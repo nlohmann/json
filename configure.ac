@@ -1,5 +1,4 @@
-AC_PREREQ([2.69])
-AC_INIT([JSON], [1.0], [BUG-REPORT-ADDRESS])
+AC_INIT([JSON], [1.0], [niels.lohmann@uni-rostock.de])
 AC_CONFIG_SRCDIR([src/JSON.cc])
 
 AM_INIT_AUTOMAKE([foreign])
