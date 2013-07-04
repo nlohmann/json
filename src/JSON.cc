@@ -7,11 +7,9 @@
 #include <iostream>
 #include <streambuf>
 #include <sstream>
-
-#ifndef __cplusplus11
 #include <cstring>
 #include <cstdlib>
-#endif
+#include <cstddef>
 
 #ifdef __cplusplus11
 using std::to_string;
@@ -576,8 +574,8 @@ std::string JSON::_typename() const {
 
 
 JSON::parser::parser(char* s) : _pos(0) {
-    _buffer = new char[strlen(s) + 1];
-    strcpy(_buffer, s);
+    _buffer = new char[std::strlen(s) + 1];
+    std::strcpy(_buffer, s);
 
     // read first character
     next();
@@ -585,7 +583,7 @@ JSON::parser::parser(char* s) : _pos(0) {
 
 JSON::parser::parser(std::string& s) : _pos(0) {
     _buffer = new char[s.length() + 1];
-    strcpy(_buffer, s.c_str());
+    std::strcpy(_buffer, s.c_str());
 
     // read first character
     next();
@@ -626,7 +624,7 @@ bool JSON::parser::next() {
 
 std::string JSON::parser::parseString() {
     // get position of closing quotes
-    char* p = strchr(_buffer + _pos, '\"');
+    char* p = std::strchr(_buffer + _pos, '\"');
 
     // if the closing quotes are escaped (viz. *(p-1) is '\\'),
     // we continue looking for the "right" quotes
@@ -634,7 +632,7 @@ std::string JSON::parser::parseString() {
         // length of the string so far
         const size_t length = p - _buffer - _pos;
         // continue checking after escaped quote
-        p = strchr(_buffer + _pos + length + 1, '\"');
+        p = std::strchr(_buffer + _pos + length + 1, '\"');
     }
 
     // check if closing quotes were found
@@ -645,7 +643,7 @@ std::string JSON::parser::parseString() {
     // copy string to return value
     const size_t length = p - _buffer - _pos;
     char* tmp = new char[length + 1];
-    strncpy(tmp, _buffer + _pos, length);
+    std::strncpy(tmp, _buffer + _pos, length);
     std::string result(tmp);
     delete [] tmp;
 
@@ -659,7 +657,7 @@ std::string JSON::parser::parseString() {
 }
 
 void JSON::parser::parseTrue() {
-    if (strncmp(_buffer + _pos, "rue", 3)) {
+    if (std::strncmp(_buffer + _pos, "rue", 3)) {
         error("expected true");
     }
 
@@ -670,7 +668,7 @@ void JSON::parser::parseTrue() {
 }
 
 void JSON::parser::parseFalse() {
-    if (strncmp(_buffer + _pos, "alse", 4)) {
+    if (std::strncmp(_buffer + _pos, "alse", 4)) {
         error("expected false");
     }
 
@@ -681,7 +679,7 @@ void JSON::parser::parseFalse() {
 }
 
 void JSON::parser::parseNull() {
-    if (strncmp(_buffer + _pos, "ull", 3)) {
+    if (std::strncmp(_buffer + _pos, "ull", 3)) {
         error("expected null");
     }
 
