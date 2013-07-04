@@ -93,28 +93,70 @@ JSON& JSON::operator=(JSON o) {
 }
 #else
 JSON& JSON::operator=(const JSON& o) {
+    // check for self-assignment
+    if (&o == this) {
+        return *this;
+    }
+
+    switch (_type) {
+        case (array): {
+            delete static_cast<std::vector<JSON>*>(_payload);
+            break;
+        }
+        case (object): {
+            delete static_cast<std::map<std::string, JSON>*>(_payload);
+            break;
+        }
+        case (string): {
+            delete static_cast<std::string*>(_payload);
+            break;
+        }
+        case (boolean): {
+            delete static_cast<bool*>(_payload);
+            break;
+        }
+        case (number_int): {
+            delete static_cast<int*>(_payload);
+            break;
+        }
+        case (number_float): {
+            delete static_cast<double*>(_payload);
+            break;
+        }
+        case (null): {
+            break;
+        }
+    }
+
     _type = o._type;
     switch (_type) {
-        case (array):
+        case (array): {
             _payload = new std::vector<JSON>(*static_cast<std::vector<JSON>*>(o._payload));
             break;
-        case (object):
+        }
+        case (object): {
             _payload = new std::map<std::string, JSON>(*static_cast<std::map<std::string, JSON>*>(o._payload));
             break;
-        case (string):
+        }
+        case (string): {
             _payload = new std::string(*static_cast<std::string*>(o._payload));
             break;
-        case (boolean):
+        }
+        case (boolean): {
             _payload = new bool(*static_cast<bool*>(o._payload));
             break;
-        case (number_int):
+        }
+        case (number_int): {
             _payload = new int(*static_cast<int*>(o._payload));
             break;
-        case (number_float):
+        }
+        case (number_float): {
             _payload = new double(*static_cast<double*>(o._payload));
             break;
-        case (null):
+        }
+        case (null): {
             break;
+        }
     }
 
     return *this;
@@ -124,26 +166,33 @@ JSON& JSON::operator=(const JSON& o) {
 /// destructor
 JSON::~JSON() {
     switch (_type) {
-        case (array):
+        case (array): {
             delete static_cast<std::vector<JSON>*>(_payload);
             break;
-        case (object):
+        }
+        case (object): {
             delete static_cast<std::map<std::string, JSON>*>(_payload);
             break;
-        case (string):
+        }
+        case (string): {
             delete static_cast<std::string*>(_payload);
             break;
-        case (boolean):
+        }
+        case (boolean): {
             delete static_cast<bool*>(_payload);
             break;
-        case (number_int):
+        }
+        case (number_int): {
             delete static_cast<int*>(_payload);
             break;
-        case (number_float):
+        }
+        case (number_float): {
             delete static_cast<double*>(_payload);
             break;
-        case (null):
+        }
+        case (null): {
             break;
+        }
     }
 }
 
@@ -567,10 +616,6 @@ void JSON::parser::error(std::string msg) {
 bool JSON::parser::next() {
     _current = _buffer[_pos++];
 
-    if (_buffer == nullptr) {
-        return false;
-    }
-
     // skip trailing whitespace
     while (std::isspace(_current)) {
         _current = _buffer[_pos++];
@@ -579,13 +624,21 @@ bool JSON::parser::next() {
     return true;
 }
 
-/// \todo: escaped strings
 std::string JSON::parser::parseString() {
-    // get position of closing quote
-    const char* p = strchr(_buffer + _pos, '\"');
+    // get position of closing quotes
+    char* p = strchr(_buffer + _pos, '\"');
 
-    // check if quotes were found
-    if (!p) {
+    // if the closing quotes are escaped (viz. *(p-1) is '\\'),
+    // we continue looking for the "right" quotes
+    while (p != nullptr and * (p - 1) == '\\') {
+        // length of the string so far
+        const size_t length = p - _buffer - _pos;
+        // continue checking after escaped quote
+        p = strchr(_buffer + _pos + length + 1, '\"');
+    }
+
+    // check if closing quotes were found
+    if (p == nullptr) {
         error("expected '\"'");
     }
 
@@ -653,8 +706,6 @@ void JSON::parser::parse(JSON& result) {
     if (!_buffer) {
         error("unexpected end of file");
     }
-
-    //JSON result;
 
     switch (_current) {
         case ('{'): {
