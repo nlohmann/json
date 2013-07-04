@@ -1,0 +1,12 @@
+language: cpp
+
+compiler:
+  - clang
+
+before_script:
+  - autoreconf -iv
+  - ./configure
+
+script:
+  - make
+  - make check
