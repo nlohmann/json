@@ -9,7 +9,6 @@
 #include <sstream>
 #include <cstring>
 #include <cstdlib>
-#include <cstddef>
 
 #ifdef __cplusplus11
 using std::to_string;

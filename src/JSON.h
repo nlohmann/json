@@ -7,6 +7,7 @@
 
 // allow us to use "nullptr" everywhere
 #ifndef nullptr
+#include <cstddef>
 #define nullptr NULL
 #endif
 
