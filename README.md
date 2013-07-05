@@ -8,7 +8,7 @@ There are myriads of [JSON](http://json.org) libraries out there, and each may e
 
 - **Trivial integration**. Our whole code consists of just two files: A header file `JSON.h` and a source file `JSON.cc`. That's it. No library, no subproject, no dependencies. The class is written in vanilla C++98 and -- if possible -- uses some features of C++11 such as move constructors. All in all, the class should require no adjustment of your compiler flags or project settings.
 
-- **Intiuitve syntax**. In languages such as Python, JSON feels like a first class data type. We used all the operator magic of C++ to achieve the same feeling in your code. Check out the examples below and you know, what I mean.
+- **Intiuitve syntax**. In languages such as Python, JSON feels like a first class data type. We used all the operator magic of C++ to achieve the same feeling in your code. Check out the [examples below](#examples) and you know, what I mean.
 
 Other aspects were not so important to us:
 
@@ -52,6 +52,37 @@ j["further"]["entry"] = 42;
 j["list"] = { 1, 0, 2 };
 ```
 
-## Input / Output
+### Input / Output
 
-## STL-like access
+```cpp
+// create object from stream
+JSON j;
+j << "{ \"pi\": 3.141, \"happy\": true }";
+
+// write string representation to stream
+std::cout << j;
+```
+
+### STL-like access
+
+```cpp
+// create an array
+JSON j;
+j.push_back("foo");
+j.push_back(1);
+j.push_back(true);
+
+// iterate the array
+for (JSON::iterator it = j.begin(); it != j.end(); ++it) {
+  std::cout << *it << '\n';
+}
+
+// getter/setter
+std::string tmp = j[0];
+j[1] = 42;
+
+// other stuff
+j.size();     // 3
+j.empty();    // false
+j.type();     // JSON::array
+```

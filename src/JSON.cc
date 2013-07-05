@@ -413,7 +413,7 @@ JSON& JSON::operator[](int index) {
 
     array_t* array = static_cast<array_t*>(_payload);
 
-    if (index >= array->size()) {
+    if (index >= (int)array->size()) {
         throw std::runtime_error("cannot access element at index " + to_string(index));
     }
 
@@ -428,7 +428,7 @@ const JSON& JSON::operator[](const int index) const {
 
     array_t* array = static_cast<array_t*>(_payload);
 
-    if (index >= array->size()) {
+    if (index >= (int)array->size()) {
         throw std::runtime_error("cannot access element at index " + to_string(index));
     }
 

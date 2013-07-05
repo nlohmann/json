@@ -283,7 +283,7 @@ class JSON {
 
             private:
                 bool next();
-                void error(std::string = "");
+                void error(std::string = "") __attribute__((noreturn));
                 std::string parseString();
                 void parseTrue();
                 void parseFalse();
