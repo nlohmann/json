@@ -22,6 +22,11 @@
 #endif
 
 class JSON {
+    // forward declaration to friend this class
+    public:
+        class iterator;
+        class const_iterator;
+
     private:
 #ifdef __cplusplus11
         /// mutex to guard payload
@@ -158,6 +163,12 @@ class JSON {
         /// return the type of the object
         json_t type() const;
 
+        /// find an element in an object (returns end() iterator otherwise)
+        iterator find(const std::string&);
+        const_iterator find(const std::string&) const;
+        iterator find(const char *);
+        const_iterator find(const char *) const;
+
         /// direct access to the underlying payload
         void* data();
         /// direct access to the underlying payload
@@ -170,14 +181,11 @@ class JSON {
         /// return the type as string
         std::string _typename() const;
 
-        // forward declaration to friend this class
-    public:
-        class const_iterator;
-
     public:
         /// an iterator
         class iterator {
-                friend class JSON::const_iterator;
+            friend class JSON;
+            friend class JSON::const_iterator;
             public:
                 iterator();
                 iterator(JSON*);
@@ -207,6 +215,7 @@ class JSON {
 
         /// a const iterator
         class const_iterator {
+            friend class JSON;
             public:
                 const_iterator();
                 const_iterator(const JSON*);

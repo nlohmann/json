@@ -484,6 +484,48 @@ JSON::json_t JSON::type() const {
     return _type;
 }
 
+JSON::iterator JSON::find(const std::string& key) {
+    return find(key.c_str());
+}
+
+JSON::const_iterator JSON::find(const std::string& key) const {
+    return find(key.c_str());
+}
+
+JSON::iterator JSON::find(const char* key) {
+    if (_type != object) {
+        return end();
+    } else {
+        std::map<std::string, JSON>* o = static_cast<std::map<std::string, JSON>*>(_payload);
+        const std::map<std::string, JSON>::iterator i = o->find(key);
+        if (i != o->end()) {
+            JSON::iterator result;
+            result._object = this;
+            result._oi = new std::map<std::string, JSON>::iterator(i);
+            return result;
+        } else {
+            return end();
+        }
+    }
+}
+
+JSON::const_iterator JSON::find(const char* key) const {
+    if (_type != object) {
+        return end();
+    } else {
+        std::map<std::string, JSON>* o = static_cast<std::map<std::string, JSON>*>(_payload);
+        const std::map<std::string, JSON>::const_iterator i = o->find(key);
+        if (i != o->end()) {
+            JSON::const_iterator result;
+            result._object = this;
+            result._oi = new std::map<std::string, JSON>::const_iterator(i);
+            return result;
+        } else {
+            return end();
+        }
+    }
+}
+
 /// direct access to the underlying payload
 void* JSON::data() {
     return _payload;
