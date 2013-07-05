@@ -202,19 +202,77 @@ void test_array() {
 #endif
 
     // iterators
-    for (JSON::iterator i = a.begin(); i != a.end(); ++i) {
-        std::cerr << *i << '\n';
+    {
+        size_t count = 0;
+        for (JSON::iterator i = a.begin(); i != a.end(); ++i) {
+            std::cerr << *i << '\n';
+            count++;
+        }
+        assert(count == a.size());
     }
 
-    for (JSON::const_iterator i = a.cbegin(); i != a.cend(); ++i) {
-        std::cerr << *i << '\n';
+    {
+        /*
+        size_t count = 0;
+        for (JSON::const_iterator i = a.begin(); i != a.end(); ++i) {
+            std::cerr << *i << '\n';
+            count++;
+        }
+        assert(count == a.size());
+        */
+    }
+
+    {
+        size_t count = 0;
+        for (JSON::const_iterator i = a.cbegin(); i != a.cend(); ++i) {
+            std::cerr << *i << '\n';
+            count++;
+        }
+        assert(count == a.size());
     }
 
 #ifdef __cplusplus11
-    for (auto element : a) {
-        std::cerr << element << '\n';
+    {
+        size_t count = 0;
+        for (auto element : a) {
+            std::cerr << element << '\n';
+            count++;
+        }
+        assert(count == a.size());
     }
 #endif
+
+    {
+        JSON::iterator i;
+        size_t count = 0;
+        for (i = a.begin(); i != a.end(); ++i) {
+            std::cerr << *i << '\n';
+            count++;
+        }
+        assert(count == a.size());
+    }
+
+    {
+        /*
+        JSON::const_iterator i;
+        size_t count = 0;
+        for (i = a.begin(); i != a.end(); ++i) {
+            std::cerr << *i << '\n';
+            count++;
+        }
+        assert(count == a.size());
+        */
+    }
+
+    {
+        JSON::const_iterator i;
+        size_t count = 0;
+        for (i = a.cbegin(); i != a.cend(); ++i) {
+            std::cerr << *i << '\n';
+            count++;
+        }
+        assert(count == a.size());
+    }
 
     {
         // get payload

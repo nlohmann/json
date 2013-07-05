@@ -643,6 +643,7 @@ std::string JSON::parser::parseString() {
     const size_t length = p - _buffer - _pos;
     char* tmp = new char[length + 1];
     std::strncpy(tmp, _buffer + _pos, length);
+    tmp[length] = 0;
     std::string result(tmp);
     delete [] tmp;
 
@@ -838,11 +839,11 @@ JSON::iterator::iterator(JSON* j) : _object(j), _vi(nullptr), _oi(nullptr) {
 JSON::iterator::iterator(const JSON::iterator& o) : _object(o._object), _vi(nullptr), _oi(nullptr) {
     switch (_object->_type) {
         case (array): {
-            _vi = new std::vector<JSON>::iterator(static_cast<std::vector<JSON>*>(_object->_payload)->begin());
+            _vi = new std::vector<JSON>::iterator(*(o._vi));
             break;
         }
         case (object): {
-            _oi = new std::map<std::string, JSON>::iterator(static_cast<std::map<std::string, JSON>*>(_object->_payload)->begin());
+            _oi = new std::map<std::string, JSON>::iterator(*(o._oi));
             break;
         }
         default:
@@ -857,6 +858,18 @@ JSON::iterator::~iterator() {
 
 JSON::iterator& JSON::iterator::operator=(const JSON::iterator& o) {
     _object = o._object;
+    switch (_object->_type) {
+        case (array): {
+            _vi = new std::vector<JSON>::iterator(*(o._vi));
+            break;
+        }
+        case (object): {
+            _oi = new std::map<std::string, JSON>::iterator(*(o._oi));
+            break;
+        }
+        default:
+            break;
+    }
     return *this;
 }
 
@@ -985,11 +998,11 @@ JSON::const_iterator::const_iterator(const JSON* j) : _object(j), _vi(nullptr), 
 JSON::const_iterator::const_iterator(const JSON::const_iterator& o) : _object(o._object), _vi(nullptr), _oi(nullptr) {
     switch (_object->_type) {
         case (array): {
-            _vi = new std::vector<JSON>::const_iterator(static_cast<std::vector<JSON>*>(_object->_payload)->begin());
+            _vi = new std::vector<JSON>::const_iterator(*(o._vi));
             break;
         }
         case (object): {
-            _oi = new std::map<std::string, JSON>::const_iterator(static_cast<std::map<std::string, JSON>*>(_object->_payload)->begin());
+            _oi = new std::map<std::string, JSON>::const_iterator(*(o._oi));
             break;
         }
         default:
@@ -1000,11 +1013,11 @@ JSON::const_iterator::const_iterator(const JSON::const_iterator& o) : _object(o.
 JSON::const_iterator::const_iterator(const JSON::iterator& o) : _object(o._object), _vi(nullptr), _oi(nullptr) {
     switch (_object->_type) {
         case (array): {
-            _vi = new std::vector<JSON>::const_iterator(static_cast<std::vector<JSON>*>(_object->_payload)->begin());
+            _vi = new std::vector<JSON>::const_iterator(*(o._vi));
             break;
         }
         case (object): {
-            _oi = new std::map<std::string, JSON>::const_iterator(static_cast<std::map<std::string, JSON>*>(_object->_payload)->begin());
+            _oi = new std::map<std::string, JSON>::const_iterator(*(o._oi));
             break;
         }
         default:
@@ -1019,6 +1032,18 @@ JSON::const_iterator::~const_iterator() {
 
 JSON::const_iterator& JSON::const_iterator::operator=(const JSON::const_iterator& o) {
     _object = o._object;
+    switch (_object->_type) {
+        case (array): {
+            _vi = new std::vector<JSON>::const_iterator(*(o._vi));
+            break;
+        }
+        case (object): {
+            _oi = new std::map<std::string, JSON>::const_iterator(*(o._oi));
+            break;
+        }
+        default:
+            break;
+    }
     return *this;
 }
 
