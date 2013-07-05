@@ -591,11 +591,11 @@ JSON::parser::parser(std::string& s) : _pos(0) {
 JSON::parser::parser(std::istream& _is) : _pos(0) {
     // determine length of input stream
     _is.seekg(0, std::ios::end);
-    std::streampos length = _is.tellg();
+    size_t length = _is.tellg();
     _is.seekg(0, std::ios::beg);
 
     // copy stream to buffer
-    _buffer = new char[length];
+    _buffer = new char[length + 1];
     _is.read(_buffer, length);
 
     // read first character
