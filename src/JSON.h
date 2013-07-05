@@ -264,5 +264,6 @@ class JSON {
                 char _current;
                 char* _buffer;
                 size_t _pos;
+                size_t _length;
         };
 };

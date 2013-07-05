@@ -573,7 +573,8 @@ std::string JSON::_typename() const {
 
 
 JSON::parser::parser(char* s) : _pos(0) {
-    _buffer = new char[std::strlen(s) + 1];
+    _length = std::strlen(s);
+    _buffer = new char[_length + 1];
     std::strcpy(_buffer, s);
 
     // read first character
@@ -581,7 +582,8 @@ JSON::parser::parser(char* s) : _pos(0) {
 }
 
 JSON::parser::parser(std::string& s) : _pos(0) {
-    _buffer = new char[s.length() + 1];
+    _length = s.length();
+    _buffer = new char[_length + 1];
     std::strcpy(_buffer, s.c_str());
 
     // read first character
@@ -591,12 +593,12 @@ JSON::parser::parser(std::string& s) : _pos(0) {
 JSON::parser::parser(std::istream& _is) : _pos(0) {
     // determine length of input stream
     _is.seekg(0, std::ios::end);
-    size_t length = _is.tellg();
+    _length = _is.tellg();
     _is.seekg(0, std::ios::beg);
 
     // copy stream to buffer
-    _buffer = new char[length + 1];
-    _is.read(_buffer, length);
+    _buffer = new char[_length + 1];
+    _is.read(_buffer, _length);
 
     // read first character
     next();
@@ -611,10 +613,18 @@ void JSON::parser::error(std::string msg) {
 }
 
 bool JSON::parser::next() {
+    if (_pos == _length) {
+        return false;
+    }
+
     _current = _buffer[_pos++];
 
     // skip trailing whitespace
     while (std::isspace(_current)) {
+        if (_pos == _length) {
+            return false;
+        }
+
         _current = _buffer[_pos++];
     }
 
