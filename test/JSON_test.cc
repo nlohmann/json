@@ -74,7 +74,6 @@ void test_null() {
     }
 }
 
-
 void test_bool() {
     JSON True = true;
     JSON False = false;
@@ -212,14 +211,12 @@ void test_array() {
     }
 
     {
-        /*
         size_t count = 0;
         for (JSON::const_iterator i = a.begin(); i != a.end(); ++i) {
             std::cerr << *i << '\n';
             count++;
         }
         assert(count == a.size());
-        */
     }
 
     {
@@ -253,7 +250,6 @@ void test_array() {
     }
 
     {
-        /*
         JSON::const_iterator i;
         size_t count = 0;
         for (i = a.begin(); i != a.end(); ++i) {
@@ -261,7 +257,6 @@ void test_array() {
             count++;
         }
         assert(count == a.size());
-        */
     }
 
     {
@@ -279,6 +274,30 @@ void test_array() {
         std::vector<JSON>* array = static_cast<std::vector<JSON>*>(a.data());
         assert(array->size() == a.size());
         assert(array->empty() == a.empty());
+    }
+}
+
+void test_object() {
+    // check find()
+    {
+        JSON o;
+        o["foo"] = "bar";
+
+        JSON::iterator i1 = o.find("foo");
+        assert(i1 != o.end());
+        assert(i1.value() == "bar");
+        assert(i1.key() == "foo");
+        assert(*i1 == "bar");
+
+        JSON::iterator i2 = o.find("baz");
+        assert(i2 == o.end());
+        
+        JSON a;
+        a += "foo";
+        a += "bar";
+        JSON::iterator i;
+        i = a.find("foo");
+        assert(i == a.end());
     }
 }
 
@@ -335,6 +354,7 @@ int main() {
     test_bool();
     test_string();
     test_array();
+    test_object();
     test_streaming();
 
     return 0;

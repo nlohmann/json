@@ -22,7 +22,7 @@
 #endif
 
 class JSON {
-    // forward declaration to friend this class
+        // forward declaration to friend this class
     public:
         class iterator;
         class const_iterator;
@@ -36,7 +36,7 @@ class JSON {
     public:
         /// possible types of a JSON object
         typedef enum {
-            array, object, null, string, boolean, number_int, number_float
+            array, object, null, string, boolean, number, number_float
         } json_t;
 
     private:
@@ -47,16 +47,21 @@ class JSON {
         void* _payload;
 
     public:
+        /// a type for an object
+        typedef std::map<std::string, JSON> object_t;
+        /// a type for an array
+        typedef std::vector<JSON> array_t;
+
 #ifdef __cplusplus11
-        /// a type for objects
-        typedef std::tuple<std::string, JSON> object_t;
-        /// a type for arrays
-        typedef std::initializer_list<JSON> array_t;
+        /// a type for array initialization
+        typedef std::initializer_list<JSON> array_init_t;
 #endif
 
     public:
         /// create an empty (null) object
         JSON();
+        /// create an empty object according to given type
+        JSON(json_t);
         /// create a string object from C++ string
         JSON(const std::string&);
         /// create a string object from C string
@@ -69,11 +74,13 @@ class JSON {
         JSON(const int);
         /// create a number object
         JSON(const double);
+        /// create an array
+        JSON(array_t);
+        /// create an object
+        JSON(object_t);
 #ifdef __cplusplus11
         /// create from an initializer list (to an array)
-        JSON(array_t);
-        /// create from a mapping (to an object)
-        JSON(object_t);
+        JSON(array_init_t);
 #endif
 
         /// copy constructor
@@ -143,6 +150,19 @@ class JSON {
         /// add a number to an array
         JSON& operator+=(double);
 
+        /// add an object/array to an array
+        void push_back(const JSON&);
+        /// add a string to an array
+        void push_back(const std::string&);
+        /// add a string to an array
+        void push_back(const char*);
+        /// add a Boolean to an array
+        void push_back(bool);
+        /// add a number to an array
+        void push_back(int);
+        /// add a number to an array
+        void push_back(double);
+
         /// operator to set an element in an array
         JSON& operator[](int);
         /// operator to get an element in an array
@@ -166,8 +186,8 @@ class JSON {
         /// find an element in an object (returns end() iterator otherwise)
         iterator find(const std::string&);
         const_iterator find(const std::string&) const;
-        iterator find(const char *);
-        const_iterator find(const char *) const;
+        iterator find(const char*);
+        const_iterator find(const char*) const;
 
         /// direct access to the underlying payload
         void* data();
@@ -184,8 +204,8 @@ class JSON {
     public:
         /// an iterator
         class iterator {
-            friend class JSON;
-            friend class JSON::const_iterator;
+                friend class JSON;
+                friend class JSON::const_iterator;
             public:
                 iterator();
                 iterator(JSON*);
@@ -208,14 +228,14 @@ class JSON {
                 /// a JSON value
                 JSON* _object;
                 /// an iterator for JSON arrays
-                std::vector<JSON>::iterator* _vi;
+                array_t::iterator* _vi;
                 /// an iterator for JSON objects
-                std::map<std::string, JSON>::iterator* _oi;
+                object_t::iterator* _oi;
         };
 
         /// a const iterator
         class const_iterator {
-            friend class JSON;
+                friend class JSON;
             public:
                 const_iterator();
                 const_iterator(const JSON*);
@@ -239,9 +259,9 @@ class JSON {
                 /// a JSON value
                 const JSON* _object;
                 /// an iterator for JSON arrays
-                std::vector<JSON>::const_iterator* _vi;
+                array_t::const_iterator* _vi;
                 /// an iterator for JSON objects
-                std::map<std::string, JSON>::const_iterator* _oi;
+                object_t::const_iterator* _oi;
         };
 
     public:
