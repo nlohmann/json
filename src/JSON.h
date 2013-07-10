@@ -39,18 +39,44 @@ class JSON {
             array, object, null, string, boolean, number, number_float
         } json_t;
 
-    private:
-        /// the type of this object
-        json_t _type;
-
-        /// the payload
-        void* _payload;
-
     public:
         /// a type for an object
         typedef std::map<std::string, JSON> object_t;
         /// a type for an array
         typedef std::vector<JSON> array_t;
+        /// a type for a string
+        typedef std::string string_t;
+        /// a type for a Boolean
+        typedef bool boolean_t;
+        /// a type for an integer number
+        typedef int number_t;
+        /// a type for a floating point number
+        typedef double number_float_t;
+
+        /// a JSON value
+        union value {
+            array_t* array;
+            object_t* object;
+            string_t* string;
+            boolean_t* boolean;
+            number_t* number;
+            number_float_t* number_float;
+
+            value() {}
+            value(array_t* array): array(array) {}
+            value(object_t* object): object(object) {}
+            value(string_t* string): string(string) {}
+            value(boolean_t* boolean) : boolean(boolean) {}
+            value(number_t* number) : number(number) {}
+            value(number_float_t* number_float) : number_float(number_float) {}
+        };
+
+    private:
+        /// the type of this object
+        json_t _type;
+
+        /// the payload
+        value _value;
 
 #ifdef __cplusplus11
         /// a type for array initialization
@@ -190,9 +216,9 @@ class JSON {
         const_iterator find(const char*) const;
 
         /// direct access to the underlying payload
-        void* data();
+        value data();
         /// direct access to the underlying payload
-        const void* data() const;
+        const value data() const;
 
         /// lexicographically compares the values
         bool operator==(const JSON&) const;

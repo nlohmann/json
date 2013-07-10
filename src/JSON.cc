@@ -34,32 +34,32 @@ std::mutex JSON::_token;
  * CONSTRUCTORS AND DESTRUCTOR *
  *******************************/
 
-JSON::JSON() : _type(null), _payload(nullptr) {}
+JSON::JSON() : _type(null) {}
 
 JSON::JSON(json_t type) : _type(type) {
     switch (_type) {
         case (array): {
-            _payload = new array_t();
+            _value.array = new array_t();
             break;
         }
         case (object): {
-            _payload = new object_t();
+            _value.object = new object_t();
             break;
         }
         case (string): {
-            _payload = new std::string();
+            _value.string = new string_t();
             break;
         }
         case (boolean): {
-            _payload = new bool();
+            _value.boolean = new boolean_t();
             break;
         }
         case (number): {
-            _payload = new int(0);
+            _value.number = new number_t();
             break;
         }
         case (number_float): {
-            _payload = new double(0.0);
+            _value.number_float = new number_float_t();
             break;
         }
         case (null): {
@@ -68,44 +68,44 @@ JSON::JSON(json_t type) : _type(type) {
     }
 }
 
-JSON::JSON(const std::string& s) : _type(string), _payload(new std::string(s)) {}
-JSON::JSON(const char* s) : _type(string), _payload(new std::string(s)) {}
-JSON::JSON(char* s) : _type(string), _payload(new std::string(s)) {}
-JSON::JSON(const bool b) : _type(boolean), _payload(new bool(b)) {}
-JSON::JSON(const int i) : _type(number), _payload(new int(i)) {}
-JSON::JSON(const double f) : _type(number_float), _payload(new double(f)) {}
-JSON::JSON(array_t a) : _type(array), _payload(new array_t(a)) {}
-JSON::JSON(object_t o) : _type(object), _payload(new object_t(o)) {}
+JSON::JSON(const std::string& s) : _type(string), _value(new string_t(s)) {}
+JSON::JSON(const char* s) : _type(string), _value(new string_t(s)) {}
+JSON::JSON(char* s) : _type(string), _value(new string_t(s)) {}
+JSON::JSON(const bool b) : _type(boolean), _value(new boolean_t(b)) {}
+JSON::JSON(const int i) : _type(number), _value(new number_t(i)) {}
+JSON::JSON(const double f) : _type(number_float), _value(new number_float_t(f)) {}
+JSON::JSON(array_t a) : _type(array), _value(new array_t(a)) {}
+JSON::JSON(object_t o) : _type(object), _value(new object_t(o)) {}
 
 #ifdef __cplusplus11
-JSON::JSON(array_init_t a) : _type(array), _payload(new array_t(a)) {}
+JSON::JSON(array_init_t a) : _type(array), _value(new array_t(a)) {}
 #endif
 
 /// copy constructor
 JSON::JSON(const JSON& o) : _type(o._type) {
     switch (_type) {
         case (array): {
-            _payload = new array_t(*static_cast<array_t*>(o._payload));
+            _value.array = new array_t(*o._value.array);
             break;
         }
         case (object): {
-            _payload = new object_t(*static_cast<object_t*>(o._payload));
+            _value.object = new object_t(*o._value.object);
             break;
         }
         case (string): {
-            _payload = new std::string(*static_cast<std::string*>(o._payload));
+            _value.string = new string_t(*o._value.string);
             break;
         }
         case (boolean): {
-            _payload = new bool(*static_cast<bool*>(o._payload));
+            _value.boolean = new boolean_t(*o._value.boolean);
             break;
         }
         case (number): {
-            _payload = new int(*static_cast<int*>(o._payload));
+            _value.number = new number_t(*o._value.number);
             break;
         }
         case (number_float): {
-            _payload = new double(*static_cast<double*>(o._payload));
+            _value.number_float = new number_float_t(*o._value.number_float);
             break;
         }
         case (null): {
@@ -116,14 +116,14 @@ JSON::JSON(const JSON& o) : _type(o._type) {
 
 #ifdef __cplusplus11
 /// move constructor
-JSON::JSON(JSON&& o) : _type(std::move(o._type)), _payload(std::move(o._payload)) {}
+JSON::JSON(JSON&& o) : _type(std::move(o._type)), _value(std::move(o._value)) {}
 #endif
 
 /// copy assignment
 #ifdef __cplusplus11
 JSON& JSON::operator=(JSON o) {
     std::swap(_type, o._type);
-    std::swap(_payload, o._payload);
+    std::swap(_value, o._value);
     return *this;
 }
 #else
@@ -135,27 +135,27 @@ JSON& JSON::operator=(const JSON& o) {
 
     switch (_type) {
         case (array): {
-            delete static_cast<array_t*>(_payload);
+            delete _value.array;
             break;
         }
         case (object): {
-            delete static_cast<object_t*>(_payload);
+            delete _value.object;
             break;
         }
         case (string): {
-            delete static_cast<std::string*>(_payload);
+            delete _value.string;
             break;
         }
         case (boolean): {
-            delete static_cast<bool*>(_payload);
+            delete _value.boolean;
             break;
         }
         case (number): {
-            delete static_cast<int*>(_payload);
+            delete _value.number;
             break;
         }
         case (number_float): {
-            delete static_cast<double*>(_payload);
+            delete _value.number_float;
             break;
         }
         case (null): {
@@ -166,27 +166,27 @@ JSON& JSON::operator=(const JSON& o) {
     _type = o._type;
     switch (_type) {
         case (array): {
-            _payload = new array_t(*static_cast<array_t*>(o._payload));
+            _value.array = new array_t(*o._value.array);
             break;
         }
         case (object): {
-            _payload = new object_t(*static_cast<object_t*>(o._payload));
+            _value.object = new object_t(*o._value.object);
             break;
         }
         case (string): {
-            _payload = new std::string(*static_cast<std::string*>(o._payload));
+            _value.string = new string_t(*o._value.string);
             break;
         }
         case (boolean): {
-            _payload = new bool(*static_cast<bool*>(o._payload));
+            _value.boolean = new boolean_t(*o._value.boolean);
             break;
         }
         case (number): {
-            _payload = new int(*static_cast<int*>(o._payload));
+            _value.number = new number_t(*o._value.number);
             break;
         }
         case (number_float): {
-            _payload = new double(*static_cast<double*>(o._payload));
+            _value.number_float = new number_float_t(*o._value.number_float);
             break;
         }
         case (null): {
@@ -202,27 +202,27 @@ JSON& JSON::operator=(const JSON& o) {
 JSON::~JSON() {
     switch (_type) {
         case (array): {
-            delete static_cast<array_t*>(_payload);
+            delete _value.array;
             break;
         }
         case (object): {
-            delete static_cast<object_t*>(_payload);
+            delete _value.object;
             break;
         }
         case (string): {
-            delete static_cast<std::string*>(_payload);
+            delete _value.string;
             break;
         }
         case (boolean): {
-            delete static_cast<bool*>(_payload);
+            delete _value.boolean;
             break;
         }
         case (number): {
-            delete static_cast<int*>(_payload);
+            delete _value.number;
             break;
         }
         case (number_float): {
-            delete static_cast<double*>(_payload);
+            delete _value.number_float;
             break;
         }
         case (null): {
@@ -239,7 +239,7 @@ JSON::~JSON() {
 JSON::operator const std::string() const {
     switch (_type) {
         case (string):
-            return *static_cast<std::string*>(_payload);
+            return *_value.string;
         default:
             throw std::runtime_error("cannot cast " + _typename() + " to JSON string");
     }
@@ -249,9 +249,9 @@ JSON::operator const std::string() const {
 JSON::operator int() const {
     switch (_type) {
         case (number):
-            return *static_cast<int*>(_payload);
+            return *_value.number;
         case (number_float):
-            return static_cast<int>(*static_cast<double*>(_payload));
+            return static_cast<number_t>(*_value.number_float);
         default:
             throw std::runtime_error("cannot cast " + _typename() + " to JSON number");
     }
@@ -260,9 +260,9 @@ JSON::operator int() const {
 JSON::operator double() const {
     switch (_type) {
         case (number):
-            return static_cast<double>(*static_cast<int*>(_payload));
+            return static_cast<number_float_t>(*_value.number);
         case (number_float):
-            return *static_cast<double*>(_payload);
+            return *_value.number_float;
         default:
             throw std::runtime_error("cannot cast " + _typename() + " to JSON number");
     }
@@ -271,7 +271,7 @@ JSON::operator double() const {
 JSON::operator bool() const {
     switch (_type) {
         case (boolean):
-            return *static_cast<bool*>(_payload);
+            return *_value.boolean;
         default:
             throw std::runtime_error("cannot cast " + _typename() + " to JSON Boolean");
     }
@@ -284,27 +284,26 @@ const std::string JSON::toString() const {
         }
 
         case (string): {
-            return std::string("\"") + *static_cast<std::string*>(_payload) + "\"";
+            return std::string("\"") + *_value.string + "\"";
         }
 
         case (boolean): {
-            return *static_cast<bool*>(_payload) ? "true" : "false";
+            return *_value.boolean ? "true" : "false";
         }
 
         case (number): {
-            return to_string(*static_cast<int*>(_payload));
+            return to_string(*_value.number);
         }
 
         case (number_float): {
-            return to_string(*static_cast<double*>(_payload));
+            return to_string(*_value.number_float);
         }
 
         case (array): {
             std::string result;
 
-            const array_t* array = static_cast<array_t*>(_payload);
-            for (array_t::const_iterator i = array->begin(); i != array->end(); ++i) {
-                if (i != array->begin()) {
+            for (array_t::const_iterator i = _value.array->begin(); i != _value.array->end(); ++i) {
+                if (i != _value.array->begin()) {
                     result += ", ";
                 }
                 result += (*i).toString();
@@ -316,9 +315,8 @@ const std::string JSON::toString() const {
         case (object): {
             std::string result;
 
-            const object_t* object = static_cast<object_t*>(_payload);
-            for (object_t::const_iterator i = object->begin(); i != object->end(); ++i) {
-                if (i != object->begin()) {
+            for (object_t::const_iterator i = _value.object->begin(); i != _value.object->end(); ++i) {
+                if (i != _value.object->begin()) {
                     result += ", ";
                 }
                 result += "\"" + i->first + "\": " + (i->second).toString();
@@ -375,10 +373,10 @@ void JSON::push_back(const JSON& o) {
 
     if (_type == null) {
         _type = array;
-        _payload = new array_t;
+        _value.array = new array_t;
     }
 
-    static_cast<array_t*>(_payload)->push_back(o);
+    _value.array->push_back(o);
 }
 
 void JSON::push_back(const std::string& s) {
@@ -411,13 +409,11 @@ JSON& JSON::operator[](int index) {
         throw std::runtime_error("cannot add entry with index " + to_string(index) + " to " + _typename());
     }
 
-    array_t* array = static_cast<array_t*>(_payload);
-
-    if (index >= (int)array->size()) {
+    if (index >= (int)_value.array->size()) {
         throw std::runtime_error("cannot access element at index " + to_string(index));
     }
 
-    return array->at(index);
+    return _value.array->at(index);
 }
 
 /// operator to get an element in an object
@@ -426,13 +422,11 @@ const JSON& JSON::operator[](const int index) const {
         throw std::runtime_error("cannot get entry with index " + to_string(index) + " from " + _typename());
     }
 
-    array_t* array = static_cast<array_t*>(_payload);
-
-    if (index >= (int)array->size()) {
+    if (index >= (int)_value.array->size()) {
         throw std::runtime_error("cannot access element at index " + to_string(index));
     }
 
-    return array->at(index);
+    return _value.array->at(index);
 }
 
 /// operator to set an element in an object
@@ -443,19 +437,18 @@ JSON& JSON::operator[](const std::string& key) {
 
     if (_type == null) {
         _type = object;
-        _payload = new object_t;
+        _value.object = new object_t;
     }
 
     if (_type != object) {
         throw std::runtime_error("cannot add entry with key " + std::string(key) + " to " + _typename());
     }
 
-    object_t* object = static_cast<object_t*>(_payload);
-    if (object->find(key) == object->end()) {
-        (*object)[key] = JSON();
+    if (_value.object->find(key) == _value.object->end()) {
+        (*_value.object)[key] = JSON();
     }
 
-    return (*object)[key];
+    return (*_value.object)[key];
 }
 
 /// operator to set an element in an object
@@ -466,19 +459,18 @@ JSON& JSON::operator[](const char* key) {
 
     if (_type == null) {
         _type = object;
-        _payload = new object_t;
+        _value.object = new object_t;
     }
 
     if (_type != object) {
         throw std::runtime_error("cannot add entry with key " + std::string(key) + " to " + _typename());
     }
 
-    object_t* object = static_cast<object_t*>(_payload);
-    if (object->find(key) == object->end()) {
-        (*object)[key] = JSON();
+    if (_value.object->find(key) == _value.object->end()) {
+        (*_value.object)[key] = JSON();
     }
 
-    return (*object)[key];
+    return (*_value.object)[key];
 }
 
 /// operator to get an element in an object
@@ -487,11 +479,10 @@ const JSON& JSON::operator[](const std::string& key) const {
         throw std::runtime_error("cannot get entry with key " + std::string(key) + " from " + _typename());
     }
 
-    const object_t* object = static_cast<object_t*>(_payload);
-    if (object->find(key) == object->end()) {
+    if (_value.object->find(key) == _value.object->end()) {
         throw std::runtime_error("key " + key + " not found");
     } else {
-        return object->find(key)->second;
+        return _value.object->find(key)->second;
     }
 }
 
@@ -499,9 +490,9 @@ const JSON& JSON::operator[](const std::string& key) const {
 size_t JSON::size() const {
     switch (_type) {
         case (array):
-            return static_cast<array_t*>(_payload)->size();
+            return _value.array->size();
         case (object):
-            return static_cast<object_t*>(_payload)->size();
+            return _value.object->size();
         case (null):
             return 0;
         case (string):
@@ -519,9 +510,9 @@ size_t JSON::size() const {
 bool JSON::empty() const {
     switch (_type) {
         case (array):
-            return static_cast<array_t*>(_payload)->empty();
+            return _value.array->empty();
         case (object):
-            return static_cast<object_t*>(_payload)->empty();
+            return _value.object->empty();
         case (null):
             return true;
         case (string):
@@ -552,9 +543,8 @@ JSON::iterator JSON::find(const char* key) {
     if (_type != object) {
         return end();
     } else {
-        object_t* o = static_cast<object_t*>(_payload);
-        const object_t::iterator i = o->find(key);
-        if (i != o->end()) {
+        const object_t::iterator i = _value.object->find(key);
+        if (i != _value.object->end()) {
             JSON::iterator result;
             result._object = this;
             result._oi = new object_t::iterator(i);
@@ -569,9 +559,8 @@ JSON::const_iterator JSON::find(const char* key) const {
     if (_type != object) {
         return end();
     } else {
-        object_t* o = static_cast<object_t*>(_payload);
-        const object_t::const_iterator i = o->find(key);
-        if (i != o->end()) {
+        const object_t::const_iterator i = _value.object->find(key);
+        if (i != _value.object->end()) {
             JSON::const_iterator result;
             result._object = this;
             result._oi = new object_t::const_iterator(i);
@@ -583,13 +572,13 @@ JSON::const_iterator JSON::find(const char* key) const {
 }
 
 /// direct access to the underlying payload
-void* JSON::data() {
-    return _payload;
+JSON::value JSON::data() {
+    return _value;
 }
 
 /// direct access to the underlying payload
-const void* JSON::data() const {
-    return _payload;
+const JSON::value JSON::data() const {
+    return _value;
 }
 
 /// lexicographically compares the values
@@ -597,16 +586,12 @@ bool JSON::operator==(const JSON& o) const {
     switch (_type) {
         case (array): {
             if (o._type == array) {
-                array_t* a = static_cast<array_t*>(_payload);
-                array_t* b = static_cast<array_t*>(o._payload);
-                return *a == *b;
+                return *_value.array == *o._value.array;
             }
         }
         case (object): {
             if (o._type == object) {
-                object_t* a = static_cast<object_t*>(_payload);
-                object_t* b = static_cast<object_t*>(o._payload);
-                return *a == *b;
+                return *_value.object == *o._value.object;
             }
         }
         case (null): {
@@ -616,29 +601,25 @@ bool JSON::operator==(const JSON& o) const {
         }
         case (string): {
             if (o._type == string) {
-                const std::string a = *this;
-                const std::string b = o;
-                return a == b;
+                return *_value.string == *o._value.string;
             }
         }
         case (boolean): {
             if (o._type == boolean) {
-                bool a = *this;
-                bool b = o;
-                return a == b;
+                return *_value.boolean == *o._value.boolean;
             }
         }
         case (number): {
             if (o._type == number or o._type == number_float) {
-                int a = *this;
-                int b = o;
+                number_t a = *this;
+                number_t b = o;
                 return a == b;
             }
         }
         case (number_float): {
             if (o._type == number or o._type == number_float) {
-                double a = *this;
-                double b = o;
+                number_float_t a = *this;
+                number_float_t b = o;
                 return a == b;
             }
         }
@@ -793,7 +774,7 @@ void JSON::parser::parseNull() {
 
     _pos += 3;
 
-    // read next character (optional?)
+    // read next character
     next();
 }
 
@@ -817,7 +798,7 @@ void JSON::parser::parse(JSON& result) {
         case ('{'): {
             // explicitly set result to object to cope with {}
             result._type = object;
-            result._payload = new object_t;
+            result._value.object = new object_t;
 
             next();
 
@@ -844,7 +825,7 @@ void JSON::parser::parse(JSON& result) {
         case ('['): {
             // explicitly set result to array to cope with []
             result._type = array;
-            result._payload = new array_t;
+            result._value.array = new array_t;
 
             next();
 
@@ -866,21 +847,21 @@ void JSON::parser::parse(JSON& result) {
 
         case ('\"'): {
             result._type = string;
-            result._payload = new std::string(parseString());
+            result._value.string = new string_t(parseString());
             break;
         }
 
         case ('t'): {
             parseTrue();
             result._type = boolean;
-            result._payload = new bool(true);
+            result._value.boolean = new boolean_t(true);
             break;
         }
 
         case ('f'): {
             parseFalse();
             result._type = boolean;
-            result._payload = new bool(false);
+            result._value.boolean = new boolean_t(false);
             break;
         }
 
@@ -902,11 +883,11 @@ void JSON::parser::parse(JSON& result) {
                 if (tmp.find(".") == std::string::npos) {
                     // integer (we use atof, because it can cope with e)
                     result._type = number;
-                    result._payload = new int(std::atof(tmp.c_str()));
+                    result._value.number = new number_t(std::atof(tmp.c_str()));
                 } else {
                     // float
                     result._type = number_float;
-                    result._payload = new double(std::atof(tmp.c_str()));
+                    result._value.number_float = new number_float_t(std::atof(tmp.c_str()));
                 }
                 break;
             } else {
@@ -933,11 +914,11 @@ JSON::iterator::iterator(JSON* j) : _object(j), _vi(nullptr), _oi(nullptr) {
     if (_object != nullptr)
         switch (_object->_type) {
             case (array): {
-                _vi = new array_t::iterator(static_cast<array_t*>(_object->_payload)->begin());
+                _vi = new array_t::iterator(_object->_value.array->begin());
                 break;
             }
             case (object): {
-                _oi = new object_t::iterator(static_cast<object_t*>(_object->_payload)->begin());
+                _oi = new object_t::iterator(_object->_value.object->begin());
                 break;
             }
             default:
@@ -1001,13 +982,13 @@ JSON::iterator& JSON::iterator::operator++() {
 
     switch (_object->_type) {
         case (array): {
-            if (++(*_vi) == static_cast<array_t*>(_object->_payload)->end()) {
+            if (++(*_vi) == _object->_value.array->end()) {
                 _object = nullptr;
             }
             break;
         }
         case (object): {
-            if (++(*_oi) == static_cast<object_t*>(_object->_payload)->end()) {
+            if (++(*_oi) == _object->_value.object->end()) {
                 _object = nullptr;
             }
             break;
@@ -1095,11 +1076,11 @@ JSON::const_iterator::const_iterator(const JSON* j) : _object(j), _vi(nullptr), 
     if (_object != nullptr)
         switch (_object->_type) {
             case (array): {
-                _vi = new array_t::const_iterator(static_cast<array_t*>(_object->_payload)->begin());
+                _vi = new array_t::const_iterator(_object->_value.array->begin());
                 break;
             }
             case (object): {
-                _oi = new object_t::const_iterator(static_cast<object_t*>(_object->_payload)->begin());
+                _oi = new object_t::const_iterator(_object->_value.object->begin());
                 break;
             }
             default:
@@ -1179,13 +1160,13 @@ JSON::const_iterator& JSON::const_iterator::operator++() {
 
     switch (_object->_type) {
         case (array): {
-            if (++(*_vi) == static_cast<array_t*>(_object->_payload)->end()) {
+            if (++(*_vi) == _object->_value.array->end()) {
                 _object = nullptr;
             }
             break;
         }
         case (object): {
-            if (++(*_oi) == static_cast<object_t*>(_object->_payload)->end()) {
+            if (++(*_oi) == _object->_value.object->end()) {
                 _object = nullptr;
             }
             break;

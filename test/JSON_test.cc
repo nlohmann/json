@@ -145,7 +145,7 @@ void test_string() {
 
     {
         // get payload
-        std::string* s1 = static_cast<std::string*>(a.data());
+        std::string* s1 = a.data().string;
         std::string s2 = a;
         assert(*s1 == s2);
     }
@@ -271,7 +271,7 @@ void test_array() {
 
     {
         // get payload
-        std::vector<JSON>* array = static_cast<std::vector<JSON>*>(a.data());
+        std::vector<JSON>* array = a.data().array;
         assert(array->size() == a.size());
         assert(array->empty() == a.empty());
     }
