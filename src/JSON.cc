@@ -51,15 +51,15 @@ JSON::JSON(json_t type) : _type(type) {
             break;
         }
         case (boolean): {
-            _value.boolean = new boolean_t();
+            _value.boolean = false;
             break;
         }
         case (number): {
-            _value.number = new number_t();
+            _value.number = 0;
             break;
         }
         case (number_float): {
-            _value.number_float = new number_float_t();
+            _value.number_float = 0.0;
             break;
         }
         case (null): {
@@ -71,9 +71,9 @@ JSON::JSON(json_t type) : _type(type) {
 JSON::JSON(const std::string& s) : _type(string), _value(new string_t(s)) {}
 JSON::JSON(const char* s) : _type(string), _value(new string_t(s)) {}
 JSON::JSON(char* s) : _type(string), _value(new string_t(s)) {}
-JSON::JSON(const bool b) : _type(boolean), _value(new boolean_t(b)) {}
-JSON::JSON(const int i) : _type(number), _value(new number_t(i)) {}
-JSON::JSON(const double f) : _type(number_float), _value(new number_float_t(f)) {}
+JSON::JSON(const bool b) : _type(boolean), _value(b) {}
+JSON::JSON(const int i) : _type(number), _value(i) {}
+JSON::JSON(const double f) : _type(number_float), _value(f) {}
 JSON::JSON(array_t a) : _type(array), _value(new array_t(a)) {}
 JSON::JSON(object_t o) : _type(object), _value(new object_t(o)) {}
 
@@ -97,15 +97,15 @@ JSON::JSON(const JSON& o) : _type(o._type) {
             break;
         }
         case (boolean): {
-            _value.boolean = new boolean_t(*o._value.boolean);
+            _value.boolean = o._value.boolean;
             break;
         }
         case (number): {
-            _value.number = new number_t(*o._value.number);
+            _value.number = o._value.number;
             break;
         }
         case (number_float): {
-            _value.number_float = new number_float_t(*o._value.number_float);
+            _value.number_float = o._value.number_float;
             break;
         }
         case (null): {
@@ -147,15 +147,12 @@ JSON& JSON::operator=(const JSON& o) {
             break;
         }
         case (boolean): {
-            delete _value.boolean;
             break;
         }
         case (number): {
-            delete _value.number;
             break;
         }
         case (number_float): {
-            delete _value.number_float;
             break;
         }
         case (null): {
@@ -178,15 +175,15 @@ JSON& JSON::operator=(const JSON& o) {
             break;
         }
         case (boolean): {
-            _value.boolean = new boolean_t(*o._value.boolean);
+            _value.boolean = o._value.boolean;
             break;
         }
         case (number): {
-            _value.number = new number_t(*o._value.number);
+            _value.number = o._value.number;
             break;
         }
         case (number_float): {
-            _value.number_float = new number_float_t(*o._value.number_float);
+            _value.number_float = o._value.number_float;
             break;
         }
         case (null): {
@@ -214,15 +211,12 @@ JSON::~JSON() {
             break;
         }
         case (boolean): {
-            delete _value.boolean;
             break;
         }
         case (number): {
-            delete _value.number;
             break;
         }
         case (number_float): {
-            delete _value.number_float;
             break;
         }
         case (null): {
@@ -249,9 +243,9 @@ JSON::operator const std::string() const {
 JSON::operator int() const {
     switch (_type) {
         case (number):
-            return *_value.number;
+            return _value.number;
         case (number_float):
-            return static_cast<number_t>(*_value.number_float);
+            return static_cast<number_t>(_value.number_float);
         default:
             throw std::runtime_error("cannot cast " + _typename() + " to JSON number");
     }
@@ -260,9 +254,9 @@ JSON::operator int() const {
 JSON::operator double() const {
     switch (_type) {
         case (number):
-            return static_cast<number_float_t>(*_value.number);
+            return static_cast<number_float_t>(_value.number);
         case (number_float):
-            return *_value.number_float;
+            return _value.number_float;
         default:
             throw std::runtime_error("cannot cast " + _typename() + " to JSON number");
     }
@@ -271,7 +265,7 @@ JSON::operator double() const {
 JSON::operator bool() const {
     switch (_type) {
         case (boolean):
-            return *_value.boolean;
+            return _value.boolean;
         default:
             throw std::runtime_error("cannot cast " + _typename() + " to JSON Boolean");
     }
@@ -288,15 +282,15 @@ const std::string JSON::toString() const {
         }
 
         case (boolean): {
-            return *_value.boolean ? "true" : "false";
+            return _value.boolean ? "true" : "false";
         }
 
         case (number): {
-            return to_string(*_value.number);
+            return to_string(_value.number);
         }
 
         case (number_float): {
-            return to_string(*_value.number_float);
+            return to_string(_value.number_float);
         }
 
         case (array): {
@@ -606,21 +600,23 @@ bool JSON::operator==(const JSON& o) const {
         }
         case (boolean): {
             if (o._type == boolean) {
-                return *_value.boolean == *o._value.boolean;
+                return _value.boolean == o._value.boolean;
             }
         }
         case (number): {
-            if (o._type == number or o._type == number_float) {
-                number_t a = *this;
-                number_t b = o;
-                return a == b;
+            if (o._type == number) {
+                return _value.number == o._value.number;
+            }
+            if (o._type == number_float) {
+                return _value.number == static_cast<number_t>(o._value.number_float);
             }
         }
         case (number_float): {
-            if (o._type == number or o._type == number_float) {
-                number_float_t a = *this;
-                number_float_t b = o;
-                return a == b;
+            if (o._type == number) {
+                return _value.number_float == static_cast<number_float_t>(o._value.number);
+            }
+            if (o._type == number_float) {
+                return _value.number_float == o._value.number_float;
             }
         }
     }
@@ -854,14 +850,14 @@ void JSON::parser::parse(JSON& result) {
         case ('t'): {
             parseTrue();
             result._type = boolean;
-            result._value.boolean = new boolean_t(true);
+            result._value.boolean = true;
             break;
         }
 
         case ('f'): {
             parseFalse();
             result._type = boolean;
-            result._value.boolean = new boolean_t(false);
+            result._value.boolean = false;
             break;
         }
 
@@ -883,11 +879,11 @@ void JSON::parser::parse(JSON& result) {
                 if (tmp.find(".") == std::string::npos) {
                     // integer (we use atof, because it can cope with e)
                     result._type = number;
-                    result._value.number = new number_t(std::atof(tmp.c_str()));
+                    result._value.number = std::atof(tmp.c_str());
                 } else {
                     // float
                     result._type = number_float;
-                    result._value.number_float = new number_float_t(std::atof(tmp.c_str()));
+                    result._value.number_float = std::atof(tmp.c_str());
                 }
                 break;
             } else {

@@ -58,17 +58,17 @@ class JSON {
             array_t* array;
             object_t* object;
             string_t* string;
-            boolean_t* boolean;
-            number_t* number;
-            number_float_t* number_float;
+            boolean_t boolean;
+            number_t number;
+            number_float_t number_float;
 
             value() {}
             value(array_t* array): array(array) {}
             value(object_t* object): object(object) {}
             value(string_t* string): string(string) {}
-            value(boolean_t* boolean) : boolean(boolean) {}
-            value(number_t* number) : number(number) {}
-            value(number_float_t* number_float) : number_float(number_float) {}
+            value(boolean_t boolean) : boolean(boolean) {}
+            value(number_t number) : number(number) {}
+            value(number_float_t number_float) : number_float(number_float) {}
         };
 
     private:
