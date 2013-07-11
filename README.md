@@ -12,9 +12,9 @@ There are myriads of [JSON](http://json.org) libraries out there, and each may e
 
 Other aspects were not so important to us:
 
-- **Memory efficiency**. Each JSON object has an overhead of one pointer and one enumeration element (1 byte). We use the following C++ data types: `std::string` for strings, `int` or `double` for numbers, `std::map` for objects, `std::vector` for arrays, and `bool` for Booleans. We know that there are more efficient ways to store the values, but we are happy enough right now. And by the way: [Valgrind](http://valgrind.org) says our code is free of leaks.
+- **Memory efficiency**. Each JSON object has an overhead of one pointer (the maximal size of a union) and one enumeration element (1 byte). We use the following C++ data types: `std::string` for strings, `int` or `double` for numbers, `std::map` for objects, `std::vector` for arrays, and `bool` for Booleans. We know that there are more efficient ways to store the values, but we are happy enough right now. And by the way: [Valgrind](http://valgrind.org) says our code is free of leaks.
 
-- **Speed**. We currently implement the parser as naive [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser) with hand coded string handling. It is fast enough, but a [LALR-parser](http://en.wikipedia.org/wiki/LALR_parser) with a decent regular expression processor should be even faster.
+- **Speed**. We currently implement the parser as naive [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser) with hand coded string handling. It is fast enough, but a [LALR-parser](http://en.wikipedia.org/wiki/LALR_parser) with a decent regular expression processor should be even faster (but would consist of more files which makes the integration harder).
 
 - **Rigourous standard compliance**. We followed the [specification](http://json.org) as close as possible, but did not invest too much in a 100% compliance with respect to Unicode support. As a result, there might be edge cases of false positives and false negatives, but as long as we have a hand-written parser, we won't invest too much to be fully compliant.
 
@@ -48,7 +48,7 @@ j["name"] = "Niels";
 // add an object inside the object
 j["further"]["entry"] = 42;
 
-// add an array that is stored as std::vector
+// add an array that is stored as std::vector (C++11)
 j["list"] = { 1, 0, 2 };
 ```
 
@@ -62,6 +62,8 @@ j << "{ \"pi\": 3.141, \"happy\": true }";
 // write string representation to stream
 std::cout << j;
 ```
+
+These operators work for any subclases of `std::istream` or `std::ostream`.
 
 ### STL-like access
 
@@ -77,6 +79,11 @@ for (JSON::iterator it = j.begin(); it != j.end(); ++it) {
   std::cout << *it << '\n';
 }
 
+// C++11 style
+for (auto element : j) {
+  std::cout << element << '\n';
+}
+
 // getter/setter
 std::string tmp = j[0];
 j[1] = 42;
@@ -85,4 +92,42 @@ j[1] = 42;
 j.size();     // 3
 j.empty();    // false
 j.type();     // JSON::array
+
+// create an object
+JSON o;
+o["foo"] = 23;
+o["bar"] = false;
+o["baz"] = 3.141;
+
+// find an entry
+if (o.find("foo") != o.end()) {
+  // there is an entry with key "foo"
+}
+
+// iterate the object
+for (JSON::iterator it = o.begin(); it != o.end(); ++it) {
+  std::cout << it.key() << ':' << it.value() << '\n';
+}
 ```
+
+### Implicit conversions
+
+The type of the JSON object is determined automatically by the expression to store. Likewise, the stored value is implicitly converted 
+
+```cpp
+/// strings
+std::string s1 = "Hello, world!";
+JSON js = s;
+std::string s2 = j;
+
+// Booleans
+bool b1 = true;
+JSON jb = b1;
+bool b2 = jb;
+
+// numbers
+int i = 42;
+JSON jn = i;
+double f = jn;
+```
+

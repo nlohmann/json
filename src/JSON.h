@@ -5,30 +5,25 @@
 #define __cplusplus11
 #endif
 
-// allow us to use "nullptr" everywhere
-#include <cstddef>
-#ifndef nullptr
-#define nullptr NULL
-#endif
-
+// STL containers
 #include <string>
 #include <vector>
 #include <map>
 
-// additional C++11 header
+// additional C++11 headers
 #ifdef __cplusplus11
 #include <mutex>
 #include <initializer_list>
 #endif
 
 class JSON {
-        // forward declaration to friend this class
+    // forward declaration to friend this class
     public:
         class iterator;
         class const_iterator;
 
-    private:
 #ifdef __cplusplus11
+    private:
         /// mutex to guard payload
         static std::mutex _token;
 #endif
@@ -55,19 +50,32 @@ class JSON {
 
         /// a JSON value
         union value {
+            /// array as pointer to array_t
             array_t* array;
+            /// object as pointer to object_t
             object_t* object;
+            /// string as pointer to string_t
             string_t* string;
+            /// Boolean
             boolean_t boolean;
+            /// number (integer)
             number_t number;
+            /// number (float)
             number_float_t number_float;
 
+            /// default constructor
             value() {}
+            /// constructor for arrays
             value(array_t* array): array(array) {}
+            /// constructor for objects
             value(object_t* object): object(object) {}
+            /// constructor for strings
             value(string_t* string): string(string) {}
+            /// constructor for Booleans
             value(boolean_t boolean) : boolean(boolean) {}
+            /// constructor for numbers (integer)
             value(number_t number) : number(number) {}
+            /// constructor for numbers (float)
             value(number_float_t number_float) : number_float(number_float) {}
         };
 
@@ -77,22 +85,22 @@ class JSON {
 
         /// the payload
         value _value;
-
+        
 #ifdef __cplusplus11
         /// a type for array initialization
         typedef std::initializer_list<JSON> array_init_t;
 #endif
 
     public:
-        /// create an empty (null) object
+        /// create a null object
         JSON();
-        /// create an empty object according to given type
+        /// create an object according to given type
         JSON(json_t);
-        /// create a string object from C++ string
+        /// create a string object from a C++ string
         JSON(const std::string&);
-        /// create a string object from C string
+        /// create a string object from a C string
         JSON(char*);
-        /// create a string object from C string
+        /// create a string object from a C string
         JSON(const char*);
         /// create a Boolean object
         JSON(const bool);
@@ -135,13 +143,16 @@ class JSON {
         operator double() const;
         /// implicit conversion to Boolean (only for Booleans)
         operator bool() const;
+        /// implicit conversion to JSON vector (not for objects)
+        operator std::vector<JSON>() const;
+        /// implicit conversion to JSON map (only for objects)
+        operator std::map<std::string, JSON>() const;
 
         /// write to stream
         friend std::ostream& operator<<(std::ostream& o, const JSON& j) {
             o << j.toString();
             return o;
         }
-
         /// write to stream
         friend std::ostream& operator>>(const JSON& j, std::ostream& o) {
             o << j.toString();
@@ -153,7 +164,6 @@ class JSON {
             parser(i).parse(j);
             return i;
         }
-
         /// read from stream
         friend std::istream& operator<<(JSON& j, std::istream& i) {
             parser(i).parse(j);
@@ -211,8 +221,11 @@ class JSON {
 
         /// find an element in an object (returns end() iterator otherwise)
         iterator find(const std::string&);
+        /// find an element in an object (returns end() iterator otherwise)
         const_iterator find(const std::string&) const;
+        /// find an element in an object (returns end() iterator otherwise)
         iterator find(const char*);
+        /// find an element in an object (returns end() iterator otherwise)
         const_iterator find(const char*) const;
 
         /// direct access to the underlying payload
@@ -222,6 +235,8 @@ class JSON {
 
         /// lexicographically compares the values
         bool operator==(const JSON&) const;
+        /// lexicographically compares the values
+        bool operator!=(const JSON&) const;
 
     private:
         /// return the type as string
@@ -299,26 +314,43 @@ class JSON {
         const_iterator cend() const;
 
     private:
+        /// a helper class to parse a JSON object
         class parser {
             public:
+                /// a parser reading from a C string
                 parser(char*);
+                /// a parser reading from a C++ string
                 parser(std::string&);
+                /// a parser reading from an input stream
                 parser(std::istream&);
+                /// destructor of the parser
                 ~parser();
+                /// parse into a given JSON object
                 void parse(JSON&);
 
             private:
+                /// read the next character, stripping whitespace
                 bool next();
-                void error(std::string = "") __attribute__((noreturn));
+                /// raise an exception with an error message
+                void error(std::string) __attribute__((noreturn));
+                /// parse a quoted string
                 std::string parseString();
+                /// parse a Boolean "true"
                 void parseTrue();
+                /// parse a Boolean "false"
                 void parseFalse();
+                /// parse a null object
                 void parseNull();
+                /// a helper function to expect a certain character
                 void expect(char);
 
+                /// the current character
                 char _current;
+                /// a buffer of the input
                 char* _buffer;
+                /// the position inside the input buffer
                 size_t _pos;
+                /// the length of the input buffer
                 size_t _length;
         };
 };

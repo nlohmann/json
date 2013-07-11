@@ -10,10 +10,20 @@
 #include <cstring>
 #include <cstdlib>
 
+// allow us to use "nullptr" everywhere
+#include <cstddef>
+#ifndef nullptr
+#define nullptr NULL
+#endif
+
+
+/////////////////////
+// HELPER FUNCTION //
+/////////////////////
+
 #ifdef __cplusplus11
 using std::to_string;
 #else
-
 inline std::string to_string(double f) {
     std::stringstream s;
     s << f;
@@ -21,18 +31,20 @@ inline std::string to_string(double f) {
 }
 #endif
 
-/******************
- * STATIC MEMBERS *
- ******************/
+
+////////////////////
+// STATIC MEMBERS //
+////////////////////
 
 #ifdef __cplusplus11
 /// a mutex to ensure thread safety
 std::mutex JSON::_token;
 #endif
 
-/*******************************
- * CONSTRUCTORS AND DESTRUCTOR *
- *******************************/
+
+/////////////////////////////////
+// CONSTRUCTORS AND DESTRUCTOR //
+/////////////////////////////////
 
 JSON::JSON() : _type(null) {}
 
@@ -133,6 +145,7 @@ JSON& JSON::operator=(const JSON& o) {
         return *this;
     }
 
+    // first delete original value
     switch (_type) {
         case (array): {
             delete _value.array;
@@ -160,6 +173,7 @@ JSON& JSON::operator=(const JSON& o) {
         }
     }
 
+    // then copy given value from o
     _type = o._type;
     switch (_type) {
         case (array): {
@@ -226,9 +240,9 @@ JSON::~JSON() {
 }
 
 
-/*****************************
- * OPERATORS AND CONVERSIONS *
- *****************************/
+///////////////////////////////
+// OPERATORS AND CONVERSIONS //
+///////////////////////////////
 
 JSON::operator const std::string() const {
     switch (_type) {
@@ -268,6 +282,27 @@ JSON::operator bool() const {
             return _value.boolean;
         default:
             throw std::runtime_error("cannot cast " + _typename() + " to JSON Boolean");
+    }
+}
+
+JSON::operator std::vector<JSON>() const {
+    if (_type == array) {
+        return *_value.array;
+    }
+    if (_type == object) {
+        throw std::runtime_error("cannot cast " + _typename() + " to JSON array");
+    }
+
+    std::vector<JSON> result;
+    result.push_back(*this);
+    return result;
+}
+
+JSON::operator std::map<std::string, JSON>() const {
+    if (_type == object) {
+        return *_value.object;
+    } else {
+        throw std::runtime_error("cannot cast " + _typename() + " to JSON object");
     }
 }
 
@@ -322,9 +357,9 @@ const std::string JSON::toString() const {
 }
 
 
-/*****************************************
- * ADDING ELEMENTS TO OBJECTS AND ARRAYS *
- *****************************************/
+///////////////////////////////////////////
+// ADDING ELEMENTS TO OBJECTS AND ARRAYS //
+///////////////////////////////////////////
 
 JSON& JSON::operator+=(const JSON& o) {
     push_back(o);
@@ -483,40 +518,54 @@ const JSON& JSON::operator[](const std::string& key) const {
 /// return the number of stored values
 size_t JSON::size() const {
     switch (_type) {
-        case (array):
+        case (array): {
             return _value.array->size();
-        case (object):
+        }
+        case (object): {
             return _value.object->size();
-        case (null):
+        }
+        case (null): {
             return 0;
-        case (string):
+        }
+        case (string): {
             return 1;
-        case (boolean):
+        }
+        case (boolean): {
             return 1;
-        case (number):
+        }
+        case (number): {
             return 1;
-        case (number_float):
+        }
+        case (number_float): {
             return 1;
+        }
     }
 }
 
 /// checks whether object is empty
 bool JSON::empty() const {
     switch (_type) {
-        case (array):
+        case (array): {
             return _value.array->empty();
-        case (object):
+        }
+        case (object): {
             return _value.object->empty();
-        case (null):
+        }
+        case (null): {
             return true;
-        case (string):
+        }
+        case (string): {
             return false;
-        case (boolean):
+        }
+        case (boolean): {
             return false;
-        case (number):
+        }
+        case (number): {
             return false;
-        case (number_float):
+        }
+        case (number_float): {
             return false;
+        }
     }
 }
 
@@ -624,25 +673,36 @@ bool JSON::operator==(const JSON& o) const {
     return false;
 }
 
+/// lexicographically compares the values
+bool JSON::operator!=(const JSON& o) const {
+    return not operator==(o);
+}
 
 
 /// return the type as string
 std::string JSON::_typename() const {
     switch (_type) {
-        case (array):
+        case (array): {
             return "array";
-        case (object):
+        }
+        case (object): {
             return "object";
-        case (null):
+        }
+        case (null): {
             return "null";
-        case (string):
+        }
+        case (string): {
             return "string";
-        case (boolean):
+        }
+        case (boolean): {
             return "boolean";
-        case (number):
+        }
+        case (number): {
             return "number";
-        case (number_float):
+        }
+        case (number_float): {
             return "number";
+        }
     }
 }
 
@@ -683,7 +743,7 @@ JSON::parser::~parser() {
     delete [] _buffer;
 }
 
-void JSON::parser::error(std::string msg) {
+void JSON::parser::error(std::string msg = "") {
     throw std::runtime_error("parse error at position " + to_string(_pos) + ": " + msg + ", last read: '" + _current + "'");
 }
 
@@ -917,8 +977,9 @@ JSON::iterator::iterator(JSON* j) : _object(j), _vi(nullptr), _oi(nullptr) {
                 _oi = new object_t::iterator(_object->_value.object->begin());
                 break;
             }
-            default:
+            default: {
                 break;
+            }
         }
 }
 
@@ -933,8 +994,9 @@ JSON::iterator::iterator(const JSON::iterator& o) : _object(o._object), _vi(null
                 _oi = new object_t::iterator(*(o._oi));
                 break;
             }
-            default:
+            default: {
                 break;
+            }
         }
 }
 
@@ -955,8 +1017,9 @@ JSON::iterator& JSON::iterator::operator=(const JSON::iterator& o) {
                 _oi = new object_t::iterator(*(o._oi));
                 break;
             }
-            default:
+            default: {
                 break;
+            }
         }
     return *this;
 }
@@ -1002,12 +1065,15 @@ JSON& JSON::iterator::operator*() const {
     }
 
     switch (_object->_type) {
-        case (array):
+        case (array): {
             return **_vi;
-        case (object):
+        }
+        case (object): {
             return (*_oi)->second;
-        default:
+        }
+        default: {
             return *_object;
+        }
     }
 }
 
@@ -1017,12 +1083,15 @@ JSON* JSON::iterator::operator->() const {
     }
 
     switch (_object->_type) {
-        case (array):
+        case (array): {
             return &(**_vi);
-        case (object):
+        }
+        case (object): {
             return &((*_oi)->second);
-        default:
+        }
+        default: {
             return _object;
+        }
     }
 }
 
@@ -1040,12 +1109,15 @@ JSON& JSON::iterator::value() const {
     }
 
     switch (_object->_type) {
-        case (array):
+        case (array): {
             return **_vi;
-        case (object):
+        }
+        case (object): {
             return (*_oi)->second;
-        default:
+        }
+        default: {
             return *_object;
+        }
     }
 }
 
@@ -1079,8 +1151,9 @@ JSON::const_iterator::const_iterator(const JSON* j) : _object(j), _vi(nullptr), 
                 _oi = new object_t::const_iterator(_object->_value.object->begin());
                 break;
             }
-            default:
+            default: {
                 break;
+            }
         }
 }
 
@@ -1095,8 +1168,9 @@ JSON::const_iterator::const_iterator(const JSON::const_iterator& o) : _object(o.
                 _oi = new object_t::const_iterator(*(o._oi));
                 break;
             }
-            default:
+            default: {
                 break;
+            }
         }
 }
 
@@ -1111,8 +1185,9 @@ JSON::const_iterator::const_iterator(const JSON::iterator& o) : _object(o._objec
                 _oi = new object_t::const_iterator(*(o._oi));
                 break;
             }
-            default:
+            default: {
                 break;
+            }
         }
 }
 
@@ -1133,8 +1208,9 @@ JSON::const_iterator& JSON::const_iterator::operator=(const JSON::const_iterator
                 _oi = new object_t::const_iterator(*(o._oi));
                 break;
             }
-            default:
+            default: {
                 break;
+            }
         }
     return *this;
 }
@@ -1180,12 +1256,15 @@ const JSON& JSON::const_iterator::operator*() const {
     }
 
     switch (_object->_type) {
-        case (array):
+        case (array): {
             return **_vi;
-        case (object):
+        }
+        case (object): {
             return (*_oi)->second;
-        default:
+        }
+        default: {
             return *_object;
+        }
     }
 }
 
@@ -1195,12 +1274,15 @@ const JSON* JSON::const_iterator::operator->() const {
     }
 
     switch (_object->_type) {
-        case (array):
+        case (array): {
             return &(**_vi);
-        case (object):
+        }
+        case (object): {
             return &((*_oi)->second);
-        default:
+        }
+        default: {
             return _object;
+        }
     }
 }
 
@@ -1218,11 +1300,14 @@ const JSON& JSON::const_iterator::value() const {
     }
 
     switch (_object->_type) {
-        case (array):
+        case (array): {
             return **_vi;
-        case (object):
+        }
+        case (object): {
             return (*_oi)->second;
-        default:
+        }
+        default: {
             return *_object;
+        }
     }
 }
