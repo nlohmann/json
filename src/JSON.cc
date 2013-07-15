@@ -21,12 +21,10 @@
 // HELPER FUNCTION //
 /////////////////////
 
-#ifdef __cplusplus11
-using std::to_string;
-#else
-inline std::string to_string(double f) {
+#ifndef __cplusplus11
+inline std::string int_to_string(int i) {
     std::stringstream s;
-    s << f;
+    s << i;
     return s.str();
 }
 #endif
@@ -321,11 +319,23 @@ const std::string JSON::toString() const {
         }
 
         case (number): {
-            return to_string(_value.number);
+#ifdef __cplusplus11
+            return std::to_string(_value.number);
+#else
+            std::stringstream s;
+            s << _value.number;
+            return s.str();
+#endif
         }
 
         case (number_float): {
-            return to_string(_value.number_float);
+#ifdef __cplusplus11
+            return std::to_string(_value.number_float);
+#else
+            std::stringstream s;
+            s << _value.number_float;
+            return s.str();
+#endif
         }
 
         case (array): {
@@ -435,11 +445,19 @@ JSON& JSON::operator[](int index) {
 #endif
 
     if (_type != array) {
-        throw std::runtime_error("cannot add entry with index " + to_string(index) + " to " + _typename());
+#ifdef __cplusplus11
+        throw std::runtime_error("cannot add entry with index " + std::to_string(index) + " to " + _typename());
+#else
+        throw std::runtime_error("cannot add entry with index " + int_to_string(index) + " to " + _typename());
+#endif
     }
 
     if (index >= (int)_value.array->size()) {
-        throw std::runtime_error("cannot access element at index " + to_string(index));
+#ifdef __cplusplus11
+        throw std::runtime_error("cannot access element at index " + std::to_string(index));
+#else
+        throw std::runtime_error("cannot access element at index " + int_to_string(index));
+#endif
     }
 
     return _value.array->at(index);
@@ -448,11 +466,19 @@ JSON& JSON::operator[](int index) {
 /// operator to get an element in an object
 const JSON& JSON::operator[](const int index) const {
     if (_type != array) {
-        throw std::runtime_error("cannot get entry with index " + to_string(index) + " from " + _typename());
+#ifdef __cplusplus11
+        throw std::runtime_error("cannot get entry with index " + std::to_string(index) + " from " + _typename());
+#else
+        throw std::runtime_error("cannot get entry with index " + int_to_string(index) + " from " + _typename());
+#endif
     }
 
     if (index >= (int)_value.array->size()) {
-        throw std::runtime_error("cannot access element at index " + to_string(index));
+#ifdef __cplusplus11
+        throw std::runtime_error("cannot access element at index " + std::to_string(index));
+#else
+        throw std::runtime_error("cannot access element at index " + int_to_string(index));
+#endif
     }
 
     return _value.array->at(index);
@@ -744,7 +770,11 @@ JSON::parser::~parser() {
 }
 
 void JSON::parser::error(std::string msg = "") {
-    throw std::runtime_error("parse error at position " + to_string(_pos) + ": " + msg + ", last read: '" + _current + "'");
+#ifdef __cplusplus11
+    throw std::runtime_error("parse error at position " + std::to_string(_pos) + ": " + msg + ", last read: '" + _current + "'");
+#else
+    throw std::runtime_error("parse error at position " + int_to_string(_pos) + ": " + msg + ", last read: '" + _current + "'");
+#endif
 }
 
 bool JSON::parser::next() {
