@@ -614,8 +614,7 @@ JSON::iterator JSON::find(const char* key) {
     } else {
         const object_t::iterator i = _value.object->find(key);
         if (i != _value.object->end()) {
-            JSON::iterator result;
-            result._object = this;
+            JSON::iterator result(this);
             result._oi = new object_t::iterator(i);
             return result;
         } else {
@@ -630,8 +629,7 @@ JSON::const_iterator JSON::find(const char* key) const {
     } else {
         const object_t::const_iterator i = _value.object->find(key);
         if (i != _value.object->end()) {
-            JSON::const_iterator result;
-            result._object = this;
+            JSON::const_iterator result(this);
             result._oi = new object_t::const_iterator(i);
             return result;
         } else {
