@@ -322,9 +322,7 @@ const std::string JSON::toString() const {
 #ifdef __cplusplus11
             return std::to_string(_value.number);
 #else
-            std::stringstream s;
-            s << _value.number;
-            return s.str();
+            return int_to_string(_value.number);
 #endif
         }
 
@@ -332,9 +330,7 @@ const std::string JSON::toString() const {
 #ifdef __cplusplus11
             return std::to_string(_value.number_float);
 #else
-            std::stringstream s;
-            s << _value.number_float;
-            return s.str();
+            return int_to_string(_value.number_float);
 #endif
         }
 
