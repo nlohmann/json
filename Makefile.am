@@ -1,8 +1,6 @@
 noinst_PROGRAMS = json json98
 TESTS = ./json ./json98
 
-#CXXFLAGS = -O3 -flto
-
 json_SOURCES = src/JSON.cc src/JSON.h test/JSON_test.cc
 json_CXXFLAGS = -std=c++11
 json_CPPFLAGS = -I$(top_srcdir)/src
