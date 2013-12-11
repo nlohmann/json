@@ -6,6 +6,8 @@
 #include <sstream>
 
 void test_null() {
+    std::cerr << "entering test_null()\n";
+
     /* a null object */
 
     // construct
@@ -72,16 +74,24 @@ void test_null() {
     } catch (const std::exception& ex) {
         assert(ex.what() == std::string("cannot cast null to JSON string"));
     }
+
+    std::cerr << "leaving test_null()\n";
 }
 
 void test_bool() {
+    std::cerr << "entering test_bool()\n";
+
     JSON True = true;
     JSON False = false;
 
     bool x = True;
+
+    std::cerr << "leaving test_bool()\n";
 }
 
 void test_string() {
+    std::cerr << "entering test_string()\n";
+
     /* a string object */
 
     // construct
@@ -149,9 +159,13 @@ void test_string() {
         std::string s2 = a;
         assert(*s1 == s2);
     }
+
+    std::cerr << "leaving test_string()\n";
 }
 
 void test_array() {
+    std::cerr << "entering test_array()\n";
+
     JSON a;
     a += JSON();
     a += 1;
@@ -275,9 +289,13 @@ void test_array() {
         assert(array->size() == a.size());
         assert(array->empty() == a.empty());
     }
+
+    std::cerr << "leaving test_array()\n";
 }
 
 void test_object() {
+    std::cerr << "entering test_object()\n";
+
     // check find()
     {
         JSON o;
@@ -299,9 +317,13 @@ void test_object() {
         i = a.find("foo");
         assert(i == a.end());
     }
+
+    std::cerr << "leaving test_object()\n";
 }
 
 void test_streaming() {
+    std::cerr << "entering test_streaming()\n";
+    
     // stream text representation into stream
     std::stringstream i;
     i << "{ \"foo\": true, \"baz\": [1,2,3,4] }";
@@ -347,6 +369,8 @@ void test_streaming() {
         JSON j;
         j << escaped_stream;
     }
+
+    std::cerr << "leaving test_streaming()\n";
 }
 
 int main() {
