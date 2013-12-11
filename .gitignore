@@ -2,3 +2,6 @@
 src/.DS_Store
 
 .DS_Store
+
+benchmark/auctions.json
+benchmark/citylots.json
