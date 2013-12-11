@@ -63,7 +63,7 @@ j << "{ \"pi\": 3.141, \"happy\": true }";
 std::cout << j;
 ```
 
-These operators work for any subclases of `std::istream` or `std::ostream`.
+These operators work for any subclasses of `std::istream` or `std::ostream`.
 
 ### STL-like access
 
