@@ -1335,6 +1335,36 @@ TEST_CASE("Parser")
         CHECK_THROWS_AS(JSON::parse("infinity"), std::invalid_argument);
     }
 
+    SECTION("number (float)")
+    {
+        // accept the exact values
+        CHECK(JSON::parse("0.5") == JSON(0.5));
+        CHECK(JSON::parse("-0.5") == JSON(-0.5));
+        CHECK(JSON::parse("1.5") == JSON(1.5));
+        CHECK(JSON::parse("-1.5") == JSON(-1.5));
+        CHECK(JSON::parse("12345678.5") == JSON(12345678.5));
+        CHECK(JSON::parse("-12345678.5") == JSON(-12345678.5));
+
+        CHECK(JSON::parse("17.5e0") == JSON(17.5));
+        CHECK(JSON::parse("17.5e1") == JSON(175));
+        CHECK(JSON::parse("17.5e3") == JSON(17500));
+        CHECK(JSON::parse("17.5e+0") == JSON(17.5));
+        CHECK(JSON::parse("17.5e+1") == JSON(175));
+        CHECK(JSON::parse("17.5e+3") == JSON(17500));
+        CHECK(JSON::parse("17.5E0") == JSON(17.5));
+        CHECK(JSON::parse("17.5E1") == JSON(175));
+        CHECK(JSON::parse("17.5E3") == JSON(17500));
+        CHECK(JSON::parse("17.5E+0") == JSON(17.5));
+        CHECK(JSON::parse("17.5E+1") == JSON(175));
+        CHECK(JSON::parse("17.5E+3") == JSON(17500));
+        CHECK(JSON::parse("10000.5e-0") == JSON(10000.5));
+        CHECK(JSON::parse("10000.5e-1") == JSON(1000.05));
+        CHECK(JSON::parse("10000.5e-4") == JSON(1.00005));
+        CHECK(JSON::parse("10000.5E-0") == JSON(10000.5));
+        CHECK(JSON::parse("10000.5E-1") == JSON(1000.05));
+        CHECK(JSON::parse("10000.5E-4") == JSON(1.00005));
+    }
+
     SECTION("parse from C++ string")
     {
         std::string s = "{ \"foo\": [1,2,true] }";

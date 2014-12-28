@@ -1940,11 +1940,6 @@ JSON::Parser::~Parser()
 */
 void JSON::Parser::parse(JSON& result)
 {
-    if (_buffer == nullptr)
-    {
-        error("unexpected end of file");
-    }
-
     switch (_current)
     {
         case ('{'):
