@@ -246,13 +246,13 @@ class JSON
     const JSON& at(const int) const;
 
     /// operator to set an element in an object
-    inline JSON& operator[](const std::string&);
+    JSON& operator[](const std::string&);
     /// operator to set an element in an object
     JSON& operator[](const char*);
     /// operator to get an element in an object
     const JSON& operator[](const std::string&) const;
     /// operator to set an element in an object
-    inline JSON& at(const std::string&);
+    JSON& at(const std::string&);
     /// operator to set an element in an object
     JSON& at(const char*);
     /// operator to get an element in an object
@@ -285,7 +285,7 @@ class JSON
     /// lexicographically compares the values
     bool operator==(const JSON&) const noexcept;
     /// lexicographically compares the values
-    inline bool operator!=(const JSON&) const noexcept;
+    bool operator!=(const JSON&) const noexcept;
 
     /// returns an iterator to the beginning (array/object)
     iterator begin() noexcept;

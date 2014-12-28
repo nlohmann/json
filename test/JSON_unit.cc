@@ -158,6 +158,12 @@ TEST_CASE("array")
         // add initializer list
         j.push_back({"a", "b", "c"});
         CHECK (j.size() == 24);
+
+        // clear()
+        JSON j7 = {0, 1, 2, 3, 4, 5, 6};;
+        CHECK(j7.size() == 7);
+        j7.clear();
+        CHECK(j7.size() == 0);
     }
 
     SECTION("Iterators")
@@ -338,16 +344,30 @@ TEST_CASE("object")
         const JSON k = j;
 
         // read
-        const std::string v0 = j["k0"];
-        CHECK(v0 == "v0");
-        auto v1 = j["k1"];
-        CHECK(v1 == nullptr);
-        int v2 = j["k2"];
-        CHECK(v2 == 42);
-        double v3 = j["k3"];
-        CHECK(v3 == 3.141);
-        bool v4 = j["k4"];
-        CHECK(v4 == true);
+        {
+            const std::string v0 = j["k0"];
+            CHECK(v0 == "v0");
+            auto v1 = j["k1"];
+            CHECK(v1 == nullptr);
+            int v2 = j["k2"];
+            CHECK(v2 == 42);
+            double v3 = j["k3"];
+            CHECK(v3 == 3.141);
+            bool v4 = j["k4"];
+            CHECK(v4 == true);
+        }
+        {
+            const std::string v0 = j[std::string("k0")];
+            CHECK(v0 == "v0");
+            auto v1 = j[std::string("k1")];
+            CHECK(v1 == nullptr);
+            int v2 = j[std::string("k2")];
+            CHECK(v2 == 42);
+            double v3 = j[std::string("k3")];
+            CHECK(v3 == 3.141);
+            bool v4 = j[std::string("k4")];
+            CHECK(v4 == true);
+        }
 
         // write (replace)
         j["k0"] = "new v0";
@@ -435,6 +455,12 @@ TEST_CASE("object")
         JSON nonarray = 1;
         CHECK_THROWS_AS(const int i = nonarray["v1"], std::domain_error);
         CHECK_THROWS_AS(nonarray["v1"] = 10, std::domain_error);
+
+        // clear()
+        JSON j7 = {{"k0", 0}, {"k1", 1}, {"k2", 2}, {"k3", 3}};
+        CHECK(j7.size() == 4);
+        j7.clear();
+        CHECK(j7.size() == 0);
     }
 
     SECTION("Iterators")
@@ -630,6 +656,14 @@ TEST_CASE("null")
         JSON j1 = nullptr;
         CHECK(j1.type() == JSON::value_type::null);
     }
+
+    SECTION("Operators")
+    {
+        // clear()
+        JSON j1 = nullptr;
+        j1.clear();
+        CHECK(j1 == JSON(nullptr));
+    }
 }
 
 TEST_CASE("string")
@@ -699,6 +733,15 @@ TEST_CASE("string")
         JSON j3 = std::move(v3);
         CHECK(j3.get<std::string>() == "Hello, world");
     }
+
+    SECTION("Operators")
+    {
+        // clear()
+        JSON j1 = std::string("Hello, world");
+        CHECK(j1.get<std::string>() == "Hello, world");
+        j1.clear();
+        CHECK(j1.get<std::string>() == "");
+    }
 }
 
 TEST_CASE("boolean")
@@ -764,6 +807,15 @@ TEST_CASE("boolean")
         JSON j2 = false;
         bool v2 = j2;
         CHECK(j2.get<bool>() == v2);
+    }
+
+    SECTION("Operators")
+    {
+        // clear()
+        JSON j1 = true;
+        CHECK(j1.get<bool>() == true);
+        j1.clear();
+        CHECK(j1.get<bool>() == false);
     }
 }
 
@@ -831,6 +883,15 @@ TEST_CASE("number (int)")
         int v2 = j2;
         CHECK(j2.get<int>() == v2);
     }
+
+    SECTION("Operators")
+    {
+        // clear()
+        JSON j1 = 42;
+        CHECK(j1.get<int>() == 42);
+        j1.clear();
+        CHECK(j1.get<int>() == 0);
+    }
 }
 
 TEST_CASE("number (float)")
@@ -896,6 +957,15 @@ TEST_CASE("number (float)")
         JSON j2 = 2.7182818;
         double v2 = j2;
         CHECK(j2.get<double>() == v2);
+    }
+
+    SECTION("Operators")
+    {
+        // clear()
+        JSON j1 = 3.1415926;
+        CHECK(j1.get<double>() == 3.1415926);
+        j1.clear();
+        CHECK(j1.get<double>() == 0.0);
     }
 }
 
