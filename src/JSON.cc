@@ -155,9 +155,9 @@ JSON::JSON(list_init_t a) noexcept
     // is a string
     for (const auto& element : a)
     {
-        if (element.type() != value_type::array or
+        if (element._type != value_type::array or
                 element.size() != 2 or
-                element[0].type() != value_type::string)
+                element[0]._type != value_type::string)
         {
 
             // the initializer list describes an array
@@ -173,7 +173,8 @@ JSON::JSON(list_init_t a) noexcept
     for (const JSON& element : a)
     {
         const std::string k = element[0];
-        _value.object->emplace(std::make_pair(std::move(k), std::move(element[1])));
+        _value.object->emplace(std::make_pair(std::move(k),
+                                              std::move(element[1])));
     }
 }
 
@@ -746,9 +747,9 @@ void JSON::push_back(list_init_t a)
     // is a string
     for (const auto& element : a)
     {
-        if (element.type() != value_type::array or
+        if (element._type != value_type::array or
                 element.size() != 2 or
-                element[0].type() != value_type::string)
+                element[0]._type != value_type::string)
         {
             // the initializer list describes an array
             is_array = true;
@@ -1345,23 +1346,16 @@ JSON::const_iterator JSON::cend() const noexcept
 JSON::iterator::iterator(JSON* j) : _object(j)
 {
     if (_object != nullptr)
-        switch (_object->_type)
+    {
+        if (_object->_type == value_type::array)
         {
-            case (value_type::array):
-            {
-                _vi = new array_t::iterator(_object->_value.array->begin());
-                break;
-            }
-            case (value_type::object):
-            {
-                _oi = new object_t::iterator(_object->_value.object->begin());
-                break;
-            }
-            default:
-            {
-                break;
-            }
+            _vi = new array_t::iterator(_object->_value.array->begin());
         }
+        if (_object->_type == value_type::object)
+        {
+            _oi = new object_t::iterator(_object->_value.object->begin());
+        }
+    }
 }
 
 JSON::iterator::iterator(const JSON::iterator& o) : _object(o._object)
@@ -1545,23 +1539,16 @@ JSON& JSON::iterator::value() const
 JSON::const_iterator::const_iterator(const JSON* j) : _object(j)
 {
     if (_object != nullptr)
-        switch (_object->_type)
+    {
+        if (_object->_type == value_type::array)
         {
-            case (value_type::array):
-            {
-                _vi = new array_t::const_iterator(_object->_value.array->begin());
-                break;
-            }
-            case (value_type::object):
-            {
-                _oi = new object_t::const_iterator(_object->_value.object->begin());
-                break;
-            }
-            default:
-            {
-                break;
-            }
+            _vi = new array_t::const_iterator(_object->_value.array->begin());
         }
+        if (_object->_type == value_type::object)
+        {
+            _oi = new object_t::const_iterator(_object->_value.object->begin());
+        }
+    }
 }
 
 JSON::const_iterator::const_iterator(const JSON::const_iterator& o) : _object(o._object)
@@ -1582,23 +1569,16 @@ JSON::const_iterator::const_iterator(const JSON::const_iterator& o) : _object(o.
 JSON::const_iterator::const_iterator(const JSON::iterator& o) : _object(o._object)
 {
     if (_object != nullptr)
-        switch (_object->_type)
+    {
+        if (_object->_type == value_type::array)
         {
-            case (value_type::array):
-            {
-                _vi = new array_t::const_iterator(*(o._vi));
-                break;
-            }
-            case (value_type::object):
-            {
-                _oi = new object_t::const_iterator(*(o._oi));
-                break;
-            }
-            default:
-            {
-                break;
-            }
+            _vi = new array_t::const_iterator(*(o._vi));
         }
+        if (_object->_type == value_type::object)
+        {
+            _oi = new object_t::const_iterator(*(o._oi));
+        }
+    }
 }
 
 JSON::const_iterator::~const_iterator()
