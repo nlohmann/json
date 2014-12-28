@@ -11,11 +11,15 @@ TEST_CASE("array")
         JSON j(JSON::value_type::array);
         CHECK(j.type() == JSON::value_type::array);
 
+        // const object
+        const JSON j_const (j);
+
         // string representation of default value
         CHECK(j.toString() == "[]");
 
         // check payload
         CHECK(*(j.data().array) == JSON::array_t());
+        //CHECK(*(j_const.data().array) == JSON::array_t());
 
         // container members
         CHECK(j.size() == 0);
@@ -142,6 +146,7 @@ TEST_CASE("array")
 
         // exceptions
         JSON nonarray = 1;
+        CHECK_THROWS_AS(nonarray.at(0), std::domain_error);
         CHECK_THROWS_AS(const int i = nonarray[0], std::domain_error);
         CHECK_NOTHROW(j[21]);
         CHECK_THROWS_AS(const int i = j.at(21), std::out_of_range);
@@ -152,6 +157,7 @@ TEST_CASE("array")
 
         const JSON nonarray_const = nonarray;
         const JSON j_const = j;
+        CHECK_THROWS_AS(nonarray_const.at(0), std::domain_error);
         CHECK_THROWS_AS(const int i = nonarray_const[0], std::domain_error);
         CHECK_NOTHROW(j_const[21]);
         CHECK_THROWS_AS(const int i = j.at(21), std::out_of_range);
@@ -286,11 +292,15 @@ TEST_CASE("object")
         JSON j(JSON::value_type::object);
         CHECK(j.type() == JSON::value_type::object);
 
+        // const object
+        const JSON j_const = j;
+
         // string representation of default value
         CHECK(j.toString() == "{}");
 
         // check payload
         CHECK(*(j.data().object) == JSON::object_t());
+        CHECK(*(j_const.data().object) == JSON::object_t());
 
         // container members
         CHECK(j.size() == 0);
@@ -423,6 +433,13 @@ TEST_CASE("object")
         CHECK_THROWS_AS(k.at(std::string("foo")), std::out_of_range);
         CHECK_NOTHROW(j.at(std::string("k0")));
         CHECK_NOTHROW(k.at(std::string("k0")));
+        {
+            JSON noobject = 1;
+            const JSON noobject_const = noobject;
+            CHECK_THROWS_AS(noobject["foo"], std::domain_error);
+            CHECK_THROWS_AS(noobject[std::string("foo")], std::domain_error);
+            CHECK_THROWS_AS(noobject_const[std::string("foo")], std::domain_error);
+        }
 
         // add pair
         j.push_back(JSON::object_t::value_type {"int_key", 42});
@@ -709,11 +726,15 @@ TEST_CASE("string")
         JSON j(JSON::value_type::string);
         CHECK(j.type() == JSON::value_type::string);
 
+        // const object
+        const JSON j_const = j;
+
         // string representation of default value
         CHECK(j.toString() == "\"\"");
 
         // check payload
         CHECK(*(j.data().string) == JSON::string_t());
+        CHECK(*(j_const.data().string) == JSON::string_t());
 
         // container members
         CHECK(j.size() == 1);
@@ -787,11 +808,15 @@ TEST_CASE("boolean")
         JSON j(JSON::value_type::boolean);
         CHECK(j.type() == JSON::value_type::boolean);
 
+        // const object
+        const JSON j_const = j;
+
         // string representation of default value
         CHECK(j.toString() == "false");
 
         // check payload
         CHECK(j.data().boolean == JSON::boolean_t());
+        CHECK(j_const.data().boolean == JSON::boolean_t());
 
         // container members
         CHECK(j.size() == 1);
@@ -862,11 +887,15 @@ TEST_CASE("number (int)")
         JSON j(JSON::value_type::number);
         CHECK(j.type() == JSON::value_type::number);
 
+        // const object
+        const JSON j_const = j;
+
         // string representation of default value
         CHECK(j.toString() == "0");
 
         // check payload
         CHECK(j.data().number == JSON::number_t());
+        CHECK(j_const.data().number == JSON::number_t());
 
         // container members
         CHECK(j.size() == 1);
@@ -944,11 +973,15 @@ TEST_CASE("number (float)")
         JSON j(JSON::value_type::number_float);
         CHECK(j.type() == JSON::value_type::number_float);
 
+        // const object
+        const JSON j_const = j;
+
         // string representation of default value
         CHECK(j.toString() == "0.000000");
 
         // check payload
         CHECK(j.data().number_float == JSON::number_float_t());
+        CHECK(j_const.data().number_float == JSON::number_float_t());
 
         // container members
         CHECK(j.size() == 1);
@@ -1142,7 +1175,17 @@ TEST_CASE("Parser")
     SECTION("parse from C++ string")
     {
         std::string s = "{ \"foo\": [1,2,true] }";
-        CHECK_NOTHROW(JSON::parse(s));
+        JSON j = JSON::parse(s);
+        CHECK(j["foo"].size() == 3);
+    }
+
+    SECTION("parse from stream")
+    {
+        std::stringstream s;
+        s << "{ \"foo\": [1,2,true] }";
+        JSON j;
+        j << s;
+        CHECK(j["foo"].size() == 3);
     }
 
     SECTION("user-defined string literal operator")
