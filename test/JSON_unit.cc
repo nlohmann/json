@@ -1407,10 +1407,41 @@ TEST_CASE("Iterators")
     {
         JSON j;
         const JSON j_const = j;
-        for (JSON::iterator i = j.begin(); i != j.end(); ++i);
-        for (JSON::const_iterator i = j.cbegin(); i != j.cend(); ++i);
-        for (JSON::const_iterator i = j_const.begin(); i != j_const.end(); ++i);
-        for (JSON::const_iterator i = j_const.cbegin(); i != j_const.cend(); ++i);
+        {
+            JSON::iterator i = j.begin();
+            ++i;
+            CHECK(i == j.end());
+            ++i;
+            CHECK(i == j.end());
+        }
+        {
+            JSON::const_iterator i = j.begin();
+            ++i;
+            CHECK(i == j.end());
+            ++i;
+            CHECK(i == j.end());
+        }
+        {
+            JSON::const_iterator i = j_const.begin();
+            ++i;
+            CHECK(i == j_const.end());
+            ++i;
+            CHECK(i == j_const.end());
+        }
+        {
+            JSON::const_iterator i = j.cbegin();
+            ++i;
+            CHECK(i == j.cend());
+            ++i;
+            CHECK(i == j.cend());
+        }
+        {
+            JSON::const_iterator i = j_const.cbegin();
+            ++i;
+            CHECK(i == j_const.cend());
+            ++i;
+            CHECK(i == j_const.cend());
+        }
     }
 }
 
