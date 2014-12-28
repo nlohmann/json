@@ -1367,24 +1367,16 @@ JSON::iterator::iterator(JSON* j) : _object(j)
 JSON::iterator::iterator(const JSON::iterator& o) : _object(o._object)
 {
     if (_object != nullptr)
-        switch (_object->_type)
+    {
+        if (_object->_type == value_type::array)
         {
-            case (value_type::array):
-            {
-                _vi = new array_t::iterator(*(o._vi));
-                break;
-            }
-            case (value_type::object):
-            {
-                _oi = new object_t::iterator(*(o._oi));
-                break;
-            }
-            default:
-            {
-                // not sure if used
-                break;
-            }
+            _vi = new array_t::iterator(*(o._vi));
         }
+        if (_object->_type == value_type::object)
+        {
+            _oi = new object_t::iterator(*(o._oi));
+        }
+    }
 }
 
 JSON::iterator::~iterator()
@@ -1409,30 +1401,16 @@ bool JSON::iterator::operator==(const JSON::iterator& o) const
     }
 
     if (_object != nullptr)
-        switch (_object->_type)
+    {
+        if (_object->_type == value_type::array)
         {
-            case (value_type::array):
-            {
-                if (_vi != o._vi)
-                {
-                    return false;
-                }
-                break;
-            }
-            case (value_type::object):
-            {
-                if (_oi != o._oi)
-                {
-                    return false;
-                }
-                break;
-            }
-            default:
-            {
-                // not sure if used
-                break;
-            }
+            return (_vi == o._vi);
         }
+        if (_object->_type == value_type::object)
+        {
+            return (_oi == o._oi);
+        }
+    }
 
     return true;
 }
@@ -1589,23 +1567,16 @@ JSON::const_iterator::const_iterator(const JSON* j) : _object(j)
 JSON::const_iterator::const_iterator(const JSON::const_iterator& o) : _object(o._object)
 {
     if (_object != nullptr)
-        switch (_object->_type)
+    {
+        if (_object->_type == value_type::array)
         {
-            case (value_type::array):
-            {
-                _vi = new array_t::const_iterator(*(o._vi));
-                break;
-            }
-            case (value_type::object):
-            {
-                _oi = new object_t::const_iterator(*(o._oi));
-                break;
-            }
-            default:
-            {
-                break;
-            }
+            _vi = new array_t::const_iterator(*(o._vi));
         }
+        if (_object->_type == value_type::object)
+        {
+            _oi = new object_t::const_iterator(*(o._oi));
+        }
+    }
 }
 
 JSON::const_iterator::const_iterator(const JSON::iterator& o) : _object(o._object)
@@ -1652,30 +1623,16 @@ bool JSON::const_iterator::operator==(const JSON::const_iterator& o) const
     }
 
     if (_object != nullptr)
-        switch (_object->_type)
+    {
+        if (_object->_type == value_type::array)
         {
-            case (value_type::array):
-            {
-                if (_vi != o._vi)
-                {
-                    return false;
-                }
-                break;
-            }
-            case (value_type::object):
-            {
-                if (_oi != o._oi)
-                {
-                    return false;
-                }
-                break;
-            }
-            default:
-            {
-                // not sure if used
-                break;
-            }
+            return (_vi == o._vi);
         }
+        if (_object->_type == value_type::object)
+        {
+            return (_oi == o._oi);
+        }
+    }
 
     return true;
 }
