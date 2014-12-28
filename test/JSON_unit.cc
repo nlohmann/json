@@ -150,6 +150,12 @@ TEST_CASE("array")
         CHECK_THROWS_AS(j.at(21) = 5, std::out_of_range);
         CHECK_THROWS_AS(nonarray += 2, std::runtime_error);
 
+        const JSON nonarray_const = nonarray;
+        const JSON j_const = j;
+        CHECK_THROWS_AS(const int i = nonarray_const[0], std::domain_error);
+        CHECK_NOTHROW(j_const[21]);
+        CHECK_THROWS_AS(const int i = j.at(21), std::out_of_range);
+
         {
             JSON nonarray2 = JSON(1);
             JSON nonarray3 = JSON(2);
@@ -413,6 +419,9 @@ TEST_CASE("object")
         // at
         CHECK_THROWS_AS(j.at("foo"), std::out_of_range);
         CHECK_THROWS_AS(k.at("foo"), std::out_of_range);
+        CHECK_THROWS_AS(j.at(std::string("foo")), std::out_of_range);
+        CHECK_THROWS_AS(k.at(std::string("foo")), std::out_of_range);
+        CHECK_NOTHROW(j.at(std::string("k0")));
         CHECK_NOTHROW(k.at(std::string("k0")));
 
         // add pair
