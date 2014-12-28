@@ -436,6 +436,10 @@ TEST_CASE("object")
         {
             JSON noobject = 1;
             const JSON noobject_const = noobject;
+            CHECK_THROWS_AS(noobject.at("foo"), std::domain_error);
+            CHECK_THROWS_AS(noobject.at(std::string("foo")), std::domain_error);
+            CHECK_THROWS_AS(noobject_const.at("foo"), std::domain_error);
+            CHECK_THROWS_AS(noobject_const.at(std::string("foo")), std::domain_error);
             CHECK_THROWS_AS(noobject["foo"], std::domain_error);
             CHECK_THROWS_AS(noobject[std::string("foo")], std::domain_error);
             CHECK_THROWS_AS(noobject_const[std::string("foo")], std::domain_error);
@@ -1046,6 +1050,100 @@ TEST_CASE("number (float)")
         j1.clear();
         CHECK(j1.get<double>() == 0.0);
     }
+}
+
+TEST_CASE("Comparisons")
+{
+    JSON j1 = {0, 1, 2, 3, 4};
+    JSON j2 = {{"foo", "bar"}, {"baz", "bam"}};
+    JSON j3 = true;
+    JSON j4 = nullptr;
+    JSON j5 = 42;
+    JSON j6 = 23.42;
+
+    CHECK((j1 == j1) == true);
+    CHECK((j1 == j2) == false);
+    CHECK((j1 == j3) == false);
+    CHECK((j1 == j4) == false);
+    CHECK((j1 == j5) == false);
+    CHECK((j1 == j6) == false);
+
+    CHECK((j2 == j1) == false);
+    CHECK((j2 == j2) == true);
+    CHECK((j2 == j3) == false);
+    CHECK((j2 == j4) == false);
+    CHECK((j2 == j5) == false);
+    CHECK((j2 == j6) == false);
+
+    CHECK((j3 == j1) == false);
+    CHECK((j3 == j2) == false);
+    CHECK((j3 == j3) == true);
+    CHECK((j3 == j4) == false);
+    CHECK((j3 == j5) == false);
+    CHECK((j3 == j6) == false);
+
+    CHECK((j4 == j1) == false);
+    CHECK((j4 == j2) == false);
+    CHECK((j4 == j3) == false);
+    CHECK((j4 == j4) == true);
+    CHECK((j4 == j5) == false);
+    CHECK((j4 == j6) == false);
+
+    CHECK((j5 == j1) == false);
+    CHECK((j5 == j2) == false);
+    CHECK((j5 == j3) == false);
+    CHECK((j5 == j4) == false);
+    CHECK((j5 == j5) == true);
+    CHECK((j5 == j6) == false);
+
+    CHECK((j6 == j1) == false);
+    CHECK((j6 == j2) == false);
+    CHECK((j6 == j3) == false);
+    CHECK((j6 == j4) == false);
+    CHECK((j6 == j5) == false);
+    CHECK((j6 == j6) == true);
+
+    CHECK((j1 != j1) == false);
+    CHECK((j1 != j2) == true);
+    CHECK((j1 != j3) == true);
+    CHECK((j1 != j4) == true);
+    CHECK((j1 != j5) == true);
+    CHECK((j1 != j6) == true);
+
+    CHECK((j2 != j1) == true);
+    CHECK((j2 != j2) == false);
+    CHECK((j2 != j3) == true);
+    CHECK((j2 != j4) == true);
+    CHECK((j2 != j5) == true);
+    CHECK((j2 != j6) == true);
+
+    CHECK((j3 != j1) == true);
+    CHECK((j3 != j2) == true);
+    CHECK((j3 != j3) == false);
+    CHECK((j3 != j4) == true);
+    CHECK((j3 != j5) == true);
+    CHECK((j3 != j6) == true);
+
+    CHECK((j4 != j1) == true);
+    CHECK((j4 != j2) == true);
+    CHECK((j4 != j3) == true);
+    CHECK((j4 != j4) == false);
+    CHECK((j4 != j5) == true);
+    CHECK((j4 != j6) == true);
+
+    CHECK((j5 != j1) == true);
+    CHECK((j5 != j2) == true);
+    CHECK((j5 != j3) == true);
+    CHECK((j5 != j4) == true);
+    CHECK((j5 != j5) == false);
+    CHECK((j5 != j6) == true);
+
+    CHECK((j6 != j1) == true);
+    CHECK((j6 != j2) == true);
+    CHECK((j6 != j3) == true);
+    CHECK((j6 != j4) == true);
+    CHECK((j6 != j5) == true);
+    CHECK((j6 != j6) == false);
 }
 
 TEST_CASE("Parser")
