@@ -1412,10 +1412,12 @@ TEST_CASE("Iterators")
         CHECK(i4 == i4);
     }
     {
-        JSON j_object = {{"1", 1}, {"2", 2}};
+        JSON j_object = {{"1", 1}, {"2", 2}, {"3", 3}};
 
         JSON::iterator i1 = j_object.begin();
         ++i1;
+        JSON::iterator i11 = j_object.begin();
+        CHECK((i1 == i11) == false);
         JSON::iterator i2(i1);
         JSON::iterator i3;
         i3 = i2;
