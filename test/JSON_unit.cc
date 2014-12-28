@@ -1090,6 +1090,14 @@ TEST_CASE("Iterators")
     JSON j6 = 23.42;
     JSON j7 = "hello";
 
+    const JSON j1_const = {0, 1, 2, 3, 4};
+    const JSON j2_const = {{"foo", "bar"}, {"baz", "bam"}};
+    const JSON j3_const = true;
+    const JSON j4_const = nullptr;
+    const JSON j5_const = 42;
+    const JSON j6_const = 23.42;
+    const JSON j7_const = "hello";
+
     // operator *
     CHECK_THROWS_AS(* j1.end(), std::runtime_error);
     CHECK_THROWS_AS(* j1.cend(), std::runtime_error);
@@ -1105,6 +1113,21 @@ TEST_CASE("Iterators")
     CHECK_THROWS_AS(* j6.cend(), std::runtime_error);
     CHECK_THROWS_AS(* j7.end(), std::runtime_error);
     CHECK_THROWS_AS(* j7.cend(), std::runtime_error);
+
+    CHECK_THROWS_AS(* j1_const.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j1_const.cend(), std::runtime_error);
+    CHECK_THROWS_AS(* j2_const.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j2_const.cend(), std::runtime_error);
+    CHECK_THROWS_AS(* j3_const.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j3_const.cend(), std::runtime_error);
+    CHECK_THROWS_AS(* j4_const.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j4_const.cend(), std::runtime_error);
+    CHECK_THROWS_AS(* j5_const.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j5_const.cend(), std::runtime_error);
+    CHECK_THROWS_AS(* j6_const.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j6_const.cend(), std::runtime_error);
+    CHECK_THROWS_AS(* j7_const.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j7_const.cend(), std::runtime_error);
 
     // operator ->
     CHECK(j1.begin()->type() == JSON::value_type::number);
@@ -1122,6 +1145,21 @@ TEST_CASE("Iterators")
     CHECK(j7.begin()->type() == JSON::value_type::string);
     CHECK(j7.cbegin()->type() == JSON::value_type::string);
 
+    CHECK(j1_const.begin()->type() == JSON::value_type::number);
+    CHECK(j1_const.cbegin()->type() == JSON::value_type::number);
+    CHECK(j2_const.begin()->type() == JSON::value_type::string);
+    CHECK(j2_const.cbegin()->type() == JSON::value_type::string);
+    CHECK(j3_const.begin()->type() == JSON::value_type::boolean);
+    CHECK(j3_const.cbegin()->type() == JSON::value_type::boolean);
+    CHECK(j4_const.begin()->type() == JSON::value_type::null);
+    CHECK(j4_const.cbegin()->type() == JSON::value_type::null);
+    CHECK(j5_const.begin()->type() == JSON::value_type::number);
+    CHECK(j5_const.cbegin()->type() == JSON::value_type::number);
+    CHECK(j6_const.begin()->type() == JSON::value_type::number_float);
+    CHECK(j6_const.cbegin()->type() == JSON::value_type::number_float);
+    CHECK(j7_const.begin()->type() == JSON::value_type::string);
+    CHECK(j7_const.cbegin()->type() == JSON::value_type::string);
+
     CHECK_THROWS_AS(j1.end()->type(), std::runtime_error);
     CHECK_THROWS_AS(j1.cend()->type(), std::runtime_error);
     CHECK_THROWS_AS(j2.end()->type(), std::runtime_error);
@@ -1136,6 +1174,21 @@ TEST_CASE("Iterators")
     CHECK_THROWS_AS(j6.cend()->type(), std::runtime_error);
     CHECK_THROWS_AS(j7.end()->type(), std::runtime_error);
     CHECK_THROWS_AS(j7.cend()->type(), std::runtime_error);
+
+    CHECK_THROWS_AS(j1_const.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j1_const.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j2_const.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j2_const.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j3_const.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j3_const.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j4_const.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j4_const.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j5_const.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j5_const.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j6_const.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j6_const.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j7_const.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j7_const.cend()->type(), std::runtime_error);
 
     // value
     CHECK(j1.begin().value().type() == JSON::value_type::number);
@@ -1153,6 +1206,21 @@ TEST_CASE("Iterators")
     CHECK(j7.begin().value().type() == JSON::value_type::string);
     CHECK(j7.cbegin().value().type() == JSON::value_type::string);
 
+    CHECK(j1_const.begin().value().type() == JSON::value_type::number);
+    CHECK(j1_const.cbegin().value().type() == JSON::value_type::number);
+    CHECK(j2_const.begin().value().type() == JSON::value_type::string);
+    CHECK(j2_const.cbegin().value().type() == JSON::value_type::string);
+    CHECK(j3_const.begin().value().type() == JSON::value_type::boolean);
+    CHECK(j3_const.cbegin().value().type() == JSON::value_type::boolean);
+    CHECK(j4_const.begin().value().type() == JSON::value_type::null);
+    CHECK(j4_const.cbegin().value().type() == JSON::value_type::null);
+    CHECK(j5_const.begin().value().type() == JSON::value_type::number);
+    CHECK(j5_const.cbegin().value().type() == JSON::value_type::number);
+    CHECK(j6_const.begin().value().type() == JSON::value_type::number_float);
+    CHECK(j6_const.cbegin().value().type() == JSON::value_type::number_float);
+    CHECK(j7_const.begin().value().type() == JSON::value_type::string);
+    CHECK(j7_const.cbegin().value().type() == JSON::value_type::string);
+
     CHECK_THROWS_AS(j1.end().value(), std::out_of_range);
     CHECK_THROWS_AS(j1.cend().value(), std::out_of_range);
     CHECK_THROWS_AS(j2.end().value(), std::out_of_range);
@@ -1167,6 +1235,21 @@ TEST_CASE("Iterators")
     CHECK_THROWS_AS(j6.cend().value(), std::out_of_range);
     CHECK_THROWS_AS(j7.end().value(), std::out_of_range);
     CHECK_THROWS_AS(j7.cend().value(), std::out_of_range);
+
+    CHECK_THROWS_AS(j1_const.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j1_const.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j2_const.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j2_const.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j3_const.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j3_const.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j4_const.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j4_const.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j5_const.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j5_const.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j6_const.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j6_const.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j7_const.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j7_const.cend().value(), std::out_of_range);
 
     // iterator comparison
     CHECK(j1.begin() != j2.begin());
