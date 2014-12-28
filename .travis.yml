@@ -16,7 +16,7 @@ before_script:
 
 script:
   - make
-  - make check
+  - ./json_unit
 
 after_success:
   - make clean

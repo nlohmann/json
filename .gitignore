@@ -18,3 +18,17 @@ html
 *.o
 
 *.Po
+
+install-sh
+
+json_unit
+
+Makefile
+
+missing
+
+.dirstamp
+
+test-driver
+
+Makefile.in
