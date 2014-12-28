@@ -104,7 +104,7 @@ j[1] = 42;
 // other stuff
 j.size();     // 3
 j.empty();    // false
-j.type();     // JSON::array
+j.type();     // JSON::valeu_type::array
 
 // create an object
 JSON o;
