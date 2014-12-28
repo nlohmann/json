@@ -151,8 +151,8 @@ TEST_CASE("array")
         CHECK_THROWS_AS(nonarray += 2, std::runtime_error);
 
         {
-            JSON nonarray2 = JSON(nullptr);
-            JSON nonarray3 = JSON(nullptr);
+            JSON nonarray2 = JSON(1);
+            JSON nonarray3 = JSON(2);
             CHECK_THROWS_AS(nonarray2.push_back(nonarray3), std::runtime_error);
         }
 
