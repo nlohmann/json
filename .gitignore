@@ -1,7 +1,20 @@
-
+.DS_Store
 src/.DS_Store
 
-.DS_Store
+aclocal.m4
 
-benchmark/auctions.json
-benchmark/citylots.json
+autom4te.cache/*
+
+config.log
+
+config.status
+
+configure
+
+depcomp
+
+html
+
+*.o
+
+*.Po

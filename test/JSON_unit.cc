@@ -131,7 +131,7 @@ TEST_CASE("array")
         j += j;
 
         CHECK (j.size() == 21);
-        
+
         // implicit transformation into an array
         JSON empty1, empty2;
         empty1 += "foo";
@@ -389,14 +389,14 @@ TEST_CASE("object")
         // add initializer list (of pairs)
         {
             JSON je;
-            je.push_back({ {"one", 1}, {"two", false}, {"three", {1,2,3}} });
+            je.push_back({ {"one", 1}, {"two", false}, {"three", {1, 2, 3}} });
             CHECK(je["one"].get<int>() == 1);
             CHECK(je["two"].get<bool>() == false);
             CHECK(je["three"].size() == 3);
         }
         {
             JSON je;
-            je += { {"one", 1}, {"two", false}, {"three", {1,2,3}} };
+            je += { {"one", 1}, {"two", false}, {"three", {1, 2, 3}} };
             CHECK(je["one"].get<int>() == 1);
             CHECK(je["two"].get<bool>() == false);
             CHECK(je["three"].size() == 3);

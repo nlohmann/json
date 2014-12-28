@@ -218,7 +218,7 @@ void test_array()
     try
     {
         a[5] = 1;
-//        assert(false);
+        //        assert(false);
     }
     catch (const std::exception& ex)
     {
