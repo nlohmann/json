@@ -1425,6 +1425,8 @@ TEST_CASE("Iterators")
 
         JSON::const_iterator i4 = j_object.begin();
         ++i4;
+        JSON::iterator i41 = j_object.begin();
+        CHECK((i4 == i41) == false);
         JSON::const_iterator i5(i4);
         JSON::const_iterator i6;
         i6 = i5;

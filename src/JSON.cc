@@ -1672,6 +1672,7 @@ bool JSON::const_iterator::operator==(const JSON::const_iterator& o) const
             }
             default:
             {
+                // not sure if used
                 break;
             }
         }
