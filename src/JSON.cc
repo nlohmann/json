@@ -285,7 +285,7 @@ JSON::~JSON() noexcept
 @param s  a string representation of a JSON object
 @return a JSON object
 */
-JSON JSON::parse(std::string& s)
+JSON JSON::parse(const std::string& s)
 {
     JSON j;
     Parser(s).parse(j);
@@ -1892,7 +1892,7 @@ JSON::Parser::Parser(const char* s)
 /*!
 @copydoc JSON::Parser::Parser(const char* s)
 */
-JSON::Parser::Parser(std::string& s)
+JSON::Parser::Parser(const std::string& s)
     : _length(s.length()), _buffer(new char[_length + 1])
 {
     std::strcpy(_buffer, s.c_str());

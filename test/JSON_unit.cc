@@ -17,6 +17,10 @@ TEST_CASE("array")
         // string representation of default value
         CHECK(j.toString() == "[]");
 
+        // iterators
+        CHECK(j.begin() != j.end());
+        CHECK(j.cbegin() != j.cend());
+
         // check payload
         //CHECK(*(j.data().array) == JSON::array_t());
         //CHECK(*(j_const.data().array) == JSON::array_t());
@@ -297,6 +301,10 @@ TEST_CASE("object")
 
         // string representation of default value
         CHECK(j.toString() == "{}");
+
+        // iterators
+        CHECK(j.begin() != j.end());
+        CHECK(j.cbegin() != j.cend());
 
         // check payload
         //CHECK(*(j.data().object) == JSON::object_t());
@@ -678,6 +686,10 @@ TEST_CASE("null")
         // string representation of default value
         CHECK(j.toString() == "null");
 
+        // iterators
+        CHECK(j.begin() != j.end());
+        CHECK(j.cbegin() != j.cend());
+
         // container members
         CHECK(j.size() == 0);
         CHECK(j.empty() == true);
@@ -736,6 +748,10 @@ TEST_CASE("string")
 
         // const object
         const JSON j_const = j;
+
+        // iterators
+        CHECK(j.begin() != j.end());
+        CHECK(j.cbegin() != j.cend());
 
         // string representation of default value
         CHECK(j.toString() == "\"\"");
@@ -819,6 +835,10 @@ TEST_CASE("boolean")
         // const object
         const JSON j_const = j;
 
+        // iterators
+        CHECK(j.begin() != j.end());
+        CHECK(j.cbegin() != j.cend());
+
         // string representation of default value
         CHECK(j.toString() == "false");
 
@@ -897,6 +917,10 @@ TEST_CASE("number (int)")
 
         // const object
         const JSON j_const = j;
+
+        // iterators
+        CHECK(j.begin() != j.end());
+        CHECK(j.cbegin() != j.cend());
 
         // string representation of default value
         CHECK(j.toString() == "0");
@@ -984,6 +1008,10 @@ TEST_CASE("number (float)")
         // const object
         const JSON j_const = j;
 
+        // iterators
+        CHECK(j.begin() != j.end());
+        CHECK(j.cbegin() != j.cend());
+
         // string representation of default value
         CHECK(j.toString() == "0.000000");
 
@@ -1060,6 +1088,7 @@ TEST_CASE("Comparisons")
     JSON j4 = nullptr;
     JSON j5 = 42;
     JSON j6 = 23.42;
+    JSON j7 = "hello";
 
     CHECK((j1 == j1) == true);
     CHECK((j1 == j2) == false);
@@ -1067,6 +1096,7 @@ TEST_CASE("Comparisons")
     CHECK((j1 == j4) == false);
     CHECK((j1 == j5) == false);
     CHECK((j1 == j6) == false);
+    CHECK((j1 == j7) == false);
 
     CHECK((j2 == j1) == false);
     CHECK((j2 == j2) == true);
@@ -1074,6 +1104,7 @@ TEST_CASE("Comparisons")
     CHECK((j2 == j4) == false);
     CHECK((j2 == j5) == false);
     CHECK((j2 == j6) == false);
+    CHECK((j2 == j7) == false);
 
     CHECK((j3 == j1) == false);
     CHECK((j3 == j2) == false);
@@ -1081,6 +1112,7 @@ TEST_CASE("Comparisons")
     CHECK((j3 == j4) == false);
     CHECK((j3 == j5) == false);
     CHECK((j3 == j6) == false);
+    CHECK((j3 == j7) == false);
 
     CHECK((j4 == j1) == false);
     CHECK((j4 == j2) == false);
@@ -1088,6 +1120,7 @@ TEST_CASE("Comparisons")
     CHECK((j4 == j4) == true);
     CHECK((j4 == j5) == false);
     CHECK((j4 == j6) == false);
+    CHECK((j4 == j7) == false);
 
     CHECK((j5 == j1) == false);
     CHECK((j5 == j2) == false);
@@ -1095,6 +1128,7 @@ TEST_CASE("Comparisons")
     CHECK((j5 == j4) == false);
     CHECK((j5 == j5) == true);
     CHECK((j5 == j6) == false);
+    CHECK((j5 == j7) == false);
 
     CHECK((j6 == j1) == false);
     CHECK((j6 == j2) == false);
@@ -1102,6 +1136,15 @@ TEST_CASE("Comparisons")
     CHECK((j6 == j4) == false);
     CHECK((j6 == j5) == false);
     CHECK((j6 == j6) == true);
+    CHECK((j6 == j7) == false);
+
+    CHECK((j7 == j1) == false);
+    CHECK((j7 == j2) == false);
+    CHECK((j7 == j3) == false);
+    CHECK((j7 == j4) == false);
+    CHECK((j7 == j5) == false);
+    CHECK((j7 == j6) == false);
+    CHECK((j7 == j7) == true);
 
     CHECK((j1 != j1) == false);
     CHECK((j1 != j2) == true);
@@ -1109,6 +1152,7 @@ TEST_CASE("Comparisons")
     CHECK((j1 != j4) == true);
     CHECK((j1 != j5) == true);
     CHECK((j1 != j6) == true);
+    CHECK((j1 != j7) == true);
 
     CHECK((j2 != j1) == true);
     CHECK((j2 != j2) == false);
@@ -1116,6 +1160,7 @@ TEST_CASE("Comparisons")
     CHECK((j2 != j4) == true);
     CHECK((j2 != j5) == true);
     CHECK((j2 != j6) == true);
+    CHECK((j2 != j7) == true);
 
     CHECK((j3 != j1) == true);
     CHECK((j3 != j2) == true);
@@ -1123,6 +1168,7 @@ TEST_CASE("Comparisons")
     CHECK((j3 != j4) == true);
     CHECK((j3 != j5) == true);
     CHECK((j3 != j6) == true);
+    CHECK((j3 != j7) == true);
 
     CHECK((j4 != j1) == true);
     CHECK((j4 != j2) == true);
@@ -1130,6 +1176,7 @@ TEST_CASE("Comparisons")
     CHECK((j4 != j4) == false);
     CHECK((j4 != j5) == true);
     CHECK((j4 != j6) == true);
+    CHECK((j4 != j7) == true);
 
     CHECK((j5 != j1) == true);
     CHECK((j5 != j2) == true);
@@ -1137,6 +1184,7 @@ TEST_CASE("Comparisons")
     CHECK((j5 != j4) == true);
     CHECK((j5 != j5) == false);
     CHECK((j5 != j6) == true);
+    CHECK((j5 != j7) == true);
 
     CHECK((j6 != j1) == true);
     CHECK((j6 != j2) == true);
@@ -1144,6 +1192,15 @@ TEST_CASE("Comparisons")
     CHECK((j6 != j4) == true);
     CHECK((j6 != j5) == true);
     CHECK((j6 != j6) == false);
+    CHECK((j6 != j7) == true);
+
+    CHECK((j7 != j1) == true);
+    CHECK((j7 != j2) == true);
+    CHECK((j7 != j3) == true);
+    CHECK((j7 != j4) == true);
+    CHECK((j7 != j5) == true);
+    CHECK((j7 != j6) == true);
+    CHECK((j7 != j7) == false);
 }
 
 TEST_CASE("Parser")
@@ -1172,6 +1229,10 @@ TEST_CASE("Parser")
         // accept some values
         CHECK(JSON::parse("\"\"") == JSON(""));
         CHECK(JSON::parse("\"foo\"") == JSON("foo"));
+
+        // escape characters
+        CHECK_THROWS_AS(JSON::parse("\"\\\""), std::invalid_argument);
+        CHECK_NOTHROW(JSON::parse("\"\\\"\""));
 
         // quotes must be closed
         CHECK_THROWS_AS(JSON::parse("\""), std::invalid_argument);
@@ -1298,5 +1359,11 @@ TEST_CASE("Parser")
 
         auto j3 = "{\"key\": \"value\"}"_json;
         CHECK(j3["key"] == "value");
+    }
+
+    SECTION("Errors")
+    {
+        CHECK_THROWS_AS(JSON::parse(""), std::invalid_argument);
+        CHECK_THROWS_AS(JSON::parse(std::string("")), std::invalid_argument);
     }
 }

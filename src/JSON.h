@@ -139,7 +139,7 @@ class JSON
     ~JSON() noexcept;
 
     /// create from string representation
-    static JSON parse(std::string&);
+    static JSON parse(const std::string&);
     /// create from string representation
     static JSON parse(const char*);
 
@@ -387,7 +387,7 @@ class JSON
         /// a parser reading from a C string
         Parser(const char*);
         /// a parser reading from a C++ string
-        Parser(std::string&);
+        Parser(const std::string&);
         /// a parser reading from an input stream
         Parser(std::istream&);
         /// destructor of the parser
