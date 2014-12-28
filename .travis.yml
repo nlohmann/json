@@ -22,5 +22,5 @@ after_success:
   - make clean
   - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage"
   - ./json_unit
-  - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
+  - coveralls --exclude lib --exclude tests --gcov-options '\-lp' --gcov 'gcov-4.8'
 
