@@ -149,7 +149,12 @@ TEST_CASE("array")
         CHECK_NOTHROW(j[21] = 5);
         CHECK_THROWS_AS(j.at(21) = 5, std::out_of_range);
         CHECK_THROWS_AS(nonarray += 2, std::runtime_error);
-        CHECK_THROWS_AS(nonarray.push_back(JSON(nullptr)), std::runtime_error);
+
+        {
+            JSON nonarray2 = JSON(nullptr);
+            JSON nonarray3 = JSON(nullptr);
+            CHECK_THROWS_AS(nonarray2.push_back(nonarray3), std::runtime_error);
+        }
 
         const JSON k = j;
         CHECK_NOTHROW(k[21]);
