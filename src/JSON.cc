@@ -1504,6 +1504,7 @@ JSON::iterator& JSON::iterator::operator++()
 
 JSON& JSON::iterator::operator*() const
 {
+    // dereferencing end() is an error
     if (_object == nullptr)
     {
         throw std::runtime_error("cannot get value");
@@ -1532,6 +1533,7 @@ JSON& JSON::iterator::operator*() const
 
 JSON* JSON::iterator::operator->() const
 {
+    // dereferencing end() is an error
     if (_object == nullptr)
     {
         throw std::runtime_error("cannot get value");
@@ -1572,6 +1574,7 @@ std::string JSON::iterator::key() const
 
 JSON& JSON::iterator::value() const
 {
+    // dereferencing end() is an error
     if (_object == nullptr)
     {
         throw std::out_of_range("cannot get value");
@@ -1775,6 +1778,7 @@ JSON::const_iterator& JSON::const_iterator::operator++()
 
 const JSON& JSON::const_iterator::operator*() const
 {
+    // dereferencing end() is an error
     if (_object == nullptr)
     {
         throw std::runtime_error("cannot get value");
@@ -1803,6 +1807,7 @@ const JSON& JSON::const_iterator::operator*() const
 
 const JSON* JSON::const_iterator::operator->() const
 {
+    // dereferencing end() is an error
     if (_object == nullptr)
     {
         throw std::runtime_error("cannot get value");
@@ -1843,6 +1848,7 @@ std::string JSON::const_iterator::key() const
 
 const JSON& JSON::const_iterator::value() const
 {
+    // dereferencing end() is an error
     if (_object == nullptr)
     {
         throw std::out_of_range("cannot get value");

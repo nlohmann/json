@@ -1080,6 +1080,213 @@ TEST_CASE("number (float)")
     }
 }
 
+TEST_CASE("Iterators")
+{
+    JSON j1 = {0, 1, 2, 3, 4};
+    JSON j2 = {{"foo", "bar"}, {"baz", "bam"}};
+    JSON j3 = true;
+    JSON j4 = nullptr;
+    JSON j5 = 42;
+    JSON j6 = 23.42;
+    JSON j7 = "hello";
+
+    // operator *
+    CHECK_THROWS_AS(* j4.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j4.end(), std::runtime_error);
+
+    // operator ->
+    CHECK(j1.begin()->type() == JSON::value_type::number);
+    CHECK(j1.cbegin()->type() == JSON::value_type::number);
+    CHECK(j2.begin()->type() == JSON::value_type::string);
+    CHECK(j2.cbegin()->type() == JSON::value_type::string);
+    CHECK(j3.begin()->type() == JSON::value_type::boolean);
+    CHECK(j3.cbegin()->type() == JSON::value_type::boolean);
+    CHECK(j4.begin()->type() == JSON::value_type::null);
+    CHECK(j4.cbegin()->type() == JSON::value_type::null);
+    CHECK(j5.begin()->type() == JSON::value_type::number);
+    CHECK(j5.cbegin()->type() == JSON::value_type::number);
+    CHECK(j6.begin()->type() == JSON::value_type::number_float);
+    CHECK(j6.cbegin()->type() == JSON::value_type::number_float);
+    CHECK(j7.begin()->type() == JSON::value_type::string);
+    CHECK(j7.cbegin()->type() == JSON::value_type::string);
+
+    CHECK_THROWS_AS(j1.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j1.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j2.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j2.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j3.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j3.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j4.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j4.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j5.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j5.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j6.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j6.cend()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j7.end()->type(), std::runtime_error);
+    CHECK_THROWS_AS(j7.cend()->type(), std::runtime_error);
+
+    // value
+    CHECK(j1.begin().value().type() == JSON::value_type::number);
+    CHECK(j1.cbegin().value().type() == JSON::value_type::number);
+    CHECK(j2.begin().value().type() == JSON::value_type::string);
+    CHECK(j2.cbegin().value().type() == JSON::value_type::string);
+    CHECK(j3.begin().value().type() == JSON::value_type::boolean);
+    CHECK(j3.cbegin().value().type() == JSON::value_type::boolean);
+    CHECK(j4.begin().value().type() == JSON::value_type::null);
+    CHECK(j4.cbegin().value().type() == JSON::value_type::null);
+    CHECK(j5.begin().value().type() == JSON::value_type::number);
+    CHECK(j5.cbegin().value().type() == JSON::value_type::number);
+    CHECK(j6.begin().value().type() == JSON::value_type::number_float);
+    CHECK(j6.cbegin().value().type() == JSON::value_type::number_float);
+    CHECK(j7.begin().value().type() == JSON::value_type::string);
+    CHECK(j7.cbegin().value().type() == JSON::value_type::string);
+
+    CHECK_THROWS_AS(j1.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j1.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j2.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j2.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j3.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j3.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j4.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j4.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j5.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j5.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j6.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j6.cend().value(), std::out_of_range);
+    CHECK_THROWS_AS(j7.end().value(), std::out_of_range);
+    CHECK_THROWS_AS(j7.cend().value(), std::out_of_range);
+
+    // iterator comparison
+    CHECK(j1.begin() != j2.begin());
+    CHECK(j1.begin() != j3.begin());
+    CHECK(j1.begin() != j4.begin());
+    CHECK(j1.begin() != j5.begin());
+    CHECK(j1.begin() != j6.begin());
+    CHECK(j1.begin() != j7.begin());
+
+    CHECK(j1.cbegin() != j2.cbegin());
+    CHECK(j1.cbegin() != j3.cbegin());
+    CHECK(j1.cbegin() != j4.cbegin());
+    CHECK(j1.cbegin() != j5.cbegin());
+    CHECK(j1.cbegin() != j6.cbegin());
+    CHECK(j1.cbegin() != j7.cbegin());
+
+    CHECK(j2.begin() != j1.begin());
+    CHECK(j2.begin() != j3.begin());
+    CHECK(j2.begin() != j4.begin());
+    CHECK(j2.begin() != j5.begin());
+    CHECK(j2.begin() != j6.begin());
+    CHECK(j2.begin() != j7.begin());
+
+    CHECK(j2.cbegin() != j1.cbegin());
+    CHECK(j2.cbegin() != j3.cbegin());
+    CHECK(j2.cbegin() != j4.cbegin());
+    CHECK(j2.cbegin() != j5.cbegin());
+    CHECK(j2.cbegin() != j6.cbegin());
+    CHECK(j2.cbegin() != j7.cbegin());
+
+    CHECK(j3.begin() != j1.begin());
+    CHECK(j3.begin() != j2.begin());
+    CHECK(j3.begin() != j4.begin());
+    CHECK(j3.begin() != j5.begin());
+    CHECK(j3.begin() != j6.begin());
+    CHECK(j3.begin() != j7.begin());
+
+    CHECK(j3.cbegin() != j1.cbegin());
+    CHECK(j3.cbegin() != j2.cbegin());
+    CHECK(j3.cbegin() != j4.cbegin());
+    CHECK(j3.cbegin() != j5.cbegin());
+    CHECK(j3.cbegin() != j6.cbegin());
+    CHECK(j3.cbegin() != j7.cbegin());
+
+    CHECK(j4.begin() != j1.begin());
+    CHECK(j4.begin() != j2.begin());
+    CHECK(j4.begin() != j3.begin());
+    CHECK(j4.begin() != j5.begin());
+    CHECK(j4.begin() != j6.begin());
+    CHECK(j4.begin() != j7.begin());
+
+    CHECK(j4.cbegin() != j1.cbegin());
+    CHECK(j4.cbegin() != j2.cbegin());
+    CHECK(j4.cbegin() != j3.cbegin());
+    CHECK(j4.cbegin() != j5.cbegin());
+    CHECK(j4.cbegin() != j6.cbegin());
+    CHECK(j4.cbegin() != j7.cbegin());
+
+    CHECK(j5.begin() != j1.begin());
+    CHECK(j5.begin() != j2.begin());
+    CHECK(j5.begin() != j3.begin());
+    CHECK(j5.begin() != j4.begin());
+    CHECK(j5.begin() != j6.begin());
+    CHECK(j5.begin() != j7.begin());
+
+    CHECK(j5.cbegin() != j1.cbegin());
+    CHECK(j5.cbegin() != j2.cbegin());
+    CHECK(j5.cbegin() != j3.cbegin());
+    CHECK(j5.cbegin() != j4.cbegin());
+    CHECK(j5.cbegin() != j6.cbegin());
+    CHECK(j5.cbegin() != j7.cbegin());
+
+    CHECK(j6.begin() != j1.begin());
+    CHECK(j6.begin() != j2.begin());
+    CHECK(j6.begin() != j3.begin());
+    CHECK(j6.begin() != j4.begin());
+    CHECK(j6.begin() != j5.begin());
+    CHECK(j6.begin() != j7.begin());
+
+    CHECK(j6.cbegin() != j1.cbegin());
+    CHECK(j6.cbegin() != j2.cbegin());
+    CHECK(j6.cbegin() != j3.cbegin());
+    CHECK(j6.cbegin() != j4.cbegin());
+    CHECK(j6.cbegin() != j5.cbegin());
+    CHECK(j6.cbegin() != j7.cbegin());
+
+    CHECK(j7.begin() != j1.begin());
+    CHECK(j7.begin() != j2.begin());
+    CHECK(j7.begin() != j3.begin());
+    CHECK(j7.begin() != j4.begin());
+    CHECK(j7.begin() != j5.begin());
+    CHECK(j7.begin() != j6.begin());
+
+    CHECK(j7.cbegin() != j1.cbegin());
+    CHECK(j7.cbegin() != j2.cbegin());
+    CHECK(j7.cbegin() != j3.cbegin());
+    CHECK(j7.cbegin() != j4.cbegin());
+    CHECK(j7.cbegin() != j5.cbegin());
+    CHECK(j7.cbegin() != j6.cbegin());
+
+    // iterator copy constructors
+    {
+        JSON::iterator tmp1(j1.begin());
+        JSON::const_iterator tmp2(j1.cbegin());
+    }
+    {
+        JSON::iterator tmp1(j2.begin());
+        JSON::const_iterator tmp2(j2.cbegin());
+    }
+    {
+        JSON::iterator tmp1(j3.begin());
+        JSON::const_iterator tmp2(j3.cbegin());
+    }
+    {
+        JSON::iterator tmp1(j4.begin());
+        JSON::const_iterator tmp2(j4.cbegin());
+    }
+    {
+        JSON::iterator tmp1(j5.begin());
+        JSON::const_iterator tmp2(j5.cbegin());
+    }
+    {
+        JSON::iterator tmp1(j6.begin());
+        JSON::const_iterator tmp2(j6.cbegin());
+    }
+    {
+        JSON::iterator tmp1(j7.begin());
+        JSON::const_iterator tmp2(j7.cbegin());
+    }
+
+}
+
 TEST_CASE("Comparisons")
 {
     JSON j1 = {0, 1, 2, 3, 4};
