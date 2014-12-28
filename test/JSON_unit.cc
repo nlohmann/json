@@ -1099,6 +1099,21 @@ TEST_CASE("Iterators")
     const JSON j7_const = "hello";
 
     // operator *
+    CHECK(* j1.begin() == JSON(0));
+    CHECK(* j1_const.begin() == JSON(0));
+    CHECK(* j2.begin() != JSON());
+    CHECK(* j2_const.begin() != JSON());
+    CHECK(* j3.begin() == JSON(true));
+    CHECK(* j3_const.begin() == JSON(true));
+    CHECK(* j4.begin() == JSON());
+    CHECK(* j4_const.begin() == JSON());
+    CHECK(* j5.begin() == JSON(42));
+    CHECK(* j5_const.begin() == JSON(42));
+    CHECK(* j6.begin() == JSON(23.42));
+    CHECK(* j6_const.begin() == JSON(23.42));
+    CHECK(* j7.begin() == JSON("hello"));
+    CHECK(* j7_const.begin() == JSON("hello"));
+
     CHECK_THROWS_AS(* j1.end(), std::runtime_error);
     CHECK_THROWS_AS(* j1.cend(), std::runtime_error);
     CHECK_THROWS_AS(* j2.end(), std::runtime_error);
