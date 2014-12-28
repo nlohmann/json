@@ -1380,6 +1380,23 @@ TEST_CASE("Iterators")
         JSON::const_iterator tmp2(j7.cbegin());
     }
 
+    // iterator copy assignment
+    {
+        JSON::iterator i1 = j2.begin();
+        JSON::const_iterator i2 = j2.cbegin();
+        JSON::iterator i3 = i1;
+        JSON::const_iterator i4 = i2;
+    }
+
+    // operator++
+    {
+        JSON j;
+        const JSON j_const = j;
+        for (JSON::iterator i = j.begin(); i != j.end(); ++i);
+        for (JSON::const_iterator i = j.cbegin(); i != j.cend(); ++i);
+        for (JSON::const_iterator i = j_const.begin(); i != j_const.end(); ++i);
+        for (JSON::const_iterator i = j_const.cbegin(); i != j_const.cend(); ++i);
+    }
 }
 
 TEST_CASE("Comparisons")

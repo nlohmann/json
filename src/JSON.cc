@@ -325,11 +325,7 @@ const std::string JSON::_typename() const noexcept
         {
             return "boolean";
         }
-        case (value_type::number):
-        {
-            return "number";
-        }
-        case (value_type::number_float):
+        default:
         {
             return "number";
         }
