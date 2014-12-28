@@ -428,4 +428,4 @@ class JSON
 };
 
 /// user-defined literal operator to create JSON objects from strings
-JSON operator ""_json(const char*, size_t);
+JSON operator "" _json(const char*, size_t);
