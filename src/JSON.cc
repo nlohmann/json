@@ -38,8 +38,6 @@ Construct an empty JSON given the type.
 @param t  the type from the @ref JSON::type enumeration.
 
 @post Memory for array, object, and string are allocated.
-
-@test Tested in block "Basics" for every type.
 */
 JSON::JSON(const value_type t) noexcept
     : _type(t)
@@ -85,8 +83,6 @@ JSON::JSON(const value_type t) noexcept
 
 /*!
 Construct a null JSON object.
-
-@test Tested in block "Create from value" for "null".
 */
 JSON::JSON(std::nullptr_t) noexcept : JSON()
 {}
@@ -95,72 +91,43 @@ JSON::JSON(std::nullptr_t) noexcept : JSON()
 Construct a string JSON object.
 
 @param s  a string to initialize the JSON object with
-
-@test Tested in block "Create from value" for "string".
 */
 JSON::JSON(const std::string& s) noexcept
     : _type(value_type::string), _value(new string_t(s))
 {}
 
-/*!
-@test Tested in block "Create from value" for "string".
-*/
 JSON::JSON(std::string&& s) noexcept
     : _type(value_type::string), _value(new string_t(std::move(s)))
 {}
 
-/*!
-@test Tested in block "Create from value" for "string".
-*/
 JSON::JSON(const char* s) noexcept
     : _type(value_type::string), _value(new string_t(s))
 {}
 
-/*!
-@test Tested in block "Create from value" for "boolean".
-*/
 JSON::JSON(const bool b) noexcept
     : _type(value_type::boolean), _value(b)
 {}
 
-/*!
-@test Tested in block "Create from value" for "number (int)".
-*/
 JSON::JSON(const int i) noexcept
     : _type(value_type::number), _value(i)
 {}
 
-/*!
-@test Tested in block "Create from value" for "number (float)".
-*/
 JSON::JSON(const double f) noexcept
     : _type(value_type::number_float), _value(f)
 {}
 
-/*!
-@test Tested in block "Create from value" for "array".
-*/
 JSON::JSON(const array_t& a) noexcept
     : _type(value_type::array), _value(new array_t(a))
 {}
 
-/*!
-@test Tested in block "Create from value" for "array".
-*/
 JSON::JSON(array_t&& a) noexcept
     : _type(value_type::array), _value(new array_t(std::move(a)))
 {}
 
-/*!
-@test Tested in block "Create from value" for "array".
-*/
 JSON::JSON(const object_t& o) noexcept
     : _type(value_type::object), _value(new object_t(o))
 {}
 
-/*!
-@test Tested in block "Create from value" for "array".
-*/
 JSON::JSON(object_t&& o) noexcept
     : _type(value_type::object), _value(new object_t(std::move(o)))
 {}
@@ -181,9 +148,6 @@ as is to create an array.
      first element is again an arrays as array.
 
 @todo Create test case for described bug.
-
-@test Tested in block "Create from value" for "array".
-@test Tested in block "Create from value" for "object".
 */
 JSON::JSON(list_init_t a) noexcept
 {
@@ -217,8 +181,6 @@ JSON::JSON(list_init_t a) noexcept
 A copy constructor for the JSON class.
 
 @param o  the JSON object to copy
-
-@test Tested in block "Basics" for every type.
 */
 JSON::JSON(const JSON& o) noexcept
     : _type(o._type)
@@ -268,8 +230,6 @@ A move constructor for the JSON class.
 @param o  the JSON object to move
 
 @post The JSON object \p o is invalidated.
-
-@test Tested in block "Basics" for every type.
 */
 JSON::JSON(JSON&& o) noexcept
     : _type(std::move(o._type)), _value(std::move(o._value))
@@ -283,8 +243,6 @@ A copy assignment operator for the JSON class, following the copy-and-swap
 idiom.
 
 @param o  A JSON object to assign to this object.
-
-@test Tested in block "Basics" for every type.
 */
 JSON& JSON::operator=(JSON o) noexcept
 {
@@ -293,9 +251,6 @@ JSON& JSON::operator=(JSON o) noexcept
     return *this;
 }
 
-/*!
-@test Tested in block "Basics" for every type.
-*/
 JSON::~JSON() noexcept
 {
     switch (_type)
@@ -340,8 +295,6 @@ JSON JSON::parse(std::string& s)
 /*!
 @param s  a string representation of a JSON object
 @return a JSON object
-
-@test Teste in block "Parser" for every type.
 */
 JSON JSON::parse(const char* s)
 {
@@ -351,9 +304,6 @@ JSON JSON::parse(const char* s)
 }
 
 
-/*!
-@test Tested in block "Basics" for every type.
-*/
 const std::string JSON::_typename() const noexcept
 {
     switch (_type)
@@ -397,8 +347,6 @@ const std::string JSON::_typename() const noexcept
 /*!
 @exception std::logic_error if the function is called for JSON objects whose
     type is not string
-
-@test Tested in block "Basics" for every type (including exceptions).
 */
 template<>
 std::string JSON::get() const
@@ -415,8 +363,6 @@ std::string JSON::get() const
 /*!
 @exception std::logic_error if the function is called for JSON objects whose
     type is not number (int or float)
-
-@test Tested in block "Basics" for every type (including exceptions).
 */
 template<>
 int JSON::get() const
@@ -435,8 +381,6 @@ int JSON::get() const
 /*!
 @exception std::logic_error if the function is called for JSON objects whose
     type is not number (int or float)
-
-@test Tested in block "Basics" for every type (including exceptions).
 */
 template<>
 double JSON::get() const
@@ -455,8 +399,6 @@ double JSON::get() const
 /*!
 @exception std::logic_error if the function is called for JSON objects whose
     type is not boolean
-
-@test Tested in block "Basics" for every type (including exceptions).
 */
 template<>
 bool JSON::get() const
@@ -473,8 +415,6 @@ bool JSON::get() const
 /*!
 @exception std::logic_error if the function is called for JSON objects whose
     type is an object
-
-@test Tested in block "Basics" for every type (including exceptions).
 */
 template<>
 JSON::array_t JSON::get() const
@@ -496,8 +436,6 @@ JSON::array_t JSON::get() const
 /*!
 @exception std::logic_error if the function is called for JSON objects whose
     type is not object
-
-@test Tested in block "Basics" for every type (including exceptions).
 */
 template<>
 JSON::object_t JSON::get() const
@@ -512,60 +450,36 @@ JSON::object_t JSON::get() const
     }
 }
 
-/*!
-@test Tested in block "Basics" for every type.
-*/
 JSON::operator const std::string() const
 {
     return get<std::string>();
 }
 
-/*!
-@test Tested in block "Basics" for every type.
-@test Tested in block "Create from value" for "number (int)".
-*/
 JSON::operator int() const
 {
     return get<int>();
 }
 
-/*!
-@test Tested in block "Basics" for every type.
-@test Tested in block "Create from value" for "number (float)".
-*/
 JSON::operator double() const
 {
     return get<double>();
 }
 
-/*!
-@test Tested in block "Basics" for every type.
-@test Tested in block "Create from value" for "boolean".
-*/
 JSON::operator bool() const
 {
     return get<bool>();
 }
 
-/*!
-@test Tested in block "Basics" for every type.
-*/
 JSON::operator array_t() const
 {
     return get<array_t>();
 }
 
-/*!
-@test Tested in block "Basics" for every type.
-*/
 JSON::operator object_t() const
 {
     return get<object_t>();
 }
 
-/*!
-@test Tested in block "Basics" for every type.
-*/
 const std::string JSON::toString() const noexcept
 {
     switch (_type)
@@ -634,45 +548,30 @@ const std::string JSON::toString() const noexcept
 // ADDING ELEMENTS TO OBJECTS AND ARRAYS //
 ///////////////////////////////////////////
 
-/*!
-@test Tested in block "Array operators" for "array".
-*/
 JSON& JSON::operator+=(const JSON& o)
 {
     push_back(o);
     return *this;
 }
 
-/*!
-@test Tested in block "Array operators" for "array".
-*/
 JSON& JSON::operator+=(const std::string& s)
 {
     push_back(JSON(s));
     return *this;
 }
 
-/*!
-@test Tested in block "Array operators" for "array".
-*/
 JSON& JSON::operator+=(const char* s)
 {
     push_back(JSON(s));
     return *this;
 }
 
-/*!
-@test Tested in block "Array operators" for "array".
-*/
 JSON& JSON::operator+=(std::nullptr_t)
 {
     push_back(JSON());
     return *this;
 }
 
-/*!
-@test Tested in block "Array operators" for "array".
-*/
 JSON& JSON::operator+=(bool b)
 {
     push_back(JSON(b));
@@ -684,8 +583,6 @@ Adds a number (int) to the current object. This is done by wrapping the number
 into a JSON and call push_back for this.
 
 @param i  A number (int) to add to the array.
-
-@test Tested in block "Array operators" for "array".
 */
 JSON& JSON::operator+=(int i)
 {
@@ -698,8 +595,6 @@ Adds a number (float) to the current object. This is done by wrapping the
 number into a JSON and call push_back for this.
 
 @param f  A number (float) to add to the array.
-
-@test Tested in block "Array operators" for "array".
 */
 JSON& JSON::operator+=(double f)
 {
@@ -737,8 +632,6 @@ an array, the passed element is added to the array.
              does not support addition to an array (e.g., int or string).
 
 @note Null objects are silently transformed into an array before the addition.
-
-@test Tested in block "Array operators" for "array".
 */
 void JSON::push_back(const JSON& o)
 {
@@ -776,8 +669,6 @@ an array, the passed element is added to the array using move semantics.
 
 @note Null objects are silently transformed into an array before the addition.
 @note This function applies move semantics for the given element.
-
-@test Tested in block "Array operators" for "array".
 */
 void JSON::push_back(JSON&& o)
 {
@@ -800,33 +691,21 @@ void JSON::push_back(JSON&& o)
     _value.array->emplace_back(std::move(o));
 }
 
-/*!
-@test Tested in block "Array operators" for "array".
-*/
 void JSON::push_back(const std::string& s)
 {
     push_back(JSON(s));
 }
 
-/*!
-@test Tested in block "Array operators" for "array".
-*/
 void JSON::push_back(const char* s)
 {
     push_back(JSON(s));
 }
 
-/*!
-@test Tested in block "Array operators" for "array".
-*/
 void JSON::push_back(std::nullptr_t)
 {
     push_back(JSON());
 }
 
-/*!
-@test Tested in block "Array operators" for "array".
-*/
 void JSON::push_back(bool b)
 {
     push_back(JSON(b));
@@ -837,8 +716,6 @@ Adds a number (int) to the current object. This is done by wrapping the number
 into a JSON and call push_back for this.
 
 @param i  A number (int) to add to the array.
-
-@test Tested in block "Array operators" for "array".
 */
 void JSON::push_back(int i)
 {
@@ -850,8 +727,6 @@ Adds a number (float) to the current object. This is done by wrapping the
 number into a JSON and call push_back for this.
 
 @param f  A number (float) to add to the array.
-
-@test Tested in block "Array operators" for "array".
 */
 void JSON::push_back(double f)
 {
@@ -919,8 +794,6 @@ index.  Bounds will not be checked.
 
 @pre Object is an array.
 @exception std::domain_error if object is not an array
-
-@test Tested in block "Array operators" for "array" (including exceptions).
 */
 JSON& JSON::operator[](const int index)
 {
@@ -952,8 +825,6 @@ index.  Bounds will not be checked.
 
 @pre Object is an array.
 @exception std::domain_error if object is not an array
-
-@test Tested in block "Array operators" for "array" (including exceptions).
 */
 const JSON& JSON::operator[](const int index) const
 {
@@ -984,8 +855,6 @@ index. Bounds will be checked.
 @pre Object is an array.
 @exception std::domain_error if object is not an array
 @exception std::out_of_range if index is out of range (via std::vector::at)
-
-@test Tested in block "Array operators" for "array" (including exceptions).
 */
 JSON& JSON::at(const int index)
 {
@@ -1018,8 +887,6 @@ index. Bounds will be checked.
 @pre Object is an array.
 @exception std::domain_error if object is not an array
 @exception std::out_of_range if index is out of range (via std::vector::at)
-
-@test Tested in block "Array operators" for "array" (including exceptions).
 */
 const JSON& JSON::at(const int index) const
 {
@@ -1193,8 +1060,6 @@ Returns the size of the JSON object.
         string), and 0 for null.
 
 @invariant The size is reported as 0 if and only if empty() would return true.
-
-@test Tested in block "Basics" for every type.
 */
 size_t JSON::size() const noexcept
 {
@@ -1230,8 +1095,6 @@ Returns whether a JSON object is empty.
         (array and object).
 
 @invariant Empty would report true if and only if size() would return 0.
-
-@test Tested in block "Basics" for every type.
 */
 bool JSON::empty() const noexcept
 {
@@ -1309,33 +1172,21 @@ void JSON::clear() noexcept
     }
 }
 
-/*!
-@test Tested in block "Basics" for every type.
-*/
 JSON::value_type JSON::type() const noexcept
 {
     return _type;
 }
 
-/*!
-@test Tested in block "Object operators" for "object".
-*/
 JSON::iterator JSON::find(const std::string& key)
 {
     return find(key.c_str());
 }
 
-/*!
-@test Tested in block "Object operators" for "object".
-*/
 JSON::const_iterator JSON::find(const std::string& key) const
 {
     return find(key.c_str());
 }
 
-/*!
-@test Tested in block "Object operators" for "object".
-*/
 JSON::iterator JSON::find(const char* key)
 {
     if (_type != value_type::object)
@@ -1358,9 +1209,6 @@ JSON::iterator JSON::find(const char* key)
     }
 }
 
-/*!
-@test Tested in block "Object operators" for "object".
-*/
 JSON::const_iterator JSON::find(const char* key) const
 {
     if (_type != value_type::object)
@@ -1385,25 +1233,17 @@ JSON::const_iterator JSON::find(const char* key) const
 
 /*!
 @return the payload of the JSON object.
-
-@test Tested in block "Basics" for every type.
 */
 JSON::value JSON::data() noexcept
 {
     return _value;
 }
 
-/*!
-@test Tested in block "Basics" for every type.
-*/
 const JSON::value JSON::data() const noexcept
 {
     return _value;
 }
 
-/*!
-@test Tested in block "Basics" for every type.
-*/
 bool JSON::operator==(const JSON& o) const noexcept
 {
     switch (_type)
@@ -1483,55 +1323,31 @@ bool JSON::operator!=(const JSON& o) const noexcept
 }
 
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON::iterator JSON::begin() noexcept
 {
     return JSON::iterator(this);
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON::iterator JSON::end() noexcept
 {
     return JSON::iterator();
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON::const_iterator JSON::begin() const noexcept
 {
     return JSON::const_iterator(this);
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON::const_iterator JSON::end() const noexcept
 {
     return JSON::const_iterator();
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON::const_iterator JSON::cbegin() const noexcept
 {
     return JSON::const_iterator(this);
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON::const_iterator JSON::cend() const noexcept
 {
     return JSON::const_iterator();
@@ -1596,10 +1412,6 @@ JSON::iterator::~iterator()
     delete _oi;
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON::iterator& JSON::iterator::operator=(JSON::iterator o)
 {
     std::swap(_object, o._object);
@@ -1608,10 +1420,6 @@ JSON::iterator& JSON::iterator::operator=(JSON::iterator o)
     return *this;
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Object operators" for "object".
-*/
 bool JSON::iterator::operator==(const JSON::iterator& o) const
 {
     if (_object != o._object)
@@ -1651,20 +1459,11 @@ bool JSON::iterator::operator==(const JSON::iterator& o) const
     return true;
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Object operators" for "object".
-@test Tested in block "Iterators" for "object".
-*/
 bool JSON::iterator::operator!=(const JSON::iterator& o) const
 {
     return not operator==(o);
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON::iterator& JSON::iterator::operator++()
 {
     // iterator cannot be incremented
@@ -1703,10 +1502,6 @@ JSON::iterator& JSON::iterator::operator++()
     return *this;
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON& JSON::iterator::operator*() const
 {
     if (_object == nullptr)
@@ -1735,10 +1530,6 @@ JSON& JSON::iterator::operator*() const
     }
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON* JSON::iterator::operator->() const
 {
     if (_object == nullptr)
@@ -1767,10 +1558,6 @@ JSON* JSON::iterator::operator->() const
     }
 }
 
-/*!
-@test Tested in block "Object operators" for "object".
-@test Tested in block "Iterators" for "object".
-*/
 std::string JSON::iterator::key() const
 {
     if (_object != nullptr and _object->_type == value_type::object)
@@ -1783,10 +1570,6 @@ std::string JSON::iterator::key() const
     }
 }
 
-/*!
-@test Tested in block "Object operators" for "object".
-@test Tested in block "Iterators" for "object".
-*/
 JSON& JSON::iterator::value() const
 {
     if (_object == nullptr)
@@ -1900,10 +1683,6 @@ JSON::const_iterator::~const_iterator()
     delete _oi;
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON::const_iterator& JSON::const_iterator::operator=(JSON::const_iterator o)
 {
     std::swap(_object, o._object);
@@ -1912,10 +1691,6 @@ JSON::const_iterator& JSON::const_iterator::operator=(JSON::const_iterator o)
     return *this;
 }
 
-/*!
-@test Tested in block "Object operators" for "object".
-@test Tested in block "Iterators" for "object".
-*/
 bool JSON::const_iterator::operator==(const JSON::const_iterator& o) const
 {
     if (_object != o._object)
@@ -1955,19 +1730,11 @@ bool JSON::const_iterator::operator==(const JSON::const_iterator& o) const
     return true;
 }
 
-/*!
-@test Tested in block "Object operators" for "object".
-@test Tested in block "Iterators" for "object".
-*/
 bool JSON::const_iterator::operator!=(const JSON::const_iterator& o) const
 {
     return not operator==(o);
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 JSON::const_iterator& JSON::const_iterator::operator++()
 {
     // iterator cannot be incremented
@@ -2006,10 +1773,6 @@ JSON::const_iterator& JSON::const_iterator::operator++()
     return *this;
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 const JSON& JSON::const_iterator::operator*() const
 {
     if (_object == nullptr)
@@ -2038,10 +1801,6 @@ const JSON& JSON::const_iterator::operator*() const
     }
 }
 
-/*!
-@test Tested in block "Iterators" for "array".
-@test Tested in block "Iterators" for "object".
-*/
 const JSON* JSON::const_iterator::operator->() const
 {
     if (_object == nullptr)
@@ -2070,10 +1829,6 @@ const JSON* JSON::const_iterator::operator->() const
     }
 }
 
-/*!
-@test Tested in block "Object operators" for "object".
-@test Tested in block "Iterators" for "object".
-*/
 std::string JSON::const_iterator::key() const
 {
     if (_object != nullptr and _object->_type == value_type::object)
@@ -2086,10 +1841,6 @@ std::string JSON::const_iterator::key() const
     }
 }
 
-/*!
-@test Tested in block "Object operators" for "object".
-@test Tested in block "Iterators" for "object".
-*/
 const JSON& JSON::const_iterator::value() const
 {
     if (_object == nullptr)
