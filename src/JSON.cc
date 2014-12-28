@@ -1381,6 +1381,7 @@ JSON::iterator::iterator(const JSON::iterator& o) : _object(o._object)
             }
             default:
             {
+                // not sure if used
                 break;
             }
         }

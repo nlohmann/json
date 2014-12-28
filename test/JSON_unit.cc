@@ -1402,12 +1402,31 @@ TEST_CASE("Iterators")
         JSON::iterator i2(i1);
         JSON::iterator i3;
         i3 = i2;
+        CHECK(i1 == i1);
 
         JSON::const_iterator i4 = j_array.begin();
         ++i4;
         JSON::const_iterator i5(i4);
         JSON::const_iterator i6;
         i6 = i5;
+        CHECK(i4 == i4);
+    }
+    {
+        JSON j_object = {{"1", 1}, {"2", 2}};
+
+        JSON::iterator i1 = j_object.begin();
+        ++i1;
+        JSON::iterator i2(i1);
+        JSON::iterator i3;
+        i3 = i2;
+        CHECK(i1 == i1);
+
+        JSON::const_iterator i4 = j_object.begin();
+        ++i4;
+        JSON::const_iterator i5(i4);
+        JSON::const_iterator i6;
+        i6 = i5;
+        CHECK(i4 == i4);
     }
 
     // iterator copy assignment
