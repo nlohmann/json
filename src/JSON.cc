@@ -74,7 +74,7 @@ JSON::JSON(const value_type t) noexcept
             _value.number_float = number_float_t();
             break;
         }
-        case (value_type::null):
+        default:
         {
             break;
         }
@@ -217,7 +217,7 @@ JSON::JSON(const JSON& o) noexcept
             _value.number_float = o._value.number_float;
             break;
         }
-        case (value_type::null):
+        default:
         {
             break;
         }
@@ -270,10 +270,7 @@ JSON::~JSON() noexcept
             delete _value.string;
             break;
         }
-        case (value_type::boolean):
-        case (value_type::number):
-        case (value_type::number_float):
-        case (value_type::null):
+        default:
         {
             // nothing to do for non-pointer types
             break;
@@ -1077,10 +1074,7 @@ size_t JSON::size() const noexcept
         {
             return 0;
         }
-        case (value_type::boolean):
-        case (value_type::number):
-        case (value_type::number_float):
-        case (value_type::string):
+        default:
         {
             return 1;
         }
@@ -1112,10 +1106,7 @@ bool JSON::empty() const noexcept
         {
             return true;
         }
-        case (value_type::boolean):
-        case (value_type::number):
-        case (value_type::number_float):
-        case (value_type::string):
+        default:
         {
             return false;
         }
@@ -1165,7 +1156,7 @@ void JSON::clear() noexcept
             _value.number_float = {};
             break;
         }
-        case (value_type::null):
+        default:
         {
             break;
         }
@@ -1369,11 +1360,7 @@ JSON::iterator::iterator(JSON* j) : _object(j)
                 _oi = new object_t::iterator(_object->_value.object->begin());
                 break;
             }
-            case (value_type::null):
-            case (value_type::string):
-            case (value_type::boolean):
-            case (value_type::number):
-            case (value_type::number_float):
+            default:
             {
                 break;
             }
@@ -1395,11 +1382,7 @@ JSON::iterator::iterator(const JSON::iterator& o) : _object(o._object)
                 _oi = new object_t::iterator(*(o._oi));
                 break;
             }
-            case (value_type::null):
-            case (value_type::string):
-            case (value_type::boolean):
-            case (value_type::number):
-            case (value_type::number_float):
+            default:
             {
                 break;
             }
@@ -1446,11 +1429,7 @@ bool JSON::iterator::operator==(const JSON::iterator& o) const
                 }
                 break;
             }
-            case (value_type::null):
-            case (value_type::string):
-            case (value_type::boolean):
-            case (value_type::number):
-            case (value_type::number_float):
+            default:
             {
                 break;
             }
@@ -1490,11 +1469,7 @@ JSON::iterator& JSON::iterator::operator++()
             }
             break;
         }
-        case (value_type::null):
-        case (value_type::string):
-        case (value_type::boolean):
-        case (value_type::number):
-        case (value_type::number_float):
+        default:
         {
             _object = nullptr;
         }
@@ -1520,11 +1495,7 @@ JSON& JSON::iterator::operator*() const
         {
             return (*_oi)->second;
         }
-        case (value_type::null):
-        case (value_type::string):
-        case (value_type::boolean):
-        case (value_type::number):
-        case (value_type::number_float):
+        default:
         {
             return *_object;
         }
@@ -1549,11 +1520,7 @@ JSON* JSON::iterator::operator->() const
         {
             return &((*_oi)->second);
         }
-        case (value_type::null):
-        case (value_type::string):
-        case (value_type::boolean):
-        case (value_type::number):
-        case (value_type::number_float):
+        default:
         {
             return _object;
         }
@@ -1590,11 +1557,7 @@ JSON& JSON::iterator::value() const
         {
             return (*_oi)->second;
         }
-        case (value_type::null):
-        case (value_type::string):
-        case (value_type::boolean):
-        case (value_type::number):
-        case (value_type::number_float):
+        default:
         {
             return *_object;
         }
@@ -1617,11 +1580,7 @@ JSON::const_iterator::const_iterator(const JSON* j) : _object(j)
                 _oi = new object_t::const_iterator(_object->_value.object->begin());
                 break;
             }
-            case (value_type::null):
-            case (value_type::string):
-            case (value_type::boolean):
-            case (value_type::number):
-            case (value_type::number_float):
+            default:
             {
                 break;
             }
@@ -1643,11 +1602,7 @@ JSON::const_iterator::const_iterator(const JSON::const_iterator& o) : _object(o.
                 _oi = new object_t::const_iterator(*(o._oi));
                 break;
             }
-            case (value_type::null):
-            case (value_type::string):
-            case (value_type::boolean):
-            case (value_type::number):
-            case (value_type::number_float):
+            default:
             {
                 break;
             }
@@ -1669,11 +1624,7 @@ JSON::const_iterator::const_iterator(const JSON::iterator& o) : _object(o._objec
                 _oi = new object_t::const_iterator(*(o._oi));
                 break;
             }
-            case (value_type::null):
-            case (value_type::string):
-            case (value_type::boolean):
-            case (value_type::number):
-            case (value_type::number_float):
+            default:
             {
                 break;
             }
@@ -1720,11 +1671,7 @@ bool JSON::const_iterator::operator==(const JSON::const_iterator& o) const
                 }
                 break;
             }
-            case (value_type::null):
-            case (value_type::string):
-            case (value_type::boolean):
-            case (value_type::number):
-            case (value_type::number_float):
+            default:
             {
                 break;
             }
@@ -1764,11 +1711,7 @@ JSON::const_iterator& JSON::const_iterator::operator++()
             }
             break;
         }
-        case (value_type::null):
-        case (value_type::string):
-        case (value_type::boolean):
-        case (value_type::number):
-        case (value_type::number_float):
+        default:
         {
             _object = nullptr;
         }
@@ -1794,11 +1737,7 @@ const JSON& JSON::const_iterator::operator*() const
         {
             return (*_oi)->second;
         }
-        case (value_type::null):
-        case (value_type::string):
-        case (value_type::boolean):
-        case (value_type::number):
-        case (value_type::number_float):
+        default:
         {
             return *_object;
         }
@@ -1823,11 +1762,7 @@ const JSON* JSON::const_iterator::operator->() const
         {
             return &((*_oi)->second);
         }
-        case (value_type::null):
-        case (value_type::string):
-        case (value_type::boolean):
-        case (value_type::number):
-        case (value_type::number_float):
+        default:
         {
             return _object;
         }
@@ -1864,11 +1799,7 @@ const JSON& JSON::const_iterator::value() const
         {
             return (*_oi)->second;
         }
-        case (value_type::null):
-        case (value_type::string):
-        case (value_type::boolean):
-        case (value_type::number):
-        case (value_type::number_float):
+        default:
         {
             return *_object;
         }
