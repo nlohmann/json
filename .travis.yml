@@ -1,7 +1,11 @@
 language: cpp
 
 compiler:
+  - gcc
   - clang
+
+before_install:
+  - sudo pip install cpp-coveralls
 
 before_script:
   - autoreconf -iv
@@ -10,3 +14,9 @@ before_script:
 script:
   - make
   - make check
+
+after_success:
+  - make clean
+  - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage"
+  - ./json_unit
+  - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
