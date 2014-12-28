@@ -413,6 +413,7 @@ TEST_CASE("object")
         // at
         CHECK_THROWS_AS(j.at("foo"), std::out_of_range);
         CHECK_THROWS_AS(k.at("foo"), std::out_of_range);
+        CHECK_NOTHROW(k.at(std::string("k0")));
 
         // add pair
         j.push_back(JSON::object_t::value_type {"int_key", 42});
@@ -916,6 +917,13 @@ TEST_CASE("number (int)")
         CHECK(j1.get<int>() == 42);
         j1.clear();
         CHECK(j1.get<int>() == 0);
+
+        // find()
+        CHECK(j1.find("foo") == j1.end());
+        CHECK(j1.find(std::string("foo")) == j1.end());
+        const JSON j2 = j1;
+        CHECK(j2.find("foo") == j2.end());
+        CHECK(j2.find(std::string("foo")) == j2.end());
     }
 }
 
