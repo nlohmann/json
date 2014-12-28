@@ -153,7 +153,10 @@ TEST_CASE("array")
         {
             JSON nonarray2 = JSON(1);
             JSON nonarray3 = JSON(2);
+            JSON empty3 = JSON();
             CHECK_THROWS_AS(nonarray2.push_back(nonarray3), std::runtime_error);
+            CHECK_NOTHROW(empty3.push_back(nonarray3));
+            CHECK(empty3.type() == JSON::value_type::array);
         }
 
         const JSON k = j;
@@ -373,6 +376,18 @@ TEST_CASE("object")
             bool v4 = j[std::string("k4")];
             CHECK(v4 == true);
         }
+        {
+            const std::string v0 = k[std::string("k0")];
+            CHECK(v0 == "v0");
+            auto v1 = k[std::string("k1")];
+            CHECK(v1 == nullptr);
+            int v2 = k[std::string("k2")];
+            CHECK(v2 == 42);
+            double v3 = k[std::string("k3")];
+            CHECK(v3 == 3.141);
+            bool v4 = k[std::string("k4")];
+            CHECK(v4 == true);
+        }
 
         // write (replace)
         j["k0"] = "new v0";
@@ -387,8 +402,13 @@ TEST_CASE("object")
         // find
         CHECK(j.find("k0") != j.end());
         CHECK(j.find("v0") == j.end());
+        CHECK(j.find(std::string("v0")) == j.end());
         JSON::const_iterator i1 = j.find("k0");
         JSON::iterator i2 = j.find("k0");
+        CHECK(k.find("k0") != k.end());
+        CHECK(k.find("v0") == k.end());
+        CHECK(k.find(std::string("v0")) == k.end());
+        JSON::const_iterator i22 = k.find("k0");
 
         // at
         CHECK_THROWS_AS(j.at("foo"), std::out_of_range);
