@@ -257,6 +257,8 @@ class JSON
     JSON& at(const char*);
     /// operator to get an element in an object
     const JSON& at(const std::string&) const;
+    /// operator to get an element in an object
+    const JSON& at(const char*) const;
 
     /// return the number of stored values
     size_t size() const noexcept;

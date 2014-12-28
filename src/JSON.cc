@@ -1099,7 +1099,8 @@ const JSON& JSON::operator[](const std::string& key) const
     // this [] operator only works for objects
     if (_type != value_type::object)
     {
-        throw std::domain_error("cannot get entry with key " + std::string(key) + " from " + _typename());
+        throw std::domain_error("cannot get entry with key " +
+                                std::string(key) + " from " + _typename());
     }
 
     // search for the key
@@ -1152,6 +1153,14 @@ JSON& JSON::at(const char* key)
 }
 
 /*!
+@copydoc JSON::at(const char *key) const
+*/
+const JSON& JSON::at(const std::string& key) const
+{
+    return at(key.c_str());
+}
+
+/*!
 This operator realizes read-only access to object elements given a string
 key.
 
@@ -1162,7 +1171,7 @@ key.
 @exception std::domain_error if object is not an object
 @exception std::out_of_range if key is not found (via std::map::at)
 */
-const JSON& JSON::at(const std::string& key) const
+const JSON& JSON::at(const char* key) const
 {
     // this [] operator only works for objects
     if (_type != value_type::object)
@@ -1174,6 +1183,7 @@ const JSON& JSON::at(const std::string& key) const
     // return element from array at given key
     return _value.object->at(key);
 }
+
 
 /*!
 Returns the size of the JSON object.

@@ -507,6 +507,10 @@ TEST_CASE("object")
         JSON nonarray = 1;
         CHECK_THROWS_AS(const int i = nonarray["v1"], std::domain_error);
         CHECK_THROWS_AS(nonarray["v1"] = 10, std::domain_error);
+        {
+            const JSON c = {{"foo", "bar"}};
+            CHECK_THROWS_AS(c[std::string("baz")], std::out_of_range);
+        }
 
         // clear()
         JSON j7 = {{"k0", 0}, {"k1", 1}, {"k2", 2}, {"k3", 3}};
