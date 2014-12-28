@@ -1394,6 +1394,21 @@ TEST_CASE("Iterators")
         JSON::iterator tmp1(j7.begin());
         JSON::const_iterator tmp2(j7.cbegin());
     }
+    {
+        JSON j_array = {0, 1, 2, 3, 4, 5};
+
+        JSON::iterator i1 = j_array.begin();
+        ++i1;
+        JSON::iterator i2(i1);
+        JSON::iterator i3;
+        i3 = i2;
+
+        JSON::const_iterator i4 = j_array.begin();
+        ++i4;
+        JSON::const_iterator i5(i4);
+        JSON::const_iterator i6;
+        i6 = i5;
+    }
 
     // iterator copy assignment
     {

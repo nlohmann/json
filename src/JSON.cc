@@ -477,11 +477,6 @@ const std::string JSON::toString() const noexcept
 {
     switch (_type)
     {
-        case (value_type::null):
-        {
-            return "null";
-        }
-
         case (value_type::string):
         {
             return std::string("\"") + *_value.string + "\"";
@@ -532,6 +527,12 @@ const std::string JSON::toString() const noexcept
             }
 
             return "{" + result + "}";
+        }
+
+        // actually only value_type::null - but making the compiler happy
+        default:
+        {
+            return "null";
         }
     }
 }
