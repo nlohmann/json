@@ -1091,8 +1091,20 @@ TEST_CASE("Iterators")
     JSON j7 = "hello";
 
     // operator *
+    CHECK_THROWS_AS(* j1.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j1.cend(), std::runtime_error);
+    CHECK_THROWS_AS(* j2.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j2.cend(), std::runtime_error);
+    CHECK_THROWS_AS(* j3.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j3.cend(), std::runtime_error);
     CHECK_THROWS_AS(* j4.end(), std::runtime_error);
-    CHECK_THROWS_AS(* j4.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j4.cend(), std::runtime_error);
+    CHECK_THROWS_AS(* j5.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j5.cend(), std::runtime_error);
+    CHECK_THROWS_AS(* j6.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j6.cend(), std::runtime_error);
+    CHECK_THROWS_AS(* j7.end(), std::runtime_error);
+    CHECK_THROWS_AS(* j7.cend(), std::runtime_error);
 
     // operator ->
     CHECK(j1.begin()->type() == JSON::value_type::number);
@@ -1602,5 +1614,6 @@ TEST_CASE("Parser")
     {
         CHECK_THROWS_AS(JSON::parse(""), std::invalid_argument);
         CHECK_THROWS_AS(JSON::parse(std::string("")), std::invalid_argument);
+        CHECK_THROWS_AS(JSON::parse("[1,2"), std::invalid_argument);
     }
 }
