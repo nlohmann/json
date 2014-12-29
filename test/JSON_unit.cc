@@ -281,6 +281,12 @@ TEST_CASE("array")
             }
         }
 
+
+        // edge case: This should be an array with two elements which are in
+        // turn arrays with two strings. However, this is treated like the
+        // initializer list of an object.
+        JSON j_should_be_an_array = { {"foo", "bar"}, {"baz", "bat"} };
+        CHECK(j_should_be_an_array.type() == JSON::value_type::object);
     }
 }
 

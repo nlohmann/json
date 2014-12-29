@@ -8,9 +8,9 @@
 
 There are myriads of [JSON](http://json.org) libraries out there, and each may even have its reason to exist. Our class had these design goals:
 
-- **Trivial integration**. Our whole code consists of just two files: A header file `JSON.h` and a source file `JSON.cc`. That's it. No library, no subproject, no dependencies. The class is written in vanilla C++11. All in all, the class should require no adjustment of your compiler flags or project settings.
+- **Trivial integration**. Our whole code consists of a class in just two files: A header file `JSON.h` and a source file `JSON.cc`. That's it. No library, no subproject, no dependencies. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
-- **Intuitive syntax**. In languages such as Python, JSON feels like a first class data type. We used all the operator magic of C++ to achieve the same feeling in your code. Check out the [examples below](#examples) and you know, what I mean.
+- **Intuitive syntax**. In languages such as Python, JSON feels like a first class data type. We used all the operator magic of modern C++ to achieve the same feeling in your code. Check out the [examples below](#examples) and the [reference](https://github.com/nlohmann/json/blob/master/Reference.md), and you know, what I mean.
 
 - **Serious testing**. Our library is heavily unit-tested and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we use [Valgrind](http://valgrind.org) to make sure no memory leaks exist.
 
@@ -176,7 +176,7 @@ int vi = jn.get<int>();
 
 ## License
 
-<img style="float: right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
+<img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 
 The library is licensed under the [MIT License](http://opensource.org/licenses/MIT):
 

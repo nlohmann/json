@@ -146,8 +146,6 @@ as is to create an array.
 
 @bug With the described approach, we would fail to recognize an array whose
      first element is again an arrays as array.
-
-@todo Create test case for described bug.
 */
 JSON::JSON(list_init_t a) noexcept
 {
@@ -598,7 +596,7 @@ JSON& JSON::operator+=(double f)
 }
 
 /*!
-@todo comment me; test me
+@todo comment me
 */
 JSON& JSON::operator+=(const object_t::value_type& p)
 {
@@ -606,7 +604,7 @@ JSON& JSON::operator+=(const object_t::value_type& p)
 }
 
 /*!
-@todo comment me; test me
+@todo comment me
 */
 JSON& JSON::operator+=(list_init_t a)
 {
@@ -731,7 +729,7 @@ void JSON::push_back(double f)
 }
 
 /*!
-@todo comment me; test me
+@todo comment me
 */
 void JSON::push_back(const object_t::value_type& p)
 {
@@ -739,7 +737,7 @@ void JSON::push_back(const object_t::value_type& p)
 }
 
 /*!
-@todo comment me; test me
+@todo comment me
 */
 void JSON::push_back(list_init_t a)
 {
@@ -1119,8 +1117,6 @@ Removes all elements from compounds and resets values to default.
 @invariant Clear will set any value type to its default value which is empty
            for compounds, false for booleans, 0 for integer numbers, and 0.0
            for floating numbers.
-
-@todo Test me.
 */
 void JSON::clear() noexcept
 {
