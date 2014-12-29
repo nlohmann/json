@@ -1224,19 +1224,6 @@ JSON::const_iterator JSON::find(const char* key) const
     }
 }
 
-/*!
-@return the payload of the JSON object.
-*/
-JSON::value JSON::data() noexcept
-{
-    return _value;
-}
-
-const JSON::value JSON::data() const noexcept
-{
-    return _value;
-}
-
 bool JSON::operator==(const JSON& o) const noexcept
 {
     switch (_type)

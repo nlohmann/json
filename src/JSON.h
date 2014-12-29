@@ -279,11 +279,6 @@ class JSON
     /// find an element in an object (returns end() iterator otherwise)
     const_iterator find(const char*) const;
 
-    /// direct access to the underlying payload
-    value data() noexcept;
-    /// direct access to the underlying payload
-    const value data() const noexcept;
-
     /// lexicographically compares the values
     bool operator==(const JSON&) const noexcept;
     /// lexicographically compares the values

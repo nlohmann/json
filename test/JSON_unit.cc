@@ -21,10 +21,6 @@ TEST_CASE("array")
         CHECK(j.begin() != j.end());
         CHECK(j.cbegin() != j.cend());
 
-        // check payload
-        //CHECK(*(j.data().array) == JSON::array_t());
-        //CHECK(*(j_const.data().array) == JSON::array_t());
-
         // container members
         CHECK(j.size() == 0);
         CHECK(j.empty() == true);
@@ -305,10 +301,6 @@ TEST_CASE("object")
         // iterators
         CHECK(j.begin() != j.end());
         CHECK(j.cbegin() != j.cend());
-
-        // check payload
-        //CHECK(*(j.data().object) == JSON::object_t());
-        //CHECK(*(j_const.data().object) == JSON::object_t());
 
         // container members
         CHECK(j.size() == 0);
@@ -756,10 +748,6 @@ TEST_CASE("string")
         // string representation of default value
         CHECK(j.toString() == "\"\"");
 
-        // check payload
-        CHECK(*(j.data().string) == JSON::string_t());
-        CHECK(*(j_const.data().string) == JSON::string_t());
-
         // container members
         CHECK(j.size() == 1);
         CHECK(j.empty() == false);
@@ -842,10 +830,6 @@ TEST_CASE("boolean")
         // string representation of default value
         CHECK(j.toString() == "false");
 
-        // check payload
-        CHECK(j.data().boolean == JSON::boolean_t());
-        CHECK(j_const.data().boolean == JSON::boolean_t());
-
         // container members
         CHECK(j.size() == 1);
         CHECK(j.empty() == false);
@@ -924,10 +908,6 @@ TEST_CASE("number (int)")
 
         // string representation of default value
         CHECK(j.toString() == "0");
-
-        // check payload
-        CHECK(j.data().number == JSON::number_t());
-        CHECK(j_const.data().number == JSON::number_t());
 
         // container members
         CHECK(j.size() == 1);
@@ -1014,10 +994,6 @@ TEST_CASE("number (float)")
 
         // string representation of default value
         CHECK(j.toString() == "0.000000");
-
-        // check payload
-        CHECK(j.data().number_float == JSON::number_float_t());
-        CHECK(j_const.data().number_float == JSON::number_float_t());
 
         // container members
         CHECK(j.size() == 1);
