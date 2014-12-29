@@ -176,6 +176,8 @@ int vi = jn.get<int>();
 
 ## License
 
+<img style="float: right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
+
 The library is licensed under the [MIT License](http://opensource.org/licenses/MIT):
 
 Copyright (c) 2013-2014 Niels Lohmann
