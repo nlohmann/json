@@ -32,3 +32,5 @@ missing
 test-driver
 
 Makefile.in
+
+*.plist

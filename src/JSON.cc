@@ -162,7 +162,7 @@ JSON::JSON(list_init_t a) noexcept
 
             // the initializer list describes an array
             _type = value_type::array;
-            _value = new array_t(std::move(a));
+            _value = new array_t(a);
             return;
         }
     }
@@ -684,6 +684,8 @@ void JSON::push_back(JSON&& o)
 
     // add element to array (move semantics)
     _value.array->emplace_back(std::move(o));
+    // invalidate object
+    o._type = value_type::null;
 }
 
 void JSON::push_back(const std::string& s)
@@ -1188,6 +1190,7 @@ JSON::iterator JSON::find(const char* key)
         if (i != _value.object->end())
         {
             JSON::iterator result(this);
+            delete result._oi;
             result._oi = new object_t::iterator(i);
             return result;
         }
@@ -1210,6 +1213,7 @@ JSON::const_iterator JSON::find(const char* key) const
         if (i != _value.object->end())
         {
             JSON::const_iterator result(this);
+            delete result._oi;
             result._oi = new object_t::const_iterator(i);
             return result;
         }
