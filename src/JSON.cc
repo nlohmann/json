@@ -1775,14 +1775,13 @@ Initialize the JSON parser given an input stream \p _is.
 */
 JSON::Parser::Parser(std::istream& _is)
 {
-    // determine length of input stream
-    _is.seekg(0, std::ios::end);
-    _length = static_cast<size_t>(_is.tellg());
-    _is.seekg(0, std::ios::beg);
+    // copy stream to string
+    std::istreambuf_iterator<char> eos;
+    std::string string_input(std::istreambuf_iterator<char>(_is), eos);
 
-    // copy stream to buffer
+    _length = string_input.size();
     _buffer = new char[_length + 1];
-    _is.read(_buffer, static_cast<std::streamsize>(_length));
+    std::strcpy(_buffer, string_input.c_str());
 
     // read first character
     next();

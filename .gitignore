@@ -34,3 +34,5 @@ test-driver
 Makefile.in
 
 *.plist
+
+json_parser
