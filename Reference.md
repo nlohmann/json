@@ -26,10 +26,10 @@ JSON values can be created from many literals and variable types:
 
 | JSON type | literal/variable types | examples |
 | --------- | ---------------------- | -------- |
-| none      | null pointer literal, `nullptr_t` type, no value | `nullptr` |
+| none      | null pointer literal, `nullptr_t` type, no value | ```cpp nullptr``` |
 | boolean   | boolean literals, `bool` type, `JSON::boolean_t` type | `true`, `false` |
 | string    | string literal, `char*` type, `std::string` type, `std::string&&` rvalue reference, `JSON::string_t` type | `"Hello"` |
 | number (integer) | integer literal, `short int` type, `int` type, `JSON_number_t` type | `42` |
 | number (floating point) | floating point literal, `float` type, `double` type, `JSON::number_float_t` type | `3.141529`
 | array | initializer list whose elements are `JSON` values (or can be translated into `JSON` values using the rules above), `std::vector<JSON>` type, `JSON::array_t` type | `{1, 2, 3, true, "foo"}` |
-| object | initializer list whose elements are pairs of a string literal and a `JSON` value (or can be translated into `JSON` values using the rules above), `std::map<std::string, JSON>` type, `JSON::object_t` type | { {"key1", 42}, {"key2", false} } |
+| object | initializer list whose elements are pairs of a string literal and a `JSON` value (or can be translated into `JSON` values using the rules above), `std::map<std::string, JSON>` type, `JSON::object_t` type | `{ {"key1", 42}, {"key2", false} }` |
