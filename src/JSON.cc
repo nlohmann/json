@@ -1791,9 +1791,10 @@ JSON::Parser::Parser(std::istream& _is)
     // from http://www.manticmoo.com/articles/jeff/programming/c++/making-io-streams-efficient-in-c++.php
     //  Don't sync C++ and C I/O
     std::ios_base::sync_with_stdio(false);
-    while(_is) {
-      std::getline(_is, input_line);
-      string_input += input_line;
+    while (_is)
+    {
+        std::getline(_is, input_line);
+        string_input += input_line;
     }
 
     _length = string_input.size();

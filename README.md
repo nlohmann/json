@@ -86,8 +86,10 @@ You can also use streams:
 
 ```cpp
 // create object from stream
+std::stringstream ss;
+ss << "{ \"pi\": 3.141, \"happy\": true }";
 JSON j;
-j << "{ \"pi\": 3.141, \"happy\": true }";
+j << ss;
 
 // write string representation to stream
 std::cout << j;
@@ -150,8 +152,8 @@ The type of the JSON object is determined automatically by the expression to sto
 ```cpp
 /// strings
 std::string s1 = "Hello, world!";
-JSON js = s;
-std::string s2 = j;
+JSON js = s1;
+std::string s2 = js;
 
 // Booleans
 bool b1 = true;
