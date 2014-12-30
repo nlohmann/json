@@ -1,3 +1,14 @@
+/*!
+@file
+@copyright The code is licensed under the MIT License
+           <http://opensource.org/licenses/MIT>,
+           Copyright (c) 2013-2014 Niels Lohmann.
+
+@author Niels Lohmann <http://nlohmann.me>
+
+@see https://github.com/nlohmann/json
+*/
+
 #pragma once
 
 #include <initializer_list>  // std::initializer_list
@@ -8,6 +19,8 @@
 #include <vector>            // std::vector
 
 /*!
+@brief JSON for Modern C++
+
 The size of a JSON object is 16 bytes: 8 bytes for the value union whose
 largest item is a pointer type and another 8 byte for an element of the
 type union. The latter only needs 1 byte - the remaining 7 bytes are wasted

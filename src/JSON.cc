@@ -1,6 +1,16 @@
+/*!
+@file
+@copyright The code is licensed under the MIT License
+           <http://opensource.org/licenses/MIT>,
+           Copyright (c) 2013-2014 Niels Lohmann.
+
+@author Niels Lohmann <http://nlohmann.me>
+
+@see https://github.com/nlohmann/json
+*/
+
 #include "JSON.h"
 
-#include <cassert>    // assert
 #include <cctype>     // std::isdigit, std::isspace
 #include <cstddef>    // size_t
 #include <cstdlib>    // std::atof
