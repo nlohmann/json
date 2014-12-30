@@ -1,6 +1,12 @@
 # Reference
 
+## Nomenclature
+
+We use the term "JSON" when we mean the [JavaScript Object Notation](http://json.org); that is, the file format. When we talk about the class implementing our library, we use "`JSON`" (typewriter font). Instances of this class are called "`JSON` values" to differentiate them from "JSON objects"; that is, unordered mappings, hashes, and whatnot.
+
 ## Types and default values
+
+This table describes how JSON values are mapped to C++ types.
 
 | JSON type               | value_type                 | C++ type                      | type alias             | default value |
 | ----------------------- | -------------------------- | ----------------------------- | ---------------------- | --------------
@@ -10,6 +16,8 @@
 | number (floating point) | `value_type::number_float` | `double`                      | `JSON::number_float_t` | `0.0`         |
 | array                   | `value_type::array `       | `std::array<JSON>`            | `JSON::array_t`        | `{}`          |
 | object                  | `value_type::object`       | `std::map<std::string, JSON>` | `JSON::object_t`       | `{}`          |
+
+The second column list entries of an enumeration `value_type` which can be queried by calling `type()` on a `JSON` value. The column "C++ types" list the internal type that is used to represent the respective JSON value. The "type alias" column furthermore lists type aliases that are used in the `JSON` class to allow for more flexibility. The last column list the default value; that is, the value that is set if none is passed to the constructor or that is set if `clear()` is called.
 
 ## Type conversions
 
@@ -24,7 +32,7 @@ When compatible, `JSON` values **implicitly convert** to `std::string`, `int`, `
 
 ## Initialization
 
-JSON values can be created from many literals and variable types:
+`JSON` values can be created from many literals and variable types:
 
 | JSON type | literal/variable types | examples |
 | --------- | ---------------------- | -------- |
@@ -35,3 +43,11 @@ JSON values can be created from many literals and variable types:
 | number (floating point) | floating point literal, `float` type, `double` type, `JSON::number_float_t` type | `3.141529`
 | array | initializer list whose elements are `JSON` values (or can be translated into `JSON` values using the rules above), `std::vector<JSON>` type, `JSON::array_t` type, `JSON::array_t&&` rvalue reference | `{1, 2, 3, true, "foo"}` |
 | object | initializer list whose elements are pairs of a string literal and a `JSON` value (or can be translated into `JSON` values using the rules above), `std::map<std::string, JSON>` type, `JSON::object_t` type, `JSON::object_t&&` rvalue reference | `{ {"key1", 42}, {"key2", false} }` |
+
+## Number types
+
+[![JSON number format](http://json.org/number.gif)](http://json.org)
+
+The JSON specification explicitly does not define an internal number representation, but only the syntax of how numbers can be written down. Consequently, we would need to use the largest possible floating point number format (e.g., `long double`) to internally store JSON numbers.
+
+However, this would be a waste of space, so we let the JSON parser decide which format to use: If the number can be precisely stored in an `int`, we use an `int` to store it. However, if it is a floating point number, we use `double` to store it.
