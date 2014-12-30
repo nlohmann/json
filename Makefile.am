@@ -7,7 +7,7 @@ json_unit_CXXFLAGS = $(FLAGS) -std=c++11
 json_unit_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/test -Dprivate=public
 
 json_parser_SOURCES = src/JSON.cc src/JSON.h benchmark/parse.cc
-json_parser_CXXFLAGS = $(FLAGS) -std=c++11
+json_parser_CXXFLAGS = -O3 -std=c++11 -flto
 json_parser_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/benchmark
 
 cppcheck:
@@ -24,3 +24,6 @@ pretty:
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none \
 	   $(SOURCES)
+
+parser:
+	make CXXFLAGS="" json_parser

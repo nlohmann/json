@@ -1776,8 +1776,15 @@ Initialize the JSON parser given an input stream \p _is.
 JSON::Parser::Parser(std::istream& _is)
 {
     // copy stream to string
-    std::istreambuf_iterator<char> eos;
-    std::string string_input(std::istreambuf_iterator<char>(_is), eos);
+    std::string input_line, string_input;
+
+    // from http://www.manticmoo.com/articles/jeff/programming/c++/making-io-streams-efficient-in-c++.php
+    //  Don't sync C++ and C I/O
+    std::ios_base::sync_with_stdio(false);
+    while(_is) {
+      std::getline(_is, input_line);
+      string_input += input_line;
+    }
 
     _length = string_input.size();
     _buffer = new char[_length + 1];
