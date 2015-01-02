@@ -1840,7 +1840,7 @@ void JSON::Parser::parse(JSON& result)
                     expect(':');
 
                     // value
-                    parse(result[key]);
+                    parse(result[std::move(key)]);
                 }
                 while (_current == ',' && next());
             }
