@@ -194,13 +194,13 @@ class JSON
     /// read from stream
     friend std::istream& operator>>(std::istream& i, JSON& j)
     {
-        Parser(i).parse(j);
+        j = Parser(i).parse();
         return i;
     }
     /// read from stream
     friend std::istream& operator<<(JSON& j, std::istream& i)
     {
-        Parser(i).parse(j);
+        j = Parser(i).parse();
         return i;
     }
 
@@ -406,8 +406,8 @@ class JSON
         // no copy assignment
         Parser& operator=(Parser) = delete;
 
-        /// parse into a given JSON object
-        void parse(JSON&);
+        /// parse and return a JSON object
+        JSON parse();
 
       private:
         /// read the next character, stripping whitespace

@@ -291,9 +291,7 @@ JSON::~JSON() noexcept
 */
 JSON JSON::parse(const std::string& s)
 {
-    JSON j;
-    Parser(s).parse(j);
-    return j;
+    return Parser(s).parse();
 }
 
 /*!
@@ -302,9 +300,7 @@ JSON JSON::parse(const std::string& s)
 */
 JSON JSON::parse(const char* s)
 {
-    JSON j;
-    Parser(s).parse(j);
-    return j;
+    return Parser(s).parse();
 }
 
 
@@ -1793,18 +1789,14 @@ JSON::Parser::Parser(std::istream& _is)
     next();
 }
 
-/*!
-@param[out] result  the JSON to parse to
-*/
-void JSON::Parser::parse(JSON& result)
+JSON JSON::Parser::parse()
 {
     switch (_current)
     {
         case ('{'):
         {
             // explicitly set result to object to cope with {}
-            result._type = value_type::object;
-            result._value.object = new object_t;
+            JSON result(value_type::object);
 
             next();
 
@@ -1820,7 +1812,7 @@ void JSON::Parser::parse(JSON& result)
                     expect(':');
 
                     // value
-                    parse(result[std::move(key)]);
+                    result[std::move(key)] = parse();
                 }
                 while (_current == ',' and next());
             }
@@ -1828,14 +1820,13 @@ void JSON::Parser::parse(JSON& result)
             // closing brace
             expect('}');
 
-            break;
+            return result;
         }
 
         case ('['):
         {
             // explicitly set result to array to cope with []
-            result._type = value_type::array;
-            result._value.array = new array_t;
+            JSON result(value_type::array);
 
             next();
 
@@ -1845,9 +1836,7 @@ void JSON::Parser::parse(JSON& result)
                 size_t element_count = 0;
                 do
                 {
-                    // add a dummy value and continue parsing at its position
-                    result += JSON();
-                    parse(result[element_count++]);
+                    result.push_back(parse());
                 }
                 while (_current == ',' and next());
             }
@@ -1855,37 +1844,30 @@ void JSON::Parser::parse(JSON& result)
             // closing bracket
             expect(']');
 
-            break;
+            return result;
         }
 
         case ('\"'):
         {
-            result._type = value_type::string;
-            result._value.string = new string_t(std::move(parseString()));
-            break;
+            return JSON(parseString());
         }
 
         case ('t'):
         {
             parseTrue();
-            result._type = value_type::boolean;
-            result._value.boolean = true;
-            break;
+            return JSON(true);
         }
 
         case ('f'):
         {
             parseFalse();
-            result._type = value_type::boolean;
-            result._value.boolean = false;
-            break;
+            return JSON(false);
         }
 
         case ('n'):
         {
             parseNull();
-            // nothing to do with result: is null by default
-            break;
+            return JSON();
         }
 
         default:
@@ -1911,14 +1893,12 @@ void JSON::Parser::parse(JSON& result)
                     if (float_val == int_val)
                     {
                         // we would not lose precision -> int
-                        result._type = value_type::number;
-                        result._value.number = int_val;
+                        return JSON(int_val);
                     }
                     else
                     {
                         // we would lose precision -> float
-                        result._type = value_type::number_float;
-                        result._value.number_float = float_val;
+                        return JSON(float_val);
                     }
                 }
                 catch (...)
