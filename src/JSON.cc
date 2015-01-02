@@ -13,8 +13,6 @@
 
 #include <cctype>     // std::isdigit, std::isspace
 #include <cstddef>    // size_t
-#include <cstdlib>    // std::atof
-#include <cstring>    // std::strlen, std::strchr, std::strcpy, std::strncmp
 #include <stdexcept>  // std::runtime_error
 #include <utility>    // std::swap, std::move
 
@@ -1748,14 +1746,12 @@ Initialize the JSON parser given a string \p s.
 
 @param s  string to parse
 
-@post \p s is copied to the buffer @ref _buffer and the firsr character is
+@post \p s is copied to the buffer @ref _buffer and the first character is
       read. Whitespace is skipped.
 */
 JSON::Parser::Parser(const char* s)
-    : _length(std::strlen(s)), _buffer(new char[_length + 1])
+    :  _buffer(s)
 {
-    std::strcpy(_buffer, s);
-
     // read first character
     next();
 }
@@ -1764,10 +1760,8 @@ JSON::Parser::Parser(const char* s)
 @copydoc JSON::Parser::Parser(const char* s)
 */
 JSON::Parser::Parser(const std::string& s)
-    : _length(s.length()), _buffer(new char[_length + 1])
+    : _buffer(s)
 {
-    std::strcpy(_buffer, s.c_str());
-
     // read first character
     next();
 }
@@ -1785,32 +1779,18 @@ Initialize the JSON parser given an input stream \p _is.
 */
 JSON::Parser::Parser(std::istream& _is)
 {
-    // copy stream to string
-    std::string input_line, string_input;
-
     // from http://www.manticmoo.com/articles/jeff/programming/c++/making-io-streams-efficient-in-c++.php
     //  Don't sync C++ and C I/O
     std::ios_base::sync_with_stdio(false);
     while (_is)
     {
+        std::string input_line;
         std::getline(_is, input_line);
-        string_input += input_line;
+        _buffer += input_line;
     }
-
-    _length = string_input.size();
-    _buffer = new char[_length + 1];
-    std::strcpy(_buffer, string_input.c_str());
 
     // read first character
     next();
-}
-
-/*!
-@post Memory allocated for @ref _buffer (by the constructors) is released.
-*/
-JSON::Parser::~Parser()
-{
-    delete [] _buffer;
 }
 
 /*!
@@ -1842,7 +1822,7 @@ void JSON::Parser::parse(JSON& result)
                     // value
                     parse(result[std::move(key)]);
                 }
-                while (_current == ',' && next());
+                while (_current == ',' and next());
             }
 
             // closing brace
@@ -1869,7 +1849,7 @@ void JSON::Parser::parse(JSON& result)
                     result += JSON();
                     parse(result[element_count++]);
                 }
-                while (_current == ',' && next());
+                while (_current == ',' and next());
             }
 
             // closing bracket
@@ -1918,9 +1898,9 @@ void JSON::Parser::parse(JSON& result)
                 {
                     tmp += _current;
                 }
-                while (next() && (std::isdigit(_current) || _current == '.'
-                                  || _current == 'e' || _current == 'E'
-                                  || _current == '+' || _current == '-'));
+                while (next() and (std::isdigit(_current) || _current == '.'
+                                   || _current == 'e' || _current == 'E'
+                                   || _current == '+' || _current == '-'));
 
                 try
                 {
@@ -1967,7 +1947,7 @@ true. If the end of the buffer is reached, false is returned.
 */
 bool JSON::Parser::next()
 {
-    if (_pos == _length)
+    if (_pos == _buffer.size())
     {
         return false;
     }
@@ -1977,7 +1957,7 @@ bool JSON::Parser::next()
     // skip trailing whitespace
     while (std::isspace(_current))
     {
-        if (_pos == _length)
+        if (_pos == _buffer.size())
         {
             return false;
         }
@@ -2012,6 +1992,7 @@ Parses a string after opening quotes (\p ") where read.
 @return the parsed string
 
 @pre  An opening quote \p " was read in the main parse function @ref parse.
+      _pos is the position after the opening quote.
 
 @post The character after the closing quote \p " is the current character @ref
       _current. Whitespace is skipped.
@@ -2019,35 +2000,33 @@ Parses a string after opening quotes (\p ") where read.
 std::string JSON::Parser::parseString()
 {
     // get position of closing quotes
-    char* p = std::strchr(_buffer + _pos, '\"');
+    auto quote_pos = _buffer.find_first_of("\"", _pos);
 
-    // if the closing quotes are escaped (viz. *(p-1) is '\\'), we continue
-    // looking for the "right" quotes
-    while (p != nullptr and * (p - 1) == '\\')
+    // if the closing quotes are escaped (character before the quotes is a
+    // backslash), we continue looking for the final quotes
+    while (quote_pos != std::string::npos and _buffer[quote_pos - 1] == '\\')
     {
-        // length of the string so far
-        const size_t length = static_cast<size_t>(p - _buffer) - _pos;
-        // continue checking after escaped quote
-        p = std::strchr(_buffer + _pos + length + 1, '\"');
+        quote_pos = _buffer.find_first_of("\"", quote_pos + 1);
     }
 
     // check if closing quotes were found
-    if (p == nullptr)
+    if (quote_pos == std::string::npos)
     {
         error("expected '\"'");
     }
 
-    // copy string to return value
-    const size_t length = static_cast<size_t>(p - _buffer) - _pos;
-    const std::string result(_buffer + _pos, length);
+    // store the coordinates of the string for the later return value
+    const auto stringBegin = _pos;
+    const auto stringLength = quote_pos - _pos;
 
-    // +1 to "eat" closing quote
-    _pos += length + 1;
+    // set buffer position to the position behind (+1) the closing quote
+    _pos = quote_pos + 1;
 
     // read next character
     next();
 
-    return result;
+    // return the string value
+    return _buffer.substr(stringBegin, stringLength);
 }
 
 /*!
@@ -2062,7 +2041,7 @@ error is raised via @ref error.
 */
 void JSON::Parser::parseTrue()
 {
-    if (std::strncmp(_buffer + _pos, "rue", 3))
+    if (_buffer.substr(_pos, 3) != "rue")
     {
         error("expected true");
     }
@@ -2085,7 +2064,7 @@ error is raised via @ref error.
 */
 void JSON::Parser::parseFalse()
 {
-    if (std::strncmp(_buffer + _pos, "alse", 4))
+    if (_buffer.substr(_pos, 4) != "alse")
     {
         error("expected false");
     }
@@ -2108,7 +2087,7 @@ error is raised via @ref error.
 */
 void JSON::Parser::parseNull()
 {
-    if (std::strncmp(_buffer + _pos, "ull", 3))
+    if (_buffer.substr(_pos, 3) != "ull")
     {
         error("expected null");
     }

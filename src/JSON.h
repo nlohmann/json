@@ -399,7 +399,7 @@ class JSON
         /// a parser reading from an input stream
         Parser(std::istream&);
         /// destructor of the parser
-        ~Parser();
+        ~Parser() = default;
 
         // no copy constructor
         Parser(const Parser&) = delete;
@@ -413,23 +413,21 @@ class JSON
         /// read the next character, stripping whitespace
         bool next();
         /// raise an exception with an error message
-        void error(const std::string&) __attribute__((noreturn));
+        inline void error(const std::string&) __attribute__((noreturn));
         /// parse a quoted string
         std::string parseString();
         /// parse a Boolean "true"
-        void parseTrue();
+        inline void parseTrue();
         /// parse a Boolean "false"
-        void parseFalse();
+        inline void parseFalse();
         /// parse a null object
-        void parseNull();
+        inline void parseNull();
         /// a helper function to expect a certain character
         void expect(const char);
 
       private:
-        /// the length of the input buffer
-        size_t _length {};
         /// a buffer of the input
-        char* _buffer { nullptr };
+        std::string _buffer {};
         /// the current character
         char _current {};
         /// the position inside the input buffer
