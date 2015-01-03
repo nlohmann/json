@@ -151,7 +151,8 @@ TEST_CASE("array")
         CHECK_NOTHROW(j[21]);
         CHECK_THROWS_AS(const int i = j.at(21), std::out_of_range);
         CHECK_THROWS_AS(nonarray[0] = 10, std::domain_error);
-        CHECK_NOTHROW(j[21] = 5);
+        // the next test is remove due to undefined behavior
+        //CHECK_NOTHROW(j[21] = 5);
         CHECK_THROWS_AS(j.at(21) = 5, std::out_of_range);
         CHECK_THROWS_AS(nonarray += 2, std::runtime_error);
 
