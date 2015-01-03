@@ -415,7 +415,7 @@ class JSON
         /// raise an exception with an error message
         inline void error(const std::string&) __attribute__((noreturn));
         /// parse a quoted string
-        std::string parseString();
+        inline std::string parseString();
         /// parse a Boolean "true"
         inline void parseTrue();
         /// parse a Boolean "false"
@@ -423,7 +423,7 @@ class JSON
         /// parse a null object
         inline void parseNull();
         /// a helper function to expect a certain character
-        void expect(const char);
+        inline void expect(const char);
 
       private:
         /// a buffer of the input

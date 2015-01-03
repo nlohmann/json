@@ -242,6 +242,7 @@ JSON::JSON(JSON&& o) noexcept
     : _type(std::move(o._type)), _value(std::move(o._value))
 {
     // invalidate payload
+    o._type = value_type::null;
     o._value = {};
 }
 
@@ -1806,13 +1807,14 @@ JSON JSON::Parser::parse()
                 do
                 {
                     // key
-                    const auto key = parseString();
+                    auto key = parseString();
 
                     // colon
                     expect(':');
 
                     // value
                     result[std::move(key)] = parse();
+                    key.clear();
                 }
                 while (_current == ',' and next());
             }
@@ -1870,48 +1872,52 @@ JSON JSON::Parser::parse()
             return JSON();
         }
 
+        case ('-'):
+        case ('0'):
+        case ('1'):
+        case ('2'):
+        case ('3'):
+        case ('4'):
+        case ('5'):
+        case ('6'):
+        case ('7'):
+        case ('8'):
+        case ('9'):
+        {
+            // remember position of number's first character
+            const auto _first_pos = _pos - 1;
+
+            while (next() and (std::isdigit(_current) || _current == '.'
+                               || _current == 'e' || _current == 'E'
+                               || _current == '+' || _current == '-'));
+
+            try
+            {
+                const auto float_val = std::stod(_buffer.substr(_first_pos, _pos - _first_pos));
+                const auto int_val = static_cast<int>(float_val);
+
+                // check if conversion loses precision
+                if (float_val == int_val)
+                {
+                    // we would not lose precision -> int
+                    return JSON(int_val);
+                }
+                else
+                {
+                    // we would lose precision -> float
+                    return JSON(float_val);
+                }
+            }
+            catch (...)
+            {
+                error("error translating " +
+                      _buffer.substr(_first_pos, _pos - _first_pos) + " to number");
+            }
+        }
+
         default:
         {
-            if (std::isdigit(_current) || _current == '-')
-            {
-                // collect number in tmp string
-                std::string tmp;
-                do
-                {
-                    tmp += _current;
-                }
-                while (next() and (std::isdigit(_current) || _current == '.'
-                                   || _current == 'e' || _current == 'E'
-                                   || _current == '+' || _current == '-'));
-
-                try
-                {
-                    const auto float_val = std::stod(tmp);
-                    const auto int_val = static_cast<int>(float_val);
-
-                    // check if conversion loses precision
-                    if (float_val == int_val)
-                    {
-                        // we would not lose precision -> int
-                        return JSON(int_val);
-                    }
-                    else
-                    {
-                        // we would lose precision -> float
-                        return JSON(float_val);
-                    }
-                }
-                catch (...)
-                {
-                    error("error while translating " + tmp + " to number");
-                }
-
-                break;
-            }
-            else
-            {
-                error("unexpected character");
-            }
+            error("unexpected character");
         }
     }
 }
