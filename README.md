@@ -99,7 +99,6 @@ JSON j2 = {
     {"value", "42.99"}
   }}
 };
-*/
 ```
 
 Note that in all cases, you never need to "tell" the compiler which JSON value you want to use.
