@@ -2,7 +2,7 @@
 
 ## Nomenclature
 
-We use the term "JSON" when we mean the [JavaScript Object Notation](http://json.org); that is, the file format. When we talk about the class implementing our library, we use "`JSON`" (typewriter font). Instances of this class are called "`JSON` values" to differentiate them from "JSON objects"; that is, unordered mappings, hashes, and whatnot.
+We use the term "JSON" when we mean the [JavaScript Object Notation](http://json.org); that is, the file format. When we talk about the class implementing our library, we use "`json`" (typewriter font). Instances of this class are called "`json` values" to differentiate them from "JSON objects"; that is, unordered mappings, hashes, and whatnot.
 
 ## Types and default values
 
@@ -11,13 +11,13 @@ This table describes how JSON values are mapped to C++ types.
 | JSON type               | value_type                 | C++ type                      | type alias             | default value |
 | ----------------------- | -------------------------- | ----------------------------- | ---------------------- | --------------
 | null                    | `value_type::null`         | `nullptr_t`                   | -                      | `nullptr`     |
-| string                  | `value_type::string`       | `std::string`                 | `JSON::string_t`       | `""`          |
-| number (integer)        | `value_type::number`       | `int`                         | `JSON::number_t`       | `0`           |
-| number (floating point) | `value_type::number_float` | `double`                      | `JSON::number_float_t` | `0.0`         |
-| array                   | `value_type::array `       | `std::array<JSON>`            | `JSON::array_t`        | `{}`          |
-| object                  | `value_type::object`       | `std::map<std::string, JSON>` | `JSON::object_t`       | `{}`          |
+| string                  | `value_type::string`       | `std::string`                 | `json::string_t`       | `""`          |
+| number (integer)        | `value_type::number`       | `int`                         | `json::number_t`       | `0`           |
+| number (floating point) | `value_type::number_float` | `double`                      | `json::number_float_t` | `0.0`         |
+| array                   | `value_type::array `       | `std::array<json>`            | `json::array_t`        | `{}`          |
+| object                  | `value_type::object`       | `std::map<std::string, json>` | `json::object_t`       | `{}`          |
 
-The second column list entries of an enumeration `value_type` which can be queried by calling `type()` on a `JSON` value. The column "C++ types" list the internal type that is used to represent the respective JSON value. The "type alias" column furthermore lists type aliases that are used in the `JSON` class to allow for more flexibility. The last column list the default value; that is, the value that is set if none is passed to the constructor or that is set if `clear()` is called.
+The second column list entries of an enumeration `value_type` which can be queried by calling `type()` on a `json` value. The column "C++ types" list the internal type that is used to represent the respective JSON value. The "type alias" column furthermore lists type aliases that are used in the `json` class to allow for more flexibility. The last column list the default value; that is, the value that is set if none is passed to the constructor or that is set if `clear()` is called.
 
 ## Type conversions
 
@@ -28,21 +28,21 @@ There are only a few type conversions possible:
 - Any value (i.e., boolean, string, number, null) but JSON objects can be translated into an array. The result is a singleton array that consists of the value before.
 - Any other conversion will throw a `std::logic_error` exception.
 
-When compatible, `JSON` values **implicitly convert** to `std::string`, `int`, `double`, `JSON::array_t`, and `JSON::object_t`. Furthermore, **explicit type conversion** is possible using the `get<>()` function with the aforementioned types.
+When compatible, `json` values **implicitly convert** to `std::string`, `int`, `double`, `json::array_t`, and `json::object_t`. Furthermore, **explicit type conversion** is possible using the `get<>()` function with the aforementioned types.
 
 ## Initialization
 
-`JSON` values can be created from many literals and variable types:
+`json` values can be created from many literals and variable types:
 
 | JSON type | literal/variable types | examples |
 | --------- | ---------------------- | -------- |
 | none      | null pointer literal, `nullptr_t` type, no value | `nullptr` |
-| boolean   | boolean literals, `bool` type, `JSON::boolean_t` type | `true`, `false` |
-| string    | string literal, `char*` type, `std::string` type, `std::string&&` rvalue reference, `JSON::string_t` type | `"Hello"` |
-| number (integer) | integer literal, `short int` type, `int` type, `JSON_number_t` type | `42` |
-| number (floating point) | floating point literal, `float` type, `double` type, `JSON::number_float_t` type | `3.141529`
-| array | initializer list whose elements are `JSON` values (or can be translated into `JSON` values using the rules above), `std::vector<JSON>` type, `JSON::array_t` type, `JSON::array_t&&` rvalue reference | `{1, 2, 3, true, "foo"}` |
-| object | initializer list whose elements are pairs of a string literal and a `JSON` value (or can be translated into `JSON` values using the rules above), `std::map<std::string, JSON>` type, `JSON::object_t` type, `JSON::object_t&&` rvalue reference | `{ {"key1", 42}, {"key2", false} }` |
+| boolean   | boolean literals, `bool` type, `json::boolean_t` type | `true`, `false` |
+| string    | string literal, `char*` type, `std::string` type, `std::string&&` rvalue reference, `json::string_t` type | `"Hello"` |
+| number (integer) | integer literal, `short int` type, `int` type, `json_number_t` type | `42` |
+| number (floating point) | floating point literal, `float` type, `double` type, `json::number_float_t` type | `3.141529`
+| array | initializer list whose elements are `json` values (or can be translated into `json` values using the rules above), `std::vector<json>` type, `json::array_t` type, `json::array_t&&` rvalue reference | `{1, 2, 3, true, "foo"}` |
+| object | initializer list whose elements are pairs of a string literal and a `json` value (or can be translated into `json` values using the rules above), `std::map<std::string, json>` type, `json::object_t` type, `json::object_t&&` rvalue reference | `{ {"key1", 42}, {"key2", false} }` |
 
 ## Number types
 

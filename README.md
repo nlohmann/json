@@ -12,9 +12,9 @@ There are myriads of [JSON](http://json.org) libraries out there, and each may e
 
 - **Intuitive syntax**. In languages such as Python, JSON feels like a first class data type. We used all the operator magic of modern C++ to achieve the same feeling in your code. Check out the [examples below](#examples) and the [reference](https://github.com/nlohmann/json/blob/master/doc/Reference.md), and you know, what I mean.
 
-- **Trivial integration**. Our whole code consists of a class in just two files: A header file `JSON.h` and a source file `JSON.cc`. That's it. No library, no subproject, no dependencies. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+- **Trivial integration**. Our whole code consists of a class in just two files: A header file `json.h` and a source file `json.cc`. That's it. No library, no subproject, no dependencies. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
-- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/blob/master/test/JSON_unit.cc) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) that there are no memory leaks.
+- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/blob/master/test/json_unit.cc) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) that there are no memory leaks.
 
 Other aspects were not so important to us:
 
@@ -29,10 +29,10 @@ Other aspects were not so important to us:
 All you need to do is add
 
 ```cpp
-#include "JSON.h"
+#include "json.h"
 ```
 
-to the files you want to use JSON objects. Furthermore, you need to compile the file `JSON.cc` and link it to your binaries. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
+to the files you want to use JSON objects. Furthermore, you need to compile the file `json.cc` and link it to your binaries. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 
 ## Examples
 
@@ -61,7 +61,7 @@ With the JSON class, you could write:
 
 ```cpp
 // create an empty structure (null)
-JSON j;
+json j;
 
 // add a number that is stored as double (note the implicit conversion of j to an object)
 j["pi"] = 3.141;
@@ -85,7 +85,7 @@ j["list"] = { 1, 0, 2 };
 j["object"] = { {"currency", "USD"}, {"value", "42.99"} };
 
 // instead, you could also write (which looks very similar to the JSON above)
-JSON j2 = {
+json j2 = {
   {"pi", 3.141},
   {"happy", true},
   {"name", "Niels"},
@@ -109,7 +109,7 @@ You can create an object (deserialization) by appending `_json` to a string lite
 
 ```cpp
 // create object from string literal
-JSON j = "{ \"pi\": 3.141, \"happy\": true }"_json;
+json j = "{ \"pi\": 3.141, \"happy\": true }"_json;
 ```
 
 You can also get a string representation (serialize):
@@ -125,7 +125,7 @@ You can also use streams to serialize and deserialize:
 
 ```cpp
 // deserialize from standard input
-JSON j;
+json j;
 j << std::cin;
 
 // serialize to standard output
@@ -140,13 +140,13 @@ We designed the JSON class to behave just like an STL container:
 
 ```cpp
 // create an array using push_back
-JSON j;
+json j;
 j.push_back("foo");
 j.push_back(1);
 j.push_back(true);
 
 // iterate the array
-for (JSON::iterator it = j.begin(); it != j.end(); ++it) {
+for (json::iterator it = j.begin(); it != j.end(); ++it) {
   std::cout << *it << '\n';
 }
 
@@ -163,14 +163,14 @@ bool foo = j.at(2);
 // other stuff
 j.size();     // 3 entries
 j.empty();    // false
-j.type();     // JSON::value_type::array
+j.type();     // json::value_type::array
 j.clear();    // the array is empty again
 
 // comparison
 j == "[\"foo\", 1, true]"_json;  // true
 
 // create an object
-JSON o;
+json o;
 o["foo"] = 23;
 o["bar"] = false;
 o["baz"] = 3.141;
@@ -181,7 +181,7 @@ if (o.find("foo") != o.end()) {
 }
 
 // iterate the object
-for (JSON::iterator it = o.begin(); it != o.end(); ++it) {
+for (json::iterator it = o.begin(); it != o.end(); ++it) {
   std::cout << it.key() << ':' << it.value() << '\n';
 }
 ```
@@ -193,17 +193,17 @@ The type of the JSON object is determined automatically by the expression to sto
 ```cpp
 /// strings
 std::string s1 = "Hello, world!";
-JSON js = s1;
+json js = s1;
 std::string s2 = js;
 
 // Booleans
 bool b1 = true;
-JSON jb = b1;
+json jb = b1;
 bool b2 = jb;
 
 // numbers
 int i = 42;
-JSON jn = i;
+json jn = i;
 double f = jn;
 
 // etc.

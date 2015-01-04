@@ -1,8 +1,8 @@
-#include "JSON.h"
+#include "json.h"
 
 int main()
 {
-    JSON j;
+    json j;
     j << std::cin;
     return 0;
 }

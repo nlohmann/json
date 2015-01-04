@@ -31,12 +31,12 @@ due to alignment.
 @bug Numbers are currently handled too generously. There are several formats
      that are forbidden by the standard, but are accepted by the parser.
 
-@todo Implement JSON::swap()
-@todo Implement JSON::insert(), JSON::emplace(), JSON::emplace_back, JSON::erase
-@todo Implement JSON::reverse_iterator, JSON::const_reverse_iterator,
-      JSON::rbegin(), JSON::rend(), JSON::crbegin(), JSON::crend()?
+@todo Implement json::swap()
+@todo Implement json::insert(), json::emplace(), json::emplace_back, json::erase
+@todo Implement json::reverse_iterator, json::const_reverse_iterator,
+      json::rbegin(), json::rend(), json::crbegin(), json::crend()?
 */
-class JSON
+class json
 {
     // forward declaration to friend this class
   public:
@@ -64,9 +64,9 @@ class JSON
     };
 
     /// a type for an object
-    using object_t = std::map<std::string, JSON>;
+    using object_t = std::map<std::string, json>;
     /// a type for an array
-    using array_t = std::vector<JSON>;
+    using array_t = std::vector<json>;
     /// a type for a string
     using string_t = std::string;
     /// a type for a Boolean
@@ -76,7 +76,7 @@ class JSON
     /// a type for a floating point number
     using number_float_t = double;
     /// a type for list initialization
-    using list_init_t = std::initializer_list<JSON>;
+    using list_init_t = std::initializer_list<json>;
 
     /// a JSON value
     union value
@@ -112,49 +112,49 @@ class JSON
 
   public:
     /// create an object according to given type
-    JSON(const value_type) noexcept;
+    json(const value_type) noexcept;
     /// create a null object
-    JSON() = default;
+    json() = default;
     /// create a null object
-    JSON(std::nullptr_t) noexcept;
+    json(std::nullptr_t) noexcept;
     /// create a string object from a C++ string
-    JSON(const std::string&) noexcept;
+    json(const std::string&) noexcept;
     /// create a string object from a C++ string (move)
-    JSON(std::string&&) noexcept;
+    json(std::string&&) noexcept;
     /// create a string object from a C string
-    JSON(const char*) noexcept;
+    json(const char*) noexcept;
     /// create a Boolean object
-    JSON(const bool) noexcept;
+    json(const bool) noexcept;
     /// create a number object
-    JSON(const int) noexcept;
+    json(const int) noexcept;
     /// create a number object
-    JSON(const double) noexcept;
+    json(const double) noexcept;
     /// create an array
-    JSON(const array_t&) noexcept;
+    json(const array_t&) noexcept;
     /// create an array (move)
-    JSON(array_t&&) noexcept;
+    json(array_t&&) noexcept;
     /// create an object
-    JSON(const object_t&) noexcept;
+    json(const object_t&) noexcept;
     /// create an object (move)
-    JSON(object_t&&) noexcept;
+    json(object_t&&) noexcept;
     /// create from an initializer list (to an array or object)
-    JSON(list_init_t) noexcept;
+    json(list_init_t) noexcept;
 
     /// copy constructor
-    JSON(const JSON&) noexcept;
+    json(const json&) noexcept;
     /// move constructor
-    JSON(JSON&&) noexcept;
+    json(json&&) noexcept;
 
     /// copy assignment
-    JSON& operator=(JSON) noexcept;
+    json& operator=(json) noexcept;
 
     /// destructor
-    ~JSON() noexcept;
+    ~json() noexcept;
 
     /// create from string representation
-    static JSON parse(const std::string&);
+    static json parse(const std::string&);
     /// create from string representation
-    static JSON parse(const char*);
+    static json parse(const char*);
 
   private:
     /// return the type as string
@@ -179,28 +179,28 @@ class JSON
     operator object_t() const;
 
     /// write to stream
-    friend std::ostream& operator<<(std::ostream& o, const JSON& j)
+    friend std::ostream& operator<<(std::ostream& o, const json& j)
     {
         o << j.toString();
         return o;
     }
     /// write to stream
-    friend std::ostream& operator>>(const JSON& j, std::ostream& o)
+    friend std::ostream& operator>>(const json& j, std::ostream& o)
     {
         o << j.toString();
         return o;
     }
 
     /// read from stream
-    friend std::istream& operator>>(std::istream& i, JSON& j)
+    friend std::istream& operator>>(std::istream& i, json& j)
     {
-        j = Parser(i).parse();
+        j = parser(i).parse();
         return i;
     }
     /// read from stream
-    friend std::istream& operator<<(JSON& j, std::istream& i)
+    friend std::istream& operator<<(json& j, std::istream& i)
     {
-        j = Parser(i).parse();
+        j = parser(i).parse();
         return i;
     }
 
@@ -208,29 +208,29 @@ class JSON
     const std::string toString() const noexcept;
 
     /// add an object/array to an array
-    JSON& operator+=(const JSON&);
+    json& operator+=(const json&);
     /// add a string to an array
-    JSON& operator+=(const std::string&);
+    json& operator+=(const std::string&);
     /// add a null object to an array
-    JSON& operator+=(const std::nullptr_t);
+    json& operator+=(const std::nullptr_t);
     /// add a string to an array
-    JSON& operator+=(const char*);
+    json& operator+=(const char*);
     /// add a Boolean to an array
-    JSON& operator+=(bool);
+    json& operator+=(bool);
     /// add a number to an array
-    JSON& operator+=(int);
+    json& operator+=(int);
     /// add a number to an array
-    JSON& operator+=(double);
+    json& operator+=(double);
 
     /// add a pair to an object
-    JSON& operator+=(const object_t::value_type&);
+    json& operator+=(const object_t::value_type&);
     /// add a list of elements to array or list of pairs to object
-    JSON& operator+=(list_init_t);
+    json& operator+=(list_init_t);
 
     /// add an object/array to an array
-    void push_back(const JSON&);
+    void push_back(const json&);
     /// add an object/array to an array (move)
-    void push_back(JSON&&);
+    void push_back(json&&);
     /// add a string to an array
     void push_back(const std::string&);
     /// add a null object to an array
@@ -250,28 +250,28 @@ class JSON
     void push_back(list_init_t);
 
     /// operator to set an element in an array
-    JSON& operator[](const int);
+    json& operator[](const int);
     /// operator to get an element in an array
-    const JSON& operator[](const int) const;
+    const json& operator[](const int) const;
     /// operator to get an element in an array
-    JSON& at(const int);
+    json& at(const int);
     /// operator to get an element in an array
-    const JSON& at(const int) const;
+    const json& at(const int) const;
 
     /// operator to set an element in an object
-    JSON& operator[](const std::string&);
+    json& operator[](const std::string&);
     /// operator to set an element in an object
-    JSON& operator[](const char*);
+    json& operator[](const char*);
     /// operator to get an element in an object
-    const JSON& operator[](const std::string&) const;
+    const json& operator[](const std::string&) const;
     /// operator to set an element in an object
-    JSON& at(const std::string&);
+    json& at(const std::string&);
     /// operator to set an element in an object
-    JSON& at(const char*);
+    json& at(const char*);
     /// operator to get an element in an object
-    const JSON& at(const std::string&) const;
+    const json& at(const std::string&) const;
     /// operator to get an element in an object
-    const JSON& at(const char*) const;
+    const json& at(const char*) const;
 
     /// return the number of stored values
     size_t size() const noexcept;
@@ -293,9 +293,9 @@ class JSON
     const_iterator find(const char*) const;
 
     /// lexicographically compares the values
-    bool operator==(const JSON&) const noexcept;
+    bool operator==(const json&) const noexcept;
     /// lexicographically compares the values
-    bool operator!=(const JSON&) const noexcept;
+    bool operator!=(const json&) const noexcept;
 
     /// returns an iterator to the beginning (array/object)
     iterator begin() noexcept;
@@ -325,11 +325,11 @@ class JSON
     /// an iterator
     class iterator
     {
-        friend class JSON;
-        friend class JSON::const_iterator;
+        friend class json;
+        friend class json::const_iterator;
       public:
         iterator() = default;
-        iterator(JSON*);
+        iterator(json*);
         iterator(const iterator&);
         ~iterator();
 
@@ -337,17 +337,17 @@ class JSON
         bool operator==(const iterator&) const;
         bool operator!=(const iterator&) const;
         iterator& operator++();
-        JSON& operator*() const;
-        JSON* operator->() const;
+        json& operator*() const;
+        json* operator->() const;
 
         /// getter for the key (in case of objects)
         std::string key() const;
         /// getter for the value
-        JSON& value() const;
+        json& value() const;
 
       private:
         /// a JSON value
-        JSON* _object = nullptr;
+        json* _object = nullptr;
         /// an iterator for JSON arrays
         array_t::iterator* _vi = nullptr;
         /// an iterator for JSON objects
@@ -357,11 +357,11 @@ class JSON
     /// a const iterator
     class const_iterator
     {
-        friend class JSON;
+        friend class json;
 
       public:
         const_iterator() = default;
-        const_iterator(const JSON*);
+        const_iterator(const json*);
         const_iterator(const const_iterator&);
         const_iterator(const iterator&);
         ~const_iterator();
@@ -370,17 +370,17 @@ class JSON
         bool operator==(const const_iterator&) const;
         bool operator!=(const const_iterator&) const;
         const_iterator& operator++();
-        const JSON& operator*() const;
-        const JSON* operator->() const;
+        const json& operator*() const;
+        const json* operator->() const;
 
         /// getter for the key (in case of objects)
         std::string key() const;
         /// getter for the value
-        const JSON& value() const;
+        const json& value() const;
 
       private:
         /// a JSON value
-        const JSON* _object = nullptr;
+        const json* _object = nullptr;
         /// an iterator for JSON arrays
         array_t::const_iterator* _vi = nullptr;
         /// an iterator for JSON objects
@@ -389,25 +389,25 @@ class JSON
 
   private:
     /// a helper class to parse a JSON object
-    class Parser
+    class parser
     {
       public:
         /// a parser reading from a C string
-        Parser(const char*);
+        parser(const char*);
         /// a parser reading from a C++ string
-        Parser(const std::string&);
+        parser(const std::string&);
         /// a parser reading from an input stream
-        Parser(std::istream&);
+        parser(std::istream&);
         /// destructor of the parser
-        ~Parser() = default;
+        ~parser() = default;
 
         // no copy constructor
-        Parser(const Parser&) = delete;
+        parser(const parser&) = delete;
         // no copy assignment
-        Parser& operator=(Parser) = delete;
+        parser& operator=(parser) = delete;
 
         /// parse and return a JSON object
-        JSON parse();
+        json parse();
 
       private:
         /// read the next character, stripping whitespace
@@ -436,4 +436,4 @@ class JSON
 };
 
 /// user-defined literal operator to create JSON objects from strings
-JSON operator "" _json(const char*, size_t);
+json operator "" _json(const char*, size_t);

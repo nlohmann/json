@@ -1,18 +1,18 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include "JSON.h"
+#include "json.h"
 
 TEST_CASE("array")
 {
     SECTION("Basics")
     {
         // construction with given type
-        JSON j(JSON::value_type::array);
-        CHECK(j.type() == JSON::value_type::array);
+        json j(json::value_type::array);
+        CHECK(j.type() == json::value_type::array);
 
         // const object
-        const JSON j_const (j);
+        const json j_const (j);
 
         // string representation of default value
         CHECK(j.toString() == "[]");
@@ -26,30 +26,30 @@ TEST_CASE("array")
         CHECK(j.empty() == true);
 
         // implicit conversions
-        CHECK_NOTHROW(JSON::array_t v = j);
-        CHECK_THROWS_AS(JSON::object_t v = j, std::logic_error);
+        CHECK_NOTHROW(json::array_t v = j);
+        CHECK_THROWS_AS(json::object_t v = j, std::logic_error);
         CHECK_THROWS_AS(std::string v = j, std::logic_error);
         CHECK_THROWS_AS(bool v = j, std::logic_error);
         CHECK_THROWS_AS(int v = j, std::logic_error);
         CHECK_THROWS_AS(double v = j, std::logic_error);
 
         // explicit conversions
-        CHECK_NOTHROW(auto v = j.get<JSON::array_t>());
-        CHECK_THROWS_AS(auto v = j.get<JSON::object_t>(), std::logic_error);
+        CHECK_NOTHROW(auto v = j.get<json::array_t>());
+        CHECK_THROWS_AS(auto v = j.get<json::object_t>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<int>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<double>(), std::logic_error);
 
         // transparent usage
-        auto id = [](JSON::array_t v)
+        auto id = [](json::array_t v)
         {
             return v;
         };
-        CHECK(id(j) == j.get<JSON::array_t>());
+        CHECK(id(j) == j.get<json::array_t>());
 
         // copy constructor
-        JSON k(j);
+        json k(j);
         CHECK(k == j);
 
         // copy assignment
@@ -57,49 +57,49 @@ TEST_CASE("array")
         CHECK(k == j);
 
         // move constructor
-        JSON l = std::move(k);
+        json l = std::move(k);
         CHECK(l == j);
     }
 
     SECTION("Create from value")
     {
-        JSON::array_t v1 = {"string", 1, 1.0, false, nullptr};
-        JSON j1 = v1;
-        CHECK(j1.get<JSON::array_t>() == v1);
+        json::array_t v1 = {"string", 1, 1.0, false, nullptr};
+        json j1 = v1;
+        CHECK(j1.get<json::array_t>() == v1);
 
-        JSON j2 = {"string", 1, 1.0, false, nullptr};
-        JSON::array_t v2 = j2;
-        CHECK(j2.get<JSON::array_t>() == v1);
-        CHECK(j2.get<JSON::array_t>() == v2);
+        json j2 = {"string", 1, 1.0, false, nullptr};
+        json::array_t v2 = j2;
+        CHECK(j2.get<json::array_t>() == v1);
+        CHECK(j2.get<json::array_t>() == v2);
 
         // special tests to make sure construction from initializer list works
 
         // case 1: there is an element that is not an array
-        JSON j3 = { {"foo", "bar"}, 3 };
-        CHECK(j3.type() == JSON::value_type::array);
+        json j3 = { {"foo", "bar"}, 3 };
+        CHECK(j3.type() == json::value_type::array);
 
         // case 2: there is an element with more than two elements
-        JSON j4 = { {"foo", "bar"}, {"one", "two", "three"} };
-        CHECK(j4.type() == JSON::value_type::array);
+        json j4 = { {"foo", "bar"}, {"one", "two", "three"} };
+        CHECK(j4.type() == json::value_type::array);
 
         // case 3: there is an element whose first element is not a string
-        JSON j5 = { {"foo", "bar"}, {true, "baz"} };
-        CHECK(j5.type() == JSON::value_type::array);
+        json j5 = { {"foo", "bar"}, {true, "baz"} };
+        CHECK(j5.type() == json::value_type::array);
 
         // check if nested arrays work and are recognized as arrays
-        JSON j6 = { {{"foo", "bar"}} };
-        CHECK(j6.type() == JSON::value_type::array);
+        json j6 = { {{"foo", "bar"}} };
+        CHECK(j6.type() == json::value_type::array);
         CHECK(j6.size() == 1);
-        CHECK(j6[0].type() == JSON::value_type::object);
+        CHECK(j6[0].type() == json::value_type::object);
 
         // move constructor
-        JSON j7(std::move(v1));
+        json j7(std::move(v1));
         CHECK(j7 == j1);
     }
 
     SECTION("Array operators")
     {
-        JSON j = {0, 1, 2, 3, 4, 5, 6};
+        json j = {0, 1, 2, 3, 4, 5, 6};
 
         // read
         const int v1 = j[3];
@@ -137,15 +137,15 @@ TEST_CASE("array")
         CHECK (j.size() == 21);
 
         // implicit transformation into an array
-        JSON empty1, empty2;
+        json empty1, empty2;
         empty1 += "foo";
         empty2.push_back("foo");
-        CHECK(empty1.type() == JSON::value_type::array);
-        CHECK(empty2.type() == JSON::value_type::array);
+        CHECK(empty1.type() == json::value_type::array);
+        CHECK(empty2.type() == json::value_type::array);
         CHECK(empty1 == empty2);
 
         // exceptions
-        JSON nonarray = 1;
+        json nonarray = 1;
         CHECK_THROWS_AS(nonarray.at(0), std::domain_error);
         CHECK_THROWS_AS(const int i = nonarray[0], std::domain_error);
         CHECK_NOTHROW(j[21]);
@@ -156,23 +156,23 @@ TEST_CASE("array")
         CHECK_THROWS_AS(j.at(21) = 5, std::out_of_range);
         CHECK_THROWS_AS(nonarray += 2, std::runtime_error);
 
-        const JSON nonarray_const = nonarray;
-        const JSON j_const = j;
+        const json nonarray_const = nonarray;
+        const json j_const = j;
         CHECK_THROWS_AS(nonarray_const.at(0), std::domain_error);
         CHECK_THROWS_AS(const int i = nonarray_const[0], std::domain_error);
         CHECK_NOTHROW(j_const[21]);
         CHECK_THROWS_AS(const int i = j.at(21), std::out_of_range);
 
         {
-            JSON nonarray2 = JSON(1);
-            JSON nonarray3 = JSON(2);
-            JSON empty3 = JSON();
+            json nonarray2 = json(1);
+            json nonarray3 = json(2);
+            json empty3 = json();
             CHECK_THROWS_AS(nonarray2.push_back(nonarray3), std::runtime_error);
             CHECK_NOTHROW(empty3.push_back(nonarray3));
-            CHECK(empty3.type() == JSON::value_type::array);
+            CHECK(empty3.type() == json::value_type::array);
         }
 
-        const JSON k = j;
+        const json k = j;
         CHECK_NOTHROW(k[21]);
         CHECK_THROWS_AS(const int i = k.at(21), std::out_of_range);
 
@@ -181,7 +181,7 @@ TEST_CASE("array")
         CHECK (j.size() == 24);
 
         // clear()
-        JSON j7 = {0, 1, 2, 3, 4, 5, 6};;
+        json j7 = {0, 1, 2, 3, 4, 5, 6};;
         CHECK(j7.size() == 7);
         j7.clear();
         CHECK(j7.size() == 0);
@@ -190,12 +190,12 @@ TEST_CASE("array")
     SECTION("Iterators")
     {
         std::vector<int> vec = {0, 1, 2, 3, 4, 5, 6};
-        JSON j1 = {0, 1, 2, 3, 4, 5, 6};
-        const JSON j2 = {0, 1, 2, 3, 4, 5, 6};
+        json j1 = {0, 1, 2, 3, 4, 5, 6};
+        const json j2 = {0, 1, 2, 3, 4, 5, 6};
 
         {
             // const_iterator
-            for (JSON::const_iterator cit = j1.begin(); cit != j1.end(); ++cit)
+            for (json::const_iterator cit = j1.begin(); cit != j1.end(); ++cit)
             {
                 int v = *cit;
                 CHECK(v == vec[static_cast<size_t>(v)]);
@@ -208,7 +208,7 @@ TEST_CASE("array")
         }
         {
             // const_iterator with cbegin/cend
-            for (JSON::const_iterator cit = j1.cbegin(); cit != j1.cend(); ++cit)
+            for (json::const_iterator cit = j1.cbegin(); cit != j1.cend(); ++cit)
             {
                 int v = *cit;
                 CHECK(v == vec[static_cast<size_t>(v)]);
@@ -231,7 +231,7 @@ TEST_CASE("array")
 
         {
             // iterator
-            for (JSON::iterator cit = j1.begin(); cit != j1.end(); ++cit)
+            for (json::iterator cit = j1.begin(); cit != j1.end(); ++cit)
             {
                 int v_old = *cit;
                 *cit = cit->get<int>() * 2;
@@ -247,7 +247,7 @@ TEST_CASE("array")
 
         {
             // const_iterator (on const object)
-            for (JSON::const_iterator cit = j2.begin(); cit != j2.end(); ++cit)
+            for (json::const_iterator cit = j2.begin(); cit != j2.end(); ++cit)
             {
                 int v = *cit;
                 CHECK(v == vec[static_cast<size_t>(v)]);
@@ -261,7 +261,7 @@ TEST_CASE("array")
 
         {
             // const_iterator with cbegin/cend (on const object)
-            for (JSON::const_iterator cit = j2.cbegin(); cit != j2.cend(); ++cit)
+            for (json::const_iterator cit = j2.cbegin(); cit != j2.cend(); ++cit)
             {
                 int v = *cit;
                 CHECK(v == vec[static_cast<size_t>(v)]);
@@ -286,8 +286,8 @@ TEST_CASE("array")
         // edge case: This should be an array with two elements which are in
         // turn arrays with two strings. However, this is treated like the
         // initializer list of an object.
-        JSON j_should_be_an_array = { {"foo", "bar"}, {"baz", "bat"} };
-        CHECK(j_should_be_an_array.type() == JSON::value_type::object);
+        json j_should_be_an_array = { {"foo", "bar"}, {"baz", "bat"} };
+        CHECK(j_should_be_an_array.type() == json::value_type::object);
     }
 }
 
@@ -296,11 +296,11 @@ TEST_CASE("object")
     SECTION("Basics")
     {
         // construction with given type
-        JSON j(JSON::value_type::object);
-        CHECK(j.type() == JSON::value_type::object);
+        json j(json::value_type::object);
+        CHECK(j.type() == json::value_type::object);
 
         // const object
-        const JSON j_const = j;
+        const json j_const = j;
 
         // string representation of default value
         CHECK(j.toString() == "{}");
@@ -314,30 +314,30 @@ TEST_CASE("object")
         CHECK(j.empty() == true);
 
         // implicit conversions
-        CHECK_THROWS_AS(JSON::array_t v = j, std::logic_error);
-        CHECK_NOTHROW(JSON::object_t v = j);
+        CHECK_THROWS_AS(json::array_t v = j, std::logic_error);
+        CHECK_NOTHROW(json::object_t v = j);
         CHECK_THROWS_AS(std::string v = j, std::logic_error);
         CHECK_THROWS_AS(bool v = j, std::logic_error);
         CHECK_THROWS_AS(int v = j, std::logic_error);
         CHECK_THROWS_AS(double v = j, std::logic_error);
 
         // explicit conversions
-        CHECK_THROWS_AS(auto v = j.get<JSON::array_t>(), std::logic_error);
-        CHECK_NOTHROW(auto v = j.get<JSON::object_t>());
+        CHECK_THROWS_AS(auto v = j.get<json::array_t>(), std::logic_error);
+        CHECK_NOTHROW(auto v = j.get<json::object_t>());
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<int>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<double>(), std::logic_error);
 
         // transparent usage
-        auto id = [](JSON::object_t v)
+        auto id = [](json::object_t v)
         {
             return v;
         };
-        CHECK(id(j) == j.get<JSON::object_t>());
+        CHECK(id(j) == j.get<json::object_t>());
 
         // copy constructor
-        JSON k(j);
+        json k(j);
         CHECK(k == j);
 
         // copy assignment
@@ -345,34 +345,34 @@ TEST_CASE("object")
         CHECK(k == j);
 
         // move constructor
-        JSON l = std::move(k);
+        json l = std::move(k);
         CHECK(l == j);
     }
 
     SECTION("Create from value")
     {
-        JSON::object_t v1 = { {"v1", "string"}, {"v2", 1}, {"v3", 1.0}, {"v4", false} };
-        JSON j1 = v1;
-        CHECK(j1.get<JSON::object_t>() == v1);
+        json::object_t v1 = { {"v1", "string"}, {"v2", 1}, {"v3", 1.0}, {"v4", false} };
+        json j1 = v1;
+        CHECK(j1.get<json::object_t>() == v1);
 
-        JSON j2 = { {"v1", "string"}, {"v2", 1}, {"v3", 1.0}, {"v4", false} };
-        JSON::object_t v2 = j2;
-        CHECK(j2.get<JSON::object_t>() == v1);
-        CHECK(j2.get<JSON::object_t>() == v2);
+        json j2 = { {"v1", "string"}, {"v2", 1}, {"v3", 1.0}, {"v4", false} };
+        json::object_t v2 = j2;
+        CHECK(j2.get<json::object_t>() == v1);
+        CHECK(j2.get<json::object_t>() == v2);
 
         // check if multiple keys are ignored
-        JSON j3 = { {"key", "value"}, {"key", 1} };
+        json j3 = { {"key", "value"}, {"key", 1} };
         CHECK(j3.size() == 1);
 
         // move constructor
-        JSON j7(std::move(v1));
+        json j7(std::move(v1));
         CHECK(j7 == j1);
     }
 
     SECTION("Object operators")
     {
-        JSON j = {{"k0", "v0"}, {"k1", nullptr}, {"k2", 42}, {"k3", 3.141}, {"k4", true}};
-        const JSON k = j;
+        json j = {{"k0", "v0"}, {"k1", nullptr}, {"k2", 42}, {"k3", 3.141}, {"k4", true}};
+        const json k = j;
 
         // read
         {
@@ -426,12 +426,12 @@ TEST_CASE("object")
         CHECK(j.find("k0") != j.end());
         CHECK(j.find("v0") == j.end());
         CHECK(j.find(std::string("v0")) == j.end());
-        JSON::const_iterator i1 = j.find("k0");
-        JSON::iterator i2 = j.find("k0");
+        json::const_iterator i1 = j.find("k0");
+        json::iterator i2 = j.find("k0");
         CHECK(k.find("k0") != k.end());
         CHECK(k.find("v0") == k.end());
         CHECK(k.find(std::string("v0")) == k.end());
-        JSON::const_iterator i22 = k.find("k0");
+        json::const_iterator i22 = k.find("k0");
 
         // at
         CHECK_THROWS_AS(j.at("foo"), std::out_of_range);
@@ -441,8 +441,8 @@ TEST_CASE("object")
         CHECK_NOTHROW(j.at(std::string("k0")));
         CHECK_NOTHROW(k.at(std::string("k0")));
         {
-            JSON noobject = 1;
-            const JSON noobject_const = noobject;
+            json noobject = 1;
+            const json noobject_const = noobject;
             CHECK_THROWS_AS(noobject.at("foo"), std::domain_error);
             CHECK_THROWS_AS(noobject.at(std::string("foo")), std::domain_error);
             CHECK_THROWS_AS(noobject_const.at("foo"), std::domain_error);
@@ -453,33 +453,33 @@ TEST_CASE("object")
         }
 
         // add pair
-        j.push_back(JSON::object_t::value_type {"int_key", 42});
+        j.push_back(json::object_t::value_type {"int_key", 42});
         CHECK(j["int_key"].get<int>() == 42);
-        j += JSON::object_t::value_type {"int_key2", 23};
+        j += json::object_t::value_type {"int_key2", 23};
         CHECK(j["int_key2"].get<int>() == 23);
         {
             // make sure null objects are transformed
-            JSON je;
-            CHECK_NOTHROW(je.push_back(JSON::object_t::value_type {"int_key", 42}));
+            json je;
+            CHECK_NOTHROW(je.push_back(json::object_t::value_type {"int_key", 42}));
             CHECK(je["int_key"].get<int>() == 42);
         }
         {
             // make sure null objects are transformed
-            JSON je;
-            CHECK_NOTHROW((je += JSON::object_t::value_type {"int_key", 42}));
+            json je;
+            CHECK_NOTHROW((je += json::object_t::value_type {"int_key", 42}));
             CHECK(je["int_key"].get<int>() == 42);
         }
 
         // add initializer list (of pairs)
         {
-            JSON je;
+            json je;
             je.push_back({ {"one", 1}, {"two", false}, {"three", {1, 2, 3}} });
             CHECK(je["one"].get<int>() == 1);
             CHECK(je["two"].get<bool>() == false);
             CHECK(je["three"].size() == 3);
         }
         {
-            JSON je;
+            json je;
             je += { {"one", 1}, {"two", false}, {"three", {1, 2, 3}} };
             CHECK(je["one"].get<int>() == 1);
             CHECK(je["two"].get<bool>() == false);
@@ -493,38 +493,38 @@ TEST_CASE("object")
         CHECK(i2.value() == j["k0"]);
 
         // key/value for uninitialzed iterator
-        JSON::const_iterator i3;
-        JSON::iterator i4;
+        json::const_iterator i3;
+        json::iterator i4;
         CHECK_THROWS_AS(i3.key(), std::out_of_range);
         CHECK_THROWS_AS(i3.value(), std::out_of_range);
         CHECK_THROWS_AS(i4.key(), std::out_of_range);
         CHECK_THROWS_AS(i4.value(), std::out_of_range);
 
         // key/value for end-iterator
-        JSON::const_iterator i5 = j.find("v0");
-        JSON::iterator i6 = j.find("v0");
+        json::const_iterator i5 = j.find("v0");
+        json::iterator i6 = j.find("v0");
         CHECK_THROWS_AS(i5.key(), std::out_of_range);
         CHECK_THROWS_AS(i5.value(), std::out_of_range);
         CHECK_THROWS_AS(i6.key(), std::out_of_range);
         CHECK_THROWS_AS(i6.value(), std::out_of_range);
 
         // implicit transformation into an object
-        JSON empty;
+        json empty;
         empty["foo"] = "bar";
-        CHECK(empty.type() == JSON::value_type::object);
+        CHECK(empty.type() == json::value_type::object);
         CHECK(empty["foo"] == "bar");
 
         // exceptions
-        JSON nonarray = 1;
+        json nonarray = 1;
         CHECK_THROWS_AS(const int i = nonarray["v1"], std::domain_error);
         CHECK_THROWS_AS(nonarray["v1"] = 10, std::domain_error);
         {
-            const JSON c = {{"foo", "bar"}};
+            const json c = {{"foo", "bar"}};
             CHECK_THROWS_AS(c[std::string("baz")], std::out_of_range);
         }
 
         // clear()
-        JSON j7 = {{"k0", 0}, {"k1", 1}, {"k2", 2}, {"k3", 3}};
+        json j7 = {{"k0", 0}, {"k1", 1}, {"k2", 2}, {"k3", 3}};
         CHECK(j7.size() == 4);
         j7.clear();
         CHECK(j7.size() == 0);
@@ -532,11 +532,11 @@ TEST_CASE("object")
 
     SECTION("Iterators")
     {
-        JSON j1 = {{"k0", 0}, {"k1", 1}, {"k2", 2}, {"k3", 3}};
-        const JSON j2 = {{"k0", 0}, {"k1", 1}, {"k2", 2}, {"k3", 3}};
+        json j1 = {{"k0", 0}, {"k1", 1}, {"k2", 2}, {"k3", 3}};
+        const json j2 = {{"k0", 0}, {"k1", 1}, {"k2", 2}, {"k3", 3}};
 
         // iterator
-        for (JSON::iterator it = j1.begin(); it != j1.end(); ++it)
+        for (json::iterator it = j1.begin(); it != j1.end(); ++it)
         {
             switch (static_cast<int>(it.value()))
             {
@@ -556,8 +556,8 @@ TEST_CASE("object")
                     CHECK(false);
             }
 
-            CHECK((*it).type() == JSON::value_type::number);
-            CHECK(it->type() == JSON::value_type::number);
+            CHECK((*it).type() == json::value_type::number);
+            CHECK(it->type() == json::value_type::number);
         }
 
         // range-based for
@@ -567,7 +567,7 @@ TEST_CASE("object")
         }
 
         // const_iterator
-        for (JSON::const_iterator it = j1.begin(); it != j1.end(); ++it)
+        for (json::const_iterator it = j1.begin(); it != j1.end(); ++it)
         {
             switch (static_cast<int>(it.value()))
             {
@@ -587,12 +587,12 @@ TEST_CASE("object")
                     CHECK(false);
             }
 
-            CHECK((*it).type() == JSON::value_type::number);
-            CHECK(it->type() == JSON::value_type::number);
+            CHECK((*it).type() == json::value_type::number);
+            CHECK(it->type() == json::value_type::number);
         }
 
         // const_iterator using cbegin/cend
-        for (JSON::const_iterator it = j1.cbegin(); it != j1.cend(); ++it)
+        for (json::const_iterator it = j1.cbegin(); it != j1.cend(); ++it)
         {
             switch (static_cast<int>(it.value()))
             {
@@ -612,12 +612,12 @@ TEST_CASE("object")
                     CHECK(false);
             }
 
-            CHECK((*it).type() == JSON::value_type::number);
-            CHECK(it->type() == JSON::value_type::number);
+            CHECK((*it).type() == json::value_type::number);
+            CHECK(it->type() == json::value_type::number);
         }
 
         // const_iterator (on const object)
-        for (JSON::const_iterator it = j2.begin(); it != j2.end(); ++it)
+        for (json::const_iterator it = j2.begin(); it != j2.end(); ++it)
         {
             switch (static_cast<int>(it.value()))
             {
@@ -637,12 +637,12 @@ TEST_CASE("object")
                     CHECK(false);
             }
 
-            CHECK((*it).type() == JSON::value_type::number);
-            CHECK(it->type() == JSON::value_type::number);
+            CHECK((*it).type() == json::value_type::number);
+            CHECK(it->type() == json::value_type::number);
         }
 
         // const_iterator using cbegin/cend (on const object)
-        for (JSON::const_iterator it = j2.cbegin(); it != j2.cend(); ++it)
+        for (json::const_iterator it = j2.cbegin(); it != j2.cend(); ++it)
         {
             switch (static_cast<int>(it.value()))
             {
@@ -662,8 +662,8 @@ TEST_CASE("object")
                     CHECK(false);
             }
 
-            CHECK((*it).type() == JSON::value_type::number);
-            CHECK(it->type() == JSON::value_type::number);
+            CHECK((*it).type() == json::value_type::number);
+            CHECK(it->type() == json::value_type::number);
         }
 
         // range-based for (on const object)
@@ -679,8 +679,8 @@ TEST_CASE("null")
     SECTION("Basics")
     {
         // construction with given type
-        JSON j;
-        CHECK(j.type() == JSON::value_type::null);
+        json j;
+        CHECK(j.type() == json::value_type::null);
 
         // string representation of default value
         CHECK(j.toString() == "null");
@@ -694,23 +694,23 @@ TEST_CASE("null")
         CHECK(j.empty() == true);
 
         // implicit conversions
-        CHECK_NOTHROW(JSON::array_t v = j);
-        CHECK_THROWS_AS(JSON::object_t v = j, std::logic_error);
+        CHECK_NOTHROW(json::array_t v = j);
+        CHECK_THROWS_AS(json::object_t v = j, std::logic_error);
         CHECK_THROWS_AS(std::string v = j, std::logic_error);
         CHECK_THROWS_AS(bool v = j, std::logic_error);
         CHECK_THROWS_AS(int v = j, std::logic_error);
         CHECK_THROWS_AS(double v = j, std::logic_error);
 
         // explicit conversions
-        CHECK_NOTHROW(auto v = j.get<JSON::array_t>());
-        CHECK_THROWS_AS(auto v = j.get<JSON::object_t>(), std::logic_error);
+        CHECK_NOTHROW(auto v = j.get<json::array_t>());
+        CHECK_THROWS_AS(auto v = j.get<json::object_t>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<int>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<double>(), std::logic_error);
 
         // copy constructor
-        JSON k(j);
+        json k(j);
         CHECK(k == j);
 
         // copy assignment
@@ -718,22 +718,22 @@ TEST_CASE("null")
         CHECK(k == j);
 
         // move constructor
-        JSON l = std::move(k);
+        json l = std::move(k);
         CHECK(l == j);
     }
 
     SECTION("Create from value")
     {
-        JSON j1 = nullptr;
-        CHECK(j1.type() == JSON::value_type::null);
+        json j1 = nullptr;
+        CHECK(j1.type() == json::value_type::null);
     }
 
     SECTION("Operators")
     {
         // clear()
-        JSON j1 = nullptr;
+        json j1 = nullptr;
         j1.clear();
-        CHECK(j1 == JSON(nullptr));
+        CHECK(j1 == json(nullptr));
     }
 }
 
@@ -742,11 +742,11 @@ TEST_CASE("string")
     SECTION("Basics")
     {
         // construction with given type
-        JSON j(JSON::value_type::string);
-        CHECK(j.type() == JSON::value_type::string);
+        json j(json::value_type::string);
+        CHECK(j.type() == json::value_type::string);
 
         // const object
-        const JSON j_const = j;
+        const json j_const = j;
 
         // iterators
         CHECK(j.begin() != j.end());
@@ -760,16 +760,16 @@ TEST_CASE("string")
         CHECK(j.empty() == false);
 
         // implicit conversions
-        CHECK_NOTHROW(JSON::array_t v = j);
-        CHECK_THROWS_AS(JSON::object_t v = j, std::logic_error);
+        CHECK_NOTHROW(json::array_t v = j);
+        CHECK_THROWS_AS(json::object_t v = j, std::logic_error);
         CHECK_NOTHROW(std::string v = j);
         CHECK_THROWS_AS(bool v = j, std::logic_error);
         CHECK_THROWS_AS(int v = j, std::logic_error);
         CHECK_THROWS_AS(double v = j, std::logic_error);
 
         // explicit conversions
-        CHECK_NOTHROW(auto v = j.get<JSON::array_t>());
-        CHECK_THROWS_AS(auto v = j.get<JSON::object_t>(), std::logic_error);
+        CHECK_NOTHROW(auto v = j.get<json::array_t>());
+        CHECK_THROWS_AS(auto v = j.get<json::object_t>(), std::logic_error);
         CHECK_NOTHROW(auto v = j.get<std::string>());
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<int>(), std::logic_error);
@@ -783,7 +783,7 @@ TEST_CASE("string")
         CHECK(id(j) == j.get<std::string>());
 
         // copy constructor
-        JSON k(j);
+        json k(j);
         CHECK(k == j);
 
         // copy assignment
@@ -791,28 +791,28 @@ TEST_CASE("string")
         CHECK(k == j);
 
         // move constructor
-        JSON l = std::move(k);
+        json l = std::move(k);
         CHECK(l == j);
     }
 
     SECTION("Create from value")
     {
-        JSON j1 = std::string("Hello, world");
+        json j1 = std::string("Hello, world");
         std::string v1 = j1;
         CHECK(j1.get<std::string>() == v1);
 
-        JSON j2 = "Hello, world";
+        json j2 = "Hello, world";
         CHECK(j2.get<std::string>() == "Hello, world");
 
         std::string v3 = "Hello, world";
-        JSON j3 = std::move(v3);
+        json j3 = std::move(v3);
         CHECK(j3.get<std::string>() == "Hello, world");
     }
 
     SECTION("Operators")
     {
         // clear()
-        JSON j1 = std::string("Hello, world");
+        json j1 = std::string("Hello, world");
         CHECK(j1.get<std::string>() == "Hello, world");
         j1.clear();
         CHECK(j1.get<std::string>() == "");
@@ -824,11 +824,11 @@ TEST_CASE("boolean")
     SECTION("Basics")
     {
         // construction with given type
-        JSON j(JSON::value_type::boolean);
-        CHECK(j.type() == JSON::value_type::boolean);
+        json j(json::value_type::boolean);
+        CHECK(j.type() == json::value_type::boolean);
 
         // const object
-        const JSON j_const = j;
+        const json j_const = j;
 
         // iterators
         CHECK(j.begin() != j.end());
@@ -842,16 +842,16 @@ TEST_CASE("boolean")
         CHECK(j.empty() == false);
 
         // implicit conversions
-        CHECK_NOTHROW(JSON::array_t v = j);
-        CHECK_THROWS_AS(JSON::object_t v = j, std::logic_error);
+        CHECK_NOTHROW(json::array_t v = j);
+        CHECK_THROWS_AS(json::object_t v = j, std::logic_error);
         CHECK_THROWS_AS(std::string v = j, std::logic_error);
         CHECK_NOTHROW(bool v = j);
         CHECK_THROWS_AS(int v = j, std::logic_error);
         CHECK_THROWS_AS(double v = j, std::logic_error);
 
         // explicit conversions
-        CHECK_NOTHROW(auto v = j.get<JSON::array_t>());
-        CHECK_THROWS_AS(auto v = j.get<JSON::object_t>(), std::logic_error);
+        CHECK_NOTHROW(auto v = j.get<json::array_t>());
+        CHECK_THROWS_AS(auto v = j.get<json::object_t>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_NOTHROW(auto v = j.get<bool>());
         CHECK_THROWS_AS(auto v = j.get<int>(), std::logic_error);
@@ -865,7 +865,7 @@ TEST_CASE("boolean")
         CHECK(id(j) == j.get<bool>());
 
         // copy constructor
-        JSON k(j);
+        json k(j);
         CHECK(k == j);
 
         // copy assignment
@@ -873,17 +873,17 @@ TEST_CASE("boolean")
         CHECK(k == j);
 
         // move constructor
-        JSON l = std::move(k);
+        json l = std::move(k);
         CHECK(l == j);
     }
 
     SECTION("Create from value")
     {
-        JSON j1 = true;
+        json j1 = true;
         bool v1 = j1;
         CHECK(j1.get<bool>() == v1);
 
-        JSON j2 = false;
+        json j2 = false;
         bool v2 = j2;
         CHECK(j2.get<bool>() == v2);
     }
@@ -891,7 +891,7 @@ TEST_CASE("boolean")
     SECTION("Operators")
     {
         // clear()
-        JSON j1 = true;
+        json j1 = true;
         CHECK(j1.get<bool>() == true);
         j1.clear();
         CHECK(j1.get<bool>() == false);
@@ -903,11 +903,11 @@ TEST_CASE("number (int)")
     SECTION("Basics")
     {
         // construction with given type
-        JSON j(JSON::value_type::number);
-        CHECK(j.type() == JSON::value_type::number);
+        json j(json::value_type::number);
+        CHECK(j.type() == json::value_type::number);
 
         // const object
-        const JSON j_const = j;
+        const json j_const = j;
 
         // iterators
         CHECK(j.begin() != j.end());
@@ -921,16 +921,16 @@ TEST_CASE("number (int)")
         CHECK(j.empty() == false);
 
         // implicit conversions
-        CHECK_NOTHROW(JSON::array_t v = j);
-        CHECK_THROWS_AS(JSON::object_t v = j, std::logic_error);
+        CHECK_NOTHROW(json::array_t v = j);
+        CHECK_THROWS_AS(json::object_t v = j, std::logic_error);
         CHECK_THROWS_AS(std::string v = j, std::logic_error);
         CHECK_THROWS_AS(bool v = j, std::logic_error);
         CHECK_NOTHROW(int v = j);
         CHECK_NOTHROW(double v = j);
 
         // explicit conversions
-        CHECK_NOTHROW(auto v = j.get<JSON::array_t>());
-        CHECK_THROWS_AS(auto v = j.get<JSON::object_t>(), std::logic_error);
+        CHECK_NOTHROW(auto v = j.get<json::array_t>());
+        CHECK_THROWS_AS(auto v = j.get<json::object_t>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_NOTHROW(auto v = j.get<int>());
@@ -944,7 +944,7 @@ TEST_CASE("number (int)")
         CHECK(id(j) == j.get<int>());
 
         // copy constructor
-        JSON k(j);
+        json k(j);
         CHECK(k == j);
 
         // copy assignment
@@ -952,17 +952,17 @@ TEST_CASE("number (int)")
         CHECK(k == j);
 
         // move constructor
-        JSON l = std::move(k);
+        json l = std::move(k);
         CHECK(l == j);
     }
 
     SECTION("Create from value")
     {
-        JSON j1 = 23;
+        json j1 = 23;
         int v1 = j1;
         CHECK(j1.get<int>() == v1);
 
-        JSON j2 = 42;
+        json j2 = 42;
         int v2 = j2;
         CHECK(j2.get<int>() == v2);
     }
@@ -970,7 +970,7 @@ TEST_CASE("number (int)")
     SECTION("Operators")
     {
         // clear()
-        JSON j1 = 42;
+        json j1 = 42;
         CHECK(j1.get<int>() == 42);
         j1.clear();
         CHECK(j1.get<int>() == 0);
@@ -978,7 +978,7 @@ TEST_CASE("number (int)")
         // find()
         CHECK(j1.find("foo") == j1.end());
         CHECK(j1.find(std::string("foo")) == j1.end());
-        const JSON j2 = j1;
+        const json j2 = j1;
         CHECK(j2.find("foo") == j2.end());
         CHECK(j2.find(std::string("foo")) == j2.end());
     }
@@ -989,11 +989,11 @@ TEST_CASE("number (float)")
     SECTION("Basics")
     {
         // construction with given type
-        JSON j(JSON::value_type::number_float);
-        CHECK(j.type() == JSON::value_type::number_float);
+        json j(json::value_type::number_float);
+        CHECK(j.type() == json::value_type::number_float);
 
         // const object
-        const JSON j_const = j;
+        const json j_const = j;
 
         // iterators
         CHECK(j.begin() != j.end());
@@ -1007,16 +1007,16 @@ TEST_CASE("number (float)")
         CHECK(j.empty() == false);
 
         // implicit conversions
-        CHECK_NOTHROW(JSON::array_t v = j);
-        CHECK_THROWS_AS(JSON::object_t v = j, std::logic_error);
+        CHECK_NOTHROW(json::array_t v = j);
+        CHECK_THROWS_AS(json::object_t v = j, std::logic_error);
         CHECK_THROWS_AS(std::string v = j, std::logic_error);
         CHECK_THROWS_AS(bool v = j, std::logic_error);
         CHECK_NOTHROW(int v = j);
         CHECK_NOTHROW(double v = j);
 
         // explicit conversions
-        CHECK_NOTHROW(auto v = j.get<JSON::array_t>());
-        CHECK_THROWS_AS(auto v = j.get<JSON::object_t>(), std::logic_error);
+        CHECK_NOTHROW(auto v = j.get<json::array_t>());
+        CHECK_THROWS_AS(auto v = j.get<json::object_t>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_NOTHROW(auto v = j.get<int>());
@@ -1030,7 +1030,7 @@ TEST_CASE("number (float)")
         CHECK(id(j) == j.get<double>());
 
         // copy constructor
-        JSON k(j);
+        json k(j);
         CHECK(k == j);
 
         // copy assignment
@@ -1038,17 +1038,17 @@ TEST_CASE("number (float)")
         CHECK(k == j);
 
         // move constructor
-        JSON l = std::move(k);
+        json l = std::move(k);
         CHECK(l == j);
     }
 
     SECTION("Create from value")
     {
-        JSON j1 = 3.1415926;
+        json j1 = 3.1415926;
         double v1 = j1;
         CHECK(j1.get<double>() == v1);
 
-        JSON j2 = 2.7182818;
+        json j2 = 2.7182818;
         double v2 = j2;
         CHECK(j2.get<double>() == v2);
     }
@@ -1056,7 +1056,7 @@ TEST_CASE("number (float)")
     SECTION("Operators")
     {
         // clear()
-        JSON j1 = 3.1415926;
+        json j1 = 3.1415926;
         CHECK(j1.get<double>() == 3.1415926);
         j1.clear();
         CHECK(j1.get<double>() == 0.0);
@@ -1065,37 +1065,37 @@ TEST_CASE("number (float)")
 
 TEST_CASE("Iterators")
 {
-    JSON j1 = {0, 1, 2, 3, 4};
-    JSON j2 = {{"foo", "bar"}, {"baz", "bam"}};
-    JSON j3 = true;
-    JSON j4 = nullptr;
-    JSON j5 = 42;
-    JSON j6 = 23.42;
-    JSON j7 = "hello";
+    json j1 = {0, 1, 2, 3, 4};
+    json j2 = {{"foo", "bar"}, {"baz", "bam"}};
+    json j3 = true;
+    json j4 = nullptr;
+    json j5 = 42;
+    json j6 = 23.42;
+    json j7 = "hello";
 
-    const JSON j1_const = {0, 1, 2, 3, 4};
-    const JSON j2_const = {{"foo", "bar"}, {"baz", "bam"}};
-    const JSON j3_const = true;
-    const JSON j4_const = nullptr;
-    const JSON j5_const = 42;
-    const JSON j6_const = 23.42;
-    const JSON j7_const = "hello";
+    const json j1_const = {0, 1, 2, 3, 4};
+    const json j2_const = {{"foo", "bar"}, {"baz", "bam"}};
+    const json j3_const = true;
+    const json j4_const = nullptr;
+    const json j5_const = 42;
+    const json j6_const = 23.42;
+    const json j7_const = "hello";
 
     // operator *
-    CHECK(* j1.begin() == JSON(0));
-    CHECK(* j1_const.begin() == JSON(0));
-    CHECK(* j2.begin() != JSON());
-    CHECK(* j2_const.begin() != JSON());
-    CHECK(* j3.begin() == JSON(true));
-    CHECK(* j3_const.begin() == JSON(true));
-    CHECK(* j4.begin() == JSON());
-    CHECK(* j4_const.begin() == JSON());
-    CHECK(* j5.begin() == JSON(42));
-    CHECK(* j5_const.begin() == JSON(42));
-    CHECK(* j6.begin() == JSON(23.42));
-    CHECK(* j6_const.begin() == JSON(23.42));
-    CHECK(* j7.begin() == JSON("hello"));
-    CHECK(* j7_const.begin() == JSON("hello"));
+    CHECK(* j1.begin() == json(0));
+    CHECK(* j1_const.begin() == json(0));
+    CHECK(* j2.begin() != json());
+    CHECK(* j2_const.begin() != json());
+    CHECK(* j3.begin() == json(true));
+    CHECK(* j3_const.begin() == json(true));
+    CHECK(* j4.begin() == json());
+    CHECK(* j4_const.begin() == json());
+    CHECK(* j5.begin() == json(42));
+    CHECK(* j5_const.begin() == json(42));
+    CHECK(* j6.begin() == json(23.42));
+    CHECK(* j6_const.begin() == json(23.42));
+    CHECK(* j7.begin() == json("hello"));
+    CHECK(* j7_const.begin() == json("hello"));
 
     CHECK_THROWS_AS(* j1.end(), std::runtime_error);
     CHECK_THROWS_AS(* j1.cend(), std::runtime_error);
@@ -1128,35 +1128,35 @@ TEST_CASE("Iterators")
     CHECK_THROWS_AS(* j7_const.cend(), std::runtime_error);
 
     // operator ->
-    CHECK(j1.begin()->type() == JSON::value_type::number);
-    CHECK(j1.cbegin()->type() == JSON::value_type::number);
-    CHECK(j2.begin()->type() == JSON::value_type::string);
-    CHECK(j2.cbegin()->type() == JSON::value_type::string);
-    CHECK(j3.begin()->type() == JSON::value_type::boolean);
-    CHECK(j3.cbegin()->type() == JSON::value_type::boolean);
-    CHECK(j4.begin()->type() == JSON::value_type::null);
-    CHECK(j4.cbegin()->type() == JSON::value_type::null);
-    CHECK(j5.begin()->type() == JSON::value_type::number);
-    CHECK(j5.cbegin()->type() == JSON::value_type::number);
-    CHECK(j6.begin()->type() == JSON::value_type::number_float);
-    CHECK(j6.cbegin()->type() == JSON::value_type::number_float);
-    CHECK(j7.begin()->type() == JSON::value_type::string);
-    CHECK(j7.cbegin()->type() == JSON::value_type::string);
+    CHECK(j1.begin()->type() == json::value_type::number);
+    CHECK(j1.cbegin()->type() == json::value_type::number);
+    CHECK(j2.begin()->type() == json::value_type::string);
+    CHECK(j2.cbegin()->type() == json::value_type::string);
+    CHECK(j3.begin()->type() == json::value_type::boolean);
+    CHECK(j3.cbegin()->type() == json::value_type::boolean);
+    CHECK(j4.begin()->type() == json::value_type::null);
+    CHECK(j4.cbegin()->type() == json::value_type::null);
+    CHECK(j5.begin()->type() == json::value_type::number);
+    CHECK(j5.cbegin()->type() == json::value_type::number);
+    CHECK(j6.begin()->type() == json::value_type::number_float);
+    CHECK(j6.cbegin()->type() == json::value_type::number_float);
+    CHECK(j7.begin()->type() == json::value_type::string);
+    CHECK(j7.cbegin()->type() == json::value_type::string);
 
-    CHECK(j1_const.begin()->type() == JSON::value_type::number);
-    CHECK(j1_const.cbegin()->type() == JSON::value_type::number);
-    CHECK(j2_const.begin()->type() == JSON::value_type::string);
-    CHECK(j2_const.cbegin()->type() == JSON::value_type::string);
-    CHECK(j3_const.begin()->type() == JSON::value_type::boolean);
-    CHECK(j3_const.cbegin()->type() == JSON::value_type::boolean);
-    CHECK(j4_const.begin()->type() == JSON::value_type::null);
-    CHECK(j4_const.cbegin()->type() == JSON::value_type::null);
-    CHECK(j5_const.begin()->type() == JSON::value_type::number);
-    CHECK(j5_const.cbegin()->type() == JSON::value_type::number);
-    CHECK(j6_const.begin()->type() == JSON::value_type::number_float);
-    CHECK(j6_const.cbegin()->type() == JSON::value_type::number_float);
-    CHECK(j7_const.begin()->type() == JSON::value_type::string);
-    CHECK(j7_const.cbegin()->type() == JSON::value_type::string);
+    CHECK(j1_const.begin()->type() == json::value_type::number);
+    CHECK(j1_const.cbegin()->type() == json::value_type::number);
+    CHECK(j2_const.begin()->type() == json::value_type::string);
+    CHECK(j2_const.cbegin()->type() == json::value_type::string);
+    CHECK(j3_const.begin()->type() == json::value_type::boolean);
+    CHECK(j3_const.cbegin()->type() == json::value_type::boolean);
+    CHECK(j4_const.begin()->type() == json::value_type::null);
+    CHECK(j4_const.cbegin()->type() == json::value_type::null);
+    CHECK(j5_const.begin()->type() == json::value_type::number);
+    CHECK(j5_const.cbegin()->type() == json::value_type::number);
+    CHECK(j6_const.begin()->type() == json::value_type::number_float);
+    CHECK(j6_const.cbegin()->type() == json::value_type::number_float);
+    CHECK(j7_const.begin()->type() == json::value_type::string);
+    CHECK(j7_const.cbegin()->type() == json::value_type::string);
 
     CHECK_THROWS_AS(j1.end()->type(), std::runtime_error);
     CHECK_THROWS_AS(j1.cend()->type(), std::runtime_error);
@@ -1189,35 +1189,35 @@ TEST_CASE("Iterators")
     CHECK_THROWS_AS(j7_const.cend()->type(), std::runtime_error);
 
     // value
-    CHECK(j1.begin().value().type() == JSON::value_type::number);
-    CHECK(j1.cbegin().value().type() == JSON::value_type::number);
-    CHECK(j2.begin().value().type() == JSON::value_type::string);
-    CHECK(j2.cbegin().value().type() == JSON::value_type::string);
-    CHECK(j3.begin().value().type() == JSON::value_type::boolean);
-    CHECK(j3.cbegin().value().type() == JSON::value_type::boolean);
-    CHECK(j4.begin().value().type() == JSON::value_type::null);
-    CHECK(j4.cbegin().value().type() == JSON::value_type::null);
-    CHECK(j5.begin().value().type() == JSON::value_type::number);
-    CHECK(j5.cbegin().value().type() == JSON::value_type::number);
-    CHECK(j6.begin().value().type() == JSON::value_type::number_float);
-    CHECK(j6.cbegin().value().type() == JSON::value_type::number_float);
-    CHECK(j7.begin().value().type() == JSON::value_type::string);
-    CHECK(j7.cbegin().value().type() == JSON::value_type::string);
+    CHECK(j1.begin().value().type() == json::value_type::number);
+    CHECK(j1.cbegin().value().type() == json::value_type::number);
+    CHECK(j2.begin().value().type() == json::value_type::string);
+    CHECK(j2.cbegin().value().type() == json::value_type::string);
+    CHECK(j3.begin().value().type() == json::value_type::boolean);
+    CHECK(j3.cbegin().value().type() == json::value_type::boolean);
+    CHECK(j4.begin().value().type() == json::value_type::null);
+    CHECK(j4.cbegin().value().type() == json::value_type::null);
+    CHECK(j5.begin().value().type() == json::value_type::number);
+    CHECK(j5.cbegin().value().type() == json::value_type::number);
+    CHECK(j6.begin().value().type() == json::value_type::number_float);
+    CHECK(j6.cbegin().value().type() == json::value_type::number_float);
+    CHECK(j7.begin().value().type() == json::value_type::string);
+    CHECK(j7.cbegin().value().type() == json::value_type::string);
 
-    CHECK(j1_const.begin().value().type() == JSON::value_type::number);
-    CHECK(j1_const.cbegin().value().type() == JSON::value_type::number);
-    CHECK(j2_const.begin().value().type() == JSON::value_type::string);
-    CHECK(j2_const.cbegin().value().type() == JSON::value_type::string);
-    CHECK(j3_const.begin().value().type() == JSON::value_type::boolean);
-    CHECK(j3_const.cbegin().value().type() == JSON::value_type::boolean);
-    CHECK(j4_const.begin().value().type() == JSON::value_type::null);
-    CHECK(j4_const.cbegin().value().type() == JSON::value_type::null);
-    CHECK(j5_const.begin().value().type() == JSON::value_type::number);
-    CHECK(j5_const.cbegin().value().type() == JSON::value_type::number);
-    CHECK(j6_const.begin().value().type() == JSON::value_type::number_float);
-    CHECK(j6_const.cbegin().value().type() == JSON::value_type::number_float);
-    CHECK(j7_const.begin().value().type() == JSON::value_type::string);
-    CHECK(j7_const.cbegin().value().type() == JSON::value_type::string);
+    CHECK(j1_const.begin().value().type() == json::value_type::number);
+    CHECK(j1_const.cbegin().value().type() == json::value_type::number);
+    CHECK(j2_const.begin().value().type() == json::value_type::string);
+    CHECK(j2_const.cbegin().value().type() == json::value_type::string);
+    CHECK(j3_const.begin().value().type() == json::value_type::boolean);
+    CHECK(j3_const.cbegin().value().type() == json::value_type::boolean);
+    CHECK(j4_const.begin().value().type() == json::value_type::null);
+    CHECK(j4_const.cbegin().value().type() == json::value_type::null);
+    CHECK(j5_const.begin().value().type() == json::value_type::number);
+    CHECK(j5_const.cbegin().value().type() == json::value_type::number);
+    CHECK(j6_const.begin().value().type() == json::value_type::number_float);
+    CHECK(j6_const.cbegin().value().type() == json::value_type::number_float);
+    CHECK(j7_const.begin().value().type() == json::value_type::string);
+    CHECK(j7_const.cbegin().value().type() == json::value_type::string);
 
     CHECK_THROWS_AS(j1.end().value(), std::out_of_range);
     CHECK_THROWS_AS(j1.cend().value(), std::out_of_range);
@@ -1350,114 +1350,114 @@ TEST_CASE("Iterators")
 
     // iterator copy constructors
     {
-        JSON::iterator tmp1(j1.begin());
-        JSON::const_iterator tmp2(j1.cbegin());
+        json::iterator tmp1(j1.begin());
+        json::const_iterator tmp2(j1.cbegin());
     }
     {
-        JSON::iterator tmp1(j2.begin());
-        JSON::const_iterator tmp2(j2.cbegin());
+        json::iterator tmp1(j2.begin());
+        json::const_iterator tmp2(j2.cbegin());
     }
     {
-        JSON::iterator tmp1(j3.begin());
-        JSON::const_iterator tmp2(j3.cbegin());
+        json::iterator tmp1(j3.begin());
+        json::const_iterator tmp2(j3.cbegin());
     }
     {
-        JSON::iterator tmp1(j4.begin());
-        JSON::const_iterator tmp2(j4.cbegin());
+        json::iterator tmp1(j4.begin());
+        json::const_iterator tmp2(j4.cbegin());
     }
     {
-        JSON::iterator tmp1(j5.begin());
-        JSON::const_iterator tmp2(j5.cbegin());
+        json::iterator tmp1(j5.begin());
+        json::const_iterator tmp2(j5.cbegin());
     }
     {
-        JSON::iterator tmp1(j6.begin());
-        JSON::const_iterator tmp2(j6.cbegin());
+        json::iterator tmp1(j6.begin());
+        json::const_iterator tmp2(j6.cbegin());
     }
     {
-        JSON::iterator tmp1(j7.begin());
-        JSON::const_iterator tmp2(j7.cbegin());
+        json::iterator tmp1(j7.begin());
+        json::const_iterator tmp2(j7.cbegin());
     }
     {
-        JSON j_array = {0, 1, 2, 3, 4, 5};
+        json j_array = {0, 1, 2, 3, 4, 5};
 
-        JSON::iterator i1 = j_array.begin();
+        json::iterator i1 = j_array.begin();
         ++i1;
-        JSON::iterator i2(i1);
-        JSON::iterator i3;
+        json::iterator i2(i1);
+        json::iterator i3;
         i3 = i2;
         CHECK(i1 == i1);
 
-        JSON::const_iterator i4 = j_array.begin();
+        json::const_iterator i4 = j_array.begin();
         ++i4;
-        JSON::const_iterator i5(i4);
-        JSON::const_iterator i6;
+        json::const_iterator i5(i4);
+        json::const_iterator i6;
         i6 = i5;
         CHECK(i4 == i4);
     }
     {
-        JSON j_object = {{"1", 1}, {"2", 2}, {"3", 3}};
+        json j_object = {{"1", 1}, {"2", 2}, {"3", 3}};
 
-        JSON::iterator i1 = j_object.begin();
+        json::iterator i1 = j_object.begin();
         ++i1;
-        JSON::iterator i11 = j_object.begin();
+        json::iterator i11 = j_object.begin();
         CHECK((i1 == i11) == false);
-        JSON::iterator i2(i1);
-        JSON::iterator i3;
+        json::iterator i2(i1);
+        json::iterator i3;
         i3 = i2;
         CHECK(i1 == i1);
 
-        JSON::const_iterator i4 = j_object.begin();
+        json::const_iterator i4 = j_object.begin();
         ++i4;
-        JSON::iterator i41 = j_object.begin();
+        json::iterator i41 = j_object.begin();
         CHECK((i4 == i41) == false);
-        JSON::const_iterator i5(i4);
-        JSON::const_iterator i6;
+        json::const_iterator i5(i4);
+        json::const_iterator i6;
         i6 = i5;
         CHECK(i4 == i4);
     }
 
     // iterator copy assignment
     {
-        JSON::iterator i1 = j2.begin();
-        JSON::const_iterator i2 = j2.cbegin();
-        JSON::iterator i3 = i1;
-        JSON::const_iterator i4 = i2;
+        json::iterator i1 = j2.begin();
+        json::const_iterator i2 = j2.cbegin();
+        json::iterator i3 = i1;
+        json::const_iterator i4 = i2;
     }
 
     // operator++
     {
-        JSON j;
-        const JSON j_const = j;
+        json j;
+        const json j_const = j;
         {
-            JSON::iterator i = j.begin();
+            json::iterator i = j.begin();
             ++i;
             CHECK(i == j.end());
             ++i;
             CHECK(i == j.end());
         }
         {
-            JSON::const_iterator i = j.begin();
+            json::const_iterator i = j.begin();
             ++i;
             CHECK(i == j.end());
             ++i;
             CHECK(i == j.end());
         }
         {
-            JSON::const_iterator i = j_const.begin();
+            json::const_iterator i = j_const.begin();
             ++i;
             CHECK(i == j_const.end());
             ++i;
             CHECK(i == j_const.end());
         }
         {
-            JSON::const_iterator i = j.cbegin();
+            json::const_iterator i = j.cbegin();
             ++i;
             CHECK(i == j.cend());
             ++i;
             CHECK(i == j.cend());
         }
         {
-            JSON::const_iterator i = j_const.cbegin();
+            json::const_iterator i = j_const.cbegin();
             ++i;
             CHECK(i == j_const.cend());
             ++i;
@@ -1468,13 +1468,13 @@ TEST_CASE("Iterators")
 
 TEST_CASE("Comparisons")
 {
-    JSON j1 = {0, 1, 2, 3, 4};
-    JSON j2 = {{"foo", "bar"}, {"baz", "bam"}};
-    JSON j3 = true;
-    JSON j4 = nullptr;
-    JSON j5 = 42;
-    JSON j6 = 23.42;
-    JSON j7 = "hello";
+    json j1 = {0, 1, 2, 3, 4};
+    json j2 = {{"foo", "bar"}, {"baz", "bam"}};
+    json j3 = true;
+    json j4 = nullptr;
+    json j5 = 42;
+    json j6 = 23.42;
+    json j7 = "hello";
 
     CHECK((j1 == j1) == true);
     CHECK((j1 == j2) == false);
@@ -1594,167 +1594,167 @@ TEST_CASE("Parser")
     SECTION("null")
     {
         // accept the exact values
-        CHECK(JSON::parse("null") == JSON(nullptr));
+        CHECK(json::parse("null") == json(nullptr));
 
         // ignore whitespace
-        CHECK(JSON::parse(" null ") == JSON(nullptr));
-        CHECK(JSON::parse("\tnull\n") == JSON(nullptr));
+        CHECK(json::parse(" null ") == json(nullptr));
+        CHECK(json::parse("\tnull\n") == json(nullptr));
 
         // respect capitalization
-        CHECK_THROWS_AS(JSON::parse("Null"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("NULL"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("Null"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("NULL"), std::invalid_argument);
 
         // do not accept prefixes
-        CHECK_THROWS_AS(JSON::parse("n"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("nu"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("nul"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("n"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("nu"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("nul"), std::invalid_argument);
     }
 
     SECTION("string")
     {
         // accept some values
-        CHECK(JSON::parse("\"\"") == JSON(""));
-        CHECK(JSON::parse("\"foo\"") == JSON("foo"));
+        CHECK(json::parse("\"\"") == json(""));
+        CHECK(json::parse("\"foo\"") == json("foo"));
 
         // escape characters
-        CHECK_THROWS_AS(JSON::parse("\"\\\""), std::invalid_argument);
-        CHECK_NOTHROW(JSON::parse("\"\\\"\""));
+        CHECK_THROWS_AS(json::parse("\"\\\""), std::invalid_argument);
+        CHECK_NOTHROW(json::parse("\"\\\"\""));
 
         // quotes must be closed
-        CHECK_THROWS_AS(JSON::parse("\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\""), std::invalid_argument);
     }
 
     SECTION("boolean")
     {
         // accept the exact values
-        CHECK(JSON::parse("true") == JSON(true));
-        CHECK(JSON::parse("false") == JSON(false));
+        CHECK(json::parse("true") == json(true));
+        CHECK(json::parse("false") == json(false));
 
         // ignore whitespace
-        CHECK(JSON::parse(" true ") == JSON(true));
-        CHECK(JSON::parse("\tfalse\n") == JSON(false));
+        CHECK(json::parse(" true ") == json(true));
+        CHECK(json::parse("\tfalse\n") == json(false));
 
         // respect capitalization
-        CHECK_THROWS_AS(JSON::parse("True"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("False"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("True"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("False"), std::invalid_argument);
 
         // do not accept prefixes
-        CHECK_THROWS_AS(JSON::parse("t"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("tr"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("tru"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("f"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("fa"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("fal"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("fals"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("t"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("tr"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("tru"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("f"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("fa"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("fal"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("fals"), std::invalid_argument);
     }
 
     SECTION("number (int)")
     {
         // accept the exact values
-        CHECK(JSON::parse("0") == JSON(0));
-        CHECK(JSON::parse("-0") == JSON(0));
-        CHECK(JSON::parse("1") == JSON(1));
-        CHECK(JSON::parse("-1") == JSON(-1));
-        CHECK(JSON::parse("12345678") == JSON(12345678));
-        CHECK(JSON::parse("-12345678") == JSON(-12345678));
+        CHECK(json::parse("0") == json(0));
+        CHECK(json::parse("-0") == json(0));
+        CHECK(json::parse("1") == json(1));
+        CHECK(json::parse("-1") == json(-1));
+        CHECK(json::parse("12345678") == json(12345678));
+        CHECK(json::parse("-12345678") == json(-12345678));
 
-        CHECK(JSON::parse("0.0") == JSON(0));
-        CHECK(JSON::parse("-0.0") == JSON(0));
-        CHECK(JSON::parse("1.0") == JSON(1));
-        CHECK(JSON::parse("-1.0") == JSON(-1));
-        CHECK(JSON::parse("12345678.0") == JSON(12345678));
-        CHECK(JSON::parse("-12345678.0") == JSON(-12345678));
+        CHECK(json::parse("0.0") == json(0));
+        CHECK(json::parse("-0.0") == json(0));
+        CHECK(json::parse("1.0") == json(1));
+        CHECK(json::parse("-1.0") == json(-1));
+        CHECK(json::parse("12345678.0") == json(12345678));
+        CHECK(json::parse("-12345678.0") == json(-12345678));
 
-        CHECK(JSON::parse("17e0") == JSON(17));
-        CHECK(JSON::parse("17e1") == JSON(170));
-        CHECK(JSON::parse("17e3") == JSON(17000));
-        CHECK(JSON::parse("17e+0") == JSON(17));
-        CHECK(JSON::parse("17e+1") == JSON(170));
-        CHECK(JSON::parse("17e+3") == JSON(17000));
-        CHECK(JSON::parse("17E0") == JSON(17));
-        CHECK(JSON::parse("17E1") == JSON(170));
-        CHECK(JSON::parse("17E3") == JSON(17000));
-        CHECK(JSON::parse("17E+0") == JSON(17));
-        CHECK(JSON::parse("17E+1") == JSON(170));
-        CHECK(JSON::parse("17E+3") == JSON(17000));
-        CHECK(JSON::parse("10000e-0") == JSON(10000));
-        CHECK(JSON::parse("10000e-1") == JSON(1000));
-        CHECK(JSON::parse("10000e-4") == JSON(1));
-        CHECK(JSON::parse("10000E-0") == JSON(10000));
-        CHECK(JSON::parse("10000E-1") == JSON(1000));
-        CHECK(JSON::parse("10000E-4") == JSON(1));
+        CHECK(json::parse("17e0") == json(17));
+        CHECK(json::parse("17e1") == json(170));
+        CHECK(json::parse("17e3") == json(17000));
+        CHECK(json::parse("17e+0") == json(17));
+        CHECK(json::parse("17e+1") == json(170));
+        CHECK(json::parse("17e+3") == json(17000));
+        CHECK(json::parse("17E0") == json(17));
+        CHECK(json::parse("17E1") == json(170));
+        CHECK(json::parse("17E3") == json(17000));
+        CHECK(json::parse("17E+0") == json(17));
+        CHECK(json::parse("17E+1") == json(170));
+        CHECK(json::parse("17E+3") == json(17000));
+        CHECK(json::parse("10000e-0") == json(10000));
+        CHECK(json::parse("10000e-1") == json(1000));
+        CHECK(json::parse("10000e-4") == json(1));
+        CHECK(json::parse("10000E-0") == json(10000));
+        CHECK(json::parse("10000E-1") == json(1000));
+        CHECK(json::parse("10000E-4") == json(1));
 
-        CHECK(JSON::parse("17.0e0") == JSON(17));
-        CHECK(JSON::parse("17.0e1") == JSON(170));
-        CHECK(JSON::parse("17.0e3") == JSON(17000));
-        CHECK(JSON::parse("17.0e+0") == JSON(17));
-        CHECK(JSON::parse("17.0e+1") == JSON(170));
-        CHECK(JSON::parse("17.0e+3") == JSON(17000));
-        CHECK(JSON::parse("17.0E0") == JSON(17));
-        CHECK(JSON::parse("17.0E1") == JSON(170));
-        CHECK(JSON::parse("17.0E3") == JSON(17000));
-        CHECK(JSON::parse("17.0E+0") == JSON(17));
-        CHECK(JSON::parse("17.0E+1") == JSON(170));
-        CHECK(JSON::parse("17.0E+3") == JSON(17000));
-        CHECK(JSON::parse("10000.0e-0") == JSON(10000));
-        CHECK(JSON::parse("10000.0e-1") == JSON(1000));
-        CHECK(JSON::parse("10000.0e-4") == JSON(1));
-        CHECK(JSON::parse("10000.0E-0") == JSON(10000));
-        CHECK(JSON::parse("10000.0E-1") == JSON(1000));
-        CHECK(JSON::parse("10000.0E-4") == JSON(1));
+        CHECK(json::parse("17.0e0") == json(17));
+        CHECK(json::parse("17.0e1") == json(170));
+        CHECK(json::parse("17.0e3") == json(17000));
+        CHECK(json::parse("17.0e+0") == json(17));
+        CHECK(json::parse("17.0e+1") == json(170));
+        CHECK(json::parse("17.0e+3") == json(17000));
+        CHECK(json::parse("17.0E0") == json(17));
+        CHECK(json::parse("17.0E1") == json(170));
+        CHECK(json::parse("17.0E3") == json(17000));
+        CHECK(json::parse("17.0E+0") == json(17));
+        CHECK(json::parse("17.0E+1") == json(170));
+        CHECK(json::parse("17.0E+3") == json(17000));
+        CHECK(json::parse("10000.0e-0") == json(10000));
+        CHECK(json::parse("10000.0e-1") == json(1000));
+        CHECK(json::parse("10000.0e-4") == json(1));
+        CHECK(json::parse("10000.0E-0") == json(10000));
+        CHECK(json::parse("10000.0E-1") == json(1000));
+        CHECK(json::parse("10000.0E-4") == json(1));
 
         // trailing zero is not allowed
-        //CHECK_THROWS_AS(JSON::parse("01"), std::invalid_argument);
+        //CHECK_THROWS_AS(json::parse("01"), std::invalid_argument);
 
         // whitespace inbetween is an error
-        //CHECK_THROWS_AS(JSON::parse("1 0"), std::invalid_argument);
+        //CHECK_THROWS_AS(json::parse("1 0"), std::invalid_argument);
 
         // only one minus is allowd
-        CHECK_THROWS_AS(JSON::parse("--1"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("--1"), std::invalid_argument);
 
         // string representations are not allowed
-        CHECK_THROWS_AS(JSON::parse("NAN"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("nan"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("INF"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("inf"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("INFINITY"), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("infinity"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("NAN"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("nan"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("INF"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("inf"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("INFINITY"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("infinity"), std::invalid_argument);
     }
 
     SECTION("number (float)")
     {
         // accept the exact values
-        CHECK(JSON::parse("0.5") == JSON(0.5));
-        CHECK(JSON::parse("-0.5") == JSON(-0.5));
-        CHECK(JSON::parse("1.5") == JSON(1.5));
-        CHECK(JSON::parse("-1.5") == JSON(-1.5));
-        CHECK(JSON::parse("12345678.5") == JSON(12345678.5));
-        CHECK(JSON::parse("-12345678.5") == JSON(-12345678.5));
+        CHECK(json::parse("0.5") == json(0.5));
+        CHECK(json::parse("-0.5") == json(-0.5));
+        CHECK(json::parse("1.5") == json(1.5));
+        CHECK(json::parse("-1.5") == json(-1.5));
+        CHECK(json::parse("12345678.5") == json(12345678.5));
+        CHECK(json::parse("-12345678.5") == json(-12345678.5));
 
-        CHECK(JSON::parse("17.5e0") == JSON(17.5));
-        CHECK(JSON::parse("17.5e1") == JSON(175));
-        CHECK(JSON::parse("17.5e3") == JSON(17500));
-        CHECK(JSON::parse("17.5e+0") == JSON(17.5));
-        CHECK(JSON::parse("17.5e+1") == JSON(175));
-        CHECK(JSON::parse("17.5e+3") == JSON(17500));
-        CHECK(JSON::parse("17.5E0") == JSON(17.5));
-        CHECK(JSON::parse("17.5E1") == JSON(175));
-        CHECK(JSON::parse("17.5E3") == JSON(17500));
-        CHECK(JSON::parse("17.5E+0") == JSON(17.5));
-        CHECK(JSON::parse("17.5E+1") == JSON(175));
-        CHECK(JSON::parse("17.5E+3") == JSON(17500));
-        CHECK(JSON::parse("10000.5e-0") == JSON(10000.5));
-        CHECK(JSON::parse("10000.5e-1") == JSON(1000.05));
-        CHECK(JSON::parse("10000.5e-4") == JSON(1.00005));
-        CHECK(JSON::parse("10000.5E-0") == JSON(10000.5));
-        CHECK(JSON::parse("10000.5E-1") == JSON(1000.05));
-        CHECK(JSON::parse("10000.5E-4") == JSON(1.00005));
+        CHECK(json::parse("17.5e0") == json(17.5));
+        CHECK(json::parse("17.5e1") == json(175));
+        CHECK(json::parse("17.5e3") == json(17500));
+        CHECK(json::parse("17.5e+0") == json(17.5));
+        CHECK(json::parse("17.5e+1") == json(175));
+        CHECK(json::parse("17.5e+3") == json(17500));
+        CHECK(json::parse("17.5E0") == json(17.5));
+        CHECK(json::parse("17.5E1") == json(175));
+        CHECK(json::parse("17.5E3") == json(17500));
+        CHECK(json::parse("17.5E+0") == json(17.5));
+        CHECK(json::parse("17.5E+1") == json(175));
+        CHECK(json::parse("17.5E+3") == json(17500));
+        CHECK(json::parse("10000.5e-0") == json(10000.5));
+        CHECK(json::parse("10000.5e-1") == json(1000.05));
+        CHECK(json::parse("10000.5e-4") == json(1.00005));
+        CHECK(json::parse("10000.5E-0") == json(10000.5));
+        CHECK(json::parse("10000.5E-1") == json(1000.05));
+        CHECK(json::parse("10000.5E-4") == json(1.00005));
     }
 
     SECTION("parse from C++ string")
     {
         std::string s = "{ \"foo\": [1,2,true] }";
-        JSON j = JSON::parse(s);
+        json j = json::parse(s);
         CHECK(j["foo"].size() == 3);
     }
 
@@ -1762,7 +1762,7 @@ TEST_CASE("Parser")
     {
         std::stringstream s;
         s << "{ \"foo\": [1,2,true] }";
-        JSON j;
+        json j;
         j << s;
         CHECK(j["foo"].size() == 3);
     }
@@ -1770,7 +1770,7 @@ TEST_CASE("Parser")
     SECTION("user-defined string literal operator")
     {
         auto j1 = "[1,2,3]"_json;
-        JSON j2 = {1, 2, 3};
+        json j2 = {1, 2, 3};
         CHECK(j1 == j2);
 
         auto j3 = "{\"key\": \"value\"}"_json;
@@ -1779,8 +1779,8 @@ TEST_CASE("Parser")
 
     SECTION("Errors")
     {
-        CHECK_THROWS_AS(JSON::parse(""), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse(std::string("")), std::invalid_argument);
-        CHECK_THROWS_AS(JSON::parse("[1,2"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse(""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse(std::string("")), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("[1,2"), std::invalid_argument);
     }
 }

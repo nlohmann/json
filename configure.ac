@@ -1,5 +1,5 @@
 AC_INIT([JSON], [2.0], [mail@nlohmann.me])
-AC_CONFIG_SRCDIR([src/JSON.cc])
+AC_CONFIG_SRCDIR([src/json.h])
 
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 AM_SILENT_RULES([yes])
