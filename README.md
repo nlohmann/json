@@ -36,7 +36,28 @@ to the files you want to use JSON objects. Furthermore, you need to compile the 
 
 ## Examples
 
-Here are some examples to give you an idea how to use the class:
+Here are some examples to give you an idea how to use the class.
+
+Assume you want to create the JSON object
+
+```json
+{
+  "pi": 3.141,
+  "happy": true,
+  "name": "Niels",
+  "nothing": null,
+  "answer": {
+    "everything": 42
+  },
+  "list": [1, 0, 2],
+  "object": {
+    "currency": "USD",
+    "value": "42.99"
+  }
+}
+```
+
+With the JSON class, you could write:
 
 ```cpp
 // create an empty structure (null)
@@ -62,9 +83,26 @@ j["list"] = { 1, 0, 2 };
 
 // add another object (using an initializer list of pairs)
 j["object"] = { {"currency", "USD"}, {"value", "42.99"} };
+
+// instead, you could also write (which looks very similar to the JSON above)
+JSON j2 = {
+  {"pi", 3.141},
+  {"happy", true},
+  {"name", "Niels"},
+  {"nothing", nullptr},
+  {"answer", {
+    {"everything", 42}
+  }},
+  {"list", {1, 0, 2}},
+  {"object", {
+    {"currency", "USD"},
+    {"value", "42.99"}
+  }}
+};
+*/
 ```
 
-Note that in all cases, the compiler derives the appropriate JSON value.
+Note that in all cases, you never need to "tell" the compiler which JSON value you want to use.
 
 ### Serialization / Deserialization
 
