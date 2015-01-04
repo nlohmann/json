@@ -158,7 +158,7 @@ class json
 
   private:
     /// return the type as string
-    const std::string _typename() const noexcept;
+    const std::string type_name() const noexcept;
 
   public:
     /// explicit value conversion
@@ -312,14 +312,14 @@ class json
 
   private:
     /// the type of this object
-    value_type _type = value_type::null;
+    value_type type_ = value_type::null;
 
     /// the payload
-    value _value {};
+    value value_ {};
 
   private:
     /// mutex to guard payload
-    static std::mutex _token;
+    static std::mutex token_;
 
   public:
     /// an iterator
@@ -347,11 +347,11 @@ class json
 
       private:
         /// a JSON value
-        json* _object = nullptr;
+        json* object_ = nullptr;
         /// an iterator for JSON arrays
-        array_t::iterator* _vi = nullptr;
+        array_t::iterator* vi_ = nullptr;
         /// an iterator for JSON objects
-        object_t::iterator* _oi = nullptr;
+        object_t::iterator* oi_ = nullptr;
     };
 
     /// a const iterator
@@ -380,11 +380,11 @@ class json
 
       private:
         /// a JSON value
-        const json* _object = nullptr;
+        const json* object_ = nullptr;
         /// an iterator for JSON arrays
-        array_t::const_iterator* _vi = nullptr;
+        array_t::const_iterator* vi_ = nullptr;
         /// an iterator for JSON objects
-        object_t::const_iterator* _oi = nullptr;
+        object_t::const_iterator* oi_ = nullptr;
     };
 
   private:
@@ -427,11 +427,11 @@ class json
 
       private:
         /// a buffer of the input
-        std::string _buffer {};
+        std::string buffer_ {};
         /// the current character
-        char _current {};
+        char current_ {};
         /// the position inside the input buffer
-        size_t _pos = 0;
+        size_t pos_ = 0;
     };
 };
 
