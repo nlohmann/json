@@ -181,13 +181,13 @@ class json
     /// write to stream
     friend std::ostream& operator<<(std::ostream& o, const json& j)
     {
-        o << j.toString();
+        o << j.to_string();
         return o;
     }
     /// write to stream
     friend std::ostream& operator>>(const json& j, std::ostream& o)
     {
-        o << j.toString();
+        o << j.to_string();
         return o;
     }
 
@@ -205,7 +205,7 @@ class json
     }
 
     /// explicit conversion to string representation (C++ style)
-    const std::string toString() const noexcept;
+    const std::string to_string() const noexcept;
 
     /// add an object/array to an array
     json& operator+=(const json&);

@@ -477,7 +477,7 @@ json::operator object_t() const
     return get<object_t>();
 }
 
-const std::string json::toString() const noexcept
+const std::string json::to_string() const noexcept
 {
     switch (_type)
     {
@@ -511,7 +511,7 @@ const std::string json::toString() const noexcept
                 {
                     result += ", ";
                 }
-                result += i->toString();
+                result += i->to_string();
             }
 
             return "[" + result + "]";
@@ -527,7 +527,7 @@ const std::string json::toString() const noexcept
                 {
                     result += ", ";
                 }
-                result += "\"" + i->first + "\": " + i->second.toString();
+                result += "\"" + i->first + "\": " + i->second.to_string();
             }
 
             return "{" + result + "}";

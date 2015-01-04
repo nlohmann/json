@@ -15,7 +15,7 @@ TEST_CASE("array")
         const json j_const (j);
 
         // string representation of default value
-        CHECK(j.toString() == "[]");
+        CHECK(j.to_string() == "[]");
 
         // iterators
         CHECK(j.begin() != j.end());
@@ -303,7 +303,7 @@ TEST_CASE("object")
         const json j_const = j;
 
         // string representation of default value
-        CHECK(j.toString() == "{}");
+        CHECK(j.to_string() == "{}");
 
         // iterators
         CHECK(j.begin() != j.end());
@@ -683,7 +683,7 @@ TEST_CASE("null")
         CHECK(j.type() == json::value_type::null);
 
         // string representation of default value
-        CHECK(j.toString() == "null");
+        CHECK(j.to_string() == "null");
 
         // iterators
         CHECK(j.begin() != j.end());
@@ -753,7 +753,7 @@ TEST_CASE("string")
         CHECK(j.cbegin() != j.cend());
 
         // string representation of default value
-        CHECK(j.toString() == "\"\"");
+        CHECK(j.to_string() == "\"\"");
 
         // container members
         CHECK(j.size() == 1);
@@ -835,7 +835,7 @@ TEST_CASE("boolean")
         CHECK(j.cbegin() != j.cend());
 
         // string representation of default value
-        CHECK(j.toString() == "false");
+        CHECK(j.to_string() == "false");
 
         // container members
         CHECK(j.size() == 1);
@@ -914,7 +914,7 @@ TEST_CASE("number (int)")
         CHECK(j.cbegin() != j.cend());
 
         // string representation of default value
-        CHECK(j.toString() == "0");
+        CHECK(j.to_string() == "0");
 
         // container members
         CHECK(j.size() == 1);
@@ -1000,7 +1000,7 @@ TEST_CASE("number (float)")
         CHECK(j.cbegin() != j.cend());
 
         // string representation of default value
-        CHECK(j.toString() == "0.000000");
+        CHECK(j.to_string() == "0.000000");
 
         // container members
         CHECK(j.size() == 1);

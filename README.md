@@ -116,7 +116,7 @@ You can also get a string representation (serialize):
 
 ```cpp
 // explicit conversion to string
-std::string s = j.toString();
+std::string s = j.to_string();
 ```
 
 The value of s could be `{"pi": 3.141, "happy": true}`, but the order of the entries in the object is not fixed.
