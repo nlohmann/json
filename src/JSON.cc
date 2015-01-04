@@ -22,7 +22,6 @@
 ////////////////////
 
 std::mutex JSON::_token;
-bool JSON::Parser::firstCall = true;
 
 
 ///////////////////////////////////
@@ -1777,17 +1776,6 @@ Initialize the JSON parser given an input stream \p _is.
 */
 JSON::Parser::Parser(std::istream& _is)
 {
-    // On first call, switch off syncing between C++ and C I/O. This call must
-    // be done before first I/O operation as the behavior may be undefined
-    // otherwise.
-    if (firstCall)
-    {
-        firstCall = false;
-        //  Don't sync C++ and C I/O
-        // from http://www.manticmoo.com/articles/jeff/programming/c++/making-io-streams-efficient-in-c++.php
-        std::ios_base::sync_with_stdio(false);
-    }
-
     while (_is)
     {
         std::string input_line;

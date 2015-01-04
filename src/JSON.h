@@ -432,10 +432,6 @@ class JSON
         char _current {};
         /// the position inside the input buffer
         size_t _pos = 0;
-
-      private:
-        /// variable to guard std::ios_base::sync_with_stdio
-        static bool firstCall;
     };
 };
 
