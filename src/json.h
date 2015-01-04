@@ -112,17 +112,17 @@ class json
 
   public:
     /// create an object according to given type
-    json(const value_type) noexcept;
+    json(const value_type);
     /// create a null object
     json() = default;
     /// create a null object
     json(std::nullptr_t) noexcept;
     /// create a string object from a C++ string
-    json(const std::string&) noexcept;
+    json(const std::string&);
     /// create a string object from a C++ string (move)
-    json(std::string&&) noexcept;
+    json(std::string&&);
     /// create a string object from a C string
-    json(const char*) noexcept;
+    json(const char*);
     /// create a Boolean object
     json(const bool) noexcept;
     /// create a number object
@@ -130,18 +130,18 @@ class json
     /// create a number object
     json(const double) noexcept;
     /// create an array
-    json(const array_t&) noexcept;
+    json(const array_t&);
     /// create an array (move)
-    json(array_t&&) noexcept;
+    json(array_t&&);
     /// create an object
-    json(const object_t&) noexcept;
+    json(const object_t&);
     /// create an object (move)
-    json(object_t&&) noexcept;
+    json(object_t&&);
     /// create from an initializer list (to an array or object)
-    json(list_init_t) noexcept;
+    json(list_init_t);
 
     /// copy constructor
-    json(const json&) noexcept;
+    json(const json&);
     /// move constructor
     json(json&&) noexcept;
 

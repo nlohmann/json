@@ -47,7 +47,7 @@ Construct an empty JSON given the type.
 
 @post Memory for array, object, and string are allocated.
 */
-json::json(const value_type t) noexcept
+json::json(const value_type t)
     : type_(t)
 {
     switch (type_)
@@ -100,15 +100,15 @@ Construct a string JSON object.
 
 @param s  a string to initialize the JSON object with
 */
-json::json(const std::string& s) noexcept
+json::json(const std::string& s)
     : type_(value_type::string), value_(new string_t(s))
 {}
 
-json::json(std::string&& s) noexcept
+json::json(std::string&& s)
     : type_(value_type::string), value_(new string_t(std::move(s)))
 {}
 
-json::json(const char* s) noexcept
+json::json(const char* s)
     : type_(value_type::string), value_(new string_t(s))
 {}
 
@@ -124,19 +124,19 @@ json::json(const double f) noexcept
     : type_(value_type::number_float), value_(f)
 {}
 
-json::json(const array_t& a) noexcept
+json::json(const array_t& a)
     : type_(value_type::array), value_(new array_t(a))
 {}
 
-json::json(array_t&& a) noexcept
+json::json(array_t&& a)
     : type_(value_type::array), value_(new array_t(std::move(a)))
 {}
 
-json::json(const object_t& o) noexcept
+json::json(const object_t& o)
     : type_(value_type::object), value_(new object_t(o))
 {}
 
-json::json(object_t&& o) noexcept
+json::json(object_t&& o)
     : type_(value_type::object), value_(new object_t(std::move(o)))
 {}
 
@@ -155,7 +155,7 @@ as is to create an array.
 @bug With the described approach, we would fail to recognize an array whose
      first element is again an arrays as array.
 */
-json::json(list_init_t a) noexcept
+json::json(list_init_t a)
 {
     // check if each element is an array with two elements whose first element
     // is a string
@@ -189,7 +189,7 @@ A copy constructor for the JSON class.
 
 @param o  the JSON object to copy
 */
-json::json(const json& o) noexcept
+json::json(const json& o)
     : type_(o.type_)
 {
     switch (type_)
