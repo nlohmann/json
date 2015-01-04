@@ -1832,7 +1832,6 @@ JSON JSON::Parser::parse()
             // process nonempty array
             if (_current != ']')
             {
-                size_t element_count = 0;
                 do
                 {
                     result.push_back(parse());

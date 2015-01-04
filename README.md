@@ -1,6 +1,6 @@
 # JSON for Modern C++
 
-*What if JSON was party of modern C++?*
+*What if JSON was part of modern C++?*
 
 [![Build Status](https://travis-ci.org/nlohmann/json.png?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
@@ -166,6 +166,9 @@ j.empty();    // false
 j.type();     // JSON::value_type::array
 j.clear();    // the array is empty again
 
+// comparison
+j == "[\"foo\", 1, true]"_json;  // true
+
 // create an object
 JSON o;
 o["foo"] = 23;
@@ -235,15 +238,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 To compile the unit tests, you need to execute
 
 ```sh
-  autoreconf -i
-  ./configure
-  make
+$ autoreconf -i
+$ ./configure
+$ make
 ```
 
 The unit tests can then be executed with
 
 ```sh
-./json_unit
+$ ./json_unit
+
+===============================================================================
+All tests passed (863 assertions in 10 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
