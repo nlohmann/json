@@ -36,3 +36,13 @@ Makefile.in
 *.plist
 
 json_parser
+
+CMakeCache.txt
+
+*.cmake
+
+CMakeFiles
+
+libjson.a
+
+Testing
