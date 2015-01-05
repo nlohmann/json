@@ -235,7 +235,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Execute unit tests with CMake
 
-# To compile and run the tests, you need to execute
+To compile and run the tests, you need to execute
 
 ```sh
 $ cmake .
