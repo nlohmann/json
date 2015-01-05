@@ -233,7 +233,26 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-## Execute unit tests
+## Execute unit tests with CMake
+
+# To compile and run the tests, you need to execute
+
+```sh
+$ cmake .
+$ make
+$ ctest
+```
+
+If you want to generate a coverage report with lcov, execute this instead:
+
+```sh
+$ cmake .
+$ make coverage
+```
+
+The report is now in the subfolder coverage/index.html
+
+## Execute unit tests with automake
 
 To compile the unit tests, you need to execute
 
