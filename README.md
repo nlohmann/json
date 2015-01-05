@@ -110,6 +110,9 @@ You can create an object (deserialization) by appending `_json` to a string lite
 ```cpp
 // create object from string literal
 json j = "{ \"pi\": 3.141, \"happy\": true }"_json;
+
+// or even nicer (thanks http://isocpp.org/blog/2015/01/json-for-modern-cpp)
+auto j2 = R"( {"pi": 3.141, "happy": true} )"_json;
 ```
 
 You can also get a string representation (serialize):
