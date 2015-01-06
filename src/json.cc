@@ -1175,6 +1175,7 @@ json::iterator json::find(const char* key)
         {
             json::iterator result(this);
             delete result.oi_;
+            result.oi_ = nullptr;
             result.oi_ = new object_t::iterator(i);
             return result;
         }
@@ -1198,6 +1199,7 @@ json::const_iterator json::find(const char* key) const
         {
             json::const_iterator result(this);
             delete result.oi_;
+            result.oi_ = nullptr;
             result.oi_ = new object_t::const_iterator(i);
             return result;
         }
