@@ -18,7 +18,7 @@ before_script:
 script:
   - make
   - ./json_unit
-  - valgrind --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=definite,possible ./json_unit
+  - valgrind --error-exitcode=1 --leak-check=full ./json_unit
 
 after_success:
   - make clean
