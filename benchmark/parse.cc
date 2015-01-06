@@ -2,7 +2,7 @@
 
 int main()
 {
-    json j;
+    nlohmann::json j;
     j << std::cin;
     return 0;
 }

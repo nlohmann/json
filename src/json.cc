@@ -12,17 +12,12 @@
 #include "json.h"
 
 #include <cctype>     // std::isdigit, std::isspace
-#include <cstddef>    // size_t
+#include <cstddef>    // std::size_t
 #include <stdexcept>  // std::runtime_error
 #include <utility>    // std::swap, std::move
 
-
-////////////////////
-// STATIC MEMBERS //
-////////////////////
-
-std::mutex json::token_;
-
+namespace nlohmann
+{
 
 ///////////////////////////////////
 // CONSTRUCTORS OF UNION "value" //
@@ -639,8 +634,6 @@ void json::push_back(const json& o)
         throw std::runtime_error("cannot add element to " + type_name());
     }
 
-    std::lock_guard<std::mutex> lg(token_);
-
     // transform null object into an array
     if (type_ == value_type::null)
     {
@@ -675,8 +668,6 @@ void json::push_back(json&& o)
     {
         throw std::runtime_error("cannot add element to " + type_name());
     }
-
-    std::lock_guard<std::mutex> lg(token_);
 
     // transform null object into an array
     if (type_ == value_type::null)
@@ -804,10 +795,8 @@ json& json::operator[](const int index)
                                 std::to_string(index) + " to " + type_name());
     }
 
-    std::lock_guard<std::mutex> lg(token_);
-
     // return reference to element from array at given index
-    return (*value_.array)[static_cast<size_t>(index)];
+    return (*value_.array)[static_cast<std::size_t>(index)];
 }
 
 /*!
@@ -836,7 +825,7 @@ const json& json::operator[](const int index) const
     }
 
     // return element from array at given index
-    return (*value_.array)[static_cast<size_t>(index)];
+    return (*value_.array)[static_cast<std::size_t>(index)];
 }
 
 /*!
@@ -865,10 +854,8 @@ json& json::at(const int index)
                                 std::to_string(index) + " to " + type_name());
     }
 
-    std::lock_guard<std::mutex> lg(token_);
-
     // return reference to element from array at given index
-    return value_.array->at(static_cast<size_t>(index));
+    return value_.array->at(static_cast<std::size_t>(index));
 }
 
 /*!
@@ -898,7 +885,7 @@ const json& json::at(const int index) const
     }
 
     // return element from array at given index
-    return value_.array->at(static_cast<size_t>(index));
+    return value_.array->at(static_cast<std::size_t>(index));
 }
 
 /*!
@@ -924,8 +911,6 @@ key.
 */
 json& json::operator[](const char* key)
 {
-    std::lock_guard<std::mutex> lg(token_);
-
     // implicitly convert null to object
     if (type_ == value_type::null)
     {
@@ -1006,8 +991,6 @@ key.
 */
 json& json::at(const char* key)
 {
-    std::lock_guard<std::mutex> lg(token_);
-
     // this function operator only works for objects
     if (type_ != value_type::object)
     {
@@ -1061,7 +1044,7 @@ Returns the size of the JSON object.
 
 @invariant The size is reported as 0 if and only if empty() would return true.
 */
-size_t json::size() const noexcept
+std::size_t json::size() const noexcept
 {
     switch (type_)
     {
@@ -2105,6 +2088,8 @@ void json::parser::expect(const char c)
     }
 }
 
+}
+
 /*!
 This operator implements a user-defined string literal for JSON objects. It can
 be used by adding \p "_json" to a string literal and returns a JSON object if
@@ -2113,7 +2098,7 @@ no parse error occurred.
 @param s  a string representation of a JSON object
 @return a JSON object
 */
-json operator "" _json(const char* s, size_t)
+nlohmann::json operator "" _json(const char* s, std::size_t)
 {
-    return json::parse(s);
+    return nlohmann::json::parse(s);
 }

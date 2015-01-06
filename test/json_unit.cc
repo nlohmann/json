@@ -3,6 +3,8 @@
 
 #include "json.h"
 
+using json = nlohmann::json;
+
 TEST_CASE("array")
 {
     SECTION("Basics")

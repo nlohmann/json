@@ -14,9 +14,11 @@
 #include <initializer_list>  // std::initializer_list
 #include <iostream>          // std::istream, std::ostream
 #include <map>               // std::map
-#include <mutex>             // std::mutex
 #include <string>            // std::string
 #include <vector>            // std::vector
+
+namespace nlohmann
+{
 
 /*!
 @brief JSON for Modern C++
@@ -274,7 +276,7 @@ class json
     const json& at(const char*) const;
 
     /// return the number of stored values
-    size_t size() const noexcept;
+    std::size_t size() const noexcept;
     /// checks whether object is empty
     bool empty() const noexcept;
     /// removes all elements from compounds and resets values to default
@@ -316,10 +318,6 @@ class json
 
     /// the payload
     value value_ {};
-
-  private:
-    /// mutex to guard payload
-    static std::mutex token_;
 
   public:
     /// an iterator
@@ -431,9 +429,11 @@ class json
         /// the current character
         char current_ {};
         /// the position inside the input buffer
-        size_t pos_ = 0;
+        std::size_t pos_ = 0;
     };
 };
 
+}
+
 /// user-defined literal operator to create JSON objects from strings
-json operator "" _json(const char*, size_t);
+nlohmann::json operator "" _json(const char*, std::size_t);

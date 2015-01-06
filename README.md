@@ -30,6 +30,9 @@ All you need to do is add
 
 ```cpp
 #include "json.h"
+
+// for convenience
+using json = nlohmann::json;
 ```
 
 to the files you want to use JSON objects. Furthermore, you need to compile the file `json.cc` and link it to your binaries. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
