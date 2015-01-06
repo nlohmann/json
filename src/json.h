@@ -160,10 +160,10 @@ class json
 
   private:
     /// return the type as string
-    const std::string type_name() const noexcept;
+    std::string type_name() const noexcept;
 
     /// dump the object (with pretty printer)
-    const std::string dump(const bool, const unsigned int, unsigned int = 0) const noexcept;
+    std::string dump(const bool, const unsigned int, unsigned int = 0) const noexcept;
 
   public:
     /// explicit value conversion
@@ -210,7 +210,7 @@ class json
     }
 
     /// explicit serialization
-    const std::string dump(int = -1) const noexcept;
+    std::string dump(int = -1) const noexcept;
 
     /// add an object/array to an array
     json& operator+=(const json&);

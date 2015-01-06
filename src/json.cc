@@ -300,7 +300,7 @@ json json::parse(const char* s)
 }
 
 
-const std::string json::type_name() const noexcept
+std::string json::type_name() const noexcept
 {
     switch (type_)
     {
@@ -479,8 +479,8 @@ Internal implementation of the serialization function.
 \param indentStep     the indent level
 \param currentIndent  the current indent level (only used internally)
 */
-const std::string json::dump(const bool prettyPrint,
-                             const unsigned int indentStep, unsigned int currentIndent) const noexcept
+std::string json::dump(const bool prettyPrint, const unsigned int indentStep,
+                       unsigned int currentIndent) const noexcept
 {
     // helper function to return whitespace as indentation
     const auto indent = [prettyPrint, &currentIndent]()
@@ -600,7 +600,7 @@ Serialization function for JSON objects. The function tries to mimick Python's
 
 \see https://docs.python.org/2/library/json.html#json.dump
 */
-const std::string json::dump(int indent) const noexcept
+std::string json::dump(int indent) const noexcept
 {
     if (indent >= 0)
     {
