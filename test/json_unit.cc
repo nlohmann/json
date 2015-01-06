@@ -1778,7 +1778,10 @@ TEST_CASE("Parser")
         auto j3 = "{\"key\": \"value\"}"_json;
         CHECK(j3["key"] == "value");
 
-        auto j22 = R"({"pi": 3.141, "happy": true })"_json;
+        auto j22 = R"({
+            "pi": 3.141,
+            "happy": true
+        })"_json;
         auto j23 = "{ \"pi\": 3.141, \"happy\": true }"_json;
         CHECK(j22 == j23);
     }
