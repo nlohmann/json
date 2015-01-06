@@ -472,8 +472,22 @@ json::operator object_t() const
     return get<object_t>();
 }
 
-const std::string json::to_string() const noexcept
+/*!
+Internal implementation of the serialization function.
+
+\param prettyPrint    whether the output shall be pretty-printed
+\param indentStep     the indent level
+\param currentIndent  the current indent level (only used internally)
+*/
+const std::string json::dump(const bool prettyPrint,
+                             const unsigned int indentStep, unsigned int currentIndent) const noexcept
 {
+    // helper function to return whitespace as indentation
+    const auto indent = [prettyPrint, &currentIndent]()
+    {
+        return prettyPrint ? std::string(currentIndent, ' ') : std::string();
+    };
+
     switch (type_)
     {
         case (value_type::string):
@@ -498,34 +512,73 @@ const std::string json::to_string() const noexcept
 
         case (value_type::array):
         {
-            std::string result;
+            if (value_.array->empty())
+            {
+                return "[]";
+            }
+
+            std::string result = "[";
+
+            // increase indentation
+            if (prettyPrint)
+            {
+                currentIndent += indentStep;
+                result += "\n";
+            }
 
             for (array_t::const_iterator i = value_.array->begin(); i != value_.array->end(); ++i)
             {
                 if (i != value_.array->begin())
                 {
-                    result += ", ";
+                    result += prettyPrint ? ",\n" : ", ";
                 }
-                result += i->to_string();
+                result += indent() + i->dump(prettyPrint, indentStep, currentIndent);
             }
 
-            return "[" + result + "]";
+            // decrease indentation
+            if (prettyPrint)
+            {
+                currentIndent -= indentStep;
+                result += "\n";
+            }
+
+            return result + indent() + "]";
         }
 
         case (value_type::object):
         {
-            std::string result;
+            if (value_.object->empty())
+            {
+                return "{}";
+            }
+
+            std::string result = "{";
+
+            // increase indentation
+            if (prettyPrint)
+            {
+                currentIndent += indentStep;
+                result += "\n";
+            }
 
             for (object_t::const_iterator i = value_.object->begin(); i != value_.object->end(); ++i)
             {
                 if (i != value_.object->begin())
                 {
-                    result += ", ";
+                    result += prettyPrint ? ",\n" : ", ";
                 }
-                result += "\"" + i->first + "\": " + i->second.to_string();
+                result += indent() + "\"" + i->first + "\": " + i->second.dump(prettyPrint, indentStep,
+                          currentIndent);
             }
 
-            return "{" + result + "}";
+            // decrease indentation
+            if (prettyPrint)
+            {
+                currentIndent -= indentStep;
+                result += "\n";
+            }
+
+            return result + indent() + "}";
         }
 
         // actually only value_type::null - but making the compiler happy
@@ -533,6 +586,29 @@ const std::string json::to_string() const noexcept
         {
             return "null";
         }
+    }
+}
+
+/*!
+Serialization function for JSON objects. The function tries to mimick Python's
+\p json.dumps() function, and currently supports its \p indent parameter.
+
+\param indent  if indent is nonnegative, then array elements and object members
+               will be pretty-printed with that indent level. An indent level
+               of 0 will only insert newlines. -1 (the default) selects the
+               most compact representation
+
+\see https://docs.python.org/2/library/json.html#json.dump
+*/
+const std::string json::dump(int indent) const noexcept
+{
+    if (indent >= 0)
+    {
+        return dump(true, static_cast<unsigned int>(indent));
+    }
+    else
+    {
+        return dump(false, 0);
     }
 }
 

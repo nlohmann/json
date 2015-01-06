@@ -162,6 +162,9 @@ class json
     /// return the type as string
     const std::string type_name() const noexcept;
 
+    /// dump the object (with pretty printer)
+    const std::string dump(const bool, const unsigned int, unsigned int = 0) const noexcept;
+
   public:
     /// explicit value conversion
     template<typename T>
@@ -180,34 +183,34 @@ class json
     /// implicit conversion to JSON map (only for objects)
     operator object_t() const;
 
-    /// write to stream
+    /// serialize to stream
     friend std::ostream& operator<<(std::ostream& o, const json& j)
     {
-        o << j.to_string();
+        o << j.dump();
         return o;
     }
-    /// write to stream
+    /// serialize to stream
     friend std::ostream& operator>>(const json& j, std::ostream& o)
     {
-        o << j.to_string();
+        o << j.dump();
         return o;
     }
 
-    /// read from stream
+    /// deserialize from stream
     friend std::istream& operator>>(std::istream& i, json& j)
     {
         j = parser(i).parse();
         return i;
     }
-    /// read from stream
+    /// deserialize from stream
     friend std::istream& operator<<(json& j, std::istream& i)
     {
         j = parser(i).parse();
         return i;
     }
 
-    /// explicit conversion to string representation (C++ style)
-    const std::string to_string() const noexcept;
+    /// explicit serialization
+    const std::string dump(int = -1) const noexcept;
 
     /// add an object/array to an array
     json& operator+=(const json&);

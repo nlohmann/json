@@ -17,7 +17,7 @@ TEST_CASE("array")
         const json j_const (j);
 
         // string representation of default value
-        CHECK(j.to_string() == "[]");
+        CHECK(j.dump() == "[]");
 
         // iterators
         CHECK(j.begin() != j.end());
@@ -305,7 +305,7 @@ TEST_CASE("object")
         const json j_const = j;
 
         // string representation of default value
-        CHECK(j.to_string() == "{}");
+        CHECK(j.dump() == "{}");
 
         // iterators
         CHECK(j.begin() != j.end());
@@ -685,7 +685,7 @@ TEST_CASE("null")
         CHECK(j.type() == json::value_type::null);
 
         // string representation of default value
-        CHECK(j.to_string() == "null");
+        CHECK(j.dump() == "null");
 
         // iterators
         CHECK(j.begin() != j.end());
@@ -755,7 +755,7 @@ TEST_CASE("string")
         CHECK(j.cbegin() != j.cend());
 
         // string representation of default value
-        CHECK(j.to_string() == "\"\"");
+        CHECK(j.dump() == "\"\"");
 
         // container members
         CHECK(j.size() == 1);
@@ -837,7 +837,7 @@ TEST_CASE("boolean")
         CHECK(j.cbegin() != j.cend());
 
         // string representation of default value
-        CHECK(j.to_string() == "false");
+        CHECK(j.dump() == "false");
 
         // container members
         CHECK(j.size() == 1);
@@ -916,7 +916,7 @@ TEST_CASE("number (int)")
         CHECK(j.cbegin() != j.cend());
 
         // string representation of default value
-        CHECK(j.to_string() == "0");
+        CHECK(j.dump() == "0");
 
         // container members
         CHECK(j.size() == 1);
@@ -1002,7 +1002,7 @@ TEST_CASE("number (float)")
         CHECK(j.cbegin() != j.cend());
 
         // string representation of default value
-        CHECK(j.to_string() == "0.000000");
+        CHECK(j.dump() == "0.000000");
 
         // container members
         CHECK(j.size() == 1);
@@ -1784,6 +1784,18 @@ TEST_CASE("Parser")
         })"_json;
         auto j23 = "{ \"pi\": 3.141, \"happy\": true }"_json;
         CHECK(j22 == j23);
+    }
+
+    SECTION("serialization")
+    {
+        auto j23 = "{ \"a\": null, \"b\": true, \"c\": [1,2,3], \"d\": {\"a\": 0} }"_json;
+
+        CHECK(j23.dump() == "{\"a\": null, \"b\": true, \"c\": [1, 2, 3], \"d\": {\"a\": 0}}");
+        CHECK(j23.dump(-1) == "{\"a\": null, \"b\": true, \"c\": [1, 2, 3], \"d\": {\"a\": 0}}");
+        CHECK(j23.dump(0) ==
+              "{\n\"a\": null,\n\"b\": true,\n\"c\": [\n1,\n2,\n3\n],\n\"d\": {\n\"a\": 0\n}\n}");
+        CHECK(j23.dump(4) ==
+              "{\n    \"a\": null,\n    \"b\": true,\n    \"c\": [\n        1,\n        2,\n        3\n    ],\n    \"d\": {\n        \"a\": 0\n    }\n}");
     }
 
     SECTION("Errors")

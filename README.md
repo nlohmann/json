@@ -112,13 +112,13 @@ You can create an object (deserialization) by appending `_json` to a string lite
 
 ```cpp
 // create object from string literal
-json j = "{ \"pi\": 3.141, \"happy\": true }"_json;
+json j = "{ \"happy\": true, \"pi\": 3.141 }"_json;
 
 // or even nicer (thanks http://isocpp.org/blog/2015/01/json-for-modern-cpp)
 auto j2 = R"(
   {
-    "pi": 3.141,
-    "happy": true
+    "happy": true,
+    "pi": 3.141
   })"_json;
 ```
 
@@ -126,7 +126,14 @@ You can also get a string representation (serialize):
 
 ```cpp
 // explicit conversion to string
-std::string s = j.to_string();
+std::string s = j.dump();    // {\"happy\": true, \"pi\": 3.141}
+
+// serialization with pretty printing
+std::cout << j.dump(4) << std::endl;
+// {
+//     "happy": true,
+//     "pi": 3.141
+// }
 ```
 
 The value of s could be `{"pi": 3.141, "happy": true}`, but the order of the entries in the object is not fixed.
