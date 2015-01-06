@@ -9,6 +9,7 @@ before_install:
   - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
   - sudo pip install cpp-coveralls pyyaml
+  - sudo apt-get install valgrind
 
 before_script:
   - autoreconf -iv
@@ -17,6 +18,7 @@ before_script:
 script:
   - make
   - ./json_unit
+  - valgrind --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=definite,possible ./json_unit
 
 after_success:
   - make clean
