@@ -2042,34 +2042,46 @@ Parses a string after opening quotes (\p ") where read.
 */
 std::string json::parser::parseString()
 {
-    // get position of closing quotes
-    auto quotepos_ = buffer_.find_first_of("\"", pos_);
+    // remember the position where the first character of the string was
+    const auto startPos = pos_;
+    // true if and only if the amount of backslashes before the current
+    // character is even
+    bool evenAmountOfBackslashes = true;
 
-    // if the closing quotes are escaped (character before the quotes is a
-    // backslash), we continue looking for the final quotes
-    while (quotepos_ != std::string::npos and buffer_[quotepos_ - 1] == '\\')
-    {
-        quotepos_ = buffer_.find_first_of("\"", quotepos_ + 1);
+    // iterate with pos_ over the whole string
+    for (;pos_ < buffer_.size(); pos_++) {
+        char currentChar = buffer_[pos_];
+
+        // currentChar is a quote, so we might have found the end of the string
+        if (currentChar == '"') {
+            // but only if the amount of backslashes before that quote is even
+            if (evenAmountOfBackslashes) {
+
+                const auto stringLength = pos_ - startPos;
+                // set pos_ behind the trailing quote
+                pos_++;
+                // find next char to parse
+                next();
+
+                // return string inside the quotes
+                return buffer_.substr(startPos, stringLength);
+            }
+        }
+
+        // remember if we have a even amount of backslashes before the current character
+        if (currentChar == '\\') {
+            // jump between even/uneven for each backslash we encounter
+            evenAmountOfBackslashes = !evenAmountOfBackslashes;
+        } else {
+            // zero backslashes are also a even number, so as soon as we encounter a non-backslash
+            // the chain of backslashes breaks and we start again from zero
+            evenAmountOfBackslashes = true;
+        }
     }
 
-    // check if closing quotes were found
-    if (quotepos_ == std::string::npos)
-    {
-        error("expected '\"'");
-    }
-
-    // store the coordinates of the string for the later return value
-    const auto stringBegin = pos_;
-    const auto stringLength = quotepos_ - pos_;
-
-    // set buffer position to the position behind (+1) the closing quote
-    pos_ = quotepos_ + 1;
-
-    // read next character
-    next();
-
-    // return the string value
-    return buffer_.substr(stringBegin, stringLength);
+    // we iterated over the whole string without finding a unescaped quote
+    // so the given string is malformed
+    error("expected '\"'");
 }
 
 /*!

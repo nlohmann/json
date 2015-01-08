@@ -1621,6 +1621,7 @@ TEST_CASE("Parser")
         // escape characters
         CHECK_THROWS_AS(json::parse("\"\\\""), std::invalid_argument);
         CHECK_NOTHROW(json::parse("\"\\\"\""));
+        CHECK_NOTHROW(json::parse("\"\\\\\""));
 
         // quotes must be closed
         CHECK_THROWS_AS(json::parse("\""), std::invalid_argument);
