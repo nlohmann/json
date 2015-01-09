@@ -2039,6 +2039,9 @@ Parses a string after opening quotes (\p ") where read.
 
 @post The character after the closing quote \p " is the current character @ref
       current_. Whitespace is skipped.
+
+@todo Unicode escapes such as \uxxxx are missing - see
+      https://github.com/nlohmann/json/issues/12
 */
 std::string json::parser::parseString()
 {
@@ -2050,38 +2053,62 @@ std::string json::parser::parseString()
     std::string result;
 
     // iterate with pos_ over the whole string
-    for (; pos_ < buffer_.size(); pos_++) {
+    for (; pos_ < buffer_.size(); pos_++)
+    {
         char currentChar = buffer_[pos_];
 
         // uneven amount of backslashes means the user wants to escape something
-        if (!evenAmountOfBackslashes) {
-
+        if (!evenAmountOfBackslashes)
+        {
             // slash, backslash and quote are copied as is
-            if (   currentChar == '/'
-                || currentChar == '\\'
-                || currentChar == '"') {
+            if (currentChar == '/' or currentChar == '\\' or currentChar == '"')
+            {
                 result += currentChar;
-            } else {
-                // All other characters are replaced by their respective special character
-                if (currentChar == 't') {
-                    result += '\t';
-                } else if (currentChar == 'b') {
-                    result += '\b';
-                } else if (currentChar == 'f') {
-                    result += '\f';
-                } else if (currentChar == 'n') {
-                    result += '\n';
-                } else if (currentChar == 'r') {
-                    result += '\r';
-                } else {
-                    error("expected one of \\,/,b,f,n,r,t behind backslash.");
+            }
+            else
+            {
+                // all other characters are replaced by their respective
+                // special character
+                switch (currentChar)
+                {
+                    case 't':
+                    {
+                        result += '\t';
+                        break;
+                    }
+                    case 'b':
+                    {
+                        result += '\b';
+                        break;
+                    }
+                    case 'f':
+                    {
+                        result += '\f';
+                        break;
+                    }
+                    case 'n':
+                    {
+                        result += '\n';
+                        break;
+                    }
+                    case 'r':
+                    {
+                        result += '\r';
+                        break;
+                    }
+                    default:
+                    {
+                        error("expected one of \\, /, b, f, n, r, t behind backslash.");
+                    }
                 }
                 // TODO implement \uXXXX
             }
-        } else {
-            if (currentChar == '"') {
+        }
+        else
+        {
+            if (currentChar == '"')
+            {
                 // currentChar is a quote, so we found the end of the string
-
 
                 // set pos_ behind the trailing quote
                 pos_++;
@@ -2090,9 +2117,12 @@ std::string json::parser::parseString()
 
                 // bring the result of the parsing process back to the caller
                 return result;
-            } else if (currentChar != '\\') {
-                // all non-backslash characters are added to the end of the result string.
-                // the only backslashes we want in the result are the ones that are escaped (which happens above).
+            }
+            else if (currentChar != '\\')
+            {
+                // All non-backslash characters are added to the end of the
+                // result string. The only backslashes we want in the result
+                // are the ones that are escaped (which happens above).
                 result += currentChar;
             }
         }

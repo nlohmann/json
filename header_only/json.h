@@ -2482,35 +2482,91 @@ Parses a string after opening quotes (\p ") where read.
 
 @post The character after the closing quote \p " is the current character @ref
       current_. Whitespace is skipped.
+
+@todo Unicode escapes such as \uxxxx are missing - see
+      https://github.com/nlohmann/json/issues/12
 */
 std::string json::parser::parseString()
 {
-    // remember the position where the first character of the string was
-    const auto startPos = pos_;
     // true if and only if the amount of backslashes before the current
     // character is even
     bool evenAmountOfBackslashes = true;
+
+    // the result of the parse process
+    std::string result;
 
     // iterate with pos_ over the whole string
     for (; pos_ < buffer_.size(); pos_++)
     {
         char currentChar = buffer_[pos_];
 
-        // currentChar is a quote, so we might have found the end of the string
-        if (currentChar == '"')
+        // uneven amount of backslashes means the user wants to escape something
+        if (!evenAmountOfBackslashes)
         {
-            // but only if the amount of backslashes before that quote is even
-            if (evenAmountOfBackslashes)
+            // slash, backslash and quote are copied as is
+            if (currentChar == '/' or currentChar == '\\' or currentChar == '"')
             {
+                result += currentChar;
+            }
+            else
+            {
+                // all other characters are replaced by their respective
+                // special character
+                switch (currentChar)
+                {
+                    case 't':
+                    {
+                        result += '\t';
+                        break;
+                    }
+                    case 'b':
+                    {
+                        result += '\b';
+                        break;
+                    }
+                    case 'f':
+                    {
+                        result += '\f';
+                        break;
+                    }
+                    case 'n':
+                    {
+                        result += '\n';
+                        break;
+                    }
+                    case 'r':
+                    {
+                        result += '\r';
+                        break;
+                    }
+                    default:
+                    {
+                        error("expected one of \\, /, b, f, n, r, t behind backslash.");
+                    }
+                }
+                // TODO implement \uXXXX
+            }
+        }
+        else
+        {
+            if (currentChar == '"')
+            {
+                // currentChar is a quote, so we found the end of the string
 
-                const auto stringLength = pos_ - startPos;
                 // set pos_ behind the trailing quote
                 pos_++;
                 // find next char to parse
                 next();
 
-                // return string inside the quotes
-                return buffer_.substr(startPos, stringLength);
+                // bring the result of the parsing process back to the caller
+                return result;
+            }
+            else if (currentChar != '\\')
+            {
+                // All non-backslash characters are added to the end of the
+                // result string. The only backslashes we want in the result
+                // are the ones that are escaped (which happens above).
+                result += currentChar;
             }
         }
 
