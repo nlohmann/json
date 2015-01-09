@@ -2049,13 +2049,16 @@ std::string json::parser::parseString()
     bool evenAmountOfBackslashes = true;
 
     // iterate with pos_ over the whole string
-    for (;pos_ < buffer_.size(); pos_++) {
+    for (; pos_ < buffer_.size(); pos_++)
+    {
         char currentChar = buffer_[pos_];
 
         // currentChar is a quote, so we might have found the end of the string
-        if (currentChar == '"') {
+        if (currentChar == '"')
+        {
             // but only if the amount of backslashes before that quote is even
-            if (evenAmountOfBackslashes) {
+            if (evenAmountOfBackslashes)
+            {
 
                 const auto stringLength = pos_ - startPos;
                 // set pos_ behind the trailing quote
@@ -2068,13 +2071,18 @@ std::string json::parser::parseString()
             }
         }
 
-        // remember if we have an even amount of backslashes before the current character
-        if (currentChar == '\\') {
+        // remember if we have an even amount of backslashes before the current
+        // character
+        if (currentChar == '\\')
+        {
             // jump between even/uneven for each backslash we encounter
-            evenAmountOfBackslashes = !evenAmountOfBackslashes;
-        } else {
-            // zero backslashes are also an even number, so as soon as we encounter a non-backslash
-            // the chain of backslashes breaks and we start again from zero
+            evenAmountOfBackslashes = not evenAmountOfBackslashes;
+        }
+        else
+        {
+            // zero backslashes are also an even number, so as soon as we
+            // encounter a non-backslash the chain of backslashes breaks and
+            // we start again from zero
             evenAmountOfBackslashes = true;
         }
     }
