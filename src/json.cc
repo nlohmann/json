@@ -2042,32 +2042,58 @@ Parses a string after opening quotes (\p ") where read.
 */
 std::string json::parser::parseString()
 {
-    // remember the position where the first character of the string was
-    const auto startPos = pos_;
     // true if and only if the amount of backslashes before the current
     // character is even
     bool evenAmountOfBackslashes = true;
 
+    // the result of the parse process
+    std::string result;
+
     // iterate with pos_ over the whole string
-    for (; pos_ < buffer_.size(); pos_++)
-    {
+    for (; pos_ < buffer_.size(); pos_++) {
         char currentChar = buffer_[pos_];
 
-        // currentChar is a quote, so we might have found the end of the string
-        if (currentChar == '"')
-        {
-            // but only if the amount of backslashes before that quote is even
-            if (evenAmountOfBackslashes)
-            {
+        // uneven amount of backslashes means the user wants to escape something
+        if (!evenAmountOfBackslashes) {
 
-                const auto stringLength = pos_ - startPos;
+            // slash, backslash and quote are copied as is
+            if (   currentChar == '/'
+                || currentChar == '\\'
+                || currentChar == '"') {
+                result += currentChar;
+            } else {
+                // All other characters are replaced by their respective special character
+                if (currentChar == 't') {
+                    result += '\t';
+                } else if (currentChar == 'b') {
+                    result += '\b';
+                } else if (currentChar == 'f') {
+                    result += '\f';
+                } else if (currentChar == 'n') {
+                    result += '\n';
+                } else if (currentChar == 'r') {
+                    result += '\r';
+                } else {
+                    error("expected one of \\,/,b,f,n,r,t behind backslash.");
+                }
+                // TODO implement \uXXXX
+            }
+        } else {
+            if (currentChar == '"') {
+                // currentChar is a quote, so we found the end of the string
+
+
                 // set pos_ behind the trailing quote
                 pos_++;
                 // find next char to parse
                 next();
 
-                // return string inside the quotes
-                return buffer_.substr(startPos, stringLength);
+                // bring the result of the parsing process back to the caller
+                return result;
+            } else if (currentChar != '\\') {
+                // all non-backslash characters are added to the end of the result string.
+                // the only backslashes we want in the result are the ones that are escaped (which happens above).
+                result += currentChar;
             }
         }
 
