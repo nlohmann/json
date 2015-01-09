@@ -1652,6 +1652,11 @@ TEST_CASE("Parser")
         CHECK(json::parse("\"a\\nz\"") == json("a\nz"));
         CHECK(json::parse("\"\\n\"") == json("\n"));
 
+        // escaping senseless stuff
+        CHECK_THROWS_AS(json::parse("\"\\z\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\ \""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\9\""), std::invalid_argument);
+
         // quotes must be closed
         CHECK_THROWS_AS(json::parse("\""), std::invalid_argument);
     }
