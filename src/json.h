@@ -324,7 +324,7 @@ class json
 
   public:
     /// an iterator
-    class iterator
+    class iterator : public std::iterator<std::forward_iterator_tag, json>
     {
         friend class json;
         friend class json::const_iterator;
@@ -356,7 +356,7 @@ class json
     };
 
     /// a const iterator
-    class const_iterator
+    class const_iterator : public std::iterator<std::forward_iterator_tag, const json>
     {
         friend class json;
 
@@ -364,7 +364,7 @@ class json
         const_iterator() = default;
         const_iterator(const json*);
         const_iterator(const const_iterator&);
-        const_iterator(const iterator&);
+        const_iterator(const json::iterator&);
         ~const_iterator();
 
         const_iterator& operator=(const_iterator);
