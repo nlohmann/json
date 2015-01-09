@@ -16,6 +16,7 @@
 #include <map>               // std::map
 #include <string>            // std::string
 #include <vector>            // std::vector
+#include <iterator>          // std::iterator
 
 namespace nlohmann
 {
