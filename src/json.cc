@@ -1400,11 +1400,11 @@ json::iterator::iterator(json* j) : object_(j)
 {
     if (object_ != nullptr)
     {
-        if (object_->type_ == value_type::array)
+        if (object_->type_ == json::value_type::array)
         {
             vi_ = new array_t::iterator(object_->value_.array->begin());
         }
-        if (object_->type_ == value_type::object)
+        if (object_->type_ == json::value_type::object)
         {
             oi_ = new object_t::iterator(object_->value_.object->begin());
         }
@@ -1415,11 +1415,11 @@ json::iterator::iterator(const json::iterator& o) : object_(o.object_)
 {
     if (object_ != nullptr)
     {
-        if (object_->type_ == value_type::array)
+        if (object_->type_ == json::value_type::array)
         {
             vi_ = new array_t::iterator(*(o.vi_));
         }
-        if (object_->type_ == value_type::object)
+        if (object_->type_ == json::value_type::object)
         {
             oi_ = new object_t::iterator(*(o.oi_));
         }
@@ -1449,11 +1449,11 @@ bool json::iterator::operator==(const json::iterator& o) const
 
     if (object_ != nullptr)
     {
-        if (object_->type_ == value_type::array)
+        if (object_->type_ == json::value_type::array)
         {
             return (vi_ == o.vi_);
         }
-        if (object_->type_ == value_type::object)
+        if (object_->type_ == json::value_type::object)
         {
             return (oi_ == o.oi_);
         }
@@ -1477,7 +1477,7 @@ json::iterator& json::iterator::operator++()
 
     switch (object_->type_)
     {
-        case (value_type::array):
+        case (json::value_type::array):
         {
             if (++(*vi_) == object_->value_.array->end())
             {
@@ -1485,7 +1485,7 @@ json::iterator& json::iterator::operator++()
             }
             break;
         }
-        case (value_type::object):
+        case (json::value_type::object):
         {
             if (++(*oi_) == object_->value_.object->end())
             {
@@ -1511,11 +1511,11 @@ json& json::iterator::operator*() const
 
     switch (object_->type_)
     {
-        case (value_type::array):
+        case (json::value_type::array):
         {
             return **vi_;
         }
-        case (value_type::object):
+        case (json::value_type::object):
         {
             return (*oi_)->second;
         }
@@ -1536,11 +1536,11 @@ json* json::iterator::operator->() const
 
     switch (object_->type_)
     {
-        case (value_type::array):
+        case (json::value_type::array):
         {
             return &(**vi_);
         }
-        case (value_type::object):
+        case (json::value_type::object):
         {
             return &((*oi_)->second);
         }
@@ -1553,7 +1553,7 @@ json* json::iterator::operator->() const
 
 std::string json::iterator::key() const
 {
-    if (object_ != nullptr and object_->type_ == value_type::object)
+    if (object_ != nullptr and object_->type_ == json::value_type::object)
     {
         return (*oi_)->first;
     }
@@ -1573,11 +1573,11 @@ json& json::iterator::value() const
 
     switch (object_->type_)
     {
-        case (value_type::array):
+        case (json::value_type::array):
         {
             return **vi_;
         }
-        case (value_type::object):
+        case (json::value_type::object):
         {
             return (*oi_)->second;
         }
@@ -1593,11 +1593,11 @@ json::const_iterator::const_iterator(const json* j) : object_(j)
 {
     if (object_ != nullptr)
     {
-        if (object_->type_ == value_type::array)
+        if (object_->type_ == json::value_type::array)
         {
             vi_ = new array_t::const_iterator(object_->value_.array->begin());
         }
-        if (object_->type_ == value_type::object)
+        if (object_->type_ == json::value_type::object)
         {
             oi_ = new object_t::const_iterator(object_->value_.object->begin());
         }
@@ -1608,11 +1608,11 @@ json::const_iterator::const_iterator(const json::const_iterator& o) : object_(o.
 {
     if (object_ != nullptr)
     {
-        if (object_->type_ == value_type::array)
+        if (object_->type_ == json::value_type::array)
         {
             vi_ = new array_t::const_iterator(*(o.vi_));
         }
-        if (object_->type_ == value_type::object)
+        if (object_->type_ == json::value_type::object)
         {
             oi_ = new object_t::const_iterator(*(o.oi_));
         }
@@ -1623,11 +1623,11 @@ json::const_iterator::const_iterator(const json::iterator& o) : object_(o.object
 {
     if (object_ != nullptr)
     {
-        if (object_->type_ == value_type::array)
+        if (object_->type_ == json::value_type::array)
         {
             vi_ = new array_t::const_iterator(*(o.vi_));
         }
-        if (object_->type_ == value_type::object)
+        if (object_->type_ == json::value_type::object)
         {
             oi_ = new object_t::const_iterator(*(o.oi_));
         }
@@ -1657,11 +1657,11 @@ bool json::const_iterator::operator==(const json::const_iterator& o) const
 
     if (object_ != nullptr)
     {
-        if (object_->type_ == value_type::array)
+        if (object_->type_ == json::value_type::array)
         {
             return (vi_ == o.vi_);
         }
-        if (object_->type_ == value_type::object)
+        if (object_->type_ == json::value_type::object)
         {
             return (oi_ == o.oi_);
         }
@@ -1685,7 +1685,7 @@ json::const_iterator& json::const_iterator::operator++()
 
     switch (object_->type_)
     {
-        case (value_type::array):
+        case (json::value_type::array):
         {
             if (++(*vi_) == object_->value_.array->end())
             {
@@ -1693,7 +1693,7 @@ json::const_iterator& json::const_iterator::operator++()
             }
             break;
         }
-        case (value_type::object):
+        case (json::value_type::object):
         {
             if (++(*oi_) == object_->value_.object->end())
             {
@@ -1719,11 +1719,11 @@ const json& json::const_iterator::operator*() const
 
     switch (object_->type_)
     {
-        case (value_type::array):
+        case (json::value_type::array):
         {
             return **vi_;
         }
-        case (value_type::object):
+        case (json::value_type::object):
         {
             return (*oi_)->second;
         }
@@ -1744,11 +1744,11 @@ const json* json::const_iterator::operator->() const
 
     switch (object_->type_)
     {
-        case (value_type::array):
+        case (json::value_type::array):
         {
             return &(**vi_);
         }
-        case (value_type::object):
+        case (json::value_type::object):
         {
             return &((*oi_)->second);
         }
@@ -1761,7 +1761,7 @@ const json* json::const_iterator::operator->() const
 
 std::string json::const_iterator::key() const
 {
-    if (object_ != nullptr and object_->type_ == value_type::object)
+    if (object_ != nullptr and object_->type_ == json::value_type::object)
     {
         return (*oi_)->first;
     }
@@ -1781,11 +1781,11 @@ const json& json::const_iterator::value() const
 
     switch (object_->type_)
     {
-        case (value_type::array):
+        case (json::value_type::array):
         {
             return **vi_;
         }
-        case (value_type::object):
+        case (json::value_type::object):
         {
             return (*oi_)->second;
         }
