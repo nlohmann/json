@@ -119,7 +119,11 @@ auto j2 = R"(
   {
     "happy": true,
     "pi": 3.141
-  })"_json;
+  }
+)"_json;
+
+// or explicitly
+auto j3 = json::parse("{ \"happy\": true, \"pi\": 3.141 }");
 ```
 
 You can also get a string representation (serialize):
