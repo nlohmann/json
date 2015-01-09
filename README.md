@@ -26,7 +26,7 @@ Other aspects were not so important to us:
 
 ## Integration
 
-All you need to do is add
+The two required source files are in the `src` directory. All you need to do is add
 
 ```cpp
 #include "json.h"
@@ -36,6 +36,8 @@ using json = nlohmann::json;
 ```
 
 to the files you want to use JSON objects. Furthermore, you need to compile the file `json.cc` and link it to your binaries. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
+
+If you want a single header file, use the `json.h` file from the `header_only` directory.
 
 ## Examples
 
