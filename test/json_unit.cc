@@ -1618,10 +1618,39 @@ TEST_CASE("Parser")
         CHECK(json::parse("\"\"") == json(""));
         CHECK(json::parse("\"foo\"") == json("foo"));
 
-        // escape characters
+        // escaping quotes
         CHECK_THROWS_AS(json::parse("\"\\\""), std::invalid_argument);
         CHECK_NOTHROW(json::parse("\"\\\"\""));
-        CHECK_NOTHROW(json::parse("\"\\\\\""));
+
+        // escaping backslashes
+        CHECK(json::parse("\"a\\\\z\"") == json("a\\z"));
+        CHECK(json::parse("\"\\\\\"") == json("\\"));
+        CHECK(json::parse("\"\\\\a\\\\\"") == json("\\a\\"));
+        CHECK(json::parse("\"\\\\\\\\\"") == json("\\\\"));
+
+        // escaping slash
+        CHECK(json::parse("\"a\\/z\"") == json("a/z"));
+        CHECK(json::parse("\"\\/\"") == json("/"));
+
+        // escaping tabs
+        CHECK(json::parse("\"a\\tz\"") == json("a\tz"));
+        CHECK(json::parse("\"\\t\"") == json("\t"));
+
+        // escaping formfeed
+        CHECK(json::parse("\"a\\fz\"") == json("a\fz"));
+        CHECK(json::parse("\"\\f\"") == json("\f"));
+
+        // escaping carriage return
+        CHECK(json::parse("\"a\\rz\"") == json("a\rz"));
+        CHECK(json::parse("\"\\r\"") == json("\r"));
+
+        // escaping backspace
+        CHECK(json::parse("\"a\\bz\"") == json("a\bz"));
+        CHECK(json::parse("\"\\b\"") == json("\b"));
+
+        // escaping newline
+        CHECK(json::parse("\"a\\nz\"") == json("a\nz"));
+        CHECK(json::parse("\"\\n\"") == json("\n"));
 
         // quotes must be closed
         CHECK_THROWS_AS(json::parse("\""), std::invalid_argument);
