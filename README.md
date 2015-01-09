@@ -256,6 +256,16 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+## Thanks
+
+I deeply appreciate the help of the following people.
+
+- [Teemperor](https://github.com/Teemperor) implemented CMake support and lcov integration and realized escape handling in the string parser.
+- [elliotgoodrich](https://github.com/elliotgoodrich) fixed an issue with double deletion in the iterator classes.
+- [kirkshoop](https://github.com/kirkshoop) made the iterators of the class composable to other libraries.
+
+Thanks a lot for helping out!
+
 ## Execute unit tests with CMake
 
 To compile and run the tests, you need to execute
@@ -291,7 +301,7 @@ The unit tests can then be executed with
 $ ./json_unit
 
 ===============================================================================
-All tests passed (863 assertions in 10 test cases)
+All tests passed (887 assertions in 10 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
