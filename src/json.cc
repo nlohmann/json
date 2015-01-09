@@ -2068,12 +2068,12 @@ std::string json::parser::parseString()
             }
         }
 
-        // remember if we have a even amount of backslashes before the current character
+        // remember if we have an even amount of backslashes before the current character
         if (currentChar == '\\') {
             // jump between even/uneven for each backslash we encounter
             evenAmountOfBackslashes = !evenAmountOfBackslashes;
         } else {
-            // zero backslashes are also a even number, so as soon as we encounter a non-backslash
+            // zero backslashes are also an even number, so as soon as we encounter a non-backslash
             // the chain of backslashes breaks and we start again from zero
             evenAmountOfBackslashes = true;
         }
