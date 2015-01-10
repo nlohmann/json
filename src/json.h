@@ -418,6 +418,10 @@ class json
         inline void error(const std::string&) __attribute__((noreturn));
         /// parse a quoted string
         inline std::string parseString();
+        /// transforms a unicode codepoint to it's UTF-8 presentation
+        inline std::string unicodeToUTF8(unsigned int codepoint);
+        /// parses a unicode escape sequence
+        inline std::string parseUnicodeEscape();
         /// parse a Boolean "true"
         inline void parseTrue();
         /// parse a Boolean "false"

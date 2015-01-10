@@ -1652,6 +1652,10 @@ TEST_CASE("Parser")
         CHECK(json::parse("\"a\\nz\"") == json("a\nz"));
         CHECK(json::parse("\"\\n\"") == json("\n"));
 
+        // escape unicode characters
+        CHECK(json::parse("\"\\u002F\"") == json("/"));
+        CHECK(json::parse("\"\\u00E4\"") == json(u8"\u00E4"));
+
         // escaping senseless stuff
         CHECK_THROWS_AS(json::parse("\"\\z\""), std::invalid_argument);
         CHECK_THROWS_AS(json::parse("\"\\ \""), std::invalid_argument);

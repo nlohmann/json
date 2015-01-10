@@ -2073,6 +2073,9 @@ std::string json::parser::parseString()
                     result += '\n';
                 } else if (currentChar == 'r') {
                     result += '\r';
+                } else if (currentChar == 'u') {
+                    pos_++;
+                    result += parseUnicodeEscape();
                 } else {
                     error("expected one of \\,/,b,f,n,r,t behind backslash.");
                 }
@@ -2117,6 +2120,76 @@ std::string json::parser::parseString()
     // so the given string is malformed
     error("expected '\"'");
 }
+
+std::string json::parser::unicodeToUTF8(unsigned int codepoint) {
+
+    // it's just a ASCII compatible codepoint,
+    // so we just interpret the point as a character
+    if (codepoint <= 0x7f) {
+        return std::string(1, static_cast<char>(codepoint));
+    }
+    else if (codepoint <= 0x7ff)
+    {
+        std::string result(2, static_cast<char>(0xc0 | ((codepoint >> 6) & 0x1f)));
+        result[1] = static_cast<char>(0x80 | (codepoint & 0x3f));
+        return result;
+    }
+    else if (codepoint <= 0xffff)
+    {
+        std::string result(3, static_cast<char>(0xe0 | ((codepoint >> 12) & 0x0f)));
+        result[1] = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f));
+        result[2] = static_cast<char>(0x80 | (codepoint & 0x3f));
+        return result;
+    }
+    else if (codepoint <= 0x1fffff)
+    {
+        std::string result(4, static_cast<char>(0xf0 | ((codepoint >> 18) & 0x07)));
+        result[1] = static_cast<char>(0x80 | ((codepoint >> 12) & 0x3f));
+        result[2] = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f));
+        result[3] = static_cast<char>(0x80 | (codepoint & 0x3f));
+        return result;
+    } else {
+        std::string errorMessage = "Invalid codepoint: ";
+        errorMessage += codepoint;
+        error(errorMessage);
+    }
+}
+
+/*!
+Parses the JSON style unicode escape sequence (\uXXXX).
+
+@return the utf-8 character the escape sequence escaped
+
+@pre  An opening quote \p " was read in the main parse function @ref parse.
+      pos_ is the position after the opening quote.
+
+@post The character after the closing quote \p " is the current character @ref
+      current_. Whitespace is skipped.
+*/
+std::string json::parser::parseUnicodeEscape() {
+    const auto startPos = pos_;
+    if (pos_ + 3 >= buffer_.size()) {
+        error("Got end of input while parsing unicode escape sequence \\uXXXX");
+    }
+    std::string hexCode(4, ' ');
+    for(; pos_ < startPos + 4; pos_++) {
+        char currentChar = buffer_[pos_];
+        if (   (currentChar >= '0' && currentChar <= '9')
+            || (currentChar >= 'a' && currentChar <= 'f')
+            || (currentChar >= 'A' && currentChar <= 'F')) {
+            // all is well, we have valid hexadecimal chars
+            // so we copy that char into our string
+            hexCode[pos_ - startPos] = currentChar;
+        } else {
+            error("Found non-hexadecimal character in unicode escape sequence!");
+        }
+    }
+    pos_--;
+    // case is safe as 4 hex characters can't present more than 16 bits
+    return unicodeToUTF8(static_cast<unsigned int>(std::stoul(hexCode, nullptr, 16)));
+}
+
+
 
 /*!
 This function is called in case a \p "t" is read in the main parse function
