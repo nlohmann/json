@@ -2151,13 +2151,13 @@ Turns a code point into it's UTF-8 representation.
 You should only pass numbers < 0x10ffff into this function
 (everything else is a invalid code point).
 
-@return the UTF-8 representation of the given codepoint
+@return the UTF-8 representation of the given code point
 
 @pre  This method isn't accessing the members of the parser
 
 @post This method isn't accessing the members of the parser
 */
-std::string json::parser::codepointToUTF8(unsigned int codepoint)
+std::string json::parser::codePointToUTF8(unsigned int codePoint)
 {
     // this method contains a lot of bit manipulations to
     // build the bytes for UTF-8.
@@ -2171,49 +2171,49 @@ std::string json::parser::codepointToUTF8(unsigned int codepoint)
     // (e.g. 1 to 4 bytes) to save the reallocations.
 
 
-    if (codepoint <= 0x7f)
+    if (codePoint <= 0x7f)
     {
-        // it's just a ASCII compatible codepoint,
+        // it's just a ASCII compatible codePoint,
         // so we just interpret the point as a character
         // and return ASCII
 
-        return std::string(1, static_cast<char>(codepoint));
+        return std::string(1, static_cast<char>(codePoint));
     }
     // if true, we need two bytes to encode this as UTF-8
-    else if (codepoint <= 0x7ff)
+    else if (codePoint <= 0x7ff)
     {
         // the 0xC0 enables the two most significant two bits
         // to make this a two-byte UTF-8 character.
-        std::string result(2, static_cast<char>(0xC0 | ((codepoint >> 6) & 0x1F)));
-        result[1] = static_cast<char>(0x80 | (codepoint & 0x3F));
+        std::string result(2, static_cast<char>(0xC0 | ((codePoint >> 6) & 0x1F)));
+        result[1] = static_cast<char>(0x80 | (codePoint & 0x3F));
         return result;
     }
     // if true, now we need three bytes to encode this as UTF-8
-    else if (codepoint <= 0xffff)
+    else if (codePoint <= 0xffff)
     {
         // the 0xE0 enables the three most significant two bits
         // to make this a three-byte UTF-8 character.
-        std::string result(3, static_cast<char>(0xE0 | ((codepoint >> 12) & 0x0F)));
-        result[1] = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
-        result[2] = static_cast<char>(0x80 | (codepoint & 0x3F));
+        std::string result(3, static_cast<char>(0xE0 | ((codePoint >> 12) & 0x0F)));
+        result[1] = static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F));
+        result[2] = static_cast<char>(0x80 | (codePoint & 0x3F));
         return result;
     }
     // if true, we need maximal four bytes to encode this as UTF-8
-    else if (codepoint <= 0x10ffff)
+    else if (codePoint <= 0x10ffff)
     {
         // the 0xE0 enables the four most significant two bits
         // to make this a three-byte UTF-8 character.
-        std::string result(4, static_cast<char>(0xF0 | ((codepoint >> 18) & 0x07)));
-        result[1] = static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F));
-        result[2] = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
-        result[3] = static_cast<char>(0x80 | (codepoint & 0x3F));
+        std::string result(4, static_cast<char>(0xF0 | ((codePoint >> 18) & 0x07)));
+        result[1] = static_cast<char>(0x80 | ((codePoint >> 12) & 0x3F));
+        result[2] = static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F));
+        result[3] = static_cast<char>(0x80 | (codePoint & 0x3F));
         return result;
     }
     else
     {
         // Can't be tested without direct access to this private method.
-        std::string errorMessage = "Invalid codepoint: ";
-        errorMessage += codepoint;
+        std::string errorMessage = "Invalid codePoint: ";
+        errorMessage += codePoint;
         error(errorMessage);
     }
 }
@@ -2227,7 +2227,7 @@ Parses 4 hexadecimal characters as a number.
 
 @post pos_ is pointing to the character after the 4 hexadecimal characters.
 */
-unsigned int json::parser::parse4HexCodepoint()
+unsigned int json::parser::parse4HexCodePoint()
 {
     const auto startPos = pos_;
 
@@ -2285,10 +2285,10 @@ std::string json::parser::parseUnicodeEscape()
     // jump to the first hex value
     pos_++;
     // parse the hex first hex values
-    unsigned int firstCodepoint = parse4HexCodepoint();
+    unsigned int firstCodePoint = parse4HexCodePoint();
 
 
-    if (firstCodepoint >= 0xD800 && firstCodepoint <= 0xDBFF)
+    if (firstCodePoint >= 0xD800 && firstCodePoint <= 0xDBFF)
     {
         // we found invalid code points, which means we either have a malformed input
         // or we found a high surrogate.
@@ -2299,29 +2299,29 @@ std::string json::parser::parseUnicodeEscape()
         pos_ += 2;
         // try to parse the next hex values.
         // the method does boundary checking for us, so no need to do that here
-        unsigned secondCodepoint = parse4HexCodepoint();
+        unsigned secondCodePoint = parse4HexCodePoint();
         // ok, we have a low surrogate, check if it is a valid one
-        if (secondCodepoint >= 0xDC00 && secondCodepoint <= 0xDFFF)
+        if (secondCodePoint >= 0xDC00 && secondCodePoint <= 0xDFFF)
         {
             // calculate the final code point from the pair according to the spec
             unsigned int finalCodePoint =
                     // high surrogate occupies the most significant 22 bits
-                    (firstCodepoint << 10)
+                    (firstCodePoint << 10)
                     // low surrogate occupies the least significant 15 bits
-                    + secondCodepoint
+                    + secondCodePoint
                     // there is still the 0xD800, 0xDC00 and 0x10000 noise in the result
                     // so we have to substract with (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
                     - 0x35FDC00;
 
             // we transform the calculated point into UTF-8
-            return codepointToUTF8(finalCodePoint);
+            return codePointToUTF8(finalCodePoint);
         }
         else
             error("missing low surrogate");
 
     }
     // We have Form 1, so we just interpret the XXXX as a code point
-    return codepointToUTF8(firstCodepoint);
+    return codePointToUTF8(firstCodePoint);
 }
 
 
