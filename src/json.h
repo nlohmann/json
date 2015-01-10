@@ -419,8 +419,10 @@ class json
         /// parse a quoted string
         inline std::string parseString();
         /// transforms a unicode codepoint to it's UTF-8 presentation
-        inline std::string unicodeToUTF8(unsigned int codepoint);
-        /// parses a unicode escape sequence
+        inline std::string codepointToUTF8(unsigned int codepoint);
+        /// parses 4 hex characters that represent a unicode codepoint
+        inline unsigned int parse4HexCodepoint();
+        /// parses \uXXXX[\uXXXX] unicode escape characters
         inline std::string parseUnicodeEscape();
         /// parse a Boolean "true"
         inline void parseTrue();

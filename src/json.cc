@@ -2049,40 +2049,61 @@ std::string json::parser::parseString()
     // the result of the parse process
     std::string result;
 
-    // iterate with pos_ over the whole string
-    for (; pos_ < buffer_.size(); pos_++) {
+    // iterate with pos_ over the whole input until we found the end and return
+    // or we exit via error()
+    for (; pos_ < buffer_.size(); pos_++)
+    {
         char currentChar = buffer_[pos_];
 
-        // uneven amount of backslashes means the user wants to escape something
-        if (!evenAmountOfBackslashes) {
+        if (!evenAmountOfBackslashes)
+        {
+            // uneven amount of backslashes means the user wants to escape something
+            // so we know there is a case such as '\X' or '\\\X' but we don't
+            // know yet what X is.
+            // at this point in the code, the currentChar has the value of X
 
             // slash, backslash and quote are copied as is
             if (   currentChar == '/'
                 || currentChar == '\\'
-                || currentChar == '"') {
+                || currentChar == '"')
+            {
                 result += currentChar;
-            } else {
-                // All other characters are replaced by their respective special character
-                if (currentChar == 't') {
-                    result += '\t';
-                } else if (currentChar == 'b') {
-                    result += '\b';
-                } else if (currentChar == 'f') {
-                    result += '\f';
-                } else if (currentChar == 'n') {
-                    result += '\n';
-                } else if (currentChar == 'r') {
-                    result += '\r';
-                } else if (currentChar == 'u') {
-                    pos_++;
-                    result += parseUnicodeEscape();
-                } else {
-                    error("expected one of \\,/,b,f,n,r,t behind backslash.");
-                }
-                // TODO implement \uXXXX
             }
-        } else {
-            if (currentChar == '"') {
+            else
+            {
+                // All other characters are replaced by their respective special character
+                if (currentChar == 't')
+                    result += '\t';
+                else if (currentChar == 'b')
+                    result += '\b';
+                else if (currentChar == 'f')
+                    result += '\f';
+                else if (currentChar == 'n')
+                    result += '\n';
+                else if (currentChar == 'r')
+                    result += '\r';
+                else if (currentChar == 'u')
+                {
+                    // \uXXXX[\uXXXX] is used for escaping unicode, which
+                    // has it's own subroutine.
+                    result += parseUnicodeEscape();
+                    // the parsing process has brought us one step behind the
+                    // unicode escape sequence:
+                    // \uXXXX
+                    //       ^
+                    // so we need to go one character back or the parser
+                    // would skip the character we are currently pointing at
+                    // (as the for-loop will drecement pos_ after this iteration).
+                    pos_--;
+                }
+                else // user did something like \z and we should report a error
+                    error("expected one of \\,/,b,f,n,r,t,u behind backslash.");
+            }
+        }
+        else
+        {
+            if (currentChar == '"')
+            {
                 // currentChar is a quote, so we found the end of the string
 
 
@@ -2093,7 +2114,9 @@ std::string json::parser::parseString()
 
                 // bring the result of the parsing process back to the caller
                 return result;
-            } else if (currentChar != '\\') {
+            }
+            else if (currentChar != '\\')
+            {
                 // all non-backslash characters are added to the end of the result string.
                 // the only backslashes we want in the result are the ones that are escaped (which happens above).
                 result += currentChar;
@@ -2121,34 +2144,74 @@ std::string json::parser::parseString()
     error("expected '\"'");
 }
 
-std::string json::parser::unicodeToUTF8(unsigned int codepoint) {
 
-    // it's just a ASCII compatible codepoint,
-    // so we just interpret the point as a character
-    if (codepoint <= 0x7f) {
+
+/*!
+Turns a code point into it's UTF-8 representation.
+You should only pass numbers < 0x10ffff into this function
+(everything else is a invalid code point).
+
+@return the UTF-8 representation of the given codepoint
+
+@pre  This method isn't accessing the members of the parser
+
+@post This method isn't accessing the members of the parser
+*/
+std::string json::parser::codepointToUTF8(unsigned int codepoint)
+{
+    // this method contains a lot of bit manipulations to
+    // build the bytes for UTF-8.
+
+    // the '(... >> S) & 0xHH'-patterns are used to retrieve
+    // certain bits from the code points.
+
+    // all static casts in this method have boundary checks
+
+    // we initialize all strings with their final length
+    // (e.g. 1 to 4 bytes) to save the reallocations.
+
+
+    if (codepoint <= 0x7f)
+    {
+        // it's just a ASCII compatible codepoint,
+        // so we just interpret the point as a character
+        // and return ASCII
+
         return std::string(1, static_cast<char>(codepoint));
     }
+    // if true, we need two bytes to encode this as UTF-8
     else if (codepoint <= 0x7ff)
     {
-        std::string result(2, static_cast<char>(0xc0 | ((codepoint >> 6) & 0x1f)));
-        result[1] = static_cast<char>(0x80 | (codepoint & 0x3f));
+        // the 0xC0 enables the two most significant two bits
+        // to make this a two-byte UTF-8 character.
+        std::string result(2, static_cast<char>(0xC0 | ((codepoint >> 6) & 0x1F)));
+        result[1] = static_cast<char>(0x80 | (codepoint & 0x3F));
         return result;
     }
+    // if true, now we need three bytes to encode this as UTF-8
     else if (codepoint <= 0xffff)
     {
-        std::string result(3, static_cast<char>(0xe0 | ((codepoint >> 12) & 0x0f)));
-        result[1] = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f));
-        result[2] = static_cast<char>(0x80 | (codepoint & 0x3f));
+        // the 0xE0 enables the three most significant two bits
+        // to make this a three-byte UTF-8 character.
+        std::string result(3, static_cast<char>(0xE0 | ((codepoint >> 12) & 0x0F)));
+        result[1] = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
+        result[2] = static_cast<char>(0x80 | (codepoint & 0x3F));
         return result;
     }
-    else if (codepoint <= 0x1fffff)
+    // if true, we need maximal four bytes to encode this as UTF-8
+    else if (codepoint <= 0x10ffff)
     {
-        std::string result(4, static_cast<char>(0xf0 | ((codepoint >> 18) & 0x07)));
-        result[1] = static_cast<char>(0x80 | ((codepoint >> 12) & 0x3f));
-        result[2] = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f));
-        result[3] = static_cast<char>(0x80 | (codepoint & 0x3f));
+        // the 0xE0 enables the four most significant two bits
+        // to make this a three-byte UTF-8 character.
+        std::string result(4, static_cast<char>(0xF0 | ((codepoint >> 18) & 0x07)));
+        result[1] = static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F));
+        result[2] = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
+        result[3] = static_cast<char>(0x80 | (codepoint & 0x3F));
         return result;
-    } else {
+    }
+    else
+    {
+        // Can't be tested without direct access to this private method.
         std::string errorMessage = "Invalid codepoint: ";
         errorMessage += codepoint;
         error(errorMessage);
@@ -2156,39 +2219,110 @@ std::string json::parser::unicodeToUTF8(unsigned int codepoint) {
 }
 
 /*!
-Parses the JSON style unicode escape sequence (\uXXXX).
+Parses 4 hexadecimal characters as a number.
 
-@return the utf-8 character the escape sequence escaped
+@return the value of the number the hexadecimal characters represent.
 
-@pre  An opening quote \p " was read in the main parse function @ref parse.
-      pos_ is the position after the opening quote.
+@pre  pos_ is pointing to the first of the 4 hexadecimal characters.
 
-@post The character after the closing quote \p " is the current character @ref
-      current_. Whitespace is skipped.
+@post pos_ is pointing to the character after the 4 hexadecimal characters.
 */
-std::string json::parser::parseUnicodeEscape() {
+unsigned int json::parser::parse4HexCodepoint()
+{
     const auto startPos = pos_;
-    if (pos_ + 3 >= buffer_.size()) {
+
+    // check if the  remaining buffer is long enough to even hold 4 characters
+    if (pos_ + 3 >= buffer_.size())
+    {
         error("Got end of input while parsing unicode escape sequence \\uXXXX");
     }
+
+    // make a string that can hold the pair
     std::string hexCode(4, ' ');
-    for(; pos_ < startPos + 4; pos_++) {
+
+    for(; pos_ < startPos + 4; pos_++)
+    {
+        // no boundary check here as we already checked above
         char currentChar = buffer_[pos_];
+
+        // check if we have a hexadecimal character
         if (   (currentChar >= '0' && currentChar <= '9')
             || (currentChar >= 'a' && currentChar <= 'f')
-            || (currentChar >= 'A' && currentChar <= 'F')) {
+            || (currentChar >= 'A' && currentChar <= 'F'))
+        {
             // all is well, we have valid hexadecimal chars
             // so we copy that char into our string
             hexCode[pos_ - startPos] = currentChar;
-        } else {
+        }
+        else
+        {
             error("Found non-hexadecimal character in unicode escape sequence!");
         }
     }
-    pos_--;
-    // case is safe as 4 hex characters can't present more than 16 bits
-    return unicodeToUTF8(static_cast<unsigned int>(std::stoul(hexCode, nullptr, 16)));
+    // the cast is safe as 4 hex characters can't present more than 16 bits
+    // the input to stoul was checked to contain only hexadecimal characters (see above)
+    return static_cast<unsigned int>(std::stoul(hexCode, nullptr, 16));
 }
 
+/*!
+Parses the unicode escape codes as defined in the ECMA-404.
+The escape sequence has two forms:
+1. \uXXXX
+2. \uXXXX\uYYYY
+where X and Y are a hexadecimal character (a-zA-Z0-9).
+
+Form 1 just contains the unicode code point in the hexadecimal number XXXX.
+Form 2 is encoding a UTF-16 surrogate pair. The high surrogate is XXXX, the low surrogate is YYYY.
+
+@return the UTF-8 character this unicode escape sequence escaped.
+
+@pre  pos_ is pointing at at the 'u' behind the first backslash.
+
+@post pos_ is pointing at the character behind the last X (or Y in form 2).
+*/
+std::string json::parser::parseUnicodeEscape()
+{
+    // jump to the first hex value
+    pos_++;
+    // parse the hex first hex values
+    unsigned int firstCodepoint = parse4HexCodepoint();
+
+
+    if (firstCodepoint >= 0xD800 && firstCodepoint <= 0xDBFF)
+    {
+        // we found invalid code points, which means we either have a malformed input
+        // or we found a high surrogate.
+        // we can only find out by seeing if the next character also wants to encode
+        // a unicode character (so, we have the \uXXXX\uXXXX case here).
+
+        // jump behind the next \u
+        pos_ += 2;
+        // try to parse the next hex values.
+        // the method does boundary checking for us, so no need to do that here
+        unsigned secondCodepoint = parse4HexCodepoint();
+        // ok, we have a low surrogate, check if it is a valid one
+        if (secondCodepoint >= 0xDC00 && secondCodepoint <= 0xDFFF)
+        {
+            // calculate the final code point from the pair according to the spec
+            unsigned int finalCodePoint =
+                    // high surrogate occupies the most significant 22 bits
+                    (firstCodepoint << 10)
+                    // low surrogate occupies the least significant 15 bits
+                    + secondCodepoint
+                    // there is still the 0xD800, 0xDC00 and 0x10000 noise in the result
+                    // so we have to substract with (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
+                    - 0x35FDC00;
+
+            // we transform the calculated point into UTF-8
+            return codepointToUTF8(finalCodePoint);
+        }
+        else
+            error("missing low surrogate");
+
+    }
+    // We have Form 1, so we just interpret the XXXX as a code point
+    return codepointToUTF8(firstCodepoint);
+}
 
 
 /*!
