@@ -165,7 +165,10 @@ class json
 
     /// dump the object (with pretty printer)
     std::string dump(const bool, const unsigned int, unsigned int = 0) const noexcept;
-
+    /// replaced a character in a string with another string
+    void replaceChar(std::string& str, char c, const std::string& replacement) const;
+    /// escapes special characters to safely dump the string
+    std::string escapeString(const std::string&) const;
   public:
     /// explicit value conversion
     template<typename T>

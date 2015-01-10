@@ -819,6 +819,17 @@ TEST_CASE("string")
         j1.clear();
         CHECK(j1.get<std::string>() == "");
     }
+
+    SECTION("Dumping")
+    {
+        CHECK(json("\"").dump(0) == "\"\\\"\"");
+        CHECK(json("\\").dump(0) == "\"\\\\\"");
+        CHECK(json("\n").dump(0) == "\"\\n\"");
+        CHECK(json("\t").dump(0) == "\"\\t\"");
+        CHECK(json("\b").dump(0) == "\"\\b\"");
+        CHECK(json("\f").dump(0) == "\"\\f\"");
+        CHECK(json("\r").dump(0) == "\"\\r\"");
+    }
 }
 
 TEST_CASE("boolean")
