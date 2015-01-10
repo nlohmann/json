@@ -4,6 +4,9 @@ project(json)
 # Enable C++11 and set flags for coverage testing
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -O0 --coverage -fprofile-arcs -ftest-coverage")
 
+# Make everything public for testing purposes
+add_definitions(-Dprivate=public)
+
 # If not specified, use Debug as build type (necessary for coverage testing)
 if( NOT CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE Debug CACHE STRING

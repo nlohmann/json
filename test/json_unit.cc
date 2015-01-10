@@ -1697,6 +1697,12 @@ TEST_CASE("Parser")
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\uD80C\""), std::invalid_argument);
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\u0000\""), std::invalid_argument);
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\uFFFF\""), std::invalid_argument);
+
+        // test private code point converter function
+        CHECK_NOTHROW(json::parser("").codePointToUTF8(0x10FFFE));
+        CHECK_NOTHROW(json::parser("").codePointToUTF8(0x10FFFF));
+        CHECK_THROWS_AS(json::parser("").codePointToUTF8(0x110000), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("").codePointToUTF8(0x110001), std::invalid_argument);
     }
 
     SECTION("boolean")
