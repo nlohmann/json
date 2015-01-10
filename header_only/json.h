@@ -9,7 +9,450 @@
 @see https://github.com/nlohmann/json
 */
 
-#include "json.h"
+#pragma once
+
+#include <initializer_list>  // std::initializer_list
+#include <iostream>          // std::istream, std::ostream
+#include <map>               // std::map
+#include <string>            // std::string
+#include <vector>            // std::vector
+#include <iterator>          // std::iterator
+
+namespace nlohmann
+{
+
+/*!
+@brief JSON for Modern C++
+
+The size of a JSON object is 16 bytes: 8 bytes for the value union whose
+largest item is a pointer type and another 8 byte for an element of the
+type union. The latter only needs 1 byte - the remaining 7 bytes are wasted
+due to alignment.
+
+@see http://stackoverflow.com/questions/7758580/writing-your-own-stl-container/7759622#7759622
+
+@bug Numbers are currently handled too generously. There are several formats
+     that are forbidden by the standard, but are accepted by the parser.
+
+@todo Implement json::swap()
+@todo Implement json::insert(), json::emplace(), json::emplace_back, json::erase
+@todo Implement json::reverse_iterator, json::const_reverse_iterator,
+      json::rbegin(), json::rend(), json::crbegin(), json::crend()?
+*/
+class json
+{
+    // forward declaration to friend this class
+  public:
+    class iterator;
+    class const_iterator;
+
+  public:
+    /// possible types of a JSON object
+    enum class value_type : uint8_t
+    {
+        /// ordered collection of values
+        array = 0,
+        /// unordered set of name/value pairs
+        object,
+        /// null value
+        null,
+        /// string value
+        string,
+        /// Boolean value
+        boolean,
+        /// number value (integer)
+        number,
+        /// number value (float)
+        number_float
+    };
+
+    /// a type for an object
+    using object_t = std::map<std::string, json>;
+    /// a type for an array
+    using array_t = std::vector<json>;
+    /// a type for a string
+    using string_t = std::string;
+    /// a type for a Boolean
+    using boolean_t = bool;
+    /// a type for an integer number
+    using number_t = int;
+    /// a type for a floating point number
+    using number_float_t = double;
+    /// a type for list initialization
+    using list_init_t = std::initializer_list<json>;
+
+    /// a JSON value
+    union value
+    {
+        /// array as pointer to array_t
+        array_t* array;
+        /// object as pointer to object_t
+        object_t* object;
+        /// string as pointer to string_t
+        string_t* string;
+        /// Boolean
+        boolean_t boolean;
+        /// number (integer)
+        number_t number;
+        /// number (float)
+        number_float_t number_float;
+
+        /// default constructor
+        value() = default;
+        /// constructor for arrays
+        value(array_t*);
+        /// constructor for objects
+        value(object_t*);
+        /// constructor for strings
+        value(string_t*);
+        /// constructor for Booleans
+        value(boolean_t);
+        /// constructor for numbers (integer)
+        value(number_t);
+        /// constructor for numbers (float)
+        value(number_float_t);
+    };
+
+  public:
+    /// create an object according to given type
+    json(const value_type);
+    /// create a null object
+    json() = default;
+    /// create a null object
+    json(std::nullptr_t) noexcept;
+    /// create a string object from a C++ string
+    json(const std::string&);
+    /// create a string object from a C++ string (move)
+    json(std::string&&);
+    /// create a string object from a C string
+    json(const char*);
+    /// create a Boolean object
+    json(const bool) noexcept;
+    /// create a number object
+    json(const int) noexcept;
+    /// create a number object
+    json(const double) noexcept;
+    /// create an array
+    json(const array_t&);
+    /// create an array (move)
+    json(array_t&&);
+    /// create an object
+    json(const object_t&);
+    /// create an object (move)
+    json(object_t&&);
+    /// create from an initializer list (to an array or object)
+    json(list_init_t);
+
+    /// copy constructor
+    json(const json&);
+    /// move constructor
+    json(json&&) noexcept;
+
+    /// copy assignment
+    json& operator=(json) noexcept;
+
+    /// destructor
+    ~json() noexcept;
+
+    /// create from string representation
+    static json parse(const std::string&);
+    /// create from string representation
+    static json parse(const char*);
+
+  private:
+    /// return the type as string
+    std::string type_name() const noexcept;
+
+    /// dump the object (with pretty printer)
+    std::string dump(const bool, const unsigned int, unsigned int = 0) const noexcept;
+
+  public:
+    /// explicit value conversion
+    template<typename T>
+    T get() const;
+
+    /// implicit conversion to string representation
+    operator const std::string() const;
+    /// implicit conversion to integer (only for numbers)
+    operator int() const;
+    /// implicit conversion to double (only for numbers)
+    operator double() const;
+    /// implicit conversion to Boolean (only for Booleans)
+    operator bool() const;
+    /// implicit conversion to JSON vector (not for objects)
+    operator array_t() const;
+    /// implicit conversion to JSON map (only for objects)
+    operator object_t() const;
+
+    /// serialize to stream
+    friend std::ostream& operator<<(std::ostream& o, const json& j)
+    {
+        o << j.dump();
+        return o;
+    }
+    /// serialize to stream
+    friend std::ostream& operator>>(const json& j, std::ostream& o)
+    {
+        o << j.dump();
+        return o;
+    }
+
+    /// deserialize from stream
+    friend std::istream& operator>>(std::istream& i, json& j)
+    {
+        j = parser(i).parse();
+        return i;
+    }
+    /// deserialize from stream
+    friend std::istream& operator<<(json& j, std::istream& i)
+    {
+        j = parser(i).parse();
+        return i;
+    }
+
+    /// explicit serialization
+    std::string dump(int = -1) const noexcept;
+
+    /// add an object/array to an array
+    json& operator+=(const json&);
+    /// add a string to an array
+    json& operator+=(const std::string&);
+    /// add a null object to an array
+    json& operator+=(const std::nullptr_t);
+    /// add a string to an array
+    json& operator+=(const char*);
+    /// add a Boolean to an array
+    json& operator+=(bool);
+    /// add a number to an array
+    json& operator+=(int);
+    /// add a number to an array
+    json& operator+=(double);
+
+    /// add a pair to an object
+    json& operator+=(const object_t::value_type&);
+    /// add a list of elements to array or list of pairs to object
+    json& operator+=(list_init_t);
+
+    /// add an object/array to an array
+    void push_back(const json&);
+    /// add an object/array to an array (move)
+    void push_back(json&&);
+    /// add a string to an array
+    void push_back(const std::string&);
+    /// add a null object to an array
+    void push_back(const std::nullptr_t);
+    /// add a string to an array
+    void push_back(const char*);
+    /// add a Boolean to an array
+    void push_back(bool);
+    /// add a number to an array
+    void push_back(int);
+    /// add a number to an array
+    void push_back(double);
+
+    /// add a pair to an object
+    void push_back(const object_t::value_type&);
+    /// add a list of elements to array or list of pairs to object
+    void push_back(list_init_t);
+
+    /// operator to set an element in an array
+    json& operator[](const int);
+    /// operator to get an element in an array
+    const json& operator[](const int) const;
+    /// operator to get an element in an array
+    json& at(const int);
+    /// operator to get an element in an array
+    const json& at(const int) const;
+
+    /// operator to set an element in an object
+    json& operator[](const std::string&);
+    /// operator to set an element in an object
+    json& operator[](const char*);
+    /// operator to get an element in an object
+    const json& operator[](const std::string&) const;
+    /// operator to set an element in an object
+    json& at(const std::string&);
+    /// operator to set an element in an object
+    json& at(const char*);
+    /// operator to get an element in an object
+    const json& at(const std::string&) const;
+    /// operator to get an element in an object
+    const json& at(const char*) const;
+
+    /// return the number of stored values
+    std::size_t size() const noexcept;
+    /// checks whether object is empty
+    bool empty() const noexcept;
+    /// removes all elements from compounds and resets values to default
+    void clear() noexcept;
+
+    /// return the type of the object
+    value_type type() const noexcept;
+
+    /// find an element in an object (returns end() iterator otherwise)
+    iterator find(const std::string&);
+    /// find an element in an object (returns end() iterator otherwise)
+    const_iterator find(const std::string&) const;
+    /// find an element in an object (returns end() iterator otherwise)
+    iterator find(const char*);
+    /// find an element in an object (returns end() iterator otherwise)
+    const_iterator find(const char*) const;
+
+    /// lexicographically compares the values
+    bool operator==(const json&) const noexcept;
+    /// lexicographically compares the values
+    bool operator!=(const json&) const noexcept;
+
+    /// returns an iterator to the beginning (array/object)
+    iterator begin() noexcept;
+    /// returns an iterator to the end (array/object)
+    iterator end() noexcept;
+    /// returns an iterator to the beginning (array/object)
+    const_iterator begin() const noexcept;
+    /// returns an iterator to the end (array/object)
+    const_iterator end() const noexcept;
+    /// returns an iterator to the beginning (array/object)
+    const_iterator cbegin() const noexcept;
+    /// returns an iterator to the end (array/object)
+    const_iterator cend() const noexcept;
+
+  private:
+    /// the type of this object
+    value_type type_ = value_type::null;
+
+    /// the payload
+    value value_ {};
+
+  public:
+    /// an iterator
+    class iterator : public std::iterator<std::forward_iterator_tag, json>
+    {
+        friend class json;
+        friend class json::const_iterator;
+      public:
+        iterator() = default;
+        iterator(json*);
+        iterator(const iterator&);
+        ~iterator();
+
+        iterator& operator=(iterator);
+        bool operator==(const iterator&) const;
+        bool operator!=(const iterator&) const;
+        iterator& operator++();
+        json& operator*() const;
+        json* operator->() const;
+
+        /// getter for the key (in case of objects)
+        std::string key() const;
+        /// getter for the value
+        json& value() const;
+
+      private:
+        /// a JSON value
+        json* object_ = nullptr;
+        /// an iterator for JSON arrays
+        array_t::iterator* vi_ = nullptr;
+        /// an iterator for JSON objects
+        object_t::iterator* oi_ = nullptr;
+    };
+
+    /// a const iterator
+    class const_iterator : public std::iterator<std::forward_iterator_tag, const json>
+    {
+        friend class json;
+
+      public:
+        const_iterator() = default;
+        const_iterator(const json*);
+        const_iterator(const const_iterator&);
+        const_iterator(const json::iterator&);
+        ~const_iterator();
+
+        const_iterator& operator=(const_iterator);
+        bool operator==(const const_iterator&) const;
+        bool operator!=(const const_iterator&) const;
+        const_iterator& operator++();
+        const json& operator*() const;
+        const json* operator->() const;
+
+        /// getter for the key (in case of objects)
+        std::string key() const;
+        /// getter for the value
+        const json& value() const;
+
+      private:
+        /// a JSON value
+        const json* object_ = nullptr;
+        /// an iterator for JSON arrays
+        array_t::const_iterator* vi_ = nullptr;
+        /// an iterator for JSON objects
+        object_t::const_iterator* oi_ = nullptr;
+    };
+
+  private:
+    /// a helper class to parse a JSON object
+    class parser
+    {
+      public:
+        /// a parser reading from a C string
+        parser(const char*);
+        /// a parser reading from a C++ string
+        parser(const std::string&);
+        /// a parser reading from an input stream
+        parser(std::istream&);
+        /// destructor of the parser
+        ~parser() = default;
+
+        // no copy constructor
+        parser(const parser&) = delete;
+        // no copy assignment
+        parser& operator=(parser) = delete;
+
+        /// parse and return a JSON object
+        json parse();
+
+      private:
+        /// read the next character, stripping whitespace
+        bool next();
+        /// raise an exception with an error message
+        inline void error(const std::string&) __attribute__((noreturn));
+        /// parse a quoted string
+        inline std::string parseString();
+        /// parse a Boolean "true"
+        inline void parseTrue();
+        /// parse a Boolean "false"
+        inline void parseFalse();
+        /// parse a null object
+        inline void parseNull();
+        /// a helper function to expect a certain character
+        inline void expect(const char);
+
+      private:
+        /// a buffer of the input
+        std::string buffer_ {};
+        /// the current character
+        char current_ {};
+        /// the position inside the input buffer
+        std::size_t pos_ = 0;
+    };
+};
+
+}
+
+/// user-defined literal operator to create JSON objects from strings
+nlohmann::json operator "" _json(const char*, std::size_t);
+/*!
+@file
+@copyright The code is licensed under the MIT License
+           <http://opensource.org/licenses/MIT>,
+           Copyright (c) 2013-2014 Niels Lohmann.
+
+@author Niels Lohmann <http://nlohmann.me>
+
+@see https://github.com/nlohmann/json
+*/
+
+
 
 #include <cctype>     // std::isdigit, std::isspace
 #include <cstddef>    // std::size_t
@@ -2052,55 +2495,56 @@ std::string json::parser::parseString()
     // the result of the parse process
     std::string result;
 
-    // iterate with pos_ over the whole input until we found the end and return
-    // or we exit via error()
+    // iterate with pos_ over the whole string
     for (; pos_ < buffer_.size(); pos_++)
     {
         char currentChar = buffer_[pos_];
 
+        // uneven amount of backslashes means the user wants to escape something
         if (!evenAmountOfBackslashes)
         {
-            // uneven amount of backslashes means the user wants to escape something
-            // so we know there is a case such as '\X' or '\\\X' but we don't
-            // know yet what X is.
-            // at this point in the code, the currentChar has the value of X
-
             // slash, backslash and quote are copied as is
-            if (   currentChar == '/'
-                || currentChar == '\\'
-                || currentChar == '"')
+            if (currentChar == '/' or currentChar == '\\' or currentChar == '"')
             {
                 result += currentChar;
             }
             else
             {
-                // All other characters are replaced by their respective special character
-                if (currentChar == 't')
-                    result += '\t';
-                else if (currentChar == 'b')
-                    result += '\b';
-                else if (currentChar == 'f')
-                    result += '\f';
-                else if (currentChar == 'n')
-                    result += '\n';
-                else if (currentChar == 'r')
-                    result += '\r';
-                else if (currentChar == 'u')
+                // all other characters are replaced by their respective
+                // special character
+                switch (currentChar)
                 {
-                    // \uXXXX[\uXXXX] is used for escaping unicode, which
-                    // has it's own subroutine.
-                    result += parseUnicodeEscape();
-                    // the parsing process has brought us one step behind the
-                    // unicode escape sequence:
-                    // \uXXXX
-                    //       ^
-                    // so we need to go one character back or the parser
-                    // would skip the character we are currently pointing at
-                    // (as the for-loop will drecement pos_ after this iteration).
-                    pos_--;
+                    case 't':
+                    {
+                        result += '\t';
+                        break;
+                    }
+                    case 'b':
+                    {
+                        result += '\b';
+                        break;
+                    }
+                    case 'f':
+                    {
+                        result += '\f';
+                        break;
+                    }
+                    case 'n':
+                    {
+                        result += '\n';
+                        break;
+                    }
+                    case 'r':
+                    {
+                        result += '\r';
+                        break;
+                    }
+                    default:
+                    {
+                        error("expected one of \\, /, b, f, n, r, t behind backslash.");
+                    }
                 }
-                else // user did something like \z and we should report a error
-                    error("expected one of \\,/,b,f,n,r,t,u behind backslash.");
+                // TODO implement \uXXXX
             }
         }
         else
@@ -2119,8 +2563,9 @@ std::string json::parser::parseString()
             }
             else if (currentChar != '\\')
             {
-                // all non-backslash characters are added to the end of the result string.
-                // the only backslashes we want in the result are the ones that are escaped (which happens above).
+                // All non-backslash characters are added to the end of the
+                // result string. The only backslashes we want in the result
+                // are the ones that are escaped (which happens above).
                 result += currentChar;
             }
         }
@@ -2145,187 +2590,6 @@ std::string json::parser::parseString()
     // so the given string is malformed
     error("expected '\"'");
 }
-
-
-
-/*!
-Turns a code point into it's UTF-8 representation.
-You should only pass numbers < 0x10ffff into this function
-(everything else is a invalid code point).
-
-@return the UTF-8 representation of the given code point
-
-@pre  This method isn't accessing the members of the parser
-
-@post This method isn't accessing the members of the parser
-*/
-std::string json::parser::codePointToUTF8(unsigned int codePoint)
-{
-    // this method contains a lot of bit manipulations to
-    // build the bytes for UTF-8.
-
-    // the '(... >> S) & 0xHH'-patterns are used to retrieve
-    // certain bits from the code points.
-
-    // all static casts in this method have boundary checks
-
-    // we initialize all strings with their final length
-    // (e.g. 1 to 4 bytes) to save the reallocations.
-
-
-    if (codePoint <= 0x7f)
-    {
-        // it's just a ASCII compatible codePoint,
-        // so we just interpret the point as a character
-        // and return ASCII
-
-        return std::string(1, static_cast<char>(codePoint));
-    }
-    // if true, we need two bytes to encode this as UTF-8
-    else if (codePoint <= 0x7ff)
-    {
-        // the 0xC0 enables the two most significant two bits
-        // to make this a two-byte UTF-8 character.
-        std::string result(2, static_cast<char>(0xC0 | ((codePoint >> 6) & 0x1F)));
-        result[1] = static_cast<char>(0x80 | (codePoint & 0x3F));
-        return result;
-    }
-    // if true, now we need three bytes to encode this as UTF-8
-    else if (codePoint <= 0xffff)
-    {
-        // the 0xE0 enables the three most significant two bits
-        // to make this a three-byte UTF-8 character.
-        std::string result(3, static_cast<char>(0xE0 | ((codePoint >> 12) & 0x0F)));
-        result[1] = static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F));
-        result[2] = static_cast<char>(0x80 | (codePoint & 0x3F));
-        return result;
-    }
-    // if true, we need maximal four bytes to encode this as UTF-8
-    else if (codePoint <= 0x10ffff)
-    {
-        // the 0xE0 enables the four most significant two bits
-        // to make this a three-byte UTF-8 character.
-        std::string result(4, static_cast<char>(0xF0 | ((codePoint >> 18) & 0x07)));
-        result[1] = static_cast<char>(0x80 | ((codePoint >> 12) & 0x3F));
-        result[2] = static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F));
-        result[3] = static_cast<char>(0x80 | (codePoint & 0x3F));
-        return result;
-    }
-    else
-    {
-        // Can't be tested without direct access to this private method.
-        std::string errorMessage = "Invalid codePoint: ";
-        errorMessage += codePoint;
-        error(errorMessage);
-    }
-}
-
-/*!
-Parses 4 hexadecimal characters as a number.
-
-@return the value of the number the hexadecimal characters represent.
-
-@pre  pos_ is pointing to the first of the 4 hexadecimal characters.
-
-@post pos_ is pointing to the character after the 4 hexadecimal characters.
-*/
-unsigned int json::parser::parse4HexCodePoint()
-{
-    const auto startPos = pos_;
-
-    // check if the  remaining buffer is long enough to even hold 4 characters
-    if (pos_ + 3 >= buffer_.size())
-    {
-        error("Got end of input while parsing unicode escape sequence \\uXXXX");
-    }
-
-    // make a string that can hold the pair
-    std::string hexCode(4, ' ');
-
-    for(; pos_ < startPos + 4; pos_++)
-    {
-        // no boundary check here as we already checked above
-        char currentChar = buffer_[pos_];
-
-        // check if we have a hexadecimal character
-        if (   (currentChar >= '0' && currentChar <= '9')
-            || (currentChar >= 'a' && currentChar <= 'f')
-            || (currentChar >= 'A' && currentChar <= 'F'))
-        {
-            // all is well, we have valid hexadecimal chars
-            // so we copy that char into our string
-            hexCode[pos_ - startPos] = currentChar;
-        }
-        else
-        {
-            error("Found non-hexadecimal character in unicode escape sequence!");
-        }
-    }
-    // the cast is safe as 4 hex characters can't present more than 16 bits
-    // the input to stoul was checked to contain only hexadecimal characters (see above)
-    return static_cast<unsigned int>(std::stoul(hexCode, nullptr, 16));
-}
-
-/*!
-Parses the unicode escape codes as defined in the ECMA-404.
-The escape sequence has two forms:
-1. \uXXXX
-2. \uXXXX\uYYYY
-where X and Y are a hexadecimal character (a-zA-Z0-9).
-
-Form 1 just contains the unicode code point in the hexadecimal number XXXX.
-Form 2 is encoding a UTF-16 surrogate pair. The high surrogate is XXXX, the low surrogate is YYYY.
-
-@return the UTF-8 character this unicode escape sequence escaped.
-
-@pre  pos_ is pointing at at the 'u' behind the first backslash.
-
-@post pos_ is pointing at the character behind the last X (or Y in form 2).
-*/
-std::string json::parser::parseUnicodeEscape()
-{
-    // jump to the first hex value
-    pos_++;
-    // parse the hex first hex values
-    unsigned int firstCodePoint = parse4HexCodePoint();
-
-
-    if (firstCodePoint >= 0xD800 && firstCodePoint <= 0xDBFF)
-    {
-        // we found invalid code points, which means we either have a malformed input
-        // or we found a high surrogate.
-        // we can only find out by seeing if the next character also wants to encode
-        // a unicode character (so, we have the \uXXXX\uXXXX case here).
-
-        // jump behind the next \u
-        pos_ += 2;
-        // try to parse the next hex values.
-        // the method does boundary checking for us, so no need to do that here
-        unsigned secondCodePoint = parse4HexCodePoint();
-        // ok, we have a low surrogate, check if it is a valid one
-        if (secondCodePoint >= 0xDC00 && secondCodePoint <= 0xDFFF)
-        {
-            // calculate the final code point from the pair according to the spec
-            unsigned int finalCodePoint =
-                    // high surrogate occupies the most significant 22 bits
-                    (firstCodePoint << 10)
-                    // low surrogate occupies the least significant 15 bits
-                    + secondCodePoint
-                    // there is still the 0xD800, 0xDC00 and 0x10000 noise in the result
-                    // so we have to substract with (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
-                    - 0x35FDC00;
-
-            // we transform the calculated point into UTF-8
-            return codePointToUTF8(finalCodePoint);
-        }
-        else
-            error("missing low surrogate");
-
-    }
-    // We have Form 1, so we just interpret the XXXX as a code point
-    return codePointToUTF8(firstCodePoint);
-}
-
 
 /*!
 This function is called in case a \p "t" is read in the main parse function
