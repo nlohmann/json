@@ -2060,10 +2060,10 @@ std::string json::parser::parseString()
 
         if (!evenAmountOfBackslashes)
         {
-            // uneven amount of backslashes means the user wants to escape something
-            // so we know there is a case such as '\X' or '\\\X' but we don't
-            // know yet what X is.
-            // at this point in the code, the currentChar has the value of X
+            // uneven amount of backslashes means the user wants to escape
+            // something so we know there is a case such as '\X' or '\\\X' but
+            // we don't know yet what X is.
+            // at this point in the code, the currentChar has the value of X.
 
             // slash, backslash and quote are copied as is
             if (   currentChar == '/'
@@ -2074,33 +2074,55 @@ std::string json::parser::parseString()
             }
             else
             {
-                // All other characters are replaced by their respective special character
-                if (currentChar == 't')
-                    result += '\t';
-                else if (currentChar == 'b')
-                    result += '\b';
-                else if (currentChar == 'f')
-                    result += '\f';
-                else if (currentChar == 'n')
-                    result += '\n';
-                else if (currentChar == 'r')
-                    result += '\r';
-                else if (currentChar == 'u')
+                // all other characters are replaced by their respective special
+                // character
+                switch (currentChar)
                 {
-                    // \uXXXX[\uXXXX] is used for escaping unicode, which
-                    // has it's own subroutine.
-                    result += parseUnicodeEscape();
-                    // the parsing process has brought us one step behind the
-                    // unicode escape sequence:
-                    // \uXXXX
-                    //       ^
-                    // so we need to go one character back or the parser
-                    // would skip the character we are currently pointing at
-                    // (as the for-loop will drecement pos_ after this iteration).
-                    pos_--;
+                    case 't':
+                    {
+                        result += '\t';
+                        break;
+                    }
+                    case 'b':
+                    {
+                        result += '\b';
+                        break;
+                    }
+                    case 'f':
+                    {
+                        result += '\f';
+                        break;
+                    }
+                    case 'n':
+                    {
+                        result += '\n';
+                        break;
+                    }
+                    case 'r':
+                    {
+                        result += '\r';
+                        break;
+                    }
+                    case 'u':
+                    {
+                        // \uXXXX[\uXXXX] is used for escaping unicode, which
+                        // has it's own subroutine.
+                        result += parseUnicodeEscape();
+                        // the parsing process has brought us one step behind
+                        // the unicode escape sequence:
+                        // \uXXXX
+                        //       ^
+                        // we need to go one character back or the parser would
+                        // skip the character we are currently pointing at as
+                        // the for-loop will decrement pos_ after this iteration
+                        pos_--;
+                        break;
+                    }
+                    default:
+                    {
+                        error("expected one of \\, /, b, f, n, r, t, u behind backslash.");
+                    }
                 }
-                else // user did something like \z and we should report a error
-                    error("expected one of \\,/,b,f,n,r,t,u behind backslash.");
             }
         }
         else
@@ -2119,8 +2141,9 @@ std::string json::parser::parseString()
             }
             else if (currentChar != '\\')
             {
-                // all non-backslash characters are added to the end of the result string.
-                // the only backslashes we want in the result are the ones that are escaped (which happens above).
+                // all non-backslash characters are added to the end of the
+                // result string. The only backslashes we want in the result
+                // are the ones that are escaped (which happens above).
                 result += currentChar;
             }
         }
@@ -2262,7 +2285,8 @@ unsigned int json::parser::parse4HexCodePoint()
         }
     }
     // the cast is safe as 4 hex characters can't present more than 16 bits
-    // the input to stoul was checked to contain only hexadecimal characters (see above)
+    // the input to stoul was checked to contain only hexadecimal characters
+    // (see above)
     return static_cast<unsigned int>(std::stoul(hexCode, nullptr, 16));
 }
 
@@ -2274,7 +2298,8 @@ The escape sequence has two forms:
 where X and Y are a hexadecimal character (a-zA-Z0-9).
 
 Form 1 just contains the unicode code point in the hexadecimal number XXXX.
-Form 2 is encoding a UTF-16 surrogate pair. The high surrogate is XXXX, the low surrogate is YYYY.
+Form 2 is encoding a UTF-16 surrogate pair. The high surrogate is XXXX, the low
+surrogate is YYYY.
 
 @return the UTF-8 character this unicode escape sequence escaped.
 
@@ -2292,10 +2317,10 @@ std::string json::parser::parseUnicodeEscape()
 
     if (firstCodePoint >= 0xD800 && firstCodePoint <= 0xDBFF)
     {
-        // we found invalid code points, which means we either have a malformed input
-        // or we found a high surrogate.
-        // we can only find out by seeing if the next character also wants to encode
-        // a unicode character (so, we have the \uXXXX\uXXXX case here).
+        // we found invalid code points, which means we either have a malformed
+        // input or we found a high surrogate.
+        // we can only find out by seeing if the next character also wants to
+        // encode a unicode character (so, we have the \uXXXX\uXXXX case here).
 
         // jump behind the next \u
         pos_ += 2;
@@ -2305,14 +2330,16 @@ std::string json::parser::parseUnicodeEscape()
         // ok, we have a low surrogate, check if it is a valid one
         if (secondCodePoint >= 0xDC00 && secondCodePoint <= 0xDFFF)
         {
-            // calculate the final code point from the pair according to the spec
+            // calculate the code point from the pair according to the spec
             unsigned int finalCodePoint =
                     // high surrogate occupies the most significant 22 bits
                     (firstCodePoint << 10)
                     // low surrogate occupies the least significant 15 bits
                     + secondCodePoint
-                    // there is still the 0xD800, 0xDC00 and 0x10000 noise in the result
-                    // so we have to substract with (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
+                    // there is still the 0xD800, 0xDC00 and 0x10000 noise in
+                    // the result
+                    // so we have to substract with:
+                    // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
                     - 0x35FDC00;
 
             // we transform the calculated point into UTF-8
