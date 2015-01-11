@@ -1988,9 +1988,9 @@ json json::parser::parse()
             // remember position of number's first character
             const auto _firstpos_ = pos_ - 1;
 
-            while (next() and (std::isdigit(current_) || current_ == '.'
-                               || current_ == 'e' || current_ == 'E'
-                               || current_ == '+' || current_ == '-'));
+            while (next() and (std::isdigit(current_) or current_ == '.'
+                               or current_ == 'e' or current_ == 'E'
+                               or current_ == '+' or current_ == '-'));
 
             try
             {
@@ -2066,7 +2066,7 @@ the error message \p msg), and the last read token.
 
 @exception std::invalid_argument whenever the function is called
 */
-void json::parser::error(const std::string& msg)
+void json::parser::error(const std::string& msg) const
 {
     throw std::invalid_argument("parse error at position " +
                                 std::to_string(pos_) + ": " + msg +
@@ -2102,7 +2102,7 @@ std::string json::parser::parseString()
     {
         char currentChar = buffer_[pos_];
 
-        if (!evenAmountOfBackslashes)
+        if (not evenAmountOfBackslashes)
         {
             // uneven amount of backslashes means the user wants to escape
             // something so we know there is a case such as '\X' or '\\\X' but
@@ -2110,9 +2110,7 @@ std::string json::parser::parseString()
             // at this point in the code, the currentChar has the value of X.
 
             // slash, backslash and quote are copied as is
-            if (   currentChar == '/'
-                || currentChar == '\\'
-                || currentChar == '"')
+            if (currentChar == '/' or currentChar == '\\' or currentChar == '"')
             {
                 result += currentChar;
             }
@@ -2221,12 +2219,8 @@ You should only pass numbers < 0x10ffff into this function
 (everything else is a invalid code point).
 
 @return the UTF-8 representation of the given code point
-
-@pre  This method isn't accessing the members of the parser
-
-@post This method isn't accessing the members of the parser
 */
-std::string json::parser::codePointToUTF8(unsigned int codePoint)
+std::string json::parser::codePointToUTF8(unsigned int codePoint) const
 {
     // this method contains a lot of bit manipulations to
     // build the bytes for UTF-8.
@@ -2238,7 +2232,6 @@ std::string json::parser::codePointToUTF8(unsigned int codePoint)
 
     // we initialize all strings with their final length
     // (e.g. 1 to 4 bytes) to save the reallocations.
-
 
     if (codePoint <= 0x7f)
     {
@@ -2309,15 +2302,15 @@ unsigned int json::parser::parse4HexCodePoint()
     // make a string that can hold the pair
     std::string hexCode(4, ' ');
 
-    for(; pos_ < startPos + 4; pos_++)
+    for (; pos_ < startPos + 4; pos_++)
     {
         // no boundary check here as we already checked above
         char currentChar = buffer_[pos_];
 
         // check if we have a hexadecimal character
-        if (   (currentChar >= '0' && currentChar <= '9')
-            || (currentChar >= 'a' && currentChar <= 'f')
-            || (currentChar >= 'A' && currentChar <= 'F'))
+        if ((currentChar >= '0' and currentChar <= '9')
+                or (currentChar >= 'a' and currentChar <= 'f')
+                or (currentChar >= 'A' and currentChar <= 'F'))
         {
             // all is well, we have valid hexadecimal chars
             // so we copy that char into our string
@@ -2358,8 +2351,7 @@ std::string json::parser::parseUnicodeEscape()
     // parse the hex first hex values
     unsigned int firstCodePoint = parse4HexCodePoint();
 
-
-    if (firstCodePoint >= 0xD800 && firstCodePoint <= 0xDBFF)
+    if (firstCodePoint >= 0xD800 and firstCodePoint <= 0xDBFF)
     {
         // we found invalid code points, which means we either have a malformed
         // input or we found a high surrogate.
@@ -2372,25 +2364,27 @@ std::string json::parser::parseUnicodeEscape()
         // the method does boundary checking for us, so no need to do that here
         unsigned secondCodePoint = parse4HexCodePoint();
         // ok, we have a low surrogate, check if it is a valid one
-        if (secondCodePoint >= 0xDC00 && secondCodePoint <= 0xDFFF)
+        if (secondCodePoint >= 0xDC00 and secondCodePoint <= 0xDFFF)
         {
             // calculate the code point from the pair according to the spec
             unsigned int finalCodePoint =
-                    // high surrogate occupies the most significant 22 bits
-                    (firstCodePoint << 10)
-                    // low surrogate occupies the least significant 15 bits
-                    + secondCodePoint
-                    // there is still the 0xD800, 0xDC00 and 0x10000 noise in
-                    // the result
-                    // so we have to substract with:
-                    // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
-                    - 0x35FDC00;
+                // high surrogate occupies the most significant 22 bits
+                (firstCodePoint << 10)
+                // low surrogate occupies the least significant 15 bits
+                + secondCodePoint
+                // there is still the 0xD800, 0xDC00 and 0x10000 noise in
+                // the result
+                // so we have to substract with:
+                // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
+                - 0x35FDC00;
 
             // we transform the calculated point into UTF-8
             return codePointToUTF8(finalCodePoint);
         }
         else
+        {
             error("missing low surrogate");
+        }
 
     }
     // We have Form 1, so we just interpret the XXXX as a code point

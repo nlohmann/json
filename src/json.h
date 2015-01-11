@@ -418,11 +418,11 @@ class json
         /// read the next character, stripping whitespace
         bool next();
         /// raise an exception with an error message
-        inline void error(const std::string&) __attribute__((noreturn));
+        inline void error(const std::string&) const __attribute__((noreturn));
         /// parse a quoted string
         inline std::string parseString();
         /// transforms a unicode codepoint to it's UTF-8 presentation
-        std::string codePointToUTF8(unsigned int codePoint);
+        std::string codePointToUTF8(unsigned int codePoint) const;
         /// parses 4 hex characters that represent a unicode code point
         inline unsigned int parse4HexCodePoint();
         /// parses \uXXXX[\uXXXX] unicode escape characters
