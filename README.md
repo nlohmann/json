@@ -276,12 +276,14 @@ $ make
 $ ctest
 ```
 
-If you want to generate a coverage report with lcov, execute this instead:
+If you want to generate a coverage report with the lcov/genhtml tools, execute this instead:
 
 ```sh
 $ cmake .
 $ make coverage
 ```
+
+**Note: You need to use GCC for now as otherwise the target coverage doesn't exist!**
 
 The report is now in the subfolder coverage/index.html
 
