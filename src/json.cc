@@ -492,7 +492,7 @@ std::string json::dump(const bool prettyPrint, const unsigned int indentStep,
     {
         case (value_type::string):
         {
-            return std::string("\"") + *value_.string + "\"";
+            return std::string("\"") + escapeString(*value_.string) + "\"";
         }
 
         case (value_type::boolean):
@@ -587,6 +587,49 @@ std::string json::dump(const bool prettyPrint, const unsigned int indentStep,
             return "null";
         }
     }
+}
+
+/*!
+Internal function to replace all occurrences of a character in a given string
+with another string.
+
+\param str            the string that contains tokens to replace
+\param c     the character that needs to be replaced
+\param replacement  the string that is the replacement for the character
+*/
+void json::replaceChar(std::string& str, char c, const std::string& replacement)
+                       const
+{
+    size_t start_pos = 0;
+    while((start_pos = str.find(c, start_pos)) != std::string::npos) {
+        str.replace(start_pos, 1, replacement);
+        start_pos += replacement.length();
+    }
+}
+
+/*!
+Escapes all special characters in the given string according to ECMA-404.
+Necessary as some characters such as quotes, backslashes and so on
+can't be used as is when dumping a string value.
+
+\param str        the string that should be escaped.
+
+\return a copy of the given string with all special characters escaped.
+*/
+std::string json::escapeString(const std::string& str) const
+{
+    std::string result(str);
+    // we first need to escape the backslashes as all other methods will insert
+    // legitimate backslashes into the result.
+    replaceChar(result, '\\', "\\\\");
+    // replace all other characters
+    replaceChar(result, '"', "\\\"");
+    replaceChar(result, '\n', "\\n");
+    replaceChar(result, '\r', "\\r");
+    replaceChar(result, '\f', "\\f");
+    replaceChar(result, '\b', "\\b");
+    replaceChar(result, '\t', "\\t");
+    return result;
 }
 
 /*!
