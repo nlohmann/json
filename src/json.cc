@@ -598,10 +598,11 @@ with another string.
 \param replacement  the string that is the replacement for the character
 */
 void json::replaceChar(std::string& str, char c, const std::string& replacement)
-                       const
+const
 {
     size_t start_pos = 0;
-    while((start_pos = str.find(c, start_pos)) != std::string::npos) {
+    while ((start_pos = str.find(c, start_pos)) != std::string::npos)
+    {
         str.replace(start_pos, 1, replacement);
         start_pos += replacement.length();
     }
