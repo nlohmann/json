@@ -1672,6 +1672,50 @@ TEST_CASE("Parser")
         CHECK_THROWS_AS(json::parse("\""), std::invalid_argument);
     }
 
+    SECTION("unicode_escaping")
+    {
+        // two tests for uppercase and lowercase hex
+
+        // normal forward slash in ASCII range
+        CHECK(json::parse("\"\\u002F\"") == json("/"));
+        CHECK(json::parse("\"\\u002f\"") == json("/"));
+        // german a umlaut
+        CHECK(json::parse("\"\\u00E4\"") == json(u8"\u00E4"));
+        CHECK(json::parse("\"\\u00e4\"") == json(u8"\u00E4"));
+        // weird d
+        CHECK(json::parse("\"\\u0111\"") == json(u8"\u0111"));
+        // unicode arrow left
+        CHECK(json::parse("\"\\u2190\"") == json(u8"\u2190"));
+        // pleasing osiris by testing hieroglyph support
+        CHECK(json::parse("\"\\uD80C\\uDC60\"") == json(u8"\U00013060"));
+        CHECK(json::parse("\"\\ud80C\\udc60\"") == json(u8"\U00013060"));
+
+
+        // no hex numbers behind the \u
+        CHECK_THROWS_AS(json::parse("\"\\uD80v\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\uD80 A\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\uD8v\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\uDv\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\uv\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\u\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\u\\u\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"a\\uD80vAz\""), std::invalid_argument);
+        // missing part of a surrogate pair
+        CHECK_THROWS_AS(json::parse("\"bla \\uD80C bla\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\uD80C bla bla\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"bla bla \\uD80C bla bla\""), std::invalid_argument);
+        // senseless surrogate pair
+        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uD80C\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\uD80C\\u0000\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uFFFF\""), std::invalid_argument);
+
+        // test private code point converter function
+        CHECK_NOTHROW(json::parser("").codePointToUTF8(0x10FFFE));
+        CHECK_NOTHROW(json::parser("").codePointToUTF8(0x10FFFF));
+        CHECK_THROWS_AS(json::parser("").codePointToUTF8(0x110000), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("").codePointToUTF8(0x110001), std::invalid_argument);
+    }
+
     SECTION("boolean")
     {
         // accept the exact values

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectCodeStyleSettingsManager">
+    <option name="PER_PROJECT_SETTINGS">
+      <value>
+        <Objective-C-extensions>
+          <option name="GENERATE_INSTANCE_VARIABLES_FOR_PROPERTIES" value="ASK" />
+          <option name="RELEASE_STYLE" value="IVAR" />
+          <file>
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="Import" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="Macro" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="Typedef" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="Struct" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="Enum" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="ClassPredef" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="Constant" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="Global" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="FunctionPredecl" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="Function" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="Class" />
+          </file>
+          <class>
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="Property" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="Synthesize" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="InitMethod" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="StaticMethod" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="InstanceMethod" />
+            <option name="com.jetbrains.objc.util.OCDeclarationKind" value="DeallocMethod" />
+          </class>
+        </Objective-C-extensions>
+      </value>
+    </option>
+    <option name="PREFERRED_PROJECT_CODE_STYLE" value="Default (1)" />
+  </component>
+</project>
