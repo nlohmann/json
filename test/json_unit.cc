@@ -773,6 +773,7 @@ TEST_CASE("string")
         CHECK_NOTHROW(auto v = j.get<json::array_t>());
         CHECK_THROWS_AS(auto v = j.get<json::object_t>(), std::logic_error);
         CHECK_NOTHROW(auto v = j.get<std::string>());
+        CHECK_NOTHROW(auto v = static_cast<std::string>(j));
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<int>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<double>(), std::logic_error);
