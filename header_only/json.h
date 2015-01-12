@@ -175,7 +175,7 @@ class json
     T get() const;
 
     /// implicit conversion to string representation
-    operator const std::string() const;
+    operator std::string() const;
     /// implicit conversion to integer (only for numbers)
     operator int() const;
     /// implicit conversion to double (only for numbers)
@@ -894,7 +894,7 @@ json::object_t json::get() const
     }
 }
 
-json::operator const std::string() const
+json::operator std::string() const
 {
     return get<std::string>();
 }

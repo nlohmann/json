@@ -260,9 +260,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 I deeply appreciate the help of the following people.
 
-- [Teemperor](https://github.com/Teemperor) implemented CMake support and lcov integration and realized escape handling in the string parser.
+- [Teemperor](https://github.com/Teemperor) implemented CMake support and lcov integration, realized escape and Unicode handling in the string parser, and fixed the JSON serialization.
 - [elliotgoodrich](https://github.com/elliotgoodrich) fixed an issue with double deletion in the iterator classes.
 - [kirkshoop](https://github.com/kirkshoop) made the iterators of the class composable to other libraries.
+- [wancw](https://github.com/wanwc) fixed a bug that hindered the class to compile with Clang.
 
 Thanks a lot for helping out!
 
