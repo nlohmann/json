@@ -442,7 +442,7 @@ json::object_t json::get() const
     }
 }
 
-json::operator const std::string() const
+json::operator std::string() const
 {
     return get<std::string>();
 }
