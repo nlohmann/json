@@ -294,12 +294,22 @@ TEST_CASE("array")
 
     SECTION("Iterators and empty arrays")
     {
-        json j(json::value_type::array);
-        for (json::iterator it = j.begin(); it != j.end(); ++it) {}
-        for (json::const_iterator it = j.begin(); it != j.end(); ++it) {}
-        for (json::const_iterator it = j.cbegin(); it != j.cend(); ++it) {}
-        for (auto el : j) {}
-        for (const auto el : j) {}
+        json empty_array(json::value_type::array);
+        for (json::iterator it = empty_array.begin(); it != empty_array.end(); ++it) {}
+        for (json::const_iterator it = empty_array.begin(); it != empty_array.end(); ++it) {}
+        for (json::const_iterator it = empty_array.cbegin(); it != empty_array.cend(); ++it) {}
+        for (auto el : empty_array) {}
+        for (const auto el : empty_array) {}
+
+        // create nonempty array, set iterators, clear array, and copy
+        // existing iterators to cover copy constructor's code
+        json array = {1, 2, 3};
+        json::iterator i1 = array.begin();
+        json::const_iterator i2 = array.cbegin();
+        array.clear();
+        json::iterator i3(i1);
+        json::const_iterator i4(i1);
+        json::const_iterator i5(i2);
     }
 }
 
@@ -687,12 +697,22 @@ TEST_CASE("object")
 
     SECTION("Iterators and empty objects")
     {
-        json j(json::value_type::object);
-        for (json::iterator it = j.begin(); it != j.end(); ++it) {}
-        for (json::const_iterator it = j.begin(); it != j.end(); ++it) {}
-        for (json::const_iterator it = j.cbegin(); it != j.cend(); ++it) {}
-        for (auto el : j) {}
-        for (const auto el : j) {}
+        json empty_object(json::value_type::object);
+        for (json::iterator it = empty_object.begin(); it != empty_object.end(); ++it) {}
+        for (json::const_iterator it = empty_object.begin(); it != empty_object.end(); ++it) {}
+        for (json::const_iterator it = empty_object.cbegin(); it != empty_object.cend(); ++it) {}
+        for (auto el : empty_object) {}
+        for (const auto el : empty_object) {}
+
+        // create nonempty object, set iterators, clear object, and copy
+        // existing iterators to cover copy constructor's code
+        json object = {{"foo", 1}};
+        json::iterator i1 = object.begin();
+        json::const_iterator i2 = object.cbegin();
+        object.clear();
+        json::iterator i3(i1);
+        json::const_iterator i4(i1);
+        json::const_iterator i5(i2);
     }
 }
 
