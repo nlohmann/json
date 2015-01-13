@@ -34,6 +34,8 @@ parser:
 	make CXXFLAGS="" json_parser
 
 header_only/json.h: $(CORE_SOURCES)
-	cat $(CORE_SOURCES) | $(SED) 's/#include "json.h"//' > header_only/json.h
+	$(AM_V_GEN)
+	$(AM_V_at)mkdir -p header_only
+	$(AM_V_at)cat $(CORE_SOURCES) | $(SED) 's/#include "json.h"//' > header_only/json.h
 
 BUILT_SOURCES = header_only/json.h

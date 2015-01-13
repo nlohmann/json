@@ -20,8 +20,8 @@ TEST_CASE("array")
         CHECK(j.dump() == "[]");
 
         // iterators
-        CHECK(j.begin() != j.end());
-        CHECK(j.cbegin() != j.cend());
+        CHECK(j.begin() == j.end());
+        CHECK(j.cbegin() == j.cend());
 
         // container members
         CHECK(j.size() == 0);
@@ -291,6 +291,16 @@ TEST_CASE("array")
         json j_should_be_an_array = { {"foo", "bar"}, {"baz", "bat"} };
         CHECK(j_should_be_an_array.type() == json::value_type::object);
     }
+
+    SECTION("Iterators and empty arrays")
+    {
+        json j(json::value_type::array);
+        for (json::iterator it = j.begin(); it != j.end(); ++it) {}
+        for (json::const_iterator it = j.begin(); it != j.end(); ++it) {}
+        for (json::const_iterator it = j.cbegin(); it != j.cend(); ++it) {}
+        for (auto el : j) {}
+        for (const auto el : j) {}
+    }
 }
 
 TEST_CASE("object")
@@ -308,8 +318,8 @@ TEST_CASE("object")
         CHECK(j.dump() == "{}");
 
         // iterators
-        CHECK(j.begin() != j.end());
-        CHECK(j.cbegin() != j.cend());
+        CHECK(j.begin() == j.end());
+        CHECK(j.cbegin() == j.cend());
 
         // container members
         CHECK(j.size() == 0);
@@ -673,6 +683,16 @@ TEST_CASE("object")
         {
             CHECK(element.get<int>() >= 0);
         }
+    }
+
+    SECTION("Iterators and empty objects")
+    {
+        json j(json::value_type::object);
+        for (json::iterator it = j.begin(); it != j.end(); ++it) {}
+        for (json::const_iterator it = j.begin(); it != j.end(); ++it) {}
+        for (json::const_iterator it = j.cbegin(); it != j.cend(); ++it) {}
+        for (auto el : j) {}
+        for (const auto el : j) {}
     }
 }
 
