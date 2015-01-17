@@ -18,6 +18,33 @@
 #include <vector>            // std::vector
 #include <iterator>          // std::iterator
 
+#define JSON_NO_RETURN __attribute__((noreturn))
+#define JSON_USE_LITERALS
+
+#if defined(_MSC_VER)
+
+#include <cstdint>
+
+#if _MSC_VER < 1900
+#define noexcept throw()
+#define u8
+#undef JSON_USE_LITERALS
+#endif
+
+#undef JSON_NO_RETURN
+#define JSON_NO_RETURN __declspec(noreturn)
+
+#define or ||
+#define and &&
+#define not !
+
+#endif
+
+#ifdef JSON_TEST
+// Make everything public for testing purposes
+#define private public
+#endif
+
 namespace nlohmann
 {
 
@@ -418,7 +445,7 @@ class json
         /// read the next character, stripping whitespace
         bool next();
         /// raise an exception with an error message
-        inline void error(const std::string&) const __attribute__((noreturn));
+        inline JSON_NO_RETURN void error(const std::string&) const;
         /// parse a quoted string
         inline std::string parseString();
         /// transforms a unicode codepoint to it's UTF-8 presentation
@@ -448,5 +475,11 @@ class json
 
 }
 
+#ifdef JSON_USE_LITERALS
 /// user-defined literal operator to create JSON objects from strings
 nlohmann::json operator "" _json(const char*, std::size_t);
+#endif
+
+#ifdef JSON_TEST
+#undef private
+#endif

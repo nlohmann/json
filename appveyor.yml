@@ -1,0 +1,16 @@
+version: 0.0.{build}
+
+branches:
+# whitelist
+    only:
+        - master
+        - appveyor
+
+install:
+    - git submodule -q update --init
+
+before_build:
+    - cmake -G"Visual Studio 12" -T v120 .\
+
+build:
+    project: json.sln
