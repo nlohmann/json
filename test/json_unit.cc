@@ -165,7 +165,7 @@ TEST_CASE("array")
         json nonarray = 1;
         CHECK_THROWS_AS(nonarray.at(0), std::domain_error);
         CHECK_THROWS_AS(const int i = nonarray[0], std::domain_error);
-		SKIP_FOR_VS(CHECK_NOTHROW(j[21]));
+        SKIP_FOR_VS(CHECK_NOTHROW(j[21]));
         CHECK_THROWS_AS(const int i = j.at(21), std::out_of_range);
         CHECK_THROWS_AS(nonarray[0] = 10, std::domain_error);
         // the next test is remove due to undefined behavior
@@ -177,7 +177,7 @@ TEST_CASE("array")
         const json j_const = j;
         CHECK_THROWS_AS(nonarray_const.at(0), std::domain_error);
         CHECK_THROWS_AS(const int i = nonarray_const[0], std::domain_error);
-		SKIP_FOR_VS(CHECK_NOTHROW(j_const[21]));
+        SKIP_FOR_VS(CHECK_NOTHROW(j_const[21]));
         CHECK_THROWS_AS(const int i = j.at(21), std::out_of_range);
 
         {
@@ -190,7 +190,7 @@ TEST_CASE("array")
         }
 
         const json k = j;
-		SKIP_FOR_VS(CHECK_NOTHROW(k[21]));
+        SKIP_FOR_VS(CHECK_NOTHROW(k[21]));
         CHECK_THROWS_AS(const int i = k.at(21), std::out_of_range);
 
         // add initializer list
