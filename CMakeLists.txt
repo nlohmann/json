@@ -1,11 +1,24 @@
 cmake_minimum_required(VERSION 2.8.4)
 project(json)
 
-# Enable C++11 and set flags for coverage testing
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -O0 --coverage -fprofile-arcs -ftest-coverage")
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    add_compile_options( -Wall -Wextra -Werror )
+    add_compile_options( -std=c++11 )
+    add_compile_options( -g -O0 -fprofile-arcs -ftest-coverage )
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    add_compile_options( -Wall -Wextra -Werror )
+    add_compile_options( -std=c++11 )
+    add_compile_options( -g -O0 --coverage -fprofile-arcs -ftest-coverage )
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    add_compile_options( /W4 /WX )
+    add_compile_options( /wd4566 ) # character represented by universal-character cannot be represented in the current code page
+    add_compile_options( /wd4189 ) # local variable is initialized but not referenced
+    add_definitions( /DUNICODE /D_UNICODE ) # it is a new millenium
+endif()
+
 
 # Make everything public for testing purposes
-add_definitions(-Dprivate=public)
+add_definitions(-DJSON_TEST)
 
 # If not specified, use Debug as build type (necessary for coverage testing)
 if( NOT CMAKE_BUILD_TYPE )

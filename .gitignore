@@ -48,3 +48,19 @@ libjson.a
 Testing
 
 .idea
+
+json.dir
+
+json.lib
+
+*.sln
+
+*.vcxproj
+
+*.exe*
+
+*.pdb
+
+*.ilk
+
+Win32

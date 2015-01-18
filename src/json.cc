@@ -2346,7 +2346,7 @@ std::string json::parser::codePointToUTF8(unsigned int codePoint) const
     {
         // Can't be tested without direct access to this private method.
         std::string errorMessage = "Invalid codePoint: ";
-        errorMessage += codePoint;
+        errorMessage += std::to_string(codePoint);
         error(errorMessage);
     }
 }
@@ -2559,6 +2559,8 @@ void json::parser::expect(const char c)
 
 }
 
+#ifdef JSON_USE_LITERALS
+
 /*!
 This operator implements a user-defined string literal for JSON objects. It can
 be used by adding \p "_json" to a string literal and returns a JSON object if
@@ -2571,3 +2573,5 @@ nlohmann::json operator "" _json(const char* s, std::size_t)
 {
     return nlohmann::json::parse(s);
 }
+
+#endif
