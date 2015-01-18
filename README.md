@@ -132,7 +132,7 @@ You can also get a string representation (serialize):
 
 ```cpp
 // explicit conversion to string
-std::string s = j.dump();    // {\"happy\": true, \"pi\": 3.141}
+std::string s = j.dump();    // {\"happy\":true,\"pi\":3.141}
 
 // serialization with pretty printing
 std::cout << j.dump(4) << std::endl;
@@ -141,8 +141,6 @@ std::cout << j.dump(4) << std::endl;
 //     "pi": 3.141
 // }
 ```
-
-The value of s could be `{"pi": 3.141, "happy": true}`, but the order of the entries in the object is not fixed.
 
 You can also use streams to serialize and deserialize:
 

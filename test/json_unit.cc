@@ -1921,8 +1921,8 @@ TEST_CASE("Parser")
     {
         auto j23 = "{ \"a\": null, \"b\": true, \"c\": [1,2,3], \"d\": {\"a\": 0} }"_json;
 
-        CHECK(j23.dump() == "{\"a\": null, \"b\": true, \"c\": [1, 2, 3], \"d\": {\"a\": 0}}");
-        CHECK(j23.dump(-1) == "{\"a\": null, \"b\": true, \"c\": [1, 2, 3], \"d\": {\"a\": 0}}");
+        CHECK(j23.dump() == "{\"a\":null,\"b\":true,\"c\":[1,2,3],\"d\":{\"a\":0}}");
+        CHECK(j23.dump(-1) == "{\"a\":null,\"b\":true,\"c\":[1,2,3],\"d\":{\"a\":0}}");
         CHECK(j23.dump(0) ==
               "{\n\"a\": null,\n\"b\": true,\n\"c\": [\n1,\n2,\n3\n],\n\"d\": {\n\"a\": 0\n}\n}");
         CHECK(j23.dump(4) ==

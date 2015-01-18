@@ -982,7 +982,7 @@ std::string json::dump(const bool prettyPrint, const unsigned int indentStep,
             {
                 if (i != value_.array->begin())
                 {
-                    result += prettyPrint ? ",\n" : ", ";
+                    result += prettyPrint ? ",\n" : ",";
                 }
                 result += indent() + i->dump(prettyPrint, indentStep, currentIndent);
             }
@@ -1017,10 +1017,11 @@ std::string json::dump(const bool prettyPrint, const unsigned int indentStep,
             {
                 if (i != value_.object->begin())
                 {
-                    result += prettyPrint ? ",\n" : ", ";
+                    result += prettyPrint ? ",\n" : ",";
                 }
-                result += indent() + "\"" + i->first + "\": " + i->second.dump(prettyPrint, indentStep,
-                          currentIndent);
+                result += indent() + "\"" + i->first + "\":" + (prettyPrint ? " " : "") + i->second.dump(
+                              prettyPrint, indentStep,
+                              currentIndent);
             }
 
             // decrease indentation
