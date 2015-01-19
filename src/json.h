@@ -34,7 +34,6 @@ due to alignment.
 @bug Numbers are currently handled too generously. There are several formats
      that are forbidden by the standard, but are accepted by the parser.
 
-@todo Implement json::swap()
 @todo Implement json::insert(), json::emplace(), json::emplace_back, json::erase
 @todo Implement json::reverse_iterator, json::const_reverse_iterator,
       json::rbegin(), json::rend(), json::crbegin(), json::crend()?
@@ -289,6 +288,9 @@ class json
     /// removes all elements from compounds and resets values to default
     void clear() noexcept;
 
+    /// swaps content with other object
+    void swap(json&) noexcept;
+
     /// return the type of the object
     value_type type() const noexcept;
 
@@ -418,7 +420,7 @@ class json
         /// read the next character, stripping whitespace
         bool next();
         /// raise an exception with an error message
-        inline void error(const std::string&) const __attribute__((noreturn));
+        [[noreturn]] inline void error(const std::string&) const;
         /// parse a quoted string
         inline std::string parseString();
         /// transforms a unicode codepoint to it's UTF-8 presentation
@@ -450,3 +452,16 @@ class json
 
 /// user-defined literal operator to create JSON objects from strings
 nlohmann::json operator "" _json(const char*, std::size_t);
+
+// specialization of std::swap
+namespace std
+{
+template <>
+/// swaps the values of two JSON objects
+inline void swap(nlohmann::json& j1,
+                 nlohmann::json& j2) noexcept(is_nothrow_move_constructible<nlohmann::json>::value and
+                         is_nothrow_move_assignable<nlohmann::json>::value)
+{
+    j1.swap(j2);
+}
+}

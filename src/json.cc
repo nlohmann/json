@@ -1268,6 +1268,12 @@ void json::clear() noexcept
     }
 }
 
+void json::swap(json& o) noexcept
+{
+    std::swap(type_, o.type_);
+    std::swap(value_, o.value_);
+}
+
 json::value_type json::type() const noexcept
 {
     return type_;

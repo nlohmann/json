@@ -311,6 +311,17 @@ TEST_CASE("array")
         json::const_iterator i4(i1);
         json::const_iterator i5(i2);
     }
+
+    SECTION("Container operations")
+    {
+        json a1 = {1, 2, 3, 4};
+        json a2 = {"one", "two", "three"};
+
+        a1.swap(a2);
+
+        CHECK(a1 == json({"one", "two", "three"}));
+        CHECK(a2 == json({1, 2, 3, 4}));
+    }
 }
 
 TEST_CASE("object")
@@ -714,6 +725,22 @@ TEST_CASE("object")
         json::const_iterator i4(i1);
         json::const_iterator i5(i2);
     }
+
+    SECTION("Container operations")
+    {
+        json o1 = { {"one", "eins"}, {"two", "zwei"} };
+        json o2 = { {"one", 1}, {"two", 2} };
+
+        o1.swap(o2);
+
+        CHECK(o1 == json({ {"one", 1}, {"two", 2} }));
+        CHECK(o2 == json({ {"one", "eins"}, {"two", "zwei"} }));
+
+        std::swap(o1, o2);
+
+        CHECK(o1 == json({ {"one", "eins"}, {"two", "zwei"} }));
+        CHECK(o2 == json({ {"one", 1}, {"two", 2} }));
+    }
 }
 
 TEST_CASE("null")
@@ -776,6 +803,22 @@ TEST_CASE("null")
         json j1 = nullptr;
         j1.clear();
         CHECK(j1 == json(nullptr));
+    }
+
+    SECTION("Container operations")
+    {
+        json n1;
+        json n2;
+
+        n1.swap(n2);
+
+        CHECK(n1 == json());
+        CHECK(n2 == json());
+
+        std::swap(n1, n2);
+
+        CHECK(n1 == json());
+        CHECK(n2 == json());
     }
 }
 
@@ -871,6 +914,22 @@ TEST_CASE("string")
         CHECK(json("\f").dump(0) == "\"\\f\"");
         CHECK(json("\r").dump(0) == "\"\\r\"");
     }
+
+    SECTION("Container operations")
+    {
+        json s1 = "foo";
+        json s2 = "bar";
+
+        s1.swap(s2);
+
+        CHECK(s1 == json("bar"));
+        CHECK(s2 == json("foo"));
+
+        std::swap(s1, s2);
+
+        CHECK(s1 == json("foo"));
+        CHECK(s2 == json("bar"));
+    }
 }
 
 TEST_CASE("boolean")
@@ -949,6 +1008,22 @@ TEST_CASE("boolean")
         CHECK(j1.get<bool>() == true);
         j1.clear();
         CHECK(j1.get<bool>() == false);
+    }
+
+    SECTION("Container operations")
+    {
+        json b1 = true;
+        json b2 = false;
+
+        b1.swap(b2);
+
+        CHECK(b1 == json(false));
+        CHECK(b2 == json(true));
+
+        std::swap(b1, b2);
+
+        CHECK(b1 == json(true));
+        CHECK(b2 == json(false));
     }
 }
 
@@ -1036,6 +1111,22 @@ TEST_CASE("number (int)")
         CHECK(j2.find("foo") == j2.end());
         CHECK(j2.find(std::string("foo")) == j2.end());
     }
+
+    SECTION("Container operations")
+    {
+        json n1 = 23;
+        json n2 = 42;
+
+        n1.swap(n2);
+
+        CHECK(n1 == json(42));
+        CHECK(n2 == json(23));
+
+        std::swap(n1, n2);
+
+        CHECK(n1 == json(23));
+        CHECK(n2 == json(42));
+    }
 }
 
 TEST_CASE("number (float)")
@@ -1114,6 +1205,22 @@ TEST_CASE("number (float)")
         CHECK(j1.get<double>() == 3.1415926);
         j1.clear();
         CHECK(j1.get<double>() == 0.0);
+    }
+
+    SECTION("Container operations")
+    {
+        json n1 = 23.42;
+        json n2 = 42.23;
+
+        n1.swap(n2);
+
+        CHECK(n1 == json(42.23));
+        CHECK(n2 == json(23.42));
+
+        std::swap(n1, n2);
+
+        CHECK(n1 == json(23.42));
+        CHECK(n2 == json(42.23));
     }
 }
 
