@@ -17,6 +17,7 @@
 #include <string>            // std::string
 #include <vector>            // std::vector
 #include <iterator>          // std::iterator
+#include <limits>            // std::numeric_limits
 
 namespace nlohmann
 {
