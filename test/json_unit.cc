@@ -41,6 +41,7 @@ TEST_CASE("array")
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<int>(), std::logic_error);
+        CHECK_THROWS_AS(auto v = j.get<int64_t>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<double>(), std::logic_error);
 
         // transparent usage
@@ -360,6 +361,7 @@ TEST_CASE("object")
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<int>(), std::logic_error);
+        CHECK_THROWS_AS(auto v = j.get<int64_t>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<double>(), std::logic_error);
 
         // transparent usage
@@ -776,6 +778,7 @@ TEST_CASE("null")
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<int>(), std::logic_error);
+        CHECK_THROWS_AS(auto v = j.get<int64_t>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<double>(), std::logic_error);
 
         // copy constructor
@@ -859,6 +862,7 @@ TEST_CASE("string")
         CHECK_NOTHROW(auto v = static_cast<std::string>(j));
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<int>(), std::logic_error);
+        CHECK_THROWS_AS(auto v = j.get<int64_t>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<double>(), std::logic_error);
 
         // transparent usage
@@ -968,6 +972,7 @@ TEST_CASE("boolean")
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_NOTHROW(auto v = j.get<bool>());
         CHECK_THROWS_AS(auto v = j.get<int>(), std::logic_error);
+        CHECK_THROWS_AS(auto v = j.get<int64_t>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<double>(), std::logic_error);
 
         // transparent usage
@@ -1063,6 +1068,7 @@ TEST_CASE("number (int)")
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_NOTHROW(auto v = j.get<int>());
+        CHECK_NOTHROW(auto v = j.get<int64_t>());
         CHECK_NOTHROW(auto v = j.get<double>());
 
         // transparent usage
@@ -1173,6 +1179,7 @@ TEST_CASE("number (float)")
         CHECK_THROWS_AS(auto v = j.get<std::string>(), std::logic_error);
         CHECK_THROWS_AS(auto v = j.get<bool>(), std::logic_error);
         CHECK_NOTHROW(auto v = j.get<int>());
+        CHECK_NOTHROW(auto v = j.get<int64_t>());
         CHECK_NOTHROW(auto v = j.get<double>());
 
         // transparent usage
