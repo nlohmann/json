@@ -74,7 +74,7 @@ class json
     /// a type for a Boolean
     using boolean_t = bool;
     /// a type for an integer number
-    using number_t = int;
+    using number_t = int64_t;
     /// a type for a floating point number
     using number_float_t = double;
     /// a type for list initialization
@@ -127,10 +127,6 @@ class json
     json(const char*);
     /// create a Boolean object
     json(const bool) noexcept;
-    /// create a number object
-    json(const int) noexcept;
-    /// create a number object
-    json(const double) noexcept;
     /// create an array
     json(const array_t&);
     /// create an array (move)
@@ -141,6 +137,18 @@ class json
     json(object_t&&);
     /// create from an initializer list (to an array or object)
     json(list_init_t);
+
+    /// create a number object (integer)
+    template<typename T, typename std::enable_if<std::numeric_limits<T>::is_integer, T>::type = 0>
+    json(const T n) noexcept
+        : type_(value_type::number), value_(static_cast<number_t>(n))
+    {}
+
+    /// create a number object (float)
+    template<typename T, typename = typename std::enable_if<std::is_floating_point<T>::value>::type>
+    json(const T n) noexcept
+        : type_(value_type::number_float), value_(static_cast<number_float_t>(n))
+    {}
 
     /// copy constructor
     json(const json&);
@@ -168,6 +176,7 @@ class json
     void replaceChar(std::string& str, char c, const std::string& replacement) const;
     /// escapes special characters to safely dump the string
     std::string escapeString(const std::string&) const;
+
   public:
     /// explicit value conversion
     template<typename T>
@@ -177,6 +186,8 @@ class json
     operator std::string() const;
     /// implicit conversion to integer (only for numbers)
     operator int() const;
+    /// implicit conversion to integer (only for numbers)
+    operator int64_t() const;
     /// implicit conversion to double (only for numbers)
     operator double() const;
     /// implicit conversion to Boolean (only for Booleans)
@@ -215,42 +226,33 @@ class json
     /// explicit serialization
     std::string dump(int = -1) const noexcept;
 
+    /// add constructible objects to an array
+    template<class T, typename std::enable_if<std::is_constructible<json, T>::value>::type = 0>
+    json & operator+=(const T& o)
+    {
+        push_back(json(o));
+        return *this;
+    }
+
     /// add an object/array to an array
     json& operator+=(const json&);
-    /// add a string to an array
-    json& operator+=(const std::string&);
-    /// add a null object to an array
-    json& operator+=(const std::nullptr_t);
-    /// add a string to an array
-    json& operator+=(const char*);
-    /// add a Boolean to an array
-    json& operator+=(bool);
-    /// add a number to an array
-    json& operator+=(int);
-    /// add a number to an array
-    json& operator+=(double);
 
     /// add a pair to an object
     json& operator+=(const object_t::value_type&);
     /// add a list of elements to array or list of pairs to object
     json& operator+=(list_init_t);
 
+    /// add constructible objects to an array
+    template<class T, typename std::enable_if<std::is_constructible<json, T>::value>::type = 0>
+    void push_back(const T& o)
+    {
+        push_back(json(o));
+    }
+
     /// add an object/array to an array
     void push_back(const json&);
     /// add an object/array to an array (move)
     void push_back(json&&);
-    /// add a string to an array
-    void push_back(const std::string&);
-    /// add a null object to an array
-    void push_back(const std::nullptr_t);
-    /// add a string to an array
-    void push_back(const char*);
-    /// add a Boolean to an array
-    void push_back(bool);
-    /// add a number to an array
-    void push_back(int);
-    /// add a number to an array
-    void push_back(double);
 
     /// add a pair to an object
     void push_back(const object_t::value_type&);

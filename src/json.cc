@@ -111,14 +111,6 @@ json::json(const bool b) noexcept
     : type_(value_type::boolean), value_(b)
 {}
 
-json::json(const int i) noexcept
-    : type_(value_type::number), value_(i)
-{}
-
-json::json(const double f) noexcept
-    : type_(value_type::number_float), value_(f)
-{}
-
 json::json(const array_t& a)
     : type_(value_type::array), value_(new array_t(a))
 {}
@@ -364,6 +356,24 @@ int json::get() const
         case (value_type::number):
             return value_.number;
         case (value_type::number_float):
+            return static_cast<int>(value_.number_float);
+        default:
+            throw std::logic_error("cannot cast " + type_name() + " to JSON number");
+    }
+}
+
+/*!
+@exception std::logic_error if the function is called for JSON objects whose
+    type is not number (int or float)
+*/
+template<>
+int64_t json::get() const
+{
+    switch (type_)
+    {
+        case (value_type::number):
+            return value_.number;
+        case (value_type::number_float):
             return static_cast<number_t>(value_.number_float);
         default:
             throw std::logic_error("cannot cast " + type_name() + " to JSON number");
@@ -450,6 +460,11 @@ json::operator std::string() const
 json::operator int() const
 {
     return get<int>();
+}
+
+json::operator int64_t() const
+{
+    return get<int64_t>();
 }
 
 json::operator double() const
@@ -668,54 +683,6 @@ json& json::operator+=(const json& o)
     return *this;
 }
 
-json& json::operator+=(const std::string& s)
-{
-    push_back(json(s));
-    return *this;
-}
-
-json& json::operator+=(const char* s)
-{
-    push_back(json(s));
-    return *this;
-}
-
-json& json::operator+=(std::nullptr_t)
-{
-    push_back(json());
-    return *this;
-}
-
-json& json::operator+=(bool b)
-{
-    push_back(json(b));
-    return *this;
-}
-
-/*!
-Adds a number (int) to the current object. This is done by wrapping the number
-into a JSON and call push_back for this.
-
-@param i  A number (int) to add to the array.
-*/
-json& json::operator+=(int i)
-{
-    push_back(json(i));
-    return *this;
-}
-
-/*!
-Adds a number (float) to the current object. This is done by wrapping the
-number into a JSON and call push_back for this.
-
-@param f  A number (float) to add to the array.
-*/
-json& json::operator+=(double f)
-{
-    push_back(json(f));
-    return *this;
-}
-
 /*!
 @todo comment me
 */
@@ -801,48 +768,6 @@ void json::push_back(json&& o)
     value_.array->emplace_back(std::move(o));
     // invalidate object
     o.type_ = value_type::null;
-}
-
-void json::push_back(const std::string& s)
-{
-    push_back(json(s));
-}
-
-void json::push_back(const char* s)
-{
-    push_back(json(s));
-}
-
-void json::push_back(std::nullptr_t)
-{
-    push_back(json());
-}
-
-void json::push_back(bool b)
-{
-    push_back(json(b));
-}
-
-/*!
-Adds a number (int) to the current object. This is done by wrapping the number
-into a JSON and call push_back for this.
-
-@param i  A number (int) to add to the array.
-*/
-void json::push_back(int i)
-{
-    push_back(json(i));
-}
-
-/*!
-Adds a number (float) to the current object. This is done by wrapping the
-number into a JSON and call push_back for this.
-
-@param f  A number (float) to add to the array.
-*/
-void json::push_back(double f)
-{
-    push_back(json(f));
 }
 
 /*!
@@ -2072,7 +1997,7 @@ json json::parser::parse()
             try
             {
                 const auto float_val = std::stod(buffer_.substr(_firstpos_, pos_ - _firstpos_));
-                const auto int_val = static_cast<int>(float_val);
+                const auto int_val = static_cast<number_t>(float_val);
 
                 // check if conversion loses precision
                 if (float_val == int_val)

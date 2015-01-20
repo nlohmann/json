@@ -1094,6 +1094,14 @@ TEST_CASE("number (int)")
         json j2 = 42;
         int v2 = j2;
         CHECK(j2.get<int>() == v2);
+
+        json j3 = 2147483647;
+        int v3 = j3;
+        CHECK(j3.get<int>() == v3);
+
+        json j4 = 9223372036854775807;
+        int64_t v4 = j4;
+        CHECK(j4.get<int64_t>() == v4);
     }
 
     SECTION("Operators")
