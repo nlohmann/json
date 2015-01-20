@@ -1204,6 +1204,9 @@ TEST_CASE("number (float)")
         json j2 = 2.7182818;
         double v2 = j2;
         CHECK(j2.get<double>() == v2);
+
+        int64_t v3 = j2;
+        CHECK(j2.get<int64_t>() == v3);
     }
 
     SECTION("Operators")
