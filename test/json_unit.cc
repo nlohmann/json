@@ -171,6 +171,7 @@ TEST_CASE("array")
             json nonarray3 = json(2);
             json empty3 = json();
             CHECK_THROWS_AS(nonarray2.push_back(nonarray3), std::runtime_error);
+            CHECK_THROWS_AS(nonarray2.push_back(3), std::runtime_error);
             CHECK_NOTHROW(empty3.push_back(nonarray3));
             CHECK(empty3.type() == json::value_type::array);
         }
