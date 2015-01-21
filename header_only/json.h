@@ -1778,6 +1778,7 @@ json::iterator json::find(const char* key)
 
     if (type_ == value_t::object)
     {
+        delete result.oi_;
         result.oi_ = new object_t::iterator(value_.object->find(key));
         result.invalid = (*(result.oi_) == value_.object->end());
     }
@@ -1791,6 +1792,7 @@ json::const_iterator json::find(const char* key) const
 
     if (type_ == value_t::object)
     {
+        delete result.oi_;
         result.oi_ = new object_t::const_iterator(value_.object->find(key));
         result.invalid = (*(result.oi_) == value_.object->cend());
     }
