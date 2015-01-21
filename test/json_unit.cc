@@ -3,6 +3,15 @@
 
 #include "json.h"
 
+#include <set>
+#include <unordered_set>
+#include <deque>
+#include <list>
+#include <forward_list>
+#include <array>
+#include <map>
+#include <unordered_map>
+
 using json = nlohmann::json;
 
 TEST_CASE("array")
@@ -323,6 +332,54 @@ TEST_CASE("array")
 
         CHECK(a1 == json({"one", "two", "three"}));
         CHECK(a2 == json({1, 2, 3, 4}));
+    }
+
+    SECTION("Construct from sequence objects")
+    {
+        std::vector<int> c_vector {1, 2, 3, 4};
+        json j_vec(c_vector);
+        CHECK(j_vec.type() == json::value_type::array);
+        CHECK(j_vec.size() == 4);
+
+        std::set<std::string> c_set {"one", "two", "three", "four", "one"};
+        json j_set(c_set);
+        CHECK(j_set.type() == json::value_type::array);
+        CHECK(j_set.size() == 4);
+
+        std::unordered_set<std::string> c_uset {"one", "two", "three", "four", "one"};
+        json j_uset(c_uset);
+        CHECK(j_uset.type() == json::value_type::array);
+        CHECK(j_uset.size() == 4);
+
+        std::multiset<std::string> c_mset {"one", "two", "one", "four"};
+        json j_mset(c_mset);
+        CHECK(j_mset.type() == json::value_type::array);
+        CHECK(j_mset.size() == 4);
+
+        std::unordered_multiset<std::string> c_umset {"one", "two", "one", "four"};
+        json j_umset(c_umset);
+        CHECK(j_umset.type() == json::value_type::array);
+        CHECK(j_umset.size() == 4);
+
+        std::deque<float> c_deque {1.2, 2.3, 3.4, 5.6};
+        json j_deque(c_deque);
+        CHECK(j_deque.type() == json::value_type::array);
+        CHECK(j_deque.size() == 4);
+
+        std::list<bool> c_list {true, true, false, true};
+        json j_list(c_list);
+        CHECK(j_list.type() == json::value_type::array);
+        CHECK(j_list.size() == 4);
+
+        std::forward_list<int64_t> c_flist {12345678909876, 23456789098765, 34567890987654, 45678909876543};
+        json j_flist(c_flist);
+        CHECK(j_flist.type() == json::value_type::array);
+        CHECK(j_flist.size() == 4);
+
+        std::array<unsigned long, 4> c_array {{1, 2, 3, 4}};
+        json j_array(c_array);
+        CHECK(j_array.type() == json::value_type::array);
+        CHECK(j_array.size() == 4);
     }
 }
 
@@ -743,6 +800,29 @@ TEST_CASE("object")
 
         CHECK(o1 == json({ {"one", "eins"}, {"two", "zwei"} }));
         CHECK(o2 == json({ {"one", 1}, {"two", 2} }));
+    }
+
+    SECTION("Construct from sequence objects")
+    {
+        std::map<std::string, int> c_map { {"one", 1}, {"two", 2}, {"three", 3} };
+        json j_map(c_map);
+        CHECK(j_map.type() == json::value_type::object);
+        CHECK(j_map.size() == 3);
+
+        std::unordered_map<const char*, float> c_umap { {"one", 1.2}, {"two", 2.3}, {"three", 3.4} };
+        json j_umap(c_umap);
+        CHECK(j_umap.type() == json::value_type::object);
+        CHECK(j_umap.size() == 3);
+
+        std::multimap<std::string, bool> c_mmap { {"one", true}, {"two", true}, {"three", false}, {"three", true} };
+        json j_mmap(c_mmap);
+        CHECK(j_mmap.type() == json::value_type::object);
+        CHECK(j_mmap.size() == 3);
+
+        std::unordered_multimap<std::string, bool> c_ummap { {"one", true}, {"two", true}, {"three", false}, {"three", true} };
+        json j_ummap(c_ummap);
+        CHECK(j_ummap.type() == json::value_type::object);
+        CHECK(j_ummap.size() == 3);
     }
 }
 

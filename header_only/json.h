@@ -151,6 +151,25 @@ class json
         : type_(value_type::number_float), value_(static_cast<number_float_t>(n))
     {}
 
+    /// create an array object
+    template <class V, typename
+              std::enable_if<
+                  not std::is_same<V, json::const_iterator>::value and
+                  not std::is_same<V, json::iterator>::value and
+                  std::is_constructible<json, typename V::value_type>::value, int>::type
+              = 0>
+    json(const V& v) : json(array_t(v.begin(), v.end()))
+    {}
+
+    /// create a JSON object
+    template <class V, typename
+              std::enable_if<
+                  std::is_constructible<std::string, typename V::key_type>::value and
+                  std::is_constructible<json, typename V::mapped_type>::value, int>::type
+              = 0>
+    json(const V& v) : json(object_t(v.begin(), v.end()))
+    {}
+
     /// copy constructor
     json(const json&);
     /// move constructor
