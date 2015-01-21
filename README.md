@@ -184,7 +184,7 @@ bool foo = j.at(2);
 // other stuff
 j.size();     // 3 entries
 j.empty();    // false
-j.type();     // json::value_type::array
+j.type();     // json::value_t::array
 j.clear();    // the array is empty again
 
 // comparison

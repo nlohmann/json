@@ -19,8 +19,8 @@ TEST_CASE("array")
     SECTION("Basics")
     {
         // construction with given type
-        json j(json::value_type::array);
-        CHECK(j.type() == json::value_type::array);
+        json j(json::value_t::array);
+        CHECK(j.type() == json::value_t::array);
 
         // const object
         const json j_const (j);
@@ -34,7 +34,9 @@ TEST_CASE("array")
 
         // container members
         CHECK(j.size() == 0);
+        CHECK(j.max_size() > 0);
         CHECK(j.empty() == true);
+        CHECK_NOTHROW(size_t h = std::hash<json>()(j));
 
         // implicit conversions
         CHECK_NOTHROW(json::array_t v = j);
@@ -88,21 +90,21 @@ TEST_CASE("array")
 
         // case 1: there is an element that is not an array
         json j3 = { {"foo", "bar"}, 3 };
-        CHECK(j3.type() == json::value_type::array);
+        CHECK(j3.type() == json::value_t::array);
 
         // case 2: there is an element with more than two elements
         json j4 = { {"foo", "bar"}, {"one", "two", "three"} };
-        CHECK(j4.type() == json::value_type::array);
+        CHECK(j4.type() == json::value_t::array);
 
         // case 3: there is an element whose first element is not a string
         json j5 = { {"foo", "bar"}, {true, "baz"} };
-        CHECK(j5.type() == json::value_type::array);
+        CHECK(j5.type() == json::value_t::array);
 
         // check if nested arrays work and are recognized as arrays
         json j6 = { {{"foo", "bar"}} };
-        CHECK(j6.type() == json::value_type::array);
+        CHECK(j6.type() == json::value_t::array);
         CHECK(j6.size() == 1);
-        CHECK(j6[0].type() == json::value_type::object);
+        CHECK(j6[0].type() == json::value_t::object);
 
         // move constructor
         json j7(std::move(v1));
@@ -152,8 +154,8 @@ TEST_CASE("array")
         json empty1, empty2;
         empty1 += "foo";
         empty2.push_back("foo");
-        CHECK(empty1.type() == json::value_type::array);
-        CHECK(empty2.type() == json::value_type::array);
+        CHECK(empty1.type() == json::value_t::array);
+        CHECK(empty2.type() == json::value_t::array);
         CHECK(empty1 == empty2);
 
         // exceptions
@@ -182,7 +184,7 @@ TEST_CASE("array")
             CHECK_THROWS_AS(nonarray2.push_back(nonarray3), std::runtime_error);
             CHECK_THROWS_AS(nonarray2.push_back(3), std::runtime_error);
             CHECK_NOTHROW(empty3.push_back(nonarray3));
-            CHECK(empty3.type() == json::value_type::array);
+            CHECK(empty3.type() == json::value_t::array);
         }
 
         const json k = j;
@@ -300,12 +302,12 @@ TEST_CASE("array")
         // turn arrays with two strings. However, this is treated like the
         // initializer list of an object.
         json j_should_be_an_array = { {"foo", "bar"}, {"baz", "bat"} };
-        CHECK(j_should_be_an_array.type() == json::value_type::object);
+        CHECK(j_should_be_an_array.type() == json::value_t::object);
     }
 
     SECTION("Iterators and empty arrays")
     {
-        json empty_array(json::value_type::array);
+        json empty_array(json::value_t::array);
         for (json::iterator it = empty_array.begin(); it != empty_array.end(); ++it) {}
         for (json::const_iterator it = empty_array.begin(); it != empty_array.end(); ++it) {}
         for (json::const_iterator it = empty_array.cbegin(); it != empty_array.cend(); ++it) {}
@@ -338,47 +340,47 @@ TEST_CASE("array")
     {
         std::vector<int> c_vector {1, 2, 3, 4};
         json j_vec(c_vector);
-        CHECK(j_vec.type() == json::value_type::array);
+        CHECK(j_vec.type() == json::value_t::array);
         CHECK(j_vec.size() == 4);
 
         std::set<std::string> c_set {"one", "two", "three", "four", "one"};
         json j_set(c_set);
-        CHECK(j_set.type() == json::value_type::array);
+        CHECK(j_set.type() == json::value_t::array);
         CHECK(j_set.size() == 4);
 
         std::unordered_set<std::string> c_uset {"one", "two", "three", "four", "one"};
         json j_uset(c_uset);
-        CHECK(j_uset.type() == json::value_type::array);
+        CHECK(j_uset.type() == json::value_t::array);
         CHECK(j_uset.size() == 4);
 
         std::multiset<std::string> c_mset {"one", "two", "one", "four"};
         json j_mset(c_mset);
-        CHECK(j_mset.type() == json::value_type::array);
+        CHECK(j_mset.type() == json::value_t::array);
         CHECK(j_mset.size() == 4);
 
         std::unordered_multiset<std::string> c_umset {"one", "two", "one", "four"};
         json j_umset(c_umset);
-        CHECK(j_umset.type() == json::value_type::array);
+        CHECK(j_umset.type() == json::value_t::array);
         CHECK(j_umset.size() == 4);
 
         std::deque<float> c_deque {1.2, 2.3, 3.4, 5.6};
         json j_deque(c_deque);
-        CHECK(j_deque.type() == json::value_type::array);
+        CHECK(j_deque.type() == json::value_t::array);
         CHECK(j_deque.size() == 4);
 
         std::list<bool> c_list {true, true, false, true};
         json j_list(c_list);
-        CHECK(j_list.type() == json::value_type::array);
+        CHECK(j_list.type() == json::value_t::array);
         CHECK(j_list.size() == 4);
 
         std::forward_list<int64_t> c_flist {12345678909876, 23456789098765, 34567890987654, 45678909876543};
         json j_flist(c_flist);
-        CHECK(j_flist.type() == json::value_type::array);
+        CHECK(j_flist.type() == json::value_t::array);
         CHECK(j_flist.size() == 4);
 
         std::array<unsigned long, 4> c_array {{1, 2, 3, 4}};
         json j_array(c_array);
-        CHECK(j_array.type() == json::value_type::array);
+        CHECK(j_array.type() == json::value_t::array);
         CHECK(j_array.size() == 4);
     }
 }
@@ -388,8 +390,8 @@ TEST_CASE("object")
     SECTION("Basics")
     {
         // construction with given type
-        json j(json::value_type::object);
-        CHECK(j.type() == json::value_type::object);
+        json j(json::value_t::object);
+        CHECK(j.type() == json::value_t::object);
 
         // const object
         const json j_const = j;
@@ -403,7 +405,9 @@ TEST_CASE("object")
 
         // container members
         CHECK(j.size() == 0);
+        CHECK(j.max_size() > 0);
         CHECK(j.empty() == true);
+        CHECK_NOTHROW(size_t h = std::hash<json>()(j));
 
         // implicit conversions
         CHECK_THROWS_AS(json::array_t v = j, std::logic_error);
@@ -604,7 +608,7 @@ TEST_CASE("object")
         // implicit transformation into an object
         json empty;
         empty["foo"] = "bar";
-        CHECK(empty.type() == json::value_type::object);
+        CHECK(empty.type() == json::value_t::object);
         CHECK(empty["foo"] == "bar");
 
         // exceptions
@@ -649,8 +653,8 @@ TEST_CASE("object")
                     CHECK(false);
             }
 
-            CHECK((*it).type() == json::value_type::number);
-            CHECK(it->type() == json::value_type::number);
+            CHECK((*it).type() == json::value_t::number);
+            CHECK(it->type() == json::value_t::number);
         }
 
         // range-based for
@@ -680,8 +684,8 @@ TEST_CASE("object")
                     CHECK(false);
             }
 
-            CHECK((*it).type() == json::value_type::number);
-            CHECK(it->type() == json::value_type::number);
+            CHECK((*it).type() == json::value_t::number);
+            CHECK(it->type() == json::value_t::number);
         }
 
         // const_iterator using cbegin/cend
@@ -705,8 +709,8 @@ TEST_CASE("object")
                     CHECK(false);
             }
 
-            CHECK((*it).type() == json::value_type::number);
-            CHECK(it->type() == json::value_type::number);
+            CHECK((*it).type() == json::value_t::number);
+            CHECK(it->type() == json::value_t::number);
         }
 
         // const_iterator (on const object)
@@ -730,8 +734,8 @@ TEST_CASE("object")
                     CHECK(false);
             }
 
-            CHECK((*it).type() == json::value_type::number);
-            CHECK(it->type() == json::value_type::number);
+            CHECK((*it).type() == json::value_t::number);
+            CHECK(it->type() == json::value_t::number);
         }
 
         // const_iterator using cbegin/cend (on const object)
@@ -755,8 +759,8 @@ TEST_CASE("object")
                     CHECK(false);
             }
 
-            CHECK((*it).type() == json::value_type::number);
-            CHECK(it->type() == json::value_type::number);
+            CHECK((*it).type() == json::value_t::number);
+            CHECK(it->type() == json::value_t::number);
         }
 
         // range-based for (on const object)
@@ -768,7 +772,7 @@ TEST_CASE("object")
 
     SECTION("Iterators and empty objects")
     {
-        json empty_object(json::value_type::object);
+        json empty_object(json::value_t::object);
         for (json::iterator it = empty_object.begin(); it != empty_object.end(); ++it) {}
         for (json::const_iterator it = empty_object.begin(); it != empty_object.end(); ++it) {}
         for (json::const_iterator it = empty_object.cbegin(); it != empty_object.cend(); ++it) {}
@@ -806,22 +810,22 @@ TEST_CASE("object")
     {
         std::map<std::string, int> c_map { {"one", 1}, {"two", 2}, {"three", 3} };
         json j_map(c_map);
-        CHECK(j_map.type() == json::value_type::object);
+        CHECK(j_map.type() == json::value_t::object);
         CHECK(j_map.size() == 3);
 
         std::unordered_map<const char*, float> c_umap { {"one", 1.2}, {"two", 2.3}, {"three", 3.4} };
         json j_umap(c_umap);
-        CHECK(j_umap.type() == json::value_type::object);
+        CHECK(j_umap.type() == json::value_t::object);
         CHECK(j_umap.size() == 3);
 
         std::multimap<std::string, bool> c_mmap { {"one", true}, {"two", true}, {"three", false}, {"three", true} };
         json j_mmap(c_mmap);
-        CHECK(j_mmap.type() == json::value_type::object);
+        CHECK(j_mmap.type() == json::value_t::object);
         CHECK(j_mmap.size() == 3);
 
         std::unordered_multimap<std::string, bool> c_ummap { {"one", true}, {"two", true}, {"three", false}, {"three", true} };
         json j_ummap(c_ummap);
-        CHECK(j_ummap.type() == json::value_type::object);
+        CHECK(j_ummap.type() == json::value_t::object);
         CHECK(j_ummap.size() == 3);
     }
 }
@@ -832,7 +836,7 @@ TEST_CASE("null")
     {
         // construction with given type
         json j;
-        CHECK(j.type() == json::value_type::null);
+        CHECK(j.type() == json::value_t::null);
 
         // string representation of default value
         CHECK(j.dump() == "null");
@@ -843,7 +847,9 @@ TEST_CASE("null")
 
         // container members
         CHECK(j.size() == 0);
+        CHECK(j.max_size() == 0);
         CHECK(j.empty() == true);
+        CHECK_NOTHROW(size_t h = std::hash<json>()(j));
 
         // implicit conversions
         CHECK_NOTHROW(json::array_t v = j);
@@ -878,7 +884,7 @@ TEST_CASE("null")
     SECTION("Create from value")
     {
         json j1 = nullptr;
-        CHECK(j1.type() == json::value_type::null);
+        CHECK(j1.type() == json::value_t::null);
     }
 
     SECTION("Operators")
@@ -911,8 +917,8 @@ TEST_CASE("string")
     SECTION("Basics")
     {
         // construction with given type
-        json j(json::value_type::string);
-        CHECK(j.type() == json::value_type::string);
+        json j(json::value_t::string);
+        CHECK(j.type() == json::value_t::string);
 
         // const object
         const json j_const = j;
@@ -926,7 +932,9 @@ TEST_CASE("string")
 
         // container members
         CHECK(j.size() == 1);
+        CHECK(j.max_size() == 1);
         CHECK(j.empty() == false);
+        CHECK_NOTHROW(size_t h = std::hash<json>()(j));
 
         // implicit conversions
         CHECK_NOTHROW(json::array_t v = j);
@@ -1022,8 +1030,8 @@ TEST_CASE("boolean")
     SECTION("Basics")
     {
         // construction with given type
-        json j(json::value_type::boolean);
-        CHECK(j.type() == json::value_type::boolean);
+        json j(json::value_t::boolean);
+        CHECK(j.type() == json::value_t::boolean);
 
         // const object
         const json j_const = j;
@@ -1037,7 +1045,9 @@ TEST_CASE("boolean")
 
         // container members
         CHECK(j.size() == 1);
+        CHECK(j.max_size() == 1);
         CHECK(j.empty() == false);
+        CHECK_NOTHROW(size_t h = std::hash<json>()(j));
 
         // implicit conversions
         CHECK_NOTHROW(json::array_t v = j);
@@ -1118,8 +1128,8 @@ TEST_CASE("number (int)")
     SECTION("Basics")
     {
         // construction with given type
-        json j(json::value_type::number);
-        CHECK(j.type() == json::value_type::number);
+        json j(json::value_t::number);
+        CHECK(j.type() == json::value_t::number);
 
         // const object
         const json j_const = j;
@@ -1133,7 +1143,9 @@ TEST_CASE("number (int)")
 
         // container members
         CHECK(j.size() == 1);
+        CHECK(j.max_size() == 1);
         CHECK(j.empty() == false);
+        CHECK_NOTHROW(size_t h = std::hash<json>()(j));
 
         // implicit conversions
         CHECK_NOTHROW(json::array_t v = j);
@@ -1229,8 +1241,8 @@ TEST_CASE("number (float)")
     SECTION("Basics")
     {
         // construction with given type
-        json j(json::value_type::number_float);
-        CHECK(j.type() == json::value_type::number_float);
+        json j(json::value_t::number_float);
+        CHECK(j.type() == json::value_t::number_float);
 
         // const object
         const json j_const = j;
@@ -1244,7 +1256,9 @@ TEST_CASE("number (float)")
 
         // container members
         CHECK(j.size() == 1);
+        CHECK(j.max_size() == 1);
         CHECK(j.empty() == false);
+        CHECK_NOTHROW(size_t h = std::hash<json>()(j));
 
         // implicit conversions
         CHECK_NOTHROW(json::array_t v = j);
@@ -1388,35 +1402,35 @@ TEST_CASE("Iterators")
     CHECK_THROWS_AS(* j7_const.cend(), std::runtime_error);
 
     // operator ->
-    CHECK(j1.begin()->type() == json::value_type::number);
-    CHECK(j1.cbegin()->type() == json::value_type::number);
-    CHECK(j2.begin()->type() == json::value_type::string);
-    CHECK(j2.cbegin()->type() == json::value_type::string);
-    CHECK(j3.begin()->type() == json::value_type::boolean);
-    CHECK(j3.cbegin()->type() == json::value_type::boolean);
-    CHECK(j4.begin()->type() == json::value_type::null);
-    CHECK(j4.cbegin()->type() == json::value_type::null);
-    CHECK(j5.begin()->type() == json::value_type::number);
-    CHECK(j5.cbegin()->type() == json::value_type::number);
-    CHECK(j6.begin()->type() == json::value_type::number_float);
-    CHECK(j6.cbegin()->type() == json::value_type::number_float);
-    CHECK(j7.begin()->type() == json::value_type::string);
-    CHECK(j7.cbegin()->type() == json::value_type::string);
+    CHECK(j1.begin()->type() == json::value_t::number);
+    CHECK(j1.cbegin()->type() == json::value_t::number);
+    CHECK(j2.begin()->type() == json::value_t::string);
+    CHECK(j2.cbegin()->type() == json::value_t::string);
+    CHECK(j3.begin()->type() == json::value_t::boolean);
+    CHECK(j3.cbegin()->type() == json::value_t::boolean);
+    CHECK(j4.begin()->type() == json::value_t::null);
+    CHECK(j4.cbegin()->type() == json::value_t::null);
+    CHECK(j5.begin()->type() == json::value_t::number);
+    CHECK(j5.cbegin()->type() == json::value_t::number);
+    CHECK(j6.begin()->type() == json::value_t::number_float);
+    CHECK(j6.cbegin()->type() == json::value_t::number_float);
+    CHECK(j7.begin()->type() == json::value_t::string);
+    CHECK(j7.cbegin()->type() == json::value_t::string);
 
-    CHECK(j1_const.begin()->type() == json::value_type::number);
-    CHECK(j1_const.cbegin()->type() == json::value_type::number);
-    CHECK(j2_const.begin()->type() == json::value_type::string);
-    CHECK(j2_const.cbegin()->type() == json::value_type::string);
-    CHECK(j3_const.begin()->type() == json::value_type::boolean);
-    CHECK(j3_const.cbegin()->type() == json::value_type::boolean);
-    CHECK(j4_const.begin()->type() == json::value_type::null);
-    CHECK(j4_const.cbegin()->type() == json::value_type::null);
-    CHECK(j5_const.begin()->type() == json::value_type::number);
-    CHECK(j5_const.cbegin()->type() == json::value_type::number);
-    CHECK(j6_const.begin()->type() == json::value_type::number_float);
-    CHECK(j6_const.cbegin()->type() == json::value_type::number_float);
-    CHECK(j7_const.begin()->type() == json::value_type::string);
-    CHECK(j7_const.cbegin()->type() == json::value_type::string);
+    CHECK(j1_const.begin()->type() == json::value_t::number);
+    CHECK(j1_const.cbegin()->type() == json::value_t::number);
+    CHECK(j2_const.begin()->type() == json::value_t::string);
+    CHECK(j2_const.cbegin()->type() == json::value_t::string);
+    CHECK(j3_const.begin()->type() == json::value_t::boolean);
+    CHECK(j3_const.cbegin()->type() == json::value_t::boolean);
+    CHECK(j4_const.begin()->type() == json::value_t::null);
+    CHECK(j4_const.cbegin()->type() == json::value_t::null);
+    CHECK(j5_const.begin()->type() == json::value_t::number);
+    CHECK(j5_const.cbegin()->type() == json::value_t::number);
+    CHECK(j6_const.begin()->type() == json::value_t::number_float);
+    CHECK(j6_const.cbegin()->type() == json::value_t::number_float);
+    CHECK(j7_const.begin()->type() == json::value_t::string);
+    CHECK(j7_const.cbegin()->type() == json::value_t::string);
 
     CHECK_THROWS_AS(j1.end()->type(), std::runtime_error);
     CHECK_THROWS_AS(j1.cend()->type(), std::runtime_error);
@@ -1449,35 +1463,35 @@ TEST_CASE("Iterators")
     CHECK_THROWS_AS(j7_const.cend()->type(), std::runtime_error);
 
     // value
-    CHECK(j1.begin().value().type() == json::value_type::number);
-    CHECK(j1.cbegin().value().type() == json::value_type::number);
-    CHECK(j2.begin().value().type() == json::value_type::string);
-    CHECK(j2.cbegin().value().type() == json::value_type::string);
-    CHECK(j3.begin().value().type() == json::value_type::boolean);
-    CHECK(j3.cbegin().value().type() == json::value_type::boolean);
-    CHECK(j4.begin().value().type() == json::value_type::null);
-    CHECK(j4.cbegin().value().type() == json::value_type::null);
-    CHECK(j5.begin().value().type() == json::value_type::number);
-    CHECK(j5.cbegin().value().type() == json::value_type::number);
-    CHECK(j6.begin().value().type() == json::value_type::number_float);
-    CHECK(j6.cbegin().value().type() == json::value_type::number_float);
-    CHECK(j7.begin().value().type() == json::value_type::string);
-    CHECK(j7.cbegin().value().type() == json::value_type::string);
+    CHECK(j1.begin().value().type() == json::value_t::number);
+    CHECK(j1.cbegin().value().type() == json::value_t::number);
+    CHECK(j2.begin().value().type() == json::value_t::string);
+    CHECK(j2.cbegin().value().type() == json::value_t::string);
+    CHECK(j3.begin().value().type() == json::value_t::boolean);
+    CHECK(j3.cbegin().value().type() == json::value_t::boolean);
+    CHECK(j4.begin().value().type() == json::value_t::null);
+    CHECK(j4.cbegin().value().type() == json::value_t::null);
+    CHECK(j5.begin().value().type() == json::value_t::number);
+    CHECK(j5.cbegin().value().type() == json::value_t::number);
+    CHECK(j6.begin().value().type() == json::value_t::number_float);
+    CHECK(j6.cbegin().value().type() == json::value_t::number_float);
+    CHECK(j7.begin().value().type() == json::value_t::string);
+    CHECK(j7.cbegin().value().type() == json::value_t::string);
 
-    CHECK(j1_const.begin().value().type() == json::value_type::number);
-    CHECK(j1_const.cbegin().value().type() == json::value_type::number);
-    CHECK(j2_const.begin().value().type() == json::value_type::string);
-    CHECK(j2_const.cbegin().value().type() == json::value_type::string);
-    CHECK(j3_const.begin().value().type() == json::value_type::boolean);
-    CHECK(j3_const.cbegin().value().type() == json::value_type::boolean);
-    CHECK(j4_const.begin().value().type() == json::value_type::null);
-    CHECK(j4_const.cbegin().value().type() == json::value_type::null);
-    CHECK(j5_const.begin().value().type() == json::value_type::number);
-    CHECK(j5_const.cbegin().value().type() == json::value_type::number);
-    CHECK(j6_const.begin().value().type() == json::value_type::number_float);
-    CHECK(j6_const.cbegin().value().type() == json::value_type::number_float);
-    CHECK(j7_const.begin().value().type() == json::value_type::string);
-    CHECK(j7_const.cbegin().value().type() == json::value_type::string);
+    CHECK(j1_const.begin().value().type() == json::value_t::number);
+    CHECK(j1_const.cbegin().value().type() == json::value_t::number);
+    CHECK(j2_const.begin().value().type() == json::value_t::string);
+    CHECK(j2_const.cbegin().value().type() == json::value_t::string);
+    CHECK(j3_const.begin().value().type() == json::value_t::boolean);
+    CHECK(j3_const.cbegin().value().type() == json::value_t::boolean);
+    CHECK(j4_const.begin().value().type() == json::value_t::null);
+    CHECK(j4_const.cbegin().value().type() == json::value_t::null);
+    CHECK(j5_const.begin().value().type() == json::value_t::number);
+    CHECK(j5_const.cbegin().value().type() == json::value_t::number);
+    CHECK(j6_const.begin().value().type() == json::value_t::number_float);
+    CHECK(j6_const.cbegin().value().type() == json::value_t::number_float);
+    CHECK(j7_const.begin().value().type() == json::value_t::string);
+    CHECK(j7_const.cbegin().value().type() == json::value_t::string);
 
     CHECK_THROWS_AS(j1.end().value(), std::out_of_range);
     CHECK_THROWS_AS(j1.cend().value(), std::out_of_range);

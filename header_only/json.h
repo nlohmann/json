@@ -2,7 +2,7 @@
 @file
 @copyright The code is licensed under the MIT License
            <http://opensource.org/licenses/MIT>,
-           Copyright (c) 2013-2014 Niels Lohmann.
+           Copyright (c) 2013-2015 Niels Lohmann.
 
 @author Niels Lohmann <http://nlohmann.me>
 
@@ -18,6 +18,7 @@
 #include <vector>            // std::vector
 #include <iterator>          // std::iterator
 #include <limits>            // std::numeric_limits
+#include <functional>        // std::hash
 
 namespace nlohmann
 {
@@ -41,30 +42,21 @@ due to alignment.
 */
 class json
 {
-    // forward declaration to friend this class
   public:
+    // forward declaration to friend this class
     class iterator;
     class const_iterator;
 
-  public:
-    /// possible types of a JSON object
-    enum class value_type : uint8_t
-    {
-        /// ordered collection of values
-        array = 0,
-        /// unordered set of name/value pairs
-        object,
-        /// null value
-        null,
-        /// string value
-        string,
-        /// Boolean value
-        boolean,
-        /// number value (integer)
-        number,
-        /// number value (float)
-        number_float
-    };
+    // container types
+    using value_type = json;
+    using reference = json&;
+    using const_reference = const json&;
+    using pointer = json*;
+    using const_pointer = const json*;
+    using iterator = json::iterator;
+    using const_iterator = json::const_iterator;
+    using difference_type = std::ptrdiff_t;
+    using size_type = std::size_t;
 
     /// a type for an object
     using object_t = std::map<std::string, json>;
@@ -113,9 +105,28 @@ class json
         value(number_float_t);
     };
 
+    /// possible types of a JSON object
+    enum class value_t : uint8_t
+    {
+        /// ordered collection of values
+        array = 0,
+        /// unordered set of name/value pairs
+        object,
+        /// null value
+        null,
+        /// string value
+        string,
+        /// Boolean value
+        boolean,
+        /// number value (integer)
+        number,
+        /// number value (float)
+        number_float
+    };
+
   public:
     /// create an object according to given type
-    json(const value_type);
+    json(const value_t);
     /// create a null object
     json() = default;
     /// create a null object
@@ -140,15 +151,23 @@ class json
     json(list_init_t);
 
     /// create a number object (integer)
-    template<typename T, typename std::enable_if<std::numeric_limits<T>::is_integer, T>::type = 0>
+    template<typename T, typename
+             std::enable_if<
+                 std::numeric_limits<T>::is_integer, T>::type
+             = 0>
     json(const T n) noexcept
-        : type_(value_type::number), value_(static_cast<number_t>(n))
+        : type_(value_t::number),
+          value_(static_cast<number_t>(n))
     {}
 
     /// create a number object (float)
-    template<typename T, typename = typename std::enable_if<std::is_floating_point<T>::value>::type>
+    template<typename T, typename = typename
+             std::enable_if<
+                 std::is_floating_point<T>::value>::type
+             >
     json(const T n) noexcept
-        : type_(value_type::number_float), value_(static_cast<number_float_t>(n))
+        : type_(value_t::number_float),
+          value_(static_cast<number_float_t>(n))
     {}
 
     /// create an array object
@@ -284,27 +303,29 @@ class json
     /// operator to get an element in an array
     const json& operator[](const int) const;
     /// operator to get an element in an array
-    json& at(const int);
+    reference at(const int);
     /// operator to get an element in an array
-    const json& at(const int) const;
+    const_reference at(const int) const;
 
     /// operator to set an element in an object
-    json& operator[](const std::string&);
+    reference operator[](const std::string&);
     /// operator to set an element in an object
-    json& operator[](const char*);
+    reference operator[](const char*);
     /// operator to get an element in an object
-    const json& operator[](const std::string&) const;
+    const_reference operator[](const std::string&) const;
     /// operator to set an element in an object
-    json& at(const std::string&);
+    reference at(const std::string&);
     /// operator to set an element in an object
-    json& at(const char*);
+    reference at(const char*);
     /// operator to get an element in an object
-    const json& at(const std::string&) const;
+    const_reference at(const std::string&) const;
     /// operator to get an element in an object
-    const json& at(const char*) const;
+    const_reference at(const char*) const;
 
     /// return the number of stored values
-    std::size_t size() const noexcept;
+    size_type size() const noexcept;
+    /// return the maximal number of values that can be stored
+    size_type max_size() const noexcept;
     /// checks whether object is empty
     bool empty() const noexcept;
     /// removes all elements from compounds and resets values to default
@@ -314,7 +335,7 @@ class json
     void swap(json&) noexcept;
 
     /// return the type of the object
-    value_type type() const noexcept;
+    value_t type() const noexcept;
 
     /// find an element in an object (returns end() iterator otherwise)
     iterator find(const std::string&);
@@ -345,7 +366,7 @@ class json
 
   private:
     /// the type of this object
-    value_type type_ = value_type::null;
+    value_t type_ = value_t::null;
 
     /// the payload
     value value_ {};
@@ -475,23 +496,37 @@ class json
 /// user-defined literal operator to create JSON objects from strings
 nlohmann::json operator "" _json(const char*, std::size_t);
 
-// specialization of std::swap
+// specialization of std::swap, and std::hash
 namespace std
 {
 template <>
 /// swaps the values of two JSON objects
 inline void swap(nlohmann::json& j1,
-                 nlohmann::json& j2) noexcept(is_nothrow_move_constructible<nlohmann::json>::value and
-                         is_nothrow_move_assignable<nlohmann::json>::value)
+                 nlohmann::json& j2) noexcept(
+                     is_nothrow_move_constructible<nlohmann::json>::value and
+                     is_nothrow_move_assignable<nlohmann::json>::value
+                 )
 {
     j1.swap(j2);
 }
+
+template <>
+/// hash value for JSON objects
+struct hash<nlohmann::json>
+{
+    size_t operator()(const nlohmann::json& j) const
+    {
+        // a naive hashing via the string representation
+        return hash<std::string>()(j.dump());
+    }
+};
+
 }
 /*!
 @file
 @copyright The code is licensed under the MIT License
            <http://opensource.org/licenses/MIT>,
-           Copyright (c) 2013-2014 Niels Lohmann.
+           Copyright (c) 2013-2015 Niels Lohmann.
 
 @author Niels Lohmann <http://nlohmann.me>
 
@@ -531,37 +566,37 @@ Construct an empty JSON given the type.
 
 @post Memory for array, object, and string are allocated.
 */
-json::json(const value_type t)
+json::json(const value_t t)
     : type_(t)
 {
     switch (type_)
     {
-        case (value_type::array):
+        case (value_t::array):
         {
             value_.array = new array_t();
             break;
         }
-        case (value_type::object):
+        case (value_t::object):
         {
             value_.object = new object_t();
             break;
         }
-        case (value_type::string):
+        case (value_t::string):
         {
             value_.string = new string_t();
             break;
         }
-        case (value_type::boolean):
+        case (value_t::boolean):
         {
             value_.boolean = boolean_t();
             break;
         }
-        case (value_type::number):
+        case (value_t::number):
         {
             value_.number = number_t();
             break;
         }
-        case (value_type::number_float):
+        case (value_t::number_float):
         {
             value_.number_float = number_float_t();
             break;
@@ -585,35 +620,35 @@ Construct a string JSON object.
 @param s  a string to initialize the JSON object with
 */
 json::json(const std::string& s)
-    : type_(value_type::string), value_(new string_t(s))
+    : type_(value_t::string), value_(new string_t(s))
 {}
 
 json::json(std::string&& s)
-    : type_(value_type::string), value_(new string_t(std::move(s)))
+    : type_(value_t::string), value_(new string_t(std::move(s)))
 {}
 
 json::json(const char* s)
-    : type_(value_type::string), value_(new string_t(s))
+    : type_(value_t::string), value_(new string_t(s))
 {}
 
 json::json(const bool b) noexcept
-    : type_(value_type::boolean), value_(b)
+    : type_(value_t::boolean), value_(b)
 {}
 
 json::json(const array_t& a)
-    : type_(value_type::array), value_(new array_t(a))
+    : type_(value_t::array), value_(new array_t(a))
 {}
 
 json::json(array_t&& a)
-    : type_(value_type::array), value_(new array_t(std::move(a)))
+    : type_(value_t::array), value_(new array_t(std::move(a)))
 {}
 
 json::json(const object_t& o)
-    : type_(value_type::object), value_(new object_t(o))
+    : type_(value_t::object), value_(new object_t(o))
 {}
 
 json::json(object_t&& o)
-    : type_(value_type::object), value_(new object_t(std::move(o)))
+    : type_(value_t::object), value_(new object_t(std::move(o)))
 {}
 
 /*!
@@ -637,20 +672,20 @@ json::json(list_init_t a)
     // is a string
     for (const auto& element : a)
     {
-        if (element.type_ != value_type::array or
+        if (element.type_ != value_t::array or
                 element.size() != 2 or
-                element[0].type_ != value_type::string)
+                element[0].type_ != value_t::string)
         {
 
             // the initializer list describes an array
-            type_ = value_type::array;
+            type_ = value_t::array;
             value_ = new array_t(a);
             return;
         }
     }
 
     // the initializer list is a list of pairs
-    type_ = value_type::object;
+    type_ = value_t::object;
     value_ = new object_t();
     for (const json& element : a)
     {
@@ -670,32 +705,32 @@ json::json(const json& o)
 {
     switch (type_)
     {
-        case (value_type::array):
+        case (value_t::array):
         {
             value_.array = new array_t(*o.value_.array);
             break;
         }
-        case (value_type::object):
+        case (value_t::object):
         {
             value_.object = new object_t(*o.value_.object);
             break;
         }
-        case (value_type::string):
+        case (value_t::string):
         {
             value_.string = new string_t(*o.value_.string);
             break;
         }
-        case (value_type::boolean):
+        case (value_t::boolean):
         {
             value_.boolean = o.value_.boolean;
             break;
         }
-        case (value_type::number):
+        case (value_t::number):
         {
             value_.number = o.value_.number;
             break;
         }
-        case (value_type::number_float):
+        case (value_t::number_float):
         {
             value_.number_float = o.value_.number_float;
             break;
@@ -718,7 +753,7 @@ json::json(json&& o) noexcept
     : type_(std::move(o.type_)), value_(std::move(o.value_))
 {
     // invalidate payload
-    o.type_ = value_type::null;
+    o.type_ = value_t::null;
     o.value_ = {};
 }
 
@@ -739,17 +774,17 @@ json::~json() noexcept
 {
     switch (type_)
     {
-        case (value_type::array):
+        case (value_t::array):
         {
             delete value_.array;
             break;
         }
-        case (value_type::object):
+        case (value_t::object):
         {
             delete value_.object;
             break;
         }
-        case (value_type::string):
+        case (value_t::string):
         {
             delete value_.string;
             break;
@@ -785,23 +820,23 @@ std::string json::type_name() const noexcept
 {
     switch (type_)
     {
-        case (value_type::array):
+        case (value_t::array):
         {
             return "array";
         }
-        case (value_type::object):
+        case (value_t::object):
         {
             return "object";
         }
-        case (value_type::null):
+        case (value_t::null):
         {
             return "null";
         }
-        case (value_type::string):
+        case (value_t::string):
         {
             return "string";
         }
-        case (value_type::boolean):
+        case (value_t::boolean):
         {
             return "boolean";
         }
@@ -826,7 +861,7 @@ std::string json::get() const
 {
     switch (type_)
     {
-        case (value_type::string):
+        case (value_t::string):
             return *value_.string;
         default:
             throw std::logic_error("cannot cast " + type_name() + " to JSON string");
@@ -842,9 +877,9 @@ int json::get() const
 {
     switch (type_)
     {
-        case (value_type::number):
+        case (value_t::number):
             return value_.number;
-        case (value_type::number_float):
+        case (value_t::number_float):
             return static_cast<int>(value_.number_float);
         default:
             throw std::logic_error("cannot cast " + type_name() + " to JSON number");
@@ -860,9 +895,9 @@ int64_t json::get() const
 {
     switch (type_)
     {
-        case (value_type::number):
+        case (value_t::number):
             return value_.number;
-        case (value_type::number_float):
+        case (value_t::number_float):
             return static_cast<number_t>(value_.number_float);
         default:
             throw std::logic_error("cannot cast " + type_name() + " to JSON number");
@@ -878,9 +913,9 @@ double json::get() const
 {
     switch (type_)
     {
-        case (value_type::number):
+        case (value_t::number):
             return static_cast<number_float_t>(value_.number);
-        case (value_type::number_float):
+        case (value_t::number_float):
             return value_.number_float;
         default:
             throw std::logic_error("cannot cast " + type_name() + " to JSON number");
@@ -896,7 +931,7 @@ bool json::get() const
 {
     switch (type_)
     {
-        case (value_type::boolean):
+        case (value_t::boolean):
             return value_.boolean;
         default:
             throw std::logic_error("cannot cast " + type_name() + " to JSON Boolean");
@@ -910,11 +945,11 @@ bool json::get() const
 template<>
 json::array_t json::get() const
 {
-    if (type_ == value_type::array)
+    if (type_ == value_t::array)
     {
         return *value_.array;
     }
-    if (type_ == value_type::object)
+    if (type_ == value_t::object)
     {
         throw std::logic_error("cannot cast " + type_name() + " to JSON array");
     }
@@ -931,7 +966,7 @@ json::array_t json::get() const
 template<>
 json::object_t json::get() const
 {
-    if (type_ == value_type::object)
+    if (type_ == value_t::object)
     {
         return *value_.object;
     }
@@ -994,27 +1029,27 @@ std::string json::dump(const bool prettyPrint, const unsigned int indentStep,
 
     switch (type_)
     {
-        case (value_type::string):
+        case (value_t::string):
         {
             return std::string("\"") + escapeString(*value_.string) + "\"";
         }
 
-        case (value_type::boolean):
+        case (value_t::boolean):
         {
             return value_.boolean ? "true" : "false";
         }
 
-        case (value_type::number):
+        case (value_t::number):
         {
             return std::to_string(value_.number);
         }
 
-        case (value_type::number_float):
+        case (value_t::number_float):
         {
             return std::to_string(value_.number_float);
         }
 
-        case (value_type::array):
+        case (value_t::array):
         {
             if (value_.array->empty())
             {
@@ -1049,7 +1084,7 @@ std::string json::dump(const bool prettyPrint, const unsigned int indentStep,
             return result + indent() + "]";
         }
 
-        case (value_type::object):
+        case (value_t::object):
         {
             if (value_.object->empty())
             {
@@ -1086,7 +1121,7 @@ std::string json::dump(const bool prettyPrint, const unsigned int indentStep,
             return result + indent() + "}";
         }
 
-        // actually only value_type::null - but making the compiler happy
+        // actually only value_t::null - but making the compiler happy
         default:
         {
             return "null";
@@ -1206,15 +1241,15 @@ an array, the passed element is added to the array.
 void json::push_back(const json& o)
 {
     // push_back only works for null objects or arrays
-    if (not(type_ == value_type::null or type_ == value_type::array))
+    if (not(type_ == value_t::null or type_ == value_t::array))
     {
         throw std::runtime_error("cannot add element to " + type_name());
     }
 
     // transform null object into an array
-    if (type_ == value_type::null)
+    if (type_ == value_t::null)
     {
-        type_ = value_type::array;
+        type_ = value_t::array;
         value_.array = new array_t;
     }
 
@@ -1241,22 +1276,22 @@ an array, the passed element is added to the array using move semantics.
 void json::push_back(json&& o)
 {
     // push_back only works for null objects or arrays
-    if (not(type_ == value_type::null or type_ == value_type::array))
+    if (not(type_ == value_t::null or type_ == value_t::array))
     {
         throw std::runtime_error("cannot add element to " + type_name());
     }
 
     // transform null object into an array
-    if (type_ == value_type::null)
+    if (type_ == value_t::null)
     {
-        type_ = value_type::array;
+        type_ = value_t::array;
         value_.array = new array_t;
     }
 
     // add element to array (move semantics)
     value_.array->emplace_back(std::move(o));
     // invalidate object
-    o.type_ = value_type::null;
+    o.type_ = value_t::null;
 }
 
 /*!
@@ -1278,9 +1313,9 @@ void json::push_back(list_init_t a)
     // is a string
     for (const auto& element : a)
     {
-        if (element.type_ != value_type::array or
+        if (element.type_ != value_t::array or
                 element.size() != 2 or
-                element[0].type_ != value_type::string)
+                element[0].type_ != value_t::string)
         {
             // the initializer list describes an array
             is_array = true;
@@ -1321,10 +1356,10 @@ index.  Bounds will not be checked.
 @pre Object is an array.
 @exception std::domain_error if object is not an array
 */
-json& json::operator[](const int index)
+json::reference json::operator[](const int index)
 {
     // this [] operator only works for arrays
-    if (type_ != value_type::array)
+    if (type_ != value_t::array)
     {
         throw std::domain_error("cannot add entry with index " +
                                 std::to_string(index) + " to " + type_name());
@@ -1350,10 +1385,10 @@ index.  Bounds will not be checked.
 @pre Object is an array.
 @exception std::domain_error if object is not an array
 */
-const json& json::operator[](const int index) const
+json::const_reference json::operator[](const int index) const
 {
     // this [] operator only works for arrays
-    if (type_ != value_type::array)
+    if (type_ != value_t::array)
     {
         throw std::domain_error("cannot get entry with index " +
                                 std::to_string(index) + " from " + type_name());
@@ -1380,10 +1415,10 @@ index. Bounds will be checked.
 @exception std::domain_error if object is not an array
 @exception std::out_of_range if index is out of range (via std::vector::at)
 */
-json& json::at(const int index)
+json::reference json::at(const int index)
 {
     // this function only works for arrays
-    if (type_ != value_type::array)
+    if (type_ != value_t::array)
     {
         throw std::domain_error("cannot add entry with index " +
                                 std::to_string(index) + " to " + type_name());
@@ -1410,10 +1445,10 @@ index. Bounds will be checked.
 @exception std::domain_error if object is not an array
 @exception std::out_of_range if index is out of range (via std::vector::at)
 */
-const json& json::at(const int index) const
+json::const_reference json::at(const int index) const
 {
     // this function only works for arrays
-    if (type_ != value_type::array)
+    if (type_ != value_t::array)
     {
         throw std::domain_error("cannot get entry with index " +
                                 std::to_string(index) + " from " + type_name());
@@ -1426,7 +1461,7 @@ const json& json::at(const int index) const
 /*!
 @copydoc json::operator[](const char* key)
 */
-json& json::operator[](const std::string& key)
+json::reference json::operator[](const std::string& key)
 {
     return operator[](key.c_str());
 }
@@ -1444,17 +1479,17 @@ key.
 
 @exception std::domain_error if object is not an object (or null)
 */
-json& json::operator[](const char* key)
+json::reference json::operator[](const char* key)
 {
     // implicitly convert null to object
-    if (type_ == value_type::null)
+    if (type_ == value_t::null)
     {
-        type_ = value_type::object;
+        type_ = value_t::object;
         value_.object = new object_t;
     }
 
     // this [] operator only works for objects
-    if (type_ != value_type::object)
+    if (type_ != value_t::object)
     {
         throw std::domain_error("cannot add entry with key " +
                                 std::string(key) + " to " + type_name());
@@ -1481,10 +1516,10 @@ key.
 @exception std::domain_error if object is not an object
 @exception std::out_of_range if key is not found in object
 */
-const json& json::operator[](const std::string& key) const
+json::const_reference json::operator[](const std::string& key) const
 {
     // this [] operator only works for objects
-    if (type_ != value_type::object)
+    if (type_ != value_t::object)
     {
         throw std::domain_error("cannot get entry with key " +
                                 std::string(key) + " from " + type_name());
@@ -1506,7 +1541,7 @@ const json& json::operator[](const std::string& key) const
 /*!
 @copydoc json::at(const char* key)
 */
-json& json::at(const std::string& key)
+json::reference json::at(const std::string& key)
 {
     return at(key.c_str());
 }
@@ -1524,10 +1559,10 @@ key.
 @exception std::domain_error if object is not an object
 @exception std::out_of_range if key was not found (via std::map::at)
 */
-json& json::at(const char* key)
+json::reference json::at(const char* key)
 {
     // this function operator only works for objects
-    if (type_ != value_type::object)
+    if (type_ != value_t::object)
     {
         throw std::domain_error("cannot add entry with key " +
                                 std::string(key) + " to " + type_name());
@@ -1540,7 +1575,7 @@ json& json::at(const char* key)
 /*!
 @copydoc json::at(const char *key) const
 */
-const json& json::at(const std::string& key) const
+json::const_reference json::at(const std::string& key) const
 {
     return at(key.c_str());
 }
@@ -1556,10 +1591,10 @@ key.
 @exception std::domain_error if object is not an object
 @exception std::out_of_range if key is not found (via std::map::at)
 */
-const json& json::at(const char* key) const
+json::const_reference json::at(const char* key) const
 {
     // this [] operator only works for objects
-    if (type_ != value_type::object)
+    if (type_ != value_t::object)
     {
         throw std::domain_error("cannot get entry with key " +
                                 std::string(key) + " from " + type_name());
@@ -1568,7 +1603,6 @@ const json& json::at(const char* key) const
     // return element from array at given key
     return value_.object->at(key);
 }
-
 
 /*!
 Returns the size of the JSON object.
@@ -1579,19 +1613,49 @@ Returns the size of the JSON object.
 
 @invariant The size is reported as 0 if and only if empty() would return true.
 */
-std::size_t json::size() const noexcept
+json::size_type json::size() const noexcept
 {
     switch (type_)
     {
-        case (value_type::array):
+        case (value_t::array):
         {
             return value_.array->size();
         }
-        case (value_type::object):
+        case (value_t::object):
         {
             return value_.object->size();
         }
-        case (value_type::null):
+        case (value_t::null):
+        {
+            return 0;
+        }
+        default:
+        {
+            return 1;
+        }
+    }
+}
+
+/*!
+Returns the maximal size of the JSON object.
+
+@return the maximal size of the JSON object; the maximal size is the maximal
+        number of elements in compounds (array and object), 1 for value types
+        (true, false, number, string), and 0 for null.
+*/
+json::size_type json::max_size() const noexcept
+{
+    switch (type_)
+    {
+        case (value_t::array):
+        {
+            return value_.array->max_size();
+        }
+        case (value_t::object):
+        {
+            return value_.object->max_size();
+        }
+        case (value_t::null):
         {
             return 0;
         }
@@ -1615,15 +1679,15 @@ bool json::empty() const noexcept
 {
     switch (type_)
     {
-        case (value_type::array):
+        case (value_t::array):
         {
             return value_.array->empty();
         }
-        case (value_type::object):
+        case (value_t::object):
         {
             return value_.object->empty();
         }
-        case (value_type::null):
+        case (value_t::null):
         {
             return true;
         }
@@ -1645,32 +1709,32 @@ void json::clear() noexcept
 {
     switch (type_)
     {
-        case (value_type::array):
+        case (value_t::array):
         {
             value_.array->clear();
             break;
         }
-        case (value_type::object):
+        case (value_t::object):
         {
             value_.object->clear();
             break;
         }
-        case (value_type::string):
+        case (value_t::string):
         {
             value_.string->clear();
             break;
         }
-        case (value_type::boolean):
+        case (value_t::boolean):
         {
             value_.boolean = {};
             break;
         }
-        case (value_type::number):
+        case (value_t::number):
         {
             value_.number = {};
             break;
         }
-        case (value_type::number_float):
+        case (value_t::number_float):
         {
             value_.number_float = {};
             break;
@@ -1688,7 +1752,7 @@ void json::swap(json& o) noexcept
     std::swap(value_, o.value_);
 }
 
-json::value_type json::type() const noexcept
+json::value_t json::type() const noexcept
 {
     return type_;
 }
@@ -1705,7 +1769,7 @@ json::const_iterator json::find(const std::string& key) const
 
 json::iterator json::find(const char* key)
 {
-    if (type_ != value_type::object)
+    if (type_ != value_t::object)
     {
         return end();
     }
@@ -1729,7 +1793,7 @@ json::iterator json::find(const char* key)
 
 json::const_iterator json::find(const char* key) const
 {
-    if (type_ != value_type::object)
+    if (type_ != value_t::object)
     {
         return end();
     }
@@ -1755,65 +1819,65 @@ bool json::operator==(const json& o) const noexcept
 {
     switch (type_)
     {
-        case (value_type::array):
+        case (value_t::array):
         {
-            if (o.type_ == value_type::array)
+            if (o.type_ == value_t::array)
             {
                 return *value_.array == *o.value_.array;
             }
             break;
         }
-        case (value_type::object):
+        case (value_t::object):
         {
-            if (o.type_ == value_type::object)
+            if (o.type_ == value_t::object)
             {
                 return *value_.object == *o.value_.object;
             }
             break;
         }
-        case (value_type::null):
+        case (value_t::null):
         {
-            if (o.type_ == value_type::null)
+            if (o.type_ == value_t::null)
             {
                 return true;
             }
             break;
         }
-        case (value_type::string):
+        case (value_t::string):
         {
-            if (o.type_ == value_type::string)
+            if (o.type_ == value_t::string)
             {
                 return *value_.string == *o.value_.string;
             }
             break;
         }
-        case (value_type::boolean):
+        case (value_t::boolean):
         {
-            if (o.type_ == value_type::boolean)
+            if (o.type_ == value_t::boolean)
             {
                 return value_.boolean == o.value_.boolean;
             }
             break;
         }
-        case (value_type::number):
+        case (value_t::number):
         {
-            if (o.type_ == value_type::number)
+            if (o.type_ == value_t::number)
             {
                 return value_.number == o.value_.number;
             }
-            if (o.type_ == value_type::number_float)
+            if (o.type_ == value_t::number_float)
             {
                 return value_.number == static_cast<number_t>(o.value_.number_float);
             }
             break;
         }
-        case (value_type::number_float):
+        case (value_t::number_float):
         {
-            if (o.type_ == value_type::number)
+            if (o.type_ == value_t::number)
             {
                 return value_.number_float == static_cast<number_float_t>(o.value_.number);
             }
-            if (o.type_ == value_type::number_float)
+            if (o.type_ == value_t::number_float)
             {
                 return value_.number_float == o.value_.number_float;
             }
@@ -1865,7 +1929,7 @@ json::iterator::iterator(json* j) : object_(j)
 {
     if (object_ != nullptr)
     {
-        if (object_->type_ == json::value_type::array)
+        if (object_->type_ == json::value_t::array)
         {
             if (object_->empty())
             {
@@ -1876,7 +1940,7 @@ json::iterator::iterator(json* j) : object_(j)
                 vi_ = new array_t::iterator(object_->value_.array->begin());
             }
         }
-        else if (object_->type_ == json::value_type::object)
+        else if (object_->type_ == json::value_t::object)
         {
             if (object_->empty())
             {
@@ -1894,7 +1958,7 @@ json::iterator::iterator(const json::iterator& o) : object_(o.object_)
 {
     if (object_ != nullptr)
     {
-        if (object_->type_ == json::value_type::array)
+        if (object_->type_ == json::value_t::array)
         {
             if (object_->empty())
             {
@@ -1905,7 +1969,7 @@ json::iterator::iterator(const json::iterator& o) : object_(o.object_)
                 vi_ = new array_t::iterator(object_->value_.array->begin());
             }
         }
-        else if (object_->type_ == json::value_type::object)
+        else if (object_->type_ == json::value_t::object)
         {
             if (object_->empty())
             {
@@ -1942,11 +2006,11 @@ bool json::iterator::operator==(const json::iterator& o) const
 
     if (object_ != nullptr)
     {
-        if (object_->type_ == json::value_type::array)
+        if (object_->type_ == json::value_t::array)
         {
             return (vi_ == o.vi_);
         }
-        if (object_->type_ == json::value_type::object)
+        if (object_->type_ == json::value_t::object)
         {
             return (oi_ == o.oi_);
         }
@@ -1970,7 +2034,7 @@ json::iterator& json::iterator::operator++()
 
     switch (object_->type_)
     {
-        case (json::value_type::array):
+        case (json::value_t::array):
         {
             if (++(*vi_) == object_->value_.array->end())
             {
@@ -1978,7 +2042,7 @@ json::iterator& json::iterator::operator++()
             }
             break;
         }
-        case (json::value_type::object):
+        case (json::value_t::object):
         {
             if (++(*oi_) == object_->value_.object->end())
             {
@@ -2004,11 +2068,11 @@ json& json::iterator::operator*() const
 
     switch (object_->type_)
     {
-        case (json::value_type::array):
+        case (json::value_t::array):
         {
             return **vi_;
         }
-        case (json::value_type::object):
+        case (json::value_t::object):
         {
             return (*oi_)->second;
         }
@@ -2029,11 +2093,11 @@ json* json::iterator::operator->() const
 
     switch (object_->type_)
     {
-        case (json::value_type::array):
+        case (json::value_t::array):
         {
             return &(**vi_);
         }
-        case (json::value_type::object):
+        case (json::value_t::object):
         {
             return &((*oi_)->second);
         }
@@ -2046,7 +2110,7 @@ json* json::iterator::operator->() const
 
 std::string json::iterator::key() const
 {
-    if (object_ != nullptr and object_->type_ == json::value_type::object)
+    if (object_ != nullptr and object_->type_ == json::value_t::object)
     {
         return (*oi_)->first;
     }
@@ -2066,11 +2130,11 @@ json& json::iterator::value() const
 
     switch (object_->type_)
     {
-        case (json::value_type::array):
+        case (json::value_t::array):
         {
             return **vi_;
         }
-        case (json::value_type::object):
+        case (json::value_t::object):
         {
             return (*oi_)->second;
         }
@@ -2086,7 +2150,7 @@ json::const_iterator::const_iterator(const json* j) : object_(j)
 {
     if (object_ != nullptr)
     {
-        if (object_->type_ == json::value_type::array)
+        if (object_->type_ == json::value_t::array)
         {
             if (object_->empty())
             {
@@ -2097,7 +2161,7 @@ json::const_iterator::const_iterator(const json* j) : object_(j)
                 vi_ = new array_t::const_iterator(object_->value_.array->begin());
             }
         }
-        else if (object_->type_ == json::value_type::object)
+        else if (object_->type_ == json::value_t::object)
         {
             if (object_->empty())
             {
@@ -2115,7 +2179,7 @@ json::const_iterator::const_iterator(const json::const_iterator& o) : object_(o.
 {
     if (object_ != nullptr)
     {
-        if (object_->type_ == json::value_type::array)
+        if (object_->type_ == json::value_t::array)
         {
             if (object_->empty())
             {
@@ -2126,7 +2190,7 @@ json::const_iterator::const_iterator(const json::const_iterator& o) : object_(o.
                 vi_ = new array_t::const_iterator(object_->value_.array->begin());
             }
         }
-        else if (object_->type_ == json::value_type::object)
+        else if (object_->type_ == json::value_t::object)
         {
             if (object_->empty())
             {
@@ -2144,7 +2208,7 @@ json::const_iterator::const_iterator(const json::iterator& o) : object_(o.object
 {
     if (object_ != nullptr)
     {
-        if (object_->type_ == json::value_type::array)
+        if (object_->type_ == json::value_t::array)
         {
             if (object_->empty())
             {
@@ -2155,7 +2219,7 @@ json::const_iterator::const_iterator(const json::iterator& o) : object_(o.object
                 vi_ = new array_t::const_iterator(object_->value_.array->begin());
             }
         }
-        else if (object_->type_ == json::value_type::object)
+        else if (object_->type_ == json::value_t::object)
         {
             if (object_->empty())
             {
@@ -2192,11 +2256,11 @@ bool json::const_iterator::operator==(const json::const_iterator& o) const
 
     if (object_ != nullptr)
     {
-        if (object_->type_ == json::value_type::array)
+        if (object_->type_ == json::value_t::array)
         {
             return (vi_ == o.vi_);
         }
-        if (object_->type_ == json::value_type::object)
+        if (object_->type_ == json::value_t::object)
         {
             return (oi_ == o.oi_);
         }
@@ -2220,7 +2284,7 @@ json::const_iterator& json::const_iterator::operator++()
 
     switch (object_->type_)
     {
-        case (json::value_type::array):
+        case (json::value_t::array):
         {
             if (++(*vi_) == object_->value_.array->end())
             {
@@ -2228,7 +2292,7 @@ json::const_iterator& json::const_iterator::operator++()
             }
             break;
         }
-        case (json::value_type::object):
+        case (json::value_t::object):
         {
             if (++(*oi_) == object_->value_.object->end())
             {
@@ -2254,11 +2318,11 @@ const json& json::const_iterator::operator*() const
 
     switch (object_->type_)
     {
-        case (json::value_type::array):
+        case (json::value_t::array):
         {
             return **vi_;
         }
-        case (json::value_type::object):
+        case (json::value_t::object):
         {
             return (*oi_)->second;
         }
@@ -2279,11 +2343,11 @@ const json* json::const_iterator::operator->() const
 
     switch (object_->type_)
     {
-        case (json::value_type::array):
+        case (json::value_t::array):
         {
             return &(**vi_);
         }
-        case (json::value_type::object):
+        case (json::value_t::object):
         {
             return &((*oi_)->second);
         }
@@ -2296,7 +2360,7 @@ const json* json::const_iterator::operator->() const
 
 std::string json::const_iterator::key() const
 {
-    if (object_ != nullptr and object_->type_ == json::value_type::object)
+    if (object_ != nullptr and object_->type_ == json::value_t::object)
     {
         return (*oi_)->first;
     }
@@ -2316,11 +2380,11 @@ const json& json::const_iterator::value() const
 
     switch (object_->type_)
     {
-        case (json::value_type::array):
+        case (json::value_t::array):
         {
             return **vi_;
         }
-        case (json::value_type::object):
+        case (json::value_t::object):
         {
             return (*oi_)->second;
         }
@@ -2390,7 +2454,7 @@ json json::parser::parse()
         case ('{'):
         {
             // explicitly set result to object to cope with {}
-            json result(value_type::object);
+            json result(value_t::object);
 
             next();
 
@@ -2421,7 +2485,7 @@ json json::parser::parse()
         case ('['):
         {
             // explicitly set result to array to cope with []
-            json result(value_type::array);
+            json result(value_t::array);
 
             next();
 
