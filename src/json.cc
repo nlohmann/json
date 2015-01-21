@@ -1245,50 +1245,28 @@ json::const_iterator json::find(const std::string& key) const
 
 json::iterator json::find(const char* key)
 {
-    if (type_ != value_t::object)
+    auto result = end();
+
+    if (type_ == value_t::object)
     {
-        return end();
+        result.oi_ = new object_t::iterator(value_.object->find(key));
+        result.invalid = (*(result.oi_) == value_.object->end());
     }
-    else
-    {
-        const object_t::iterator i = value_.object->find(key);
-        if (i != value_.object->end())
-        {
-            json::iterator result(this);
-            delete result.oi_;
-            result.oi_ = nullptr;
-            result.oi_ = new object_t::iterator(i);
-            return result;
-        }
-        else
-        {
-            return end();
-        }
-    }
+
+    return result;
 }
 
 json::const_iterator json::find(const char* key) const
 {
-    if (type_ != value_t::object)
+    auto result = cend();
+
+    if (type_ == value_t::object)
     {
-        return end();
+        result.oi_ = new object_t::const_iterator(value_.object->find(key));
+        result.invalid = (*(result.oi_) == value_.object->cend());
     }
-    else
-    {
-        const object_t::const_iterator i = value_.object->find(key);
-        if (i != value_.object->end())
-        {
-            json::const_iterator result(this);
-            delete result.oi_;
-            result.oi_ = nullptr;
-            result.oi_ = new object_t::const_iterator(i);
-            return result;
-        }
-        else
-        {
-            return end();
-        }
-    }
+
+    return result;
 }
 
 bool json::operator==(const json& o) const noexcept
@@ -1372,90 +1350,78 @@ bool json::operator!=(const json& o) const noexcept
 
 json::iterator json::begin() noexcept
 {
-    return json::iterator(this);
+    return json::iterator(this, true);
 }
 
 json::iterator json::end() noexcept
 {
-    return json::iterator();
+    return json::iterator(this, false);
 }
 
 json::const_iterator json::begin() const noexcept
 {
-    return json::const_iterator(this);
+    return json::const_iterator(this, true);
 }
 
 json::const_iterator json::end() const noexcept
 {
-    return json::const_iterator();
+    return json::const_iterator(this, false);
 }
 
 json::const_iterator json::cbegin() const noexcept
 {
-    return json::const_iterator(this);
+    return json::const_iterator(this, true);
 }
 
 json::const_iterator json::cend() const noexcept
 {
-    return json::const_iterator();
+    return json::const_iterator(this, false);
 }
 
 
-json::iterator::iterator(json* j) : object_(j)
+json::iterator::iterator(json* j, bool begin)
+    : object_(j), invalid(not begin or j == nullptr)
 {
     if (object_ != nullptr)
     {
         if (object_->type_ == json::value_t::array)
         {
-            if (object_->empty())
+            if (begin)
             {
-                object_ = nullptr;
+                vi_ = new array_t::iterator(object_->value_.array->begin());
+                invalid = (*vi_ == object_->value_.array->end());
             }
             else
             {
-                vi_ = new array_t::iterator(object_->value_.array->begin());
+                vi_ = new array_t::iterator(object_->value_.array->end());
             }
         }
         else if (object_->type_ == json::value_t::object)
         {
-            if (object_->empty())
+            if (begin)
             {
-                object_ = nullptr;
+                oi_ = new object_t::iterator(object_->value_.object->begin());
+                invalid = (*oi_ == object_->value_.object->end());
             }
             else
             {
-                oi_ = new object_t::iterator(object_->value_.object->begin());
+                oi_ = new object_t::iterator(object_->value_.object->end());
             }
         }
     }
 }
 
-json::iterator::iterator(const json::iterator& o) : object_(o.object_)
+json::iterator::iterator(const json::iterator& o)
+    : object_(o.object_), invalid(o.invalid)
 {
-    if (object_ != nullptr)
+    if (o.vi_ != nullptr)
     {
-        if (object_->type_ == json::value_t::array)
-        {
-            if (object_->empty())
-            {
-                object_ = nullptr;
-            }
-            else
-            {
-                vi_ = new array_t::iterator(object_->value_.array->begin());
-            }
-        }
-        else if (object_->type_ == json::value_t::object)
-        {
-            if (object_->empty())
-            {
-                object_ = nullptr;
-            }
-            else
-            {
-                oi_ = new object_t::iterator(object_->value_.object->begin());
-            }
-        }
+        vi_ = new array_t::iterator(*(o.vi_));
+    }
+
+    if (o.oi_ != nullptr)
+    {
+        oi_ = new object_t::iterator(*(o.oi_));
     }
 }
 
@@ -1470,29 +1436,29 @@ json::iterator& json::iterator::operator=(json::iterator o)
     std::swap(object_, o.object_);
     std::swap(vi_, o.vi_);
     std::swap(oi_, o.oi_);
+    std::swap(invalid, o.invalid);
     return *this;
 }
 
 bool json::iterator::operator==(const json::iterator& o) const
 {
-    if (object_ != o.object_)
+    if (object_ != nullptr and o.object_ != nullptr)
     {
-        return false;
-    }
-
-    if (object_ != nullptr)
-    {
-        if (object_->type_ == json::value_t::array)
+        if (object_->type_ == json::value_t::array and o.object_->type_ == json::value_t::array)
         {
-            return (vi_ == o.vi_);
+            return (*vi_ == *(o.vi_));
         }
-        if (object_->type_ == json::value_t::object)
+        if (object_->type_ == json::value_t::object and o.object_->type_ == json::value_t::object)
         {
-            return (oi_ == o.oi_);
+            return (*oi_ == *(o.oi_));
+        }
+
+        if (invalid == o.invalid and object_ == o.object_)
+        {
+            return true;
         }
     }
-
-    return true;
+    return false;
 }
 
 bool json::iterator::operator!=(const json::iterator& o) const
@@ -1502,44 +1468,38 @@ bool json::iterator::operator!=(const json::iterator& o) const
 
 json::iterator& json::iterator::operator++()
 {
-    // iterator cannot be incremented
-    if (object_ == nullptr)
+    if (object_ != nullptr)
     {
-        return *this;
+        switch (object_->type_)
+        {
+            case (json::value_t::array):
+            {
+                std::advance(*vi_, 1);
+                invalid = (*vi_ == object_->value_.array->end());
+                break;
+            }
+            case (json::value_t::object):
+            {
+                std::advance(*oi_, 1);
+                invalid = (*oi_ == object_->value_.object->end());
+                break;
+            }
+            default:
+            {
+                invalid = true;
+                break;
+            }
+        }
     }
 
-    switch (object_->type_)
-    {
-        case (json::value_t::array):
-        {
-            if (++(*vi_) == object_->value_.array->end())
-            {
-                object_ = nullptr;
-            }
-            break;
-        }
-        case (json::value_t::object):
-        {
-            if (++(*oi_) == object_->value_.object->end())
-            {
-                object_ = nullptr;
-            }
-            break;
-        }
-        default:
-        {
-            object_ = nullptr;
-        }
-    }
     return *this;
 }
 
 json& json::iterator::operator*() const
 {
-    // dereferencing end() is an error
-    if (object_ == nullptr)
+    if (object_ == nullptr or invalid)
     {
-        throw std::runtime_error("cannot get value");
+        throw std::out_of_range("cannot get value");
     }
 
     switch (object_->type_)
@@ -1561,10 +1521,9 @@ json& json::iterator::operator*() const
 
 json* json::iterator::operator->() const
 {
-    // dereferencing end() is an error
-    if (object_ == nullptr)
+    if (object_ == nullptr or invalid)
     {
-        throw std::runtime_error("cannot get value");
+        throw std::out_of_range("cannot get value");
     }
 
     switch (object_->type_)
@@ -1586,20 +1545,17 @@ json* json::iterator::operator->() const
 
 std::string json::iterator::key() const
 {
-    if (object_ != nullptr and object_->type_ == json::value_t::object)
+    if (object_ == nullptr or invalid or object_->type_ != json::value_t::object)
     {
-        return (*oi_)->first;
+        throw std::out_of_range("cannot get value");
     }
-    else
-    {
-        throw std::out_of_range("cannot get key");
-    }
+
+    return (*oi_)->first;
 }
 
 json& json::iterator::value() const
 {
-    // dereferencing end() is an error
-    if (object_ == nullptr)
+    if (object_ == nullptr or invalid)
     {
         throw std::out_of_range("cannot get value");
     }
@@ -1622,90 +1578,61 @@ json& json::iterator::value() const
 }
 
 
-json::const_iterator::const_iterator(const json* j) : object_(j)
+json::const_iterator::const_iterator(const json* j, bool begin)
+    : object_(j), invalid(not begin or j == nullptr)
 {
     if (object_ != nullptr)
     {
         if (object_->type_ == json::value_t::array)
         {
-            if (object_->empty())
+            if (begin)
             {
-                object_ = nullptr;
+                vi_ = new array_t::const_iterator(object_->value_.array->cbegin());
+                invalid = (*vi_ == object_->value_.array->cend());
             }
             else
             {
-                vi_ = new array_t::const_iterator(object_->value_.array->begin());
+                vi_ = new array_t::const_iterator(object_->value_.array->cend());
             }
         }
         else if (object_->type_ == json::value_t::object)
         {
-            if (object_->empty())
+            if (begin)
             {
-                object_ = nullptr;
+                oi_ = new object_t::const_iterator(object_->value_.object->cbegin());
+                invalid = (*oi_ == object_->value_.object->cend());
             }
             else
             {
-                oi_ = new object_t::const_iterator(object_->value_.object->begin());
+                oi_ = new object_t::const_iterator(object_->value_.object->cend());
             }
         }
     }
 }
 
-json::const_iterator::const_iterator(const json::const_iterator& o) : object_(o.object_)
+json::const_iterator::const_iterator(const json::const_iterator& o)
+    : object_(o.object_), invalid(o.invalid)
 {
-    if (object_ != nullptr)
+    if (o.vi_ != nullptr)
     {
-        if (object_->type_ == json::value_t::array)
-        {
-            if (object_->empty())
-            {
-                object_ = nullptr;
-            }
-            else
-            {
-                vi_ = new array_t::const_iterator(object_->value_.array->begin());
-            }
-        }
-        else if (object_->type_ == json::value_t::object)
-        {
-            if (object_->empty())
-            {
-                object_ = nullptr;
-            }
-            else
-            {
-                oi_ = new object_t::const_iterator(object_->value_.object->begin());
-            }
-        }
+        vi_ = new array_t::const_iterator(*(o.vi_));
+    }
+    if (o.oi_ != nullptr)
+    {
+        oi_ = new object_t::const_iterator(*(o.oi_));
     }
 }
 
-json::const_iterator::const_iterator(const json::iterator& o) : object_(o.object_)
+json::const_iterator::const_iterator(const json::iterator& o)
+    : object_(o.object_), invalid(o.invalid)
 {
-    if (object_ != nullptr)
+    if (o.vi_ != nullptr)
     {
-        if (object_->type_ == json::value_t::array)
-        {
-            if (object_->empty())
-            {
-                object_ = nullptr;
-            }
-            else
-            {
-                vi_ = new array_t::const_iterator(object_->value_.array->begin());
-            }
-        }
-        else if (object_->type_ == json::value_t::object)
-        {
-            if (object_->empty())
-            {
-                object_ = nullptr;
-            }
-            else
-            {
-                oi_ = new object_t::const_iterator(object_->value_.object->begin());
-            }
-        }
+        vi_ = new array_t::const_iterator(*(o.vi_));
+    }
+    if (o.oi_ != nullptr)
+    {
+        oi_ = new object_t::const_iterator(*(o.oi_));
     }
 }
 
@@ -1720,29 +1647,29 @@ json::const_iterator& json::const_iterator::operator=(json::const_iterator o)
     std::swap(object_, o.object_);
     std::swap(vi_, o.vi_);
     std::swap(oi_, o.oi_);
+    std::swap(invalid, o.invalid);
     return *this;
 }
 
 bool json::const_iterator::operator==(const json::const_iterator& o) const
 {
-    if (object_ != o.object_)
+    if (object_ != nullptr and o.object_ != nullptr)
     {
-        return false;
+        if (object_->type_ == json::value_t::array and o.object_->type_ == json::value_t::array)
+        {
+            return (*vi_ == *(o.vi_));
+        }
+        if (object_->type_ == json::value_t::object and o.object_->type_ == json::value_t::object)
+        {
+            return (*oi_ == *(o.oi_));
+        }
+        if (invalid == o.invalid and object_ == o.object_)
+        {
+            return true;
+        }
     }
 
-    if (object_ != nullptr)
-    {
-        if (object_->type_ == json::value_t::array)
-        {
-            return (vi_ == o.vi_);
-        }
-        if (object_->type_ == json::value_t::object)
-        {
-            return (oi_ == o.oi_);
-        }
-    }
-
-    return true;
+    return false;
 }
 
 bool json::const_iterator::operator!=(const json::const_iterator& o) const
@@ -1752,44 +1679,38 @@ bool json::const_iterator::operator!=(const json::const_iterator& o) const
 
 json::const_iterator& json::const_iterator::operator++()
 {
-    // iterator cannot be incremented
-    if (object_ == nullptr)
+    if (object_ != nullptr)
     {
-        return *this;
+        switch (object_->type_)
+        {
+            case (json::value_t::array):
+            {
+                std::advance(*vi_, 1);
+                invalid = (*vi_ == object_->value_.array->end());
+                break;
+            }
+            case (json::value_t::object):
+            {
+                std::advance(*oi_, 1);
+                invalid = (*oi_ == object_->value_.object->end());
+                break;
+            }
+            default:
+            {
+                invalid = true;
+                break;
+            }
+        }
     }
 
-    switch (object_->type_)
-    {
-        case (json::value_t::array):
-        {
-            if (++(*vi_) == object_->value_.array->end())
-            {
-                object_ = nullptr;
-            }
-            break;
-        }
-        case (json::value_t::object):
-        {
-            if (++(*oi_) == object_->value_.object->end())
-            {
-                object_ = nullptr;
-            }
-            break;
-        }
-        default:
-        {
-            object_ = nullptr;
-        }
-    }
     return *this;
 }
 
 const json& json::const_iterator::operator*() const
 {
-    // dereferencing end() is an error
-    if (object_ == nullptr)
+    if (object_ == nullptr or invalid)
     {
-        throw std::runtime_error("cannot get value");
+        throw std::out_of_range("cannot get value");
     }
 
     switch (object_->type_)
@@ -1811,10 +1732,9 @@ const json& json::const_iterator::operator*() const
 
 const json* json::const_iterator::operator->() const
 {
-    // dereferencing end() is an error
-    if (object_ == nullptr)
+    if (object_ == nullptr or invalid)
     {
-        throw std::runtime_error("cannot get value");
+        throw std::out_of_range("cannot get value");
     }
 
     switch (object_->type_)
@@ -1836,20 +1756,17 @@ const json* json::const_iterator::operator->() const
 
 std::string json::const_iterator::key() const
 {
-    if (object_ != nullptr and object_->type_ == json::value_t::object)
+    if (object_ == nullptr or invalid or object_->type_ != json::value_t::object)
     {
-        return (*oi_)->first;
+        throw std::out_of_range("cannot get value");
     }
-    else
-    {
-        throw std::out_of_range("cannot get key");
-    }
+
+    return (*oi_)->first;
 }
 
 const json& json::const_iterator::value() const
 {
-    // dereferencing end() is an error
-    if (object_ == nullptr)
+    if (object_ == nullptr or invalid)
     {
         throw std::out_of_range("cannot get value");
     }

@@ -42,11 +42,12 @@ due to alignment.
 */
 class json
 {
-  public:
+  private:
     // forward declaration to friend this class
     class iterator;
     class const_iterator;
 
+  public:
     // container types
     using value_type = json;
     using reference = json&;
@@ -371,15 +372,15 @@ class json
     /// the payload
     value value_ {};
 
-  public:
+  private:
     /// an iterator
-    class iterator : public std::iterator<std::forward_iterator_tag, json>
+    class iterator : private std::iterator<std::forward_iterator_tag, json>
     {
         friend class json;
         friend class json::const_iterator;
       public:
         iterator() = default;
-        iterator(json*);
+        iterator(json*, bool);
         iterator(const iterator&);
         ~iterator();
 
@@ -402,16 +403,18 @@ class json
         array_t::iterator* vi_ = nullptr;
         /// an iterator for JSON objects
         object_t::iterator* oi_ = nullptr;
+        /// whether iterator points to a valid object
+        bool invalid = true;
     };
 
     /// a const iterator
-    class const_iterator : public std::iterator<std::forward_iterator_tag, const json>
+    class const_iterator : private std::iterator<std::forward_iterator_tag, const json>
     {
         friend class json;
 
       public:
         const_iterator() = default;
-        const_iterator(const json*);
+        const_iterator(const json*, bool);
         const_iterator(const const_iterator&);
         const_iterator(const json::iterator&);
         ~const_iterator();
@@ -435,6 +438,8 @@ class json
         array_t::const_iterator* vi_ = nullptr;
         /// an iterator for JSON objects
         object_t::const_iterator* oi_ = nullptr;
+        /// whether iterator reached past the end
+        bool invalid = true;
     };
 
   private:
