@@ -1380,6 +1380,26 @@ json::const_iterator json::cend() const noexcept
     return json::const_iterator(this, false);
 }
 
+json::reverse_iterator json::rbegin() noexcept
+{
+    return reverse_iterator(end());
+}
+
+json::reverse_iterator json::rend() noexcept
+{
+    return reverse_iterator(begin());
+}
+
+json::const_reverse_iterator json::crbegin() const noexcept
+{
+    return const_reverse_iterator(cend());
+}
+
+json::const_reverse_iterator json::crend() const noexcept
+{
+    return const_reverse_iterator(cbegin());
+}
+
 
 json::iterator::iterator(json* j, bool begin)
     : object_(j), invalid(not begin or j == nullptr)
@@ -1484,6 +1504,35 @@ json::iterator& json::iterator::operator++()
             {
                 std::advance(*oi_, 1);
                 invalid = (*oi_ == object_->value_.object->end());
+                break;
+            }
+            default:
+            {
+                invalid = true;
+                break;
+            }
+        }
+    }
+
+    return *this;
+}
+
+json::iterator& json::iterator::operator--()
+{
+    if (object_ != nullptr)
+    {
+        switch (object_->type_)
+        {
+            case (json::value_t::array):
+            {
+                invalid = (*vi_ == object_->value_.array->begin());
+                std::advance(*vi_, -1);
+                break;
+            }
+            case (json::value_t::object):
+            {
+                invalid = (*oi_ == object_->value_.object->begin());
+                std::advance(*oi_, -1);
                 break;
             }
             default:
@@ -1695,6 +1744,35 @@ json::const_iterator& json::const_iterator::operator++()
             {
                 std::advance(*oi_, 1);
                 invalid = (*oi_ == object_->value_.object->end());
+                break;
+            }
+            default:
+            {
+                invalid = true;
+                break;
+            }
+        }
+    }
+
+    return *this;
+}
+
+json::const_iterator& json::const_iterator::operator--()
+{
+    if (object_ != nullptr)
+    {
+        switch (object_->type_)
+        {
+            case (json::value_t::array):
+            {
+                invalid = (*vi_ == object_->value_.array->begin());
+                std::advance(*vi_, -1);
+                break;
+            }
+            case (json::value_t::object):
+            {
+                invalid = (*oi_ == object_->value_.object->begin());
+                std::advance(*oi_, -1);
                 break;
             }
             default:
@@ -1944,7 +2022,7 @@ json json::parser::parse()
 
             try
             {
-                const auto float_val = std::stod(buffer_.substr(_firstpos_, pos_ - _firstpos_));
+                const auto float_val = std::stold(buffer_.substr(_firstpos_, pos_ - _firstpos_));
                 const auto int_val = static_cast<number_t>(float_val);
 
                 // check if conversion loses precision
@@ -1956,7 +2034,7 @@ json json::parser::parse()
                 else
                 {
                     // we would lose precision -> float
-                    return json(float_val);
+                    return json(static_cast<number_float_t>(float_val));
                 }
             }
             catch (...)

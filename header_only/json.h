@@ -37,27 +37,38 @@ due to alignment.
      that are forbidden by the standard, but are accepted by the parser.
 
 @todo Implement json::insert(), json::emplace(), json::emplace_back, json::erase
-@todo Implement json::reverse_iterator, json::const_reverse_iterator,
-      json::rbegin(), json::rend(), json::crbegin(), json::crend()?
 */
 class json
 {
-  private:
+  public:
     // forward declaration to friend this class
     class iterator;
     class const_iterator;
 
   public:
     // container types
+    /// the type of elements in a JSON class
     using value_type = json;
+    /// the type of element references
     using reference = json&;
+    /// the type of const element references
     using const_reference = const json&;
+    /// the type of pointers to elements
     using pointer = json*;
+    /// the type of const pointers to elements
     using const_pointer = const json*;
-    using iterator = json::iterator;
-    using const_iterator = json::const_iterator;
+    /// a type to represent differences between iterators
     using difference_type = std::ptrdiff_t;
+    /// a type to represent container sizes
     using size_type = std::size_t;
+    /// an iterator for a JSON container
+    using iterator = json::iterator;
+    /// a const iterator for a JSON container
+    using const_iterator = json::const_iterator;
+    /// a reverse iterator for a JSON container
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    /// a const reverse iterator for a JSON container
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
     /// a type for an object
     using object_t = std::map<std::string, json>;
@@ -151,7 +162,10 @@ class json
     /// create from an initializer list (to an array or object)
     json(list_init_t);
 
-    /// create a number object (integer)
+    /*!
+    @brief create a number object (integer)
+    @param n  an integer number to wrap in a JSON object
+    */
     template<typename T, typename
              std::enable_if<
                  std::numeric_limits<T>::is_integer, T>::type
@@ -161,7 +175,10 @@ class json
           value_(static_cast<number_t>(n))
     {}
 
-    /// create a number object (float)
+    /*!
+    @brief create a number object (float)
+    @param n  a floating point number to wrap in a JSON object
+    */
     template<typename T, typename = typename
              std::enable_if<
                  std::is_floating_point<T>::value>::type
@@ -171,7 +188,11 @@ class json
           value_(static_cast<number_float_t>(n))
     {}
 
-    /// create an array object
+    /*!
+    @brief create an array object
+    @param v  any type of container whose elements can be use to construct
+              JSON objects (e.g., std::vector, std::set, std::array)
+    */
     template <class V, typename
               std::enable_if<
                   not std::is_same<V, json::const_iterator>::value and
@@ -181,7 +202,11 @@ class json
     json(const V& v) : json(array_t(v.begin(), v.end()))
     {}
 
-    /// create a JSON object
+    /*!
+    @brief create a JSON object
+    @param v  any type of associative container whose elements can be use to
+              construct JSON objects (e.g., std::map<std::string, *>)
+    */
     template <class V, typename
               std::enable_if<
                   std::is_constructible<std::string, typename V::key_type>::value and
@@ -364,6 +389,14 @@ class json
     const_iterator cbegin() const noexcept;
     /// returns an iterator to the end (array/object)
     const_iterator cend() const noexcept;
+    /// returns a reverse iterator to the beginning
+    reverse_iterator rbegin() noexcept;
+    /// returns a reverse iterator to the end
+    reverse_iterator rend() noexcept;
+    /// returns a reverse iterator to the beginning
+    const_reverse_iterator crbegin() const noexcept;
+    /// returns a reverse iterator to the end
+    const_reverse_iterator crend() const noexcept;
 
   private:
     /// the type of this object
@@ -372,12 +405,13 @@ class json
     /// the payload
     value value_ {};
 
-  private:
+  public:
     /// an iterator
-    class iterator : private std::iterator<std::forward_iterator_tag, json>
+    class iterator : public std::iterator<std::bidirectional_iterator_tag, json>
     {
         friend class json;
         friend class json::const_iterator;
+
       public:
         iterator() = default;
         iterator(json*, bool);
@@ -388,6 +422,7 @@ class json
         bool operator==(const iterator&) const;
         bool operator!=(const iterator&) const;
         iterator& operator++();
+        iterator& operator--();
         json& operator*() const;
         json* operator->() const;
 
@@ -408,7 +443,7 @@ class json
     };
 
     /// a const iterator
-    class const_iterator : private std::iterator<std::forward_iterator_tag, const json>
+    class const_iterator : public std::iterator<std::bidirectional_iterator_tag, const json>
     {
         friend class json;
 
@@ -423,6 +458,7 @@ class json
         bool operator==(const const_iterator&) const;
         bool operator!=(const const_iterator&) const;
         const_iterator& operator++();
+        const_iterator& operator--();
         const json& operator*() const;
         const json* operator->() const;
 
@@ -1909,6 +1945,26 @@ json::const_iterator json::cend() const noexcept
     return json::const_iterator(this, false);
 }
 
+json::reverse_iterator json::rbegin() noexcept
+{
+    return reverse_iterator(end());
+}
+
+json::reverse_iterator json::rend() noexcept
+{
+    return reverse_iterator(begin());
+}
+
+json::const_reverse_iterator json::crbegin() const noexcept
+{
+    return const_reverse_iterator(cend());
+}
+
+json::const_reverse_iterator json::crend() const noexcept
+{
+    return const_reverse_iterator(cbegin());
+}
+
 
 json::iterator::iterator(json* j, bool begin)
     : object_(j), invalid(not begin or j == nullptr)
@@ -2013,6 +2069,35 @@ json::iterator& json::iterator::operator++()
             {
                 std::advance(*oi_, 1);
                 invalid = (*oi_ == object_->value_.object->end());
+                break;
+            }
+            default:
+            {
+                invalid = true;
+                break;
+            }
+        }
+    }
+
+    return *this;
+}
+
+json::iterator& json::iterator::operator--()
+{
+    if (object_ != nullptr)
+    {
+        switch (object_->type_)
+        {
+            case (json::value_t::array):
+            {
+                invalid = (*vi_ == object_->value_.array->begin());
+                std::advance(*vi_, -1);
+                break;
+            }
+            case (json::value_t::object):
+            {
+                invalid = (*oi_ == object_->value_.object->begin());
+                std::advance(*oi_, -1);
                 break;
             }
             default:
@@ -2224,6 +2309,35 @@ json::const_iterator& json::const_iterator::operator++()
             {
                 std::advance(*oi_, 1);
                 invalid = (*oi_ == object_->value_.object->end());
+                break;
+            }
+            default:
+            {
+                invalid = true;
+                break;
+            }
+        }
+    }
+
+    return *this;
+}
+
+json::const_iterator& json::const_iterator::operator--()
+{
+    if (object_ != nullptr)
+    {
+        switch (object_->type_)
+        {
+            case (json::value_t::array):
+            {
+                invalid = (*vi_ == object_->value_.array->begin());
+                std::advance(*vi_, -1);
+                break;
+            }
+            case (json::value_t::object):
+            {
+                invalid = (*oi_ == object_->value_.object->begin());
+                std::advance(*oi_, -1);
                 break;
             }
             default:
@@ -2473,7 +2587,7 @@ json json::parser::parse()
 
             try
             {
-                const auto float_val = std::stod(buffer_.substr(_firstpos_, pos_ - _firstpos_));
+                const auto float_val = std::stold(buffer_.substr(_firstpos_, pos_ - _firstpos_));
                 const auto int_val = static_cast<number_t>(float_val);
 
                 // check if conversion loses precision
@@ -2485,7 +2599,7 @@ json json::parser::parse()
                 else
                 {
                     // we would lose precision -> float
-                    return json(float_val);
+                    return json(static_cast<number_float_t>(float_val));
                 }
             }
             catch (...)

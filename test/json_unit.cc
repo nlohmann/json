@@ -657,6 +657,14 @@ TEST_CASE("object")
             CHECK(it->type() == json::value_t::number);
         }
 
+        for (json::reverse_iterator it = j1.rbegin(); it != j1.rend(); ++it)
+        {
+        }
+
+        for (json::const_reverse_iterator it = j1.crbegin(); it != j1.crend(); ++it)
+        {
+        }
+
         // range-based for
         for (auto& element : j1)
         {
@@ -2055,6 +2063,10 @@ TEST_CASE("Parser")
         CHECK(json::parse("10000.0E-0") == json(10000));
         CHECK(json::parse("10000.0E-1") == json(1000));
         CHECK(json::parse("10000.0E-4") == json(1));
+
+        // 64 bit integers
+        CHECK(json::parse("9223372036854775807") == json(9223372036854775807));
+        CHECK(json::parse("-9223372036854775807") == json(-9223372036854775807));
 
         // trailing zero is not allowed
         //CHECK_THROWS_AS(json::parse("01"), std::invalid_argument);
