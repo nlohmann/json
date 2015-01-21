@@ -262,6 +262,7 @@ I deeply appreciate the help of the following people.
 - [elliotgoodrich](https://github.com/elliotgoodrich) fixed an issue with double deletion in the iterator classes.
 - [kirkshoop](https://github.com/kirkshoop) made the iterators of the class composable to other libraries.
 - [wancw](https://github.com/wanwc) fixed a bug that hindered the class to compile with Clang.
+- Tomas Åblad found a bug in the iterator implementation.
 
 Thanks a lot for helping out!
 

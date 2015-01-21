@@ -2065,8 +2065,8 @@ TEST_CASE("Parser")
         CHECK(json::parse("10000.0E-4") == json(1));
 
         // 64 bit integers
-        CHECK(json::parse("9223372036854775807") == json(9223372036854775807));
-        CHECK(json::parse("-9223372036854775807") == json(-9223372036854775807));
+        CHECK(json::parse("9000000000000000000") == json(9000000000000000000));
+        CHECK(json::parse("-9000000000000000000") == json(-9000000000000000000));
 
         // trailing zero is not allowed
         //CHECK_THROWS_AS(json::parse("01"), std::invalid_argument);
