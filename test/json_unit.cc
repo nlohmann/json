@@ -939,12 +939,10 @@ TEST_CASE("null")
         CHECK(n2 == json());
 
         json::iterator it = n1.begin();
-        ++it;
-        CHECK(it == n1.end());
+        --it;
 
         json::const_iterator cit = n1.cbegin();
-        ++cit;
-        CHECK(cit == n1.cend());
+        --cit;
     }
 }
 
