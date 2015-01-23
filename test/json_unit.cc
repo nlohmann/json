@@ -222,6 +222,14 @@ TEST_CASE("array")
             }
         }
         {
+            for (json::const_reverse_iterator it = j1.rbegin(); it != j1.crend(); ++it)
+            {
+            }
+            for (json::reverse_iterator it = j1.rbegin(); it != j1.rend(); ++it)
+            {
+            }
+        }
+        {
             // const_iterator with cbegin/cend
             for (json::const_iterator cit = j1.cbegin(); cit != j1.cend(); ++cit)
             {
@@ -661,10 +669,6 @@ TEST_CASE("object")
         {
         }
 
-        for (json::const_reverse_iterator it = j1.crbegin(); it != j1.crend(); ++it)
-        {
-        }
-
         // range-based for
         for (auto& element : j1)
         {
@@ -694,6 +698,10 @@ TEST_CASE("object")
 
             CHECK((*it).type() == json::value_t::number);
             CHECK(it->type() == json::value_t::number);
+        }
+
+        for (json::const_reverse_iterator it = j1.crbegin(); it != j1.crend(); ++it)
+        {
         }
 
         // const_iterator using cbegin/cend
