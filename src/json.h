@@ -192,11 +192,14 @@ class json
     @brief create an array object
     @param v  any type of container whose elements can be use to construct
               JSON objects (e.g., std::vector, std::set, std::array)
+    @note For some reason, we need to explicitly forbid JSON iterator types.
     */
     template <class V, typename
               std::enable_if<
-                  not std::is_same<V, json::const_iterator>::value and
                   not std::is_same<V, json::iterator>::value and
+                  not std::is_same<V, json::const_iterator>::value and
+                  not std::is_same<V, json::reverse_iterator>::value and
+                  not std::is_same<V, json::const_reverse_iterator>::value and
                   std::is_constructible<json, typename V::value_type>::value, int>::type
               = 0>
     json(const V& v) : json(array_t(v.begin(), v.end()))
@@ -325,9 +328,9 @@ class json
     void push_back(list_init_t);
 
     /// operator to set an element in an array
-    json& operator[](const int);
+    reference operator[](const int);
     /// operator to get an element in an array
-    const json& operator[](const int) const;
+    const_reference operator[](const int) const;
     /// operator to get an element in an array
     reference at(const int);
     /// operator to get an element in an array
@@ -339,6 +342,8 @@ class json
     reference operator[](const char*);
     /// operator to get an element in an object
     const_reference operator[](const std::string&) const;
+    /// operator to get an element in an object
+    const_reference operator[](const char*) const;
     /// operator to set an element in an object
     reference at(const std::string&);
     /// operator to set an element in an object

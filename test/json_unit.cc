@@ -505,6 +505,18 @@ TEST_CASE("object")
             CHECK(v4 == true);
         }
         {
+            const std::string v0 = k["k0"];
+            CHECK(v0 == "v0");
+            auto v1 = k["k1"];
+            CHECK(v1 == nullptr);
+            int v2 = k["k2"];
+            CHECK(v2 == 42);
+            double v3 = k["k3"];
+            CHECK(v3 == 3.141);
+            bool v4 = k["k4"];
+            CHECK(v4 == true);
+        }
+        {
             const std::string v0 = k[std::string("k0")];
             CHECK(v0 == "v0");
             auto v1 = k[std::string("k1")];
@@ -925,6 +937,12 @@ TEST_CASE("null")
 
         CHECK(n1 == json());
         CHECK(n2 == json());
+
+        json::reverse_iterator ri = n1.rbegin();
+        ri--;
+
+        json::const_reverse_iterator rci = n1.crbegin();
+        rci--;
     }
 }
 

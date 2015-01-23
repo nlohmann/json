@@ -982,6 +982,14 @@ json::reference json::operator[](const char* key)
 }
 
 /*!
+@copydoc json::operator[](const char* key)
+*/
+json::const_reference json::operator[](const std::string& key) const
+{
+    return operator[](key.c_str());
+}
+
+/*!
 This operator realizes read-only access to object elements given a string
 key.
 
@@ -992,7 +1000,7 @@ key.
 @exception std::domain_error if object is not an object
 @exception std::out_of_range if key is not found in object
 */
-json::const_reference json::operator[](const std::string& key) const
+json::const_reference json::operator[](const char* key) const
 {
     // this [] operator only works for objects
     if (type_ != value_t::object)
@@ -1007,7 +1015,7 @@ json::const_reference json::operator[](const std::string& key) const
     // make sure the key exists in the object
     if (it == value_.object->end())
     {
-        throw std::out_of_range("key " + key + " not found");
+        throw std::out_of_range("key " + std::string(key) + " not found");
     }
 
     // return element from array at given key

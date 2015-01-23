@@ -192,11 +192,14 @@ class json
     @brief create an array object
     @param v  any type of container whose elements can be use to construct
               JSON objects (e.g., std::vector, std::set, std::array)
+    @note For some reason, we need to explicitly forbid JSON iterator types.
     */
     template <class V, typename
               std::enable_if<
-                  not std::is_same<V, json::const_iterator>::value and
                   not std::is_same<V, json::iterator>::value and
+                  not std::is_same<V, json::const_iterator>::value and
+                  not std::is_same<V, json::reverse_iterator>::value and
+                  not std::is_same<V, json::const_reverse_iterator>::value and
                   std::is_constructible<json, typename V::value_type>::value, int>::type
               = 0>
     json(const V& v) : json(array_t(v.begin(), v.end()))
@@ -325,9 +328,9 @@ class json
     void push_back(list_init_t);
 
     /// operator to set an element in an array
-    json& operator[](const int);
+    reference operator[](const int);
     /// operator to get an element in an array
-    const json& operator[](const int) const;
+    const_reference operator[](const int) const;
     /// operator to get an element in an array
     reference at(const int);
     /// operator to get an element in an array
@@ -339,6 +342,8 @@ class json
     reference operator[](const char*);
     /// operator to get an element in an object
     const_reference operator[](const std::string&) const;
+    /// operator to get an element in an object
+    const_reference operator[](const char*) const;
     /// operator to set an element in an object
     reference at(const std::string&);
     /// operator to set an element in an object
@@ -1547,6 +1552,14 @@ json::reference json::operator[](const char* key)
 }
 
 /*!
+@copydoc json::operator[](const char* key)
+*/
+json::const_reference json::operator[](const std::string& key) const
+{
+    return operator[](key.c_str());
+}
+
+/*!
 This operator realizes read-only access to object elements given a string
 key.
 
@@ -1557,7 +1570,7 @@ key.
 @exception std::domain_error if object is not an object
 @exception std::out_of_range if key is not found in object
 */
-json::const_reference json::operator[](const std::string& key) const
+json::const_reference json::operator[](const char* key) const
 {
     // this [] operator only works for objects
     if (type_ != value_t::object)
@@ -1572,7 +1585,7 @@ json::const_reference json::operator[](const std::string& key) const
     // make sure the key exists in the object
     if (it == value_.object->end())
     {
-        throw std::out_of_range("key " + key + " not found");
+        throw std::out_of_range("key " + std::string(key) + " not found");
     }
 
     // return element from array at given key
