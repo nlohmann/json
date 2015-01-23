@@ -938,11 +938,13 @@ TEST_CASE("null")
         CHECK(n1 == json());
         CHECK(n2 == json());
 
-        json::reverse_iterator ri = n1.rbegin();
-        ri--;
+        json::iterator it = n1.begin();
+        ++it;
+        CHECK(it == n1.end());
 
-        json::const_reverse_iterator rci = n1.crbegin();
-        rci--;
+        json::const_iterator cit = n1.cbegin();
+        ++cit;
+        CHECK(cit == n1.cend());
     }
 }
 
