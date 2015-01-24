@@ -408,6 +408,11 @@ TEST_CASE("array")
         CHECK(j_vec.type() == json::value_t::array);
         CHECK(j_vec.size() == 4);
 
+        std::vector<std::vector<int>> cr_vector {{1, 2}, {3}, {4, 5, 6}};
+        json j_vecr(cr_vector);
+        CHECK(j_vecr.type() == json::value_t::array);
+        CHECK(j_vecr.size() == 3);
+
         std::set<std::string> c_set {"one", "two", "three", "four", "one"};
         json j_set(c_set);
         CHECK(j_set.type() == json::value_t::array);
