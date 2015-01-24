@@ -140,7 +140,7 @@ class json
     /// create an object according to given type
     json(const value_t);
     /// create a null object
-    json() = default;
+    json() noexcept;
     /// create a null object
     json(std::nullptr_t) noexcept;
     /// create a string object from a C++ string
@@ -160,7 +160,7 @@ class json
     /// create an object (move)
     json(object_t&&);
     /// create from an initializer list (to an array or object)
-    json(list_init_t);
+    json(list_init_t, bool = true, value_t = value_t::array);
 
     /*!
     @brief create a number object (integer)
@@ -171,7 +171,7 @@ class json
                  std::numeric_limits<T>::is_integer, T>::type
              = 0>
     json(const T n) noexcept
-        : type_(value_t::number),
+        : final_type_(0), type_(value_t::number),
           value_(static_cast<number_t>(n))
     {}
 
@@ -184,7 +184,7 @@ class json
                  std::is_floating_point<T>::value>::type
              >
     json(const T n) noexcept
-        : type_(value_t::number_float),
+        : final_type_(0), type_(value_t::number_float),
           value_(static_cast<number_float_t>(n))
     {}
 
@@ -228,6 +228,11 @@ class json
 
     /// destructor
     ~json() noexcept;
+
+    /// explicit keyword to force array creation
+    static json array(list_init_t = list_init_t());
+    /// explicit keyword to force object creation
+    static json object(list_init_t = list_init_t());
 
     /// create from string representation
     static json parse(const std::string&);
@@ -404,9 +409,10 @@ class json
     const_reverse_iterator crend() const noexcept;
 
   private:
+    /// whether the type is final
+    unsigned final_type_ : 1;
     /// the type of this object
     value_t type_ = value_t::null;
-
     /// the payload
     value value_ {};
 
@@ -654,6 +660,9 @@ json::json(const value_t t)
     }
 }
 
+json::json() noexcept : final_type_(0), type_(value_t::null)
+{}
+
 /*!
 Construct a null JSON object.
 */
@@ -666,35 +675,35 @@ Construct a string JSON object.
 @param s  a string to initialize the JSON object with
 */
 json::json(const std::string& s)
-    : type_(value_t::string), value_(new string_t(s))
+    : final_type_(0), type_(value_t::string), value_(new string_t(s))
 {}
 
 json::json(std::string&& s)
-    : type_(value_t::string), value_(new string_t(std::move(s)))
+    : final_type_(0), type_(value_t::string), value_(new string_t(std::move(s)))
 {}
 
 json::json(const char* s)
-    : type_(value_t::string), value_(new string_t(s))
+    : final_type_(0), type_(value_t::string), value_(new string_t(s))
 {}
 
 json::json(const bool b) noexcept
-    : type_(value_t::boolean), value_(b)
+    : final_type_(0), type_(value_t::boolean), value_(b)
 {}
 
 json::json(const array_t& a)
-    : type_(value_t::array), value_(new array_t(a))
+    : final_type_(0), type_(value_t::array), value_(new array_t(a))
 {}
 
 json::json(array_t&& a)
-    : type_(value_t::array), value_(new array_t(std::move(a)))
+    : final_type_(0), type_(value_t::array), value_(new array_t(std::move(a)))
 {}
 
 json::json(const object_t& o)
-    : type_(value_t::object), value_(new object_t(o))
+    : final_type_(0), type_(value_t::object), value_(new object_t(o))
 {}
 
 json::json(object_t&& o)
-    : type_(value_t::object), value_(new object_t(std::move(o)))
+    : final_type_(0), type_(value_t::object), value_(new object_t(std::move(o)))
 {}
 
 /*!
@@ -711,33 +720,90 @@ as is to create an array.
 
 @bug With the described approach, we would fail to recognize an array whose
      first element is again an arrays as array.
+
+@param a               an initializer list to create from
+@param type_deduction  whether the type (array/object) shall eb deducted
+@param manual_type     if type deduction is switched of, pass a manual type
 */
-json::json(list_init_t a)
+json::json(list_init_t a, bool type_deduction, value_t manual_type) : final_type_(0)
 {
+    // the initializer list could describe an object
+    bool is_object = true;
+
     // check if each element is an array with two elements whose first element
     // is a string
     for (const auto& element : a)
     {
-        if (element.type_ != value_t::array or
-                element.size() != 2 or
-                element[0].type_ != value_t::string)
+        if ((element.final_type_ == 1 and element.type_ == value_t::array)
+                or (element.type_ != value_t::array or element.size() != 2 or element[0].type_ != value_t::string))
         {
-
-            // the initializer list describes an array
-            type_ = value_t::array;
-            value_ = new array_t(a);
-            return;
+            // we found an element that makes it impossible to use the
+            // initializer list as object
+            is_object = false;
+            break;
         }
     }
 
-    // the initializer list is a list of pairs
-    type_ = value_t::object;
-    value_ = new object_t();
-    for (const json& element : a)
+    // adjust type if type deduction is not wanted
+    if (not type_deduction)
     {
-        const std::string k = element[0];
-        value_.object->emplace(std::make_pair(std::move(k),
-                                              std::move(element[1])));
+        // mark this object's type as final
+        final_type_ = 1;
+
+        // if array is wanted, do not create an object though possible
+        if (manual_type == value_t::array)
+        {
+            is_object = false;
+        }
+
+        // if object is wanted but impossible, throw an exception
+        if (manual_type == value_t::object and not is_object)
+        {
+            throw std::logic_error("cannot create JSON object");
+        }
+    }
+
+    if (is_object)
+    {
+        // the initializer list is a list of pairs -> create object
+        type_ = value_t::object;
+        value_ = new object_t();
+        for (auto& element : a)
+        {
+            value_.object->emplace(std::make_pair(std::move(element[0]), std::move(element[1])));
+        }
+    }
+    else
+    {
+        // the initializer list describes an array -> create array
+        type_ = value_t::array;
+        value_ = new array_t(std::move(a));
+    }
+}
+
+/*!
+@param a  initializer list to create an array from
+@return array
+*/
+json json::array(list_init_t a)
+{
+    return json(a, false, value_t::array);
+}
+
+/*!
+@param a  initializer list to create an object from
+@return object
+*/
+json json::object(list_init_t a)
+{
+    // if more than one element is in the initializer list, wrap it
+    if (a.size() > 1)
+    {
+        return json({a}, false, value_t::object);
+    }
+    else
+    {
+        return json(a, false, value_t::object);
     }
 }
 

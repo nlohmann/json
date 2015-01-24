@@ -140,7 +140,7 @@ class json
     /// create an object according to given type
     json(const value_t);
     /// create a null object
-    json() = default;
+    json() noexcept;
     /// create a null object
     json(std::nullptr_t) noexcept;
     /// create a string object from a C++ string
@@ -160,7 +160,7 @@ class json
     /// create an object (move)
     json(object_t&&);
     /// create from an initializer list (to an array or object)
-    json(list_init_t);
+    json(list_init_t, bool = true, value_t = value_t::array);
 
     /*!
     @brief create a number object (integer)
@@ -171,7 +171,7 @@ class json
                  std::numeric_limits<T>::is_integer, T>::type
              = 0>
     json(const T n) noexcept
-        : type_(value_t::number),
+        : final_type_(0), type_(value_t::number),
           value_(static_cast<number_t>(n))
     {}
 
@@ -184,7 +184,7 @@ class json
                  std::is_floating_point<T>::value>::type
              >
     json(const T n) noexcept
-        : type_(value_t::number_float),
+        : final_type_(0), type_(value_t::number_float),
           value_(static_cast<number_float_t>(n))
     {}
 
@@ -228,6 +228,11 @@ class json
 
     /// destructor
     ~json() noexcept;
+
+    /// explicit keyword to force array creation
+    static json array(list_init_t = list_init_t());
+    /// explicit keyword to force object creation
+    static json object(list_init_t = list_init_t());
 
     /// create from string representation
     static json parse(const std::string&);
@@ -404,9 +409,10 @@ class json
     const_reverse_iterator crend() const noexcept;
 
   private:
+    /// whether the type is final
+    unsigned final_type_ : 1;
     /// the type of this object
     value_t type_ = value_t::null;
-
     /// the payload
     value value_ {};
 

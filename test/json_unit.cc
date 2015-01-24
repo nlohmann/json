@@ -304,13 +304,70 @@ TEST_CASE("array")
                 CHECK(v == vec[static_cast<size_t>(v)]);
             }
         }
+    }
 
-
+    SECTION("Initializer lists")
+    {
         // edge case: This should be an array with two elements which are in
         // turn arrays with two strings. However, this is treated like the
         // initializer list of an object.
         json j_should_be_an_array = { {"foo", "bar"}, {"baz", "bat"} };
         CHECK(j_should_be_an_array.type() == json::value_t::object);
+
+        json j_is_an_array = { json::array({"foo", "bar"}), {"baz", "bat"} };
+        CHECK(j_is_an_array.type() == json::value_t::array);
+
+        // array outside initializer list
+        json j_pair_array = json::array({"s1", "s2"});
+        CHECK(j_pair_array.type() == json::value_t::array);
+
+        // array inside initializer list
+        json j_pair_array2 = {json::array({"us1", "us2"})};
+        CHECK(j_pair_array2.type() == json::value_t::array);
+
+        // array() is []
+        json j_empty_array_explicit = json::array();
+        CHECK(j_empty_array_explicit.type() == json::value_t::array);
+
+        // object() is []
+        json j_empty_object_explicit = json::object();
+        CHECK(j_empty_object_explicit.type() == json::value_t::object);
+
+        // {object({"s1", "s2"})} is [{"s1": "s2"}]
+        json j_explicit_object = {json::object({"s1", "s2"})};
+        CHECK(j_explicit_object.type() == json::value_t::array);
+
+        // object({"s1", "s2"}) is [{"s1": "s2"}]
+        json j_explicit_object2 = json::object({"s1", "s2"});
+        CHECK(j_explicit_object2.type() == json::value_t::object);
+
+        // object({{"s1", "s2"}}) is [{"s1": "s2"}]
+        json j_explicit_object3 = json::object({{"s1", "s2"}});
+        CHECK(j_explicit_object3.type() == json::value_t::object);
+
+        // check errors when explicit object creation is demanded
+        CHECK_THROWS_AS(json::object({"s1"}), std::logic_error);
+        CHECK_THROWS_AS(json::object({"s1", 1, 3}), std::logic_error);
+        CHECK_THROWS_AS(json::object({1, "s1"}), std::logic_error);
+        CHECK_THROWS_AS(json::object({{1, "s1"}}), std::logic_error);
+        CHECK_THROWS_AS(json::object({{"foo", "bar"}, {1, "s1"}}), std::logic_error);
+
+        // {} is null
+        json j_null = {};
+        CHECK(j_null.type() == json::value_t::null);
+
+        // {{}} is []
+        json j_empty_array_implicit = {{}};
+        CHECK(j_empty_array_implicit.type() == json::value_t::array);
+
+        // {1} is [1]
+        json j_singleton_array = {1};
+        CHECK(j_singleton_array.type() == json::value_t::array);
+
+        // test case from issue #8
+        json j_issue8 = {json::array({"a", "b"}), json::array({"c", "d"})};
+        CHECK(j_issue8.type() == json::value_t::array);
+        CHECK(j_issue8.dump() == "[[\"a\",\"b\"],[\"c\",\"d\"]]");
     }
 
     SECTION("Iterators and empty arrays")
