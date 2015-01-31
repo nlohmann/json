@@ -3,6 +3,8 @@
 
 #include "json.hpp"
 
+#include <unordered_map>
+#include <list>
 #include <sstream>
 
 using nlohmann::json;
@@ -61,6 +63,49 @@ TEST_CASE()
         // a way to express an _array_ of key/value pairs [["currency", "USD"], ["value", 42.99]]
         json array_not_object = { json::array({"currency", "USD"}), json::array({"value", 42.99}) };
         std::cerr << "array_not_object: " << array_not_object << std::endl;
+    }
+    {
+        CHECK_THROWS_AS(json::object({1, 2, 3}), std::logic_error);
+    }
+    {
+        CHECK(json::object({{"foo", 1}, {"bar", 2}, {"baz", 3}}).size() == 3);
+        CHECK(json::object({{"foo", 1}}).size() == 1);
+        CHECK(json::object().size() == 0);
+    }
+    {
+        json j = json::object({{"foo", 1}, {"bar", 2}, {"baz", 3}});
+        {
+            CHECK(j["foo"] == json(1));
+            CHECK(j.at("foo") == json(1));
+        }
+        {
+            std::map<std::string, json> m = j;
+            auto k = j.get<std::map<std::string, json>>();
+            CHECK(m == k);
+        }
+        {
+            std::unordered_map<std::string, json> m = j;
+            auto k = j.get<std::unordered_map<std::string, json>>();
+            CHECK(m == k);
+        }
+    }
+
+    {
+        json j = {1, 2, 3, 4, 5};
+        {
+            CHECK(j[0] == json(1));
+            CHECK(j.at(0) == json(1));
+        }
+        {
+            std::vector<json> m = j;
+            auto k = j.get<std::list<json>>();
+            CHECK(m == k);
+        }
+        {
+            std::set<json> m = j;
+            auto k = j.get<std::set<json>>();
+            CHECK(m == k);
+        }
     }
 }
 

@@ -350,7 +350,7 @@ class basic_json
             // if object is wanted but impossible, throw an exception
             if (manual_type == value_t::object and not is_object)
             {
-                throw std::logic_error("cannot create JSON object");
+                throw std::logic_error("cannot create JSON object from initializer list");
             }
         }
 
@@ -379,15 +379,7 @@ class basic_json
 
     inline static basic_json object(list_init_t l = list_init_t())
     {
-        // if more than one element is in the initializer list, wrap it
-        if (l.size() > 1)
-        {
-            return basic_json({l}, false, value_t::object);
-        }
-        else
-        {
-            return basic_json(l, false, value_t::object);
-        }
+        return basic_json(l, false, value_t::object);
     }
 
     ///////////////////////////////////////
