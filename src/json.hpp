@@ -1514,11 +1514,6 @@ class basic_json
         /// constructor for a given JSON instance
         inline iterator(pointer object) : m_object(object)
         {
-            if (m_object == nullptr)
-            {
-                throw std::logic_error("cannot create iterator");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -1606,11 +1601,6 @@ class basic_json
         /// return a reference to the value pointed to by the iterator
         inline reference operator*() const
         {
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot get value");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -1645,11 +1635,6 @@ class basic_json
         /// dereference the iterator
         inline pointer operator->() const
         {
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot get value");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -1681,11 +1666,6 @@ class basic_json
         {
             iterator result = *this;
 
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot increment iterator");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -1713,11 +1693,6 @@ class basic_json
         /// pre-increment (++it)
         inline iterator& operator++()
         {
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot increment iterator");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -1747,11 +1722,6 @@ class basic_json
         {
             iterator result = *this;
 
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot decrement iterator");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -1779,11 +1749,6 @@ class basic_json
         /// pre-decrement (--it)
         inline iterator& operator--()
         {
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot decrement iterator");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -1811,10 +1776,7 @@ class basic_json
         /// comparison: equal
         inline bool operator==(const iterator& other) const
         {
-            if (m_object == nullptr
-                    or other.m_object == nullptr
-                    or m_object != other.m_object
-                    or m_object->m_type != other.m_object->m_type)
+            if (m_object != other.m_object or m_object->m_type != other.m_object->m_type)
             {
                 return false;
             }
@@ -1900,11 +1862,6 @@ class basic_json
         /// constructor for a given JSON instance
         inline const_iterator(pointer object) : m_object(object)
         {
-            if (m_object == nullptr)
-            {
-                throw std::logic_error("cannot create iterator");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -1995,11 +1952,6 @@ class basic_json
         /// return a reference to the value pointed to by the iterator
         inline reference operator*() const
         {
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot get value");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -2034,11 +1986,6 @@ class basic_json
         /// dereference the iterator
         inline pointer operator->() const
         {
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot get value");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -2070,11 +2017,6 @@ class basic_json
         {
             const_iterator result = *this;
 
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot increment iterator");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -2102,11 +2044,6 @@ class basic_json
         /// pre-increment (++it)
         inline const_iterator& operator++()
         {
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot increment iterator");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -2136,11 +2073,6 @@ class basic_json
         {
             iterator result = *this;
 
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot decrement iterator");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -2168,11 +2100,6 @@ class basic_json
         /// pre-decrement (--it)
         inline const_iterator& operator--()
         {
-            if (m_object == nullptr)
-            {
-                throw std::out_of_range("cannot decrement iterator");
-            }
-
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
@@ -2200,10 +2127,7 @@ class basic_json
         /// comparison: equal
         inline bool operator==(const const_iterator& other) const
         {
-            if (m_object == nullptr
-                    or other.m_object == nullptr
-                    or m_object != other.m_object
-                    or m_object->m_type != other.m_object->m_type)
+            if (m_object != other.m_object or m_object->m_type != other.m_object->m_type)
             {
                 return false;
             }
