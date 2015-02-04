@@ -1322,6 +1322,72 @@ class basic_json
     }
 
     /*!
+    Escape a string by replacing special characters by a sequence of an
+    escape character (backslash) and another character.
+    */
+    static string_t escape_string(const string_t& s)
+    {
+        // create a result string of at least the size than s
+        string_t result;
+        result.reserve(s.size());
+
+        for (auto c : s)
+        {
+            switch (c)
+            {
+                // quotation mark
+                case '"':
+                {
+                    result.append("\\\"", 2);
+                    break;
+                }
+                // reverse solidus
+                case '\\':
+                {
+                    result.append("\\\\", 2);
+                    break;
+                }
+                // backspace
+                case '\b':
+                {
+                    result.append("\\b", 2);
+                    break;
+                }
+                // formfeed
+                case '\f':
+                {
+                    result.append("\\f", 2);
+                    break;
+                }
+                // newline
+                case '\n':
+                {
+                    result.append("\\n", 2);
+                    break;
+                }
+                // carriage return
+                case '\r':
+                {
+                    result.append("\\r", 2);
+                    break;
+                }
+                // horizontal tab
+                case '\t':
+                {
+                    result.append("\\t", 2);
+                    break;
+                }
+                default:
+                {
+                    result.append(1, c);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /*!
     Internal implementation of the serialization function.
 
     @param prettyPrint    whether the output shall be pretty-printed
@@ -1417,7 +1483,7 @@ class basic_json
 
             case (value_t::string):
             {
-                return string_t("\"") + *m_value.string + "\"";
+                return string_t("\"") + escape_string(*m_value.string) + "\"";
             }
 
             case (value_t::boolean):
