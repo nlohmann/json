@@ -414,7 +414,7 @@ int json::get() const
     switch (type_)
     {
         case (value_t::number):
-            return value_.number;
+            return static_cast<int>(value_.number);
         case (value_t::number_float):
             return static_cast<int>(value_.number_float);
         default:
@@ -2371,7 +2371,7 @@ std::string json::parser::codePointToUTF8(unsigned int codePoint) const
     {
         // Can't be tested without direct access to this private method.
         std::string errorMessage = "Invalid codePoint: ";
-        errorMessage += codePoint;
+        errorMessage += static_cast<char>(codePoint);
         error(errorMessage);
     }
 }
@@ -2584,6 +2584,8 @@ void json::parser::expect(const char c)
 
 }
 
+
+#if !_MSC_VER
 /*!
 This operator implements a user-defined string literal for JSON objects. It can
 be used by adding \p "_json" to a string literal and returns a JSON object if
@@ -2596,3 +2598,4 @@ nlohmann::json operator "" _json(const char* s, std::size_t)
 {
     return nlohmann::json::parse(s);
 }
+#endif
