@@ -20,6 +20,20 @@
 #include <limits>            // std::numeric_limits
 #include <functional>        // std::hash
 
+#if _MSC_VER
+
+#ifndef _MSC_EXTENSIONS
+#define _MSC_EXTENSIONS 
+#endif
+
+#include <iso646.h>
+
+#ifdef _NOEXCEPT
+#define noexcept _NOEXCEPT
+#endif
+
+#endif
+
 namespace nlohmann
 {
 
@@ -515,7 +529,13 @@ class json
         /// read the next character, stripping whitespace
         bool next();
         /// raise an exception with an error message
+		
+#if _MSC_VER
+		__declspec(noreturn) inline void error(const std::string&) const;
+#else
         [[noreturn]] inline void error(const std::string&) const;
+#endif
+
         /// parse a quoted string
         inline std::string parseString();
         /// transforms a unicode codepoint to it's UTF-8 presentation
@@ -545,12 +565,17 @@ class json
 
 }
 
+
+#if !_MSC_VER
 /// user-defined literal operator to create JSON objects from strings
 nlohmann::json operator "" _json(const char*, std::size_t);
+#endif
 
 // specialization of std::swap, and std::hash
 namespace std
 {
+	
+#if !_MSC_VER
 template <>
 /// swaps the values of two JSON objects
 inline void swap(nlohmann::json& j1,
@@ -561,6 +586,16 @@ inline void swap(nlohmann::json& j1,
 {
     j1.swap(j2);
 }
+#else
+template <>
+/// swaps the values of two JSON objects
+inline void swap(nlohmann::json& j1,
+                 nlohmann::json& j2)
+{
+    j1.swap(j2);
+}
+
+#endif
 
 template <>
 /// hash value for JSON objects
