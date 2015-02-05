@@ -11,6 +11,11 @@ using nlohmann::json;
 
 TEST_CASE()
 {
+    CHECK(json::parser("[1,2,3,4,5,6]").parse().dump() == "[1,2,3,4,5,6]");
+}
+
+TEST_CASE()
+{
     CHECK(json::escape_string("\\") == "\\\\");
     CHECK(json::escape_string("\"") == "\\\"");
     CHECK(json::escape_string("\n") == "\\n");
@@ -18,12 +23,18 @@ TEST_CASE()
     CHECK(json::escape_string("\f") == "\\f");
     CHECK(json::escape_string("\b") == "\\b");
     CHECK(json::escape_string("\t") == "\\t");
-    
+
+    CHECK(json::escape_string("Lorem ipsum \"dolor\" sit amet,\nconsectetur \\ adipiscing elit.")
+          == "Lorem ipsum \\\"dolor\\\" sit amet,\\nconsectetur \\\\ adipiscing elit.");
+    CHECK(json::escape_string("the main said, \"cool!\"") == "the main said, \\\"cool!\\\"");
+    CHECK(json::escape_string("\a") == "\\u0007");
+    CHECK(json::escape_string("\v") == "\\u000b");
+
     {
         json j = "AC/DC";
         CHECK(j.dump() == "\"AC/DC\"");
     }
-    
+
     {
         json j = {1, 2, 3, 4};
         std::cerr << j << std::endl;
