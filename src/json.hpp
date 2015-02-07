@@ -196,25 +196,25 @@ class basic_json
 
             case (value_t::string):
             {
-                m_value.string = new string_t();
+                m_value.string = new string_t("");
                 break;
             }
 
             case (value_t::boolean):
             {
-                m_value.boolean = boolean_t();
+                m_value.boolean = boolean_t(false);
                 break;
             }
 
             case (value_t::number_integer):
             {
-                m_value.number_integer = number_integer_t();
+                m_value.number_integer = number_integer_t(0);
                 break;
             }
 
             case (value_t::number_float):
             {
-                m_value.number_float = number_float_t();
+                m_value.number_float = number_float_t(0.0);
                 break;
             }
         }
@@ -737,7 +737,7 @@ class basic_json
 
 
     /// find an element in an object
-    iterator find(typename object_t::key_type key)
+    inline iterator find(typename object_t::key_type key)
     {
         auto result = end();
 
@@ -750,7 +750,7 @@ class basic_json
     }
 
     /// find an element in an object
-    const_iterator find(typename object_t::key_type key) const
+    inline const_iterator find(typename object_t::key_type key) const
     {
         auto result = cend();
 
@@ -829,22 +829,20 @@ class basic_json
             {
                 return true;
             }
-            case (value_t::number_integer):
-            case (value_t::number_float):
-            case (value_t::boolean):
-            case (value_t::string):
-            {
-                return false;
-            }
+
             case (value_t::array):
             {
                 return m_value.array->empty();
             }
+
             case (value_t::object):
             {
                 return m_value.object->empty();
             }
         }
+
+        // all other types are nonempty
+        return false;
     }
 
     /// returns the number of elements
@@ -856,22 +854,20 @@ class basic_json
             {
                 return 0;
             }
-            case (value_t::number_integer):
-            case (value_t::number_float):
-            case (value_t::boolean):
-            case (value_t::string):
-            {
-                return 1;
-            }
+
             case (value_t::array):
             {
                 return m_value.array->size();
             }
+
             case (value_t::object):
             {
                 return m_value.object->size();
             }
         }
+
+        // all other types have size 1
+        return 1;
     }
 
     /// returns the maximum possible number of elements
@@ -883,22 +879,20 @@ class basic_json
             {
                 return 0;
             }
-            case (value_t::number_integer):
-            case (value_t::number_float):
-            case (value_t::boolean):
-            case (value_t::string):
-            {
-                return 1;
-            }
+
             case (value_t::array):
             {
                 return m_value.array->max_size();
             }
+
             case (value_t::object):
             {
                 return m_value.object->max_size();
             }
         }
+
+        // all other types have max_size 1
+        return 1;
     }
 
 
@@ -917,17 +911,17 @@ class basic_json
             }
             case (value_t::number_integer):
             {
-                m_value.number_integer = {};
+                m_value.number_integer = 0;
                 break;
             }
             case (value_t::number_float):
             {
-                m_value.number_float = {};
+                m_value.number_float = 0.0;
                 break;
             }
             case (value_t::boolean):
             {
-                m_value.boolean = {};
+                m_value.boolean = false;
                 break;
             }
             case (value_t::string):
@@ -2554,13 +2548,14 @@ class basic_json
 
                 case (token_type::value_number):
                 {
-                    // The pointer current_re2c points to the beginning of the parsed
-                    // number. We pass this pointer to std::strtod which sets endptr
-                    // to the first character past the converted number. If this pointer
-                    // is not the same as buffer_re2c, then either more or less
-                    // characters have been used during the comparison. This can happen
-                    // for inputs like "01" which will be treated like number 0 followed
-                    // by number 1.
+                    // The pointer current_re2c points to the beginning of the
+                    // parsed number. We pass this pointer to std::strtod which
+                    // sets endptr to the first character past the converted
+                    // number. If this pointer is not the same as buffer_re2c,
+                    // then either more or less characters have been used
+                    // during the comparison. This can happen for inputs like
+                    // "01" which will be treated like number 0 followed by
+                    // number 1.
 
                     // conversion
                     char* endptr;

@@ -2548,13 +2548,14 @@ class basic_json
 
                 case (token_type::value_number):
                 {
-                    // The pointer current_re2c points to the beginning of the parsed
-                    // number. We pass this pointer to std::strtod which sets endptr
-                    // to the first character past the converted number. If this pointer
-                    // is not the same as buffer_re2c, then either more or less
-                    // characters have been used during the comparison. This can happen
-                    // for inputs like "01" which will be treated like number 0 followed
-                    // by number 1.
+                    // The pointer current_re2c points to the beginning of the
+                    // parsed number. We pass this pointer to std::strtod which
+                    // sets endptr to the first character past the converted
+                    // number. If this pointer is not the same as buffer_re2c,
+                    // then either more or less characters have been used
+                    // during the comparison. This can happen for inputs like
+                    // "01" which will be treated like number 0 followed by
+                    // number 1.
 
                     // conversion
                     char* endptr;
