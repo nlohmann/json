@@ -909,31 +909,37 @@ class basic_json
             {
                 break;
             }
+
             case (value_t::number_integer):
             {
                 m_value.number_integer = 0;
                 break;
             }
+
             case (value_t::number_float):
             {
                 m_value.number_float = 0.0;
                 break;
             }
+
             case (value_t::boolean):
             {
                 m_value.boolean = false;
                 break;
             }
+
             case (value_t::string):
             {
                 m_value.string->clear();
                 break;
             }
+
             case (value_t::array):
             {
                 m_value.array->clear();
                 break;
             }
+
             case (value_t::object):
             {
                 m_value.object->clear();
@@ -2730,7 +2736,7 @@ class basic_json
 
         @todo Take care of Unicode.
         */
-        std::string get_string() const
+        inline std::string get_string() const
         {
             return std::string(
                        reinterpret_cast<const char*>(current_re2c + 1),
@@ -2738,6 +2744,7 @@ class basic_json
                    );
         }
 
+    private:
         /// the buffer
         std::string buffer;
         /// a pointer to the next character to read from the buffer
@@ -2785,7 +2792,7 @@ template <>
 struct hash<nlohmann::json>
 {
     /// return a hash value for a JSON object
-    size_t operator()(const nlohmann::json& j) const
+    inline size_t operator()(const nlohmann::json& j) const
     {
         // a naive hashing via the string representation
         return hash<std::string>()(j.dump());
@@ -2801,7 +2808,7 @@ no parse error occurred.
 @param s  a string representation of a JSON object
 @return a JSON object
 */
-nlohmann::json operator "" _json(const char* s, std::size_t)
+inline nlohmann::json operator "" _json(const char* s, std::size_t)
 {
     return nlohmann::json::parse(s);
 }
