@@ -196,25 +196,25 @@ class basic_json
 
             case (value_t::string):
             {
-                m_value.string = new string_t();
+                m_value.string = new string_t("");
                 break;
             }
 
             case (value_t::boolean):
             {
-                m_value.boolean = boolean_t();
+                m_value.boolean = boolean_t(false);
                 break;
             }
 
             case (value_t::number_integer):
             {
-                m_value.number_integer = number_integer_t();
+                m_value.number_integer = number_integer_t(0);
                 break;
             }
 
             case (value_t::number_float):
             {
-                m_value.number_float = number_float_t();
+                m_value.number_float = number_float_t(0.0);
                 break;
             }
         }
@@ -315,6 +315,7 @@ class basic_json
         : m_type(value_t::number_float), m_value(number_float_t(value))
     {}
 
+    /// create a container (array or object) from an initializer list
     inline basic_json(list_init_t l, bool type_deduction = true, value_t manual_type = value_t::array)
     {
         // the initializer list could describe an object
@@ -372,11 +373,13 @@ class basic_json
         }
     }
 
+    /// explicitly create an array from an initializer list
     inline static basic_json array(list_init_t l = list_init_t())
     {
         return basic_json(l, false, value_t::array);
     }
 
+    /// explicitly create an object from an initializer list
     inline static basic_json object(list_init_t l = list_init_t())
     {
         return basic_json(l, false, value_t::object);
@@ -733,6 +736,33 @@ class basic_json
     }
 
 
+    /// find an element in an object
+    inline iterator find(typename object_t::key_type key)
+    {
+        auto result = end();
+
+        if (m_type == value_t::object)
+        {
+            result.m_it.object_iterator = m_value.object->find(key);
+        }
+
+        return result;
+    }
+
+    /// find an element in an object
+    inline const_iterator find(typename object_t::key_type key) const
+    {
+        auto result = cend();
+
+        if (m_type == value_t::object)
+        {
+            result.m_it.object_iterator = m_value.object->find(key);
+        }
+
+        return result;
+    }
+
+
     ///////////////
     // iterators //
     ///////////////
@@ -799,22 +829,20 @@ class basic_json
             {
                 return true;
             }
-            case (value_t::number_integer):
-            case (value_t::number_float):
-            case (value_t::boolean):
-            case (value_t::string):
-            {
-                return false;
-            }
+
             case (value_t::array):
             {
                 return m_value.array->empty();
             }
+
             case (value_t::object):
             {
                 return m_value.object->empty();
             }
         }
+
+        // all other types are nonempty
+        return false;
     }
 
     /// returns the number of elements
@@ -826,22 +854,20 @@ class basic_json
             {
                 return 0;
             }
-            case (value_t::number_integer):
-            case (value_t::number_float):
-            case (value_t::boolean):
-            case (value_t::string):
-            {
-                return 1;
-            }
+
             case (value_t::array):
             {
                 return m_value.array->size();
             }
+
             case (value_t::object):
             {
                 return m_value.object->size();
             }
         }
+
+        // all other types have size 1
+        return 1;
     }
 
     /// returns the maximum possible number of elements
@@ -853,22 +879,20 @@ class basic_json
             {
                 return 0;
             }
-            case (value_t::number_integer):
-            case (value_t::number_float):
-            case (value_t::boolean):
-            case (value_t::string):
-            {
-                return 1;
-            }
+
             case (value_t::array):
             {
                 return m_value.array->max_size();
             }
+
             case (value_t::object):
             {
                 return m_value.object->max_size();
             }
         }
+
+        // all other types have max_size 1
+        return 1;
     }
 
 
@@ -887,17 +911,17 @@ class basic_json
             }
             case (value_t::number_integer):
             {
-                m_value.number_integer = {};
+                m_value.number_integer = 0;
                 break;
             }
             case (value_t::number_float):
             {
-                m_value.number_float = {};
+                m_value.number_float = 0.0;
                 break;
             }
             case (value_t::boolean):
             {
-                m_value.boolean = {};
+                m_value.boolean = false;
                 break;
             }
             case (value_t::string):
@@ -1348,7 +1372,7 @@ class basic_json
 
     /*!
     @brief escape a string
-    
+
     Escape a string by replacing certain special characters by a sequence of an
     escape character (backslash) and another character and other control
     characters by a sequence of "\u" followed by a four-digit hex
@@ -1436,12 +1460,12 @@ class basic_json
 
     /*!
     @brief internal implementation of the serialization function
-    
+
     This function is called by the public member function dump and organizes
     the serializaion internally. The indentation level is propagated as
     additional parameter. In case of arrays and objects, the function is called
     recursively. Note that
-    
+
     - strings and object keys are escaped using escape_string()
     - numbers are converted to a string before output using std::to_string()
 
@@ -1573,6 +1597,7 @@ class basic_json
     /// the value of the current element
     json_value m_value = {};
 
+
   public:
     ///////////////
     // iterators //
@@ -1601,7 +1626,9 @@ class basic_json
             /// the iterator points to the only value
             begin,
             /// the iterator points past the only value
-            end
+            end,
+            /// the iterator points to an invalid value
+            invalid
         };
 
         /// an iterator value
@@ -1674,6 +1701,7 @@ class basic_json
 
                 case (basic_json::value_t::null):
                 {
+                    // set to end so begin()==end() is true: null is empty
                     m_it.generic_iterator = generic_iterator_value::end;
                     break;
                 }
@@ -1795,7 +1823,14 @@ class basic_json
 
                 default:
                 {
-                    m_it.generic_iterator = generic_iterator_value::end;
+                    if (m_it.generic_iterator == generic_iterator_value::begin)
+                    {
+                        m_it.generic_iterator = generic_iterator_value::end;
+                    }
+                    else
+                    {
+                        m_it.generic_iterator = generic_iterator_value::invalid;
+                    }
                     break;
                 }
             }
@@ -1822,7 +1857,14 @@ class basic_json
 
                 default:
                 {
-                    m_it.generic_iterator = generic_iterator_value::end;
+                    if (m_it.generic_iterator == generic_iterator_value::begin)
+                    {
+                        m_it.generic_iterator = generic_iterator_value::end;
+                    }
+                    else
+                    {
+                        m_it.generic_iterator = generic_iterator_value::invalid;
+                    }
                     break;
                 }
             }
@@ -1849,9 +1891,22 @@ class basic_json
                     break;
                 }
 
+                case (basic_json::value_t::null):
+                {
+                    m_it.generic_iterator = generic_iterator_value::invalid;
+                    break;
+                }
+
                 default:
                 {
-                    m_it.generic_iterator = generic_iterator_value::uninitialized;
+                    if (m_it.generic_iterator == generic_iterator_value::end)
+                    {
+                        m_it.generic_iterator = generic_iterator_value::begin;
+                    }
+                    else
+                    {
+                        m_it.generic_iterator = generic_iterator_value::invalid;
+                    }
                     break;
                 }
             }
@@ -1876,9 +1931,22 @@ class basic_json
                     break;
                 }
 
+                case (basic_json::value_t::null):
+                {
+                    m_it.generic_iterator = generic_iterator_value::invalid;
+                    break;
+                }
+
                 default:
                 {
-                    m_it.generic_iterator = generic_iterator_value::uninitialized;
+                    if (m_it.generic_iterator == generic_iterator_value::end)
+                    {
+                        m_it.generic_iterator = generic_iterator_value::begin;
+                    }
+                    else
+                    {
+                        m_it.generic_iterator = generic_iterator_value::invalid;
+                    }
                     break;
                 }
             }
@@ -1949,7 +2017,9 @@ class basic_json
             /// the iterator points to the only value
             begin,
             /// the iterator points past the only value
-            end
+            end,
+            /// the iterator points to an invalid value
+            invalid
         };
 
         /// an iterator value
@@ -1995,6 +2065,7 @@ class basic_json
             }
         }
 
+        /// copy constructor given a nonconst iterator
         inline const_iterator(const iterator& other) : m_object(other.m_object), m_it(other.m_it)
         {}
 
@@ -2025,6 +2096,7 @@ class basic_json
 
                 case (basic_json::value_t::null):
                 {
+                    // set to end so begin()==end() is true: null is empty
                     m_it.generic_iterator = generic_iterator_value::end;
                     break;
                 }
@@ -2146,7 +2218,14 @@ class basic_json
 
                 default:
                 {
-                    m_it.generic_iterator = generic_iterator_value::end;
+                    if (m_it.generic_iterator == generic_iterator_value::begin)
+                    {
+                        m_it.generic_iterator = generic_iterator_value::end;
+                    }
+                    else
+                    {
+                        m_it.generic_iterator = generic_iterator_value::invalid;
+                    }
                     break;
                 }
             }
@@ -2173,7 +2252,14 @@ class basic_json
 
                 default:
                 {
-                    m_it.generic_iterator = generic_iterator_value::end;
+                    if (m_it.generic_iterator == generic_iterator_value::begin)
+                    {
+                        m_it.generic_iterator = generic_iterator_value::end;
+                    }
+                    else
+                    {
+                        m_it.generic_iterator = generic_iterator_value::invalid;
+                    }
                     break;
                 }
             }
@@ -2200,9 +2286,22 @@ class basic_json
                     break;
                 }
 
+                case (basic_json::value_t::null):
+                {
+                    m_it.generic_iterator = generic_iterator_value::invalid;
+                    break;
+                }
+
                 default:
                 {
-                    m_it.generic_iterator = generic_iterator_value::uninitialized;
+                    if (m_it.generic_iterator == generic_iterator_value::end)
+                    {
+                        m_it.generic_iterator = generic_iterator_value::begin;
+                    }
+                    else
+                    {
+                        m_it.generic_iterator = generic_iterator_value::invalid;
+                    }
                     break;
                 }
             }
@@ -2227,9 +2326,22 @@ class basic_json
                     break;
                 }
 
+                case (basic_json::value_t::null):
+                {
+                    m_it.generic_iterator = generic_iterator_value::invalid;
+                    break;
+                }
+
                 default:
                 {
-                    m_it.generic_iterator = generic_iterator_value::uninitialized;
+                    if (m_it.generic_iterator == generic_iterator_value::end)
+                    {
+                        m_it.generic_iterator = generic_iterator_value::begin;
+                    }
+                    else
+                    {
+                        m_it.generic_iterator = generic_iterator_value::invalid;
+                    }
                     break;
                 }
             }
@@ -2276,6 +2388,7 @@ class basic_json
         /// the actual iterator of the associated instance
         internal_const_iterator m_it;
     };
+
 
   private:
     ////////////
@@ -2670,6 +2783,7 @@ inline void swap(nlohmann::json& j1,
 template <>
 struct hash<nlohmann::json>
 {
+    /// return a hash value for a JSON object
     size_t operator()(const nlohmann::json& j) const
     {
         // a naive hashing via the string representation

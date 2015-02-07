@@ -72,6 +72,13 @@ TEST_CASE()
         std::cerr << j.dump(4) << std::endl;
         j["pi"] = {3, 1, 4, 1};
         std::cerr << j << std::endl;
+
+        const json jc(j);
+        CHECK(j.find("name") != j.end());
+        CHECK(j.find("foo") == j.end());
+        CHECK(*(j.find("name")) == json("Niels") );
+        CHECK(jc.find("name") != jc.end());
+        CHECK(jc.find("foo") == jc.end());
     }
     {
         // ways to express the empty array []
