@@ -519,13 +519,13 @@ class basic_json
         }
     }
 
-    /// return the type of the object explicitly
+    /// return the type of the object (explicit)
     inline value_t type() const noexcept
     {
         return m_type;
     }
 
-    /// return the type of the object implicitly
+    /// return the type of the object (implicit)
     operator value_t() const noexcept
     {
         return m_type;

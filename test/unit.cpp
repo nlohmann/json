@@ -1031,3 +1031,154 @@ TEST_CASE("other constructors and destructor")
         }
     }
 }
+
+TEST_CASE("object inspection")
+{
+    SECTION("dump")
+    {
+        json j {{"object", json::object()}, {"array", {1, 2, 3, 4}}, {"number", 42}, {"boolean", false}, {"null", nullptr}, {"string", "Hello world"} };
+
+        SECTION("no indent")
+        {
+            CHECK(j.dump() ==
+                  R"({"array":[1,2,3,4],"boolean":false,"null":null,"number":42,"object":{},"string":"Hello world"})");
+        }
+
+        SECTION("indent=0")
+        {
+            CHECK(j.dump(0) == R"({
+"array": [
+1,
+2,
+3,
+4
+],
+"boolean": false,
+"null": null,
+"number": 42,
+"object": {},
+"string": "Hello world"
+})");
+        }
+
+        SECTION("indent=4")
+        {
+            CHECK(j.dump(4) == R"({
+    "array": [
+        1,
+        2,
+        3,
+        4
+    ],
+    "boolean": false,
+    "null": null,
+    "number": 42,
+    "object": {},
+    "string": "Hello world"
+})");
+        }
+
+        SECTION("dump and floating-point numbers")
+        {
+            auto s = json(42.23).dump();
+            CHECK(s.find("42.23") != std::string::npos);
+        }
+    }
+
+    SECTION("return the type of the object (explicit)")
+    {
+        SECTION("null")
+        {
+            json j = nullptr;
+            CHECK(j.type() == json::value_t::null);
+        }
+
+        SECTION("object")
+        {
+            json j = {{"foo", "bar"}};
+            CHECK(j.type() == json::value_t::object);
+        }
+
+        SECTION("array")
+        {
+            json j = {1, 2, 3, 4};
+            CHECK(j.type() == json::value_t::array);
+        }
+
+        SECTION("boolean")
+        {
+            json j = true;
+            CHECK(j.type() == json::value_t::boolean);
+        }
+
+        SECTION("string")
+        {
+            json j = "Hello world";
+            CHECK(j.type() == json::value_t::string);
+        }
+
+        SECTION("number (integer)")
+        {
+            json j = 23;
+            CHECK(j.type() == json::value_t::number_integer);
+        }
+
+        SECTION("number (floating-point)")
+        {
+            json j = 42.23;
+            CHECK(j.type() == json::value_t::number_float);
+        }
+    }
+
+    SECTION("return the type of the object (implicit)")
+    {
+        SECTION("null")
+        {
+            json j = nullptr;
+            json::value_t t = j;
+            CHECK(t == j.type());
+        }
+
+        SECTION("object")
+        {
+            json j = {{"foo", "bar"}};
+            json::value_t t = j;
+            CHECK(t == j.type());
+        }
+
+        SECTION("array")
+        {
+            json j = {1, 2, 3, 4};
+            json::value_t t = j;
+            CHECK(t == j.type());
+        }
+
+        SECTION("boolean")
+        {
+            json j = true;
+            json::value_t t = j;
+            CHECK(t == j.type());
+        }
+
+        SECTION("string")
+        {
+            json j = "Hello world";
+            json::value_t t = j;
+            CHECK(t == j.type());
+        }
+
+        SECTION("number (integer)")
+        {
+            json j = 23;
+            json::value_t t = j;
+            CHECK(t == j.type());
+        }
+
+        SECTION("number (floating-point)")
+        {
+            json j = 42.23;
+            json::value_t t = j;
+            CHECK(t == j.type());
+        }
+    }
+}
