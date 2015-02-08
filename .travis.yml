@@ -9,7 +9,7 @@ before_install:
   - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.9; fi
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
   - sudo pip install cpp-coveralls pyyaml
-  - sudo apt-get install valgrind
+  - sudo apt-get install valgrind re2c
 
 before_script:
   - autoreconf -iv
