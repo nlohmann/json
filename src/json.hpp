@@ -497,6 +497,8 @@ class basic_json
     ///////////////////////
 
     /*!
+    @brief serialization
+
     Serialization function for JSON objects. The function tries to mimick Python's
     @p json.dumps() function, and currently supports its @p indent parameter.
 
@@ -536,7 +538,7 @@ class basic_json
     // value conversion //
     //////////////////////
 
-    /// get an object
+    /// get an object (explicit)
     template <class T, typename
               std::enable_if<
                   std::is_constructible<string_t, typename T::key_type>::value and
@@ -553,7 +555,7 @@ class basic_json
         }
     }
 
-    /// get an array
+    /// get an array (explicit)
     template <class T, typename
               std::enable_if<
                   not std::is_same<T, string_t>::value and
@@ -570,7 +572,7 @@ class basic_json
         }
     }
 
-    /// get a string
+    /// get a string (explicit)
     template <typename T, typename
               std::enable_if<
                   std::is_constructible<T, string_t>::value, int>::type
@@ -586,7 +588,7 @@ class basic_json
         }
     }
 
-    /// get a boolean
+    /// get a boolean (explicit)
     template <typename T, typename
               std::enable_if<
                   std::is_same<boolean_t, T>::value, int>::type
@@ -602,7 +604,7 @@ class basic_json
         }
     }
 
-    /// explicitly get a number
+    /// get a number (explicit)
     template<typename T, typename
              std::enable_if<
                  not std::is_same<boolean_t, T>::value and
@@ -621,7 +623,7 @@ class basic_json
         }
     }
 
-    /// explicitly get a value
+    /// get a value (implicit)
     template<typename T>
     inline operator T() const
     {
