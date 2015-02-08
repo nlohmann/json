@@ -84,10 +84,6 @@ class basic_json
     using iterator = basic_json::iterator;
     /// a const iterator for a basic_json container
     using const_iterator = basic_json::const_iterator;
-    // a reverse iterator for a basic_json container
-    using reverse_iterator = std::reverse_iterator<iterator>;
-    /// a const reverse iterator for a basic_json container
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 
     ///////////////////////////
@@ -259,8 +255,6 @@ class basic_json
               std::enable_if<
                   not std::is_same<V, basic_json::iterator>::value and
                   not std::is_same<V, basic_json::const_iterator>::value and
-                  not std::is_same<V, basic_json::reverse_iterator>::value and
-                  not std::is_same<V, basic_json::const_reverse_iterator>::value and
                   std::is_constructible<basic_json, typename V::value_type>::value, int>::type
               = 0>
     inline basic_json(const V& value)
@@ -732,18 +726,6 @@ class basic_json
         return m_value.object->operator[](key);
     }
 
-    /// access specified element
-    inline reference operator[](typename object_t::key_type&& key)
-    {
-        // at only works for objects
-        if (m_type != value_t::object)
-        {
-            throw std::runtime_error("cannot use [] with " + type_name());
-        }
-
-        return m_value.object->operator[](std::move(key));
-    }
-
 
     /// find an element in an object
     inline iterator find(typename object_t::key_type key)
@@ -821,38 +803,6 @@ class basic_json
     {
         const_iterator result(this);
         result.set_end();
-        return result;
-    }
-
-    /// returns a reverse iterator to the end of the container
-    inline reverse_iterator rbegin() const noexcept
-    {
-        reverse_iterator result(this);
-        result.set_end();
-        return result;
-    }
-
-    /// returns a reverse iterator to the beginning of the container
-    inline reverse_iterator rend() const noexcept
-    {
-        reverse_iterator result(this);
-        result.set_begin();
-        return result;
-    }
-
-    /// returns a const reverse iterator to the end of the container
-    inline const_reverse_iterator crbegin() const noexcept
-    {
-        const_reverse_iterator result(this);
-        result.set_end();
-        return result;
-    }
-
-    /// returns a const reverse iterator to the beginning of the container
-    inline const_reverse_iterator crend() const noexcept
-    {
-        const_reverse_iterator result(this);
-        result.set_begin();
         return result;
     }
 
@@ -2326,7 +2276,7 @@ class basic_json
         /// post-decrement (it--)
         inline const_iterator operator--(int)
         {
-            iterator result = *this;
+            const_iterator result = *this;
 
             switch (m_object->m_type)
             {

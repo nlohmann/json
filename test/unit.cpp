@@ -2275,3 +2275,472 @@ TEST_CASE("element access")
         }
     }
 }
+
+TEST_CASE("iterators")
+{
+    SECTION("boolean")
+    {
+        json j = true;
+        json j_const(j);
+
+        SECTION("json + begin/end")
+        {
+            auto it = j.begin();
+            CHECK(it != j.end());
+            CHECK(*it == j);
+
+            it++;
+            CHECK(it != j.begin());
+            CHECK(it == j.end());
+
+            it--;
+            CHECK(it == j.begin());
+            CHECK(it != j.end());
+            CHECK(*it == j);
+
+            ++it;
+            CHECK(it != j.begin());
+            CHECK(it == j.end());
+
+            --it;
+            CHECK(it == j.begin());
+            CHECK(it != j.end());
+            CHECK(*it == j);
+        }
+
+        SECTION("const json + begin/end")
+        {
+            auto it = j_const.begin();
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+
+            it++;
+            CHECK(it != j_const.begin());
+            CHECK(it == j_const.end());
+
+            it--;
+            CHECK(it == j_const.begin());
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+
+            ++it;
+            CHECK(it != j_const.begin());
+            CHECK(it == j_const.end());
+
+            --it;
+            CHECK(it == j_const.begin());
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+        }
+
+        SECTION("json + cbegin/cend")
+        {
+            auto it = j.cbegin();
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+
+            it++;
+            CHECK(it != j.cbegin());
+            CHECK(it == j.cend());
+
+            it--;
+            CHECK(it == j.cbegin());
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+
+            ++it;
+            CHECK(it != j.cbegin());
+            CHECK(it == j.cend());
+
+            --it;
+            CHECK(it == j.cbegin());
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+        }
+
+        SECTION("const json + cbegin/cend")
+        {
+            auto it = j_const.cbegin();
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+
+            it++;
+            CHECK(it != j_const.cbegin());
+            CHECK(it == j_const.cend());
+
+            it--;
+            CHECK(it == j_const.cbegin());
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+
+            ++it;
+            CHECK(it != j_const.cbegin());
+            CHECK(it == j_const.cend());
+
+            --it;
+            CHECK(it == j_const.cbegin());
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+        }
+    }
+
+    SECTION("string")
+    {
+        json j = "hello world";
+        json j_const(j);
+
+        SECTION("json + begin/end")
+        {
+            auto it = j.begin();
+            CHECK(it != j.end());
+            CHECK(*it == j);
+
+            it++;
+            CHECK(it != j.begin());
+            CHECK(it == j.end());
+
+            it--;
+            CHECK(it == j.begin());
+            CHECK(it != j.end());
+            CHECK(*it == j);
+
+            ++it;
+            CHECK(it != j.begin());
+            CHECK(it == j.end());
+
+            --it;
+            CHECK(it == j.begin());
+            CHECK(it != j.end());
+            CHECK(*it == j);
+        }
+
+        SECTION("const json + begin/end")
+        {
+            auto it = j_const.begin();
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+
+            it++;
+            CHECK(it != j_const.begin());
+            CHECK(it == j_const.end());
+
+            it--;
+            CHECK(it == j_const.begin());
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+
+            ++it;
+            CHECK(it != j_const.begin());
+            CHECK(it == j_const.end());
+
+            --it;
+            CHECK(it == j_const.begin());
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+        }
+
+        SECTION("json + cbegin/cend")
+        {
+            auto it = j.cbegin();
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+
+            it++;
+            CHECK(it != j.cbegin());
+            CHECK(it == j.cend());
+
+            it--;
+            CHECK(it == j.cbegin());
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+
+            ++it;
+            CHECK(it != j.cbegin());
+            CHECK(it == j.cend());
+
+            --it;
+            CHECK(it == j.cbegin());
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+        }
+
+        SECTION("const json + cbegin/cend")
+        {
+            auto it = j_const.cbegin();
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+
+            it++;
+            CHECK(it != j_const.cbegin());
+            CHECK(it == j_const.cend());
+
+            it--;
+            CHECK(it == j_const.cbegin());
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+
+            ++it;
+            CHECK(it != j_const.cbegin());
+            CHECK(it == j_const.cend());
+
+            --it;
+            CHECK(it == j_const.cbegin());
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+        }
+    }
+
+    SECTION("array")
+    {
+        json j = {1, 2, 3, 4};
+        json j_const(j);
+    }
+
+    SECTION("object")
+    {
+        json j = {{"one", 1}, {"two", 2}, {"three", 3}};
+        json j_const(j);
+    }
+
+    SECTION("number (integer)")
+    {
+        json j = 23;
+        json j_const(j);
+
+        SECTION("json + begin/end")
+        {
+            auto it = j.begin();
+            CHECK(it != j.end());
+            CHECK(*it == j);
+
+            it++;
+            CHECK(it != j.begin());
+            CHECK(it == j.end());
+
+            it--;
+            CHECK(it == j.begin());
+            CHECK(it != j.end());
+            CHECK(*it == j);
+
+            ++it;
+            CHECK(it != j.begin());
+            CHECK(it == j.end());
+
+            --it;
+            CHECK(it == j.begin());
+            CHECK(it != j.end());
+            CHECK(*it == j);
+        }
+
+        SECTION("const json + begin/end")
+        {
+            auto it = j_const.begin();
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+
+            it++;
+            CHECK(it != j_const.begin());
+            CHECK(it == j_const.end());
+
+            it--;
+            CHECK(it == j_const.begin());
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+
+            ++it;
+            CHECK(it != j_const.begin());
+            CHECK(it == j_const.end());
+
+            --it;
+            CHECK(it == j_const.begin());
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+        }
+
+        SECTION("json + cbegin/cend")
+        {
+            auto it = j.cbegin();
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+
+            it++;
+            CHECK(it != j.cbegin());
+            CHECK(it == j.cend());
+
+            it--;
+            CHECK(it == j.cbegin());
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+
+            ++it;
+            CHECK(it != j.cbegin());
+            CHECK(it == j.cend());
+
+            --it;
+            CHECK(it == j.cbegin());
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+        }
+
+        SECTION("const json + cbegin/cend")
+        {
+            auto it = j_const.cbegin();
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+
+            it++;
+            CHECK(it != j_const.cbegin());
+            CHECK(it == j_const.cend());
+
+            it--;
+            CHECK(it == j_const.cbegin());
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+
+            ++it;
+            CHECK(it != j_const.cbegin());
+            CHECK(it == j_const.cend());
+
+            --it;
+            CHECK(it == j_const.cbegin());
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+        }
+    }
+
+    SECTION("number (float)")
+    {
+        json j = 23.42;
+        json j_const(j);
+
+        SECTION("json + begin/end")
+        {
+            auto it = j.begin();
+            CHECK(it != j.end());
+            CHECK(*it == j);
+
+            it++;
+            CHECK(it != j.begin());
+            CHECK(it == j.end());
+
+            it--;
+            CHECK(it == j.begin());
+            CHECK(it != j.end());
+            CHECK(*it == j);
+
+            ++it;
+            CHECK(it != j.begin());
+            CHECK(it == j.end());
+
+            --it;
+            CHECK(it == j.begin());
+            CHECK(it != j.end());
+            CHECK(*it == j);
+        }
+
+        SECTION("const json + begin/end")
+        {
+            auto it = j_const.begin();
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+
+            it++;
+            CHECK(it != j_const.begin());
+            CHECK(it == j_const.end());
+
+            it--;
+            CHECK(it == j_const.begin());
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+
+            ++it;
+            CHECK(it != j_const.begin());
+            CHECK(it == j_const.end());
+
+            --it;
+            CHECK(it == j_const.begin());
+            CHECK(it != j_const.end());
+            CHECK(*it == j_const);
+        }
+
+        SECTION("json + cbegin/cend")
+        {
+            auto it = j.cbegin();
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+
+            it++;
+            CHECK(it != j.cbegin());
+            CHECK(it == j.cend());
+
+            it--;
+            CHECK(it == j.cbegin());
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+
+            ++it;
+            CHECK(it != j.cbegin());
+            CHECK(it == j.cend());
+
+            --it;
+            CHECK(it == j.cbegin());
+            CHECK(it != j.cend());
+            CHECK(*it == j);
+        }
+
+        SECTION("const json + cbegin/cend")
+        {
+            auto it = j_const.cbegin();
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+
+            it++;
+            CHECK(it != j_const.cbegin());
+            CHECK(it == j_const.cend());
+
+            it--;
+            CHECK(it == j_const.cbegin());
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+
+            ++it;
+            CHECK(it != j_const.cbegin());
+            CHECK(it == j_const.cend());
+
+            --it;
+            CHECK(it == j_const.cbegin());
+            CHECK(it != j_const.cend());
+            CHECK(*it == j_const);
+        }
+    }
+
+    SECTION("null")
+    {
+        json j = nullptr;
+        json j_const(j);
+
+        SECTION("json + begin/end")
+        {
+            auto it = j.begin();
+            CHECK(it == j.end());
+        }
+
+        SECTION("const json + begin/end")
+        {
+            auto it = j_const.begin();
+            CHECK(it == j_const.end());
+        }
+
+        SECTION("json + cbegin/cend")
+        {
+            auto it = j.cbegin();
+            CHECK(it == j.cend());
+        }
+
+        SECTION("const json + cbegin/cend")
+        {
+            auto it = j_const.cbegin();
+            CHECK(it == j_const.cend());
+        }
+    }
+}
