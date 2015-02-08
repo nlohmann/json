@@ -15,7 +15,7 @@ using nlohmann::json;
 #include <unordered_set>
 #include <vector>
 
-TEST_CASE("Constructors")
+TEST_CASE("constructors")
 {
     SECTION("create an empty value with a given type")
     {
@@ -891,6 +891,143 @@ TEST_CASE("Constructors")
                 json j = json::array({ {"one", 1}, {"two", 2.2}, {"three", false} });
                 CHECK(j.type() == json::value_t::array);
             }
+        }
+    }
+}
+
+TEST_CASE("other constructors and destructor")
+{
+    SECTION("copy constructor")
+    {
+        SECTION("object")
+        {
+            json j {{"foo", 1}, {"bar", false}};
+            json k(j);
+            CHECK(j == k);
+        }
+
+        SECTION("array")
+        {
+            json j {"foo", 1, 42.23, false};
+            json k(j);
+            CHECK(j == k);
+        }
+
+        SECTION("null")
+        {
+            json j(nullptr);
+            json k(j);
+            CHECK(j == k);
+        }
+
+        SECTION("boolean")
+        {
+            json j(true);
+            json k(j);
+            CHECK(j == k);
+        }
+
+        SECTION("string")
+        {
+            json j("Hello world");
+            json k(j);
+            CHECK(j == k);
+        }
+
+        SECTION("number (integer)")
+        {
+            json j(42);
+            json k(j);
+            CHECK(j == k);
+        }
+
+        SECTION("number (floating-point)")
+        {
+            json j(42.23);
+            json k(j);
+            CHECK(j == k);
+        }
+    }
+
+    SECTION("move constructor")
+    {
+        json j {{"foo", "bar"}, {"baz", {1, 2, 3, 4}}, {"a", 42.23}, {"b", nullptr}};
+        CHECK(j.type() == json::value_t::object);
+        json k(std::move(j));
+        CHECK(k.type() == json::value_t::object);
+        CHECK(j.type() == json::value_t::null);
+    }
+
+    SECTION("copy assignment")
+    {
+        SECTION("object")
+        {
+            json j {{"foo", 1}, {"bar", false}};
+            json k = j;
+            CHECK(j == k);
+        }
+
+        SECTION("array")
+        {
+            json j {"foo", 1, 42.23, false};
+            json k = j;
+            CHECK(j == k);
+        }
+
+        SECTION("null")
+        {
+            json j(nullptr);
+            json k = j;
+            CHECK(j == k);
+        }
+
+        SECTION("boolean")
+        {
+            json j(true);
+            json k = j;
+            CHECK(j == k);
+        }
+
+        SECTION("string")
+        {
+            json j("Hello world");
+            json k = j;
+            CHECK(j == k);
+        }
+
+        SECTION("number (integer)")
+        {
+            json j(42);
+            json k = j;
+            CHECK(j == k);
+        }
+
+        SECTION("number (floating-point)")
+        {
+            json j(42.23);
+            json k = j;
+            CHECK(j == k);
+        }
+    }
+
+    SECTION("destructor")
+    {
+        SECTION("object")
+        {
+            auto j = new json {{"foo", 1}, {"bar", false}};
+            delete j;
+        }
+
+        SECTION("array")
+        {
+            auto j = new json {"foo", 1, false, 23.42};
+            delete j;
+        }
+
+        SECTION("string")
+        {
+            auto j = new json("Hello world");
+            delete j;
         }
     }
 }
