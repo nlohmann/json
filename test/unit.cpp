@@ -1478,6 +1478,150 @@ TEST_CASE("value conversion")
             CHECK(json(n) == j);
         }
 
+        SECTION("int8_t")
+        {
+            int8_t n = j.get<int8_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int16_t")
+        {
+            int16_t n = j.get<int16_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int32_t")
+        {
+            int32_t n = j.get<int32_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int64_t")
+        {
+            int64_t n = j.get<int64_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int8_fast_t")
+        {
+            int_fast8_t n = j.get<int_fast8_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int16_fast_t")
+        {
+            int_fast16_t n = j.get<int_fast16_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int32_fast_t")
+        {
+            int_fast32_t n = j.get<int_fast32_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int64_fast_t")
+        {
+            int_fast64_t n = j.get<int_fast64_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int8_least_t")
+        {
+            int_least8_t n = j.get<int_least8_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int16_least_t")
+        {
+            int_least16_t n = j.get<int_least16_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int32_least_t")
+        {
+            int_least32_t n = j.get<int_least32_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int64_least_t")
+        {
+            int_least64_t n = j.get<int_least64_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint8_t")
+        {
+            uint8_t n = j.get<uint8_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint16_t")
+        {
+            uint16_t n = j.get<uint16_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint32_t")
+        {
+            uint32_t n = j.get<uint32_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint64_t")
+        {
+            uint64_t n = j.get<uint64_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint8_fast_t")
+        {
+            uint_fast8_t n = j.get<uint_fast8_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint16_fast_t")
+        {
+            uint_fast16_t n = j.get<uint_fast16_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint32_fast_t")
+        {
+            uint_fast32_t n = j.get<uint_fast32_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint64_fast_t")
+        {
+            uint_fast64_t n = j.get<uint_fast64_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint8_least_t")
+        {
+            uint_least8_t n = j.get<uint_least8_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint16_least_t")
+        {
+            uint_least16_t n = j.get<uint_least16_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint32_least_t")
+        {
+            uint_least32_t n = j.get<uint_least32_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint64_least_t")
+        {
+            uint_least64_t n = j.get<uint_least64_t>();
+            CHECK(json(n) == j);
+        }
+
         SECTION("exception in case of a non-number type")
         {
             CHECK_THROWS_AS(json(json::value_t::null).get<json::number_integer_t>(), std::logic_error);
@@ -1486,6 +1630,210 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::string).get<json::number_integer_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::boolean).get<json::number_integer_t>(), std::logic_error);
             CHECK_NOTHROW(json(json::value_t::number_float).get<json::number_integer_t>());
+        }
+    }
+
+    SECTION("get an integer number (implicit)")
+    {
+        json::number_integer_t n_reference {42};
+        json j(n_reference);
+
+        SECTION("number_integer_t")
+        {
+            json::number_integer_t n = j.get<json::number_integer_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("short")
+        {
+            short n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("unsigned short")
+        {
+            unsigned short n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int")
+        {
+            int n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("unsigned int")
+        {
+            unsigned int n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("long")
+        {
+            long n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("unsigned long")
+        {
+            unsigned long n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("long long")
+        {
+            long long n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("unsigned long long")
+        {
+            unsigned long long n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int8_t")
+        {
+            int8_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int16_t")
+        {
+            int16_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int32_t")
+        {
+            int32_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int64_t")
+        {
+            int64_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int8_fast_t")
+        {
+            int_fast8_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int16_fast_t")
+        {
+            int_fast16_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int32_fast_t")
+        {
+            int_fast32_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int64_fast_t")
+        {
+            int_fast64_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int8_least_t")
+        {
+            int_least8_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int16_least_t")
+        {
+            int_least16_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int32_least_t")
+        {
+            int_least32_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int64_least_t")
+        {
+            int_least64_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint8_t")
+        {
+            uint8_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint16_t")
+        {
+            uint16_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint32_t")
+        {
+            uint32_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint64_t")
+        {
+            uint64_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint8_fast_t")
+        {
+            uint_fast8_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint16_fast_t")
+        {
+            uint_fast16_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint32_fast_t")
+        {
+            uint_fast32_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint64_fast_t")
+        {
+            uint_fast64_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint8_least_t")
+        {
+            uint_least8_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint16_least_t")
+        {
+            uint_least16_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint32_least_t")
+        {
+            uint_least32_t n = j;
+            CHECK(json(n) == j);
+        }
+
+        SECTION("uint64_least_t")
+        {
+            uint_least64_t n = j;
+            CHECK(json(n) == j);
         }
     }
 }
