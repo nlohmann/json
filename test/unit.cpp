@@ -1197,7 +1197,7 @@ TEST_CASE("value conversion")
             std::unordered_multimap<std::string, json> o = j.get<std::unordered_multimap<std::string, json>>();
             CHECK(json(o) == j);
         }
-        
+
         SECTION("exception in case of a non-object type")
         {
             CHECK_THROWS_AS(json(json::value_t::null).get<json::object_t>(), std::logic_error);
@@ -1331,7 +1331,7 @@ TEST_CASE("value conversion")
     {
         json::string_t s_reference {"Hello world"};
         json j(s_reference);
-        
+
         SECTION("string_t")
         {
             json::string_t s = j.get<json::string_t>();
@@ -1359,7 +1359,7 @@ TEST_CASE("value conversion")
     {
         json::string_t s_reference {"Hello world"};
         json j(s_reference);
-        
+
         SECTION("string_t")
         {
             json::string_t s = j;
@@ -1377,7 +1377,7 @@ TEST_CASE("value conversion")
     {
         json::boolean_t b_reference {true};
         json j(b_reference);
-        
+
         SECTION("boolean_t")
         {
             json::boolean_t b = j.get<json::boolean_t>();
@@ -1405,7 +1405,7 @@ TEST_CASE("value conversion")
     {
         json::boolean_t b_reference {true};
         json j(b_reference);
-        
+
         SECTION("boolean_t")
         {
             json::boolean_t b = j;
@@ -1419,4 +1419,73 @@ TEST_CASE("value conversion")
         }
     }
 
+    SECTION("get an integer number (explicit)")
+    {
+        json::number_integer_t n_reference {42};
+        json j(n_reference);
+
+        SECTION("number_integer_t")
+        {
+            json::number_integer_t n = j.get<json::number_integer_t>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("short")
+        {
+            short n = j.get<short>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("unsigned short")
+        {
+            unsigned short n = j.get<unsigned short>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("int")
+        {
+            int n = j.get<int>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("unsigned int")
+        {
+            unsigned int n = j.get<unsigned int>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("long")
+        {
+            long n = j.get<long>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("unsigned long")
+        {
+            unsigned long n = j.get<unsigned long>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("long long")
+        {
+            long long n = j.get<long long>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("unsigned long long")
+        {
+            unsigned long long n = j.get<unsigned long long>();
+            CHECK(json(n) == j);
+        }
+
+        SECTION("exception in case of a non-number type")
+        {
+            CHECK_THROWS_AS(json(json::value_t::null).get<json::number_integer_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::object).get<json::number_integer_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::array).get<json::number_integer_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::string).get<json::number_integer_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::boolean).get<json::number_integer_t>(), std::logic_error);
+            CHECK_NOTHROW(json(json::value_t::number_float).get<json::number_integer_t>());
+        }
+    }
 }
