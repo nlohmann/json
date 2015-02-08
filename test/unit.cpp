@@ -262,7 +262,7 @@ TEST_CASE("Constructors")
         }
     }
 
-    SECTION("create an string (implicit)")
+    SECTION("create a string (implicit)")
     {
         // reference string
         json::string_t s_reference {"Hello world"};
@@ -296,6 +296,350 @@ TEST_CASE("Constructors")
         {
             json j("Hello world");
             CHECK(j.type() == json::value_t::string);
+            CHECK(j == j_reference);
+        }
+    }
+
+    SECTION("create a boolean (explicit)")
+    {
+        SECTION("empty boolean")
+        {
+            json::boolean_t b{};
+            json j(b);
+            CHECK(j.type() == json::value_t::boolean);
+        }
+
+        SECTION("filled boolean (true)")
+        {
+            json j(true);
+            CHECK(j.type() == json::value_t::boolean);
+        }
+
+        SECTION("filled boolean (false)")
+        {
+            json j(false);
+            CHECK(j.type() == json::value_t::boolean);
+        }
+    }
+
+    SECTION("create an integer number (explicit)")
+    {
+        SECTION("uninitialized value")
+        {
+            json::number_integer_t n{};
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+        }
+
+        SECTION("initialized value")
+        {
+            json::number_integer_t n(42);
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+        }
+    }
+
+    SECTION("create an integer number (implicit)")
+    {
+        // reference object
+        json::number_integer_t n_reference = 42;
+        json j_reference(n_reference);
+
+        SECTION("short")
+        {
+            short n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("unsigned short")
+        {
+            unsigned short n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int")
+        {
+            int n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("unsigned int")
+        {
+            unsigned int n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("long")
+        {
+            long n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("unsigned long")
+        {
+            short n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("long long")
+        {
+            long long n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("unsigned long long")
+        {
+            unsigned long long n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int8_t")
+        {
+            int8_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int16_t")
+        {
+            int16_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int32_t")
+        {
+            int32_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int64_t")
+        {
+            int64_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int_fast8_t")
+        {
+            int_fast8_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int_fast16_t")
+        {
+            int_fast16_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int_fast32_t")
+        {
+            int_fast32_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int_fast64_t")
+        {
+            int_fast64_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int_least8_t")
+        {
+            int_least8_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int_least16_t")
+        {
+            int_least16_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int_least32_t")
+        {
+            int_least32_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("int_least64_t")
+        {
+            int_least64_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint8_t")
+        {
+            uint8_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint16_t")
+        {
+            uint16_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint32_t")
+        {
+            uint32_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint64_t")
+        {
+            uint64_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint_fast8_t")
+        {
+            uint_fast8_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint_fast16_t")
+        {
+            uint_fast16_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint_fast32_t")
+        {
+            uint_fast32_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint_fast64_t")
+        {
+            uint_fast64_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint_least8_t")
+        {
+            uint_least8_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint_least16_t")
+        {
+            uint_least16_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint_least32_t")
+        {
+            uint_least32_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("uint_least64_t")
+        {
+            uint_least64_t n = 42;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("integer literal without suffix")
+        {
+            json j(42);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("integer literal with u suffix")
+        {
+            json j(42u);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("integer literal with l suffix")
+        {
+            json j(42l);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("integer literal with ul suffix")
+        {
+            json j(42ul);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("integer literal with ll suffix")
+        {
+            json j(42ll);
+            CHECK(j.type() == json::value_t::number_integer);
+            CHECK(j == j_reference);
+        }
+
+        SECTION("integer literal with ull suffix")
+        {
+            json j(42ull);
+            CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
     }
