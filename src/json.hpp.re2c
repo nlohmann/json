@@ -44,7 +44,7 @@ namespace nlohmann
                            (@c bool by default)
 @tparam NumberIntegerType  type for JSON integer numbers
                            (@c int64_t by default)
-@tparam NumberFloatType    type for JSON floating point numbers
+@tparam NumberFloatType    type for JSON floating-point numbers
                            (@c double by default)
 */
 template <
@@ -104,7 +104,7 @@ class basic_json
     using boolean_t = BooleanType;
     /// a type for a number (integer)
     using number_integer_t = NumberIntegerType;
-    /// a type for a number (floating point)
+    /// a type for a number (floating-point)
     using number_float_t = NumberFloatType;
     /// a type for list initialization
     using list_init_t = std::initializer_list<basic_json>;
@@ -127,7 +127,7 @@ class basic_json
         boolean_t boolean;
         /// number (integer)
         number_integer_t number_integer;
-        /// number (floating point)
+        /// number (floating-point)
         number_float_t number_float;
 
         /// default constructor (for null values)
@@ -142,7 +142,7 @@ class basic_json
         json_value(boolean_t v) : boolean(v) {}
         /// constructor for numbers (integer)
         json_value(number_integer_t v) : number_integer(v) {}
-        /// constructor for numbers (floating point)
+        /// constructor for numbers (floating-point)
         json_value(number_float_t v) : number_float(v) {}
     };
 
@@ -166,7 +166,7 @@ class basic_json
         boolean,
         /// number value (integer)
         number_integer,
-        /// number value (floating point)
+        /// number value (floating-point)
         number_float
     };
 
@@ -306,12 +306,12 @@ class basic_json
         : m_type(value_t::number_integer), m_value(number_integer_t(value))
     {}
 
-    /// create a floating point number (explicit)
+    /// create a floating-point number (explicit)
     inline basic_json(const number_float_t& value)
         : m_type(value_t::number_float), m_value(value)
     {}
 
-    /// create a floating point number (implicit)
+    /// create a floating-point number (implicit)
     template<typename T, typename = typename
              std::enable_if<
                  std::is_constructible<number_float_t, T>::value and

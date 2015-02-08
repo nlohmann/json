@@ -643,4 +643,254 @@ TEST_CASE("Constructors")
             CHECK(j == j_reference);
         }
     }
+
+    SECTION("create a floating-point number (explicit)")
+    {
+        SECTION("uninitialized value")
+        {
+            json::number_float_t n{};
+            json j(n);
+            CHECK(j.type() == json::value_t::number_float);
+        }
+
+        SECTION("initialized value")
+        {
+            json::number_float_t n(42.23);
+            json j(n);
+            CHECK(j.type() == json::value_t::number_float);
+        }
+    }
+
+    SECTION("create a floating-point number (implicit)")
+    {
+        // reference object
+        json::number_float_t n_reference = 42.23;
+        json j_reference(n_reference);
+
+        SECTION("float")
+        {
+            float n = 42.23;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_float);
+            CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
+        }
+
+        SECTION("double")
+        {
+            double n = 42.23;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_float);
+            CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
+        }
+
+        SECTION("long double")
+        {
+            long double n = 42.23;
+            json j(n);
+            CHECK(j.type() == json::value_t::number_float);
+            CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
+        }
+
+        SECTION("floating-point literal without suffix")
+        {
+            json j(42.23);
+            CHECK(j.type() == json::value_t::number_float);
+            CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
+        }
+
+        SECTION("integer literal with f suffix")
+        {
+            json j(42.23f);
+            CHECK(j.type() == json::value_t::number_float);
+            CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
+        }
+
+        SECTION("integer literal with l suffix")
+        {
+            json j(42.23l);
+            CHECK(j.type() == json::value_t::number_float);
+            CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
+        }
+    }
+
+    SECTION("create a container (array or object) from an initializer list")
+    {
+        SECTION("empty initializer list")
+        {
+            SECTION("explicit")
+            {
+                std::initializer_list<json> l;
+                json j(l);
+                CHECK(j.type() == json::value_t::object);
+            }
+
+            SECTION("implicit")
+            {
+                json j {};
+                CHECK(j.type() == json::value_t::null);
+            }
+        }
+
+        SECTION("one element")
+        {
+            SECTION("array")
+            {
+                SECTION("explicit")
+                {
+                    std::initializer_list<json> l = {json(json::array_t())};
+                    json j(l);
+                    CHECK(j.type() == json::value_t::array);
+                }
+
+                SECTION("implicit")
+                {
+                    json j {json::array_t()};
+                    CHECK(j.type() == json::value_t::array);
+                }
+            }
+
+            SECTION("object")
+            {
+                SECTION("explicit")
+                {
+                    std::initializer_list<json> l = {json(json::object_t())};
+                    json j(l);
+                    CHECK(j.type() == json::value_t::array);
+                }
+
+                SECTION("implicit")
+                {
+                    json j {json::object_t()};
+                    CHECK(j.type() == json::value_t::array);
+                }
+            }
+
+            SECTION("string")
+            {
+                SECTION("explicit")
+                {
+                    std::initializer_list<json> l = {json("Hello world")};
+                    json j(l);
+                    CHECK(j.type() == json::value_t::array);
+                }
+
+                SECTION("implicit")
+                {
+                    json j {"Hello world"};
+                    CHECK(j.type() == json::value_t::array);
+                }
+            }
+
+            SECTION("boolean")
+            {
+                SECTION("explicit")
+                {
+                    std::initializer_list<json> l = {json(true)};
+                    json j(l);
+                    CHECK(j.type() == json::value_t::array);
+                }
+
+                SECTION("implicit")
+                {
+                    json j {true};
+                    CHECK(j.type() == json::value_t::array);
+                }
+            }
+
+            SECTION("number (integer)")
+            {
+                SECTION("explicit")
+                {
+                    std::initializer_list<json> l = {json(1)};
+                    json j(l);
+                    CHECK(j.type() == json::value_t::array);
+                }
+
+                SECTION("implicit")
+                {
+                    json j {1};
+                    CHECK(j.type() == json::value_t::array);
+                }
+            }
+
+            SECTION("number (floating-point)")
+            {
+                SECTION("explicit")
+                {
+                    std::initializer_list<json> l = {json(42.23)};
+                    json j(l);
+                    CHECK(j.type() == json::value_t::array);
+                }
+
+                SECTION("implicit")
+                {
+                    json j {42.23};
+                    CHECK(j.type() == json::value_t::array);
+                }
+            }
+        }
+
+        SECTION("more elements")
+        {
+            SECTION("explicit")
+            {
+                std::initializer_list<json> l = {1, 42.23, true, nullptr, json::object_t(), json::array_t()};
+                json j(l);
+                CHECK(j.type() == json::value_t::array);
+            }
+
+            SECTION("implicit")
+            {
+                json j {1, 42.23, true, nullptr, json::object_t(), json::array_t()};
+                CHECK(j.type() == json::value_t::array);
+            }
+        }
+
+        SECTION("implicit type deduction")
+        {
+            SECTION("object")
+            {
+                json j { {"one", 1}, {"two", 2.2}, {"three", false} };
+                CHECK(j.type() == json::value_t::object);
+            }
+
+            SECTION("array")
+            {
+                json j { {"one", 1}, {"two", 2.2}, {"three", false}, 13 };
+                CHECK(j.type() == json::value_t::array);
+            }
+        }
+
+        SECTION("explicit type deduction")
+        {
+            SECTION("empty object")
+            {
+                json j = json::object();
+                CHECK(j.type() == json::value_t::object);
+            }
+
+            SECTION("object")
+            {
+                json j = json::object({ {"one", 1}, {"two", 2.2}, {"three", false} });
+                CHECK(j.type() == json::value_t::object);
+            }
+
+            SECTION("object with error")
+            {
+                CHECK_THROWS_AS(json::object({ {"one", 1}, {"two", 2.2}, {"three", false}, 13 }), std::logic_error);
+            }
+
+            SECTION("empty array")
+            {
+                json j = json::array();
+                CHECK(j.type() == json::value_t::array);
+            }
+
+            SECTION("array")
+            {
+                json j = json::array({ {"one", 1}, {"two", 2.2}, {"three", false} });
+                CHECK(j.type() == json::value_t::array);
+            }
+        }
+    }
 }
