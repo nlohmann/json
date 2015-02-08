@@ -1836,4 +1836,223 @@ TEST_CASE("value conversion")
             CHECK(json(n) == j);
         }
     }
+
+    SECTION("get a floating-point number (explicit)")
+    {
+        json::number_float_t n_reference {42.23};
+        json j(n_reference);
+
+        SECTION("number_float_t")
+        {
+            json::number_float_t n = j.get<json::number_float_t>();
+            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+        }
+
+        SECTION("float")
+        {
+            float n = j.get<float>();
+            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+        }
+
+        SECTION("double")
+        {
+            double n = j.get<double>();
+            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+        }
+
+        SECTION("exception in case of a non-string type")
+        {
+            CHECK_THROWS_AS(json(json::value_t::null).get<json::number_float_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::object).get<json::number_float_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::array).get<json::number_float_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::string).get<json::number_float_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::boolean).get<json::number_float_t>(), std::logic_error);
+            CHECK_NOTHROW(json(json::value_t::number_integer).get<json::number_float_t>());
+        }
+    }
+
+    SECTION("get a floating-point number (implicit)")
+    {
+        json::number_float_t n_reference {42.23};
+        json j(n_reference);
+
+        SECTION("number_float_t")
+        {
+            json::number_float_t n = j;
+            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+        }
+
+        SECTION("float")
+        {
+            float n = j;
+            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+        }
+
+        SECTION("double")
+        {
+            double n = j;
+            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+        }
+    }
+}
+
+TEST_CASE("element access")
+{
+    SECTION("array")
+    {
+        json j = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+        const json j_const = j;
+
+        SECTION("access specified element with bounds checking")
+        {
+            SECTION("access within bounds")
+            {
+                CHECK(j.at(0) == json(1));
+                CHECK(j.at(1) == json(true));
+                CHECK(j.at(2) == json(nullptr));
+                CHECK(j.at(3) == json("string"));
+                CHECK(j.at(4) == json(42.23));
+                CHECK(j.at(5) == json(json::object()));
+                CHECK(j.at(6) == json({1, 2, 3}));
+
+                CHECK(j_const.at(0) == json(1));
+                CHECK(j_const.at(1) == json(true));
+                CHECK(j_const.at(2) == json(nullptr));
+                CHECK(j_const.at(3) == json("string"));
+                CHECK(j_const.at(4) == json(42.23));
+                CHECK(j_const.at(5) == json(json::object()));
+                CHECK(j_const.at(6) == json({1, 2, 3}));
+            }
+
+            SECTION("access outside bounds")
+            {
+                CHECK_THROWS_AS(j.at(7), std::out_of_range);
+                CHECK_THROWS_AS(j_const.at(7), std::out_of_range);
+            }
+
+            SECTION("access on non-array type")
+            {
+                SECTION("null")
+                {
+                    json j_nonarray(json::value_t::null);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                }
+
+                SECTION("boolean")
+                {
+                    json j_nonarray(json::value_t::boolean);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                }
+
+                SECTION("string")
+                {
+                    json j_nonarray(json::value_t::string);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                }
+
+                SECTION("object")
+                {
+                    json j_nonarray(json::value_t::object);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                }
+
+                SECTION("number (integer)")
+                {
+                    json j_nonarray(json::value_t::number_integer);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                }
+
+                SECTION("number (floating-point)")
+                {
+                    json j_nonarray(json::value_t::number_float);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                }
+            }
+        }
+
+        SECTION("access specified element")
+        {
+            SECTION("access within bounds")
+            {
+                CHECK(j[0] == json(1));
+                CHECK(j[1] == json(true));
+                CHECK(j[2] == json(nullptr));
+                CHECK(j[3] == json("string"));
+                CHECK(j[4] == json(42.23));
+                CHECK(j[5] == json(json::object()));
+                CHECK(j[6] == json({1, 2, 3}));
+
+                CHECK(j_const[0] == json(1));
+                CHECK(j_const[1] == json(true));
+                CHECK(j_const[2] == json(nullptr));
+                CHECK(j_const[3] == json("string"));
+                CHECK(j_const[4] == json(42.23));
+                CHECK(j_const[5] == json(json::object()));
+                CHECK(j_const[6] == json({1, 2, 3}));
+            }
+
+            SECTION("access on non-array type")
+            {
+                SECTION("null")
+                {
+                    json j_nonarray(json::value_t::null);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                }
+
+                SECTION("boolean")
+                {
+                    json j_nonarray(json::value_t::boolean);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                }
+
+                SECTION("string")
+                {
+                    json j_nonarray(json::value_t::string);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                }
+
+                SECTION("object")
+                {
+                    json j_nonarray(json::value_t::object);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                }
+
+                SECTION("number (integer)")
+                {
+                    json j_nonarray(json::value_t::number_integer);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                }
+
+                SECTION("number (floating-point)")
+                {
+                    json j_nonarray(json::value_t::number_float);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                }
+            }
+        }
+    }
 }
