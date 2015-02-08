@@ -1040,42 +1040,17 @@ TEST_CASE("object inspection")
 
         SECTION("no indent")
         {
-            CHECK(j.dump() ==
-                  R"({"array":[1,2,3,4],"boolean":false,"null":null,"number":42,"object":{},"string":"Hello world"})");
+            CHECK(j.dump() == "{\"array\":[1,2,3,4],\"boolean\":false,\"null\":null,\"number\":42,\"object\":{},\"string\":\"Hello world\"}");
         }
 
         SECTION("indent=0")
         {
-            CHECK(j.dump(0) == R"({
-"array": [
-1,
-2,
-3,
-4
-],
-"boolean": false,
-"null": null,
-"number": 42,
-"object": {},
-"string": "Hello world"
-})");
+            CHECK(j.dump(0) == "{\n\"array\": [\n1,\n2,\n3,\n4\n],\n\"boolean\": false,\n\"null\": null,\n\"number\": 42,\n\"object\": {},\n\"string\": \"Hello world\"\n}");
         }
 
         SECTION("indent=4")
         {
-            CHECK(j.dump(4) == R"({
-    "array": [
-        1,
-        2,
-        3,
-        4
-    ],
-    "boolean": false,
-    "null": null,
-    "number": 42,
-    "object": {},
-    "string": "Hello world"
-})");
+            CHECK(j.dump(4) == "{\n    \"array\": [\n        1,\n        2,\n        3,\n        4\n    ],\n    \"boolean\": false,\n    \"null\": null,\n    \"number\": 42,\n    \"object\": {},\n    \"string\": \"Hello world\"\n}");
         }
 
         SECTION("dump and floating-point numbers")
