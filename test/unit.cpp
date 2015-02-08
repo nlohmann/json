@@ -1197,6 +1197,52 @@ TEST_CASE("value conversion")
             std::unordered_multimap<std::string, json> o = j.get<std::unordered_multimap<std::string, json>>();
             CHECK(json(o) == j);
         }
+        
+        SECTION("exception in case of a non-object type")
+        {
+            CHECK_THROWS_AS(json(json::value_t::null).get<json::object_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::array).get<json::object_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::string).get<json::object_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::boolean).get<json::object_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::object_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_float).get<json::object_t>(), std::logic_error);
+        }
+    }
+
+    SECTION("get an object (implicit)")
+    {
+        json::object_t o_reference = {{"object", json::object()}, {"array", {1, 2, 3, 4}}, {"number", 42}, {"boolean", false}, {"null", nullptr}, {"string", "Hello world"} };
+        json j(o_reference);
+
+        SECTION("json::object_t")
+        {
+            json::object_t o = j;
+            CHECK(json(o) == j);
+        }
+
+        SECTION("std::map<std::string, json>")
+        {
+            std::map<std::string, json> o = j;
+            CHECK(json(o) == j);
+        }
+
+        SECTION("std::multimap<std::string, json>")
+        {
+            std::multimap<std::string, json> o = j;
+            CHECK(json(o) == j);
+        }
+
+        SECTION("std::unordered_map<std::string, json>")
+        {
+            std::unordered_map<std::string, json> o = j;
+            CHECK(json(o) == j);
+        }
+
+        SECTION("std::unordered_multimap<std::string, json>")
+        {
+            std::unordered_multimap<std::string, json> o = j;
+            CHECK(json(o) == j);
+        }
     }
 
     SECTION("get an array (explicit)")
@@ -1231,6 +1277,52 @@ TEST_CASE("value conversion")
         SECTION("std::deque<json>")
         {
             std::deque<json> a = j.get<std::deque<json>>();
+            CHECK(json(a) == j);
+        }
+
+        SECTION("exception in case of a non-array type")
+        {
+            CHECK_THROWS_AS(json(json::value_t::null).get<json::array_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::object).get<json::array_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::string).get<json::array_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::boolean).get<json::array_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::array_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_float).get<json::array_t>(), std::logic_error);
+        }
+    }
+
+    SECTION("get an array (implicit)")
+    {
+        json::array_t a_reference {json(1), json(2.2), json(false), json("string"), json()};
+        json j(a_reference);
+
+        SECTION("json::array_t")
+        {
+            json::array_t a = j;
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::list<json>")
+        {
+            std::list<json> a = j;
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::forward_list<json>")
+        {
+            std::forward_list<json> a = j;
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::vector<json>")
+        {
+            std::vector<json> a = j;
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::deque<json>")
+        {
+            std::deque<json> a = j;
             CHECK(json(a) == j);
         }
     }
