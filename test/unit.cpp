@@ -2055,12 +2055,12 @@ TEST_CASE("element access")
             }
         }
     }
-    
+
     SECTION("object")
     {
-        json j = {{"integer", 1}, {"floating", 42.23}, {"null", nullptr}, {"string", "hello world"}, {"boolean", true}, {"object", json::object()}, {"array", {1,2,3}}};
+        json j = {{"integer", 1}, {"floating", 42.23}, {"null", nullptr}, {"string", "hello world"}, {"boolean", true}, {"object", json::object()}, {"array", {1, 2, 3}}};
         const json j_const = j;
-        
+
         SECTION("access specified element with bounds checking")
         {
             SECTION("access within bounds")
@@ -2189,6 +2189,87 @@ TEST_CASE("element access")
                 {
                     json j_nonobject(json::value_t::number_float);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                }
+            }
+        }
+
+        SECTION("find an element in an object")
+        {
+            SECTION("existing element")
+            {
+                for (auto key :
+                        {"integer", "floating", "null", "string", "boolean", "object", "array"
+                        })
+                {
+                    CHECK(j.find(key) != j.end());
+                    CHECK(*j.find(key) == j.at(key));
+                    CHECK(j_const.find(key) != j_const.end());
+                    CHECK(*j_const.find(key) == j_const.at(key));
+                }
+            }
+
+            SECTION("nonexisting element")
+            {
+                CHECK(j.find("foo") == j.end());
+                CHECK(j_const.find("foo") == j_const.end());
+            }
+
+            SECTION("all types")
+            {
+                SECTION("null")
+                {
+                    json j_nonarray(json::value_t::null);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK(j_nonarray.find("foo") == j_nonarray.end());
+                    CHECK(j_nonarray_const.find("foo") == j_nonarray_const.end());
+                }
+
+                SECTION("string")
+                {
+                    json j_nonarray(json::value_t::string);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK(j_nonarray.find("foo") == j_nonarray.end());
+                    CHECK(j_nonarray_const.find("foo") == j_nonarray_const.end());
+                }
+
+                SECTION("object")
+                {
+                    json j_nonarray(json::value_t::object);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK(j_nonarray.find("foo") == j_nonarray.end());
+                    CHECK(j_nonarray_const.find("foo") == j_nonarray_const.end());
+                }
+
+                SECTION("array")
+                {
+                    json j_nonarray(json::value_t::array);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK(j_nonarray.find("foo") == j_nonarray.end());
+                    CHECK(j_nonarray_const.find("foo") == j_nonarray_const.end());
+                }
+
+                SECTION("boolean")
+                {
+                    json j_nonarray(json::value_t::boolean);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK(j_nonarray.find("foo") == j_nonarray.end());
+                    CHECK(j_nonarray_const.find("foo") == j_nonarray_const.end());
+                }
+
+                SECTION("number (integer)")
+                {
+                    json j_nonarray(json::value_t::number_integer);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK(j_nonarray.find("foo") == j_nonarray.end());
+                    CHECK(j_nonarray_const.find("foo") == j_nonarray_const.end());
+                }
+
+                SECTION("number (floating-point)")
+                {
+                    json j_nonarray(json::value_t::number_float);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK(j_nonarray.find("foo") == j_nonarray.end());
+                    CHECK(j_nonarray_const.find("foo") == j_nonarray_const.end());
                 }
             }
         }
