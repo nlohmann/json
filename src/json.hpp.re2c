@@ -84,6 +84,10 @@ class basic_json
     using iterator = basic_json::iterator;
     /// a const iterator for a basic_json container
     using const_iterator = basic_json::const_iterator;
+    // a reverse iterator for a basic_json container
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    /// a const reverse iterator for a basic_json container
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 
     ///////////////////////////
@@ -255,6 +259,8 @@ class basic_json
               std::enable_if<
                   not std::is_same<V, basic_json::iterator>::value and
                   not std::is_same<V, basic_json::const_iterator>::value and
+                  not std::is_same<V, basic_json::reverse_iterator>::value and
+                  not std::is_same<V, basic_json::const_reverse_iterator>::value and
                   std::is_constructible<basic_json, typename V::value_type>::value, int>::type
               = 0>
     inline basic_json(const V& value)
@@ -437,7 +443,7 @@ class basic_json
         : m_type(std::move(other.m_type)),
           m_value(std::move(other.m_value))
     {
-        // invaludate payload
+        // invalidate payload
         other.m_type = value_t::null;
         other.m_value = {};
     }
@@ -461,23 +467,24 @@ class basic_json
                 m_value.object = nullptr;
                 break;
             }
+
             case (value_t::array):
             {
                 delete m_value.array;
                 m_value.array = nullptr;
                 break;
             }
+
             case (value_t::string):
             {
                 delete m_value.string;
                 m_value.string = nullptr;
                 break;
             }
-            case (value_t::null):
-            case (value_t::boolean):
-            case (value_t::number_integer):
-            case (value_t::number_float):
+
+            default:
             {
+                // all other types need no specific destructor
                 break;
             }
         }
@@ -815,6 +822,38 @@ class basic_json
         return result;
     }
 
+    /// returns a reverse iterator to the end of the container
+    inline reverse_iterator rbegin() const noexcept
+    {
+        reverse_iterator result(this);
+        result.set_end();
+        return result;
+    }
+
+    /// returns a reverse iterator to the beginning of the container
+    inline reverse_iterator rend() const noexcept
+    {
+        reverse_iterator result(this);
+        result.set_begin();
+        return result;
+    }
+
+    /// returns a const reverse iterator to the end of the container
+    inline const_reverse_iterator crbegin() const noexcept
+    {
+        const_reverse_iterator result(this);
+        result.set_end();
+        return result;
+    }
+
+    /// returns a const reverse iterator to the beginning of the container
+    inline const_reverse_iterator crend() const noexcept
+    {
+        const_reverse_iterator result(this);
+        result.set_begin();
+        return result;
+    }
+
 
     //////////////
     // capacity //
@@ -839,10 +878,13 @@ class basic_json
             {
                 return m_value.object->empty();
             }
-        }
 
-        // all other types are nonempty
-        return false;
+            default:
+            {
+                // all other types are nonempty
+                return false;
+            }
+        }
     }
 
     /// returns the number of elements
@@ -864,10 +906,13 @@ class basic_json
             {
                 return m_value.object->size();
             }
-        }
 
-        // all other types have size 1
-        return 1;
+            default:
+            {
+                // all other types have size 1
+                return 1;
+            }
+        }
     }
 
     /// returns the maximum possible number of elements
@@ -889,10 +934,13 @@ class basic_json
             {
                 return m_value.object->max_size();
             }
-        }
 
-        // all other types have max_size 1
-        return 1;
+            default:
+            {
+                // all other types have max_size 1
+                return 1;
+            }
+        }
     }
 
 
@@ -2744,7 +2792,7 @@ class basic_json
                    );
         }
 
-    private:
+      private:
         /// the buffer
         std::string buffer;
         /// a pointer to the next character to read from the buffer
