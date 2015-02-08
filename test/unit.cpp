@@ -1326,4 +1326,97 @@ TEST_CASE("value conversion")
             CHECK(json(a) == j);
         }
     }
+
+    SECTION("get a string (explicit)")
+    {
+        json::string_t s_reference {"Hello world"};
+        json j(s_reference);
+        
+        SECTION("string_t")
+        {
+            json::string_t s = j.get<json::string_t>();
+            CHECK(json(s) == j);
+        }
+
+        SECTION("std::string")
+        {
+            std::string s = j.get<std::string>();
+            CHECK(json(s) == j);
+        }
+
+        SECTION("exception in case of a non-string type")
+        {
+            CHECK_THROWS_AS(json(json::value_t::null).get<json::string_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::object).get<json::string_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::array).get<json::string_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::boolean).get<json::string_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::string_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_float).get<json::string_t>(), std::logic_error);
+        }
+    }
+
+    SECTION("get a string (implicit)")
+    {
+        json::string_t s_reference {"Hello world"};
+        json j(s_reference);
+        
+        SECTION("string_t")
+        {
+            json::string_t s = j;
+            CHECK(json(s) == j);
+        }
+
+        SECTION("std::string")
+        {
+            std::string s = j;
+            CHECK(json(s) == j);
+        }
+    }
+
+    SECTION("get a boolean (explicit)")
+    {
+        json::boolean_t b_reference {true};
+        json j(b_reference);
+        
+        SECTION("boolean_t")
+        {
+            json::boolean_t b = j.get<json::boolean_t>();
+            CHECK(json(b) == j);
+        }
+
+        SECTION("bool")
+        {
+            bool b = j.get<bool>();
+            CHECK(json(b) == j);
+        }
+
+        SECTION("exception in case of a non-string type")
+        {
+            CHECK_THROWS_AS(json(json::value_t::null).get<json::boolean_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::object).get<json::boolean_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::array).get<json::boolean_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::string).get<json::boolean_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::boolean_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_float).get<json::boolean_t>(), std::logic_error);
+        }
+    }
+
+    SECTION("get a boolean (implicit)")
+    {
+        json::boolean_t b_reference {true};
+        json j(b_reference);
+        
+        SECTION("boolean_t")
+        {
+            json::boolean_t b = j;
+            CHECK(json(b) == j);
+        }
+
+        SECTION("bool")
+        {
+            bool b = j;
+            CHECK(json(b) == j);
+        }
+    }
+
 }
