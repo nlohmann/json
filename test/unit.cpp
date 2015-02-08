@@ -2055,4 +2055,142 @@ TEST_CASE("element access")
             }
         }
     }
+    
+    SECTION("object")
+    {
+        json j = {{"integer", 1}, {"floating", 42.23}, {"null", nullptr}, {"string", "hello world"}, {"boolean", true}, {"object", json::object()}, {"array", {1,2,3}}};
+        const json j_const = j;
+        
+        SECTION("access specified element with bounds checking")
+        {
+            SECTION("access within bounds")
+            {
+                CHECK(j.at("integer") == json(1));
+                CHECK(j.at("boolean") == json(true));
+                CHECK(j.at("null") == json(nullptr));
+                CHECK(j.at("string") == json("hello world"));
+                CHECK(j.at("floating") == json(42.23));
+                CHECK(j.at("object") == json(json::object()));
+                CHECK(j.at("array") == json({1, 2, 3}));
+
+                CHECK(j_const.at("integer") == json(1));
+                CHECK(j_const.at("boolean") == json(true));
+                CHECK(j_const.at("null") == json(nullptr));
+                CHECK(j_const.at("string") == json("hello world"));
+                CHECK(j_const.at("floating") == json(42.23));
+                CHECK(j_const.at("object") == json(json::object()));
+                CHECK(j_const.at("array") == json({1, 2, 3}));
+            }
+
+            SECTION("access outside bounds")
+            {
+                CHECK_THROWS_AS(j.at("foo"), std::out_of_range);
+                CHECK_THROWS_AS(j_const.at("foo"), std::out_of_range);
+            }
+
+            SECTION("access on non-object type")
+            {
+                SECTION("null")
+                {
+                    json j_nonobject(json::value_t::null);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                }
+
+                SECTION("boolean")
+                {
+                    json j_nonobject(json::value_t::boolean);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                }
+
+                SECTION("string")
+                {
+                    json j_nonobject(json::value_t::string);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                }
+
+                SECTION("array")
+                {
+                    json j_nonobject(json::value_t::array);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                }
+
+                SECTION("number (integer)")
+                {
+                    json j_nonobject(json::value_t::number_integer);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                }
+
+                SECTION("number (floating-point)")
+                {
+                    json j_nonobject(json::value_t::number_float);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                }
+            }
+        }
+
+        SECTION("access specified element")
+        {
+            SECTION("access within bounds")
+            {
+                CHECK(j["integer"] == json(1));
+                CHECK(j["boolean"] == json(true));
+                CHECK(j["null"] == json(nullptr));
+                CHECK(j["string"] == json("hello world"));
+                CHECK(j["floating"] == json(42.23));
+                CHECK(j["object"] == json(json::object()));
+                CHECK(j["array"] == json({1, 2, 3}));
+            }
+
+            SECTION("access on non-object type")
+            {
+                SECTION("null")
+                {
+                    json j_nonobject(json::value_t::null);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                }
+
+                SECTION("boolean")
+                {
+                    json j_nonobject(json::value_t::boolean);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                }
+
+                SECTION("string")
+                {
+                    json j_nonobject(json::value_t::string);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                }
+
+                SECTION("array")
+                {
+                    json j_nonobject(json::value_t::array);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                }
+
+                SECTION("number (integer)")
+                {
+                    json j_nonobject(json::value_t::number_integer);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                }
+
+                SECTION("number (floating-point)")
+                {
+                    json j_nonobject(json::value_t::number_float);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                }
+            }
+        }
+    }
 }
