@@ -197,7 +197,7 @@ TEST_CASE("constructors")
             CHECK(j == j_reference);
         }
 
-        SECTION("std::array<json>")
+        SECTION("std::array<json, 5>")
         {
             std::array<json, 5> a {{json(1), json(2.2), json(false), json("string"), json()}};
             json j(a);
@@ -1170,7 +1170,7 @@ TEST_CASE("value conversion")
 
         SECTION("json::object_t")
         {
-            json::object_t o = j.get<std::map<std::string, json>>();
+            json::object_t o = j.get<json::object_t>();
             CHECK(json(o) == j);
         }
 
@@ -1196,6 +1196,42 @@ TEST_CASE("value conversion")
         {
             std::unordered_multimap<std::string, json> o = j.get<std::unordered_multimap<std::string, json>>();
             CHECK(json(o) == j);
+        }
+    }
+
+    SECTION("get an array (explicit)")
+    {
+        json::array_t a_reference {json(1), json(2.2), json(false), json("string"), json()};
+        json j(a_reference);
+
+        SECTION("json::array_t")
+        {
+            json::array_t a = j.get<json::array_t>();
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::list<json>")
+        {
+            std::list<json> a = j.get<std::list<json>>();
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::forward_list<json>")
+        {
+            std::forward_list<json> a = j.get<std::forward_list<json>>();
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::vector<json>")
+        {
+            std::vector<json> a = j.get<std::vector<json>>();
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::deque<json>")
+        {
+            std::deque<json> a = j.get<std::deque<json>>();
+            CHECK(json(a) == j);
         }
     }
 }
