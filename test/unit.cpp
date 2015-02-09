@@ -2285,7 +2285,7 @@ TEST_CASE("iterators")
 
         SECTION("json + begin/end")
         {
-            auto it = j.begin();
+            json::iterator it = j.begin();
             CHECK(it != j.end());
             CHECK(*it == j);
 
@@ -2310,7 +2310,7 @@ TEST_CASE("iterators")
 
         SECTION("const json + begin/end")
         {
-            auto it = j_const.begin();
+            json::const_iterator it = j_const.begin();
             CHECK(it != j_const.end());
             CHECK(*it == j_const);
 
@@ -2335,7 +2335,7 @@ TEST_CASE("iterators")
 
         SECTION("json + cbegin/cend")
         {
-            auto it = j.cbegin();
+            json::const_iterator it = j.cbegin();
             CHECK(it != j.cend());
             CHECK(*it == j);
 
@@ -2360,7 +2360,7 @@ TEST_CASE("iterators")
 
         SECTION("const json + cbegin/cend")
         {
-            auto it = j_const.cbegin();
+            json::const_iterator it = j_const.cbegin();
             CHECK(it != j_const.cend());
             CHECK(*it == j_const);
 
@@ -2391,7 +2391,7 @@ TEST_CASE("iterators")
 
         SECTION("json + begin/end")
         {
-            auto it = j.begin();
+            json::iterator it = j.begin();
             CHECK(it != j.end());
             CHECK(*it == j);
 
@@ -2416,7 +2416,7 @@ TEST_CASE("iterators")
 
         SECTION("const json + begin/end")
         {
-            auto it = j_const.begin();
+            json::const_iterator it = j_const.begin();
             CHECK(it != j_const.end());
             CHECK(*it == j_const);
 
@@ -2441,7 +2441,7 @@ TEST_CASE("iterators")
 
         SECTION("json + cbegin/cend")
         {
-            auto it = j.cbegin();
+            json::const_iterator it = j.cbegin();
             CHECK(it != j.cend());
             CHECK(*it == j);
 
@@ -2466,7 +2466,7 @@ TEST_CASE("iterators")
 
         SECTION("const json + cbegin/cend")
         {
-            auto it = j_const.cbegin();
+            json::const_iterator it = j_const.cbegin();
             CHECK(it != j_const.cend());
             CHECK(*it == j_const);
 
@@ -2509,7 +2509,7 @@ TEST_CASE("iterators")
 
         SECTION("json + begin/end")
         {
-            auto it = j.begin();
+            json::iterator it = j.begin();
             CHECK(it != j.end());
             CHECK(*it == j);
 
@@ -2534,7 +2534,7 @@ TEST_CASE("iterators")
 
         SECTION("const json + begin/end")
         {
-            auto it = j_const.begin();
+            json::const_iterator it = j_const.begin();
             CHECK(it != j_const.end());
             CHECK(*it == j_const);
 
@@ -2559,7 +2559,7 @@ TEST_CASE("iterators")
 
         SECTION("json + cbegin/cend")
         {
-            auto it = j.cbegin();
+            json::const_iterator it = j.cbegin();
             CHECK(it != j.cend());
             CHECK(*it == j);
 
@@ -2584,7 +2584,7 @@ TEST_CASE("iterators")
 
         SECTION("const json + cbegin/cend")
         {
-            auto it = j_const.cbegin();
+            json::const_iterator it = j_const.cbegin();
             CHECK(it != j_const.cend());
             CHECK(*it == j_const);
 
@@ -2615,7 +2615,7 @@ TEST_CASE("iterators")
 
         SECTION("json + begin/end")
         {
-            auto it = j.begin();
+            json::iterator it = j.begin();
             CHECK(it != j.end());
             CHECK(*it == j);
 
@@ -2640,7 +2640,7 @@ TEST_CASE("iterators")
 
         SECTION("const json + begin/end")
         {
-            auto it = j_const.begin();
+            json::const_iterator it = j_const.begin();
             CHECK(it != j_const.end());
             CHECK(*it == j_const);
 
@@ -2665,7 +2665,7 @@ TEST_CASE("iterators")
 
         SECTION("json + cbegin/cend")
         {
-            auto it = j.cbegin();
+            json::const_iterator it = j.cbegin();
             CHECK(it != j.cend());
             CHECK(*it == j);
 
@@ -2690,7 +2690,7 @@ TEST_CASE("iterators")
 
         SECTION("const json + cbegin/cend")
         {
-            auto it = j_const.cbegin();
+            json::const_iterator it = j_const.cbegin();
             CHECK(it != j_const.cend());
             CHECK(*it == j_const);
 
@@ -2721,25 +2721,25 @@ TEST_CASE("iterators")
 
         SECTION("json + begin/end")
         {
-            auto it = j.begin();
+            json::iterator it = j.begin();
             CHECK(it == j.end());
         }
 
         SECTION("const json + begin/end")
         {
-            auto it = j_const.begin();
+            json::const_iterator it = j_const.begin();
             CHECK(it == j_const.end());
         }
 
         SECTION("json + cbegin/cend")
         {
-            auto it = j.cbegin();
+            json::const_iterator it = j.cbegin();
             CHECK(it == j.cend());
         }
 
         SECTION("const json + cbegin/cend")
         {
-            auto it = j_const.cbegin();
+            json::const_iterator it = j_const.cbegin();
             CHECK(it == j_const.cend());
         }
     }
