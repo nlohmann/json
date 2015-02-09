@@ -2608,8 +2608,8 @@ TEST_CASE("iterators")
 
         SECTION("const json + begin/end")
         {
-            json::iterator it_begin = j_const.begin();
-            json::iterator it_end = j_const.end();
+            json::const_iterator it_begin = j_const.begin();
+            json::const_iterator it_end = j_const.end();
 
             auto it = it_begin;
             CHECK(it != it_end);
@@ -3374,6 +3374,94 @@ TEST_CASE("capacity")
                 CHECK(j.max_size() == 0);
                 CHECK(j_const.max_size() == 0);
             }
+        }
+    }
+}
+
+TEST_CASE("modifiers")
+{
+    SECTION("clear()")
+    {
+        SECTION("boolean")
+        {
+            json j = true;
+
+            j.clear();
+            CHECK(j == json(json::value_t::boolean));
+        }
+
+        SECTION("string")
+        {
+            json j = "hello world";
+
+            j.clear();
+            CHECK(j == json(json::value_t::string));
+        }
+
+        SECTION("array")
+        {
+            SECTION("empty array")
+            {
+                json j = json::array();
+
+                j.clear();
+                CHECK(j.empty());
+                CHECK(j == json(json::value_t::array));
+            }
+
+            SECTION("filled array")
+            {
+                json j = {1, 2, 3};
+
+                j.clear();
+                CHECK(j.empty());
+                CHECK(j == json(json::value_t::array));
+            }
+        }
+
+        SECTION("object")
+        {
+            SECTION("empty object")
+            {
+                json j = json::object();
+
+                j.clear();
+                CHECK(j.empty());
+                CHECK(j == json(json::value_t::object));
+            }
+
+            SECTION("filled object")
+            {
+                json j = {{"one", 1}, {"two", 2}, {"three", 3}};
+
+                j.clear();
+                CHECK(j.empty());
+                CHECK(j == json(json::value_t::object));
+            }
+        }
+
+        SECTION("number (integer)")
+        {
+            json j = 23;
+
+            j.clear();
+            CHECK(j == json(json::value_t::number_integer));
+        }
+
+        SECTION("number (float)")
+        {
+            json j = 23.42;
+
+            j.clear();
+            CHECK(j == json(json::value_t::number_float));
+        }
+
+        SECTION("null")
+        {
+            json j = nullptr;
+
+            j.clear();
+            CHECK(j == json(json::value_t::null));
         }
     }
 }
