@@ -443,8 +443,9 @@ class basic_json
     }
 
     /// copy assignment
-    inline reference operator=(basic_json other) noexcept
+    inline reference& operator=(basic_json other) noexcept
     {
+        assert(false); // not sure if function will ever be called
         std::swap(m_type, other.m_type);
         std::swap(m_value, other.m_value);
         return *this;
@@ -1704,6 +1705,7 @@ class basic_json
         /// copy assignment
         inline iterator& operator=(const iterator& other) noexcept
         {
+            assert(false); // not sure if function will ever be called
             m_object = other.m_object;
             m_it = other.m_it;
             return *this;
@@ -2085,7 +2087,7 @@ class basic_json
         }
 
         /// copy assignment
-        inline const_iterator operator=(const const_iterator& other) noexcept
+        inline const_iterator& operator=(const const_iterator& other) noexcept
         {
             m_object = other.m_object;
             m_it = other.m_it;
@@ -3329,7 +3331,7 @@ json_parser_60:
             }
         }
 
-        inline std::string token_type_name(token_type t)
+        inline static std::string token_type_name(token_type t)
         {
             switch (t)
             {

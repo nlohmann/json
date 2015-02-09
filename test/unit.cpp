@@ -2518,8 +2518,8 @@ TEST_CASE("iterators")
 
         SECTION("const json + begin/end")
         {
-            json::iterator it_begin = j_const.begin();
-            json::iterator it_end = j_const.end();
+            json::const_iterator it_begin = j_const.begin();
+            json::const_iterator it_end = j_const.end();
 
             auto it = it_begin;
             CHECK(it != it_end);
@@ -3462,6 +3462,109 @@ TEST_CASE("modifiers")
 
             j.clear();
             CHECK(j == json(json::value_t::null));
+        }
+    }
+
+    SECTION("swap()")
+    {
+        SECTION("json")
+        {
+            SECTION("member swap")
+            {
+                json j("hello world");
+                json k(42.23);
+
+                j.swap(k);
+
+                CHECK(j == json(42.23));
+                CHECK(k == json("hello world"));
+            }
+
+            SECTION("nonmember swap")
+            {
+                json j("hello world");
+                json k(42.23);
+
+                std::swap(j, k);
+
+                CHECK(j == json(42.23));
+                CHECK(k == json("hello world"));
+            }
+        }
+
+        SECTION("array_t")
+        {
+            SECTION("array_t type")
+            {
+                json j = {1, 2, 3, 4};
+                json::array_t a = {"foo", "bar", "baz"};
+
+                j.swap(a);
+
+                CHECK(j == json({"foo", "bar", "baz"}));
+
+                j.swap(a);
+
+                CHECK(j == json({1, 2, 3, 4}));
+            }
+
+            SECTION("non-array_t type")
+            {
+                json j = 17;
+                json::array_t a = {"foo", "bar", "baz"};
+
+                CHECK_THROWS_AS(j.swap(a), std::runtime_error);
+            }
+        }
+
+        SECTION("object_t")
+        {
+            SECTION("object_t type")
+            {
+                json j = {{"one", 1}, {"two", 2}};
+                json::object_t o = {{"cow", "Kuh"}, {"chicken", "Huhn"}};
+
+                j.swap(o);
+
+                CHECK(j == json({{"cow", "Kuh"}, {"chicken", "Huhn"}}));
+
+                j.swap(o);
+
+                CHECK(j == json({{"one", 1}, {"two", 2}}));
+            }
+
+            SECTION("non-object_t type")
+            {
+                json j = 17;
+                json::object_t o = {{"cow", "Kuh"}, {"chicken", "Huhn"}};
+
+                CHECK_THROWS_AS(j.swap(o), std::runtime_error);
+            }
+        }
+
+        SECTION("string_t")
+        {
+            SECTION("string_t type")
+            {
+                json j = "Hello world";
+                json::string_t s = "Hallo Welt";
+
+                j.swap(s);
+
+                CHECK(j == json("Hallo Welt"));
+
+                j.swap(s);
+
+                CHECK(j == json("Hello world"));
+            }
+
+            SECTION("non-string_t type")
+            {
+                json j = 17;
+                json::string_t s = "Hallo Welt";
+
+                CHECK_THROWS_AS(j.swap(s), std::runtime_error);
+            }
         }
     }
 }
