@@ -972,6 +972,13 @@ class basic_json
     }
 
     /// add an object to an array
+    inline reference operator+=(basic_json&& value)
+    {
+        push_back(std::move(value));
+        return *this;
+    }
+
+    /// add an object to an array
     inline void push_back(const basic_json& value)
     {
         // push_back only works for null objects or arrays
@@ -991,32 +998,12 @@ class basic_json
         m_value.array->push_back(value);
     }
 
-    /*
     /// add an object to an array
     inline reference operator+=(const basic_json& value)
     {
         push_back(value);
         return *this;
     }
-    */
-
-    /// add constructible objects to an array
-    template<class T, typename std::enable_if<std::is_constructible<basic_json, T>::value>::type = 0>
-    inline void push_back(const T& value)
-    {
-        assert(false); // not sure if function will ever be called
-        push_back(basic_json(value));
-    }
-
-    /*
-    /// add constructible objects to an array
-    template<class T, typename std::enable_if<std::is_constructible<basic_json, T>::value>::type = 0>
-    inline reference operator+=(const T& value)
-    {
-        push_back(basic_json(value));
-        return *this;
-    }
-    */
 
     /// add an object to an object
     inline void push_back(const typename object_t::value_type& value)
@@ -1046,30 +1033,6 @@ class basic_json
         return operator[](value.first);
     }
     */
-
-    /// constructs element in-place at the end of an array
-    template <typename T, typename
-              std::enable_if<
-                  std::is_constructible<basic_json, T>::value, int>::type
-              = 0>
-    inline void emplace_back(T && arg)
-    {
-        // push_back only works for null objects or arrays
-        if (not(m_type == value_t::null or m_type == value_t::array))
-        {
-            throw std::runtime_error("cannot add element to " + type_name());
-        }
-
-        // transform null object into an array
-        if (m_type == value_t::null)
-        {
-            m_type = value_t::array;
-            m_value.array = new array_t;
-        }
-
-        // add element to array
-        m_value.array->emplace_back(std::forward<T>(arg));
-    }
 
     /// swaps the contents
     inline void swap(reference other) noexcept

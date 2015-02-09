@@ -3465,6 +3465,128 @@ TEST_CASE("modifiers")
         }
     }
 
+    SECTION("push_back()")
+    {
+        SECTION("to array")
+        {
+            SECTION("json&&")
+            {
+                SECTION("null")
+                {
+                    json j;
+                    j.push_back(1);
+                    j.push_back(2);
+                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j == json({1, 2}));
+                }
+
+                SECTION("array")
+                {
+                    json j = {1, 2, 3};
+                    j.push_back("Hello");
+                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j == json({1, 2, 3, "Hello"}));
+                }
+
+                SECTION("other type")
+                {
+                    json j = 1;
+                    CHECK_THROWS_AS(j.push_back("Hello"), std::runtime_error);
+                }
+            }
+
+            SECTION("const json&")
+            {
+                SECTION("null")
+                {
+                    json j;
+                    json k(1);
+                    j.push_back(k);
+                    j.push_back(k);
+                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j == json({1, 1}));
+                }
+
+                SECTION("array")
+                {
+                    json j = {1, 2, 3};
+                    json k("Hello");
+                    j.push_back(k);
+                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j == json({1, 2, 3, "Hello"}));
+                }
+
+                SECTION("other type")
+                {
+                    json j = 1;
+                    json k("Hello");
+                    CHECK_THROWS_AS(j.push_back(k), std::runtime_error);
+                }
+            }
+        }
+    }
+
+    SECTION("operator+=")
+    {
+        SECTION("to array")
+        {
+            SECTION("json&&")
+            {
+                SECTION("null")
+                {
+                    json j;
+                    j += 1;
+                    j += 2;
+                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j == json({1, 2}));
+                }
+
+                SECTION("array")
+                {
+                    json j = {1, 2, 3};
+                    j += "Hello";
+                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j == json({1, 2, 3, "Hello"}));
+                }
+
+                SECTION("other type")
+                {
+                    json j = 1;
+                    CHECK_THROWS_AS(j += "Hello", std::runtime_error);
+                }
+            }
+
+            SECTION("const json&")
+            {
+                SECTION("null")
+                {
+                    json j;
+                    json k(1);
+                    j += k;
+                    j += k;
+                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j == json({1, 1}));
+                }
+
+                SECTION("array")
+                {
+                    json j = {1, 2, 3};
+                    json k("Hello");
+                    j += k;
+                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j == json({1, 2, 3, "Hello"}));
+                }
+
+                SECTION("other type")
+                {
+                    json j = 1;
+                    json k("Hello");
+                    CHECK_THROWS_AS(j += k, std::runtime_error);
+                }
+            }
+        }
+    }
+
     SECTION("swap()")
     {
         SECTION("json")
