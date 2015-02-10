@@ -2412,12 +2412,10 @@ class basic_json
         /// constructor for strings
         inline parser(const std::string& s) : buffer(s)
         {
-            buffer += "     ";
-
             // set buffer for RE2C
             buffer_re2c = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
             // set a pointer past the end of the buffer
-            buffer_re2c_limit = buffer_re2c + buffer.size() - 5;
+            buffer_re2c_limit = buffer_re2c + buffer.size();
             // read first token
             get_token();
         }
@@ -2431,13 +2429,11 @@ class basic_json
                 std::getline(_is, input_line);
                 buffer += input_line;
             }
-            
-            buffer += "     ";
 
             // set buffer for RE2C
             buffer_re2c = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
             // set a pointer past the end of the buffer
-            buffer_re2c_limit = buffer_re2c + buffer.size() - 5;
+            buffer_re2c_limit = buffer_re2c + buffer.size();
             // read first token
             get_token();
         }
