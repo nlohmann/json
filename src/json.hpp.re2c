@@ -1264,14 +1264,20 @@ class basic_json
     /// serialize to stream
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
     {
-        o << j.dump();
+        // read width member and use it as indentation parameter if nonzero
+        const int indentation = (o.width() == 0) ? -1 : o.width();
+
+        o << j.dump(indentation);
         return o;
     }
 
     /// serialize to stream
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
     {
-        o << j.dump();
+        // read width member and use it as indentation parameter if nonzero
+        const int indentation = (o.width() == 0) ? -1 : o.width();
+
+        o << j.dump(indentation);
         return o;
     }
 

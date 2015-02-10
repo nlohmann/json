@@ -7,6 +7,7 @@ using nlohmann::json;
 #include <array>
 #include <deque>
 #include <forward_list>
+#include <iomanip>
 #include <list>
 #include <map>
 #include <set>
@@ -1045,10 +1046,12 @@ TEST_CASE("object inspection")
     {
         json j {{"object", json::object()}, {"array", {1, 2, 3, 4}}, {"number", 42}, {"boolean", false}, {"null", nullptr}, {"string", "Hello world"} };
 
-        SECTION("no indent")
+        SECTION("no indent / indent=-1")
         {
             CHECK(j.dump() ==
                   "{\"array\":[1,2,3,4],\"boolean\":false,\"null\":null,\"number\":42,\"object\":{},\"string\":\"Hello world\"}");
+
+            CHECK(j.dump() == j.dump(-1));
         }
 
         SECTION("indent=0")
@@ -2152,12 +2155,25 @@ TEST_CASE("element access")
             SECTION("access within bounds")
             {
                 CHECK(j["integer"] == json(1));
+                CHECK(j[json::object_t::key_type("integer")] == j["integer"]);
+
                 CHECK(j["boolean"] == json(true));
+                CHECK(j[json::object_t::key_type("boolean")] == j["boolean"]);
+
                 CHECK(j["null"] == json(nullptr));
+                CHECK(j[json::object_t::key_type("null")] == j["null"]);
+
                 CHECK(j["string"] == json("hello world"));
+                CHECK(j[json::object_t::key_type("string")] == j["string"]);
+
                 CHECK(j["floating"] == json(42.23));
+                CHECK(j[json::object_t::key_type("floating")] == j["floating"]);
+
                 CHECK(j["object"] == json(json::object()));
+                CHECK(j[json::object_t::key_type("object")] == j["object"]);
+
                 CHECK(j["array"] == json({1, 2, 3}));
+                CHECK(j[json::object_t::key_type("array")] == j["array"]);
             }
 
             SECTION("access on non-object type")
@@ -2166,36 +2182,42 @@ TEST_CASE("element access")
                 {
                     json j_nonobject(json::value_t::null);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
 
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
             }
         }
@@ -3826,18 +3848,43 @@ TEST_CASE("serialization")
 {
     SECTION("operator<<")
     {
-        std::stringstream ss;
-        json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
-        ss << j;
-        CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
+        SECTION("no given width")
+        {
+            std::stringstream ss;
+            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            ss << j;
+            CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
+        }
+
+        SECTION("given width")
+        {
+            std::stringstream ss;
+            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            ss << std::setw(4) << j;
+            CHECK(ss.str() ==
+                  "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
+        }
     }
 
     SECTION("operator>>")
     {
-        std::stringstream ss;
-        json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
-        j >> ss;
-        CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
+        SECTION("no given width")
+        {
+            std::stringstream ss;
+            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            j >> ss;
+            CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
+        }
+
+        SECTION("given width")
+        {
+            std::stringstream ss;
+            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            ss.width(4);
+            j >> ss;
+            CHECK(ss.str() ==
+                  "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
+        }
     }
 }
 
