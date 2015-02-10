@@ -963,49 +963,56 @@ TEST_CASE("other constructors and destructor")
         SECTION("object")
         {
             json j {{"foo", 1}, {"bar", false}};
-            json k = j;
+            json k;
+            k = j;
             CHECK(j == k);
         }
 
         SECTION("array")
         {
             json j {"foo", 1, 42.23, false};
-            json k = j;
+            json k;
+            k = j;
             CHECK(j == k);
         }
 
         SECTION("null")
         {
             json j(nullptr);
-            json k = j;
+            json k;
+            k = j;
             CHECK(j == k);
         }
 
         SECTION("boolean")
         {
             json j(true);
-            json k = j;
+            json k;
+            k = j;
             CHECK(j == k);
         }
 
         SECTION("string")
         {
             json j("Hello world");
-            json k = j;
+            json k;
+            k = j;
             CHECK(j == k);
         }
 
         SECTION("number (integer)")
         {
             json j(42);
-            json k = j;
+            json k;
+            k = j;
             CHECK(j == k);
         }
 
         SECTION("number (floating-point)")
         {
             json j(42.23);
-            json k = j;
+            json k;
+            k = j;
             CHECK(j == k);
         }
     }

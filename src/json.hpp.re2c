@@ -445,7 +445,6 @@ class basic_json
     /// copy assignment
     inline reference& operator=(basic_json other) noexcept
     {
-        assert(false); // not sure if function will ever be called
         std::swap(m_type, other.m_type);
         std::swap(m_value, other.m_value);
         return *this;
