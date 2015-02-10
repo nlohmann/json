@@ -1,3 +1,4 @@
+#line 1 "src/json.hpp.re2c"
 #ifndef _NLOHMANN_JSON
 #define _NLOHMANN_JSON
 
@@ -2601,6 +2602,7 @@ class basic_json
             const lexer_char_t* marker;
 
             // set up RE2C
+#line 2612 "src/json.hpp.re2c"
 
 
             for (;;)
@@ -2609,6 +2611,7 @@ class basic_json
                 current_re2c = buffer_re2c;
 
 
+#line 2616 "<stdout>"
                 {
                     lexer_char_t yych;
                     unsigned int yyaccept = 0;
@@ -2768,15 +2771,19 @@ class basic_json
                         }
                     }
 json_parser_2:
+#line 2622 "src/json.hpp.re2c"
                     {
                         continue;
                     }
+#line 2705 "<stdout>"
 json_parser_3:
                     ++buffer_re2c;
 json_parser_4:
+#line 2661 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::parse_error;
                     }
+#line 2711 "<stdout>"
 json_parser_5:
                     yych = *++buffer_re2c;
                     goto json_parser_60;
@@ -2786,9 +2793,11 @@ json_parser_6:
                     goto json_parser_51;
 json_parser_7:
                     ++buffer_re2c;
+#line 2629 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::value_separator;
                     }
+#line 2723 "<stdout>"
 json_parser_9:
                     yych = *++buffer_re2c;
                     if (yych <= '/')
@@ -2826,28 +2835,36 @@ json_parser_10:
                         }
                     }
 json_parser_11:
+#line 2649 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::value_number;
                     }
+#line 2742 "<stdout>"
 json_parser_12:
                     yyaccept = 1;
                     yych = *(marker = ++buffer_re2c);
                     goto json_parser_41;
 json_parser_13:
                     ++buffer_re2c;
+#line 2630 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::name_separator;
                     }
+#line 2751 "<stdout>"
 json_parser_15:
                     ++buffer_re2c;
+#line 2625 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::begin_array;
                     }
+#line 2756 "<stdout>"
 json_parser_17:
                     ++buffer_re2c;
+#line 2626 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::end_array;
                     }
+#line 2761 "<stdout>"
 json_parser_19:
                     yyaccept = 0;
                     yych = *(marker = ++buffer_re2c);
@@ -2874,14 +2891,18 @@ json_parser_21:
                     goto json_parser_4;
 json_parser_22:
                     ++buffer_re2c;
+#line 2627 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::begin_object;
                     }
+#line 2781 "<stdout>"
 json_parser_24:
                     ++buffer_re2c;
+#line 2628 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::end_object;
                     }
+#line 2786 "<stdout>"
 json_parser_26:
                     yych = *++buffer_re2c;
                     if (yych == 'u')
@@ -2905,9 +2926,11 @@ json_parser_28:
                         goto json_parser_27;
                     }
                     ++buffer_re2c;
+#line 2634 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::literal_true;
                     }
+#line 2803 "<stdout>"
 json_parser_31:
                     yych = *++buffer_re2c;
                     if (yych != 'l')
@@ -2920,9 +2943,11 @@ json_parser_31:
                         goto json_parser_27;
                     }
                     ++buffer_re2c;
+#line 2633 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::literal_null;
                     }
+#line 2812 "<stdout>"
 json_parser_35:
                     yych = *++buffer_re2c;
                     if (yych != 'l')
@@ -2940,9 +2965,11 @@ json_parser_35:
                         goto json_parser_27;
                     }
                     ++buffer_re2c;
+#line 2635 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::literal_false;
                     }
+#line 2823 "<stdout>"
 json_parser_40:
                     yyaccept = 1;
                     marker = ++buffer_re2c;
@@ -3168,9 +3195,11 @@ json_parser_51:
                     }
 json_parser_53:
                     ++buffer_re2c;
+#line 2658 "src/json.hpp.re2c"
                     {
                         return last_token = token_type::value_string;
                     }
+#line 2932 "<stdout>"
 json_parser_55:
                     ++buffer_re2c;
                     yych = *buffer_re2c;
@@ -3299,6 +3328,7 @@ json_parser_60:
                     }
                     goto json_parser_2;
                 }
+#line 2662 "src/json.hpp.re2c"
 
             }
         }
