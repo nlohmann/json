@@ -14,7 +14,7 @@ json_unit_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/test -Dprivate=public
 # -i                     do not create #line information
 # --no-generation-date   suppress generation date output
 src/json.hpp: src/json.hpp.re2c
-	$(AM_V_GEN)$(RE2C) -b -s --no-generation-date $< | $(SED) '1d' > $@
+	$(AM_V_GEN)$(RE2C) -b -s -i --no-generation-date $< | $(SED) '1d' > $@
 
 cppcheck:
 	cppcheck --enable=all --inconclusive --std=c++11 src/json.hpp
