@@ -4052,6 +4052,15 @@ TEST_CASE("parser class")
                         break;
                     }
 
+                    case (' '):
+                    case ('\t'):
+                    case ('\n'):
+                    case ('\r'):
+                    {
+                        CHECK(json::parser(s).last_token == json::parser::token_type::end_of_input);
+                        break;
+                    }
+
                     default:
                     {
                         CHECK(json::parser(s).last_token == json::parser::token_type::parse_error);
@@ -4095,5 +4104,6 @@ TEST_CASE("parser class")
         CHECK(json::parser::token_type_name(json::parser::token_type::name_separator) == ":");
         CHECK(json::parser::token_type_name(json::parser::token_type::value_separator) == ",");
         CHECK(json::parser::token_type_name(json::parser::token_type::parse_error) == "<parse error>");
+        CHECK(json::parser::token_type_name(json::parser::token_type::end_of_input) == "<end of input>");
     }
 }
