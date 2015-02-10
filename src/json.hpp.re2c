@@ -2402,7 +2402,8 @@ class basic_json
             end_object,
             name_separator,
             value_separator,
-            parse_error
+            parse_error,
+            end_of_input
         };
 
         /// the type of a lexer character
@@ -2611,56 +2612,59 @@ class basic_json
                 re2c:define:YYLIMIT  = buffer_re2c_limit;
             */
 
-            for (;;)
+lexer_start:
+            // set current to the begin of the buffer
+            current_re2c = buffer_re2c;
+
+            if (current_re2c == buffer_re2c_limit)
             {
-                // set current to the begin of the buffer
-                current_re2c = buffer_re2c;
-
-                /*!re2c
-                    // whitespace
-                    ws = [ \t\n\r]*;
-                    ws   { continue; }
-
-                    // structural characters
-                    "[" { return last_token = token_type::begin_array; }
-                    "]" { return last_token = token_type::end_array; }
-                    "{" { return last_token = token_type::begin_object; }
-                    "}" { return last_token = token_type::end_object; }
-                    "," { return last_token = token_type::value_separator; }
-                    ":" { return last_token = token_type::name_separator; }
-
-                    // literal names
-                    "null"  { return last_token = token_type::literal_null; }
-                    "true"  { return last_token = token_type::literal_true; }
-                    "false" { return last_token = token_type::literal_false; }
-
-                    // number
-                    decimal_point = [.];
-                    digit         = [0-9];
-                    digit_1_9     = [1-9];
-                    e             = [eE];
-                    minus         = [-];
-                    plus          = [+];
-                    zero          = [0];
-                    exp           = e (minus|plus)? digit+;
-                    frac          = decimal_point digit+;
-                    int           = (zero|digit_1_9 digit*);
-                    number        = minus? int frac? exp?;
-                    number        { return last_token = token_type::value_number; }
-
-                    // string
-                    quotation_mark = [\"];
-                    escape         = [\\];
-                    unescaped      = [^\"\\];
-                    escaped        = escape ([\"\\/bfnrt] | [u][0-9a-fA-F]{4});
-                    char           = unescaped | escaped;
-                    string         = quotation_mark char* quotation_mark;
-                    string         { return last_token = token_type::value_string; }
-
-                    // anything else is an error
-                    * { return last_token = token_type::parse_error; }
-                */
+                return last_token = token_type::end_of_input;
             }
+
+            /*!re2c
+                // whitespace
+                ws = [ \t\n\r]*;
+                ws   { goto lexer_start; }
+
+                // structural characters
+                "[" { return last_token = token_type::begin_array; }
+                "]" { return last_token = token_type::end_array; }
+                "{" { return last_token = token_type::begin_object; }
+                "}" { return last_token = token_type::end_object; }
+                "," { return last_token = token_type::value_separator; }
+                ":" { return last_token = token_type::name_separator; }
+
+                // literal names
+                "null"  { return last_token = token_type::literal_null; }
+                "true"  { return last_token = token_type::literal_true; }
+                "false" { return last_token = token_type::literal_false; }
+
+                // number
+                decimal_point = [.];
+                digit         = [0-9];
+                digit_1_9     = [1-9];
+                e             = [eE];
+                minus         = [-];
+                plus          = [+];
+                zero          = [0];
+                exp           = e (minus|plus)? digit+;
+                frac          = decimal_point digit+;
+                int           = (zero|digit_1_9 digit*);
+                number        = minus? int frac? exp?;
+                number        { return last_token = token_type::value_number; }
+
+                // string
+                quotation_mark = [\"];
+                escape         = [\\];
+                unescaped      = [^\"\\];
+                escaped        = escape ([\"\\/bfnrt] | [u][0-9a-fA-F]{4});
+                char           = unescaped | escaped;
+                string         = quotation_mark char* quotation_mark;
+                string         { return last_token = token_type::value_string; }
+
+                // anything else is an error
+                * { return last_token = token_type::parse_error; }
+            */
         }
 
         inline static std::string token_type_name(token_type t)
@@ -2693,6 +2697,8 @@ class basic_json
                     return ",";
                 case (token_type::parse_error):
                     return "<parse error>";
+                case (token_type::end_of_input):
+                    return "<end of input>";
             }
         }
 
