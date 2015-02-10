@@ -2414,9 +2414,9 @@ class basic_json
         inline parser(const std::string& s) : buffer(s)
         {
             // set buffer for RE2C
-            buffer_re2c = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
+            m_cursor = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
             // set a pointer past the end of the buffer
-            buffer_re2c_limit = buffer_re2c + buffer.size();
+            m_limit = m_cursor + buffer.size();
             // read first token
             get_token();
         }
@@ -2432,9 +2432,9 @@ class basic_json
             }
 
             // set buffer for RE2C
-            buffer_re2c = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
+            m_cursor = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
             // set a pointer past the end of the buffer
-            buffer_re2c_limit = buffer_re2c + buffer.size();
+            m_limit = m_cursor + buffer.size();
             // read first token
             get_token();
         }
@@ -2538,10 +2538,10 @@ class basic_json
 
                 case (token_type::value_number):
                 {
-                    // The pointer current_re2c points to the beginning of the
+                    // The pointer m_begin points to the beginning of the
                     // parsed number. We pass this pointer to std::strtod which
                     // sets endptr to the first character past the converted
-                    // number. If this pointer is not the same as buffer_re2c,
+                    // number. If this pointer is not the same as m_cursor,
                     // then either more or less characters have been used
                     // during the comparison. This can happen for inputs like
                     // "01" which will be treated like number 0 followed by
@@ -2549,13 +2549,13 @@ class basic_json
 
                     // conversion
                     char* endptr;
-                    const auto float_val = std::strtod(reinterpret_cast<const char*>(current_re2c), &endptr);
+                    const auto float_val = std::strtod(reinterpret_cast<const char*>(m_begin), &endptr);
 
                     // check if strtod read beyond the end of the lexem
-                    if (reinterpret_cast<const lexer_char_t*>(endptr) != buffer_re2c)
+                    if (reinterpret_cast<const lexer_char_t*>(endptr) != m_cursor)
                     {
                         throw std::invalid_argument(std::string("parse error - ") +
-                                                    reinterpret_cast<const char*>(current_re2c) + " is not a number");
+                                                    reinterpret_cast<const char*>(m_begin) + " is not a number");
                     }
 
                     // check if conversion loses precision
@@ -2575,7 +2575,7 @@ class basic_json
                 default:
                 {
                     std::string error_msg = "parse error - unexpected \'";
-                    error_msg += static_cast<char>(current_re2c[0]);
+                    error_msg += static_cast<char>(m_begin[0]);
                     error_msg += "\' (";
                     error_msg += token_type_name(last_token) + ")";
                     throw std::invalid_argument(error_msg);
@@ -2599,24 +2599,24 @@ class basic_json
         inline token_type get_token()
         {
             // needed by RE2C
-            const lexer_char_t* marker;
+            const lexer_char_t* marker = nullptr;
 
             // set up RE2C
             /*!re2c
                 re2c:labelprefix     = "json_parser_";
                 re2c:yyfill:enable   = 0;
-                re2c:define:YYCURSOR = buffer_re2c;
+                re2c:define:YYCURSOR = m_cursor;
                 re2c:define:YYCTYPE  = lexer_char_t;
                 re2c:define:YYMARKER = marker;
                 re2c:indent:string   = "    ";
-                re2c:define:YYLIMIT  = buffer_re2c_limit;
+                re2c:define:YYLIMIT  = m_limit;
             */
 
 lexer_start:
             // set current to the begin of the buffer
-            current_re2c = buffer_re2c;
+            m_begin = m_cursor;
 
-            if (current_re2c == buffer_re2c_limit)
+            if (m_begin == m_limit)
             {
                 return last_token = token_type::end_of_input;
             }
@@ -2707,7 +2707,7 @@ lexer_start:
             if (t != last_token)
             {
                 std::string error_msg = "parse error - unexpected \'";
-                error_msg += static_cast<char>(current_re2c[0]);
+                error_msg += static_cast<char>(m_begin[0]);
                 error_msg += "\' (" + token_type_name(last_token);
                 error_msg += "); expected " + token_type_name(t);
                 throw std::invalid_argument(error_msg);
@@ -2715,9 +2715,9 @@ lexer_start:
         }
 
         /*!
-        The pointer current_re2c points to the opening quote of the string, and
-        buffer_re2c past the closing quote of the string. We create a std::string from
-        the character after the opening quotes (current_re2c+1) until the character
+        The pointer m_begin points to the opening quote of the string, and
+        m_cursor past the closing quote of the string. We create a std::string from
+        the character after the opening quotes (m_begin+1) until the character
         before the closing quotes (hence subtracting 2 characters from the pointer
         difference of the two pointers).
 
@@ -2728,8 +2728,8 @@ lexer_start:
         inline std::string get_string() const
         {
             return std::string(
-                       reinterpret_cast<const char*>(current_re2c + 1),
-                       static_cast<std::size_t>(buffer_re2c - current_re2c - 2)
+                       reinterpret_cast<const char*>(m_begin + 1),
+                       static_cast<std::size_t>(m_cursor - m_begin - 2)
                    );
         }
 
@@ -2737,11 +2737,11 @@ lexer_start:
         /// the buffer
         std::string buffer;
         /// a pointer to the next character to read from the buffer
-        const lexer_char_t* buffer_re2c = nullptr;
+        const lexer_char_t* m_cursor = nullptr;
         /// a pointer past the last character of the buffer
-        const lexer_char_t* buffer_re2c_limit = nullptr;
+        const lexer_char_t* m_limit = nullptr;
         /// a pointer to the beginning of the current token
-        const lexer_char_t* current_re2c = nullptr;
+        const lexer_char_t* m_begin = nullptr;
         /// the type of the last read token
         token_type last_token = token_type::uninitialized;
     };

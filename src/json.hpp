@@ -2414,9 +2414,9 @@ class basic_json
         inline parser(const std::string& s) : buffer(s)
         {
             // set buffer for RE2C
-            buffer_re2c = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
+            m_cursor = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
             // set a pointer past the end of the buffer
-            buffer_re2c_limit = buffer_re2c + buffer.size();
+            m_limit = m_cursor + buffer.size();
             // read first token
             get_token();
         }
@@ -2432,9 +2432,9 @@ class basic_json
             }
 
             // set buffer for RE2C
-            buffer_re2c = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
+            m_cursor = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
             // set a pointer past the end of the buffer
-            buffer_re2c_limit = buffer_re2c + buffer.size();
+            m_limit = m_cursor + buffer.size();
             // read first token
             get_token();
         }
@@ -2538,10 +2538,10 @@ class basic_json
 
                 case (token_type::value_number):
                 {
-                    // The pointer current_re2c points to the beginning of the
+                    // The pointer m_begin points to the beginning of the
                     // parsed number. We pass this pointer to std::strtod which
                     // sets endptr to the first character past the converted
-                    // number. If this pointer is not the same as buffer_re2c,
+                    // number. If this pointer is not the same as m_cursor,
                     // then either more or less characters have been used
                     // during the comparison. This can happen for inputs like
                     // "01" which will be treated like number 0 followed by
@@ -2549,13 +2549,13 @@ class basic_json
 
                     // conversion
                     char* endptr;
-                    const auto float_val = std::strtod(reinterpret_cast<const char*>(current_re2c), &endptr);
+                    const auto float_val = std::strtod(reinterpret_cast<const char*>(m_begin), &endptr);
 
                     // check if strtod read beyond the end of the lexem
-                    if (reinterpret_cast<const lexer_char_t*>(endptr) != buffer_re2c)
+                    if (reinterpret_cast<const lexer_char_t*>(endptr) != m_cursor)
                     {
                         throw std::invalid_argument(std::string("parse error - ") +
-                                                    reinterpret_cast<const char*>(current_re2c) + " is not a number");
+                                                    reinterpret_cast<const char*>(m_begin) + " is not a number");
                     }
 
                     // check if conversion loses precision
@@ -2575,7 +2575,7 @@ class basic_json
                 default:
                 {
                     std::string error_msg = "parse error - unexpected \'";
-                    error_msg += static_cast<char>(current_re2c[0]);
+                    error_msg += static_cast<char>(m_begin[0]);
                     error_msg += "\' (";
                     error_msg += token_type_name(last_token) + ")";
                     throw std::invalid_argument(error_msg);
@@ -2599,16 +2599,16 @@ class basic_json
         inline token_type get_token()
         {
             // needed by RE2C
-            const lexer_char_t* marker;
+            const lexer_char_t* marker = nullptr;
 
             // set up RE2C
 
 
 lexer_start:
             // set current to the begin of the buffer
-            current_re2c = buffer_re2c;
+            m_begin = m_cursor;
 
-            if (current_re2c == buffer_re2c_limit)
+            if (m_begin == m_limit)
             {
                 return last_token = token_type::end_of_input;
             }
@@ -2653,7 +2653,7 @@ lexer_start:
                     64,  64,  64,  64,  64,  64,  64,  64,
                 };
 
-                yych = *buffer_re2c;
+                yych = *m_cursor;
                 if (yych <= ':')
                 {
                     if (yych <= '!')
@@ -2777,25 +2777,25 @@ json_parser_2:
                     goto lexer_start;
                 }
 json_parser_3:
-                ++buffer_re2c;
+                ++m_cursor;
 json_parser_4:
                 {
                     return last_token = token_type::parse_error;
                 }
 json_parser_5:
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 goto json_parser_60;
 json_parser_6:
                 yyaccept = 0;
-                yych = *(marker = ++buffer_re2c);
+                yych = *(marker = ++m_cursor);
                 goto json_parser_51;
 json_parser_7:
-                ++buffer_re2c;
+                ++m_cursor;
                 {
                     return last_token = token_type::value_separator;
                 }
 json_parser_9:
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 if (yych <= '/')
                 {
                     goto json_parser_4;
@@ -2811,7 +2811,7 @@ json_parser_9:
                 goto json_parser_4;
 json_parser_10:
                 yyaccept = 1;
-                yych = *(marker = ++buffer_re2c);
+                yych = *(marker = ++m_cursor);
                 if (yych <= 'D')
                 {
                     if (yych == '.')
@@ -2836,26 +2836,26 @@ json_parser_11:
                 }
 json_parser_12:
                 yyaccept = 1;
-                yych = *(marker = ++buffer_re2c);
+                yych = *(marker = ++m_cursor);
                 goto json_parser_41;
 json_parser_13:
-                ++buffer_re2c;
+                ++m_cursor;
                 {
                     return last_token = token_type::name_separator;
                 }
 json_parser_15:
-                ++buffer_re2c;
+                ++m_cursor;
                 {
                     return last_token = token_type::begin_array;
                 }
 json_parser_17:
-                ++buffer_re2c;
+                ++m_cursor;
                 {
                     return last_token = token_type::end_array;
                 }
 json_parser_19:
                 yyaccept = 0;
-                yych = *(marker = ++buffer_re2c);
+                yych = *(marker = ++m_cursor);
                 if (yych == 'a')
                 {
                     goto json_parser_35;
@@ -2863,7 +2863,7 @@ json_parser_19:
                 goto json_parser_4;
 json_parser_20:
                 yyaccept = 0;
-                yych = *(marker = ++buffer_re2c);
+                yych = *(marker = ++m_cursor);
                 if (yych == 'u')
                 {
                     goto json_parser_31;
@@ -2871,30 +2871,30 @@ json_parser_20:
                 goto json_parser_4;
 json_parser_21:
                 yyaccept = 0;
-                yych = *(marker = ++buffer_re2c);
+                yych = *(marker = ++m_cursor);
                 if (yych == 'r')
                 {
                     goto json_parser_26;
                 }
                 goto json_parser_4;
 json_parser_22:
-                ++buffer_re2c;
+                ++m_cursor;
                 {
                     return last_token = token_type::begin_object;
                 }
 json_parser_24:
-                ++buffer_re2c;
+                ++m_cursor;
                 {
                     return last_token = token_type::end_object;
                 }
 json_parser_26:
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 if (yych == 'u')
                 {
                     goto json_parser_28;
                 }
 json_parser_27:
-                buffer_re2c = marker;
+                m_cursor = marker;
                 if (yyaccept == 0)
                 {
                     goto json_parser_4;
@@ -2904,54 +2904,54 @@ json_parser_27:
                     goto json_parser_11;
                 }
 json_parser_28:
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 if (yych != 'e')
                 {
                     goto json_parser_27;
                 }
-                ++buffer_re2c;
+                ++m_cursor;
                 {
                     return last_token = token_type::literal_true;
                 }
 json_parser_31:
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 if (yych != 'l')
                 {
                     goto json_parser_27;
                 }
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 if (yych != 'l')
                 {
                     goto json_parser_27;
                 }
-                ++buffer_re2c;
+                ++m_cursor;
                 {
                     return last_token = token_type::literal_null;
                 }
 json_parser_35:
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 if (yych != 'l')
                 {
                     goto json_parser_27;
                 }
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 if (yych != 's')
                 {
                     goto json_parser_27;
                 }
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 if (yych != 'e')
                 {
                     goto json_parser_27;
                 }
-                ++buffer_re2c;
+                ++m_cursor;
                 {
                     return last_token = token_type::literal_false;
                 }
 json_parser_40:
                 yyaccept = 1;
-                marker = ++buffer_re2c;
-                yych = *buffer_re2c;
+                marker = ++m_cursor;
+                yych = *m_cursor;
 json_parser_41:
                 if (yybm[0 + yych] & 32)
                 {
@@ -2977,7 +2977,7 @@ json_parser_41:
                     goto json_parser_11;
                 }
 json_parser_42:
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 if (yych <= '/')
                 {
                     goto json_parser_27;
@@ -2988,7 +2988,7 @@ json_parser_42:
                 }
                 goto json_parser_27;
 json_parser_43:
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 if (yych <= ',')
                 {
                     if (yych != '+')
@@ -3013,7 +3013,7 @@ json_parser_43:
                     goto json_parser_27;
                 }
 json_parser_44:
-                yych = *++buffer_re2c;
+                yych = *++m_cursor;
                 if (yych <= '/')
                 {
                     goto json_parser_27;
@@ -3023,8 +3023,8 @@ json_parser_44:
                     goto json_parser_27;
                 }
 json_parser_45:
-                ++buffer_re2c;
-                yych = *buffer_re2c;
+                ++m_cursor;
+                yych = *m_cursor;
                 if (yych <= '/')
                 {
                     goto json_parser_11;
@@ -3036,8 +3036,8 @@ json_parser_45:
                 goto json_parser_11;
 json_parser_47:
                 yyaccept = 1;
-                marker = ++buffer_re2c;
-                yych = *buffer_re2c;
+                marker = ++m_cursor;
+                yych = *m_cursor;
                 if (yych <= 'D')
                 {
                     if (yych <= '/')
@@ -3064,7 +3064,7 @@ json_parser_47:
                 }
 json_parser_49:
                 yyaccept = 1;
-                yych = *(marker = ++buffer_re2c);
+                yych = *(marker = ++m_cursor);
                 if (yych <= 'D')
                 {
                     if (yych == '.')
@@ -3086,8 +3086,8 @@ json_parser_49:
                     goto json_parser_11;
                 }
 json_parser_50:
-                ++buffer_re2c;
-                yych = *buffer_re2c;
+                ++m_cursor;
+                yych = *m_cursor;
 json_parser_51:
                 if (yybm[0 + yych] & 64)
                 {
@@ -3097,8 +3097,8 @@ json_parser_51:
                 {
                     goto json_parser_53;
                 }
-                ++buffer_re2c;
-                yych = *buffer_re2c;
+                ++m_cursor;
+                yych = *m_cursor;
                 if (yych <= 'e')
                 {
                     if (yych <= '/')
@@ -3172,13 +3172,13 @@ json_parser_51:
                     }
                 }
 json_parser_53:
-                ++buffer_re2c;
+                ++m_cursor;
                 {
                     return last_token = token_type::value_string;
                 }
 json_parser_55:
-                ++buffer_re2c;
-                yych = *buffer_re2c;
+                ++m_cursor;
+                yych = *m_cursor;
                 if (yych <= '@')
                 {
                     if (yych <= '/')
@@ -3206,8 +3206,8 @@ json_parser_55:
                     }
                 }
 json_parser_56:
-                ++buffer_re2c;
-                yych = *buffer_re2c;
+                ++m_cursor;
+                yych = *m_cursor;
                 if (yych <= '@')
                 {
                     if (yych <= '/')
@@ -3235,8 +3235,8 @@ json_parser_56:
                     }
                 }
 json_parser_57:
-                ++buffer_re2c;
-                yych = *buffer_re2c;
+                ++m_cursor;
+                yych = *m_cursor;
                 if (yych <= '@')
                 {
                     if (yych <= '/')
@@ -3264,8 +3264,8 @@ json_parser_57:
                     }
                 }
 json_parser_58:
-                ++buffer_re2c;
-                yych = *buffer_re2c;
+                ++m_cursor;
+                yych = *m_cursor;
                 if (yych <= '@')
                 {
                     if (yych <= '/')
@@ -3295,8 +3295,8 @@ json_parser_58:
                     goto json_parser_27;
                 }
 json_parser_59:
-                ++buffer_re2c;
-                yych = *buffer_re2c;
+                ++m_cursor;
+                yych = *m_cursor;
 json_parser_60:
                 if (yybm[0 + yych] & 128)
                 {
@@ -3347,7 +3347,7 @@ json_parser_60:
             if (t != last_token)
             {
                 std::string error_msg = "parse error - unexpected \'";
-                error_msg += static_cast<char>(current_re2c[0]);
+                error_msg += static_cast<char>(m_begin[0]);
                 error_msg += "\' (" + token_type_name(last_token);
                 error_msg += "); expected " + token_type_name(t);
                 throw std::invalid_argument(error_msg);
@@ -3355,9 +3355,9 @@ json_parser_60:
         }
 
         /*!
-        The pointer current_re2c points to the opening quote of the string, and
-        buffer_re2c past the closing quote of the string. We create a std::string from
-        the character after the opening quotes (current_re2c+1) until the character
+        The pointer m_begin points to the opening quote of the string, and
+        m_cursor past the closing quote of the string. We create a std::string from
+        the character after the opening quotes (m_begin+1) until the character
         before the closing quotes (hence subtracting 2 characters from the pointer
         difference of the two pointers).
 
@@ -3368,8 +3368,8 @@ json_parser_60:
         inline std::string get_string() const
         {
             return std::string(
-                       reinterpret_cast<const char*>(current_re2c + 1),
-                       static_cast<std::size_t>(buffer_re2c - current_re2c - 2)
+                       reinterpret_cast<const char*>(m_begin + 1),
+                       static_cast<std::size_t>(m_cursor - m_begin - 2)
                    );
         }
 
@@ -3377,11 +3377,11 @@ json_parser_60:
         /// the buffer
         std::string buffer;
         /// a pointer to the next character to read from the buffer
-        const lexer_char_t* buffer_re2c = nullptr;
+        const lexer_char_t* m_cursor = nullptr;
         /// a pointer past the last character of the buffer
-        const lexer_char_t* buffer_re2c_limit = nullptr;
+        const lexer_char_t* m_limit = nullptr;
         /// a pointer to the beginning of the current token
-        const lexer_char_t* current_re2c = nullptr;
+        const lexer_char_t* m_begin = nullptr;
         /// the type of the last read token
         token_type last_token = token_type::uninitialized;
     };
