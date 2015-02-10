@@ -2612,7 +2612,7 @@ class basic_json
                 re2c:define:YYLIMIT  = m_limit;
             */
 
-lexer_start:
+json_parser_lexer_start:
             // set current to the begin of the buffer
             m_begin = m_cursor;
 
@@ -2624,7 +2624,7 @@ lexer_start:
             /*!re2c
                 // whitespace
                 ws = [ \t\n\r]*;
-                ws   { goto lexer_start; }
+                ws   { goto json_parser_lexer_start; }
 
                 // structural characters
                 "[" { return last_token = token_type::begin_array; }

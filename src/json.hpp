@@ -2604,7 +2604,7 @@ class basic_json
             // set up RE2C
 
 
-lexer_start:
+json_parser_lexer_start:
             // set current to the begin of the buffer
             m_begin = m_cursor;
 
@@ -2774,7 +2774,7 @@ lexer_start:
                 }
 json_parser_2:
                 {
-                    goto lexer_start;
+                    goto json_parser_lexer_start;
                 }
 json_parser_3:
                 ++m_cursor;
