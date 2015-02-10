@@ -1463,11 +1463,6 @@ class basic_json
 
         switch (m_type)
         {
-            case (value_t::null):
-            {
-                return "null";
-            }
-
             case (value_t::object):
             {
                 if (m_value.object->empty())
@@ -1557,6 +1552,11 @@ class basic_json
             case (value_t::number_float):
             {
                 return std::to_string(m_value.number_float);
+            }
+
+            default:
+            {
+                return "null";
             }
         }
     }
