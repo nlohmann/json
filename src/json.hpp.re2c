@@ -1315,24 +1315,28 @@ class basic_json
             {
                 return "null";
             }
+
             case (value_t::object):
             {
                 return "object";
             }
+
             case (value_t::array):
             {
                 return "array";
             }
+
             case (value_t::string):
             {
                 return "string";
             }
+
             case (value_t::boolean):
             {
                 return "boolean";
             }
-            case (value_t::number_integer):
-            case (value_t::number_float):
+
+            default:
             {
                 return "number";
             }

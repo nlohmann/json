@@ -3821,3 +3821,50 @@ TEST_CASE("lexicographical comparison operators")
         }
     }
 }
+
+TEST_CASE("serialization")
+{
+    SECTION("operator<<")
+    {
+        std::stringstream ss;
+        json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+        ss << j;
+        CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
+    }
+
+    SECTION("operator>>")
+    {
+        std::stringstream ss;
+        json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+        j >> ss;
+        CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
+    }
+}
+
+TEST_CASE("deserialization")
+{
+    SECTION("string")
+    {
+        auto s = "[\"foo\",1,2,3,false,{\"one\":1}]";
+        json j = json::parse(s);
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
+
+    SECTION("operator<<")
+    {
+        std::stringstream ss;
+        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+        json j;
+        j << ss;
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
+
+    SECTION("operator>>")
+    {
+        std::stringstream ss;
+        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+        json j;
+        ss >> j;
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
+}
