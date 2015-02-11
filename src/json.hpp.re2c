@@ -256,6 +256,8 @@ class basic_json
               std::enable_if<
                   not std::is_same<V, basic_json::iterator>::value and
                   not std::is_same<V, basic_json::const_iterator>::value and
+                  not std::is_same<V, typename array_t::iterator>::value and
+                  not std::is_same<V, typename array_t::const_iterator>::value and
                   std::is_constructible<basic_json, typename V::value_type>::value, int>::type
               = 0>
     inline basic_json(const V& value)
@@ -1678,7 +1680,6 @@ class basic_json
         /// copy assignment
         inline iterator& operator=(const iterator& other) noexcept
         {
-            assert(false); // not sure if function will ever be called
             m_object = other.m_object;
             m_it = other.m_it;
             return *this;

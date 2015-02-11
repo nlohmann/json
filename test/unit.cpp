@@ -3912,13 +3912,275 @@ TEST_CASE("deserialization")
         ss >> j;
         CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
     }
-    
+
     SECTION("user-defined string literal")
     {
         CHECK("[\"foo\",1,2,3,false,{\"one\":1}]"_json == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
     }
 }
 
+TEST_CASE("iterator class")
+{
+    SECTION("initialization")
+    {
+        SECTION("constructor with object")
+        {
+            SECTION("null")
+            {
+                json j(json::value_t::null);
+                json::iterator it(&j);
+            }
+
+            SECTION("object")
+            {
+                json j(json::value_t::object);
+                json::iterator it(&j);
+            }
+
+            SECTION("array")
+            {
+                json j(json::value_t::array);
+                json::iterator it(&j);
+            }
+        }
+
+        SECTION("copy assignment")
+        {
+            json j(json::value_t::null);
+            json::iterator it(&j);
+            json::iterator it2(&j);
+            it2 = it;
+        }
+
+        SECTION("set_begin")
+        {
+            SECTION("null")
+            {
+                json j(json::value_t::null);
+                json::iterator it(&j);
+                it.set_begin();
+                CHECK(it == j.begin());
+            }
+
+            SECTION("object")
+            {
+                json j(json::value_t::object);
+                json::iterator it(&j);
+                it.set_begin();
+                CHECK(it == j.begin());
+            }
+
+            SECTION("array")
+            {
+                json j(json::value_t::array);
+                json::iterator it(&j);
+                it.set_begin();
+                CHECK(it == j.begin());
+            }
+        }
+
+        SECTION("set_end")
+        {
+            SECTION("null")
+            {
+                json j(json::value_t::null);
+                json::iterator it(&j);
+                it.set_end();
+                CHECK(it == j.end());
+            }
+
+            SECTION("object")
+            {
+                json j(json::value_t::object);
+                json::iterator it(&j);
+                it.set_end();
+                CHECK(it == j.end());
+            }
+
+            SECTION("array")
+            {
+                json j(json::value_t::array);
+                json::iterator it(&j);
+                it.set_end();
+                CHECK(it == j.end());
+            }
+        }
+    }
+
+    SECTION("element access")
+    {
+        SECTION("operator*")
+        {
+            SECTION("null")
+            {
+                json j(json::value_t::null);
+                json::iterator it = j.begin();
+                CHECK_THROWS_AS(*it, std::out_of_range);
+            }
+
+            SECTION("number")
+            {
+                json j(17);
+                json::iterator it = j.begin();
+                CHECK(*it == json(17));
+                it = j.end();
+                CHECK_THROWS_AS(*it, std::out_of_range);
+            }
+
+            SECTION("object")
+            {
+                json j({{"foo", "bar"}});
+                json::iterator it = j.begin();
+                CHECK(*it == json("bar"));
+            }
+
+            SECTION("array")
+            {
+                json j({1, 2, 3, 4});
+                json::iterator it = j.begin();
+                CHECK(*it == json(1));
+            }
+        }
+
+        SECTION("operator->")
+        {
+            SECTION("null")
+            {
+                json j(json::value_t::null);
+                json::iterator it = j.begin();
+                CHECK_THROWS_AS(it->type_name(), std::out_of_range);
+            }
+
+            SECTION("number")
+            {
+                json j(17);
+                json::iterator it = j.begin();
+                CHECK(it->type_name() == "number");
+                it = j.end();
+                CHECK_THROWS_AS(it->type_name(), std::out_of_range);
+            }
+
+            SECTION("object")
+            {
+                json j({{"foo", "bar"}});
+                json::iterator it = j.begin();
+                CHECK(it->type_name() == "string");
+            }
+
+            SECTION("array")
+            {
+                json j({1, 2, 3, 4});
+                json::iterator it = j.begin();
+                CHECK(it->type_name() == "number");
+            }
+        }
+    }
+
+    SECTION("increment/decrement")
+    {
+        SECTION("post-increment")
+        {
+            SECTION("null")
+            {
+                json j(json::value_t::null);
+                json::iterator it = j.begin();
+                CHECK(it.m_it.generic_iterator == json::generic_iterator_value::end);
+                it++;
+                CHECK(it.m_it.generic_iterator == json::generic_iterator_value::invalid);
+            }
+
+            SECTION("number")
+            {
+                json j(17);
+                json::iterator it = j.begin();
+                CHECK(it.m_it.generic_iterator == json::generic_iterator_value::begin);
+                it++;
+                CHECK(it.m_it.generic_iterator == json::generic_iterator_value::end);
+                it++;
+                CHECK(it.m_it.generic_iterator == json::generic_iterator_value::invalid);
+            }
+
+            SECTION("object")
+            {
+                json j({{"foo", "bar"}});
+                json::iterator it = j.begin();
+                CHECK(it.m_it.object_iterator == it.m_object->m_value.object->begin());
+                it++;
+                CHECK(it.m_it.object_iterator == it.m_object->m_value.object->end());
+            }
+
+            SECTION("array")
+            {
+                json j({1, 2, 3, 4});
+                json::iterator it = j.begin();
+                CHECK(it.m_it.array_iterator == it.m_object->m_value.array->begin());
+                it++;
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->begin());
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->end());
+                it++;
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->begin());
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->end());
+                it++;
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->begin());
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->end());
+                it++;
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->begin());
+                CHECK(it.m_it.array_iterator == it.m_object->m_value.array->end());
+            }
+        }
+
+        SECTION("pre-increment")
+        {
+            SECTION("null")
+            {
+                json j(json::value_t::null);
+                json::iterator it = j.begin();
+                CHECK(it.m_it.generic_iterator == json::generic_iterator_value::end);
+                ++it;
+                CHECK(it.m_it.generic_iterator == json::generic_iterator_value::invalid);
+            }
+
+            SECTION("number")
+            {
+                json j(17);
+                json::iterator it = j.begin();
+                CHECK(it.m_it.generic_iterator == json::generic_iterator_value::begin);
+                ++it;
+                CHECK(it.m_it.generic_iterator == json::generic_iterator_value::end);
+                ++it;
+                CHECK(it.m_it.generic_iterator == json::generic_iterator_value::invalid);
+            }
+
+            SECTION("object")
+            {
+                json j({{"foo", "bar"}});
+                json::iterator it = j.begin();
+                CHECK(it.m_it.object_iterator == it.m_object->m_value.object->begin());
+                ++it;
+                CHECK(it.m_it.object_iterator == it.m_object->m_value.object->end());
+            }
+
+            SECTION("array")
+            {
+                json j({1, 2, 3, 4});
+                json::iterator it = j.begin();
+                CHECK(it.m_it.array_iterator == it.m_object->m_value.array->begin());
+                ++it;
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->begin());
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->end());
+                ++it;
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->begin());
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->end());
+                ++it;
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->begin());
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->end());
+                ++it;
+                CHECK(it.m_it.array_iterator != it.m_object->m_value.array->begin());
+                CHECK(it.m_it.array_iterator == it.m_object->m_value.array->end());
+            }
+        }
+    }
+}
 
 TEST_CASE("convenience functions")
 {
@@ -4202,6 +4464,8 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("-").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("--").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("-0.").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("-.").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("0.:").parse(), std::invalid_argument);
 
         // unexpected end of null
         CHECK_THROWS_AS(json::parser("n").parse(), std::invalid_argument);
