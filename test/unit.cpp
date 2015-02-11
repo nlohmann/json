@@ -4153,6 +4153,9 @@ TEST_CASE("parser class")
 
                 SECTION("with exponent")
                 {
+                    CHECK(json::parser("0e1").parse() == json(0e1));
+                    CHECK(json::parser("0E1").parse() == json(0e1));
+
                     CHECK(json::parser("10000E-4").parse() == json(10000e-4));
                     CHECK(json::parser("10000E-3").parse() == json(10000e-3));
                     CHECK(json::parser("10000E-2").parse() == json(10000e-2));
@@ -4162,6 +4165,16 @@ TEST_CASE("parser class")
                     CHECK(json::parser("10000E2").parse() == json(10000e2));
                     CHECK(json::parser("10000E3").parse() == json(10000e3));
                     CHECK(json::parser("10000E4").parse() == json(10000e4));
+
+                    CHECK(json::parser("10000e-4").parse() == json(10000e-4));
+                    CHECK(json::parser("10000e-3").parse() == json(10000e-3));
+                    CHECK(json::parser("10000e-2").parse() == json(10000e-2));
+                    CHECK(json::parser("10000e-1").parse() == json(10000e-1));
+                    CHECK(json::parser("10000e0").parse() == json(10000e0));
+                    CHECK(json::parser("10000e1").parse() == json(10000e1));
+                    CHECK(json::parser("10000e2").parse() == json(10000e2));
+                    CHECK(json::parser("10000e3").parse() == json(10000e3));
+                    CHECK(json::parser("10000e4").parse() == json(10000e4));
                 }
             }
 
@@ -4185,5 +4198,6 @@ TEST_CASE("parser class")
     SECTION("parse errors")
     {
         CHECK_THROWS_AS(json::parser("-,").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("-A").parse(), std::invalid_argument);
     }
 }
