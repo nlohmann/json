@@ -4988,6 +4988,44 @@ TEST_CASE("parser class")
             }
         }
 
+        SECTION("string")
+        {
+            // empty string
+            CHECK(json::parser("\"\"").parse() == json(json::value_t::string));
+
+            SECTION("escaped")
+            {
+                // quotation mark
+                CHECK(json::parser("\"\\\"\"").parse() == json("\\\""));
+                // reverse solidus
+                CHECK(json::parser("\"\\\\\"").parse() == json("\\\\"));
+                // solidus
+                CHECK(json::parser("\"\\/\"").parse() == json("\\/"));
+                // backspace
+                CHECK(json::parser("\"\\b\"").parse() == json("\\b"));
+                // formfeed
+                CHECK(json::parser("\"\\f\"").parse() == json("\\f"));
+                // newline
+                CHECK(json::parser("\"\\n\"").parse() == json("\\n"));
+                // carriage return
+                CHECK(json::parser("\"\\r\"").parse() == json("\\r"));
+                // horizontal tab
+                CHECK(json::parser("\"\\t\"").parse() == json("\\t"));
+
+                CHECK(json::parser("\"\\u0000\"").parse() == json("\\u0000"));
+                CHECK(json::parser("\"\\u000a\"").parse() == json("\\u000a"));
+                CHECK(json::parser("\"\\u00b0\"").parse() == json("\\u00b0"));
+                CHECK(json::parser("\"\\u0c00\"").parse() == json("\\u0c00"));
+                CHECK(json::parser("\"\\ud000\"").parse() == json("\\ud000"));
+                CHECK(json::parser("\"\\u0000\"").parse() == json("\\u0000"));
+                CHECK(json::parser("\"\\u000E\"").parse() == json("\\u000E"));
+                CHECK(json::parser("\"\\u00F0\"").parse() == json("\\u00F0"));
+                CHECK(json::parser("\"\\u0100\"").parse() == json("\\u0100"));
+                CHECK(json::parser("\"\\u2000\"").parse() == json("\\u2000"));
+                CHECK(json::parser("\"\\uFFFF\"").parse() == json("\\uFFFF"));
+            }
+        }
+
         SECTION("number")
         {
             SECTION("integers")
@@ -5090,5 +5128,8 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("{\"foo\":").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("{\"foo\":}").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("{\"foo\":1,}").parse(), std::invalid_argument);
+
+        // unexpected end of string
+        CHECK_THROWS_AS(json::parser("\"").parse(), std::invalid_argument);
     }
 }
