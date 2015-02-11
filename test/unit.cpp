@@ -4133,6 +4133,11 @@ TEST_CASE("parser class")
                 CHECK(json::parser("{}").parse() == json(json::value_t::object));
                 CHECK(json::parser("{ }").parse() == json(json::value_t::object));
             }
+
+            SECTION("nonempty object")
+            {
+                CHECK(json::parser("{\"\": true, \"one\": 1, \"two\": null}").parse() == json({{"", true}, {"one", 1}, {"two", nullptr}}));
+            }
         }
 
         SECTION("number")
@@ -4157,6 +4162,16 @@ TEST_CASE("parser class")
                     CHECK(json::parser("10000E2").parse() == json(10000e2));
                     CHECK(json::parser("10000E3").parse() == json(10000e3));
                     CHECK(json::parser("10000E4").parse() == json(10000e4));
+                }
+            }
+
+            SECTION("floating-point")
+            {
+                SECTION("without exponent")
+                {
+                    CHECK(json::parser("-128.5").parse() == json(-128.5));
+                    CHECK(json::parser("0.999").parse() == json(0.999));
+                    CHECK(json::parser("128.5").parse() == json(128.5));
                 }
             }
 
