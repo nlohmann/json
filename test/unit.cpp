@@ -4044,7 +4044,7 @@ TEST_CASE("lexer class")
 
             switch (c)
             {
-                // characters that are prefixes of reasonable json
+                // single characters that are valid tokens
                 case ('['):
                 case (']'):
                 case ('{'):
@@ -4063,12 +4063,6 @@ TEST_CASE("lexer class")
                 case ('9'):
                 {
                     CHECK(json::lexer(s.c_str()).scan() != json::lexer::token_type::parse_error);
-                    break;
-                }
-
-                case ('"'):
-                {
-                    // no idea what to do here
                     break;
                 }
 
@@ -4199,32 +4193,37 @@ TEST_CASE("parser class")
     SECTION("parse errors")
     {
         // unexpected end of number
-        CHECK_THROWS_AS(json::parser("0.A").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("-,").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("-A").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("0.").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("-").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("--").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("-0.").parse(), std::invalid_argument);
 
         // unexpected end of null
         CHECK_THROWS_AS(json::parser("n").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("nA").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("nuA").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("nulA").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("n").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("nu").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("nul").parse(), std::invalid_argument);
 
         // unexpected end of true
         CHECK_THROWS_AS(json::parser("t").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("tA").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("trA").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("truA").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("t").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("tr").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("tru").parse(), std::invalid_argument);
 
         // unexpected end of false
         CHECK_THROWS_AS(json::parser("f").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("faA").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("falA").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("falsA").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("fa").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("fal").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("fals").parse(), std::invalid_argument);
 
         // unexpected end of array
+        CHECK_THROWS_AS(json::parser("[1,").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("[1,]").parse(), std::invalid_argument);
 
         // unexpected end of object
+        CHECK_THROWS_AS(json::parser("{").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("{\"foo\"").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("{\"foo\":").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("{\"foo\":}").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("{\"foo\":1,}").parse(), std::invalid_argument);
     }

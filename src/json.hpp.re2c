@@ -2514,7 +2514,7 @@ class basic_json
                 // string
                 quotation_mark = [\"];
                 escape         = [\\];
-                unescaped      = [^\"\\];
+                unescaped      = [^\"\\\000];
                 escaped        = escape ([\"\\/bfnrt] | [u][0-9a-fA-F]{4});
                 char           = unescaped | escaped;
                 string         = quotation_mark char* quotation_mark;
