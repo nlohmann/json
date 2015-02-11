@@ -2,7 +2,6 @@
 #define _NLOHMANN_JSON
 
 #include <algorithm>
-#include <cassert>
 #include <functional>
 #include <initializer_list>
 #include <iostream>
