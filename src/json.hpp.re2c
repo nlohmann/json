@@ -14,6 +14,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <cmath>
 
 /*!
 - ObjectType trick from http://stackoverflow.com/a/9860911
@@ -2384,9 +2385,9 @@ class basic_json
     // parser //
     ////////////
 
-    class parser
+    class lexer
     {
-      private:
+      public:
         /// token types for the parser
         enum class token_type
         {
@@ -2406,238 +2407,40 @@ class basic_json
             end_of_input
         };
 
-        /// the type of a lexer character
-        using lexer_char_t = unsigned char;
-
-      public:
-        /// constructor for strings
-        inline parser(const std::string& s) : buffer(s)
+        inline lexer(const char* s) : m_content(s)
         {
-            // set buffer for RE2C
-            m_cursor = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
-            // set a pointer past the end of the buffer
-            m_limit = m_cursor + buffer.size();
-            // read first token
-            get_token();
+            m_start = m_cursor = m_content;
+            m_limit = m_content + strlen(m_content);
         }
 
-        /// a parser reading from an input stream
-        inline parser(std::istream& _is)
+        inline lexer() = default;
+
+        /*!max:re2c */
+
+        inline token_type scan()
         {
-            while (_is)
-            {
-                std::string input_line;
-                std::getline(_is, input_line);
-                buffer += input_line;
-            }
-
-            // set buffer for RE2C
-            m_cursor = reinterpret_cast<const lexer_char_t*>(buffer.c_str());
-            // set a pointer past the end of the buffer
-            m_limit = m_cursor + buffer.size();
-            // read first token
-            get_token();
-        }
-
-        inline basic_json parse()
-        {
-            switch (last_token)
-            {
-                case (token_type::begin_object):
-                {
-                    // explicitly set result to object to cope with {}
-                    basic_json result(value_t::object);
-
-                    // read next token
-                    get_token();
-
-                    // closing } -> we are done
-                    if (last_token == token_type::end_object)
-                    {
-                        return result;
-                    }
-
-                    // otherwise: parse key-value pairs
-                    do
-                    {
-                        // store key
-                        expect_new(token_type::value_string);
-                        const auto key = get_string();
-
-                        // parse separator (:)
-                        get_token();
-                        expect_new(token_type::name_separator);
-
-                        // parse value
-                        get_token();
-                        result[key] = parse();
-
-                        // read next character
-                        get_token();
-                    }
-                    while (last_token == token_type::value_separator
-                            and get_token() == last_token);
-
-                    // closing }
-                    expect_new(token_type::end_object);
-
-                    return result;
-                }
-
-                case (token_type::begin_array):
-                {
-                    // explicitly set result to object to cope with []
-                    basic_json result(value_t::array);
-
-                    // read next token
-                    get_token();
-
-                    // closing ] -> we are done
-                    if (last_token == token_type::end_array)
-                    {
-                        return result;
-                    }
-
-                    // otherwise: parse values
-                    do
-                    {
-                        // parse value
-                        result.push_back(parse());
-
-                        // read next character
-                        get_token();
-                    }
-                    while (last_token == token_type::value_separator
-                            and get_token() == last_token);
-
-                    // closing ]
-                    expect_new(token_type::end_array);
-
-                    return result;
-                }
-
-                case (token_type::literal_null):
-                {
-                    return basic_json(nullptr);
-                }
-
-                case (token_type::value_string):
-                {
-                    return basic_json(get_string());
-                }
-
-                case (token_type::literal_true):
-                {
-                    return basic_json(true);
-                }
-
-                case (token_type::literal_false):
-                {
-                    return basic_json(false);
-                }
-
-                case (token_type::value_number):
-                {
-                    // The pointer m_begin points to the beginning of the
-                    // parsed number. We pass this pointer to std::strtod which
-                    // sets endptr to the first character past the converted
-                    // number. If this pointer is not the same as m_cursor,
-                    // then either more or less characters have been used
-                    // during the comparison. This can happen for inputs like
-                    // "01" which will be treated like number 0 followed by
-                    // number 1.
-
-                    // conversion
-                    char* endptr;
-                    const auto float_val = std::strtod(reinterpret_cast<const char*>(m_begin), &endptr);
-
-                    // check if strtod read beyond the end of the lexem
-                    if (reinterpret_cast<const lexer_char_t*>(endptr) != m_cursor)
-                    {
-                        throw std::invalid_argument(std::string("parse error - ") +
-                                                    reinterpret_cast<const char*>(m_begin) + " is not a number");
-                    }
-
-                    // check if conversion loses precision
-                    const auto int_val = static_cast<int>(float_val);
-                    if (float_val == int_val)
-                    {
-                        // we basic_json not lose precision -> return int
-                        return basic_json(int_val);
-                    }
-                    else
-                    {
-                        // we would lose precision -> returnfloat
-                        return basic_json(float_val);
-                    }
-                }
-
-                default:
-                {
-                    std::string error_msg = "parse error - unexpected \'";
-                    error_msg += static_cast<char>(m_begin[0]);
-                    error_msg += "\' (";
-                    error_msg += token_type_name(last_token) + ")";
-                    throw std::invalid_argument(error_msg);
-                }
-            }
-        }
-
-      private:
-        /*!
-        This function implements a scanner for JSON. It is specified using
-        regular expressions that try to follow RFC 7159 and ECMA-404 as close
-        as possible. These regular expressions are then translated into a
-        deterministic finite automaton (DFA) by the tool RE2C. As a result, the
-        translated code for this function consists of a large block of code
-        with goto jumps.
-
-        @return the class of the next token read from the buffer
-
-        @todo Unicode support needs to be checked.
-        */
-        inline token_type get_token()
-        {
-            // needed by RE2C
-            const lexer_char_t* marker = nullptr;
-
-            // set up RE2C
+#define YYFILL(n)
             /*!re2c
-                re2c:labelprefix     = "json_parser_";
-                re2c:yyfill:enable   = 0;
-                re2c:define:YYCURSOR = m_cursor;
-                re2c:define:YYCTYPE  = lexer_char_t;
-                re2c:define:YYMARKER = marker;
-                re2c:indent:string   = "    ";
-                re2c:define:YYLIMIT  = m_limit;
-            */
-
-json_parser_lexer_start:
-            // set current to the begin of the buffer
-            m_begin = m_cursor;
-
-            if (m_begin == m_limit)
-            {
-                return last_token = token_type::end_of_input;
-            }
-
-            /*!re2c
-                // whitespace
-                ws = [ \t\n\r]*;
-                ws   { goto json_parser_lexer_start; }
+                re2c:define:YYCURSOR    = m_cursor;
+                re2c:define:YYLIMIT     = m_limit;
+                re2c:define:YYCTYPE     = char;
+                re2c:define:YYCTXMARKER = m_ctxmarker;
+                re2c:define:YYMARKER    = m_marker;
+                re2c:indent:top         = 1;
+                re2c:yyfill:enable      = 0;
 
                 // structural characters
-                "[" { return last_token = token_type::begin_array; }
-                "]" { return last_token = token_type::end_array; }
-                "{" { return last_token = token_type::begin_object; }
-                "}" { return last_token = token_type::end_object; }
-                "," { return last_token = token_type::value_separator; }
-                ":" { return last_token = token_type::name_separator; }
+                "[" { return token_type::begin_array; }
+                "]" { return token_type::end_array; }
+                "{" { return token_type::begin_object; }
+                "}" { return token_type::end_object; }
+                "," { return token_type::value_separator; }
+                ":" { return token_type::name_separator; }
 
                 // literal names
-                "null"  { return last_token = token_type::literal_null; }
-                "true"  { return last_token = token_type::literal_true; }
-                "false" { return last_token = token_type::literal_false; }
+                "null"  { return token_type::literal_null; }
+                "true"  { return token_type::literal_true; }
+                "false" { return token_type::literal_false; }
 
                 // number
                 decimal_point = [.];
@@ -2651,7 +2454,7 @@ json_parser_lexer_start:
                 frac          = decimal_point digit+;
                 int           = (zero|digit_1_9 digit*);
                 number        = minus? int frac? exp?;
-                number        { return last_token = token_type::value_number; }
+                number        { return token_type::value_number; }
 
                 // string
                 quotation_mark = [\"];
@@ -2660,58 +2463,16 @@ json_parser_lexer_start:
                 escaped        = escape ([\"\\/bfnrt] | [u][0-9a-fA-F]{4});
                 char           = unescaped | escaped;
                 string         = quotation_mark char* quotation_mark;
-                string         { return last_token = token_type::value_string; }
+                string         { return token_type::value_string; }
 
-                // anything else is an error
-                * { return last_token = token_type::parse_error; }
-            */
+                // end of file
+               '\000'          { return token_type::end_of_input; }
+             */
         }
 
-        inline static std::string token_type_name(token_type t)
+        inline std::string get_string_value() const
         {
-            switch (t)
-            {
-                case (token_type::uninitialized):
-                    return "<uninitialized>";
-                case (token_type::literal_true):
-                    return "true literal";
-                case (token_type::literal_false):
-                    return "false literal";
-                case (token_type::literal_null):
-                    return "null literal";
-                case (token_type::value_string):
-                    return "string literal";
-                case (token_type::value_number):
-                    return "number literal";
-                case (token_type::begin_array):
-                    return "[";
-                case (token_type::begin_object):
-                    return "{";
-                case (token_type::end_array):
-                    return "]";
-                case (token_type::end_object):
-                    return "}";
-                case (token_type::name_separator):
-                    return ":";
-                case (token_type::value_separator):
-                    return ",";
-                case (token_type::parse_error):
-                    return "<parse error>";
-                case (token_type::end_of_input):
-                    return "<end of input>";
-            }
-        }
-
-        inline void expect_new(token_type t)
-        {
-            if (t != last_token)
-            {
-                std::string error_msg = "parse error - unexpected \'";
-                error_msg += static_cast<char>(m_begin[0]);
-                error_msg += "\' (" + token_type_name(last_token);
-                error_msg += "); expected " + token_type_name(t);
-                throw std::invalid_argument(error_msg);
-            }
+            return std::string(m_start, static_cast<size_t>(m_cursor - m_start));
         }
 
         /*!
@@ -2727,23 +2488,266 @@ json_parser_lexer_start:
         */
         inline std::string get_string() const
         {
-            return std::string(
-                       reinterpret_cast<const char*>(m_begin + 1),
-                       static_cast<std::size_t>(m_cursor - m_begin - 2)
-                   );
+            return std::string(m_start + 1, static_cast<size_t>(m_cursor - m_start - 2));
+        }
+
+        inline number_float_t get_number() const
+        {
+            // The pointer m_begin points to the beginning of the
+            // parsed number. We pass this pointer to std::strtod which
+            // sets endptr to the first character past the converted
+            // number. If this pointer is not the same as m_cursor,
+            // then either more or less characters have been used
+            // during the comparison. This can happen for inputs like
+            // "01" which will be treated like number 0 followed by
+            // number 1.
+
+            // conversion
+            char* endptr;
+            const auto float_val = std::strtod(reinterpret_cast<const char*>(m_start), &endptr);
+
+            // check if strtod read beyond the end of the lexem
+            if (endptr != m_cursor)
+            {
+                std::cerr << get_string_value() << std::endl;
+                return NAN;
+            }
+            else
+            {
+                return float_val;
+            }
+        }
+
+      private:
+        const char* m_content = nullptr;
+
+        const char* m_start = nullptr;
+        const char* m_cursor = nullptr;
+        const char* m_limit = nullptr;
+        const char* m_marker = nullptr;
+        const char* m_ctxmarker = nullptr;
+    };
+
+    class parser
+    {
+      public:
+        /// constructor for strings
+        inline parser(const std::string& s) : m_buffer(s), m_lexer(m_buffer.c_str())
+        {
+            // read first token
+            get_token();
+        }
+
+        /// a parser reading from an input stream
+        inline parser(std::istream& _is)
+        {
+            while (_is)
+            {
+                std::string input_line;
+                std::getline(_is, input_line);
+                m_buffer += input_line;
+            }
+
+            // initializer lexer
+            m_lexer = lexer(m_buffer.c_str());
+
+            // read first token
+            get_token();
+        }
+
+        inline basic_json parse()
+        {
+            switch (last_token)
+            {
+                case (lexer::token_type::begin_object):
+                {
+                    // explicitly set result to object to cope with {}
+                    basic_json result(value_t::object);
+
+                    // read next token
+                    get_token();
+
+                    // closing } -> we are done
+                    if (last_token == lexer::token_type::end_object)
+                    {
+                        return result;
+                    }
+
+                    // otherwise: parse key-value pairs
+                    do
+                    {
+                        // store key
+                        expect(lexer::token_type::value_string);
+                        const auto key = m_lexer.get_string();
+
+                        // parse separator (:)
+                        get_token();
+                        expect(lexer::token_type::name_separator);
+
+                        // parse value
+                        get_token();
+                        result[key] = parse();
+
+                        // read next character
+                        get_token();
+                    }
+                    while (last_token == lexer::token_type::value_separator
+                            and get_token() == last_token);
+
+                    // closing }
+                    expect(lexer::token_type::end_object);
+
+                    return result;
+                }
+
+                case (lexer::token_type::begin_array):
+                {
+                    // explicitly set result to object to cope with []
+                    basic_json result(value_t::array);
+
+                    // read next token
+                    get_token();
+
+                    // closing ] -> we are done
+                    if (last_token == lexer::token_type::end_array)
+                    {
+                        return result;
+                    }
+
+                    // otherwise: parse values
+                    do
+                    {
+                        // parse value
+                        result.push_back(parse());
+
+                        // read next character
+                        get_token();
+                    }
+                    while (last_token == lexer::token_type::value_separator
+                            and get_token() == last_token);
+
+                    // closing ]
+                    expect(lexer::token_type::end_array);
+
+                    return result;
+                }
+
+                case (lexer::token_type::literal_null):
+                {
+                    return basic_json(nullptr);
+                }
+
+                case (lexer::token_type::value_string):
+                {
+                    return basic_json(m_lexer.get_string());
+                }
+
+                case (lexer::token_type::literal_true):
+                {
+                    return basic_json(true);
+                }
+
+                case (lexer::token_type::literal_false):
+                {
+                    return basic_json(false);
+                }
+
+                case (lexer::token_type::value_number):
+                {
+                    auto float_val = m_lexer.get_number();
+
+                    if (std::isnan(float_val))
+                    {
+                        throw std::invalid_argument(std::string("parse error - ") +
+                                                    m_lexer.get_string_value() + " is not a number");
+                    }
+
+                    // check if conversion loses precision
+                    const auto int_val = static_cast<number_integer_t>(float_val);
+                    if (float_val == int_val)
+                    {
+                        // we basic_json not lose precision -> return int
+                        return basic_json(int_val);
+                    }
+                    else
+                    {
+                        // we would lose precision -> returnfloat
+                        return basic_json(float_val);
+                    }
+                }
+
+                default:
+                {
+                    std::string error_msg = "parse error - unexpected \'";
+                    error_msg += m_lexer.get_string_value();
+                    error_msg += "\' (";
+                    error_msg += token_type_name(last_token) + ")";
+                    throw std::invalid_argument(error_msg);
+                }
+            }
+        }
+
+      private:
+        /// get next token from lexer
+        inline typename lexer::token_type get_token()
+        {
+            last_token = m_lexer.scan();
+            return last_token;
+        }
+
+        inline static std::string token_type_name(typename lexer::token_type t)
+        {
+            switch (t)
+            {
+                case (lexer::token_type::uninitialized):
+                    return "<uninitialized>";
+                case (lexer::token_type::literal_true):
+                    return "true literal";
+                case (lexer::token_type::literal_false):
+                    return "false literal";
+                case (lexer::token_type::literal_null):
+                    return "null literal";
+                case (lexer::token_type::value_string):
+                    return "string literal";
+                case (lexer::token_type::value_number):
+                    return "number literal";
+                case (lexer::token_type::begin_array):
+                    return "[";
+                case (lexer::token_type::begin_object):
+                    return "{";
+                case (lexer::token_type::end_array):
+                    return "]";
+                case (lexer::token_type::end_object):
+                    return "}";
+                case (lexer::token_type::name_separator):
+                    return ":";
+                case (lexer::token_type::value_separator):
+                    return ",";
+                case (lexer::token_type::parse_error):
+                    return "<parse error>";
+                case (lexer::token_type::end_of_input):
+                    return "<end of input>";
+            }
+        }
+
+        inline void expect(typename lexer::token_type t) const
+        {
+            if (t != last_token)
+            {
+                std::string error_msg = "parse error - unexpected \'";
+                error_msg += m_lexer.get_string_value();
+                error_msg += "\' (" + token_type_name(last_token);
+                error_msg += "); expected " + token_type_name(t);
+                throw std::invalid_argument(error_msg);
+            }
         }
 
       private:
         /// the buffer
-        std::string buffer;
-        /// a pointer to the next character to read from the buffer
-        const lexer_char_t* m_cursor = nullptr;
-        /// a pointer past the last character of the buffer
-        const lexer_char_t* m_limit = nullptr;
-        /// a pointer to the beginning of the current token
-        const lexer_char_t* m_begin = nullptr;
+        std::string m_buffer;
         /// the type of the last read token
-        token_type last_token = token_type::uninitialized;
+        typename lexer::token_type last_token = lexer::token_type::uninitialized;
+        lexer m_lexer;
     };
 };
 
