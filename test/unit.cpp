@@ -3799,8 +3799,6 @@ TEST_CASE("lexicographical comparison operators")
         {
             for (size_t j = 0; j < j_values.size(); ++j)
             {
-                CAPTURE(i);
-                CAPTURE(j);
                 // check precomputed values
                 CHECK( (j_values[i] < j_values[j]) == expected[i][j] );
             }
@@ -4044,9 +4042,6 @@ TEST_CASE("lexer class")
         {
             auto s = std::string(1, c);
 
-            CAPTURE(c);
-            CAPTURE(s);
-
             switch (c)
             {
                 // characters that are prefixes of reasonable json
@@ -4115,6 +4110,37 @@ TEST_CASE("parser class")
         SECTION("false")
         {
             CHECK(json::parser("false").parse() == json(false));
+        }
+
+        SECTION("number")
+        {
+            SECTION("integers")
+            {
+                SECTION("without exponent")
+                {
+                    CHECK(json::parser("-128").parse() == json(-128));
+                    CHECK(json::parser("0").parse() == json(0));
+                    CHECK(json::parser("128").parse() == json(128));
+                }
+
+                SECTION("with exponent")
+                {
+                    CHECK(json::parser("10000E-4").parse() == json(10000e-4));
+                    CHECK(json::parser("10000E-3").parse() == json(10000e-3));
+                    CHECK(json::parser("10000E-2").parse() == json(10000e-2));
+                    CHECK(json::parser("10000E-1").parse() == json(10000e-1));
+                    CHECK(json::parser("10000E0").parse() == json(10000e0));
+                    CHECK(json::parser("10000E1").parse() == json(10000e1));
+                    CHECK(json::parser("10000E2").parse() == json(10000e2));
+                    CHECK(json::parser("10000E3").parse() == json(10000e3));
+                    CHECK(json::parser("10000E4").parse() == json(10000e4));
+                }
+            }
+
+            SECTION("invalid numbers")
+            {
+                CHECK_THROWS_AS(json::parser("01").parse(), std::invalid_argument);
+            }
         }
     }
 }

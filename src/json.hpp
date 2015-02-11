@@ -3207,7 +3207,6 @@ json_parser_62:
             // check if strtod read beyond the end of the lexem
             if (endptr != m_cursor)
             {
-                std::cerr << get_string_value() << std::endl;
                 return NAN;
             }
             else
