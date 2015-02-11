@@ -2524,7 +2524,7 @@ class basic_json
                 '\000'         { return token_type::end_of_input; }
 
                 // anything else is an error
-                *              { return token_type::parse_error; }
+                .              { return token_type::parse_error; }
              */
         }
 
@@ -2612,7 +2612,19 @@ class basic_json
             get_token();
         }
 
+        /// public parser interface
         inline basic_json parse()
+        {
+            basic_json result = parse_internal();
+
+            expect(lexer::token_type::end_of_input);
+
+            return result;
+        }
+
+      private:
+        /// the actual parser
+        inline basic_json parse_internal()
         {
             switch (last_token)
             {
@@ -2627,12 +2639,19 @@ class basic_json
                     // closing } -> we are done
                     if (last_token == lexer::token_type::end_object)
                     {
+                        get_token();
                         return result;
                     }
 
                     // otherwise: parse key-value pairs
                     do
                     {
+                        // ugly, but could be fixed with loop reorganization
+                        if (last_token == lexer::token_type::value_separator)
+                        {
+                            get_token();
+                        }
+
                         // store key
                         expect(lexer::token_type::value_string);
                         const auto key = m_lexer.get_string();
@@ -2643,16 +2662,13 @@ class basic_json
 
                         // parse value
                         get_token();
-                        result[key] = parse();
-
-                        // read next character
-                        get_token();
+                        result[key] = parse_internal();
                     }
-                    while (last_token == lexer::token_type::value_separator
-                            and get_token() == last_token);
+                    while (last_token == lexer::token_type::value_separator);
 
                     // closing }
                     expect(lexer::token_type::end_object);
+                    get_token();
 
                     return result;
                 }
@@ -2668,44 +2684,53 @@ class basic_json
                     // closing ] -> we are done
                     if (last_token == lexer::token_type::end_array)
                     {
+                        get_token();
                         return result;
                     }
 
                     // otherwise: parse values
                     do
                     {
-                        // parse value
-                        result.push_back(parse());
+                        // ugly, but could be fixed with loop reorganization
+                        if (last_token == lexer::token_type::value_separator)
+                        {
+                            get_token();
+                        }
 
-                        // read next character
-                        get_token();
+                        // parse value
+                        result.push_back(parse_internal());
                     }
-                    while (last_token == lexer::token_type::value_separator
-                            and get_token() == last_token);
+                    while (last_token == lexer::token_type::value_separator);
 
                     // closing ]
                     expect(lexer::token_type::end_array);
+                    get_token();
 
                     return result;
                 }
 
                 case (lexer::token_type::literal_null):
                 {
+                    get_token();
                     return basic_json(nullptr);
                 }
 
                 case (lexer::token_type::value_string):
                 {
-                    return basic_json(m_lexer.get_string());
+                    const auto s = m_lexer.get_string();
+                    get_token();
+                    return basic_json(s);
                 }
 
                 case (lexer::token_type::literal_true):
                 {
+                    get_token();
                     return basic_json(true);
                 }
 
                 case (lexer::token_type::literal_false):
                 {
+                    get_token();
                     return basic_json(false);
                 }
 
@@ -2718,6 +2743,8 @@ class basic_json
                         throw std::invalid_argument(std::string("parse error - ") +
                                                     m_lexer.get_string_value() + " is not a number");
                     }
+
+                    get_token();
 
                     // check if conversion loses precision
                     const auto int_val = static_cast<number_integer_t>(float_val);
@@ -2744,7 +2771,6 @@ class basic_json
             }
         }
 
-      private:
         /// get next token from lexer
         inline typename lexer::token_type get_token()
         {

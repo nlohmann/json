@@ -5052,7 +5052,15 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("--").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("-0.").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("-.").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("-:").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("0.:").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("e.").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("1e.").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("1e/").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("1e:").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("1E.").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("1E/").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("1E:").parse(), std::invalid_argument);
 
         // unexpected end of null
         CHECK_THROWS_AS(json::parser("n").parse(), std::invalid_argument);
