@@ -3912,6 +3912,11 @@ TEST_CASE("deserialization")
         ss >> j;
         CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
     }
+    
+    SECTION("user-defined string literal")
+    {
+        CHECK("[\"foo\",1,2,3,false,{\"one\":1}]"_json == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
 }
 
 
