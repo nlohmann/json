@@ -2415,19 +2415,30 @@ class basic_json
 
         inline lexer() = default;
 
-        /*!max:re2c */
+        /*!
+        This function implements a scanner for JSON. It is specified using
+        regular expressions that try to follow RFC 7159 and ECMA-404 as close
+        as possible. These regular expressions are then translated into a
+        deterministic finite automaton (DFA) by the tool RE2C. As a result, the
+        translated code for this function consists of a large block of code
+        with goto jumps.
 
+        @return the class of the next token read from the buffer
+
+        @todo Unicode support needs to be checked.
+        */
         inline token_type scan()
         {
-#define YYFILL(n)
+            m_start = m_cursor;
+
             /*!re2c
                 re2c:define:YYCURSOR    = m_cursor;
                 re2c:define:YYLIMIT     = m_limit;
                 re2c:define:YYCTYPE     = char;
-                re2c:define:YYCTXMARKER = m_ctxmarker;
                 re2c:define:YYMARKER    = m_marker;
                 re2c:indent:top         = 1;
                 re2c:yyfill:enable      = 0;
+                re2c:labelprefix        = "json_parser_";
 
                 // structural characters
                 "[" { return token_type::begin_array; }
@@ -2466,7 +2477,7 @@ class basic_json
                 string         { return token_type::value_string; }
 
                 // end of file
-               '\000'          { return token_type::end_of_input; }
+                '\000'         { return token_type::end_of_input; }
              */
         }
 
@@ -2476,11 +2487,11 @@ class basic_json
         }
 
         /*!
-        The pointer m_begin points to the opening quote of the string, and
-        m_cursor past the closing quote of the string. We create a std::string from
-        the character after the opening quotes (m_begin+1) until the character
-        before the closing quotes (hence subtracting 2 characters from the pointer
-        difference of the two pointers).
+        The pointer m_start points to the opening quote of the string, and
+        m_cursor past the closing quote of the string. We create a std::string
+        from the character after the opening quotes (m_begin+1) until the
+        character before the closing quotes (hence subtracting 2 characters
+        from the pointer difference of the two pointers).
 
         @return string value of current token without opening and closing quotes
 
@@ -2493,14 +2504,13 @@ class basic_json
 
         inline number_float_t get_number() const
         {
-            // The pointer m_begin points to the beginning of the
-            // parsed number. We pass this pointer to std::strtod which
-            // sets endptr to the first character past the converted
-            // number. If this pointer is not the same as m_cursor,
-            // then either more or less characters have been used
-            // during the comparison. This can happen for inputs like
-            // "01" which will be treated like number 0 followed by
-            // number 1.
+            // The pointer m_begin points to the beginning of the parsed
+            // number. We pass this pointer to std::strtod which sets endptr to
+            // the first character past the converted number. If this pointer is
+            // not the same as m_cursor, then either more or less characters
+            // have been used during the comparison. This can happen for inputs
+            // like "01" which will be treated like number 0 followed by number
+            // 1.
 
             // conversion
             char* endptr;
@@ -2519,13 +2529,16 @@ class basic_json
         }
 
       private:
+        /// the buffer
         const char* m_content = nullptr;
-
+        /// pointer to he beginning of the current symbol
         const char* m_start = nullptr;
+        /// pointer to the current symbol
         const char* m_cursor = nullptr;
+        /// pointer to the end of the buffer
         const char* m_limit = nullptr;
+        /// pointer for backtracking information
         const char* m_marker = nullptr;
-        const char* m_ctxmarker = nullptr;
     };
 
     class parser

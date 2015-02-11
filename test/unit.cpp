@@ -3892,43 +3892,27 @@ TEST_CASE("deserialization")
 {
     SECTION("string")
     {
-        //        auto s = "[\"foo\",1,2,3,false,{\"one\":1}]";
-        //        json j = json::parse(s);
-        //        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
-
-        auto s = "null";
+        auto s = "[\"foo\",1,2,3,false,{\"one\":1}]";
         json j = json::parse(s);
-        CHECK(j == json());
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
     }
 
     SECTION("operator<<")
     {
-        //        std::stringstream ss;
-        //        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
-        //        json j;
-        //        j << ss;
-        //        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
-
         std::stringstream ss;
-        ss << "null";
+        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
         json j;
         j << ss;
-        CHECK(j == json());
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
     }
 
     SECTION("operator>>")
     {
-        //        std::stringstream ss;
-        //        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
-        //        json j;
-        //        ss >> j;
-        //        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
-
         std::stringstream ss;
-        ss << "null";
+        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
         json j;
         ss >> j;
-        CHECK(j == json());
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
     }
 }
 
