@@ -2432,13 +2432,18 @@ class basic_json
             m_start = m_cursor;
 
             /*!re2c
+                re2c:define:YYCTYPE     = char;
                 re2c:define:YYCURSOR    = m_cursor;
                 re2c:define:YYLIMIT     = m_limit;
-                re2c:define:YYCTYPE     = char;
                 re2c:define:YYMARKER    = m_marker;
+                re2c:indent:string      = "    ";
                 re2c:indent:top         = 1;
-                re2c:yyfill:enable      = 0;
                 re2c:labelprefix        = "json_parser_";
+                re2c:yyfill:enable      = 0;
+
+                // whitespace
+                ws = [ \t\n\r]*;
+                ws   { return scan(); }
 
                 // structural characters
                 "[" { return token_type::begin_array; }
