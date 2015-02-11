@@ -4037,7 +4037,7 @@ TEST_CASE("lexer class")
         CHECK(json::lexer::token_type_name(json::lexer::token_type::parse_error) == "<parse error>");
         CHECK(json::lexer::token_type_name(json::lexer::token_type::end_of_input) == "<end of input>");
     }
-    
+
     SECTION("parse errors on first character")
     {
         for (int c = 1; c < 128; ++c)
@@ -4066,9 +4066,14 @@ TEST_CASE("lexer class")
                 case ('7'):
                 case ('8'):
                 case ('9'):
-                case ('"'):
                 {
                     CHECK(json::lexer(s.c_str()).scan() != json::lexer::token_type::parse_error);
+                    break;
+                }
+
+                case ('"'):
+                {
+                    // no idea what to do here
                     break;
                 }
 

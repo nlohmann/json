@@ -2443,10 +2443,10 @@ class basic_json
                     return ":";
                 case (token_type::value_separator):
                     return ",";
-                case (token_type::parse_error):
-                    return "<parse error>";
                 case (token_type::end_of_input):
                     return "<end of input>";
+                default:
+                    return "<parse error>";
             }
         }
 
