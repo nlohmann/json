@@ -4112,6 +4112,29 @@ TEST_CASE("parser class")
             CHECK(json::parser("false").parse() == json(false));
         }
 
+        SECTION("array")
+        {
+            SECTION("empty array")
+            {
+                CHECK(json::parser("[]").parse() == json(json::value_t::array));
+                CHECK(json::parser("[ ]").parse() == json(json::value_t::array));
+            }
+
+            SECTION("nonempty array")
+            {
+                CHECK(json::parser("[true, false, null]").parse() == json({true, false, nullptr}));
+            }
+        }
+
+        SECTION("object")
+        {
+            SECTION("empty object")
+            {
+                CHECK(json::parser("{}").parse() == json(json::value_t::object));
+                CHECK(json::parser("{ }").parse() == json(json::value_t::object));
+            }
+        }
+
         SECTION("number")
         {
             SECTION("integers")
