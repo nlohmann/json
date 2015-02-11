@@ -4181,4 +4181,9 @@ TEST_CASE("parser class")
             }
         }
     }
+
+    SECTION("parse errors")
+    {
+        CHECK_THROWS_AS(json::parser("-,").parse(), std::invalid_argument);
+    }
 }
