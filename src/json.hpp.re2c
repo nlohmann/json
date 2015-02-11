@@ -2415,6 +2415,41 @@ class basic_json
 
         inline lexer() = default;
 
+        inline static std::string token_type_name(token_type t)
+        {
+            switch (t)
+            {
+                case (token_type::uninitialized):
+                    return "<uninitialized>";
+                case (token_type::literal_true):
+                    return "true literal";
+                case (token_type::literal_false):
+                    return "false literal";
+                case (token_type::literal_null):
+                    return "null literal";
+                case (token_type::value_string):
+                    return "string literal";
+                case (token_type::value_number):
+                    return "number literal";
+                case (token_type::begin_array):
+                    return "[";
+                case (token_type::begin_object):
+                    return "{";
+                case (token_type::end_array):
+                    return "]";
+                case (token_type::end_object):
+                    return "}";
+                case (token_type::name_separator):
+                    return ":";
+                case (token_type::value_separator):
+                    return ",";
+                case (token_type::parse_error):
+                    return "<parse error>";
+                case (token_type::end_of_input):
+                    return "<end of input>";
+            }
+        }
+
         /*!
         This function implements a scanner for JSON. It is specified using
         regular expressions that try to follow RFC 7159 and ECMA-404 as close
@@ -2429,6 +2464,10 @@ class basic_json
         */
         inline token_type scan()
         {
+            // pointer for backtracking information
+            const char* m_marker = nullptr;
+
+            // remember the begin of the token
             m_start = m_cursor;
 
             /*!re2c
@@ -2483,6 +2522,9 @@ class basic_json
 
                 // end of file
                 '\000'         { return token_type::end_of_input; }
+
+                // anything else is an error
+                *              { return token_type::parse_error; }
              */
         }
 
@@ -2542,8 +2584,6 @@ class basic_json
         const char* m_cursor = nullptr;
         /// pointer to the end of the buffer
         const char* m_limit = nullptr;
-        /// pointer for backtracking information
-        const char* m_marker = nullptr;
     };
 
     class parser
@@ -2699,7 +2739,7 @@ class basic_json
                     std::string error_msg = "parse error - unexpected \'";
                     error_msg += m_lexer.get_string_value();
                     error_msg += "\' (";
-                    error_msg += token_type_name(last_token) + ")";
+                    error_msg += lexer::token_type_name(last_token) + ")";
                     throw std::invalid_argument(error_msg);
                 }
             }
@@ -2713,49 +2753,14 @@ class basic_json
             return last_token;
         }
 
-        inline static std::string token_type_name(typename lexer::token_type t)
-        {
-            switch (t)
-            {
-                case (lexer::token_type::uninitialized):
-                    return "<uninitialized>";
-                case (lexer::token_type::literal_true):
-                    return "true literal";
-                case (lexer::token_type::literal_false):
-                    return "false literal";
-                case (lexer::token_type::literal_null):
-                    return "null literal";
-                case (lexer::token_type::value_string):
-                    return "string literal";
-                case (lexer::token_type::value_number):
-                    return "number literal";
-                case (lexer::token_type::begin_array):
-                    return "[";
-                case (lexer::token_type::begin_object):
-                    return "{";
-                case (lexer::token_type::end_array):
-                    return "]";
-                case (lexer::token_type::end_object):
-                    return "}";
-                case (lexer::token_type::name_separator):
-                    return ":";
-                case (lexer::token_type::value_separator):
-                    return ",";
-                case (lexer::token_type::parse_error):
-                    return "<parse error>";
-                case (lexer::token_type::end_of_input):
-                    return "<end of input>";
-            }
-        }
-
         inline void expect(typename lexer::token_type t) const
         {
             if (t != last_token)
             {
                 std::string error_msg = "parse error - unexpected \'";
                 error_msg += m_lexer.get_string_value();
-                error_msg += "\' (" + token_type_name(last_token);
-                error_msg += "); expected " + token_type_name(t);
+                error_msg += "\' (" + lexer::token_type_name(last_token);
+                error_msg += "); expected " + lexer::token_type_name(t);
                 throw std::invalid_argument(error_msg);
             }
         }
