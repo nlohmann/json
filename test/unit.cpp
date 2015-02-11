@@ -4037,67 +4037,64 @@ TEST_CASE("lexer class")
         CHECK(json::lexer::token_type_name(json::lexer::token_type::parse_error) == "<parse error>");
         CHECK(json::lexer::token_type_name(json::lexer::token_type::end_of_input) == "<end of input>");
     }
+    
+    SECTION("parse errors on first character")
+    {
+        for (int c = 1; c < 128; ++c)
+        {
+            auto s = std::string(1, c);
+
+            CAPTURE(c);
+            CAPTURE(s);
+
+            switch (c)
+            {
+                // characters that are prefixes of reasonable json
+                case ('['):
+                case (']'):
+                case ('{'):
+                case ('}'):
+                case (','):
+                case (':'):
+                case ('0'):
+                case ('1'):
+                case ('2'):
+                case ('3'):
+                case ('4'):
+                case ('5'):
+                case ('6'):
+                case ('7'):
+                case ('8'):
+                case ('9'):
+                case ('"'):
+                {
+                    CHECK(json::lexer(s.c_str()).scan() != json::lexer::token_type::parse_error);
+                    break;
+                }
+
+                // whitespace
+                case (' '):
+                case ('\t'):
+                case ('\n'):
+                case ('\r'):
+                {
+                    CHECK(json::lexer(s.c_str()).scan() == json::lexer::token_type::end_of_input);
+                    break;
+                }
+
+                // anything else is not expected
+                default:
+                {
+                    CHECK(json::lexer(s.c_str()).scan() == json::lexer::token_type::parse_error);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 TEST_CASE("parser class")
 {
-    SECTION("get_token")
-    {
-        /*
-        SECTION("parse errors on first character")
-        {
-            for (int c = 1; c < 255; ++c)
-            {
-                auto s = std::string(1, c);
-
-                CAPTURE(c);
-                CAPTURE(s);
-
-                switch (c)
-                {
-                    // characters that are prefixes of reasonable json
-                    case ('['):
-                    case (']'):
-                    case ('{'):
-                    case ('}'):
-                    case (','):
-                    case (':'):
-                    case ('0'):
-                    case ('1'):
-                    case ('2'):
-                    case ('3'):
-                    case ('4'):
-                    case ('5'):
-                    case ('6'):
-                    case ('7'):
-                    case ('8'):
-                    case ('9'):
-                    case ('"'):
-                    {
-                        CHECK(json::parser(s).last_token != json::lexer::token_type::parse_error);
-                        break;
-                    }
-
-                    case (' '):
-                    case ('\t'):
-                    case ('\n'):
-                    case ('\r'):
-                    {
-                        CHECK(json::parser(s).last_token == json::lexer::token_type::end_of_input);
-                        break;
-                    }
-
-                    default:
-                    {
-                        CHECK(json::parser(s).last_token == json::lexer::token_type::parse_error);
-                        break;
-                    }
-                }
-            }
-        }
-        */
-    }
-
     SECTION("parse")
     {
         SECTION("null")
