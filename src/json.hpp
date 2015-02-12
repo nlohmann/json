@@ -1,3 +1,12 @@
+/*!
+@file
+@copyright The code is licensed under the MIT License
+           <http://opensource.org/licenses/MIT>,
+           Copyright (c) 2013-2015 Niels Lohmann.
+@author Niels Lohmann <http://nlohmann.me>
+@see https://github.com/nlohmann/json
+*/
+
 #ifndef _NLOHMANN_JSON
 #define _NLOHMANN_JSON
 
@@ -1026,14 +1035,12 @@ class basic_json
         m_value.object->insert(value);
     }
 
-    /*
     /// add an object to an object
     inline reference operator+=(const typename object_t::value_type& value)
     {
         push_back(value);
         return operator[](value.first);
     }
-    */
 
     /// swaps the contents
     inline void swap(reference other) noexcept

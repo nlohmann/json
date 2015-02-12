@@ -1,3 +1,12 @@
+/*!
+@file
+@copyright The code is licensed under the MIT License
+           <http://opensource.org/licenses/MIT>,
+           Copyright (c) 2013-2015 Niels Lohmann.
+@author Niels Lohmann <http://nlohmann.me>
+@see https://github.com/nlohmann/json
+*/
+
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
@@ -3553,6 +3562,16 @@ TEST_CASE("modifiers")
                 }
             }
         }
+
+        SECTION("to object")
+        {
+            json j(json::value_t::object);
+            j.push_back(json::object_t::value_type({"one", 1}));
+            j.push_back(json::object_t::value_type({"two", 2}));
+            CHECK(j.size() == 2);
+            CHECK(j["one"] == json(1));
+            CHECK(j["two"] == json(2));
+        }
     }
 
     SECTION("operator+=")
@@ -3613,6 +3632,16 @@ TEST_CASE("modifiers")
                     CHECK_THROWS_AS(j += k, std::runtime_error);
                 }
             }
+        }
+
+        SECTION("to object")
+        {
+            json j(json::value_t::object);
+            j += json::object_t::value_type({"one", 1});
+            j += json::object_t::value_type({"two", 2});
+            CHECK(j.size() == 2);
+            CHECK(j["one"] == json(1));
+            CHECK(j["two"] == json(2));
         }
     }
 
@@ -5073,11 +5102,23 @@ TEST_CASE("parser class")
                     CHECK(json::parser("0.999").parse() == json(0.999));
                     CHECK(json::parser("128.5").parse() == json(128.5));
                 }
+
+                SECTION("with exponent")
+                {
+                    CHECK(json::parser("-128.5E3").parse() == json(-128.5E3));
+                    CHECK(json::parser("-128.5E-3").parse() == json(-128.5E-3));
+                }
             }
 
             SECTION("invalid numbers")
             {
                 CHECK_THROWS_AS(json::parser("01").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("--1").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("1.").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("1E").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("1E-").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("1.E1").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("-1E").parse(), std::invalid_argument);
             }
         }
     }
@@ -5119,8 +5160,11 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("fals").parse(), std::invalid_argument);
 
         // unexpected end of array
+        CHECK_THROWS_AS(json::parser("[").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("[1").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("[1,").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("[1,]").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("]").parse(), std::invalid_argument);
 
         // unexpected end of object
         CHECK_THROWS_AS(json::parser("{").parse(), std::invalid_argument);
@@ -5128,6 +5172,7 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("{\"foo\":").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("{\"foo\":}").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("{\"foo\":1,}").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("}").parse(), std::invalid_argument);
 
         // unexpected end of string
         CHECK_THROWS_AS(json::parser("\"").parse(), std::invalid_argument);
