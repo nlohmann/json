@@ -5259,5 +5259,72 @@ TEST_CASE("parser class")
                 }
             }
         }
+
+        // invalid \uxxxx escapes
+        {
+            // check whether character is a valid hex character
+            const auto valid = [](int c)
+            {
+                switch (c)
+                {
+                    case ('0'):
+                    case ('1'):
+                    case ('2'):
+                    case ('3'):
+                    case ('4'):
+                    case ('5'):
+                    case ('6'):
+                    case ('7'):
+                    case ('8'):
+                    case ('9'):
+                    case ('a'):
+                    case ('b'):
+                    case ('c'):
+                    case ('d'):
+                    case ('e'):
+                    case ('f'):
+                    case ('A'):
+                    case ('B'):
+                    case ('C'):
+                    case ('D'):
+                    case ('E'):
+                    case ('F'):
+                    {
+                        return true;
+                    }
+
+                    default:
+                    {
+                        return false;
+                    }
+                }
+            };
+
+            for (int c = 1; c < 128; ++c)
+            {
+                std::string s = "\"\\u";
+
+                // create a string with the iterated character at each position
+                auto s1 = s + "000" + std::string(1, c) + "\"";
+                auto s2 = s + "00" + std::string(1, c) + "0\"";
+                auto s3 = s + "0" + std::string(1, c) + "00\"";
+                auto s4 = s + std::string(1, c) + "000\"";
+
+                if (valid(c))
+                {
+                    CHECK_NOTHROW(json::parser(s1).parse());
+                    CHECK_NOTHROW(json::parser(s2).parse());
+                    CHECK_NOTHROW(json::parser(s3).parse());
+                    CHECK_NOTHROW(json::parser(s4).parse());
+                }
+                else
+                {
+                    CHECK_THROWS_AS(json::parser(s1).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s2).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s3).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s4).parse(), std::invalid_argument);
+                }
+            }
+        }
     }
 }
