@@ -5175,6 +5175,8 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("-0.0Z").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("-0E123:").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("-0e0-:").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("-0e-:").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("-0f").parse(), std::invalid_argument);
             }
         }
     }
