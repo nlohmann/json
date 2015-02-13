@@ -5136,6 +5136,7 @@ TEST_CASE("parser class")
 
                     CHECK(json::parser("-0e1").parse() == json(-0e1));
                     CHECK(json::parser("-0E1").parse() == json(-0e1));
+                    CHECK(json::parser("-0E123").parse() == json(-0e123));
                 }
             }
 
@@ -5169,6 +5170,11 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("-1E").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("-0E#").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("-0E-#").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("-0#").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("-0.0:").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("-0.0Z").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("-0E123:").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("-0e0-:").parse(), std::invalid_argument);
             }
         }
     }
