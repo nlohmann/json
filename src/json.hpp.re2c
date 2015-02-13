@@ -454,7 +454,12 @@ class basic_json
     }
 
     /// copy assignment
-    inline reference& operator=(basic_json other) noexcept
+    inline reference& operator=(basic_json other) noexcept (
+        std::is_nothrow_move_constructible<value_t>::value and
+        std::is_nothrow_move_assignable<value_t>::value and
+        std::is_nothrow_move_constructible<json_value>::value and
+        std::is_nothrow_move_assignable<json_value>::value
+    )
     {
         std::swap(m_type, other.m_type);
         std::swap(m_value, other.m_value);
@@ -1043,7 +1048,12 @@ class basic_json
     }
 
     /// swaps the contents
-    inline void swap(reference other) noexcept
+    inline void swap(reference other) noexcept (
+        std::is_nothrow_move_constructible<value_t>::value and
+        std::is_nothrow_move_assignable<value_t>::value and
+        std::is_nothrow_move_constructible<json_value>::value and
+        std::is_nothrow_move_assignable<json_value>::value
+    )
     {
         std::swap(m_type, other.m_type);
         std::swap(m_value, other.m_value);
@@ -1464,10 +1474,13 @@ class basic_json
     inline string_t dump(const bool prettyPrint, const unsigned int indentStep,
                          unsigned int currentIndent = 0) const noexcept
     {
+        // variable to hold indentation for recursive calls
+        auto new_indent = currentIndent;
+
         // helper function to return whitespace as indentation
-        const auto indent = [prettyPrint, &currentIndent]()
+        const auto indent = [prettyPrint, &new_indent]()
         {
-            return prettyPrint ? string_t(currentIndent, ' ') : string_t();
+            return prettyPrint ? string_t(new_indent, ' ') : string_t();
         };
 
         switch (m_type)
@@ -1484,7 +1497,7 @@ class basic_json
                 // increase indentation
                 if (prettyPrint)
                 {
-                    currentIndent += indentStep;
+                    new_indent += indentStep;
                     result += "\n";
                 }
 
@@ -1495,13 +1508,13 @@ class basic_json
                         result += prettyPrint ? ",\n" : ",";
                     }
                     result += indent() + "\"" + escape_string(i->first) + "\":" + (prettyPrint ? " " : "")
-                              + i->second.dump(prettyPrint, indentStep, currentIndent);
+                              + i->second.dump(prettyPrint, indentStep, new_indent);
                 }
 
                 // decrease indentation
                 if (prettyPrint)
                 {
-                    currentIndent -= indentStep;
+                    new_indent -= indentStep;
                     result += "\n";
                 }
 
@@ -1520,7 +1533,7 @@ class basic_json
                 // increase indentation
                 if (prettyPrint)
                 {
-                    currentIndent += indentStep;
+                    new_indent += indentStep;
                     result += "\n";
                 }
 
@@ -1530,13 +1543,13 @@ class basic_json
                     {
                         result += prettyPrint ? ",\n" : ",";
                     }
-                    result += indent() + i->dump(prettyPrint, indentStep, currentIndent);
+                    result += indent() + i->dump(prettyPrint, indentStep, new_indent);
                 }
 
                 // decrease indentation
                 if (prettyPrint)
                 {
-                    currentIndent -= indentStep;
+                    new_indent -= indentStep;
                     result += "\n";
                 }
 
