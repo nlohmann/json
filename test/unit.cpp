@@ -5218,27 +5218,46 @@ TEST_CASE("parser class")
 
         // unexpected end of string
         CHECK_THROWS_AS(json::parser("\"").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\u").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\u0").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\u01").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\u012").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\"\\\"").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\"\\u\"").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\"\\u0\"").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\"\\u01\"").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\"\\u012\"").parse(), std::invalid_argument);
 
         // invalid escapes
-        CHECK_THROWS_AS(json::parser("\\!").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\#").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\[").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\]").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\.").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\0").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\a").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\c").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\e").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\g").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\m").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\o").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\q").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\s").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\\v").parse(), std::invalid_argument);
+        for (int c = 1; c < 128; ++c)
+        {
+            auto s = std::string("\"\\") + std::string(1, c) + "\"";
+
+            switch (c)
+            {
+                // valid escapes
+                case ('"'):
+                case ('\\'):
+                case ('/'):
+                case ('b'):
+                case ('f'):
+                case ('n'):
+                case ('r'):
+                case ('t'):
+                {
+                    CHECK_NOTHROW(json::parser(s).parse());
+                    break;
+                }
+
+                // \u must be followed with four numbers, so we skip it here
+                case ('u'):
+                {
+                    break;
+                }
+
+                // any other combination of backslash and character is invalid
+                default:
+                {
+                    CHECK_THROWS_AS(json::parser(s).parse(), std::invalid_argument);
+                    break;
+                }
+            }
+        }
     }
 }
