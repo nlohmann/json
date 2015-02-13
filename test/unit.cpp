@@ -3565,12 +3565,33 @@ TEST_CASE("modifiers")
 
         SECTION("to object")
         {
-            json j(json::value_t::object);
-            j.push_back(json::object_t::value_type({"one", 1}));
-            j.push_back(json::object_t::value_type({"two", 2}));
-            CHECK(j.size() == 2);
-            CHECK(j["one"] == json(1));
-            CHECK(j["two"] == json(2));
+            SECTION("null")
+            {
+                json j;
+                j.push_back(json::object_t::value_type({"one", 1}));
+                j.push_back(json::object_t::value_type({"two", 2}));
+                CHECK(j.type() == json::value_t::object);
+                CHECK(j.size() == 2);
+                CHECK(j["one"] == json(1));
+                CHECK(j["two"] == json(2));
+            }
+
+            SECTION("object")
+            {
+                json j(json::value_t::object);
+                j.push_back(json::object_t::value_type({"one", 1}));
+                j.push_back(json::object_t::value_type({"two", 2}));
+                CHECK(j.size() == 2);
+                CHECK(j["one"] == json(1));
+                CHECK(j["two"] == json(2));
+            }
+
+            SECTION("other type")
+            {
+                json j = 1;
+                json k("Hello");
+                CHECK_THROWS_AS(j.push_back(json::object_t::value_type({"one", 1})), std::runtime_error);
+            }
         }
     }
 
@@ -3636,12 +3657,33 @@ TEST_CASE("modifiers")
 
         SECTION("to object")
         {
-            json j(json::value_t::object);
-            j += json::object_t::value_type({"one", 1});
-            j += json::object_t::value_type({"two", 2});
-            CHECK(j.size() == 2);
-            CHECK(j["one"] == json(1));
-            CHECK(j["two"] == json(2));
+            SECTION("null")
+            {
+                json j;
+                j += json::object_t::value_type({"one", 1});
+                j += json::object_t::value_type({"two", 2});
+                CHECK(j.type() == json::value_t::object);
+                CHECK(j.size() == 2);
+                CHECK(j["one"] == json(1));
+                CHECK(j["two"] == json(2));
+            }
+
+            SECTION("object")
+            {
+                json j(json::value_t::object);
+                j += json::object_t::value_type({"one", 1});
+                j += json::object_t::value_type({"two", 2});
+                CHECK(j.size() == 2);
+                CHECK(j["one"] == json(1));
+                CHECK(j["two"] == json(2));
+            }
+
+            SECTION("other type")
+            {
+                json j = 1;
+                json k("Hello");
+                CHECK_THROWS_AS(j += json::object_t::value_type({"one", 1}), std::runtime_error);
+            }
         }
     }
 
@@ -5176,5 +5218,27 @@ TEST_CASE("parser class")
 
         // unexpected end of string
         CHECK_THROWS_AS(json::parser("\"").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\u").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\u0").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\u01").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\u012").parse(), std::invalid_argument);
+
+        // invalid escapes
+        CHECK_THROWS_AS(json::parser("\\!").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\#").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\[").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\]").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\.").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\0").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\a").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\c").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\e").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\g").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\m").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\o").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\q").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\s").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\\v").parse(), std::invalid_argument);
     }
 }
