@@ -3630,6 +3630,8 @@ TEST_CASE("capacity")
             {
                 CHECK(std::distance(j.begin(), j.end()) == j.size());
                 CHECK(std::distance(j_const.begin(), j_const.end()) == j_const.size());
+                CHECK(std::distance(j.rbegin(), j.rend()) == j.size());
+                CHECK(std::distance(j_const.crbegin(), j_const.crend()) == j_const.size());
             }
         }
 
@@ -3648,6 +3650,8 @@ TEST_CASE("capacity")
             {
                 CHECK(std::distance(j.begin(), j.end()) == j.size());
                 CHECK(std::distance(j_const.begin(), j_const.end()) == j_const.size());
+                CHECK(std::distance(j.rbegin(), j.rend()) == j.size());
+                CHECK(std::distance(j_const.crbegin(), j_const.crend()) == j_const.size());
             }
         }
 
@@ -3668,6 +3672,8 @@ TEST_CASE("capacity")
                 {
                     CHECK(std::distance(j.begin(), j.end()) == j.size());
                     CHECK(std::distance(j_const.begin(), j_const.end()) == j_const.size());
+                    CHECK(std::distance(j.rbegin(), j.rend()) == j.size());
+                    CHECK(std::distance(j_const.crbegin(), j_const.crend()) == j_const.size());
                 }
             }
 
@@ -3686,6 +3692,8 @@ TEST_CASE("capacity")
                 {
                     CHECK(std::distance(j.begin(), j.end()) == j.size());
                     CHECK(std::distance(j_const.begin(), j_const.end()) == j_const.size());
+                    CHECK(std::distance(j.rbegin(), j.rend()) == j.size());
+                    CHECK(std::distance(j_const.crbegin(), j_const.crend()) == j_const.size());
                 }
             }
         }
@@ -3707,6 +3715,8 @@ TEST_CASE("capacity")
                 {
                     CHECK(std::distance(j.begin(), j.end()) == j.size());
                     CHECK(std::distance(j_const.begin(), j_const.end()) == j_const.size());
+                    CHECK(std::distance(j.rbegin(), j.rend()) == j.size());
+                    CHECK(std::distance(j_const.crbegin(), j_const.crend()) == j_const.size());
                 }
             }
 
@@ -3725,6 +3735,8 @@ TEST_CASE("capacity")
                 {
                     CHECK(std::distance(j.begin(), j.end()) == j.size());
                     CHECK(std::distance(j_const.begin(), j_const.end()) == j_const.size());
+                    CHECK(std::distance(j.rbegin(), j.rend()) == j.size());
+                    CHECK(std::distance(j_const.crbegin(), j_const.crend()) == j_const.size());
                 }
             }
         }
@@ -3744,6 +3756,8 @@ TEST_CASE("capacity")
             {
                 CHECK(std::distance(j.begin(), j.end()) == j.size());
                 CHECK(std::distance(j_const.begin(), j_const.end()) == j_const.size());
+                CHECK(std::distance(j.rbegin(), j.rend()) == j.size());
+                CHECK(std::distance(j_const.crbegin(), j_const.crend()) == j_const.size());
             }
         }
 
@@ -3762,6 +3776,8 @@ TEST_CASE("capacity")
             {
                 CHECK(std::distance(j.begin(), j.end()) == j.size());
                 CHECK(std::distance(j_const.begin(), j_const.end()) == j_const.size());
+                CHECK(std::distance(j.rbegin(), j.rend()) == j.size());
+                CHECK(std::distance(j_const.crbegin(), j_const.crend()) == j_const.size());
             }
         }
 
@@ -3780,6 +3796,8 @@ TEST_CASE("capacity")
             {
                 CHECK(std::distance(j.begin(), j.end()) == j.size());
                 CHECK(std::distance(j_const.begin(), j_const.end()) == j_const.size());
+                CHECK(std::distance(j.rbegin(), j.rend()) == j.size());
+                CHECK(std::distance(j_const.crbegin(), j_const.crend()) == j_const.size());
             }
         }
     }

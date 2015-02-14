@@ -2516,68 +2516,73 @@ class basic_json
             // pointer for backtracking information
             const char* m_marker = nullptr;
 
-            // remember the begin of the token
-            m_start = m_cursor;
+            while (true)
+            {
+                // remember the begin of the token
+                m_start = m_cursor;
 
-            /*!re2c
-                re2c:define:YYCTYPE     = char;
-                re2c:define:YYCURSOR    = m_cursor;
-                re2c:define:YYLIMIT     = m_limit;
-                re2c:define:YYMARKER    = m_marker;
-                re2c:indent:string      = "    ";
-                re2c:indent:top         = 1;
-                re2c:labelprefix        = "json_parser_";
-                re2c:yyfill:enable      = 0;
+                /*!re2c
+                    re2c:define:YYCTYPE  = char;
+                    re2c:define:YYCURSOR = m_cursor;
+                    re2c:define:YYLIMIT  = m_limit;
+                    re2c:define:YYMARKER = m_marker;
+                    re2c:indent:string   = "    ";
+                    re2c:indent:top      = 1;
+                    re2c:labelprefix     = "basic_json_parser_";
+                    re2c:yyfill:enable   = 0;
 
-                // whitespace
-                ws = [ \t\n\r]*;
-                ws   { return scan(); }
+                    // whitespace
+                    ws = [ \t\n\r]+;
+                    ws   { continue; }
 
-                // structural characters
-                "[" { return token_type::begin_array; }
-                "]" { return token_type::end_array; }
-                "{" { return token_type::begin_object; }
-                "}" { return token_type::end_object; }
-                "," { return token_type::value_separator; }
-                ":" { return token_type::name_separator; }
+                    // structural characters
+                    "[" { return token_type::begin_array; }
+                    "]" { return token_type::end_array; }
+                    "{" { return token_type::begin_object; }
+                    "}" { return token_type::end_object; }
+                    "," { return token_type::value_separator; }
+                    ":" { return token_type::name_separator; }
 
-                // literal names
-                "null"  { return token_type::literal_null; }
-                "true"  { return token_type::literal_true; }
-                "false" { return token_type::literal_false; }
+                    // literal names
+                    "null"  { return token_type::literal_null; }
+                    "true"  { return token_type::literal_true; }
+                    "false" { return token_type::literal_false; }
 
-                // number
-                decimal_point = [.];
-                digit         = [0-9];
-                digit_1_9     = [1-9];
-                e             = [eE];
-                minus         = [-];
-                plus          = [+];
-                zero          = [0];
-                exp           = e (minus|plus)? digit+;
-                frac          = decimal_point digit+;
-                int           = (zero|digit_1_9 digit*);
-                number        = minus? int frac? exp?;
-                number        { return token_type::value_number; }
+                    // number
+                    decimal_point = [.];
+                    digit         = [0-9];
+                    digit_1_9     = [1-9];
+                    e             = [eE];
+                    minus         = [-];
+                    plus          = [+];
+                    zero          = [0];
+                    exp           = e (minus|plus)? digit+;
+                    frac          = decimal_point digit+;
+                    int           = (zero|digit_1_9 digit*);
+                    number        = minus? int frac? exp?;
+                    number        { return token_type::value_number; }
 
-                // string
-                quotation_mark = [\"];
-                escape         = [\\];
-                unescaped      = [^\"\\\000];
-                escaped        = escape ([\"\\/bfnrt] | [u][0-9a-fA-F]{4});
-                char           = unescaped | escaped;
-                string         = quotation_mark char* quotation_mark;
-                string         { return token_type::value_string; }
+                    // string
+                    quotation_mark  = [\"];
+                    escape          = [\\];
+                    unescaped       = [^\"\\\000];
+                    single_escaped  = [\"\\/bfnrt];
+                    unicode_escaped = [u][0-9a-fA-F]{4};
+                    escaped         = escape (single_escaped | unicode_escaped);
+                    char            = unescaped | escaped;
+                    string          = quotation_mark char* quotation_mark;
+                    string          { return token_type::value_string; }
 
-                // end of file
-                '\000'         { return token_type::end_of_input; }
+                    // end of file
+                    '\000'         { return token_type::end_of_input; }
 
-                // anything else is an error
-                .              { return token_type::parse_error; }
-             */
+                    // anything else is an error
+                    .              { return token_type::parse_error; }
+                 */
+            }
         }
 
-        inline std::string get_string_value() const
+        inline std::string get_token() const
         {
             return std::string(m_start, static_cast<size_t>(m_cursor - m_start));
         }
@@ -2612,15 +2617,9 @@ class basic_json
             char* endptr;
             const auto float_val = std::strtod(reinterpret_cast<const char*>(m_start), &endptr);
 
-            // check if strtod read beyond the end of the lexem
-            if (endptr != m_cursor)
-            {
-                return NAN;
-            }
-            else
-            {
-                return float_val;
-            }
+            // return float_val if the whole number was translated and NAN
+            // otherwise
+            return (endptr == m_cursor) ? float_val : NAN;
         }
 
       private:
@@ -2787,10 +2786,12 @@ class basic_json
                 {
                     auto float_val = m_lexer.get_number();
 
+                    // NAN is returned if token could not be translated
+                    // completely
                     if (std::isnan(float_val))
                     {
                         throw std::invalid_argument(std::string("parse error - ") +
-                                                    m_lexer.get_string_value() + " is not a number");
+                                                    m_lexer.get_token() + " is not a number");
                     }
 
                     get_token();
@@ -2812,7 +2813,7 @@ class basic_json
                 default:
                 {
                     std::string error_msg = "parse error - unexpected \'";
-                    error_msg += m_lexer.get_string_value();
+                    error_msg += m_lexer.get_token();
                     error_msg += "\' (";
                     error_msg += lexer::token_type_name(last_token) + ")";
                     throw std::invalid_argument(error_msg);
@@ -2832,7 +2833,7 @@ class basic_json
             if (t != last_token)
             {
                 std::string error_msg = "parse error - unexpected \'";
-                error_msg += m_lexer.get_string_value();
+                error_msg += m_lexer.get_token();
                 error_msg += "\' (" + lexer::token_type_name(last_token);
                 error_msg += "); expected " + lexer::token_type_name(t);
                 throw std::invalid_argument(error_msg);
@@ -2844,6 +2845,7 @@ class basic_json
         std::string m_buffer;
         /// the type of the last read token
         typename lexer::token_type last_token = lexer::token_type::uninitialized;
+        /// the lexer
         lexer m_lexer;
     };
 };
