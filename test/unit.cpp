@@ -1080,6 +1080,13 @@ TEST_CASE("object inspection")
             auto s = json(42.23).dump();
             CHECK(s.find("42.23") != std::string::npos);
         }
+
+        SECTION("dump and non-ASCII characters")
+        {
+            CHECK(json("ä").dump() == "\"ä\"");
+            CHECK(json("Ö").dump() == "\"Ö\"");
+            CHECK(json("❤️").dump() == "\"❤️\"");
+        }
     }
 
     SECTION("return the type of the object (explicit)")

@@ -1491,7 +1491,7 @@ class basic_json
 
                 default:
                 {
-                    if (c <= 0x1f)
+                    if (c >= 0 and c <= 0x1f)
                     {
                         // control characters (everything between 0x00 and 0x1f)
                         // -> create four-digit hex representation
