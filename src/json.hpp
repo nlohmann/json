@@ -24,14 +24,8 @@
 #include <utility>
 #include <vector>
 
-/*!
-- ObjectType trick from http://stackoverflow.com/a/9860911
-*/
 /*
-template<typename C, typename=void>
-struct container_resizable : std::false_type {};
-template<typename C>
-struct container_resizable<C, decltype(C().resize(0))> : std::true_type {};
+- ObjectType trick from http://stackoverflow.com/a/9860911
 */
 
 /*!
@@ -55,10 +49,12 @@ namespace nlohmann
                            (@c int64_t by default)
 @tparam NumberFloatType    type for JSON floating-point numbers
                            (@c double by default)
+
+@see RFC 7159 <http://rfc7159.net/rfc7159>
+@see ECMA 404 <http://www.ecma-international.org/publications/standards/Ecma-404.htm>
 */
 template <
     template<typename U, typename V, typename... Args> class ObjectType = std::map,
-    //template<typename... Args> class ArrayType = std::vector,
     template<typename U, typename... Args> class ArrayType = std::vector,
     class StringType = std::string,
     class BooleanType = bool,
@@ -72,6 +68,7 @@ class basic_json
     // container types //
     /////////////////////
 
+    // forward declarations
     class iterator;
     class const_iterator;
 
@@ -97,6 +94,7 @@ class basic_json
     using reverse_iterator = std::reverse_iterator<iterator>;
     /// a const reverse iterator for a basic_json container
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
 
     ///////////////////////////
     // JSON value data types //
@@ -162,20 +160,13 @@ class basic_json
     /// JSON value type enumeration
     enum class value_t : uint8_t
     {
-        /// null value
-        null,
-        /// object (unordered set of name/value pairs)
-        object,
-        /// array (ordered collection of values)
-        array,
-        /// string value
-        string,
-        /// boolean value
-        boolean,
-        /// number value (integer)
-        number_integer,
-        /// number value (floating-point)
-        number_float
+        null,           ///< null value
+        object,         ///< object (unordered set of name/value pairs)
+        array,          ///< array (ordered collection of values)
+        string,         ///< string value
+        boolean,        ///< boolean value
+        number_integer, ///< number value (integer)
+        number_float    ///< number value (floating-point)
     };
 
 
@@ -524,7 +515,7 @@ class basic_json
 
     @see https://docs.python.org/2/library/json.html#json.dump
     */
-    inline string_t dump(int indent = -1) const noexcept
+    inline string_t dump(const int indent = -1) const noexcept
     {
         if (indent >= 0)
         {
@@ -833,10 +824,22 @@ class basic_json
         return reverse_iterator(end());
     }
 
+    /// returns a reverse iterator to the beginning
+    inline const_reverse_iterator rbegin() const noexcept
+    {
+        return const_reverse_iterator(end());
+    }
+
     /// returns a reverse iterator to the end
     inline reverse_iterator rend() noexcept
     {
         return reverse_iterator(begin());
+    }
+
+    /// returns a reverse iterator to the end
+    inline const_reverse_iterator rend() const noexcept
+    {
+        return const_reverse_iterator(begin());
     }
 
     /// returns a reverse iterator to the beginning
@@ -1335,7 +1338,7 @@ class basic_json
     /////////////////////
 
     /// deserialize from string
-    static basic_json parse(const std::string& s)
+    static basic_json parse(const string_t& s)
     {
         return parser(s).parse();
     }
@@ -1501,7 +1504,7 @@ class basic_json
     @param currentIndent  the current indent level (only used internally)
     */
     inline string_t dump(const bool prettyPrint, const unsigned int indentStep,
-                         unsigned int currentIndent = 0) const noexcept
+                         const unsigned int currentIndent = 0) const noexcept
     {
         // variable to hold indentation for recursive calls
         auto new_indent = currentIndent;
@@ -1647,43 +1650,24 @@ class basic_json
     };
 
     /// an iterator value
+    template<typename array_iterator_t, typename object_iterator_t>
     union internal_iterator
     {
         /// iterator for JSON objects
-        typename object_t::iterator object_iterator;
+        object_iterator_t object_iterator;
         /// iterator for JSON arrays
-        typename array_t::iterator array_iterator;
+        array_iterator_t array_iterator;
         /// generic iteraotr for all other value types
         generic_iterator_value generic_iterator;
 
         /// default constructor
         internal_iterator() : generic_iterator(generic_iterator_value::uninitialized) {}
         /// constructor for object iterators
-        internal_iterator(typename object_t::iterator v) : object_iterator(v) {}
+        internal_iterator(object_iterator_t v) : object_iterator(v) {}
         /// constructor for array iterators
-        internal_iterator(typename array_t::iterator v) : array_iterator(v) {}
+        internal_iterator(array_iterator_t v) : array_iterator(v) {}
         /// constructor for generic iterators
         internal_iterator(generic_iterator_value v) : generic_iterator(v) {}
-    };
-
-    /// a const iterator value
-    union internal_const_iterator
-    {
-        /// iterator for JSON objects
-        typename object_t::const_iterator object_iterator;
-        /// iterator for JSON arrays
-        typename array_t::const_iterator array_iterator;
-        /// generic iteraotr for all other value types
-        generic_iterator_value generic_iterator;
-
-        /// default constructor
-        internal_const_iterator() : generic_iterator(generic_iterator_value::uninitialized) {}
-        /// constructor for object iterators
-        internal_const_iterator(typename object_t::iterator v) : object_iterator(v) {}
-        /// constructor for array iterators
-        internal_const_iterator(typename array_t::iterator v) : array_iterator(v) {}
-        /// constructor for generic iterators
-        internal_const_iterator(generic_iterator_value v) : generic_iterator(v) {}
     };
 
   public:
@@ -2042,7 +2026,7 @@ class basic_json
         /// associated JSON instance
         pointer m_object = nullptr;
         /// the actual iterator of the associated instance
-        internal_iterator m_it;
+        internal_iterator<typename array_t::iterator, typename object_t::iterator> m_it;
     };
 
     /// a const bidirectional iterator for the basic_json class
@@ -2425,49 +2409,68 @@ class basic_json
         /// associated JSON instance
         pointer m_object = nullptr;
         /// the actual iterator of the associated instance
-        internal_const_iterator m_it;
+        internal_iterator<typename array_t::const_iterator, typename object_t::const_iterator> m_it;
     };
 
 
   private:
-    ////////////
-    // parser //
-    ////////////
+    //////////////////////
+    // lexer and parser //
+    //////////////////////
 
+    /*!
+    @brief lexical analysis
+
+    This class organizes the lexical analysis during JSON deserialization. The
+    core of it is a scanner generated by re2c <http://re2c.org> that processes
+    a buffer and recognizes tokens according to RFC 7159 and ECMA-404.
+    */
     class lexer
     {
       public:
         /// token types for the parser
         enum class token_type
         {
-            uninitialized,
-            literal_true,
-            literal_false,
-            literal_null,
-            value_string,
-            value_number,
-            begin_array,
-            begin_object,
-            end_array,
-            end_object,
-            name_separator,
-            value_separator,
-            parse_error,
-            end_of_input
+            uninitialized,    ///< indicating the scanner is uninitialized
+            literal_true,     ///< the "true" literal
+            literal_false,    ///< the "false" literal
+            literal_null,     ///< the "null" literal
+            value_string,     ///< a string - use get_string() for actual value
+            value_number,     ///< a number - use get_number() for actual value
+            begin_array,      ///< the character for array begin "["
+            begin_object,     ///< the character for object begin "{"
+            end_array,        ///< the character for array end "]"
+            end_object,       ///< the character for object end "}"
+            name_separator,   ///< the name separator ":"
+            value_separator,  ///< the value separator ","
+            parse_error,      ///< indicating a parse error
+            end_of_input      ///< indicating the end of the input buffer
         };
 
         /// the char type to use in the lexer
         using lexer_char_t = typename string_t::value_type;
 
-        inline lexer(const typename string_t::value_type* s) : m_content(s)
+        /// constructor with a given buffer
+        inline lexer(const string_t& s) noexcept
+            : m_content(s.c_str())
         {
             m_start = m_cursor = m_content;
-            m_limit = m_content + strlen(m_content);
+            m_limit = m_content + s.size();
         }
 
+        /// default constructor
         inline lexer() = default;
 
-        inline static string_t to_unicode(const long codepoint)
+        /*!
+        @brief create a string from a Unicode code point
+
+        @param codepoint  the code point (must be in [0x0, 0x10ffff]
+        @return string representation of the code point
+        @exception std::out_of_range  if code point is >0x10ffff
+
+        @see <http://en.wikipedia.org/wiki/UTF-8#Sample_code>
+        */
+        inline static string_t to_unicode(const size_t codepoint)
         {
             string_t result;
 
@@ -2505,7 +2508,8 @@ class basic_json
             return result;
         }
 
-        inline static std::string token_type_name(token_type t)
+        /// return name of values of type token_type
+        inline static std::string token_type_name(token_type t) noexcept
         {
             switch (t)
             {
@@ -2544,16 +2548,16 @@ class basic_json
         This function implements a scanner for JSON. It is specified using
         regular expressions that try to follow RFC 7159 and ECMA-404 as close
         as possible. These regular expressions are then translated into a
-        deterministic finite automaton (DFA) by the tool RE2C. As a result, the
-        translated code for this function consists of a large block of code
-        with goto jumps.
+        deterministic finite automaton (DFA) by the tool re2c
+        <http://re2c.org>. As a result, the translated code for this function
+        consists of a large block of code with goto jumps.
 
         @return the class of the next token read from the buffer
         */
-        inline token_type scan()
+        inline token_type scan() noexcept
         {
             // pointer for backtracking information
-            const typename string_t::value_type* m_marker = nullptr;
+            const lexer_char_t* m_marker = nullptr;
 
             // remember the begin of the token
             m_start = m_cursor;
@@ -3269,19 +3273,32 @@ basic_json_parser_59:
 
         }
 
-        inline string_t get_token() const
+        /// return string representation of last read token
+        inline string_t get_token() const noexcept
         {
             return string_t(m_start, static_cast<size_t>(m_cursor - m_start));
         }
 
         /*!
-        The pointer m_start points to the opening quote of the string, and
-        m_cursor past the closing quote of the string. We create a std::string
-        from the character after the opening quotes (m_start+1) until the
-        character before the closing quotes (hence subtracting 2 characters
-        from the pointer difference of the two pointers).
+        @brief return string value for string tokens
+
+        The function iterates the characters between the opening and closing
+        quotes of the string value. The complete string is the range
+        [m_start,m_cursor). Consequently, we iterate from m_start+1 to
+        m_cursor-1.
+
+        We differentiate two cases:
+
+        1. Escaped characters. In this case, a new character is constructed
+           according to the nature of the escape. Some escapes create new
+           characters (e.g., @c "\\n" is replaced by @c "\n"), some are copied
+           as is (e.g., @c "\\\\"). Furthermore, Unicode escapes of the shape
+           @c "\\uxxxx" need special care. In this case, to_unicode takes care
+           of the construction of the values.
+        2. Unescaped characters are copied as is.
 
         @return string value of current token without opening and closing quotes
+        @exception std::out_of_range if to_unicode fails
         */
         inline string_t get_string() const
         {
@@ -3347,7 +3364,7 @@ basic_json_parser_59:
                         case 'u':
                         {
                             // get code xxxx from \uxxxx
-                            auto codepoint = strtol(i + 1, nullptr, 16);
+                            auto codepoint = std::strtoul(i + 1, nullptr, 16);
                             // add unicode character(s)
                             result += to_unicode(codepoint);
                             // skip the next four characters (\uxxxx)
@@ -3367,19 +3384,29 @@ basic_json_parser_59:
             return result;
         }
 
+        /*!
+        @brief return number value for number tokens
+
+        This function translates the last token into a floating point number.
+        The pointer m_begin points to the beginning of the parsed number. We
+        pass this pointer to std::strtod which sets endptr to the first
+        character past the converted number. If this pointer is not the same as
+        m_cursor, then either more or less characters have been used during the
+        comparison. This can happen for inputs like "01" which will be treated
+        like number 0 followed by number 1.
+
+        @return the result of the number conversion or NAN if the conversion
+        read past the current token. The latter case needs to be treated by the
+        caller function.
+
+        @exception std::range_error if passed value is out of range
+        */
         inline number_float_t get_number() const
         {
-            // The pointer m_begin points to the beginning of the parsed
-            // number. We pass this pointer to std::strtod which sets endptr to
-            // the first character past the converted number. If this pointer is
-            // not the same as m_cursor, then either more or less characters
-            // have been used during the comparison. This can happen for inputs
-            // like "01" which will be treated like number 0 followed by number
-            // 1.
-
             // conversion
-            char* endptr;
-            const auto float_val = std::strtod(reinterpret_cast<const char*>(m_start), &endptr);
+            lexer_char_t* endptr;
+            const auto float_val = std::strtod(reinterpret_cast<const lexer_char_t*>(m_start),
+                                               &endptr);
 
             // return float_val if the whole number was translated and NAN
             // otherwise
@@ -3388,20 +3415,20 @@ basic_json_parser_59:
 
       private:
         /// the buffer
-        const typename string_t::value_type* m_content = nullptr;
+        const lexer_char_t* m_content = nullptr;
         /// pointer to he beginning of the current symbol
-        const typename string_t::value_type* m_start = nullptr;
+        const lexer_char_t* m_start = nullptr;
         /// pointer to the current symbol
-        const typename string_t::value_type* m_cursor = nullptr;
+        const lexer_char_t* m_cursor = nullptr;
         /// pointer to the end of the buffer
-        const typename string_t::value_type* m_limit = nullptr;
+        const lexer_char_t* m_limit = nullptr;
     };
 
     class parser
     {
       public:
         /// constructor for strings
-        inline parser(const string_t& s) : m_buffer(s), m_lexer(m_buffer.c_str())
+        inline parser(const string_t& s) : m_buffer(s), m_lexer(m_buffer)
         {
             // read first token
             get_token();
@@ -3418,7 +3445,7 @@ basic_json_parser_59:
             }
 
             // initializer lexer
-            m_lexer = lexer(m_buffer.c_str());
+            m_lexer = lexer(m_buffer);
 
             // read first token
             get_token();
