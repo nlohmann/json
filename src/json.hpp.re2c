@@ -725,9 +725,34 @@ class basic_json
         return m_value.object->operator[](key);
     }
 
+    /// access specified element
+    inline const_reference operator[](const typename object_t::key_type& key) const
+    {
+        // at only works for objects
+        if (m_type != value_t::object)
+        {
+            throw std::runtime_error("cannot use [] with " + type_name());
+        }
+
+        return m_value.object->operator[](key);
+    }
+
     /// access specified element (needed for clang)
     template<typename T, size_t n>
     inline reference operator[](const T (&key)[n])
+    {
+        // at only works for objects
+        if (m_type != value_t::object)
+        {
+            throw std::runtime_error("cannot use [] with " + type_name());
+        }
+
+        return m_value.object->operator[](key);
+    }
+
+    /// access specified element (needed for clang)
+    template<typename T, size_t n>
+    inline const_reference operator[](const T (&key)[n]) const
     {
         // at only works for objects
         if (m_type != value_t::object)
@@ -1686,6 +1711,9 @@ class basic_json
         /// the category of the iterator
         using iterator_category = std::bidirectional_iterator_tag;
 
+        /// default constructor
+        inline iterator() = default;
+
         /// constructor for a given JSON instance
         inline iterator(pointer object) : m_object(object)
         {
@@ -2043,6 +2071,9 @@ class basic_json
         using reference = basic_json::const_reference;
         /// the category of the iterator
         using iterator_category = std::bidirectional_iterator_tag;
+
+        /// default constructor
+        inline const_iterator() = default;
 
         /// constructor for a given JSON instance
         inline const_iterator(pointer object) : m_object(object)
