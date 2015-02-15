@@ -2204,43 +2204,61 @@ TEST_CASE("element access")
                 SECTION("null")
                 {
                     json j_nonobject(json::value_t::null);
+                    const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
+                    const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
+                    const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
 
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
+                    const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
+                    const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
+                    const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
             }
         }
