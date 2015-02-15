@@ -2497,13 +2497,36 @@ class basic_json
 
         @param codepoint  the code point (must be in [0x0, 0x10ffff]
         @return string representation of the code point
-        @exception std::out_of_range  if code point is >0x10ffff
+        @exception std::out_of_range if code point is >0x10ffff
+        @exception std::invalid_argument if the low surrogate is invalid
 
         @see <http://en.wikipedia.org/wiki/UTF-8#Sample_code>
         */
-        inline static string_t to_unicode(const size_t codepoint)
+        inline static string_t to_unicode(const size_t codepoint1, size_t codepoint2 = 0)
         {
             string_t result;
+
+            // calculate the codepoint from the given code points
+            size_t codepoint = codepoint1;
+            if (codepoint1 >= 0xD800 and codepoint1 <= 0xDBFF)
+            {
+                if (codepoint2 >= 0xDC00 and codepoint2 <= 0xDFFF)
+                {
+                    codepoint =
+                        // high surrogate occupies the most significant 22 bits
+                        (codepoint1 << 10)
+                        // low surrogate occupies the least significant 15 bits
+                        + codepoint2
+                        // there is still the 0xD800, 0xDC00 and 0x10000 noise
+                        // in the result so we have to substract with:
+                        // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
+                        - 0x35FDC00;
+                }
+                else
+                {
+                    throw std::invalid_argument("missing or wrong low surrogate");
+                }
+            }
 
             if (codepoint <= 0x7f)
             {
@@ -3394,12 +3417,24 @@ basic_json_parser_59:
                         // unicode
                         case 'u':
                         {
-                            // get code xxxx from \uxxxx
-                            auto codepoint = std::strtoul(i + 1, nullptr, 16);
-                            // add unicode character(s)
-                            result += to_unicode(codepoint);
-                            // skip the next four characters (\uxxxx)
-                            i += 4;
+                            // get code xxxx from uxxxx
+                            auto codepoint = std::strtoul(std::string(i + 1, 4).c_str(), nullptr, 16);
+
+                            if (codepoint >= 0xD800 and codepoint <= 0xDBFF)
+                            {
+                                // get code yyyy from uxxxx\uyyyy
+                                auto codepoint2 = std::strtoul(std::string(i + 7, 4).c_str(), nullptr, 16);
+                                result += to_unicode(codepoint, codepoint2);
+                                // skip the next 11 characters (xxxx\uyyyy)
+                                i += 11;
+                            }
+                            else
+                            {
+                                // add unicode character(s)
+                                result += to_unicode(codepoint);
+                                // skip the next four characters (xxxx)
+                                i += 4;
+                            }
                             break;
                         }
                     }
