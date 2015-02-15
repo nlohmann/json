@@ -2165,24 +2165,38 @@ TEST_CASE("element access")
             {
                 CHECK(j["integer"] == json(1));
                 CHECK(j[json::object_t::key_type("integer")] == j["integer"]);
+                CHECK(j_const["integer"] == json(1));
+                CHECK(j_const[json::object_t::key_type("integer")] == j["integer"]);
 
                 CHECK(j["boolean"] == json(true));
                 CHECK(j[json::object_t::key_type("boolean")] == j["boolean"]);
+                CHECK(j_const["boolean"] == json(true));
+                CHECK(j_const[json::object_t::key_type("boolean")] == j["boolean"]);
 
                 CHECK(j["null"] == json(nullptr));
                 CHECK(j[json::object_t::key_type("null")] == j["null"]);
+                CHECK(j_const["null"] == json(nullptr));
+                CHECK(j_const[json::object_t::key_type("null")] == j["null"]);
 
                 CHECK(j["string"] == json("hello world"));
                 CHECK(j[json::object_t::key_type("string")] == j["string"]);
+                CHECK(j_const["string"] == json("hello world"));
+                CHECK(j_const[json::object_t::key_type("string")] == j["string"]);
 
                 CHECK(j["floating"] == json(42.23));
                 CHECK(j[json::object_t::key_type("floating")] == j["floating"]);
+                CHECK(j_const["floating"] == json(42.23));
+                CHECK(j_const[json::object_t::key_type("floating")] == j["floating"]);
 
                 CHECK(j["object"] == json(json::object()));
                 CHECK(j[json::object_t::key_type("object")] == j["object"]);
+                CHECK(j_const["object"] == json(json::object()));
+                CHECK(j_const[json::object_t::key_type("object")] == j["object"]);
 
                 CHECK(j["array"] == json({1, 2, 3}));
                 CHECK(j[json::object_t::key_type("array")] == j["array"]);
+                CHECK(j_const["array"] == json({1, 2, 3}));
+                CHECK(j_const[json::object_t::key_type("array")] == j["array"]);
             }
 
             SECTION("access on non-object type")
@@ -2316,6 +2330,15 @@ TEST_CASE("element access")
 
 TEST_CASE("iterators")
 {
+    SECTION("uninitialized")
+    {
+        json::iterator it;
+        CHECK(it.m_object == nullptr);
+
+        json::const_iterator cit;
+        CHECK(cit.m_object == nullptr);
+    }
+
     SECTION("boolean")
     {
         json j = true;
