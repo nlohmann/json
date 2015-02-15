@@ -5577,27 +5577,27 @@ TEST_CASE("parser class")
                 // solidus
                 CHECK(json::parser("\"\\/\"").parse() == json("\\/"));
                 // backspace
-                CHECK(json::parser("\"\\b\"").parse() == json("\\b"));
+                CHECK(json::parser("\"\\b\"").parse() == json("\b"));
                 // formfeed
-                CHECK(json::parser("\"\\f\"").parse() == json("\\f"));
+                CHECK(json::parser("\"\\f\"").parse() == json("\f"));
                 // newline
-                CHECK(json::parser("\"\\n\"").parse() == json("\\n"));
+                CHECK(json::parser("\"\\n\"").parse() == json("\n"));
                 // carriage return
-                CHECK(json::parser("\"\\r\"").parse() == json("\\r"));
+                CHECK(json::parser("\"\\r\"").parse() == json("\r"));
                 // horizontal tab
-                CHECK(json::parser("\"\\t\"").parse() == json("\\t"));
+                CHECK(json::parser("\"\\t\"").parse() == json("\t"));
 
-                CHECK(json::parser("\"\\u0000\"").parse() == json("\\u0000"));
-                CHECK(json::parser("\"\\u000a\"").parse() == json("\\u000a"));
-                CHECK(json::parser("\"\\u00b0\"").parse() == json("\\u00b0"));
-                CHECK(json::parser("\"\\u0c00\"").parse() == json("\\u0c00"));
-                CHECK(json::parser("\"\\ud000\"").parse() == json("\\ud000"));
-                CHECK(json::parser("\"\\u0000\"").parse() == json("\\u0000"));
-                CHECK(json::parser("\"\\u000E\"").parse() == json("\\u000E"));
-                CHECK(json::parser("\"\\u00F0\"").parse() == json("\\u00F0"));
-                CHECK(json::parser("\"\\u0100\"").parse() == json("\\u0100"));
-                CHECK(json::parser("\"\\u2000\"").parse() == json("\\u2000"));
-                CHECK(json::parser("\"\\uFFFF\"").parse() == json("\\uFFFF"));
+                CHECK(json::parser("\"\\u0001\"").parse().get<json::string_t>() == "\x01");
+                CHECK(json::parser("\"\\u000a\"").parse().get<json::string_t>() == "\n");
+                CHECK(json::parser("\"\\u00b0\"").parse().get<json::string_t>() == "°");
+                CHECK(json::parser("\"\\u0c00\"").parse().get<json::string_t>() == "ఀ");
+                CHECK(json::parser("\"\\ud000\"").parse().get<json::string_t>() == "퀀");
+                CHECK(json::parser("\"\\u000E\"").parse().get<json::string_t>() == "\x0E");
+                CHECK(json::parser("\"\\u00F0\"").parse().get<json::string_t>() == "ð");
+                CHECK(json::parser("\"\\u0100\"").parse().get<json::string_t>() == "Ā");
+                CHECK(json::parser("\"\\u2000\"").parse().get<json::string_t>() == " ");
+                CHECK(json::parser("\"\\uFFFF\"").parse().get<json::string_t>() == "￿");
+                CHECK(json::parser("\"\\u20AC\"").parse().get<json::string_t>() == "€");
             }
         }
 
@@ -5847,4 +5847,9 @@ TEST_CASE("parser class")
             }
         }
     }
+}
+
+TEST_CASE()
+{
+    CHECK(json::parser("\"\\u0049\\u004e\"").parse().get<json::string_t>() == "IN");
 }

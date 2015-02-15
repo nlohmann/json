@@ -11,6 +11,7 @@
 #define _NLOHMANN_JSON
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
 #include <initializer_list>
 #include <iostream>
@@ -22,7 +23,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <cmath>
 
 /*!
 - ObjectType trick from http://stackoverflow.com/a/9860911
@@ -2464,6 +2464,51 @@ class basic_json
 
         inline lexer() = default;
 
+        template<typename CharT>
+        inline static std::basic_string<CharT> to_unicode(const long codepoint)
+        {
+            std::string result;
+
+            if (codepoint <= 0x7f)
+            {
+                // 1-byte (ASCII) characters: 0xxxxxxx
+                result.append(1, static_cast<char>(codepoint));
+            }
+            else if (codepoint <= 0x7ff)
+            {
+                // 2-byte characters: 110xxxxx 10xxxxxx
+                // the 0xC0 enables the two most significant bits to make this
+                // a 2-byte UTF-8 character
+                result.append(1, static_cast<CharT>(0xC0 | ((codepoint >> 6) & 0x1F)));
+                result.append(1, static_cast<CharT>(0x80 | (codepoint & 0x3F)));
+            }
+            else if (codepoint <= 0xffff)
+            {
+                // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
+                // the 0xE0 enables the three most significant bits to make
+                // this a 3-byte UTF-8 character
+                result.append(1, static_cast<CharT>(0xE0 | ((codepoint >> 12) & 0x0F)));
+                result.append(1, static_cast<CharT>(0x80 | ((codepoint >> 6) & 0x3F)));
+                result.append(1, static_cast<CharT>(0x80 | (codepoint & 0x3F)));
+            }
+            else if (codepoint <= 0x10ffff)
+            {
+                // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+                // the 0xF0 enables the four most significant bits to make this
+                // a 4-byte UTF-8 character
+                result.append(1, static_cast<CharT>(0xF0 | ((codepoint >> 18) & 0x07)));
+                result.append(1, static_cast<CharT>(0x80 | ((codepoint >> 12) & 0x3F)));
+                result.append(1, static_cast<CharT>(0x80 | ((codepoint >> 6) & 0x3F)));
+                result.append(1, static_cast<CharT>(0x80 | (codepoint & 0x3F)));
+            }
+            else
+            {
+                throw std::out_of_range("code point is invalid");
+            }
+
+            return result;
+        }
+
         inline static std::string token_type_name(token_type t)
         {
             switch (t)
@@ -3241,7 +3286,7 @@ basic_json_parser_59:
         /*!
         The pointer m_start points to the opening quote of the string, and
         m_cursor past the closing quote of the string. We create a std::string
-        from the character after the opening quotes (m_begin+1) until the
+        from the character after the opening quotes (m_start+1) until the
         character before the closing quotes (hence subtracting 2 characters
         from the pointer difference of the two pointers).
 
@@ -3251,7 +3296,86 @@ basic_json_parser_59:
         */
         inline std::string get_string() const
         {
-            return std::string(m_start + 1, static_cast<size_t>(m_cursor - m_start - 2));
+            std::string result;
+            result.reserve(static_cast<size_t>(m_cursor - m_start - 2));
+
+            // iterate the result between the quotes
+            for (const char* i = m_start + 1; i < m_cursor - 1; ++i)
+            {
+                // process escaped characters
+                if (*i == '\\')
+                {
+                    // read next character
+                    ++i;
+
+                    switch (*i)
+                    {
+                        // the default escapes
+                        case 't':
+                        {
+                            result += "\t";
+                            break;
+                        }
+                        case 'b':
+                        {
+                            result += "\b";
+                            break;
+                        }
+                        case 'f':
+                        {
+                            result += "\f";
+                            break;
+                        }
+                        case 'n':
+                        {
+                            result += "\n";
+                            break;
+                        }
+                        case 'r':
+                        {
+                            result += "\r";
+                            break;
+                        }
+
+                        // characters that are not "un"escsaped
+                        case '\\':
+                        {
+                            result += "\\\\";
+                            break;
+                        }
+                        case '/':
+                        {
+                            result += "\\/";
+                            break;
+                        }
+                        case '"':
+                        {
+                            result += "\\\"";
+                            break;
+                        }
+
+                        // unicode
+                        case 'u':
+                        {
+                            // get code xxxx from \uxxxx
+                            auto codepoint = strtol(i + 1, nullptr, 16);
+                            // add unicode character(s)
+                            result += to_unicode<char>(codepoint);
+                            // skip the next four characters (\uxxxx)
+                            i += 4;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    // all other characters are just copied to the end of the
+                    // string
+                    result.append(1, *i);
+                }
+            }
+
+            return result;
         }
 
         inline number_float_t get_number() const
