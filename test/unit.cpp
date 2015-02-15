@@ -5514,6 +5514,12 @@ TEST_CASE("lexer class")
             }
         }
     }
+
+    SECTION("to_unicode")
+    {
+        CHECK(json::lexer::to_unicode<char>(0x1F4A9) == "💩");
+        CHECK_THROWS_AS(json::lexer::to_unicode<char>(0x110000), std::out_of_range);
+    }
 }
 
 TEST_CASE("parser class")
