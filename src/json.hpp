@@ -3422,6 +3422,12 @@ basic_json_parser_59:
 
                             if (codepoint >= 0xD800 and codepoint <= 0xDBFF)
                             {
+                                // make sure there is a subsequent unicode
+                                if (m_cursor - i < 11 and * (i + 5) == '\\' and * (i + 6) == 'u')
+                                {
+                                    throw std::invalid_argument("missing low surrogate");
+                                }
+
                                 // get code yyyy from uxxxx\uyyyy
                                 auto codepoint2 = std::strtoul(std::string(i + 7, 4).c_str(), nullptr, 16);
                                 result += to_unicode(codepoint, codepoint2);
