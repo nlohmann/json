@@ -59,7 +59,8 @@ template <
     class StringType = std::string,
     class BooleanType = bool,
     class NumberIntegerType = int64_t,
-    class NumberFloatType = double
+    class NumberFloatType = double,
+    template<typename U> class Allocator = std::allocator
     >
 class basic_json
 {
@@ -199,7 +200,11 @@ class basic_json
 
             case (value_t::string):
             {
-                m_value.string = new string_t("");
+                Allocator<string_t> alloc;
+                m_value.string = alloc.allocate(1);
+                alloc.construct(m_value.string, "");
+
+                //m_value.string = new string_t("");
                 break;
             }
 
@@ -270,13 +275,21 @@ class basic_json
 
     /// create a string (explicit)
     inline basic_json(const string_t& value)
-        : m_type(value_t::string), m_value(new string_t(value))
-    {}
+        : m_type(value_t::string)//, m_value(new string_t(value))
+    {
+        Allocator<string_t> alloc;
+        m_value.string = alloc.allocate(1);
+        alloc.construct(m_value.string, value);
+    }
 
     /// create a string (explicit)
     inline basic_json(const typename string_t::value_type* value)
-        : m_type(value_t::string), m_value(new string_t(value))
-    {}
+        : m_type(value_t::string)//, m_value(new string_t(value))
+    {
+        Allocator<string_t> alloc;
+        m_value.string = alloc.allocate(1);
+        alloc.construct(m_value.string, value);
+    }
 
     /// create a string (implicit)
     template <class V, typename
@@ -418,7 +431,10 @@ class basic_json
             }
             case (value_t::string):
             {
-                m_value.string = new string_t(*other.m_value.string);
+                // m_value.string = new string_t(*other.m_value.string);
+                Allocator<string_t> alloc;
+                m_value.string = alloc.allocate(1);
+                alloc.construct(m_value.string, *other.m_value.string);
                 break;
             }
             case (value_t::boolean):
@@ -483,8 +499,12 @@ class basic_json
 
             case (value_t::string):
             {
-                delete m_value.string;
+                Allocator<string_t> alloc;
+                alloc.deallocate(m_value.string, 1);
                 m_value.string = nullptr;
+
+                // delete m_value.string;
+                // m_value.string = nullptr;
                 break;
             }
 
