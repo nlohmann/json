@@ -24,10 +24,6 @@
 #include <utility>
 #include <vector>
 
-/*
-- ObjectType trick from http://stackoverflow.com/a/9860911
-*/
-
 /*!
 @see https://github.com/nlohmann
 */
@@ -51,6 +47,8 @@ namespace nlohmann
                            (@c double by default)
 @tparam Allocator          type of the allocator to use
                            (@c std::allocator by default)
+
+@note ObjectType trick from http://stackoverflow.com/a/9860911
 
 @see RFC 7159 <http://rfc7159.net/rfc7159>
 @see ECMA 404 <http://www.ecma-international.org/publications/standards/Ecma-404.htm>
