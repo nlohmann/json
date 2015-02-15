@@ -431,7 +431,7 @@ class basic_json
             }
             case (value_t::string):
             {
-                //                m_value.string = new string_t(*other.m_value.string);
+                // m_value.string = new string_t(*other.m_value.string);
                 Allocator<string_t> alloc;
                 m_value.string = alloc.allocate(1);
                 alloc.construct(m_value.string, *other.m_value.string);
@@ -500,11 +500,12 @@ class basic_json
             case (value_t::string):
             {
                 Allocator<string_t> alloc;
+                alloc.destroy(m_value.string);
                 alloc.deallocate(m_value.string, 1);
                 m_value.string = nullptr;
 
-                //                delete m_value.string;
-                //                m_value.string = nullptr;
+                // delete m_value.string;
+                // m_value.string = nullptr;
                 break;
             }
 

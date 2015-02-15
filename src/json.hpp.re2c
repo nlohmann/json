@@ -500,6 +500,7 @@ class basic_json
             case (value_t::string):
             {
                 Allocator<string_t> alloc;
+                alloc.destroy(m_value.string);
                 alloc.deallocate(m_value.string, 1);
                 m_value.string = nullptr;
 
