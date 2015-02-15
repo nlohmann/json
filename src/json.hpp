@@ -3423,7 +3423,7 @@ basic_json_parser_59:
                             if (codepoint >= 0xD800 and codepoint <= 0xDBFF)
                             {
                                 // make sure there is a subsequent unicode
-                                if (m_cursor - i < 11 and * (i + 5) == '\\' and * (i + 6) == 'u')
+                                if ((i + 6 >= m_limit) or * (i + 5) != '\\' or * (i + 6) != 'u')
                                 {
                                     throw std::invalid_argument("missing low surrogate");
                                 }
