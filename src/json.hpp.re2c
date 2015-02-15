@@ -2456,7 +2456,10 @@ class basic_json
             end_of_input
         };
 
-        inline lexer(const char* s) : m_content(s)
+        /// the char type to use in the lexer
+        using lexer_char_t = typename string_t::value_type;
+
+        inline lexer(const typename string_t::value_type* s) : m_content(s)
         {
             m_start = m_cursor = m_content;
             m_limit = m_content + strlen(m_content);
@@ -2464,46 +2467,39 @@ class basic_json
 
         inline lexer() = default;
 
-        template<typename CharT>
-        inline static std::basic_string<CharT> to_unicode(const long codepoint)
+        inline static string_t to_unicode(const long codepoint)
         {
-            std::string result;
+            string_t result;
 
             if (codepoint <= 0x7f)
             {
-                // 1-byte (ASCII) characters: 0xxxxxxx
-                result.append(1, static_cast<char>(codepoint));
+                // 1-byte characters: 0xxxxxxx (ASCI)
+                result.append(1, static_cast<typename string_t::value_type>(codepoint));
             }
             else if (codepoint <= 0x7ff)
             {
                 // 2-byte characters: 110xxxxx 10xxxxxx
-                // the 0xC0 enables the two most significant bits to make this
-                // a 2-byte UTF-8 character
-                result.append(1, static_cast<CharT>(0xC0 | ((codepoint >> 6) & 0x1F)));
-                result.append(1, static_cast<CharT>(0x80 | (codepoint & 0x3F)));
+                result.append(1, static_cast<typename string_t::value_type>(0xC0 | ((codepoint >> 6) & 0x1F)));
+                result.append(1, static_cast<typename string_t::value_type>(0x80 | (codepoint & 0x3F)));
             }
             else if (codepoint <= 0xffff)
             {
                 // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                // the 0xE0 enables the three most significant bits to make
-                // this a 3-byte UTF-8 character
-                result.append(1, static_cast<CharT>(0xE0 | ((codepoint >> 12) & 0x0F)));
-                result.append(1, static_cast<CharT>(0x80 | ((codepoint >> 6) & 0x3F)));
-                result.append(1, static_cast<CharT>(0x80 | (codepoint & 0x3F)));
+                result.append(1, static_cast<typename string_t::value_type>(0xE0 | ((codepoint >> 12) & 0x0F)));
+                result.append(1, static_cast<typename string_t::value_type>(0x80 | ((codepoint >> 6) & 0x3F)));
+                result.append(1, static_cast<typename string_t::value_type>(0x80 | (codepoint & 0x3F)));
             }
             else if (codepoint <= 0x10ffff)
             {
                 // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                // the 0xF0 enables the four most significant bits to make this
-                // a 4-byte UTF-8 character
-                result.append(1, static_cast<CharT>(0xF0 | ((codepoint >> 18) & 0x07)));
-                result.append(1, static_cast<CharT>(0x80 | ((codepoint >> 12) & 0x3F)));
-                result.append(1, static_cast<CharT>(0x80 | ((codepoint >> 6) & 0x3F)));
-                result.append(1, static_cast<CharT>(0x80 | (codepoint & 0x3F)));
+                result.append(1, static_cast<typename string_t::value_type>(0xF0 | ((codepoint >> 18) & 0x07)));
+                result.append(1, static_cast<typename string_t::value_type>(0x80 | ((codepoint >> 12) & 0x3F)));
+                result.append(1, static_cast<typename string_t::value_type>(0x80 | ((codepoint >> 6) & 0x3F)));
+                result.append(1, static_cast<typename string_t::value_type>(0x80 | (codepoint & 0x3F)));
             }
             else
             {
-                throw std::out_of_range("code point is invalid");
+                throw std::out_of_range("code points above 0x10FFFF are invalid");
             }
 
             return result;
@@ -2557,77 +2553,74 @@ class basic_json
         inline token_type scan()
         {
             // pointer for backtracking information
-            const char* m_marker = nullptr;
+            const typename string_t::value_type* m_marker = nullptr;
 
-            while (true)
-            {
-                // remember the begin of the token
-                m_start = m_cursor;
+            // remember the begin of the token
+            m_start = m_cursor;
 
-                /*!re2c
-                    re2c:define:YYCTYPE  = char;
-                    re2c:define:YYCURSOR = m_cursor;
-                    re2c:define:YYLIMIT  = m_limit;
-                    re2c:define:YYMARKER = m_marker;
-                    re2c:indent:string   = "    ";
-                    re2c:indent:top      = 1;
-                    re2c:labelprefix     = "basic_json_parser_";
-                    re2c:yyfill:enable   = 0;
+            /*!re2c
+                re2c:define:YYCTYPE  = lexer_char_t;
+                re2c:define:YYCURSOR = m_cursor;
+                re2c:define:YYLIMIT  = m_limit;
+                re2c:define:YYMARKER = m_marker;
+                re2c:indent:string   = "    ";
+                re2c:indent:top      = 1;
+                re2c:labelprefix     = "basic_json_parser_";
+                re2c:yyfill:enable   = 0;
 
-                    // whitespace
-                    ws = [ \t\n\r]+;
-                    ws   { continue; }
+                // whitespace
+                ws = [ \t\n\r]+;
+                ws   { return scan(); }
 
-                    // structural characters
-                    "[" { return token_type::begin_array; }
-                    "]" { return token_type::end_array; }
-                    "{" { return token_type::begin_object; }
-                    "}" { return token_type::end_object; }
-                    "," { return token_type::value_separator; }
-                    ":" { return token_type::name_separator; }
+                // structural characters
+                "[" { return token_type::begin_array; }
+                "]" { return token_type::end_array; }
+                "{" { return token_type::begin_object; }
+                "}" { return token_type::end_object; }
+                "," { return token_type::value_separator; }
+                ":" { return token_type::name_separator; }
 
-                    // literal names
-                    "null"  { return token_type::literal_null; }
-                    "true"  { return token_type::literal_true; }
-                    "false" { return token_type::literal_false; }
+                // literal names
+                "null"  { return token_type::literal_null; }
+                "true"  { return token_type::literal_true; }
+                "false" { return token_type::literal_false; }
 
-                    // number
-                    decimal_point = [.];
-                    digit         = [0-9];
-                    digit_1_9     = [1-9];
-                    e             = [eE];
-                    minus         = [-];
-                    plus          = [+];
-                    zero          = [0];
-                    exp           = e (minus|plus)? digit+;
-                    frac          = decimal_point digit+;
-                    int           = (zero|digit_1_9 digit*);
-                    number        = minus? int frac? exp?;
-                    number        { return token_type::value_number; }
+                // number
+                decimal_point = [.];
+                digit         = [0-9];
+                digit_1_9     = [1-9];
+                e             = [eE];
+                minus         = [-];
+                plus          = [+];
+                zero          = [0];
+                exp           = e (minus|plus)? digit+;
+                frac          = decimal_point digit+;
+                int           = (zero|digit_1_9 digit*);
+                number        = minus? int frac? exp?;
+                number        { return token_type::value_number; }
 
-                    // string
-                    quotation_mark  = [\"];
-                    escape          = [\\];
-                    unescaped       = [^\"\\\000];
-                    single_escaped  = [\"\\/bfnrt];
-                    unicode_escaped = [u][0-9a-fA-F]{4};
-                    escaped         = escape (single_escaped | unicode_escaped);
-                    char            = unescaped | escaped;
-                    string          = quotation_mark char* quotation_mark;
-                    string          { return token_type::value_string; }
+                // string
+                quotation_mark  = [\"];
+                escape          = [\\];
+                unescaped       = [^\"\\\000];
+                single_escaped  = [\"\\/bfnrt];
+                unicode_escaped = [u][0-9a-fA-F]{4};
+                escaped         = escape (single_escaped | unicode_escaped);
+                char            = unescaped | escaped;
+                string          = quotation_mark char* quotation_mark;
+                string          { return token_type::value_string; }
 
-                    // end of file
-                    '\000'         { return token_type::end_of_input; }
+                // end of file
+                '\000'         { return token_type::end_of_input; }
 
-                    // anything else is an error
-                    .              { return token_type::parse_error; }
-                 */
-            }
+                // anything else is an error
+                .              { return token_type::parse_error; }
+             */
         }
 
-        inline std::string get_token() const
+        inline string_t get_token() const
         {
-            return std::string(m_start, static_cast<size_t>(m_cursor - m_start));
+            return string_t(m_start, static_cast<size_t>(m_cursor - m_start));
         }
 
         /*!
@@ -2638,16 +2631,14 @@ class basic_json
         from the pointer difference of the two pointers).
 
         @return string value of current token without opening and closing quotes
-
-        @todo Take care of Unicode.
         */
-        inline std::string get_string() const
+        inline string_t get_string() const
         {
-            std::string result;
+            string_t result;
             result.reserve(static_cast<size_t>(m_cursor - m_start - 2));
 
             // iterate the result between the quotes
-            for (const char* i = m_start + 1; i < m_cursor - 1; ++i)
+            for (const typename string_t::value_type* i = m_start + 1; i < m_cursor - 1; ++i)
             {
                 // process escaped characters
                 if (*i == '\\')
@@ -2707,7 +2698,7 @@ class basic_json
                             // get code xxxx from \uxxxx
                             auto codepoint = strtol(i + 1, nullptr, 16);
                             // add unicode character(s)
-                            result += to_unicode<char>(codepoint);
+                            result += to_unicode(codepoint);
                             // skip the next four characters (\uxxxx)
                             i += 4;
                             break;
@@ -2746,20 +2737,20 @@ class basic_json
 
       private:
         /// the buffer
-        const char* m_content = nullptr;
+        const typename string_t::value_type* m_content = nullptr;
         /// pointer to he beginning of the current symbol
-        const char* m_start = nullptr;
+        const typename string_t::value_type* m_start = nullptr;
         /// pointer to the current symbol
-        const char* m_cursor = nullptr;
+        const typename string_t::value_type* m_cursor = nullptr;
         /// pointer to the end of the buffer
-        const char* m_limit = nullptr;
+        const typename string_t::value_type* m_limit = nullptr;
     };
 
     class parser
     {
       public:
         /// constructor for strings
-        inline parser(const std::string& s) : m_buffer(s), m_lexer(m_buffer.c_str())
+        inline parser(const string_t& s) : m_buffer(s), m_lexer(m_buffer.c_str())
         {
             // read first token
             get_token();
@@ -2770,7 +2761,7 @@ class basic_json
         {
             while (_is)
             {
-                std::string input_line;
+                string_t input_line;
                 std::getline(_is, input_line);
                 m_buffer += input_line;
             }
@@ -2964,7 +2955,7 @@ class basic_json
 
       private:
         /// the buffer
-        std::string m_buffer;
+        string_t m_buffer;
         /// the type of the last read token
         typename lexer::token_type last_token = lexer::token_type::uninitialized;
         /// the lexer
