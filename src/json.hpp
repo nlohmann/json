@@ -3800,7 +3800,7 @@ struct hash<nlohmann::json>
     inline size_t operator()(const nlohmann::json& j) const
     {
         // a naive hashing via the string representation
-        return hash<std::string>()(j.dump());
+        return hash<nlohmann::json::string_t>()(j.dump());
     }
 };
 }
