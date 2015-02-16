@@ -3800,7 +3800,8 @@ struct hash<nlohmann::json>
     inline size_t operator()(const nlohmann::json& j) const
     {
         // a naive hashing via the string representation
-        return hash<nlohmann::json::string_t>()(j.dump());
+        const auto& h = hash<nlohmann::json::string_t>();
+        return h(j.dump());
     }
 };
 }
@@ -3815,7 +3816,8 @@ no parse error occurred.
 */
 inline nlohmann::json operator "" _json(const char* s, std::size_t)
 {
-    return nlohmann::json::parse(s);
+    return nlohmann::json::parse(reinterpret_cast<nlohmann::json::string_t::value_type*>
+                                 (const_cast<char*>(s)));
 }
 
 #endif
