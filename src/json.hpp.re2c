@@ -2529,11 +2529,11 @@ class basic_json
         };
 
         /// the char type to use in the lexer
-        using lexer_char_t = typename string_t::value_type;
+        using lexer_char_t = unsigned char;
 
         /// constructor with a given buffer
         inline lexer(const string_t& s) noexcept
-            : m_content(s.c_str())
+            : m_content(reinterpret_cast<const lexer_char_t*>(s.c_str()))
         {
             m_start = m_cursor = m_content;
             m_limit = m_content + s.size();
@@ -2552,7 +2552,7 @@ class basic_json
 
         @see <http://en.wikipedia.org/wiki/UTF-8#Sample_code>
         */
-        inline static string_t to_unicode(const size_t codepoint1, size_t codepoint2 = 0)
+        inline static string_t to_unicode(const size_t codepoint1, const size_t codepoint2 = 0)
         {
             string_t result;
 
@@ -2729,7 +2729,8 @@ class basic_json
         /// return string representation of last read token
         inline string_t get_token() const noexcept
         {
-            return string_t(m_start, static_cast<size_t>(m_cursor - m_start));
+            return string_t(reinterpret_cast<typename string_t::const_pointer>(m_start),
+                            static_cast<size_t>(m_cursor - m_start));
         }
 
         /*!
@@ -2759,7 +2760,7 @@ class basic_json
             result.reserve(static_cast<size_t>(m_cursor - m_start - 2));
 
             // iterate the result between the quotes
-            for (const typename string_t::value_type* i = m_start + 1; i < m_cursor - 1; ++i)
+            for (const lexer_char_t* i = m_start + 1; i < m_cursor - 1; ++i)
             {
                 // process escaped characters
                 if (*i == '\\')
@@ -2817,7 +2818,8 @@ class basic_json
                         case 'u':
                         {
                             // get code xxxx from uxxxx
-                            auto codepoint = std::strtoul(std::string(i + 1, 4).c_str(), nullptr, 16);
+                            auto codepoint = std::strtoul(std::string(reinterpret_cast<typename string_t::const_pointer>(i + 1),
+                                                          4).c_str(), nullptr, 16);
 
                             if (codepoint >= 0xD800 and codepoint <= 0xDBFF)
                             {
@@ -2828,7 +2830,8 @@ class basic_json
                                 }
 
                                 // get code yyyy from uxxxx\uyyyy
-                                auto codepoint2 = std::strtoul(std::string(i + 7, 4).c_str(), nullptr, 16);
+                                auto codepoint2 = std::strtoul(std::string(reinterpret_cast<typename string_t::const_pointer>
+                                                               (i + 7), 4).c_str(), nullptr, 16);
                                 result += to_unicode(codepoint, codepoint2);
                                 // skip the next 11 characters (xxxx\uyyyy)
                                 i += 11;
@@ -2848,7 +2851,7 @@ class basic_json
                 {
                     // all other characters are just copied to the end of the
                     // string
-                    result.append(1, *i);
+                    result.append(1, static_cast<typename string_t::value_type>(*i));
                 }
             }
 
@@ -2875,13 +2878,13 @@ class basic_json
         inline number_float_t get_number() const
         {
             // conversion
-            lexer_char_t* endptr;
-            const auto float_val = std::strtod(reinterpret_cast<const lexer_char_t*>(m_start),
+            typename string_t::value_type* endptr;
+            const auto float_val = std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start),
                                                &endptr);
 
             // return float_val if the whole number was translated and NAN
             // otherwise
-            return (endptr == m_cursor) ? float_val : NAN;
+            return (reinterpret_cast<lexer_char_t*>(endptr) == m_cursor) ? float_val : NAN;
         }
 
       private:
