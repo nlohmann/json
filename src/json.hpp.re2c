@@ -14,11 +14,13 @@
 #include <cmath>
 #include <functional>
 #include <initializer_list>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <limits>
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -139,12 +141,6 @@ class basic_json
 
         /// default constructor (for null values)
         json_value() = default;
-        /// constructor for objects
-        json_value(object_t* v) : object(v) {}
-        /// constructor for arrays
-        json_value(array_t* v) : array(v) {}
-        /// constructor for strings
-        json_value(string_t* v) : string(v) {}
         /// constructor for booleans
         json_value(boolean_t v) : boolean(v) {}
         /// constructor for numbers (integer)
@@ -556,10 +552,10 @@ class basic_json
     Serialization function for JSON objects. The function tries to mimick Python's
     @p json.dumps() function, and currently supports its @p indent parameter.
 
-    @param indent  if indent is nonnegative, then array elements and object members
-                   will be pretty-printed with that indent level. An indent level
-                   of 0 will only insert newlines. -1 (the default) selects the
-                   most compact representation
+    @param indent  sif indent is nonnegative, then array elements and object
+    members will be pretty-printed with that indent level. An indent level of 0
+    will only insert newlines. -1 (the default) selects the most compact
+    representation
 
     @see https://docs.python.org/2/library/json.html#json.dump
     */

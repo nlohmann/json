@@ -16,7 +16,6 @@ using nlohmann::json;
 #include <array>
 #include <deque>
 #include <forward_list>
-#include <iomanip>
 #include <list>
 #include <map>
 #include <set>
