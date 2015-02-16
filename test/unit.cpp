@@ -119,9 +119,9 @@ TEST_CASE("constructors")
         json::object_t o_reference {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
         json j_reference(o_reference);
 
-        SECTION("std::map<std::string, json>")
+        SECTION("std::map<json::string_t, json>")
         {
-            std::map<std::string, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
+            std::map<json::string_t, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
             json j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
@@ -135,25 +135,25 @@ TEST_CASE("constructors")
             CHECK(j == j_reference);
         }
 
-        SECTION("std::multimap<std::string, json>")
+        SECTION("std::multimap<json::string_t, json>")
         {
-            std::multimap<std::string, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
+            std::multimap<json::string_t, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
             json j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
         }
 
-        SECTION("std::unordered_map<std::string, json>")
+        SECTION("std::unordered_map<json::string_t, json>")
         {
-            std::unordered_map<std::string, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
+            std::unordered_map<json::string_t, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
             json j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
         }
 
-        SECTION("std::unordered_multimap<std::string, json>")
+        SECTION("std::unordered_multimap<json::string_t, json>")
         {
-            std::unordered_multimap<std::string, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
+            std::unordered_multimap<json::string_t, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
             json j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
@@ -1199,27 +1199,28 @@ TEST_CASE("value conversion")
             CHECK(json(o) == j);
         }
 
-        SECTION("std::map<std::string, json>")
+        SECTION("std::map<json::string_t, json>")
         {
-            std::map<std::string, json> o = j.get<std::map<std::string, json>>();
+            std::map<json::string_t, json> o = j.get<std::map<json::string_t, json>>();
             CHECK(json(o) == j);
         }
 
-        SECTION("std::multimap<std::string, json>")
+        SECTION("std::multimap<json::string_t, json>")
         {
-            std::multimap<std::string, json> o = j.get<std::multimap<std::string, json>>();
+            std::multimap<json::string_t, json> o = j.get<std::multimap<json::string_t, json>>();
             CHECK(json(o) == j);
         }
 
-        SECTION("std::unordered_map<std::string, json>")
+        SECTION("std::unordered_map<json::string_t, json>")
         {
-            std::unordered_map<std::string, json> o = j.get<std::unordered_map<std::string, json>>();
+            std::unordered_map<json::string_t, json> o = j.get<std::unordered_map<json::string_t, json>>();
             CHECK(json(o) == j);
         }
 
-        SECTION("std::unordered_multimap<std::string, json>")
+        SECTION("std::unordered_multimap<json::string_t, json>")
         {
-            std::unordered_multimap<std::string, json> o = j.get<std::unordered_multimap<std::string, json>>();
+            std::unordered_multimap<json::string_t, json> o =
+                j.get<std::unordered_multimap<json::string_t, json>>();
             CHECK(json(o) == j);
         }
 
@@ -1245,27 +1246,27 @@ TEST_CASE("value conversion")
             CHECK(json(o) == j);
         }
 
-        SECTION("std::map<std::string, json>")
+        SECTION("std::map<json::string_t, json>")
         {
-            std::map<std::string, json> o = j;
+            std::map<json::string_t, json> o = j;
             CHECK(json(o) == j);
         }
 
-        SECTION("std::multimap<std::string, json>")
+        SECTION("std::multimap<json::string_t, json>")
         {
-            std::multimap<std::string, json> o = j;
+            std::multimap<json::string_t, json> o = j;
             CHECK(json(o) == j);
         }
 
-        SECTION("std::unordered_map<std::string, json>")
+        SECTION("std::unordered_map<json::string_t, json>")
         {
-            std::unordered_map<std::string, json> o = j;
+            std::unordered_map<json::string_t, json> o = j;
             CHECK(json(o) == j);
         }
 
-        SECTION("std::unordered_multimap<std::string, json>")
+        SECTION("std::unordered_multimap<json::string_t, json>")
         {
-            std::unordered_multimap<std::string, json> o = j;
+            std::unordered_multimap<json::string_t, json> o = j;
             CHECK(json(o) == j);
         }
     }
