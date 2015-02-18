@@ -6,14 +6,10 @@ compiler:
 before_install:
   - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
   - sudo apt-get update -qq
-  - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+  - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.9; fi
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
   - sudo pip install cpp-coveralls pyyaml
   - sudo apt-get install valgrind
-
-before_script:
-  - autoreconf -iv
-  - ./configure
 
 script:
   - make
@@ -22,6 +18,7 @@ script:
 
 after_success:
   - make clean
-  - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage"
+  - touch src/json.hpp
+  - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11"
   - ./json_unit
-  - coveralls --exclude benchmark --exclude test --exclude header_only --gcov-options '\-lp' --gcov 'gcov-4.8'
+  - coveralls --exclude test/catch.hpp --exclude test/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
