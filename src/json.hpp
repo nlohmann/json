@@ -760,6 +760,15 @@ class basic_json
     /// access specified element
     inline reference operator[](const typename object_t::key_type& key)
     {
+        // implicitly convert null to object
+        if (m_type == value_t::null)
+        {
+            m_type = value_t::object;
+            Allocator<object_t> alloc;
+            m_value.object = alloc.allocate(1);
+            alloc.construct(m_value.object);
+        }
+
         // at only works for objects
         if (m_type != value_t::object)
         {
@@ -785,6 +794,15 @@ class basic_json
     template<typename T, size_t n>
     inline reference operator[](const T (&key)[n])
     {
+        // implicitly convert null to object
+        if (m_type == value_t::null)
+        {
+            m_type = value_t::object;
+            Allocator<object_t> alloc;
+            m_value.object = alloc.allocate(1);
+            alloc.construct(m_value.object);
+        }
+
         // at only works for objects
         if (m_type != value_t::object)
         {
