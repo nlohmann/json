@@ -2211,9 +2211,10 @@ TEST_CASE("element access")
                 SECTION("null")
                 {
                     json j_nonobject(json::value_t::null);
+                    json j_nonobject2(json::value_t::null);
                     const json j_const_nonobject(j_nonobject);
                     CHECK_NOTHROW(j_nonobject["foo"]);
-                    CHECK_NOTHROW(j_nonobject[json::object_t::key_type("foo")]);
+                    CHECK_NOTHROW(j_nonobject2[json::object_t::key_type("foo")]);
                     CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
                     CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
                 }
