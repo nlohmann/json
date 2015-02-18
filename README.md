@@ -33,7 +33,7 @@ As of February 2015, the following updates were made to the library
 - *Changed:* The **deserialization** is now supported by a lexer generated with [re2c](http://re2c.org) from file [`src/json.hpp.re2c`](https://github.com/nlohmann/json/blob/master/src/json.hpp.re2c). As a result, we follow the JSON specification more strictly. Note neither the tool re2c nor its input are required to use the class.
 - *Added:* The library now satisfies the [**ReversibleContainer**](http://en.cppreference.com/w/cpp/concept/ReversibleContainer) requirement. It hence provides four different iterators (`iterator`, `const_iterator`, `reverse_iterator`, and `const_reverse_iterator`), comparison functions, `swap()`, `size()`, `max_size()`, and `empty()` member functions.
 - *Added*: The class uses **user-defined allocators** which default to `std::allocator`, but can be templated via parameter `Allocator`.
-- *Added:* To simplify pretty-printing, the `std::setw` **stream manipulator** has been overloaded to set the desired indentation. Pretty-printing a JSON object `j` is as simple as `std::cout << std::setw(4) << j << '\n'.
+- *Added:* To simplify pretty-printing, the `std::setw` **stream manipulator** has been overloaded to set the desired indentation. Pretty-printing a JSON object `j` is as simple as `std::cout << std::setw(4) << j << '\n'`.
 - *Changed*: The type `json::value_t::number` is now called `json::value_t::number_integer` to be more symmetric compared to `json::value_t::number_float`.
 - *Removed:* The `key()` and `value()` member functions for object iterators were nonstandard and yielded more problems than benefits. They were removed from the library.
 
