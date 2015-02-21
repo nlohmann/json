@@ -29,7 +29,7 @@ Other aspects were not so important to us:
 As of February 2015, the following updates were made to the library
 
 - *Changed:* In the generic class `basic_json`, all JSON value types (array, object, string, bool, integer number, and floating-point) are now **templated**. That is, you can choose whether you like a `std::list` for your arrays or an `std::unordered_map` for your objects. The specialization `json` sets some reasonable defaults.
-- *Changed:* The library now consists of a single header, called `json.hpp`. Consequently, build systems such as Automake or CMake are not any longer required.
+- *Changed:* The library now consists of a **single header**, called `json.hpp`. Consequently, build systems such as Automake or CMake are not any longer required.
 - *Changed:* The **deserialization** is now supported by a lexer generated with [re2c](http://re2c.org) from file [`src/json.hpp.re2c`](https://github.com/nlohmann/json/blob/master/src/json.hpp.re2c). As a result, we follow the JSON specification more strictly. Note neither the tool re2c nor its input are required to use the class.
 - *Added:* The library now satisfies the [**ReversibleContainer**](http://en.cppreference.com/w/cpp/concept/ReversibleContainer) requirement. It hence provides four different iterators (`iterator`, `const_iterator`, `reverse_iterator`, and `const_reverse_iterator`), comparison functions, `swap()`, `size()`, `max_size()`, and `empty()` member functions.
 - *Added*: The class uses **user-defined allocators** which default to `std::allocator`, but can be templated via parameter `Allocator`.
@@ -184,7 +184,7 @@ These operators work for any subclasses of `std::istream` or `std::ostream`.
 
 ### STL-like access
 
-We designed the JSON class to behave just like an STL container:
+We designed the JSON class to behave just like an STL container. In fact, it satisfies the [**ReversibleContainer**](http://en.cppreference.com/w/cpp/concept/ReversibleContainer) requirement.
 
 ```cpp
 // create an array using push_back

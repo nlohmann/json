@@ -712,10 +712,24 @@ class basic_json
     /// access specified element
     inline reference operator[](size_type pos)
     {
-        // at only works for arrays
+        // implicitly convert null to object
+        if (m_type == value_t::null)
+        {
+            m_type = value_t::array;
+            Allocator<array_t> alloc;
+            m_value.array = alloc.allocate(1);
+            alloc.construct(m_value.array);
+        }
+
+        // [] only works for arrays
         if (m_type != value_t::array)
         {
             throw std::runtime_error("cannot use [] with " + type_name());
+        }
+
+        for (size_t i = m_value.array->size(); i <= pos; ++i)
+        {
+            m_value.array->push_back(basic_json());
         }
 
         return m_value.array->operator[](pos);
@@ -769,7 +783,7 @@ class basic_json
             alloc.construct(m_value.object);
         }
 
-        // at only works for objects
+        // [] only works for objects
         if (m_type != value_t::object)
         {
             throw std::runtime_error("cannot use [] with " + type_name());

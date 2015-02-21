@@ -2033,10 +2033,20 @@ TEST_CASE("element access")
             {
                 SECTION("null")
                 {
-                    json j_nonarray(json::value_t::null);
-                    const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                    SECTION("standard tests")
+                    {
+                        json j_nonarray(json::value_t::null);
+                        const json j_nonarray_const(j_nonarray);
+                        CHECK_NOTHROW(j_nonarray[0]);
+                        CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                    }
+
+                    SECTION("implicit transformation to properly filled array")
+                    {
+                        json j_nonarray;
+                        j_nonarray[3] = 42;
+                        CHECK(j_nonarray == json({nullptr, nullptr, nullptr, 42}));
+                    }
                 }
 
                 SECTION("boolean")
