@@ -214,6 +214,14 @@ j.empty();    // false
 j.type();     // json::value_t::array
 j.clear();    // the array is empty again
 
+// convenience type checkers
+j.is_null();
+j.is_boolean();
+j.is_number();
+j.is_object();
+j.is_array();
+j.is_string();
+
 // comparison
 j == "[\"foo\", 1, true]"_json;  // true
 
