@@ -1,6 +1,4 @@
-# JSON for Modern C++
-
-*What if JSON was part of modern C++?*
+![JSON for Modern C++](https://raw.githubusercontent.com/nlohmann/json/master/json.gif)
 
 [![Build Status](https://travis-ci.org/nlohmann/json.png?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
