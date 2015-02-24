@@ -274,6 +274,7 @@ class basic_json
                     {
                         return true;
                     }
+
                     default:
                     {
                         return false;
@@ -291,6 +292,7 @@ class basic_json
                     {
                         return true;
                     }
+
                     default:
                     {
                         return false;
@@ -317,7 +319,12 @@ class basic_json
     // constructors //
     //////////////////
 
-    /// create an empty value with a given type
+    /*!
+    @brief create an empty value with a given type
+    @param value  the type to create an value of
+
+    @exception std::bad_alloc  if allocation for object, array, or string fails.
+    */
     inline basic_json(const value_t value)
         : m_type(value)
     {
@@ -578,6 +585,9 @@ class basic_json
 
     /*!
     @brief copy constructor
+
+    @exception std::bad_alloc  if allocation for object, array, or string fails.
+
     @ingroup container
     */
     inline basic_json(const basic_json& other)
@@ -589,6 +599,7 @@ class basic_json
             {
                 break;
             }
+
             case (value_t::object):
             {
                 Allocator<object_t> alloc;
@@ -596,6 +607,7 @@ class basic_json
                 alloc.construct(m_value.object, *other.m_value.object);
                 break;
             }
+
             case (value_t::array):
             {
                 Allocator<array_t> alloc;
@@ -603,6 +615,7 @@ class basic_json
                 alloc.construct(m_value.array, *other.m_value.array);
                 break;
             }
+
             case (value_t::string):
             {
                 Allocator<string_t> alloc;
@@ -610,16 +623,19 @@ class basic_json
                 alloc.construct(m_value.string, *other.m_value.string);
                 break;
             }
+
             case (value_t::boolean):
             {
                 m_value.boolean = other.m_value.boolean;
                 break;
             }
+
             case (value_t::number_integer):
             {
                 m_value.number_integer = other.m_value.number_integer;
                 break;
             }
+
             case (value_t::number_float):
             {
                 m_value.number_float = other.m_value.number_float;
@@ -706,8 +722,9 @@ class basic_json
     /*!
     @brief serialization
 
-    Serialization function for JSON objects. The function tries to mimick Python's
-    @p json.dumps() function, and currently supports its @p indent parameter.
+    Serialization function for JSON objects. The function tries to mimick
+    Python's @p json.dumps() function, and currently supports its @p indent
+    parameter.
 
     @param indent  sif indent is nonnegative, then array elements and object
     members will be pretty-printed with that indent level. An indent level of 0
@@ -771,7 +788,7 @@ class basic_json
     }
 
     /// return the type of the object (implicit)
-    operator value_t() const noexcept
+    inline operator value_t() const noexcept
     {
         return m_type;
     }
@@ -1487,7 +1504,7 @@ class basic_json
     @brief comparison: equal
     @ingroup container
     */
-    friend bool operator==(const_reference lhs, const_reference rhs)
+    friend bool operator==(const_reference lhs, const_reference rhs) noexcept
     {
         switch (lhs.type())
         {
@@ -1564,13 +1581,13 @@ class basic_json
     @brief comparison: not equal
     @ingroup container
     */
-    friend bool operator!=(const_reference lhs, const_reference rhs)
+    friend bool operator!=(const_reference lhs, const_reference rhs) noexcept
     {
         return not (lhs == rhs);
     }
 
     /// comparison: less than
-    friend bool operator<(const_reference lhs, const_reference rhs)
+    friend bool operator<(const_reference lhs, const_reference rhs) noexcept
     {
         switch (lhs.type())
         {
@@ -1646,19 +1663,19 @@ class basic_json
     }
 
     /// comparison: less than or equal
-    friend bool operator<=(const_reference lhs, const_reference rhs)
+    friend bool operator<=(const_reference lhs, const_reference rhs) noexcept
     {
         return not (rhs < lhs);
     }
 
     /// comparison: greater than
-    friend bool operator>(const_reference lhs, const_reference rhs)
+    friend bool operator>(const_reference lhs, const_reference rhs) noexcept
     {
         return not (lhs <= rhs);
     }
 
     /// comparison: greater than or equal
-    friend bool operator>=(const_reference lhs, const_reference rhs)
+    friend bool operator>=(const_reference lhs, const_reference rhs) noexcept
     {
         return not (lhs < rhs);
     }
@@ -1783,36 +1800,42 @@ class basic_json
                     result += "\\\"";
                     break;
                 }
+
                 // reverse solidus (0x5c)
                 case '\\':
                 {
                     result += "\\\\";
                     break;
                 }
+
                 // backspace (0x08)
                 case '\b':
                 {
                     result += "\\b";
                     break;
                 }
+
                 // formfeed (0x0c)
                 case '\f':
                 {
                     result += "\\f";
                     break;
                 }
+
                 // newline (0x0a)
                 case '\n':
                 {
                     result += "\\n";
                     break;
                 }
+
                 // carriage return (0x0d)
                 case '\r':
                 {
                     result += "\\r";
                     break;
                 }
+
                 // horizontal tab (0x09)
                 case '\t':
                 {
@@ -2027,7 +2050,7 @@ class basic_json
         inline iterator() = default;
 
         /// constructor for a given JSON instance
-        inline iterator(pointer object) : m_object(object)
+        inline iterator(pointer object) noexcept : m_object(object)
         {
             switch (m_object->m_type)
             {
@@ -2505,7 +2528,7 @@ class basic_json
         inline const_iterator() = default;
 
         /// constructor for a given JSON instance
-        inline const_iterator(pointer object) : m_object(object)
+        inline const_iterator(pointer object) noexcept : m_object(object)
         {
             switch (m_object->m_type)
             {
@@ -2528,7 +2551,7 @@ class basic_json
         }
 
         /// copy constructor given a nonconst iterator
-        inline const_iterator(const iterator& other) : m_object(other.m_object)
+        inline const_iterator(const iterator& other) noexcept : m_object(other.m_object)
         {
             switch (m_object->m_type)
             {
@@ -4268,7 +4291,6 @@ basic_json_parser_59:
 
 /// default JSON class
 using json = basic_json<>;
-
 }
 
 

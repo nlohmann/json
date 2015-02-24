@@ -6797,38 +6797,82 @@ TEST_CASE("algorithms")
 
 TEST_CASE("concepts")
 {
-    SECTION("DefaultConstructible")
+    SECTION("class json")
     {
-        CHECK(std::is_nothrow_default_constructible<json>::value);
+        SECTION("DefaultConstructible")
+        {
+            CHECK(std::is_nothrow_default_constructible<json>::value);
+        }
+
+        SECTION("MoveConstructible")
+        {
+            CHECK(std::is_nothrow_move_constructible<json>::value);
+        }
+
+        SECTION("CopyConstructible")
+        {
+            CHECK(std::is_copy_constructible<json>::value);
+        }
+
+        SECTION("MoveAssignable")
+        {
+            CHECK(std::is_nothrow_move_assignable<json>::value);
+        }
+
+        SECTION("CopyAssignable")
+        {
+            CHECK(std::is_copy_assignable<json>::value);
+        }
+
+        SECTION("Destructible")
+        {
+            CHECK(std::is_nothrow_destructible<json>::value);
+        }
+
+        SECTION("StandardLayoutType")
+        {
+            CHECK(std::is_standard_layout<json>::value);
+        }
     }
 
-    SECTION("MoveConstructible")
+    SECTION("class iterator")
     {
-        CHECK(std::is_nothrow_move_constructible<json>::value);
-    }
+        SECTION("CopyConstructible")
+        {
+            CHECK(std::is_nothrow_copy_constructible<json::iterator>::value);
+            CHECK(std::is_nothrow_copy_constructible<json::const_iterator>::value);
+        }
 
-    SECTION("CopyConstructible")
-    {
-        CHECK(std::is_copy_constructible<json>::value);
-    }
+        SECTION("CopyAssignable")
+        {
+            CHECK(std::is_nothrow_copy_assignable<json::iterator>::value);
+            CHECK(std::is_nothrow_copy_assignable<json::const_iterator>::value);
+        }
 
-    SECTION("MoveAssignable")
-    {
-        CHECK(std::is_nothrow_move_assignable<json>::value);
-    }
+        SECTION("Destructible")
+        {
+            CHECK(std::is_nothrow_destructible<json::iterator>::value);
+            CHECK(std::is_nothrow_destructible<json::const_iterator>::value);
+        }
 
-    SECTION("CopyAssignable")
-    {
-        CHECK(std::is_copy_assignable<json>::value);
-    }
-
-    SECTION("Destructible")
-    {
-        CHECK(std::is_nothrow_destructible<json>::value);
-    }
-
-    SECTION("StandardLayoutType")
-    {
-        CHECK(std::is_standard_layout<json>::value);
+        SECTION("Swappable")
+        {
+            {
+                json j {1, 2, 3};
+                json::iterator it1 = j.begin();
+                json::iterator it2 = j.end();
+                std::swap(it1, it2);
+                CHECK(it1 == j.end());
+                CHECK(it2 == j.begin());
+            }
+            {
+                json j {1, 2, 3};
+                json::const_iterator it1 = j.cbegin();
+                json::const_iterator it2 = j.cend();
+                std::swap(it1, it2);
+                CHECK(it1 == j.end());
+                CHECK(it2 == j.begin());
+            }
+        }
     }
 }
