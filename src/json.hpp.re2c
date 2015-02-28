@@ -3267,7 +3267,7 @@ class basic_json
 			std::getline(*m_stream, line);
 			m_buffer += line;
 
-			m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str()); //reinterpret_cast<lexer_char_t*>(endptr)
+			m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
 			m_start  = m_content + offset_start;
 			m_marker = m_start + offset_marker;
 			m_cursor = m_start + offset_cursor;
