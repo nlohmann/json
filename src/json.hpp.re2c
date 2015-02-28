@@ -3191,7 +3191,7 @@ class basic_json
             // remember the begin of the token
             m_start = m_cursor;
 
-#define YYFILL(n)       { size_t offset_marker = m_marker - m_start; yyfill(n);  m_marker = m_start + offset_marker; }
+#define YYFILL(n) { yyfill(n); }
 
             /*!re2c
                 re2c:define:YYCTYPE  = lexer_char_t;
