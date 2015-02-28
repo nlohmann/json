@@ -3450,8 +3450,6 @@ class basic_json
         const lexer_char_t* m_cursor = nullptr;
         /// pointer to the end of the buffer
         const lexer_char_t* m_limit = nullptr;
-        /// YYSTATE
-        int m_state;
     };
 
     /*!
