@@ -3186,7 +3186,7 @@ class basic_json
         inline token_type scan() noexcept
         {
             // pointer for backtracking information
-            const lexer_char_t* m_marker = nullptr;
+            m_marker = nullptr;
 
             // remember the begin of the token
             m_start = m_cursor;
@@ -3258,6 +3258,7 @@ class basic_json
 			if (not m_stream or not *m_stream) return;
 
 			ssize_t offset_start  = m_start  - m_content;
+			ssize_t offset_marker = m_marker - m_start;
 			ssize_t offset_cursor = m_cursor - m_start;
 			ssize_t offset_limit  = m_limit  - m_start;
 
@@ -3268,6 +3269,7 @@ class basic_json
 
 			m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str()); //reinterpret_cast<lexer_char_t*>(endptr)
 			m_start  = m_content + offset_start;
+			m_marker = m_start + offset_marker;
 			m_cursor = m_start + offset_cursor;
 			m_limit  = m_start + offset_limit;
 		}
@@ -3442,6 +3444,8 @@ class basic_json
         const lexer_char_t* m_content = nullptr;
         /// pointer to the beginning of the current symbol
         const lexer_char_t* m_start = nullptr;
+        /// pointer for backtracking information
+        const lexer_char_t* m_marker = nullptr;
         /// pointer to the current symbol
         const lexer_char_t* m_cursor = nullptr;
         /// pointer to the end of the buffer
