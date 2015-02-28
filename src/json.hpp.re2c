@@ -3468,16 +3468,6 @@ class basic_json
         /// a parser reading from an input stream
 		inline parser(std::istream& _is) : m_lexer(&_is)
         {
-//            while (_is)
-//            {
-//                string_t input_line;
-//                std::getline(_is, input_line);
-//                m_buffer += input_line;
-//            }
-
-            // initializer lexer
-//			m_lexer = std::move(lexer(_is));
-
             // read first token
             get_token();
         }
