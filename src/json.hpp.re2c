@@ -3191,13 +3191,13 @@ class basic_json
             // remember the begin of the token
             m_start = m_cursor;
 
-#define YYFILL(n) { yyfill(n); }
-
             /*!re2c
                 re2c:define:YYCTYPE  = lexer_char_t;
                 re2c:define:YYCURSOR = m_cursor;
                 re2c:define:YYLIMIT  = m_limit;
                 re2c:define:YYMARKER = m_marker;
+                re2c:define:YYFILL   = "{ yyfill(); }";
+                re2c:yyfill:parameter = 0;
                 re2c:indent:string   = "    ";
                 re2c:indent:top      = 1;
                 re2c:labelprefix     = "basic_json_parser_";
@@ -3254,7 +3254,7 @@ class basic_json
         }
 
 		/// append data from the stream to the internal buffer
-		void yyfill(int n) noexcept
+		void yyfill() noexcept
 		{
 			if (not m_stream or not *m_stream) return;
 
@@ -3262,9 +3262,6 @@ class basic_json
 			ssize_t offset_marker = m_marker - m_start;
 			ssize_t offset_cursor = m_cursor - m_start;
 
-			// The parser generator expects a minimum of n bytes to be appended,
-			// but by appending a line of data we will never split a token, so
-			// it should be safe to ignore the parameter.
 			m_buffer.erase(0, offset_start);
 			std::string line;
 			std::getline(*m_stream, line);
