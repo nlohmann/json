@@ -1717,6 +1717,12 @@ class basic_json
     }
 
     /// deserialize from stream
+    static basic_json parse(std::istream& i)
+    {
+        return parser(i).parse();
+    }
+
+    /// deserialize from stream
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
         j = parser(i).parse();
