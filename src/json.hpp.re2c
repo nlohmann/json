@@ -3253,6 +3253,7 @@ class basic_json
 
         }
 
+		/// append data from the stream to the internal buffer
 		void yyfill(int n) noexcept
 		{
 			if (not m_stream or not *m_stream) return;
@@ -3261,6 +3262,9 @@ class basic_json
 			ssize_t offset_marker = m_marker - m_start;
 			ssize_t offset_cursor = m_cursor - m_start;
 
+			// The parser generator expects a minimum of n bytes to be appended,
+			// but by appending a line of data we will never split a token, so
+			// it should be safe to ignore the parameter.
 			m_buffer.erase(0, offset_start);
 			std::string line;
 			std::getline(*m_stream, line);
