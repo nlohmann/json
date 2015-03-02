@@ -3052,18 +3052,18 @@ class basic_json
         using lexer_char_t = unsigned char;
 
         /// constructor with a given buffer
-		inline lexer(const string_t& s) noexcept
-		: m_buffer(s), m_stream(nullptr)
-		{
-			m_content = reinterpret_cast<const lexer_char_t*>(s.c_str());
-			m_start = m_cursor = m_content;
-			m_limit = m_content + s.size();
-		}
-		inline lexer(std::istream* s) noexcept
+        inline lexer(const string_t& s) noexcept
+        : m_buffer(s), m_stream(nullptr)
+        {
+            m_content = reinterpret_cast<const lexer_char_t*>(s.c_str());
+            m_start = m_cursor = m_content;
+            m_limit = m_content + s.size();
+        }
+        inline lexer(std::istream* s) noexcept
             : m_stream(s)
         {
-			getline(*m_stream, m_buffer);
-			m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
+            getline(*m_stream, m_buffer);
+            m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
             m_start = m_cursor = m_content;
             m_limit = m_content + m_buffer.size();
         }
@@ -3259,26 +3259,26 @@ class basic_json
 
         }
 
-		/// append data from the stream to the internal buffer
-		void yyfill() noexcept
-		{
-			if (not m_stream or not *m_stream) return;
+        /// append data from the stream to the internal buffer
+        void yyfill() noexcept
+        {
+            if (not m_stream or not *m_stream) return;
 
-			ssize_t offset_start  = m_start  - m_content;
-			ssize_t offset_marker = m_marker - m_start;
-			ssize_t offset_cursor = m_cursor - m_start;
+            ssize_t offset_start  = m_start  - m_content;
+            ssize_t offset_marker = m_marker - m_start;
+            ssize_t offset_cursor = m_cursor - m_start;
 
-			m_buffer.erase(0, offset_start);
-			std::string line;
-			std::getline(*m_stream, line);
-			m_buffer += line;
+            m_buffer.erase(0, offset_start);
+            std::string line;
+            std::getline(*m_stream, line);
+            m_buffer += line;
 
-			m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
-			m_start  = m_content;
-			m_marker = m_start + offset_marker;
-			m_cursor = m_start + offset_cursor;
-			m_limit  = m_start + m_buffer.size() - 1;
-		}
+            m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
+            m_start  = m_content;
+            m_marker = m_start + offset_marker;
+            m_cursor = m_start + offset_cursor;
+            m_limit  = m_start + m_buffer.size() - 1;
+        }
 
         /// return string representation of last read token
         inline string_t get_token() const noexcept
