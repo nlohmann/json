@@ -1049,7 +1049,6 @@ class basic_json
         return m_value.object->operator[](key);
     }
 
-
     /// find an element in an object
     inline iterator find(typename object_t::key_type key)
     {
@@ -1074,6 +1073,13 @@ class basic_json
         }
 
         return result;
+    }
+
+    /// returns the number of occurrences of a key in an object
+    inline size_type count(typename object_t::key_type key) const
+    {
+        // return 0 for all nonobject types
+        return (m_type == value_t::object) ? m_value.object->count(key) : 0;
     }
 
 

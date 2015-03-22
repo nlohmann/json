@@ -2441,6 +2441,85 @@ TEST_CASE("element access")
                 }
             }
         }
+
+        SECTION("count keys in an object")
+        {
+            SECTION("existing element")
+            {
+                for (auto key :
+                        {"integer", "floating", "null", "string", "boolean", "object", "array"
+                        })
+                {
+                    CHECK(j.count(key) == 1);
+                    CHECK(j_const.count(key) == 1);
+                }
+            }
+
+            SECTION("nonexisting element")
+            {
+                CHECK(j.count("foo") == 0);
+                CHECK(j_const.count("foo") == 0);
+            }
+
+            SECTION("all types")
+            {
+                SECTION("null")
+                {
+                    json j_nonobject(json::value_t::null);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.count("foo") == 0);
+                    CHECK(j_nonobject_const.count("foo") == 0);
+                }
+
+                SECTION("string")
+                {
+                    json j_nonobject(json::value_t::string);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.count("foo") == 0);
+                    CHECK(j_nonobject_const.count("foo") == 0);
+                }
+
+                SECTION("object")
+                {
+                    json j_nonobject(json::value_t::object);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.count("foo") == 0);
+                    CHECK(j_nonobject_const.count("foo") == 0);
+                }
+
+                SECTION("array")
+                {
+                    json j_nonobject(json::value_t::array);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.count("foo") == 0);
+                    CHECK(j_nonobject_const.count("foo") == 0);
+                }
+
+                SECTION("boolean")
+                {
+                    json j_nonobject(json::value_t::boolean);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.count("foo") == 0);
+                    CHECK(j_nonobject_const.count("foo") == 0);
+                }
+
+                SECTION("number (integer)")
+                {
+                    json j_nonobject(json::value_t::number_integer);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.count("foo") == 0);
+                    CHECK(j_nonobject_const.count("foo") == 0);
+                }
+
+                SECTION("number (floating-point)")
+                {
+                    json j_nonobject(json::value_t::number_float);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.count("foo") == 0);
+                    CHECK(j_nonobject_const.count("foo") == 0);
+                }
+            }
+        }
     }
 }
 
