@@ -2040,6 +2040,9 @@ class basic_json
     /// a random access iterator for the basic_json class
     class iterator : public std::iterator<std::random_access_iterator_tag, basic_json>
     {
+        // allow basic_json class to access m_it
+        friend class basic_json;
+
       public:
         /// the type of the values when the iterator is dereferenced
         using value_type = basic_json::value_type;
@@ -2529,6 +2532,9 @@ class basic_json
     /// a const random access iterator for the basic_json class
     class const_iterator : public std::iterator<std::random_access_iterator_tag, const basic_json>
     {
+        // allow basic_json class to access m_it
+        friend class basic_json;
+
       public:
         /// the type of the values when the iterator is dereferenced
         using value_type = basic_json::value_type;
