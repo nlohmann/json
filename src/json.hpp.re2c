@@ -2072,11 +2072,22 @@ class basic_json
             }
         }
 
+        /// copy constructor
+        inline iterator(const iterator& other) noexcept
+            : m_object(other.m_object), m_it(other.m_it)
+        {}
+
         /// copy assignment
-        inline iterator& operator=(const iterator& other) noexcept
+        inline iterator& operator=(iterator other) noexcept (
+            std::is_nothrow_move_constructible<pointer>::value and
+            std::is_nothrow_move_assignable<pointer>::value and
+            std::is_nothrow_move_constructible<internal_iterator<typename array_t::iterator, typename object_t::iterator>>::value
+            and
+            std::is_nothrow_move_assignable<internal_iterator<typename array_t::iterator, typename object_t::iterator>>::value
+        )
         {
-            m_object = other.m_object;
-            m_it = other.m_it;
+            std::swap(m_object, other.m_object);
+            std::swap(m_it, other.m_it);
             return *this;
         }
 
@@ -2575,11 +2586,22 @@ class basic_json
             }
         }
 
+        /// copy constructor
+        inline const_iterator(const const_iterator& other) noexcept
+            : m_object(other.m_object), m_it(other.m_it)
+        {}
+
         /// copy assignment
-        inline const_iterator& operator=(const const_iterator& other) noexcept
+        inline const_iterator& operator=(const_iterator other) noexcept(
+            std::is_nothrow_move_constructible<pointer>::value and
+            std::is_nothrow_move_assignable<pointer>::value and
+            std::is_nothrow_move_constructible<internal_iterator<typename array_t::const_iterator, typename object_t::const_iterator>>::value
+            and
+            std::is_nothrow_move_assignable<internal_iterator<typename array_t::const_iterator, typename object_t::const_iterator>>::value
+        )
         {
-            m_object = other.m_object;
-            m_it = other.m_it;
+            std::swap(m_object, other.m_object);
+            std::swap(m_it, other.m_it);
             return *this;
         }
 
