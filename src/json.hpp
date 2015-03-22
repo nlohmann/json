@@ -410,7 +410,7 @@ class basic_json
     {
         Allocator<object_t> alloc;
         m_value.object = alloc.allocate(1);
-        alloc.construct(m_value.object, value.begin(), value.end());
+        alloc.construct(m_value.object, std::begin(value), std::end(value));
     }
 
     /// create an array (explicit)
@@ -438,7 +438,7 @@ class basic_json
     {
         Allocator<array_t> alloc;
         m_value.array = alloc.allocate(1);
-        alloc.construct(m_value.array, value.begin(), value.end());
+        alloc.construct(m_value.array, std::begin(value), std::end(value));
     }
 
     /// create a string (explicit)
@@ -3067,7 +3067,8 @@ class basic_json
 
         @see <http://en.wikipedia.org/wiki/UTF-8#Sample_code>
         */
-        inline static string_t to_unicode(const size_t codepoint1, const size_t codepoint2 = 0)
+        inline static string_t to_unicode(const size_t codepoint1,
+                                          const size_t codepoint2 = 0)
         {
             string_t result;
 
@@ -3095,7 +3096,7 @@ class basic_json
 
             if (codepoint <= 0x7f)
             {
-                // 1-byte characters: 0xxxxxxx (ASCI)
+                // 1-byte characters: 0xxxxxxx (ASCII)
                 result.append(1, static_cast<typename string_t::value_type>(codepoint));
             }
             else if (codepoint <= 0x7ff)
