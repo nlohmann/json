@@ -32,6 +32,7 @@ iterators allow a ReversibleContainer to be iterated over in reverse.
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <functional>
 #include <initializer_list>
 #include <iomanip>
@@ -1882,7 +1883,8 @@ class basic_json
     recursively. Note that
 
     - strings and object keys are escaped using escape_string()
-    - integer numbers are converted to a string before output using std::to_string()
+    - integer numbers are converted to a string before output using
+      std::to_string()
     - floating-point numbers are converted to a string using "%g" format
 
     @param prettyPrint    whether the output shall be pretty-printed
@@ -1991,12 +1993,12 @@ class basic_json
 
             case (value_t::number_float):
             {
-                // 15 digits of precision allows round-trip IEEE 754 string->double->string
-                unsigned int sz = (unsigned int)std::snprintf(nullptr, 0, "%.15g", m_value.number_float);
+                // 15 digits of precision allows round-trip IEEE 754
+                // string->double->string
+                const auto sz = static_cast<unsigned int>(std::snprintf(nullptr, 0, "%.15g", m_value.number_float));
                 std::vector<char> buf(sz + 1);
                 std::snprintf(&buf[0], buf.size(), "%.15g", m_value.number_float);
-                string_t formatted = buf.data();
-                return formatted;
+                return string_t(buf.data());
             }
 
             default:
