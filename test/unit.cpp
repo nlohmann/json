@@ -1160,6 +1160,12 @@ TEST_CASE("object inspection")
             CHECK(s.find("42.23") != std::string::npos);
         }
 
+        SECTION("dump and small floating-point numbers")
+        {
+            auto s = json(1.23456e-78).dump();
+            CHECK(s.find("1.23456e-78") != std::string::npos);
+        }
+
         SECTION("dump and non-ASCII characters")
         {
             CHECK(json("ä").dump() == "\"ä\"");
