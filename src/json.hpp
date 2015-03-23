@@ -1571,11 +1571,11 @@ class basic_json
             {
                 if (rhs.type() == value_t::number_integer)
                 {
-                    return lhs.m_value.number_float == static_cast<number_float_t>(rhs.m_value.number_integer);
+                    return approx(lhs.m_value.number_float, static_cast<number_float_t>(rhs.m_value.number_integer));
                 }
                 if (rhs.type() == value_t::number_float)
                 {
-                    return lhs.m_value.number_float == rhs.m_value.number_float;
+                    return approx(lhs.m_value.number_float, rhs.m_value.number_float);
                 }
                 break;
             }
@@ -2006,6 +2006,13 @@ class basic_json
                 return "null";
             }
         }
+    }
+
+    /// "equality" comparison for floating point numbers
+    template<typename T>
+    inline static bool approx(const T a, const T b)
+    {
+        return not (a > b or a < b);
     }
 
 
@@ -4275,7 +4282,7 @@ basic_json_parser_59:
 
                     // check if conversion loses precision
                     const auto int_val = static_cast<number_integer_t>(float_val);
-                    if (float_val == int_val)
+                    if (approx(float_val, static_cast<number_float_t>(int_val)))
                     {
                         // we basic_json not lose precision -> return int
                         return basic_json(int_val);
