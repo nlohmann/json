@@ -2367,6 +2367,86 @@ TEST_CASE("element access")
             }
         }
 
+        SECTION("remove specified element")
+        {
+            SECTION("remove element")
+            {
+                CHECK(j.find("integer") != j.end());
+                CHECK(j.erase("integer") == 1);
+                CHECK(j.find("integer") == j.end());
+                CHECK(j.erase("integer") == 0);
+
+                CHECK(j.find("boolean") != j.end());
+                CHECK(j.erase("boolean") == 1);
+                CHECK(j.find("boolean") == j.end());
+                CHECK(j.erase("boolean") == 0);
+
+                CHECK(j.find("null") != j.end());
+                CHECK(j.erase("null") == 1);
+                CHECK(j.find("null") == j.end());
+                CHECK(j.erase("null") == 0);
+
+                CHECK(j.find("string") != j.end());
+                CHECK(j.erase("string") == 1);
+                CHECK(j.find("string") == j.end());
+                CHECK(j.erase("string") == 0);
+
+                CHECK(j.find("floating") != j.end());
+                CHECK(j.erase("floating") == 1);
+                CHECK(j.find("floating") == j.end());
+                CHECK(j.erase("floating") == 0);
+
+                CHECK(j.find("object") != j.end());
+                CHECK(j.erase("object") == 1);
+                CHECK(j.find("object") == j.end());
+                CHECK(j.erase("object") == 0);
+
+                CHECK(j.find("array") != j.end());
+                CHECK(j.erase("array") == 1);
+                CHECK(j.find("array") == j.end());
+                CHECK(j.erase("array") == 0);
+            }
+
+            SECTION("access on non-object type")
+            {
+                SECTION("null")
+                {
+                    json j_nonobject(json::value_t::null);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                }
+
+                SECTION("boolean")
+                {
+                    json j_nonobject(json::value_t::boolean);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                }
+
+                SECTION("string")
+                {
+                    json j_nonobject(json::value_t::string);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                }
+
+                SECTION("array")
+                {
+                    json j_nonobject(json::value_t::array);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                }
+
+                SECTION("number (integer)")
+                {
+                    json j_nonobject(json::value_t::number_integer);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                }
+
+                SECTION("number (floating-point)")
+                {
+                    json j_nonobject(json::value_t::number_float);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                }
+            }
+        }
+
         SECTION("find an element in an object")
         {
             SECTION("existing element")

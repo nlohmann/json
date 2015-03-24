@@ -1050,6 +1050,18 @@ class basic_json
         return m_value.object->operator[](key);
     }
 
+    /// remove element from an object given a key
+    inline size_type erase(const typename object_t::key_type& key)
+    {
+        // at only works for objects
+        if (m_type != value_t::object)
+        {
+            throw std::runtime_error("cannot use at with " + type_name());
+        }
+
+        return m_value.object->erase(key);
+    }
+
     /// find an element in an object
     inline iterator find(typename object_t::key_type key)
     {
