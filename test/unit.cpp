@@ -2801,6 +2801,16 @@ TEST_CASE("iterators")
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
             }
+
+            SECTION("key/value")
+            {
+                auto it = j.begin();
+                auto cit = j_const.cbegin();
+                CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK(it.value() == json(true));
+                CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK(cit.value() == json(true));
+            }
         }
 
         SECTION("string")
@@ -2982,6 +2992,16 @@ TEST_CASE("iterators")
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
             }
+
+            SECTION("key/value")
+            {
+                auto it = j.begin();
+                auto cit = j_const.cbegin();
+                CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK(it.value() == json("hello world"));
+                CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK(cit.value() == json("hello world"));
+            }
         }
 
         SECTION("array")
@@ -3156,6 +3176,16 @@ TEST_CASE("iterators")
                 CHECK(it != it_begin);
                 CHECK(it == it_end);
             }
+
+            SECTION("key/value")
+            {
+                auto it = j.begin();
+                auto cit = j_const.cbegin();
+                CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK(it.value() == json(1));
+                CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK(cit.value() == json(1));
+            }
         }
 
         SECTION("object")
@@ -3329,6 +3359,16 @@ TEST_CASE("iterators")
                 ++it;
                 CHECK(it != it_begin);
                 CHECK(it == it_end);
+            }
+
+            SECTION("key/value")
+            {
+                auto it = j.begin();
+                auto cit = j_const.cbegin();
+                CHECK(it.key() == "A");
+                CHECK(it.value() == json(1));
+                CHECK(cit.key() == "A");
+                CHECK(cit.value() == json(1));
             }
         }
 
@@ -3511,6 +3551,16 @@ TEST_CASE("iterators")
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
             }
+
+            SECTION("key/value")
+            {
+                auto it = j.begin();
+                auto cit = j_const.cbegin();
+                CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK(it.value() == json(23));
+                CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK(cit.value() == json(23));
+            }
         }
 
         SECTION("number (float)")
@@ -3692,6 +3742,16 @@ TEST_CASE("iterators")
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
             }
+
+            SECTION("key/value")
+            {
+                auto it = j.begin();
+                auto cit = j_const.cbegin();
+                CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK(it.value() == json(23.42));
+                CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK(cit.value() == json(23.42));
+            }
         }
 
         SECTION("null")
@@ -3742,6 +3802,16 @@ TEST_CASE("iterators")
             {
                 json::const_reverse_iterator it = j_const.crbegin();
                 CHECK(it == j_const.crend());
+            }
+
+            SECTION("key/value")
+            {
+                auto it = j.begin();
+                auto cit = j_const.cbegin();
+                CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK_THROWS_AS(it.value(), std::out_of_range);
+                CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK_THROWS_AS(cit.value(), std::out_of_range);
             }
         }
     }

@@ -2137,6 +2137,7 @@ class basic_json
             return *this;
         }
 
+      private:
         /// set the iterator to the first value
         inline void set_begin() noexcept
         {
@@ -2194,6 +2195,7 @@ class basic_json
             }
         }
 
+      public:
         /// return a reference to the value pointed to by the iterator
         inline reference operator*()
         {
@@ -2559,6 +2561,27 @@ class basic_json
             }
         }
 
+        inline typename object_t::key_type key() const
+        {
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    return m_it.object_iterator->first;
+                }
+
+                default:
+                {
+                    throw std::domain_error("cannot use key() for non-object iterators");
+                }
+            }
+        }
+
+        inline reference value()
+        {
+            return operator*();
+        }
+
       private:
         /// associated JSON instance
         pointer m_object = nullptr;
@@ -2654,6 +2677,7 @@ class basic_json
             return *this;
         }
 
+      private:
         /// set the iterator to the first value
         inline void set_begin() noexcept
         {
@@ -2711,6 +2735,7 @@ class basic_json
             }
         }
 
+      public:
         /// return a reference to the value pointed to by the iterator
         inline reference operator*() const
         {
@@ -3069,6 +3094,27 @@ class basic_json
                     }
                 }
             }
+        }
+
+        inline typename object_t::key_type key() const
+        {
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    return m_it.object_iterator->first;
+                }
+
+                default:
+                {
+                    throw std::domain_error("cannot use key() for non-object iterators");
+                }
+            }
+        }
+
+        inline reference value() const
+        {
+            return operator*();
         }
 
       private:
