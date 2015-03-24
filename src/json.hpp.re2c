@@ -1740,6 +1740,12 @@ class basic_json
     }
 
     /// deserialize from stream
+    static basic_json parse(std::istream& i)
+    {
+        return parser(i).parse();
+    }
+
+    /// deserialize from stream
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
         j = parser(i).parse();
@@ -3112,10 +3118,19 @@ class basic_json
 
         /// constructor with a given buffer
         inline lexer(const string_t& s) noexcept
-            : m_content(reinterpret_cast<const lexer_char_t*>(s.c_str()))
+        : m_buffer(s), m_stream(nullptr)
         {
+            m_content = reinterpret_cast<const lexer_char_t*>(s.c_str());
             m_start = m_cursor = m_content;
             m_limit = m_content + s.size();
+        }
+        inline lexer(std::istream* s) noexcept
+            : m_stream(s)
+        {
+            getline(*m_stream, m_buffer);
+            m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
+            m_start = m_cursor = m_content;
+            m_limit = m_content + m_buffer.size();
         }
 
         /// default constructor
@@ -3242,7 +3257,7 @@ class basic_json
         inline token_type scan() noexcept
         {
             // pointer for backtracking information
-            const lexer_char_t* m_marker = nullptr;
+            m_marker = nullptr;
 
             // remember the begin of the token
             m_start = m_cursor;
@@ -3252,10 +3267,11 @@ class basic_json
                 re2c:define:YYCURSOR = m_cursor;
                 re2c:define:YYLIMIT  = m_limit;
                 re2c:define:YYMARKER = m_marker;
+                re2c:define:YYFILL   = "{ yyfill(); }";
+                re2c:yyfill:parameter = 0;
                 re2c:indent:string   = "    ";
                 re2c:indent:top      = 1;
                 re2c:labelprefix     = "basic_json_parser_";
-                re2c:yyfill:enable   = 0;
 
                 // whitespace
                 ws = [ \t\n\r]+;
@@ -3305,6 +3321,28 @@ class basic_json
                 // anything else is an error
                 .              { return token_type::parse_error; }
              */
+
+        }
+
+        /// append data from the stream to the internal buffer
+        void yyfill() noexcept
+        {
+            if (not m_stream or not *m_stream) return;
+
+            ssize_t offset_start  = m_start  - m_content;
+            ssize_t offset_marker = m_marker - m_start;
+            ssize_t offset_cursor = m_cursor - m_start;
+
+            m_buffer.erase(0, offset_start);
+            std::string line;
+            std::getline(*m_stream, line);
+            m_buffer += line;
+
+            m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
+            m_start  = m_content;
+            m_marker = m_start + offset_marker;
+            m_cursor = m_start + offset_cursor;
+            m_limit  = m_start + m_buffer.size() - 1;
         }
 
         /// return string representation of last read token
@@ -3469,10 +3507,16 @@ class basic_json
         }
 
       private:
+        /// optional input stream
+        std::istream* m_stream;
         /// the buffer
+        string_t m_buffer;
+        /// the buffer pointer
         const lexer_char_t* m_content = nullptr;
-        /// pointer to he beginning of the current symbol
+        /// pointer to the beginning of the current symbol
         const lexer_char_t* m_start = nullptr;
+        /// pointer for backtracking information
+        const lexer_char_t* m_marker = nullptr;
         /// pointer to the current symbol
         const lexer_char_t* m_cursor = nullptr;
         /// pointer to the end of the buffer
@@ -3486,25 +3530,15 @@ class basic_json
     {
       public:
         /// constructor for strings
-        inline parser(const string_t& s) : m_buffer(s), m_lexer(m_buffer)
+		inline parser(const string_t& s) : m_lexer(s)
         {
             // read first token
             get_token();
         }
 
         /// a parser reading from an input stream
-        inline parser(std::istream& _is)
+		inline parser(std::istream& _is) : m_lexer(&_is)
         {
-            while (_is)
-            {
-                string_t input_line;
-                std::getline(_is, input_line);
-                m_buffer += input_line;
-            }
-
-            // initializer lexer
-            m_lexer = lexer(m_buffer);
-
             // read first token
             get_token();
         }
@@ -3690,8 +3724,6 @@ class basic_json
         }
 
       private:
-        /// the buffer
-        string_t m_buffer;
         /// the type of the last read token
         typename lexer::token_type last_token = lexer::token_type::uninitialized;
         /// the lexer
