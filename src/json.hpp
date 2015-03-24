@@ -411,7 +411,9 @@ class basic_json
     {
         Allocator<object_t> alloc;
         m_value.object = alloc.allocate(1);
-        alloc.construct(m_value.object, std::begin(value), std::end(value));
+        using std::begin;
+        using std::end;
+        alloc.construct(m_value.object, begin(value), end(value));
     }
 
     /// create an array (explicit)
@@ -439,7 +441,9 @@ class basic_json
     {
         Allocator<array_t> alloc;
         m_value.array = alloc.allocate(1);
-        alloc.construct(m_value.array, std::begin(value), std::end(value));
+        using std::begin;
+        using std::end;
+        alloc.construct(m_value.array, begin(value), end(value));
     }
 
     /// create a string (explicit)
