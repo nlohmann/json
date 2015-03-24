@@ -353,7 +353,7 @@ I deeply appreciate the help of the following people.
 - [kirkshoop](https://github.com/kirkshoop) made the iterators of the class composable to other libraries.
 - [wancw](https://github.com/wanwc) fixed a bug that hindered the class to compile with Clang.
 - Tomas Åblad found a bug in the iterator implementation.
-- [Joshua C. Randall](https://github.com/jrandall) fixed a bug in the floating-point serialization.
+- [Joshua C. Randall](https://github.com/jrandall) fixed a bug in the floating-point serialization and implemented code to parse streams incrementally.
 
 Thanks a lot for helping out!
 
