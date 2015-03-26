@@ -2810,6 +2810,13 @@ TEST_CASE("iterators")
                 CHECK(it.value() == json(true));
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
                 CHECK(cit.value() == json(true));
+
+                auto rit = j.rend();
+                auto crit = j.rend();
+                CHECK_THROWS_AS(rit.key(), std::domain_error);
+                CHECK(rit.value() == json(true));
+                CHECK_THROWS_AS(crit.key(), std::domain_error);
+                CHECK(crit.value() == json(true));
             }
         }
 
@@ -3001,6 +3008,13 @@ TEST_CASE("iterators")
                 CHECK(it.value() == json("hello world"));
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
                 CHECK(cit.value() == json("hello world"));
+
+                auto rit = j.rend();
+                auto crit = j.rend();
+                CHECK_THROWS_AS(rit.key(), std::domain_error);
+                CHECK(rit.value() == json("hello world"));
+                CHECK_THROWS_AS(crit.key(), std::domain_error);
+                CHECK(crit.value() == json("hello world"));
             }
         }
 
@@ -3185,6 +3199,13 @@ TEST_CASE("iterators")
                 CHECK(it.value() == json(1));
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
                 CHECK(cit.value() == json(1));
+
+                auto rit = j.rend();
+                auto crit = j.rend();
+                CHECK_THROWS_AS(rit.key(), std::domain_error);
+                CHECK(rit.value() == json(1));
+                CHECK_THROWS_AS(crit.key(), std::domain_error);
+                CHECK(crit.value() == json(1));
             }
         }
 
@@ -3369,6 +3390,13 @@ TEST_CASE("iterators")
                 CHECK(it.value() == json(1));
                 CHECK(cit.key() == "A");
                 CHECK(cit.value() == json(1));
+
+                auto rit = j.rend();
+                auto crit = j.rend();
+                CHECK(rit.key() == "A");
+                CHECK(rit.value() == json(1));
+                CHECK(crit.key() == "A");
+                CHECK(crit.value() == json(1));
             }
         }
 
@@ -3560,6 +3588,13 @@ TEST_CASE("iterators")
                 CHECK(it.value() == json(23));
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
                 CHECK(cit.value() == json(23));
+
+                auto rit = j.rend();
+                auto crit = j.rend();
+                CHECK_THROWS_AS(rit.key(), std::domain_error);
+                CHECK(rit.value() == json(23));
+                CHECK_THROWS_AS(crit.key(), std::domain_error);
+                CHECK(crit.value() == json(23));
             }
         }
 
@@ -3751,6 +3786,13 @@ TEST_CASE("iterators")
                 CHECK(it.value() == json(23.42));
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
                 CHECK(cit.value() == json(23.42));
+
+                auto rit = j.rend();
+                auto crit = j.rend();
+                CHECK_THROWS_AS(rit.key(), std::domain_error);
+                CHECK(rit.value() == json(23.42));
+                CHECK_THROWS_AS(crit.key(), std::domain_error);
+                CHECK(crit.value() == json(23.42));
             }
         }
 
@@ -3812,6 +3854,13 @@ TEST_CASE("iterators")
                 CHECK_THROWS_AS(it.value(), std::out_of_range);
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
                 CHECK_THROWS_AS(cit.value(), std::out_of_range);
+
+                auto rit = j.rend();
+                auto crit = j.rend();
+                CHECK_THROWS_AS(rit.key(), std::domain_error);
+                CHECK_THROWS_AS(rit.value(), std::out_of_range);
+                CHECK_THROWS_AS(crit.key(), std::domain_error);
+                CHECK_THROWS_AS(crit.value(), std::out_of_range);
             }
         }
     }

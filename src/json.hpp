@@ -96,6 +96,8 @@ class basic_json
     // forward declarations
     class iterator;
     class const_iterator;
+    class reverse_iterator;
+    class const_reverse_iterator;
 
     /*!
     @brief the type of elements in a basic_json container
@@ -151,13 +153,13 @@ class basic_json
     @brief a reverse iterator for a basic_json container
     @ingroup reversiblecontainer
     */
-    using reverse_iterator = std::reverse_iterator<iterator>;
+    using reverse_iterator = basic_json::reverse_iterator;
 
     /*!
     @brief a const reverse iterator for a basic_json container
     @ingroup reversiblecontainer
     */
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    using const_reverse_iterator = basic_json::const_reverse_iterator;
 
 
     /// returns the allocator associated with the container
@@ -2561,6 +2563,7 @@ class basic_json
             }
         }
 
+        /// return the key of an object iterator
         inline typename object_t::key_type key() const
         {
             switch (m_object->m_type)
@@ -2577,6 +2580,7 @@ class basic_json
             }
         }
 
+        /// return the key of an iterator
         inline reference value()
         {
             return operator*();
@@ -3096,6 +3100,7 @@ class basic_json
             }
         }
 
+        /// return the key of an object iterator
         inline typename object_t::key_type key() const
         {
             switch (m_object->m_type)
@@ -3112,6 +3117,7 @@ class basic_json
             }
         }
 
+        /// return the value of an iterator
         inline reference value() const
         {
             return operator*();
@@ -3122,6 +3128,48 @@ class basic_json
         pointer m_object = nullptr;
         /// the actual iterator of the associated instance
         internal_iterator<typename array_t::const_iterator, typename object_t::const_iterator> m_it;
+    };
+
+    /// a reverse random access iterator for the basic_json class
+    class reverse_iterator : private std::reverse_iterator<basic_json::iterator>
+    {
+      public:
+        inline reverse_iterator(const typename std::reverse_iterator<basic_json::iterator>::iterator_type&
+                                it)
+            : std::reverse_iterator<basic_json::iterator>(it) {}
+
+        /// return the key of an object iterator
+        inline typename object_t::key_type key() const
+        {
+            return this->base().key();
+        }
+
+        /// return the value of an iterator
+        inline reference value() const
+        {
+            return this->base().operator * ();
+        }
+    };
+
+    /// a const reverse random access iterator for the basic_json class
+    class const_reverse_iterator : private std::reverse_iterator<basic_json::const_iterator>
+    {
+      public:
+        inline const_reverse_iterator(const typename
+                                      std::reverse_iterator<basic_json::const_iterator>::iterator_type& it)
+            : std::reverse_iterator<basic_json::const_iterator>(it) {}
+
+        /// return the key of an object iterator
+        inline typename object_t::key_type key() const
+        {
+            return this->base().key();
+        }
+
+        /// return the value of an iterator
+        inline reference value() const
+        {
+            return this->base().operator * ();
+        }
     };
 
 
