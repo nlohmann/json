@@ -33,7 +33,6 @@ As of February 2015, the following updates were made to the library
 - *Added*: The class uses **user-defined allocators** which default to `std::allocator`, but can be templated via parameter `Allocator`.
 - *Added:* To simplify pretty-printing, the `std::setw` **stream manipulator** has been overloaded to set the desired indentation. Pretty-printing a JSON object `j` is as simple as `std::cout << std::setw(4) << j << '\n'`.
 - *Changed*: The type `json::value_t::number` is now called `json::value_t::number_integer` to be more symmetric compared to `json::value_t::number_float`.
-- *Removed:* The `key()` and `value()` member functions for object iterators were nonstandard and yielded more problems than benefits. They were removed from the library.
 
 ## Integration
 
@@ -229,10 +228,22 @@ o["foo"] = 23;
 o["bar"] = false;
 o["baz"] = 3.141;
 
+// special iterator member functions for objects
+for (json::iterator it = o.begin(); it != o.end(); ++it) {
+  std::cout << it.key() << " : " << it.value() << "\n";
+}
+
 // find an entry
 if (o.find("foo") != o.end()) {
   // there is an entry with key "foo"
 }
+
+// or simpler using count()
+int foo_present = o.count("foo"); // 1
+int fob_present = o.count("fob"); // 0
+
+// delete an entry
+o.erase("foo");
 ```
 
 ### Conversion from STL containers
