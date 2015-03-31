@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/nlohmann/json.png?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
+[![Documentation Status](https://readthedocs.org/projects/json/badge/?version=latest)](https://readthedocs.org/projects/json/?badge=latest)
 [![Github Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
 
 ## Design goals
