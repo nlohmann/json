@@ -1,0 +1,21 @@
+{
+  "name": "nlohmann-json",
+  "version": "3.0.0",
+  "homepage": "https://github.com/nlohmann/json",
+  "authors": [
+    "Niels Lohmann <niels.lohmann@gmail.com>"
+  ],
+  "description": "JSON for Modern C++",
+  "main": "src/json.hpp",
+  "keywords": [
+    "json"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
