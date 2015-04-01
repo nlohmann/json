@@ -108,7 +108,7 @@ using json = basic_json<
 
 ### Capacity
 
-- `empty`
+- [`empty`](empty)
 - `size`
 - `max_size`
 
