@@ -808,7 +808,7 @@ class basic_json
     /// get an object (explicit)
     template <class T, typename
               std::enable_if<
-                  std::is_constructible<string_t, typename T::key_type>::value and
+                  std::is_constructible<typename T::key_type, string_t>::value and
                   std::is_constructible<basic_json, typename T::mapped_type>::value, int>::type
               = 0>
     inline T get() const
@@ -842,7 +842,7 @@ class basic_json
     /// get a string (explicit)
     template <typename T, typename
               std::enable_if<
-                  std::is_constructible<T, string_t>::value, int>::type
+                  std::is_constructible<string_t, T>::value, int>::type
               = 0>
     inline T get() const
     {
