@@ -2117,6 +2117,7 @@ TEST_CASE("value conversion")
                 CHECK_THROWS_AS((json().get<std::list<int>>()), std::logic_error);
                 CHECK_THROWS_AS((json().get<std::vector<int>>()), std::logic_error);
                 CHECK_THROWS_AS((json().get<std::vector<json>>()), std::logic_error);
+                CHECK_THROWS_AS((json().get<std::list<json>>()), std::logic_error);
             }
         }
     }
