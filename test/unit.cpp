@@ -2006,6 +2006,108 @@ TEST_CASE("value conversion")
             CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
         }
     }
+
+    SECTION("more involved conversions")
+    {
+        SECTION("object-like STL containers")
+        {
+            json j1 = {{"one", 1}, {"two", 2}, {"three", 3}};
+            json j2 = {{"one", 1.1}, {"two", 2.2}, {"three", 3.3}};
+            json j3 = {{"one", true}, {"two", false}, {"three", true}};
+            json j4 = {{"one", "eins"}, {"two", "zwei"}, {"three", "drei"}};
+
+            SECTION("std::map")
+            {
+                auto m1 = j1.get<std::map<std::string, int>>();
+                auto m2 = j2.get<std::map<std::string, double>>();
+                auto m3 = j3.get<std::map<std::string, bool>>();
+                //auto m4 = j4.get<std::map<std::string, std::string>>();
+            }
+
+            SECTION("std::unordered_map")
+            {
+                auto m1 = j1.get<std::unordered_map<std::string, int>>();
+                auto m2 = j2.get<std::unordered_map<std::string, double>>();
+                auto m3 = j3.get<std::unordered_map<std::string, bool>>();
+                //auto m4 = j4.get<std::unordered_map<std::string, std::string>>();
+                //CHECK(m4["one"] == "eins");
+            }
+
+            SECTION("std::multimap")
+            {
+                auto m1 = j1.get<std::multimap<std::string, int>>();
+                auto m2 = j2.get<std::multimap<std::string, double>>();
+                auto m3 = j3.get<std::multimap<std::string, bool>>();
+                //auto m4 = j4.get<std::multimap<std::string, std::string>>();
+                //CHECK(m4["one"] == "eins");
+            }
+
+            SECTION("std::unordered_multimap")
+            {
+                auto m1 = j1.get<std::unordered_multimap<std::string, int>>();
+                auto m2 = j2.get<std::unordered_multimap<std::string, double>>();
+                auto m3 = j3.get<std::unordered_multimap<std::string, bool>>();
+                //auto m4 = j4.get<std::unordered_multimap<std::string, std::string>>();
+                //CHECK(m4["one"] == "eins");
+            }
+        }
+
+        SECTION("array-like STL containers")
+        {
+            json j1 = {1, 2, 3, 4};
+            json j2 = {1.2, 2.3, 3.4, 4.5};
+            json j3 = {true, false, true};
+            json j4 = {"one", "two", "three"};
+
+            SECTION("std::list")
+            {
+                auto m1 = j1.get<std::list<int>>();
+                auto m2 = j2.get<std::list<double>>();
+                auto m3 = j3.get<std::list<bool>>();
+                auto m4 = j4.get<std::list<std::string>>();
+            }
+
+            //SECTION("std::forward_list")
+            //{
+            //    auto m1 = j1.get<std::forward_list<int>>();
+            //    auto m2 = j2.get<std::forward_list<double>>();
+            //    auto m3 = j3.get<std::forward_list<bool>>();
+            //    auto m4 = j4.get<std::forward_list<std::string>>();
+            //}
+
+            SECTION("std::vector")
+            {
+                auto m1 = j1.get<std::vector<int>>();
+                auto m2 = j2.get<std::vector<double>>();
+                auto m3 = j3.get<std::vector<bool>>();
+                auto m4 = j4.get<std::vector<std::string>>();
+            }
+
+            SECTION("std::deque")
+            {
+                auto m1 = j1.get<std::deque<int>>();
+                auto m2 = j2.get<std::deque<double>>();
+                auto m3 = j3.get<std::deque<bool>>();
+                auto m4 = j4.get<std::deque<std::string>>();
+            }
+
+            SECTION("std::set")
+            {
+                auto m1 = j1.get<std::set<int>>();
+                auto m2 = j2.get<std::set<double>>();
+                auto m3 = j3.get<std::set<bool>>();
+                auto m4 = j4.get<std::set<std::string>>();
+            }
+
+            SECTION("std::unordered_set")
+            {
+                auto m1 = j1.get<std::unordered_set<int>>();
+                auto m2 = j2.get<std::unordered_set<double>>();
+                auto m3 = j3.get<std::unordered_set<bool>>();
+                auto m4 = j4.get<std::unordered_set<std::string>>();
+            }
+        }
+    }
 }
 
 TEST_CASE("element access")

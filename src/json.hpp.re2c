@@ -58,15 +58,14 @@ namespace nlohmann
 // Helper to determine whether there's a key_type for T.
 // http://stackoverflow.com/a/7728728/266378
 template<typename T>
-struct has_key_type
+struct has_mapped_type
 {
   private:
-    template<typename C> static char test(typename C::key_type*);
+    template<typename C> static char test(typename C::mapped_type*);
     template<typename C> static int  test(...);
   public:
     enum { value = sizeof(test<T>(0)) == sizeof(char) };
 };
-
 
 /*!
 @brief JSON
@@ -814,7 +813,7 @@ class basic_json
         return m_type;
     }
 
-
+  private:
     //////////////////////
     // value conversion //
     //////////////////////
@@ -822,87 +821,204 @@ class basic_json
     /// get an object (explicit)
     template <class T, typename
               std::enable_if<
-                  std::is_constructible<typename T::key_type, typename object_t::key_type>::value and
-                  std::is_constructible<typename T::mapped_type, basic_json>::value, int>::type
-              = 0>
-    inline T get() const
+                  std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
+                  std::is_convertible<basic_json, typename T::mapped_type>::value
+                  , int>::type = 0>
+    inline T get_impl(T*) const
     {
         switch (m_type)
         {
             case (value_t::object):
+            {
                 return T(m_value.object->begin(), m_value.object->end());
+            }
             default:
+            {
                 throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+            }
+        }
+    }
+
+    /// get an object (explicit)
+    inline object_t get_impl(object_t*) const
+    {
+        switch (m_type)
+        {
+            case (value_t::object):
+            {
+                return *(m_value.object);
+            }
+            default:
+            {
+                throw std::logic_error("cannot cast " + type_name() + " to object");
+            }
         }
     }
 
     /// get an array (explicit)
     template <class T, typename
               std::enable_if<
-                  not std::is_same<T, string_t>::value and
-                  not has_key_type<T>::value and
-                  std::is_constructible<typename T::value_type, basic_json>::value, int>::type
-              = 0>
-    inline T get() const
+                  std::is_convertible<basic_json, typename T::value_type>::value and
+                  not std::is_same<basic_json, typename T::value_type>::value and
+                  not std::is_arithmetic<T>::value and
+                  not std::is_convertible<std::string, T>::value and
+                  not has_mapped_type<T>::value
+                  , int>::type = 0>
+    inline T get_impl(T*) const
     {
         switch (m_type)
         {
             case (value_t::array):
-                return T(m_value.array->begin(), m_value.array->end());
+            {
+                T to_vector;
+                //to_vector.reserve(m_value.array->size());
+                std::transform(m_value.array->begin(), m_value.array->end(),
+                               std::inserter(to_vector, to_vector.end()), [](basic_json i)
+                {
+                    return i.get<typename T::value_type>();
+                });
+                return to_vector;
+
+                //   return T(m_value.array->begin(), m_value.array->end());
+            }
             default:
+            {
                 throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+            }
+        }
+    }
+
+    /// get an array (explicit)
+    template <class T, typename
+              std::enable_if<
+                  std::is_convertible<basic_json, T>::value and
+                  not std::is_same<basic_json, T>::value
+                  , int>::type = 0>
+    inline std::vector<T> get_impl(std::vector<T>*) const
+    {
+        switch (m_type)
+        {
+            case (value_t::array):
+            {
+                std::vector<T> to_vector;
+                to_vector.reserve(m_value.array->size());
+                std::transform(m_value.array->begin(), m_value.array->end(),
+                               std::inserter(to_vector, to_vector.end()), [](basic_json i)
+                {
+                    return i.get<T>();
+                });
+                return to_vector;
+            }
+            default:
+            {
+                throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+            }
+        }
+    }
+
+    /// get an array (explicit)
+    template <class T, typename
+              std::enable_if<
+                  std::is_same<basic_json, typename T::value_type>::value and
+                  not has_mapped_type<T>::value
+                  , int>::type = 0>
+    inline T get_impl(T*) const
+    {
+        switch (m_type)
+        {
+            case (value_t::array):
+            {
+                return T(m_value.array->begin(), m_value.array->end());
+            }
+            default:
+            {
+                throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+            }
+        }
+    }
+
+    inline array_t get_impl(array_t*) const
+    {
+        switch (m_type)
+        {
+            case (value_t::array):
+            {
+                return *(m_value.array);
+            }
+            default:
+            {
+                throw std::logic_error("cannot cast " + type_name() + " to array");
+            }
         }
     }
 
     /// get a string (explicit)
     template <typename T, typename
               std::enable_if<
-                  std::is_constructible<T, string_t>::value, int>::type
-              = 0>
-    inline T get() const
+                  std::is_convertible<string_t, T>::value
+                  , int>::type = 0>
+    inline T get_impl(T*) const
     {
         switch (m_type)
         {
             case (value_t::string):
+            {
                 return *m_value.string;
+            }
             default:
+            {
                 throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
-        }
-    }
-
-    /// get a boolean (explicit)
-    template <typename T, typename
-              std::enable_if<
-                  std::is_same<boolean_t, T>::value, int>::type
-              = 0>
-    inline T get() const
-    {
-        switch (m_type)
-        {
-            case (value_t::boolean):
-                return m_value.boolean;
-            default:
-                throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+            }
         }
     }
 
     /// get a number (explicit)
     template<typename T, typename
              std::enable_if<
-                 not std::is_same<boolean_t, T>::value and
-                 std::is_arithmetic<T>::value, int>::type
-             = 0>
-    inline T get() const
+                 std::is_arithmetic<T>::value
+                 , int>::type = 0>
+    inline T get_impl(T*) const
     {
         switch (m_type)
         {
             case (value_t::number_integer):
+            {
                 return static_cast<T>(m_value.number_integer);
+            }
             case (value_t::number_float):
+            {
                 return static_cast<T>(m_value.number_float);
+            }
             default:
+            {
                 throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+            }
         }
+    }
+
+    /// get a boolean (explicit)
+    inline boolean_t get_impl(boolean_t*) const
+    {
+        switch (m_type)
+        {
+            case (value_t::boolean):
+            {
+                return m_value.boolean;
+            }
+            default:
+            {
+                throw std::logic_error("cannot cast " + type_name() + " to " + typeid(boolean_t).name());
+            }
+        }
+    }
+
+  public:
+    /// get a value (explicit)
+    // <http://stackoverflow.com/a/8315197/266378>
+    template<typename T>
+    inline T get() const
+    {
+        return get_impl(static_cast<T*>(nullptr));
     }
 
     /// get a value (implicit)
@@ -1077,7 +1193,7 @@ class basic_json
         // at only works for objects
         if (m_type != value_t::object)
         {
-            throw std::runtime_error("cannot use at with " + type_name());
+            throw std::runtime_error("cannot use erase with " + type_name());
         }
 
         return m_value.object->erase(key);
