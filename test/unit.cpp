@@ -2050,6 +2050,11 @@ TEST_CASE("value conversion")
                 //auto m4 = j4.get<std::unordered_multimap<std::string, std::string>>();
                 //CHECK(m4["one"] == "eins");
             }
+
+            SECTION("exception in case of a non-object type")
+            {
+                CHECK_THROWS_AS((json().get<std::map<std::string, int>>()), std::logic_error);
+            }
         }
 
         SECTION("array-like STL containers")
@@ -2105,6 +2110,13 @@ TEST_CASE("value conversion")
                 auto m2 = j2.get<std::unordered_set<double>>();
                 auto m3 = j3.get<std::unordered_set<bool>>();
                 auto m4 = j4.get<std::unordered_set<std::string>>();
+            }
+
+            SECTION("exception in case of a non-object type")
+            {
+                CHECK_THROWS_AS((json().get<std::list<int>>()), std::logic_error);
+                CHECK_THROWS_AS((json().get<std::vector<int>>()), std::logic_error);
+                CHECK_THROWS_AS((json().get<std::vector<json>>()), std::logic_error);
             }
         }
     }
