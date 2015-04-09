@@ -48,6 +48,19 @@ using json = nlohmann::json;
 
 to the files you want to use JSON objects. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 
+## Supported compilers
+
+Though it's 2015 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+
+- GCC 4.8
+- GCC 4.9
+- Clang 3.4
+- Clang 3.5
+
+I would be happy to learn about other compilers/versions.
+
+Unfortunately, Microsoft Visual C++ support at the moment. MSVC 2013 and MSVC 2014 have been reported not to be able to compile class. Note that I will not accept pull requests that "fix" the code by polluting it with preprocessor directives to mitigate MSVC's lacking C++11 support.
+
 ## Examples
 
 Here are some examples to give you an idea how to use the class.
