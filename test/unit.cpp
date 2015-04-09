@@ -2291,6 +2291,91 @@ TEST_CASE("element access")
                 }
             }
         }
+
+        SECTION("remove specified element")
+        {
+            SECTION("remove element")
+            {
+                {
+                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    jarray.erase(0);
+                    CHECK(jarray == json({true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                }
+                {
+                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    jarray.erase(1);
+                    CHECK(jarray == json({1, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                }
+                {
+                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    jarray.erase(2);
+                    CHECK(jarray == json({1, true, "string", 42.23, json::object(), {1, 2, 3}}));
+                }
+                {
+                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    jarray.erase(3);
+                    CHECK(jarray == json({1, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
+                }
+                {
+                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    jarray.erase(4);
+                    CHECK(jarray == json({1, true, nullptr, "string", json::object(), {1, 2, 3}}));
+                }
+                {
+                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    jarray.erase(5);
+                    CHECK(jarray == json({1, true, nullptr, "string", 42.23, {1, 2, 3}}));
+                }
+                {
+                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    jarray.erase(6);
+                    CHECK(jarray == json({1, true, nullptr, "string", 42.23, json::object()}));
+                }
+                {
+                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    CHECK_THROWS_AS(jarray.erase(7), std::out_of_range);
+                }
+            }
+
+            SECTION("access on non-object type")
+            {
+                SECTION("null")
+                {
+                    json j_nonobject(json::value_t::null);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                }
+
+                SECTION("boolean")
+                {
+                    json j_nonobject(json::value_t::boolean);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                }
+
+                SECTION("string")
+                {
+                    json j_nonobject(json::value_t::string);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                }
+
+                SECTION("object")
+                {
+                    json j_nonobject(json::value_t::object);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                }
+
+                SECTION("number (integer)")
+                {
+                    json j_nonobject(json::value_t::number_integer);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                }
+
+                SECTION("number (floating-point)")
+                {
+                    json j_nonobject(json::value_t::number_float);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                }
+            }
+        }
     }
 
     SECTION("object")

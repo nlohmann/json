@@ -1190,13 +1190,30 @@ class basic_json
     /// remove element from an object given a key
     inline size_type erase(const typename object_t::key_type& key)
     {
-        // at only works for objects
+        // this erase only works for objects
         if (m_type != value_t::object)
         {
             throw std::runtime_error("cannot use erase with " + type_name());
         }
 
         return m_value.object->erase(key);
+    }
+
+    /// remove element from an array given an index
+    inline void erase(const size_type pos)
+    {
+        // this erase only works for arrays
+        if (m_type != value_t::array)
+        {
+            throw std::runtime_error("cannot use erase with " + type_name());
+        }
+
+        if (pos >= size())
+        {
+            throw std::out_of_range("index out of range");
+        }
+
+        m_value.array->erase(m_value.array->begin() + static_cast<difference_type>(pos));
     }
 
     /// find an element in an object
