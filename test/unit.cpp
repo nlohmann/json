@@ -2294,7 +2294,7 @@ TEST_CASE("element access")
 
         SECTION("remove specified element")
         {
-            SECTION("remove element")
+            SECTION("remove element by index")
             {
                 {
                     json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
@@ -2337,7 +2337,112 @@ TEST_CASE("element access")
                 }
             }
 
-            SECTION("access on non-object type")
+            SECTION("remove element by iterator")
+            {
+                SECTION("erase(begin())")
+                {
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::iterator it2 = jarray.erase(jarray.begin());
+                        CHECK(jarray == json({true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(*it2 == json(true));
+                    }
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::const_iterator it2 = jarray.erase(jarray.cbegin());
+                        CHECK(jarray == json({true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(*it2 == json(true));
+                    }
+                }
+
+                SECTION("erase(begin(), end())")
+                {
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::iterator it2 = jarray.erase(jarray.begin(), jarray.end());
+                        CHECK(jarray == json::array());
+                        CHECK(it2 == jarray.end());
+                    }
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::const_iterator it2 = jarray.erase(jarray.cbegin(), jarray.cend());
+                        CHECK(jarray == json::array());
+                        CHECK(it2 == jarray.cend());
+                    }
+                }
+
+                SECTION("erase(begin(), begin())")
+                {
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::iterator it2 = jarray.erase(jarray.begin(), jarray.begin());
+                        CHECK(jarray == json({1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(*it2 == json(1));
+                    }
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::const_iterator it2 = jarray.erase(jarray.cbegin(), jarray.cbegin());
+                        CHECK(jarray == json({1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(*it2 == json(1));
+                    }
+                }
+
+                SECTION("erase at offset")
+                {
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::iterator it = jarray.begin() + 3;
+                        json::iterator it2 = jarray.erase(it);
+                        CHECK(jarray == json({1, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(*it2 == json(42.23));
+                    }
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::const_iterator it = jarray.cbegin() + 3;
+                        json::const_iterator it2 = jarray.erase(it);
+                        CHECK(jarray == json({1, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(*it2 == json(42.23));
+                    }
+                }
+
+                SECTION("erase subrange")
+                {
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::iterator it2 = jarray.erase(jarray.begin() + 2, jarray.begin() + 5);
+                        CHECK(jarray == json({1, true, json::object(), {1, 2, 3}}));
+                        CHECK(*it2 == json::object());
+                    }
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::const_iterator it2 = jarray.erase(jarray.cbegin() + 2, jarray.cbegin() + 5);
+                        CHECK(jarray == json({1, true, json::object(), {1, 2, 3}}));
+                        CHECK(*it2 == json::object());
+                    }
+                }
+
+                SECTION("different arrays")
+                {
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray2 = {"foo", "bar"};
+                        CHECK_THROWS_AS(jarray.erase(jarray2.begin()), std::runtime_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray.begin(), jarray2.end()), std::runtime_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.begin(), jarray.end()), std::runtime_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.begin(), jarray2.end()), std::runtime_error);
+                    }
+                    {
+                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray2 = {"foo", "bar"};
+                        CHECK_THROWS_AS(jarray.erase(jarray2.cbegin()), std::runtime_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray.cbegin(), jarray2.cend()), std::runtime_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.cbegin(), jarray.cend()), std::runtime_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.cbegin(), jarray2.cend()), std::runtime_error);
+                    }
+                }
+            }
+
+            SECTION("remove element by index in non-array type")
             {
                 SECTION("null")
                 {
@@ -2569,7 +2674,7 @@ TEST_CASE("element access")
 
         SECTION("remove specified element")
         {
-            SECTION("remove element")
+            SECTION("remove element by key")
             {
                 CHECK(j.find("integer") != j.end());
                 CHECK(j.erase("integer") == 1);
@@ -2607,7 +2712,112 @@ TEST_CASE("element access")
                 CHECK(j.erase("array") == 0);
             }
 
-            SECTION("access on non-object type")
+            SECTION("remove element by iterator")
+            {
+                SECTION("erase(begin())")
+                {
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json::iterator it2 = jobject.erase(jobject.begin());
+                        CHECK(jobject == json({{"b", 1}, {"c", 17}}));
+                        CHECK(*it2 == json(1));
+                    }
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json::const_iterator it2 = jobject.erase(jobject.cbegin());
+                        CHECK(jobject == json({{"b", 1}, {"c", 17}}));
+                        CHECK(*it2 == json(1));
+                    }
+                }
+
+                SECTION("erase(begin(), end())")
+                {
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json::iterator it2 = jobject.erase(jobject.begin(), jobject.end());
+                        CHECK(jobject == json::object());
+                        CHECK(it2 == jobject.end());
+                    }
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json::const_iterator it2 = jobject.erase(jobject.cbegin(), jobject.cend());
+                        CHECK(jobject == json::object());
+                        CHECK(it2 == jobject.cend());
+                    }
+                }
+
+                SECTION("erase(begin(), begin())")
+                {
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json::iterator it2 = jobject.erase(jobject.begin(), jobject.begin());
+                        CHECK(jobject == json({{"a", "a"}, {"b", 1}, {"c", 17}}));
+                        CHECK(*it2 == json("a"));
+                    }
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json::const_iterator it2 = jobject.erase(jobject.cbegin(), jobject.cbegin());
+                        CHECK(jobject == json({{"a", "a"}, {"b", 1}, {"c", 17}}));
+                        CHECK(*it2 == json("a"));
+                    }
+                }
+
+                SECTION("erase at offset")
+                {
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json::iterator it = jobject.find("b");
+                        json::iterator it2 = jobject.erase(it);
+                        CHECK(jobject == json({{"a", "a"}, {"c", 17}}));
+                        CHECK(*it2 == json(17));
+                    }
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json::const_iterator it = jobject.find("b");
+                        json::const_iterator it2 = jobject.erase(it);
+                        CHECK(jobject == json({{"a", "a"}, {"c", 17}}));
+                        CHECK(*it2 == json(17));
+                    }
+                }
+
+                SECTION("erase subrange")
+                {
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
+                        json::iterator it2 = jobject.erase(jobject.find("b"), jobject.find("e"));
+                        CHECK(jobject == json({{"a", "a"}, {"e", true}}));
+                        CHECK(*it2 == json(true));
+                    }
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
+                        json::const_iterator it2 = jobject.erase(jobject.find("b"), jobject.find("e"));
+                        CHECK(jobject == json({{"a", "a"}, {"e", true}}));
+                        CHECK(*it2 == json(true));
+                    }
+                }
+
+                SECTION("different arrays")
+                {
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
+                        json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        CHECK_THROWS_AS(jobject.erase(jobject2.begin()), std::runtime_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject.begin(), jobject2.end()), std::runtime_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject.end()), std::runtime_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject2.end()), std::runtime_error);
+                    }
+                    {
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
+                        json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin()), std::runtime_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject.cbegin(), jobject2.cend()), std::runtime_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject.cend()), std::runtime_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject2.cend()), std::runtime_error);
+                    }
+                }
+            }
+
+            SECTION("remove element by key in non-object type")
             {
                 SECTION("null")
                 {
@@ -2803,6 +3013,253 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
+                }
+            }
+        }
+    }
+
+    SECTION("other values")
+    {
+        SECTION("erase with one valid iterator")
+        {
+            SECTION("string")
+            {
+                {
+                    json j = "foo";
+                    json::iterator it = j.erase(j.begin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+                {
+                    json j = "bar";
+                    json::const_iterator it = j.erase(j.cbegin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+            }
+
+            SECTION("number (boolean)")
+            {
+                {
+                    json j = false;
+                    json::iterator it = j.erase(j.begin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+                {
+                    json j = true;
+                    json::const_iterator it = j.erase(j.cbegin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+            }
+
+            SECTION("number (integer)")
+            {
+                {
+                    json j = 17;
+                    json::iterator it = j.erase(j.begin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+                {
+                    json j = 17;
+                    json::const_iterator it = j.erase(j.cbegin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+            }
+
+            SECTION("number (floating point)")
+            {
+                {
+                    json j = 23.42;
+                    json::iterator it = j.erase(j.begin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+                {
+                    json j = 23.42;
+                    json::const_iterator it = j.erase(j.cbegin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+            }
+        }
+
+        SECTION("erase with one invalid iterator")
+        {
+            SECTION("string")
+            {
+                {
+                    json j = "foo";
+                    CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
+                }
+                {
+                    json j = "bar";
+                    CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
+                }
+            }
+
+            SECTION("number (boolean)")
+            {
+                {
+                    json j = false;
+                    CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
+                }
+                {
+                    json j = true;
+                    CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
+                }
+            }
+
+            SECTION("number (integer)")
+            {
+                {
+                    json j = 17;
+                    CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
+                }
+                {
+                    json j = 17;
+                    CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
+                }
+            }
+
+            SECTION("number (floating point)")
+            {
+                {
+                    json j = 23.42;
+                    CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
+                }
+                {
+                    json j = 23.42;
+                    CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
+                }
+            }
+        }
+
+        SECTION("erase with two valid iterators")
+        {
+            SECTION("string")
+            {
+                {
+                    json j = "foo";
+                    json::iterator it = j.erase(j.begin(), j.end());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+                {
+                    json j = "bar";
+                    json::const_iterator it = j.erase(j.cbegin(), j.cend());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+            }
+
+            SECTION("number (boolean)")
+            {
+                {
+                    json j = false;
+                    json::iterator it = j.erase(j.begin(), j.end());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+                {
+                    json j = true;
+                    json::const_iterator it = j.erase(j.cbegin(), j.cend());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+            }
+
+            SECTION("number (integer)")
+            {
+                {
+                    json j = 17;
+                    json::iterator it = j.erase(j.begin(), j.end());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+                {
+                    json j = 17;
+                    json::const_iterator it = j.erase(j.cbegin(), j.cend());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+            }
+
+            SECTION("number (floating point)")
+            {
+                {
+                    json j = 23.42;
+                    json::iterator it = j.erase(j.begin(), j.end());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+                {
+                    json j = 23.42;
+                    json::const_iterator it = j.erase(j.cbegin(), j.cend());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+            }
+        }
+
+        SECTION("erase with two invalid iterators")
+        {
+            SECTION("string")
+            {
+                {
+                    json j = "foo";
+                    CHECK_THROWS_AS(j.erase(j.end(), j.end()), std::out_of_range);
+                    CHECK_THROWS_AS(j.erase(j.begin(), j.begin()), std::out_of_range);
+                }
+                {
+                    json j = "bar";
+                    CHECK_THROWS_AS(j.erase(j.cend(), j.cend()), std::out_of_range);
+                    CHECK_THROWS_AS(j.erase(j.cbegin(), j.cbegin()), std::out_of_range);
+                }
+            }
+
+            SECTION("number (boolean)")
+            {
+                {
+                    json j = false;
+                    CHECK_THROWS_AS(j.erase(j.end(), j.end()), std::out_of_range);
+                    CHECK_THROWS_AS(j.erase(j.begin(), j.begin()), std::out_of_range);
+                }
+                {
+                    json j = true;
+                    CHECK_THROWS_AS(j.erase(j.cend(), j.cend()), std::out_of_range);
+                    CHECK_THROWS_AS(j.erase(j.cbegin(), j.cbegin()), std::out_of_range);
+                }
+            }
+
+            SECTION("number (integer)")
+            {
+                {
+                    json j = 17;
+                    CHECK_THROWS_AS(j.erase(j.end(), j.end()), std::out_of_range);
+                    CHECK_THROWS_AS(j.erase(j.begin(), j.begin()), std::out_of_range);
+                }
+                {
+                    json j = 17;
+                    CHECK_THROWS_AS(j.erase(j.cend(), j.cend()), std::out_of_range);
+                    CHECK_THROWS_AS(j.erase(j.cbegin(), j.cbegin()), std::out_of_range);
+                }
+            }
+
+            SECTION("number (floating point)")
+            {
+                {
+                    json j = 23.42;
+                    CHECK_THROWS_AS(j.erase(j.end(), j.end()), std::out_of_range);
+                    CHECK_THROWS_AS(j.erase(j.begin(), j.begin()), std::out_of_range);
+                }
+                {
+                    json j = 23.42;
+                    CHECK_THROWS_AS(j.erase(j.cend(), j.cend()), std::out_of_range);
+                    CHECK_THROWS_AS(j.erase(j.cbegin(), j.cbegin()), std::out_of_range);
                 }
             }
         }

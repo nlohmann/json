@@ -7,26 +7,6 @@
 @see https://github.com/nlohmann/json
 */
 
-/*!
-@defgroup container Container
-@brief C++ Container concept
-
-A Container is an object used to store other objects and taking care of the
-management of the memory used by the objects it contains.
-
-@see http://en.cppreference.com/w/cpp/concept/Container
-
-@defgroup reversiblecontainer Reversible Container
-@brief C++ Reversible Container concept
-@ingroup container
-
-A ReversibleContainer is a Container that has iterators that meet the
-requirements of either BidirectionalIterator or RandomAccessIterator. Such
-iterators allow a ReversibleContainer to be iterated over in reverse.
-
-@see http://en.cppreference.com/w/cpp/concept/ReversibleContainer
-*/
-
 #ifndef _NLOHMANN_JSON
 #define _NLOHMANN_JSON
 
@@ -871,15 +851,12 @@ class basic_json
             case (value_t::array):
             {
                 T to_vector;
-                //to_vector.reserve(m_value.array->size());
                 std::transform(m_value.array->begin(), m_value.array->end(),
                                std::inserter(to_vector, to_vector.end()), [](basic_json i)
                 {
                     return i.get<typename T::value_type>();
                 });
                 return to_vector;
-
-                //   return T(m_value.array->begin(), m_value.array->end());
             }
             default:
             {
@@ -1185,6 +1162,129 @@ class basic_json
         }
 
         return m_value.object->operator[](key);
+    }
+
+    /// remove element given an iterator
+    template <class T, typename
+              std::enable_if<
+                  std::is_same<T, basic_json::iterator>::value or
+                  std::is_same<T, basic_json::const_iterator>::value
+                  , int>::type
+              = 0>
+    inline T erase(T pos)
+    {
+        // make sure iterator fits the current value
+        if (this != pos.m_object or m_type != pos.m_object->m_type)
+        {
+            throw std::runtime_error("iterator does not fit current value");
+        }
+
+        T result = end();
+
+        switch (m_type)
+        {
+            case value_t::number_integer:
+            case value_t::number_float:
+            case value_t::boolean:
+            case value_t::string:
+            {
+                if (pos.m_it.generic_iterator != 0)
+                {
+                    throw std::out_of_range("iterator out of range");
+                }
+
+                if (m_type == value_t::string)
+                {
+                    delete m_value.string;
+                    m_value.string = nullptr;
+                }
+
+                m_type = value_t::null;
+                break;
+            }
+
+            case value_t::object:
+            {
+                result.m_it.object_iterator = m_value.object->erase(pos.m_it.object_iterator);
+                break;
+            }
+
+            case value_t::array:
+            {
+                result.m_it.array_iterator = m_value.array->erase(pos.m_it.array_iterator);
+                break;
+            }
+
+            default:
+            {
+                throw std::runtime_error("cannot use erase with " + type_name());
+            }
+        }
+
+        return result;
+    }
+
+    /// remove elements given an iterator range
+    template <class T, typename
+              std::enable_if<
+                  std::is_same<T, basic_json::iterator>::value or
+                  std::is_same<T, basic_json::const_iterator>::value
+                  , int>::type
+              = 0>
+    inline T erase(T first, T last)
+    {
+        // make sure iterator fits the current value
+        if (this != first.m_object or this != last.m_object or
+                m_type != first.m_object->m_type or m_type != last.m_object->m_type)
+        {
+            throw std::runtime_error("iterators do not fit current value");
+        }
+
+        T result = end();
+
+        switch (m_type)
+        {
+            case value_t::number_integer:
+            case value_t::number_float:
+            case value_t::boolean:
+            case value_t::string:
+            {
+                if (first.m_it.generic_iterator != 0 or last.m_it.generic_iterator != 1)
+                {
+                    throw std::out_of_range("iterators out of range");
+                }
+
+                if (m_type == value_t::string)
+                {
+                    delete m_value.string;
+                    m_value.string = nullptr;
+                }
+
+                m_type = value_t::null;
+                break;
+            }
+
+            case value_t::object:
+            {
+                result.m_it.object_iterator = m_value.object->erase(first.m_it.object_iterator,
+                                              last.m_it.object_iterator);
+                break;
+            }
+
+            case value_t::array:
+            {
+                result.m_it.array_iterator = m_value.array->erase(first.m_it.array_iterator,
+                                             last.m_it.array_iterator);
+                break;
+            }
+
+            default:
+            {
+                throw std::runtime_error("cannot use erase with " + type_name());
+            }
+        }
+
+        return result;
     }
 
     /// remove element from an object given a key
