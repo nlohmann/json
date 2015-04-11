@@ -3022,6 +3022,18 @@ TEST_CASE("element access")
     {
         SECTION("erase with one valid iterator")
         {
+            SECTION("null")
+            {
+                {
+                    json j;
+                    CHECK_THROWS_AS(j.erase(j.begin()), std::runtime_error);
+                }
+                {
+                    json j;
+                    CHECK_THROWS_AS(j.erase(j.cbegin()), std::runtime_error);
+                }
+            }
+
             SECTION("string")
             {
                 {
@@ -3140,6 +3152,18 @@ TEST_CASE("element access")
 
         SECTION("erase with two valid iterators")
         {
+            SECTION("null")
+            {
+                {
+                    json j;
+                    CHECK_THROWS_AS(j.erase(j.begin(), j.end()), std::runtime_error);
+                }
+                {
+                    json j;
+                    CHECK_THROWS_AS(j.erase(j.cbegin(), j.cend()), std::runtime_error);
+                }
+            }
+
             SECTION("string")
             {
                 {
