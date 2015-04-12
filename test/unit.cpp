@@ -7346,9 +7346,16 @@ TEST_CASE("parser class")
 
                 // exotic test cases for full coverage
                 {
-                    std::stringstream ss;
-                    ss << "\"\\u000\n1\"";
-                    CHECK(json::parser(ss).parse().get<json::string_t>() == "\x01");
+                    {
+                        std::stringstream ss;
+                        ss << "\"\\u000\n1\"";
+                        CHECK(json::parser(ss).parse().get<json::string_t>() == "\x01");
+                    }
+                    {
+                        std::stringstream ss;
+                        ss << "\"\\u00\n01\"";
+                        CHECK(json::parser(ss).parse().get<json::string_t>() == "\x01");
+                    }
                 }
 
                 CHECK(json::parser("\"\\u0001\"").parse().get<json::string_t>() == "\x01");
