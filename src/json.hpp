@@ -587,7 +587,7 @@ class basic_json
         alloc.construct(m_value.array, count, other);
     }
 
-    // construct a JSON container given an iterator range
+    /// construct a JSON container given an iterator range
     template <class T, typename
               std::enable_if<
                   std::is_same<T, basic_json::iterator>::value or
@@ -603,8 +603,10 @@ class basic_json
             throw std::runtime_error("iterators are not compatible");
         }
 
+        // set the type
         m_type = first.m_object->m_type;
 
+        // check if iterator range is complete for non-compound values
         switch (m_type)
         {
             case value_t::number_integer:
@@ -1259,6 +1261,34 @@ class basic_json
         }
 
         return m_value.object->operator[](key);
+    }
+
+    /// access the first element
+    inline reference front()
+    {
+        return *begin();
+    }
+
+    /// access the first element
+    inline const_reference front() const
+    {
+        return *cbegin();
+    }
+
+    /// access the last element
+    inline reference back()
+    {
+        auto tmp = end();
+        --tmp;
+        return *tmp;
+    }
+
+    /// access the last element
+    inline const_reference back() const
+    {
+        auto tmp = cend();
+        --tmp;
+        return *tmp;
     }
 
     /// remove element given an iterator

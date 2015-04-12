@@ -2471,6 +2471,14 @@ TEST_CASE("element access")
             }
         }
 
+        SECTION("front and back")
+        {
+            CHECK(j.front() == json(1));
+            CHECK(j_const.front() == json(1));
+            CHECK(j.back() == json({1, 2, 3}));
+            CHECK(j_const.back() == json({1, 2, 3}));
+        }
+
         SECTION("access specified element")
         {
             SECTION("access within bounds")
@@ -2827,6 +2835,16 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
                 }
             }
+        }
+
+        SECTION("front and back")
+        {
+            // "array" is the smallest key
+            CHECK(j.front() == json({1, 2, 3}));
+            CHECK(j_const.front() == json({1, 2, 3}));
+            // "string" is the largest key
+            CHECK(j.back() == json("hello world"));
+            CHECK(j_const.back() == json("hello world"));
         }
 
         SECTION("access specified element")
@@ -3282,6 +3300,79 @@ TEST_CASE("element access")
 
     SECTION("other values")
     {
+        SECTION("front and back")
+        {
+            SECTION("null")
+            {
+                {
+                    json j;
+                    CHECK_THROWS_AS(j.front(), std::out_of_range);
+                    CHECK_THROWS_AS(j.back(), std::out_of_range);
+                }
+                {
+                    const json j{};
+                    CHECK_THROWS_AS(j.front(), std::out_of_range);
+                    CHECK_THROWS_AS(j.back(), std::out_of_range);
+                }
+            }
+
+            SECTION("string")
+            {
+                {
+                    json j = "foo";
+                    CHECK(j.front() == j);
+                    CHECK(j.back() == j);
+                }
+                {
+                    const json j = "bar";
+                    CHECK(j.front() == j);
+                    CHECK(j.back() == j);
+                }
+            }
+
+            SECTION("number (boolean)")
+            {
+                {
+                    json j = false;
+                    CHECK(j.front() == j);
+                    CHECK(j.back() == j);
+                }
+                {
+                    const json j = true;
+                    CHECK(j.front() == j);
+                    CHECK(j.back() == j);
+                }
+            }
+
+            SECTION("number (integer)")
+            {
+                {
+                    json j = 17;
+                    CHECK(j.front() == j);
+                    CHECK(j.back() == j);
+                }
+                {
+                    const json j = 17;
+                    CHECK(j.front() == j);
+                    CHECK(j.back() == j);
+                }
+            }
+
+            SECTION("number (floating point)")
+            {
+                {
+                    json j = 23.42;
+                    CHECK(j.front() == j);
+                    CHECK(j.back() == j);
+                }
+                {
+                    const json j = 23.42;
+                    CHECK(j.front() == j);
+                    CHECK(j.back() == j);
+                }
+            }
+        }
+
         SECTION("erase with one valid iterator")
         {
             SECTION("null")
