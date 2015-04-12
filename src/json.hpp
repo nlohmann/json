@@ -3541,7 +3541,7 @@ class basic_json
         }
 
         /// return the value of an iterator
-        inline reference value() const
+        inline const_reference value() const
         {
             return this->base().operator * ();
         }

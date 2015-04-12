@@ -3846,7 +3846,7 @@ TEST_CASE("iterators")
                 CHECK(cit.value() == json(true));
 
                 auto rit = j.rend();
-                auto crit = j.rend();
+                auto crit = j.crend();
                 CHECK_THROWS_AS(rit.key(), std::domain_error);
                 CHECK(rit.value() == json(true));
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
@@ -4044,7 +4044,7 @@ TEST_CASE("iterators")
                 CHECK(cit.value() == json("hello world"));
 
                 auto rit = j.rend();
-                auto crit = j.rend();
+                auto crit = j.crend();
                 CHECK_THROWS_AS(rit.key(), std::domain_error);
                 CHECK(rit.value() == json("hello world"));
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
@@ -4235,7 +4235,7 @@ TEST_CASE("iterators")
                 CHECK(cit.value() == json(1));
 
                 auto rit = j.rend();
-                auto crit = j.rend();
+                auto crit = j.crend();
                 CHECK_THROWS_AS(rit.key(), std::domain_error);
                 CHECK(rit.value() == json(1));
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
@@ -4426,7 +4426,7 @@ TEST_CASE("iterators")
                 CHECK(cit.value() == json(1));
 
                 auto rit = j.rend();
-                auto crit = j.rend();
+                auto crit = j.crend();
                 CHECK(rit.key() == "A");
                 CHECK(rit.value() == json(1));
                 CHECK(crit.key() == "A");
@@ -4624,7 +4624,7 @@ TEST_CASE("iterators")
                 CHECK(cit.value() == json(23));
 
                 auto rit = j.rend();
-                auto crit = j.rend();
+                auto crit = j.crend();
                 CHECK_THROWS_AS(rit.key(), std::domain_error);
                 CHECK(rit.value() == json(23));
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
@@ -4822,7 +4822,7 @@ TEST_CASE("iterators")
                 CHECK(cit.value() == json(23.42));
 
                 auto rit = j.rend();
-                auto crit = j.rend();
+                auto crit = j.crend();
                 CHECK_THROWS_AS(rit.key(), std::domain_error);
                 CHECK(rit.value() == json(23.42));
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
@@ -4890,7 +4890,7 @@ TEST_CASE("iterators")
                 CHECK_THROWS_AS(cit.value(), std::out_of_range);
 
                 auto rit = j.rend();
-                auto crit = j.rend();
+                auto crit = j.crend();
                 CHECK_THROWS_AS(rit.key(), std::domain_error);
                 CHECK_THROWS_AS(rit.value(), std::out_of_range);
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
@@ -6328,6 +6328,14 @@ TEST_CASE("serialization")
 
 TEST_CASE("deserialization")
 {
+    SECTION("stream")
+    {
+        std::stringstream ss;
+        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+        json j = json::parse(ss);
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
+
     SECTION("string")
     {
         auto s = "[\"foo\",1,2,3,false,{\"one\":1}]";
