@@ -902,6 +902,17 @@ TEST_CASE("constructors")
             }
         }
     }
+
+    SECTION("create an array of n copies of a given value")
+    {
+        json v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2}}};
+        json arr(3, v);
+        CHECK(arr.size() == 3);
+        for (auto& x : arr)
+        {
+            CHECK(x == v);
+        }
+    }
 }
 
 TEST_CASE("other constructors and destructor")
@@ -7762,6 +7773,56 @@ TEST_CASE("algorithms")
 
 TEST_CASE("concepts")
 {
+    SECTION("container requirements for json")
+    {
+        // X: container class: json
+        // T: type of objects: json
+        // a, b: values of type X: json
+
+        // TABLE 96 - Container Requirements
+
+        // X::value_type must return T
+        CHECK((std::is_same<json::value_type, json>::value));
+
+        // X::reference must return lvalue of T
+        CHECK((std::is_same<json::reference, json&>::value));
+
+        // X::const_reference must return const lvalue of T
+        CHECK((std::is_same<json::const_reference, const json&>::value));
+
+        // X::iterator must return iterator whose value_type is T
+        CHECK((std::is_same<json::iterator::value_type, json>::value));
+        // X::iterator must meet the forward iterator requirements
+        CHECK((std::is_base_of<std::forward_iterator_tag, typename std::iterator_traits<json::iterator>::iterator_category>::value));
+        // X::iterator must be convertible to X::const_iterator
+        CHECK((std::is_convertible<json::iterator, json::const_iterator>::value));
+
+        // X::const_iterator must return iterator whose value_type is T
+        CHECK((std::is_same<json::const_iterator::value_type, json>::value));
+        // X::const_iterator must meet the forward iterator requirements
+        CHECK((std::is_base_of<std::forward_iterator_tag, typename std::iterator_traits<json::const_iterator>::iterator_category>::value));
+
+        // X::difference_type must return a signed integer
+        CHECK((std::is_signed<json::difference_type>::value));
+        // X::difference_type must be identical to X::iterator::difference_type
+        CHECK((std::is_same<json::difference_type, json::iterator::difference_type>::value));
+        // X::difference_type must be identical to X::const_iterator::difference_type
+        CHECK((std::is_same<json::difference_type, json::const_iterator::difference_type>::value));
+
+        // X::size_type must return an unsigned integer
+        CHECK((std::is_unsigned<json::size_type>::value));
+        // X::size_type can represent any non-negative value of X::difference_type
+
+        // the expression "X u" has the post-condition "u.empty()"
+        {
+            json u;
+            CHECK(u.empty());
+        }
+
+        // the expression "X()" has the post-condition "X().empty()"
+        CHECK(json().empty());
+    }
+
     SECTION("class json")
     {
         SECTION("DefaultConstructible")

@@ -1,3 +1,7 @@
 site_name: JSON for Modern C++
 
-#theme: readthedocs
+theme: readthedocs
+#theme: bootstrap
+#theme: yeti
+
+markdown_extensions: [fenced_code]

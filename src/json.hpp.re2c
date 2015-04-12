@@ -156,7 +156,7 @@ class basic_json
 
 
     /// returns the allocator associated with the container
-    inline allocator_type get_allocator() const
+    inline static allocator_type get_allocator()
     {
         return allocator_type();
     }
@@ -578,6 +578,14 @@ class basic_json
         return basic_json(l, false, value_t::object);
     }
 
+    /// construct an array with count copies of given value
+    inline basic_json(size_type count, const basic_json& other)
+        : m_type(value_t::array)
+    {
+        AllocatorType<array_t> alloc;
+        m_value.array = alloc.allocate(1);
+        alloc.construct(m_value.array, count, other);
+    }
 
     ///////////////////////////////////////
     // other constructors and destructor //
