@@ -1110,7 +1110,7 @@ class basic_json
     ////////////////////
 
     /// access specified element with bounds checking
-    inline reference at(size_type pos)
+    inline reference at(size_type idx)
     {
         // at only works for arrays
         if (m_type != value_t::array)
@@ -1118,11 +1118,11 @@ class basic_json
             throw std::runtime_error("cannot use at with " + type_name());
         }
 
-        return m_value.array->at(pos);
+        return m_value.array->at(idx);
     }
 
     /// access specified element with bounds checking
-    inline const_reference at(size_type pos) const
+    inline const_reference at(size_type idx) const
     {
         // at only works for arrays
         if (m_type != value_t::array)
@@ -1130,45 +1130,7 @@ class basic_json
             throw std::runtime_error("cannot use at with " + type_name());
         }
 
-        return m_value.array->at(pos);
-    }
-
-    /// access specified element
-    inline reference operator[](size_type pos)
-    {
-        // implicitly convert null to object
-        if (m_type == value_t::null)
-        {
-            m_type = value_t::array;
-            AllocatorType<array_t> alloc;
-            m_value.array = alloc.allocate(1);
-            alloc.construct(m_value.array);
-        }
-
-        // [] only works for arrays
-        if (m_type != value_t::array)
-        {
-            throw std::runtime_error("cannot use [] with " + type_name());
-        }
-
-        for (size_t i = m_value.array->size(); i <= pos; ++i)
-        {
-            m_value.array->push_back(basic_json());
-        }
-
-        return m_value.array->operator[](pos);
-    }
-
-    /// access specified element
-    inline const_reference operator[](size_type pos) const
-    {
-        // at only works for arrays
-        if (m_type != value_t::array)
-        {
-            throw std::runtime_error("cannot use [] with " + type_name());
-        }
-
-        return m_value.array->operator[](pos);
+        return m_value.array->at(idx);
     }
 
     /// access specified element with bounds checking
@@ -1193,6 +1155,44 @@ class basic_json
         }
 
         return m_value.object->at(key);
+    }
+
+    /// access specified element
+    inline reference operator[](size_type idx)
+    {
+        // implicitly convert null to object
+        if (m_type == value_t::null)
+        {
+            m_type = value_t::array;
+            AllocatorType<array_t> alloc;
+            m_value.array = alloc.allocate(1);
+            alloc.construct(m_value.array);
+        }
+
+        // [] only works for arrays
+        if (m_type != value_t::array)
+        {
+            throw std::runtime_error("cannot use [] with " + type_name());
+        }
+
+        for (size_t i = m_value.array->size(); i <= idx; ++i)
+        {
+            m_value.array->push_back(basic_json());
+        }
+
+        return m_value.array->operator[](idx);
+    }
+
+    /// access specified element
+    inline const_reference operator[](size_type idx) const
+    {
+        // at only works for arrays
+        if (m_type != value_t::array)
+        {
+            throw std::runtime_error("cannot use [] with " + type_name());
+        }
+
+        return m_value.array->operator[](idx);
     }
 
     /// access specified element
