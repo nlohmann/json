@@ -913,6 +913,257 @@ TEST_CASE("constructors")
             CHECK(x == v);
         }
     }
+
+    SECTION("create a JSON container from an iterator range")
+    {
+        SECTION("object")
+        {
+            SECTION("json(begin(), end())")
+            {
+                {
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    json j_new(jobject.begin(), jobject.end());
+                    CHECK(j_new == jobject);
+                }
+                {
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    json j_new(jobject.cbegin(), jobject.cend());
+                    CHECK(j_new == jobject);
+                }
+            }
+
+            SECTION("json(begin(), begin())")
+            {
+                {
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    json j_new(jobject.begin(), jobject.begin());
+                    CHECK(j_new == json::object());
+                }
+                {
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    json j_new(jobject.cbegin(), jobject.cbegin());
+                    CHECK(j_new == json::object());
+                }
+            }
+
+            SECTION("construct from subrange")
+            {
+                json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
+                json j_new(jobject.find("b"), jobject.find("e"));
+                CHECK(j_new == json({{"b", 1}, {"c", 17}, {"d", false}}));
+            }
+
+            SECTION("incompatible iterators")
+            {
+                {
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
+                    json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    CHECK_THROWS_AS(json(jobject.begin(), jobject2.end()), std::runtime_error);
+                    CHECK_THROWS_AS(json(jobject2.begin(), jobject.end()), std::runtime_error);
+                }
+                {
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
+                    json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    CHECK_THROWS_AS(json(jobject.cbegin(), jobject2.cend()), std::runtime_error);
+                    CHECK_THROWS_AS(json(jobject2.cbegin(), jobject.cend()), std::runtime_error);
+                }
+            }
+        }
+
+        SECTION("array")
+        {
+            SECTION("json(begin(), end())")
+            {
+                {
+                    json jarray = {1, 2, 3, 4, 5};
+                    json j_new(jarray.begin(), jarray.end());
+                    CHECK(j_new == jarray);
+                }
+                {
+                    json jarray = {1, 2, 3, 4, 5};
+                    json j_new(jarray.cbegin(), jarray.cend());
+                    CHECK(j_new == jarray);
+                }
+            }
+
+            SECTION("json(begin(), begin())")
+            {
+                {
+                    json jarray = {1, 2, 3, 4, 5};
+                    json j_new(jarray.begin(), jarray.begin());
+                    CHECK(j_new == json::array());
+                }
+                {
+                    json jarray = {1, 2, 3, 4, 5};
+                    json j_new(jarray.cbegin(), jarray.cbegin());
+                    CHECK(j_new == json::array());
+                }
+            }
+
+            SECTION("construct from subrange")
+            {
+                {
+                    json jarray = {1, 2, 3, 4, 5};
+                    json j_new(jarray.begin() + 1, jarray.begin() + 3);
+                    CHECK(j_new == json({2, 3}));
+                }
+                {
+                    json jarray = {1, 2, 3, 4, 5};
+                    json j_new(jarray.cbegin() + 1, jarray.cbegin() + 3);
+                    CHECK(j_new == json({2, 3}));
+                }
+            }
+
+            SECTION("incompatible iterators")
+            {
+                {
+                    json jarray = {1, 2, 3, 4};
+                    json jarray2 = {2, 3, 4, 5};
+                    CHECK_THROWS_AS(json(jarray.begin(), jarray2.end()), std::runtime_error);
+                    CHECK_THROWS_AS(json(jarray2.begin(), jarray.end()), std::runtime_error);
+                }
+                {
+                    json jarray = {1, 2, 3, 4};
+                    json jarray2 = {2, 3, 4, 5};
+                    CHECK_THROWS_AS(json(jarray.cbegin(), jarray2.cend()), std::runtime_error);
+                    CHECK_THROWS_AS(json(jarray2.cbegin(), jarray.cend()), std::runtime_error);
+                }
+            }
+        }
+
+        SECTION("other values")
+        {
+            SECTION("construct with two valid iterators")
+            {
+                SECTION("null")
+                {
+                    {
+                        json j;
+                        CHECK_THROWS_AS(json(j.begin(), j.end()), std::runtime_error);
+                    }
+                    {
+                        json j;
+                        CHECK_THROWS_AS(json(j.cbegin(), j.cend()), std::runtime_error);
+                    }
+                }
+
+                SECTION("string")
+                {
+                    {
+                        json j = "foo";
+                        json j_new(j.begin(), j.end());
+                        CHECK(j == j_new);
+                    }
+                    {
+                        json j = "bar";
+                        json j_new(j.cbegin(), j.cend());
+                        CHECK(j == j_new);
+                    }
+                }
+
+                SECTION("number (boolean)")
+                {
+                    {
+                        json j = false;
+                        json j_new(j.begin(), j.end());
+                        CHECK(j == j_new);
+                    }
+                    {
+                        json j = true;
+                        json j_new(j.cbegin(), j.cend());
+                        CHECK(j == j_new);
+                    }
+                }
+
+                SECTION("number (integer)")
+                {
+                    {
+                        json j = 17;
+                        json j_new(j.begin(), j.end());
+                        CHECK(j == j_new);
+                    }
+                    {
+                        json j = 17;
+                        json j_new(j.cbegin(), j.cend());
+                        CHECK(j == j_new);
+                    }
+                }
+
+                SECTION("number (floating point)")
+                {
+                    {
+                        json j = 23.42;
+                        json j_new(j.begin(), j.end());
+                        CHECK(j == j_new);
+                    }
+                    {
+                        json j = 23.42;
+                        json j_new(j.cbegin(), j.cend());
+                        CHECK(j == j_new);
+                    }
+                }
+            }
+
+            SECTION("construct with two invalid iterators")
+            {
+                SECTION("string")
+                {
+                    {
+                        json j = "foo";
+                        CHECK_THROWS_AS(json(j.end(), j.end()), std::out_of_range);
+                        CHECK_THROWS_AS(json(j.begin(), j.begin()), std::out_of_range);
+                    }
+                    {
+                        json j = "bar";
+                        CHECK_THROWS_AS(json(j.cend(), j.cend()), std::out_of_range);
+                        CHECK_THROWS_AS(json(j.cbegin(), j.cbegin()), std::out_of_range);
+                    }
+                }
+
+                SECTION("number (boolean)")
+                {
+                    {
+                        json j = false;
+                        CHECK_THROWS_AS(json(j.end(), j.end()), std::out_of_range);
+                        CHECK_THROWS_AS(json(j.begin(), j.begin()), std::out_of_range);
+                    }
+                    {
+                        json j = true;
+                        CHECK_THROWS_AS(json(j.cend(), j.cend()), std::out_of_range);
+                        CHECK_THROWS_AS(json(j.cbegin(), j.cbegin()), std::out_of_range);
+                    }
+                }
+
+                SECTION("number (integer)")
+                {
+                    {
+                        json j = 17;
+                        CHECK_THROWS_AS(json(j.end(), j.end()), std::out_of_range);
+                        CHECK_THROWS_AS(json(j.begin(), j.begin()), std::out_of_range);
+                    }
+                    {
+                        json j = 17;
+                        CHECK_THROWS_AS(json(j.cend(), j.cend()), std::out_of_range);
+                        CHECK_THROWS_AS(json(j.cbegin(), j.cbegin()), std::out_of_range);
+                    }
+                }
+
+                SECTION("number (floating point)")
+                {
+                    {
+                        json j = 23.42;
+                        CHECK_THROWS_AS(json(j.end(), j.end()), std::out_of_range);
+                        CHECK_THROWS_AS(json(j.begin(), j.begin()), std::out_of_range);
+                    }
+                    {
+                        json j = 23.42;
+                        CHECK_THROWS_AS(json(j.cend(), j.cend()), std::out_of_range);
+                        CHECK_THROWS_AS(json(j.cbegin(), j.cbegin()), std::out_of_range);
+                    }
+                }
+            }
+        }
+    }
 }
 
 TEST_CASE("other constructors and destructor")
@@ -2807,7 +3058,7 @@ TEST_CASE("element access")
                     }
                 }
 
-                SECTION("different arrays")
+                SECTION("different objects")
                 {
                     {
                         json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};

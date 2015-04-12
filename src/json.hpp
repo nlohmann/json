@@ -587,6 +587,95 @@ class basic_json
         alloc.construct(m_value.array, count, other);
     }
 
+    // construct a JSON container given an iterator range
+    template <class T, typename
+              std::enable_if<
+                  std::is_same<T, basic_json::iterator>::value or
+                  std::is_same<T, basic_json::const_iterator>::value
+                  , int>::type
+              = 0>
+    inline basic_json(T first, T last)
+    {
+        // make sure iterator fits the current value
+        if (first.m_object != last.m_object or
+                first.m_object->m_type != last.m_object->m_type)
+        {
+            throw std::runtime_error("iterators are not compatible");
+        }
+
+        m_type = first.m_object->m_type;
+
+        switch (m_type)
+        {
+            case value_t::number_integer:
+            case value_t::number_float:
+            case value_t::boolean:
+            case value_t::string:
+            {
+                if (first.m_it.generic_iterator != 0 or last.m_it.generic_iterator != 1)
+                {
+                    throw std::out_of_range("iterators out of range");
+                }
+                break;
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+
+        switch (m_type)
+        {
+            case value_t::number_integer:
+            {
+                m_value.number_integer = first.m_object->m_value.number_integer;
+                break;
+            }
+
+            case value_t::number_float:
+            {
+                m_value.number_float = first.m_object->m_value.number_float;
+                break;
+            }
+
+            case value_t::boolean:
+            {
+                m_value.boolean = first.m_object->m_value.boolean;
+                break;
+            }
+
+            case value_t::string:
+            {
+                AllocatorType<string_t> alloc;
+                m_value.string = alloc.allocate(1);
+                alloc.construct(m_value.string, *first.m_object->m_value.string);
+                break;
+            }
+
+            case value_t::object:
+            {
+                AllocatorType<object_t> alloc;
+                m_value.object = alloc.allocate(1);
+                alloc.construct(m_value.object, first.m_it.object_iterator, last.m_it.object_iterator);
+                break;
+            }
+
+            case value_t::array:
+            {
+                AllocatorType<array_t> alloc;
+                m_value.array = alloc.allocate(1);
+                alloc.construct(m_value.array, first.m_it.array_iterator, last.m_it.array_iterator);
+                break;
+            }
+
+            default:
+            {
+                throw std::runtime_error("cannot use construct with iterators from " + first.m_object->type_name());
+            }
+        }
+    }
+
     ///////////////////////////////////////
     // other constructors and destructor //
     ///////////////////////////////////////
