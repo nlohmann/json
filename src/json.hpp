@@ -1498,9 +1498,7 @@ class basic_json
     */
     inline const_iterator begin() const noexcept
     {
-        const_iterator result(this);
-        result.set_begin();
-        return result;
+        return cbegin();
     }
 
     /*!
@@ -1531,9 +1529,7 @@ class basic_json
     */
     inline const_iterator end() const noexcept
     {
-        const_iterator result(this);
-        result.set_end();
-        return result;
+        return cend();
     }
 
     /*!
@@ -1562,7 +1558,7 @@ class basic_json
     */
     inline const_reverse_iterator rbegin() const noexcept
     {
-        return const_reverse_iterator(end());
+        return crbegin();
     }
 
     /*!
@@ -1580,7 +1576,7 @@ class basic_json
     */
     inline const_reverse_iterator rend() const noexcept
     {
-        return const_reverse_iterator(begin());
+        return crend();
     }
 
     /*!
