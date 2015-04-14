@@ -10,9 +10,6 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include "json.hpp"
-using nlohmann::json;
-
 #include <array>
 #include <deque>
 #include <forward_list>
@@ -23,6 +20,10 @@ using nlohmann::json;
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#define private public
+#include "json.hpp"
+using nlohmann::json;
 
 TEST_CASE("constructors")
 {

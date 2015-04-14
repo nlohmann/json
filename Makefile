@@ -13,7 +13,7 @@ clean:
 
 # build unit tests
 json_unit: test/unit.cpp src/json.hpp test/catch.hpp
-	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src -I test -Dprivate=public $< $(LDFLAGS) -o $@
+	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src -I test $< $(LDFLAGS) -o $@
 
 # create scanner with re2c
 re2c: src/json.hpp.re2c
