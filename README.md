@@ -54,6 +54,7 @@ Though it's 2015 already, the support for C++11 is still a bit sparse. Currently
 
 - GCC 4.8
 - GCC 4.9
+- GCC 5.0
 - Clang 3.4
 - Clang 3.5
 
@@ -380,6 +381,7 @@ I deeply appreciate the help of the following people.
 - Tomas Åblad found a bug in the iterator implementation.
 - [Joshua C. Randall](https://github.com/jrandall) fixed a bug in the floating-point serialization.
 - [Aaron Burghardt](https://github.com/aburgh) implemented code to parse streams incrementally.
+- [Daniel Kopeček](https://github.com/dkopecek) fixed a bug in the compilation with GCC 5.0.
 
 Thanks a lot for helping out!
 
