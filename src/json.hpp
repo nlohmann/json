@@ -2251,7 +2251,7 @@ class basic_json
                     {
                         // control characters (everything between 0x00 and 0x1f)
                         // -> create four-digit hex representation
-                        std::stringstream ss;
+                        std::basic_stringstream<typename string_t::value_type> ss;
                         ss << "\\u" << std::hex << std::setw(4) << std::setfill('0') << int(c);
                         result += ss.str();
                     }
@@ -2391,7 +2391,7 @@ class basic_json
                 // 15 digits of precision allows round-trip IEEE 754
                 // string->double->string
                 const auto sz = static_cast<unsigned int>(std::snprintf(nullptr, 0, "%.15g", m_value.number_float));
-                std::vector<char> buf(sz + 1);
+                std::vector<typename string_t::value_type> buf(sz + 1);
                 std::snprintf(&buf[0], buf.size(), "%.15g", m_value.number_float);
                 return string_t(buf.data());
             }
@@ -4577,21 +4577,19 @@ basic_json_parser_59:
                             result += "\r";
                             break;
                         }
-
-                        // characters that are not "un"escsaped
                         case '\\':
                         {
-                            result += "\\\\";
+                            result += "\\";
                             break;
                         }
                         case '/':
                         {
-                            result += "\\/";
+                            result += "/";
                             break;
                         }
                         case '"':
                         {
-                            result += "\\\"";
+                            result += "\"";
                             break;
                         }
 

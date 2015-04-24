@@ -7328,12 +7328,12 @@ TEST_CASE("parser class")
 
             SECTION("escaped")
             {
-                // quotation mark
-                CHECK(json::parser("\"\\\"\"").parse() == json("\\\""));
-                // reverse solidus
-                CHECK(json::parser("\"\\\\\"").parse() == json("\\\\"));
+                // quotation mark "\""
+                CHECK(json::parser("\"\\\"\"").parse() == R"("\"")"_json);
+                // reverse solidus "\\"
+                CHECK(json::parser("\"\\\\\"").parse() == R"("\\")"_json);
                 // solidus
-                CHECK(json::parser("\"\\/\"").parse() == json("\\/"));
+                CHECK(json::parser("\"\\/\"").parse() == R"("/")"_json);
                 // backspace
                 CHECK(json::parser("\"\\b\"").parse() == json("\b"));
                 // formfeed
@@ -8264,6 +8264,19 @@ TEST_CASE("concepts")
                 CHECK(it1 == j.end());
                 CHECK(it2 == j.begin());
             }
+        }
+    }
+}
+
+TEST_CASE("regression tests")
+{
+    SECTION("issue #60 - Double quotation mark is not parsed correctly")
+    {
+        SECTION("escape_dobulequote")
+        {
+            auto s = "[\"\\\"foo\\\"\"]";
+            json j = json::parse(s);
+            CHECK(j == R"(["\"foo\""])"_json);
         }
     }
 }
