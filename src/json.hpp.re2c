@@ -504,14 +504,15 @@ class basic_json
     {}
 
     /// create a container (array or object) from an initializer list
-    inline basic_json(list_init_t l, bool type_deduction = true, value_t manual_type = value_t::array)
+    inline basic_json(list_init_t init, bool type_deduction = true,
+                      value_t manual_type = value_t::array)
     {
         // the initializer list could describe an object
         bool is_object = true;
 
         // check if each element is an array with two elements whose first element
         // is a string
-        for (const auto& element : l)
+        for (const auto& element : init)
         {
             if ((element.m_final and element.m_type == value_t::array)
                     or (element.m_type != value_t::array or element.size() != 2
@@ -551,7 +552,7 @@ class basic_json
             m_value.object = alloc.allocate(1);
             alloc.construct(m_value.object);
 
-            for (auto& element : l)
+            for (auto& element : init)
             {
                 m_value.object->emplace(std::move(*(element[0].m_value.string)), std::move(element[1]));
             }
@@ -562,20 +563,20 @@ class basic_json
             m_type = value_t::array;
             AllocatorType<array_t> alloc;
             m_value.array = alloc.allocate(1);
-            alloc.construct(m_value.array, std::move(l));
+            alloc.construct(m_value.array, std::move(init));
         }
     }
 
     /// explicitly create an array from an initializer list
-    inline static basic_json array(list_init_t l = list_init_t())
+    inline static basic_json array(list_init_t init = list_init_t())
     {
-        return basic_json(l, false, value_t::array);
+        return basic_json(init, false, value_t::array);
     }
 
     /// explicitly create an object from an initializer list
-    inline static basic_json object(list_init_t l = list_init_t())
+    inline static basic_json object(list_init_t init = list_init_t())
     {
-        return basic_json(l, false, value_t::object);
+        return basic_json(init, false, value_t::object);
     }
 
     /// construct an array with count copies of given value
@@ -764,6 +765,7 @@ class basic_json
         std::is_nothrow_move_assignable<json_value>::value
     )
     {
+        using std::swap;
         std::swap(m_type, other.m_type);
         std::swap(m_value, other.m_value);
         return *this;
@@ -3374,7 +3376,6 @@ class basic_json
                 case (basic_json::value_t::object):
                 {
                     throw std::domain_error("cannot use operator+= for object iterators");
-                    break;
                 }
 
                 case (basic_json::value_t::array):
