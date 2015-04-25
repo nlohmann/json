@@ -11,6 +11,7 @@
 #define _NLOHMANN_JSON
 
 #include <algorithm>
+#include <ciso646>
 #include <cmath>
 #include <cstdio>
 #include <functional>
@@ -86,40 +87,19 @@ class basic_json
     // container types //
     /////////////////////
 
-    // forward declarations
-    class iterator;
-    class const_iterator;
-    class reverse_iterator;
-    class const_reverse_iterator;
-
-    /*!
-    @brief the type of elements in a basic_json container
-    @ingroup container
-    */
+    /// the type of elements in a basic_json container
     using value_type = basic_json;
 
-    /*!
-    @brief the type of an element reference
-    @ingroup container
-    */
+    /// the type of an element reference
     using reference = value_type&;
 
-    /*!
-    @brief the type of an element const reference
-    @ingroup container
-    */
+    /// the type of an element const reference
     using const_reference = const value_type&;
 
-    /*!
-    @brief a type to represent differences between iterators
-    @ingroup container
-    */
+    /// a type to represent differences between iterators
     using difference_type = std::ptrdiff_t;
 
-    /*!
-    @brief a type to represent container sizes
-    @ingroup container
-    */
+    /// a type to represent container sizes
     using size_type = std::size_t;
 
     /// the allocator type
@@ -130,30 +110,14 @@ class basic_json
     /// the type of an element const pointer
     using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer;
 
-    /*!
-    @brief an iterator for a basic_json container
-    @ingroup container
-    */
-    using iterator = basic_json::iterator;
-
-    /*!
-    @brief a const iterator for a basic_json container
-    @ingroup container
-    */
-    using const_iterator = basic_json::const_iterator;
-
-    /*!
-    @brief a reverse iterator for a basic_json container
-    @ingroup reversiblecontainer
-    */
-    using reverse_iterator = basic_json::reverse_iterator;
-
-    /*!
-    @brief a const reverse iterator for a basic_json container
-    @ingroup reversiblecontainer
-    */
-    using const_reverse_iterator = basic_json::const_reverse_iterator;
-
+    /// an iterator for a basic_json container
+    class iterator;
+    /// a const iterator for a basic_json container
+    class const_iterator;
+    /// a reverse iterator for a basic_json container
+    class reverse_iterator;
+    /// a const reverse iterator for a basic_json container
+    class const_reverse_iterator;
 
     /// returns the allocator associated with the container
     inline static allocator_type get_allocator()
