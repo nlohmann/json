@@ -1,7 +1,10 @@
-version: 1.0.{build}
-os: Visual Studio 2015 Preview
+version: '{build}'
+os: Visual Studio 2015 CTP
 init:
-- cmake -h
-- cmake -G "Visual Studio 14 2015 Win64"
+- cmake
+install:
+- set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;%PATH%
 build:
-  verbosity: minimal
+  verbosity: detailed
+test_script:
+- json_unit.exe
