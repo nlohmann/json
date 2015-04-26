@@ -1875,33 +1875,19 @@ class basic_json
             switch (lhs_type)
             {
                 case (value_t::array):
-                {
                     return *lhs.m_value.array == *rhs.m_value.array;
-                }
                 case (value_t::object):
-                {
                     return *lhs.m_value.object == *rhs.m_value.object;
-                }
                 case (value_t::null):
-                {
                     return true;
-                }
                 case (value_t::string):
-                {
                     return *lhs.m_value.string == *rhs.m_value.string;
-                }
                 case (value_t::boolean):
-                {
                     return lhs.m_value.boolean == rhs.m_value.boolean;
-                }
                 case (value_t::number_integer):
-                {
                     return lhs.m_value.number_integer == rhs.m_value.number_integer;
-                }
                 case (value_t::number_float):
-                {
                     return approx(lhs.m_value.number_float, rhs.m_value.number_float);
-                }
             }
         }
         else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
@@ -1936,33 +1922,19 @@ class basic_json
             switch (lhs_type)
             {
                 case (value_t::array):
-                {
                     return *lhs.m_value.array < *rhs.m_value.array;
-                }
                 case (value_t::object):
-                {
                     return *lhs.m_value.object < *rhs.m_value.object;
-                }
                 case (value_t::null):
-                {
                     return false;
-                }
                 case (value_t::string):
-                {
                     return *lhs.m_value.string < *rhs.m_value.string;
-                }
                 case (value_t::boolean):
-                {
                     return lhs.m_value.boolean < rhs.m_value.boolean;
-                }
                 case (value_t::number_integer):
-                {
                     return lhs.m_value.number_integer < rhs.m_value.number_integer;
-                }
                 case (value_t::number_float):
-                {
                     return lhs.m_value.number_float < rhs.m_value.number_float;
-                }
             }
         }
         else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
