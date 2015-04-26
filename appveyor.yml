@@ -1,7 +1,7 @@
 version: '{build}'
 os: Visual Studio 2015 CTP
 init:
-- cmake
+- cmake .
 install:
 - set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;%PATH%
 build:
