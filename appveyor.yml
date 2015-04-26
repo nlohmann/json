@@ -1,4 +1,0 @@
-version: 1.0.{build}
-os: Visual Studio 2015 Preview
-build_script:
-- make
