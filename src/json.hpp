@@ -4716,9 +4716,9 @@ basic_json_parser_59:
                         get_token();
                         expect(lexer::token_type::name_separator);
 
-                        // parse value
+                        // parse and add value
                         get_token();
-                        result[key] = parse_internal();
+                        result.m_value.object->emplace(key, parse_internal());
                     }
                     while (last_token == lexer::token_type::value_separator);
 
@@ -4753,8 +4753,8 @@ basic_json_parser_59:
                             get_token();
                         }
 
-                        // parse value
-                        result.push_back(parse_internal());
+                        // parse and add value
+                        result.m_value.array->emplace_back(parse_internal());
                     }
                     while (last_token == lexer::token_type::value_separator);
 
