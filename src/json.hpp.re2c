@@ -11,6 +11,7 @@
 #define NLOHMANN_JSON_HPP
 
 #include <algorithm>
+#include <array>
 #include <ciso646>
 #include <cmath>
 #include <cstdio>
@@ -202,76 +203,17 @@ class basic_json
     */
     friend bool operator<(const value_t lhs, const value_t rhs)
     {
-        // no type is smaller than itself
-        if (lhs == rhs)
-        {
-            return false;
-        }
-
-        switch (lhs)
-        {
-            case (value_t::null):
-            {
-                // nulls are smaller than all other types
-                return true;
+        std::array<uint8_t, 7> order = {{
+                0, // null
+                3, // object
+                4, // array
+                5, // string
+                1, // boolean
+                2, // integer
+                2  // float
             }
-
-            case (value_t::boolean):
-            {
-                // only nulls are smaller than booleans
-                return (rhs != value_t::null);
-            }
-
-            case (value_t::number_float):
-            case (value_t::number_integer):
-            {
-                switch (rhs)
-                {
-                    // numbers are smaller than objects, arrays, and string
-                    case (value_t::object):
-                    case (value_t::array):
-                    case (value_t::string):
-                    {
-                        return true;
-                    }
-
-                    default:
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            case (value_t::object):
-            {
-                switch (rhs)
-                {
-                    // objects are smaller than arrays and string
-                    case (value_t::array):
-                    case (value_t::string):
-                    {
-                        return true;
-                    }
-
-                    default:
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            case (value_t::array):
-            {
-                // arrays are smaller than strings
-                return (rhs == value_t::string);
-            }
-
-            default:
-            {
-                // a string is not smaller than any other types
-                return false;
-            }
-        }
+        };
+        return order[static_cast<std::size_t>(lhs)] < order[static_cast<std::size_t>(rhs)];
     }
 
 
@@ -1868,74 +1810,38 @@ class basic_json
     */
     friend bool operator==(const_reference lhs, const_reference rhs) noexcept
     {
-        switch (lhs.type())
+        const auto lhs_type = lhs.type();
+        const auto rhs_type = rhs.type();
+        if (lhs_type == rhs_type)
         {
-            case (value_t::array):
+            switch (lhs_type)
             {
-                if (rhs.type() == value_t::array)
-                {
+                case (value_t::array):
                     return *lhs.m_value.array == *rhs.m_value.array;
-                }
-                break;
-            }
-            case (value_t::object):
-            {
-                if (rhs.type() == value_t::object)
-                {
+                case (value_t::object):
                     return *lhs.m_value.object == *rhs.m_value.object;
-                }
-                break;
-            }
-            case (value_t::null):
-            {
-                if (rhs.type() == value_t::null)
-                {
+                case (value_t::null):
                     return true;
-                }
-                break;
-            }
-            case (value_t::string):
-            {
-                if (rhs.type() == value_t::string)
-                {
+                case (value_t::string):
                     return *lhs.m_value.string == *rhs.m_value.string;
-                }
-                break;
-            }
-            case (value_t::boolean):
-            {
-                if (rhs.type() == value_t::boolean)
-                {
+                case (value_t::boolean):
                     return lhs.m_value.boolean == rhs.m_value.boolean;
-                }
-                break;
-            }
-            case (value_t::number_integer):
-            {
-                if (rhs.type() == value_t::number_integer)
-                {
+                case (value_t::number_integer):
                     return lhs.m_value.number_integer == rhs.m_value.number_integer;
-                }
-                if (rhs.type() == value_t::number_float)
-                {
-                    return lhs.m_value.number_integer == static_cast<number_integer_t>(rhs.m_value.number_float);
-                }
-                break;
-            }
-            case (value_t::number_float):
-            {
-                if (rhs.type() == value_t::number_integer)
-                {
-                    return approx(lhs.m_value.number_float, static_cast<number_float_t>(rhs.m_value.number_integer));
-                }
-                if (rhs.type() == value_t::number_float)
-                {
+                case (value_t::number_float):
                     return approx(lhs.m_value.number_float, rhs.m_value.number_float);
-                }
-                break;
             }
         }
-
+        else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
+        {
+            return approx(static_cast<number_float_t>(lhs.m_value.number_integer),
+                          rhs.m_value.number_float);
+        }
+        else if (lhs_type == value_t::number_float and rhs_type == value_t::number_integer)
+        {
+            return approx(lhs.m_value.number_float,
+                          static_cast<number_float_t>(rhs.m_value.number_integer));
+        }
         return false;
     }
 
@@ -1951,77 +1857,42 @@ class basic_json
     /// comparison: less than
     friend bool operator<(const_reference lhs, const_reference rhs) noexcept
     {
-        switch (lhs.type())
+        const auto lhs_type = lhs.type();
+        const auto rhs_type = rhs.type();
+        if (lhs_type == rhs_type)
         {
-            case (value_t::array):
+            switch (lhs_type)
             {
-                if (rhs.type() == value_t::array)
-                {
+                case (value_t::array):
                     return *lhs.m_value.array < *rhs.m_value.array;
-                }
-                break;
-            }
-            case (value_t::object):
-            {
-                if (rhs.type() == value_t::object)
-                {
+                case (value_t::object):
                     return *lhs.m_value.object < *rhs.m_value.object;
-                }
-                break;
-            }
-            case (value_t::null):
-            {
-                if (rhs.type() == value_t::null)
-                {
+                case (value_t::null):
                     return false;
-                }
-                break;
-            }
-            case (value_t::string):
-            {
-                if (rhs.type() == value_t::string)
-                {
+                case (value_t::string):
                     return *lhs.m_value.string < *rhs.m_value.string;
-                }
-                break;
-            }
-            case (value_t::boolean):
-            {
-                if (rhs.type() == value_t::boolean)
-                {
+                case (value_t::boolean):
                     return lhs.m_value.boolean < rhs.m_value.boolean;
-                }
-                break;
-            }
-            case (value_t::number_integer):
-            {
-                if (rhs.type() == value_t::number_integer)
-                {
+                case (value_t::number_integer):
                     return lhs.m_value.number_integer < rhs.m_value.number_integer;
-                }
-                if (rhs.type() == value_t::number_float)
-                {
-                    return lhs.m_value.number_integer < static_cast<number_integer_t>(rhs.m_value.number_float);
-                }
-                break;
-            }
-            case (value_t::number_float):
-            {
-                if (rhs.type() == value_t::number_integer)
-                {
-                    return lhs.m_value.number_float < static_cast<number_float_t>(rhs.m_value.number_integer);
-                }
-                if (rhs.type() == value_t::number_float)
-                {
+                case (value_t::number_float):
                     return lhs.m_value.number_float < rhs.m_value.number_float;
-                }
-                break;
             }
+        }
+        else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
+        {
+            return static_cast<number_float_t>(lhs.m_value.number_integer) <
+                   rhs.m_value.number_float;
+        }
+        else if (lhs_type == value_t::number_float and rhs_type == value_t::number_integer)
+        {
+            return lhs.m_value.number_float <
+                   static_cast<number_float_t>(rhs.m_value.number_integer);
         }
 
         // We only reach this line if we cannot compare values. In that case,
         // we compare types.
-        return lhs.type() < rhs.type();
+        return lhs_type < rhs_type;
     }
 
     /// comparison: less than or equal
