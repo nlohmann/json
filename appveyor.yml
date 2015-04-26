@@ -4,7 +4,7 @@ init: []
 install: []
 build_script:
 - set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;%PATH%
-- cmake
+- cmake .
 - msbuild json.sln
 test_script:
 - json_unit.exe
