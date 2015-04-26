@@ -382,6 +382,7 @@ I deeply appreciate the help of the following people.
 - [Joshua C. Randall](https://github.com/jrandall) fixed a bug in the floating-point serialization.
 - [Aaron Burghardt](https://github.com/aburgh) implemented code to parse streams incrementally.
 - [Daniel Kopeček](https://github.com/dkopecek) fixed a bug in the compilation with GCC 5.0.
+- [Florian Weber](https://github.com/Florianjw) fixed a bug in and improved the performance of the comparison operators.
 
 Thanks a lot for helping out!
 
@@ -394,7 +395,7 @@ $ make
 $ ./json_unit
 
 ===============================================================================
-All tests passed (4463 assertions in 18 test cases)
+All tests passed (4558 assertions in 19 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

@@ -1812,6 +1812,7 @@ class basic_json
     {
         const auto lhs_type = lhs.type();
         const auto rhs_type = rhs.type();
+
         if (lhs_type == rhs_type)
         {
             switch (lhs_type)
@@ -1859,6 +1860,7 @@ class basic_json
     {
         const auto lhs_type = lhs.type();
         const auto rhs_type = rhs.type();
+
         if (lhs_type == rhs_type)
         {
             switch (lhs_type)
