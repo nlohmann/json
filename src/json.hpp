@@ -7,8 +7,8 @@
 @see https://github.com/nlohmann/json
 */
 
-#ifndef _NLOHMANN_JSON
-#define _NLOHMANN_JSON
+#ifndef NLOHMANN_JSON_HPP
+#define NLOHMANN_JSON_HPP
 
 #include <algorithm>
 #include <ciso646>
