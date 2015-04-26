@@ -1906,8 +1906,8 @@ class basic_json
         }
         else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
         {
-            return lhs.m_value.number_integer ==
-                   static_cast<number_integer_t>(rhs.m_value.number_float);
+            return approx(static_cast<number_float_t>(lhs.m_value.number_integer),
+                          rhs.m_value.number_float);
         }
         else if (lhs_type == value_t::number_float and rhs_type == value_t::number_integer)
         {
@@ -1967,8 +1967,8 @@ class basic_json
         }
         else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
         {
-            return lhs.m_value.number_integer <
-                   static_cast<number_integer_t>(rhs.m_value.number_float);
+            return static_cast<number_float_t>(lhs.m_value.number_integer) <
+                   rhs.m_value.number_float;
         }
         else if (lhs_type == value_t::number_float and rhs_type == value_t::number_integer)
         {
