@@ -6,8 +6,8 @@ add_executable(json_unit
     src/json.hpp test/catch.hpp test/unit.cpp
 )
 
-target_compile_features(json_unit
-    PRIVATE cxx_range_for
+set(CMAKE_CXX_FLAGS
+    "-std=c++11 -stdlib=libc++"
 )
 
 include_directories(
