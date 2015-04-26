@@ -11,6 +11,7 @@
 #define NLOHMANN_JSON_HPP
 
 #include <algorithm>
+#include <array>
 #include <ciso646>
 #include <cmath>
 #include <cstdio>
@@ -202,76 +203,17 @@ class basic_json
     */
     friend bool operator<(const value_t lhs, const value_t rhs)
     {
-        // no type is smaller than itself
-        if (lhs == rhs)
-        {
-            return false;
-        }
-
-        switch (lhs)
-        {
-            case (value_t::null):
-            {
-                // nulls are smaller than all other types
-                return true;
+        std::array<uint8_t, 7> order = {{
+                0, // null
+                3, // object
+                4, // array
+                5, // string
+                1, // boolean
+                2, // integer
+                2  // float
             }
-
-            case (value_t::boolean):
-            {
-                // only nulls are smaller than booleans
-                return (rhs != value_t::null);
-            }
-
-            case (value_t::number_float):
-            case (value_t::number_integer):
-            {
-                switch (rhs)
-                {
-                    // numbers are smaller than objects, arrays, and string
-                    case (value_t::object):
-                    case (value_t::array):
-                    case (value_t::string):
-                    {
-                        return true;
-                    }
-
-                    default:
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            case (value_t::object):
-            {
-                switch (rhs)
-                {
-                    // objects are smaller than arrays and string
-                    case (value_t::array):
-                    case (value_t::string):
-                    {
-                        return true;
-                    }
-
-                    default:
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            case (value_t::array):
-            {
-                // arrays are smaller than strings
-                return (rhs == value_t::string);
-            }
-
-            default:
-            {
-                // a string is not smaller than any other types
-                return false;
-            }
-        }
+        };
+        return order[static_cast<std::size_t>(lhs)] < order[static_cast<std::size_t>(rhs)];
     }
 
 
