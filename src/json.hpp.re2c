@@ -1951,77 +1951,56 @@ class basic_json
     /// comparison: less than
     friend bool operator<(const_reference lhs, const_reference rhs) noexcept
     {
-        switch (lhs.type())
+        const auto lhs_type = lhs.type();
+        const auto rhs_type = rhs.type();
+        if (lhs_type == rhs_type)
         {
-            case (value_t::array):
+            switch (lhs_type)
             {
-                if (rhs.type() == value_t::array)
+                case (value_t::array):
                 {
-                    return *lhs.m_value.array < *rhs.m_value.array;
+                    return *lhs.m_value_array < *rhs.m_value.array;
                 }
-                break;
-            }
-            case (value_t::object):
-            {
-                if (rhs.type() == value_t::object)
+                case (value_t::onject):
                 {
                     return *lhs.m_value.object < *rhs.m_value.object;
                 }
-                break;
-            }
-            case (value_t::null):
-            {
-                if (rhs.type() == value_t::null)
+                case (value_t::null):
                 {
                     return false;
                 }
-                break;
-            }
-            case (value_t::string):
-            {
-                if (rhs.type() == value_t::string)
+                case (value_t::string):
                 {
                     return *lhs.m_value.string < *rhs.m_value.string;
                 }
-                break;
-            }
-            case (value_t::boolean):
-            {
-                if (rhs.type() == value_t::boolean)
+                case (value_t::boolean):
                 {
                     return lhs.m_value.boolean < rhs.m_value.boolean;
                 }
-                break;
-            }
-            case (value_t::number_integer):
-            {
-                if (rhs.type() == value_t::number_integer)
+                case (value_t::number_integer):
                 {
                     return lhs.m_value.number_integer < rhs.m_value.number_integer;
                 }
-                if (rhs.type() == value_t::number_float)
-                {
-                    return lhs.m_value.number_integer < static_cast<number_integer_t>(rhs.m_value.number_float);
-                }
-                break;
-            }
-            case (value_t::number_float):
-            {
-                if (rhs.type() == value_t::number_integer)
-                {
-                    return lhs.m_value.number_float < static_cast<number_float_t>(rhs.m_value.number_integer);
-                }
-                if (rhs.type() == value_t::number_float)
+                case (value_t::number_float):
                 {
                     return lhs.m_value.number_float < rhs.m_value.number_float;
                 }
-                break;
             }
+        }
+        else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
+        {
+            return lhs.m_value.number_integer <
+                   static_cast<number_integer_t>(rhs.m_value.number_float);
+        }
+        else if (lhs_type == value_t::number_float and rhs_type == value_t::number_integer)
+        {
+            return lhs.m_value.number_float <
+                   static_cast<number_float_t>(rhs.m_value.number_integer);
         }
 
         // We only reach this line if we cannot compare values. In that case,
         // we compare types.
-        return lhs.type() < rhs.type();
+        return lhs_type < rhs_type;
     }
 
     /// comparison: less than or equal
