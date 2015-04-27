@@ -329,10 +329,10 @@ class basic_json
     /// create an array (implicit)
     template <class V, typename
               std::enable_if<
-                  not std::is_same<V, basic_json::iterator>::value and
-                  not std::is_same<V, basic_json::const_iterator>::value and
-                  not std::is_same<V, basic_json::reverse_iterator>::value and
-                  not std::is_same<V, basic_json::const_reverse_iterator>::value and
+                  not std::is_same<V, typename basic_json::iterator>::value and
+                  not std::is_same<V, typename basic_json::const_iterator>::value and
+                  not std::is_same<V, typename basic_json::reverse_iterator>::value and
+                  not std::is_same<V, typename basic_json::const_reverse_iterator>::value and
                   not std::is_same<V, typename array_t::iterator>::value and
                   not std::is_same<V, typename array_t::const_iterator>::value and
                   std::is_constructible<basic_json, typename V::value_type>::value, int>::type
@@ -493,8 +493,8 @@ class basic_json
     /// construct a JSON container given an iterator range
     template <class T, typename
               std::enable_if<
-                  std::is_same<T, basic_json::iterator>::value or
-                  std::is_same<T, basic_json::const_iterator>::value
+                  std::is_same<T, typename basic_json::iterator>::value or
+                  std::is_same<T, typename basic_json::const_iterator>::value
                   , int>::type
               = 0>
     inline basic_json(T first, T last)
@@ -1198,8 +1198,8 @@ class basic_json
     /// remove element given an iterator
     template <class T, typename
               std::enable_if<
-                  std::is_same<T, basic_json::iterator>::value or
-                  std::is_same<T, basic_json::const_iterator>::value
+                  std::is_same<T, typename basic_json::iterator>::value or
+                  std::is_same<T, typename basic_json::const_iterator>::value
                   , int>::type
               = 0>
     inline T erase(T pos)
@@ -1258,8 +1258,8 @@ class basic_json
     /// remove elements given an iterator range
     template <class T, typename
               std::enable_if<
-                  std::is_same<T, basic_json::iterator>::value or
-                  std::is_same<T, basic_json::const_iterator>::value
+                  std::is_same<T, typename basic_json::iterator>::value or
+                  std::is_same<T, typename basic_json::const_iterator>::value
                   , int>::type
               = 0>
     inline T erase(T first, T last)
