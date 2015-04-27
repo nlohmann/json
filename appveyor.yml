@@ -1,5 +1,5 @@
 version: '{build}'
-os: Visual Studio 2015 Preview
+os: Visual Studio 2015 CTP
 init: []
 install: []
 build_script:

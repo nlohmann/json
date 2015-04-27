@@ -16,7 +16,7 @@ json_unit: test/unit.cpp src/json.hpp test/catch.hpp
 	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src -I test $< $(LDFLAGS) -o $@
 
 # create scanner with re2c
-re2c:
+re2c: src/json.hpp.re2c
 	$(RE2C) -b -s -i --no-generation-date $< | $(SED) '1d' > src/json.hpp
 
 # static analyser
