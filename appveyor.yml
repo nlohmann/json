@@ -5,6 +5,6 @@ install: []
 build_script:
 - set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;%PATH%
 - cmake .
-- msbuild json.sln
+- msbuild json.sln /EHsc
 test_script:
 - json_unit.exe
