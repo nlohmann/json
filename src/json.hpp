@@ -191,8 +191,34 @@ class basic_json
         string,         ///< string value
         boolean,        ///< boolean value
         number_integer, ///< number value (integer)
-        number_float    ///< number value (floating-point)
+        number_float,   ///< number value (floating-point)
+        discarded       ///< (internal) indicates the parser callback chose not to keep the value
     };
+
+    //////////////////////////
+    // JSON parser callback //
+    //////////////////////////
+
+    /// JSON callback event enumeration
+    enum class parse_event_t : uint8_t
+    {
+        object_start,  ///< start an object scope (found a '{' token)
+        object_end,    ///< end of an object scope (found '}' token)
+        array_start,   ///< start of an array scope (found '[' token)
+        array_end,     ///< end of an array scope (found ']' token)
+        key,           ///< found an object key within an object scope
+        value          ///< a value in an appropriate context (i.e., following a tag in an object scope)
+    };
+
+    /// per-element parser callback type
+    using parser_callback_t = std::function<bool(int depth, parse_event_t event,
+                              const basic_json& parsed)>;
+
+    /// default parser callback returns true to keep all elements
+    static bool default_callback(int, parse_event_t, const basic_json&)
+    {
+        return true;
+    }
 
     /*!
     @brief comparison operator for JSON value types
@@ -233,6 +259,7 @@ class basic_json
         switch (m_type)
         {
             case (value_t::null):
+            case (value_t::discarded):
             {
                 break;
             }
@@ -598,6 +625,7 @@ class basic_json
         switch (m_type)
         {
             case (value_t::null):
+            case (value_t::discarded):
             {
                 break;
             }
@@ -788,6 +816,12 @@ class basic_json
     inline bool is_string() const noexcept
     {
         return m_type == value_t::string;
+    }
+
+    // return whether value is discarded
+    inline bool is_discarded() const noexcept
+    {
+        return m_type == value_t::discarded;
     }
 
     /// return the type of the object (implicit)
@@ -1610,6 +1644,7 @@ class basic_json
         switch (m_type)
         {
             case (value_t::null):
+            case (value_t::discarded):
             {
                 break;
             }
@@ -1827,6 +1862,8 @@ class basic_json
                     return lhs.m_value.number_integer == rhs.m_value.number_integer;
                 case (value_t::number_float):
                     return approx(lhs.m_value.number_float, rhs.m_value.number_float);
+                case (value_t::discarded):
+                    return false;
             }
         }
         else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
@@ -1875,6 +1912,8 @@ class basic_json
                     return lhs.m_value.number_integer < rhs.m_value.number_integer;
                 case (value_t::number_float):
                     return lhs.m_value.number_float < rhs.m_value.number_float;
+                case (value_t::discarded):
+                    return false;
             }
         }
         else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
@@ -1942,15 +1981,15 @@ class basic_json
     /////////////////////
 
     /// deserialize from string
-    static basic_json parse(const string_t& s)
+    static basic_json parse(const string_t& s, parser_callback_t cb = default_callback)
     {
-        return parser(s).parse();
+        return parser(s, cb).parse();
     }
 
     /// deserialize from stream
-    static basic_json parse(std::istream& i)
+    static basic_json parse(std::istream& i, parser_callback_t cb = default_callback)
     {
-        return parser(i).parse();
+        return parser(i, cb).parse();
     }
 
     /// deserialize from stream
@@ -2001,6 +2040,11 @@ class basic_json
             case (value_t::boolean):
             {
                 return "boolean";
+            }
+
+            case (value_t::discarded):
+            {
+                return "discarded";
             }
 
             default:
@@ -2231,6 +2275,10 @@ class basic_json
                 return string_t(buf.data());
             }
 
+            case (value_t::discarded):
+            {
+                return "<discarded>";
+            }
             default:
             {
                 return "null";
@@ -4521,14 +4569,15 @@ basic_json_parser_59:
     {
       public:
         /// constructor for strings
-        inline parser(const string_t& s) : m_lexer(s)
+        inline parser(const string_t& s, parser_callback_t cb = default_callback) : callback(cb), m_lexer(s)
         {
             // read first token
             get_token();
         }
 
         /// a parser reading from an input stream
-        inline parser(std::istream& _is) : m_lexer(&_is)
+        inline parser(std::istream& _is, parser_callback_t cb = default_callback) : callback(cb),
+            m_lexer(&_is)
         {
             // read first token
             get_token();
@@ -4537,7 +4586,7 @@ basic_json_parser_59:
         /// public parser interface
         inline basic_json parse()
         {
-            basic_json result = parse_internal();
+            basic_json result = parse_internal(true);
 
             expect(lexer::token_type::end_of_input);
 
@@ -4546,14 +4595,19 @@ basic_json_parser_59:
 
       private:
         /// the actual parser
-        inline basic_json parse_internal()
+        inline basic_json parse_internal(bool keep)
         {
+            auto result = basic_json(value_t::discarded);
+
             switch (last_token)
             {
                 case (lexer::token_type::begin_object):
                 {
-                    // explicitly set result to object to cope with {}
-                    basic_json result(value_t::object);
+                    if (keep and (keep = callback(depth++, parse_event_t::object_start, result)))
+                    {
+                        // explicitly set result to object to cope with {}
+                        result = basic_json(value_t::object);
+                    }
 
                     // read next token
                     get_token();
@@ -4562,6 +4616,10 @@ basic_json_parser_59:
                     if (last_token == lexer::token_type::end_object)
                     {
                         get_token();
+                        if (keep and not (keep = callback(--depth, parse_event_t::object_end, result)))
+                        {
+                            result = basic_json(value_t::discarded);
+                        }
                         return result;
                     }
 
@@ -4578,27 +4636,44 @@ basic_json_parser_59:
                         expect(lexer::token_type::value_string);
                         const auto key = m_lexer.get_string();
 
+                        bool keep_tag = false;
+                        if (keep)
+                        {
+                            keep_tag = callback(depth, parse_event_t::key, basic_json(key));
+                        }
+
                         // parse separator (:)
                         get_token();
                         expect(lexer::token_type::name_separator);
 
                         // parse and add value
                         get_token();
-                        result.m_value.object->emplace(key, parse_internal());
+                        auto value = parse_internal(keep);
+                        if (keep and keep_tag and not value.is_discarded())
+                        {
+                            result[key] = value;
+                        }
                     }
                     while (last_token == lexer::token_type::value_separator);
 
                     // closing }
                     expect(lexer::token_type::end_object);
                     get_token();
+                    if (keep and not callback(--depth, parse_event_t::object_end, result))
+                    {
+                        result = basic_json(value_t::discarded);
+                    }
 
                     return result;
                 }
 
                 case (lexer::token_type::begin_array):
                 {
-                    // explicitly set result to object to cope with []
-                    basic_json result(value_t::array);
+                    if (keep and (keep = callback(depth++, parse_event_t::array_start, result)))
+                    {
+                        // explicitly set result to object to cope with []
+                        result = basic_json(value_t::array);
+                    }
 
                     // read next token
                     get_token();
@@ -4607,6 +4682,10 @@ basic_json_parser_59:
                     if (last_token == lexer::token_type::end_array)
                     {
                         get_token();
+                        if (not callback(--depth, parse_event_t::array_end, result))
+                        {
+                            result = basic_json(value_t::discarded);
+                        }
                         return result;
                     }
 
@@ -4619,14 +4698,22 @@ basic_json_parser_59:
                             get_token();
                         }
 
-                        // parse and add value
-                        result.m_value.array->emplace_back(parse_internal());
+                        // parse value
+                        auto value = parse_internal(keep);
+                        if (keep and not value.is_discarded())
+                        {
+                            result.push_back(value);
+                        }
                     }
                     while (last_token == lexer::token_type::value_separator);
 
                     // closing ]
                     expect(lexer::token_type::end_array);
                     get_token();
+                    if (keep and not callback(--depth, parse_event_t::array_end, result))
+                    {
+                        result = basic_json(value_t::discarded);
+                    }
 
                     return result;
                 }
@@ -4634,26 +4721,30 @@ basic_json_parser_59:
                 case (lexer::token_type::literal_null):
                 {
                     get_token();
-                    return basic_json(nullptr);
+                    result = basic_json(nullptr);
+                    break;
                 }
 
                 case (lexer::token_type::value_string):
                 {
                     const auto s = m_lexer.get_string();
                     get_token();
-                    return basic_json(s);
+                    result = basic_json(s);
+                    break;
                 }
 
                 case (lexer::token_type::literal_true):
                 {
                     get_token();
-                    return basic_json(true);
+                    result = basic_json(true);
+                    break;
                 }
 
                 case (lexer::token_type::literal_false):
                 {
                     get_token();
-                    return basic_json(false);
+                    result = basic_json(false);
+                    break;
                 }
 
                 case (lexer::token_type::value_number):
@@ -4675,13 +4766,14 @@ basic_json_parser_59:
                     if (approx(float_val, static_cast<number_float_t>(int_val)))
                     {
                         // we basic_json not lose precision -> return int
-                        return basic_json(int_val);
+                        result = basic_json(int_val);
                     }
                     else
                     {
                         // we would lose precision -> returnfloat
-                        return basic_json(float_val);
+                        result = basic_json(float_val);
                     }
+                    break;
                 }
 
                 default:
@@ -4693,6 +4785,12 @@ basic_json_parser_59:
                     throw std::invalid_argument(error_msg);
                 }
             }
+
+            if (keep and not callback(depth, parse_event_t::value, result))
+            {
+                result = basic_json(value_t::discarded);
+            }
+            return result;
         }
 
         /// get next token from lexer
@@ -4715,6 +4813,10 @@ basic_json_parser_59:
         }
 
       private:
+        /// levels of recursion
+        int depth = 0;
+        /// callback function
+        parser_callback_t callback;
         /// the type of the last read token
         typename lexer::token_type last_token = lexer::token_type::uninitialized;
         /// the lexer

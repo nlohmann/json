@@ -380,7 +380,7 @@ I deeply appreciate the help of the following people.
 - [wancw](https://github.com/wanwc) fixed a bug that hindered the class to compile with Clang.
 - Tomas Åblad found a bug in the iterator implementation.
 - [Joshua C. Randall](https://github.com/jrandall) fixed a bug in the floating-point serialization.
-- [Aaron Burghardt](https://github.com/aburgh) implemented code to parse streams incrementally.
+- [Aaron Burghardt](https://github.com/aburgh) implemented code to parse streams incrementally. Furthermore, he greatly improved the parser class by allowing the definition of a filter function to discard undesired elements while parsing.
 - [Daniel Kopeček](https://github.com/dkopecek) fixed a bug in the compilation with GCC 5.0.
 - [Florian Weber](https://github.com/Florianjw) fixed a bug in and improved the performance of the comparison operators.
 
