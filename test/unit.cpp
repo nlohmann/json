@@ -7682,6 +7682,54 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\u0000\""), std::invalid_argument);
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\uFFFF\""), std::invalid_argument);
     }
+
+    SECTION("callback function")
+    {
+        auto s_object = R"(
+            {
+                "foo": true,
+                "bar": false
+            }
+        )";
+
+        auto s_array = R"(
+            [1,2,3,4,5]
+        )";
+
+        SECTION("true-filter")
+        {
+            json j_object = json::parse(s_object, [](int, json::parse_event_t, const json&)
+            {
+                return true;
+            });
+
+            CHECK (j_object == json({{"foo", true}, {"bar", false}}));
+
+            json j_array = json::parse(s_array, [](int, json::parse_event_t, const json&)
+            {
+                return true;
+            });
+
+            CHECK (j_array == json({1, 2, 3, 4, 5}));
+        }
+
+        SECTION("false-filter")
+        {
+            json j_object = json::parse(s_object, [](int, json::parse_event_t, const json&)
+            {
+                return false;
+            });
+
+            CHECK (j_object.is_discarded());
+
+            json j_array = json::parse(s_array, [](int, json::parse_event_t, const json&)
+            {
+                return false;
+            });
+
+            CHECK (j_array.is_discarded());
+        }
+    }
 }
 
 TEST_CASE("README", "[hide]")
