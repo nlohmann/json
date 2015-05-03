@@ -7800,58 +7800,6 @@ TEST_CASE("parser class")
                     CHECK (j_array.is_discarded());
                 }
             }
-
-            SECTION("second closing event")
-            {
-                bool second = false;
-                json j_object = json::parse(s_object, [&second](int, json::parse_event_t e, const json&)
-                {
-                    if (e == json::parse_event_t::object_end)
-                    {
-                        if (second)
-                        {
-                            assert(false);
-                            return false;
-                        }
-                        else
-                        {
-                            second = true;
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        return true;
-                    }
-                });
-
-                CHECK (j_object.is_discarded());
-                CHECK(second);
-
-                second = false;
-                json j_array = json::parse(s_array, [&second](int, json::parse_event_t e, const json&)
-                {
-                    if (e == json::parse_event_t::array_end)
-                    {
-                        if (second)
-                        {
-                            return false;
-                        }
-                        else
-                        {
-                            second = true;
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        return true;
-                    }
-                });
-
-                CHECK (j_array.is_discarded());
-                CHECK(second);
-            }
         }
     }
 }
