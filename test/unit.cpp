@@ -7695,7 +7695,7 @@ TEST_CASE("parser class")
         )";
 
         auto s_array = R"(
-            [1,2,[3],4,5]
+            [1,2,[3,4,5],4,5]
         )";
 
         SECTION("filter nothing")
@@ -7712,7 +7712,7 @@ TEST_CASE("parser class")
                 return true;
             });
 
-            CHECK (j_array == json({1, 2, {3}, 4, 5}));
+            CHECK (j_array == json({1, 2, {3, 4, 5}, 4, 5}));
         }
 
         SECTION("filter everything")
@@ -7761,42 +7761,44 @@ TEST_CASE("parser class")
                 }
             });
 
-            CHECK (j_array == json({1, {3}, 4, 5}));
+            CHECK (j_array == json({1, {3, 4, 5}, 4, 5}));
         }
 
         SECTION("filter specific events")
         {
             SECTION("first closing event")
             {
-                json j_object = json::parse(s_object, [](int, json::parse_event_t e, const json&)
                 {
-                    // filter all number(2) elements
-                    if (e == json::parse_event_t::object_end)
+                    json j_object = json::parse(s_object, [](int, json::parse_event_t e, const json&)
                     {
-                        return false;
-                    }
-                    else
-                    {
-                        return true;
-                    }
-                });
+                        if (e == json::parse_event_t::object_end)
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    });
 
-                CHECK (j_object.is_discarded());
+                    CHECK (j_object.is_discarded());
+                }
 
-                json j_array = json::parse(s_array, [](int, json::parse_event_t e, const json&)
                 {
-                    // filter all number(2) elements
-                    if (e == json::parse_event_t::array_end)
+                    json j_array = json::parse(s_array, [](int, json::parse_event_t e, const json&)
                     {
-                        return false;
-                    }
-                    else
-                    {
-                        return true;
-                    }
-                });
+                        if (e == json::parse_event_t::array_end)
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    });
 
-                CHECK (j_array.is_discarded());
+                    CHECK (j_array.is_discarded());
+                }
             }
 
             SECTION("second closing event")
@@ -7808,6 +7810,7 @@ TEST_CASE("parser class")
                     {
                         if (second)
                         {
+                            assert(false);
                             return false;
                         }
                         else
