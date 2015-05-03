@@ -7761,6 +7761,39 @@ TEST_CASE("parser class")
 
             CHECK (j_array == json({1, 3, 4, 5}));
         }
+        
+        SECTION("filter specific events")
+        {
+            json j_object = json::parse(s_object, [](int, json::parse_event_t e, const json &)
+            {
+                // filter all number(2) elements
+                if (e == json::parse_event_t::object_end)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+            
+            CHECK (j_object.is_discarded());
+
+            json j_array = json::parse(s_array, [](int, json::parse_event_t e, const json &)
+            {
+                // filter all number(2) elements
+                if (e == json::parse_event_t::array_end)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+            
+            CHECK (j_array.is_discarded());
+        }
     }
 }
 
