@@ -7687,13 +7687,15 @@ TEST_CASE("parser class")
     {
         auto s_object = R"(
             {
-                "foo": 1,
-                "bar": 2
+                "foo": 2,
+                "bar": {
+                    "baz": 1
+                }
             }
         )";
 
         auto s_array = R"(
-            [1,2,3,4,5]
+            [1,2,3,4,[5]]
         )";
 
         SECTION("filter nothing")
@@ -7703,14 +7705,14 @@ TEST_CASE("parser class")
                 return true;
             });
 
-            CHECK (j_object == json({{"foo", 1}, {"bar", 2}}));
+            CHECK (j_object == json({{"foo", 2}, {"bar", {{"baz", 1}}}}));
 
             json j_array = json::parse(s_array, [](int, json::parse_event_t, const json&)
             {
                 return true;
             });
 
-            CHECK (j_array == json({1, 2, 3, 4, 5}));
+            CHECK (j_array == json({1, 2, 3, 4, {5}}));
         }
 
         SECTION("filter everything")
@@ -7745,7 +7747,7 @@ TEST_CASE("parser class")
                 }
             });
 
-            CHECK (j_object == json({{"foo", 1}}));
+            CHECK (j_object == json({{"bar", {{"baz", 1}}}}));
 
             json j_array = json::parse(s_array, [](int, json::parse_event_t, const json & j)
             {
@@ -7759,40 +7761,94 @@ TEST_CASE("parser class")
                 }
             });
 
-            CHECK (j_array == json({1, 3, 4, 5}));
+            CHECK (j_array == json({1, 3, 4, {5}}));
         }
-        
+
         SECTION("filter specific events")
         {
-            json j_object = json::parse(s_object, [](int, json::parse_event_t e, const json &)
+            SECTION("first closing event")
             {
-                // filter all number(2) elements
-                if (e == json::parse_event_t::object_end)
+                json j_object = json::parse(s_object, [](int, json::parse_event_t e, const json&)
                 {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            });
-            
-            CHECK (j_object.is_discarded());
+                    // filter all number(2) elements
+                    if (e == json::parse_event_t::object_end)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                });
 
-            json j_array = json::parse(s_array, [](int, json::parse_event_t e, const json &)
+                CHECK (j_object.is_discarded());
+
+                json j_array = json::parse(s_array, [](int, json::parse_event_t e, const json&)
+                {
+                    // filter all number(2) elements
+                    if (e == json::parse_event_t::array_end)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                });
+
+                CHECK (j_array.is_discarded());
+            }
+
+            SECTION("second closing event")
             {
-                // filter all number(2) elements
-                if (e == json::parse_event_t::array_end)
+                int i = 0;
+                json j_object = json::parse(s_object, [&i](int, json::parse_event_t e, const json&)
                 {
-                    return false;
-                }
-                else
+                    // filter all number(2) elements
+                    if (e == json::parse_event_t::object_end)
+                    {
+                        if (i > 0)
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            ++i;
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                });
+
+                CHECK (j_object.is_discarded());
+
+                i = 0;
+                json j_array = json::parse(s_array, [&i](int, json::parse_event_t e, const json&)
                 {
-                    return true;
-                }
-            });
-            
-            CHECK (j_array.is_discarded());
+                    // filter all number(2) elements
+                    if (e == json::parse_event_t::array_end)
+                    {
+                        if (i > 0)
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            ++i;
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                });
+
+                CHECK (j_array.is_discarded());
+            }
         }
     }
 }
