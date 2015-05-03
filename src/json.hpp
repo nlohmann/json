@@ -239,6 +239,13 @@ class basic_json
                 2  // float
             }
         };
+
+        // discarded values are not comparable
+        if (lhs == value_t::discarded or rhs == value_t::discarded)
+        {
+            return false;
+        }
+
         return order[static_cast<std::size_t>(lhs)] < order[static_cast<std::size_t>(rhs)];
     }
 
