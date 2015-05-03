@@ -7687,8 +7687,8 @@ TEST_CASE("parser class")
     {
         auto s_object = R"(
             {
-                "foo": true,
-                "bar": false
+                "foo": 1,
+                "bar": 2
             }
         )";
 
@@ -7696,14 +7696,14 @@ TEST_CASE("parser class")
             [1,2,3,4,5]
         )";
 
-        SECTION("true-filter")
+        SECTION("filter nothing")
         {
             json j_object = json::parse(s_object, [](int, json::parse_event_t, const json&)
             {
                 return true;
             });
 
-            CHECK (j_object == json({{"foo", true}, {"bar", false}}));
+            CHECK (j_object == json({{"foo", 1}, {"bar", 2}}));
 
             json j_array = json::parse(s_array, [](int, json::parse_event_t, const json&)
             {
@@ -7713,7 +7713,7 @@ TEST_CASE("parser class")
             CHECK (j_array == json({1, 2, 3, 4, 5}));
         }
 
-        SECTION("false-filter")
+        SECTION("filter everything")
         {
             json j_object = json::parse(s_object, [](int, json::parse_event_t, const json&)
             {
@@ -7728,6 +7728,38 @@ TEST_CASE("parser class")
             });
 
             CHECK (j_array.is_discarded());
+        }
+
+        SECTION("filter specific element")
+        {
+            json j_object = json::parse(s_object, [](int, json::parse_event_t, const json & j)
+            {
+                // filter all number(2) elements
+                if (j == json(2))
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+
+            CHECK (j_object == json({{"foo", 1}}));
+
+            json j_array = json::parse(s_array, [](int, json::parse_event_t, const json & j)
+            {
+                if (j == json(2))
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+
+            CHECK (j_array == json({1, 3, 4, 5}));
         }
     }
 }
