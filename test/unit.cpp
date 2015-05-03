@@ -36,6 +36,13 @@ TEST_CASE("constructors")
             CHECK(j.type() == t);
         }
 
+        SECTION("discarded")
+        {
+            auto t = json::value_t::discarded;
+            json j(t);
+            CHECK(j.type() == t);
+        }
+
         SECTION("object")
         {
             auto t = json::value_t::object;
@@ -1324,6 +1331,7 @@ TEST_CASE("object inspection")
             CHECK(j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
+            CHECK(not j.is_discarded());
         }
 
         SECTION("array")
@@ -1335,6 +1343,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_object());
             CHECK(j.is_array());
             CHECK(not j.is_string());
+            CHECK(not j.is_discarded());
         }
 
         SECTION("null")
@@ -1346,6 +1355,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
+            CHECK(not j.is_discarded());
         }
 
         SECTION("boolean")
@@ -1357,6 +1367,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
+            CHECK(not j.is_discarded());
         }
 
         SECTION("string")
@@ -1368,6 +1379,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(j.is_string());
+            CHECK(not j.is_discarded());
         }
 
         SECTION("number (integer)")
@@ -1379,6 +1391,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
+            CHECK(not j.is_discarded());
         }
 
         SECTION("number (floating-point)")
@@ -1390,6 +1403,19 @@ TEST_CASE("object inspection")
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
+            CHECK(not j.is_discarded());
+        }
+
+        SECTION("discarded")
+        {
+            json j(json::value_t::discarded);
+            CHECK(not j.is_null());
+            CHECK(not j.is_boolean());
+            CHECK(not j.is_number());
+            CHECK(not j.is_object());
+            CHECK(not j.is_array());
+            CHECK(not j.is_string());
+            CHECK(j.is_discarded());
         }
     }
 
@@ -1434,6 +1460,12 @@ TEST_CASE("object inspection")
             CHECK(json("ä").dump() == "\"ä\"");
             CHECK(json("Ö").dump() == "\"Ö\"");
             CHECK(json("❤️").dump() == "\"❤️\"");
+        }
+        
+        SECTION("serialization of discarded element")
+        {
+            json j_discarded(json::value_t::discarded);
+            CHECK(j_discarded.dump() == "<discarded>");
         }
     }
 
@@ -7107,6 +7139,7 @@ TEST_CASE("convenience functions")
         CHECK(json(json::value_t::number_float).type_name() == "number");
         CHECK(json(json::value_t::boolean).type_name() == "boolean");
         CHECK(json(json::value_t::string).type_name() == "string");
+        CHECK(json(json::value_t::discarded).type_name() == "discarded");
     }
 
     SECTION("string escape")
