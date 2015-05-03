@@ -1461,7 +1461,7 @@ TEST_CASE("object inspection")
             CHECK(json("Ö").dump() == "\"Ö\"");
             CHECK(json("❤️").dump() == "\"❤️\"");
         }
-        
+
         SECTION("serialization of discarded element")
         {
             json j_discarded(json::value_t::discarded);
@@ -6233,6 +6233,13 @@ TEST_CASE("lexicographical comparison operators")
                     CHECK( (j_values[i] == j_values[j]) == expected[i][j] );
                 }
             }
+
+            // comparison with discarded elements
+            json j_discarded(json::value_t::discarded);
+            for (size_t i = 0; i < j_values.size(); ++i)
+            {
+                CHECK( (j_values[i] == j_discarded) == false);
+            }
         }
 
         SECTION("comparison: not equal")
@@ -6274,6 +6281,13 @@ TEST_CASE("lexicographical comparison operators")
                     // check precomputed values
                     CHECK( (j_values[i] < j_values[j]) == expected[i][j] );
                 }
+            }
+
+            // comparison with discarded elements
+            json j_discarded(json::value_t::discarded);
+            for (size_t i = 0; i < j_values.size(); ++i)
+            {
+                CHECK( (j_values[i] < j_discarded) == false);
             }
         }
 
