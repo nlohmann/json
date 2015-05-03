@@ -6240,6 +6240,7 @@ TEST_CASE("lexicographical comparison operators")
             {
                 CHECK( (j_values[i] == j_discarded) == false);
                 CHECK( (j_discarded == j_values[i]) == false);
+                CHECK( (j_discarded == j_discarded) == false);
             }
         }
 
@@ -6290,6 +6291,7 @@ TEST_CASE("lexicographical comparison operators")
             {
                 CHECK( (j_values[i] < j_discarded) == false);
                 CHECK( (j_discarded < j_values[i]) == false);
+                CHECK( (j_discarded < j_discarded) == false);
             }
         }
 
