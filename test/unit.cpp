@@ -6239,6 +6239,7 @@ TEST_CASE("lexicographical comparison operators")
             for (size_t i = 0; i < j_values.size(); ++i)
             {
                 CHECK( (j_values[i] == j_discarded) == false);
+                CHECK( (j_discarded == j_values[i]) == false);
             }
         }
 
@@ -6288,6 +6289,7 @@ TEST_CASE("lexicographical comparison operators")
             for (size_t i = 0; i < j_values.size(); ++i)
             {
                 CHECK( (j_values[i] < j_discarded) == false);
+                CHECK( (j_discarded < j_values[i]) == false);
             }
         }
 
