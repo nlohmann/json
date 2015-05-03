@@ -7695,7 +7695,7 @@ TEST_CASE("parser class")
         )";
 
         auto s_array = R"(
-            [1,2,3,4,[5]]
+            [1,2,[3],4,5]
         )";
 
         SECTION("filter nothing")
@@ -7712,7 +7712,7 @@ TEST_CASE("parser class")
                 return true;
             });
 
-            CHECK (j_array == json({1, 2, 3, 4, {5}}));
+            CHECK (j_array == json({1, 2, {3}, 4, 5}));
         }
 
         SECTION("filter everything")
@@ -7761,7 +7761,7 @@ TEST_CASE("parser class")
                 }
             });
 
-            CHECK (j_array == json({1, 3, 4, {5}}));
+            CHECK (j_array == json({1, {3}, 4, 5}));
         }
 
         SECTION("filter specific events")
@@ -7801,19 +7801,18 @@ TEST_CASE("parser class")
 
             SECTION("second closing event")
             {
-                int i = 0;
-                json j_object = json::parse(s_object, [&i](int, json::parse_event_t e, const json&)
+                bool second = false;
+                json j_object = json::parse(s_object, [&second](int, json::parse_event_t e, const json&)
                 {
-                    // filter all number(2) elements
                     if (e == json::parse_event_t::object_end)
                     {
-                        if (i > 0)
+                        if (second)
                         {
                             return false;
                         }
                         else
                         {
-                            ++i;
+                            second = true;
                             return true;
                         }
                     }
@@ -7824,20 +7823,20 @@ TEST_CASE("parser class")
                 });
 
                 CHECK (j_object.is_discarded());
+                CHECK(second);
 
-                i = 0;
-                json j_array = json::parse(s_array, [&i](int, json::parse_event_t e, const json&)
+                second = false;
+                json j_array = json::parse(s_array, [&second](int, json::parse_event_t e, const json&)
                 {
-                    // filter all number(2) elements
                     if (e == json::parse_event_t::array_end)
                     {
-                        if (i > 0)
+                        if (second)
                         {
                             return false;
                         }
                         else
                         {
-                            ++i;
+                            second = true;
                             return true;
                         }
                     }
@@ -7848,6 +7847,7 @@ TEST_CASE("parser class")
                 });
 
                 CHECK (j_array.is_discarded());
+                CHECK(second);
             }
         }
     }
