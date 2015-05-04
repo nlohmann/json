@@ -4658,7 +4658,7 @@ basic_json_parser_59:
                         auto value = parse_internal(keep);
                         if (keep and keep_tag and not value.is_discarded())
                         {
-                            result[key] = value;
+                            result[key] = std::move(value);
                         }
                     }
                     while (last_token == lexer::token_type::value_separator);
@@ -4709,7 +4709,7 @@ basic_json_parser_59:
                         auto value = parse_internal(keep);
                         if (keep and not value.is_discarded())
                         {
-                            result.push_back(value);
+                            result.push_back(std::move(value));
                         }
                     }
                     while (last_token == lexer::token_type::value_separator);
