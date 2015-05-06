@@ -8458,14 +8458,6 @@ TEST_CASE("regression tests")
             CHECK(json(NAN) == json());
         }
 
-        SECTION("overflows")
-        {
-            CHECK(json(std::exp(800)) == json());
-            CHECK(json(HUGE_VALF) == json());
-            CHECK(json(HUGE_VAL) == json());
-            CHECK(json(HUGE_VALL) == json());
-        }
-
         SECTION("infinity")
         {
             CHECK(json(INFINITY) == json());
