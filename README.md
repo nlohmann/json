@@ -383,6 +383,7 @@ I deeply appreciate the help of the following people.
 - [Aaron Burghardt](https://github.com/aburgh) implemented code to parse streams incrementally. Furthermore, he greatly improved the parser class by allowing the definition of a filter function to discard undesired elements while parsing.
 - [Daniel Kopeček](https://github.com/dkopecek) fixed a bug in the compilation with GCC 5.0.
 - [Florian Weber](https://github.com/Florianjw) fixed a bug in and improved the performance of the comparison operators.
+- [Eric Cornelius](https://github.com/EricMCornelius) pointed out a bug in the handling with NaN and infinity values.
 
 Thanks a lot for helping out!
 
@@ -395,7 +396,7 @@ $ make
 $ ./json_unit
 
 ===============================================================================
-All tests passed (4558 assertions in 19 test cases)
+All tests passed (4673 assertions in 19 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

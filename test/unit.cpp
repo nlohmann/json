@@ -8450,4 +8450,25 @@ TEST_CASE("regression tests")
             CHECK(j == R"(["\"foo\""])"_json);
         }
     }
+
+    SECTION("issue #70 - Handle infinity and NaN cases")
+    {
+        SECTION("NAN value")
+        {
+            CHECK(json(NAN) == json());
+        }
+
+        SECTION("overflows")
+        {
+            CHECK(json(std::exp(800)) == json());
+            CHECK(json(HUGE_VALF) == json());
+            CHECK(json(HUGE_VAL) == json());
+            CHECK(json(HUGE_VALL) == json());
+        }
+
+        SECTION("infinity")
+        {
+            CHECK(json(INFINITY) == json());
+        }
+    }
 }

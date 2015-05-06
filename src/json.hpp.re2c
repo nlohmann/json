@@ -431,7 +431,14 @@ class basic_json
     /// create a floating-point number (explicit)
     inline basic_json(const number_float_t& value)
         : m_type(value_t::number_float), m_value(value)
-    {}
+    {
+        // replace infinity and NAN by null
+        if (not std::isfinite(value))
+        {
+            m_type = value_t::null;
+            m_value = json_value();
+        }
+    }
 
     /// create a floating-point number (implicit)
     template<typename T, typename = typename
@@ -441,7 +448,14 @@ class basic_json
              >
     inline basic_json(const T value) noexcept
         : m_type(value_t::number_float), m_value(number_float_t(value))
-    {}
+    {
+        // replace infinity and NAN by null
+        if (not std::isfinite(value))
+        {
+            m_type = value_t::null;
+            m_value = json_value();
+        }
+    }
 
     /// create a container (array or object) from an initializer list
     inline basic_json(list_init_t init, bool type_deduction = true,
