@@ -8456,11 +8456,13 @@ TEST_CASE("regression tests")
         SECTION("NAN value")
         {
             CHECK(json(NAN) == json());
+            CHECK(json(static_cast<long double>(NAN)) == json());
         }
 
         SECTION("infinity")
         {
             CHECK(json(INFINITY) == json());
+            CHECK(json(static_cast<long double>(INFINITY)) == json());
         }
     }
 }
