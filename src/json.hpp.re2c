@@ -2333,13 +2333,12 @@ class basic_json
     ///////////////
 
     /// an iterator value
-    template<typename array_iterator_t, typename object_iterator_t>
     union internal_iterator
     {
         /// iterator for JSON objects
-        object_iterator_t object_iterator;
+        typename object_t::iterator object_iterator;
         /// iterator for JSON arrays
-        array_iterator_t array_iterator;
+        typename array_t::iterator array_iterator;
         /// generic iteraotr for all other value types
         difference_type generic_iterator;
 
@@ -2401,9 +2400,8 @@ class basic_json
         inline iterator& operator=(iterator other) noexcept (
             std::is_nothrow_move_constructible<pointer>::value and
             std::is_nothrow_move_assignable<pointer>::value and
-            std::is_nothrow_move_constructible<internal_iterator<typename array_t::iterator, typename object_t::iterator>>::value
-            and
-            std::is_nothrow_move_assignable<internal_iterator<typename array_t::iterator, typename object_t::iterator>>::value
+            std::is_nothrow_move_constructible<internal_iterator>::value and
+            std::is_nothrow_move_assignable<internal_iterator>::value
         )
         {
             std::swap(m_object, other.m_object);
@@ -2862,7 +2860,7 @@ class basic_json
         /// associated JSON instance
         pointer m_object = nullptr;
         /// the actual iterator of the associated instance
-        internal_iterator<typename array_t::iterator, typename object_t::iterator> m_it;
+        internal_iterator m_it;
     };
 
     /// a const random access iterator for the basic_json class
@@ -2893,12 +2891,12 @@ class basic_json
             {
                 case (basic_json::value_t::object):
                 {
-                    m_it.object_iterator = typename object_t::const_iterator();
+                    m_it.object_iterator = typename object_t::iterator();
                     break;
                 }
                 case (basic_json::value_t::array):
                 {
-                    m_it.array_iterator = typename array_t::const_iterator();
+                    m_it.array_iterator = typename array_t::iterator();
                     break;
                 }
                 default:
@@ -2943,9 +2941,8 @@ class basic_json
         inline const_iterator& operator=(const_iterator other) noexcept(
             std::is_nothrow_move_constructible<pointer>::value and
             std::is_nothrow_move_assignable<pointer>::value and
-            std::is_nothrow_move_constructible<internal_iterator<typename array_t::const_iterator, typename object_t::const_iterator>>::value
-            and
-            std::is_nothrow_move_assignable<internal_iterator<typename array_t::const_iterator, typename object_t::const_iterator>>::value
+            std::is_nothrow_move_constructible<internal_iterator>::value and
+            std::is_nothrow_move_assignable<internal_iterator>::value
         )
         {
             std::swap(m_object, other.m_object);
@@ -2961,13 +2958,13 @@ class basic_json
             {
                 case (basic_json::value_t::object):
                 {
-                    m_it.object_iterator = m_object->m_value.object->cbegin();
+                    m_it.object_iterator = m_object->m_value.object->begin();
                     break;
                 }
 
                 case (basic_json::value_t::array):
                 {
-                    m_it.array_iterator = m_object->m_value.array->cbegin();
+                    m_it.array_iterator = m_object->m_value.array->begin();
                     break;
                 }
 
@@ -2993,13 +2990,13 @@ class basic_json
             {
                 case (basic_json::value_t::object):
                 {
-                    m_it.object_iterator = m_object->m_value.object->cend();
+                    m_it.object_iterator = m_object->m_value.object->end();
                     break;
                 }
 
                 case (basic_json::value_t::array):
                 {
-                    m_it.array_iterator = m_object->m_value.array->cend();
+                    m_it.array_iterator = m_object->m_value.array->end();
                     break;
                 }
 
@@ -3398,7 +3395,7 @@ class basic_json
         /// associated JSON instance
         pointer m_object = nullptr;
         /// the actual iterator of the associated instance
-        internal_iterator<typename array_t::const_iterator, typename object_t::const_iterator> m_it;
+        internal_iterator m_it;
     };
 
     /// a reverse random access iterator for the basic_json class
