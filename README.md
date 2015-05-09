@@ -384,6 +384,7 @@ I deeply appreciate the help of the following people.
 - [Daniel Kopeček](https://github.com/dkopecek) fixed a bug in the compilation with GCC 5.0.
 - [Florian Weber](https://github.com/Florianjw) fixed a bug in and improved the performance of the comparison operators.
 - [Eric Cornelius](https://github.com/EricMCornelius) pointed out a bug in the handling with NaN and infinity values.
+- [易思龙](https://github.com/likebeta) implemented a conversion from anonymous enums.
 
 Thanks a lot for helping out!
 
@@ -396,7 +397,7 @@ $ make
 $ ./json_unit
 
 ===============================================================================
-All tests passed (4707 assertions in 20 test cases)
+All tests passed (4708 assertions in 20 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
