@@ -8529,4 +8529,16 @@ TEST_CASE("regression tests")
             CHECK(json(json::number_float_t(INFINITY)) == json());
         }
     }
+
+    SECTION("pull request #71 - handle enum type")
+    {
+        enum { t = 0 };
+        json j = json::array();
+        j.push_back(t);
+
+        j.push_back(json::object(
+        {
+            {"game_type", t}
+        }));
+    }
 }

@@ -417,10 +417,10 @@ class basic_json
     inline basic_json(const number_integer_t& value)
         : m_type(value_t::number_integer), m_value(value)
     {}
-    
+
     /// create an int number to support enum type (implicit)
-    inline basic_json(int int_enum)
-	    : m_type(value_t::number_integer), m_value((NumberIntegerType)int_enum)
+    inline basic_json(const int int_enum)
+        : m_type(value_t::number_integer), m_value(static_cast<number_integer_t>(int_enum))
     {}
 
     /// create an integer number (implicit)
