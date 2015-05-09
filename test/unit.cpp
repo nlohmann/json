@@ -7398,16 +7398,17 @@ TEST_CASE("parser class")
 
                 // exotic test cases for full coverage
                 {
-                    {
-                        std::stringstream ss;
-                        ss << "\"\\u000\n1\"";
-                        CHECK(json::parser(ss).parse().get<json::string_t>() == "\x01");
-                    }
-                    {
-                        std::stringstream ss;
-                        ss << "\"\\u00\n01\"";
-                        CHECK(json::parser(ss).parse().get<json::string_t>() == "\x01");
-                    }
+                    // that one got illegal
+                    //{
+                    //    std::stringstream ss;
+                    //    ss << "\"\\u000\n1\"";
+                    //    CHECK(json::parser(ss).parse().get<json::string_t>() == "\x01");
+                    //}
+                    //{
+                    //    std::stringstream ss;
+                    //    ss << "\"\\u00\n01\"";
+                    //    CHECK(json::parser(ss).parse().get<json::string_t>() == "\x01");
+                    //}
                 }
 
                 CHECK(json::parser("\"\\u0001\"").parse().get<json::string_t>() == "\x01");
@@ -8435,6 +8436,73 @@ TEST_CASE("concepts")
                 CHECK(it1 == j.end());
                 CHECK(it2 == j.begin());
             }
+        }
+    }
+}
+
+TEST_CASE("JSON compliance")
+{
+    // test cases are from http://json.org/JSON_checker/
+
+    SECTION("expected failures")
+    {
+        for (auto filename :
+                {
+                    //"test/json_tests/fail1.json",
+                    "test/json_tests/fail2.json",
+                    "test/json_tests/fail3.json",
+                    "test/json_tests/fail4.json",
+                    "test/json_tests/fail5.json",
+                    "test/json_tests/fail6.json",
+                    "test/json_tests/fail7.json",
+                    "test/json_tests/fail8.json",
+                    "test/json_tests/fail9.json",
+                    "test/json_tests/fail10.json",
+                    "test/json_tests/fail11.json",
+                    "test/json_tests/fail12.json",
+                    "test/json_tests/fail13.json",
+                    "test/json_tests/fail14.json",
+                    "test/json_tests/fail15.json",
+                    "test/json_tests/fail16.json",
+                    "test/json_tests/fail17.json",
+                    //"test/json_tests/fail18.json",
+                    "test/json_tests/fail19.json",
+                    "test/json_tests/fail20.json",
+                    "test/json_tests/fail21.json",
+                    "test/json_tests/fail22.json",
+                    "test/json_tests/fail23.json",
+                    "test/json_tests/fail24.json",
+                    "test/json_tests/fail25.json",
+                    "test/json_tests/fail26.json",
+                    "test/json_tests/fail27.json",
+                    "test/json_tests/fail28.json",
+                    "test/json_tests/fail29.json",
+                    "test/json_tests/fail30.json",
+                    "test/json_tests/fail31.json",
+                    "test/json_tests/fail32.json",
+                    "test/json_tests/fail33.json"
+                })
+        {
+            CAPTURE(filename);
+            json j;
+            std::ifstream f(filename);
+            CHECK_THROWS_AS(j << f, std::invalid_argument);
+        }
+    }
+
+    SECTION("expected passes")
+    {
+        for (auto filename :
+                {
+                    "test/json_tests/pass1.json",
+                    "test/json_tests/pass2.json",
+                    "test/json_tests/pass3.json"
+                })
+        {
+            CAPTURE(filename);
+            json j;
+            std::ifstream f(filename);
+            CHECK_NOTHROW(j << f);
         }
     }
 }

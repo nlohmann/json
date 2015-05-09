@@ -3631,7 +3631,7 @@ class basic_json
                 static const unsigned char yybm[] =
                 {
                     0,  64,  64,  64,  64,  64,  64,  64,
-                    64,  96,  96,  64,  64,  96,  64,  64,
+                    64,  32,  32,  64,  64,  32,  64,  64,
                     64,  64,  64,  64,  64,  64,  64,  64,
                     64,  64,  64,  64,  64,  64,  64,  64,
                     96,  64,   0,  64,  64,  64,  64,  64,
@@ -3914,11 +3914,26 @@ basic_json_parser_25:
 basic_json_parser_26:
                 yyaccept = 0;
                 yych = *(m_marker = ++m_cursor);
-                if (yych <= 0x00)
+                if (yych <= '\n')
                 {
+                    if (yych <= 0x00)
+                    {
+                        goto basic_json_parser_19;
+                    }
+                    if (yych <= 0x08)
+                    {
+                        goto basic_json_parser_31;
+                    }
                     goto basic_json_parser_19;
                 }
-                goto basic_json_parser_31;
+                else
+                {
+                    if (yych == '\r')
+                    {
+                        goto basic_json_parser_19;
+                    }
+                    goto basic_json_parser_31;
+                }
 basic_json_parser_27:
                 ++m_cursor;
                 {
@@ -3939,7 +3954,7 @@ basic_json_parser_31:
                 {
                     goto basic_json_parser_30;
                 }
-                if (yych <= 0x00)
+                if (yych <= '\r')
                 {
                     goto basic_json_parser_32;
                 }
@@ -4395,7 +4410,7 @@ basic_json_parser_59:
             m_buffer.erase(0, static_cast<size_t>(offset_start));
             std::string line;
             std::getline(*m_stream, line);
-            m_buffer += line;
+            m_buffer += "\n" + line; // add line with newline symbol
 
             m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
             m_start  = m_content;
@@ -4641,6 +4656,9 @@ basic_json_parser_59:
                         return result;
                     }
 
+                    // no comma is expected here
+                    unexpect(lexer::token_type::value_separator);
+
                     // otherwise: parse key-value pairs
                     do
                     {
@@ -4706,6 +4724,9 @@ basic_json_parser_59:
                         }
                         return result;
                     }
+
+                    // no comma is expected here
+                    unexpect(lexer::token_type::value_separator);
 
                     // otherwise: parse values
                     do
@@ -4796,11 +4817,8 @@ basic_json_parser_59:
 
                 default:
                 {
-                    std::string error_msg = "parse error - unexpected \'";
-                    error_msg += m_lexer.get_token();
-                    error_msg += "\' (";
-                    error_msg += lexer::token_type_name(last_token) + ")";
-                    throw std::invalid_argument(error_msg);
+                    // the last token was unexpected
+                    unexpect(last_token);
                 }
             }
 
@@ -4826,6 +4844,18 @@ basic_json_parser_59:
                 error_msg += m_lexer.get_token();
                 error_msg += "\' (" + lexer::token_type_name(last_token);
                 error_msg += "); expected " + lexer::token_type_name(t);
+                throw std::invalid_argument(error_msg);
+            }
+        }
+
+        inline void unexpect(typename lexer::token_type t) const
+        {
+            if (t == last_token)
+            {
+                std::string error_msg = "parse error - unexpected \'";
+                error_msg += m_lexer.get_token();
+                error_msg += "\' (";
+                error_msg += lexer::token_type_name(last_token) + ")";
                 throw std::invalid_argument(error_msg);
             }
         }
