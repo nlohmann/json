@@ -3669,7 +3669,7 @@ class basic_json
                 // string
                 quotation_mark  = [\"];
                 escape          = [\\];
-                unescaped       = [^\"\\\000\t\n\r];
+                unescaped       = [^\"\\\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F];
                 single_escaped  = [\"\\/bfnrt];
                 unicode_escaped = [u][0-9a-fA-F]{4};
                 escaped         = escape (single_escaped | unicode_escaped);

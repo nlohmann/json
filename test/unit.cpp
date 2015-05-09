@@ -7384,6 +7384,8 @@ TEST_CASE("parser class")
                 // error: newline in string
                 CHECK_THROWS_AS(json::parser("\"\n\"").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("\"\r\"").parse(), std::invalid_argument);
+                // error: backspace in string
+                CHECK_THROWS_AS(json::parser("\"\b\"").parse(), std::invalid_argument);
             }
 
             SECTION("escaped")

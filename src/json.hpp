@@ -3630,8 +3630,8 @@ class basic_json
                 unsigned int yyaccept = 0;
                 static const unsigned char yybm[] =
                 {
-                    0,  64,  64,  64,  64,  64,  64,  64,
-                    64,  32,  32,  64,  64,  32,  64,  64,
+                    0,   0,   0,   0,   0,   0,   0,   0,
+                    0,  32,  32,   0,   0,  32,   0,   0,
                     64,  64,  64,  64,  64,  64,  64,  64,
                     64,  64,  64,  64,  64,  64,  64,  64,
                     96,  64,   0,  64,  64,  64,  64,  64,
@@ -3914,26 +3914,11 @@ basic_json_parser_25:
 basic_json_parser_26:
                 yyaccept = 0;
                 yych = *(m_marker = ++m_cursor);
-                if (yych <= '\n')
+                if (yych <= 0x0F)
                 {
-                    if (yych <= 0x00)
-                    {
-                        goto basic_json_parser_19;
-                    }
-                    if (yych <= 0x08)
-                    {
-                        goto basic_json_parser_31;
-                    }
                     goto basic_json_parser_19;
                 }
-                else
-                {
-                    if (yych == '\r')
-                    {
-                        goto basic_json_parser_19;
-                    }
-                    goto basic_json_parser_31;
-                }
+                goto basic_json_parser_31;
 basic_json_parser_27:
                 ++m_cursor;
                 {
@@ -3954,7 +3939,7 @@ basic_json_parser_31:
                 {
                     goto basic_json_parser_30;
                 }
-                if (yych <= '\r')
+                if (yych <= 0x0F)
                 {
                     goto basic_json_parser_32;
                 }
