@@ -8662,7 +8662,7 @@ TEST_CASE("compliance tests from nativejson-benchmark")
         TEST_STRING("[\"\\u20AC\"]", "\xE2\x82\xAC"); // Euro sign U+20AC
         TEST_STRING("[\"\\uD834\\uDD1E\"]", "\xF0\x9D\x84\x9E");  // G clef sign U+1D11E
     }
-    
+
     SECTION("roundtrip")
     {
         // test cases are from https://github.com/miloyip/nativejson-benchmark/tree/master/data/roundtrip

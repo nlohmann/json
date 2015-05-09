@@ -147,6 +147,23 @@ class basic_json
     using list_init_t = std::initializer_list<basic_json>;
 
 
+    /////////////////////////////////
+    // JSON value type enumeration //
+    /////////////////////////////////
+
+    /// JSON value type enumeration
+    enum class value_t : uint8_t
+    {
+        null,           ///< null value
+        object,         ///< object (unordered set of name/value pairs)
+        array,          ///< array (ordered collection of values)
+        string,         ///< string value
+        boolean,        ///< boolean value
+        number_integer, ///< number value (integer)
+        number_float,   ///< number value (floating-point)
+        discarded       ///< (internal) indicates the parser callback chose not to keep the value
+    };
+
     ////////////////////////
     // JSON value storage //
     ////////////////////////
@@ -175,24 +192,60 @@ class basic_json
         json_value(number_integer_t v) : number_integer(v) {}
         /// constructor for numbers (floating-point)
         json_value(number_float_t v) : number_float(v) {}
-    };
+        /// constructor for empty values of a given type
+        json_value(value_t t)
+        {
+            switch (t)
+            {
+                case (value_t::null):
+                case (value_t::discarded):
+                {
+                    break;
+                }
 
+                case (value_t::object):
+                {
+                    AllocatorType<object_t> alloc;
+                    object = alloc.allocate(1);
+                    alloc.construct(object);
+                    break;
+                }
 
-    /////////////////////////////////
-    // JSON value type enumeration //
-    /////////////////////////////////
+                case (value_t::array):
+                {
+                    AllocatorType<array_t> alloc;
+                    array = alloc.allocate(1);
+                    alloc.construct(array);
+                    break;
+                }
 
-    /// JSON value type enumeration
-    enum class value_t : uint8_t
-    {
-        null,           ///< null value
-        object,         ///< object (unordered set of name/value pairs)
-        array,          ///< array (ordered collection of values)
-        string,         ///< string value
-        boolean,        ///< boolean value
-        number_integer, ///< number value (integer)
-        number_float,   ///< number value (floating-point)
-        discarded       ///< (internal) indicates the parser callback chose not to keep the value
+                case (value_t::string):
+                {
+                    AllocatorType<string_t> alloc;
+                    string = alloc.allocate(1);
+                    alloc.construct(string, "");
+                    break;
+                }
+
+                case (value_t::boolean):
+                {
+                    boolean = boolean_t(false);
+                    break;
+                }
+
+                case (value_t::number_integer):
+                {
+                    number_integer = number_integer_t(0);
+                    break;
+                }
+
+                case (value_t::number_float):
+                {
+                    number_float = number_float_t(0.0);
+                    break;
+                }
+            }
+        }
     };
 
     //////////////////////////
@@ -261,59 +314,8 @@ class basic_json
     @exception std::bad_alloc  if allocation for object, array, or string fails.
     */
     inline basic_json(const value_t value)
-        : m_type(value)
-    {
-        switch (m_type)
-        {
-            case (value_t::null):
-            case (value_t::discarded):
-            {
-                break;
-            }
-
-            case (value_t::object):
-            {
-                AllocatorType<object_t> alloc;
-                m_value.object = alloc.allocate(1);
-                alloc.construct(m_value.object);
-                break;
-            }
-
-            case (value_t::array):
-            {
-                AllocatorType<array_t> alloc;
-                m_value.array = alloc.allocate(1);
-                alloc.construct(m_value.array);
-                break;
-            }
-
-            case (value_t::string):
-            {
-                AllocatorType<string_t> alloc;
-                m_value.string = alloc.allocate(1);
-                alloc.construct(m_value.string, "");
-                break;
-            }
-
-            case (value_t::boolean):
-            {
-                m_value.boolean = boolean_t(false);
-                break;
-            }
-
-            case (value_t::number_integer):
-            {
-                m_value.number_integer = number_integer_t(0);
-                break;
-            }
-
-            case (value_t::number_float):
-            {
-                m_value.number_float = number_float_t(0.0);
-                break;
-            }
-        }
-    }
+        : m_type(value), m_value(value)
+    {}
 
     /*!
     @brief create a null object (implicitly)
@@ -4629,7 +4631,8 @@ basic_json_parser_59:
                     if (keep and (keep = callback(depth++, parse_event_t::object_start, result)))
                     {
                         // explicitly set result to object to cope with {}
-                        result = basic_json(value_t::object);
+                        result.m_type = value_t::object;
+                        result.m_value = json_value(value_t::object);
                     }
 
                     // read next token
@@ -4698,7 +4701,8 @@ basic_json_parser_59:
                     if (keep and (keep = callback(depth++, parse_event_t::array_start, result)))
                     {
                         // explicitly set result to object to cope with []
-                        result = basic_json(value_t::array);
+                        result.m_type = value_t::array;
+                        result.m_value = json_value(value_t::array);
                     }
 
                     // read next token
@@ -4750,7 +4754,7 @@ basic_json_parser_59:
                 case (lexer::token_type::literal_null):
                 {
                     get_token();
-                    result = basic_json(nullptr);
+                    result.m_type = value_t::null;
                     break;
                 }
 
@@ -4765,14 +4769,16 @@ basic_json_parser_59:
                 case (lexer::token_type::literal_true):
                 {
                     get_token();
-                    result = basic_json(true);
+                    result.m_type = value_t::boolean;
+                    result.m_value = true;
                     break;
                 }
 
                 case (lexer::token_type::literal_false):
                 {
                     get_token();
-                    result = basic_json(false);
+                    result.m_type = value_t::boolean;
+                    result.m_value = false;
                     break;
                 }
 
@@ -4795,12 +4801,14 @@ basic_json_parser_59:
                     if (approx(float_val, static_cast<number_float_t>(int_val)))
                     {
                         // we basic_json not lose precision -> return int
-                        result = basic_json(int_val);
+                        result.m_type = value_t::number_integer;
+                        result.m_value = int_val;
                     }
                     else
                     {
                         // we would lose precision -> returnfloat
-                        result = basic_json(float_val);
+                        result.m_type = value_t::number_float;
+                        result.m_value = float_val;
                     }
                     break;
                 }
