@@ -7377,6 +7377,15 @@ TEST_CASE("parser class")
             // empty string
             CHECK(json::parser("\"\"").parse() == json(json::value_t::string));
 
+            SECTION("errors")
+            {
+                // error: tab in string
+                CHECK_THROWS_AS(json::parser("\"\t\"").parse(), std::invalid_argument);
+                // error: newline in string
+                CHECK_THROWS_AS(json::parser("\"\n\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\r\"").parse(), std::invalid_argument);
+            }
+
             SECTION("escaped")
             {
                 // quotation mark "\""
@@ -8524,11 +8533,13 @@ TEST_CASE("regression tests")
         SECTION("NAN value")
         {
             CHECK(json(NAN) == json());
+            CHECK(json(json::number_float_t(NAN)) == json());
         }
 
         SECTION("infinity")
         {
             CHECK(json(INFINITY) == json());
+            CHECK(json(json::number_float_t(INFINITY)) == json());
         }
     }
 }
