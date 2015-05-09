@@ -7405,21 +7405,6 @@ TEST_CASE("parser class")
                 // horizontal tab
                 CHECK(json::parser("\"\\t\"").parse() == json("\t"));
 
-                // exotic test cases for full coverage
-                {
-                    // that one got illegal
-                    //{
-                    //    std::stringstream ss;
-                    //    ss << "\"\\u000\n1\"";
-                    //    CHECK(json::parser(ss).parse().get<json::string_t>() == "\x01");
-                    //}
-                    //{
-                    //    std::stringstream ss;
-                    //    ss << "\"\\u00\n01\"";
-                    //    CHECK(json::parser(ss).parse().get<json::string_t>() == "\x01");
-                    //}
-                }
-
                 CHECK(json::parser("\"\\u0001\"").parse().get<json::string_t>() == "\x01");
                 CHECK(json::parser("\"\\u000a\"").parse().get<json::string_t>() == "\n");
                 CHECK(json::parser("\"\\u00b0\"").parse().get<json::string_t>() == "°");
