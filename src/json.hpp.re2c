@@ -185,15 +185,15 @@ class basic_json
         number_float_t number_float;
 
         /// default constructor (for null values)
-        json_value() = default;
+        inline json_value() noexcept = default;
         /// constructor for booleans
-        json_value(boolean_t v) : boolean(v) {}
+        inline json_value(boolean_t v) noexcept : boolean(v) {}
         /// constructor for numbers (integer)
-        json_value(number_integer_t v) : number_integer(v) {}
+        inline json_value(number_integer_t v) noexcept : number_integer(v) {}
         /// constructor for numbers (floating-point)
-        json_value(number_float_t v) : number_float(v) {}
+        inline json_value(number_float_t v) noexcept : number_float(v) {}
         /// constructor for empty values of a given type
-        json_value(value_t t)
+        inline json_value(value_t t)
         {
             switch (t)
             {
@@ -248,7 +248,7 @@ class basic_json
         }
 
         /// constructor for strings
-        json_value(const string_t& value)
+        inline json_value(const string_t& value)
         {
             AllocatorType<string_t> alloc;
             string = alloc.allocate(1);
@@ -256,7 +256,7 @@ class basic_json
         }
 
         /// constructor for objects
-        json_value(const object_t& value)
+        inline json_value(const object_t& value)
         {
             AllocatorType<object_t> alloc;
             object = alloc.allocate(1);
@@ -264,7 +264,7 @@ class basic_json
         }
 
         /// constructor for arrays
-        json_value(const array_t& value)
+        inline json_value(const array_t& value)
         {
             AllocatorType<array_t> alloc;
             array = alloc.allocate(1);
@@ -1187,9 +1187,7 @@ class basic_json
         if (m_type == value_t::null)
         {
             m_type = value_t::object;
-            AllocatorType<object_t> alloc;
-            m_value.object = alloc.allocate(1);
-            alloc.construct(m_value.object);
+            m_value = value_t::object;
         }
 
         // at only works for objects
