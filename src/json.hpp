@@ -246,6 +246,30 @@ class basic_json
                 }
             }
         }
+
+        /// constructor for strings
+        json_value(const string_t& value)
+        {
+            AllocatorType<string_t> alloc;
+            string = alloc.allocate(1);
+            alloc.construct(string, value);
+        }
+
+        /// constructor for objects
+        json_value(const object_t& value)
+        {
+            AllocatorType<object_t> alloc;
+            object = alloc.allocate(1);
+            alloc.construct(object, value);
+        }
+
+        /// constructor for arrays
+        json_value(const array_t& value)
+        {
+            AllocatorType<array_t> alloc;
+            array = alloc.allocate(1);
+            alloc.construct(array, value);
+        }
     };
 
     //////////////////////////
@@ -325,17 +349,13 @@ class basic_json
 
     /// create a null object (explicitly)
     inline basic_json(std::nullptr_t) noexcept
-        : m_type(value_t::null)
+        : basic_json(value_t::null)
     {}
 
     /// create an object (explicit)
     inline basic_json(const object_t& value)
-        : m_type(value_t::object)
-    {
-        AllocatorType<object_t> alloc;
-        m_value.object = alloc.allocate(1);
-        alloc.construct(m_value.object, value);
-    }
+        : m_type(value_t::object), m_value(value)
+    {}
 
     /// create an object (implicit)
     template <class V, typename
@@ -355,12 +375,8 @@ class basic_json
 
     /// create an array (explicit)
     inline basic_json(const array_t& value)
-        : m_type(value_t::array)
-    {
-        AllocatorType<array_t> alloc;
-        m_value.array = alloc.allocate(1);
-        alloc.construct(m_value.array, value);
-    }
+        : m_type(value_t::array), m_value(value)
+    {}
 
     /// create an array (implicit)
     template <class V, typename
@@ -385,21 +401,13 @@ class basic_json
 
     /// create a string (explicit)
     inline basic_json(const string_t& value)
-        : m_type(value_t::string)
-    {
-        AllocatorType<string_t> alloc;
-        m_value.string = alloc.allocate(1);
-        alloc.construct(m_value.string, value);
-    }
+        : m_type(value_t::string), m_value(value)
+    {}
 
     /// create a string (explicit)
     inline basic_json(const typename string_t::value_type* value)
-        : m_type(value_t::string)
-    {
-        AllocatorType<string_t> alloc;
-        m_value.string = alloc.allocate(1);
-        alloc.construct(m_value.string, value);
-    }
+        : basic_json(string_t(value))
+    {}
 
     /// create a string (implicit)
     template <class V, typename
@@ -422,7 +430,7 @@ class basic_json
 
     /// create an int number to support enum type (implicit)
     inline basic_json(const int int_enum)
-        : m_type(value_t::number_integer), m_value(static_cast<number_integer_t>(int_enum))
+        : basic_json(static_cast<number_integer_t>(int_enum))
     {}
 
     /// create an integer number (implicit)
@@ -432,7 +440,7 @@ class basic_json
                  std::numeric_limits<T>::is_integer, T>::type
              = 0>
     inline basic_json(const T value) noexcept
-        : m_type(value_t::number_integer), m_value(number_integer_t(value))
+        : basic_json(number_integer_t(value))
     {}
 
     /// create a floating-point number (explicit)
@@ -454,15 +462,8 @@ class basic_json
                  std::is_floating_point<T>::value>::type
              >
     inline basic_json(const T value) noexcept
-        : m_type(value_t::number_float), m_value(number_float_t(value))
-    {
-        // replace infinity and NAN by null
-        if (not std::isfinite(value))
-        {
-            m_type = value_t::null;
-            m_value = json_value();
-        }
-    }
+        : basic_json(number_float_t(value))
+    {}
 
     /// create a container (array or object) from an initializer list
     inline basic_json(list_init_t init, bool type_deduction = true,
@@ -607,9 +608,7 @@ class basic_json
 
             case value_t::string:
             {
-                AllocatorType<string_t> alloc;
-                m_value.string = alloc.allocate(1);
-                alloc.construct(m_value.string, *first.m_object->m_value.string);
+                m_value = *first.m_object->m_value.string;
                 break;
             }
 
@@ -660,43 +659,37 @@ class basic_json
 
             case (value_t::object):
             {
-                AllocatorType<object_t> alloc;
-                m_value.object = alloc.allocate(1);
-                alloc.construct(m_value.object, *other.m_value.object);
+                m_value = *other.m_value.object;
                 break;
             }
 
             case (value_t::array):
             {
-                AllocatorType<array_t> alloc;
-                m_value.array = alloc.allocate(1);
-                alloc.construct(m_value.array, *other.m_value.array);
+                m_value = *other.m_value.array;
                 break;
             }
 
             case (value_t::string):
             {
-                AllocatorType<string_t> alloc;
-                m_value.string = alloc.allocate(1);
-                alloc.construct(m_value.string, *other.m_value.string);
+                m_value = *other.m_value.string;
                 break;
             }
 
             case (value_t::boolean):
             {
-                m_value.boolean = other.m_value.boolean;
+                m_value = other.m_value.boolean;
                 break;
             }
 
             case (value_t::number_integer):
             {
-                m_value.number_integer = other.m_value.number_integer;
+                m_value = other.m_value.number_integer;
                 break;
             }
 
             case (value_t::number_float):
             {
-                m_value.number_float = other.m_value.number_float;
+                m_value = other.m_value.number_float;
                 break;
             }
         }
