@@ -506,9 +506,7 @@ class basic_json
         {
             // the initializer list is a list of pairs -> create object
             m_type = value_t::object;
-            AllocatorType<object_t> alloc;
-            m_value.object = alloc.allocate(1);
-            alloc.construct(m_value.object);
+            m_value = value_t::object;
 
             for (auto& element : init)
             {
@@ -1721,9 +1719,7 @@ class basic_json
         if (m_type == value_t::null)
         {
             m_type = value_t::array;
-            AllocatorType<array_t> alloc;
-            m_value.array = alloc.allocate(1);
-            alloc.construct(m_value.array);
+            m_value = value_t::array;
         }
 
         // add element to array (move semantics)
@@ -1752,9 +1748,7 @@ class basic_json
         if (m_type == value_t::null)
         {
             m_type = value_t::array;
-            AllocatorType<array_t> alloc;
-            m_value.array = alloc.allocate(1);
-            alloc.construct(m_value.array);
+            m_value = value_t::array;
         }
 
         // add element to array
@@ -1781,9 +1775,7 @@ class basic_json
         if (m_type == value_t::null)
         {
             m_type = value_t::object;
-            AllocatorType<object_t> alloc;
-            m_value.object = alloc.allocate(1);
-            alloc.construct(m_value.object);
+            m_value = value_t::object;
         }
 
         // add element to array
