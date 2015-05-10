@@ -291,12 +291,6 @@ class basic_json
     using parser_callback_t = std::function<bool(int depth, parse_event_t event,
                               const basic_json& parsed)>;
 
-    /// default parser callback returns true to keep all elements
-    static bool default_callback(int, parse_event_t, const basic_json&)
-    {
-        return true;
-    }
-
     /*!
     @brief comparison operator for JSON value types
 
@@ -1994,13 +1988,13 @@ class basic_json
     /////////////////////
 
     /// deserialize from string
-    static basic_json parse(const string_t& s, parser_callback_t cb = default_callback)
+    static basic_json parse(const string_t& s, parser_callback_t cb = nullptr)
     {
         return parser(s, cb).parse();
     }
 
     /// deserialize from stream
-    static basic_json parse(std::istream& i, parser_callback_t cb = default_callback)
+    static basic_json parse(std::istream& i, parser_callback_t cb = nullptr)
     {
         return parser(i, cb).parse();
     }
@@ -4579,14 +4573,14 @@ basic_json_parser_59:
     {
       public:
         /// constructor for strings
-        inline parser(const string_t& s, parser_callback_t cb = default_callback) : callback(cb), m_lexer(s)
+        inline parser(const string_t& s, parser_callback_t cb = nullptr) : callback(cb), m_lexer(s)
         {
             // read first token
             get_token();
         }
 
         /// a parser reading from an input stream
-        inline parser(std::istream& _is, parser_callback_t cb = default_callback) : callback(cb),
+        inline parser(std::istream& _is, parser_callback_t cb = nullptr) : callback(cb),
             m_lexer(&_is)
         {
             // read first token
@@ -4613,7 +4607,7 @@ basic_json_parser_59:
             {
                 case (lexer::token_type::begin_object):
                 {
-                    if (keep and (keep = callback(depth++, parse_event_t::object_start, result)))
+                    if (keep and (not callback or (keep = callback(depth++, parse_event_t::object_start, result))))
                     {
                         // explicitly set result to object to cope with {}
                         result.m_type = value_t::object;
@@ -4627,7 +4621,7 @@ basic_json_parser_59:
                     if (last_token == lexer::token_type::end_object)
                     {
                         get_token();
-                        if (keep and not (keep = callback(--depth, parse_event_t::object_end, result)))
+                        if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
                         {
                             result = basic_json(value_t::discarded);
                         }
@@ -4653,7 +4647,7 @@ basic_json_parser_59:
                         bool keep_tag = false;
                         if (keep)
                         {
-                            keep_tag = callback(depth, parse_event_t::key, basic_json(key));
+                            keep_tag = callback ? callback(depth, parse_event_t::key, basic_json(key)) : true;
                         }
 
                         // parse separator (:)
@@ -4673,7 +4667,7 @@ basic_json_parser_59:
                     // closing }
                     expect(lexer::token_type::end_object);
                     get_token();
-                    if (keep and not callback(--depth, parse_event_t::object_end, result))
+                    if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
                     {
                         result = basic_json(value_t::discarded);
                     }
@@ -4683,7 +4677,7 @@ basic_json_parser_59:
 
                 case (lexer::token_type::begin_array):
                 {
-                    if (keep and (keep = callback(depth++, parse_event_t::array_start, result)))
+                    if (keep and (not callback or (keep = callback(depth++, parse_event_t::array_start, result))))
                     {
                         // explicitly set result to object to cope with []
                         result.m_type = value_t::array;
@@ -4697,7 +4691,7 @@ basic_json_parser_59:
                     if (last_token == lexer::token_type::end_array)
                     {
                         get_token();
-                        if (not callback(--depth, parse_event_t::array_end, result))
+                        if (callback and not callback(--depth, parse_event_t::array_end, result))
                         {
                             result = basic_json(value_t::discarded);
                         }
@@ -4728,7 +4722,7 @@ basic_json_parser_59:
                     // closing ]
                     expect(lexer::token_type::end_array);
                     get_token();
-                    if (keep and not callback(--depth, parse_event_t::array_end, result))
+                    if (keep and callback and not callback(--depth, parse_event_t::array_end, result))
                     {
                         result = basic_json(value_t::discarded);
                     }
@@ -4805,7 +4799,7 @@ basic_json_parser_59:
                 }
             }
 
-            if (keep and not callback(depth, parse_event_t::value, result))
+            if (keep and callback and not callback(depth, parse_event_t::value, result))
             {
                 result = basic_json(value_t::discarded);
             }

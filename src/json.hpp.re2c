@@ -3953,7 +3953,7 @@ class basic_json
                         bool keep_tag = false;
                         if (keep)
                         {
-							keep_tag = callback ? callback(depth, parse_event_t::key, basic_json(key)) : true;
+                            keep_tag = callback ? callback(depth, parse_event_t::key, basic_json(key)) : true;
                         }
 
                         // parse separator (:)
