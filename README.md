@@ -129,7 +129,7 @@ json j2 = {
 };
 ```
 
-Note that in all theses cases, you never need to "tell" the compiler which JSON value you want to use. If you want to be explicit or express some edge cases, the functions `json::array` and `json::object` will help:
+Note that in all these cases, you never need to "tell" the compiler which JSON value you want to use. If you want to be explicit or express some edge cases, the functions `json::array` and `json::object` will help:
 
 ```cpp
 // ways to express the empty array []
