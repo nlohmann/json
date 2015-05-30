@@ -8747,4 +8747,36 @@ TEST_CASE("regression tests")
             {"game_type", t}
         }));
     }
+
+    SECTION("issue #76 - dump() / parse() not idempotent")
+    {
+        // create JSON object
+        json fields;
+        fields["one"] = std::string("one");
+        fields["two"] = std::string("two three");
+        fields["three"] = std::string("three \"four\"");
+
+        // create another JSON object by deserializing the serialization
+        std::string payload = fields.dump();
+        json parsed_fields = json::parse(payload);
+
+        // check individual fields to match both objects
+        CHECK(parsed_fields["one"] == fields["one"]);
+        CHECK(parsed_fields["two"] == fields["two"]);
+        CHECK(parsed_fields["three"] == fields["three"]);
+
+        // check individual fields to match original input
+        CHECK(parsed_fields["one"] == std::string("one"));
+        CHECK(parsed_fields["two"] == std::string("two three"));
+        CHECK(parsed_fields["three"] == std::string("three \"four\""));
+
+        // check equality of the objects
+        CHECK(parsed_fields == fields);
+
+        // check equality of the serialized objects
+        CHECK(fields.dump() == parsed_fields.dump());
+
+        // check everything in one line
+        CHECK(fields == json::parse(fields.dump()));
+    }
 }
