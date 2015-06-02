@@ -2323,7 +2323,7 @@ class basic_json
         typename object_t::iterator object_iterator;
         /// iterator for JSON arrays
         typename array_t::iterator array_iterator;
-        /// generic iteraotr for all other value types
+        /// generic iterator for all other value types
         difference_type generic_iterator;
 
         /// default constructor
