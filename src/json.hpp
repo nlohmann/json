@@ -2267,16 +2267,18 @@ class basic_json
 
             case (value_t::number_integer):
             {
-                return std::to_string(m_value.number_integer);
+                std::stringstream s;
+                s << m_value.number_integer;
+                return s.str();
             }
 
             case (value_t::number_float):
             {
                 // 15 digits of precision allows round-trip IEEE 754
                 // string->double->string
-                const auto sz = static_cast<unsigned int>(std::snprintf(nullptr, 0, "%.15g", m_value.number_float));
+                const auto sz = static_cast<unsigned int>(snprintf(nullptr, 0, "%.15g", m_value.number_float));
                 std::vector<typename string_t::value_type> buf(sz + 1);
-                std::snprintf(&buf[0], buf.size(), "%.15g", m_value.number_float);
+                snprintf(&buf[0], buf.size(), "%.15g", m_value.number_float);
                 return string_t(buf.data());
             }
 
@@ -4372,9 +4374,9 @@ basic_json_parser_59:
                 return;
             }
 
-            const ssize_t offset_start = m_start - m_content;
-            const ssize_t offset_marker = m_marker - m_start;
-            const ssize_t offset_cursor = m_cursor - m_start;
+            const int offset_start = m_start - m_content;
+            const int offset_marker = m_marker - m_start;
+            const int offset_cursor = m_cursor - m_start;
 
             m_buffer.erase(0, static_cast<size_t>(offset_start));
             std::string line;
