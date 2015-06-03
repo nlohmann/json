@@ -1,5 +1,5 @@
 version: '{build}'
-os: MinGW
+os: Visual Studio 2015 RC
 init: []
 install: []
 build_script:
