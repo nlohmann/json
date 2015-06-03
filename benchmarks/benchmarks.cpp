@@ -49,12 +49,15 @@ BENCHMARK("dump jeopardy.json", [](benchpress::context* ctx)
     std::ifstream input_file("benchmarks/files/jeopardy/jeopardy.json");
     nlohmann::json j;
     j << input_file;
+    std::ofstream output_file("jeopardy.dump.json");
 
     ctx->reset_timer();
     for (size_t i = 0; i < ctx->num_iterations(); ++i)
     {
-        j.dump();
+        output_file << j;
     }
+
+    std::remove("jeopardy.dump.json");
 })
 
 BENCHMARK("dump jeopardy.json with indent", [](benchpress::context* ctx)
@@ -62,10 +65,13 @@ BENCHMARK("dump jeopardy.json with indent", [](benchpress::context* ctx)
     std::ifstream input_file("benchmarks/files/jeopardy/jeopardy.json");
     nlohmann::json j;
     j << input_file;
+    std::ofstream output_file("jeopardy.dump.json");
 
     ctx->reset_timer();
     for (size_t i = 0; i < ctx->num_iterations(); ++i)
     {
-        j.dump(4);
+        output_file << std::setw(4) << j;
     }
+
+    std::remove("jeopardy.dump.json");
 })

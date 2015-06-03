@@ -7162,45 +7162,52 @@ TEST_CASE("convenience functions")
 
     SECTION("string escape")
     {
-        CHECK(json::escape_string("\"") == "\\\"");
-        CHECK(json::escape_string("\\") == "\\\\");
-        CHECK(json::escape_string("\b") == "\\b");
-        CHECK(json::escape_string("\f") == "\\f");
-        CHECK(json::escape_string("\n") == "\\n");
-        CHECK(json::escape_string("\r") == "\\r");
-        CHECK(json::escape_string("\t") == "\\t");
+        auto escape_string = [](const std::string & s)
+        {
+            std::stringstream ss;
+            json::escape_string(ss, s);
+            return ss.str();
+        };
 
-        CHECK(json::escape_string("\x01") == "\\u0001");
-        CHECK(json::escape_string("\x02") == "\\u0002");
-        CHECK(json::escape_string("\x03") == "\\u0003");
-        CHECK(json::escape_string("\x04") == "\\u0004");
-        CHECK(json::escape_string("\x05") == "\\u0005");
-        CHECK(json::escape_string("\x06") == "\\u0006");
-        CHECK(json::escape_string("\x07") == "\\u0007");
-        CHECK(json::escape_string("\x08") == "\\b");
-        CHECK(json::escape_string("\x09") == "\\t");
-        CHECK(json::escape_string("\x0a") == "\\n");
-        CHECK(json::escape_string("\x0b") == "\\u000b");
-        CHECK(json::escape_string("\x0c") == "\\f");
-        CHECK(json::escape_string("\x0d") == "\\r");
-        CHECK(json::escape_string("\x0e") == "\\u000e");
-        CHECK(json::escape_string("\x0f") == "\\u000f");
-        CHECK(json::escape_string("\x10") == "\\u0010");
-        CHECK(json::escape_string("\x11") == "\\u0011");
-        CHECK(json::escape_string("\x12") == "\\u0012");
-        CHECK(json::escape_string("\x13") == "\\u0013");
-        CHECK(json::escape_string("\x14") == "\\u0014");
-        CHECK(json::escape_string("\x15") == "\\u0015");
-        CHECK(json::escape_string("\x16") == "\\u0016");
-        CHECK(json::escape_string("\x17") == "\\u0017");
-        CHECK(json::escape_string("\x18") == "\\u0018");
-        CHECK(json::escape_string("\x19") == "\\u0019");
-        CHECK(json::escape_string("\x1a") == "\\u001a");
-        CHECK(json::escape_string("\x1b") == "\\u001b");
-        CHECK(json::escape_string("\x1c") == "\\u001c");
-        CHECK(json::escape_string("\x1d") == "\\u001d");
-        CHECK(json::escape_string("\x1e") == "\\u001e");
-        CHECK(json::escape_string("\x1f") == "\\u001f");
+        CHECK(escape_string("\"") == "\\\"");
+        CHECK(escape_string("\\") == "\\\\");
+        CHECK(escape_string("\b") == "\\b");
+        CHECK(escape_string("\f") == "\\f");
+        CHECK(escape_string("\n") == "\\n");
+        CHECK(escape_string("\r") == "\\r");
+        CHECK(escape_string("\t") == "\\t");
+
+        CHECK(escape_string("\x01") == "\\u0001");
+        CHECK(escape_string("\x02") == "\\u0002");
+        CHECK(escape_string("\x03") == "\\u0003");
+        CHECK(escape_string("\x04") == "\\u0004");
+        CHECK(escape_string("\x05") == "\\u0005");
+        CHECK(escape_string("\x06") == "\\u0006");
+        CHECK(escape_string("\x07") == "\\u0007");
+        CHECK(escape_string("\x08") == "\\b");
+        CHECK(escape_string("\x09") == "\\t");
+        CHECK(escape_string("\x0a") == "\\n");
+        CHECK(escape_string("\x0b") == "\\u000b");
+        CHECK(escape_string("\x0c") == "\\f");
+        CHECK(escape_string("\x0d") == "\\r");
+        CHECK(escape_string("\x0e") == "\\u000e");
+        CHECK(escape_string("\x0f") == "\\u000f");
+        CHECK(escape_string("\x10") == "\\u0010");
+        CHECK(escape_string("\x11") == "\\u0011");
+        CHECK(escape_string("\x12") == "\\u0012");
+        CHECK(escape_string("\x13") == "\\u0013");
+        CHECK(escape_string("\x14") == "\\u0014");
+        CHECK(escape_string("\x15") == "\\u0015");
+        CHECK(escape_string("\x16") == "\\u0016");
+        CHECK(escape_string("\x17") == "\\u0017");
+        CHECK(escape_string("\x18") == "\\u0018");
+        CHECK(escape_string("\x19") == "\\u0019");
+        CHECK(escape_string("\x1a") == "\\u001a");
+        CHECK(escape_string("\x1b") == "\\u001b");
+        CHECK(escape_string("\x1c") == "\\u001c");
+        CHECK(escape_string("\x1d") == "\\u001d");
+        CHECK(escape_string("\x1e") == "\\u001e");
+        CHECK(escape_string("\x1f") == "\\u001f");
     }
 }
 

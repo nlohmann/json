@@ -779,14 +779,18 @@ class basic_json
     */
     inline string_t dump(const int indent = -1) const noexcept
     {
+        std::stringstream ss;
+
         if (indent >= 0)
         {
-            return dump(true, static_cast<unsigned int>(indent));
+            dump(ss, true, static_cast<unsigned int>(indent));
         }
         else
         {
-            return dump(false, 0);
+            dump(ss, false, 0);
         }
+
+        return ss.str();
     }
 
     /// return the type of the object (explicit)
@@ -1964,19 +1968,21 @@ class basic_json
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
     {
         // read width member and use it as indentation parameter if nonzero
-        const int indentation = (o.width() == 0) ? -1 : o.width();
+        const bool prettyPrint = (o.width() > 0);
+        const auto indentation = (prettyPrint ? o.width() : 0);
 
-        o << j.dump(indentation);
+        // reset width to 0 for subsequent calls to this stream
+        o.width(0);
+
+        // do the actual serialization
+        j.dump(o, prettyPrint, indentation);
         return o;
     }
 
     /// serialize to stream
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
     {
-        // read width member and use it as indentation parameter if nonzero
-        const int indentation = (o.width() == 0) ? -1 : o.width();
-
-        o << j.dump(indentation);
+        o << j;
         return o;
     }
 
@@ -2067,15 +2073,11 @@ class basic_json
     characters by a sequence of "\u" followed by a four-digit hex
     representation.
 
+    @param o  the stream to write the escaped string to
     @param s  the string to escape
-    @return escaped string
     */
-    static string_t escape_string(const string_t& s) noexcept
+    static void escape_string(std::ostream& o, const string_t& s) noexcept
     {
-        // create a result string of at least the size than s
-        string_t result;
-        result.reserve(s.size());
-
         for (const auto c : s)
         {
             switch (c)
@@ -2083,49 +2085,49 @@ class basic_json
                 // quotation mark (0x22)
                 case '"':
                 {
-                    result += "\\\"";
+                    o << "\\\"";
                     break;
                 }
 
                 // reverse solidus (0x5c)
                 case '\\':
                 {
-                    result += "\\\\";
+                    o << "\\\\";
                     break;
                 }
 
                 // backspace (0x08)
                 case '\b':
                 {
-                    result += "\\b";
+                    o << "\\b";
                     break;
                 }
 
                 // formfeed (0x0c)
                 case '\f':
                 {
-                    result += "\\f";
+                    o << "\\f";
                     break;
                 }
 
                 // newline (0x0a)
                 case '\n':
                 {
-                    result += "\\n";
+                    o << "\\n";
                     break;
                 }
 
                 // carriage return (0x0d)
                 case '\r':
                 {
-                    result += "\\r";
+                    o << "\\r";
                     break;
                 }
 
                 // horizontal tab (0x09)
                 case '\t':
                 {
-                    result += "\\t";
+                    o << "\\t";
                     break;
                 }
 
@@ -2135,23 +2137,18 @@ class basic_json
                     {
                         // control characters (everything between 0x00 and 0x1f)
                         // -> create four-digit hex representation
-                        std::basic_stringstream<typename string_t::value_type> ss;
-                        ss << "\\u" << std::hex << std::setw(4) << std::setfill('0') << int(c);
-                        result += ss.str();
+                        o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << int(c);
                     }
                     else
                     {
                         // all other characters are added as-is
-                        result.append(1, c);
+                        o << c;
                     }
                     break;
                 }
             }
         }
-
-        return result;
     }
-
 
     /*!
     @brief internal implementation of the serialization function
@@ -2166,21 +2163,16 @@ class basic_json
       std::to_string()
     - floating-point numbers are converted to a string using "%g" format
 
+    @param o              stream to write to
     @param prettyPrint    whether the output shall be pretty-printed
     @param indentStep     the indent level
     @param currentIndent  the current indent level (only used internally)
     */
-    inline string_t dump(const bool prettyPrint, const unsigned int indentStep,
-                         const unsigned int currentIndent = 0) const noexcept
+    inline void dump(std::ostream& o, const bool prettyPrint, const unsigned int indentStep,
+                     const unsigned int currentIndent = 0) const noexcept
     {
         // variable to hold indentation for recursive calls
         auto new_indent = currentIndent;
-
-        // helper function to return whitespace as indentation
-        const auto indent = [prettyPrint, &new_indent]()
-        {
-            return prettyPrint ? string_t(new_indent, ' ') : string_t();
-        };
 
         switch (m_type)
         {
@@ -2188,86 +2180,98 @@ class basic_json
             {
                 if (m_value.object->empty())
                 {
-                    return "{}";
+                    o << "{}";
+                    return;
                 }
 
-                string_t result = "{";
+                o << "{";
 
                 // increase indentation
                 if (prettyPrint)
                 {
                     new_indent += indentStep;
-                    result += "\n";
+                    o << "\n";
                 }
 
                 for (auto i = m_value.object->cbegin(); i != m_value.object->cend(); ++i)
                 {
                     if (i != m_value.object->cbegin())
                     {
-                        result += prettyPrint ? ",\n" : ",";
+                        o << (prettyPrint ? ",\n" : ",");
                     }
-                    result += indent() + "\"" + escape_string(i->first) + "\":" + (prettyPrint ? " " : "")
-                              + i->second.dump(prettyPrint, indentStep, new_indent);
+                    o << string_t(new_indent, ' ') << "\"";
+                    escape_string(o, i->first);
+                    o << "\":" << (prettyPrint ? " " : "");
+                    i->second.dump(o, prettyPrint, indentStep, new_indent);
                 }
 
                 // decrease indentation
                 if (prettyPrint)
                 {
                     new_indent -= indentStep;
-                    result += "\n";
+                    o << "\n";
                 }
 
-                return result + indent() + "}";
+                o << string_t(new_indent, ' ') + "}";
+                return;
             }
 
             case (value_t::array):
             {
                 if (m_value.array->empty())
                 {
-                    return "[]";
+                    o << "[]";
+                    return;
                 }
 
-                string_t result = "[";
+                o << "[";
 
                 // increase indentation
                 if (prettyPrint)
                 {
                     new_indent += indentStep;
-                    result += "\n";
+                    o << "\n";
                 }
 
                 for (auto i = m_value.array->cbegin(); i != m_value.array->cend(); ++i)
                 {
                     if (i != m_value.array->cbegin())
                     {
-                        result += prettyPrint ? ",\n" : ",";
+                        o << (prettyPrint ? ",\n" : ",");
                     }
-                    result += indent() + i->dump(prettyPrint, indentStep, new_indent);
+                    o << string_t(new_indent, ' ');
+                    i->dump(o, prettyPrint, indentStep, new_indent);
                 }
 
                 // decrease indentation
                 if (prettyPrint)
                 {
                     new_indent -= indentStep;
-                    result += "\n";
+                    o << "\n";
                 }
 
-                return result + indent() + "]";
+                o << string_t(new_indent, ' ') << "]";
+                return;
             }
 
             case (value_t::string):
             {
-                return string_t("\"") + escape_string(*m_value.string) + "\"";
+                o << string_t("\"");
+                escape_string(o, *m_value.string);
+                o << "\"";
+                return;
             }
 
             case (value_t::boolean):
             {
-                return m_value.boolean ? "true" : "false";
+                o << (m_value.boolean ? "true" : "false");
+                return;
             }
 
             case (value_t::number_integer):
             {
-                return std::to_string(m_value.number_integer);
+                o << m_value.number_integer;
+                return;
             }
 
             case (value_t::number_float):
@@ -2277,16 +2281,20 @@ class basic_json
                 const auto sz = static_cast<unsigned int>(std::snprintf(nullptr, 0, "%.15g", m_value.number_float));
                 std::vector<typename string_t::value_type> buf(sz + 1);
                 std::snprintf(&buf[0], buf.size(), "%.15g", m_value.number_float);
-                return string_t(buf.data());
+                o << buf.data();
+                return;
             }
 
             case (value_t::discarded):
             {
-                return "<discarded>";
+                o << "<discarded>";
+                return;
             }
+
             default:
             {
-                return "null";
+                o << "null";
+                return;
             }
         }
     }

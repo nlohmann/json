@@ -33,6 +33,6 @@ pretty:
 	   src/json.hpp src/json.hpp.re2c test/unit.cpp benchmarks/benchmarks.cpp
 
 # benchmarks
-json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/cxxopts.hpp
+json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/cxxopts.hpp src/json.hpp
 	$(CXX) -std=c++11 $(CXXFLAGS) -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
 	./json_benchmarks
