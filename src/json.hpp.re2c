@@ -29,6 +29,13 @@
 #include <utility>
 #include <vector>
 
+// enable ssize_t on MinGW
+#ifdef __GNUC__
+    #ifdef __MINGW32__
+        #include <sys/types.h>
+    #endif
+#endif
+
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann
@@ -2159,8 +2166,7 @@ class basic_json
     recursively. Note that
 
     - strings and object keys are escaped using escape_string()
-    - integer numbers are converted to a string before output using
-      std::to_string()
+    - integer numbers are converted implictly via operator<<
     - floating-point numbers are converted to a string using "%g" format
 
     @param o              stream to write to
@@ -2278,9 +2284,10 @@ class basic_json
             {
                 // 15 digits of precision allows round-trip IEEE 754
                 // string->double->string
-                const auto sz = static_cast<unsigned int>(std::snprintf(nullptr, 0, "%.15g", m_value.number_float));
+                using std::snprintf;
+                const auto sz = static_cast<unsigned int>(snprintf(nullptr, 0, "%.15g", m_value.number_float));
                 std::vector<typename string_t::value_type> buf(sz + 1);
-                std::snprintf(&buf[0], buf.size(), "%.15g", m_value.number_float);
+                snprintf(&buf[0], buf.size(), "%.15g", m_value.number_float);
                 o << buf.data();
                 return;
             }
