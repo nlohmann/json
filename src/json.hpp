@@ -2284,11 +2284,7 @@ class basic_json
             {
                 // 15 digits of precision allows round-trip IEEE 754
                 // string->double->string
-                using std::snprintf;
-                const auto sz = static_cast<unsigned int>(snprintf(nullptr, 0, "%.15g", m_value.number_float));
-                std::vector<typename string_t::value_type> buf(sz + 1);
-                snprintf(&buf[0], buf.size(), "%.15g", m_value.number_float);
-                o << buf.data();
+                o << std::setprecision(15) << m_value.number_float;
                 return;
             }
 
