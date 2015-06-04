@@ -8786,4 +8786,26 @@ TEST_CASE("regression tests")
         // check everything in one line
         CHECK(fields == json::parse(fields.dump()));
     }
+
+    SECTION("issue #82 - lexer::get_number return NAN")
+    {
+        const auto content = R"(
+        {
+            "Test":"Test1",
+            "Number":100,
+            "Foo":42.42
+        })";
+
+        std::stringstream ss;
+        ss << content;
+        json j;
+        ss >> j;
+
+        std::string test = j["Test"];
+        CHECK(test == "Test1");
+        int number = j["Number"];
+        CHECK(number == 100);
+        float foo = j["Foo"];
+        CHECK(foo == Approx(42.42));
+    }
 }
