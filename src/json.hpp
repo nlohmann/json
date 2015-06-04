@@ -139,9 +139,10 @@ class basic_json
     ///////////////////////////
 
     /// a type for an object
-    using object_t = ObjectType<StringType, basic_json>;
+    using object_t =
+        ObjectType<StringType, basic_json, std::less<StringType>, AllocatorType<std::pair<const StringType, basic_json>>>;
     /// a type for an array
-    using array_t = ArrayType<basic_json>;
+    using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
     /// a type for a string
     using string_t = StringType;
     /// a type for a boolean
@@ -2350,15 +2351,15 @@ class basic_json
 
       public:
         /// the type of the values when the iterator is dereferenced
-        using value_type = basic_json::value_type;
+        using value_type = typename basic_json::value_type;
         /// a type to represent differences between iterators
-        using difference_type = basic_json::difference_type;
+        using difference_type = typename basic_json::difference_type;
         /// defines a pointer to the type iterated over (value_type)
-        using pointer = basic_json::pointer;
+        using pointer = typename basic_json::pointer;
         /// defines a reference to the type iterated over (value_type)
-        using reference = basic_json::reference;
+        using reference = typename basic_json::reference;
         /// the category of the iterator
-        using iterator_category = std::bidirectional_iterator_tag;
+        using iterator_category = typename std::bidirectional_iterator_tag;
 
         /// default constructor
         inline iterator() = default;
@@ -2866,15 +2867,15 @@ class basic_json
 
       public:
         /// the type of the values when the iterator is dereferenced
-        using value_type = basic_json::value_type;
+        using value_type = typename basic_json::value_type;
         /// a type to represent differences between iterators
-        using difference_type = basic_json::difference_type;
+        using difference_type = typename basic_json::difference_type;
         /// defines a pointer to the type iterated over (value_type)
-        using pointer = basic_json::const_pointer;
+        using pointer = typename basic_json::const_pointer;
         /// defines a reference to the type iterated over (value_type)
-        using reference = basic_json::const_reference;
+        using reference = typename basic_json::const_reference;
         /// the category of the iterator
-        using iterator_category = std::bidirectional_iterator_tag;
+        using iterator_category = typename std::bidirectional_iterator_tag;
 
         /// default constructor
         inline const_iterator() = default;
@@ -3394,10 +3395,11 @@ class basic_json
     };
 
     /// a reverse random access iterator for the basic_json class
-    class reverse_iterator : private std::reverse_iterator<basic_json::iterator>
+    class reverse_iterator : private std::reverse_iterator<typename basic_json::iterator>
     {
       public:
-        inline reverse_iterator(const typename std::reverse_iterator<basic_json::iterator>::iterator_type&
+        inline reverse_iterator(const typename
+                                std::reverse_iterator<typename basic_json::iterator>::iterator_type&
                                 it)
             : std::reverse_iterator<basic_json::iterator>(it) {}
 
@@ -3415,11 +3417,11 @@ class basic_json
     };
 
     /// a const reverse random access iterator for the basic_json class
-    class const_reverse_iterator : private std::reverse_iterator<basic_json::const_iterator>
+    class const_reverse_iterator : private std::reverse_iterator<typename basic_json::const_iterator>
     {
       public:
         inline const_reverse_iterator(const typename
-                                      std::reverse_iterator<basic_json::const_iterator>::iterator_type& it)
+                                      std::reverse_iterator<typename basic_json::const_iterator>::iterator_type& it)
             : std::reverse_iterator<basic_json::const_iterator>(it) {}
 
         /// return the key of an object iterator
