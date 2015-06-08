@@ -1983,7 +1983,7 @@ class basic_json
         o.width(0);
 
         // do the actual serialization
-        j.dump(o, prettyPrint, indentation);
+        j.dump(o, prettyPrint, static_cast<int>(indentation));
         return o;
     }
 
