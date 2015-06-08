@@ -1983,15 +1983,14 @@ class basic_json
         o.width(0);
 
         // do the actual serialization
-        j.dump(o, prettyPrint, indentation);
+        j.dump(o, prettyPrint, static_cast<int>(indentation));
         return o;
     }
 
     /// serialize to stream
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
     {
-        o << j;
-        return o;
+        return o << j;
     }
 
 
