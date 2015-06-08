@@ -185,7 +185,7 @@ class basic_json
         array_t* array;
         /// string (stored with pointer to save storage)
         string_t* string;
-        /// bolean
+        /// boolean
         boolean_t boolean;
         /// number (integer)
         number_integer_t number_integer;
@@ -1983,15 +1983,14 @@ class basic_json
         o.width(0);
 
         // do the actual serialization
-        j.dump(o, prettyPrint, indentation);
+        j.dump(o, prettyPrint, static_cast<unsigned int>(indentation));
         return o;
     }
 
     /// serialize to stream
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
     {
-        o << j;
-        return o;
+        return o << j;
     }
 
 

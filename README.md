@@ -62,7 +62,7 @@ Though it's 2015 already, the support for C++11 is still a bit sparse. Currently
 
 I would be happy to learn about other compilers/versions.
 
-Unfortunately, Microsoft Visual C++ support at the moment. MSVC 2013 and MSVC 2014 have been reported not to be able to compile class. Note that I will not accept pull requests that "fix" the code by polluting it with preprocessor directives to mitigate MSVC's lacking C++11 support.
+Unfortunately, Microsoft Visual C++ support at the moment. MSVC 2013 and MSVC 2014 have been reported not to be able to compile the class. Note that I will not accept pull requests that "fix" the code by polluting it with preprocessor directives to mitigate MSVC's lacking C++11 support.
 
 ## Examples
 
