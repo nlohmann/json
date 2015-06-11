@@ -4,6 +4,7 @@
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Documentation Status](https://readthedocs.org/projects/json/badge/?version=latest)](https://readthedocs.org/projects/json/?badge=latest)
 [![Github Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
+[![License](http://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/nlohmann/json/blob/master/LICENSE.MIT)
 
 ## Design goals
 
