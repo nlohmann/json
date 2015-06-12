@@ -7965,7 +7965,7 @@ TEST_CASE("README", "[hide]")
         json j_vec(c_vector);
         // [1, 2, 3, 4]
 
-        std::deque<float> c_deque {1.2, 2.3, 3.4, 5.6};
+        std::deque<float> c_deque {1.2f, 2.3f, 3.4f, 5.6f};
         json j_deque(c_deque);
         // [1.2, 2.3, 3.4, 5.6]
 
@@ -8003,7 +8003,7 @@ TEST_CASE("README", "[hide]")
         json j_map(c_map);
         // {"one": 1, "two": 2, "three": 3}
 
-        std::unordered_map<const char*, float> c_umap { {"one", 1.2}, {"two", 2.3}, {"three", 3.4} };
+        std::unordered_map<const char*, float> c_umap { {"one", 1.2f}, {"two", 2.3f}, {"three", 3.4f} };
         json j_umap(c_umap);
         // {"one": 1.2, "two": 2.3, "three": 3.4}
 
