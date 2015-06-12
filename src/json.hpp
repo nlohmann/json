@@ -1994,8 +1994,9 @@ class basic_json
         }
 
         // We only reach this line if we cannot compare values. In that case,
-        // we compare types.
-        return lhs_type < rhs_type;
+        // we compare types. Have to use operator< explicitly in order to
+        // not cause ambiguity on MS compiler
+        return operator<(lhs_type, rhs_type);
     }
 
     /// comparison: less than or equal
