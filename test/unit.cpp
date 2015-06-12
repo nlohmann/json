@@ -3699,10 +3699,12 @@ TEST_CASE("iterators")
         SECTION("uninitialized")
         {
             json::iterator it;
-            CHECK(it.m_object == nullptr);
+            auto r1 = it.m_object == nullptr;
+            CHECK(r1); // MSVC fails to compile std::cout << nullptr;
 
             json::const_iterator cit;
-            CHECK(cit.m_object == nullptr);
+            auto r2 = it.m_object == nullptr;
+            CHECK(r2);
         }
 
         SECTION("boolean")
@@ -7414,7 +7416,8 @@ TEST_CASE("parser class")
             SECTION("escaped")
             {
                 // quotation mark "\""
-                CHECK(json::parser("\"\\\"\"").parse() == R"("\"")"_json);
+                auto s = R"("\"")";
+                CHECK(json::parser("\"\\\"\"").parse() == json::parser(s).parse());
                 // reverse solidus "\\"
                 CHECK(json::parser("\"\\\\\"").parse() == R"("\\")"_json);
                 // solidus
@@ -8807,8 +8810,12 @@ TEST_CASE("regression tests")
         SECTION("escape_dobulequote")
         {
             auto s = "[\"\\\"foo\\\"\"]";
+            auto raw_s = R"(["\"foo\""])";
+
             json j = json::parse(s);
-            CHECK(j == R"(["\"foo\""])"_json);
+            json raw_j = json::parse(raw_s);
+
+            CHECK(j == raw_j);
         }
     }
 
