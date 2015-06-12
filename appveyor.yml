@@ -7,4 +7,4 @@ build_script:
 - cmake .
 - msbuild json.sln
 test_script:
-- json_unit.exe
+- Debug\json_unit.exe
