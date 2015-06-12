@@ -36,6 +36,10 @@
     #endif
 #endif
 
+#ifdef _MSC_VER
+  using ssize_t = long long;
+#endif
+
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann
@@ -94,6 +98,12 @@ class basic_json
     /////////////////////
     // container types //
     /////////////////////
+
+    #ifdef _MSC_VER
+      using __basic_json = basic_json<>;
+    #else
+      using __basic_json = basic_json;
+    #endif
 
     /// the type of elements in a basic_json container
     using value_type = basic_json;
@@ -383,10 +393,10 @@ class basic_json
     /// create an array (implicit)
     template <class V, typename
               std::enable_if<
-                  not std::is_same<V, typename basic_json::iterator>::value and
-                  not std::is_same<V, typename basic_json::const_iterator>::value and
-                  not std::is_same<V, typename basic_json::reverse_iterator>::value and
-                  not std::is_same<V, typename basic_json::const_reverse_iterator>::value and
+                  not std::is_same<V, typename __basic_json::iterator>::value and
+                  not std::is_same<V, typename __basic_json::const_iterator>::value and
+                  not std::is_same<V, typename __basic_json::reverse_iterator>::value and
+                  not std::is_same<V, typename __basic_json::const_reverse_iterator>::value and
                   not std::is_same<V, typename array_t::iterator>::value and
                   not std::is_same<V, typename array_t::const_iterator>::value and
                   std::is_constructible<basic_json, typename V::value_type>::value, int>::type
@@ -576,8 +586,8 @@ class basic_json
     /// construct a JSON container given an iterator range
     template <class T, typename
               std::enable_if<
-                  std::is_same<T, typename basic_json::iterator>::value or
-                  std::is_same<T, typename basic_json::const_iterator>::value
+                  std::is_same<T, typename __basic_json::iterator>::value or
+                  std::is_same<T, typename __basic_json::const_iterator>::value
                   , int>::type
               = 0>
     basic_json(T first, T last)
@@ -903,7 +913,7 @@ class basic_json
     template <class T, typename
               std::enable_if<
                   std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
-                  std::is_convertible<basic_json, typename T::mapped_type>::value
+                  std::is_convertible<__basic_json, typename T::mapped_type>::value
                   , int>::type = 0>
     T get_impl(T*) const
     {
@@ -939,8 +949,8 @@ class basic_json
     /// get an array (explicit)
     template <class T, typename
               std::enable_if<
-                  std::is_convertible<basic_json, typename T::value_type>::value and
-                  not std::is_same<basic_json, typename T::value_type>::value and
+                  std::is_convertible<__basic_json, typename T::value_type>::value and
+                  not std::is_same<__basic_json, typename T::value_type>::value and
                   not std::is_arithmetic<T>::value and
                   not std::is_convertible<std::string, T>::value and
                   not has_mapped_type<T>::value
@@ -969,8 +979,8 @@ class basic_json
     /// get an array (explicit)
     template <class T, typename
               std::enable_if<
-                  std::is_convertible<basic_json, T>::value and
-                  not std::is_same<basic_json, T>::value
+                  std::is_convertible<__basic_json, T>::value and
+                  not std::is_same<__basic_json, T>::value
                   , int>::type = 0>
     std::vector<T> get_impl(std::vector<T>*) const
     {
@@ -997,7 +1007,7 @@ class basic_json
     /// get an array (explicit)
     template <class T, typename
               std::enable_if<
-                  std::is_same<basic_json, typename T::value_type>::value and
+                  std::is_same<__basic_json, typename T::value_type>::value and
                   not has_mapped_type<T>::value
                   , int>::type = 0>
     T get_impl(T*) const
@@ -1294,8 +1304,8 @@ class basic_json
     /// remove element given an iterator
     template <class T, typename
               std::enable_if<
-                  std::is_same<T, typename basic_json::iterator>::value or
-                  std::is_same<T, typename basic_json::const_iterator>::value
+                  std::is_same<T, typename __basic_json::iterator>::value or
+                  std::is_same<T, typename __basic_json::const_iterator>::value
                   , int>::type
               = 0>
     T erase(T pos)
@@ -1354,8 +1364,8 @@ class basic_json
     /// remove elements given an iterator range
     template <class T, typename
               std::enable_if<
-                  std::is_same<T, typename basic_json::iterator>::value or
-                  std::is_same<T, typename basic_json::const_iterator>::value
+                  std::is_same<T, typename __basic_json::iterator>::value or
+                  std::is_same<T, typename __basic_json::const_iterator>::value
                   , int>::type
               = 0>
     T erase(T first, T last)
