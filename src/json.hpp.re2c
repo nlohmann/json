@@ -469,7 +469,7 @@ class basic_json
 
     /// create a container (array or object) from an initializer list
     basic_json(list_init_t init, bool type_deduction = true,
-                      value_t manual_type = value_t::array)
+               value_t manual_type = value_t::array)
     {
         // the initializer list could describe an object
         bool is_object = true;
@@ -2175,7 +2175,7 @@ class basic_json
     @param currentIndent  the current indent level (only used internally)
     */
     void dump(std::ostream& o, const bool prettyPrint, const unsigned int indentStep,
-                     const unsigned int currentIndent = 0) const noexcept
+              const unsigned int currentIndent = 0) const noexcept
     {
         // variable to hold indentation for recursive calls
         auto new_indent = currentIndent;
@@ -3398,8 +3398,8 @@ class basic_json
     {
       public:
         reverse_iterator(const typename
-                                std::reverse_iterator<typename basic_json::iterator>::iterator_type&
-                                it)
+                         std::reverse_iterator<typename basic_json::iterator>::iterator_type&
+                         it)
             : std::reverse_iterator<basic_json::iterator>(it) {}
 
         /// return the key of an object iterator
@@ -3420,7 +3420,7 @@ class basic_json
     {
       public:
         const_reverse_iterator(const typename
-                                      std::reverse_iterator<typename basic_json::const_iterator>::iterator_type& it)
+                               std::reverse_iterator<typename basic_json::const_iterator>::iterator_type& it)
             : std::reverse_iterator<basic_json::const_iterator>(it) {}
 
         /// return the key of an object iterator
@@ -3506,7 +3506,7 @@ class basic_json
         @see <http://en.wikipedia.org/wiki/UTF-8#Sample_code>
         */
         static string_t to_unicode(const std::size_t codepoint1,
-                                          const std::size_t codepoint2 = 0)
+                                   const std::size_t codepoint2 = 0)
         {
             string_t result;
 
