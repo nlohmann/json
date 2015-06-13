@@ -8688,13 +8688,13 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     "test/json_roundtrip/roundtrip10.json",
                     "test/json_roundtrip/roundtrip11.json",
                     "test/json_roundtrip/roundtrip12.json",
-                    //"test/json_roundtrip/roundtrip13.json",
+                    "test/json_roundtrip/roundtrip13.json",
                     "test/json_roundtrip/roundtrip14.json",
                     "test/json_roundtrip/roundtrip15.json",
                     "test/json_roundtrip/roundtrip16.json",
                     "test/json_roundtrip/roundtrip17.json",
-                    //"test/json_roundtrip/roundtrip18.json",
-                    //"test/json_roundtrip/roundtrip19.json",
+                    "test/json_roundtrip/roundtrip18.json",
+                    "test/json_roundtrip/roundtrip19.json",
                     //"test/json_roundtrip/roundtrip20.json",
                     //"test/json_roundtrip/roundtrip21.json",
                     "test/json_roundtrip/roundtrip22.json",
@@ -8708,7 +8708,7 @@ TEST_CASE("compliance tests from nativejson-benchmark")
             CAPTURE(filename);
             std::ifstream f(filename);
             std::string json_string( (std::istreambuf_iterator<char>(f) ),
-                                     (std::istreambuf_iterator<char>()    ) );
+                                     (std::istreambuf_iterator<char>()) );
 
             json j = json::parse(json_string);
             CHECK(j.dump() == json_string);

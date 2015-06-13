@@ -2283,8 +2283,9 @@ class basic_json
             case (value_t::number_float):
             {
                 // 15 digits of precision allows round-trip IEEE 754
-                // string->double->string
-                o << std::setprecision(15) << m_value.number_float;
+                // string->double->string; to be safe, we read this value from
+                // std::numeric_limits<number_float_t>::digits10
+                o << std::setprecision(std::numeric_limits<number_float_t>::digits10) << m_value.number_float;
                 return;
             }
 
@@ -4547,12 +4548,12 @@ basic_json_parser_59:
 
         @exception std::range_error if passed value is out of range
         */
-        number_float_t get_number() const
+        long double get_number() const
         {
             // conversion
             typename string_t::value_type* endptr;
-            const auto float_val = std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start),
-                                               &endptr);
+            const auto float_val = std::strtold(reinterpret_cast<typename string_t::const_pointer>(m_start),
+                                                &endptr);
 
             // return float_val if the whole number was translated and NAN
             // otherwise
@@ -4787,7 +4788,7 @@ basic_json_parser_59:
 
                     // check if conversion loses precision
                     const auto int_val = static_cast<number_integer_t>(float_val);
-                    if (approx(float_val, static_cast<number_float_t>(int_val)))
+                    if (approx(float_val, static_cast<long double>(int_val)))
                     {
                         // we basic_json not lose precision -> return int
                         result.m_type = value_t::number_integer;
@@ -4797,7 +4798,7 @@ basic_json_parser_59:
                     {
                         // we would lose precision -> returnfloat
                         result.m_type = value_t::number_float;
-                        result.m_value = float_val;
+                        result.m_value = static_cast<number_float_t>(float_val);
                     }
                     break;
                 }
