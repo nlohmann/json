@@ -500,7 +500,7 @@ class basic_json
             // if object is wanted but impossible, throw an exception
             if (manual_type == value_t::object and not is_object)
             {
-                throw std::logic_error("cannot create JSON object from initializer list");
+                throw std::domain_error("cannot create JSON object from initializer list");
             }
         }
 
@@ -559,7 +559,7 @@ class basic_json
         if (first.m_object != last.m_object or
                 first.m_object->m_type != last.m_object->m_type)
         {
-            throw std::runtime_error("iterators are not compatible");
+            throw std::domain_error("iterators are not compatible");
         }
 
         // set the type
@@ -630,7 +630,7 @@ class basic_json
 
             default:
             {
-                throw std::runtime_error("cannot use construct with iterators from " + first.m_object->type_name());
+                throw std::domain_error("cannot use construct with iterators from " + first.m_object->type_name());
             }
         }
     }
@@ -778,7 +778,7 @@ class basic_json
     Python's @p json.dumps() function, and currently supports its @p indent
     parameter.
 
-    @param indent  sif indent is nonnegative, then array elements and object
+    @param indent  if indent is nonnegative, then array elements and object
     members will be pretty-printed with that indent level. An indent level of 0
     will only insert newlines. -1 (the default) selects the most compact
     representation
@@ -876,7 +876,7 @@ class basic_json
             }
             default:
             {
-                throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
             }
         }
     }
@@ -892,7 +892,7 @@ class basic_json
             }
             default:
             {
-                throw std::logic_error("cannot cast " + type_name() + " to object");
+                throw std::domain_error("cannot cast " + type_name() + " to object");
             }
         }
     }
@@ -922,7 +922,7 @@ class basic_json
             }
             default:
             {
-                throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
             }
         }
     }
@@ -950,7 +950,7 @@ class basic_json
             }
             default:
             {
-                throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
             }
         }
     }
@@ -971,7 +971,7 @@ class basic_json
             }
             default:
             {
-                throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
             }
         }
     }
@@ -986,7 +986,7 @@ class basic_json
             }
             default:
             {
-                throw std::logic_error("cannot cast " + type_name() + " to array");
+                throw std::domain_error("cannot cast " + type_name() + " to array");
             }
         }
     }
@@ -1006,7 +1006,7 @@ class basic_json
             }
             default:
             {
-                throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
             }
         }
     }
@@ -1030,7 +1030,7 @@ class basic_json
             }
             default:
             {
-                throw std::logic_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
             }
         }
     }
@@ -1046,7 +1046,7 @@ class basic_json
             }
             default:
             {
-                throw std::logic_error("cannot cast " + type_name() + " to " + typeid(boolean_t).name());
+                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(boolean_t).name());
             }
         }
     }
@@ -1078,7 +1078,7 @@ class basic_json
         // at only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::runtime_error("cannot use at with " + type_name());
+            throw std::domain_error("cannot use at with " + type_name());
         }
 
         return m_value.array->at(idx);
@@ -1090,7 +1090,7 @@ class basic_json
         // at only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::runtime_error("cannot use at with " + type_name());
+            throw std::domain_error("cannot use at with " + type_name());
         }
 
         return m_value.array->at(idx);
@@ -1102,7 +1102,7 @@ class basic_json
         // at only works for objects
         if (m_type != value_t::object)
         {
-            throw std::runtime_error("cannot use at with " + type_name());
+            throw std::domain_error("cannot use at with " + type_name());
         }
 
         return m_value.object->at(key);
@@ -1114,7 +1114,7 @@ class basic_json
         // at only works for objects
         if (m_type != value_t::object)
         {
-            throw std::runtime_error("cannot use at with " + type_name());
+            throw std::domain_error("cannot use at with " + type_name());
         }
 
         return m_value.object->at(key);
@@ -1135,7 +1135,7 @@ class basic_json
         // [] only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::runtime_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use [] with " + type_name());
         }
 
         for (size_t i = m_value.array->size(); i <= idx; ++i)
@@ -1152,7 +1152,7 @@ class basic_json
         // at only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::runtime_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use [] with " + type_name());
         }
 
         return m_value.array->operator[](idx);
@@ -1173,7 +1173,7 @@ class basic_json
         // [] only works for objects
         if (m_type != value_t::object)
         {
-            throw std::runtime_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use [] with " + type_name());
         }
 
         return m_value.object->operator[](key);
@@ -1185,7 +1185,7 @@ class basic_json
         // at only works for objects
         if (m_type != value_t::object)
         {
-            throw std::runtime_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use [] with " + type_name());
         }
 
         return m_value.object->operator[](key);
@@ -1205,7 +1205,7 @@ class basic_json
         // at only works for objects
         if (m_type != value_t::object)
         {
-            throw std::runtime_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use [] with " + type_name());
         }
 
         return m_value.object->operator[](key);
@@ -1218,7 +1218,7 @@ class basic_json
         // at only works for objects
         if (m_type != value_t::object)
         {
-            throw std::runtime_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use [] with " + type_name());
         }
 
         return m_value.object->operator[](key);
@@ -1264,7 +1264,7 @@ class basic_json
         // make sure iterator fits the current value
         if (this != pos.m_object or m_type != pos.m_object->m_type)
         {
-            throw std::runtime_error("iterator does not fit current value");
+            throw std::domain_error("iterator does not fit current value");
         }
 
         T result = end();
@@ -1305,7 +1305,7 @@ class basic_json
 
             default:
             {
-                throw std::runtime_error("cannot use erase with " + type_name());
+                throw std::domain_error("cannot use erase with " + type_name());
             }
         }
 
@@ -1325,7 +1325,7 @@ class basic_json
         if (this != first.m_object or this != last.m_object or
                 m_type != first.m_object->m_type or m_type != last.m_object->m_type)
         {
-            throw std::runtime_error("iterators do not fit current value");
+            throw std::domain_error("iterators do not fit current value");
         }
 
         T result = end();
@@ -1368,7 +1368,7 @@ class basic_json
 
             default:
             {
-                throw std::runtime_error("cannot use erase with " + type_name());
+                throw std::domain_error("cannot use erase with " + type_name());
             }
         }
 
@@ -1381,7 +1381,7 @@ class basic_json
         // this erase only works for objects
         if (m_type != value_t::object)
         {
-            throw std::runtime_error("cannot use erase with " + type_name());
+            throw std::domain_error("cannot use erase with " + type_name());
         }
 
         return m_value.object->erase(key);
@@ -1393,7 +1393,7 @@ class basic_json
         // this erase only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::runtime_error("cannot use erase with " + type_name());
+            throw std::domain_error("cannot use erase with " + type_name());
         }
 
         if (idx >= size())
@@ -1716,7 +1716,7 @@ class basic_json
         // push_back only works for null objects or arrays
         if (not(m_type == value_t::null or m_type == value_t::array))
         {
-            throw std::runtime_error("cannot add element to " + type_name());
+            throw std::domain_error("cannot add element to " + type_name());
         }
 
         // transform null object into an array
@@ -1745,7 +1745,7 @@ class basic_json
         // push_back only works for null objects or arrays
         if (not(m_type == value_t::null or m_type == value_t::array))
         {
-            throw std::runtime_error("cannot add element to " + type_name());
+            throw std::domain_error("cannot add element to " + type_name());
         }
 
         // transform null object into an array
@@ -1772,7 +1772,7 @@ class basic_json
         // push_back only works for null objects or objects
         if (not(m_type == value_t::null or m_type == value_t::object))
         {
-            throw std::runtime_error("cannot add element to " + type_name());
+            throw std::domain_error("cannot add element to " + type_name());
         }
 
         // transform null object into an object
@@ -1814,7 +1814,7 @@ class basic_json
         // swap only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::runtime_error("cannot use swap with " + type_name());
+            throw std::domain_error("cannot use swap with " + type_name());
         }
 
         // swap arrays
@@ -1827,7 +1827,7 @@ class basic_json
         // swap only works for objects
         if (m_type != value_t::object)
         {
-            throw std::runtime_error("cannot use swap with " + type_name());
+            throw std::domain_error("cannot use swap with " + type_name());
         }
 
         // swap arrays
@@ -1840,7 +1840,7 @@ class basic_json
         // swap only works for strings
         if (m_type != value_t::string)
         {
-            throw std::runtime_error("cannot use swap with " + type_name());
+            throw std::domain_error("cannot use swap with " + type_name());
         }
 
         // swap arrays
@@ -1976,14 +1976,14 @@ class basic_json
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
     {
         // read width member and use it as indentation parameter if nonzero
-        const bool prettyPrint = (o.width() > 0);
-        const auto indentation = (prettyPrint ? o.width() : 0);
+        const bool pretty_print = (o.width() > 0);
+        const auto indentation = (pretty_print ? o.width() : 0);
 
         // reset width to 0 for subsequent calls to this stream
         o.width(0);
 
         // do the actual serialization
-        j.dump(o, prettyPrint, static_cast<unsigned int>(indentation));
+        j.dump(o, pretty_print, static_cast<unsigned int>(indentation));
         return o;
     }
 
@@ -2169,16 +2169,16 @@ class basic_json
     - integer numbers are converted implictly via operator<<
     - floating-point numbers are converted to a string using "%g" format
 
-    @param o              stream to write to
-    @param prettyPrint    whether the output shall be pretty-printed
-    @param indentStep     the indent level
-    @param currentIndent  the current indent level (only used internally)
+    @param o               stream to write to
+    @param pretty_print    whether the output shall be pretty-printed
+    @param indent_step     the indent level
+    @param current_indent  the current indent level (only used internally)
     */
-    void dump(std::ostream& o, const bool prettyPrint, const unsigned int indentStep,
-              const unsigned int currentIndent = 0) const noexcept
+    void dump(std::ostream& o, const bool pretty_print, const unsigned int indent_step,
+              const unsigned int current_indent = 0) const noexcept
     {
         // variable to hold indentation for recursive calls
-        auto new_indent = currentIndent;
+        unsigned int new_indent = current_indent;
 
         switch (m_type)
         {
@@ -2193,9 +2193,9 @@ class basic_json
                 o << "{";
 
                 // increase indentation
-                if (prettyPrint)
+                if (pretty_print)
                 {
-                    new_indent += indentStep;
+                    new_indent += indent_step;
                     o << "\n";
                 }
 
@@ -2203,18 +2203,18 @@ class basic_json
                 {
                     if (i != m_value.object->cbegin())
                     {
-                        o << (prettyPrint ? ",\n" : ",");
+                        o << (pretty_print ? ",\n" : ",");
                     }
                     o << string_t(new_indent, ' ') << "\"";
                     escape_string(o, i->first);
-                    o << "\":" << (prettyPrint ? " " : "");
-                    i->second.dump(o, prettyPrint, indentStep, new_indent);
+                    o << "\":" << (pretty_print ? " " : "");
+                    i->second.dump(o, pretty_print, indent_step, new_indent);
                 }
 
                 // decrease indentation
-                if (prettyPrint)
+                if (pretty_print)
                 {
-                    new_indent -= indentStep;
+                    new_indent -= indent_step;
                     o << "\n";
                 }
 
@@ -2233,9 +2233,9 @@ class basic_json
                 o << "[";
 
                 // increase indentation
-                if (prettyPrint)
+                if (pretty_print)
                 {
-                    new_indent += indentStep;
+                    new_indent += indent_step;
                     o << "\n";
                 }
 
@@ -2243,16 +2243,16 @@ class basic_json
                 {
                     if (i != m_value.array->cbegin())
                     {
-                        o << (prettyPrint ? ",\n" : ",");
+                        o << (pretty_print ? ",\n" : ",");
                     }
                     o << string_t(new_indent, ' ');
-                    i->dump(o, prettyPrint, indentStep, new_indent);
+                    i->dump(o, pretty_print, indent_step, new_indent);
                 }
 
                 // decrease indentation
-                if (prettyPrint)
+                if (pretty_print)
                 {
-                    new_indent -= indentStep;
+                    new_indent -= indent_step;
                     o << "\n";
                 }
 

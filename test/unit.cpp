@@ -966,14 +966,14 @@ TEST_CASE("constructors")
                 {
                     json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
                     json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
-                    CHECK_THROWS_AS(json(jobject.begin(), jobject2.end()), std::runtime_error);
-                    CHECK_THROWS_AS(json(jobject2.begin(), jobject.end()), std::runtime_error);
+                    CHECK_THROWS_AS(json(jobject.begin(), jobject2.end()), std::domain_error);
+                    CHECK_THROWS_AS(json(jobject2.begin(), jobject.end()), std::domain_error);
                 }
                 {
                     json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
                     json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
-                    CHECK_THROWS_AS(json(jobject.cbegin(), jobject2.cend()), std::runtime_error);
-                    CHECK_THROWS_AS(json(jobject2.cbegin(), jobject.cend()), std::runtime_error);
+                    CHECK_THROWS_AS(json(jobject.cbegin(), jobject2.cend()), std::domain_error);
+                    CHECK_THROWS_AS(json(jobject2.cbegin(), jobject.cend()), std::domain_error);
                 }
             }
         }
@@ -1027,14 +1027,14 @@ TEST_CASE("constructors")
                 {
                     json jarray = {1, 2, 3, 4};
                     json jarray2 = {2, 3, 4, 5};
-                    CHECK_THROWS_AS(json(jarray.begin(), jarray2.end()), std::runtime_error);
-                    CHECK_THROWS_AS(json(jarray2.begin(), jarray.end()), std::runtime_error);
+                    CHECK_THROWS_AS(json(jarray.begin(), jarray2.end()), std::domain_error);
+                    CHECK_THROWS_AS(json(jarray2.begin(), jarray.end()), std::domain_error);
                 }
                 {
                     json jarray = {1, 2, 3, 4};
                     json jarray2 = {2, 3, 4, 5};
-                    CHECK_THROWS_AS(json(jarray.cbegin(), jarray2.cend()), std::runtime_error);
-                    CHECK_THROWS_AS(json(jarray2.cbegin(), jarray.cend()), std::runtime_error);
+                    CHECK_THROWS_AS(json(jarray.cbegin(), jarray2.cend()), std::domain_error);
+                    CHECK_THROWS_AS(json(jarray2.cbegin(), jarray.cend()), std::domain_error);
                 }
             }
         }
@@ -1047,11 +1047,11 @@ TEST_CASE("constructors")
                 {
                     {
                         json j;
-                        CHECK_THROWS_AS(json(j.begin(), j.end()), std::runtime_error);
+                        CHECK_THROWS_AS(json(j.begin(), j.end()), std::domain_error);
                     }
                     {
                         json j;
-                        CHECK_THROWS_AS(json(j.cbegin(), j.cend()), std::runtime_error);
+                        CHECK_THROWS_AS(json(j.cbegin(), j.cend()), std::domain_error);
                     }
                 }
 
@@ -2458,48 +2458,48 @@ TEST_CASE("element access")
                 {
                     json j_nonarray(json::value_t::null);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonarray(json::value_t::boolean);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
                 }
 
                 SECTION("string")
                 {
                     json j_nonarray(json::value_t::string);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
                 }
 
                 SECTION("object")
                 {
                     json j_nonarray(json::value_t::object);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonarray(json::value_t::number_integer);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonarray(json::value_t::number_float);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray.at(0), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
                 }
             }
         }
@@ -2542,7 +2542,7 @@ TEST_CASE("element access")
                         json j_nonarray(json::value_t::null);
                         const json j_nonarray_const(j_nonarray);
                         CHECK_NOTHROW(j_nonarray[0]);
-                        CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                        CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
                     }
 
                     SECTION("implicit transformation to properly filled array")
@@ -2557,40 +2557,40 @@ TEST_CASE("element access")
                 {
                     json j_nonarray(json::value_t::boolean);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
                 }
 
                 SECTION("string")
                 {
                     json j_nonarray(json::value_t::string);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
                 }
 
                 SECTION("object")
                 {
                     json j_nonarray(json::value_t::object);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonarray(json::value_t::number_integer);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonarray(json::value_t::number_float);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::runtime_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
                 }
             }
         }
@@ -2729,18 +2729,18 @@ TEST_CASE("element access")
                     {
                         json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json jarray2 = {"foo", "bar"};
-                        CHECK_THROWS_AS(jarray.erase(jarray2.begin()), std::runtime_error);
-                        CHECK_THROWS_AS(jarray.erase(jarray.begin(), jarray2.end()), std::runtime_error);
-                        CHECK_THROWS_AS(jarray.erase(jarray2.begin(), jarray.end()), std::runtime_error);
-                        CHECK_THROWS_AS(jarray.erase(jarray2.begin(), jarray2.end()), std::runtime_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.begin()), std::domain_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray.begin(), jarray2.end()), std::domain_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.begin(), jarray.end()), std::domain_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.begin(), jarray2.end()), std::domain_error);
                     }
                     {
                         json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json jarray2 = {"foo", "bar"};
-                        CHECK_THROWS_AS(jarray.erase(jarray2.cbegin()), std::runtime_error);
-                        CHECK_THROWS_AS(jarray.erase(jarray.cbegin(), jarray2.cend()), std::runtime_error);
-                        CHECK_THROWS_AS(jarray.erase(jarray2.cbegin(), jarray.cend()), std::runtime_error);
-                        CHECK_THROWS_AS(jarray.erase(jarray2.cbegin(), jarray2.cend()), std::runtime_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.cbegin()), std::domain_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray.cbegin(), jarray2.cend()), std::domain_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.cbegin(), jarray.cend()), std::domain_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.cbegin(), jarray2.cend()), std::domain_error);
                     }
                 }
             }
@@ -2750,37 +2750,37 @@ TEST_CASE("element access")
                 SECTION("null")
                 {
                     json j_nonobject(json::value_t::null);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
                 }
 
                 SECTION("object")
                 {
                     json j_nonobject(json::value_t::object);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
                 }
             }
         }
@@ -2824,48 +2824,48 @@ TEST_CASE("element access")
                 {
                     json j_nonobject(json::value_t::null);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
                 }
 
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::runtime_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
                 }
             }
         }
@@ -2929,58 +2929,58 @@ TEST_CASE("element access")
                     const json j_const_nonobject(j_nonobject);
                     CHECK_NOTHROW(j_nonobject["foo"]);
                     CHECK_NOTHROW(j_nonobject2[json::object_t::key_type("foo")]);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
 
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], std::runtime_error);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::runtime_error);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::runtime_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
             }
         }
@@ -3114,18 +3114,18 @@ TEST_CASE("element access")
                     {
                         json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
                         json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
-                        CHECK_THROWS_AS(jobject.erase(jobject2.begin()), std::runtime_error);
-                        CHECK_THROWS_AS(jobject.erase(jobject.begin(), jobject2.end()), std::runtime_error);
-                        CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject.end()), std::runtime_error);
-                        CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject2.end()), std::runtime_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.begin()), std::domain_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject.begin(), jobject2.end()), std::domain_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject.end()), std::domain_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject2.end()), std::domain_error);
                     }
                     {
                         json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
                         json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
-                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin()), std::runtime_error);
-                        CHECK_THROWS_AS(jobject.erase(jobject.cbegin(), jobject2.cend()), std::runtime_error);
-                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject.cend()), std::runtime_error);
-                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject2.cend()), std::runtime_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin()), std::domain_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject.cbegin(), jobject2.cend()), std::domain_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject.cend()), std::domain_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject2.cend()), std::domain_error);
                     }
                 }
             }
@@ -3135,37 +3135,37 @@ TEST_CASE("element access")
                 SECTION("null")
                 {
                     json j_nonobject(json::value_t::null);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
                 }
 
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::runtime_error);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
                 }
             }
         }
@@ -3412,11 +3412,11 @@ TEST_CASE("element access")
             {
                 {
                     json j;
-                    CHECK_THROWS_AS(j.erase(j.begin()), std::runtime_error);
+                    CHECK_THROWS_AS(j.erase(j.begin()), std::domain_error);
                 }
                 {
                     json j;
-                    CHECK_THROWS_AS(j.erase(j.cbegin()), std::runtime_error);
+                    CHECK_THROWS_AS(j.erase(j.cbegin()), std::domain_error);
                 }
             }
 
@@ -3542,11 +3542,11 @@ TEST_CASE("element access")
             {
                 {
                     json j;
-                    CHECK_THROWS_AS(j.erase(j.begin(), j.end()), std::runtime_error);
+                    CHECK_THROWS_AS(j.erase(j.begin(), j.end()), std::domain_error);
                 }
                 {
                     json j;
-                    CHECK_THROWS_AS(j.erase(j.cbegin(), j.cend()), std::runtime_error);
+                    CHECK_THROWS_AS(j.erase(j.cbegin(), j.cend()), std::domain_error);
                 }
             }
 
@@ -5889,7 +5889,7 @@ TEST_CASE("modifiers")
                 SECTION("other type")
                 {
                     json j = 1;
-                    CHECK_THROWS_AS(j.push_back("Hello"), std::runtime_error);
+                    CHECK_THROWS_AS(j.push_back("Hello"), std::domain_error);
                 }
             }
 
@@ -5918,7 +5918,7 @@ TEST_CASE("modifiers")
                 {
                     json j = 1;
                     json k("Hello");
-                    CHECK_THROWS_AS(j.push_back(k), std::runtime_error);
+                    CHECK_THROWS_AS(j.push_back(k), std::domain_error);
                 }
             }
         }
@@ -5950,7 +5950,7 @@ TEST_CASE("modifiers")
             {
                 json j = 1;
                 json k("Hello");
-                CHECK_THROWS_AS(j.push_back(json::object_t::value_type({"one", 1})), std::runtime_error);
+                CHECK_THROWS_AS(j.push_back(json::object_t::value_type({"one", 1})), std::domain_error);
             }
         }
     }
@@ -5981,7 +5981,7 @@ TEST_CASE("modifiers")
                 SECTION("other type")
                 {
                     json j = 1;
-                    CHECK_THROWS_AS(j += "Hello", std::runtime_error);
+                    CHECK_THROWS_AS(j += "Hello", std::domain_error);
                 }
             }
 
@@ -6010,7 +6010,7 @@ TEST_CASE("modifiers")
                 {
                     json j = 1;
                     json k("Hello");
-                    CHECK_THROWS_AS(j += k, std::runtime_error);
+                    CHECK_THROWS_AS(j += k, std::domain_error);
                 }
             }
         }
@@ -6042,7 +6042,7 @@ TEST_CASE("modifiers")
             {
                 json j = 1;
                 json k("Hello");
-                CHECK_THROWS_AS(j += json::object_t::value_type({"one", 1}), std::runtime_error);
+                CHECK_THROWS_AS(j += json::object_t::value_type({"one", 1}), std::domain_error);
             }
         }
     }
@@ -6095,7 +6095,7 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::array_t a = {"foo", "bar", "baz"};
 
-                CHECK_THROWS_AS(j.swap(a), std::runtime_error);
+                CHECK_THROWS_AS(j.swap(a), std::domain_error);
             }
         }
 
@@ -6120,7 +6120,7 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::object_t o = {{"cow", "Kuh"}, {"chicken", "Huhn"}};
 
-                CHECK_THROWS_AS(j.swap(o), std::runtime_error);
+                CHECK_THROWS_AS(j.swap(o), std::domain_error);
             }
         }
 
@@ -6145,7 +6145,7 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::string_t s = "Hallo Welt";
 
-                CHECK_THROWS_AS(j.swap(s), std::runtime_error);
+                CHECK_THROWS_AS(j.swap(s), std::domain_error);
             }
         }
     }
