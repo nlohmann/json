@@ -22,8 +22,6 @@ Other aspects were not so important to us:
 
 - **Speed**. We currently implement the parser as naive [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser) with hand coded string handling. It is fast enough, but a [LALR-parser](http://en.wikipedia.org/wiki/LALR_parser) with a decent regular expression processor should be even faster (but would consist of more files which makes the integration harder).
 
-- **Rigorous Unicode compliance**. We did our best to implement some robust Unicode support. There are still some issues with escaping, and if you run into a problem, please [tell me](https://github.com/nlohmann/json/issues).
-
 ## Updates since last version
 
 As of February 2015, the following updates were made to the library
@@ -400,7 +398,7 @@ $ make
 $ ./json_unit
 
 ===============================================================================
-All tests passed (4800 assertions in 21 test cases)
+All tests passed (3341006 assertions in 22 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

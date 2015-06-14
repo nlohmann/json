@@ -8716,6 +8716,74 @@ TEST_CASE("compliance tests from nativejson-benchmark")
     }
 }
 
+TEST_CASE("Unicode")
+{
+    SECTION("full enumeration of Unicode codepoints")
+    {
+        // create a string from a codepoint
+        auto codepoint_to_unicode = [](std::size_t cp)
+        {
+            char* buffer = new char[10];
+            sprintf(buffer, "\\u%04lx", cp);
+            std::string result(buffer);
+            delete[] buffer;
+            return result;
+        };
+
+        // generate all codepoints
+        for (std::size_t cp = 0; cp <= 0x10FFFFu; ++cp)
+        {
+            // The Unicode standard permanently reserves these code point
+            // values for UTF-16 encoding of the high and low surrogates, and
+            // they will never be assigned a character, so there should be no
+            // reason to encode them. The official Unicode standard says that
+            // no UTF forms, including UTF-16, can encode these code points.
+            if (cp >= 0xD800u and cp <= 0xDFFFu)
+            {
+                continue;
+            }
+
+            std::string res;
+
+            if (cp < 0x10000u)
+            {
+                // codepoint can be represented with 16 bit
+                res += codepoint_to_unicode(cp);
+            }
+            else
+            {
+                // codepoint can be represented with a pair
+                res += codepoint_to_unicode(0xd800u + (((cp - 0x10000u) >> 10) & 0x3ffu));
+                res += codepoint_to_unicode(0xdc00u + ((cp - 0x10000u) & 0x3ffu));
+            }
+
+            try
+            {
+                json j1, j2;
+                CHECK_NOTHROW(j1 = json::parse("\"" + res + "\""));
+                CHECK_NOTHROW(j2 = json::parse(j1.dump()));
+                CHECK(j1 == j2);
+            }
+            catch (std::invalid_argument)
+            {
+                // we ignore parsing errors
+            }
+        }
+    }
+
+    SECTION("read all unicode characters")
+    {
+        // read a file with all unicode characters stored as single-character
+        // strings in a JSON array
+        std::ifstream f("test/json_nlohmann_tests/all_unicode.json");
+        json j;
+        CHECK_NOTHROW(j << f);
+
+        // the array has 1112064 + 1 elemnts (a terminating "null" value)
+        CHECK(j.size() == 1112065);
+    }
+}
+
 TEST_CASE("regression tests")
 {
     SECTION("issue #60 - Double quotation mark is not parsed correctly")

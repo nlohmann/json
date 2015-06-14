@@ -3513,8 +3513,11 @@ class basic_json
 
             // calculate the codepoint from the given code points
             std::size_t codepoint = codepoint1;
+
+            // check if codepoint1 is a high surrogate
             if (codepoint1 >= 0xD800 and codepoint1 <= 0xDBFF)
             {
+                // check if codepoint2 is a low surrogate
                 if (codepoint2 >= 0xDC00 and codepoint2 <= 0xDFFF)
                 {
                     codepoint =
@@ -3533,7 +3536,7 @@ class basic_json
                 }
             }
 
-            if (codepoint <= 0x7f)
+            if (codepoint < 0x80)
             {
                 // 1-byte characters: 0xxxxxxx (ASCII)
                 result.append(1, static_cast<typename string_t::value_type>(codepoint));
@@ -4494,6 +4497,7 @@ basic_json_parser_59:
                             auto codepoint = std::strtoul(std::string(reinterpret_cast<typename string_t::const_pointer>(i + 1),
                                                           4).c_str(), nullptr, 16);
 
+                            // check if codepoint is a high surrogate
                             if (codepoint >= 0xD800 and codepoint <= 0xDBFF)
                             {
                                 // make sure there is a subsequent unicode
