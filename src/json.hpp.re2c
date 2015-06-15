@@ -425,14 +425,40 @@ class basic_json
         : m_type(value_t::boolean), m_value(value)
     {}
 
-    /// create an integer number (explicit)
-    basic_json(const number_integer_t& value)
+    /*!
+    @brief create an integer number (explicit)
+
+    @tparam T  helper type to compare number_integer_t and int
+    @param value  an integer to create a JSON number from
+
+    This constructor takes care about explicitly passed values of type
+    number_integer_t. However, this constructor would have the same signature
+    as the existing one for const int values, so we need to switch this one off
+    in case number_integer_t is the same as int.
+    */
+    template<typename T,
+             typename std::enable_if<
+                 not (std::is_same<T, int>::value)
+                 and std::is_same<T, number_integer_t>::value
+                 , int>::type = 0>
+    basic_json(const number_integer_t value)
         : m_type(value_t::number_integer), m_value(value)
     {}
 
-    /// create an int number to support enum type (implicit)
-    basic_json(const int int_enum)
-        : basic_json(static_cast<number_integer_t>(int_enum))
+    /*!
+    @brief create an int number to support enum type (implicit)
+
+    @param value  an integer to create a JSON number from
+
+    This constructor allows to pass enums directly to a constructor. As C++ has
+    no way of specifying the type of an anonymous enum explicitly, we can only
+    rely on the fact that such values implicitly convert to int. As int may
+    already be the same type of number_integer_t, we may need to switch off
+    that constructor, which is done above.
+    */
+    basic_json(const int value)
+        : m_type(value_t::number_integer),
+          m_value(static_cast<number_integer_t>(value))
     {}
 
     /// create an integer number (implicit)
@@ -442,11 +468,12 @@ class basic_json
                  std::numeric_limits<T>::is_integer, T>::type
              = 0>
     basic_json(const T value) noexcept
-        : basic_json(number_integer_t(value))
+        : m_type(value_t::number_integer),
+          m_value(static_cast<number_integer_t>(value))
     {}
 
     /// create a floating-point number (explicit)
-    basic_json(const number_float_t& value)
+    basic_json(const number_float_t value)
         : m_type(value_t::number_float), m_value(value)
     {
         // replace infinity and NAN by null

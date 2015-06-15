@@ -8892,4 +8892,13 @@ TEST_CASE("regression tests")
         float foo = j["Foo"];
         CHECK(foo == Approx(42.42));
     }
+
+    SECTION("issue #89 - nonstandard integer type")
+    {
+        // create JSON class with nonstandard integer number type
+        nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, float> j;
+        j["int_1"] = 1;
+        // we need to cast to int to compile with Catch - the value is int32_t
+        CHECK(static_cast<int>(j["int_1"]) == 1);
+    }
 }
