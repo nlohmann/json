@@ -1328,6 +1328,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_null());
             CHECK(not j.is_boolean());
             CHECK(not j.is_number());
+            CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_float());
             CHECK(j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -1340,6 +1342,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_null());
             CHECK(not j.is_boolean());
             CHECK(not j.is_number());
+            CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(j.is_array());
             CHECK(not j.is_string());
@@ -1352,6 +1356,8 @@ TEST_CASE("object inspection")
             CHECK(j.is_null());
             CHECK(not j.is_boolean());
             CHECK(not j.is_number());
+            CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -1364,6 +1370,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_null());
             CHECK(j.is_boolean());
             CHECK(not j.is_number());
+            CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -1376,6 +1384,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_null());
             CHECK(not j.is_boolean());
             CHECK(not j.is_number());
+            CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(j.is_string());
@@ -1388,6 +1398,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_null());
             CHECK(not j.is_boolean());
             CHECK(j.is_number());
+            CHECK(j.is_number_integer());
+            CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -1400,6 +1412,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_null());
             CHECK(not j.is_boolean());
             CHECK(j.is_number());
+            CHECK(not j.is_number_integer());
+            CHECK(j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -1412,6 +1426,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_null());
             CHECK(not j.is_boolean());
             CHECK(not j.is_number());
+            CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());

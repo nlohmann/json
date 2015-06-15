@@ -825,6 +825,18 @@ class basic_json
         return (m_type == value_t::number_integer) or (m_type == value_t::number_float);
     }
 
+    // return whether value an integer is number
+    bool is_number_integer() const noexcept
+    {
+        return m_type == value_t::number_integer;
+    }
+
+    // return whether value is a floating-point number
+    bool is_number_float() const noexcept
+    {
+        return m_type == value_t::number_float;
+    }
+
     // return whether value is object
     bool is_object() const noexcept
     {
