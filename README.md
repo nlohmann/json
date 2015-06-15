@@ -395,7 +395,7 @@ To compile and run the tests, you need to execute
 
 ```sh
 $ make
-$ ./json_unit
+$ ./json_unit "*"
 
 ===============================================================================
 All tests passed (3341006 assertions in 22 test cases)

@@ -13,12 +13,12 @@ before_install:
 
 script:
   - make
-  - ./json_unit
+  - ./json_unit "*"
   - valgrind --error-exitcode=1 --leak-check=full ./json_unit
 
 after_success:
   - make clean
   - touch src/json.hpp
   - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11"
-  - ./json_unit
+  - ./json_unit "*"
   - coveralls --exclude test/catch.hpp --exclude test/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'

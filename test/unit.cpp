@@ -8716,7 +8716,7 @@ TEST_CASE("compliance tests from nativejson-benchmark")
     }
 }
 
-TEST_CASE("Unicode")
+TEST_CASE("Unicode", "[hide]")
 {
     SECTION("full enumeration of Unicode codepoints")
     {
