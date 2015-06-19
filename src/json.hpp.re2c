@@ -3434,7 +3434,7 @@ class basic_json
     };
 
     /// a reverse random access iterator for the basic_json class
-    class reverse_iterator : private std::reverse_iterator<typename basic_json::iterator>
+    class reverse_iterator : public std::reverse_iterator<typename basic_json::iterator>
     {
       public:
         reverse_iterator(const typename
@@ -3456,7 +3456,7 @@ class basic_json
     };
 
     /// a const reverse random access iterator for the basic_json class
-    class const_reverse_iterator : private std::reverse_iterator<typename basic_json::const_iterator>
+    class const_reverse_iterator : public std::reverse_iterator<typename basic_json::const_iterator>
     {
       public:
         const_reverse_iterator(const typename
