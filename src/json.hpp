@@ -3116,27 +3116,7 @@ class basic_json
         const_iterator operator++(int)
         {
             auto result = *this;
-
-            switch (m_object->m_type)
-            {
-                case (basic_json::value_t::object):
-                {
-                    m_it.object_iterator++;
-                    break;
-                }
-
-                case (basic_json::value_t::array):
-                {
-                    m_it.array_iterator++;
-                    break;
-                }
-
-                default:
-                {
-                    m_it.generic_iterator++;
-                    break;
-                }
-            }
+            ++(*this);
 
             return result;
         }
@@ -3172,27 +3152,7 @@ class basic_json
         const_iterator operator--(int)
         {
             auto result = *this;
-
-            switch (m_object->m_type)
-            {
-                case (basic_json::value_t::object):
-                {
-                    m_it.object_iterator--;
-                    break;
-                }
-
-                case (basic_json::value_t::array):
-                {
-                    m_it.array_iterator--;
-                    break;
-                }
-
-                default:
-                {
-                    m_it.generic_iterator--;
-                    break;
-                }
-            }
+            --(*this);
 
             return result;
         }
