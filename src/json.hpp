@@ -2900,7 +2900,7 @@ class basic_json
         /// associated JSON instance
         pointer m_object = nullptr;
         /// the actual iterator of the associated instance
-        internal_iterator m_it;
+        internal_iterator m_it = internal_iterator();
     };
 
     /// a const random access iterator for the basic_json class
@@ -3395,7 +3395,7 @@ class basic_json
         /// associated JSON instance
         pointer m_object = nullptr;
         /// the actual iterator of the associated instance
-        internal_iterator m_it;
+        internal_iterator m_it = internal_iterator();
     };
 
     /// a reverse random access iterator for the basic_json class
@@ -3488,7 +3488,7 @@ class basic_json
             m_limit = m_content + s.size();
         }
         lexer(std::istream* s) noexcept
-            : m_stream(s)
+            : m_stream(s), m_buffer()
         {
             getline(*m_stream, m_buffer);
             m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
@@ -3498,6 +3498,10 @@ class basic_json
 
         /// default constructor
         lexer() = default;
+
+        // switch of unwanted functions
+        lexer(const lexer&) = delete;
+        lexer operator=(const lexer&) = delete;
 
         /*!
         @brief create a string from a Unicode code point
