@@ -38,6 +38,7 @@
 
 // enable ssize_t for MSVC
 #ifdef _MSC_VER
+    #include <basetsd.h>
     using ssize_t = SSIZE_T;
 #endif
 
