@@ -58,6 +58,7 @@ Though it's 2015 already, the support for C++11 is still a bit sparse. Currently
 - Clang 3.4
 - Clang 3.5
 - Clang 3.6
+- Clang 3.7
 
 I would be happy to learn about other compilers/versions.
 
