@@ -36,6 +36,11 @@
     #endif
 #endif
 
+// enable ssize_t for MSVC
+#ifdef _MSC_VER
+    using ssize_t = SSIZE_T;
+#endif
+
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann
