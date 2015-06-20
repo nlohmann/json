@@ -532,7 +532,7 @@ class basic_json
             // if object is wanted but impossible, throw an exception
             if (manual_type == value_t::object and not is_object)
             {
-                throw std::domain_error("cannot create JSON object from initializer list");
+                throw std::domain_error("cannot create object from initializer list");
             }
         }
 
@@ -920,7 +920,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("value type must be object, but is " + type_name());
             }
         }
     }
@@ -936,7 +936,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("cannot cast " + type_name() + " to object");
+                throw std::domain_error("value type must be object, but is " + type_name());
             }
         }
     }
@@ -966,7 +966,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("value type must be array, but is " + type_name());
             }
         }
     }
@@ -994,7 +994,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("value type must be array, but is " + type_name());
             }
         }
     }
@@ -1015,7 +1015,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("value type must be array, but is " + type_name());
             }
         }
     }
@@ -1030,7 +1030,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("cannot cast " + type_name() + " to array");
+                throw std::domain_error("value type must be array, but is " + type_name());
             }
         }
     }
@@ -1050,7 +1050,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("value type must be string, but is " + type_name());
             }
         }
     }
@@ -1074,7 +1074,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(T).name());
+                throw std::domain_error("value type must be number, but is " + type_name());
             }
         }
     }
@@ -1090,7 +1090,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("cannot cast " + type_name() + " to " + typeid(boolean_t).name());
+                throw std::domain_error("value type must be boolean, but is " + type_name());
             }
         }
     }
@@ -1122,7 +1122,7 @@ class basic_json
         // at only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::domain_error("cannot use at with " + type_name());
+            throw std::domain_error("cannot use at() with " + type_name());
         }
 
         return m_value.array->at(idx);
@@ -1134,7 +1134,7 @@ class basic_json
         // at only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::domain_error("cannot use at with " + type_name());
+            throw std::domain_error("cannot use at() with " + type_name());
         }
 
         return m_value.array->at(idx);
@@ -1146,7 +1146,7 @@ class basic_json
         // at only works for objects
         if (m_type != value_t::object)
         {
-            throw std::domain_error("cannot use at with " + type_name());
+            throw std::domain_error("cannot use at() with " + type_name());
         }
 
         return m_value.object->at(key);
@@ -1158,7 +1158,7 @@ class basic_json
         // at only works for objects
         if (m_type != value_t::object)
         {
-            throw std::domain_error("cannot use at with " + type_name());
+            throw std::domain_error("cannot use at() with " + type_name());
         }
 
         return m_value.object->at(key);
@@ -1179,7 +1179,7 @@ class basic_json
         // [] only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::domain_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use operator[] with " + type_name());
         }
 
         for (size_t i = m_value.array->size(); i <= idx; ++i)
@@ -1196,7 +1196,7 @@ class basic_json
         // at only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::domain_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use operator[] with " + type_name());
         }
 
         return m_value.array->operator[](idx);
@@ -1217,7 +1217,7 @@ class basic_json
         // [] only works for objects
         if (m_type != value_t::object)
         {
-            throw std::domain_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use operator[] with " + type_name());
         }
 
         return m_value.object->operator[](key);
@@ -1229,7 +1229,7 @@ class basic_json
         // at only works for objects
         if (m_type != value_t::object)
         {
-            throw std::domain_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use operator[] with " + type_name());
         }
 
         return m_value.object->operator[](key);
@@ -1249,7 +1249,7 @@ class basic_json
         // at only works for objects
         if (m_type != value_t::object)
         {
-            throw std::domain_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use operator[] with " + type_name());
         }
 
         return m_value.object->operator[](key);
@@ -1262,7 +1262,7 @@ class basic_json
         // at only works for objects
         if (m_type != value_t::object)
         {
-            throw std::domain_error("cannot use [] with " + type_name());
+            throw std::domain_error("cannot use operator[] with " + type_name());
         }
 
         return m_value.object->operator[](key);
@@ -1349,7 +1349,7 @@ class basic_json
 
             default:
             {
-                throw std::domain_error("cannot use erase with " + type_name());
+                throw std::domain_error("cannot use erase() with " + type_name());
             }
         }
 
@@ -1425,7 +1425,7 @@ class basic_json
         // this erase only works for objects
         if (m_type != value_t::object)
         {
-            throw std::domain_error("cannot use erase with " + type_name());
+            throw std::domain_error("cannot use erase() with " + type_name());
         }
 
         return m_value.object->erase(key);
@@ -1437,7 +1437,7 @@ class basic_json
         // this erase only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::domain_error("cannot use erase with " + type_name());
+            throw std::domain_error("cannot use erase() with " + type_name());
         }
 
         if (idx >= size())
@@ -1760,7 +1760,7 @@ class basic_json
         // push_back only works for null objects or arrays
         if (not(m_type == value_t::null or m_type == value_t::array))
         {
-            throw std::domain_error("cannot add element to " + type_name());
+            throw std::domain_error("cannot use push_back() with " + type_name());
         }
 
         // transform null object into an array
@@ -1789,7 +1789,7 @@ class basic_json
         // push_back only works for null objects or arrays
         if (not(m_type == value_t::null or m_type == value_t::array))
         {
-            throw std::domain_error("cannot add element to " + type_name());
+            throw std::domain_error("cannot use push_back() with " + type_name());
         }
 
         // transform null object into an array
@@ -1816,7 +1816,7 @@ class basic_json
         // push_back only works for null objects or objects
         if (not(m_type == value_t::null or m_type == value_t::object))
         {
-            throw std::domain_error("cannot add element to " + type_name());
+            throw std::domain_error("cannot use push_back() with " + type_name());
         }
 
         // transform null object into an object
@@ -1858,7 +1858,7 @@ class basic_json
         // swap only works for arrays
         if (m_type != value_t::array)
         {
-            throw std::domain_error("cannot use swap with " + type_name());
+            throw std::domain_error("cannot use swap() with " + type_name());
         }
 
         // swap arrays
@@ -1871,7 +1871,7 @@ class basic_json
         // swap only works for objects
         if (m_type != value_t::object)
         {
-            throw std::domain_error("cannot use swap with " + type_name());
+            throw std::domain_error("cannot use swap() with " + type_name());
         }
 
         // swap arrays
@@ -1884,7 +1884,7 @@ class basic_json
         // swap only works for strings
         if (m_type != value_t::string)
         {
-            throw std::domain_error("cannot use swap with " + type_name());
+            throw std::domain_error("cannot use swap() with " + type_name());
         }
 
         // swap arrays
