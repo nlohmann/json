@@ -27,7 +27,9 @@ MULTILINE_CPP_IS_BRIEF = NO
 INHERIT_DOCS           = YES
 SEPARATE_MEMBER_PAGES  = NO
 TAB_SIZE               = 4
-ALIASES                =
+ALIASES                = "complexity=@par Complexity\n"
+ALIASES                += liveexample{2}="@par Example\n \1 \n @includelineno \2.cpp \n Output:\n @verbinclude \2.output"
+ALIASES                += requirement="@par Requirements\n"
 TCL_SUBST              =
 OPTIMIZE_OUTPUT_FOR_C  = NO
 OPTIMIZE_OUTPUT_JAVA   = NO
@@ -50,7 +52,7 @@ LOOKUP_CACHE_SIZE      = 0
 # Build related configuration options
 #---------------------------------------------------------------------------
 EXTRACT_ALL            = YES
-EXTRACT_PRIVATE        = YES
+EXTRACT_PRIVATE        = NO
 EXTRACT_PACKAGE        = YES
 EXTRACT_STATIC         = YES
 EXTRACT_LOCAL_CLASSES  = YES
@@ -69,7 +71,7 @@ SHOW_GROUPED_MEMB_INC  = NO
 FORCE_LOCAL_INCLUDES   = NO
 INLINE_INFO            = YES
 SORT_MEMBER_DOCS       = YES
-SORT_BRIEF_DOCS        = NO
+SORT_BRIEF_DOCS        = YES
 SORT_MEMBERS_CTORS_1ST = YES
 SORT_GROUP_NAMES       = NO
 SORT_BY_SCOPE_NAME     = NO
@@ -80,9 +82,9 @@ GENERATE_BUGLIST       = YES
 GENERATE_DEPRECATEDLIST= YES
 ENABLED_SECTIONS       =
 MAX_INITIALIZER_LINES  = 30
-SHOW_USED_FILES        = YES
+SHOW_USED_FILES        = NO
 SHOW_FILES             = YES
-SHOW_NAMESPACES        = YES
+SHOW_NAMESPACES        = NO
 FILE_VERSION_FILTER    =
 LAYOUT_FILE            =
 CITE_BIB_FILES         =
@@ -99,18 +101,18 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = src/json.hpp
+INPUT                  = src/json.hpp docs/doxyindex.cpp
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
 RECURSIVE              = NO
 EXCLUDE                =
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       =
-EXCLUDE_SYMBOLS        =
-EXAMPLE_PATH           =
+EXCLUDE_SYMBOLS        = nlohmann::internals
+EXAMPLE_PATH           = docs/examples
 EXAMPLE_PATTERNS       =
 EXAMPLE_RECURSIVE      = NO
-IMAGE_PATH             =
+IMAGE_PATH             = docs/images
 INPUT_FILTER           =
 FILTER_PATTERNS        =
 FILTER_SOURCE_FILES    = NO
@@ -119,15 +121,15 @@ USE_MDFILE_AS_MAINPAGE =
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing
 #---------------------------------------------------------------------------
-SOURCE_BROWSER         = YES
-INLINE_SOURCES         = YES
+SOURCE_BROWSER         = NO
+INLINE_SOURCES         = NO
 STRIP_CODE_COMMENTS    = YES
-REFERENCED_BY_RELATION = YES
-REFERENCES_RELATION    = YES
-REFERENCES_LINK_SOURCE = YES
+REFERENCED_BY_RELATION = NO
+REFERENCES_RELATION    = NO
+REFERENCES_LINK_SOURCE = NO
 SOURCE_TOOLTIPS        = YES
 USE_HTAGS              = NO
-VERBATIM_HEADERS       = YES
+VERBATIM_HEADERS       = NO
 #---------------------------------------------------------------------------
 # Configuration options related to the alphabetical class index
 #---------------------------------------------------------------------------
@@ -153,15 +155,15 @@ HTML_DYNAMIC_SECTIONS  = NO
 HTML_INDEX_NUM_ENTRIES = 100
 GENERATE_DOCSET        = NO
 DOCSET_FEEDNAME        = "Doxygen generated docs"
-DOCSET_BUNDLE_ID       = org.doxygen.Project
-DOCSET_PUBLISHER_ID    = org.doxygen.Publisher
+DOCSET_BUNDLE_ID       = me.nlohmann.json
+DOCSET_PUBLISHER_ID    = me.nlohmann
 DOCSET_PUBLISHER_NAME  = Publisher
 GENERATE_HTMLHELP      = NO
 CHM_FILE               =
 HHC_LOCATION           =
 GENERATE_CHI           = NO
 CHM_INDEX_ENCODING     =
-BINARY_TOC             = NO
+BINARY_TOC             = YES
 TOC_EXPAND             = NO
 GENERATE_QHP           = NO
 QCH_FILE               =
@@ -277,7 +279,7 @@ PERL_PATH              = /usr/bin/perl
 #---------------------------------------------------------------------------
 # Configuration options related to the dot tool
 #---------------------------------------------------------------------------
-CLASS_DIAGRAMS         = YES
+CLASS_DIAGRAMS         = NO
 MSCGEN_PATH            =
 DIA_PATH               =
 HIDE_UNDOC_RELATIONS   = YES
@@ -286,18 +288,18 @@ DOT_NUM_THREADS        = 0
 DOT_FONTNAME           = Helvetica
 DOT_FONTSIZE           = 10
 DOT_FONTPATH           =
-CLASS_GRAPH            = YES
-COLLABORATION_GRAPH    = YES
+CLASS_GRAPH            = NO
+COLLABORATION_GRAPH    = NO
 GROUP_GRAPHS           = YES
 UML_LOOK               = YES
 UML_LIMIT_NUM_FIELDS   = 10
-TEMPLATE_RELATIONS     = YES
-INCLUDE_GRAPH          = YES
-INCLUDED_BY_GRAPH      = YES
-CALL_GRAPH             = YES
-CALLER_GRAPH           = YES
-GRAPHICAL_HIERARCHY    = YES
-DIRECTORY_GRAPH        = YES
+TEMPLATE_RELATIONS     = NO
+INCLUDE_GRAPH          = NO
+INCLUDED_BY_GRAPH      = NO
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+GRAPHICAL_HIERARCHY    = NO
+DIRECTORY_GRAPH        = NO
 DOT_IMAGE_FORMAT       = svg
 INTERACTIVE_SVG        = YES
 DOT_PATH               =

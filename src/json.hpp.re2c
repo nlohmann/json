@@ -50,6 +50,9 @@ namespace nlohmann
 {
 
 
+/// namespace with internal helper functions
+namespace internals
+{
 // Helper to determine whether there's a key_type for T.
 // http://stackoverflow.com/a/7728728/266378
 template<typename T>
@@ -61,9 +64,10 @@ struct has_mapped_type
   public:
     enum { value = sizeof(test<T>(0)) == sizeof(char) };
 };
+}
 
 /*!
-@brief JSON
+@brief a class to store JSON values
 
 @tparam ObjectType         type for JSON objects
                            (@c std::map by default)
@@ -101,6 +105,9 @@ class basic_json
     // container types //
     /////////////////////
 
+    /// @name container types
+    /// @{
+
     /// the type of elements in a basic_json container
     using value_type = basic_json;
 
@@ -133,6 +140,9 @@ class basic_json
     /// a const reverse iterator for a basic_json container
     class const_reverse_iterator;
 
+    /// @}
+
+
     /// returns the allocator associated with the container
     static allocator_type get_allocator()
     {
@@ -143,6 +153,9 @@ class basic_json
     ///////////////////////////
     // JSON value data types //
     ///////////////////////////
+
+    /// @name JSON value data types
+    /// @{
 
     /// a type for an object
     using object_t =
@@ -160,12 +173,19 @@ class basic_json
     /// a type for list initialization
     using list_init_t = std::initializer_list<basic_json>;
 
+    /// @}
+
 
     /////////////////////////////////
     // JSON value type enumeration //
     /////////////////////////////////
 
-    /// JSON value type enumeration
+    /*!
+    @brief the JSON value type enumeration
+
+    This enumeration collects the different JSON value types. It is used to
+    distinguish the stored values in the union @ref json_value.
+    */
     enum class value_t : uint8_t
     {
         null,           ///< null value
@@ -177,6 +197,7 @@ class basic_json
         number_float,   ///< number value (floating-point)
         discarded       ///< (internal) indicates the parser callback chose not to keep the value
     };
+
 
     ////////////////////////
     // JSON value storage //
@@ -341,9 +362,28 @@ class basic_json
 
     /*!
     @brief create an empty value with a given type
-    @param value  the type to create an value of
 
-    @exception std::bad_alloc  if allocation for object, array, or string fails.
+    Create an empty JSON value with a given type. The value will be default
+    initialized with an empty value which depends on the type:
+
+    Value type  | initial value
+    ----------- | -------------
+    null        | @c null
+    boolean     | @c false
+    string      | @c ""
+    number      | @c 0
+    object      | @c {}
+    array       | @c []
+
+    @param value  the type of the value to create
+
+    @complexity Constant.
+
+    @exception std::bad_alloc if allocation for object, array, or string value
+    fails (thrown by the constructors of @ref json_value)
+
+    @liveexample{The following code shows the constructor for different @ref
+    value_t values,basic_json__value_t}
     */
     basic_json(const value_t value)
         : m_type(value), m_value(value)
@@ -351,27 +391,93 @@ class basic_json
 
     /*!
     @brief create a null object (implicitly)
+
+    Create a `null` JSON value. This is the implicit version of the `null`
+    value constructor as it takes no parameters.
+
+    @complexity Constant.
+
+    @requirement This function satisfies the Container requirements:
+    - The complexity is constant.
+    - As postcondition, it holds: `basic_json().empty() == true`.
+
+    @liveexample{The following code shows the constructor for a `null` JSON
+    value.,basic_json}
+
+    @sa basic_json(std::nullptr_t)
     @ingroup container
     */
     basic_json() noexcept = default;
 
-    /// create a null object (explicitly)
+    /*!
+    @brief create a null object (explicitly)
+
+    Create a `null` JSON value. This is the explicitly version of the `null`
+    value constructor as it takes a null pointer as parameter. It allows to
+    create `null` values by explicitly assigning a @c nullptr to a JSON value.
+    The passed null pointer itself is not read - it is only used to choose the
+    right constructor.
+
+    @complexity Constant.
+
+    @liveexample{The following code shows the constructor with null pointer
+    parameter.,basic_json__nullptr_t}
+
+    @sa basic_json()
+    */
     basic_json(std::nullptr_t) noexcept
         : basic_json(value_t::null)
     {}
 
-    /// create an object (explicit)
+    /*!
+    @brief create an object (explicit)
+
+    Create an object JSON value with a given content.
+
+    @param value  a value for the object
+
+    @complexity Linear in the size of the passed @a value.
+
+    @exception std::bad_alloc if allocation for object value fails (thrown by
+    the constructor of @ref json_value)
+
+    @liveexample{The following code shows the constructor with an @ref object_t
+    parameter.,basic_json__object_t}
+
+    @sa basic_json(const CompatibleObjectType&)
+    */
     basic_json(const object_t& value)
         : m_type(value_t::object), m_value(value)
     {}
 
-    /// create an object (implicit)
-    template <class V, typename
+    /*!
+    @brief create an object (implicit)
+
+    Create an object JSON value with a given content. This constructor allows
+    any type that can be used to construct values of type @ref object_t.
+    Examples include the types `std::map` and `std::unordered_map`.
+
+    @tparam CompatibleObjectType an object type whose `key_type` and
+    `value_type` is compatible to @ref object_t
+
+    @param value  a value for the object
+
+    @complexity Linear in the size of the passed @a value.
+
+    @exception std::bad_alloc if allocation for object value fails (thrown by
+    the constructor of @ref json_value)
+
+    @liveexample{The following code shows the constructor with several
+    compatible object type parameters.,basic_json__CompatibleObjectType}
+
+    @sa basic_json(const object_t&)
+    */
+    template <class CompatibleObjectType, typename
               std::enable_if<
-                  std::is_constructible<typename object_t::key_type, typename V::key_type>::value and
-                  std::is_constructible<basic_json, typename V::mapped_type>::value, int>::type
+                  std::is_constructible<typename object_t::key_type, typename CompatibleObjectType::key_type>::value and
+                  std::is_constructible<basic_json, typename CompatibleObjectType::mapped_type>::value, int>::type
               = 0>
-    basic_json(const V& value)
+    basic_json(const CompatibleObjectType& value)
         : m_type(value_t::object)
     {
         AllocatorType<object_t> alloc;
@@ -381,23 +487,60 @@ class basic_json
         alloc.construct(m_value.object, begin(value), end(value));
     }
 
-    /// create an array (explicit)
+    /*!
+    @brief create an array (explicit)
+
+    Create an array JSON value with a given content.
+
+    @param value  a value for the array
+
+    @complexity Linear in the size of the passed @a value.
+
+    @exception std::bad_alloc if allocation for array value fails (thrown by
+    the constructor of @ref json_value)
+
+    @liveexample{The following code shows the constructor with an @ref array_t
+    parameter.,basic_json__array_t}
+
+    @sa basic_json(const CompatibleArrayType&)
+    */
     basic_json(const array_t& value)
         : m_type(value_t::array), m_value(value)
     {}
 
-    /// create an array (implicit)
-    template <class V, typename
+    /*!
+    @brief create an array (implicit)
+
+    Create an array JSON value with a given content. This constructor allows
+    any type that can be used to construct values of type @ref array_t.
+    Examples include the types `std::vector`, `std::list`, and `std::set`.
+
+    @tparam CompatibleArrayType an object type whose `value_type` is compatible
+    to @ref array_t
+
+    @param value  a value for the array
+
+    @complexity Linear in the size of the passed @a value.
+
+    @exception std::bad_alloc if allocation for array value fails (thrown by
+    the constructor of @ref json_value)
+
+    @liveexample{The following code shows the constructor with several
+    compatible array type parameters.,basic_json__CompatibleArrayType}
+
+    @sa basic_json(const array_t&)
+    */
+    template <class CompatibleArrayType, typename
               std::enable_if<
-                  not std::is_same<V, typename basic_json::iterator>::value and
-                  not std::is_same<V, typename basic_json::const_iterator>::value and
-                  not std::is_same<V, typename basic_json::reverse_iterator>::value and
-                  not std::is_same<V, typename basic_json::const_reverse_iterator>::value and
-                  not std::is_same<V, typename array_t::iterator>::value and
-                  not std::is_same<V, typename array_t::const_iterator>::value and
-                  std::is_constructible<basic_json, typename V::value_type>::value, int>::type
+                  not std::is_same<CompatibleArrayType, typename basic_json::iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename basic_json::const_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename basic_json::reverse_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename basic_json::const_reverse_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename array_t::iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename array_t::const_iterator>::value and
+                  std::is_constructible<basic_json, typename CompatibleArrayType::value_type>::value, int>::type
               = 0>
-    basic_json(const V& value)
+    basic_json(const CompatibleArrayType& value)
         : m_type(value_t::array)
     {
         AllocatorType<array_t> alloc;
@@ -675,7 +818,20 @@ class basic_json
     /*!
     @brief copy constructor
 
-    @exception std::bad_alloc  if allocation for object, array, or string fails.
+    Creates a copy of a given JSON value.
+
+    @param other  the JSON value to copy
+
+    @complexity Linear in the size of @a other.
+
+    @requirement This function satisfies the Container requirements:
+    - The complexity is linear.
+    - As postcondition, it holds: `other == basic_json(other)`.
+
+    @exception std::bad_alloc if allocation for object, array, or string fails.
+
+    @liveexample{The following code shows an example for the copy
+    constructor.,basic_json__basic_json}
 
     @ingroup container
     */
@@ -740,6 +896,15 @@ class basic_json
 
     /*!
     @brief copy assignment
+
+    The copy assignment operator is expressed in terms of the copy constructor,
+    destructor, and the swap() member function.
+
+    @complexity Linear.
+
+    @requirement This function satisfies the Container requirements:
+    - The complexity is linear.
+
     @ingroup container
     */
     reference& operator=(basic_json other) noexcept (
@@ -757,6 +922,15 @@ class basic_json
 
     /*!
     @brief destructor
+
+    Destroys the JSON value and frees all memory.
+
+    @complexity Linear.
+
+    @requirement This function satisfies the Container requirements:
+    - The complexity is linear.
+    - All stored elements are destroyed and all memory is freed.
+
     @ingroup container
     */
     ~basic_json() noexcept
@@ -804,6 +978,9 @@ class basic_json
     // object inspection //
     ///////////////////////
 
+    /// @name object inspection
+    /// @{
+
     /*!
     @brief serialization
 
@@ -840,49 +1017,140 @@ class basic_json
         return m_type;
     }
 
-    // return whether value is null
+    /*!
+    @brief return whether value is null
+
+    This function returns true iff the JSON value is null.
+
+    @return `true` if value type is null, `false` otherwise.
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref is_null for all JSON
+    value types.,is_null}
+    */
     bool is_null() const noexcept
     {
         return m_type == value_t::null;
     }
 
-    // return whether value is boolean
+    /*!
+    @brief return whether value is a boolean
+
+    This function returns true iff the JSON value is a boolean.
+
+    @return `true` if value type is boolean, `false` otherwise.
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref is_boolean for all JSON
+    value types.,is_boolean}
+    */
     bool is_boolean() const noexcept
     {
         return m_type == value_t::boolean;
     }
 
-    // return whether value is number
+    /*!
+    @brief return whether value is a number
+
+    This function returns true iff the JSON value is a number. This includes
+    both integer and floating-point values.
+
+    @return `true` if value type is number, `false` otherwise.
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref is_number for all JSON
+    value types.,is_number}
+    */
     bool is_number() const noexcept
     {
         return (m_type == value_t::number_integer) or (m_type == value_t::number_float);
     }
 
-    // return whether value an integer is number
+    /*!
+    @brief return whether value is an integer number
+
+    This function returns true iff the JSON value is an integer number. This
+    excludes floating-point values.
+
+    @return `true` if value type is an integer number, `false` otherwise.
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref is_number_integer for all
+    JSON value types.,is_number_integer}
+    */
     bool is_number_integer() const noexcept
     {
         return m_type == value_t::number_integer;
     }
 
-    // return whether value is a floating-point number
+    /*!
+    @brief return whether value is a floating-point number
+
+    This function returns true iff the JSON value is a floating-point number.
+    This excludes integer values.
+
+    @return `true` if value type is a floating-point number, `false` otherwise.
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref is_number_float for all
+    JSON value types.,is_number_float}
+    */
     bool is_number_float() const noexcept
     {
         return m_type == value_t::number_float;
     }
 
-    // return whether value is object
+    /*!
+    @brief return whether value is an object
+
+    This function returns true iff the JSON value is an object.
+
+    @return `true` if value type is object, `false` otherwise.
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref is_object for all JSON
+    value types.,is_object}
+    */
     bool is_object() const noexcept
     {
         return m_type == value_t::object;
     }
 
-    // return whether value is array
+    /*!
+    @brief return whether value is an array
+
+    This function returns true iff the JSON value is an array.
+
+    @return `true` if value type is array, `false` otherwise.
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref is_array for all JSON
+    value types.,is_array}
+    */
     bool is_array() const noexcept
     {
         return m_type == value_t::array;
     }
 
-    // return whether value is string
+    /*!
+    @brief return whether value is a string
+
+    This function returns true iff the JSON value is a string.
+
+    @return `true` if value type is string, `false` otherwise.
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref is_string for all JSON
+    value types.,is_string}
+    */
     bool is_string() const noexcept
     {
         return m_type == value_t::string;
@@ -900,10 +1168,12 @@ class basic_json
         return m_type;
     }
 
+    /// @}
+
   private:
-    //////////////////////
-    // value conversion //
-    //////////////////////
+    //////////////////
+    // value access //
+    //////////////////
 
     /// get an object (explicit)
     template <class T, typename
@@ -949,7 +1219,7 @@ class basic_json
                   not std::is_same<basic_json, typename T::value_type>::value and
                   not std::is_arithmetic<T>::value and
                   not std::is_convertible<std::string, T>::value and
-                  not has_mapped_type<T>::value
+                  not internals::has_mapped_type<T>::value
                   , int>::type = 0>
     T get_impl(T*) const
     {
@@ -1004,7 +1274,7 @@ class basic_json
     template <class T, typename
               std::enable_if<
                   std::is_same<basic_json, typename T::value_type>::value and
-                  not has_mapped_type<T>::value
+                  not internals::has_mapped_type<T>::value
                   , int>::type = 0>
     T get_impl(T*) const
     {
@@ -1097,6 +1367,10 @@ class basic_json
     }
 
   public:
+
+    /// @name value access
+    /// @{
+
     /// get a value (explicit)
     // <http://stackoverflow.com/a/8315197/266378>
     template<typename T>
@@ -1112,10 +1386,15 @@ class basic_json
         return get<T>();
     }
 
+    /// @}
+
 
     ////////////////////
     // element access //
     ////////////////////
+
+    /// @name element access
+    /// @{
 
     /// access specified element with bounds checking
     reference at(size_type idx)
@@ -1482,13 +1761,32 @@ class basic_json
         return (m_type == value_t::object) ? m_value.object->count(key) : 0;
     }
 
+    /// @}
+
 
     ///////////////
     // iterators //
     ///////////////
 
+    /// @name iterators
+    /// @{
+
     /*!
     @brief returns an iterator to the first element
+
+    Returns an iterator to the first element.
+
+    @image html range-begin-end.svg "Illustration from cppreference.com"
+
+    @return iterator to the first element
+
+    @complexity Constant.
+
+    @requirement This function satisfies the Container requirements:
+    - The complexity is constant.
+
+    @liveexample{The following code shows an example for @ref begin.,begin}
+
     @ingroup container
     */
     iterator begin() noexcept
@@ -1499,7 +1797,7 @@ class basic_json
     }
 
     /*!
-    @brief returns a const iterator to the first element
+    @copydoc basic_json::cbegin()
     @ingroup container
     */
     const_iterator begin() const noexcept
@@ -1509,6 +1807,21 @@ class basic_json
 
     /*!
     @brief returns a const iterator to the first element
+
+    Returns a const iterator to the first element.
+
+    @image html range-begin-end.svg "Illustration from cppreference.com"
+
+    @return const iterator to the first element
+
+    @complexity Constant.
+
+    @requirement This function satisfies the Container requirements:
+    - The complexity is constant.
+    - Has the semantics of `const_cast<const basic_json&>(*this).begin()`.
+
+    @liveexample{The following code shows an example for @ref cbegin.,cbegin}
+
     @ingroup container
     */
     const_iterator cbegin() const noexcept
@@ -1520,6 +1833,20 @@ class basic_json
 
     /*!
     @brief returns an iterator to one past the last element
+
+    Returns an iterator to one past the last element.
+
+    @image html range-begin-end.svg "Illustration from cppreference.com"
+
+    @return iterator one past the last element
+
+    @complexity Constant.
+
+    @requirement This function satisfies the Container requirements:
+    - The complexity is constant.
+
+    @liveexample{The following code shows an example for @ref end.,end}
+
     @ingroup container
     */
     iterator end() noexcept
@@ -1530,7 +1857,7 @@ class basic_json
     }
 
     /*!
-    @brief returns a const iterator to one past the last element
+    @copydoc basic_json::cend()
     @ingroup container
     */
     const_iterator end() const noexcept
@@ -1540,6 +1867,21 @@ class basic_json
 
     /*!
     @brief returns a const iterator to one past the last element
+
+    Returns a const iterator to one past the last element.
+
+    @image html range-begin-end.svg "Illustration from cppreference.com"
+
+    @return const iterator one past the last element
+
+    @complexity Constant.
+
+    @requirement This function satisfies the Container requirements:
+    - The complexity is constant.
+    - Has the semantics of `const_cast<const basic_json&>(*this).end()`.
+
+    @liveexample{The following code shows an example for @ref cend.,cend}
+
     @ingroup container
     */
     const_iterator cend() const noexcept
@@ -1550,7 +1892,20 @@ class basic_json
     }
 
     /*!
-    @brief returns a reverse iterator to the first element
+    @brief returns an iterator to the reverse-beginning
+
+    Returns an iterator to the reverse-beginning; that is, the last element.
+
+    @image html range-rbegin-rend.svg "Illustration from cppreference.com"
+
+    @complexity Constant.
+
+    @requirement This function satisfies the ReversibleContainer requirements:
+    - The complexity is constant.
+    - Has the semantics of `reverse_iterator(end())`.
+
+    @liveexample{The following code shows an example for @ref rbegin.,rbegin}
+
     @ingroup reversiblecontainer
     */
     reverse_iterator rbegin() noexcept
@@ -1559,7 +1914,7 @@ class basic_json
     }
 
     /*!
-    @brief returns a const reverse iterator to the first element
+    @copydoc basic_json::crbegin()
     @ingroup reversiblecontainer
     */
     const_reverse_iterator rbegin() const noexcept
@@ -1568,7 +1923,21 @@ class basic_json
     }
 
     /*!
-    @brief returns a reverse iterator to one past the last element
+    @brief returns an iterator to the reverse-end
+
+    Returns an iterator to the reverse-end; that is, one before the first
+    element.
+
+    @image html range-rbegin-rend.svg "Illustration from cppreference.com"
+
+    @complexity Constant.
+
+    @requirement This function satisfies the ReversibleContainer requirements:
+    - The complexity is constant.
+    - Has the semantics of `reverse_iterator(begin())`.
+
+    @liveexample{The following code shows an example for @ref rend.,rend}
+
     @ingroup reversiblecontainer
     */
     reverse_iterator rend() noexcept
@@ -1577,7 +1946,7 @@ class basic_json
     }
 
     /*!
-    @brief returns a const reverse iterator to one past the last element
+    @copydoc basic_json::crend()
     @ingroup reversiblecontainer
     */
     const_reverse_iterator rend() const noexcept
@@ -1586,7 +1955,21 @@ class basic_json
     }
 
     /*!
-    @brief returns a const reverse iterator to the first element
+    @brief returns a const reverse iterator to the last element
+
+    Returns a const iterator to the reverse-beginning; that is, the last
+    element.
+
+    @image html range-rbegin-rend.svg "Illustration from cppreference.com"
+
+    @complexity Constant.
+
+    @requirement This function satisfies the ReversibleContainer requirements:
+    - The complexity is constant.
+    - Has the semantics of `const_cast<const basic_json&>(*this).rbegin()`.
+
+    @liveexample{The following code shows an example for @ref crbegin.,crbegin}
+
     @ingroup reversiblecontainer
     */
     const_reverse_iterator crbegin() const noexcept
@@ -1595,7 +1978,21 @@ class basic_json
     }
 
     /*!
-    @brief returns a const reverse iterator to one past the last element
+    @brief returns a const reverse iterator to one before the first
+
+    Returns a const reverse iterator to the reverse-end; that is, one before
+    the first element.
+
+    @image html range-rbegin-rend.svg "Illustration from cppreference.com"
+
+    @complexity Constant.
+
+    @requirement This function satisfies the ReversibleContainer requirements:
+    - The complexity is constant.
+    - Has the semantics of `const_cast<const basic_json&>(*this).rend()`.
+
+    @liveexample{The following code shows an example for @ref crend.,crend}
+
     @ingroup reversiblecontainer
     */
     const_reverse_iterator crend() const noexcept
@@ -1603,13 +2000,43 @@ class basic_json
         return const_reverse_iterator(cbegin());
     }
 
+    /// @}
+
 
     //////////////
     // capacity //
     //////////////
 
+    /// @name capacity
+    /// @{
+
     /*!
     @brief checks whether the container is empty
+
+    Checks if a JSON value has no elements.
+
+    @return The return value depends on the different value types and is
+            defined as follows:
+            Value type  | return value
+            ----------- | -------------
+            null        | @c true
+            boolean     | @c false
+            string      | @c false
+            number      | @c false
+            object      | result of function object_t::empty()
+            array       | result of function array_t::empty()
+
+    @complexity Constant, as long as @ref array_t and @ref object_t satisfy the
+                Container concept; that is, their empty() functions have
+                constant complexity.
+
+    @requirement This function satisfies the Container requirements:
+    - The complexity is constant.
+    - Has the semantics of `begin() == end()`.
+
+    @liveexample{The following code uses @ref empty to check if a @ref json
+    object contains any elements.,empty}
+
     @ingroup container
     */
     bool empty() const noexcept
@@ -1641,6 +2068,31 @@ class basic_json
 
     /*!
     @brief returns the number of elements
+
+    Returns the number of elements in a JSON value.
+
+    @return The return value depends on the different value types and is
+            defined as follows:
+            Value type  | return value
+            ----------- | -------------
+            null        | @c 0
+            boolean     | @c 1
+            string      | @c 1
+            number      | @c 1
+            object      | result of function object_t::size()
+            array       | result of function array_t::size()
+
+    @complexity Constant, as long as @ref array_t and @ref object_t satisfy the
+                Container concept; that is, their size() functions have
+                constant complexity.
+
+    @requirement This function satisfies the Container requirements:
+    - The complexity is constant.
+    - Has the semantics of `std::distance(begin(), end())`.
+
+    @liveexample{The following code calls @ref size on the different value
+    types.,size}
+
     @ingroup container
     */
     size_type size() const noexcept
@@ -1701,10 +2153,15 @@ class basic_json
         }
     }
 
+    /// @}
+
 
     ///////////////
     // modifiers //
     ///////////////
+
+    /// @name modifiers
+    /// @{
 
     /// clears the contents
     void clear() noexcept
@@ -1892,10 +2349,15 @@ class basic_json
         std::swap(*(m_value.string), other);
     }
 
+    /// @}
+
 
     //////////////////////////////////////////
     // lexicographical comparison operators //
     //////////////////////////////////////////
+
+    /// @name lexicographical comparison operators
+    /// @{
 
     /*!
     @brief comparison: equal
@@ -2012,10 +2474,15 @@ class basic_json
         return not (lhs < rhs);
     }
 
+    /// @}
+
 
     ///////////////////
     // serialization //
     ///////////////////
+
+    /// @name serialization
+    /// @{
 
     /// serialize to stream
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
@@ -2038,10 +2505,15 @@ class basic_json
         return o << j;
     }
 
+    /// @}
+
 
     /////////////////////
     // deserialization //
     /////////////////////
+
+    /// @name deserialization
+    /// @{
 
     /// deserialize from string
     static basic_json parse(const string_t& s, parser_callback_t cb = nullptr)
@@ -2068,6 +2540,8 @@ class basic_json
         j = parser(i).parse();
         return i;
     }
+
+    /// @}
 
 
   private:
@@ -4184,7 +4658,12 @@ class basic_json
 // presets //
 /////////////
 
-/// default JSON class
+/*!
+@brief default JSON class
+
+This type is the default specialization of the @ref basic_json class which uses
+the standard template types.
+*/
 using json = basic_json<>;
 }
 

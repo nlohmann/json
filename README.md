@@ -272,7 +272,7 @@ std::vector<int> c_vector {1, 2, 3, 4};
 json j_vec(c_vector);
 // [1, 2, 3, 4]
 
-std::deque<float> c_deque {1.2, 2.3, 3.4, 5.6};
+std::deque<double> c_deque {1.2, 2.3, 3.4, 5.6};
 json j_deque(c_deque);
 // [1.2, 2.3, 3.4, 5.6]
 
@@ -312,7 +312,7 @@ std::map<std::string, int> c_map { {"one", 1}, {"two", 2}, {"three", 3} };
 json j_map(c_map);
 // {"one": 1, "two": 2, "three": 3}
 
-std::unordered_map<const char*, float> c_umap { {"one", 1.2}, {"two", 2.3}, {"three", 3.4} };
+std::unordered_map<const char*, double> c_umap { {"one", 1.2}, {"two", 2.3}, {"three", 3.4} };
 json j_umap(c_umap);
 // {"one": 1.2, "two": 2.3, "three": 3.4}
 

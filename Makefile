@@ -30,7 +30,11 @@ pretty:
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none \
-	   src/json.hpp src/json.hpp.re2c test/unit.cpp benchmarks/benchmarks.cpp
+	   src/json.hpp src/json.hpp.re2c test/unit.cpp benchmarks/benchmarks.cpp docs/examples/*.cpp
+
+# update docs
+update_docs:
+	make create -C docs/examples
 
 # benchmarks
 json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/cxxopts.hpp src/json.hpp
