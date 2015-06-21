@@ -155,7 +155,9 @@ class basic_json
     /// @}
 
 
-    /// returns the allocator associated with the container
+    /*!
+    @brief returns the allocator associated with the container
+    */
     static allocator_type get_allocator()
     {
         return allocator_type();
