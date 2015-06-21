@@ -50,7 +50,7 @@ update_doxygen_online:
 	git checkout gh-pages
 	rm -fr html
 	mv /tmp/github-html html
-    git commit -m "Doxygen update"
+	git commit -m "Doxygen update"
 	git checkout master
 
 # create scanner with re2c
