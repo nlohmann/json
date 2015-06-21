@@ -99,11 +99,7 @@ class basic_json
     // container types //
     /////////////////////
 
-    #ifdef _MSC_VER
-      using __basic_json = basic_json<>;
-    #else
-      using __basic_json = basic_json;
-    #endif
+    using __basic_json = basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberFloatType, AllocatorType>;
 
     /// the type of elements in a basic_json container
     using value_type = basic_json;
