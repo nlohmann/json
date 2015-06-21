@@ -368,12 +368,12 @@ class basic_json
 
     Value type  | initial value
     ----------- | -------------
-    null        | @c null
-    boolean     | @c false
-    string      | @c ""
-    number      | @c 0
-    object      | @c {}
-    array       | @c []
+    null        | `null`
+    boolean     | `false`
+    string      | `""`
+    number      | `0`
+    object      | `{}`
+    array       | `[]`
 
     @param value  the type of the value to create
 
@@ -643,7 +643,72 @@ class basic_json
         : basic_json(number_float_t(value))
     {}
 
-    /// create a container (array or object) from an initializer list
+    /*!
+    @brief create a container (array or object) from an initializer list
+
+    Creates a JSON value of type array or object from the passed initializer
+    list @a init. In case @a type_deduction is `true` (default), the type of
+    the JSON value to be created is deducted from the initializer list @a init
+    according to the following rules:
+
+    1. If the list is empty, an empty JSON object value `{}` is created.
+    2. If the list consists of pairs whose first element is a string, a JSON
+    object value is created where the first elements of the pairs are treated
+    as keys and the second elements are as values.
+    3. In all other cases, an array is created.
+
+    The rules aim to create the best fit between a C++ initializer list and
+    JSON values. The ratioinale is as follows:
+
+    1. The empty initializer list is written as `{}` which is exactly an empty
+    JSON object.
+    2. C++ has now way of describing mapped types other than to list a list of
+    pairs. As JSON requires that keys must be of type string, rule 2 is the
+    weakest constraint one can pose on initializer lists to interpret them as
+    an object.
+    3. In all other cases, the initializer list could not be interpreted as
+    JSON object type, so interpreting it as JSON array type is safe.
+
+    With the rules described above, the following JSON values cannot be expressed by an initializer list:
+
+    - the empty array (`[]`): use @ref array(list_init_t) with an empty
+      initializer list in this case
+    - arrays whose elements satisfy rule 2: use @ref array(list_init_t) with
+      the same initializer list in this case
+
+    @note When used without parentheses around an empty initializer list, @ref
+    basic_json() is called instead of this function, yielding the JSON null
+    value.
+
+    @param init  initializer list with JSON values
+
+    @param type_deduction  internal parameter; when set to `true`, the type of
+    the JSON value is deducted from the initializer list @a init; when set to
+    `false`, the type provided via @a manual_type is forced. This mode is used
+    by the functions @ref array(list_init_t) and @ref object(list_init_t).
+
+    @param manual_type  internal parameter; when @a type_deduction is set to
+    `false`, the created JSON value will use the provided type (only @ref
+    value_t::array and @ref value_t::object are valid); when @a type_deduction
+    is set to `true`, this parameter has no effect
+
+    @return a JSON value created from the initializer list @a init; the type is
+    either an array or an object
+
+    @throw std::domain_error if @a type_deduction is `false`, @a manual_type is
+    `value_t::object`, but @a init contains an element which is not a pair
+    whose first element is a string
+
+    @complexity Linear in the size of the initializer list @a init.
+
+    @liveexample{The example below shows how JSON values are created from
+    initializer lists,basic_json__list_init_t}
+
+    @sa @ref basic_json array(list_init_t) - create a JSON array value from
+    an initializer list
+    @sa @ref basic_json object(list_init_t) - create a JSON object value from
+    an initializer list
+    */
     basic_json(list_init_t init, bool type_deduction = true,
                value_t manual_type = value_t::array)
     {
@@ -701,25 +766,101 @@ class basic_json
         }
     }
 
-    /// explicitly create an array from an initializer list
+    /*!
+    @brief explicitly create an array from an initializer list
+
+    Creates a JSON array value from a given initializer list. That is, given a
+    list of values `a, b, c`, creates the JSON value `[a, b, c]`. If the
+    initializer list is empty, the empty array `[]` is created.
+
+    @note This function is only needed to express two edge cases that cannot be
+    realized with the initializer list constructor (@ref
+    basic_json(list_init_t, bool, value_t)). These cases are:
+    1. creating an array whose elements are all pairs whose first element is a
+    string - in this case, the initializer list constructor would create an
+    object, taking the first elements as keys
+    2. creating an empty array - passing the empty initializer list to the
+    initializer list constructor yields an empty object
+
+    @param init  initializer list with JSON values to create an array from
+    (optional)
+
+    @return JSON array value
+
+    @complexity Linear in the size of @a init.
+
+    @liveexample{The following code shows an example for the @ref array
+    function.,array}
+
+    @sa @ref basic_json(list_init_t, bool, value_t) - create a JSON value from
+    an initializer list
+    @sa @ref basic_json object(list_init_t) - create a JSON object value from
+    an initializer list
+    */
     static basic_json array(list_init_t init = list_init_t())
     {
         return basic_json(init, false, value_t::array);
     }
 
-    /// explicitly create an object from an initializer list
+    /*!
+    @brief explicitly create an object from an initializer list
+
+    Creates a JSON object value from a given initializer list. The initializer
+    lists elements must be pairs, and their first elments must be strings. If
+    the initializer list is empty, the empty object `{}` is created.
+
+    @note This function is only added for symmetry reasons. In contrast to the
+    related function @ref basic_json array(list_init_t), there are no cases
+    which can only be expressed by this function. That is, any initializer list
+    @a init can also be passed to the initializer list constructor @ref
+    basic_json(list_init_t, bool, value_t).
+
+    @param init  initializer list to create an object from (optional)
+
+    @return JSON object value
+
+    @throw std::domain_error if @a init is not a pair whose first elements are
+    strings; thrown by @ref basic_json(list_init_t, bool, value_t)
+
+    @complexity Linear in the size of @a init.
+
+    @liveexample{The following code shows an example for the @ref object
+    function.,object}
+
+    @sa @ref basic_json(list_init_t, bool, value_t) - create a JSON value from
+    an initializer list
+    @sa @ref basic_json array(list_init_t) - create a JSON array value from an
+    initializer list
+    */
     static basic_json object(list_init_t init = list_init_t())
     {
         return basic_json(init, false, value_t::object);
     }
 
-    /// construct an array with count copies of given value
-    basic_json(size_type count, const basic_json& other)
+    /*!
+    @brief construct an array with count copies of given value
+
+    Constructs a JSON array value by creating @a count copies of a passed
+    value. In case @a count is `0`, an empty array is created. As postcondition,
+    `std::distance(begin(),end()) == count` holds.
+
+    @param count  the number of JSON copies of @a value to create
+    @param value  the JSON value to copy
+
+    @return A JSON array value with @a count copies of @a value.
+
+    @complexity Linear in @a count.
+
+    @liveexample{The following code shows examples for the @ref
+    basic_json(size_type\, const basic_json&)
+    constructor.,basic_json__size_type_basic_json}
+    */
+    basic_json(size_type count, const basic_json& value)
         : m_type(value_t::array)
     {
         AllocatorType<array_t> alloc;
         m_value.array = alloc.allocate(1);
-        alloc.construct(m_value.array, count, other);
+        alloc.construct(m_value.array, count, value);
     }
 
     /// construct a JSON container given an iterator range
@@ -2163,6 +2304,34 @@ class basic_json
 
     /*!
     @brief returns the maximum possible number of elements
+
+    Returns the maximum number of elements a JSON value is able to hold due to
+    system or library implementation limitations, i.e. `std::distance(begin(),
+    end())` for the JSON value.
+
+    @return The return value depends on the different value types and is
+            defined as follows:
+            Value type  | return value
+            ----------- | -------------
+            null        | @c 0
+            boolean     | @c 1
+            string      | @c 1
+            number      | @c 1
+            object      | result of function object_t::max_size()
+            array       | result of function array_t::max_size()
+
+    @complexity Constant, as long as @ref array_t and @ref object_t satisfy the
+                Container concept; that is, their max_size() functions have
+                constant complexity.
+
+    @requirement This function satisfies the Container requirements:
+    - The complexity is constant.
+    - Has the semantics of returning `b.size()` where `b` is the largest
+      possible JSON value.
+
+    @liveexample{The following code calls @ref max_size on the different value
+    types. Note the output is implementation specific.,max_size}
+
     @ingroup container
     */
     size_type max_size() const noexcept
@@ -2202,7 +2371,29 @@ class basic_json
     /// @name modifiers
     /// @{
 
-    /// clears the contents
+    /*!
+    @brief clears the contents
+
+    Clears the content of a JSON value and resets it to the default value as
+    if @ref basic_json(value_t) would have been called:
+
+    Value type  | initial value
+    ----------- | -------------
+    null        | `null`
+    boolean     | `false`
+    string      | `""`
+    number      | `0`
+    object      | `{}`
+    array       | `[]`
+
+    @note Floating-point numbers are set to `0.0` which will be serialized to
+    `0`. The vale type remains @ref number_float_t.
+
+    @complexity Linear in the size of the JSON value.
+
+    @liveexample{The example below shows the effect of @ref clear to different
+    JSON value types.,clear}
+    */
     void clear() noexcept
     {
         switch (m_type)

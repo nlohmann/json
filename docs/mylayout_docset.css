@@ -1,0 +1,15 @@
+.memtemplate {
+    display: none;
+}
+
+.memTemplParams {
+    display: none;
+}
+
+.navtab {
+    display: none;
+}
+
+#top, .footer {
+    display: none;
+}
