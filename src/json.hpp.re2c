@@ -84,7 +84,8 @@ struct has_mapped_type
 @tparam AllocatorType      type of the allocator to use
                            (@c std::allocator by default)
 
-@requirement This class satisfies the Container requirements (see http://en.cppreference.com/w/cpp/concept/Container):
+@requirement This class satisfies the Container requirements (see
+http://en.cppreference.com/w/cpp/concept/Container):
 - basic_json()
 - basic_json(const basic_json&)
 - reference& operator=(basic_json)
@@ -392,7 +393,7 @@ class basic_json
     object      | `{}`
     array       | `[]`
 
-    @param value  the type of the value to create
+    @param[in] value  the type of the value to create
 
     @complexity Constant.
 
@@ -451,7 +452,7 @@ class basic_json
 
     Create an object JSON value with a given content.
 
-    @param value  a value for the object
+    @param[in] value  a value for the object
 
     @complexity Linear in the size of the passed @a value.
 
@@ -477,7 +478,7 @@ class basic_json
     @tparam CompatibleObjectType an object type whose `key_type` and
     `value_type` is compatible to @ref object_t
 
-    @param value  a value for the object
+    @param[in] value  a value for the object
 
     @complexity Linear in the size of the passed @a value.
 
@@ -509,7 +510,7 @@ class basic_json
 
     Create an array JSON value with a given content.
 
-    @param value  a value for the array
+    @param[in] value  a value for the array
 
     @complexity Linear in the size of the passed @a value.
 
@@ -535,7 +536,7 @@ class basic_json
     @tparam CompatibleArrayType an object type whose `value_type` is compatible
     to @ref array_t
 
-    @param value  a value for the array
+    @param[in] value  a value for the array
 
     @complexity Linear in the size of the passed @a value.
 
@@ -567,22 +568,56 @@ class basic_json
         alloc.construct(m_value.array, begin(value), end(value));
     }
 
-    /// create a string (explicit)
+    /*!
+    @brief create a string (explicit)
+
+    Create an string JSON value with a given content.
+
+    @param[in] value  a value for the string
+
+    @complexity Linear in the size of the passed @a value.
+
+    @exception std::bad_alloc if allocation for string value fails (thrown by
+    the constructor of @ref json_value)
+
+    @liveexample{The following code shows the constructor with an @ref string_t
+    parameter.,basic_json__string_t}
+
+    @sa basic_json(const typename string_t::value_type*)
+    @sa basic_json(const CompatibleStringType&)
+    */
     basic_json(const string_t& value)
         : m_type(value_t::string), m_value(value)
     {}
 
-    /// create a string (explicit)
+    /*!
+    @brief create a string (explicit)
+
+    Create an string JSON value with a given content.
+
+    @param[in] value  a literal value for the string
+
+    @complexity Linear in the size of the passed @a value.
+
+    @exception std::bad_alloc if allocation for string value fails (thrown by
+    the constructor of @ref json_value)
+
+    @liveexample{The following code shows the constructor with string literal
+    parameter.,basic_json__string_t_value_type}
+
+    @sa basic_json(const string_t&)
+    @sa basic_json(const CompatibleStringType&)
+    */
     basic_json(const typename string_t::value_type* value)
         : basic_json(string_t(value))
     {}
 
     /// create a string (implicit)
-    template <class V, typename
+    template <class CompatibleStringType, typename
               std::enable_if<
-                  std::is_constructible<string_t, V>::value, int>::type
+                  std::is_constructible<string_t, CompatibleStringType>::value, int>::type
               = 0>
-    basic_json(const V& value)
+    basic_json(const CompatibleStringType& value)
         : basic_json(string_t(value))
     {}
 
@@ -595,7 +630,7 @@ class basic_json
     @brief create an integer number (explicit)
 
     @tparam T  helper type to compare number_integer_t and int
-    @param value  an integer to create a JSON number from
+    @param[in] value  an integer to create a JSON number from
 
     This constructor takes care about explicitly passed values of type
     number_integer_t. However, this constructor would have the same signature
@@ -614,7 +649,7 @@ class basic_json
     /*!
     @brief create an int number to support enum type (implicit)
 
-    @param value  an integer to create a JSON number from
+    @param[in] value  an integer to create a JSON number from
 
     This constructor allows to pass enums directly to a constructor. As C++ has
     no way of specifying the type of an anonymous enum explicitly, we can only
@@ -698,14 +733,14 @@ class basic_json
     basic_json() is called instead of this function, yielding the JSON null
     value.
 
-    @param init  initializer list with JSON values
+    @param[in] init  initializer list with JSON values
 
-    @param type_deduction  internal parameter; when set to `true`, the type of
-    the JSON value is deducted from the initializer list @a init; when set to
-    `false`, the type provided via @a manual_type is forced. This mode is used
-    by the functions @ref array(list_init_t) and @ref object(list_init_t).
+    @param[in] type_deduction internal parameter; when set to `true`, the type
+    of the JSON value is deducted from the initializer list @a init; when set
+    to `false`, the type provided via @a manual_type is forced. This mode is
+    used by the functions @ref array(list_init_t) and @ref object(list_init_t).
 
-    @param manual_type  internal parameter; when @a type_deduction is set to
+    @param[in] manual_type internal parameter; when @a type_deduction is set to
     `false`, the created JSON value will use the provided type (only @ref
     value_t::array and @ref value_t::object are valid); when @a type_deduction
     is set to `true`, this parameter has no effect
@@ -797,7 +832,7 @@ class basic_json
     2. creating an empty array - passing the empty initializer list to the
     initializer list constructor yields an empty object
 
-    @param init  initializer list with JSON values to create an array from
+    @param[in] init  initializer list with JSON values to create an array from
     (optional)
 
     @return JSON array value
@@ -830,7 +865,7 @@ class basic_json
     @a init can also be passed to the initializer list constructor @ref
     basic_json(list_init_t, bool, value_t).
 
-    @param init  initializer list to create an object from (optional)
+    @param[in] init  initializer list to create an object from (optional)
 
     @return JSON object value
 
@@ -859,8 +894,8 @@ class basic_json
     value. In case @a count is `0`, an empty array is created. As postcondition,
     `std::distance(begin(),end()) == count` holds.
 
-    @param count  the number of JSON copies of @a value to create
-    @param value  the JSON value to copy
+    @param[in] count  the number of JSON copies of @a value to create
+    @param[in] value  the JSON value to copy
 
     @complexity Linear in @a count.
 
@@ -974,7 +1009,7 @@ class basic_json
 
     Creates a copy of a given JSON value.
 
-    @param other  the JSON value to copy
+    @param[in] other  the JSON value to copy
 
     @complexity Linear in the size of @a other.
 
@@ -1045,7 +1080,7 @@ class basic_json
     value @a other using move semantics. It "steals" the resources from @a
     other and leaves it as JSON null value.
 
-    @param other  value to move to this object
+    @param[in,out] other  value to move to this object
 
     @post @a other is a JSON null value
 
@@ -1070,7 +1105,7 @@ class basic_json
     strategy: It is expressed in terms of the copy constructor, destructor, and
     the swap() member function.
 
-    @param other  value to copy from
+    @param[in] other  value to copy from
 
     @complexity Linear.
 
@@ -1165,7 +1200,7 @@ class basic_json
     Python's @p json.dumps() function, and currently supports its @p indent
     parameter.
 
-    @param indent  if indent is nonnegative, then array elements and object
+    @param[in] indent if indent is nonnegative, then array elements and object
     members will be pretty-printed with that indent level. An indent level of 0
     will only insert newlines. -1 (the default) selects the most compact
     representation
@@ -2634,6 +2669,24 @@ class basic_json
 
     /*!
     @brief comparison: equal
+
+    Compares two JSON values for equality according to the following rules:
+    - Two JSON values are equal if (1) they are from the same type and (2)
+      their stored values are the same.
+    - Integer and floating-point numbers are automatically converted before
+      comparison. Floating-point numbers are compared indirectly: two
+      floating-point numbers `f1` and `f2` are considered equal if neither
+      `f1 > f2` nor `f2 > f1` holds.
+    - Two JSON null values are equal.
+
+    @param[in] lhs  first JSON value to consider
+    @param[in] rhs  second JSON value to consider
+    @return whether the values @a lhs and @a rhs are equal
+
+    @complexity Linear.
+
+    @todo Add example.
+
     @ingroup container
     */
     friend bool operator==(const_reference lhs, const_reference rhs) noexcept
@@ -2678,6 +2731,17 @@ class basic_json
 
     /*!
     @brief comparison: not equal
+
+    Compares two JSON values for inequality by calculating `not (lhs == rhs)`.
+
+    @param[in] lhs  first JSON value to consider
+    @param[in] rhs  second JSON value to consider
+    @return whether the values @a lhs and @a rhs are not equal
+
+    @complexity Linear.
+
+    @todo Add example.
+
     @ingroup container
     */
     friend bool operator!=(const_reference lhs, const_reference rhs) noexcept
@@ -2685,7 +2749,27 @@ class basic_json
         return not (lhs == rhs);
     }
 
-    /// comparison: less than
+    /*!
+    @brief comparison: less than
+
+    Compares whether one JSON value @a lhs is less than another JSON value @a
+    rhs according to the following rules:
+    - If @a lhs and @a rhs have the same type, the values are compared using
+      the default `<` operator.
+    - Integer and floating-point numbers are automatically converted before
+      comparison
+    - In case @a lhs and @a rhs have different types, the values are ignored
+      and the order of the types is considered, see
+      @ref operator<(const value_t, const value_t).
+
+    @param[in] lhs  first JSON value to consider
+    @param[in] rhs  second JSON value to consider
+    @return whether @a lhs is less than @a rhs
+
+    @complexity Linear.
+
+    @todo Add example.
+    */
     friend bool operator<(const_reference lhs, const_reference rhs) noexcept
     {
         const auto lhs_type = lhs.type();
@@ -2729,19 +2813,58 @@ class basic_json
         return lhs_type < rhs_type;
     }
 
-    /// comparison: less than or equal
+    /*!
+    @brief comparison: less than or equal
+
+    Compares whether one JSON value @a lhs is less than or equal to another
+    JSON value by calculating `not (rhs < lhs)`.
+
+    @param[in] lhs  first JSON value to consider
+    @param[in] rhs  second JSON value to consider
+    @return whether @a lhs is less than or equal to @a rhs
+
+    @complexity Linear.
+
+    @todo Add example.
+    */
     friend bool operator<=(const_reference lhs, const_reference rhs) noexcept
     {
         return not (rhs < lhs);
     }
 
-    /// comparison: greater than
+    /*!
+    @brief comparison: greater than
+
+    Compares whether one JSON value @a lhs is greater than another
+    JSON value by calculating `not (lhs <= rhs)`.
+
+    @param[in] lhs  first JSON value to consider
+    @param[in] rhs  second JSON value to consider
+    @return whether @a lhs is greater than to @a rhs
+
+    @complexity Linear.
+
+    @todo Add example.
+    */
     friend bool operator>(const_reference lhs, const_reference rhs) noexcept
     {
         return not (lhs <= rhs);
     }
 
-    /// comparison: greater than or equal
+    /*!
+    @brief comparison: greater than or equal
+
+    Compares whether one JSON value @a lhs is greater than or equal to another
+    JSON value by calculating `not (lhs < rhs)`.
+
+    @param[in] lhs  first JSON value to consider
+    @param[in] rhs  second JSON value to consider
+    @return whether @a lhs is greater than or equal to @a rhs
+
+    @complexity Linear.
+
+    @todo Add example.
+    */
     friend bool operator>=(const_reference lhs, const_reference rhs) noexcept
     {
         return not (lhs < rhs);
@@ -2757,7 +2880,25 @@ class basic_json
     /// @name serialization
     /// @{
 
-    /// serialize to stream
+    /*!
+    @brief serialize to stream
+
+    Serialize the given JSON value @a j to the output stream @a o. The JSON
+    value will be serialized using the @ref dump member function. The
+    indentation of the output can be controlled with the member variable
+    `width` of the output stream @a o. For instance, using the manipulator
+    `std::setw(4)` on @a o sets the indentation level to `4` and the
+    serialization result is the same as calling `dump(4)`.
+
+    @param[in,out] o  stream to serialize to
+    @param[in] j  JSON value to serialize
+
+    @return the stream @a o
+
+    @complexity Linear.
+
+    @liveexample{,operator_serialize}
+    */
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
     {
         // read width member and use it as indentation parameter if nonzero
@@ -2772,7 +2913,10 @@ class basic_json
         return o;
     }
 
-    /// serialize to stream
+    /*!
+    @brief serialize to stream
+    @copydoc operator<<(std::ostream&, const basic_json&)
+    */
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
     {
         return o << j;
@@ -2872,8 +3016,8 @@ class basic_json
     characters by a sequence of "\u" followed by a four-digit hex
     representation.
 
-    @param o  the stream to write the escaped string to
-    @param s  the string to escape
+    @param[out] o  the stream to write the escaped string to
+    @param[in] s  the string to escape
     */
     static void escape_string(std::ostream& o, const string_t& s) noexcept
     {
@@ -2961,10 +3105,10 @@ class basic_json
     - integer numbers are converted implictly via operator<<
     - floating-point numbers are converted to a string using "%g" format
 
-    @param o               stream to write to
-    @param pretty_print    whether the output shall be pretty-printed
-    @param indent_step     the indent level
-    @param current_indent  the current indent level (only used internally)
+    @param[out] o              stream to write to
+    @param[in] pretty_print    whether the output shall be pretty-printed
+    @param[in] indent_step     the indent level
+    @param[in] current_indent  the current indent level (only used internally)
     */
     void dump(std::ostream& o, const bool pretty_print, const unsigned int indent_step,
               const unsigned int current_indent = 0) const noexcept
@@ -4254,8 +4398,8 @@ class basic_json
         /*!
         @brief create a string from a Unicode code point
 
-        @param codepoint1  the code point (can be high surrogate)
-        @param codepoint2  the code point (can be low surrogate or 0)
+        @param[in] codepoint1  the code point (can be high surrogate)
+        @param[in] codepoint2  the code point (can be low surrogate or 0)
         @return string representation of the code point
         @exception std::out_of_range if code point is >0x10ffff
         @exception std::invalid_argument if the low surrogate is invalid
@@ -4977,11 +5121,13 @@ struct hash<nlohmann::json>
 }
 
 /*!
+@brief user-defined string literal for JSON values
+
 This operator implements a user-defined string literal for JSON objects. It can
 be used by adding \p "_json" to a string literal and returns a JSON object if
 no parse error occurred.
 
-@param s  a string representation of a JSON object
+@param[in] s  a string representation of a JSON object
 @return a JSON object
 */
 inline nlohmann::json operator "" _json(const char* s, std::size_t)
