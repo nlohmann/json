@@ -120,6 +120,9 @@ class basic_json
     /// @name container types
     /// @{
 
+    using __basic_json =
+        basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberFloatType, AllocatorType>;
+
     /// the type of elements in a basic_json container
     using value_type = basic_json;
 
@@ -546,10 +549,10 @@ class basic_json
     */
     template <class CompatibleArrayType, typename
               std::enable_if<
-                  not std::is_same<CompatibleArrayType, typename basic_json::iterator>::value and
-                  not std::is_same<CompatibleArrayType, typename basic_json::const_iterator>::value and
-                  not std::is_same<CompatibleArrayType, typename basic_json::reverse_iterator>::value and
-                  not std::is_same<CompatibleArrayType, typename basic_json::const_reverse_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename __basic_json::iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename __basic_json::const_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename __basic_json::reverse_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename __basic_json::const_reverse_iterator>::value and
                   not std::is_same<CompatibleArrayType, typename array_t::iterator>::value and
                   not std::is_same<CompatibleArrayType, typename array_t::const_iterator>::value and
                   std::is_constructible<basic_json, typename CompatibleArrayType::value_type>::value, int>::type
@@ -706,9 +709,6 @@ class basic_json
     value_t::array and @ref value_t::object are valid); when @a type_deduction
     is set to `true`, this parameter has no effect
 
-    @return a JSON value created from the initializer list @a init; the type is
-    either an array or an object
-
     @throw std::domain_error if @a type_deduction is `false`, @a manual_type is
     `value_t::object`, but @a init contains an element which is not a pair
     whose first element is a string
@@ -718,10 +718,10 @@ class basic_json
     @liveexample{The example below shows how JSON values are created from
     initializer lists,basic_json__list_init_t}
 
-    @sa @ref basic_json array(list_init_t) - create a JSON array value from
-    an initializer list
-    @sa @ref basic_json object(list_init_t) - create a JSON object value from
-    an initializer list
+    @sa basic_json array(list_init_t) - create a JSON array value from an
+    initializer list
+    @sa basic_json object(list_init_t) - create a JSON object value from an
+    initializer list
     */
     basic_json(list_init_t init, bool type_deduction = true,
                value_t manual_type = value_t::array)
@@ -806,10 +806,10 @@ class basic_json
     @liveexample{The following code shows an example for the @ref array
     function.,array}
 
-    @sa @ref basic_json(list_init_t, bool, value_t) - create a JSON value from
-    an initializer list
-    @sa @ref basic_json object(list_init_t) - create a JSON object value from
-    an initializer list
+    @sa basic_json(list_init_t, bool, value_t) - create a JSON value from an
+    initializer list
+    @sa basic_json object(list_init_t) - create a JSON object value from an
+    initializer list
     */
     static basic_json array(list_init_t init = list_init_t())
     {
@@ -841,9 +841,9 @@ class basic_json
     @liveexample{The following code shows an example for the @ref object
     function.,object}
 
-    @sa @ref basic_json(list_init_t, bool, value_t) - create a JSON value from
-    an initializer list
-    @sa @ref basic_json array(list_init_t) - create a JSON array value from an
+    @sa basic_json(list_init_t, bool, value_t) - create a JSON value from an
+    initializer list
+    @sa basic_json array(list_init_t) - create a JSON array value from an
     initializer list
     */
     static basic_json object(list_init_t init = list_init_t())
@@ -860,8 +860,6 @@ class basic_json
 
     @param count  the number of JSON copies of @a value to create
     @param value  the JSON value to copy
-
-    @return A JSON array value with @a count copies of @a value.
 
     @complexity Linear in @a count.
 
@@ -880,8 +878,8 @@ class basic_json
     /// construct a JSON container given an iterator range
     template <class T, typename
               std::enable_if<
-                  std::is_same<T, typename basic_json::iterator>::value or
-                  std::is_same<T, typename basic_json::const_iterator>::value
+                  std::is_same<T, typename __basic_json::iterator>::value or
+                  std::is_same<T, typename __basic_json::const_iterator>::value
                   , int>::type
               = 0>
     basic_json(T first, T last)
@@ -1334,7 +1332,7 @@ class basic_json
     template <class T, typename
               std::enable_if<
                   std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
-                  std::is_convertible<basic_json, typename T::mapped_type>::value
+                  std::is_convertible<__basic_json, typename T::mapped_type>::value
                   , int>::type = 0>
     T get_impl(T*) const
     {
@@ -1370,8 +1368,8 @@ class basic_json
     /// get an array (explicit)
     template <class T, typename
               std::enable_if<
-                  std::is_convertible<basic_json, typename T::value_type>::value and
-                  not std::is_same<basic_json, typename T::value_type>::value and
+                  std::is_convertible<__basic_json, typename T::value_type>::value and
+                  not std::is_same<__basic_json, typename T::value_type>::value and
                   not std::is_arithmetic<T>::value and
                   not std::is_convertible<std::string, T>::value and
                   not internals::has_mapped_type<T>::value
@@ -1400,8 +1398,8 @@ class basic_json
     /// get an array (explicit)
     template <class T, typename
               std::enable_if<
-                  std::is_convertible<basic_json, T>::value and
-                  not std::is_same<basic_json, T>::value
+                  std::is_convertible<__basic_json, T>::value and
+                  not std::is_same<__basic_json, T>::value
                   , int>::type = 0>
     std::vector<T> get_impl(std::vector<T>*) const
     {
@@ -1773,8 +1771,8 @@ class basic_json
     /// remove element given an iterator
     template <class T, typename
               std::enable_if<
-                  std::is_same<T, typename basic_json::iterator>::value or
-                  std::is_same<T, typename basic_json::const_iterator>::value
+                  std::is_same<T, typename __basic_json::iterator>::value or
+                  std::is_same<T, typename __basic_json::const_iterator>::value
                   , int>::type
               = 0>
     T erase(T pos)
