@@ -1548,19 +1548,56 @@ class basic_json
         return m_value.object->operator[](key);
     }
 
-    /// access the first element
+    /*!
+    @brief access the first element
+
+    Returns a reference to the first element in the container. For a JSON
+    container `c`, the expression `c.front()` is equivalent to `*c.begin()`.
+
+    @return In case of a compound value (array or object), a reference to the
+    first element is returned. In cast of number, string, or boolean values, a
+    reference to the value is returned.
+
+    @complexity Constant.
+
+    @note Calling `front` on an empty container is undefined.
+
+    @throw std::out_of_range when called on null value.
+
+    @liveexample{The following code shows an example for @ref front.,front}
+    */
     reference front()
     {
         return *begin();
     }
 
-    /// access the first element
+    /*!
+    @copydoc basic_json::front()
+    */
     const_reference front() const
     {
         return *cbegin();
     }
 
-    /// access the last element
+    /*!
+    @brief access the last element
+
+    Returns a reference to the last element in the container. For a JSON
+    container `c`, the expression `c.back()` is equivalent to `{ auto tmp =
+    c.end(); --tmp; return *tmp; }`.
+
+    @return In case of a compound value (array or object), a reference to the
+    last element is returned. In cast of number, string, or boolean values, a
+    reference to the value is returned.
+
+    @complexity Constant.
+
+    @note Calling `back` on an empty container is undefined.
+
+    @throw std::out_of_range when called on null value.
+
+    @liveexample{The following code shows an example for @ref back.,back}
+    */
     reference back()
     {
         auto tmp = end();
@@ -1568,7 +1605,9 @@ class basic_json
         return *tmp;
     }
 
-    /// access the last element
+    /*!
+    @copydoc basic_json::back()
+    */
     const_reference back() const
     {
         auto tmp = cend();

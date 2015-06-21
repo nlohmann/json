@@ -15,6 +15,24 @@ clean:
 json_unit: test/unit.cpp src/json.hpp test/catch.hpp
 	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src -I test $< $(LDFLAGS) -o $@
 
+check: json_unit
+	./json_unit "*"
+	make check -C docs/examples
+
+docset:
+	cp Doxyfile Doxyfile_docset
+	gsed -i 's/DISABLE_INDEX          = NO/DISABLE_INDEX          = YES/' Doxyfile_docset
+	gsed -i 's/SEARCHENGINE           = YES/SEARCHENGINE           = NO/' Doxyfile_docset
+	gsed -i 's/GENERATE_TREEVIEW      = YES/GENERATE_TREEVIEW      = NO/' Doxyfile_docset
+	gsed -i 's/SEPARATE_MEMBER_PAGES  = NO/SEPARATE_MEMBER_PAGES  = YES/' Doxyfile_docset
+	gsed -i 's/BINARY_TOC             = YES/BINARY_TOC             = NO/' Doxyfile_docset
+	rm -fr html *.docset
+	doxygen Doxyfile_docset
+	make -C html
+	mv html/*.docset .
+	gsed -i 's@<string>doxygen</string>@<string>json</string>@' me.nlohmann.json.docset/Contents/Info.plist
+	rm -fr Doxyfile_docset html
+
 # create scanner with re2c
 re2c: src/json.hpp.re2c
 	$(RE2C) -b -s -i --no-generation-date $< | $(SED) '1d' > src/json.hpp
