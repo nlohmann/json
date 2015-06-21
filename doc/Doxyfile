@@ -28,7 +28,7 @@ INHERIT_DOCS           = YES
 SEPARATE_MEMBER_PAGES  = YES
 TAB_SIZE               = 4
 ALIASES                = "complexity=@par Complexity\n"
-ALIASES                += liveexample{2}="@par Example\n \1 \n @includelineno \2.cpp \n Output:\n @verbinclude \2.output \n The example code above can be translated with @verbatim g++ -std=c++11 -Isrc docs/examples/\2.cpp -o \2 @endverbatim."
+ALIASES                += liveexample{2}="@par Example\n \1 \n @includelineno \2.cpp \n Output:\n @verbinclude \2.output \n The example code above can be translated with @verbatim g++ -std=c++11 -Isrc doc/examples/\2.cpp -o \2 @endverbatim."
 ALIASES                += requirement="@par Requirements\n"
 TCL_SUBST              =
 OPTIMIZE_OUTPUT_FOR_C  = NO
@@ -101,7 +101,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = src/json.hpp docs/doxyindex.cpp
+INPUT                  = ../src/json.hpp doxyindex.cpp
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
 RECURSIVE              = NO
@@ -109,10 +109,10 @@ EXCLUDE                =
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       =
 EXCLUDE_SYMBOLS        = nlohmann::internals
-EXAMPLE_PATH           = docs/examples
+EXAMPLE_PATH           = examples
 EXAMPLE_PATTERNS       =
 EXAMPLE_RECURSIVE      = NO
-IMAGE_PATH             = docs/images
+IMAGE_PATH             = images
 INPUT_FILTER           =
 FILTER_PATTERNS        =
 FILTER_SOURCE_FILES    = NO
@@ -145,7 +145,7 @@ HTML_FILE_EXTENSION    = .html
 HTML_HEADER            =
 HTML_FOOTER            =
 HTML_STYLESHEET        =
-HTML_EXTRA_STYLESHEET  = docs/mylayout.css
+HTML_EXTRA_STYLESHEET  = css/mylayout.css
 HTML_EXTRA_FILES       =
 HTML_COLORSTYLE_HUE    = 220
 HTML_COLORSTYLE_SAT    = 100
