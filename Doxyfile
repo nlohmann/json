@@ -25,10 +25,10 @@ JAVADOC_AUTOBRIEF      = NO
 QT_AUTOBRIEF           = NO
 MULTILINE_CPP_IS_BRIEF = NO
 INHERIT_DOCS           = YES
-SEPARATE_MEMBER_PAGES  = NO
+SEPARATE_MEMBER_PAGES  = YES
 TAB_SIZE               = 4
 ALIASES                = "complexity=@par Complexity\n"
-ALIASES                += liveexample{2}="@par Example\n \1 \n @includelineno \2.cpp \n Output:\n @verbinclude \2.output"
+ALIASES                += liveexample{2}="@par Example\n \1 \n @includelineno \2.cpp \n Output:\n @verbinclude \2.output \n The example code above can be translated with @verbatim g++ -std=c++11 -Isrc docs/examples/\2.cpp -o \2 @endverbatim."
 ALIASES                += requirement="@par Requirements\n"
 TCL_SUBST              =
 OPTIMIZE_OUTPUT_FOR_C  = NO
