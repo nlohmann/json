@@ -85,16 +85,16 @@ struct has_mapped_type
                            (@c std::allocator by default)
 
 @requirement This class satisfies the Container requirements (see http://en.cppreference.com/w/cpp/concept/Container):
-- @ref basic_json()
-- @ref basic_json(const basic_json&)
-- @ref reference& operator=(basic_json)
-- @ref ~basic_json()
-- @ref iterator begin(), @ref const_iterator begin(), @ref const_iterator cbegin()
-- @ref iterator end(), @ref const_iterator end(), @ref const_iterator cend()
-- @ref bool operator==(const_reference, const_reference), @ref bool operator!=(const_reference, const_reference)
-- @ref void swap(reference other)
-- @ref size_type size(), @ref size_type max_size()
-- @ref bool empty()
+- basic_json()
+- basic_json(const basic_json&)
+- reference& operator=(basic_json)
+- ~basic_json()
+- iterator begin(), const_iterator begin(), const_iterator cbegin()
+- iterator end(), const_iterator end(), const_iterator cend()
+- bool operator==(const_reference, const_reference), bool operator!=(const_reference, const_reference)
+- void swap(reference other)
+- size_type size(), size_type max_size()
+- bool empty()
 
 @note ObjectType trick from http://stackoverflow.com/a/9860911
 
@@ -686,7 +686,8 @@ class basic_json
     3. In all other cases, the initializer list could not be interpreted as
     JSON object type, so interpreting it as JSON array type is safe.
 
-    With the rules described above, the following JSON values cannot be expressed by an initializer list:
+    With the rules described above, the following JSON values cannot be
+    expressed by an initializer list:
 
     - the empty array (`[]`): use @ref array(list_init_t) with an empty
       initializer list in this case
@@ -1037,7 +1038,22 @@ class basic_json
         }
     }
 
-    /// move constructor
+    /*!
+    @brief move constructor
+
+    Move constructor. Constructs a JSON value with the contents of the given
+    value @a other using move semantics. It "steals" the resources from @a
+    other and leaves it as JSON null value.
+
+    @param other  value to move to this object
+
+    @post @a other is a JSON null value
+
+    @complexity Constant.
+
+    @liveexample{The code below shows the move constructor explicitly called
+    via std::move.,basic_json__moveconstructor}
+    */
     basic_json(basic_json&& other) noexcept
         : m_type(std::move(other.m_type)),
           m_value(std::move(other.m_value))
@@ -1050,13 +1066,21 @@ class basic_json
     /*!
     @brief copy assignment
 
-    The copy assignment operator is expressed in terms of the copy constructor,
-    destructor, and the swap() member function.
+    Copy assignment operator. Copies a JSON value via the "copy and swap"
+    strategy: It is expressed in terms of the copy constructor, destructor, and
+    the swap() member function.
+
+    @param other  value to copy from
 
     @complexity Linear.
 
     @requirement This function satisfies the Container requirements:
     - The complexity is linear.
+
+    @liveexample{The code below shows and example for the copy assignment. It
+    creates a copy of value `a` which is then swapped with `b`. Finally\, the
+    copy of `a` (which is the null value after the swap) is
+    destroyed.,basic_json__copyassignment}
 
     @ingroup container
     */
@@ -1076,7 +1100,7 @@ class basic_json
     /*!
     @brief destructor
 
-    Destroys the JSON value and frees all memory.
+    Destroys the JSON value and frees all allocated memory.
 
     @complexity Linear.
 
@@ -1137,7 +1161,7 @@ class basic_json
     /*!
     @brief serialization
 
-    Serialization function for JSON objects. The function tries to mimick
+    Serialization function for JSON values. The function tries to mimick
     Python's @p json.dumps() function, and currently supports its @p indent
     parameter.
 
@@ -1145,6 +1169,13 @@ class basic_json
     members will be pretty-printed with that indent level. An indent level of 0
     will only insert newlines. -1 (the default) selects the most compact
     representation
+
+    @return string containing the serialization of the JSON value
+
+    @complexity Linear.
+
+    @liveexample{The following example shows the effect of different @a indent
+    parameters to the result of the serializaion.,dump}
 
     @see https://docs.python.org/2/library/json.html#json.dump
     */

@@ -50,6 +50,7 @@ update_doxygen_online:
 	rm -fr html
 	mv /tmp/github-html html
 	-cd html ; git rm $(shell git ls-files --deleted)
+	git add html
 	git commit -m "Doxygen update"
 	git checkout master
 
