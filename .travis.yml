@@ -22,3 +22,18 @@ after_success:
   - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11"
   - ./json_unit "*"
   - coveralls --exclude test/catch.hpp --exclude test/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "kzVz6s9W/rAs3e9nK5cU1vSXkNG0Kqe0g/WHybXNFVkiNTE/eauKgpcxc9QPnPVsLZmS9knANnf3V1/i/u50uYwrmf6ntlka67sXBiACnaYqUsGZ07F0i3evL84OsY/ViXmJ60AbcNDtCJR9oepAH7ANGHLL8z6yX4/m+Ocaj6s="
+
+addons:
+  coverity_scan:
+    project:
+      name: "nlohmann/json"
+      description: "Build submitted via Travis CI"
+    notification_email: niels.lohmann@gmail.com
+    build_command_prepend: "make clean"
+    build_command:   "make"
