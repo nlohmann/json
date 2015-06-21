@@ -41,6 +41,11 @@ doxygen: create_output
 	gsed -i 's@&lt; ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberFloatType, AllocatorType &gt;@@g' html/*.html
 	gsed -i 's@&lt;&#160;ObjectType,&#160;ArrayType,&#160;StringType,&#160;BooleanType,&#160;NumberIntegerType,&#160;NumberFloatType,&#160;AllocatorType&#160;&gt;@@g' html/*.html
 
+upload: doxygen
+	cd html ; ../git-update-ghpages nlohmann/json
+	rm -fr html
+	open http://nlohmann.github.io/json/
+
 
 ##########################################################################
 # docset
