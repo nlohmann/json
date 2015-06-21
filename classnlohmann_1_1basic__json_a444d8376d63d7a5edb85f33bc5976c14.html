@@ -48,6 +48,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -156,9 +157,9 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <dl class="section note"><dt>Note</dt><dd>When used without parentheses around an empty initializer list, <a class="el" href="classnlohmann_1_1basic__json_a5a2d4dbcdbc8ea065b87daf52cd786b9.html#a5a2d4dbcdbc8ea065b87daf52cd786b9">basic_json()</a> is called instead of this function, yielding the JSON null value.</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">init</td><td>initializer list with JSON values</td></tr>
-    <tr><td class="paramname">type_deduction</td><td>internal parameter; when set to <code>true</code>, the type of the JSON value is deducted from the initializer list <em>init</em>; when set to <code>false</code>, the type provided via <em>manual_type</em> is forced. This mode is used by the functions <a class="el" href="classnlohmann_1_1basic__json_a53590b99e380c464a83a0a5edf6da9ab.html#a53590b99e380c464a83a0a5edf6da9ab">array(list_init_t)</a> and <a class="el" href="classnlohmann_1_1basic__json_afb9664e6f30038e691f2e864e7f6a740.html#afb9664e6f30038e691f2e864e7f6a740">object(list_init_t)</a>.</td></tr>
-    <tr><td class="paramname">manual_type</td><td>internal parameter; when <em>type_deduction</em> is set to <code>false</code>, the created JSON value will use the provided type (only <a class="el" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522af1f713c9e000f5d3f280adbd124df4f5">value_t::array</a> and <a class="el" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522aa8cfde6331bd59eb2ac96f8911c4b666">value_t::object</a> are valid); when <em>type_deduction</em> is set to <code>true</code>, this parameter has no effect</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">init</td><td>initializer list with JSON values</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">type_deduction</td><td>internal parameter; when set to <code>true</code>, the type of the JSON value is deducted from the initializer list <em>init</em>; when set to <code>false</code>, the type provided via <em>manual_type</em> is forced. This mode is used by the functions <a class="el" href="classnlohmann_1_1basic__json_a53590b99e380c464a83a0a5edf6da9ab.html#a53590b99e380c464a83a0a5edf6da9ab">array(list_init_t)</a> and <a class="el" href="classnlohmann_1_1basic__json_afb9664e6f30038e691f2e864e7f6a740.html#afb9664e6f30038e691f2e864e7f6a740">object(list_init_t)</a>.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">manual_type</td><td>internal parameter; when <em>type_deduction</em> is set to <code>false</code>, the created JSON value will use the provided type (only <a class="el" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522af1f713c9e000f5d3f280adbd124df4f5">value_t::array</a> and <a class="el" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522aa8cfde6331bd59eb2ac96f8911c4b666">value_t::object</a> are valid); when <em>type_deduction</em> is set to <code>true</code>, this parameter has no effect</td></tr>
   </table>
   </dd>
 </dl>
@@ -189,9 +190,9 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    std::cout &lt;&lt; j_nested_object &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    std::cout &lt;&lt; j_nested_array &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;}</div>
-<div class="ttc" id="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474_html_a2bfd99e845a2e5cd90aeaf1b1431f474"><div class="ttname"><a href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">nlohmann::json</a></div><div class="ttdeci">basic_json&lt;&gt; json</div><div class="ttdoc">default JSON class </div><div class="ttdef"><b>Definition:</b> json.hpp:5634</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:113</div></div>
-<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:49</div></div>
+<div class="ttc" id="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474_html_a2bfd99e845a2e5cd90aeaf1b1431f474"><div class="ttname"><a href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">nlohmann::json</a></div><div class="ttdeci">basic_json&lt;&gt; json</div><div class="ttdoc">default JSON class </div><div class="ttdef"><b>Definition:</b> json.hpp:5785</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:121</div></div>
+<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:56</div></div>
 </div><!-- fragment --> Output: <pre class="fragment">{}
 {"one":1,"two":2}
 [1,2,3,4]
@@ -210,7 +211,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacenlohmann.html">nlohmann</a></li><li class="navelem"><a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a></li>
-    <li class="footer">Generated on Sun Jun 21 2015 21:49:33 for JSON for Modern C++ by
+    <li class="footer">Generated on Sun Jun 21 2015 22:58:55 for JSON for Modern C++ by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

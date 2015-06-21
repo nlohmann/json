@@ -48,6 +48,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -123,7 +124,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <p>Create an array JSON value with a given content.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">value</td><td>a value for the array</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">value</td><td>a value for the array</td></tr>
   </table>
   </dd>
 </dl>
@@ -149,9 +150,9 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="comment">// serialize the JSON array</span></div>
 <div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    std::cout &lt;&lt; j &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;}</div>
-<div class="ttc" id="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba_html_ac82abedf356d252e0589850c3d8b35ba"><div class="ttname"><a href="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba.html#ac82abedf356d252e0589850c3d8b35ba">nlohmann::basic_json::array_t</a></div><div class="ttdeci">ArrayType&lt; basic_json, AllocatorType&lt; basic_json &gt;&gt; array_t</div><div class="ttdoc">a type for an array </div><div class="ttdef"><b>Definition:</b> json.hpp:181</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:113</div></div>
-<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:49</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba_html_ac82abedf356d252e0589850c3d8b35ba"><div class="ttname"><a href="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba.html#ac82abedf356d252e0589850c3d8b35ba">nlohmann::basic_json::array_t</a></div><div class="ttdeci">ArrayType&lt; basic_json, AllocatorType&lt; basic_json &gt;&gt; array_t</div><div class="ttdoc">a type for an array </div><div class="ttdef"><b>Definition:</b> json.hpp:189</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:121</div></div>
+<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:56</div></div>
 </div><!-- fragment --> Output: <pre class="fragment">["one","two",3,4.5,false]
 </pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/basic_json__array_t.cpp -o basic_json__array_t </pre>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_ad7067a1a8ad2d88125915ada6d4d79b7.html#ad7067a1a8ad2d88125915ada6d4d79b7" title="create an array (implicit) ">basic_json(const CompatibleArrayType&amp;)</a> </dd></dl>
@@ -164,7 +165,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacenlohmann.html">nlohmann</a></li><li class="navelem"><a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a></li>
-    <li class="footer">Generated on Sun Jun 21 2015 21:49:32 for JSON for Modern C++ by
+    <li class="footer">Generated on Sun Jun 21 2015 22:58:55 for JSON for Modern C++ by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

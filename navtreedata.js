@@ -1,6 +1,7 @@
 var NAVTREE =
 [
   [ "JSON for Modern C++", "index.html", [
+    [ "Todo List", "todo.html", null ],
     [ "Namespace Members", "namespacemembers.html", [
       [ "All", "namespacemembers.html", null ],
       [ "Typedefs", "namespacemembers_type.html", null ]
@@ -24,7 +25,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 ".html",
-"unionnlohmann_1_1basic__json_1_1json__value_a592a4d5dfca10aa2bf033641b9ee050f.html#a592a4d5dfca10aa2bf033641b9ee050f"
+"unionnlohmann_1_1basic__json_1_1json__value_a4ff9894ccb1eca08ba1c49eec70ee2f5.html#a4ff9894ccb1eca08ba1c49eec70ee2f5"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

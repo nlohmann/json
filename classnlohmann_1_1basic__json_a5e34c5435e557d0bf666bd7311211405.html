@@ -48,6 +48,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -130,6 +131,54 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Serialize the given JSON value <em>j</em> to the output stream <em>o</em>. The JSON value will be serialized using the <a class="el" href="classnlohmann_1_1basic__json_a1f6b988271c56e3b9d5d33166154fdb6.html#a1f6b988271c56e3b9d5d33166154fdb6">dump</a> member function. The indentation of the output can be controlled with the member variable <code>width</code> of the output stream <em>o</em>. For instance, using the manipulator <code>std::setw(4)</code> on <em>o</em> sets the indentation level to <code>4</code> and the serialization result is the same as calling <code>dump(4)</code>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">o</td><td>stream to serialize to </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">j</td><td>JSON value to serialize</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the stream <em>o</em> </dd></dl>
+<dl class="section user"><dt>Complexity</dt><dd>Linear.</dd></dl>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
+<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div>
+<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="keyword">using namespace </span><a class="code" href="namespacenlohmann.html">nlohmann</a>;</div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;</div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create JSON values</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_object = {{<span class="stringliteral">&quot;one&quot;</span>, 1}, {<span class="stringliteral">&quot;two&quot;</span>, 2}};</div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_array = {1, 2, 4, 8, 16};</div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;</div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <span class="comment">// serialize without indentation</span></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    std::cout &lt;&lt; j_object &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    std::cout &lt;&lt; j_array &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    <span class="comment">// serialize with indentation</span></div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    std::cout &lt;&lt; std::setw(4) &lt;&lt; j_object &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    std::cout &lt;&lt; std::setw(2) &lt;&lt; j_array &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;}</div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:121</div></div>
+<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:56</div></div>
+</div><!-- fragment --> Output: <pre class="fragment">{"one":1,"two":2}
+
+[1,2,4,8,16]
+
+{
+    "one": 1,
+    "two": 2
+}
+
+[
+  1,
+  2,
+  4,
+  8,
+  16
+]
+
+</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/operator_serialize.cpp -o operator_serialize </pre>. </dd></dl>
 
 </div>
 </div>
@@ -139,7 +188,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacenlohmann.html">nlohmann</a></li><li class="navelem"><a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a></li>
-    <li class="footer">Generated on Sun Jun 21 2015 21:49:32 for JSON for Modern C++ by
+    <li class="footer">Generated on Sun Jun 21 2015 22:58:55 for JSON for Modern C++ by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

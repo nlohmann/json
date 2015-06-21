@@ -48,6 +48,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -124,7 +125,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <dl class="section note"><dt>Note</dt><dd>This function is only added for symmetry reasons. In contrast to the related function <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> <a class="el" href="classnlohmann_1_1basic__json_a53590b99e380c464a83a0a5edf6da9ab.html#a53590b99e380c464a83a0a5edf6da9ab" title="explicitly create an array from an initializer list ">array(list_init_t)</a>, there are no cases which can only be expressed by this function. That is, any initializer list <em>init</em> can also be passed to the initializer list constructor <a class="el" href="classnlohmann_1_1basic__json_a444d8376d63d7a5edb85f33bc5976c14.html#a444d8376d63d7a5edb85f33bc5976c14">basic_json(list_init_t, bool, value_t)</a>.</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">init</td><td>initializer list to create an object from (optional)</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">init</td><td>initializer list to create an object from (optional)</td></tr>
   </table>
   </dd>
 </dl>
@@ -153,9 +154,9 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    std::cout &lt;&lt; j_empty_init_list &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    std::cout &lt;&lt; j_list_of_pairs &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;}</div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:113</div></div>
-<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:49</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_afb9664e6f30038e691f2e864e7f6a740_html_afb9664e6f30038e691f2e864e7f6a740"><div class="ttname"><a href="classnlohmann_1_1basic__json_afb9664e6f30038e691f2e864e7f6a740.html#afb9664e6f30038e691f2e864e7f6a740">nlohmann::basic_json::object</a></div><div class="ttdeci">static basic_json object(list_init_t init=list_init_t())</div><div class="ttdoc">explicitly create an object from an initializer list </div><div class="ttdef"><b>Definition:</b> json.hpp:850</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:121</div></div>
+<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:56</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_afb9664e6f30038e691f2e864e7f6a740_html_afb9664e6f30038e691f2e864e7f6a740"><div class="ttname"><a href="classnlohmann_1_1basic__json_afb9664e6f30038e691f2e864e7f6a740.html#afb9664e6f30038e691f2e864e7f6a740">nlohmann::basic_json::object</a></div><div class="ttdeci">static basic_json object(list_init_t init=list_init_t())</div><div class="ttdoc">explicitly create an object from an initializer list </div><div class="ttdef"><b>Definition:</b> json.hpp:892</div></div>
 </div><!-- fragment --> Output: <pre class="fragment">{}
 {}
 {"one":1,"two":2}
@@ -172,7 +173,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacenlohmann.html">nlohmann</a></li><li class="navelem"><a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a></li>
-    <li class="footer">Generated on Sun Jun 21 2015 21:49:32 for JSON for Modern C++ by
+    <li class="footer">Generated on Sun Jun 21 2015 22:58:55 for JSON for Modern C++ by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>
