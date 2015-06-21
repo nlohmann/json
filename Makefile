@@ -42,6 +42,16 @@ docset: update_docs src/json.hpp
 	gsed -i 's@<string>doxygen</string>@<string>json</string>@' me.nlohmann.json.docset/Contents/Info.plist
 	rm -fr Doxyfile_docset html
 
+# update online documentation
+update_doxygen_online:
+	make re2c pretty doxygen
+	rm -fr /tmp/github-html
+	cp -r html /tmp/github-html
+	git checkout gh-pages
+	rm -fr html
+	mv /tmp/github-html html
+	git checkout master
+
 # create scanner with re2c
 re2c: src/json.hpp.re2c
 	$(RE2C) -b -s -i --no-generation-date $< | $(SED) '1d' > src/json.hpp
