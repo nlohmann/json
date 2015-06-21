@@ -1,11 +1,18 @@
 /*!
-@file
+@mainpage
+
+These pages contain the API documentation of JSON for Modern C++, a C++11
+header-only JSON class.
+
+Class @ref nlohmann::basic_json is a good entry point for the documentation.
+
 @copyright The code is licensed under the MIT License
            <http://opensource.org/licenses/MIT>,
            Copyright (c) 2013-2015 Niels Lohmann.
 @author Niels Lohmann <http://nlohmann.me>
-@see https://github.com/nlohmann/json
+@see https://github.com/nlohmann/json to download the source code
 */
+
 
 #ifndef NLOHMANN_JSON_HPP
 #define NLOHMANN_JSON_HPP
