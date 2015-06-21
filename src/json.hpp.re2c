@@ -84,6 +84,18 @@ struct has_mapped_type
 @tparam AllocatorType      type of the allocator to use
                            (@c std::allocator by default)
 
+@requirement This class satisfies the Container requirements (see http://en.cppreference.com/w/cpp/concept/Container):
+- @ref basic_json()
+- @ref basic_json(const basic_json&)
+- @ref reference& operator=(basic_json)
+- @ref ~basic_json()
+- @ref iterator begin(), @ref const_iterator begin(), @ref const_iterator cbegin()
+- @ref iterator end(), @ref const_iterator end(), @ref const_iterator cend()
+- @ref bool operator==(const_reference, const_reference), @ref bool operator!=(const_reference, const_reference)
+- @ref void swap(reference other)
+- @ref size_type size(), @ref size_type max_size()
+- @ref bool empty()
+
 @note ObjectType trick from http://stackoverflow.com/a/9860911
 
 @see RFC 7159 <http://rfc7159.net/rfc7159>
