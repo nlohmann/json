@@ -600,7 +600,7 @@ class basic_json
     /*!
     @brief create a string (explicit)
 
-    Create an string JSON value with a given content.
+    Create a string JSON value with a given content.
 
     @param[in] value  a literal value for the string
 
@@ -636,13 +636,22 @@ class basic_json
     /*!
     @brief create an integer number (explicit)
 
-    @tparam T  helper type to compare number_integer_t and int
+    Create an interger number JSON value with a given content.
+
+    @tparam T  helper type to compare number_integer_t and int (not visible in)
+    the interface.
+
     @param[in] value  an integer to create a JSON number from
 
-    This constructor takes care about explicitly passed values of type
-    number_integer_t. However, this constructor would have the same signature
-    as the existing one for const int values, so we need to switch this one off
-    in case number_integer_t is the same as int.
+    @note This constructor would have the same signature as @ref
+    basic_json(const int value), so we need to switch this one off in case
+    number_integer_t is the same as int. This is done via the helper type @a T.
+
+    @complexity Constant.
+
+    @todo Add example.
+
+    @sa basic_json(const int)
     */
     template<typename T,
              typename std::enable_if<
@@ -654,33 +663,80 @@ class basic_json
     {}
 
     /*!
-    @brief create an int number to support enum type (implicit)
+    @brief create an integer number from an enum type (explicit)
+
+    Create an interger number JSON value with a given content.
 
     @param[in] value  an integer to create a JSON number from
 
-    This constructor allows to pass enums directly to a constructor. As C++ has
-    no way of specifying the type of an anonymous enum explicitly, we can only
-    rely on the fact that such values implicitly convert to int. As int may
-    already be the same type of number_integer_t, we may need to switch off
-    that constructor, which is done above.
+    @note This constructor allows to pass enums directly to a constructor. As
+    C++ has no way of specifying the type of an anonymous enum explicitly, we
+    can only rely on the fact that such values implicitly convert to int. As
+    int may already be the same type of number_integer_t, we may need to switch
+    off the constructor @ref basic_json(const number_integer_t).
+
+    @complexity Constant.
+
+    @liveexample{The example below shows the construction of a JSON integer
+    number value.,basic_json__number_integer_t}
+
+    @sa basic_json(const number_integer_t)
     */
     basic_json(const int value)
         : m_type(value_t::number_integer),
           m_value(static_cast<number_integer_t>(value))
     {}
 
-    /// create an integer number (implicit)
-    template<typename T, typename
+    /*!
+    @brief create an integer number (implicit)
+
+    Create an inteher numnbr JSON value with a given content. This constructor
+    allows any type that can be used to construct values of type @ref
+    number_integer_t. Examples may include the types `int`, `int32_t`, or
+    `short`.
+
+    @tparam CompatibleNumberIntegerType an integer type which is compatible to
+    @ref number_integer_t.
+
+    @param[in] value  an integer to create a JSON number from
+
+    @complexity Constant.
+
+    @liveexample{The example below shows the construction of several JSON
+    integer number values from compatible
+    types.,basic_json__CompatibleIntegerNumberType}
+
+    @sa basic_json(const number_integer_t)
+    */
+    template<typename CompatibleNumberIntegerType, typename
              std::enable_if<
-                 std::is_constructible<number_integer_t, T>::value and
-                 std::numeric_limits<T>::is_integer, T>::type
+                 std::is_constructible<number_integer_t, CompatibleNumberIntegerType>::value and
+                 std::numeric_limits<CompatibleNumberIntegerType>::is_integer, CompatibleNumberIntegerType>::type
              = 0>
-    basic_json(const T value) noexcept
+    basic_json(const CompatibleNumberIntegerType value) noexcept
         : m_type(value_t::number_integer),
           m_value(static_cast<number_integer_t>(value))
     {}
 
-    /// create a floating-point number (explicit)
+    /*!
+    @brief create a floating-point number (explicit)
+
+    Create a floating-point number JSON value with a given content.
+
+    @param[in] value  a floating-point value to create a JSON number from
+
+    @note RFC 7159 <http://www.rfc-editor.org/rfc/rfc7159.txt>, section 6
+    disallows NaN values:
+    > Numeric values that cannot be represented in the grammar below (such
+    > as Infinity and NaN) are not permitted.
+    In case the parameter @a value is not a number, a JSON null value is
+    created instead.
+
+    @complexity Linear.
+
+    @liveexample{The following example creates several floating-point
+    values.,basic_json__number_float_t}
+    */
     basic_json(const number_float_t value)
         : m_type(value_t::number_float), m_value(value)
     {
@@ -693,12 +749,12 @@ class basic_json
     }
 
     /// create a floating-point number (implicit)
-    template<typename T, typename = typename
+    template<typename CompatibleNumberFloatType, typename = typename
              std::enable_if<
-                 std::is_constructible<number_float_t, T>::value and
-                 std::is_floating_point<T>::value>::type
+                 std::is_constructible<number_float_t, CompatibleNumberFloatType>::value and
+                 std::is_floating_point<CompatibleNumberFloatType>::value>::type
              >
-    basic_json(const T value) noexcept
+    basic_json(const CompatibleNumberFloatType value) noexcept
         : basic_json(number_float_t(value))
     {}
 
