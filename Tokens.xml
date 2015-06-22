@@ -379,7 +379,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_acbf7f957ecb6ce19cdc5b40b5d6b6333.html</Path>
     <Anchor>acbf7f957ecb6ce19cdc5b40b5d6b6333</Anchor>
-    <Abstract>create an int number to support enum type (implicit) </Abstract>
+    <Abstract>create an integer number from an enum type (explicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -389,8 +389,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ad0e116881c75aaef148c62f79d56735f.html</Path>
-    <Anchor>ad0e116881c75aaef148c62f79d56735f</Anchor>
+    <Path>classnlohmann_1_1basic__json_a0bb6ea56c89560cce8003485bffe49d4.html</Path>
+    <Anchor>a0bb6ea56c89560cce8003485bffe49d4</Anchor>
     <Abstract>create an integer number (implicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -413,8 +413,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ad0e116881c75aaef148c62f79d56735f.html</Path>
-    <Anchor>ad0e116881c75aaef148c62f79d56735f</Anchor>
+    <Path>classnlohmann_1_1basic__json_a034bccea9f5400650443e9f12e67b079.html</Path>
+    <Anchor>a034bccea9f5400650443e9f12e67b079</Anchor>
     <Abstract>create a floating-point number (implicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>

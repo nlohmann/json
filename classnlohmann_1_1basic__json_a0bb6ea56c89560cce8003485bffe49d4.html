@@ -80,7 +80,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('classnlohmann_1_1basic__json_ac943391891fcde0a71a15ce990e0f7f4.html','');});
+$(document).ready(function(){initNavTree('classnlohmann_1_1basic__json_a0bb6ea56c89560cce8003485bffe49d4.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -98,11 +98,13 @@ $(document).ready(function(){initNavTree('classnlohmann_1_1basic__json_ac9433918
 </div>
 
 <div class="contents">
-<a class="anchor" id="ac943391891fcde0a71a15ce990e0f7f4"></a>
+<a class="anchor" id="a0bb6ea56c89560cce8003485bffe49d4"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;template&lt; typename U, typename V, typename...Args &gt; class ObjectType = std::map, template&lt; typename U, typename...Args &gt; class ArrayType = std::vector, class StringType  = std::string, class BooleanType  = bool, class NumberIntegerType  = int64_t, class NumberFloatType  = double, template&lt; typename U &gt; class AllocatorType = std::allocator&gt; </div>
+<div class="memtemplate">
+template&lt;typename CompatibleNumberIntegerType , typename std::enable_if&lt; std::is_constructible&lt; number_integer_t, CompatibleNumberIntegerType &gt;::value andstd::numeric_limits&lt; CompatibleNumberIntegerType &gt;::is_integer, CompatibleNumberIntegerType &gt;::type  = 0&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -110,57 +112,67 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
         <tr>
           <td class="memname"><a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::<a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
+          <td class="paramtype">const CompatibleNumberIntegerType&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Creates a copy of a given JSON value.</p>
+<p>Create an inteher numnbr JSON value with a given content. This constructor allows any type that can be used to construct values of type <a class="el" href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">number_integer_t</a>. Examples may include the types <code>int</code>, <code>int32_t</code>, or <code>short</code>.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">CompatibleNumberIntegerType</td><td>an integer type which is compatible to <a class="el" href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">number_integer_t</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">other</td><td>the JSON value to copy</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">value</td><td>an integer to create a JSON number from</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section user"><dt>Complexity</dt><dd>Linear in the size of <em>other</em>.</dd></dl>
-<dl class="section user"><dt>Requirements</dt><dd>This function satisfies the Container requirements:<ul>
-<li>The complexity is linear.</li>
-<li>As postcondition, it holds: <code>other == basic_json(other)</code>.</li>
-</ul>
-</dd></dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">std::bad_alloc</td><td>if allocation for object, array, or string fails.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section user"><dt>Example</dt><dd>The following code shows an example for the copy constructor. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
+<dl class="section user"><dt>Complexity</dt><dd>Constant.</dd></dl>
+<dl class="section user"><dt>Example</dt><dd>The example below shows the construction of several JSON integer number values from compatible types. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="keyword">using namespace </span><a class="code" href="namespacenlohmann.html">nlohmann</a>;</div>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;</div>
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create a JSON array</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j1 = {<span class="stringliteral">&quot;one&quot;</span>, <span class="stringliteral">&quot;two&quot;</span>, 3, 4.5, <span class="keyword">false</span>};</div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="comment">// create a copy</span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j2(j1);</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="comment">// serialize the JSON array</span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    std::cout &lt;&lt; j1 &lt;&lt; <span class="stringliteral">&quot; = &quot;</span> &lt;&lt; j2 &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    std::cout &lt;&lt; std::boolalpha &lt;&lt; (j1 == j2) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;}</div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create values of different integer types</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <span class="keywordtype">short</span> n42 = 42;</div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;    <span class="keywordtype">int</span> n23 = 23;</div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="keywordtype">long</span> n1024 = 1024;</div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    int_least32_t n17 = 17;</div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    uint8_t n8 = 8;</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    <span class="comment">// create JSON numbers</span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j42(n42);</div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j23(n23);</div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j1024(n1024);</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j17(n17);</div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j8(n8);</div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;</div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;    <span class="comment">// serialize the JSON numbers</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    std::cout &lt;&lt; j42 &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    std::cout &lt;&lt; j23 &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;    std::cout &lt;&lt; j1024 &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    std::cout &lt;&lt; j17 &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;    std::cout &lt;&lt; j8 &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;}</div>
 <div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:121</div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:56</div></div>
-</div><!-- fragment --> Output: <pre class="fragment">["one","two",3,4.5,false] = ["one","two",3,4.5,false]
-true
-</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/basic_json__basic_json.cpp -o basic_json__basic_json </pre>. </dd></dl>
+</div><!-- fragment --> Output: <pre class="fragment">42
+23
+1024
+17
+8
+</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/basic_json__CompatibleIntegerNumberType.cpp -o basic_json__CompatibleIntegerNumberType </pre>.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_a190d719446e7016879c4b961c9cf9072.html#a190d719446e7016879c4b961c9cf9072" title="create an integer number (explicit) ">basic_json(const number_integer_t)</a> </dd></dl>
 
 </div>
 </div>

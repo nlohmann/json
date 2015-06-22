@@ -123,9 +123,10 @@ template&lt;typename T , typename std::enable_if&lt; not(std::is_same&lt; T, int
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Create an interger number JSON value with a given content.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">T</td><td>helper type to compare number_integer_t and int </td></tr>
+    <tr><td class="paramname">T</td><td>helper type to compare number_integer_t and int (not visible in) the interface.</td></tr>
   </table>
   </dd>
 </dl>
@@ -135,7 +136,10 @@ template&lt;typename T , typename std::enable_if&lt; not(std::is_same&lt; T, int
   </table>
   </dd>
 </dl>
-<p>This constructor takes care about explicitly passed values of type number_integer_t. However, this constructor would have the same signature as the existing one for const int values, so we need to switch this one off in case number_integer_t is the same as int. </p>
+<dl class="section note"><dt>Note</dt><dd>This constructor would have the same signature as <a class="el" href="classnlohmann_1_1basic__json_acbf7f957ecb6ce19cdc5b40b5d6b6333.html#acbf7f957ecb6ce19cdc5b40b5d6b6333">basic_json(const int value)</a>, so we need to switch this one off in case number_integer_t is the same as int. This is done via the helper type <em>T</em>.</dd></dl>
+<dl class="section user"><dt>Complexity</dt><dd>Constant.</dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000001">Todo:</a></b></dt><dd>Add example.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_acbf7f957ecb6ce19cdc5b40b5d6b6333.html#acbf7f957ecb6ce19cdc5b40b5d6b6333" title="create an integer number from an enum type (explicit) ">basic_json(const int)</a> </dd></dl>
 
 </div>
 </div>
@@ -145,7 +149,7 @@ template&lt;typename T , typename std::enable_if&lt; not(std::is_same&lt; T, int
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacenlohmann.html">nlohmann</a></li><li class="navelem"><a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a></li>
-    <li class="footer">Generated on Sun Jun 21 2015 22:58:55 for JSON for Modern C++ by
+    <li class="footer">Generated on Mon Jun 22 2015 21:44:33 for JSON for Modern C++ by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>
