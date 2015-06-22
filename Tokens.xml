@@ -415,7 +415,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a034bccea9f5400650443e9f12e67b079.html</Path>
     <Anchor>a034bccea9f5400650443e9f12e67b079</Anchor>
-    <Abstract>create a floating-point number (implicit) </Abstract>
+    <Abstract>create an floating-point number (implicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -449,8 +449,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a2de337cd1d53060b4b8c4118cddc6333.html</Path>
-    <Anchor>a2de337cd1d53060b4b8c4118cddc6333</Anchor>
+    <Path>classnlohmann_1_1basic__json_a6a7f45095675ac6fd1d018a0e41874be.html</Path>
+    <Anchor>a6a7f45095675ac6fd1d018a0e41874be</Anchor>
     <Abstract>construct a JSON container given an iterator range </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1403,18 +1403,6 @@
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>operator&gt;&gt;</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>ffunc</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_aaf363408931d76472ded14017e59c9e8.html</Path>
-    <Anchor>aaf363408931d76472ded14017e59c9e8</Anchor>
-    <Abstract>deserialize from stream </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
       <Name>operator&lt;&lt;</Name>
       <APILanguage>cpp</APILanguage>
       <Type>ffunc</Type>
@@ -1422,6 +1410,18 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a60ca396028b8d9714c6e10efbf475af6.html</Path>
     <Anchor>a60ca396028b8d9714c6e10efbf475af6</Anchor>
+    <Abstract>deserialize from stream </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator&gt;&gt;</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>ffunc</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_aaf363408931d76472ded14017e59c9e8.html</Path>
+    <Anchor>aaf363408931d76472ded14017e59c9e8</Anchor>
     <Abstract>deserialize from stream </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>

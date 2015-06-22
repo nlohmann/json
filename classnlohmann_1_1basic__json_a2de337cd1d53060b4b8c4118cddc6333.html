@@ -133,6 +133,21 @@ template&lt;class T , typename std::enable_if&lt; std::is_same&lt; T, typename _
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Constructs the JSON value with the contents of the range <code>[first, last)</code>.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>an iterator type (<a class="el" href="classnlohmann_1_1basic__json_1_1iterator.html">iterator</a> or <a class="el" href="classnlohmann_1_1basic__json_1_1const__iterator.html">const_iterator</a>)</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">first</td><td>begin of the range to copy from (included) </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">last</td><td>end of the range to copy from (excluded)</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section user"><dt>Complexity</dt><dd>Linear in distance between <em>first</em> and <em>last</em>. </dd></dl>
 
 </div>
 </div>
@@ -142,7 +157,7 @@ template&lt;class T , typename std::enable_if&lt; std::is_same&lt; T, typename _
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacenlohmann.html">nlohmann</a></li><li class="navelem"><a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a></li>
-    <li class="footer">Generated on Mon Jun 22 2015 21:44:33 for JSON for Modern C++ by
+    <li class="footer">Generated on Mon Jun 22 2015 22:02:52 for JSON for Modern C++ by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>
