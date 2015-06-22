@@ -404,7 +404,7 @@ class basic_json
 
     @complexity Constant.
 
-    @exception std::bad_alloc if allocation for object, array, or string value
+    @throw std::bad_alloc if allocation for object, array, or string value
     fails (thrown by the constructors of @ref json_value)
 
     @liveexample{The following code shows the constructor for different @ref
@@ -463,7 +463,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @exception std::bad_alloc if allocation for object value fails (thrown by
+    @throw std::bad_alloc if allocation for object value fails (thrown by
     the constructor of @ref json_value)
 
     @liveexample{The following code shows the constructor with an @ref object_t
@@ -489,7 +489,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @exception std::bad_alloc if allocation for object value fails (thrown by
+    @throw std::bad_alloc if allocation for object value fails (thrown by
     the constructor of @ref json_value)
 
     @liveexample{The following code shows the constructor with several
@@ -521,7 +521,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @exception std::bad_alloc if allocation for array value fails (thrown by
+    @throw std::bad_alloc if allocation for array value fails (thrown by
     the constructor of @ref json_value)
 
     @liveexample{The following code shows the constructor with an @ref array_t
@@ -547,7 +547,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @exception std::bad_alloc if allocation for array value fails (thrown by
+    @throw std::bad_alloc if allocation for array value fails (thrown by
     the constructor of @ref json_value)
 
     @liveexample{The following code shows the constructor with several
@@ -584,7 +584,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @exception std::bad_alloc if allocation for string value fails (thrown by
+    @throw std::bad_alloc if allocation for string value fails (thrown by
     the constructor of @ref json_value)
 
     @liveexample{The following code shows the constructor with an @ref string_t
@@ -606,7 +606,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @exception std::bad_alloc if allocation for string value fails (thrown by
+    @throw std::bad_alloc if allocation for string value fails (thrown by
     the constructor of @ref json_value)
 
     @liveexample{The following code shows the constructor with string literal
@@ -619,7 +619,26 @@ class basic_json
         : basic_json(string_t(value))
     {}
 
-    /// create a string (implicit)
+    /*!
+    @brief create a string (implicit)
+
+    Create a string JSON value with a given content.
+
+    @param[in] value  a value for the string
+
+    @tparam CompatibleStringType an string type which is compatible to @ref
+    string_t
+
+    @complexity Linear in the size of the passed @a value.
+
+    @throw std::bad_alloc if allocation for string value fails (thrown by
+    the constructor of @ref json_value)
+
+    @liveexample{The following code shows the construction of a string value
+    from a compatible type.,basic_json__CompatibleStringType}
+
+    @sa basic_json(const string_t&)
+    */
     template <class CompatibleStringType, typename
               std::enable_if<
                   std::is_constructible<string_t, CompatibleStringType>::value, int>::type
@@ -628,7 +647,18 @@ class basic_json
         : basic_json(string_t(value))
     {}
 
-    /// create a boolean (explicit)
+    /*!
+    @brief create a boolean (explicit)
+
+    Creates a JSON boolean type from a given value.
+
+    @param[in] value  a boolean value to store
+
+    @complexity Constant.
+
+    @liveexample{The example below demonstrates boolean
+    values.,basic_json__boolean_t}
+    */
     basic_json(boolean_t value)
         : m_type(value_t::boolean), m_value(value)
     {}
@@ -649,7 +679,8 @@ class basic_json
 
     @complexity Constant.
 
-    @todo Add example.
+    @liveexample{The example below shows the construction of a JSON integer
+    number value.,basic_json__number_integer_t}
 
     @sa basic_json(const int)
     */
@@ -665,7 +696,7 @@ class basic_json
     /*!
     @brief create an integer number from an enum type (explicit)
 
-    Create an interger number JSON value with a given content.
+    Create an integer number JSON value with a given content.
 
     @param[in] value  an integer to create a JSON number from
 
@@ -678,7 +709,7 @@ class basic_json
     @complexity Constant.
 
     @liveexample{The example below shows the construction of a JSON integer
-    number value.,basic_json__number_integer_t}
+    number value from an anonymous enum.,basic_json__const_int}
 
     @sa basic_json(const number_integer_t)
     */
@@ -690,7 +721,7 @@ class basic_json
     /*!
     @brief create an integer number (implicit)
 
-    Create an inteher numnbr JSON value with a given content. This constructor
+    Create an integer number JSON value with a given content. This constructor
     allows any type that can be used to construct values of type @ref
     number_integer_t. Examples may include the types `int`, `int32_t`, or
     `short`.
@@ -732,7 +763,7 @@ class basic_json
     In case the parameter @a value is not a number, a JSON null value is
     created instead.
 
-    @complexity Linear.
+    @complexity Constant.
 
     @liveexample{The following example creates several floating-point
     values.,basic_json__number_float_t}
@@ -748,7 +779,33 @@ class basic_json
         }
     }
 
-    /// create a floating-point number (implicit)
+    /*!
+    @brief create an floating-point number (implicit)
+
+    Create an floating-point number JSON value with a given content. This
+    constructor allows any type that can be used to construct values of type
+    @ref number_float_t. Examples may include the types `float`.
+
+    @tparam CompatibleNumberFloatType a floating-point type which is compatible
+    to @ref number_float_t.
+
+    @param[in] value  a floating-point to create a JSON number from
+
+    @note RFC 7159 <http://www.rfc-editor.org/rfc/rfc7159.txt>, section 6
+    disallows NaN values:
+    > Numeric values that cannot be represented in the grammar below (such
+    > as Infinity and NaN) are not permitted.
+    In case the parameter @a value is not a number, a JSON null value is
+    created instead.
+
+    @complexity Constant.
+
+    @liveexample{The example below shows the construction of several JSON
+    floating-point number values from compatible
+    types.,basic_json__CompatibleNumberFloatType}
+
+    @sa basic_json(const number_float_t)
+    */
     template<typename CompatibleNumberFloatType, typename = typename
              std::enable_if<
                  std::is_constructible<number_float_t, CompatibleNumberFloatType>::value and
@@ -974,26 +1031,51 @@ class basic_json
         alloc.construct(m_value.array, count, value);
     }
 
-    /// construct a JSON container given an iterator range
-    template <class T, typename
+    /*!
+    @brief construct a JSON container given an iterator range
+
+    Constructs the JSON value with the contents of the range `[first, last)`.
+    The semantics depends on the different types a JSON value can have:
+    - In case of atomic value types (number, boolean, or string), @a first must
+      be `begin()` and @a last must be `end()`. In this case, the value is
+      copied. Otherwise, std::out_of_range is thrown.
+    - In case of compound value types (array, object), the constructor behaves
+      as similar versions for `std::vector`.
+    - In case of a null value type, std::domain_error is thrown.
+
+    @tparam InputIT an input iterator type (@ref iterator or @ref
+    const_iterator)
+
+    @param[in] first begin of the range to copy from (included)
+    @param[in] last end of the range to copy from (excluded)
+
+    @throw std::domain_error if iterators are not compatible; that is, do not
+    belong to the same JSON value
+    @throw std::out_of_range if iterators are for an atomic value type (number,
+    boolean, or string) where an out of range error can be detected easily
+    @throw std::bad_alloc if allocation for object, array, or string fails
+    @throw std::domain_error if called with a null value
+
+    @complexity Linear in distance between @a first and @a last.
+
+    @liveexample{The example below shows several ways to create JSON values by
+    specifying a subrange with iterators.,basic_json__InputIt_InputIt}
+    */
+    template <class InputIT, typename
               std::enable_if<
-                  std::is_same<T, typename __basic_json::iterator>::value or
-                  std::is_same<T, typename __basic_json::const_iterator>::value
+                  std::is_same<InputIT, typename __basic_json::iterator>::value or
+                  std::is_same<InputIT, typename __basic_json::const_iterator>::value
                   , int>::type
               = 0>
-    basic_json(T first, T last)
+    basic_json(InputIT first, InputIT last) : m_type(first.m_object->m_type)
     {
         // make sure iterator fits the current value
-        if (first.m_object != last.m_object or
-                first.m_object->m_type != last.m_object->m_type)
+        if (first.m_object != last.m_object)
         {
             throw std::domain_error("iterators are not compatible");
         }
 
-        // set the type
-        m_type = first.m_object->m_type;
-
-        // check if iterator range is complete for non-compound values
+        // check if iterator range is complete for atomic values
         switch (m_type)
         {
             case value_t::number_integer:
@@ -1080,7 +1162,7 @@ class basic_json
     - The complexity is linear.
     - As postcondition, it holds: `other == basic_json(other)`.
 
-    @exception std::bad_alloc if allocation for object, array, or string fails.
+    @throw std::bad_alloc if allocation for object, array, or string fails.
 
     @liveexample{The following code shows an example for the copy
     constructor.,basic_json__basic_json}
@@ -1844,7 +1926,7 @@ class basic_json
 
     @note Calling `front` on an empty container is undefined.
 
-    @throw std::out_of_range when called on null value.
+    @throw std::out_of_range when called on null value
 
     @liveexample{The following code shows an example for @ref front.,front}
     */
@@ -2960,7 +3042,8 @@ class basic_json
 
     @complexity Linear.
 
-    @liveexample{,operator_serialize}
+    @liveexample{The example below shows the serialization with different
+    parameters to `width` to adjust the indentation level.,operator_serialize}
     */
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
     {
@@ -2995,27 +3078,82 @@ class basic_json
     /// @name deserialization
     /// @{
 
-    /// deserialize from string
+    /*!
+    @brief deserialize from string
+
+    @param[in] s  string to read a serialized JSON value from
+    @param[in] cb a parser callback function of type parser_callback_t which is
+    used to control the deserialization by filtering unwanted values (optional)
+
+    @return result of the deserialization
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser. The complexity can be higher if the parser callback function
+    @a cb has a super-linear complexity.
+
+    @todo Add example.
+
+    @sa parse(std::istream&, parser_callback_t) for a version that reads from
+    an input stream
+    */
     static basic_json parse(const string_t& s, parser_callback_t cb = nullptr)
     {
         return parser(s, cb).parse();
     }
 
-    /// deserialize from stream
+    /*!
+    @brief deserialize from stream
+
+    @param[in,out] i  stream to read a serialized JSON value from
+    @param[in] cb a parser callback function of type parser_callback_t which is
+    used to control the deserialization by filtering unwanted values (optional)
+
+    @return result of the deserialization
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser. The complexity can be higher if the parser callback function
+    @a cb has a super-linear complexity.
+
+    @todo Add example.
+
+    @sa parse(const string_t&, parser_callback_t) for a version that reads
+    from a string
+    */
     static basic_json parse(std::istream& i, parser_callback_t cb = nullptr)
     {
         return parser(i, cb).parse();
     }
 
-    /// deserialize from stream
-    friend std::istream& operator>>(std::istream& i, basic_json& j)
+    /*!
+    @brief deserialize from stream
+
+    Deserializes an input stream to a JSON value.
+
+    @param[in,out] i  input stream to read a serialized JSON value from
+    @param[in,out] j  JSON value to write the deserialized input to
+
+    @throw std::invalid_argument in case of parse errors
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser.
+
+    @liveexample{The example below shows how a JSON value is constructed by
+    reading a serialization from a stream.,operator_deserialize}
+
+    @sa parse(std::istream&, parser_callback_t) for a variant with a parser
+    callback function to filter values while parsing
+    */
+    friend std::istream& operator<<(basic_json& j, std::istream& i)
     {
         j = parser(i).parse();
         return i;
     }
 
-    /// deserialize from stream
-    friend std::istream& operator<<(basic_json& j, std::istream& i)
+    /*!
+    @brief deserialize from stream
+    @copydoc operator<<(basic_json&, std::istream&)
+    */
+    friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
         j = parser(i).parse();
         return i;
@@ -4464,8 +4602,8 @@ class basic_json
         @param[in] codepoint1  the code point (can be high surrogate)
         @param[in] codepoint2  the code point (can be low surrogate or 0)
         @return string representation of the code point
-        @exception std::out_of_range if code point is >0x10ffff
-        @exception std::invalid_argument if the low surrogate is invalid
+        @throw std::out_of_range if code point is >0x10ffff
+        @throw std::invalid_argument if the low surrogate is invalid
 
         @see <http://en.wikipedia.org/wiki/UTF-8#Sample_code>
         */
@@ -4699,7 +4837,7 @@ class basic_json
         2. Unescaped characters are copied as is.
 
         @return string value of current token without opening and closing quotes
-        @exception std::out_of_range if to_unicode fails
+        @throw std::out_of_range if to_unicode fails
         */
         string_t get_string() const
         {
@@ -4819,7 +4957,7 @@ class basic_json
         read past the current token. The latter case needs to be treated by the
         caller function.
 
-        @exception std::range_error if passed value is out of range
+        @throw std::range_error if passed value is out of range
         */
         long double get_number() const
         {
