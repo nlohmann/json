@@ -8009,6 +8009,39 @@ TEST_CASE("parser class")
                 }
             }
         }
+
+        SECTION("special cases")
+        {
+            // the following test cases cover the situation in which an empty
+            // object and array is discarded only after the closing character
+            // has been read
+
+            json j_empty_object = json::parse("{}", [](int, json::parse_event_t e, const json&)
+            {
+                if (e == json::parse_event_t::object_end)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+            CHECK(j_empty_object == json());
+
+            json j_empty_array = json::parse("[]", [](int, json::parse_event_t e, const json&)
+            {
+                if (e == json::parse_event_t::array_end)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+            CHECK(j_empty_array == json());
+        }
     }
 }
 
