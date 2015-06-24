@@ -8,14 +8,6 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
-<link href="navtree.css" rel="stylesheet" type="text/css"/>
-<script type="text/javascript" src="resize.js"></script>
-<script type="text/javascript" src="navtreedata.js"></script>
-<script type="text/javascript" src="navtree.js"></script>
-<script type="text/javascript">
-  $(document).ready(initResizable);
-  $(window).load(resizeHeight);
-</script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
@@ -76,21 +68,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="functions.html"><span>Class&#160;Members</span></a></li>
     </ul>
   </div>
-</div><!-- top -->
-<div id="side-nav" class="ui-resizable side-nav-resizable">
-  <div id="nav-tree">
-    <div id="nav-tree-contents">
-      <div id="nav-sync" class="sync"></div>
-    </div>
-  </div>
-  <div id="splitbar" style="-moz-user-select:none;" 
-       class="ui-resizable-handle">
-  </div>
-</div>
-<script type="text/javascript">
-$(document).ready(function(){initNavTree('classnlohmann_1_1basic__json.html','');});
-</script>
-<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -105,6 +82,11 @@ $(document).ready(function(){initNavTree('classnlohmann_1_1basic__json.html','')
 </iframe>
 </div>
 
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="namespacenlohmann.html">nlohmann</a></li><li class="navelem"><a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a></li>  </ul>
+</div>
+</div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
@@ -153,11 +135,11 @@ Public Types</h2></td></tr>
 <a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafea2063c1608d6e0baf80249c42e2be5804">parse_event_t::value</a>
 <br />
  }</td></tr>
-<tr class="memdesc:aea1c863b719b4ca5b77188c171bbfafe"><td class="mdescLeft">&#160;</td><td class="mdescRight">JSON callback event enumeration.  <a href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">More...</a><br /></td></tr>
+<tr class="memdesc:aea1c863b719b4ca5b77188c171bbfafe"><td class="mdescLeft">&#160;</td><td class="mdescRight">JSON callback events.  <a href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">More...</a><br /></td></tr>
 <tr class="separator:aea1c863b719b4ca5b77188c171bbfafe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adb71e93d99ec4fc0df16d74ab30c02a1"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_adb71e93d99ec4fc0df16d74ab30c02a1.html#adb71e93d99ec4fc0df16d74ab30c02a1">parser_callback_t</a> = std::function&lt; bool(int depth, <a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">parse_event_t</a> event, const <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> &amp;parsed)&gt;</td></tr>
-<tr class="memdesc:adb71e93d99ec4fc0df16d74ab30c02a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">per-element parser callback type  <a href="classnlohmann_1_1basic__json_adb71e93d99ec4fc0df16d74ab30c02a1.html#adb71e93d99ec4fc0df16d74ab30c02a1">More...</a><br /></td></tr>
-<tr class="separator:adb71e93d99ec4fc0df16d74ab30c02a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8e533b4290ade5bf5a33104a69b202a"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">parser_callback_t</a> = std::function&lt; bool(int depth, <a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">parse_event_t</a> event, <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> &amp;parsed)&gt;</td></tr>
+<tr class="memdesc:aa8e533b4290ade5bf5a33104a69b202a"><td class="mdescLeft">&#160;</td><td class="mdescRight">per-element parser callback type  <a href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">More...</a><br /></td></tr>
+<tr class="separator:aa8e533b4290ade5bf5a33104a69b202a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a231b02148577b69a154b2ce2c87a5522"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">value_t</a> : uint8_t { <br />
 &#160;&#160;<a class="el" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522a37a6259cc0c1dae299a7866489dff0bd">value_t::null</a>, 
 <a class="el" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522aa8cfde6331bd59eb2ac96f8911c4b666">value_t::object</a>, 
@@ -347,22 +329,22 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a9a91e05cbc516623fa61e253f920e42e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">element access</div></td></tr>
 <tr class="memitem:ada8e01109a60088e4db2a670d4903b54"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classnlohmann_1_1basic__json_a5fd8b54389698edf0c08e2dd001f610b.html#a5fd8b54389698edf0c08e2dd001f610b">reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54.html#ada8e01109a60088e4db2a670d4903b54">at</a> (<a class="el" href="classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html#a80ceaa3bdd346292273b309e08525c1c">size_type</a> idx)</td></tr>
-<tr class="memdesc:ada8e01109a60088e4db2a670d4903b54"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified element with bounds checking  <a href="classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54.html#ada8e01109a60088e4db2a670d4903b54">More...</a><br /></td></tr>
+<tr class="memdesc:ada8e01109a60088e4db2a670d4903b54"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified array element with bounds checking  <a href="classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54.html#ada8e01109a60088e4db2a670d4903b54">More...</a><br /></td></tr>
 <tr class="separator:ada8e01109a60088e4db2a670d4903b54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af6b6050ccd906dddf7c9f47fe3ad62a5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classnlohmann_1_1basic__json_ac4011bd0781e51afe4994d2b09fd27e9.html#ac4011bd0781e51afe4994d2b09fd27e9">const_reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_af6b6050ccd906dddf7c9f47fe3ad62a5.html#af6b6050ccd906dddf7c9f47fe3ad62a5">at</a> (<a class="el" href="classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html#a80ceaa3bdd346292273b309e08525c1c">size_type</a> idx) const </td></tr>
-<tr class="memdesc:af6b6050ccd906dddf7c9f47fe3ad62a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified element with bounds checking  <a href="classnlohmann_1_1basic__json_af6b6050ccd906dddf7c9f47fe3ad62a5.html#af6b6050ccd906dddf7c9f47fe3ad62a5">More...</a><br /></td></tr>
+<tr class="memdesc:af6b6050ccd906dddf7c9f47fe3ad62a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified array element with bounds checking  <a href="classnlohmann_1_1basic__json_af6b6050ccd906dddf7c9f47fe3ad62a5.html#af6b6050ccd906dddf7c9f47fe3ad62a5">More...</a><br /></td></tr>
 <tr class="separator:af6b6050ccd906dddf7c9f47fe3ad62a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a652414dd930cb3af3b6f454cc535a23e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classnlohmann_1_1basic__json_a5fd8b54389698edf0c08e2dd001f610b.html#a5fd8b54389698edf0c08e2dd001f610b">reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a652414dd930cb3af3b6f454cc535a23e.html#a652414dd930cb3af3b6f454cc535a23e">at</a> (const typename object_t::key_type &amp;key)</td></tr>
-<tr class="memdesc:a652414dd930cb3af3b6f454cc535a23e"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified element with bounds checking  <a href="classnlohmann_1_1basic__json_a652414dd930cb3af3b6f454cc535a23e.html#a652414dd930cb3af3b6f454cc535a23e">More...</a><br /></td></tr>
+<tr class="memdesc:a652414dd930cb3af3b6f454cc535a23e"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified object element with bounds checking  <a href="classnlohmann_1_1basic__json_a652414dd930cb3af3b6f454cc535a23e.html#a652414dd930cb3af3b6f454cc535a23e">More...</a><br /></td></tr>
 <tr class="separator:a652414dd930cb3af3b6f454cc535a23e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a16a275d0201e9aedc87c933c764b8869"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classnlohmann_1_1basic__json_ac4011bd0781e51afe4994d2b09fd27e9.html#ac4011bd0781e51afe4994d2b09fd27e9">const_reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a16a275d0201e9aedc87c933c764b8869.html#a16a275d0201e9aedc87c933c764b8869">at</a> (const typename object_t::key_type &amp;key) const </td></tr>
-<tr class="memdesc:a16a275d0201e9aedc87c933c764b8869"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified element with bounds checking  <a href="classnlohmann_1_1basic__json_a16a275d0201e9aedc87c933c764b8869.html#a16a275d0201e9aedc87c933c764b8869">More...</a><br /></td></tr>
+<tr class="memdesc:a16a275d0201e9aedc87c933c764b8869"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified object element with bounds checking  <a href="classnlohmann_1_1basic__json_a16a275d0201e9aedc87c933c764b8869.html#a16a275d0201e9aedc87c933c764b8869">More...</a><br /></td></tr>
 <tr class="separator:a16a275d0201e9aedc87c933c764b8869"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a57703688bee6b9736ab3a430d8d246f2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classnlohmann_1_1basic__json_a5fd8b54389698edf0c08e2dd001f610b.html#a5fd8b54389698edf0c08e2dd001f610b">reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a57703688bee6b9736ab3a430d8d246f2.html#a57703688bee6b9736ab3a430d8d246f2">operator[]</a> (<a class="el" href="classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html#a80ceaa3bdd346292273b309e08525c1c">size_type</a> idx)</td></tr>
-<tr class="memdesc:a57703688bee6b9736ab3a430d8d246f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified element  <a href="classnlohmann_1_1basic__json_a57703688bee6b9736ab3a430d8d246f2.html#a57703688bee6b9736ab3a430d8d246f2">More...</a><br /></td></tr>
+<tr class="memdesc:a57703688bee6b9736ab3a430d8d246f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified array element  <a href="classnlohmann_1_1basic__json_a57703688bee6b9736ab3a430d8d246f2.html#a57703688bee6b9736ab3a430d8d246f2">More...</a><br /></td></tr>
 <tr class="separator:a57703688bee6b9736ab3a430d8d246f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae960d2d6bc7b94fe39cc5e9f106edfa9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classnlohmann_1_1basic__json_ac4011bd0781e51afe4994d2b09fd27e9.html#ac4011bd0781e51afe4994d2b09fd27e9">const_reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_ae960d2d6bc7b94fe39cc5e9f106edfa9.html#ae960d2d6bc7b94fe39cc5e9f106edfa9">operator[]</a> (<a class="el" href="classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html#a80ceaa3bdd346292273b309e08525c1c">size_type</a> idx) const </td></tr>
-<tr class="memdesc:ae960d2d6bc7b94fe39cc5e9f106edfa9"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified element  <a href="classnlohmann_1_1basic__json_ae960d2d6bc7b94fe39cc5e9f106edfa9.html#ae960d2d6bc7b94fe39cc5e9f106edfa9">More...</a><br /></td></tr>
+<tr class="memdesc:ae960d2d6bc7b94fe39cc5e9f106edfa9"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified array element  <a href="classnlohmann_1_1basic__json_ae960d2d6bc7b94fe39cc5e9f106edfa9.html#ae960d2d6bc7b94fe39cc5e9f106edfa9">More...</a><br /></td></tr>
 <tr class="separator:ae960d2d6bc7b94fe39cc5e9f106edfa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af74581d177dafc38df5a126ccd358999"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classnlohmann_1_1basic__json_a5fd8b54389698edf0c08e2dd001f610b.html#a5fd8b54389698edf0c08e2dd001f610b">reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_af74581d177dafc38df5a126ccd358999.html#af74581d177dafc38df5a126ccd358999">operator[]</a> (const typename object_t::key_type &amp;key)</td></tr>
 <tr class="memdesc:af74581d177dafc38df5a126ccd358999"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified element  <a href="classnlohmann_1_1basic__json_af74581d177dafc38df5a126ccd358999.html#af74581d177dafc38df5a126ccd358999">More...</a><br /></td></tr>
@@ -486,7 +468,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:afb19d4669daf3c4347763f043471b835"><td class="mdescLeft">&#160;</td><td class="mdescRight">exchanges the values  <a href="classnlohmann_1_1basic__json_afb19d4669daf3c4347763f043471b835.html#afb19d4669daf3c4347763f043471b835">More...</a><br /></td></tr>
 <tr class="separator:afb19d4669daf3c4347763f043471b835"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa71e977d31f470689883ac60d16ea4ac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_aa71e977d31f470689883ac60d16ea4ac.html#aa71e977d31f470689883ac60d16ea4ac">swap</a> (<a class="el" href="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba.html#ac82abedf356d252e0589850c3d8b35ba">array_t</a> &amp;other)</td></tr>
-<tr class="memdesc:aa71e977d31f470689883ac60d16ea4ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">swaps the contents  <a href="classnlohmann_1_1basic__json_aa71e977d31f470689883ac60d16ea4ac.html#aa71e977d31f470689883ac60d16ea4ac">More...</a><br /></td></tr>
+<tr class="memdesc:aa71e977d31f470689883ac60d16ea4ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">exchanges the values  <a href="classnlohmann_1_1basic__json_aa71e977d31f470689883ac60d16ea4ac.html#aa71e977d31f470689883ac60d16ea4ac">More...</a><br /></td></tr>
 <tr class="separator:aa71e977d31f470689883ac60d16ea4ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4bf695ddf4a00ea8feea2c725ec847f1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a4bf695ddf4a00ea8feea2c725ec847f1.html#a4bf695ddf4a00ea8feea2c725ec847f1">swap</a> (<a class="el" href="classnlohmann_1_1basic__json_a63691315292df8e1522b00d37ebb1ffc.html#a63691315292df8e1522b00d37ebb1ffc">object_t</a> &amp;other)</td></tr>
 <tr class="memdesc:a4bf695ddf4a00ea8feea2c725ec847f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">swaps the contents  <a href="classnlohmann_1_1basic__json_a4bf695ddf4a00ea8feea2c725ec847f1.html#a4bf695ddf4a00ea8feea2c725ec847f1">More...</a><br /></td></tr>
@@ -541,10 +523,10 @@ Friends</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 deserialization</h2></td></tr>
-<tr class="memitem:af2730bc8ffa6b28916875c13ee7b83f5"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_af2730bc8ffa6b28916875c13ee7b83f5.html#af2730bc8ffa6b28916875c13ee7b83f5">parse</a> (const <a class="el" href="classnlohmann_1_1basic__json_ace8338e57fdb11e1955c2a0c2d782069.html#ace8338e57fdb11e1955c2a0c2d782069">string_t</a> &amp;s, <a class="el" href="classnlohmann_1_1basic__json_adb71e93d99ec4fc0df16d74ab30c02a1.html#adb71e93d99ec4fc0df16d74ab30c02a1">parser_callback_t</a> cb=nullptr)</td></tr>
+<tr class="memitem:af2730bc8ffa6b28916875c13ee7b83f5"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_af2730bc8ffa6b28916875c13ee7b83f5.html#af2730bc8ffa6b28916875c13ee7b83f5">parse</a> (const <a class="el" href="classnlohmann_1_1basic__json_ace8338e57fdb11e1955c2a0c2d782069.html#ace8338e57fdb11e1955c2a0c2d782069">string_t</a> &amp;s, <a class="el" href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">parser_callback_t</a> cb=nullptr)</td></tr>
 <tr class="memdesc:af2730bc8ffa6b28916875c13ee7b83f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">deserialize from string  <a href="classnlohmann_1_1basic__json_af2730bc8ffa6b28916875c13ee7b83f5.html#af2730bc8ffa6b28916875c13ee7b83f5">More...</a><br /></td></tr>
 <tr class="separator:af2730bc8ffa6b28916875c13ee7b83f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a74ccfa471a0c061876b247f820f3c741"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a74ccfa471a0c061876b247f820f3c741.html#a74ccfa471a0c061876b247f820f3c741">parse</a> (std::istream &amp;i, <a class="el" href="classnlohmann_1_1basic__json_adb71e93d99ec4fc0df16d74ab30c02a1.html#adb71e93d99ec4fc0df16d74ab30c02a1">parser_callback_t</a> cb=nullptr)</td></tr>
+<tr class="memitem:a74ccfa471a0c061876b247f820f3c741"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a74ccfa471a0c061876b247f820f3c741.html#a74ccfa471a0c061876b247f820f3c741">parse</a> (std::istream &amp;i, <a class="el" href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">parser_callback_t</a> cb=nullptr)</td></tr>
 <tr class="memdesc:a74ccfa471a0c061876b247f820f3c741"><td class="mdescLeft">&#160;</td><td class="mdescRight">deserialize from stream  <a href="classnlohmann_1_1basic__json_a74ccfa471a0c061876b247f820f3c741.html#a74ccfa471a0c061876b247f820f3c741">More...</a><br /></td></tr>
 <tr class="separator:a74ccfa471a0c061876b247f820f3c741"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60ca396028b8d9714c6e10efbf475af6"><td class="memItemLeft" align="right" valign="top">std::istream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a60ca396028b8d9714c6e10efbf475af6.html#a60ca396028b8d9714c6e10efbf475af6">operator&lt;&lt;</a> (<a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> &amp;j, std::istream &amp;i)</td></tr>
@@ -588,15 +570,11 @@ class nlohmann::basic_json</h3>
 <dd>
 ECMA 404 <a href="http://www.ecma-international.org/publications/standards/Ecma-404.htm">http://www.ecma-international.org/publications/standards/Ecma-404.htm</a> </dd></dl>
 </div></div><!-- contents -->
-</div><!-- doc-content -->
 <!-- start footer part -->
-<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
-  <ul>
-    <li class="navelem"><a class="el" href="namespacenlohmann.html">nlohmann</a></li><li class="navelem"><a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a></li>
-    <li class="footer">Generated on Mon Jun 22 2015 23:21:59 for JSON for Modern C++ by
-    <a href="http://www.doxygen.org/index.html">
-    <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
-  </ul>
-</div>
+<hr class="footer"/><address class="footer"><small>
+Generated on Wed Jun 24 2015 12:16:08 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+<img class="footer" src="doxygen.png" alt="doxygen"/>
+</a> 1.8.9.1
+</small></address>
 </body>
 </html>

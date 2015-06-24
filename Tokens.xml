@@ -47,8 +47,8 @@
       <Type>tdef</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_adb71e93d99ec4fc0df16d74ab30c02a1.html</Path>
-    <Anchor>adb71e93d99ec4fc0df16d74ab30c02a1</Anchor>
+    <Path>classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html</Path>
+    <Anchor>aa8e533b4290ade5bf5a33104a69b202a</Anchor>
     <Abstract>per-element parser callback type </Abstract>
   </Token>
   <Token>
@@ -678,7 +678,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54.html</Path>
     <Anchor>ada8e01109a60088e4db2a670d4903b54</Anchor>
-    <Abstract>access specified element with bounds checking </Abstract>
+    <Abstract>access specified array element with bounds checking </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -690,7 +690,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_af6b6050ccd906dddf7c9f47fe3ad62a5.html</Path>
     <Anchor>af6b6050ccd906dddf7c9f47fe3ad62a5</Anchor>
-    <Abstract>access specified element with bounds checking </Abstract>
+    <Abstract>access specified array element with bounds checking </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -702,7 +702,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a652414dd930cb3af3b6f454cc535a23e.html</Path>
     <Anchor>a652414dd930cb3af3b6f454cc535a23e</Anchor>
-    <Abstract>access specified element with bounds checking </Abstract>
+    <Abstract>access specified object element with bounds checking </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -714,7 +714,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a16a275d0201e9aedc87c933c764b8869.html</Path>
     <Anchor>a16a275d0201e9aedc87c933c764b8869</Anchor>
-    <Abstract>access specified element with bounds checking </Abstract>
+    <Abstract>access specified object element with bounds checking </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -726,7 +726,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a57703688bee6b9736ab3a430d8d246f2.html</Path>
     <Anchor>a57703688bee6b9736ab3a430d8d246f2</Anchor>
-    <Abstract>access specified element </Abstract>
+    <Abstract>access specified array element </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -738,7 +738,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_ae960d2d6bc7b94fe39cc5e9f106edfa9.html</Path>
     <Anchor>ae960d2d6bc7b94fe39cc5e9f106edfa9</Anchor>
-    <Abstract>access specified element </Abstract>
+    <Abstract>access specified array element </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -1206,7 +1206,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aa71e977d31f470689883ac60d16ea4ac.html</Path>
     <Anchor>aa71e977d31f470689883ac60d16ea4ac</Anchor>
-    <Abstract>swaps the contents </Abstract>
+    <Abstract>exchanges the values </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -1434,7 +1434,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafeae73f17027cb0acbb537f29d0a6944b26</Anchor>
-    <Abstract>start an object scope (found a &amp;#39;{&amp;#39; token) </Abstract>
+    <Abstract>the parser read { and started to process a JSON object </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1445,7 +1445,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafeaf63e2a2468a37aa4f394fcc3bcb8249c</Anchor>
-    <Abstract>end of an object scope (found &amp;#39;}&amp;#39; token) </Abstract>
+    <Abstract>the parser read } and finished processing a JSON object </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1456,7 +1456,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafeaa4388a3d92419edbb1c6efd4d52461f3</Anchor>
-    <Abstract>start of an array scope (found &amp;#39;[&amp;#39; token) </Abstract>
+    <Abstract>the parser read [ and started to process a JSON array </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1467,7 +1467,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafea49642fb732aa2e112188fba1f9d3ef7f</Anchor>
-    <Abstract>end of an array scope (found &amp;#39;]&amp;#39; token) </Abstract>
+    <Abstract>the parser read ] and finished processing a JSON array </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1478,7 +1478,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafea3c6e0b8a9c15224a8228b9a98ca1531d</Anchor>
-    <Abstract>found an object key within an object scope </Abstract>
+    <Abstract>the parser read a key of a value in an object </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1489,7 +1489,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafea2063c1608d6e0baf80249c42e2be5804</Anchor>
-    <Abstract>a value in an appropriate context (i.e., following a tag in an object scope) </Abstract>
+    <Abstract>the parser finished reading a JSON value </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1588,7 +1588,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafeae73f17027cb0acbb537f29d0a6944b26</Anchor>
-    <Abstract>start an object scope (found a &amp;#39;{&amp;#39; token) </Abstract>
+    <Abstract>the parser read { and started to process a JSON object </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1599,7 +1599,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafeaf63e2a2468a37aa4f394fcc3bcb8249c</Anchor>
-    <Abstract>end of an object scope (found &amp;#39;}&amp;#39; token) </Abstract>
+    <Abstract>the parser read } and finished processing a JSON object </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1610,7 +1610,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafeaa4388a3d92419edbb1c6efd4d52461f3</Anchor>
-    <Abstract>start of an array scope (found &amp;#39;[&amp;#39; token) </Abstract>
+    <Abstract>the parser read [ and started to process a JSON array </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1621,7 +1621,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafea49642fb732aa2e112188fba1f9d3ef7f</Anchor>
-    <Abstract>end of an array scope (found &amp;#39;]&amp;#39; token) </Abstract>
+    <Abstract>the parser read ] and finished processing a JSON array </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1632,7 +1632,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafea3c6e0b8a9c15224a8228b9a98ca1531d</Anchor>
-    <Abstract>found an object key within an object scope </Abstract>
+    <Abstract>the parser read a key of a value in an object </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1643,7 +1643,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html</Path>
     <Anchor>aea1c863b719b4ca5b77188c171bbfafea2063c1608d6e0baf80249c42e2be5804</Anchor>
-    <Abstract>a value in an appropriate context (i.e., following a tag in an object scope) </Abstract>
+    <Abstract>the parser finished reading a JSON value </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>

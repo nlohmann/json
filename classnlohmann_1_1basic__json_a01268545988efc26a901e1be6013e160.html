@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.9.1"/>
-<title>JSON for Modern C++: nlohmann::basic_json::operator[]</title>
+<title>JSON for Modern C++: nlohmann::basic_json::parser_callback_t</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -174,7 +174,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a74a943800c7f103d0990d7eef82c6453.html#a74a943800c7f103d0990d7eef82c6453">operator&gt;=</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a34d6a60dd99e9f33b8273a1c8db5669b.html#a34d6a60dd99e9f33b8273a1c8db5669b">operator&gt;&gt;</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aaf363408931d76472ded14017e59c9e8.html#aaf363408931d76472ded14017e59c9e8">operator&gt;&gt;</a></td></tr>
-          <tr><td class="navtab"><a class="qindexHL" href="classnlohmann_1_1basic__json_a57703688bee6b9736ab3a430d8d246f2.html#a57703688bee6b9736ab3a430d8d246f2">operator[]</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a57703688bee6b9736ab3a430d8d246f2.html#a57703688bee6b9736ab3a430d8d246f2">operator[]</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ae960d2d6bc7b94fe39cc5e9f106edfa9.html#ae960d2d6bc7b94fe39cc5e9f106edfa9">operator[]</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_af74581d177dafc38df5a126ccd358999.html#af74581d177dafc38df5a126ccd358999">operator[]</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a8e34088252a3ee6b2377f3a1f26dd1ba.html#a8e34088252a3ee6b2377f3a1f26dd1ba">operator[]</a></td></tr>
@@ -183,7 +183,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_af2730bc8ffa6b28916875c13ee7b83f5.html#af2730bc8ffa6b28916875c13ee7b83f5">parse</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a74ccfa471a0c061876b247f820f3c741.html#a74ccfa471a0c061876b247f820f3c741">parse</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">parse_event_t</a></td></tr>
-          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">parser_callback_t</a></td></tr>
+          <tr><td class="navtab"><a class="qindexHL" href="classnlohmann_1_1basic__json_a01268545988efc26a901e1be6013e160.html#a01268545988efc26a901e1be6013e160">parser_callback_t</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a6bbd3e72a870f1ba81ff6886b063b0fe.html#a6bbd3e72a870f1ba81ff6886b063b0fe">pointer</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a429c2606865483ff357cccc1b1c46569.html#a429c2606865483ff357cccc1b1c46569">push_back</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a749e58042d8069f4f048ee4d23c43f63.html#a749e58042d8069f4f048ee4d23c43f63">push_back</a></td></tr>
@@ -208,75 +208,49 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       </div>
    </td>
    <td valign="top" class="mempage">
-<a class="anchor" id="a57703688bee6b9736ab3a430d8d246f2"></a>
+<a class="anchor" id="a01268545988efc26a901e1be6013e160"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;template&lt; typename U, typename V, typename...Args &gt; class ObjectType = std::map, template&lt; typename U, typename...Args &gt; class ArrayType = std::vector, class StringType  = std::string, class BooleanType  = bool, class NumberIntegerType  = int64_t, class NumberFloatType  = double, template&lt; typename U &gt; class AllocatorType = std::allocator&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classnlohmann_1_1basic__json_a5fd8b54389698edf0c08e2dd001f610b.html#a5fd8b54389698edf0c08e2dd001f610b">reference</a> <a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::operator[] </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html#a80ceaa3bdd346292273b309e08525c1c">size_type</a>&#160;</td>
-          <td class="paramname"><em>idx</em></td><td>)</td>
-          <td></td>
+          <td class="memname">using <a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::<a class="el" href="classnlohmann_1_1basic__json_a01268545988efc26a901e1be6013e160.html#a01268545988efc26a901e1be6013e160">parser_callback_t</a> =  std::function &lt; bool( int depth, <a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">parse_event_t</a> event, <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>&amp; parsed) &gt;</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
-<p>Returns a reference to the element at specified location <em>idx</em>.</p>
-<dl class="section note"><dt>Note</dt><dd>If <em>idx</em> is beyond the range of the array (i.e., <code>idx &gt;= <a class="el" href="classnlohmann_1_1basic__json_af49c37bbda87f36170c67f960db3781a.html#af49c37bbda87f36170c67f960db3781a" title="returns the number of elements ">size()</a></code>), then the array is silently filled up with <code>null</code> values to make <code>idx</code> a valid reference to the last stored element.</dd></dl>
+<p>With a parser callback function, the result of parsing a JSON text can be influenced. When passed to <a class="el" href="classnlohmann_1_1basic__json_a74ccfa471a0c061876b247f820f3c741.html#a74ccfa471a0c061876b247f820f3c741">parse(std::istream&amp;, parser_callback_t)</a> or <a class="el" href="classnlohmann_1_1basic__json_af2730bc8ffa6b28916875c13ee7b83f5.html#af2730bc8ffa6b28916875c13ee7b83f5">parse(const string_t&amp;, parser_callback_t cb)</a>, it is called on certain events (passed as <a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">parse_event_t</a> via parameter <em>event</em>) with a set recursion depth <em>depth</em> and context JSON value <em>parsed</em>. The return value of the callback function is a boolean indicating whether the element that emitted the callback shall be kept or not.</p>
+<p>We distinguish six scenarios (determined by the event type) in which the callback function can be called. The following table describes the values of the parameters <em>depth</em>, <em>event</em>, and <em>parsed</em>.</p>
+<table class="doxtable">
+<tr>
+<th>parameter <em>event</em> </th><th>description </th><th>parameter <em>depth</em> </th><th>parameter <em>parsed</em>  </th></tr>
+<tr>
+<td><a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafeae73f17027cb0acbb537f29d0a6944b26" title="the parser read { and started to process a JSON object ">parse_event_t::object_start</a> </td><td>the parser read <code>{</code> and started to process a JSON object </td><td>depth of the parent of the JSON object </td><td>a JSON value with type discarded </td></tr>
+<tr>
+<td><a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafea3c6e0b8a9c15224a8228b9a98ca1531d" title="the parser read a key of a value in an object ">parse_event_t::key</a> </td><td>the parser read a key of a value in an object </td><td>depth of the currently parsed JSON object </td><td>a JSON string containing the key </td></tr>
+<tr>
+<td><a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafeaf63e2a2468a37aa4f394fcc3bcb8249c" title="the parser read } and finished processing a JSON object ">parse_event_t::object_end</a> </td><td>the parser read <code>}</code> and finished processing a JSON object </td><td>depth of the parent of the JSON object </td><td>the parsed JSON object </td></tr>
+<tr>
+<td><a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafeaa4388a3d92419edbb1c6efd4d52461f3" title="the parser read [ and started to process a JSON array ">parse_event_t::array_start</a> </td><td>the parser read <code>[</code> and started to process a JSON array </td><td>depth of the parent of the JSON array </td><td>a JSON value with type discarded </td></tr>
+<tr>
+<td><a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafea49642fb732aa2e112188fba1f9d3ef7f" title="the parser read ] and finished processing a JSON array ">parse_event_t::array_end</a> </td><td>the parser read <code>]</code> and finished processing a JSON array </td><td>depth of the parent of the JSON array </td><td>the parsed JSON array </td></tr>
+<tr>
+<td><a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafea2063c1608d6e0baf80249c42e2be5804" title="the parser finished reading a JSON value ">parse_event_t::value</a> </td><td>the parser finished reading a JSON value </td><td>depth of the value </td><td>the parsed JSON value </td></tr>
+</table>
+<p>Discarding a value (i.e., returning <code>false</code>) has different effects depending on the context in which function was called:</p>
+<ul>
+<li>Discarded values in structured types are skipped. That is, the parser will behave as if the discarded value was never read.</li>
+<li>In case a value outside a structured type is skipped, it is replaced with <code>null</code>. This case happens if the top-level element is skipped.</li>
+</ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">idx</td><td>index of the element to access</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">depth</td><td>the depth of the recursion during parsing</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">event</td><td>an event of type parse_event_t indicating the context in the callback function has been called</td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">parsed</td><td>the current intermediate parse result; note that writing to this value has no effect for <a class="el" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafea3c6e0b8a9c15224a8228b9a98ca1531d" title="the parser read a key of a value in an object ">parse_event_t::key</a> events</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>reference to the element at index <em>idx</em> </dd></dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">std::domain_error</td><td>if JSON is not an array or null</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section user"><dt>Complexity</dt><dd>Constant if <em>idx</em> is in the range of the array. Otherwise linear in <code>idx - <a class="el" href="classnlohmann_1_1basic__json_af49c37bbda87f36170c67f960db3781a.html#af49c37bbda87f36170c67f960db3781a" title="returns the number of elements ">size()</a></code>.</dd></dl>
-<dl class="section user"><dt>Example</dt><dd>The example below shows how array elements can be read and written using [] operator. Note the addition of <code>null</code> values. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div>
-<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="keyword">using namespace </span><a class="code" href="namespacenlohmann.html">nlohmann</a>;</div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;</div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create a JSON array</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> array = {1, 2, 3, 4, 5};</div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="comment">// output element at index 3 (fourth element)</span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    std::cout &lt;&lt; array[3] &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="comment">// change last element to 6</span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    array[array.size() - 1] = 6;</div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;</div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    <span class="comment">// output changed array</span></div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    std::cout &lt;&lt; array &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;</div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    <span class="comment">// write beyond array limit</span></div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;    array[10] = 11;</div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;</div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    <span class="comment">// output changed array</span></div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    std::cout &lt;&lt; array &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;}</div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:121</div></div>
-<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:56</div></div>
-</div><!-- fragment --> Output: <pre class="fragment">4
-[1,2,3,4,6]
-[1,2,3,4,6,null,null,null,null,null,11]
-</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/operatorarray__size_type.cpp -o operatorarray__size_type </pre>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Whether the JSON value which called the function during parsing should be kept (<code>true</code>) or not (<code>false</code>). In the latter case, it is either skipped completely or replaced by an empty discarded object. </dd></dl>
 
 </div>
 </div>
@@ -286,7 +260,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jun 24 2015 12:16:08 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jun 24 2015 10:47:13 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
