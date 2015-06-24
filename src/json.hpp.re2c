@@ -120,7 +120,6 @@ template <
     >
 class basic_json
 {
-  public:
     /////////////////////
     // container types //
     /////////////////////
@@ -128,9 +127,12 @@ class basic_json
     /// @name container types
     /// @{
 
+  private:
+    /// workaround type for MSVC
     using __basic_json =
         basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberFloatType, AllocatorType>;
 
+  public:
     /// the type of elements in a basic_json container
     using value_type = basic_json;
 
@@ -208,8 +210,10 @@ class basic_json
     /*!
     @brief the JSON value type enumeration
 
-    This enumeration collects the different JSON value types. It is used to
-    distinguish the stored values in the union @ref json_value.
+    This enumeration collects the different JSON value types. It is internally
+    used to distinguish the stored values, and the functions is_null,
+    is_object, is_array, is_string, is_boolean, is_number, and is_discarded
+    rely on it.
     */
     enum class value_t : uint8_t
     {
@@ -224,6 +228,7 @@ class basic_json
     };
 
 
+  private:
     ////////////////////////
     // JSON value storage //
     ////////////////////////
@@ -332,6 +337,8 @@ class basic_json
         }
     };
 
+
+  public:
     //////////////////////////
     // JSON parser callback //
     //////////////////////////
@@ -462,7 +469,7 @@ class basic_json
     @complexity Constant.
 
     @throw std::bad_alloc if allocation for object, array, or string value
-    fails (thrown by the constructors of @ref json_value)
+    fails
 
     @liveexample{The following code shows the constructor for different @ref
     value_t values,basic_json__value_t}
@@ -520,8 +527,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @throw std::bad_alloc if allocation for object value fails (thrown by
-    the constructor of @ref json_value)
+    @throw std::bad_alloc if allocation for object value fails
 
     @liveexample{The following code shows the constructor with an @ref object_t
     parameter.,basic_json__object_t}
@@ -546,8 +552,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @throw std::bad_alloc if allocation for object value fails (thrown by
-    the constructor of @ref json_value)
+    @throw std::bad_alloc if allocation for object value fails
 
     @liveexample{The following code shows the constructor with several
     compatible object type parameters.,basic_json__CompatibleObjectType}
@@ -578,8 +583,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @throw std::bad_alloc if allocation for array value fails (thrown by
-    the constructor of @ref json_value)
+    @throw std::bad_alloc if allocation for array value fails
 
     @liveexample{The following code shows the constructor with an @ref array_t
     parameter.,basic_json__array_t}
@@ -604,8 +608,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @throw std::bad_alloc if allocation for array value fails (thrown by
-    the constructor of @ref json_value)
+    @throw std::bad_alloc if allocation for array value fails
 
     @liveexample{The following code shows the constructor with several
     compatible array type parameters.,basic_json__CompatibleArrayType}
@@ -641,8 +644,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @throw std::bad_alloc if allocation for string value fails (thrown by
-    the constructor of @ref json_value)
+    @throw std::bad_alloc if allocation for string value fails
 
     @liveexample{The following code shows the constructor with an @ref string_t
     parameter.,basic_json__string_t}
@@ -663,8 +665,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @throw std::bad_alloc if allocation for string value fails (thrown by
-    the constructor of @ref json_value)
+    @throw std::bad_alloc if allocation for string value fails
 
     @liveexample{The following code shows the constructor with string literal
     parameter.,basic_json__string_t_value_type}
@@ -688,8 +689,7 @@ class basic_json
 
     @complexity Linear in the size of the passed @a value.
 
-    @throw std::bad_alloc if allocation for string value fails (thrown by
-    the constructor of @ref json_value)
+    @throw std::bad_alloc if allocation for string value fails
 
     @liveexample{The following code shows the construction of a string value
     from a compatible type.,basic_json__CompatibleStringType}
@@ -1432,7 +1432,14 @@ class basic_json
         return ss.str();
     }
 
-    /// return the type of the object (explicit)
+    /*!
+    @brief return the type of the JSON value (explicit)
+
+    Return the type of the JSON value as a value from the @ref value_t
+    enumeration.
+
+    @return the type of the JSON value
+    */
     value_t type() const noexcept
     {
         return m_type;
@@ -2179,7 +2186,26 @@ class basic_json
         return m_value.array->operator[](idx);
     }
 
-    /// access specified element
+    /*!
+    @brief access specified object element
+
+    Returns a reference to the element at with specified key @a key.
+
+    @note If @a key is not found in the object, then it is silently added to
+    the object and filled with a `null` value to make `key` a valid reference.
+    In case the value was `null` before, it is converted to an object.
+
+    @param[in] key  key of the element to access
+
+    @return reference to the element at key @a key
+
+    @throw std::domain_error if JSON is not an object or null
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read and
+    written using the [] operator.,operatorarray__key_type}
+    */
     reference operator[](const typename object_t::key_type& key)
     {
         // implicitly convert null to object
@@ -2200,7 +2226,22 @@ class basic_json
         return m_value.object->operator[](key);
     }
 
-    /// access specified element
+    /*!
+    @brief access specified object element
+
+    Returns a reference to the element at with specified key @a key.
+
+    @param[in] key  key of the element to access
+
+    @return reference to the element at key @a key
+
+    @throw std::domain_error if JSON is not an object or null
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read using
+    the [] operator.,operatorarray__key_type_const}
+    */
     const_reference operator[](const typename object_t::key_type& key) const
     {
         // at only works for objects
@@ -2212,7 +2253,28 @@ class basic_json
         return m_value.object->operator[](key);
     }
 
-    /// access specified element (needed for clang)
+    /*!
+    @brief access specified object element
+
+    Returns a reference to the element at with specified key @a key.
+
+    @note If @a key is not found in the object, then it is silently added to
+    the object and filled with a `null` value to make `key` a valid reference.
+    In case the value was `null` before, it is converted to an object.
+
+    @note This function is required for compatibility reasons with Clang.
+
+    @param[in] key  key of the element to access
+
+    @return reference to the element at key @a key
+
+    @throw std::domain_error if JSON is not an object or null
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read and
+    written using the [] operator.,operatorarray__key_type}
+    */
     template<typename T, std::size_t n>
     reference operator[](const T (&key)[n])
     {
@@ -2232,7 +2294,24 @@ class basic_json
         return m_value.object->operator[](key);
     }
 
-    /// access specified element (needed for clang)
+    /*!
+    @brief access specified object element
+
+    Returns a reference to the element at with specified key @a key.
+
+    @note This function is required for compatibility reasons with Clang.
+
+    @param[in] key  key of the element to access
+
+    @return reference to the element at key @a key
+
+    @throw std::domain_error if JSON is not an object or null
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read using
+    the [] operator.,operatorarray__key_type_const}
+    */
     template<typename T, std::size_t n>
     const_reference operator[](const T (&key)[n]) const
     {

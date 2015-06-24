@@ -8953,6 +8953,76 @@ TEST_CASE("compliance tests from nativejson-benchmark")
     }
 }
 
+TEST_CASE("RFC 7159 examples")
+{
+    // here, we list all JSON values from the RFC 7159 document
+
+    SECTION("7. Strings")
+    {
+        CHECK(json::parse("\"\\u005C\"") == json("\\"));
+        CHECK(json::parse("\"\\uD834\\uDD1E\"") == json("𝄞"));
+    }
+
+    SECTION("8.3 String Comparison")
+    {
+        CHECK(json::parse("\"a\\b\"") == json::parse("\"a\u005Cb\""));
+    }
+
+    SECTION("13 Examples")
+    {
+        {
+            auto string1 = R"(
+            {
+                 "Image": {
+                     "Width":  800,
+                     "Height": 600,
+                     "Title":  "View from 15th Floor",
+                     "Thumbnail": {
+                         "Url":    "http://www.example.com/image/481989943",
+                         "Height": 125,
+                         "Width":  100
+                     },
+                     "Animated" : false,
+                     "IDs": [116, 943, 234, 38793]
+                   }
+               }
+            )";
+            CHECK_NOTHROW(json(string1));
+        }
+
+        {
+            auto string2 = R"(
+                [
+                    {
+                       "precision": "zip",
+                       "Latitude":  37.7668,
+                       "Longitude": -122.3959,
+                       "Address":   "",
+                       "City":      "SAN FRANCISCO",
+                       "State":     "CA",
+                       "Zip":       "94107",
+                       "Country":   "US"
+                    },
+                    {
+                       "precision": "zip",
+                       "Latitude":  37.371991,
+                       "Longitude": -122.026020,
+                       "Address":   "",
+                       "City":      "SUNNYVALE",
+                       "State":     "CA",
+                       "Zip":       "94085",
+                       "Country":   "US"
+                    }
+            ])";
+            CHECK_NOTHROW(json(string2));
+        }
+
+        CHECK(json::parse("\"Hello world!\"") == json("Hello world!"));
+        CHECK(json::parse("42") == json(42));
+        CHECK(json::parse("true") == json(true));
+    }
+}
+
 TEST_CASE("Unicode", "[hide]")
 {
     SECTION("full enumeration of Unicode codepoints")
