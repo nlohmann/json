@@ -336,20 +336,77 @@ class basic_json
     // JSON parser callback //
     //////////////////////////
 
-    /// JSON callback event enumeration
+    /*!
+    @brief JSON callback events
+
+    This enumeration lists the parser events that can trigger calling a
+    callback function of type @ref parser_callback_t during parsing.
+    */
     enum class parse_event_t : uint8_t
     {
-        object_start,  ///< start an object scope (found a '{' token)
-        object_end,    ///< end of an object scope (found '}' token)
-        array_start,   ///< start of an array scope (found '[' token)
-        array_end,     ///< end of an array scope (found ']' token)
-        key,           ///< found an object key within an object scope
-        value          ///< a value in an appropriate context (i.e., following a tag in an object scope)
+        /// the parser read `{` and started to process a JSON object
+        object_start,
+        /// the parser read `}` and finished processing a JSON object
+        object_end,
+        /// the parser read `[` and started to process a JSON array
+        array_start,
+        /// the parser read `]` and finished processing a JSON array
+        array_end,
+        /// the parser read a key of a value in an object
+        key,
+        /// the parser finished reading a JSON value
+        value
     };
 
-    /// per-element parser callback type
-    using parser_callback_t = std::function<bool(int depth, parse_event_t event,
-                              const basic_json& parsed)>;
+    /*!
+    @brief per-element parser callback type
+
+    With a parser callback function, the result of parsing a JSON text can be
+    influenced. When passed to @ref parse(std::istream&, parser_callback_t) or
+    @ref parse(const string_t&, parser_callback_t), it is called on certain
+    events (passed as @ref parse_event_t via parameter @a event) with a set
+    recursion depth @a depth and context JSON value @a parsed. The return value
+    of the callback function is a boolean indicating whether the element that
+    emitted the callback shall be kept or not.
+
+    We distinguish six scenarios (determined by the event type) in which the
+    callback function can be called. The following table describes the values
+    of the parameters @a depth, @a event, and @a parsed.
+
+    parameter @a event | description | parameter @a depth | parameter @a parsed
+    ------------------ | ----------- | ------------------ | -------------------
+    parse_event_t::object_start | the parser read `{` and started to process a JSON object | depth of the parent of the JSON object | a JSON value with type discarded
+    parse_event_t::key | the parser read a key of a value in an object | depth of the currently parsed JSON object | a JSON string containing the key
+    parse_event_t::object_end | the parser read `}` and finished processing a JSON object | depth of the parent of the JSON object | the parsed JSON object
+    parse_event_t::array_start | the parser read `[` and started to process a JSON array | depth of the parent of the JSON array | a JSON value with type discarded
+    parse_event_t::array_end | the parser read `]` and finished processing a JSON array | depth of the parent of the JSON array | the parsed JSON array
+    parse_event_t::value | the parser finished reading a JSON value | depth of the value | the parsed JSON value
+
+    Discarding a value (i.e., returning `false`) has different effects depending on the
+    context in which function was called:
+
+    - Discarded values in structured types are skipped. That is, the parser
+      will behave as if the discarded value was never read.
+    - In case a value outside a structured type is skipped, it is replaced with
+      `null`. This case happens if the top-level element is skipped.
+
+    @param[in] depth   the depth of the recursion during parsing
+
+    @param[in] event   an event of type parse_event_t indicating the context in
+    the callback function has been called
+
+    @param[in,out] parsed  the current intermediate parse result; note that
+    writing to this value has no effect for parse_event_t::key events
+
+    @return Whether the JSON value which called the function during parsing
+    should be kept (`true`) or not (`false`). In the latter case, it is either
+    skipped completely or replaced by an empty discarded object.
+
+    @sa @ref parse(std::istream&, parser_callback_t) or
+    @ref parse(const string_t&, parser_callback_t) for examples
+    */
+    using parser_callback_t = std::function<bool(
+                                  int depth, parse_event_t event, basic_json& parsed)>;
 
     /*!
     @brief comparison operator for JSON value types
@@ -1760,7 +1817,25 @@ class basic_json
     /// @name element access
     /// @{
 
-    /// access specified element with bounds checking
+    /*!
+    @brief access specified array element with bounds checking
+
+    Returns a reference to the element at specified location @a idx, with
+    bounds checking.
+
+    @param[in] idx  index of the element to access
+
+    @return reference to the element at index @a idx
+
+    @throw std::domain_error if JSON is not an array
+    @throw std::out_of_range if the index @a idx is out of range of the array;
+    that is, `idx >= size()`
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how array elements can be read and
+    written using at.,at__size_type}
+    */
     reference at(size_type idx)
     {
         // at only works for arrays
@@ -1772,7 +1847,25 @@ class basic_json
         return m_value.array->at(idx);
     }
 
-    /// access specified element with bounds checking
+    /*!
+    @brief access specified array element with bounds checking
+
+    Returns a const reference to the element at specified location @a idx, with
+    bounds checking.
+
+    @param[in] idx  index of the element to access
+
+    @return const reference to the element at index @a idx
+
+    @throw std::domain_error if JSON is not an array
+    @throw std::out_of_range if the index @a idx is out of range of the array;
+    that is, `idx >= size()`
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how array elements can be read using
+    at.,at__size_type_const}
+    */
     const_reference at(size_type idx) const
     {
         // at only works for arrays
@@ -1784,7 +1877,25 @@ class basic_json
         return m_value.array->at(idx);
     }
 
-    /// access specified element with bounds checking
+    /*!
+    @brief access specified object element with bounds checking
+
+    Returns a reference to the element at with specified key @a key, with
+    bounds checking.
+
+    @param[in] key  key of the element to access
+
+    @return reference to the element at key @a key
+
+    @throw std::domain_error if JSON is not an object
+    @throw std::out_of_range if the key @a key is is not stored in the object;
+    that is, `find(key) == end()`
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read and
+    written using at.,at__object_t_key_type}
+    */
     reference at(const typename object_t::key_type& key)
     {
         // at only works for objects
@@ -1796,7 +1907,25 @@ class basic_json
         return m_value.object->at(key);
     }
 
-    /// access specified element with bounds checking
+    /*!
+    @brief access specified object element with bounds checking
+
+    Returns a const reference to the element at with specified key @a key, with
+    bounds checking.
+
+    @param[in] key  key of the element to access
+
+    @return const reference to the element at key @a key
+
+    @throw std::domain_error if JSON is not an object
+    @throw std::out_of_range if the key @a key is is not stored in the object;
+    that is, `find(key) == end()`
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read using
+    at.,at__object_t_key_type_const}
+    */
     const_reference at(const typename object_t::key_type& key) const
     {
         // at only works for objects
@@ -1808,7 +1937,28 @@ class basic_json
         return m_value.object->at(key);
     }
 
-    /// access specified element
+    /*!
+    @brief access specified array element
+
+    Returns a reference to the element at specified location @a idx.
+
+    @note If @a idx is beyond the range of the array (i.e., `idx >= size()`),
+    then the array is silently filled up with `null` values to make `idx` a
+    valid reference to the last stored element.
+
+    @param[in] idx  index of the element to access
+
+    @return reference to the element at index @a idx
+
+    @throw std::domain_error if JSON is not an array or null
+
+    @complexity Constant if @a idx is in the range of the array. Otherwise
+    linear in `idx - size()`.
+
+    @liveexample{The example below shows how array elements can be read and
+    written using [] operator. Note the addition of `null`
+    values.,operatorarray__size_type}
+    */
     reference operator[](size_type idx)
     {
         // implicitly convert null to object
@@ -1834,7 +1984,22 @@ class basic_json
         return m_value.array->operator[](idx);
     }
 
-    /// access specified element
+    /*!
+    @brief access specified array element
+
+    Returns a const reference to the element at specified location @a idx.
+
+    @param[in] idx  index of the element to access
+
+    @return const reference to the element at index @a idx
+
+    @throw std::domain_error if JSON is not an array
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how array elements can be read using
+    the [] operator.,operatorarray__size_type_const}
+    */
     const_reference operator[](size_type idx) const
     {
         // at only works for arrays
@@ -2750,6 +2915,19 @@ class basic_json
 
     /*!
     @brief exchanges the values
+
+    Exchanges the contents of the JSON value with those of @a other. Does not
+    invoke any move, copy, or swap operations on individual elements. All
+    iterators and references remain valid. The past-the-end iterator is
+    invalidated.
+
+    @param[in,out] other JSON value to exchange the contents with
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how JSON arrays can be
+    swapped.,swap__reference}
+
     @ingroup container
     */
     void swap(reference other) noexcept (
@@ -2763,7 +2941,25 @@ class basic_json
         std::swap(m_value, other.m_value);
     }
 
-    /// swaps the contents
+    /*!
+    @brief exchanges the values
+
+    Exchanges the contents of a JSON array with those of @a other. Does not
+    invoke any move, copy, or swap operations on individual elements. All
+    iterators and references remain valid. The past-the-end iterator is
+    invalidated.
+
+    @param[in,out] other array to exchange the contents with
+
+    @throw std::domain_error when JSON value is not an array
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how JSON values can be
+    swapped.,swap__array_t}
+
+    @ingroup container
+    */
     void swap(array_t& other)
     {
         // swap only works for arrays
@@ -3082,8 +3278,9 @@ class basic_json
     @brief deserialize from string
 
     @param[in] s  string to read a serialized JSON value from
-    @param[in] cb a parser callback function of type parser_callback_t which is
-    used to control the deserialization by filtering unwanted values (optional)
+    @param[in] cb a parser callback function of type @ref parser_callback_t
+    which is used to control the deserialization by filtering unwanted values
+    (optional)
 
     @return result of the deserialization
 
@@ -3091,7 +3288,8 @@ class basic_json
     LL(1) parser. The complexity can be higher if the parser callback function
     @a cb has a super-linear complexity.
 
-    @todo Add example.
+    @liveexample{The example below demonstrates the parse function with and
+    without callback function.,parse__string__parser_callback_t}
 
     @sa parse(std::istream&, parser_callback_t) for a version that reads from
     an input stream
@@ -3105,8 +3303,9 @@ class basic_json
     @brief deserialize from stream
 
     @param[in,out] i  stream to read a serialized JSON value from
-    @param[in] cb a parser callback function of type parser_callback_t which is
-    used to control the deserialization by filtering unwanted values (optional)
+    @param[in] cb a parser callback function of type @ref parser_callback_t
+    which is used to control the deserialization by filtering unwanted values
+    (optional)
 
     @return result of the deserialization
 
@@ -3114,7 +3313,8 @@ class basic_json
     LL(1) parser. The complexity can be higher if the parser callback function
     @a cb has a super-linear complexity.
 
-    @todo Add example.
+    @liveexample{The example below demonstrates the parse function with and
+    without callback function.,parse__istream__parser_callback_t}
 
     @sa parse(const string_t&, parser_callback_t) for a version that reads
     from a string
@@ -5016,7 +5216,9 @@ class basic_json
 
             expect(lexer::token_type::end_of_input);
 
-            return result;
+            // return parser result and replace it with null in case the
+            // top-level value was discarded by the callback function
+            return result.is_discarded() ? basic_json() : result;
         }
 
       private:
@@ -5069,7 +5271,15 @@ class basic_json
                         bool keep_tag = false;
                         if (keep)
                         {
-                            keep_tag = callback ? callback(depth, parse_event_t::key, basic_json(key)) : true;
+                            if (callback)
+                            {
+                                basic_json k(key);
+                                keep_tag = callback(depth, parse_event_t::key, k);
+                            }
+                            else
+                            {
+                                keep_tag = true;
+                            }
                         }
 
                         // parse separator (:)

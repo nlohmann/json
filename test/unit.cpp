@@ -7742,14 +7742,16 @@ TEST_CASE("parser class")
                 return false;
             });
 
-            CHECK (j_object.is_discarded());
+            // the top-level object will be discarded, leaving a null
+            CHECK (j_object.is_null());
 
             json j_array = json::parse(s_array, [](int, json::parse_event_t, const json&)
             {
                 return false;
             });
 
-            CHECK (j_array.is_discarded());
+            // the top-level array will be discarded, leaving a null
+            CHECK (j_array.is_null());
         }
 
         SECTION("filter specific element")
@@ -7791,8 +7793,10 @@ TEST_CASE("parser class")
                 {
                     json j_object = json::parse(s_object, [](int, json::parse_event_t e, const json&)
                     {
-                        if (e == json::parse_event_t::object_end)
+                        static bool first = true;
+                        if (e == json::parse_event_t::object_end and first)
                         {
+                            first = false;
                             return false;
                         }
                         else
@@ -7801,14 +7805,17 @@ TEST_CASE("parser class")
                         }
                     });
 
-                    CHECK (j_object.is_discarded());
+                    // the first completed object will be discarded
+                    CHECK (j_object == json({{"foo", 2}}));
                 }
 
                 {
                     json j_array = json::parse(s_array, [](int, json::parse_event_t e, const json&)
                     {
-                        if (e == json::parse_event_t::array_end)
+                        static bool first = true;
+                        if (e == json::parse_event_t::array_end and first)
                         {
+                            first = false;
                             return false;
                         }
                         else
@@ -7817,7 +7824,8 @@ TEST_CASE("parser class")
                         }
                     });
 
-                    CHECK (j_array.is_discarded());
+                    // the first completed array will be discarded
+                    CHECK (j_array == json({1, 2, 4, 5}));
                 }
             }
         }

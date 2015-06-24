@@ -56,8 +56,6 @@ docset: create_output
 	cp Doxyfile Doxyfile_docset
 	gsed -i 's/DISABLE_INDEX          = NO/DISABLE_INDEX          = YES/' Doxyfile_docset
 	gsed -i 's/SEARCHENGINE           = YES/SEARCHENGINE           = NO/' Doxyfile_docset
-	gsed -i 's/GENERATE_TREEVIEW      = YES/GENERATE_TREEVIEW      = NO/' Doxyfile_docset
-	gsed -i 's/BINARY_TOC             = YES/BINARY_TOC             = NO/' Doxyfile_docset
 	gsed -i 's@HTML_EXTRA_STYLESHEET  = css/mylayout.css@HTML_EXTRA_STYLESHEET  = css/mylayout_docset.css@' Doxyfile_docset
 	rm -fr html *.docset
 	doxygen Doxyfile_docset
