@@ -319,14 +319,22 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a31af4b416e9ccb373291a645da7f83d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">return the type of the object (implicit)  <a href="classnlohmann_1_1basic__json_a31af4b416e9ccb373291a645da7f83d7.html#a31af4b416e9ccb373291a645da7f83d7">More...</a><br /></td></tr>
 <tr class="separator:a31af4b416e9ccb373291a645da7f83d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">value access</div></td></tr>
-<tr class="memitem:a70be72c27e1ca0af77335585a8cec1ed"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a70be72c27e1ca0af77335585a8cec1ed"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a70be72c27e1ca0af77335585a8cec1ed.html#a70be72c27e1ca0af77335585a8cec1ed">get</a> () const </td></tr>
-<tr class="memdesc:a70be72c27e1ca0af77335585a8cec1ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">get a value (explicit)  <a href="classnlohmann_1_1basic__json_a70be72c27e1ca0af77335585a8cec1ed.html#a70be72c27e1ca0af77335585a8cec1ed">More...</a><br /></td></tr>
-<tr class="separator:a70be72c27e1ca0af77335585a8cec1ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a91e05cbc516623fa61e253f920e42e"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a9a91e05cbc516623fa61e253f920e42e"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a9a91e05cbc516623fa61e253f920e42e.html#a9a91e05cbc516623fa61e253f920e42e">operator T</a> () const </td></tr>
-<tr class="memdesc:a9a91e05cbc516623fa61e253f920e42e"><td class="mdescLeft">&#160;</td><td class="mdescRight">get a value (implicit)  <a href="classnlohmann_1_1basic__json_a9a91e05cbc516623fa61e253f920e42e.html#a9a91e05cbc516623fa61e253f920e42e">More...</a><br /></td></tr>
-<tr class="separator:a9a91e05cbc516623fa61e253f920e42e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f0aad50ed7e8aec3128fe018c18b3fe"><td class="memTemplParams" colspan="2">template&lt;typename ValueType , typename std::enable_if&lt; not std::is_pointer&lt; ValueType &gt;::value, int &gt;::type  = 0&gt; </td></tr>
+<tr class="memitem:a5f0aad50ed7e8aec3128fe018c18b3fe"><td class="memTemplItemLeft" align="right" valign="top">ValueType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html#a5f0aad50ed7e8aec3128fe018c18b3fe">get</a> () const </td></tr>
+<tr class="memdesc:a5f0aad50ed7e8aec3128fe018c18b3fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">get a value (explicit)  <a href="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html#a5f0aad50ed7e8aec3128fe018c18b3fe">More...</a><br /></td></tr>
+<tr class="separator:a5f0aad50ed7e8aec3128fe018c18b3fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a2d66582b75e0301d37886137c6953c"><td class="memTemplParams" colspan="2">template&lt;typename PointerType , typename std::enable_if&lt; std::is_pointer&lt; PointerType &gt;::value, int &gt;::type  = 0&gt; </td></tr>
+<tr class="memitem:a5a2d66582b75e0301d37886137c6953c"><td class="memTemplItemLeft" align="right" valign="top">PointerType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a5a2d66582b75e0301d37886137c6953c.html#a5a2d66582b75e0301d37886137c6953c">get</a> () const noexcept</td></tr>
+<tr class="memdesc:a5a2d66582b75e0301d37886137c6953c"><td class="mdescLeft">&#160;</td><td class="mdescRight">get a pointer value (explicit)  <a href="classnlohmann_1_1basic__json_a5a2d66582b75e0301d37886137c6953c.html#a5a2d66582b75e0301d37886137c6953c">More...</a><br /></td></tr>
+<tr class="separator:a5a2d66582b75e0301d37886137c6953c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2efda2b6d931ee72d9757418042e74e1"><td class="memTemplParams" colspan="2">template&lt;typename PointerType , typename std::enable_if&lt; std::is_pointer&lt; PointerType &gt;::value, int &gt;::type  = 0&gt; </td></tr>
+<tr class="memitem:a2efda2b6d931ee72d9757418042e74e1"><td class="memTemplItemLeft" align="right" valign="top">PointerType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a2efda2b6d931ee72d9757418042e74e1.html#a2efda2b6d931ee72d9757418042e74e1">get_ptr</a> () const noexcept</td></tr>
+<tr class="memdesc:a2efda2b6d931ee72d9757418042e74e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">get a pointer value (implicit)  <a href="classnlohmann_1_1basic__json_a2efda2b6d931ee72d9757418042e74e1.html#a2efda2b6d931ee72d9757418042e74e1">More...</a><br /></td></tr>
+<tr class="separator:a2efda2b6d931ee72d9757418042e74e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af709c079de0ac3507143ea2c60699bd0"><td class="memTemplParams" colspan="2">template&lt;typename ValueType , typename std::enable_if&lt; not std::is_pointer&lt; ValueType &gt;::value, int &gt;::type  = 0&gt; </td></tr>
+<tr class="memitem:af709c079de0ac3507143ea2c60699bd0"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_af709c079de0ac3507143ea2c60699bd0.html#af709c079de0ac3507143ea2c60699bd0">operator ValueType</a> () const </td></tr>
+<tr class="memdesc:af709c079de0ac3507143ea2c60699bd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">get a value (implicit)  <a href="classnlohmann_1_1basic__json_af709c079de0ac3507143ea2c60699bd0.html#af709c079de0ac3507143ea2c60699bd0">More...</a><br /></td></tr>
+<tr class="separator:af709c079de0ac3507143ea2c60699bd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">element access</div></td></tr>
 <tr class="memitem:ada8e01109a60088e4db2a670d4903b54"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classnlohmann_1_1basic__json_a5fd8b54389698edf0c08e2dd001f610b.html#a5fd8b54389698edf0c08e2dd001f610b">reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54.html#ada8e01109a60088e4db2a670d4903b54">at</a> (<a class="el" href="classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html#a80ceaa3bdd346292273b309e08525c1c">size_type</a> idx)</td></tr>
 <tr class="memdesc:ada8e01109a60088e4db2a670d4903b54"><td class="mdescLeft">&#160;</td><td class="mdescRight">access specified array element with bounds checking  <a href="classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54.html#ada8e01109a60088e4db2a670d4903b54">More...</a><br /></td></tr>
@@ -572,7 +580,7 @@ ECMA 404 <a href="http://www.ecma-international.org/publications/standards/Ecma-
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jun 24 2015 12:16:08 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jun 24 2015 15:16:44 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

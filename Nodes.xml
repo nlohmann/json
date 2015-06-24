@@ -890,13 +890,23 @@
                </Node>
                <Node>
                 <Name>get</Name>
-                <Path>classnlohmann_1_1basic__json_a70be72c27e1ca0af77335585a8cec1ed.html</Path>
-                <Anchor>a70be72c27e1ca0af77335585a8cec1ed</Anchor>
+                <Path>classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html</Path>
+                <Anchor>a5f0aad50ed7e8aec3128fe018c18b3fe</Anchor>
+               </Node>
+               <Node>
+                <Name>get</Name>
+                <Path>classnlohmann_1_1basic__json_a5a2d66582b75e0301d37886137c6953c.html</Path>
+                <Anchor>a5a2d66582b75e0301d37886137c6953c</Anchor>
                </Node>
                <Node>
                 <Name>get_allocator</Name>
                 <Path>classnlohmann_1_1basic__json_ad2c4513cef5d8db760c4b2d871eea42c.html</Path>
                 <Anchor>ad2c4513cef5d8db760c4b2d871eea42c</Anchor>
+               </Node>
+               <Node>
+                <Name>get_ptr</Name>
+                <Path>classnlohmann_1_1basic__json_a2efda2b6d931ee72d9757418042e74e1.html</Path>
+                <Anchor>a2efda2b6d931ee72d9757418042e74e1</Anchor>
                </Node>
                <Node>
                 <Name>is_array</Name>
@@ -954,14 +964,14 @@
                 <Anchor>afb9664e6f30038e691f2e864e7f6a740</Anchor>
                </Node>
                <Node>
-                <Name>operator T</Name>
-                <Path>classnlohmann_1_1basic__json_a9a91e05cbc516623fa61e253f920e42e.html</Path>
-                <Anchor>a9a91e05cbc516623fa61e253f920e42e</Anchor>
-               </Node>
-               <Node>
                 <Name>operator value_t</Name>
                 <Path>classnlohmann_1_1basic__json_a31af4b416e9ccb373291a645da7f83d7.html</Path>
                 <Anchor>a31af4b416e9ccb373291a645da7f83d7</Anchor>
+               </Node>
+               <Node>
+                <Name>operator ValueType</Name>
+                <Path>classnlohmann_1_1basic__json_af709c079de0ac3507143ea2c60699bd0.html</Path>
+                <Anchor>af709c079de0ac3507143ea2c60699bd0</Anchor>
                </Node>
                <Node>
                 <Name>operator+=</Name>

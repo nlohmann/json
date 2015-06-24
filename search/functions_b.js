@@ -1,8 +1,8 @@
 var searchData=
 [
   ['object',['object',['../classnlohmann_1_1basic__json_afb9664e6f30038e691f2e864e7f6a740.html#afb9664e6f30038e691f2e864e7f6a740',1,'nlohmann::basic_json']]],
-  ['operator_20t',['operator T',['../classnlohmann_1_1basic__json_a9a91e05cbc516623fa61e253f920e42e.html#a9a91e05cbc516623fa61e253f920e42e',1,'nlohmann::basic_json']]],
   ['operator_20value_5ft',['operator value_t',['../classnlohmann_1_1basic__json_a31af4b416e9ccb373291a645da7f83d7.html#a31af4b416e9ccb373291a645da7f83d7',1,'nlohmann::basic_json']]],
+  ['operator_20valuetype',['operator ValueType',['../classnlohmann_1_1basic__json_af709c079de0ac3507143ea2c60699bd0.html#af709c079de0ac3507143ea2c60699bd0',1,'nlohmann::basic_json']]],
   ['operator_21_3d',['operator!=',['../classnlohmann_1_1basic__json_1_1iterator_a903462b9290e1bde30716f9e14d9d3df.html#a903462b9290e1bde30716f9e14d9d3df',1,'nlohmann::basic_json::iterator::operator!=()'],['../classnlohmann_1_1basic__json_1_1const__iterator_ab9d31bf0d0b4d7310c858a04ce84a52f.html#ab9d31bf0d0b4d7310c858a04ce84a52f',1,'nlohmann::basic_json::const_iterator::operator!=()']]],
   ['operator_28_29',['operator()',['../structstd_1_1hash_3_01nlohmann_1_1json_01_4_afd03f6ad53db22868ca4163a8200b2f9.html#afd03f6ad53db22868ca4163a8200b2f9',1,'std::hash&lt; nlohmann::json &gt;']]],
   ['operator_2a',['operator*',['../classnlohmann_1_1basic__json_1_1iterator_a33277dbf06ac5c1e7102e26f6b5e2c00.html#a33277dbf06ac5c1e7102e26f6b5e2c00',1,'nlohmann::basic_json::iterator::operator*()'],['../classnlohmann_1_1basic__json_1_1const__iterator_a4632d8307fc315f21e2ecc9ba5aa6346.html#a4632d8307fc315f21e2ecc9ba5aa6346',1,'nlohmann::basic_json::const_iterator::operator*()']]],
