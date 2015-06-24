@@ -1432,6 +1432,244 @@ class basic_json
         return ss.str();
     }
 
+    /*!
+    @brief serialization
+
+    Calculates the extra space required to escape a JSON string
+    */
+    inline std::size_t extra_space(const string_t& s) const noexcept
+    {
+        std::size_t count = 0;
+
+        for (const auto c : s)
+        {
+            switch (c)
+            {
+                case '"':
+                case '\\':
+                case '\b':
+                case '\f':
+                case '\n':
+                case '\r':
+                case '\t':
+                    count += 1;
+                    break;
+                default:
+                {
+                    if (c >= 0 and c <= 0x1f)
+                    {
+                        count += 6;
+                    }
+                    break;
+                }
+            }
+        }
+
+        return count;
+    }
+
+    /*!
+    @brief serialization
+
+    Rapid string escaping alternative
+
+    First, does a linear scan of the input and calculates the additional required
+    storage.  Then, if no escaping is necessary, returns the input.  Otherwise,
+    it initialized an appropriately sized output string, and iterates through it
+    replacing the necessary non-escape characters during the pass. 
+    */
+    string_t fast_escape_string(const string_t& s) const noexcept
+    {
+        auto space = extra_space(s);
+        if (!space) {
+            return s;
+        }
+
+        // create a result string of necessary size
+        const auto len = space + s.size();
+        string_t result(len, '\\');
+        std::size_t pos = 0;
+
+        for (const auto c : s)
+        {
+            switch (c)
+            {
+                // quotation mark (0x22)
+                case '"':
+                {
+                    result[pos + 1] = '"';
+                    pos += 2;
+                    break;
+                }
+
+                // reverse solidus (0x5c)
+                case '\\':
+                {
+                    pos += 2;
+                    break;
+                }
+
+                // backspace (0x08)
+                case '\b':
+                {
+                    result[pos + 1] = 'b';
+                    pos += 2;
+                    break;
+                }
+
+                // formfeed (0x0c)
+                case '\f':
+                {
+                    result[pos + 1] = 'f';
+                    pos += 2;
+                    break;
+                }
+
+                // newline (0x0a)
+                case '\n':
+                {
+                    result[pos + 1] = 'n';
+                    pos += 2;
+                    break;
+                }
+
+                // carriage return (0x0d)
+                case '\r':
+                {
+                    result[pos + 1] = 'r';
+                    pos += 2;
+                    break;
+                }
+
+                // horizontal tab (0x09)
+                case '\t':
+                {
+                    result[pos + 1] = 't';
+                    pos += 2;
+                    break;
+                }
+
+                default:
+                {
+                    if (c >= 0 and c <= 0x1f)
+                    {
+                        result[pos + 1] = 'u';
+                        snprintf(&result[pos + 2], 4, "%04x", int(c));
+                        pos += 6;
+                        result[pos] = (pos == len) ? '\0' : '\\';
+                    }
+                    else
+                    {
+                        // all other characters are added as-is
+                        result[pos] = c;
+                        ++pos;
+                    }
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /*!
+    @brief serialization
+
+    Serialized the JSON value to an ostream
+    */
+    inline void dump(std::ostream& out) const noexcept
+    {
+        switch (m_type)
+        {
+            case (value_t::object):
+            {
+                if (m_value.object->empty())
+                {
+                    out << "{}";
+                    return;
+                }
+
+                out << "{";
+
+                for (auto i = m_value.object->cbegin(); i != m_value.object->cend(); ++i)
+                {
+                    if (i != m_value.object->cbegin())
+                    {
+                        out << ",";
+                    }
+                    out << "\"" << fast_escape_string(i->first) << "\":";
+                    i->second.dump(out);
+                }
+
+                out << "}";
+                break;
+            }
+
+            case (value_t::array):
+            {
+                if (m_value.array->empty())
+                {
+                    out << "[]";
+                    return;
+                }
+
+                out << "[";
+
+                for (auto i = m_value.array->cbegin(); i != m_value.array->cend(); ++i)
+                {
+                    if (i != m_value.array->cbegin())
+                    {
+                        out << ",";
+                    }
+                    i->dump(out);
+                }
+
+                out << "]";
+                break;
+            }
+
+            case (value_t::string):
+            {
+                out << "\"" << fast_escape_string(*m_value.string) << "\"";
+                break;
+            }
+
+            case (value_t::boolean):
+            {
+                out << (m_value.boolean ? "true" : "false");
+                break;
+            }
+
+            case (value_t::number_integer):
+            {
+                out << std::to_string(m_value.number_integer);
+                break;
+            }
+
+            case (value_t::number_float):
+            {
+                // 15 digits of precision allows round-trip IEEE 754
+                // string->double->string
+                const auto sz = static_cast<unsigned int>(std::snprintf(nullptr, 0, "%.15g", m_value.number_float));
+                std::vector<typename string_t::value_type> buf(sz + 1);
+                std::snprintf(&buf[0], buf.size(), "%.15g", m_value.number_float);
+                out << buf.data();
+                break;
+            }
+
+            case (value_t::discarded):
+            {
+                out << "<discarded>";
+                break;
+            }
+            default:
+            {
+                out << "null";
+                break;
+            }
+        }
+    }
+
     /// return the type of the object (explicit)
     value_t type() const noexcept
     {
