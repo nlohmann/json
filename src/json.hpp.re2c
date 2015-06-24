@@ -1787,24 +1787,192 @@ class basic_json
         }
     }
 
+    /// get a pointer to the value (object)
+    const object_t* get_impl_ptr(object_t*) const noexcept
+    {
+        return is_object() ? m_value.object : nullptr;
+    }
+
+    /// get a pointer to the value (array)
+    const array_t* get_impl_ptr(array_t*) const noexcept
+    {
+        return is_array() ? m_value.array : nullptr;
+    }
+
+    /// get a pointer to the value (string)
+    const string_t* get_impl_ptr(string_t*) const noexcept
+    {
+        return is_string() ? m_value.string : nullptr;
+    }
+
+    /// get a pointer to the value (boolean)
+    const boolean_t* get_impl_ptr(boolean_t*) const noexcept
+    {
+        return is_boolean() ? &m_value.boolean : nullptr;
+    }
+
+    /// get a pointer to the value (integer number)
+    const number_integer_t* get_impl_ptr(number_integer_t*) const noexcept
+    {
+        return is_number_integer() ? &m_value.number_integer : nullptr;
+    }
+
+    /// get a pointer to the value (floating-point number)
+    const number_float_t* get_impl_ptr(number_float_t*) const noexcept
+    {
+        return is_number_float() ? &m_value.number_float : nullptr;
+    }
+
   public:
 
     /// @name value access
     /// @{
 
-    /// get a value (explicit)
-    // <http://stackoverflow.com/a/8315197/266378>
-    template<typename T>
-    T get() const
+    /*!
+    @brief get a value (explicit)
+
+    Explicit type conversion between the JSON value and a compatible value.
+
+    @tparam ValueType non-pointer type compatible to the JSON value, for
+    instance `int` for JSON integer numbers, `bool` for JSON booleans, or
+    `std::vector` types for JSON arrays
+
+    @return copy of the JSON value, converted to type @a ValueType
+
+    @throw std::domain_error in case passed type @a ValueType is incompatible
+    to JSON
+
+    @complexity Linear in the size of the JSON value.
+
+    @liveexample{The example below shows serveral conversions from JSON values
+    to other types. There a few things to note: (1) Floating-point numbers can
+    be converted to integers\, (2) A JSON array can be converted to a standard
+    `std::vector<short>`\, (3) A JSON object can be converted to C++
+    assiciative containers such as `std::unordered_map<std::string\,
+    json>`.,get__ValueType_const}
+
+    @internal
+    The idea of using a casted null pointer to choose the correct
+    implementation is from <http://stackoverflow.com/a/8315197/266378>.
+    @endinternal
+
+    @sa @ref operator ValueType() const for implicit conversion
+    @sa @ref get() for pointer-member access
+    */
+    template<typename ValueType, typename
+             std::enable_if<
+                 not std::is_pointer<ValueType>::value
+                 , int>::type = 0>
+    ValueType get() const
     {
-        return get_impl(static_cast<T*>(nullptr));
+        return get_impl(static_cast<ValueType*>(nullptr));
     }
 
-    /// get a value (implicit)
-    template<typename T>
-    operator T() const
+    /*!
+    @brief get a pointer value (explicit)
+
+    Explicit pointer access to the internally stored JSON value. No copies are
+    made.
+
+    @warning Writing data to the pointee of the result yields an undefined
+    state.
+
+    @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
+    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t, or @ref
+    number_float_t.
+
+    @return pointer to the internally stored JSON value if the requested pointer
+    type @a PointerType fits to the JSON value; `nullptr` otherwise
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how pointers to internal values of a
+    JSON value can be requested. Note that no type conversions are made and a
+    `nullptr` is returned if the value and the requested pointer type does not
+    match.,get__PointerType}
+
+    @sa @ref get_ptr() for explicit pointer-member access
+    */
+    template<typename PointerType, typename
+             std::enable_if<
+                 std::is_pointer<PointerType>::value
+                 , int>::type = 0>
+    PointerType get() const noexcept
     {
-        return get<T>();
+        // delegate the call to get_ptr
+        return get_ptr<PointerType>();
+    }
+
+    /*!
+    @brief get a pointer value (implicit)
+
+    Implict pointer access to the internally stored JSON value. No copies are
+    made.
+
+    @warning Writing data to the pointee of the result yields an undefined
+    state.
+
+    @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
+    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t, or @ref
+    number_float_t.
+
+    @return pointer to the internally stored JSON value if the requested pointer
+    type @a PointerType fits to the JSON value; `nullptr` otherwise
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how pointers to internal values of a
+    JSON value can be requested. Note that no type conversions are made and a
+    `nullptr` is returned if the value and the requested pointer type does not
+    match.,get_ptr}
+    */
+    template<typename PointerType, typename
+             std::enable_if<
+                 std::is_pointer<PointerType>::value
+                 , int>::type = 0>
+    PointerType get_ptr() const noexcept
+    {
+        // get_impl_ptr will only work with non-const and non-volatile pointer
+        // types. Therefore, we case away all cv properties to be able to
+        // select the correct function. The cv properties will then be added
+        // again by the const const cast to PointerType.
+        return const_cast<PointerType>(get_impl_ptr(
+                                           static_cast<typename std::add_pointer<typename std::remove_cv<typename std::remove_pointer<PointerType>::type>::type>::type>
+                                           (nullptr)));
+    }
+
+    /*!
+    @brief get a value (implicit)
+
+    Implict type conversion between the JSON value and a compatible value. The
+    call is realized by calling @ref get() const.
+
+    @tparam ValueType non-pointer type compatible to the JSON value, for
+    instance `int` for JSON integer numbers, `bool` for JSON booleans, or
+    `std::vector` types for JSON arrays
+
+    @return copy of the JSON value, converted to type @a ValueType
+
+    @throw std::domain_error in case passed type @a ValueType is incompatible
+    to JSON, thrown by @ref get() const
+
+    @complexity Linear in the size of the JSON value.
+
+    @liveexample{The example below shows serveral conversions from JSON values
+    to other types. There a few things to note: (1) Floating-point numbers can
+    be converted to integers\, (2) A JSON array can be converted to a standard
+    `std::vector<short>`\, (3) A JSON object can be converted to C++
+    assiciative containers such as `std::unordered_map<std::string\,
+    json>`.,operator__ValueType}
+    */
+    template<typename ValueType, typename
+             std::enable_if<
+                 not std::is_pointer<ValueType>::value
+                 , int>::type = 0>
+    operator ValueType() const
+    {
+        // delegate the call to get<>() const
+        return get<ValueType>();
     }
 
     /// @}
