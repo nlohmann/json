@@ -85,7 +85,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
    <td valign="top">
       <div class="navtab">
         <table>
-          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a87698fe3ae2652b3ad5eab1b717fee5f.html#a87698fe3ae2652b3ad5eab1b717fee5f">__basic_json</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ae928414b2805cf6ef56b4e4f8d235416.html#ae928414b2805cf6ef56b4e4f8d235416">allocator_type</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a53590b99e380c464a83a0a5edf6da9ab.html#a53590b99e380c464a83a0a5edf6da9ab">array</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba.html#ac82abedf356d252e0589850c3d8b35ba">array_t</a></td></tr>
@@ -152,7 +151,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ab8682827348d8eb61507bbe8c7829ce8.html#ab8682827348d8eb61507bbe8c7829ce8">is_number_float</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aa5a06ef7009d3a8c72cc173f1f5da760.html#aa5a06ef7009d3a8c72cc173f1f5da760">is_number_integer</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a2bb1b109282149119a070be4ac76f820.html#a2bb1b109282149119a070be4ac76f820">is_object</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ab2fa1c4df15db5de07144b5c15c6f0f6.html#ab2fa1c4df15db5de07144b5c15c6f0f6">is_primitive</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_abc2b49c2c44c61a15d4b272a85b41064.html#abc2b49c2c44c61a15d4b272a85b41064">is_string</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a9d508dc7eb7023cd17b3c6958ea7c4ee.html#a9d508dc7eb7023cd17b3c6958ea7c4ee">is_structured</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aa23ac5808b9aa1a08d18e3ebea25c7ce.html#aa23ac5808b9aa1a08d18e3ebea25c7ce">list_init_t</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a0998ed4a76d1e5048fd043475eb7bfde.html#a0998ed4a76d1e5048fd043475eb7bfde">max_size</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044.html#aacf6c869f6a9c66ac1bc99e93f310044">number_float_t</a></td></tr>
@@ -232,6 +233,61 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Implicitly return the type of the JSON value as a value from the <a class="el" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">value_t</a> enumeration.</p>
+<dl class="section return"><dt>Returns</dt><dd>the type of the JSON value</dd></dl>
+<dl class="section user"><dt>Complexity</dt><dd>Constant.</dd></dl>
+<dl class="section user"><dt>Example</dt><dd>The following code exemplifies the value_t operator for all JSON types. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
+<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div>
+<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="keyword">using namespace </span><a class="code" href="namespacenlohmann.html">nlohmann</a>;</div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;</div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create JSON values</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_null;</div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_boolean = <span class="keyword">true</span>;</div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_number_integer = 17;</div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_number_float = 23.42;</div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_object = {{<span class="stringliteral">&quot;one&quot;</span>, 1}, {<span class="stringliteral">&quot;two&quot;</span>, 2}};</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_array = {1, 2, 4, 8, 16};</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_string = <span class="stringliteral">&quot;Hello, world&quot;</span>;</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;</div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    <span class="comment">// call operator value_t()</span></div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">json::value_t</a> t_null = j_null;</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">json::value_t</a> t_boolean = j_boolean;</div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">json::value_t</a> t_number_integer = j_number_integer;</div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">json::value_t</a> t_number_float = j_number_float;</div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">json::value_t</a> t_object = j_object;</div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">json::value_t</a> t_array = j_array;</div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">json::value_t</a> t_string = j_string;</div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    <span class="comment">// print types</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;    std::cout &lt;&lt; std::boolalpha;</div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;    std::cout &lt;&lt; (t_null == <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522a37a6259cc0c1dae299a7866489dff0bd">json::value_t::null</a>) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;    std::cout &lt;&lt; (t_boolean == <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522a84e2c64f38f78ba3ea5c905ab5a2da27">json::value_t::boolean</a>) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    std::cout &lt;&lt; (t_number_integer == <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522a5763da164f8659d94a56e29df64b4bcc">json::value_t::number_integer</a>) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    std::cout &lt;&lt; (t_number_float == <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522ad9966ecb59667235a57b4b999a649eef">json::value_t::number_float</a>) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;    std::cout &lt;&lt; (t_object == <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522aa8cfde6331bd59eb2ac96f8911c4b666">json::value_t::object</a>) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    std::cout &lt;&lt; (t_array == <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522af1f713c9e000f5d3f280adbd124df4f5">json::value_t::array</a>) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    std::cout &lt;&lt; (t_string == <a class="code" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522ab45cffe084dd3d20d928bee85e7b0f21">json::value_t::string</a>) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;}</div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:121</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522aa8cfde6331bd59eb2ac96f8911c4b666"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522aa8cfde6331bd59eb2ac96f8911c4b666">nlohmann::basic_json::value_t::object</a></div><div class="ttdoc">object (unordered set of name/value pairs) </div></div>
+<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:56</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522ab45cffe084dd3d20d928bee85e7b0f21"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522ab45cffe084dd3d20d928bee85e7b0f21">nlohmann::basic_json::value_t::string</a></div><div class="ttdoc">string value </div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">nlohmann::basic_json::value_t</a></div><div class="ttdeci">value_t</div><div class="ttdoc">the JSON type enumeration </div><div class="ttdef"><b>Definition:</b> json.hpp:217</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522af1f713c9e000f5d3f280adbd124df4f5"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522af1f713c9e000f5d3f280adbd124df4f5">nlohmann::basic_json::value_t::array</a></div><div class="ttdoc">array (ordered collection of values) </div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522a37a6259cc0c1dae299a7866489dff0bd"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522a37a6259cc0c1dae299a7866489dff0bd">nlohmann::basic_json::value_t::null</a></div><div class="ttdoc">null value </div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522ad9966ecb59667235a57b4b999a649eef"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522ad9966ecb59667235a57b4b999a649eef">nlohmann::basic_json::value_t::number_float</a></div><div class="ttdoc">number value (floating-point) </div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522a84e2c64f38f78ba3ea5c905ab5a2da27"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522a84e2c64f38f78ba3ea5c905ab5a2da27">nlohmann::basic_json::value_t::boolean</a></div><div class="ttdoc">boolean value </div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522a5763da164f8659d94a56e29df64b4bcc"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522a5763da164f8659d94a56e29df64b4bcc">nlohmann::basic_json::value_t::number_integer</a></div><div class="ttdoc">number value (integer) </div></div>
+</div><!-- fragment --> Output: <pre class="fragment">true
+true
+true
+true
+true
+true
+true
+</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/operator__value_t.cpp -o operator__value_t </pre>. </dd></dl>
 
 </div>
 </div>
@@ -241,7 +297,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jun 24 2015 15:16:44 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Jun 27 2015 18:43:19 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

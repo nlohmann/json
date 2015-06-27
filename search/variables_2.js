@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['number_5ffloat',['number_float',['../unionnlohmann_1_1basic__json_1_1json__value_a329c53042b9ba5c73512da4c780f2f2c.html#a329c53042b9ba5c73512da4c780f2f2c',1,'nlohmann::basic_json::json_value']]],
-  ['number_5finteger',['number_integer',['../unionnlohmann_1_1basic__json_1_1json__value_a874e1bed30eee7847d34d8f410114cbc.html#a874e1bed30eee7847d34d8f410114cbc',1,'nlohmann::basic_json::json_value']]]
+  ['generic_5fiterator',['generic_iterator',['../group__object__inspection_ga59ae719c283942c17e47b3f0afcb7711.html#ga59ae719c283942c17e47b3f0afcb7711',1,'nlohmann::basic_json::internal_iterator']]]
 ];

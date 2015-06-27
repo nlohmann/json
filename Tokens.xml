@@ -53,104 +53,6 @@
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>__basic_json</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a87698fe3ae2652b3ad5eab1b717fee5f.html</Path>
-    <Anchor>a87698fe3ae2652b3ad5eab1b717fee5f</Anchor>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>value_type</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a7d0db3b728d820d4984df78d97d2b104.html</Path>
-    <Anchor>a7d0db3b728d820d4984df78d97d2b104</Anchor>
-    <Abstract>the type of elements in a basic_json container </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>reference</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a5fd8b54389698edf0c08e2dd001f610b.html</Path>
-    <Anchor>a5fd8b54389698edf0c08e2dd001f610b</Anchor>
-    <Abstract>the type of an element reference </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>const_reference</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ac4011bd0781e51afe4994d2b09fd27e9.html</Path>
-    <Anchor>ac4011bd0781e51afe4994d2b09fd27e9</Anchor>
-    <Abstract>the type of an element const reference </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>difference_type</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_adbd4c16c9ac641b2a4736bc2c6787d83.html</Path>
-    <Anchor>adbd4c16c9ac641b2a4736bc2c6787d83</Anchor>
-    <Abstract>a type to represent differences between iterators </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>size_type</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html</Path>
-    <Anchor>a80ceaa3bdd346292273b309e08525c1c</Anchor>
-    <Abstract>a type to represent container sizes </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>allocator_type</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ae928414b2805cf6ef56b4e4f8d235416.html</Path>
-    <Anchor>ae928414b2805cf6ef56b4e4f8d235416</Anchor>
-    <Abstract>the allocator type </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>pointer</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a6bbd3e72a870f1ba81ff6886b063b0fe.html</Path>
-    <Anchor>a6bbd3e72a870f1ba81ff6886b063b0fe</Anchor>
-    <Abstract>the type of an element pointer </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>const_pointer</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a13e5642dbfa1602c937d295a085413cc.html</Path>
-    <Anchor>a13e5642dbfa1602c937d295a085413cc</Anchor>
-    <Abstract>the type of an element const pointer </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
       <Name>object_t</Name>
       <APILanguage>cpp</APILanguage>
       <Type>tdef</Type>
@@ -523,7 +425,31 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_ad81f3cedf09ccd70b2f3239d148c8752.html</Path>
     <Anchor>ad81f3cedf09ccd70b2f3239d148c8752</Anchor>
-    <Abstract>return the type of the object (explicit) </Abstract>
+    <Abstract>return the type of the JSON value (explicit) </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>is_primitive</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ab2fa1c4df15db5de07144b5c15c6f0f6.html</Path>
+    <Anchor>ab2fa1c4df15db5de07144b5c15c6f0f6</Anchor>
+    <Abstract>return whether type is primitive </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>is_structured</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a9d508dc7eb7023cd17b3c6958ea7c4ee.html</Path>
+    <Anchor>a9d508dc7eb7023cd17b3c6958ea7c4ee</Anchor>
+    <Abstract>return whether type is structured </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -631,6 +557,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_ad1fea64ed433a6f4e7408c8c7bbc4a37.html</Path>
     <Anchor>ad1fea64ed433a6f4e7408c8c7bbc4a37</Anchor>
+    <Abstract>return whether value is discarded </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -642,7 +569,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a31af4b416e9ccb373291a645da7f83d7.html</Path>
     <Anchor>a31af4b416e9ccb373291a645da7f83d7</Anchor>
-    <Abstract>return the type of the object (implicit) </Abstract>
+    <Abstract>return the type of the JSON value (implicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -774,7 +701,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_af74581d177dafc38df5a126ccd358999.html</Path>
     <Anchor>af74581d177dafc38df5a126ccd358999</Anchor>
-    <Abstract>access specified element </Abstract>
+    <Abstract>access specified object element </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -786,7 +713,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a8e34088252a3ee6b2377f3a1f26dd1ba.html</Path>
     <Anchor>a8e34088252a3ee6b2377f3a1f26dd1ba</Anchor>
-    <Abstract>access specified element </Abstract>
+    <Abstract>access specified object element </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -798,7 +725,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a266c4dd24d11a86e4831523af5d9df4d.html</Path>
     <Anchor>a266c4dd24d11a86e4831523af5d9df4d</Anchor>
-    <Abstract>access specified element (needed for clang) </Abstract>
+    <Abstract>access specified object element </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -810,7 +737,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a9daafb4c15ed5a008cb825bbd8c29d87.html</Path>
     <Anchor>a9daafb4c15ed5a008cb825bbd8c29d87</Anchor>
-    <Abstract>access specified element (needed for clang) </Abstract>
+    <Abstract>access specified object element </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -1302,7 +1229,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aac185a137428a7337aa620de07bfbbd7.html</Path>
     <Anchor>aac185a137428a7337aa620de07bfbbd7</Anchor>
-    <Abstract>comparison operator for JSON value types </Abstract>
+    <Abstract>comparison operator for JSON types </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -1400,6 +1327,94 @@
     <Anchor>a34d6a60dd99e9f33b8273a1c8db5669b</Anchor>
     <Abstract>serialize to stream </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>value_type</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a7d0db3b728d820d4984df78d97d2b104.html</Path>
+    <Anchor>a7d0db3b728d820d4984df78d97d2b104</Anchor>
+    <Abstract>the type of elements in a basic_json container </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>reference</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a5fd8b54389698edf0c08e2dd001f610b.html</Path>
+    <Anchor>a5fd8b54389698edf0c08e2dd001f610b</Anchor>
+    <Abstract>the type of an element reference </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>const_reference</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ac4011bd0781e51afe4994d2b09fd27e9.html</Path>
+    <Anchor>ac4011bd0781e51afe4994d2b09fd27e9</Anchor>
+    <Abstract>the type of an element const reference </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>difference_type</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_adbd4c16c9ac641b2a4736bc2c6787d83.html</Path>
+    <Anchor>adbd4c16c9ac641b2a4736bc2c6787d83</Anchor>
+    <Abstract>a type to represent differences between iterators </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>size_type</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html</Path>
+    <Anchor>a80ceaa3bdd346292273b309e08525c1c</Anchor>
+    <Abstract>a type to represent container sizes </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>allocator_type</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ae928414b2805cf6ef56b4e4f8d235416.html</Path>
+    <Anchor>ae928414b2805cf6ef56b4e4f8d235416</Anchor>
+    <Abstract>the allocator type </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>pointer</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a6bbd3e72a870f1ba81ff6886b063b0fe.html</Path>
+    <Anchor>a6bbd3e72a870f1ba81ff6886b063b0fe</Anchor>
+    <Abstract>the type of an element pointer </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>const_pointer</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a13e5642dbfa1602c937d295a085413cc.html</Path>
+    <Anchor>a13e5642dbfa1602c937d295a085413cc</Anchor>
+    <Abstract>the type of an element const pointer </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -2542,179 +2557,6 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_1_1iterator_ada3100cdb8700566051828f1355fa745.html</Path>
     <Anchor>ada3100cdb8700566051828f1355fa745</Anchor>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>nlohmann::basic_json::json_value</Name>
-      <APILanguage>c</APILanguage>
-      <Type>cl</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value.html</Path>
-    <Abstract>a JSON value </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>json_value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_ac6fa840d0f9cefd1f064e371a369d3bf.html</Path>
-    <Anchor>ac6fa840d0f9cefd1f064e371a369d3bf</Anchor>
-    <Abstract>default constructor (for null values) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>json_value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_af432b12c2a45a123ae7404588d889af7.html</Path>
-    <Anchor>af432b12c2a45a123ae7404588d889af7</Anchor>
-    <Abstract>constructor for booleans </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>json_value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_a4351a2387d3eef1c1ecea5c9c8efb92d.html</Path>
-    <Anchor>a4351a2387d3eef1c1ecea5c9c8efb92d</Anchor>
-    <Abstract>constructor for numbers (integer) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>json_value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_a10dd4f2f978cdcbb3be850dc8f3351d6.html</Path>
-    <Anchor>a10dd4f2f978cdcbb3be850dc8f3351d6</Anchor>
-    <Abstract>constructor for numbers (floating-point) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>json_value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_a231c96961c674bebfb14d3f50bb57703.html</Path>
-    <Anchor>a231c96961c674bebfb14d3f50bb57703</Anchor>
-    <Abstract>constructor for empty values of a given type </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>json_value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_a592a4d5dfca10aa2bf033641b9ee050f.html</Path>
-    <Anchor>a592a4d5dfca10aa2bf033641b9ee050f</Anchor>
-    <Abstract>constructor for strings </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>json_value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_a3a2fa91f7daaca8a07963755eea1580d.html</Path>
-    <Anchor>a3a2fa91f7daaca8a07963755eea1580d</Anchor>
-    <Abstract>constructor for objects </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>json_value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_ac051d54557c5cf079925b810c0e16e1e.html</Path>
-    <Anchor>ac051d54557c5cf079925b810c0e16e1e</Anchor>
-    <Abstract>constructor for arrays </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>array</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>data</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_a9b0c0f7dc2ddb9fa9101a287b233a8b2.html</Path>
-    <Anchor>a9b0c0f7dc2ddb9fa9101a287b233a8b2</Anchor>
-    <Abstract>array (stored with pointer to save storage) </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>boolean</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>data</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_a9bd260b1ff2f03572dcc84c179a6a37c.html</Path>
-    <Anchor>a9bd260b1ff2f03572dcc84c179a6a37c</Anchor>
-    <Abstract>boolean </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>number_float</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>data</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_a329c53042b9ba5c73512da4c780f2f2c.html</Path>
-    <Anchor>a329c53042b9ba5c73512da4c780f2f2c</Anchor>
-    <Abstract>number (floating-point) </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>number_integer</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>data</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_a874e1bed30eee7847d34d8f410114cbc.html</Path>
-    <Anchor>a874e1bed30eee7847d34d8f410114cbc</Anchor>
-    <Abstract>number (integer) </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>object</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>data</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_a4ff9894ccb1eca08ba1c49eec70ee2f5.html</Path>
-    <Anchor>a4ff9894ccb1eca08ba1c49eec70ee2f5</Anchor>
-    <Abstract>object (stored with pointer to save storage) </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>string</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>data</Type>
-      <Scope>nlohmann::basic_json::json_value</Scope>
-    </TokenIdentifier>
-    <Path>unionnlohmann_1_1basic__json_1_1json__value_ab2c1e8a4ef5293eb86e9a6c03fbb5610.html</Path>
-    <Anchor>ab2c1e8a4ef5293eb86e9a6c03fbb5610</Anchor>
-    <Abstract>string (stored with pointer to save storage) </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>

@@ -378,82 +378,6 @@
                 </Subnodes>
                </Node>
                <Node>
-                <Name>json_value</Name>
-                <Path>unionnlohmann_1_1basic__json_1_1json__value.html</Path>
-                <Subnodes>
-                 <Node>
-                  <Name>json_value</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_ac6fa840d0f9cefd1f064e371a369d3bf.html</Path>
-                  <Anchor>ac6fa840d0f9cefd1f064e371a369d3bf</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>json_value</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_af432b12c2a45a123ae7404588d889af7.html</Path>
-                  <Anchor>af432b12c2a45a123ae7404588d889af7</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>json_value</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_a4351a2387d3eef1c1ecea5c9c8efb92d.html</Path>
-                  <Anchor>a4351a2387d3eef1c1ecea5c9c8efb92d</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>json_value</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_a10dd4f2f978cdcbb3be850dc8f3351d6.html</Path>
-                  <Anchor>a10dd4f2f978cdcbb3be850dc8f3351d6</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>json_value</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_a231c96961c674bebfb14d3f50bb57703.html</Path>
-                  <Anchor>a231c96961c674bebfb14d3f50bb57703</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>json_value</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_a592a4d5dfca10aa2bf033641b9ee050f.html</Path>
-                  <Anchor>a592a4d5dfca10aa2bf033641b9ee050f</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>json_value</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_a3a2fa91f7daaca8a07963755eea1580d.html</Path>
-                  <Anchor>a3a2fa91f7daaca8a07963755eea1580d</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>json_value</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_ac051d54557c5cf079925b810c0e16e1e.html</Path>
-                  <Anchor>ac051d54557c5cf079925b810c0e16e1e</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>array</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_a9b0c0f7dc2ddb9fa9101a287b233a8b2.html</Path>
-                  <Anchor>a9b0c0f7dc2ddb9fa9101a287b233a8b2</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>boolean</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_a9bd260b1ff2f03572dcc84c179a6a37c.html</Path>
-                  <Anchor>a9bd260b1ff2f03572dcc84c179a6a37c</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>number_float</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_a329c53042b9ba5c73512da4c780f2f2c.html</Path>
-                  <Anchor>a329c53042b9ba5c73512da4c780f2f2c</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>number_integer</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_a874e1bed30eee7847d34d8f410114cbc.html</Path>
-                  <Anchor>a874e1bed30eee7847d34d8f410114cbc</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>object</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_a4ff9894ccb1eca08ba1c49eec70ee2f5.html</Path>
-                  <Anchor>a4ff9894ccb1eca08ba1c49eec70ee2f5</Anchor>
-                 </Node>
-                 <Node>
-                  <Name>string</Name>
-                  <Path>unionnlohmann_1_1basic__json_1_1json__value_ab2c1e8a4ef5293eb86e9a6c03fbb5610.html</Path>
-                  <Anchor>ab2c1e8a4ef5293eb86e9a6c03fbb5610</Anchor>
-                 </Node>
-                </Subnodes>
-               </Node>
-               <Node>
                 <Name>reverse_iterator</Name>
                 <Path>classnlohmann_1_1basic__json_1_1reverse__iterator.html</Path>
                 <Subnodes>
@@ -473,11 +397,6 @@
                   <Anchor>ae711bdc24d54870a560550fc21c11f46</Anchor>
                  </Node>
                 </Subnodes>
-               </Node>
-               <Node>
-                <Name>__basic_json</Name>
-                <Path>classnlohmann_1_1basic__json_a87698fe3ae2652b3ad5eab1b717fee5f.html</Path>
-                <Anchor>a87698fe3ae2652b3ad5eab1b717fee5f</Anchor>
                </Node>
                <Node>
                 <Name>allocator_type</Name>
@@ -949,9 +868,19 @@
                 <Anchor>a2bb1b109282149119a070be4ac76f820</Anchor>
                </Node>
                <Node>
+                <Name>is_primitive</Name>
+                <Path>classnlohmann_1_1basic__json_ab2fa1c4df15db5de07144b5c15c6f0f6.html</Path>
+                <Anchor>ab2fa1c4df15db5de07144b5c15c6f0f6</Anchor>
+               </Node>
+               <Node>
                 <Name>is_string</Name>
                 <Path>classnlohmann_1_1basic__json_abc2b49c2c44c61a15d4b272a85b41064.html</Path>
                 <Anchor>abc2b49c2c44c61a15d4b272a85b41064</Anchor>
+               </Node>
+               <Node>
+                <Name>is_structured</Name>
+                <Path>classnlohmann_1_1basic__json_a9d508dc7eb7023cd17b3c6958ea7c4ee.html</Path>
+                <Anchor>a9d508dc7eb7023cd17b3c6958ea7c4ee</Anchor>
                </Node>
                <Node>
                 <Name>max_size</Name>
@@ -1207,10 +1136,6 @@
             </Subnodes>
            </Node>
            <Node>
-            <Name>nlohmann::basic_json&lt; ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberFloatType, AllocatorType &gt;::json_value</Name>
-            <Path>unionnlohmann_1_1basic__json_1_1json__value.html</Path>
-           </Node>
-           <Node>
             <Name>reverse_iterator</Name>
             <Path></Path>
             <Subnodes>
@@ -1233,100 +1158,10 @@
            <Node>
             <Name>All</Name>
             <Path>functions.html</Path>
-            <Subnodes>
-             <Node>
-              <Name>_</Name>
-              <Path>functions.html</Path>
-             </Node>
-             <Node>
-              <Name>a</Name>
-              <Path>functions_a.html</Path>
-             </Node>
-             <Node>
-              <Name>b</Name>
-              <Path>functions_b.html</Path>
-             </Node>
-             <Node>
-              <Name>c</Name>
-              <Path>functions_c.html</Path>
-             </Node>
-             <Node>
-              <Name>d</Name>
-              <Path>functions_d.html</Path>
-             </Node>
-             <Node>
-              <Name>e</Name>
-              <Path>functions_e.html</Path>
-             </Node>
-             <Node>
-              <Name>f</Name>
-              <Path>functions_f.html</Path>
-             </Node>
-             <Node>
-              <Name>g</Name>
-              <Path>functions_g.html</Path>
-             </Node>
-             <Node>
-              <Name>i</Name>
-              <Path>functions_i.html</Path>
-             </Node>
-             <Node>
-              <Name>j</Name>
-              <Path>functions_j.html</Path>
-             </Node>
-             <Node>
-              <Name>k</Name>
-              <Path>functions_k.html</Path>
-             </Node>
-             <Node>
-              <Name>l</Name>
-              <Path>functions_l.html</Path>
-             </Node>
-             <Node>
-              <Name>m</Name>
-              <Path>functions_m.html</Path>
-             </Node>
-             <Node>
-              <Name>n</Name>
-              <Path>functions_n.html</Path>
-             </Node>
-             <Node>
-              <Name>o</Name>
-              <Path>functions_o.html</Path>
-             </Node>
-             <Node>
-              <Name>p</Name>
-              <Path>functions_p.html</Path>
-             </Node>
-             <Node>
-              <Name>r</Name>
-              <Path>functions_r.html</Path>
-             </Node>
-             <Node>
-              <Name>s</Name>
-              <Path>functions_s.html</Path>
-             </Node>
-             <Node>
-              <Name>t</Name>
-              <Path>functions_t.html</Path>
-             </Node>
-             <Node>
-              <Name>v</Name>
-              <Path>functions_v.html</Path>
-             </Node>
-             <Node>
-              <Name>~</Name>
-              <Path>functions_~.html</Path>
-             </Node>
-            </Subnodes>
            </Node>
            <Node>
             <Name>Functions</Name>
             <Path>functions_func.html</Path>
-           </Node>
-           <Node>
-            <Name>Variables</Name>
-            <Path>functions_vars.html</Path>
            </Node>
            <Node>
             <Name>Typedefs</Name>
