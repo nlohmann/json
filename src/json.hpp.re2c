@@ -203,17 +203,16 @@ class basic_json
     /// @}
 
 
-    /////////////////////////////////
-    // JSON value type enumeration //
-    /////////////////////////////////
+    ///////////////////////////
+    // JSON type enumeration //
+    ///////////////////////////
 
     /*!
-    @brief the JSON value type enumeration
+    @brief the JSON type enumeration
 
-    This enumeration collects the different JSON value types. It is internally
-    used to distinguish the stored values, and the functions is_null,
-    is_object, is_array, is_string, is_boolean, is_number, and is_discarded
-    rely on it.
+    This enumeration collects the different JSON types. It is internally used
+    to distinguish the stored values, and the functions is_null, is_object,
+    is_array, is_string, is_boolean, is_number, and is_discarded rely on it.
     */
     enum class value_t : uint8_t
     {
@@ -416,7 +415,7 @@ class basic_json
                                   int depth, parse_event_t event, basic_json& parsed)>;
 
     /*!
-    @brief comparison operator for JSON value types
+    @brief comparison operator for JSON types
 
     Returns an ordering that is similar to Python:
     - order: null < boolean < number < object < array < string
@@ -1093,12 +1092,12 @@ class basic_json
 
     Constructs the JSON value with the contents of the range `[first, last)`.
     The semantics depends on the different types a JSON value can have:
-    - In case of atomic value types (number, boolean, or string), @a first must
+    - In case of primitive types (number, boolean, or string), @a first must
       be `begin()` and @a last must be `end()`. In this case, the value is
       copied. Otherwise, std::out_of_range is thrown.
-    - In case of compound value types (array, object), the constructor behaves
+    - In case of structured types (array, object), the constructor behaves
       as similar versions for `std::vector`.
-    - In case of a null value type, std::domain_error is thrown.
+    - In case of a null type, std::domain_error is thrown.
 
     @tparam InputIT an input iterator type (@ref iterator or @ref
     const_iterator)
@@ -1108,7 +1107,7 @@ class basic_json
 
     @throw std::domain_error if iterators are not compatible; that is, do not
     belong to the same JSON value
-    @throw std::out_of_range if iterators are for an atomic value type (number,
+    @throw std::out_of_range if iterators are for a primitive type (number,
     boolean, or string) where an out of range error can be detected easily
     @throw std::bad_alloc if allocation for object, array, or string fails
     @throw std::domain_error if called with a null value
@@ -1132,7 +1131,7 @@ class basic_json
             throw std::domain_error("iterators are not compatible");
         }
 
-        // check if iterator range is complete for atomic values
+        // check if iterator range is complete for primitive values
         switch (m_type)
         {
             case value_t::number_integer:
@@ -1439,6 +1438,11 @@ class basic_json
     enumeration.
 
     @return the type of the JSON value
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref type() for all JSON
+    types.,type}
     */
     value_t type() const noexcept
     {
@@ -1446,16 +1450,53 @@ class basic_json
     }
 
     /*!
+    @brief return whether type is primitive
+
+    This function returns true iff the JSON type is primitive (string, number,
+    boolean, or null).
+
+    @return `true` if type is primitive (string, number, boolean, or null),
+    `false` otherwise.
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref is_primitive for all JSON
+    types.,is_primitive}
+    */
+    bool is_primitive() const noexcept
+    {
+        return is_null() or is_string() or is_boolean() or is_number();
+    }
+
+    /*!
+    @brief return whether type is structured
+
+    This function returns true iff the JSON type is structured (array or
+    object).
+
+    @return `true` if type is structured (array or object), `false` otherwise.
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref is_structured for all JSON
+    types.,is_structured}
+    */
+    bool is_structured() const noexcept
+    {
+        return is_array() or is_object();
+    }
+
+    /*!
     @brief return whether value is null
 
     This function returns true iff the JSON value is null.
 
-    @return `true` if value type is null, `false` otherwise.
+    @return `true` if type is null, `false` otherwise.
 
     @complexity Constant.
 
     @liveexample{The following code exemplifies @ref is_null for all JSON
-    value types.,is_null}
+    types.,is_null}
     */
     bool is_null() const noexcept
     {
@@ -1467,12 +1508,12 @@ class basic_json
 
     This function returns true iff the JSON value is a boolean.
 
-    @return `true` if value type is boolean, `false` otherwise.
+    @return `true` if type is boolean, `false` otherwise.
 
     @complexity Constant.
 
     @liveexample{The following code exemplifies @ref is_boolean for all JSON
-    value types.,is_boolean}
+    types.,is_boolean}
     */
     bool is_boolean() const noexcept
     {
@@ -1485,16 +1526,16 @@ class basic_json
     This function returns true iff the JSON value is a number. This includes
     both integer and floating-point values.
 
-    @return `true` if value type is number, `false` otherwise.
+    @return `true` if type is number, `false` otherwise.
 
     @complexity Constant.
 
     @liveexample{The following code exemplifies @ref is_number for all JSON
-    value types.,is_number}
+    types.,is_number}
     */
     bool is_number() const noexcept
     {
-        return (m_type == value_t::number_integer) or (m_type == value_t::number_float);
+        return is_number_integer() or is_number_float();
     }
 
     /*!
@@ -1503,12 +1544,12 @@ class basic_json
     This function returns true iff the JSON value is an integer number. This
     excludes floating-point values.
 
-    @return `true` if value type is an integer number, `false` otherwise.
+    @return `true` if type is an integer number, `false` otherwise.
 
     @complexity Constant.
 
     @liveexample{The following code exemplifies @ref is_number_integer for all
-    JSON value types.,is_number_integer}
+    JSON types.,is_number_integer}
     */
     bool is_number_integer() const noexcept
     {
@@ -1521,12 +1562,12 @@ class basic_json
     This function returns true iff the JSON value is a floating-point number.
     This excludes integer values.
 
-    @return `true` if value type is a floating-point number, `false` otherwise.
+    @return `true` if type is a floating-point number, `false` otherwise.
 
     @complexity Constant.
 
     @liveexample{The following code exemplifies @ref is_number_float for all
-    JSON value types.,is_number_float}
+    JSON types.,is_number_float}
     */
     bool is_number_float() const noexcept
     {
@@ -1538,12 +1579,12 @@ class basic_json
 
     This function returns true iff the JSON value is an object.
 
-    @return `true` if value type is object, `false` otherwise.
+    @return `true` if type is object, `false` otherwise.
 
     @complexity Constant.
 
     @liveexample{The following code exemplifies @ref is_object for all JSON
-    value types.,is_object}
+    types.,is_object}
     */
     bool is_object() const noexcept
     {
@@ -1555,12 +1596,12 @@ class basic_json
 
     This function returns true iff the JSON value is an array.
 
-    @return `true` if value type is array, `false` otherwise.
+    @return `true` if type is array, `false` otherwise.
 
     @complexity Constant.
 
     @liveexample{The following code exemplifies @ref is_array for all JSON
-    value types.,is_array}
+    types.,is_array}
     */
     bool is_array() const noexcept
     {
@@ -1572,25 +1613,48 @@ class basic_json
 
     This function returns true iff the JSON value is a string.
 
-    @return `true` if value type is string, `false` otherwise.
+    @return `true` if type is string, `false` otherwise.
 
     @complexity Constant.
 
     @liveexample{The following code exemplifies @ref is_string for all JSON
-    value types.,is_string}
+    types.,is_string}
     */
     bool is_string() const noexcept
     {
         return m_type == value_t::string;
     }
 
-    // return whether value is discarded
+    /*!
+    @brief return whether value is discarded
+
+    This function returns true iff the JSON value was discarded during parsing
+    with a callback function (see @ref parser_callback_t).
+
+    @return `true` if type is discarded, `false` otherwise.
+
+    @complexity Constant.
+
+    @todo Add example.
+    */
     bool is_discarded() const noexcept
     {
         return m_type == value_t::discarded;
     }
 
-    /// return the type of the object (implicit)
+    /*!
+    @brief return the type of the JSON value (implicit)
+
+    Implicitly return the type of the JSON value as a value from the @ref
+    value_t enumeration.
+
+    @return the type of the JSON value
+
+    @complexity Constant.
+
+    @liveexample{The following code exemplifies the value_t operator for all
+    JSON types.,operator__value_t}
+    */
     operator value_t() const noexcept
     {
         return m_type;
@@ -1619,7 +1683,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("value type must be object, but is " + type_name());
+                throw std::domain_error("type must be object, but is " + type_name());
             }
         }
     }
@@ -1635,7 +1699,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("value type must be object, but is " + type_name());
+                throw std::domain_error("type must be object, but is " + type_name());
             }
         }
     }
@@ -1665,7 +1729,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("value type must be array, but is " + type_name());
+                throw std::domain_error("type must be array, but is " + type_name());
             }
         }
     }
@@ -1693,7 +1757,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("value type must be array, but is " + type_name());
+                throw std::domain_error("type must be array, but is " + type_name());
             }
         }
     }
@@ -1714,11 +1778,12 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("value type must be array, but is " + type_name());
+                throw std::domain_error("type must be array, but is " + type_name());
             }
         }
     }
 
+    /// get an array (explicit)
     array_t get_impl(array_t*) const
     {
         switch (m_type)
@@ -1729,7 +1794,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("value type must be array, but is " + type_name());
+                throw std::domain_error("type must be array, but is " + type_name());
             }
         }
     }
@@ -1749,7 +1814,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("value type must be string, but is " + type_name());
+                throw std::domain_error("type must be string, but is " + type_name());
             }
         }
     }
@@ -1773,7 +1838,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("value type must be number, but is " + type_name());
+                throw std::domain_error("type must be number, but is " + type_name());
             }
         }
     }
@@ -1789,7 +1854,7 @@ class basic_json
             }
             default:
             {
-                throw std::domain_error("value type must be boolean, but is " + type_name());
+                throw std::domain_error("type must be boolean, but is " + type_name());
             }
         }
     }
@@ -2330,7 +2395,7 @@ class basic_json
     Returns a reference to the first element in the container. For a JSON
     container `c`, the expression `c.front()` is equivalent to `*c.begin()`.
 
-    @return In case of a compound value (array or object), a reference to the
+    @return In case of a structured type (array or object), a reference to the
     first element is returned. In cast of number, string, or boolean values, a
     reference to the value is returned.
 
@@ -2362,7 +2427,7 @@ class basic_json
     container `c`, the expression `c.back()` is equivalent to `{ auto tmp =
     c.end(); --tmp; return *tmp; }`.
 
-    @return In case of a compound value (array or object), a reference to the
+    @return In case of a structured type (array or object), a reference to the
     last element is returned. In cast of number, string, or boolean values, a
     reference to the value is returned.
 
@@ -2830,7 +2895,7 @@ class basic_json
 
     Checks if a JSON value has no elements.
 
-    @return The return value depends on the different value types and is
+    @return The return value depends on the different types and is
             defined as follows:
             Value type  | return value
             ----------- | -------------
@@ -2886,7 +2951,7 @@ class basic_json
 
     Returns the number of elements in a JSON value.
 
-    @return The return value depends on the different value types and is
+    @return The return value depends on the different types and is
             defined as follows:
             Value type  | return value
             ----------- | -------------
@@ -2944,7 +3009,7 @@ class basic_json
     system or library implementation limitations, i.e. `std::distance(begin(),
     end())` for the JSON value.
 
-    @return The return value depends on the different value types and is
+    @return The return value depends on the different types and is
             defined as follows:
             Value type  | return value
             ----------- | -------------
@@ -3027,7 +3092,7 @@ class basic_json
     @complexity Linear in the size of the JSON value.
 
     @liveexample{The example below shows the effect of @ref clear to different
-    JSON value types.,clear}
+    JSON types.,clear}
     */
     void clear() noexcept
     {
@@ -3919,7 +3984,7 @@ class basic_json
         typename object_t::iterator object_iterator;
         /// iterator for JSON arrays
         typename array_t::iterator array_iterator;
-        /// generic iterator for all other value types
+        /// generic iterator for all other types
         difference_type generic_iterator;
 
         /// default constructor

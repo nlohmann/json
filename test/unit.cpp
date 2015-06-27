@@ -1334,6 +1334,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_array());
             CHECK(not j.is_string());
             CHECK(not j.is_discarded());
+            CHECK(not j.is_primitive());
+            CHECK(j.is_structured());
         }
 
         SECTION("array")
@@ -1348,6 +1350,8 @@ TEST_CASE("object inspection")
             CHECK(j.is_array());
             CHECK(not j.is_string());
             CHECK(not j.is_discarded());
+            CHECK(not j.is_primitive());
+            CHECK(j.is_structured());
         }
 
         SECTION("null")
@@ -1362,6 +1366,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_array());
             CHECK(not j.is_string());
             CHECK(not j.is_discarded());
+            CHECK(j.is_primitive());
+            CHECK(not j.is_structured());
         }
 
         SECTION("boolean")
@@ -1376,6 +1382,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_array());
             CHECK(not j.is_string());
             CHECK(not j.is_discarded());
+            CHECK(j.is_primitive());
+            CHECK(not j.is_structured());
         }
 
         SECTION("string")
@@ -1390,6 +1398,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_array());
             CHECK(j.is_string());
             CHECK(not j.is_discarded());
+            CHECK(j.is_primitive());
+            CHECK(not j.is_structured());
         }
 
         SECTION("number (integer)")
@@ -1404,6 +1414,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_array());
             CHECK(not j.is_string());
             CHECK(not j.is_discarded());
+            CHECK(j.is_primitive());
+            CHECK(not j.is_structured());
         }
 
         SECTION("number (floating-point)")
@@ -1418,6 +1430,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_array());
             CHECK(not j.is_string());
             CHECK(not j.is_discarded());
+            CHECK(j.is_primitive());
+            CHECK(not j.is_structured());
         }
 
         SECTION("discarded")
@@ -1432,6 +1446,8 @@ TEST_CASE("object inspection")
             CHECK(not j.is_array());
             CHECK(not j.is_string());
             CHECK(j.is_discarded());
+            CHECK(not j.is_primitive());
+            CHECK(not j.is_structured());
         }
     }
 
@@ -7670,6 +7686,20 @@ TEST_CASE("parser class")
                     CHECK(json::parser("-0E1").parse() == json(-0e1));
                     CHECK(json::parser("-0E123").parse() == json(-0e123));
                 }
+
+                SECTION("edge cases")
+                {
+                    // From RFC7159, Section 6:
+                    // Note that when such software is used, numbers that are
+                    // integers and are in the range [-(2**53)+1, (2**53)-1]
+                    // are interoperable in the sense that implementations will
+                    // agree exactly on their numeric values.
+
+                    // -(2**53)+1
+                    CHECK(json::parser("-9007199254740991").parse().get<int64_t>() == -9007199254740991);
+                    // (2**53)-1
+                    CHECK(json::parser("9007199254740991").parse().get<int64_t>() == 9007199254740991);
+                }
             }
 
             SECTION("floating-point")
@@ -8961,6 +8991,7 @@ TEST_CASE("RFC 7159 examples")
     {
         CHECK(json::parse("\"\\u005C\"") == json("\\"));
         CHECK(json::parse("\"\\uD834\\uDD1E\"") == json("𝄞"));
+        CHECK(json::parse("\"𝄞\"") == json("𝄞"));
     }
 
     SECTION("8.3 String Comparison")
