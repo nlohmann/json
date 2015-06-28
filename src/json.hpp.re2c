@@ -5085,14 +5085,14 @@ class basic_json
         using lexer_char_t = unsigned char;
 
         /// constructor with a given buffer
-        lexer(const string_t& s) noexcept
+        explicit lexer(const string_t& s) noexcept
             : m_stream(nullptr), m_buffer(s)
         {
             m_content = reinterpret_cast<const lexer_char_t*>(s.c_str());
             m_start = m_cursor = m_content;
             m_limit = m_content + s.size();
         }
-        lexer(std::istream* s) noexcept
+        explicit lexer(std::istream* s) noexcept
             : m_stream(s), m_buffer()
         {
             getline(*m_stream, m_buffer);
