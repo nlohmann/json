@@ -1346,7 +1346,7 @@ class basic_json
 
     @ingroup container
     */
-    ~basic_json() noexcept
+    ~basic_json()
     {
         switch (m_type)
         {
@@ -1415,7 +1415,7 @@ class basic_json
 
     @see https://docs.python.org/2/library/json.html#json.dump
     */
-    string_t dump(const int indent = -1) const noexcept
+    string_t dump(const int indent = -1) const
     {
         std::stringstream ss;
 
@@ -2669,7 +2669,7 @@ class basic_json
 
     @ingroup container
     */
-    iterator begin() noexcept
+    iterator begin()
     {
         iterator result(this);
         result.set_begin();
@@ -2680,7 +2680,7 @@ class basic_json
     @copydoc basic_json::cbegin()
     @ingroup container
     */
-    const_iterator begin() const noexcept
+    const_iterator begin() const
     {
         return cbegin();
     }
@@ -2704,7 +2704,7 @@ class basic_json
 
     @ingroup container
     */
-    const_iterator cbegin() const noexcept
+    const_iterator cbegin() const
     {
         const_iterator result(this);
         result.set_begin();
@@ -2729,7 +2729,7 @@ class basic_json
 
     @ingroup container
     */
-    iterator end() noexcept
+    iterator end()
     {
         iterator result(this);
         result.set_end();
@@ -2740,7 +2740,7 @@ class basic_json
     @copydoc basic_json::cend()
     @ingroup container
     */
-    const_iterator end() const noexcept
+    const_iterator end() const
     {
         return cend();
     }
@@ -2764,7 +2764,7 @@ class basic_json
 
     @ingroup container
     */
-    const_iterator cend() const noexcept
+    const_iterator cend() const
     {
         const_iterator result(this);
         result.set_end();
@@ -2788,7 +2788,7 @@ class basic_json
 
     @ingroup reversiblecontainer
     */
-    reverse_iterator rbegin() noexcept
+    reverse_iterator rbegin()
     {
         return reverse_iterator(end());
     }
@@ -2797,7 +2797,7 @@ class basic_json
     @copydoc basic_json::crbegin()
     @ingroup reversiblecontainer
     */
-    const_reverse_iterator rbegin() const noexcept
+    const_reverse_iterator rbegin() const
     {
         return crbegin();
     }
@@ -2820,7 +2820,7 @@ class basic_json
 
     @ingroup reversiblecontainer
     */
-    reverse_iterator rend() noexcept
+    reverse_iterator rend()
     {
         return reverse_iterator(begin());
     }
@@ -2829,7 +2829,7 @@ class basic_json
     @copydoc basic_json::crend()
     @ingroup reversiblecontainer
     */
-    const_reverse_iterator rend() const noexcept
+    const_reverse_iterator rend() const
     {
         return crend();
     }
@@ -2852,7 +2852,7 @@ class basic_json
 
     @ingroup reversiblecontainer
     */
-    const_reverse_iterator crbegin() const noexcept
+    const_reverse_iterator crbegin() const
     {
         return const_reverse_iterator(cend());
     }
@@ -2875,7 +2875,7 @@ class basic_json
 
     @ingroup reversiblecontainer
     */
-    const_reverse_iterator crend() const noexcept
+    const_reverse_iterator crend() const
     {
         return const_reverse_iterator(cbegin());
     }
@@ -3680,7 +3680,7 @@ class basic_json
     ///////////////////////////
 
     /// return the type as string
-    string_t type_name() const noexcept
+    string_t type_name() const
     {
         switch (m_type)
         {
@@ -3732,7 +3732,7 @@ class basic_json
     @param[out] o  the stream to write the escaped string to
     @param[in] s  the string to escape
     */
-    static void escape_string(std::ostream& o, const string_t& s) noexcept
+    static void escape_string(std::ostream& o, const string_t& s)
     {
         for (const auto c : s)
         {
@@ -3824,7 +3824,7 @@ class basic_json
     @param[in] current_indent  the current indent level (only used internally)
     */
     void dump(std::ostream& o, const bool pretty_print, const unsigned int indent_step,
-              const unsigned int current_indent = 0) const noexcept
+              const unsigned int current_indent = 0) const
     {
         // variable to hold indentation for recursive calls
         unsigned int new_indent = current_indent;
@@ -4014,7 +4014,7 @@ class basic_json
         iterator() = default;
 
         /// constructor for a given JSON instance
-        iterator(pointer object) noexcept : m_object(object)
+        iterator(pointer object) : m_object(object)
         {
             switch (m_object->m_type)
             {
@@ -4056,7 +4056,7 @@ class basic_json
 
       private:
         /// set the iterator to the first value
-        void set_begin() noexcept
+        void set_begin()
         {
             switch (m_object->m_type)
             {
@@ -4088,7 +4088,7 @@ class basic_json
         }
 
         /// set the iterator past the last value
-        void set_end() noexcept
+        void set_end()
         {
             switch (m_object->m_type)
             {
@@ -4530,7 +4530,7 @@ class basic_json
         const_iterator() = default;
 
         /// constructor for a given JSON instance
-        const_iterator(pointer object) noexcept : m_object(object)
+        const_iterator(pointer object) : m_object(object)
         {
             switch (m_object->m_type)
             {
@@ -4553,7 +4553,7 @@ class basic_json
         }
 
         /// copy constructor given a nonconst iterator
-        const_iterator(const iterator& other) noexcept : m_object(other.m_object)
+        const_iterator(const iterator& other) : m_object(other.m_object)
         {
             switch (m_object->m_type)
             {
@@ -4597,7 +4597,7 @@ class basic_json
 
       private:
         /// set the iterator to the first value
-        void set_begin() noexcept
+        void set_begin()
         {
             switch (m_object->m_type)
             {
@@ -4629,7 +4629,7 @@ class basic_json
         }
 
         /// set the iterator past the last value
-        void set_end() noexcept
+        void set_end()
         {
             switch (m_object->m_type)
             {
@@ -5184,7 +5184,7 @@ class basic_json
         }
 
         /// return name of values of type token_type
-        static std::string token_type_name(token_type t) noexcept
+        static std::string token_type_name(token_type t)
         {
             switch (t)
             {
