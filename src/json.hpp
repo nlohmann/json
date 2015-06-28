@@ -2701,7 +2701,21 @@ class basic_json
         m_value.array->erase(m_value.array->begin() + static_cast<difference_type>(idx));
     }
 
-    /// find an element in an object
+    /*!
+    @brief find an element in a JSON object
+
+    Finds an element in a JSON object with key equivalent to @a key. If the
+    element is not found or the JSON value is not an object, end() is returned.
+
+    @param[in] key key value of the element to search for
+
+    @return Iterator to an element with key equivalent to @a key. If no such
+    element is found, past-the-end (see end()) iterator is returned.
+
+    @complexity Logarithmic in the size of the JSON object.
+
+    @liveexample{The example shows how find is used.,find__key_type}
+    */
     iterator find(typename object_t::key_type key)
     {
         auto result = end();
@@ -2714,7 +2728,10 @@ class basic_json
         return result;
     }
 
-    /// find an element in an object
+    /*!
+    @brief find an element in a JSON object
+    @copydoc find(typename object_t::key_type)
+    */
     const_iterator find(typename object_t::key_type key) const
     {
         auto result = cend();
@@ -2727,7 +2744,22 @@ class basic_json
         return result;
     }
 
-    /// returns the number of occurrences of a key in an object
+    /*!
+    @brief returns the number of occurrences of a key in a JSON object
+
+    Returns the number of elements with key @a key. If ObjectType is the
+    default `std::map` type, the return value will always be `0` (@a key was
+    not found) or `1` (@a key was found).
+
+    @param[in] key key value of the element to count
+
+    @return Number of elements with key @a key. If the JSON value is not an
+    object, the return value will be `0`.
+
+    @complexity Logarithmic in the size of the JSON object.
+
+    @liveexample{The example shows how count is used.,count}
+    */
     size_type count(typename object_t::key_type key) const
     {
         // return 0 for all nonobject types
