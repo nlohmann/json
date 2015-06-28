@@ -2456,22 +2456,54 @@ class basic_json
         return *tmp;
     }
 
-    /// remove element given an iterator
-    template <class T, typename
+    /*!
+    @brief remove element given an iterator
+
+    Removes the element specified by iterator @a pos. Invalidates iterators and
+    references at or after the point of the erase, including the end()
+    iterator. The iterator @a pos must be valid and dereferenceable. Thus the
+    end() iterator (which is valid, but is not dereferencable) cannot be used
+    as a value for @a pos.
+
+    If called on a primitive type other than null, the resulting JSON value
+    will be `null`.
+
+    @param[in] pos iterator to the element to remove
+    @return Iterator following the last removed element. If the iterator @a pos
+    refers to the last element, the end() iterator is returned.
+
+    @tparam InteratorType an @ref iterator or @ref const_iterator
+
+    @throw std::domain_error if called on a `null` value
+    @throw std::domain_error if called on an iterator which does not belong to
+    the current JSON value
+    @throw std::out_of_range if called on a primitive type with invalid iterator
+    (i.e., any iterator which is not end())
+
+    @complexity The complexity depends on the type:
+    - objects: amortized constant
+    - arrays: linear in distance between pos and the end of the container
+    - strings: linear in the length of the string
+    - other types: constant
+
+    @liveexample{The example shows the result of erase for different JSON
+    types.,erase__IteratorType}
+    */
+    template <class InteratorType, typename
               std::enable_if<
-                  std::is_same<T, typename __basic_json::iterator>::value or
-                  std::is_same<T, typename __basic_json::const_iterator>::value
+                  std::is_same<InteratorType, typename __basic_json::iterator>::value or
+                  std::is_same<InteratorType, typename __basic_json::const_iterator>::value
                   , int>::type
               = 0>
-    T erase(T pos)
+    InteratorType erase(InteratorType pos)
     {
         // make sure iterator fits the current value
-        if (this != pos.m_object or m_type != pos.m_object->m_type)
+        if (this != pos.m_object)
         {
             throw std::domain_error("iterator does not fit current value");
         }
 
-        T result = end();
+        InteratorType result = end();
 
         switch (m_type)
         {
@@ -2516,23 +2548,55 @@ class basic_json
         return result;
     }
 
-    /// remove elements given an iterator range
-    template <class T, typename
+    /*!
+    @brief remove elements given an iterator range
+
+    Removes the element specified by the range `[first; last)`. Invalidates
+    iterators and references at or after the point of the erase, including the
+    end() iterator. The iterator @a first does not need to be dereferenceable
+    if `first == last`: erasing an empty range is a no-op.
+
+    If called on a primitive type other than null, the resulting JSON value
+    will be `null`.
+
+    @param[in] first iterator to the beginning of the range to remove
+    @param[in] last iterator past the end of the range to remove
+    @return Iterator following the last removed element. If the iterator @a
+    second refers to the last element, the end() iterator is returned.
+
+    @tparam InteratorType an @ref iterator or @ref const_iterator
+
+    @throw std::domain_error if called on a `null` value
+    @throw std::domain_error if called on iterators which does not belong to
+    the current JSON value
+    @throw std::out_of_range if called on a primitive type with invalid iterators
+    (i.e., if `first != begin()` and `last != end()`)
+
+    @complexity The complexity depends on the type:
+    - objects: `log(size()) + std::distance(first, last)`
+    - arrays: linear in the distance between @a first and @a last, plus linear
+      in the distance between @a last and end of the container
+    - strings: linear in the length of the string
+    - other types: constant
+
+    @liveexample{The example shows the result of erase for different JSON
+    types.,erase__IteratorType_IteratorType}
+    */
+    template <class InteratorType, typename
               std::enable_if<
-                  std::is_same<T, typename basic_json::iterator>::value or
-                  std::is_same<T, typename basic_json::const_iterator>::value
+                  std::is_same<InteratorType, typename basic_json::iterator>::value or
+                  std::is_same<InteratorType, typename basic_json::const_iterator>::value
                   , int>::type
               = 0>
-    T erase(T first, T last)
+    InteratorType erase(InteratorType first, InteratorType last)
     {
         // make sure iterator fits the current value
-        if (this != first.m_object or this != last.m_object or
-                m_type != first.m_object->m_type or m_type != last.m_object->m_type)
+        if (this != first.m_object or this != last.m_object)
         {
             throw std::domain_error("iterators do not fit current value");
         }
 
-        T result = end();
+        InteratorType result = end();
 
         switch (m_type)
         {
@@ -2579,7 +2643,23 @@ class basic_json
         return result;
     }
 
-    /// remove element from an object given a key
+    /*!
+    @brief remove element from a JSON object given a key
+
+    Removes elements from a JSON object with the key value @a key.
+
+    @param[in] key value of the elements to remove
+
+    @return Number of elements removed. If ObjectType is the default `std::map`
+    type, the return value will always be `0` (@a key was not found) or `1` (@a
+    key was found).
+
+    @throw std::domain_error when called on a type other than JSON object
+
+    @complexity `log(size()) + count(key)`
+
+    @liveexample{The example shows the effect of erase.,erase__key_type}
+    */
     size_type erase(const typename object_t::key_type& key)
     {
         // this erase only works for objects
@@ -2591,7 +2671,20 @@ class basic_json
         return m_value.object->erase(key);
     }
 
-    /// remove element from an array given an index
+    /*!
+    @brief remove element from a JSON array given an index
+
+    Removes element from a JSON array at the index @a idx.
+
+    @param[in] idx index of the element to remove
+
+    @throw std::domain_error when called on a type other than JSON array
+    @throw std::out_of_range when `idx >= size()`
+
+    @complexity Linear in distance between @a idx and the end of the container.
+
+    @liveexample{The example shows the effect of erase.,erase__size_type}
+    */
     void erase(const size_type idx)
     {
         // this erase only works for arrays
