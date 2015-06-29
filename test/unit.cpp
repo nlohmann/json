@@ -8983,6 +8983,61 @@ TEST_CASE("compliance tests from nativejson-benchmark")
     }
 }
 
+TEST_CASE("test suite from json-test-suite")
+{
+    SECTION("read all sample.json")
+    {
+        // read a file with all unicode characters stored as single-character
+        // strings in a JSON array
+        std::ifstream f("test/json_testsuite/sample.json");
+        json j;
+        CHECK_NOTHROW(j << f);
+
+        // the array has 3 elements
+        CHECK(j.size() == 3);
+    }
+}
+
+TEST_CASE("json.org examples")
+{
+    // here, we list all JSON values from http://json.org/example
+
+    SECTION("1.json")
+    {
+        std::ifstream f("test/json.org/1.json");
+        json j;
+        CHECK_NOTHROW(j << f);
+    }
+
+    SECTION("2.json")
+    {
+        std::ifstream f("test/json.org/2.json");
+        json j;
+        CHECK_NOTHROW(j << f);
+    }
+
+    SECTION("3.json")
+    {
+        std::ifstream f("test/json.org/3.json");
+        json j;
+        CHECK_NOTHROW(j << f);
+    }
+
+    SECTION("4.json")
+    {
+        std::ifstream f("test/json.org/4.json");
+        json j;
+        CHECK_NOTHROW(j << f);
+    }
+
+    SECTION("5.json")
+    {
+        std::ifstream f("test/json.org/5.json");
+        json j;
+        CHECK_NOTHROW(j << f);
+    }
+}
+
 TEST_CASE("RFC 7159 examples")
 {
     // here, we list all JSON values from the RFC 7159 document
