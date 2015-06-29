@@ -814,8 +814,13 @@
                </Node>
                <Node>
                 <Name>get</Name>
-                <Path>classnlohmann_1_1basic__json_a5a2d66582b75e0301d37886137c6953c.html</Path>
-                <Anchor>a5a2d66582b75e0301d37886137c6953c</Anchor>
+                <Path>classnlohmann_1_1basic__json_ae50f22a1c646b8627e88f1313cceffd4.html</Path>
+                <Anchor>ae50f22a1c646b8627e88f1313cceffd4</Anchor>
+               </Node>
+               <Node>
+                <Name>get</Name>
+                <Path>classnlohmann_1_1basic__json_ac66fedfefc284420b01124cd24cb06c2.html</Path>
+                <Anchor>ac66fedfefc284420b01124cd24cb06c2</Anchor>
                </Node>
                <Node>
                 <Name>get_allocator</Name>
@@ -824,8 +829,13 @@
                </Node>
                <Node>
                 <Name>get_ptr</Name>
-                <Path>classnlohmann_1_1basic__json_a2efda2b6d931ee72d9757418042e74e1.html</Path>
-                <Anchor>a2efda2b6d931ee72d9757418042e74e1</Anchor>
+                <Path>classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html</Path>
+                <Anchor>a656939a3dc9a6047e4afacd9e11b83a6</Anchor>
+               </Node>
+               <Node>
+                <Name>get_ptr</Name>
+                <Path>classnlohmann_1_1basic__json_ae19d3fe7f9ded97236715406e94ab979.html</Path>
+                <Anchor>ae19d3fe7f9ded97236715406e94ab979</Anchor>
                </Node>
                <Node>
                 <Name>is_array</Name>

@@ -591,8 +591,20 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a5a2d66582b75e0301d37886137c6953c.html</Path>
-    <Anchor>a5a2d66582b75e0301d37886137c6953c</Anchor>
+    <Path>classnlohmann_1_1basic__json_ae50f22a1c646b8627e88f1313cceffd4.html</Path>
+    <Anchor>ae50f22a1c646b8627e88f1313cceffd4</Anchor>
+    <Abstract>get a pointer value (explicit) </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>get</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ac66fedfefc284420b01124cd24cb06c2.html</Path>
+    <Anchor>ac66fedfefc284420b01124cd24cb06c2</Anchor>
     <Abstract>get a pointer value (explicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -603,8 +615,20 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a2efda2b6d931ee72d9757418042e74e1.html</Path>
-    <Anchor>a2efda2b6d931ee72d9757418042e74e1</Anchor>
+    <Path>classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html</Path>
+    <Anchor>a656939a3dc9a6047e4afacd9e11b83a6</Anchor>
+    <Abstract>get a pointer value (implicit) </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>get_ptr</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ae19d3fe7f9ded97236715406e94ab979.html</Path>
+    <Anchor>ae19d3fe7f9ded97236715406e94ab979</Anchor>
     <Abstract>get a pointer value (implicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>

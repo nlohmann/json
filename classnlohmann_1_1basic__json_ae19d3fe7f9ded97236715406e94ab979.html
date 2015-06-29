@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.9.1"/>
-<title>JSON for Modern C++: nlohmann::basic_json::dump</title>
+<title>JSON for Modern C++: nlohmann::basic_json::get_ptr</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -127,7 +127,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a4d688b5ff534d3ab4e284b3191061529.html#a4d688b5ff534d3ab4e284b3191061529">crbegin</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a4943b7f16ddc4e0df33c0cae7ef14471.html#a4943b7f16ddc4e0df33c0cae7ef14471">crend</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_adbd4c16c9ac641b2a4736bc2c6787d83.html#adbd4c16c9ac641b2a4736bc2c6787d83">difference_type</a></td></tr>
-          <tr><td class="navtab"><a class="qindexHL" href="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76.html#ade7bd6e0fe221fec9d3fa9b430f5ce76">dump</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76.html#ade7bd6e0fe221fec9d3fa9b430f5ce76">dump</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a572cdf681c75b42c2bc38a1fbe993eca.html#a572cdf681c75b42c2bc38a1fbe993eca">empty</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ab2162bc76e10d8736cab9b2039956054.html#ab2162bc76e10d8736cab9b2039956054">end</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aa5413178b8041f7ac685dec4b040dd2c.html#aa5413178b8041f7ac685dec4b040dd2c">end</a></td></tr>
@@ -144,7 +144,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ac66fedfefc284420b01124cd24cb06c2.html#ac66fedfefc284420b01124cd24cb06c2">get</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ad2c4513cef5d8db760c4b2d871eea42c.html#ad2c4513cef5d8db760c4b2d871eea42c">get_allocator</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html#a656939a3dc9a6047e4afacd9e11b83a6">get_ptr</a></td></tr>
-          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ae19d3fe7f9ded97236715406e94ab979.html#ae19d3fe7f9ded97236715406e94ab979">get_ptr</a></td></tr>
+          <tr><td class="navtab"><a class="qindexHL" href="classnlohmann_1_1basic__json_ae19d3fe7f9ded97236715406e94ab979.html#ae19d3fe7f9ded97236715406e94ab979">get_ptr</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_af70222eb312ca0a44cd7d793b1516e2e.html#af70222eb312ca0a44cd7d793b1516e2e">is_array</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a62136b62f0ec60c0f2b5a3ce9aaa19b4.html#a62136b62f0ec60c0f2b5a3ce9aaa19b4">is_boolean</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ad1fea64ed433a6f4e7408c8c7bbc4a37.html#ad1fea64ed433a6f4e7408c8c7bbc4a37">is_discarded</a></td></tr>
@@ -213,97 +213,68 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       </div>
    </td>
    <td valign="top" class="mempage">
-<a class="anchor" id="ade7bd6e0fe221fec9d3fa9b430f5ce76"></a>
+<a class="anchor" id="ae19d3fe7f9ded97236715406e94ab979"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;template&lt; typename U, typename V, typename...Args &gt; class ObjectType = std::map, template&lt; typename U, typename...Args &gt; class ArrayType = std::vector, class StringType  = std::string, class BooleanType  = bool, class NumberIntegerType  = int64_t, class NumberFloatType  = double, template&lt; typename U &gt; class AllocatorType = std::allocator&gt; </div>
+<div class="memtemplate">
+template&lt;typename PointerType , typename std::enable_if&lt; std::is_pointer&lt; PointerType &gt;::valueand std::is_const&lt; PointerType &gt;::value, int &gt;::type  = 0&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classnlohmann_1_1basic__json_ace8338e57fdb11e1955c2a0c2d782069.html#ace8338e57fdb11e1955c2a0c2d782069">string_t</a> <a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::dump </td>
+          <td class="memname">const PointerType <a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::get_ptr </td>
           <td>(</td>
-          <td class="paramtype">const int&#160;</td>
-          <td class="paramname"><em>indent</em> = <code>-1</code></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Serialization function for JSON values. The function tries to mimick Python's <code>json.dumps()</code> function, and currently supports its <code>indent</code> parameter.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">indent</td><td>if indent is nonnegative, then array elements and object members will be pretty-printed with that indent level. An indent level of 0 will only insert newlines. -1 (the default) selects the most compact representation</td></tr>
+<p>get a pointer value (implicit) Implict pointer access to the internally stored JSON value. No copies are made.</p>
+<dl class="section warning"><dt>Warning</dt><dd>Writing data to the pointee of the result yields an undefined state.</dd></dl>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">PointerType</td><td>pointer type; must be a pointer to <a class="el" href="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba.html#ac82abedf356d252e0589850c3d8b35ba">array_t</a>, <a class="el" href="classnlohmann_1_1basic__json_a63691315292df8e1522b00d37ebb1ffc.html#a63691315292df8e1522b00d37ebb1ffc">object_t</a>, <a class="el" href="classnlohmann_1_1basic__json_ace8338e57fdb11e1955c2a0c2d782069.html#ace8338e57fdb11e1955c2a0c2d782069">string_t</a>, <a class="el" href="classnlohmann_1_1basic__json_aafa839f2a74dc1b5060314b3423143b8.html#aafa839f2a74dc1b5060314b3423143b8">boolean_t</a>, <a class="el" href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">number_integer_t</a>, or <a class="el" href="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044.html#aacf6c869f6a9c66ac1bc99e93f310044">number_float_t</a>.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>string containing the serialization of the JSON value</dd></dl>
-<dl class="section user"><dt>Complexity</dt><dd>Linear.</dd></dl>
-<dl class="section user"><dt>Example</dt><dd>The following example shows the effect of different <em>indent</em> parameters to the result of the serializaion. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
+<dl class="section return"><dt>Returns</dt><dd>pointer to the internally stored JSON value if the requested pointer type <em>PointerType</em> fits to the JSON value; <code>nullptr</code> otherwise</dd></dl>
+<dl class="section user"><dt>Complexity</dt><dd>Constant.</dd></dl>
+<dl class="section user"><dt>Example</dt><dd>The example below shows how pointers to internal values of a JSON value can be requested. Note that no type conversions are made and a <code>nullptr</code> is returned if the value and the requested pointer type does not match. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="keyword">using namespace </span><a class="code" href="namespacenlohmann.html">nlohmann</a>;</div>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;</div>
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create JSON values</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_object = {{<span class="stringliteral">&quot;one&quot;</span>, 1}, {<span class="stringliteral">&quot;two&quot;</span>, 2}};</div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_array = {1, 2, 4, 8, 16};</div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;</div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <span class="comment">// call dump()</span></div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    std::cout &lt;&lt; j_object.<a class="code" href="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76.html#ade7bd6e0fe221fec9d3fa9b430f5ce76">dump</a>() &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    std::cout &lt;&lt; j_object.<a class="code" href="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76.html#ade7bd6e0fe221fec9d3fa9b430f5ce76">dump</a>(-1) &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    std::cout &lt;&lt; j_object.<a class="code" href="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76.html#ade7bd6e0fe221fec9d3fa9b430f5ce76">dump</a>(0) &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    std::cout &lt;&lt; j_object.<a class="code" href="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76.html#ade7bd6e0fe221fec9d3fa9b430f5ce76">dump</a>(4) &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    std::cout &lt;&lt; j_array.<a class="code" href="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76.html#ade7bd6e0fe221fec9d3fa9b430f5ce76">dump</a>() &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    std::cout &lt;&lt; j_array.<a class="code" href="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76.html#ade7bd6e0fe221fec9d3fa9b430f5ce76">dump</a>(-1) &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    std::cout &lt;&lt; j_array.<a class="code" href="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76.html#ade7bd6e0fe221fec9d3fa9b430f5ce76">dump</a>(0) &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    std::cout &lt;&lt; j_array.<a class="code" href="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76.html#ade7bd6e0fe221fec9d3fa9b430f5ce76">dump</a>(4) &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create a JSON boolean</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> value = 17;</div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="comment">// explicitly getting pointers</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <span class="keyword">auto</span> p1 = value.<a class="code" href="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html#a656939a3dc9a6047e4afacd9e11b83a6">get_ptr</a>&lt;<span class="keyword">const</span> <a class="code" href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">json::number_integer_t</a>*&gt;();</div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    <span class="keyword">auto</span> p2 = value.<a class="code" href="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html#a656939a3dc9a6047e4afacd9e11b83a6">get_ptr</a>&lt;<a class="code" href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">json::number_integer_t</a>*&gt;();</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="keyword">auto</span> p3 = value.<a class="code" href="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html#a656939a3dc9a6047e4afacd9e11b83a6">get_ptr</a>&lt;<a class="code" href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">json::number_integer_t</a>* <span class="keyword">const</span>&gt;();</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    <span class="keyword">auto</span> p4 = value.<a class="code" href="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html#a656939a3dc9a6047e4afacd9e11b83a6">get_ptr</a>&lt;<span class="keyword">const</span> <a class="code" href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">json::number_integer_t</a>* <span class="keyword">const</span>&gt;();</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    <span class="keyword">auto</span> p5 = value.<a class="code" href="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html#a656939a3dc9a6047e4afacd9e11b83a6">get_ptr</a>&lt;<a class="code" href="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044.html#aacf6c869f6a9c66ac1bc99e93f310044">json::number_float_t</a>*&gt;();</div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;</div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    <span class="comment">// print the pointees</span></div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    std::cout &lt;&lt; *p1 &lt;&lt; <span class="charliteral">&#39; &#39;</span> &lt;&lt; *p2 &lt;&lt; <span class="charliteral">&#39; &#39;</span> &lt;&lt; *p3 &lt;&lt; <span class="charliteral">&#39; &#39;</span> &lt;&lt; *p4 &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    std::cout &lt;&lt; std::boolalpha &lt;&lt; (p5 == <span class="keyword">nullptr</span>) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;}</div>
 <div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:121</div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:56</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76_html_ade7bd6e0fe221fec9d3fa9b430f5ce76"><div class="ttname"><a href="classnlohmann_1_1basic__json_ade7bd6e0fe221fec9d3fa9b430f5ce76.html#ade7bd6e0fe221fec9d3fa9b430f5ce76">nlohmann::basic_json::dump</a></div><div class="ttdeci">string_t dump(const int indent=-1) const </div><div class="ttdoc">serialization </div><div class="ttdef"><b>Definition:</b> json.hpp:1418</div></div>
-</div><!-- fragment --> Output: <pre class="fragment">{"one":1,"two":2}
-
-{"one":1,"two":2}
-
-{
-"one": 1,
-"two": 2
-}
-
-{
-    "one": 1,
-    "two": 2
-}
-
-[1,2,4,8,16]
-
-[1,2,4,8,16]
-
-[
-1,
-2,
-4,
-8,
-16
-]
-
-[
-    1,
-    2,
-    4,
-    8,
-    16
-]
-
-</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/dump.cpp -o dump </pre>.</dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a href="https://docs.python.org/2/library/json.html#json.dump">https://docs.python.org/2/library/json.html#json.dump</a> </dd></dl>
+<div class="ttc" id="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6_html_a656939a3dc9a6047e4afacd9e11b83a6"><div class="ttname"><a href="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html#a656939a3dc9a6047e4afacd9e11b83a6">nlohmann::basic_json::get_ptr</a></div><div class="ttdeci">PointerType get_ptr() noexcept</div><div class="ttdoc">get a pointer value (implicit) </div><div class="ttdef"><b>Definition:</b> json.hpp:2055</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33_html_a6944904b3b59769b1cf62ac2532cbe33"><div class="ttname"><a href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">nlohmann::basic_json::number_integer_t</a></div><div class="ttdeci">NumberIntegerType number_integer_t</div><div class="ttdoc">a type for a number (integer) </div><div class="ttdef"><b>Definition:</b> json.hpp:197</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044_html_aacf6c869f6a9c66ac1bc99e93f310044"><div class="ttname"><a href="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044.html#aacf6c869f6a9c66ac1bc99e93f310044">nlohmann::basic_json::number_float_t</a></div><div class="ttdeci">NumberFloatType number_float_t</div><div class="ttdoc">a type for a number (floating-point) </div><div class="ttdef"><b>Definition:</b> json.hpp:199</div></div>
+</div><!-- fragment --> Output: <pre class="fragment">17 17 17 17
+true
+</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/get_ptr.cpp -o get_ptr </pre>. </dd></dl>
 
 </div>
 </div>

@@ -140,9 +140,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a83cbbfbf5d3ecbad6de8ece0be6b36c4.html#a83cbbfbf5d3ecbad6de8ece0be6b36c4">front</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a8b526709d395142b68d21abfbfff17c3.html#a8b526709d395142b68d21abfbfff17c3">front</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html#a5f0aad50ed7e8aec3128fe018c18b3fe">get</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ae50f22a1c646b8627e88f1313cceffd4.html#ae50f22a1c646b8627e88f1313cceffd4">get</a></td></tr>
           <tr><td class="navtab"><a class="qindexHL" href="classnlohmann_1_1basic__json_a5a2d66582b75e0301d37886137c6953c.html#a5a2d66582b75e0301d37886137c6953c">get</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ad2c4513cef5d8db760c4b2d871eea42c.html#ad2c4513cef5d8db760c4b2d871eea42c">get_allocator</a></td></tr>
-          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a2efda2b6d931ee72d9757418042e74e1.html#a2efda2b6d931ee72d9757418042e74e1">get_ptr</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html#a656939a3dc9a6047e4afacd9e11b83a6">get_ptr</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ae19d3fe7f9ded97236715406e94ab979.html#ae19d3fe7f9ded97236715406e94ab979">get_ptr</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_af70222eb312ca0a44cd7d793b1516e2e.html#af70222eb312ca0a44cd7d793b1516e2e">is_array</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a62136b62f0ec60c0f2b5a3ce9aaa19b4.html#a62136b62f0ec60c0f2b5a3ce9aaa19b4">is_boolean</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ad1fea64ed433a6f4e7408c8c7bbc4a37.html#ad1fea64ed433a6f4e7408c8c7bbc4a37">is_discarded</a></td></tr>
@@ -235,7 +237,7 @@ template&lt;typename PointerType , typename std::enable_if&lt; std::is_pointer&l
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Explicit pointer access to the internally stored JSON value. No copies are made.</p>
+<p>get a pointer value (explicit) Explicit pointer access to the internally stored JSON value. No copies are made.</p>
 <dl class="section warning"><dt>Warning</dt><dd>Writing data to the pointee of the result yields an undefined state.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -267,13 +269,13 @@ template&lt;typename PointerType , typename std::enable_if&lt; std::is_pointer&l
 <div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;}</div>
 <div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:121</div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:56</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe_html_a5f0aad50ed7e8aec3128fe018c18b3fe"><div class="ttname"><a href="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html#a5f0aad50ed7e8aec3128fe018c18b3fe">nlohmann::basic_json::get</a></div><div class="ttdeci">ValueType get() const </div><div class="ttdoc">get a value (explicit) </div><div class="ttdef"><b>Definition:</b> json.hpp:1938</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe_html_a5f0aad50ed7e8aec3128fe018c18b3fe"><div class="ttname"><a href="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html#a5f0aad50ed7e8aec3128fe018c18b3fe">nlohmann::basic_json::get</a></div><div class="ttdeci">ValueType get() const </div><div class="ttdoc">get a value (explicit) </div><div class="ttdef"><b>Definition:</b> json.hpp:1974</div></div>
 <div class="ttc" id="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33_html_a6944904b3b59769b1cf62ac2532cbe33"><div class="ttname"><a href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">nlohmann::basic_json::number_integer_t</a></div><div class="ttdeci">NumberIntegerType number_integer_t</div><div class="ttdoc">a type for a number (integer) </div><div class="ttdef"><b>Definition:</b> json.hpp:197</div></div>
 <div class="ttc" id="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044_html_aacf6c869f6a9c66ac1bc99e93f310044"><div class="ttname"><a href="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044.html#aacf6c869f6a9c66ac1bc99e93f310044">nlohmann::basic_json::number_float_t</a></div><div class="ttdeci">NumberFloatType number_float_t</div><div class="ttdoc">a type for a number (floating-point) </div><div class="ttdef"><b>Definition:</b> json.hpp:199</div></div>
 </div><!-- fragment --> Output: <pre class="fragment">17 17 17 17
 true
 </pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/get__PointerType.cpp -o get__PointerType </pre>.</dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_a2efda2b6d931ee72d9757418042e74e1.html#a2efda2b6d931ee72d9757418042e74e1">get_ptr()</a> for explicit pointer-member access </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html#a656939a3dc9a6047e4afacd9e11b83a6">get_ptr()</a> for explicit pointer-member access </dd></dl>
 
 </div>
 </div>
@@ -283,7 +285,7 @@ true
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jun 28 2015 19:32:30 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jun 29 2015 20:29:30 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
