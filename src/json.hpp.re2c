@@ -1860,37 +1860,73 @@ class basic_json
     }
 
     /// get a pointer to the value (object)
-    const object_t* get_impl_ptr(object_t*) const noexcept
+    object_t* get_impl_ptr(object_t*) noexcept
+    {
+        return is_object() ? m_value.object : nullptr;
+    }
+
+    /// get a pointer to the value (object)
+    const object_t* get_impl_ptr(const object_t*) const noexcept
     {
         return is_object() ? m_value.object : nullptr;
     }
 
     /// get a pointer to the value (array)
-    const array_t* get_impl_ptr(array_t*) const noexcept
+    array_t* get_impl_ptr(array_t*) noexcept
+    {
+        return is_array() ? m_value.array : nullptr;
+    }
+
+    /// get a pointer to the value (array)
+    const array_t* get_impl_ptr(const array_t*) const noexcept
     {
         return is_array() ? m_value.array : nullptr;
     }
 
     /// get a pointer to the value (string)
-    const string_t* get_impl_ptr(string_t*) const noexcept
+    string_t* get_impl_ptr(string_t*) noexcept
+    {
+        return is_string() ? m_value.string : nullptr;
+    }
+
+    /// get a pointer to the value (string)
+    const string_t* get_impl_ptr(const string_t*) const noexcept
     {
         return is_string() ? m_value.string : nullptr;
     }
 
     /// get a pointer to the value (boolean)
-    const boolean_t* get_impl_ptr(boolean_t*) const noexcept
+    boolean_t* get_impl_ptr(boolean_t*) noexcept
+    {
+        return is_boolean() ? &m_value.boolean : nullptr;
+    }
+
+    /// get a pointer to the value (boolean)
+    const boolean_t* get_impl_ptr(const boolean_t*) const noexcept
     {
         return is_boolean() ? &m_value.boolean : nullptr;
     }
 
     /// get a pointer to the value (integer number)
-    const number_integer_t* get_impl_ptr(number_integer_t*) const noexcept
+    number_integer_t* get_impl_ptr(number_integer_t*) noexcept
+    {
+        return is_number_integer() ? &m_value.number_integer : nullptr;
+    }
+
+    /// get a pointer to the value (integer number)
+    const number_integer_t* get_impl_ptr(const number_integer_t*) const noexcept
     {
         return is_number_integer() ? &m_value.number_integer : nullptr;
     }
 
     /// get a pointer to the value (floating-point number)
-    const number_float_t* get_impl_ptr(number_float_t*) const noexcept
+    number_float_t* get_impl_ptr(number_float_t*) noexcept
+    {
+        return is_number_float() ? &m_value.number_float : nullptr;
+    }
+
+    /// get a pointer to the value (floating-point number)
+    const number_float_t* get_impl_ptr(const number_float_t*) const noexcept
     {
         return is_number_float() ? &m_value.number_float : nullptr;
     }
@@ -1969,7 +2005,21 @@ class basic_json
              std::enable_if<
                  std::is_pointer<PointerType>::value
                  , int>::type = 0>
-    PointerType get() const noexcept
+    PointerType get() noexcept
+    {
+        // delegate the call to get_ptr
+        return get_ptr<PointerType>();
+    }
+
+    /*!
+    @brief get a pointer value (explicit)
+    @copydoc get()
+    */
+    template<typename PointerType, typename
+             std::enable_if<
+                 std::is_pointer<PointerType>::value
+                 , int>::type = 0>
+    const PointerType get() const noexcept
     {
         // delegate the call to get_ptr
         return get_ptr<PointerType>();
@@ -2002,15 +2052,25 @@ class basic_json
              std::enable_if<
                  std::is_pointer<PointerType>::value
                  , int>::type = 0>
-    PointerType get_ptr() const noexcept
+    PointerType get_ptr() noexcept
     {
-        // get_impl_ptr will only work with non-const and non-volatile pointer
-        // types. Therefore, we case away all cv properties to be able to
-        // select the correct function. The cv properties will then be added
-        // again by the const const cast to PointerType.
-        return const_cast<PointerType>(get_impl_ptr(
-                                           static_cast<typename std::add_pointer<typename std::remove_cv<typename std::remove_pointer<PointerType>::type>::type>::type>
-                                           (nullptr)));
+        // delegate the call to get_impl_ptr<>()
+        return get_impl_ptr(static_cast<PointerType>(nullptr));
+    }
+
+    /*!
+    @brief get a pointer value (implicit)
+    @copydoc get_ptr()
+    */
+    template<typename PointerType, typename
+             std::enable_if<
+                 std::is_pointer<PointerType>::value
+                 and std::is_const<PointerType>::value
+                 , int>::type = 0>
+    const PointerType get_ptr() const noexcept
+    {
+        // delegate the call to get_impl_ptr<>() const
+        return get_impl_ptr(static_cast<const PointerType>(nullptr));
     }
 
     /*!
