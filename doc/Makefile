@@ -24,8 +24,19 @@ EXAMPLES = $(wildcard examples/*.cpp)
 	diff $@ $(<:.cpp=.output)
 	rm $(<:.cpp=) $@
 
+# create links to try the code online
+%.link: %.cpp
+	rm -fr tmp
+	mkdir tmp
+	cp $(SRCDIR)/json.hpp tmp
+	./send_to_wandbox.py tmp $< > $@.tmp
+	/bin/echo -n "<a target=\"_blank\" href=\"`cat $@.tmp`\"><b>online</b></a>" > $@
+	rm -fr tmp $@.tmp
+
 # create output from all stand-alone example files
 create_output: $(EXAMPLES:.cpp=.output)
+
+create_links: $(EXAMPLES:.cpp=.link)
 
 # check output of all stand-alone example files
 check_output: $(EXAMPLES:.cpp=.test)
