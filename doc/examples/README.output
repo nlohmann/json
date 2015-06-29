@@ -1,0 +1,27 @@
+{
+    "answer": {
+        "everything": 42
+    },
+    "happy": true,
+    "list": [
+        1,
+        0,
+        2
+    ],
+    "name": "Niels",
+    "new": {
+        "key": {
+            "value": [
+                "another",
+                "list"
+            ]
+        }
+    },
+    "nothing": null,
+    "object": {
+        "currency": "USD",
+        "value": 42.99
+    },
+    "pi": 3.141,
+    "size": 9
+}

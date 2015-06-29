@@ -135,11 +135,11 @@ json j2 = {
 Note that in all these cases, you never need to "tell" the compiler which JSON value you want to use. If you want to be explicit or express some edge cases, the functions `json::array` and `json::object` will help:
 
 ```cpp
-// ways to express the empty array []
-json empty_array_implicit = {{}};
+// a way to express the empty array []
 json empty_array_explicit = json::array();
 
-// a way to express the empty object {}
+// ways to express the empty object {}
+json empty_object_implicit = json({});
 json empty_object_explicit = json::object();
 
 // a way to express an _array_ of key/value pairs [["currency", "USD"], ["value", 42.99]]
