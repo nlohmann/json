@@ -9276,4 +9276,16 @@ TEST_CASE("regression tests")
         // we need to cast to int to compile with Catch - the value is int32_t
         CHECK(static_cast<int>(j["int_1"]) == 1);
     }
+
+    SECTION("issue #101 - binary string causes numbers to be dumped as hex")
+    {
+        int64_t number = 10;
+        std::string bytes{"\x00" "asdf\n", 6};
+        json j;
+        j["int64"] = number;
+        j["binary string"] = bytes;
+        // make sure the number is really printed as decimal "10" and not as
+        // hexadecimal "a"
+        CHECK(j.dump() == "{\"binary string\":\"\\u0000asdf\\n\",\"int64\":10}");
+    }
 }

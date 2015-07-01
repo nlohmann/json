@@ -3978,7 +3978,7 @@ class basic_json
                     {
                         // control characters (everything between 0x00 and 0x1f)
                         // -> create four-digit hex representation
-                        o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << int(c);
+                        o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << int(c) << std::dec;
                     }
                     else
                     {
