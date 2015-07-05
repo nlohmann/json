@@ -6798,20 +6798,20 @@ TEST_CASE("iterator class")
             {
                 json j(json::value_t::null);
                 json::iterator it = j.begin();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 it++;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("number")
             {
                 json j(17);
                 json::iterator it = j.begin();
-                CHECK(it.m_it.generic_iterator == 0);
+                CHECK(it.m_it.primitive_iterator == 0);
                 it++;
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 it++;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("object")
@@ -6849,20 +6849,20 @@ TEST_CASE("iterator class")
             {
                 json j(json::value_t::null);
                 json::iterator it = j.begin();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 ++it;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("number")
             {
                 json j(17);
                 json::iterator it = j.begin();
-                CHECK(it.m_it.generic_iterator == 0);
+                CHECK(it.m_it.primitive_iterator == 0);
                 ++it;
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 ++it;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("object")
@@ -6900,18 +6900,18 @@ TEST_CASE("iterator class")
             {
                 json j(json::value_t::null);
                 json::iterator it = j.end();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
             }
 
             SECTION("number")
             {
                 json j(17);
                 json::iterator it = j.end();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 it--;
-                CHECK(it.m_it.generic_iterator == 0);
+                CHECK(it.m_it.primitive_iterator == 0);
                 it--;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("object")
@@ -6949,18 +6949,18 @@ TEST_CASE("iterator class")
             {
                 json j(json::value_t::null);
                 json::iterator it = j.end();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
             }
 
             SECTION("number")
             {
                 json j(17);
                 json::iterator it = j.end();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 --it;
-                CHECK(it.m_it.generic_iterator == 0);
+                CHECK(it.m_it.primitive_iterator == 0);
                 --it;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("object")
@@ -7162,20 +7162,20 @@ TEST_CASE("const_iterator class")
             {
                 json j(json::value_t::null);
                 json::const_iterator it = j.cbegin();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 it++;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("number")
             {
                 json j(17);
                 json::const_iterator it = j.cbegin();
-                CHECK(it.m_it.generic_iterator == 0);
+                CHECK(it.m_it.primitive_iterator == 0);
                 it++;
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 it++;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("object")
@@ -7213,20 +7213,20 @@ TEST_CASE("const_iterator class")
             {
                 json j(json::value_t::null);
                 json::const_iterator it = j.cbegin();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 ++it;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("number")
             {
                 json j(17);
                 json::const_iterator it = j.cbegin();
-                CHECK(it.m_it.generic_iterator == 0);
+                CHECK(it.m_it.primitive_iterator == 0);
                 ++it;
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 ++it;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("object")
@@ -7264,18 +7264,18 @@ TEST_CASE("const_iterator class")
             {
                 json j(json::value_t::null);
                 json::const_iterator it = j.cend();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
             }
 
             SECTION("number")
             {
                 json j(17);
                 json::const_iterator it = j.cend();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 it--;
-                CHECK(it.m_it.generic_iterator == 0);
+                CHECK(it.m_it.primitive_iterator == 0);
                 it--;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("object")
@@ -7313,18 +7313,18 @@ TEST_CASE("const_iterator class")
             {
                 json j(json::value_t::null);
                 json::const_iterator it = j.cend();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
             }
 
             SECTION("number")
             {
                 json j(17);
                 json::const_iterator it = j.cend();
-                CHECK(it.m_it.generic_iterator == 1);
+                CHECK(it.m_it.primitive_iterator == 1);
                 --it;
-                CHECK(it.m_it.generic_iterator == 0);
+                CHECK(it.m_it.primitive_iterator == 0);
                 --it;
-                CHECK((it.m_it.generic_iterator != 0 and it.m_it.generic_iterator != 1));
+                CHECK((it.m_it.primitive_iterator != 0 and it.m_it.primitive_iterator != 1));
             }
 
             SECTION("object")
