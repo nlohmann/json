@@ -4169,8 +4169,6 @@ class basic_json
     class primitive_iterator_t
     {
       public:
-        primitive_iterator_t() = default;
-
         /// set iterator to a defined beginning
         void set_begin()
         {

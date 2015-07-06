@@ -4169,8 +4169,6 @@ class basic_json
     class primitive_iterator_t
     {
       public:
-        primitive_iterator_t() = default;
-
         /// set iterator to a defined beginning
         void set_begin()
         {
@@ -4202,7 +4200,7 @@ class basic_json
         }
 
         /// return value to compare
-        operator const difference_type& () const
+        operator const difference_type () const
         {
             return m_it;
         }
