@@ -4093,9 +4093,9 @@ TEST_CASE("iterators")
                 auto rit = j.rend();
                 auto crit = j.crend();
                 CHECK_THROWS_AS(rit.key(), std::domain_error);
-                CHECK(rit.value() == json(true));
+                CHECK_THROWS_AS(rit.value(), std::out_of_range);
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
-                CHECK(crit.value() == json(true));
+                CHECK_THROWS_AS(crit.value(), std::out_of_range);
             }
         }
 
@@ -4291,9 +4291,9 @@ TEST_CASE("iterators")
                 auto rit = j.rend();
                 auto crit = j.crend();
                 CHECK_THROWS_AS(rit.key(), std::domain_error);
-                CHECK(rit.value() == json("hello world"));
+                CHECK_THROWS_AS(rit.value(), std::out_of_range);
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
-                CHECK(crit.value() == json("hello world"));
+                CHECK_THROWS_AS(crit.value(), std::out_of_range);
             }
         }
 
@@ -4478,13 +4478,6 @@ TEST_CASE("iterators")
                 CHECK(it.value() == json(1));
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
                 CHECK(cit.value() == json(1));
-
-                auto rit = j.rend();
-                auto crit = j.crend();
-                CHECK_THROWS_AS(rit.key(), std::domain_error);
-                CHECK(rit.value() == json(1));
-                CHECK_THROWS_AS(crit.key(), std::domain_error);
-                CHECK(crit.value() == json(1));
             }
         }
 
@@ -4669,13 +4662,6 @@ TEST_CASE("iterators")
                 CHECK(it.value() == json(1));
                 CHECK(cit.key() == "A");
                 CHECK(cit.value() == json(1));
-
-                auto rit = j.rend();
-                auto crit = j.crend();
-                CHECK(rit.key() == "A");
-                CHECK(rit.value() == json(1));
-                CHECK(crit.key() == "A");
-                CHECK(crit.value() == json(1));
             }
         }
 
@@ -4871,9 +4857,9 @@ TEST_CASE("iterators")
                 auto rit = j.rend();
                 auto crit = j.crend();
                 CHECK_THROWS_AS(rit.key(), std::domain_error);
-                CHECK(rit.value() == json(23));
+                CHECK_THROWS_AS(rit.value(), std::out_of_range);
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
-                CHECK(crit.value() == json(23));
+                CHECK_THROWS_AS(crit.value(), std::out_of_range);
             }
         }
 
@@ -5069,9 +5055,9 @@ TEST_CASE("iterators")
                 auto rit = j.rend();
                 auto crit = j.crend();
                 CHECK_THROWS_AS(rit.key(), std::domain_error);
-                CHECK(rit.value() == json(23.42));
+                CHECK_THROWS_AS(rit.value(), std::out_of_range);
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
-                CHECK(crit.value() == json(23.42));
+                CHECK_THROWS_AS(crit.value(), std::out_of_range);
             }
         }
 
@@ -9275,6 +9261,61 @@ TEST_CASE("regression tests")
         j["int_1"] = 1;
         // we need to cast to int to compile with Catch - the value is int32_t
         CHECK(static_cast<int>(j["int_1"]) == 1);
+    }
+
+    SECTION("issue #93 reverse_iterator operator inheritance problem")
+    {
+        {
+            json a = {1, 2, 3};
+            json::reverse_iterator rit = a.rbegin();
+            ++rit;
+            CHECK(*rit == json(2));
+            CHECK(rit.value() == json(2));
+        }
+        {
+            json a = {1, 2, 3};
+            json::reverse_iterator rit = ++a.rbegin();
+        }
+        {
+            json a = {1, 2, 3};
+            json::reverse_iterator rit = a.rbegin();
+            ++rit;
+            json b = {0, 0, 0};
+            std::transform(rit, a.rend(), b.rbegin(), [](json el)
+            {
+                return el;
+            });
+            CHECK(b == json({0, 1, 2}));
+        }
+        {
+            //            json a = {1,2,3};
+            //            json b = {0,0,0};
+            //            std::transform(++a.rbegin(),a.rend(),b.rbegin(),[](json el){return el;});
+        }
+    }
+
+    SECTION("issue #100 - failed to iterator json object with reverse_iterator")
+    {
+        json config =
+        {
+            { "111", 111 },
+            { "112", 112 },
+            { "113", 113 }
+        };
+
+        std::stringstream ss;
+
+        for (auto it = config.begin(); it != config.end(); ++it)
+        {
+            ss << it.key() << ": " << it.value() << '\n';
+        }
+
+        for (auto it = config.rbegin(); it != config.rend(); ++it)
+        {
+            ss << it.key() << ": " << it.value() << '\n';
+        }
+
+        CHECK(ss.str() == "111: 111\n112: 112\n113: 113\n113: 113\n112: 112\n111: 111\n");
     }
 
     SECTION("issue #101 - binary string causes numbers to be dumped as hex")

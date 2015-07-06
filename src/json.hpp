@@ -5248,16 +5248,22 @@ class basic_json
                          it)
             : std::reverse_iterator<basic_json::iterator>(it) {}
 
+        reverse_iterator(const std::reverse_iterator<typename basic_json::iterator>& it)
+            : std::reverse_iterator<typename basic_json::iterator>(it)
+        {}
+
         /// return the key of an object iterator
         typename object_t::key_type key() const
         {
-            return this->base().key();
+            auto it = --this->base();
+            return it.key();
         }
 
         /// return the value of an iterator
         reference value() const
         {
-            return this->base().operator * ();
+            auto it = --this->base();
+            return it.operator * ();
         }
     };
 
@@ -5272,13 +5278,15 @@ class basic_json
         /// return the key of an object iterator
         typename object_t::key_type key() const
         {
-            return this->base().key();
+            auto it = --this->base();
+            return it.key();
         }
 
         /// return the value of an iterator
         const_reference value() const
         {
-            return this->base().operator * ();
+            auto it = --this->base();
+            return it.operator * ();
         }
     };
 
