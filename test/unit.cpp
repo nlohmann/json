@@ -5492,6 +5492,369 @@ TEST_CASE("iterators")
             }
         }
     }
+
+    SECTION("reverse iterator comparisons")
+    {
+        json j_values = {nullptr, true, 42, 23.23, {{"one", 1}, {"two", 2}}, {1, 2, 3, 4, 5}, "Hello, world"};
+
+        for (json& j : j_values)
+        {
+            auto it1 = j.rbegin();
+            auto it2 = j.rbegin();
+            auto it3 = j.rbegin();
+            ++it2;
+            ++it3;
+            ++it3;
+            auto it1_c = j.crbegin();
+            auto it2_c = j.crbegin();
+            auto it3_c = j.crbegin();
+            ++it2_c;
+            ++it3_c;
+            ++it3_c;
+
+            // comparison: equal
+            {
+                CHECK(it1 == it1);
+                CHECK(not (it1 == it2));
+                CHECK(not (it1 == it3));
+                CHECK(not (it2 == it3));
+                CHECK(it1_c == it1_c);
+                CHECK(not (it1_c == it2_c));
+                CHECK(not (it1_c == it3_c));
+                CHECK(not (it2_c == it3_c));
+            }
+
+            // comparison: not equal
+            {
+                // check definition
+                CHECK( (it1 != it1) == not(it1 == it1) );
+                CHECK( (it1 != it2) == not(it1 == it2) );
+                CHECK( (it1 != it3) == not(it1 == it3) );
+                CHECK( (it2 != it3) == not(it2 == it3) );
+                CHECK( (it1_c != it1_c) == not(it1_c == it1_c) );
+                CHECK( (it1_c != it2_c) == not(it1_c == it2_c) );
+                CHECK( (it1_c != it3_c) == not(it1_c == it3_c) );
+                CHECK( (it2_c != it3_c) == not(it2_c == it3_c) );
+            }
+
+            // comparison: smaller
+            {
+                if (j.type() == json::value_t::object)
+                {
+                    CHECK_THROWS_AS(it1 < it1, std::domain_error);
+                    CHECK_THROWS_AS(it1 < it2, std::domain_error);
+                    CHECK_THROWS_AS(it2 < it3, std::domain_error);
+                    CHECK_THROWS_AS(it1 < it3, std::domain_error);
+                    CHECK_THROWS_AS(it1_c < it1_c, std::domain_error);
+                    CHECK_THROWS_AS(it1_c < it2_c, std::domain_error);
+                    CHECK_THROWS_AS(it2_c < it3_c, std::domain_error);
+                    CHECK_THROWS_AS(it1_c < it3_c, std::domain_error);
+                }
+                else
+                {
+                    CHECK(not (it1 < it1));
+                    CHECK(it1 < it2);
+                    CHECK(it1 < it3);
+                    CHECK(it2 < it3);
+                    CHECK(not (it1_c < it1_c));
+                    CHECK(it1_c < it2_c);
+                    CHECK(it1_c < it3_c);
+                    CHECK(it2_c < it3_c);
+                }
+            }
+
+            // comparison: less than or equal
+            {
+                if (j.type() == json::value_t::object)
+                {
+                    CHECK_THROWS_AS(it1 <= it1, std::domain_error);
+                    CHECK_THROWS_AS(it1 <= it2, std::domain_error);
+                    CHECK_THROWS_AS(it2 <= it3, std::domain_error);
+                    CHECK_THROWS_AS(it1 <= it3, std::domain_error);
+                    CHECK_THROWS_AS(it1_c <= it1_c, std::domain_error);
+                    CHECK_THROWS_AS(it1_c <= it2_c, std::domain_error);
+                    CHECK_THROWS_AS(it2_c <= it3_c, std::domain_error);
+                    CHECK_THROWS_AS(it1_c <= it3_c, std::domain_error);
+                }
+                else
+                {
+                    // check definition
+                    CHECK( (it1 <= it1) == not(it1 < it1) );
+                    CHECK( (it1 <= it2) == not(it2 < it1) );
+                    CHECK( (it1 <= it3) == not(it3 < it1) );
+                    CHECK( (it2 <= it3) == not(it3 < it2) );
+                    CHECK( (it1_c <= it1_c) == not(it1_c < it1_c) );
+                    CHECK( (it1_c <= it2_c) == not(it2_c < it1_c) );
+                    CHECK( (it1_c <= it3_c) == not(it3_c < it1_c) );
+                    CHECK( (it2_c <= it3_c) == not(it3_c < it2_c) );
+                }
+            }
+
+            // comparison: greater than
+            {
+                if (j.type() == json::value_t::object)
+                {
+                    CHECK_THROWS_AS(it1 > it1, std::domain_error);
+                    CHECK_THROWS_AS(it1 > it2, std::domain_error);
+                    CHECK_THROWS_AS(it2 > it3, std::domain_error);
+                    CHECK_THROWS_AS(it1 > it3, std::domain_error);
+                    CHECK_THROWS_AS(it1_c > it1_c, std::domain_error);
+                    CHECK_THROWS_AS(it1_c > it2_c, std::domain_error);
+                    CHECK_THROWS_AS(it2_c > it3_c, std::domain_error);
+                    CHECK_THROWS_AS(it1_c > it3_c, std::domain_error);
+                }
+                else
+                {
+                    // check definition
+                    CHECK( (it1 > it1) == (it1 < it1) );
+                    CHECK( (it1 > it2) == (it2 < it1) );
+                    CHECK( (it1 > it3) == (it3 < it1) );
+                    CHECK( (it2 > it3) == (it3 < it2) );
+                    CHECK( (it1_c > it1_c) == (it1_c < it1_c) );
+                    CHECK( (it1_c > it2_c) == (it2_c < it1_c) );
+                    CHECK( (it1_c > it3_c) == (it3_c < it1_c) );
+                    CHECK( (it2_c > it3_c) == (it3_c < it2_c) );
+                }
+            }
+
+            // comparison: greater than or equal
+            {
+                if (j.type() == json::value_t::object)
+                {
+                    CHECK_THROWS_AS(it1 >= it1, std::domain_error);
+                    CHECK_THROWS_AS(it1 >= it2, std::domain_error);
+                    CHECK_THROWS_AS(it2 >= it3, std::domain_error);
+                    CHECK_THROWS_AS(it1 >= it3, std::domain_error);
+                    CHECK_THROWS_AS(it1_c >= it1_c, std::domain_error);
+                    CHECK_THROWS_AS(it1_c >= it2_c, std::domain_error);
+                    CHECK_THROWS_AS(it2_c >= it3_c, std::domain_error);
+                    CHECK_THROWS_AS(it1_c >= it3_c, std::domain_error);
+                }
+                else
+                {
+                    // check definition
+                    CHECK( (it1 >= it1) == not(it1 < it1) );
+                    CHECK( (it1 >= it2) == not(it1 < it2) );
+                    CHECK( (it1 >= it3) == not(it1 < it3) );
+                    CHECK( (it2 >= it3) == not(it2 < it3) );
+                    CHECK( (it1_c >= it1_c) == not(it1_c < it1_c) );
+                    CHECK( (it1_c >= it2_c) == not(it1_c < it2_c) );
+                    CHECK( (it1_c >= it3_c) == not(it1_c < it3_c) );
+                    CHECK( (it2_c >= it3_c) == not(it2_c < it3_c) );
+                }
+            }
+        }
+
+        // check exceptions if different objects are compared
+        for (auto j : j_values)
+        {
+            for (auto k : j_values)
+            {
+                if (j != k)
+                {
+                    CHECK_THROWS_AS(j.rbegin() == k.rbegin(), std::domain_error);
+                    CHECK_THROWS_AS(j.crbegin() == k.crbegin(), std::domain_error);
+
+                    CHECK_THROWS_AS(j.rbegin() < k.rbegin(), std::domain_error);
+                    CHECK_THROWS_AS(j.crbegin() < k.crbegin(), std::domain_error);
+                }
+            }
+        }
+    }
+
+    SECTION("reverse iterator arithmetic")
+    {
+        json j_object = {{"one", 1}, {"two", 2}, {"three", 3}};
+        json j_array = {1, 2, 3, 4, 5, 6};
+        json j_null = nullptr;
+        json j_value = 42;
+
+        SECTION("addition and subtraction")
+        {
+            SECTION("object")
+            {
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(it += 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(it += 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(it + 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(it + 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(it -= 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(it -= 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(it - 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(it - 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(it - it, std::domain_error);
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(it - it, std::domain_error);
+                }
+            }
+
+            SECTION("array")
+            {
+                {
+                    auto it = j_array.rbegin();
+                    it += 3;
+                    CHECK((j_array.rbegin() + 3) == it);
+                    CHECK((it - 3) == j_array.rbegin());
+                    CHECK((j_array.rbegin() - it) == 3);
+                    CHECK(*it == json(3));
+                    it -= 2;
+                    CHECK(*it == json(5));
+                }
+                {
+                    auto it = j_array.crbegin();
+                    it += 3;
+                    CHECK((j_array.crbegin() + 3) == it);
+                    CHECK((it - 3) == j_array.crbegin());
+                    CHECK((j_array.crbegin() - it) == 3);
+                    CHECK(*it == json(3));
+                    it -= 2;
+                    CHECK(*it == json(5));
+                }
+            }
+
+            SECTION("null")
+            {
+                {
+                    auto it = j_null.rbegin();
+                    it += 3;
+                    CHECK((j_null.rbegin() + 3) == it);
+                    CHECK((it - 3) == j_null.rbegin());
+                    CHECK((j_null.rbegin() - it) == 3);
+                    CHECK(it != j_null.rend());
+                    it -= 3;
+                    CHECK(it == j_null.rend());
+                }
+                {
+                    auto it = j_null.crbegin();
+                    it += 3;
+                    CHECK((j_null.crbegin() + 3) == it);
+                    CHECK((it - 3) == j_null.crbegin());
+                    CHECK((j_null.crbegin() - it) == 3);
+                    CHECK(it != j_null.crend());
+                    it -= 3;
+                    CHECK(it == j_null.crend());
+                }
+            }
+
+            SECTION("value")
+            {
+                {
+                    auto it = j_value.rbegin();
+                    it += 3;
+                    CHECK((j_value.rbegin() + 3) == it);
+                    CHECK((it - 3) == j_value.rbegin());
+                    CHECK((j_value.rbegin() - it) == 3);
+                    CHECK(it != j_value.rend());
+                    it -= 3;
+                    CHECK(*it == json(42));
+                }
+                {
+                    auto it = j_value.crbegin();
+                    it += 3;
+                    CHECK((j_value.crbegin() + 3) == it);
+                    CHECK((it - 3) == j_value.crbegin());
+                    CHECK((j_value.crbegin() - it) == 3);
+                    CHECK(it != j_value.crend());
+                    it -= 3;
+                    CHECK(*it == json(42));
+                }
+            }
+        }
+
+        SECTION("subscript operator")
+        {
+            SECTION("object")
+            {
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(it[0], std::domain_error);
+                    CHECK_THROWS_AS(it[1], std::domain_error);
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(it[0], std::domain_error);
+                    CHECK_THROWS_AS(it[1], std::domain_error);
+                }
+            }
+
+            SECTION("array")
+            {
+                {
+                    auto it = j_array.rbegin();
+                    CHECK(it[0] == json(6));
+                    CHECK(it[1] == json(5));
+                    CHECK(it[2] == json(4));
+                    CHECK(it[3] == json(3));
+                    CHECK(it[4] == json(2));
+                    CHECK(it[5] == json(1));
+                }
+                {
+                    auto it = j_array.crbegin();
+                    CHECK(it[0] == json(6));
+                    CHECK(it[1] == json(5));
+                    CHECK(it[2] == json(4));
+                    CHECK(it[3] == json(3));
+                    CHECK(it[4] == json(2));
+                    CHECK(it[5] == json(1));
+                }
+            }
+
+            SECTION("null")
+            {
+                {
+                    auto it = j_null.rbegin();
+                    CHECK_THROWS_AS(it[0], std::out_of_range);
+                    CHECK_THROWS_AS(it[1], std::out_of_range);
+                }
+                {
+                    auto it = j_null.crbegin();
+                    CHECK_THROWS_AS(it[0], std::out_of_range);
+                    CHECK_THROWS_AS(it[1], std::out_of_range);
+                }
+            }
+
+            SECTION("value")
+            {
+                {
+                    auto it = j_value.rbegin();
+                    CHECK(it[0] == json(42));
+                    CHECK_THROWS_AS(it[1], std::out_of_range);
+                }
+                {
+                    auto it = j_value.crbegin();
+                    CHECK(it[0] == json(42));
+                    CHECK_THROWS_AS(it[1], std::out_of_range);
+                }
+            }
+        }
+    }
 }
 
 TEST_CASE("capacity")
@@ -9288,9 +9651,13 @@ TEST_CASE("regression tests")
             CHECK(b == json({0, 1, 2}));
         }
         {
-            //            json a = {1,2,3};
-            //            json b = {0,0,0};
-            //            std::transform(++a.rbegin(),a.rend(),b.rbegin(),[](json el){return el;});
+            json a = {1, 2, 3};
+            json b = {0, 0, 0};
+            std::transform(++a.rbegin(), a.rend(), b.rbegin(), [](json el)
+            {
+                return el;
+            });
+            CHECK(b == json({0, 1, 2}));
         }
     }
 

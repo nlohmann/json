@@ -5239,18 +5239,95 @@ class basic_json
         internal_iterator m_it = internal_iterator();
     };
 
-    /// a reverse random access iterator for the basic_json class
+    /*!
+    @brief a reverse random access iterator for the basic_json class
+
+    The reverse iterator is realized with the `std::reverse_iterator` adaptor.
+    This adaptor does not automatically inherit all functionality from the
+    base iterator class, so some functions need to be explicitly implemented
+    by either delegating them to the base class or by using the `base()`
+    function to access the underlying base iterator.
+
+    The following operators are implicitly inherited:
+
+    - `operator==`, `operator!=`, `operator<`, `operator<=`, `operator>`,
+      `operator>=`
+    - `operator-=`
+    - `operator->`, `operator*`
+    */
     class reverse_iterator : public std::reverse_iterator<typename basic_json::iterator>
     {
       public:
-        reverse_iterator(const typename
-                         std::reverse_iterator<typename basic_json::iterator>::iterator_type&
-                         it)
-            : std::reverse_iterator<basic_json::iterator>(it) {}
+        /// shortcut to the reverse iterator adaptor
+        using base_iterator = std::reverse_iterator<typename basic_json::iterator>;
 
-        reverse_iterator(const std::reverse_iterator<typename basic_json::iterator>& it)
-            : std::reverse_iterator<typename basic_json::iterator>(it)
-        {}
+        /// create reverse iterator from iterator
+        reverse_iterator(const typename base_iterator::iterator_type& it)
+            : base_iterator(it) {}
+
+        /// create reverse iterator from base class
+        reverse_iterator(const base_iterator& it) : base_iterator(it) {}
+
+        /// post-increment (it++)
+        reverse_iterator operator++(int)
+        {
+            return base_iterator::operator++(1);
+        }
+
+        /// pre-increment (++it)
+        reverse_iterator& operator++()
+        {
+            base_iterator::operator++();
+            return *this;
+        }
+
+        /// post-decrement (it--)
+        reverse_iterator operator--(int)
+        {
+            return base_iterator::operator--(1);
+        }
+
+        /// pre-decrement (--it)
+        reverse_iterator& operator--()
+        {
+            base_iterator::operator--();
+            return *this;
+        }
+
+        /// add to iterator
+        reverse_iterator& operator+=(difference_type i)
+        {
+            base_iterator::operator+=(i);
+            return *this;
+        }
+
+        /// add to iterator
+        reverse_iterator operator+(difference_type i) const
+        {
+            auto result = *this;
+            result += i;
+            return result;
+        }
+
+        /// subtract from iterator
+        reverse_iterator operator-(difference_type i) const
+        {
+            auto result = *this;
+            result -= i;
+            return result;
+        }
+
+        /// return difference
+        difference_type operator-(const reverse_iterator& other) const
+        {
+            return this->base() - other.base();
+        }
+
+        /// access to successor
+        reference operator[](difference_type n) const
+        {
+            return *(this->operator+(n));
+        }
 
         /// return the key of an object iterator
         typename object_t::key_type key() const
@@ -5271,9 +5348,76 @@ class basic_json
     class const_reverse_iterator : public std::reverse_iterator<typename basic_json::const_iterator>
     {
       public:
-        const_reverse_iterator(const typename
-                               std::reverse_iterator<typename basic_json::const_iterator>::iterator_type& it)
-            : std::reverse_iterator<basic_json::const_iterator>(it) {}
+        /// shortcut to the reverse iterator adaptor
+        using base_iterator = std::reverse_iterator<typename basic_json::const_iterator>;
+
+        /// create reverse iterator from iterator
+        const_reverse_iterator(const typename base_iterator::iterator_type& it)
+            : base_iterator(it) {}
+
+        /// create reverse iterator from base class
+        const_reverse_iterator(const base_iterator& it) : base_iterator(it) {}
+
+        /// post-increment (it++)
+        const_reverse_iterator operator++(int)
+        {
+            return base_iterator::operator++(1);
+        }
+
+        /// pre-increment (++it)
+        const_reverse_iterator& operator++()
+        {
+            base_iterator::operator++();
+            return *this;
+        }
+
+        /// post-decrement (it--)
+        const_reverse_iterator operator--(int)
+        {
+            return base_iterator::operator--(1);
+        }
+
+        /// pre-decrement (--it)
+        const_reverse_iterator& operator--()
+        {
+            base_iterator::operator--();
+            return *this;
+        }
+
+        /// add to iterator
+        const_reverse_iterator& operator+=(difference_type i)
+        {
+            base_iterator::operator+=(i);
+            return *this;
+        }
+
+        /// add to iterator
+        const_reverse_iterator operator+(difference_type i) const
+        {
+            auto result = *this;
+            result += i;
+            return result;
+        }
+
+        /// subtract from iterator
+        const_reverse_iterator operator-(difference_type i) const
+        {
+            auto result = *this;
+            result -= i;
+            return result;
+        }
+
+        /// return difference
+        difference_type operator-(const const_reverse_iterator& other) const
+        {
+            return this->base() - other.base();
+        }
+
+        /// access to successor
+        const_reference operator[](difference_type n) const
+        {
+            return *(this->operator+(n));
+        }
 
         /// return the key of an object iterator
         typename object_t::key_type key() const
