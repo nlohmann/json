@@ -1,5 +1,7 @@
 SRCDIR = ../src
 
+all: doxygen
+
 clean:
 	rm -fr me.nlohmann.json.docset html
 

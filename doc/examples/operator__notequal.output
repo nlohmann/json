@@ -1,0 +1,4 @@
+[1,2,3] == [1,2,4] true
+{"A":"a","B":"b"} == {"A":"a","B":"b"} false
+17 == 17 false
+"foo" == "bar" true

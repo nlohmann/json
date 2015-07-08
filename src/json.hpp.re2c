@@ -57,11 +57,15 @@ namespace nlohmann
 {
 
 
-/// namespace with internal helper functions
-namespace internals
+/*!
+@brief unnamed namespace with internal helper functions
+*/
+namespace
 {
-// Helper to determine whether there's a key_type for T.
-// http://stackoverflow.com/a/7728728/266378
+/*!
+@brief Helper to determine whether there's a key_type for T.
+@sa http://stackoverflow.com/a/7728728/266378
+*/
 template<typename T>
 struct has_mapped_type
 {
@@ -71,6 +75,13 @@ struct has_mapped_type
   public:
     enum { value = sizeof(test<T>(0)) == sizeof(char) };
 };
+
+/// "equality" comparison for floating point numbers
+template<typename T>
+static bool approx(const T a, const T b)
+{
+    return not (a > b or a < b);
+}
 }
 
 /*!
@@ -107,7 +118,6 @@ http://en.cppreference.com/w/cpp/concept/Container):
 @note ObjectType trick from http://stackoverflow.com/a/9860911
 
 @see RFC 7159 <http://rfc7159.net/rfc7159>
-@see ECMA 404 <http://www.ecma-international.org/publications/standards/Ecma-404.htm>
 */
 template <
     template<typename U, typename V, typename... Args> class ObjectType = std::map,
@@ -120,6 +130,13 @@ template <
     >
 class basic_json
 {
+  private:
+    /// workaround type for MSVC
+    using __basic_json =
+        basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberFloatType, AllocatorType>;
+
+  public:
+
     /////////////////////
     // container types //
     /////////////////////
@@ -127,12 +144,6 @@ class basic_json
     /// @name container types
     /// @{
 
-  private:
-    /// workaround type for MSVC
-    using __basic_json =
-        basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberFloatType, AllocatorType>;
-
-  public:
     /// the type of elements in a basic_json container
     using value_type = basic_json;
 
@@ -1711,7 +1722,7 @@ class basic_json
                   not std::is_same<__basic_json, typename T::value_type>::value and
                   not std::is_arithmetic<T>::value and
                   not std::is_convertible<std::string, T>::value and
-                  not internals::has_mapped_type<T>::value
+                  not has_mapped_type<T>::value
                   , int>::type = 0>
     T get_impl(T*) const
     {
@@ -1766,7 +1777,7 @@ class basic_json
     template <class T, typename
               std::enable_if<
                   std::is_same<basic_json, typename T::value_type>::value and
-                  not internals::has_mapped_type<T>::value
+                  not has_mapped_type<T>::value
                   , int>::type = 0>
     T get_impl(T*) const
     {
@@ -3322,7 +3333,23 @@ class basic_json
         }
     }
 
-    /// add an object to an array
+    /*!
+    @brief add an object to an array
+
+    Appends the given element @a value to the end of the JSON value. If the
+    function is called on a JSON null value, an empty array is created before
+    appending @a value.
+
+    @param value the value to add to the JSON array
+
+    @throw std::domain_error when called on a type other than JSON array or null
+
+    @complexity Amortized constant.
+
+    @liveexample{The example shows how `push_back` and `+=` can be used to add
+    elements to a JSON array. Note how the `null` value was silently converted
+    to a JSON array.,push_back}
+    */
     void push_back(basic_json&& value)
     {
         // push_back only works for null objects or arrays
@@ -3344,14 +3371,20 @@ class basic_json
         value.m_type = value_t::null;
     }
 
-    /// add an object to an array
+    /*!
+    @brief add an object to an array
+    @copydoc push_back(basic_json&&)
+    */
     reference operator+=(basic_json&& value)
     {
         push_back(std::move(value));
         return *this;
     }
 
-    /// add an object to an array
+    /*!
+    @brief add an object to an array
+    @copydoc push_back(basic_json&&)
+    */
     void push_back(const basic_json& value)
     {
         // push_back only works for null objects or arrays
@@ -3371,14 +3404,34 @@ class basic_json
         m_value.array->push_back(value);
     }
 
-    /// add an object to an array
+    /*!
+    @brief add an object to an array
+    @copydoc push_back(basic_json&&)
+    */
     reference operator+=(const basic_json& value)
     {
         push_back(value);
         return *this;
     }
 
-    /// add an object to an object
+    /*!
+    @brief add an object to an object
+
+    Inserts the given element @a value to the JSON object. If the function is
+    called on a JSON null value, an empty object is created before inserting @a
+    value.
+
+    @param value the value to add to the JSON object
+
+    @throw std::domain_error when called on a type other than JSON object or
+    null
+
+    @complexity Logarithmic in the size of the container, O(log(`size()`)).
+
+    @liveexample{The example shows how `push_back` and `+=` can be used to add
+    elements to a JSON object. Note how the `null` value was silently converted
+    to a JSON object.,push_back__object_t__value}
+    */
     void push_back(const typename object_t::value_type& value)
     {
         // push_back only works for null objects or objects
@@ -3398,7 +3451,10 @@ class basic_json
         m_value.object->insert(value);
     }
 
-    /// add an object to an object
+    /*!
+    @brief add an object to an object
+    @copydoc push_back(const typename object_t::value_type&)
+    */
     reference operator+=(const typename object_t::value_type& value)
     {
         push_back(value);
@@ -3464,7 +3520,25 @@ class basic_json
         std::swap(*(m_value.array), other);
     }
 
-    /// swaps the contents
+    /*!
+    @brief exchanges the values
+
+    Exchanges the contents of a JSON object with those of @a other. Does not
+    invoke any move, copy, or swap operations on individual elements. All
+    iterators and references remain valid. The past-the-end iterator is
+    invalidated.
+
+    @param[in,out] other object to exchange the contents with
+
+    @throw std::domain_error when JSON value is not an object
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how JSON values can be
+    swapped.,swap__object_t}
+
+    @ingroup container
+    */
     void swap(object_t& other)
     {
         // swap only works for objects
@@ -3473,11 +3547,29 @@ class basic_json
             throw std::domain_error("cannot use swap() with " + type_name());
         }
 
-        // swap arrays
+        // swap objects
         std::swap(*(m_value.object), other);
     }
 
-    /// swaps the contents
+    /*!
+    @brief exchanges the values
+
+    Exchanges the contents of a JSON string with those of @a other. Does not
+    invoke any move, copy, or swap operations on individual elements. All
+    iterators and references remain valid. The past-the-end iterator is
+    invalidated.
+
+    @param[in,out] other string to exchange the contents with
+
+    @throw std::domain_error when JSON value is not a string
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how JSON values can be
+    swapped.,swap__string_t}
+
+    @ingroup container
+    */
     void swap(string_t& other)
     {
         // swap only works for strings
@@ -3486,7 +3578,7 @@ class basic_json
             throw std::domain_error("cannot use swap() with " + type_name());
         }
 
-        // swap arrays
+        // swap strings
         std::swap(*(m_value.string), other);
     }
 
@@ -3518,7 +3610,8 @@ class basic_json
 
     @complexity Linear.
 
-    @todo Add example.
+    @liveexample{The example demonstrates comparing several JSON
+    types.,operator__equal}
 
     @ingroup container
     */
@@ -3573,7 +3666,8 @@ class basic_json
 
     @complexity Linear.
 
-    @todo Add example.
+    @liveexample{The example demonstrates comparing several JSON
+    types.,operator__notequal}
 
     @ingroup container
     */
@@ -3601,7 +3695,8 @@ class basic_json
 
     @complexity Linear.
 
-    @todo Add example.
+    @liveexample{The example demonstrates comparing several JSON
+    types.,operator__less}
     */
     friend bool operator<(const_reference lhs, const_reference rhs) noexcept
     {
@@ -3658,7 +3753,8 @@ class basic_json
 
     @complexity Linear.
 
-    @todo Add example.
+    @liveexample{The example demonstrates comparing several JSON
+    types.,operator__greater}
     */
     friend bool operator<=(const_reference lhs, const_reference rhs) noexcept
     {
@@ -3677,7 +3773,8 @@ class basic_json
 
     @complexity Linear.
 
-    @todo Add example.
+    @liveexample{The example demonstrates comparing several JSON
+    types.,operator__lessequal}
     */
     friend bool operator>(const_reference lhs, const_reference rhs) noexcept
     {
@@ -3696,7 +3793,8 @@ class basic_json
 
     @complexity Linear.
 
-    @todo Add example.
+    @liveexample{The example demonstrates comparing several JSON
+    types.,operator__greaterequal}
     */
     friend bool operator>=(const_reference lhs, const_reference rhs) noexcept
     {
@@ -4131,14 +4229,6 @@ class basic_json
             }
         }
     }
-
-    /// "equality" comparison for floating point numbers
-    template<typename T>
-    static bool approx(const T a, const T b)
-    {
-        return not (a > b or a < b);
-    }
-
 
   private:
     //////////////////////
@@ -5445,7 +5535,7 @@ class basic_json
 
     This class organizes the lexical analysis during JSON deserialization. The
     core of it is a scanner generated by re2c <http://re2c.org> that processes
-    a buffer and recognizes tokens according to RFC 7159 and ECMA-404.
+    a buffer and recognizes tokens according to RFC 7159.
     */
     class lexer
     {
@@ -5609,11 +5699,11 @@ class basic_json
 
         /*!
         This function implements a scanner for JSON. It is specified using
-        regular expressions that try to follow RFC 7159 and ECMA-404 as close
-        as possible. These regular expressions are then translated into a
-        deterministic finite automaton (DFA) by the tool re2c
-        <http://re2c.org>. As a result, the translated code for this function
-        consists of a large block of code with goto jumps.
+        regular expressions that try to follow RFC 7159 as close as possible.
+        These regular expressions are then translated into a deterministic
+        finite automaton (DFA) by the tool re2c <http://re2c.org>. As a result,
+        the translated code for this function consists of a large block of code
+        with goto jumps.
 
         @return the class of the next token read from the buffer
         */
