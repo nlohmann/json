@@ -1,0 +1,348 @@
+Grammar
+
+    0 $accept: value $end
+
+    1 value: object
+    2      | array
+    3      | value_string
+    4      | value_number
+    5      | literal_true
+    6      | literal_false
+    7      | literal_null
+
+    8 object: begin_object end_object
+    9       | begin_object object_value_list end_object
+
+   10 object_value_list: value_string name_separator value
+   11                  | value_string name_separator value value_separator object_value_list
+
+   12 array: begin_array end_array
+   13      | begin_array array_value_list end_array
+
+   14 array_value_list: value
+   15                 | value value_separator array_value_list
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+error (256)
+value_number (258) 4
+value_string (259) 3 10 11
+begin_object (260) 8 9
+end_object (261) 8 9
+begin_array (262) 12 13
+end_array (263) 12 13
+literal_true (264) 5
+literal_false (265) 6
+literal_null (266) 7
+name_separator (267) 10 11
+value_separator (268) 11 15
+
+
+Nonterminals, with rules where they appear
+
+$accept (14)
+    on left: 0
+value (15)
+    on left: 1 2 3 4 5 6 7, on right: 0 10 11 14 15
+object (16)
+    on left: 8 9, on right: 1
+object_value_list (17)
+    on left: 10 11, on right: 9 11
+array (18)
+    on left: 12 13, on right: 2
+array_value_list (19)
+    on left: 14 15, on right: 13 15
+
+
+State 0
+
+    0 $accept: . value $end
+    1 value: . object
+    2      | . array
+    3      | . value_string
+    4      | . value_number
+    5      | . literal_true
+    6      | . literal_false
+    7      | . literal_null
+    8 object: . begin_object end_object
+    9       | . begin_object object_value_list end_object
+   12 array: . begin_array end_array
+   13      | . begin_array array_value_list end_array
+
+    value_number   shift, and go to state 1
+    value_string   shift, and go to state 2
+    begin_object   shift, and go to state 3
+    begin_array    shift, and go to state 4
+    literal_true   shift, and go to state 5
+    literal_false  shift, and go to state 6
+    literal_null   shift, and go to state 7
+
+    value   go to state 8
+    object  go to state 9
+    array   go to state 10
+
+
+State 1
+
+    4 value: value_number .
+
+    $default  reduce using rule 4 (value)
+
+
+State 2
+
+    3 value: value_string .
+
+    $default  reduce using rule 3 (value)
+
+
+State 3
+
+    8 object: begin_object . end_object
+    9       | begin_object . object_value_list end_object
+   10 object_value_list: . value_string name_separator value
+   11                  | . value_string name_separator value value_separator object_value_list
+
+    value_string  shift, and go to state 11
+    end_object    shift, and go to state 12
+
+    object_value_list  go to state 13
+
+
+State 4
+
+    1 value: . object
+    2      | . array
+    3      | . value_string
+    4      | . value_number
+    5      | . literal_true
+    6      | . literal_false
+    7      | . literal_null
+    8 object: . begin_object end_object
+    9       | . begin_object object_value_list end_object
+   12 array: . begin_array end_array
+   12      | begin_array . end_array
+   13      | . begin_array array_value_list end_array
+   13      | begin_array . array_value_list end_array
+   14 array_value_list: . value
+   15                 | . value value_separator array_value_list
+
+    value_number   shift, and go to state 1
+    value_string   shift, and go to state 2
+    begin_object   shift, and go to state 3
+    begin_array    shift, and go to state 4
+    end_array      shift, and go to state 14
+    literal_true   shift, and go to state 5
+    literal_false  shift, and go to state 6
+    literal_null   shift, and go to state 7
+
+    value             go to state 15
+    object            go to state 9
+    array             go to state 10
+    array_value_list  go to state 16
+
+
+State 5
+
+    5 value: literal_true .
+
+    $default  reduce using rule 5 (value)
+
+
+State 6
+
+    6 value: literal_false .
+
+    $default  reduce using rule 6 (value)
+
+
+State 7
+
+    7 value: literal_null .
+
+    $default  reduce using rule 7 (value)
+
+
+State 8
+
+    0 $accept: value . $end
+
+    $end  shift, and go to state 17
+
+
+State 9
+
+    1 value: object .
+
+    $default  reduce using rule 1 (value)
+
+
+State 10
+
+    2 value: array .
+
+    $default  reduce using rule 2 (value)
+
+
+State 11
+
+   10 object_value_list: value_string . name_separator value
+   11                  | value_string . name_separator value value_separator object_value_list
+
+    name_separator  shift, and go to state 18
+
+
+State 12
+
+    8 object: begin_object end_object .
+
+    $default  reduce using rule 8 (object)
+
+
+State 13
+
+    9 object: begin_object object_value_list . end_object
+
+    end_object  shift, and go to state 19
+
+
+State 14
+
+   12 array: begin_array end_array .
+
+    $default  reduce using rule 12 (array)
+
+
+State 15
+
+   14 array_value_list: value .  [end_array]
+   15                 | value . value_separator array_value_list
+
+    value_separator  shift, and go to state 20
+
+    $default  reduce using rule 14 (array_value_list)
+
+
+State 16
+
+   13 array: begin_array array_value_list . end_array
+
+    end_array  shift, and go to state 21
+
+
+State 17
+
+    0 $accept: value $end .
+
+    $default  accept
+
+
+State 18
+
+    1 value: . object
+    2      | . array
+    3      | . value_string
+    4      | . value_number
+    5      | . literal_true
+    6      | . literal_false
+    7      | . literal_null
+    8 object: . begin_object end_object
+    9       | . begin_object object_value_list end_object
+   10 object_value_list: value_string name_separator . value
+   11                  | value_string name_separator . value value_separator object_value_list
+   12 array: . begin_array end_array
+   13      | . begin_array array_value_list end_array
+
+    value_number   shift, and go to state 1
+    value_string   shift, and go to state 2
+    begin_object   shift, and go to state 3
+    begin_array    shift, and go to state 4
+    literal_true   shift, and go to state 5
+    literal_false  shift, and go to state 6
+    literal_null   shift, and go to state 7
+
+    value   go to state 22
+    object  go to state 9
+    array   go to state 10
+
+
+State 19
+
+    9 object: begin_object object_value_list end_object .
+
+    $default  reduce using rule 9 (object)
+
+
+State 20
+
+    1 value: . object
+    2      | . array
+    3      | . value_string
+    4      | . value_number
+    5      | . literal_true
+    6      | . literal_false
+    7      | . literal_null
+    8 object: . begin_object end_object
+    9       | . begin_object object_value_list end_object
+   12 array: . begin_array end_array
+   13      | . begin_array array_value_list end_array
+   14 array_value_list: . value
+   15                 | . value value_separator array_value_list
+   15                 | value value_separator . array_value_list
+
+    value_number   shift, and go to state 1
+    value_string   shift, and go to state 2
+    begin_object   shift, and go to state 3
+    begin_array    shift, and go to state 4
+    literal_true   shift, and go to state 5
+    literal_false  shift, and go to state 6
+    literal_null   shift, and go to state 7
+
+    value             go to state 15
+    object            go to state 9
+    array             go to state 10
+    array_value_list  go to state 23
+
+
+State 21
+
+   13 array: begin_array array_value_list end_array .
+
+    $default  reduce using rule 13 (array)
+
+
+State 22
+
+   10 object_value_list: value_string name_separator value .  [end_object]
+   11                  | value_string name_separator value . value_separator object_value_list
+
+    value_separator  shift, and go to state 24
+
+    $default  reduce using rule 10 (object_value_list)
+
+
+State 23
+
+   15 array_value_list: value value_separator array_value_list .
+
+    $default  reduce using rule 15 (array_value_list)
+
+
+State 24
+
+   10 object_value_list: . value_string name_separator value
+   11                  | . value_string name_separator value value_separator object_value_list
+   11                  | value_string name_separator value value_separator . object_value_list
+
+    value_string  shift, and go to state 11
+
+    object_value_list  go to state 25
+
+
+State 25
+
+   11 object_value_list: value_string name_separator value value_separator object_value_list .
+
+    $default  reduce using rule 11 (object_value_list)

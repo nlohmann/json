@@ -1,0 +1,619 @@
+graph: {
+	display_edge_labels:	yes
+	priority_phase:	yes
+	port_sharing:	no
+	crossing_weight:	median
+	splines:	yes
+	node: {
+		title:	"0"
+		label:	"state  0\n $accept -> . value $end"
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"1"
+		label:	"NUMBER"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"2"
+		label:	"STRING"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"3"
+		label:	"LBRACE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"4"
+		label:	"LBRACK"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"5"
+		label:	"TRUE_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"6"
+		label:	"FALSE_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"7"
+		label:	"NULL_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"8"
+		label:	"value"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"9"
+		label:	"object"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"10"
+		label:	"array"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"11"
+		label:	"number"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"12"
+		label:	"string"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"13"
+		label:	"null"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"14"
+		label:	"boolean"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"1"
+		label:	"state  1\n number -> NUMBER ."
+	}
+	node: {
+		title:	"2"
+		label:	"state  2\n string -> STRING ."
+	}
+	node: {
+		title:	"3"
+		label:	"state  3\n object -> LBRACE . RBRACE\n object -> LBRACE . object_value_list RBRACE"
+	}
+	edge: {
+		sourcename:	"3"
+		targetname:	"15"
+		label:	"STRING"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"3"
+		targetname:	"16"
+		label:	"RBRACE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"3"
+		targetname:	"17"
+		label:	"object_value_list"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"4"
+		label:	"state  4\n array -> LBRACK . RBRACK\n array -> LBRACK . array_value_list RBRACK"
+	}
+	backedge: {
+		sourcename:	"4"
+		targetname:	"1"
+		label:	"NUMBER"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"4"
+		targetname:	"2"
+		label:	"STRING"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"4"
+		targetname:	"3"
+		label:	"LBRACE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"4"
+		label:	"LBRACK"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"18"
+		label:	"RBRACK"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"5"
+		label:	"TRUE_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"6"
+		label:	"FALSE_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"7"
+		label:	"NULL_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"19"
+		label:	"value"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"9"
+		label:	"object"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"10"
+		label:	"array"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"20"
+		label:	"array_value_list"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"11"
+		label:	"number"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"12"
+		label:	"string"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"13"
+		label:	"null"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"14"
+		label:	"boolean"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"5"
+		label:	"state  5\n boolean -> TRUE_VALUE ."
+	}
+	node: {
+		title:	"6"
+		label:	"state  6\n boolean -> FALSE_VALUE ."
+	}
+	node: {
+		title:	"7"
+		label:	"state  7\n null -> NULL_VALUE ."
+	}
+	node: {
+		title:	"8"
+		label:	"state  8\n $accept -> value . $end"
+	}
+	edge: {
+		sourcename:	"8"
+		targetname:	"21"
+		label:	"$end"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"9"
+		label:	"state  9\n value -> object ."
+	}
+	node: {
+		title:	"10"
+		label:	"state 10\n value -> array ."
+	}
+	node: {
+		title:	"11"
+		label:	"state 11\n value -> number ."
+	}
+	node: {
+		title:	"12"
+		label:	"state 12\n value -> string ."
+	}
+	node: {
+		title:	"13"
+		label:	"state 13\n value -> null ."
+	}
+	node: {
+		title:	"14"
+		label:	"state 14\n value -> boolean ."
+	}
+	node: {
+		title:	"15"
+		label:	"state 15\n object_value_list -> STRING . COLON value\n object_value_list -> STRING . COLON value COMMA object_value_list"
+	}
+	edge: {
+		sourcename:	"15"
+		targetname:	"22"
+		label:	"COLON"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"16"
+		label:	"state 16\n object -> LBRACE RBRACE ."
+	}
+	node: {
+		title:	"17"
+		label:	"state 17\n object -> LBRACE object_value_list . RBRACE"
+	}
+	edge: {
+		sourcename:	"17"
+		targetname:	"23"
+		label:	"RBRACE"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"18"
+		label:	"state 18\n array -> LBRACK RBRACK ."
+	}
+	node: {
+		title:	"19"
+		label:	"state 19\n array_value_list -> value .\n array_value_list -> value . COMMA array_value_list"
+	}
+	edge: {
+		sourcename:	"19"
+		targetname:	"24"
+		label:	"COMMA"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"20"
+		label:	"state 20\n array -> LBRACK array_value_list . RBRACK"
+	}
+	edge: {
+		sourcename:	"20"
+		targetname:	"25"
+		label:	"RBRACK"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"21"
+		label:	"state 21\n $accept -> value $end ."
+	}
+	node: {
+		title:	"22"
+		label:	"state 22\n object_value_list -> STRING COLON . value\n object_value_list -> STRING COLON . value COMMA object_value_list"
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"1"
+		label:	"NUMBER"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"2"
+		label:	"STRING"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"3"
+		label:	"LBRACE"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"4"
+		label:	"LBRACK"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"5"
+		label:	"TRUE_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"6"
+		label:	"FALSE_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"7"
+		label:	"NULL_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"22"
+		targetname:	"26"
+		label:	"value"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"9"
+		label:	"object"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"10"
+		label:	"array"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"11"
+		label:	"number"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"12"
+		label:	"string"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"13"
+		label:	"null"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"22"
+		targetname:	"14"
+		label:	"boolean"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"23"
+		label:	"state 23\n object -> LBRACE object_value_list RBRACE ."
+	}
+	node: {
+		title:	"24"
+		label:	"state 24\n array_value_list -> value COMMA . array_value_list"
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"1"
+		label:	"NUMBER"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"2"
+		label:	"STRING"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"3"
+		label:	"LBRACE"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"4"
+		label:	"LBRACK"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"5"
+		label:	"TRUE_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"6"
+		label:	"FALSE_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"7"
+		label:	"NULL_VALUE"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"19"
+		label:	"value"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"9"
+		label:	"object"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"10"
+		label:	"array"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"24"
+		targetname:	"27"
+		label:	"array_value_list"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"11"
+		label:	"number"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"12"
+		label:	"string"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"13"
+		label:	"null"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"24"
+		targetname:	"14"
+		label:	"boolean"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"25"
+		label:	"state 25\n array -> LBRACK array_value_list RBRACK ."
+	}
+	node: {
+		title:	"26"
+		label:	"state 26\n object_value_list -> STRING COLON value .\n object_value_list -> STRING COLON value . COMMA object_value_list"
+	}
+	edge: {
+		sourcename:	"26"
+		targetname:	"28"
+		label:	"COMMA"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"27"
+		label:	"state 27\n array_value_list -> value COMMA array_value_list ."
+	}
+	node: {
+		title:	"28"
+		label:	"state 28\n object_value_list -> STRING COLON value COMMA . object_value_list"
+	}
+	backedge: {
+		sourcename:	"28"
+		targetname:	"15"
+		label:	"STRING"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"28"
+		targetname:	"29"
+		label:	"object_value_list"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"29"
+		label:	"state 29\n object_value_list -> STRING COLON value COMMA object_value_list ."
+	}
+
+
+}
