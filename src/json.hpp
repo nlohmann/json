@@ -13,7 +13,6 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 @see https://github.com/nlohmann/json to download the source code
 */
 
-
 #ifndef NLOHMANN_JSON_HPP
 #define NLOHMANN_JSON_HPP
 
@@ -87,20 +86,20 @@ static bool approx(const T a, const T b)
 /*!
 @brief a class to store JSON values
 
-@tparam ObjectType         type for JSON objects
-                           (@c std::map by default)
-@tparam ArrayType          type for JSON arrays
-                           (@c std::vector by default)
-@tparam StringType         type for JSON strings and object keys
-                           (@c std::string by default)
-@tparam BooleanType        type for JSON booleans
-                           (@c bool by default)
-@tparam NumberIntegerType  type for JSON integer numbers
-                           (@c int64_t by default)
-@tparam NumberFloatType    type for JSON floating-point numbers
-                           (@c double by default)
-@tparam AllocatorType      type of the allocator to use
-                           (@c std::allocator by default)
+@tparam ObjectType type for JSON objects (@c std::map by default; will be used
+in @ref object_t)
+@tparam ArrayType type for JSON arrays (@c std::vector by default; will be used
+in @ref array_t)
+@tparam StringType type for JSON strings and object keys (@c std::string by
+default; will be used in @ref string_t)
+@tparam BooleanType type for JSON booleans (@c `bool` by default; will be used
+in @ref boolean_t)
+@tparam NumberIntegerType type for JSON integer numbers (@c `int64_t` by
+default; will be used in @ref number_integer_t)
+@tparam NumberFloatType type for JSON floating-point numbers (@c `double` by
+default; will be used in @ref number_float_t)
+@tparam AllocatorType type of the allocator to use (@c `std::allocator` by
+default)
 
 @requirement This class satisfies the Container requirements (see
 http://en.cppreference.com/w/cpp/concept/Container):
@@ -195,21 +194,305 @@ class basic_json
     /// @name JSON value data types
     /// @{
 
-    /// a type for an object
+    /*!
+    @brief a type for an object
+
+    [RFC 7159](http://rfc7159.net/rfc7159) describes JSON objects as follows:
+    > An object is an unordered collection of zero or more name/value pairs,
+    > where a name is a string and a value is a string, number, boolean, null,
+    > object, or array.
+
+    To store objects in C++, a type is defined by the template parameters @a
+    ObjectType which chooses the container (e.g., `std::map` or
+    `std::unordered_map`), @a StringType which chooses the type of the keys or
+    names, and @a AllocatorType which chooses the allocator to use.
+
+    #### Default type
+
+    With the default values for @a ObjectType (`std::map`), @a StringType
+    (`std::string`), and @a AllocatorType (`std::allocator`), the default value
+    for @a object_t is:
+
+    @code {.cpp}
+    std::map<
+      std::string, // key_type
+      basic_json, // value_type
+      std::less<std::string>, // key_compare
+      std::allocator<std::pair<const std::string, basic_json>> // allocator_type
+    >
+    @endcode
+
+    #### Behavior
+
+    The choice of @a object_t influences the behavior of the JSON class. With
+    the default type, objects have the following behavior:
+
+    - When all names are unique, objects will be interoperable in the sense
+      that all software implementations receiving that object will agree on the
+      name-value mappings.
+    - When the names within an object are not unique, later stored name/value
+      pairs overwrite previously stored name/value pairs, leaving the used
+      names unique. For instance, `{"key": 1}` and `{"key": 2, "key": 1}` will
+      be treated as equal and both stored as `{"key": 1}`.
+    - Internally, name/value pairs are stored in lexicographical order of the
+      names. Objects will also be serialized (see @ref dump) in this order. For
+      instance, `{"b": 1, "a": 2}` and `{"a": 2, "b": 1}` will be stored and
+      serialized as `{"a": 2, "b": 1}`.
+    - When comparing objects, the order of the name/value pairs is irrelevant.
+      This makes objects interoperable in the sense that they will not be
+      affected by these differences. For instance, `{"b": 1, "a": 2}` and
+      `{"a": 2, "b": 1}` will be treated as equal.
+
+    #### Limits
+
+    [RFC 7159](http://rfc7159.net/rfc7159) specifies:
+    > An implementation may set limits on the maximum depth of nesting.
+
+    In this class, the object's limit of nesting is not constraint explicitly.
+    However, a maximum depth of nesting may be introduced by the compiler or
+    runtime environment. A theoretical limit can be queried by calling the @ref
+    max_size function of a JSON object.
+
+    #### Storage
+
+    Objects are stored as pointers in a `basic_json` type. That is, for any
+    access to object values, a pointer of type `object_t*` must be dereferenced.
+
+    @sa array_t
+    */
     using object_t =
         ObjectType<StringType, basic_json, std::less<StringType>, AllocatorType<std::pair<const StringType, basic_json>>>;
-    /// a type for an array
+
+    /*!
+    @brief a type for an array
+
+    [RFC 7159](http://rfc7159.net/rfc7159) describes JSON arrays as follows:
+    > An array is an ordered sequence of zero or more values.
+
+    To store objects in C++, a type is defined by the template parameters @a
+    ArrayType which chooses the container (e.g., `std::vector` or `std::list`)
+    and @a AllocatorType which chooses the allocator to use.
+
+    #### Default type
+
+    With the default values for @a ArrayType (`std::vector`) and @a
+    AllocatorType (`std::allocator`), the default value for @a array_t is:
+
+    @code {.cpp}
+    std::vector<
+      basic_json, // value_type
+      std::allocator<basic_json> // allocator_type
+    >
+    @endcode
+
+    #### Limits
+
+    [RFC 7159](http://rfc7159.net/rfc7159) specifies:
+    > An implementation may set limits on the maximum depth of nesting.
+
+    In this class, the array's limit of nesting is not constraint explicitly.
+    However, a maximum depth of nesting may be introduced by the compiler or
+    runtime environment. A theoretical limit can be queried by calling the @ref
+    max_size function of a JSON array.
+
+    #### Storage
+
+    Arrays are stored as pointers in a `basic_json` type. That is, for any
+    access to array values, a pointer of type `array_t*` must be dereferenced.
+    */
     using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
-    /// a type for a string
+
+    /*!
+    @brief a type for a string
+
+    [RFC 7159](http://rfc7159.net/rfc7159) describes JSON strings as follows:
+    > A string is a sequence of zero or more Unicode characters.
+
+    To store objects in C++, a type is defined by the template parameters @a
+    StringType which chooses the container (e.g., `std::string`) to use.
+
+    Unicode values are split by the JSON class into byte-sized characters
+    during deserialization.
+
+    #### Default type
+
+    With the default values for @a StringType (`std::string`), the default
+    value for @a string_t is:
+
+    @code {.cpp}
+    std::string
+    @endcode
+
+    #### String comparison
+
+    [RFC 7159](http://rfc7159.net/rfc7159) states:
+    > Software implementations are typically required to test names of object
+    > members for equality. Implementations that transform the textual
+    > representation into sequences of Unicode code units and then perform the
+    > comparison numerically, code unit by code unit, are interoperable in the
+    > sense that implementations will agree in all cases on equality or
+    > inequality of two strings. For example, implementations that compare
+    > strings with escaped characters unconverted may incorrectly find that
+    > `"a\\b"` and `"a\u005Cb"` are not equal.
+
+    This implementation is interoperable as it does compare strings code unit
+    by code unit.
+
+    #### Storage
+
+    String values are stored as pointers in a `basic_json` type. That is, for
+    any access to string values, a pointer of type `string_t*` must be
+    dereferenced.
+    */
     using string_t = StringType;
-    /// a type for a boolean
+
+    /*!
+    @brief a type for a boolean
+
+    [RFC 7159](http://rfc7159.net/rfc7159) implicitly describes a boolean as a
+    type which differentiates the two literals `true` and `false`.
+
+    To store objects in C++, a type is defined by the template parameter @a
+    BooleanType which chooses the type to use.
+
+    #### Default type
+
+    With the default values for @a BooleanType (`bool`), the default value for
+    @a boolean_t is:
+
+    @code {.cpp}
+    bool
+    @endcode
+
+    #### Storage
+
+    Boolean values are stored directly inside a `basic_json` type.
+    */
     using boolean_t = BooleanType;
-    /// a type for a number (integer)
+
+    /*!
+    @brief a type for a number (integer)
+
+    [RFC 7159](http://rfc7159.net/rfc7159) describes numbers as follows:
+    > The representation of numbers is similar to that used in most programming
+    > languages. A number is represented in base 10 using decimal digits. It
+    > contains an integer component that may be prefixed with an optional minus
+    > sign, which may be followed by a fraction part and/or an exponent part.
+    > Leading zeros are not allowed. (...) Numeric values that cannot be
+    > represented in the grammar below (such as Infinity and NaN) are not
+    > permitted.
+
+    This description includes both integer and floating-point numbers. However,
+    C++ allows more precise storage if it is known whether the number is an
+    integer or a floating-point number. Therefore, two different types, @ref
+    number_integer_t and @ref number_float_t are used.
+
+    To store integer numbers in C++, a type is defined by the template
+    parameter @a NumberIntegerType which chooses the type to use.
+
+    #### Default type
+
+    With the default values for @a NumberIntegerType (`int64_t`), the default
+    value for @a number_integer_t is:
+
+    @code {.cpp}
+    int64_t
+    @endcode
+
+    #### Default behavior
+
+    - The restrictions about leading zeros is not enforced in C++. Instead,
+      leading zeros in integer literals lead to an interpretation as octal
+      number. Internally, the value will be stored as decimal number. For
+      instance, the C++ integer literal `010` will be serialized to `8`. During
+      deserialization, leading zeros yield an error.
+    - Not-a-number (NaN) values will be serialized to `null`.
+
+    #### Limits
+
+    [RFC 7159](http://rfc7159.net/rfc7159) specifies:
+    > An implementation may set limits on the range and precision of numbers.
+
+    When the default type is used, the maximal integer number that can be
+    stored is `9223372036854775807` (INT64_MAX) and the minimal integer number
+    that can be stored is `-9223372036854775808` (INT64_MIN). Integer numbers
+    that are out of range will yield over/underflow when used in a constructor.
+    During deserialization, too large or small integer numbers will be
+    automatically be stored as @ref number_float_t.
+
+    [RFC 7159](http://rfc7159.net/rfc7159) further states:
+    > Note that when such software is used, numbers that are integers and are
+    > in the range \f$[-2^{53}+1, 2^{53}-1]\f$ are interoperable in the sense
+    > that implementations will agree exactly on their numeric values.
+
+    As this range is a subrange of the exactly supported range [INT64_MIN,
+    INT64_MAX], this class's integer type is interoperable.
+
+    #### Storage
+
+    Integer number values are stored directly inside a `basic_json` type.
+    */
     using number_integer_t = NumberIntegerType;
-    /// a type for a number (floating-point)
+
+    /*!
+    @brief a type for a number (floating-point)
+
+    [RFC 7159](http://rfc7159.net/rfc7159) describes numbers as follows:
+    > The representation of numbers is similar to that used in most programming
+    > languages. A number is represented in base 10 using decimal digits. It
+    > contains an integer component that may be prefixed with an optional minus
+    > sign, which may be followed by a fraction part and/or an exponent part.
+    > Leading zeros are not allowed. (...) Numeric values that cannot be
+    > represented in the grammar below (such as Infinity and NaN) are not
+    > permitted.
+
+    This description includes both integer and floating-point numbers. However,
+    C++ allows more precise storage if it is known whether the number is an
+    integer or a floating-point number. Therefore, two different types, @ref
+    number_integer_t and @ref number_float_t are used.
+
+    To store floating-point numbers in C++, a type is defined by the template
+    parameter @a NumberFloatType which chooses the type to use.
+
+    #### Default type
+
+    With the default values for @a NumberFloatType (`double`), the default
+    value for @a number_float_t is:
+
+    @code {.cpp}
+    double
+    @endcode
+
+    #### Default behavior
+
+    - The restrictions about leading zeros is not enforced in C++. Instead,
+      leading zeros in floating-point literals will be ignored. Internally, the
+      value will be stored as decimal number. For instance, the C++
+      floating-point literal `01.2` will be serialized to `1.2`. During
+      deserialization, leading zeros yield an error.
+    - Not-a-number (NaN) values will be serialized to `null`.
+
+    #### Limits
+
+    [RFC 7159](http://rfc7159.net/rfc7159) states:
+    > This specification allows implementations to set limits on the range and
+    > precision of numbers accepted. Since software that implements IEEE
+    > 754-2008 binary64 (double precision) numbers is generally available and
+    > widely used, good interoperability can be achieved by implementations that
+    > expect no more precision or range than these provide, in the sense that
+    > implementations will approximate JSON numbers within the expected
+    > precision.
+
+    This implementation does exactly follow this approach, as it uses double
+    precision floating-point numbers. Note values smaller than
+    `-1.79769313486232e+308` and values greather than `1.79769313486232e+308`
+    will be stored as NaN internally and be serialized to `null`.
+
+    #### Storage
+
+    Floating-point number values are stored directly inside a `basic_json` type.
+    */
     using number_float_t = NumberFloatType;
-    /// a type for list initialization
-    using list_init_t = std::initializer_list<basic_json>;
 
     /// @}
 
@@ -424,35 +707,6 @@ class basic_json
     */
     using parser_callback_t = std::function<bool(
                                   int depth, parse_event_t event, basic_json& parsed)>;
-
-    /*!
-    @brief comparison operator for JSON types
-
-    Returns an ordering that is similar to Python:
-    - order: null < boolean < number < object < array < string
-    - furthermore, each type is not smaller than itself
-    */
-    friend bool operator<(const value_t lhs, const value_t rhs)
-    {
-        static constexpr std::array<uint8_t, 7> order = {{
-                0, // null
-                3, // object
-                4, // array
-                5, // string
-                1, // boolean
-                2, // integer
-                2  // float
-            }
-        };
-
-        // discarded values are not comparable
-        if (lhs == value_t::discarded or rhs == value_t::discarded)
-        {
-            return false;
-        }
-
-        return order[static_cast<std::size_t>(lhs)] < order[static_cast<std::size_t>(rhs)];
-    }
 
 
     //////////////////
@@ -911,10 +1165,11 @@ class basic_json
     With the rules described above, the following JSON values cannot be
     expressed by an initializer list:
 
-    - the empty array (`[]`): use @ref array(list_init_t) with an empty
-      initializer list in this case
-    - arrays whose elements satisfy rule 2: use @ref array(list_init_t) with
-      the same initializer list in this case
+    - the empty array (`[]`): use @ref array(std::initializer_list<basic_json>)
+      with an empty initializer list in this case
+    - arrays whose elements satisfy rule 2: use @ref
+      array(std::initializer_list<basic_json>) with the same initializer list
+      in this case
 
     @note When used without parentheses around an empty initializer list, @ref
     basic_json() is called instead of this function, yielding the JSON null
@@ -925,7 +1180,8 @@ class basic_json
     @param[in] type_deduction internal parameter; when set to `true`, the type
     of the JSON value is deducted from the initializer list @a init; when set
     to `false`, the type provided via @a manual_type is forced. This mode is
-    used by the functions @ref array(list_init_t) and @ref object(list_init_t).
+    used by the functions @ref array(std::initializer_list<basic_json>) and
+    @ref object(std::initializer_list<basic_json>).
 
     @param[in] manual_type internal parameter; when @a type_deduction is set to
     `false`, the created JSON value will use the provided type (only @ref
@@ -941,12 +1197,13 @@ class basic_json
     @liveexample{The example below shows how JSON values are created from
     initializer lists,basic_json__list_init_t}
 
-    @sa basic_json array(list_init_t) - create a JSON array value from an
-    initializer list
-    @sa basic_json object(list_init_t) - create a JSON object value from an
-    initializer list
+    @sa basic_json array(std::initializer_list<basic_json>) - create a JSON
+    array value from an initializer list
+    @sa basic_json object(std::initializer_list<basic_json>) - create a JSON
+    object value from an initializer list
     */
-    basic_json(list_init_t init, bool type_deduction = true,
+    basic_json(std::initializer_list<basic_json> init,
+               bool type_deduction = true,
                value_t manual_type = value_t::array)
     {
         // the initializer list could describe an object
@@ -1012,7 +1269,8 @@ class basic_json
 
     @note This function is only needed to express two edge cases that cannot be
     realized with the initializer list constructor (@ref
-    basic_json(list_init_t, bool, value_t)). These cases are:
+    basic_json(std::initializer_list<basic_json>, bool, value_t)). These cases
+    are:
     1. creating an array whose elements are all pairs whose first element is a
     string - in this case, the initializer list constructor would create an
     object, taking the first elements as keys
@@ -1029,12 +1287,13 @@ class basic_json
     @liveexample{The following code shows an example for the @ref array
     function.,array}
 
-    @sa basic_json(list_init_t, bool, value_t) - create a JSON value from an
-    initializer list
-    @sa basic_json object(list_init_t) - create a JSON object value from an
-    initializer list
+    @sa basic_json(std::initializer_list<basic_json>, bool, value_t) - create a
+    JSON value from an initializer list
+    @sa basic_json object(std::initializer_list<basic_json>) - create a JSON
+    object value from an initializer list
     */
-    static basic_json array(list_init_t init = list_init_t())
+    static basic_json array(std::initializer_list<basic_json> init =
+                                std::initializer_list<basic_json>())
     {
         return basic_json(init, false, value_t::array);
     }
@@ -1047,29 +1306,32 @@ class basic_json
     the initializer list is empty, the empty object `{}` is created.
 
     @note This function is only added for symmetry reasons. In contrast to the
-    related function @ref basic_json array(list_init_t), there are no cases
-    which can only be expressed by this function. That is, any initializer list
-    @a init can also be passed to the initializer list constructor @ref
-    basic_json(list_init_t, bool, value_t).
+    related function @ref basic_json array(std::initializer_list<basic_json>),
+    there are no cases which can only be expressed by this function. That is,
+    any initializer list @a init can also be passed to the initializer list
+    constructor @ref basic_json(std::initializer_list<basic_json>, bool,
+    value_t).
 
     @param[in] init  initializer list to create an object from (optional)
 
     @return JSON object value
 
     @throw std::domain_error if @a init is not a pair whose first elements are
-    strings; thrown by @ref basic_json(list_init_t, bool, value_t)
+    strings; thrown by @ref basic_json(std::initializer_list<basic_json>, bool,
+    value_t)
 
     @complexity Linear in the size of @a init.
 
     @liveexample{The following code shows an example for the @ref object
     function.,object}
 
-    @sa basic_json(list_init_t, bool, value_t) - create a JSON value from an
-    initializer list
-    @sa basic_json array(list_init_t) - create a JSON array value from an
-    initializer list
+    @sa basic_json(std::initializer_list<basic_json>, bool, value_t) - create a
+    JSON value from an initializer list
+    @sa basic_json array(std::initializer_list<basic_json>) - create a JSON
+    array value from an initializer list
     */
-    static basic_json object(list_init_t init = list_init_t())
+    static basic_json object(std::initializer_list<basic_json> init =
+                                 std::initializer_list<basic_json>())
     {
         return basic_json(init, false, value_t::object);
     }
@@ -3592,6 +3854,37 @@ class basic_json
     /// @name lexicographical comparison operators
     /// @{
 
+  private:
+    /*!
+    @brief comparison operator for JSON types
+
+    Returns an ordering that is similar to Python:
+    - order: null < boolean < number < object < array < string
+    - furthermore, each type is not smaller than itself
+    */
+    friend bool operator<(const value_t lhs, const value_t rhs)
+    {
+        static constexpr std::array<uint8_t, 7> order = {{
+                0, // null
+                3, // object
+                4, // array
+                5, // string
+                1, // boolean
+                2, // integer
+                2  // float
+            }
+        };
+
+        // discarded values are not comparable
+        if (lhs == value_t::discarded or rhs == value_t::discarded)
+        {
+            return false;
+        }
+
+        return order[static_cast<std::size_t>(lhs)] < order[static_cast<std::size_t>(rhs)];
+    }
+
+  public:
     /*!
     @brief comparison: equal
 
