@@ -6743,6 +6743,36 @@ TEST_CASE("modifiers")
             }
         }
 
+        SECTION("initializer list at position")
+        {
+            SECTION("insert before begin()")
+            {
+                auto it = j_array.insert(j_array.begin(), {7, 8, 9});
+                CHECK(j_array.size() == 7);
+                CHECK(*it == json(7));
+                CHECK(j_array.begin() == it);
+                CHECK(j_array == json({7, 8, 9, 1, 2, 3, 4}));
+            }
+
+            SECTION("insert in the middle")
+            {
+                auto it = j_array.insert(j_array.begin() + 2, {7, 8, 9});
+                CHECK(j_array.size() == 7);
+                CHECK(*it == json(7));
+                CHECK((it - j_array.begin()) == 2);
+                CHECK(j_array == json({1, 2, 7, 8, 9, 3, 4}));
+            }
+
+            SECTION("insert before end()")
+            {
+                auto it = j_array.insert(j_array.end(), {7, 8, 9});
+                CHECK(j_array.size() == 7);
+                CHECK(*it == json(7));
+                CHECK((j_array.end() - it) == 3);
+                CHECK(j_array == json({1, 2, 3, 4, 7, 8, 9}));
+            }
+        }
+
         SECTION("invalid iterator")
         {
             // pass iterator to a different array
@@ -6753,6 +6783,7 @@ TEST_CASE("modifiers")
             CHECK_THROWS_AS(j_array.insert(j_another_array.end(), 10, 11), std::domain_error);
             CHECK_THROWS_AS(j_array.insert(j_another_array.end(), j_yet_another_array.begin(),
                                            j_yet_another_array.end()), std::domain_error);
+            CHECK_THROWS_AS(j_array.insert(j_another_array.end(), {1, 2, 3, 4}), std::domain_error);
         }
 
         SECTION("non-array type")
@@ -6765,6 +6796,7 @@ TEST_CASE("modifiers")
             CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), 10, 11), std::domain_error);
             CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), j_yet_another_array.begin(),
                                               j_yet_another_array.end()), std::domain_error);
+            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), {1, 2, 3, 4}), std::domain_error);
         }
     }
 

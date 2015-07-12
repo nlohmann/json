@@ -3877,6 +3877,45 @@ class basic_json
     }
 
     /*!
+    @brief inserts elements
+
+    Inserts elements from initializer list @a ilist before iterator @a pos.
+
+    @param[in] pos iterator before which the content will be inserted; may be
+    the end() iterator
+    @param[in] ilist initializer list to insert the values from
+
+    @throw std::domain_error if called on JSON values other than arrays
+    @throw std::domain_error if @a pos is not an iterator of *this
+    @return iterator pointing to the first element inserted, or @a pos if
+    `ilist` is empty
+
+    @complexity Linear in `ilist.size()` plus linear in the distance between @a
+    pos and end of the container.
+
+    @liveexample{The example shows how insert is used.,insert__ilist}
+    */
+    iterator insert(const_iterator pos, std::initializer_list<basic_json> ilist)
+    {
+        // insert only works for arrays
+        if (m_type != value_t::array)
+        {
+            throw std::domain_error("cannot use insert() with " + type_name());
+        }
+
+        // check if iterator pos fits to this JSON value
+        if (pos.m_object != this)
+        {
+            throw std::domain_error("iterator does not fit current value");
+        }
+
+        // insert to array and return iterator
+        iterator result(this);
+        result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, ilist);
+        return result;
+    }
+
+    /*!
     @brief exchanges the values
 
     Exchanges the contents of the JSON value with those of @a other. Does not
