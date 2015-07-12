@@ -400,7 +400,7 @@ $ make
 $ ./json_unit "*"
 
 ===============================================================================
-All tests passed (3341006 assertions in 22 test cases)
+All tests passed (3341759 assertions in 27 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

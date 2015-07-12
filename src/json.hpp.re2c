@@ -3694,7 +3694,7 @@ class basic_json
     called on a JSON null value, an empty object is created before inserting @a
     value.
 
-    @param value the value to add to the JSON object
+    @param[in] value the value to add to the JSON object
 
     @throw std::domain_error when called on a type other than JSON object or
     null
@@ -3732,6 +3732,148 @@ class basic_json
     {
         push_back(value);
         return operator[](value.first);
+    }
+
+    /*!
+    @brief inserts element
+
+    Inserts element @a value before iterator @a pos.
+
+    @param[in] pos iterator before which the content will be inserted; may be
+    the end() iterator
+    @param[in] value element to insert
+    @return iterator pointing to the inserted @a value.
+
+    @throw std::domain_error if called on JSON values other than arrays
+    @throw std::domain_error if @a pos is not an iterator of *this
+
+    @complexity Constant plus linear in the distance between pos and end of the
+    container.
+
+    @liveexample{The example shows how insert is used.,insert}
+    */
+    iterator insert(const_iterator pos, const basic_json& value)
+    {
+        // insert only works for arrays
+        if (m_type != value_t::array)
+        {
+            throw std::domain_error("cannot use insert() with " + type_name());
+        }
+
+        // check if iterator pos fits to this JSON value
+        if (pos.m_object != this)
+        {
+            throw std::domain_error("iterator does not fit current value");
+        }
+
+        // insert to array and return iterator
+        iterator result(this);
+        result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, value);
+        return result;
+    }
+
+    /*!
+    @brief inserts element
+    @copydoc insert(const_iterator, const basic_json&)
+    */
+    iterator insert(const_iterator pos, basic_json&& value)
+    {
+        return insert(pos, value);
+    }
+
+    /*!
+    @brief inserts elements
+
+    Inserts @a count copies of @a value before iterator @a pos.
+
+    @param[in] pos iterator before which the content will be inserted; may be
+    the end() iterator
+    @param[in] count number of copies of @a value to insert
+    @param[in] value element to insert
+    @return iterator pointing to the first element inserted, or @a pos if
+    `count==0`
+
+    @throw std::domain_error if called on JSON values other than arrays
+    @throw std::domain_error if @a pos is not an iterator of *this
+
+    @complexity Linear in @a count plus linear in the distance between @a pos
+    and end of the container.
+
+    @liveexample{The example shows how insert is used.,insert__count}
+    */
+    iterator insert(const_iterator pos, size_type count, const basic_json& value)
+    {
+        // insert only works for arrays
+        if (m_type != value_t::array)
+        {
+            throw std::domain_error("cannot use insert() with " + type_name());
+        }
+
+        // check if iterator pos fits to this JSON value
+        if (pos.m_object != this)
+        {
+            throw std::domain_error("iterator does not fit current value");
+        }
+
+        // insert to array and return iterator
+        iterator result(this);
+        result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, count, value);
+        return result;
+    }
+
+    /*!
+    @brief inserts elements
+
+    Inserts elements from range `[first, last)` before iterator @a pos.
+
+    @param[in] pos iterator before which the content will be inserted; may be
+    the end() iterator
+    @param[in] first begin of the range of elements to insert
+    @param[in] last end of the range of elements to insert
+
+    @throw std::domain_error if called on JSON values other than arrays
+    @throw std::domain_error if @a pos is not an iterator of *this
+    @throw std::domain_error if @a first and @a last do not belong to the same
+    JSON value
+    @throw std::domain_error if @a first or @a last are iterators into
+    container for which insert is called
+    @return iterator pointing to the first element inserted, or @a pos if
+    `first==last`
+
+    @complexity Linear in `std::distance(first, last)` plus linear in the
+    distance between @a pos and end of the container.
+
+    @liveexample{The example shows how insert is used.,insert__range}
+    */
+    iterator insert(const_iterator pos, const_iterator first, const_iterator last)
+    {
+        // insert only works for arrays
+        if (m_type != value_t::array)
+        {
+            throw std::domain_error("cannot use insert() with " + type_name());
+        }
+
+        // check if iterator pos fits to this JSON value
+        if (pos.m_object != this)
+        {
+            throw std::domain_error("iterator does not fit current value");
+        }
+
+        if (first.m_object != last.m_object)
+        {
+            throw std::domain_error("iterators does not fit");
+        }
+
+        if (first.m_object == this or last.m_object == this)
+        {
+            throw std::domain_error("passed iterators may not belong to container");
+        }
+
+        // insert to array and return iterator
+        iterator result(this);
+        result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator,
+                                     first.m_it.array_iterator, last.m_it.array_iterator);
+        return result;
     }
 
     /*!

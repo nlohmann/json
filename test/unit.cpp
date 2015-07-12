@@ -6608,6 +6608,162 @@ TEST_CASE("modifiers")
         }
     }
 
+    SECTION("insert")
+    {
+        json j_array = {1, 2, 3, 4};
+        json j_value = 5;
+
+        SECTION("value at position")
+        {
+            SECTION("insert before begin()")
+            {
+                auto it = j_array.insert(j_array.begin(), j_value);
+                CHECK(j_array.size() == 5);
+                CHECK(*it == j_value);
+                CHECK(j_array.begin() == it);
+                CHECK(j_array == json({5, 1, 2, 3, 4}));
+            }
+
+            SECTION("insert in the middle")
+            {
+                auto it = j_array.insert(j_array.begin() + 2, j_value);
+                CHECK(j_array.size() == 5);
+                CHECK(*it == j_value);
+                CHECK((it - j_array.begin()) == 2);
+                CHECK(j_array == json({1, 2, 5, 3, 4}));
+            }
+
+            SECTION("insert before end()")
+            {
+                auto it = j_array.insert(j_array.end(), j_value);
+                CHECK(j_array.size() == 5);
+                CHECK(*it == j_value);
+                CHECK((j_array.end() - it) == 1);
+                CHECK(j_array == json({1, 2, 3, 4, 5}));
+            }
+        }
+
+        SECTION("rvalue at position")
+        {
+            SECTION("insert before begin()")
+            {
+                auto it = j_array.insert(j_array.begin(), 5);
+                CHECK(j_array.size() == 5);
+                CHECK(*it == j_value);
+                CHECK(j_array.begin() == it);
+                CHECK(j_array == json({5, 1, 2, 3, 4}));
+            }
+
+            SECTION("insert in the middle")
+            {
+                auto it = j_array.insert(j_array.begin() + 2, 5);
+                CHECK(j_array.size() == 5);
+                CHECK(*it == j_value);
+                CHECK((it - j_array.begin()) == 2);
+                CHECK(j_array == json({1, 2, 5, 3, 4}));
+            }
+
+            SECTION("insert before end()")
+            {
+                auto it = j_array.insert(j_array.end(), 5);
+                CHECK(j_array.size() == 5);
+                CHECK(*it == j_value);
+                CHECK((j_array.end() - it) == 1);
+                CHECK(j_array == json({1, 2, 3, 4, 5}));
+            }
+        }
+
+        SECTION("copies at position")
+        {
+            SECTION("insert before begin()")
+            {
+                auto it = j_array.insert(j_array.begin(), 3, 5);
+                CHECK(j_array.size() == 7);
+                CHECK(*it == j_value);
+                CHECK(j_array.begin() == it);
+                CHECK(j_array == json({5, 5, 5, 1, 2, 3, 4}));
+            }
+
+            SECTION("insert in the middle")
+            {
+                auto it = j_array.insert(j_array.begin() + 2, 3, 5);
+                CHECK(j_array.size() == 7);
+                CHECK(*it == j_value);
+                CHECK((it - j_array.begin()) == 2);
+                CHECK(j_array == json({1, 2, 5, 5, 5, 3, 4}));
+            }
+
+            SECTION("insert before end()")
+            {
+                auto it = j_array.insert(j_array.end(), 3, 5);
+                CHECK(j_array.size() == 7);
+                CHECK(*it == j_value);
+                CHECK((j_array.end() - it) == 3);
+                CHECK(j_array == json({1, 2, 3, 4, 5, 5, 5}));
+            }
+
+            SECTION("insert nothing (count = 0)")
+            {
+                auto pos = j_array.end();
+                auto it = j_array.insert(j_array.end(), 0, 5);
+                CHECK(j_array.size() == 4);
+                CHECK(it == pos);
+                CHECK(j_array == json({1, 2, 3, 4}));
+            }
+        }
+
+        SECTION("range")
+        {
+            json j_other_array = {"first", "second"};
+
+            SECTION("proper usage")
+            {
+                auto it = j_array.insert(j_array.end(), j_other_array.begin(), j_other_array.end());
+                CHECK(j_array.size() == 6);
+                CHECK(*it == *j_other_array.begin());
+                CHECK((j_array.end() - it) == 2);
+                CHECK(j_array == json({1, 2, 3, 4, "first", "second"}));
+            }
+
+            SECTION("empty range")
+            {
+                auto it = j_array.insert(j_array.end(), j_other_array.begin(), j_other_array.begin());
+                CHECK(j_array.size() == 4);
+                CHECK(it == j_array.end());
+                CHECK(j_array == json({1, 2, 3, 4}));
+            }
+
+            SECTION("invalid iterators")
+            {
+                CHECK_THROWS_AS(j_array.insert(j_array.end(), j_array.begin(), j_array.end()), std::domain_error);
+            }
+        }
+
+        SECTION("invalid iterator")
+        {
+            // pass iterator to a different array
+            json j_another_array = {1, 2};
+            json j_yet_another_array = {"first", "second"};
+            CHECK_THROWS_AS(j_array.insert(j_another_array.end(), 10), std::domain_error);
+            CHECK_THROWS_AS(j_array.insert(j_another_array.end(), j_value), std::domain_error);
+            CHECK_THROWS_AS(j_array.insert(j_another_array.end(), 10, 11), std::domain_error);
+            CHECK_THROWS_AS(j_array.insert(j_another_array.end(), j_yet_another_array.begin(),
+                                           j_yet_another_array.end()), std::domain_error);
+        }
+
+        SECTION("non-array type")
+        {
+            // call insert on a non-array type
+            json j_nonarray = 3;
+            json j_yet_another_array = {"first", "second"};
+            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), 10), std::domain_error);
+            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), j_value), std::domain_error);
+            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), 10, 11), std::domain_error);
+            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), j_yet_another_array.begin(),
+                                              j_yet_another_array.end()), std::domain_error);
+        }
+    }
+
     SECTION("swap()")
     {
         SECTION("json")
