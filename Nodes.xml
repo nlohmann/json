@@ -18,6 +18,10 @@
           <Path>namespacemembers.html</Path>
          </Node>
          <Node>
+          <Name>Functions</Name>
+          <Path>namespacemembers_func.html</Path>
+         </Node>
+         <Node>
           <Name>Typedefs</Name>
           <Path>namespacemembers_type.html</Path>
          </Node>
@@ -35,6 +39,23 @@
             <Name>nlohmann</Name>
             <Path>namespacenlohmann.html</Path>
             <Subnodes>
+             <Node>
+              <Name>anonymous_namespace{json.hpp}</Name>
+              <Path>namespacenlohmann_1_1anonymous__namespace_02json_8hpp_03.html</Path>
+              <Subnodes>
+               <Node>
+                <Name>has_mapped_type</Name>
+                <Path>structnlohmann_1_1anonymous__namespace_02json_8hpp_03_1_1has__mapped__type.html</Path>
+                <Subnodes>
+                 <Node>
+                  <Name>value</Name>
+                  <Path>structnlohmann_1_1anonymous__namespace_02json_8hpp_03_1_1has__mapped__type_af1817f143485abec957f317fff256756.html</Path>
+                  <Anchor>af1817f143485abec957f317fff256756ac200aa9e414ceaf8dd26882ae1714752</Anchor>
+                 </Node>
+                </Subnodes>
+               </Node>
+              </Subnodes>
+             </Node>
              <Node>
               <Name>basic_json</Name>
               <Path>classnlohmann_1_1basic__json.html</Path>
@@ -205,14 +226,69 @@
                 <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator.html</Path>
                 <Subnodes>
                  <Node>
+                  <Name>base_iterator</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_a2d56bd27d5625ff7f6375c3daacaf985.html</Path>
+                  <Anchor>a2d56bd27d5625ff7f6375c3daacaf985</Anchor>
+                 </Node>
+                 <Node>
                   <Name>const_reverse_iterator</Name>
-                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_a8ba3f75a7ec557eec19b7513e2924219.html</Path>
-                  <Anchor>a8ba3f75a7ec557eec19b7513e2924219</Anchor>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_a0a629ad408ca408831898129954509de.html</Path>
+                  <Anchor>a0a629ad408ca408831898129954509de</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>const_reverse_iterator</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_a36f4823b6a3c48b18dd34a8c32d69032.html</Path>
+                  <Anchor>a36f4823b6a3c48b18dd34a8c32d69032</Anchor>
                  </Node>
                  <Node>
                   <Name>key</Name>
                   <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_a7eb11a5029b7ffff32fdea5f082493c2.html</Path>
                   <Anchor>a7eb11a5029b7ffff32fdea5f082493c2</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator+</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_a49d273e4f273c204b24dd0a95f7b8fbe.html</Path>
+                  <Anchor>a49d273e4f273c204b24dd0a95f7b8fbe</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator++</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_a7a770f61d1826940b1240bbc9b64250e.html</Path>
+                  <Anchor>a7a770f61d1826940b1240bbc9b64250e</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator++</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_ac8e5cfc054ab5b5a029f1417eeab6849.html</Path>
+                  <Anchor>ac8e5cfc054ab5b5a029f1417eeab6849</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator+=</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_a0f7a1b1cfcb392626677db4d721d8162.html</Path>
+                  <Anchor>a0f7a1b1cfcb392626677db4d721d8162</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator-</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_a5f202fab3c6b020d26e52b6115e5c500.html</Path>
+                  <Anchor>a5f202fab3c6b020d26e52b6115e5c500</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator-</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_a35453d58fa5ad973121883e398428799.html</Path>
+                  <Anchor>a35453d58fa5ad973121883e398428799</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator--</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_ab7e5d38f73a389f1ca95d0a8eb989879.html</Path>
+                  <Anchor>ab7e5d38f73a389f1ca95d0a8eb989879</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator--</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_adf0d1463938202e1a0ae3b9af5f2f497.html</Path>
+                  <Anchor>adf0d1463938202e1a0ae3b9af5f2f497</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator[]</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1const__reverse__iterator_abad717264654e1c8fe4c9a132c886b01.html</Path>
+                  <Anchor>abad717264654e1c8fe4c9a132c886b01</Anchor>
                  </Node>
                  <Node>
                   <Name>value</Name>
@@ -382,14 +458,69 @@
                 <Path>classnlohmann_1_1basic__json_1_1reverse__iterator.html</Path>
                 <Subnodes>
                  <Node>
+                  <Name>base_iterator</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_af530909fe1c73c87dc5f1c7afd132b09.html</Path>
+                  <Anchor>af530909fe1c73c87dc5f1c7afd132b09</Anchor>
+                 </Node>
+                 <Node>
                   <Name>reverse_iterator</Name>
-                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_af3029b8b16518b9da0b4cd3be98ef2c1.html</Path>
-                  <Anchor>af3029b8b16518b9da0b4cd3be98ef2c1</Anchor>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_a53260a8b47d21ea32f2a718414f680cd.html</Path>
+                  <Anchor>a53260a8b47d21ea32f2a718414f680cd</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>reverse_iterator</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_a54d7e34d5c3eb175c60657c442b98527.html</Path>
+                  <Anchor>a54d7e34d5c3eb175c60657c442b98527</Anchor>
                  </Node>
                  <Node>
                   <Name>key</Name>
                   <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_a514d7a82f1c8f1862acfefe8d16c6ca6.html</Path>
                   <Anchor>a514d7a82f1c8f1862acfefe8d16c6ca6</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator+</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_a8e1b3de932dbf16c5d418741f8a3aff5.html</Path>
+                  <Anchor>a8e1b3de932dbf16c5d418741f8a3aff5</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator++</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_afd5f2dfa7551ee76fa85f344ba57c09a.html</Path>
+                  <Anchor>afd5f2dfa7551ee76fa85f344ba57c09a</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator++</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_ae97ee3934cbb395c0686225dd1f810c6.html</Path>
+                  <Anchor>ae97ee3934cbb395c0686225dd1f810c6</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator+=</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_afa7138aba1ee625188d4577fd6a8ce75.html</Path>
+                  <Anchor>afa7138aba1ee625188d4577fd6a8ce75</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator-</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_a779e6d33dc2a95b09af8880ac35ca5a0.html</Path>
+                  <Anchor>a779e6d33dc2a95b09af8880ac35ca5a0</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator-</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_a91ab780b917813804449f03f8b611e1a.html</Path>
+                  <Anchor>a91ab780b917813804449f03f8b611e1a</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator--</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_a963d0ff1cd1b127820b512dad3980835.html</Path>
+                  <Anchor>a963d0ff1cd1b127820b512dad3980835</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator--</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_ab274433af69a5f596a837edae8b70ff7.html</Path>
+                  <Anchor>ab274433af69a5f596a837edae8b70ff7</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>operator[]</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1reverse__iterator_ab2e6fec73e4f67a50ca14f2bf568114d.html</Path>
+                  <Anchor>ab2e6fec73e4f67a50ca14f2bf568114d</Anchor>
                  </Node>
                  <Node>
                   <Name>value</Name>
@@ -427,11 +558,6 @@
                 <Name>difference_type</Name>
                 <Path>classnlohmann_1_1basic__json_adbd4c16c9ac641b2a4736bc2c6787d83.html</Path>
                 <Anchor>adbd4c16c9ac641b2a4736bc2c6787d83</Anchor>
-               </Node>
-               <Node>
-                <Name>list_init_t</Name>
-                <Path>classnlohmann_1_1basic__json_aa23ac5808b9aa1a08d18e3ebea25c7ce.html</Path>
-                <Anchor>aa23ac5808b9aa1a08d18e3ebea25c7ce</Anchor>
                </Node>
                <Node>
                 <Name>number_float_t</Name>
@@ -644,8 +770,8 @@
                </Node>
                <Node>
                 <Name>basic_json</Name>
-                <Path>classnlohmann_1_1basic__json_a444d8376d63d7a5edb85f33bc5976c14.html</Path>
-                <Anchor>a444d8376d63d7a5edb85f33bc5976c14</Anchor>
+                <Path>classnlohmann_1_1basic__json_af1e3f9e079136abca2530c8191c56292.html</Path>
+                <Anchor>af1e3f9e079136abca2530c8191c56292</Anchor>
                </Node>
                <Node>
                 <Name>basic_json</Name>
@@ -674,8 +800,8 @@
                </Node>
                <Node>
                 <Name>array</Name>
-                <Path>classnlohmann_1_1basic__json_a53590b99e380c464a83a0a5edf6da9ab.html</Path>
-                <Anchor>a53590b99e380c464a83a0a5edf6da9ab</Anchor>
+                <Path>classnlohmann_1_1basic__json_afc4223b5ad03b1b76e925374a8fff98e.html</Path>
+                <Anchor>afc4223b5ad03b1b76e925374a8fff98e</Anchor>
                </Node>
                <Node>
                 <Name>at</Name>
@@ -899,8 +1025,8 @@
                </Node>
                <Node>
                 <Name>object</Name>
-                <Path>classnlohmann_1_1basic__json_afb9664e6f30038e691f2e864e7f6a740.html</Path>
-                <Anchor>afb9664e6f30038e691f2e864e7f6a740</Anchor>
+                <Path>classnlohmann_1_1basic__json_ad1f617d29e8923dd40c89153f792b1bc.html</Path>
+                <Anchor>ad1f617d29e8923dd40c89153f792b1bc</Anchor>
                </Node>
                <Node>
                 <Name>operator value_t</Name>
@@ -1128,6 +1254,10 @@
             <Path>classnlohmann_1_1basic__json.html</Path>
            </Node>
            <Node>
+            <Name>nlohmann::anonymous_namespace{json.hpp}::has_mapped_type&lt; T &gt;</Name>
+            <Path>structnlohmann_1_1anonymous__namespace_02json_8hpp_03_1_1has__mapped__type.html</Path>
+           </Node>
+           <Node>
             <Name>std::hash&lt; nlohmann::json &gt;</Name>
             <Path>structstd_1_1hash_3_01nlohmann_1_1json_01_4.html</Path>
            </Node>
@@ -1168,6 +1298,80 @@
            <Node>
             <Name>All</Name>
             <Path>functions.html</Path>
+            <Subnodes>
+             <Node>
+              <Name>a</Name>
+              <Path>functions.html</Path>
+             </Node>
+             <Node>
+              <Name>b</Name>
+              <Path>functions_b.html</Path>
+             </Node>
+             <Node>
+              <Name>c</Name>
+              <Path>functions_c.html</Path>
+             </Node>
+             <Node>
+              <Name>d</Name>
+              <Path>functions_d.html</Path>
+             </Node>
+             <Node>
+              <Name>e</Name>
+              <Path>functions_e.html</Path>
+             </Node>
+             <Node>
+              <Name>f</Name>
+              <Path>functions_f.html</Path>
+             </Node>
+             <Node>
+              <Name>g</Name>
+              <Path>functions_g.html</Path>
+             </Node>
+             <Node>
+              <Name>i</Name>
+              <Path>functions_i.html</Path>
+             </Node>
+             <Node>
+              <Name>k</Name>
+              <Path>functions_k.html</Path>
+             </Node>
+             <Node>
+              <Name>m</Name>
+              <Path>functions_m.html</Path>
+             </Node>
+             <Node>
+              <Name>n</Name>
+              <Path>functions_n.html</Path>
+             </Node>
+             <Node>
+              <Name>o</Name>
+              <Path>functions_o.html</Path>
+             </Node>
+             <Node>
+              <Name>p</Name>
+              <Path>functions_p.html</Path>
+             </Node>
+             <Node>
+              <Name>r</Name>
+              <Path>functions_r.html</Path>
+             </Node>
+             <Node>
+              <Name>s</Name>
+              <Path>functions_s.html</Path>
+             </Node>
+             <Node>
+              <Name>t</Name>
+              <Path>functions_t.html</Path>
+             </Node>
+             <Node>
+              <Name>v</Name>
+              <Path>functions_v.html</Path>
+             </Node>
+             <Node>
+              <Name>~</Name>
+              <Path>functions_~.html</Path>
+             </Node>
+            </Subnodes>
            </Node>
            <Node>
             <Name>Functions</Name>
@@ -1180,6 +1384,10 @@
            <Node>
             <Name>Enumerations</Name>
             <Path>functions_enum.html</Path>
+           </Node>
+           <Node>
+            <Name>Enumerator</Name>
+            <Path>functions_eval.html</Path>
            </Node>
            <Node>
             <Name>Related Functions</Name>
