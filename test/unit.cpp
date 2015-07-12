@@ -6803,6 +6803,11 @@ TEST_CASE("lexicographical comparison operators")
                 CHECK( (j_discarded == j_values[i]) == false);
                 CHECK( (j_discarded == j_discarded) == false);
             }
+
+            // compare with null pointer
+            json j_null;
+            CHECK(j_null == nullptr);
+            CHECK(nullptr == j_null);
         }
 
         SECTION("comparison: not equal")
@@ -6815,6 +6820,13 @@ TEST_CASE("lexicographical comparison operators")
                     CHECK( (j_values[i] != j_values[j]) == not(j_values[i] == j_values[j]) );
                 }
             }
+
+            // compare with null pointer
+            json j_null;
+            CHECK( (j_null != nullptr) == false);
+            CHECK( (nullptr != j_null) == false);
+            CHECK( (j_null != nullptr) == not(j_null == nullptr));
+            CHECK( (nullptr != j_null) == not(nullptr == j_null));
         }
 
         SECTION("comparison: less")
@@ -8968,6 +8980,8 @@ TEST_CASE("concepts")
         // X::size_type must return an unsigned integer
         CHECK((std::is_unsigned<json::size_type>::value));
         // X::size_type can represent any non-negative value of X::difference_type
+        CHECK(std::numeric_limits<json::difference_type>::max() <=
+              std::numeric_limits<json::size_type>::max());
 
         // the expression "X u" has the post-condition "u.empty()"
         {

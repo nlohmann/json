@@ -101,18 +101,24 @@ default; will be used in @ref number_float_t)
 @tparam AllocatorType type of the allocator to use (@c `std::allocator` by
 default)
 
-@requirement This class satisfies the Container requirements (see
-http://en.cppreference.com/w/cpp/concept/Container):
-- basic_json()
-- basic_json(const basic_json&)
-- reference& operator=(basic_json)
-- ~basic_json()
-- iterator begin(), const_iterator begin(), const_iterator cbegin()
-- iterator end(), const_iterator end(), const_iterator cend()
-- bool operator==(const_reference, const_reference), bool operator!=(const_reference, const_reference)
-- void swap(reference other)
-- size_type size(), size_type max_size()
-- bool empty()
+@requirement The class satisfies the following concept requirements:
+- Basic
+ - [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible)
+ - [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible)
+ - [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible)
+ - [MoveAssignable](http://en.cppreference.com/w/cpp/concept/MoveAssignable)
+ - [CopyAssignable](http://en.cppreference.com/w/cpp/concept/CopyAssignable)
+ - [Destructible](http://en.cppreference.com/w/cpp/concept/Destructible)
+- Layout
+ - [StandardLayoutType](http://en.cppreference.com/w/cpp/concept/StandardLayoutType)
+- Library-wide
+ - [EqualityComparable](http://en.cppreference.com/w/cpp/concept/EqualityComparable)
+ - [LessThanComparable](http://en.cppreference.com/w/cpp/concept/LessThanComparable)
+ - [Swappable](http://en.cppreference.com/w/cpp/concept/Swappable)
+ - [NullablePointer](http://en.cppreference.com/w/cpp/concept/NullablePointer)
+- Container
+ - [Container](http://en.cppreference.com/w/cpp/concept/Container)
+ - [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
 
 @note ObjectType trick from http://stackoverflow.com/a/9860911
 
@@ -1904,11 +1910,16 @@ class basic_json
     This function returns true iff the JSON value was discarded during parsing
     with a callback function (see @ref parser_callback_t).
 
+    @note This function will always be `false` for JSON values after parsing.
+    That is, discarded values can only occur during parsing, but will be
+    removed when inside a structured value or replaced by null in other cases.
+
     @return `true` if type is discarded, `false` otherwise.
 
     @complexity Constant.
 
-    @todo Add example.
+    @liveexample{The following code exemplifies @ref is_discarded for all JSON
+    types.,is_discarded}
     */
     bool is_discarded() const noexcept
     {
@@ -3949,6 +3960,36 @@ class basic_json
     }
 
     /*!
+    @brief comparison: equal
+
+    The functions compares the given JSON value against a null pointer. As the
+    null pointer can be used to initialize a JSON value to null, a comparison
+    of JSON value @a v with a null pointer should be equivalent to call
+    `v.is_null()`.
+
+    @param[in] v  JSON value to consider
+    @return whether @a v is null
+
+    @complexity Constant.
+
+    @liveexample{The example compares several JSON types to the null pointer.
+    ,operator__equal__nullptr_t}
+    */
+    friend bool operator==(const_reference v, std::nullptr_t) noexcept
+    {
+        return v.is_null();
+    }
+
+    /*!
+    @brief comparison: equal
+    @copydoc operator==(const_reference, std::nullptr_t)
+    */
+    friend bool operator==(std::nullptr_t, const_reference v) noexcept
+    {
+        return v.is_null();
+    }
+
+    /*!
     @brief comparison: not equal
 
     Compares two JSON values for inequality by calculating `not (lhs == rhs)`.
@@ -3967,6 +4008,36 @@ class basic_json
     friend bool operator!=(const_reference lhs, const_reference rhs) noexcept
     {
         return not (lhs == rhs);
+    }
+
+    /*!
+    @brief comparison: not equal
+
+    The functions compares the given JSON value against a null pointer. As the
+    null pointer can be used to initialize a JSON value to null, a comparison
+    of JSON value @a v with a null pointer should be equivalent to call
+    `not v.is_null()`.
+
+    @param[in] v  JSON value to consider
+    @return whether @a v is not null
+
+    @complexity Constant.
+
+    @liveexample{The example compares several JSON types to the null pointer.
+    ,operator__notequal__nullptr_t}
+    */
+    friend bool operator!=(const_reference v, std::nullptr_t) noexcept
+    {
+        return not v.is_null();
+    }
+
+    /*!
+    @brief comparison: not equal
+    @copydoc operator!=(const_reference, std::nullptr_t)
+    */
+    friend bool operator!=(std::nullptr_t, const_reference v) noexcept
+    {
+        return not v.is_null();
     }
 
     /*!
