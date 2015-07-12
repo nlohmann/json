@@ -6735,7 +6735,11 @@ TEST_CASE("modifiers")
 
             SECTION("invalid iterators")
             {
+                json j_other_array2 = {"first", "second"};
+
                 CHECK_THROWS_AS(j_array.insert(j_array.end(), j_array.begin(), j_array.end()), std::domain_error);
+                CHECK_THROWS_AS(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()),
+                                std::domain_error);
             }
         }
 
