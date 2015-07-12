@@ -980,6 +980,11 @@
                 <Anchor>a8fa74698f4061e18ec664009f3af1ddf</Anchor>
                </Node>
                <Node>
+                <Name>insert</Name>
+                <Path>classnlohmann_1_1basic__json_ab14e3503305622fb5ab01a7f490916e8.html</Path>
+                <Anchor>ab14e3503305622fb5ab01a7f490916e8</Anchor>
+               </Node>
+               <Node>
                 <Name>is_array</Name>
                 <Path>classnlohmann_1_1basic__json_af70222eb312ca0a44cd7d793b1516e2e.html</Path>
                 <Anchor>af70222eb312ca0a44cd7d793b1516e2e</Anchor>

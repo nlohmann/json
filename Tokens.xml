@@ -1280,6 +1280,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>insert</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ab14e3503305622fb5ab01a7f490916e8.html</Path>
+    <Anchor>ab14e3503305622fb5ab01a7f490916e8</Anchor>
+    <Abstract>inserts elements </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>swap</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
