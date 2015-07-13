@@ -2931,8 +2931,8 @@ class basic_json
     */
     template <class InteratorType, typename
               std::enable_if<
-                  std::is_same<InteratorType, typename basic_json::iterator>::value or
-                  std::is_same<InteratorType, typename basic_json::const_iterator>::value
+                  std::is_same<InteratorType, typename __basic_json::iterator>::value or
+                  std::is_same<InteratorType, typename __basic_json::const_iterator>::value
                   , int>::type
               = 0>
     InteratorType erase(InteratorType first, InteratorType last)
@@ -4852,7 +4852,7 @@ class basic_json
     };
 
     /// an iterator value
-    union internal_iterator
+    struct internal_iterator
     {
         /// iterator for JSON objects
         typename object_t::iterator object_iterator;
