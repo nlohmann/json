@@ -388,6 +388,8 @@ I deeply appreciate the help of the following people.
 - [Florian Weber](https://github.com/Florianjw) fixed a bug in and improved the performance of the comparison operators.
 - [Eric Cornelius](https://github.com/EricMCornelius) pointed out a bug in the handling with NaN and infinity values.
 - [易思龙](https://github.com/likebeta) implemented a conversion from anonymous enums.
+- [kepkin](https://github.com/kepkin) patiently pushed forward the support for Microsoft Visual studio.
+- [gregmarr](https://github.com/gregmarr) simplified the implementation of reverse iterators.
 
 Thanks a lot for helping out!
 
