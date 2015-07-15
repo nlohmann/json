@@ -2931,8 +2931,8 @@ class basic_json
     */
     template <class InteratorType, typename
               std::enable_if<
-                  std::is_same<InteratorType, typename basic_json::iterator>::value or
-                  std::is_same<InteratorType, typename basic_json::const_iterator>::value
+                  std::is_same<InteratorType, typename __basic_json::iterator>::value or
+                  std::is_same<InteratorType, typename __basic_json::const_iterator>::value
                   , int>::type
               = 0>
     InteratorType erase(InteratorType first, InteratorType last)
@@ -4286,7 +4286,9 @@ class basic_json
 
         // We only reach this line if we cannot compare values. In that case,
         // we compare types.
-        return lhs_type < rhs_type;
+        // Have to use operator< explicitly in order to
+        // not cause ambiguity on MS compiler
+        return operator<(lhs_type, rhs_type);
     }
 
     /*!
@@ -4852,7 +4854,7 @@ class basic_json
     };
 
     /// an iterator value
-    union internal_iterator
+    struct internal_iterator
     {
         /// iterator for JSON objects
         typename object_t::iterator object_iterator;

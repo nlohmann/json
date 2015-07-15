@@ -6939,7 +6939,7 @@ TEST_CASE("lexicographical comparison operators")
                     CAPTURE(i);
                     CAPTURE(j);
                     // check precomputed values
-                    CHECK( (j_types[i] < j_types[j]) == expected[i][j] );
+                    CHECK(operator<(j_types[i], j_types[j]) == expected[i][j]);
                 }
             }
         }
@@ -8163,9 +8163,11 @@ TEST_CASE("parser class")
             SECTION("escaped")
             {
                 // quotation mark "\""
-                CHECK(json::parser("\"\\\"\"").parse() == R"("\"")"_json);
+                auto r1 = R"("\"")"_json;
+                CHECK(json::parser("\"\\\"\"").parse() == r1);
                 // reverse solidus "\\"
-                CHECK(json::parser("\"\\\\\"").parse() == R"("\\")"_json);
+                auto r2 = R"("\\")"_json;
+                CHECK(json::parser("\"\\\\\"").parse() == r2);
                 // solidus
                 CHECK(json::parser("\"\\/\"").parse() == R"("/")"_json);
                 // backspace
@@ -9738,7 +9740,8 @@ TEST_CASE("regression tests")
         {
             auto s = "[\"\\\"foo\\\"\"]";
             json j = json::parse(s);
-            CHECK(j == R"(["\"foo\""])"_json);
+            auto expected = R"(["\"foo\""])"_json;
+            CHECK(j == expected);
         }
     }
 
