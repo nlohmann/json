@@ -6939,7 +6939,7 @@ TEST_CASE("lexicographical comparison operators")
                     CAPTURE(i);
                     CAPTURE(j);
                     // check precomputed values
-                    CHECK( (j_types[i] < j_types[j]) == expected[i][j] );
+                    CHECK(operator<(j_types[i], j_types[j]) == expected[i][j]);
                 }
             }
         }
