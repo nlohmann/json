@@ -8,8 +8,11 @@ add_executable(json_unit
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS
-        "/EHsc /Od"
+        "/EHsc"
     )
+
+    STRING(REPLACE "-O2" "-Od" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+
     add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 else(MSVC)
     set(CMAKE_CXX_FLAGS
