@@ -8,7 +8,7 @@ add_executable(json_unit
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS
-        "/EHsc"
+        "/EHsc /Od"
     )
     add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 else(MSVC)

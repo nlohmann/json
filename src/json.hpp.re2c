@@ -137,7 +137,7 @@ class basic_json
 {
   private:
     /// workaround type for MSVC
-    using __basic_json =
+    using basic_json_t =
         basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberFloatType, AllocatorType>;
 
   public:
@@ -890,10 +890,10 @@ class basic_json
     */
     template <class CompatibleArrayType, typename
               std::enable_if<
-                  not std::is_same<CompatibleArrayType, typename __basic_json::iterator>::value and
-                  not std::is_same<CompatibleArrayType, typename __basic_json::const_iterator>::value and
-                  not std::is_same<CompatibleArrayType, typename __basic_json::reverse_iterator>::value and
-                  not std::is_same<CompatibleArrayType, typename __basic_json::const_reverse_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename basic_json_t::iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename basic_json_t::const_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename basic_json_t::reverse_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename basic_json_t::const_reverse_iterator>::value and
                   not std::is_same<CompatibleArrayType, typename array_t::iterator>::value and
                   not std::is_same<CompatibleArrayType, typename array_t::const_iterator>::value and
                   std::is_constructible<basic_json, typename CompatibleArrayType::value_type>::value, int>::type
@@ -1401,8 +1401,8 @@ class basic_json
     */
     template <class InputIT, typename
               std::enable_if<
-                  std::is_same<InputIT, typename __basic_json::iterator>::value or
-                  std::is_same<InputIT, typename __basic_json::const_iterator>::value
+                  std::is_same<InputIT, typename basic_json_t::iterator>::value or
+                  std::is_same<InputIT, typename basic_json_t::const_iterator>::value
                   , int>::type
               = 0>
     basic_json(InputIT first, InputIT last) : m_type(first.m_object->m_type)
@@ -1503,7 +1503,7 @@ class basic_json
     @throw std::bad_alloc if allocation for object, array, or string fails.
 
     @liveexample{The following code shows an example for the copy
-    constructor.,basic_json__basic_json}
+    constructor.,basic_jsonbasic_json_t}
 
     @ingroup container
     */
@@ -1958,7 +1958,7 @@ class basic_json
     template <class T, typename
               std::enable_if<
                   std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
-                  std::is_convertible<__basic_json, typename T::mapped_type>::value
+                  std::is_convertible<basic_json_t, typename T::mapped_type>::value
                   , int>::type = 0>
     T get_impl(T*) const
     {
@@ -1994,8 +1994,8 @@ class basic_json
     /// get an array (explicit)
     template <class T, typename
               std::enable_if<
-                  std::is_convertible<__basic_json, typename T::value_type>::value and
-                  not std::is_same<__basic_json, typename T::value_type>::value and
+                  std::is_convertible<basic_json_t, typename T::value_type>::value and
+                  not std::is_same<basic_json_t, typename T::value_type>::value and
                   not std::is_arithmetic<T>::value and
                   not std::is_convertible<std::string, T>::value and
                   not has_mapped_type<T>::value
@@ -2024,8 +2024,8 @@ class basic_json
     /// get an array (explicit)
     template <class T, typename
               std::enable_if<
-                  std::is_convertible<__basic_json, T>::value and
-                  not std::is_same<__basic_json, T>::value
+                  std::is_convertible<basic_json_t, T>::value and
+                  not std::is_same<basic_json_t, T>::value
                   , int>::type = 0>
     std::vector<T> get_impl(std::vector<T>*) const
     {
@@ -2838,8 +2838,8 @@ class basic_json
     */
     template <class InteratorType, typename
               std::enable_if<
-                  std::is_same<InteratorType, typename __basic_json::iterator>::value or
-                  std::is_same<InteratorType, typename __basic_json::const_iterator>::value
+                  std::is_same<InteratorType, typename basic_json_t::iterator>::value or
+                  std::is_same<InteratorType, typename basic_json_t::const_iterator>::value
                   , int>::type
               = 0>
     InteratorType erase(InteratorType pos)
@@ -2931,8 +2931,8 @@ class basic_json
     */
     template <class InteratorType, typename
               std::enable_if<
-                  std::is_same<InteratorType, typename basic_json::iterator>::value or
-                  std::is_same<InteratorType, typename basic_json::const_iterator>::value
+                  std::is_same<InteratorType, typename basic_json_t::iterator>::value or
+                  std::is_same<InteratorType, typename basic_json_t::const_iterator>::value
                   , int>::type
               = 0>
     InteratorType erase(InteratorType first, InteratorType last)
@@ -4285,8 +4285,9 @@ class basic_json
         }
 
         // We only reach this line if we cannot compare values. In that case,
-        // we compare types.
-        return lhs_type < rhs_type;
+        // we compare types. Note we have to call the operator explicitly,
+        // because MSVC has problems otherwise.
+        return operator<(lhs_type, rhs_type);
     }
 
     /*!
@@ -4851,8 +4852,14 @@ class basic_json
         difference_type m_it = std::numeric_limits<std::ptrdiff_t>::min();
     };
 
-    /// an iterator value
-    union internal_iterator
+    /*!
+    @brief an iterator value
+
+    @note This structure could easily be a union, but MSVC currently does not
+    allow unions members with complex constructors, see
+    https://github.com/nlohmann/json/pull/105.
+    */
+    struct internal_iterator
     {
         /// iterator for JSON objects
         typename object_t::iterator object_iterator;
