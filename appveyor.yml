@@ -4,7 +4,7 @@ init: []
 install: []
 build_script:
 - set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;%PATH%
-- cmake .
-- msbuild json.sln /p:Configuration=Release
+- cmake . -G "Visual Studio 14 2015"
+- cmake --build . --config Release
 test_script:
 - Release\json_unit.exe
