@@ -264,27 +264,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
   </table>
   </dd>
 </dl>
-<dl class="section user"><dt>Example</dt><dd>The following code shows an example for the copy constructor. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div>
-<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="keyword">using namespace </span><a class="code" href="namespacenlohmann.html">nlohmann</a>;</div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;</div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create a JSON array</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j1 = {<span class="stringliteral">&quot;one&quot;</span>, <span class="stringliteral">&quot;two&quot;</span>, 3, 4.5, <span class="keyword">false</span>};</div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="comment">// create a copy</span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j2(j1);</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="comment">// serialize the JSON array</span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    std::cout &lt;&lt; j1 &lt;&lt; <span class="stringliteral">&quot; = &quot;</span> &lt;&lt; j2 &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    std::cout &lt;&lt; std::boolalpha &lt;&lt; (j1 == j2) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;}</div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:136</div></div>
-<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:55</div></div>
-</div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/wwzBU7cK8Xr2yiKJ"><b>online</b></a>): <pre class="fragment">["one","two",3,4.5,false] = ["one","two",3,4.5,false]
-true
-</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/basic_json__basic_json.cpp -o basic_json__basic_json </pre> </dd></dl>
+<dl class="section user"><dt>Example</dt><dd>The following code shows an example for the copy constructor. <div class="fragment"></div><!-- fragment --> Output (play with this example ): <pre class="fragment"></pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/basic_jsonbasic_json_t.cpp -o basic_jsonbasic_json_t </pre> </dd></dl>
 
 </div>
 </div>
@@ -294,7 +274,7 @@ true
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 14 2015 21:24:39 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Jul 16 2015 22:38:07 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
