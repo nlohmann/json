@@ -255,7 +255,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Constructs a JSON array value by creating <em>count</em> copies of a passed value. In case <em>count</em> is <code>0</code>, an empty array is created. As postcondition, <code>std::distance(<a class="el" href="classnlohmann_1_1basic__json_acdf4445333649ec94198f09a62144884.html#acdf4445333649ec94198f09a62144884" title="returns an iterator to the first element ">begin()</a>,<a class="el" href="classnlohmann_1_1basic__json_ab2162bc76e10d8736cab9b2039956054.html#ab2162bc76e10d8736cab9b2039956054" title="returns an iterator to one past the last element ">end()</a>) == count</code> holds.</p>
+<p>Constructs a JSON array value by creating <em>count</em> copies of a passed value. In case <em>count</em> is <code>0</code>, an empty array is created. As postcondition, <code>std::distance(begin(),end()) == count</code> holds.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of JSON copies of <em>value</em> to create </td></tr>
@@ -281,8 +281,8 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    std::cout &lt;&lt; array_1 &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    std::cout &lt;&lt; array_5 &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;}</div>
-<div class="ttc" id="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474_html_a2bfd99e845a2e5cd90aeaf1b1431f474"><div class="ttname"><a href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">nlohmann::json</a></div><div class="ttdeci">basic_json&lt;&gt; json</div><div class="ttdoc">default JSON class </div><div class="ttdef"><b>Definition:</b> json.hpp:7037</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:136</div></div>
+<div class="ttc" id="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474_html_a2bfd99e845a2e5cd90aeaf1b1431f474"><div class="ttname"><a href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">nlohmann::json</a></div><div class="ttdeci">basic_json&lt;&gt; json</div><div class="ttdoc">default JSON class </div><div class="ttdef"><b>Definition:</b> json.hpp:6665</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:159</div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:55</div></div>
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/dkznQmTMqulurCqD"><b>online</b></a>): <pre class="fragment">[]
 ["Hello"]
@@ -297,7 +297,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 16 2015 22:38:07 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 19 2015 12:42:02 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

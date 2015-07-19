@@ -14,10 +14,6 @@
           <Path>namespacemembers.html</Path>
          </Node>
          <Node>
-          <Name>Functions</Name>
-          <Path>namespacemembers_func.html</Path>
-         </Node>
-         <Node>
           <Name>Typedefs</Name>
           <Path>namespacemembers_type.html</Path>
          </Node>
@@ -35,23 +31,6 @@
             <Name>nlohmann</Name>
             <Path>namespacenlohmann.html</Path>
             <Subnodes>
-             <Node>
-              <Name>anonymous_namespace{json.hpp}</Name>
-              <Path>namespacenlohmann_1_1anonymous__namespace_02json_8hpp_03.html</Path>
-              <Subnodes>
-               <Node>
-                <Name>has_mapped_type</Name>
-                <Path>structnlohmann_1_1anonymous__namespace_02json_8hpp_03_1_1has__mapped__type.html</Path>
-                <Subnodes>
-                 <Node>
-                  <Name>value</Name>
-                  <Path>structnlohmann_1_1anonymous__namespace_02json_8hpp_03_1_1has__mapped__type_af1817f143485abec957f317fff256756.html</Path>
-                  <Anchor>af1817f143485abec957f317fff256756ac200aa9e414ceaf8dd26882ae1714752</Anchor>
-                 </Node>
-                </Subnodes>
-               </Node>
-              </Subnodes>
-             </Node>
              <Node>
               <Name>basic_json</Name>
               <Path>classnlohmann_1_1basic__json.html</Path>
@@ -1184,10 +1163,6 @@
             <Path>classnlohmann_1_1basic__json.html</Path>
            </Node>
            <Node>
-            <Name>nlohmann::anonymous_namespace{json.hpp}::has_mapped_type&lt; T &gt;</Name>
-            <Path>structnlohmann_1_1anonymous__namespace_02json_8hpp_03_1_1has__mapped__type.html</Path>
-           </Node>
-           <Node>
             <Name>std::hash&lt; nlohmann::json &gt;</Name>
             <Path>structstd_1_1hash_3_01nlohmann_1_1json_01_4.html</Path>
            </Node>
@@ -1316,10 +1291,6 @@
            <Node>
             <Name>Enumerations</Name>
             <Path>functions_enum.html</Path>
-           </Node>
-           <Node>
-            <Name>Enumerator</Name>
-            <Path>functions_eval.html</Path>
            </Node>
            <Node>
             <Name>Related Functions</Name>

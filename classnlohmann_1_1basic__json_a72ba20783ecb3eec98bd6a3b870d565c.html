@@ -253,7 +253,7 @@ Illustration from cppreference.com</div></div>
 <dl class="section user"><dt>Complexity</dt><dd>Constant.</dd></dl>
 <dl class="section user"><dt>Requirements</dt><dd>This function satisfies the Container requirements:<ul>
 <li>The complexity is constant.</li>
-<li>Has the semantics of <code>const_cast&lt;const <a class="el" href="classnlohmann_1_1basic__json.html" title="a class to store JSON values ">basic_json</a>&amp;&gt;(*this).<a class="el" href="classnlohmann_1_1basic__json_ab2162bc76e10d8736cab9b2039956054.html#ab2162bc76e10d8736cab9b2039956054" title="returns an iterator to one past the last element ">end()</a></code>.</li>
+<li>Has the semantics of <code>const_cast&lt;const basic_json&amp;&gt;(*this).end()</code>.</li>
 </ul>
 </dd></dl>
 <dl class="section user"><dt>Example</dt><dd>The following code shows an example for <a class="el" href="classnlohmann_1_1basic__json_a72ba20783ecb3eec98bd6a3b870d565c.html#a72ba20783ecb3eec98bd6a3b870d565c">cend</a>. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
@@ -274,10 +274,10 @@ Illustration from cppreference.com</div></div>
 <div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    <span class="comment">// serialize the element that the iterator points to</span></div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    std::cout &lt;&lt; *it &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;}</div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:136</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_a72ba20783ecb3eec98bd6a3b870d565c_html_a72ba20783ecb3eec98bd6a3b870d565c"><div class="ttname"><a href="classnlohmann_1_1basic__json_a72ba20783ecb3eec98bd6a3b870d565c.html#a72ba20783ecb3eec98bd6a3b870d565c">nlohmann::basic_json::cend</a></div><div class="ttdeci">const_iterator cend() const </div><div class="ttdoc">returns a const iterator to one past the last element </div><div class="ttdef"><b>Definition:</b> json.hpp:3239</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:159</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a72ba20783ecb3eec98bd6a3b870d565c_html_a72ba20783ecb3eec98bd6a3b870d565c"><div class="ttname"><a href="classnlohmann_1_1basic__json_a72ba20783ecb3eec98bd6a3b870d565c.html#a72ba20783ecb3eec98bd6a3b870d565c">nlohmann::basic_json::cend</a></div><div class="ttdeci">const_iterator cend() const </div><div class="ttdoc">returns a const iterator to one past the last element </div><div class="ttdef"><b>Definition:</b> json.hpp:3253</div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:55</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_1_1const__iterator_html"><div class="ttname"><a href="classnlohmann_1_1basic__json_1_1const__iterator.html">nlohmann::basic_json::const_iterator</a></div><div class="ttdoc">a const random access iterator for the basic_json class </div><div class="ttdef"><b>Definition:</b> json.hpp:4877</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_1_1const__iterator_html"><div class="ttname"><a href="classnlohmann_1_1basic__json_1_1const__iterator.html">nlohmann::basic_json::const_iterator</a></div><div class="ttdoc">a const random access iterator for the basic_json class </div><div class="ttdef"><b>Definition:</b> json.hpp:4870</div></div>
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/0OHrFwFGvRuDKdfx"><b>online</b></a>): <pre class="fragment">5
 </pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/cend.cpp -o cend </pre> </dd></dl>
 
@@ -289,7 +289,7 @@ Illustration from cppreference.com</div></div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 16 2015 22:38:06 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 19 2015 12:42:01 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

@@ -246,7 +246,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </table>
 </div><div class="memdoc">
 <p>Creates a JSON object value from a given initializer list. The initializer lists elements must be pairs, and their first elments must be strings. If the initializer list is empty, the empty object <code>{}</code> is created.</p>
-<dl class="section note"><dt>Note</dt><dd>This function is only added for symmetry reasons. In contrast to the related function <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> <a class="el" href="classnlohmann_1_1basic__json_afc4223b5ad03b1b76e925374a8fff98e.html#afc4223b5ad03b1b76e925374a8fff98e" title="explicitly create an array from an initializer list ">array(std::initializer_list&lt;basic_json&gt;)</a>, there are no cases which can only be expressed by this function. That is, any initializer list <em>init</em> can also be passed to the initializer list constructor <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>(std::initializer_list&lt;basic_json&gt;, bool, value_t).</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>This function is only added for symmetry reasons. In contrast to the related function <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> array(std::initializer_list&lt;basic_json&gt;), there are no cases which can only be expressed by this function. That is, any initializer list <em>init</em> can also be passed to the initializer list constructor <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>(std::initializer_list&lt;basic_json&gt;, bool, value_t).</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">init</td><td>initializer list to create an object from (optional)</td></tr>
@@ -278,16 +278,16 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    std::cout &lt;&lt; j_empty_init_list &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    std::cout &lt;&lt; j_list_of_pairs &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;}</div>
-<div class="ttc" id="classnlohmann_1_1basic__json_ad1f617d29e8923dd40c89153f792b1bc_html_ad1f617d29e8923dd40c89153f792b1bc"><div class="ttname"><a href="classnlohmann_1_1basic__json_ad1f617d29e8923dd40c89153f792b1bc.html#ad1f617d29e8923dd40c89153f792b1bc">nlohmann::basic_json::object</a></div><div class="ttdeci">static basic_json object(std::initializer_list&lt; basic_json &gt; init=std::initializer_list&lt; basic_json &gt;())</div><div class="ttdoc">explicitly create an object from an initializer list </div><div class="ttdef"><b>Definition:</b> json.hpp:1342</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:136</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_ad1f617d29e8923dd40c89153f792b1bc_html_ad1f617d29e8923dd40c89153f792b1bc"><div class="ttname"><a href="classnlohmann_1_1basic__json_ad1f617d29e8923dd40c89153f792b1bc.html#ad1f617d29e8923dd40c89153f792b1bc">nlohmann::basic_json::object</a></div><div class="ttdeci">static basic_json object(std::initializer_list&lt; basic_json &gt; init=std::initializer_list&lt; basic_json &gt;())</div><div class="ttdoc">explicitly create an object from an initializer list </div><div class="ttdef"><b>Definition:</b> json.hpp:1372</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:159</div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:55</div></div>
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/kQKYwNmQRJAJhCTe"><b>online</b></a>): <pre class="fragment">{}
 {}
 {"one":1,"two":2}
 </pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/object.cpp -o object </pre></dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_af1e3f9e079136abca2530c8191c56292.html#af1e3f9e079136abca2530c8191c56292" title="create a container (array or object) from an initializer list ">basic_json(std::initializer_list&lt;basic_json&gt;, bool, value_t)</a> - create a JSON value from an initializer list </dd>
+<dl class="section see"><dt>See also</dt><dd>basic_json(std::initializer_list&lt;basic_json&gt;, bool, value_t) - create a JSON value from an initializer list </dd>
 <dd>
-<a class="el" href="classnlohmann_1_1basic__json.html" title="a class to store JSON values ">basic_json</a> <a class="el" href="classnlohmann_1_1basic__json_afc4223b5ad03b1b76e925374a8fff98e.html#afc4223b5ad03b1b76e925374a8fff98e" title="explicitly create an array from an initializer list ">array(std::initializer_list&lt;basic_json&gt;)</a> - create a JSON <a class="el" href="classnlohmann_1_1basic__json_afc4223b5ad03b1b76e925374a8fff98e.html#afc4223b5ad03b1b76e925374a8fff98e" title="explicitly create an array from an initializer list ">array</a> value from an initializer list </dd></dl>
+basic_json array(std::initializer_list&lt;basic_json&gt;) - create a JSON array value from an initializer list </dd></dl>
 
 </div>
 </div>
@@ -297,7 +297,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 16 2015 22:38:06 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 19 2015 12:42:02 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

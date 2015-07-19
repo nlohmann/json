@@ -245,14 +245,14 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
   </tr>
 </table>
 </div><div class="memdoc">
-<p>find an element in a JSON object Finds an element in a JSON object with key equivalent to <em>key</em>. If the element is not found or the JSON value is not an object, <a class="el" href="classnlohmann_1_1basic__json_ab2162bc76e10d8736cab9b2039956054.html#ab2162bc76e10d8736cab9b2039956054" title="returns an iterator to one past the last element ">end()</a> is returned.</p>
+<p>find an element in a JSON object Finds an element in a JSON object with key equivalent to <em>key</em>. If the element is not found or the JSON value is not an object, end() is returned.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">key</td><td>key value of the element to search for</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Iterator to an element with key equivalent to <em>key</em>. If no such element is found, past-the-end (see <a class="el" href="classnlohmann_1_1basic__json_ab2162bc76e10d8736cab9b2039956054.html#ab2162bc76e10d8736cab9b2039956054" title="returns an iterator to one past the last element ">end()</a>) iterator is returned.</dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Iterator to an element with key equivalent to <em>key</em>. If no such element is found, past-the-end (see end()) iterator is returned.</dd></dl>
 <dl class="section user"><dt>Complexity</dt><dd>Logarithmic in the size of the JSON object.</dd></dl>
 <dl class="section user"><dt>Example</dt><dd>The example shows how find is used. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div>
@@ -273,9 +273,9 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    std::cout &lt;&lt; <span class="stringliteral">&quot;value at key \&quot;two\&quot;: &quot;</span> &lt;&lt; *it_two &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    std::cout &lt;&lt; <span class="stringliteral">&quot;\&quot;three\&quot; was found: &quot;</span> &lt;&lt; (it_three != j_object.<a class="code" href="classnlohmann_1_1basic__json_ab2162bc76e10d8736cab9b2039956054.html#ab2162bc76e10d8736cab9b2039956054">end</a>()) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;}</div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:136</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_ab2162bc76e10d8736cab9b2039956054_html_ab2162bc76e10d8736cab9b2039956054"><div class="ttname"><a href="classnlohmann_1_1basic__json_ab2162bc76e10d8736cab9b2039956054.html#ab2162bc76e10d8736cab9b2039956054">nlohmann::basic_json::end</a></div><div class="ttdeci">iterator end()</div><div class="ttdoc">returns an iterator to one past the last element </div><div class="ttdef"><b>Definition:</b> json.hpp:3204</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_a7dab69b10b98e7bc694339720e37fb2b_html_a7dab69b10b98e7bc694339720e37fb2b"><div class="ttname"><a href="classnlohmann_1_1basic__json_a7dab69b10b98e7bc694339720e37fb2b.html#a7dab69b10b98e7bc694339720e37fb2b">nlohmann::basic_json::find</a></div><div class="ttdeci">iterator find(typename object_t::key_type key)</div><div class="ttdoc">find an element in a JSON object </div><div class="ttdef"><b>Definition:</b> json.hpp:3066</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:159</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_ab2162bc76e10d8736cab9b2039956054_html_ab2162bc76e10d8736cab9b2039956054"><div class="ttname"><a href="classnlohmann_1_1basic__json_ab2162bc76e10d8736cab9b2039956054.html#ab2162bc76e10d8736cab9b2039956054">nlohmann::basic_json::end</a></div><div class="ttdeci">iterator end()</div><div class="ttdoc">returns an iterator to one past the last element </div><div class="ttdef"><b>Definition:</b> json.hpp:3221</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a7dab69b10b98e7bc694339720e37fb2b_html_a7dab69b10b98e7bc694339720e37fb2b"><div class="ttname"><a href="classnlohmann_1_1basic__json_a7dab69b10b98e7bc694339720e37fb2b.html#a7dab69b10b98e7bc694339720e37fb2b">nlohmann::basic_json::find</a></div><div class="ttdeci">iterator find(typename object_t::key_type key)</div><div class="ttdoc">find an element in a JSON object </div><div class="ttdef"><b>Definition:</b> json.hpp:3090</div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:55</div></div>
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/q5oRles9a6IgEOkD"><b>online</b></a>): <pre class="fragment">"two" was found: true
 value at key "two": 2
@@ -290,7 +290,7 @@ value at key "two": 2
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 16 2015 22:38:06 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 19 2015 12:42:02 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

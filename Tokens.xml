@@ -1752,7 +1752,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html</Path>
     <Anchor>a231b02148577b69a154b2ce2c87a5522a94708897ec9db8647dfe695714c98e46</Anchor>
-    <Abstract>(internal) indicates the parser callback chose not to keep the value </Abstract>
+    <Abstract>discarded by the the parser callback function </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -1906,7 +1906,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html</Path>
     <Anchor>a231b02148577b69a154b2ce2c87a5522a94708897ec9db8647dfe695714c98e46</Anchor>
-    <Abstract>(internal) indicates the parser callback chose not to keep the value </Abstract>
+    <Abstract>discarded by the the parser callback function </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -2283,6 +2283,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_1_1const__iterator_ada3100cdb8700566051828f1355fa745.html</Path>
     <Anchor>ada3100cdb8700566051828f1355fa745</Anchor>
+    <Abstract>allow basic_json to access private members </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -2292,7 +2293,7 @@
       <Scope>nlohmann::basic_json::iterator</Scope>
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_1_1iterator.html</Path>
-    <Abstract>a random access iterator for the basic_json class </Abstract>
+    <Abstract>a mutable random access iterator for the basic_json class </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -2914,6 +2915,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_1_1json__reverse__iterator_a5ee9ec91a6ddcd8d72278d681361626f.html</Path>
     <Anchor>a5ee9ec91a6ddcd8d72278d681361626f</Anchor>
+    <Abstract>the reference type for the pointed-to element </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -3080,49 +3082,6 @@
     </TokenIdentifier>
     <Path>namespacenlohmann_1_1anonymous__namespace_02json_8hpp_03.html</Path>
     <Abstract>unnamed namespace with internal helper functions </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>approx</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>nlohmann::anonymous_namespace{json.hpp}</Scope>
-    </TokenIdentifier>
-    <Path>namespacenlohmann_1_1anonymous__namespace_02json_8hpp_03_a174856a407e2478a8d172232c13597dd.html</Path>
-    <Anchor>a174856a407e2478a8d172232c13597dd</Anchor>
-    <Abstract>&quot;equality&quot; comparison for floating point numbers </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>nlohmann::anonymous_namespace{json.hpp}::has_mapped_type</Name>
-      <APILanguage>c</APILanguage>
-      <Type>tmplt</Type>
-      <Scope>nlohmann::anonymous_namespace{json.hpp}::has_mapped_type</Scope>
-    </TokenIdentifier>
-    <Path>structnlohmann_1_1anonymous__namespace_02json_8hpp_03_1_1has__mapped__type.html</Path>
-    <Abstract>Helper to determine whether there&amp;#39;s a key_type for T. </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>econst</Type>
-      <Scope>nlohmann::anonymous_namespace{json.hpp}::has_mapped_type</Scope>
-    </TokenIdentifier>
-    <Path>structnlohmann_1_1anonymous__namespace_02json_8hpp_03_1_1has__mapped__type_af1817f143485abec957f317fff256756.html</Path>
-    <Anchor>af1817f143485abec957f317fff256756ac200aa9e414ceaf8dd26882ae1714752</Anchor>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>econst</Type>
-      <Scope>nlohmann::anonymous_namespace{json.hpp}::has_mapped_type</Scope>
-    </TokenIdentifier>
-    <Path>structnlohmann_1_1anonymous__namespace_02json_8hpp_03_1_1has__mapped__type_af1817f143485abec957f317fff256756.html</Path>
-    <Anchor>af1817f143485abec957f317fff256756ac200aa9e414ceaf8dd26882ae1714752</Anchor>
   </Token>
   <Token>
     <TokenIdentifier>

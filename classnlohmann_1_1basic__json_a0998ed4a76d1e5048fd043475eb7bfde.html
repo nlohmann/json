@@ -244,25 +244,25 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns the maximum number of elements a JSON value is able to hold due to system or library implementation limitations, i.e. <code>std::distance(<a class="el" href="classnlohmann_1_1basic__json_acdf4445333649ec94198f09a62144884.html#acdf4445333649ec94198f09a62144884" title="returns an iterator to the first element ">begin()</a>, <a class="el" href="classnlohmann_1_1basic__json_ab2162bc76e10d8736cab9b2039956054.html#ab2162bc76e10d8736cab9b2039956054" title="returns an iterator to one past the last element ">end()</a>)</code> for the JSON value.</p>
+<p>Returns the maximum number of elements a JSON value is able to hold due to system or library implementation limitations, i.e. <code>std::distance(begin(), end())</code> for the JSON value.</p>
 <dl class="section return"><dt>Returns</dt><dd>The return value depends on the different types and is defined as follows: <table class="doxtable">
 <tr>
 <th>Value type </th><th>return value  </th></tr>
 <tr>
-<td>null </td><td><code>0</code> (same as <a class="el" href="classnlohmann_1_1basic__json_af49c37bbda87f36170c67f960db3781a.html#af49c37bbda87f36170c67f960db3781a" title="returns the number of elements ">size()</a>) </td></tr>
+<td>null </td><td><code>0</code> (same as size()) </td></tr>
 <tr>
-<td>boolean </td><td><code>1</code> (same as <a class="el" href="classnlohmann_1_1basic__json_af49c37bbda87f36170c67f960db3781a.html#af49c37bbda87f36170c67f960db3781a" title="returns the number of elements ">size()</a>) </td></tr>
+<td>boolean </td><td><code>1</code> (same as size()) </td></tr>
 <tr>
-<td>string </td><td><code>1</code> (same as <a class="el" href="classnlohmann_1_1basic__json_af49c37bbda87f36170c67f960db3781a.html#af49c37bbda87f36170c67f960db3781a" title="returns the number of elements ">size()</a>) </td></tr>
+<td>string </td><td><code>1</code> (same as size()) </td></tr>
 <tr>
-<td>number </td><td><code>1</code> (same as <a class="el" href="classnlohmann_1_1basic__json_af49c37bbda87f36170c67f960db3781a.html#af49c37bbda87f36170c67f960db3781a" title="returns the number of elements ">size()</a>) </td></tr>
+<td>number </td><td><code>1</code> (same as size()) </td></tr>
 <tr>
 <td>object </td><td>result of function object_t::max_size() </td></tr>
 <tr>
 <td>array </td><td>result of function array_t::max_size() </td></tr>
 </table>
 </dd></dl>
-<dl class="section user"><dt>Complexity</dt><dd>Constant, as long as <a class="el" href="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba.html#ac82abedf356d252e0589850c3d8b35ba">array_t</a> and <a class="el" href="classnlohmann_1_1basic__json_a63691315292df8e1522b00d37ebb1ffc.html#a63691315292df8e1522b00d37ebb1ffc">object_t</a> satisfy the Container concept; that is, their <a class="el" href="classnlohmann_1_1basic__json_a0998ed4a76d1e5048fd043475eb7bfde.html#a0998ed4a76d1e5048fd043475eb7bfde" title="returns the maximum possible number of elements ">max_size()</a> functions have constant complexity.</dd></dl>
+<dl class="section user"><dt>Complexity</dt><dd>Constant, as long as <a class="el" href="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba.html#ac82abedf356d252e0589850c3d8b35ba">array_t</a> and <a class="el" href="classnlohmann_1_1basic__json_a63691315292df8e1522b00d37ebb1ffc.html#a63691315292df8e1522b00d37ebb1ffc">object_t</a> satisfy the Container concept; that is, their max_size() functions have constant complexity.</dd></dl>
 <dl class="section user"><dt>Requirements</dt><dd>This function satisfies the Container requirements:<ul>
 <li>The complexity is constant.</li>
 <li>Has the semantics of returning <code>b.size()</code> where <code>b</code> is the largest possible JSON value.</li>
@@ -292,9 +292,9 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    std::cout &lt;&lt; j_array.<a class="code" href="classnlohmann_1_1basic__json_a0998ed4a76d1e5048fd043475eb7bfde.html#a0998ed4a76d1e5048fd043475eb7bfde">max_size</a>() &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    std::cout &lt;&lt; j_string.<a class="code" href="classnlohmann_1_1basic__json_a0998ed4a76d1e5048fd043475eb7bfde.html#a0998ed4a76d1e5048fd043475eb7bfde">max_size</a>() &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;}</div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:136</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:159</div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:55</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_a0998ed4a76d1e5048fd043475eb7bfde_html_a0998ed4a76d1e5048fd043475eb7bfde"><div class="ttname"><a href="classnlohmann_1_1basic__json_a0998ed4a76d1e5048fd043475eb7bfde.html#a0998ed4a76d1e5048fd043475eb7bfde">nlohmann::basic_json::max_size</a></div><div class="ttdeci">size_type max_size() const noexcept</div><div class="ttdoc">returns the maximum possible number of elements </div><div class="ttdef"><b>Definition:</b> json.hpp:3509</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a0998ed4a76d1e5048fd043475eb7bfde_html_a0998ed4a76d1e5048fd043475eb7bfde"><div class="ttname"><a href="classnlohmann_1_1basic__json_a0998ed4a76d1e5048fd043475eb7bfde.html#a0998ed4a76d1e5048fd043475eb7bfde">nlohmann::basic_json::max_size</a></div><div class="ttdeci">size_type max_size() const noexcept</div><div class="ttdoc">returns the maximum possible number of elements </div><div class="ttdef"><b>Definition:</b> json.hpp:3507</div></div>
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/RLNomTjexFIzyUx4"><b>online</b></a>): <pre class="fragment">0
 1
 1
@@ -312,7 +312,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 16 2015 22:38:06 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 19 2015 12:42:02 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

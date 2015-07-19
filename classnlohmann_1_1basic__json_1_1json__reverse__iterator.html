@@ -97,7 +97,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="contents">
 
 <p>a template for a reverse iterator class  
-</p>
+ <a href="classnlohmann_1_1basic__json_1_1json__reverse__iterator.html#details">More...</a></p>
 
 <p><code>#include &lt;json.hpp&gt;</code></p>
 <table class="memberdecls">
@@ -107,6 +107,7 @@ Public Types</h2></td></tr>
 <tr class="memdesc:ab6245ab29d8481ef2a2351c02cc31d4d"><td class="mdescLeft">&#160;</td><td class="mdescRight">shortcut to the reverse iterator adaptor  <a href="classnlohmann_1_1basic__json_1_1json__reverse__iterator_ab6245ab29d8481ef2a2351c02cc31d4d.html#ab6245ab29d8481ef2a2351c02cc31d4d">More...</a><br /></td></tr>
 <tr class="separator:ab6245ab29d8481ef2a2351c02cc31d4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ee9ec91a6ddcd8d72278d681361626f"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_1_1json__reverse__iterator_a5ee9ec91a6ddcd8d72278d681361626f.html#a5ee9ec91a6ddcd8d72278d681361626f">reference</a> = typename Base::reference</td></tr>
+<tr class="memdesc:a5ee9ec91a6ddcd8d72278d681361626f"><td class="mdescLeft">&#160;</td><td class="mdescRight">the reference type for the pointed-to element  <a href="classnlohmann_1_1basic__json_1_1json__reverse__iterator_a5ee9ec91a6ddcd8d72278d681361626f.html#a5ee9ec91a6ddcd8d72278d681361626f">More...</a><br /></td></tr>
 <tr class="separator:a5ee9ec91a6ddcd8d72278d681361626f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -151,10 +152,26 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a61d31531e0dfc5448e7fa15678b05bbe"><td class="mdescLeft">&#160;</td><td class="mdescRight">return the value of an iterator  <a href="classnlohmann_1_1basic__json_1_1json__reverse__iterator_a61d31531e0dfc5448e7fa15678b05bbe.html#a61d31531e0dfc5448e7fa15678b05bbe">More...</a><br /></td></tr>
 <tr class="separator:a61d31531e0dfc5448e7fa15678b05bbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-</div><!-- contents -->
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><h3>template&lt;template&lt; typename U, typename V, typename...Args &gt; class ObjectType = std::map, template&lt; typename U, typename...Args &gt; class ArrayType = std::vector, class StringType = std::string, class BooleanType = bool, class NumberIntegerType = int64_t, class NumberFloatType = double, template&lt; typename U &gt; class AllocatorType = std::allocator&gt;<br />
+template&lt;typename Base&gt;<br />
+class nlohmann::basic_json::json_reverse_iterator&lt; Base &gt;</h3>
+
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Base</td><td>the base iterator type to reverse. Valid types are <a class="el" href="classnlohmann_1_1basic__json_1_1iterator.html">iterator</a> (to create <a class="el" href="classnlohmann_1_1basic__json_a1683189bd539313b5559f07961166c8b.html#a1683189bd539313b5559f07961166c8b">reverse_iterator</a>) and <a class="el" href="classnlohmann_1_1basic__json_1_1const__iterator.html">const_iterator</a> (to create <a class="el" href="classnlohmann_1_1basic__json_a71eba33d906745e66f340952b79fbce3.html#a71eba33d906745e66f340952b79fbce3">const_reverse_iterator</a>).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section user"><dt>Requirements</dt><dd>The class satisfies the following concept requirements:<ul>
+<li><a href="http://en.cppreference.com/w/cpp/concept/RandomAccessIterator">RandomAccessIterator</a>: The iterator that can be moved to point (forward and backward) to any element in constant time.</li>
+<li><a href="http://en.cppreference.com/w/cpp/concept/OutputIterator">OutputIterator</a>: It is possible to write to the pointed-to element (only if <em>Base</em> is <a class="el" href="classnlohmann_1_1basic__json_1_1iterator.html">iterator</a>). </li>
+</ul>
+</dd></dl>
+</div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 16 2015 22:38:07 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 19 2015 12:42:02 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

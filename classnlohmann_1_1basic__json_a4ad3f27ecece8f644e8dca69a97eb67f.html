@@ -252,7 +252,7 @@ Illustration from cppreference.com</div></div>
  <dl class="section user"><dt>Complexity</dt><dd>Constant.</dd></dl>
 <dl class="section user"><dt>Requirements</dt><dd>This function satisfies the ReversibleContainer requirements:<ul>
 <li>The complexity is constant.</li>
-<li>Has the semantics of <code>const_cast&lt;const <a class="el" href="classnlohmann_1_1basic__json.html" title="a class to store JSON values ">basic_json</a>&amp;&gt;(*this).<a class="el" href="classnlohmann_1_1basic__json_a7c08f966200af98db0313a3b517ce0a9.html#a7c08f966200af98db0313a3b517ce0a9" title="returns an iterator to the reverse-end ">rend()</a></code>.</li>
+<li>Has the semantics of <code>const_cast&lt;const basic_json&amp;&gt;(*this).rend()</code>.</li>
 </ul>
 </dd></dl>
 <dl class="section user"><dt>Example</dt><dd>The following code shows an example for <a class="el" href="classnlohmann_1_1basic__json_a4943b7f16ddc4e0df33c0cae7ef14471.html#a4943b7f16ddc4e0df33c0cae7ef14471">crend</a>. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
@@ -273,10 +273,10 @@ Illustration from cppreference.com</div></div>
 <div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    <span class="comment">// serialize the element that the iterator points to</span></div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    std::cout &lt;&lt; *it &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;}</div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:136</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:159</div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:55</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_a4943b7f16ddc4e0df33c0cae7ef14471_html_a4943b7f16ddc4e0df33c0cae7ef14471"><div class="ttname"><a href="classnlohmann_1_1basic__json_a4943b7f16ddc4e0df33c0cae7ef14471.html#a4943b7f16ddc4e0df33c0cae7ef14471">nlohmann::basic_json::crend</a></div><div class="ttdeci">const_reverse_iterator crend() const </div><div class="ttdoc">returns a const reverse iterator to one before the first </div><div class="ttdef"><b>Definition:</b> json.hpp:3350</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_1_1json__reverse__iterator_html"><div class="ttname"><a href="classnlohmann_1_1basic__json_1_1json__reverse__iterator.html">nlohmann::basic_json::json_reverse_iterator</a></div><div class="ttdoc">a template for a reverse iterator class </div><div class="ttdef"><b>Definition:</b> json.hpp:176</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a4943b7f16ddc4e0df33c0cae7ef14471_html_a4943b7f16ddc4e0df33c0cae7ef14471"><div class="ttname"><a href="classnlohmann_1_1basic__json_a4943b7f16ddc4e0df33c0cae7ef14471.html#a4943b7f16ddc4e0df33c0cae7ef14471">nlohmann::basic_json::crend</a></div><div class="ttdeci">const_reverse_iterator crend() const </div><div class="ttdoc">returns a const reverse iterator to one before the first </div><div class="ttdef"><b>Definition:</b> json.hpp:3354</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_1_1json__reverse__iterator_html"><div class="ttname"><a href="classnlohmann_1_1basic__json_1_1json__reverse__iterator.html">nlohmann::basic_json::json_reverse_iterator</a></div><div class="ttdoc">a template for a reverse iterator class </div><div class="ttdef"><b>Definition:</b> json.hpp:204</div></div>
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/XHuFmdmwqZ7Tdw2U"><b>online</b></a>): <pre class="fragment">1
 </pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/crend.cpp -o crend </pre> </dd></dl>
 
@@ -288,7 +288,7 @@ Illustration from cppreference.com</div></div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 16 2015 22:38:07 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 19 2015 12:42:02 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
