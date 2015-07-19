@@ -4848,11 +4848,16 @@ class basic_json
     struct internal_iterator
     {
         /// iterator for JSON objects
-        typename object_t::iterator object_iterator = typename object_t::iterator();
+        typename object_t::iterator object_iterator;
         /// iterator for JSON arrays
-        typename array_t::iterator array_iterator = typename array_t::iterator();
+        typename array_t::iterator array_iterator;
         /// generic iterator for all other types
-        primitive_iterator_t primitive_iterator = primitive_iterator_t();
+        primitive_iterator_t primitive_iterator;
+
+        /// create an uninitialized internal_iterator
+        internal_iterator()
+            : object_iterator(), array_iterator(), primitive_iterator()
+        {}
     };
 
   public:
