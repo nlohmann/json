@@ -57,6 +57,7 @@ Though it's 2015 already, the support for C++11 is still a bit sparse. Currently
 - GCC 4.9
 - GCC 5.0
 - GCC 5.1
+- GCC 5.2
 - Clang 3.4
 - Clang 3.5
 - Clang 3.6
