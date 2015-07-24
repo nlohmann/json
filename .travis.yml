@@ -2,6 +2,9 @@ language: cpp
 
 sudo: false
 
+compiler:
+  - gcc
+
 env:
   - COMPILER=g++-4.9
   - COMPILER=g++-5
