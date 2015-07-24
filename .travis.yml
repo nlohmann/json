@@ -2,15 +2,18 @@ language: cpp
 
 sudo: false
 
-compiler:
-  - gcc
+env:
+  - CXX=g++-4.9
+  - CXX=g++-4.8
 
 addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
     packages:
+    - g++-4.8
     - g++-4.9
+    - g++-5
     - valgrind
     - python-pip
     - python-yaml
@@ -19,13 +22,13 @@ before_script:
   - pip install --user git+git://github.com/eddyxu/cpp-coveralls.git
 
 script:
-  - make CXX=g++-4.9
+  - make
   - ./json_unit "*"
   - valgrind --error-exitcode=1 --leak-check=full ./json_unit
 
 after_success:
   - make clean
   - touch src/json.hpp
-  - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11" CXX=g++-4.9
+  - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11"
   - ./json_unit "*"
   - coveralls --exclude test/catch.hpp --exclude test/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
