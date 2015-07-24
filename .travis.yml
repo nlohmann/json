@@ -8,7 +8,7 @@ compiler:
 addons:
   apt:
     sources:
-    - chef-current-precise
+    - extras-precise
     packages:
     - g++-4.9
     - valgrind
