@@ -18,6 +18,9 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
     - llvm-toolchain-precise
+    - llvm-toolchain-precise-3.5
+    - llvm-toolchain-precise-3.6
+    - llvm-toolchain-precise-3.7
     packages:
     - g++-4.8
     - g++-4.9
