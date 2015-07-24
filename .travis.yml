@@ -14,7 +14,7 @@ addons:
     - python-yaml
 
 before_script:
-  - pip install git+git://github.com/eddyxu/cpp-coveralls.git
+  - pip install --user git+git://github.com/eddyxu/cpp-coveralls.git
 
 script:
   - make
