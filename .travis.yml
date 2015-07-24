@@ -1,16 +1,20 @@
 language: cpp
 
+sudo: false
+
 compiler:
   - gcc
 
-before_install:
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo apt-get update -qq
-  - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.9; fi
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
-  - sudo pip install cpp-coveralls pyyaml
-  - sudo apt-get install valgrind
-  - sudo pip install codecov
+addons:
+  apt:
+    packages:
+    - g++-4.9
+    - valgrind
+    - python-pip
+    - python-yaml
+
+before_script:
+  - pip install git+git://github.com/eddyxu/cpp-coveralls.git
 
 script:
   - make
@@ -23,4 +27,3 @@ after_success:
   - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11"
   - ./json_unit "*"
   - coveralls --exclude test/catch.hpp --exclude test/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
-  - codecov
