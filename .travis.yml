@@ -3,14 +3,25 @@ language: cpp
 sudo: false
 
 compiler:
+  - clang
   - gcc
 
 env:
   - COMPILER=g++-4.9
   - COMPILER=g++-5
-  - COMPILER=g++-mingw-w64-i686
   - COMPILER=clang-3.6
   - COMPILER=clang-3.7
+
+matrix:
+  exclude:
+    - compiler: clang
+      env: COMPILER=g++-4.9
+    - compiler: clang
+      env: COMPILER=g++-5
+    - compiler: gcc
+      env: COMPILER=clang-3.6
+    - compiler: gcc
+      env: COMPILER=clang-3.7
 
 addons:
   apt:
@@ -22,7 +33,6 @@ addons:
     packages:
     - g++-4.9
     - g++-5
-    - g++-mingw-w64-i686
     - clang-3.6
     - clang-3.7
     - valgrind
