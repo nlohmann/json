@@ -31,7 +31,7 @@ EXAMPLES = $(wildcard examples/*.cpp)
 	rm -fr tmp
 	mkdir tmp
 	cp $(SRCDIR)/json.hpp tmp
-	./send_to_wandbox.py tmp $< > $@.tmp
+	scripts/send_to_wandbox.py tmp $< > $@.tmp
 	/bin/echo -n "<a target=\"_blank\" href=\"`cat $@.tmp`\"><b>online</b></a>" > $@
 	rm -fr tmp $@.tmp
 
@@ -55,7 +55,7 @@ doxygen: create_output create_links
 	gsed -i 's@&lt;&#160;ObjectType,&#160;ArrayType,&#160;StringType,&#160;BooleanType,&#160;NumberIntegerType,&#160;NumberFloatType,&#160;AllocatorType&#160;&gt;@@g' html/*.html
 
 upload: clean doxygen check_output
-	cd html ; ../git-update-ghpages nlohmann/json
+	cd html ; ../scripts/git-update-ghpages nlohmann/json
 	rm -fr html
 	open http://nlohmann.github.io/json/
 
