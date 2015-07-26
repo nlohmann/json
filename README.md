@@ -4,8 +4,9 @@
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/GnGKwji06WeVonlI)
-[![Documentation Status](https://img.shields.io/badge/documentation-doxygen-blue.svg)](http://nlohmann.github.io/json)
+[![Documentation Status](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
+[![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
 [![Github Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
 
 ## Design goals
@@ -24,21 +25,9 @@ Other aspects were not so important to us:
 
 - **Speed**. We currently implement the parser as naive [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser) with hand coded string handling. It is fast enough, but a [LALR-parser](http://en.wikipedia.org/wiki/LALR_parser) with a decent regular expression processor should be even faster (but would consist of more files which makes the integration harder).
 
-## Updates since last version
-
-As of February 2015, the following updates were made to the library
-
-- *Changed:* In the generic class `basic_json`, all JSON value types (array, object, string, bool, integer number, and floating-point) are now **templated**. That is, you can choose whether you like a `std::list` for your arrays or an `std::unordered_map` for your objects. The specialization `json` sets some reasonable defaults.
-- *Changed:* The library now consists of a **single header**, called `json.hpp`. Consequently, build systems such as Automake or CMake are not any longer required.
-- *Changed:* The **deserialization** is now supported by a lexer generated with [re2c](http://re2c.org) from file [`src/json.hpp.re2c`](https://github.com/nlohmann/json/blob/master/src/json.hpp.re2c). As a result, we follow the JSON specification more strictly. Note neither the tool re2c nor its input are required to use the class.
-- *Added:* The library now satisfies the [**ReversibleContainer**](http://en.cppreference.com/w/cpp/concept/ReversibleContainer) requirement. It hence provides four different iterators (`iterator`, `const_iterator`, `reverse_iterator`, and `const_reverse_iterator`), comparison functions, `swap()`, `size()`, `max_size()`, and `empty()` member functions.
-- *Added*: The class uses **user-defined allocators** which default to `std::allocator`, but can be templated via parameter `Allocator`.
-- *Added:* To simplify pretty-printing, the `std::setw` **stream manipulator** has been overloaded to set the desired indentation. Pretty-printing a JSON object `j` is as simple as `std::cout << std::setw(4) << j << '\n'`.
-- *Changed*: The type `json::value_t::number` is now called `json::value_t::number_integer` to be more symmetric compared to `json::value_t::number_float`.
-
 ## Integration
 
-The single required source, `json.hpp` file is in the `src` directory. All you need to do is add
+The single required source, file `json.hpp` is in the `src` directory or [released here](https://github.com/nlohmann/json/releases). All you need to do is add
 
 ```cpp
 #include "json.hpp"
@@ -53,15 +42,8 @@ to the files you want to use JSON objects. That's it. Do not forget to set the n
 
 Though it's 2015 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8
-- GCC 4.9
-- GCC 5.0
-- GCC 5.1
-- GCC 5.2
-- Clang 3.4
-- Clang 3.5
-- Clang 3.6
-- Clang 3.7
+- GCC 4.8 - 5.2
+- Clang 3.4 - 3.7
 - Microsoft Visual C++ 14.0 RC
 
 I would be happy to learn about other compilers/versions.
@@ -403,7 +385,7 @@ $ make
 $ ./json_unit "*"
 
 ===============================================================================
-All tests passed (3341759 assertions in 27 test cases)
+All tests passed (3341774 assertions in 27 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
