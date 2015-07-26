@@ -387,7 +387,7 @@ I deeply appreciate the help of the following people.
 - [Aaron Burghardt](https://github.com/aburgh) implemented code to parse streams incrementally. Furthermore, he greatly improved the parser class by allowing the definition of a filter function to discard undesired elements while parsing.
 - [Daniel Kopeček](https://github.com/dkopecek) fixed a bug in the compilation with GCC 5.0.
 - [Florian Weber](https://github.com/Florianjw) fixed a bug in and improved the performance of the comparison operators.
-- [Eric Cornelius](https://github.com/EricMCornelius) pointed out a bug in the handling with NaN and infinity values.
+- [Eric Cornelius](https://github.com/EricMCornelius) pointed out a bug in the handling with NaN and infinity values. He also improved the performance of the string escaping.
 - [易思龙](https://github.com/likebeta) implemented a conversion from anonymous enums.
 - [kepkin](https://github.com/kepkin) patiently pushed forward the support for Microsoft Visual studio.
 - [gregmarr](https://github.com/gregmarr) simplified the implementation of reverse iterators.
