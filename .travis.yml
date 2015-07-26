@@ -3,7 +3,6 @@ language: cpp
 sudo: false
 
 compiler:
-  - clang
   - gcc
 
 env:
@@ -11,17 +10,6 @@ env:
   - COMPILER=g++-5
   - COMPILER=clang-3.6
   - COMPILER=clang-3.7
-
-matrix:
-  exclude:
-    - compiler: clang
-      env: COMPILER=g++-4.9
-    - compiler: clang
-      env: COMPILER=g++-5
-    - compiler: gcc
-      env: COMPILER=clang-3.6
-    - compiler: gcc
-      env: COMPILER=clang-3.7
 
 addons:
   apt:
