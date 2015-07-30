@@ -4972,7 +4972,7 @@ class basic_json
         /// defines a reference to the type iterated over (value_type)
         using reference = typename basic_json::const_reference;
         /// the category of the iterator
-        using iterator_category = std::random_access_iterator_tag;
+        using iterator_category = std::bidirectional_iterator_tag;
 
         /// default constructor
         const_iterator() = default;
