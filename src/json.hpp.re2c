@@ -4972,7 +4972,7 @@ class basic_json
         /// defines a reference to the type iterated over (value_type)
         using reference = typename basic_json::const_reference;
         /// the category of the iterator
-        using iterator_category = std::bidirectional_iterator_tag;
+        using iterator_category = std::random_access_iterator_tag;
 
         /// default constructor
         const_iterator() = default;
@@ -5686,6 +5686,133 @@ class basic_json
         {
             auto it = --this->base();
             return it.operator * ();
+        }
+    };
+
+    /*!
+    @brief wrapper to access iterator member functions in range-based for
+
+    This class allows to access @ref key() and @ref value() during range-based
+    for loops. In these loops, a reference to the JSON values is returned, so
+    there is no access to the underlying iterator.
+    */
+    class iterator_wrapper
+    {
+      private:
+        /// the container to iterate
+        basic_json& container;
+        /// the type of the iterator to use while iteration
+        using json_iterator = decltype(container.begin());
+
+        /// internal iterator wrapper
+        class iterator_wrapper_internal
+        {
+          private:
+            /// the iterator
+            json_iterator anchor;
+            /// an index for arrays
+            size_t array_index = 0;
+            size_t container_size = 0;
+
+            /// calculate a key for the iterator
+            std::string calculate_key()
+            {
+                switch (anchor.m_object->type())
+                {
+                    /// use integer array index as key
+                    case (value_t::array):
+                    {
+                        return std::to_string(array_index);
+                    }
+
+                    /// use key from the object
+                    case (value_t::object):
+                    {
+                        return anchor.key();
+                    }
+
+                    /// use an empty key for all primitive types
+                    default:
+                    {
+                        return "";
+                    }
+                }
+            }
+
+          public:
+            /// construct wrapper given an iterator
+            iterator_wrapper_internal(json_iterator i, size_t s)
+                : anchor(i), container_size(s), first(calculate_key()), second(*i)
+            {}
+
+            /// dereference operator (needed for range-based for)
+            iterator_wrapper_internal operator*()
+            {
+                return *this;
+            }
+
+            /// increment operator (needed for range-based for)
+            iterator_wrapper_internal operator++()
+            {
+                ++anchor;
+                ++array_index;
+
+                first = calculate_key();
+
+                if (array_index < container_size)
+                {
+                    second = *anchor;
+                }
+
+                return *this;
+            }
+
+            /// inequality operator (needed for range-based for)
+            bool operator!= (const iterator_wrapper_internal& o)
+            {
+                return anchor != o.anchor;
+            }
+
+            /// stream operator
+            friend std::ostream& operator<<(std::ostream& o, const iterator_wrapper_internal& w)
+            {
+                return o << w.value();
+            }
+
+            /// return key of the iterator
+            typename basic_json::string_t key() const
+            {
+                return first;
+            }
+
+            /// return value of the iterator
+            basic_json value() const
+            {
+                return second;
+            }
+
+            /// public member to simulate std::map::iterator access
+            typename basic_json::string_t first;
+            /// public member to simulate std::map::iterator access
+            basic_json& second;
+        };
+
+      public:
+        /// construct iterator wrapper from a container
+        iterator_wrapper(basic_json& cont)
+            : container(cont)
+        {}
+
+        /// return iterator begin (needed for range-based for)
+        iterator_wrapper_internal begin()
+        {
+            return iterator_wrapper_internal(container.begin(), container.size());
+        }
+
+        /// return iterator end (needed for range-based for)
+        iterator_wrapper_internal end()
+        {
+            return iterator_wrapper_internal(container.end(), container.size());
         }
     };
 
