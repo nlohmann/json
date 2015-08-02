@@ -7551,17 +7551,17 @@ TEST_CASE("iterator_wrapper")
 {
     SECTION("objects")
     {
+        std::stringstream ss;
         json j_object = {{"key1", 1}, {"key2", 2}};
         for (auto it : json::iterator_wrapper(j_object))
         {
-            CHECK((it.first == json("key1") or it.first == json("key2")));
-            CHECK((it.key() == json("key1") or it.key() == json("key2")));
-            CHECK(it.key() == it.first);
-
-            CHECK((it.second == json(1) or it.second == json(2)));
-            CHECK((it.value() == json(1) or it.value() == json(2)));
-            CHECK(it.value() == it.second);
+            ss << it.first << ' ';
+            ss << it.key() << ' ';
+            ss << it.second << ' ';
+            ss << it.value() << ' ';
         }
+
+        CHECK(ss.str() == "key1 key1 1 1 key2 key2 2 2 ");
     }
 }
 
