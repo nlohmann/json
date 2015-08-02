@@ -5752,7 +5752,7 @@ class basic_json
             }
 
             /// increment operator (needed for range-based for)
-            iterator_wrapper_internal operator++()
+            iterator_wrapper_internal& operator++()
             {
                 ++anchor;
                 ++array_index;
