@@ -7547,6 +7547,24 @@ TEST_CASE("iterator class")
     }
 }
 
+TEST_CASE("iterator_wrapper")
+{
+    SECTION("objects")
+    {
+        json j_object = {{"key1", 1}, {"key2", 2}};
+        for (auto it : json::iterator_wrapper(j_object))
+        {
+            CHECK((it.first == "key1" or it.first == "key2"));
+            CHECK((it.key() == "key1" or it.key() == "key2"));
+            CHECK(it.key() == it.first);
+
+            CHECK((it.second == json(1) or it.second == json(2)));
+            CHECK((it.value() == json(1) or it.value() == json(2)));
+            CHECK(it.value() == it.second);
+        }
+    }
+}
+
 TEST_CASE("const_iterator class")
 {
     SECTION("construction")
