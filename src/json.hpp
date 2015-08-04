@@ -49,6 +49,7 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 #include <iostream>
 #include <iterator>
 #include <limits>
+#include <locale>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -6932,18 +6933,18 @@ basic_json_parser_59:
         read past the current token. The latter case needs to be treated by the
         caller function.
 
+        @note This function is locale-independent, see
+        http://stackoverflow.com/a/1333899/266378
+
         @throw std::range_error if passed value is out of range
         */
         long double get_number() const
         {
-            // conversion
-            typename string_t::value_type* endptr;
-            const auto float_val = std::strtold(reinterpret_cast<typename string_t::const_pointer>(m_start),
-                                                &endptr);
-
-            // return float_val if the whole number was translated and NAN
-            // otherwise
-            return (reinterpret_cast<lexer_char_t*>(endptr) == m_cursor) ? float_val : NAN;
+            long double f = NAN;
+            std::stringstream ss(get_token());
+            ss.imbue(std::locale("C"));
+            ss >> f;
+            return f;
         }
 
       private:
