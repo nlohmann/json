@@ -2886,6 +2886,53 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>nlohmann::basic_json::iterator_wrapper</Name>
+      <APILanguage>c</APILanguage>
+      <Type>cl</Type>
+      <Scope>nlohmann::basic_json::iterator_wrapper</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_1_1iterator__wrapper.html</Path>
+    <Abstract>wrapper to access iterator member functions in range-based for </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>iterator_wrapper</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json::iterator_wrapper</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_1_1iterator__wrapper_a784f17dec56c1ec90b0b73eb8307ea7d.html</Path>
+    <Anchor>a784f17dec56c1ec90b0b73eb8307ea7d</Anchor>
+    <Abstract>construct iterator wrapper from a container </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>begin</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json::iterator_wrapper</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_1_1iterator__wrapper_a80305d6ac43b6fb53c62256e450485ac.html</Path>
+    <Anchor>a80305d6ac43b6fb53c62256e450485ac</Anchor>
+    <Abstract>return iterator begin (needed for range-based for) </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>end</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json::iterator_wrapper</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_1_1iterator__wrapper_ab5951e20b05998e768943acd0b418c81.html</Path>
+    <Anchor>ab5951e20b05998e768943acd0b418c81</Anchor>
+    <Abstract>return iterator end (needed for range-based for) </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>nlohmann::basic_json::json_reverse_iterator</Name>
       <APILanguage>c</APILanguage>
       <Type>tmplt</Type>

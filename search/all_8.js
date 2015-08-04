@@ -12,7 +12,9 @@ var searchData=
   ['is_5fprimitive',['is_primitive',['../classnlohmann_1_1basic__json_ab2fa1c4df15db5de07144b5c15c6f0f6.html#ab2fa1c4df15db5de07144b5c15c6f0f6',1,'nlohmann::basic_json']]],
   ['is_5fstring',['is_string',['../classnlohmann_1_1basic__json_abc2b49c2c44c61a15d4b272a85b41064.html#abc2b49c2c44c61a15d4b272a85b41064',1,'nlohmann::basic_json']]],
   ['is_5fstructured',['is_structured',['../classnlohmann_1_1basic__json_a9d508dc7eb7023cd17b3c6958ea7c4ee.html#a9d508dc7eb7023cd17b3c6958ea7c4ee',1,'nlohmann::basic_json']]],
-  ['iterator',['iterator',['../classnlohmann_1_1basic__json_1_1iterator.html',1,'nlohmann::basic_json']]],
   ['iterator',['iterator',['../classnlohmann_1_1basic__json_1_1iterator_a4f6e03ae3bb674ebf0b727f74957c12f.html#a4f6e03ae3bb674ebf0b727f74957c12f',1,'nlohmann::basic_json::iterator::iterator()=default'],['../classnlohmann_1_1basic__json_1_1iterator_ab220a0cc3fe410fbae4524208bd5834f.html#ab220a0cc3fe410fbae4524208bd5834f',1,'nlohmann::basic_json::iterator::iterator(pointer object) noexcept'],['../classnlohmann_1_1basic__json_1_1iterator_a94285e2ade0bfef829b81377bbbca6cf.html#a94285e2ade0bfef829b81377bbbca6cf',1,'nlohmann::basic_json::iterator::iterator(const iterator &amp;other) noexcept']]],
-  ['iterator_5fcategory',['iterator_category',['../classnlohmann_1_1basic__json_1_1const__iterator_ae480d5c86e5e1129d53d1e19782017a6.html#ae480d5c86e5e1129d53d1e19782017a6',1,'nlohmann::basic_json::const_iterator']]]
+  ['iterator',['iterator',['../classnlohmann_1_1basic__json_1_1iterator.html',1,'nlohmann::basic_json']]],
+  ['iterator_5fcategory',['iterator_category',['../classnlohmann_1_1basic__json_1_1const__iterator_ae480d5c86e5e1129d53d1e19782017a6.html#ae480d5c86e5e1129d53d1e19782017a6',1,'nlohmann::basic_json::const_iterator']]],
+  ['iterator_5fwrapper',['iterator_wrapper',['../classnlohmann_1_1basic__json_1_1iterator__wrapper_a784f17dec56c1ec90b0b73eb8307ea7d.html#a784f17dec56c1ec90b0b73eb8307ea7d',1,'nlohmann::basic_json::iterator_wrapper']]],
+  ['iterator_5fwrapper',['iterator_wrapper',['../classnlohmann_1_1basic__json_1_1iterator__wrapper.html',1,'nlohmann::basic_json']]]
 ];

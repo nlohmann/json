@@ -303,6 +303,27 @@
                 </Subnodes>
                </Node>
                <Node>
+                <Name>iterator_wrapper</Name>
+                <Path>classnlohmann_1_1basic__json_1_1iterator__wrapper.html</Path>
+                <Subnodes>
+                 <Node>
+                  <Name>iterator_wrapper</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1iterator__wrapper_a784f17dec56c1ec90b0b73eb8307ea7d.html</Path>
+                  <Anchor>a784f17dec56c1ec90b0b73eb8307ea7d</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>begin</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1iterator__wrapper_a80305d6ac43b6fb53c62256e450485ac.html</Path>
+                  <Anchor>a80305d6ac43b6fb53c62256e450485ac</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>end</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1iterator__wrapper_ab5951e20b05998e768943acd0b418c81.html</Path>
+                  <Anchor>ab5951e20b05998e768943acd0b418c81</Anchor>
+                 </Node>
+                </Subnodes>
+               </Node>
+               <Node>
                 <Name>json_reverse_iterator</Name>
                 <Path>classnlohmann_1_1basic__json_1_1json__reverse__iterator.html</Path>
                 <Subnodes>
@@ -1181,6 +1202,10 @@
               </Subnodes>
              </Node>
             </Subnodes>
+           </Node>
+           <Node>
+            <Name>nlohmann::basic_json&lt; ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberFloatType, AllocatorType &gt;::iterator_wrapper</Name>
+            <Path>classnlohmann_1_1basic__json_1_1iterator__wrapper.html</Path>
            </Node>
            <Node>
             <Name>reverse_iterator</Name>
