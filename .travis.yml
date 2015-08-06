@@ -34,8 +34,8 @@ script:
   - valgrind --error-exitcode=1 --leak-check=full ./json_unit
 
 after_success:
-  - if [ "$COMPILER" = "g++-4.9" ]; make clean
-  - if [ "$COMPILER" = "g++-4.9" ]; touch src/json.hpp
-  - if [ "$COMPILER" = "g++-4.9" ]; make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11 -lstdc++" CXX=$COMPILER
-  - if [ "$COMPILER" = "g++-4.9" ]; ./json_unit "*"
-  - if [ "$COMPILER" = "g++-4.9" ]; coveralls --exclude test/catch.hpp --exclude test/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
+  - if [ "$COMPILER" = "g++-4.9" ]; then make clean ; fi
+  - if [ "$COMPILER" = "g++-4.9" ]; then touch src/json.hpp ; fi
+  - if [ "$COMPILER" = "g++-4.9" ]; then make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11 -lstdc++" CXX=$COMPILER ; fi
+  - if [ "$COMPILER" = "g++-4.9" ]; then ./json_unit "*" ; fi
+  - if [ "$COMPILER" = "g++-4.9" ]; then coveralls --exclude test/catch.hpp --exclude test/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9' ; fi
