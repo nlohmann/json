@@ -9260,6 +9260,69 @@ TEST_CASE("concepts")
     }
 }
 
+TEST_CASE("iterator_wrapper")
+{
+    SECTION("object")
+    {
+        json j = {{"A", 1}, {"B", 2}};
+        int counter = 1;
+
+        for (auto i : json::iterator_wrapper(j))
+        {
+            switch (counter++)
+            {
+                case 1:
+                {
+                    CHECK(i.key() == "A");
+                    CHECK(i.value() == json(1));
+                    CHECK(i.first == "A");
+                    CHECK(i.second == json(1));
+                    break;
+                }
+
+                case 2:
+                {
+                    CHECK(i.key() == "B");
+                    CHECK(i.value() == json(2));
+                    CHECK(i.first == "B");
+                    CHECK(i.second == json(2));
+                    break;
+                }
+            }
+        }
+    }
+
+    SECTION("array")
+    {
+        json j = {"A", "B"};
+        int counter = 1;
+
+        for (auto i : json::iterator_wrapper(j))
+        {
+            switch (counter++)
+            {
+                case 1:
+                {
+                    CHECK(i.key() == "0");
+                    CHECK(i.value() == "A");
+                    CHECK(i.first == "0");
+                    CHECK(i.second == "A");
+                    break;
+                }
+
+                case 2:
+                {
+                    CHECK(i.key() == "1");
+                    CHECK(i.value() == "B");
+                    CHECK(i.first == "1");
+                    CHECK(i.second == "B");
+                    break;
+                }
+            }
+        }
+    }
+}
+
 TEST_CASE("compliance tests from json.org")
 {
     // test cases are from http://json.org/JSON_checker/
