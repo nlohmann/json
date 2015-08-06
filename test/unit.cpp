@@ -9260,6 +9260,7 @@ TEST_CASE("concepts")
     }
 }
 
+/*
 TEST_CASE("iterator_wrapper")
 {
     SECTION("object")
@@ -9322,6 +9323,7 @@ TEST_CASE("iterator_wrapper")
         }
     }
 }
+*/
 
 TEST_CASE("compliance tests from json.org")
 {
