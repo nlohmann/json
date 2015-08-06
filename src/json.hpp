@@ -5757,10 +5757,9 @@ class basic_json
                 ++anchor;
                 ++array_index;
 
-                first = calculate_key();
-
                 if (array_index < container_size)
                 {
+                    first = calculate_key();
                     second = *anchor;
                 }
 
