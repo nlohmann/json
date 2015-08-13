@@ -5702,7 +5702,7 @@ class basic_json
         /// the container to iterate
         basic_json& container;
         /// the type of the iterator to use while iteration
-        using json_iterator = decltype(container.begin());
+        using json_iterator = decltype(std::begin(container));
 
         /// internal iterator wrapper
         class iterator_wrapper_internal
