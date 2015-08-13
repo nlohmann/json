@@ -9260,70 +9260,301 @@ TEST_CASE("concepts")
     }
 }
 
-/*
 TEST_CASE("iterator_wrapper")
 {
     SECTION("object")
     {
-        json j = {{"A", 1}, {"B", 2}};
-        int counter = 1;
-
-        for (auto i : json::iterator_wrapper(j))
+        SECTION("value")
         {
-            switch (counter++)
-            {
-                case 1:
-                {
-                    CHECK(i.key() == "A");
-                    CHECK(i.value() == json(1));
-                    CHECK(i.first == "A");
-                    CHECK(i.second == json(1));
-                    break;
-                }
+            json j = {{"A", 1}, {"B", 2}};
+            int counter = 1;
 
-                case 2:
+            for (auto i : json::iterator_wrapper(j))
+            {
+                switch (counter++)
                 {
-                    CHECK(i.key() == "B");
-                    CHECK(i.value() == json(2));
-                    CHECK(i.first == "B");
-                    CHECK(i.second == json(2));
-                    break;
+                    case 1:
+                    {
+                        CHECK(i.key() == "A");
+                        CHECK(i.value() == json(1));
+                        break;
+                    }
+
+                    case 2:
+                    {
+                        CHECK(i.key() == "B");
+                        CHECK(i.value() == json(2));
+                        break;
+                    }
                 }
             }
+
+            CHECK(counter == 3);
+        }
+
+        SECTION("reference")
+        {
+            json j = {{"A", 1}, {"B", 2}};
+            int counter = 1;
+
+            for (auto& i : json::iterator_wrapper(j))
+            {
+                switch (counter++)
+                {
+                    case 1:
+                    {
+                        CHECK(i.key() == "A");
+                        CHECK(i.value() == json(1));
+                        break;
+                    }
+
+                    case 2:
+                    {
+                        CHECK(i.key() == "B");
+                        CHECK(i.value() == json(2));
+                        break;
+                    }
+                }
+            }
+
+            CHECK(counter == 3);
+        }
+
+        SECTION("const value")
+        {
+            json j = {{"A", 1}, {"B", 2}};
+            int counter = 1;
+
+            for (const auto i : json::iterator_wrapper(j))
+            {
+                switch (counter++)
+                {
+                    case 1:
+                    {
+                        CHECK(i.key() == "A");
+                        CHECK(i.value() == json(1));
+                        break;
+                    }
+
+                    case 2:
+                    {
+                        CHECK(i.key() == "B");
+                        CHECK(i.value() == json(2));
+                        break;
+                    }
+                }
+            }
+
+            CHECK(counter == 3);
+        }
+
+        SECTION("const reference")
+        {
+            json j = {{"A", 1}, {"B", 2}};
+            int counter = 1;
+
+            for (const auto& i : json::iterator_wrapper(j))
+            {
+                switch (counter++)
+                {
+                    case 1:
+                    {
+                        CHECK(i.key() == "A");
+                        CHECK(i.value() == json(1));
+                        break;
+                    }
+
+                    case 2:
+                    {
+                        CHECK(i.key() == "B");
+                        CHECK(i.value() == json(2));
+                        break;
+                    }
+                }
+            }
+
+            CHECK(counter == 3);
         }
     }
 
     SECTION("array")
     {
-        json j = {"A", "B"};
-        int counter = 1;
-
-        for (auto i : json::iterator_wrapper(j))
+        SECTION("value")
         {
-            switch (counter++)
-            {
-                case 1:
-                {
-                    CHECK(i.key() == "0");
-                    CHECK(i.value() == "A");
-                    CHECK(i.first == "0");
-                    CHECK(i.second == "A");
-                    break;
-                }
+            json j = {"A", "B"};
+            int counter = 1;
 
-                case 2:
+            for (auto i : json::iterator_wrapper(j))
+            {
+                switch (counter++)
                 {
-                    CHECK(i.key() == "1");
-                    CHECK(i.value() == "B");
-                    CHECK(i.first == "1");
-                    CHECK(i.second == "B");
-                    break;
+                    case 1:
+                    {
+                        CHECK(i.key() == "0");
+                        CHECK(i.value() == "A");
+                        break;
+                    }
+
+                    case 2:
+                    {
+                        CHECK(i.key() == "1");
+                        CHECK(i.value() == "B");
+                        break;
+                    }
                 }
             }
+
+            CHECK(counter == 3);
+        }
+
+        SECTION("reference")
+        {
+            json j = {"A", "B"};
+            int counter = 1;
+
+            for (auto& i : json::iterator_wrapper(j))
+            {
+                switch (counter++)
+                {
+                    case 1:
+                    {
+                        CHECK(i.key() == "0");
+                        CHECK(i.value() == "A");
+                        break;
+                    }
+
+                    case 2:
+                    {
+                        CHECK(i.key() == "1");
+                        CHECK(i.value() == "B");
+                        break;
+                    }
+                }
+            }
+
+            CHECK(counter == 3);
+        }
+
+        SECTION("const value")
+        {
+            json j = {"A", "B"};
+            int counter = 1;
+
+            for (const auto i : json::iterator_wrapper(j))
+            {
+                switch (counter++)
+                {
+                    case 1:
+                    {
+                        CHECK(i.key() == "0");
+                        CHECK(i.value() == "A");
+                        break;
+                    }
+
+                    case 2:
+                    {
+                        CHECK(i.key() == "1");
+                        CHECK(i.value() == "B");
+                        break;
+                    }
+                }
+            }
+
+            CHECK(counter == 3);
+        }
+
+        SECTION("const reference")
+        {
+            json j = {"A", "B"};
+            int counter = 1;
+
+            for (const auto& i : json::iterator_wrapper(j))
+            {
+                switch (counter++)
+                {
+                    case 1:
+                    {
+                        CHECK(i.key() == "0");
+                        CHECK(i.value() == "A");
+                        break;
+                    }
+
+                    case 2:
+                    {
+                        CHECK(i.key() == "1");
+                        CHECK(i.value() == "B");
+                        break;
+                    }
+                }
+            }
+
+            CHECK(counter == 3);
+        }
+    }
+
+    SECTION("primitive")
+    {
+        SECTION("value")
+        {
+            json j = 1;
+            int counter = 1;
+
+            for (auto i : json::iterator_wrapper(j))
+            {
+                ++counter;
+                CHECK(i.key() == "");
+                CHECK(i.value() == json(1));
+            }
+
+            CHECK(counter == 2);
+        }
+
+        SECTION("reference")
+        {
+            json j = 1;
+            int counter = 1;
+
+            for (auto& i : json::iterator_wrapper(j))
+            {
+                ++counter;
+                CHECK(i.key() == "");
+                CHECK(i.value() == json(1));
+            }
+
+            CHECK(counter == 2);
+        }
+
+        SECTION("const value")
+        {
+            json j = 1;
+            int counter = 1;
+
+            for (const auto i : json::iterator_wrapper(j))
+            {
+                ++counter;
+                CHECK(i.key() == "");
+                CHECK(i.value() == json(1));
+            }
+
+            CHECK(counter == 2);
+        }
+
+        SECTION("reference")
+        {
+            json j = 1;
+            int counter = 1;
+
+            for (const auto& i : json::iterator_wrapper(j))
+            {
+                ++counter;
+                CHECK(i.key() == "");
+                CHECK(i.value() == json(1));
+            }
+
+            CHECK(counter == 2);
         }
     }
 }
-*/
 
 TEST_CASE("compliance tests from json.org")
 {
