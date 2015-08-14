@@ -4692,6 +4692,8 @@ class basic_json
                         // print character c as \uxxxx
                         sprintf(&result[pos + 1], "u%04x", int(c));
                         pos += 6;
+                        // overwrite trailing null character
+                        result[pos] = '\\';
                     }
                     else
                     {

@@ -373,6 +373,7 @@ I deeply appreciate the help of the following people.
 - [易思龙](https://github.com/likebeta) implemented a conversion from anonymous enums.
 - [kepkin](https://github.com/kepkin) patiently pushed forward the support for Microsoft Visual studio.
 - [gregmarr](https://github.com/gregmarr) simplified the implementation of reverse iterators.
+- [Caio Luppi](https://github.com/caiovlp) fixed a bug in the Unicode handling.
 
 Thanks a lot for helping out!
 

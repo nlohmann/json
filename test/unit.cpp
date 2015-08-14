@@ -10194,4 +10194,12 @@ TEST_CASE("regression tests")
         // hexadecimal "a"
         CHECK(j.dump() == "{\"binary string\":\"\\u0000asdf\\n\",\"int64\":10}");
     }
+
+    SECTION("issue #111 - subsequent unicode chars")
+    {
+        std::string bytes{0x7, 0x7};
+        json j;
+        j["string"] = bytes;
+        CHECK(j["string"] == "\u0007\u0007");
+    }
 }
