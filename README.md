@@ -169,7 +169,7 @@ You can also use streams to serialize and deserialize:
 ```cpp
 // deserialize from standard input
 json j;
-j << std::cin;
+std::cin >> j;
 
 // serialize to standard output
 std::cout << j;
