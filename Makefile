@@ -1,3 +1,5 @@
+.PHONY: pretty clean
+
 # used programs
 RE2C = re2c
 SED = sed
