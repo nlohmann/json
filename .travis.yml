@@ -9,14 +9,6 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-4.8', 'valgrind']
-      env: COMPILER=g++-4.8
-
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-4.9', 'valgrind', 'python-pip', 'python-yaml']
       before_script:
         - pip install --user git+git://github.com/eddyxu/cpp-coveralls.git
@@ -30,17 +22,6 @@ matrix:
           packages: ['g++-5', 'valgrind']
       env: COMPILER=g++-5
 
-    - os: linux
-      compiler: clang
-      env: COMPILER=clang++
-
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
-          packages: ['clang-3.5', 'valgrind']
-      env: COMPILER=clang++-3.5
 
     - os: linux
       compiler: clang
