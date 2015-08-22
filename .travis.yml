@@ -2,6 +2,7 @@ language: cpp
 
 sudo: false
 
+# from http://stackoverflow.com/a/32127147/266378
 matrix:
   include:
     - os: linux
@@ -22,7 +23,6 @@ matrix:
           packages: ['g++-5', 'valgrind']
       env: COMPILER=g++-5
 
-
     - os: linux
       compiler: clang
       addons:
@@ -30,6 +30,18 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
           packages: ['clang-3.6', 'valgrind']
       env: COMPILER=clang++-3.6
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
+          packages: ['clang-3.7']
+      env: COMPILER=clang++-3.7
+
+    - os: osx
+      compiler: clang
+      env: COMPILER=clang++
 
 script:
   - make CXX=$COMPILER CXXFLAGS="-lstdc++"
