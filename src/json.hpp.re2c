@@ -6209,7 +6209,7 @@ class basic_json
         @brief return number value for number tokens
 
         This function translates the last token into a floating point number.
-        The pointer m_begin points to the beginning of the parsed number. We
+        The pointer m_start points to the beginning of the parsed number. We
         pass this pointer to std::strtod which sets endptr to the first
         character past the converted number. If this pointer is not the same as
         m_cursor, then either more or less characters have been used during the
