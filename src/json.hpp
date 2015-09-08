@@ -591,7 +591,7 @@ class basic_json
         AllocatorType<T> alloc;
         auto deleter = [&](T* object) { alloc.deallocate(object, 1); };
         std::unique_ptr<T, decltype(deleter)> object(alloc.allocate(1), deleter);
-        alloc.construct(object, std::forward<Args>(args)...);
+        alloc.construct(object.get(), std::forward<Args>(args)...);
         return object.release();
     }
 
