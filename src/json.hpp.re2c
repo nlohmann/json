@@ -1658,8 +1658,8 @@ class basic_json
     )
     {
         using std::swap;
-        std::swap(m_type, other.m_type);
-        std::swap(m_value, other.m_value);
+        swap(m_type, other.m_type);
+        swap(m_value, other.m_value);
         return *this;
     }
 
