@@ -4471,6 +4471,11 @@ class basic_json
         return parser(i, cb).parse();
     }
 
+    static basic_json parse(std::istream&& i, parser_callback_t cb = nullptr)
+    {
+        return parser(i, cb).parse();
+    }
+
     /*!
     @brief deserialize from stream
 
