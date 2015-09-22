@@ -19,5 +19,6 @@ if (NOT TARGET "nlohmann-json::nlohmann-json")
   add_library("nlohmann-json::nlohmann-json" INTERFACE IMPORTED)
   set_target_properties("nlohmann-json::nlohmann-json"
     PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${NLOHMANN_JSON_INCLUDE_DIRS}")
+    INTERFACE_INCLUDE_DIRECTORIES "${NLOHMANN_JSON_INCLUDE_DIRS}"
+    INTERFACE_COMPILE_OPTIONS ${NLOHMANN_JSON_DEFINITIONS})
 endif()
