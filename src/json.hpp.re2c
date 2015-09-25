@@ -1683,7 +1683,6 @@ class basic_json
                 AllocatorType<object_t> alloc;
                 alloc.destroy(m_value.object);
                 alloc.deallocate(m_value.object, 1);
-                m_value.object = nullptr;
                 break;
             }
 
@@ -1692,7 +1691,6 @@ class basic_json
                 AllocatorType<array_t> alloc;
                 alloc.destroy(m_value.array);
                 alloc.deallocate(m_value.array, 1);
-                m_value.array = nullptr;
                 break;
             }
 
@@ -1701,7 +1699,6 @@ class basic_json
                 AllocatorType<string_t> alloc;
                 alloc.destroy(m_value.string);
                 alloc.deallocate(m_value.string, 1);
-                m_value.string = nullptr;
                 break;
             }
 
