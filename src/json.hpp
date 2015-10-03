@@ -584,6 +584,20 @@ class basic_json
 
 
   private:
+    /// helper for exception-safe object creation
+    template<typename T, typename... Args>
+    static T* create( Args&& ... args )
+    {
+        AllocatorType<T> alloc;
+        auto deleter = [&](T * object)
+        {
+            alloc.deallocate(object, 1);
+        };
+        std::unique_ptr<T, decltype(deleter)> object(alloc.allocate(1), deleter);
+        alloc.construct(object.get(), std::forward<Args>(args)...);
+        return object.release();
+    }
+
     ////////////////////////
     // JSON value storage //
     ////////////////////////
@@ -625,25 +639,19 @@ class basic_json
 
                 case (value_t::object):
                 {
-                    AllocatorType<object_t> alloc;
-                    object = alloc.allocate(1);
-                    alloc.construct(object);
+                    object = create<object_t>();
                     break;
                 }
 
                 case (value_t::array):
                 {
-                    AllocatorType<array_t> alloc;
-                    array = alloc.allocate(1);
-                    alloc.construct(array);
+                    array = create<array_t>();
                     break;
                 }
 
                 case (value_t::string):
                 {
-                    AllocatorType<string_t> alloc;
-                    string = alloc.allocate(1);
-                    alloc.construct(string, "");
+                    string = create<string_t>("");
                     break;
                 }
 
@@ -670,25 +678,19 @@ class basic_json
         /// constructor for strings
         json_value(const string_t& value)
         {
-            AllocatorType<string_t> alloc;
-            string = alloc.allocate(1);
-            alloc.construct(string, value);
+            string = create<string_t>(value);
         }
 
         /// constructor for objects
         json_value(const object_t& value)
         {
-            AllocatorType<object_t> alloc;
-            object = alloc.allocate(1);
-            alloc.construct(object, value);
+            object = create<object_t>(value);
         }
 
         /// constructor for arrays
         json_value(const array_t& value)
         {
-            AllocatorType<array_t> alloc;
-            array = alloc.allocate(1);
-            alloc.construct(array, value);
+            array = create<array_t>(value);
         }
     };
 
@@ -892,11 +894,9 @@ class basic_json
     basic_json(const CompatibleObjectType& value)
         : m_type(value_t::object)
     {
-        AllocatorType<object_t> alloc;
-        m_value.object = alloc.allocate(1);
         using std::begin;
         using std::end;
-        alloc.construct(m_value.object, begin(value), end(value));
+        m_value.object = create<object_t>(begin(value), end(value));
     }
 
     /*!
@@ -953,11 +953,9 @@ class basic_json
     basic_json(const CompatibleArrayType& value)
         : m_type(value_t::array)
     {
-        AllocatorType<array_t> alloc;
-        m_value.array = alloc.allocate(1);
         using std::begin;
         using std::end;
-        alloc.construct(m_value.array, begin(value), end(value));
+        m_value.array = create<array_t>(begin(value), end(value));
     }
 
     /*!
@@ -1315,9 +1313,7 @@ class basic_json
         {
             // the initializer list describes an array -> create array
             m_type = value_t::array;
-            AllocatorType<array_t> alloc;
-            m_value.array = alloc.allocate(1);
-            alloc.construct(m_value.array, std::move(init));
+            m_value.array = create<array_t>(std::move(init));
         }
     }
 
@@ -1416,9 +1412,7 @@ class basic_json
     basic_json(size_type count, const basic_json& value)
         : m_type(value_t::array)
     {
-        AllocatorType<array_t> alloc;
-        m_value.array = alloc.allocate(1);
-        alloc.construct(m_value.array, count, value);
+        m_value.array = create<array_t>(count, value);
     }
 
     /*!
@@ -1514,17 +1508,13 @@ class basic_json
 
             case value_t::object:
             {
-                AllocatorType<object_t> alloc;
-                m_value.object = alloc.allocate(1);
-                alloc.construct(m_value.object, first.m_it.object_iterator, last.m_it.object_iterator);
+                m_value.object = create<object_t>(first.m_it.object_iterator, last.m_it.object_iterator);
                 break;
             }
 
             case value_t::array:
             {
-                AllocatorType<array_t> alloc;
-                m_value.array = alloc.allocate(1);
-                alloc.construct(m_value.array, first.m_it.array_iterator, last.m_it.array_iterator);
+                m_value.array = create<array_t>(first.m_it.array_iterator, last.m_it.array_iterator);
                 break;
             }
 
@@ -1658,8 +1648,8 @@ class basic_json
     )
     {
         using std::swap;
-        std::swap(m_type, other.m_type);
-        std::swap(m_value, other.m_value);
+        swap(m_type, other.m_type);
+        swap(m_value, other.m_value);
         return *this;
     }
 
@@ -1683,7 +1673,6 @@ class basic_json
                 AllocatorType<object_t> alloc;
                 alloc.destroy(m_value.object);
                 alloc.deallocate(m_value.object, 1);
-                m_value.object = nullptr;
                 break;
             }
 
@@ -1692,7 +1681,6 @@ class basic_json
                 AllocatorType<array_t> alloc;
                 alloc.destroy(m_value.array);
                 alloc.deallocate(m_value.array, 1);
-                m_value.array = nullptr;
                 break;
             }
 
@@ -1701,7 +1689,6 @@ class basic_json
                 AllocatorType<string_t> alloc;
                 alloc.destroy(m_value.string);
                 alloc.deallocate(m_value.string, 1);
-                m_value.string = nullptr;
                 break;
             }
 
@@ -2598,9 +2585,7 @@ class basic_json
         if (m_type == value_t::null)
         {
             m_type = value_t::array;
-            AllocatorType<array_t> alloc;
-            m_value.array = alloc.allocate(1);
-            alloc.construct(m_value.array);
+            m_value.array = create<array_t>();
         }
 
         // [] only works for arrays
@@ -2670,9 +2655,7 @@ class basic_json
         if (m_type == value_t::null)
         {
             m_type = value_t::object;
-            AllocatorType<object_t> alloc;
-            m_value.object = alloc.allocate(1);
-            alloc.construct(m_value.object);
+            m_value.object = create<object_t>();
         }
 
         // [] only works for objects
@@ -4467,6 +4450,11 @@ class basic_json
     from a string
     */
     static basic_json parse(std::istream& i, parser_callback_t cb = nullptr)
+    {
+        return parser(i, cb).parse();
+    }
+
+    static basic_json parse(std::istream&& i, parser_callback_t cb = nullptr)
     {
         return parser(i, cb).parse();
     }
@@ -6903,7 +6891,7 @@ basic_json_parser_59:
         @brief return number value for number tokens
 
         This function translates the last token into a floating point number.
-        The pointer m_begin points to the beginning of the parsed number. We
+        The pointer m_start points to the beginning of the parsed number. We
         pass this pointer to std::strtod which sets endptr to the first
         character past the converted number. If this pointer is not the same as
         m_cursor, then either more or less characters have been used during the

@@ -586,10 +586,13 @@ class basic_json
   private:
     /// helper for exception-safe object creation
     template<typename T, typename... Args>
-    static T* create( Args&&... args )
+    static T* create(Args&& ... args)
     {
         AllocatorType<T> alloc;
-        auto deleter = [&](T* object) { alloc.deallocate(object, 1); };
+        auto deleter = [&](T* object)
+        {
+            alloc.deallocate(object, 1);
+        };
         std::unique_ptr<T, decltype(deleter)> object(alloc.allocate(1), deleter);
         alloc.construct(object.get(), std::forward<Args>(args)...);
         return object.release();

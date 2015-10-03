@@ -374,6 +374,11 @@ I deeply appreciate the help of the following people.
 - [kepkin](https://github.com/kepkin) patiently pushed forward the support for Microsoft Visual studio.
 - [gregmarr](https://github.com/gregmarr) simplified the implementation of reverse iterators.
 - [Caio Luppi](https://github.com/caiovlp) fixed a bug in the Unicode handling.
+- [dariomt](https://github.com/dariomt) fixed some typos in the examples.
+- [Daniel Frey](https://github.com/d-frey) cleaned up some pointers and implemented exception-safe memory allocation.
+- [Colin Hirsch](https://github.com/ColinH) took care of a small namespace issue.
+- [Huu Nguyen](https://github.com/whoshuu) correct a variable name in the documentation.
+- [Silverweed](https://github.com/silverweed) overloaded `parse()` to accept an rvalue reference.
 
 Thanks a lot for helping out!
 
