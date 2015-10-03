@@ -4,7 +4,7 @@ using namespace nlohmann;
 
 int main()
 {
-    // create a JSON boolean
+    // create a JSON number
     json value = 17;
 
     // explicitly getting pointers
