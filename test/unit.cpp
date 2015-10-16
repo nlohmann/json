@@ -9229,7 +9229,7 @@ TEST_CASE("concepts")
         SECTION("CopyAssignable")
         {
 // STL iterators used by json::iterator don't pass this test in Debug mode
-#if defined(_MSC_VER) && (_ITERATOR_DEBUG_LEVEL == 0)
+#if !defined(_MSC_VER) || (_ITERATOR_DEBUG_LEVEL == 0)
             CHECK(std::is_nothrow_copy_assignable<json::iterator>::value);
             CHECK(std::is_nothrow_copy_assignable<json::const_iterator>::value);
 #endif
