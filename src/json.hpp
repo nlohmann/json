@@ -2400,10 +2400,10 @@ class basic_json
                  std::is_pointer<PointerType>::value
                  and std::is_const< typename std::remove_pointer<PointerType>::type >::value
                  , int>::type = 0>
-    PointerType get_ptr() const noexcept
+    const PointerType get_ptr() const noexcept
     {
         // delegate the call to get_impl_ptr<>() const
-        return get_impl_ptr(static_cast<PointerType>(nullptr));
+        return get_impl_ptr(static_cast<const PointerType>(nullptr));
     }
 
 	/*!
