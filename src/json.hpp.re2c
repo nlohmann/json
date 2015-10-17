@@ -589,7 +589,7 @@ class basic_json
     static T* create(Args&& ... args)
     {
         AllocatorType<T> alloc;
-        auto deleter = [&](T* object)
+        auto deleter = [&](T * object)
         {
             alloc.deallocate(object, 1);
         };

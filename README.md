@@ -379,6 +379,7 @@ I deeply appreciate the help of the following people.
 - [Colin Hirsch](https://github.com/ColinH) took care of a small namespace issue.
 - [Huu Nguyen](https://github.com/whoshuu) correct a variable name in the documentation.
 - [Silverweed](https://github.com/silverweed) overloaded `parse()` to accept an rvalue reference.
+- [dariomt](https://github.com/dariomt) fixed a subtlety in MSVC type support.
 
 Thanks a lot for helping out!
 

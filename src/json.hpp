@@ -586,7 +586,7 @@ class basic_json
   private:
     /// helper for exception-safe object creation
     template<typename T, typename... Args>
-    static T* create( Args&& ... args )
+    static T* create(Args&& ... args)
     {
         AllocatorType<T> alloc;
         auto deleter = [&](T * object)
