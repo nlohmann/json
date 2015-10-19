@@ -5729,12 +5729,6 @@ class basic_json
                 return anchor != o.anchor;
             }
 
-            /// stream operator
-            friend std::ostream& operator<<(std::ostream& o, const iterator_wrapper_internal& w)
-            {
-                return o << w.value();
-            }
-
             /// return key of the iterator
             typename basic_json::string_t key() const
             {
