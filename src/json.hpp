@@ -4678,7 +4678,7 @@ class basic_json
                     if (c >= 0x00 and c <= 0x1f)
                     {
                         // print character c as \uxxxx
-                        sprintf(&result[pos + 1], "u%04x", int(c));
+                        sprintf_s(&result[pos + 1],result.size(),"u%04x", int(c));
                         pos += 6;
                         // overwrite trailing null character
                         result[pos] = '\\';
@@ -4910,7 +4910,7 @@ class basic_json
         static constexpr difference_type end_value = begin_value + 1;
 
         /// iterator as signed integer type
-        difference_type m_it = std::numeric_limits<std::ptrdiff_t>::min();
+        difference_type m_it = std::numeric_limits<std::ptrdiff_t>::denorm_min();
     };
 
     /*!
