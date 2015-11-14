@@ -10205,4 +10205,9 @@ TEST_CASE("regression tests")
         j["string"] = bytes;
         CHECK(j["string"] == "\u0007\u0007");
     }
+
+    SECTION("character following a surrogate pair is skipped")
+    {
+        CHECK(json::parse("\"\\ud80c\\udc60abc\"").get<json::string_t>() == u8"\U00013060abc");
+    }
 }

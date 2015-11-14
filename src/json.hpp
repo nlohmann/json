@@ -6856,8 +6856,8 @@ basic_json_parser_59:
                                 auto codepoint2 = std::strtoul(std::string(reinterpret_cast<typename string_t::const_pointer>
                                                                (i + 7), 4).c_str(), nullptr, 16);
                                 result += to_unicode(codepoint, codepoint2);
-                                // skip the next 11 characters (xxxx\uyyyy)
-                                i += 11;
+                                // skip the next 10 characters (xxxx\uyyyy)
+                                i += 10;
                             }
                             else
                             {
