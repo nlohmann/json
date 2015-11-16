@@ -1,0 +1,24 @@
+# It can be used as :
+#  
+# find_package(nlohmann-json)
+# target_link_libraries(program nlohmann-json::nlohmann-json)
+#
+# It also defines 
+#   - ${NLOHMANN_JSON_INCLUDE_DIRS}
+#   - ${NLOHMANN_JSON_DEFINITIONS}
+#
+set(NLOHMANN_JSON_VERSION @json_VERSION@)
+
+@PACKAGE_INIT@
+
+set_and_check(NLOHMANN_JSON_INCLUDE_DIRS "@PACKAGE_INCLUDE_INSTALL_DIR@")
+set(NLOHMANN_JSON_DEFINITIONS "@CMAKE_CXX_FLAGS@")
+check_required_components(nlohmann_json) 
+
+if (NOT TARGET "nlohmann-json::nlohmann-json")
+  add_library("nlohmann-json::nlohmann-json" INTERFACE IMPORTED)
+  set_target_properties("nlohmann-json::nlohmann-json"
+    PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${NLOHMANN_JSON_INCLUDE_DIRS}"
+    INTERFACE_COMPILE_OPTIONS ${NLOHMANN_JSON_DEFINITIONS})
+endif()

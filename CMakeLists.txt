@@ -1,25 +1,50 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0.0)
 
-project(json CXX)
+project(json
+  LANGUAGES CXX 
+  VERSION "1.0.0")
 
 add_executable(json_unit
     src/json.hpp test/catch.hpp test/unit.cpp
 )
 
-if(MSVC)
-    set(CMAKE_CXX_FLAGS
-        "/EHsc"
-    )
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-    STRING(REPLACE "/O2" "/Od" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  set(CMAKE_CXX_FLAGS "-std=c++11")
 
-    add_definitions(-D_SCL_SECURE_NO_WARNINGS)
-else(MSVC)
-    set(CMAKE_CXX_FLAGS
-        "-std=c++11 -stdlib=libc++"
-    )
-endif(MSVC)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+  set(CMAKE_CXX_FLAGS "/EHsc")
+
+  STRING(REPLACE "/O2" "/Od" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+
+  # See https://msdn.microsoft.com/fr-fr/library/aa985974.aspx?f=255&MSPPError=-2147217396
+  # Avoid warnings for unsafe STL methods call
+  add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+endif()
 
 include_directories(
     src test
 )
+
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/src/ DESTINATION include/nlohmann
+        FILES_MATCHING PATTERN "*.[ih]pp")
+
+include(CMakePackageConfigHelpers)
+set(INCLUDE_INSTALL_DIR include/)
+set(DEFINITIONS "${CMAKE_CXX_FLAGS}")
+configure_package_config_file(
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/modules/nlohmann-json-config.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/nlohmann-json-config.cmake
+  INSTALL_DESTINATION lib/cmake/nlohmann-json-${json_VERSION}
+  PATH_VARS INCLUDE_INSTALL_DIR)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/nlohmann-json-config-version.cmake
+    COMPATIBILITY AnyNewerVersion)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/nlohmann-json-config.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/nlohmann-json-config-version.cmake
+    DESTINATION lib/cmake/nlohmann-json-${json_VERSION})
