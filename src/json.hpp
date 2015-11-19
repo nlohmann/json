@@ -4677,11 +4677,19 @@ class basic_json
                 {
                     if (c >= 0x00 and c <= 0x1f)
                     {
+                        // convert a number 0..15 to its hex representation (0..f)
+                        auto hexify = [](const char v) -> char
+                        {
+                            return (v < 10) ? ('0' + v) : ('a' + v - 10);
+                        };
+
                         // print character c as \uxxxx
-                        sprintf(&result[pos + 1], "u%04x", int(c));
-                        pos += 6;
-                        // overwrite trailing null character
-                        result[pos] = '\\';
+                        for(const char m : { 'u', '0', '0', hexify(c >> 4), hexify(c & 0x0f) })
+                        {
+                            result[++pos] = m;
+                        }
+
+                        ++pos;
                     }
                     else
                     {
