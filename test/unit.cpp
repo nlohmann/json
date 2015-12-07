@@ -10022,6 +10022,14 @@ TEST_CASE("Unicode", "[hide]")
         // the array has 1112064 + 1 elemnts (a terminating "null" value)
         CHECK(j.size() == 1112065);
     }
+
+    SECTION("ignore byte-order-mark")
+    {
+        // read a file with a UTF-8 BOM
+        std::ifstream f("test/json_nlohmann_tests/bom.json");
+        json j;
+        CHECK_NOTHROW(j << f);
+    }
 }
 
 TEST_CASE("regression tests")

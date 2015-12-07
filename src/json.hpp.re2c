@@ -4437,6 +4437,8 @@ class basic_json
     LL(1) parser. The complexity can be higher if the parser callback function
     @a cb has a super-linear complexity.
 
+    @note A UTF-8 byte order mark is silently ignored.
+
     @liveexample{The example below demonstrates the parse function with and
     without callback function.,parse__string__parser_callback_t}
 
@@ -4461,6 +4463,8 @@ class basic_json
     @complexity Linear in the length of the input. The parser is a predictive
     LL(1) parser. The complexity can be higher if the parser callback function
     @a cb has a super-linear complexity.
+
+    @note A UTF-8 byte order mark is silently ignored.
 
     @liveexample{The example below demonstrates the parse function with and
     without callback function.,parse__istream__parser_callback_t}
@@ -4490,6 +4494,8 @@ class basic_json
 
     @complexity Linear in the length of the input. The parser is a predictive
     LL(1) parser.
+
+    @note A UTF-8 byte order mark is silently ignored.
 
     @liveexample{The example below shows how a JSON value is constructed by
     reading a serialization from a stream.,operator_deserialize}
@@ -6000,19 +6006,23 @@ class basic_json
             m_start = m_cursor;
 
             /*!re2c
-                re2c:define:YYCTYPE  = lexer_char_t;
-                re2c:define:YYCURSOR = m_cursor;
-                re2c:define:YYLIMIT  = m_limit;
-                re2c:define:YYMARKER = m_marker;
-                re2c:define:YYFILL   = "yyfill(); // LCOV_EXCL_LINE";
+                re2c:define:YYCTYPE   = lexer_char_t;
+                re2c:define:YYCURSOR  = m_cursor;
+                re2c:define:YYLIMIT   = m_limit;
+                re2c:define:YYMARKER  = m_marker;
+                re2c:define:YYFILL    = "yyfill(); // LCOV_EXCL_LINE";
                 re2c:yyfill:parameter = 0;
-                re2c:indent:string   = "    ";
-                re2c:indent:top      = 1;
-                re2c:labelprefix     = "basic_json_parser_";
+                re2c:indent:string    = "    ";
+                re2c:indent:top       = 1;
+                re2c:labelprefix      = "basic_json_parser_";
 
-                // whitespace
+                // ignore whitespace
                 ws = [ \t\n\r]+;
                 ws   { return scan(); }
+
+                // ignore byte-order-mark
+                bom = "\xEF\xBB\xBF";
+                bom   { return scan(); }
 
                 // structural characters
                 "[" { return token_type::begin_array; }
