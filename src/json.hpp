@@ -2404,7 +2404,7 @@ class basic_json
     template<typename PointerType, typename
              std::enable_if<
                  std::is_pointer<PointerType>::value
-                 and std::is_const< typename std::remove_pointer<PointerType>::type >::value
+                 and std::is_const<typename std::remove_pointer<PointerType>::type>::value
                  , int>::type = 0>
     const PointerType get_ptr() const noexcept
     {

@@ -381,6 +381,7 @@ I deeply appreciate the help of the following people.
 - [Silverweed](https://github.com/silverweed) overloaded `parse()` to accept an rvalue reference.
 - [dariomt](https://github.com/dariomt) fixed a subtlety in MSVC type support.
 - [ZahlGraf](https://github.com/ZahlGraf) added a workaround that allows compilation using Android NDK.
+- [Eau Claire](https://github.com/whackashoe) replaced a function that was marked as unsafe by Visual Studio.
 
 Thanks a lot for helping out!
 
