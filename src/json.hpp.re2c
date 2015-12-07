@@ -4703,7 +4703,9 @@ class basic_json
                         };
 
                         // print character c as \uxxxx
-                        for(const char m : { 'u', '0', '0', hexify(c >> 4), hexify(c & 0x0f) })
+                        for (const char m :
+                    { 'u', '0', '0', hexify(c >> 4), hexify(c & 0x0f)
+                        })
                         {
                             result[++pos] = m;
                         }
@@ -4937,7 +4939,7 @@ class basic_json
         static constexpr difference_type end_value = begin_value + 1;
 
         /// iterator as signed integer type
-        difference_type m_it = std::numeric_limits<std::ptrdiff_t>::min();
+        difference_type m_it = std::numeric_limits<std::ptrdiff_t>::denorm_min();
     };
 
     /*!

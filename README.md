@@ -382,6 +382,7 @@ I deeply appreciate the help of the following people.
 - [dariomt](https://github.com/dariomt) fixed a subtlety in MSVC type support.
 - [ZahlGraf](https://github.com/ZahlGraf) added a workaround that allows compilation using Android NDK.
 - [Eau Claire](https://github.com/whackashoe) replaced a function that was marked as unsafe by Visual Studio.
+- [406345](https://github.com/406345) fixed two small warnings.
 
 Thanks a lot for helping out!
 
