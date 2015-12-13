@@ -2691,33 +2691,6 @@ class basic_json
 
     Returns a reference to the element at with specified key @a key.
 
-    @param[in] key  key of the element to access
-
-    @return reference to the element at key @a key
-
-    @throw std::domain_error if JSON is not an object or null
-
-    @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be read using
-    the [] operator.,operatorarray__key_type_const}
-    */
-    const_reference operator[](const typename object_t::key_type& key) const
-    {
-        // at only works for objects
-        if (m_type != value_t::object)
-        {
-            throw std::domain_error("cannot use operator[] with " + type_name());
-        }
-
-        return m_value.object->operator[](key);
-    }
-
-    /*!
-    @brief access specified object element
-
-    Returns a reference to the element at with specified key @a key.
-
     @note If @a key is not found in the object, then it is silently added to
     the object and filled with a `null` value to make `key` a valid reference.
     In case the value was `null` before, it is converted to an object.
@@ -2745,36 +2718,6 @@ class basic_json
             m_value = value_t::object;
         }
 
-        // at only works for objects
-        if (m_type != value_t::object)
-        {
-            throw std::domain_error("cannot use operator[] with " + type_name());
-        }
-
-        return m_value.object->operator[](key);
-    }
-
-    /*!
-    @brief access specified object element
-
-    Returns a reference to the element at with specified key @a key.
-
-    @note This function is required for compatibility reasons with Clang.
-
-    @param[in] key  key of the element to access
-
-    @return reference to the element at key @a key
-
-    @throw std::domain_error if JSON is not an object or null
-
-    @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be read using
-    the [] operator.,operatorarray__key_type_const}
-    */
-    template<typename T, std::size_t n>
-    const_reference operator[](const T (&key)[n]) const
-    {
         // at only works for objects
         if (m_type != value_t::object)
         {
