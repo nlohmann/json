@@ -1,4 +1,4 @@
-/* The standard CSS for doxygen 1.8.9.1 */
+/* The standard CSS for doxygen 1.8.10 */
 
 body, table, div, p, dl {
 	font: 400 14px/22px Roboto,sans-serif;
@@ -1108,6 +1108,11 @@ dl.section dd {
 	border: 0px none;
 }
  
+#projectalign
+{
+        vertical-align: middle;
+}
+
 #projectname
 {
 	font: 300% Tahoma, Arial,sans-serif;
