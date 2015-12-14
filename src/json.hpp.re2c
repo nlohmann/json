@@ -686,8 +686,6 @@ class basic_json
                     break;
                 }
 
-                case value_t::null:
-                case value_t::discarded:
                 default:
                 {
                     break;
@@ -1494,10 +1492,6 @@ class basic_json
                 break;
             }
 
-            case value_t::array:
-            case value_t::discarded:
-            case value_t::null:
-            case value_t::object:
             default:
             {
                 break;
@@ -1542,8 +1536,6 @@ class basic_json
                 break;
             }
 
-            case value_t::discarded:
-            case value_t::null:
             default:
             {
                 throw std::domain_error("cannot use construct with iterators from " + first.m_object->type_name());
@@ -1614,8 +1606,6 @@ class basic_json
                 break;
             }
 
-            case value_t::discarded:
-            case value_t::null:
             default:
             {
                 break;
@@ -1719,11 +1709,6 @@ class basic_json
                 break;
             }
 
-            case value_t::boolean:
-            case value_t::discarded:
-            case value_t::null:
-            case value_t::number_float:
-            case value_t::number_integer:
             default:
             {
                 // all other types need no specific destructor
@@ -2169,12 +2154,6 @@ class basic_json
                 return static_cast<T>(m_value.number_float);
             }
 
-            case value_t::array:
-            case value_t::boolean:
-            case value_t::discarded:
-            case value_t::null:
-            case value_t::object:
-            case value_t::string:
             default:
             {
                 throw std::domain_error("type must be number, but is " + type_name());
@@ -2874,8 +2853,6 @@ class basic_json
                 break;
             }
 
-            case value_t::discarded:
-            case value_t::null:
             default:
             {
                 throw std::domain_error("cannot use erase() with " + type_name());
@@ -2971,8 +2948,6 @@ class basic_json
                 break;
             }
 
-            case value_t::discarded:
-            case value_t::null:
             default:
             {
                 throw std::domain_error("cannot use erase with " + type_name());
@@ -3380,11 +3355,6 @@ class basic_json
                 return m_value.object->empty();
             }
 
-            case basic_json::value_t::boolean:
-            case basic_json::value_t::discarded:
-            case basic_json::value_t::number_float:
-            case basic_json::value_t::number_integer:
-            case basic_json::value_t::string:
             default:
             {
                 // all other types are nonempty
@@ -3439,11 +3409,6 @@ class basic_json
                 return m_value.object->size();
             }
 
-            case value_t::boolean:
-            case value_t::discarded:
-            case value_t::number_float:
-            case value_t::number_integer:
-            case value_t::string:
             default:
             {
                 // all other types have size 1
@@ -3496,12 +3461,6 @@ class basic_json
                 return m_value.object->max_size();
             }
 
-            case basic_json::value_t::boolean:
-            case basic_json::value_t::discarded:
-            case basic_json::value_t::null:
-            case basic_json::value_t::number_float:
-            case basic_json::value_t::number_integer:
-            case basic_json::value_t::string:
             default:
             {
                 // all other types have max_size() == size()
@@ -3583,8 +3542,6 @@ class basic_json
                 break;
             }
 
-            case value_t::discarded:
-            case value_t::null:
             default:
             {
                 break;
@@ -4099,8 +4056,6 @@ class basic_json
                     return lhs.m_value.number_integer == rhs.m_value.number_integer;
                 case value_t::number_float:
                     return approx(lhs.m_value.number_float, rhs.m_value.number_float);
-                case value_t::discarded:
-                    return false;
                 default:
                     return false;
             }
@@ -4242,8 +4197,6 @@ class basic_json
                     return lhs.m_value.number_integer < rhs.m_value.number_integer;
                 case value_t::number_float:
                     return lhs.m_value.number_float < rhs.m_value.number_float;
-                case value_t::discarded:
-                    return false;
                 default:
                     return false;
             }
@@ -4527,8 +4480,6 @@ class basic_json
                 return "discarded";
             }
 
-            case value_t::number_float:
-            case value_t::number_integer:
             default:
             {
                 return "number";
@@ -4839,11 +4790,6 @@ class basic_json
                 o << "null";
                 return;
             }
-
-            default:
-            {
-                return;
-            }
         }
     }
 
@@ -4991,12 +4937,6 @@ class basic_json
                     break;
                 }
 
-                case basic_json::value_t::boolean:
-                case basic_json::value_t::discarded:
-                case basic_json::value_t::null:
-                case basic_json::value_t::number_float:
-                case basic_json::value_t::number_integer:
-                case basic_json::value_t::string:
                 default:
                 {
                     m_it.primitive_iterator = primitive_iterator_t();
@@ -5022,12 +4962,6 @@ class basic_json
                     break;
                 }
 
-                case value_t::boolean:
-                case value_t::discarded:
-                case value_t::null:
-                case value_t::number_float:
-                case value_t::number_integer:
-                case value_t::string:
                 default:
                 {
                     m_it.primitive_iterator = other.m_it.primitive_iterator;
@@ -5079,11 +5013,6 @@ class basic_json
                     break;
                 }
 
-                case basic_json::value_t::boolean:
-                case basic_json::value_t::discarded:
-                case basic_json::value_t::number_float:
-                case basic_json::value_t::number_integer:
-                case basic_json::value_t::string:
                 default:
                 {
                     m_it.primitive_iterator.set_begin();
@@ -5109,12 +5038,6 @@ class basic_json
                     break;
                 }
 
-                case basic_json::value_t::boolean:
-                case basic_json::value_t::discarded:
-                case basic_json::value_t::null:
-                case basic_json::value_t::number_float:
-                case basic_json::value_t::number_integer:
-                case basic_json::value_t::string:
                 default:
                 {
                     m_it.primitive_iterator.set_end();
@@ -5144,11 +5067,6 @@ class basic_json
                     throw std::out_of_range("cannot get value");
                 }
 
-                case value_t::boolean:
-                case value_t::discarded:
-                case value_t::number_float:
-                case value_t::number_integer:
-                case value_t::string:
                 default:
                 {
                     if (m_it.primitive_iterator.is_begin())
@@ -5178,12 +5096,6 @@ class basic_json
                     return &*m_it.array_iterator;
                 }
 
-                case basic_json::value_t::boolean:
-                case basic_json::value_t::discarded:
-                case basic_json::value_t::null:
-                case basic_json::value_t::number_float:
-                case basic_json::value_t::number_integer:
-                case basic_json::value_t::string:
                 default:
                 {
                     if (m_it.primitive_iterator.is_begin())
@@ -5224,12 +5136,6 @@ class basic_json
                     break;
                 }
 
-                case value_t::boolean:
-                case value_t::discarded:
-                case value_t::null:
-                case value_t::number_float:
-                case value_t::number_integer:
-                case value_t::string:
                 default:
                 {
                     ++m_it.primitive_iterator;
@@ -5266,12 +5172,6 @@ class basic_json
                     break;
                 }
 
-                case value_t::boolean:
-                case value_t::discarded:
-                case value_t::null:
-                case value_t::number_float:
-                case value_t::number_integer:
-                case value_t::string:
                 default:
                 {
                     --m_it.primitive_iterator;
@@ -5303,12 +5203,6 @@ class basic_json
                     return (m_it.array_iterator == other.m_it.array_iterator);
                 }
 
-                case value_t::boolean:
-                case value_t::discarded:
-                case value_t::null:
-                case value_t::number_float:
-                case value_t::number_integer:
-                case value_t::string:
                 default:
                 {
                     return (m_it.primitive_iterator == other.m_it.primitive_iterator);
@@ -5343,12 +5237,6 @@ class basic_json
                     return (m_it.array_iterator < other.m_it.array_iterator);
                 }
 
-                case basic_json::value_t::boolean:
-                case basic_json::value_t::discarded:
-                case basic_json::value_t::null:
-                case basic_json::value_t::number_float:
-                case basic_json::value_t::number_integer:
-                case basic_json::value_t::string:
                 default:
                 {
                     return (m_it.primitive_iterator < other.m_it.primitive_iterator);
@@ -5390,12 +5278,6 @@ class basic_json
                     break;
                 }
 
-                case basic_json::value_t::boolean:
-                case basic_json::value_t::discarded:
-                case basic_json::value_t::null:
-                case basic_json::value_t::number_float:
-                case basic_json::value_t::number_integer:
-                case basic_json::value_t::string:
                 default:
                 {
                     m_it.primitive_iterator += i;
@@ -5443,12 +5325,6 @@ class basic_json
                     return m_it.array_iterator - other.m_it.array_iterator;
                 }
 
-                case basic_json::value_t::boolean:
-                case basic_json::value_t::discarded:
-                case basic_json::value_t::null:
-                case basic_json::value_t::number_float:
-                case basic_json::value_t::number_integer:
-                case basic_json::value_t::string:
                 default:
                 {
                     return m_it.primitive_iterator - other.m_it.primitive_iterator;
@@ -5476,11 +5352,6 @@ class basic_json
                     throw std::out_of_range("cannot get value");
                 }
 
-                case basic_json::value_t::boolean:
-                case basic_json::value_t::discarded:
-                case basic_json::value_t::number_float:
-                case basic_json::value_t::number_integer:
-                case basic_json::value_t::string:
                 default:
                 {
                     if (m_it.primitive_iterator == -n)
@@ -5827,12 +5698,6 @@ class basic_json
                     }
 
                     /// use an empty key for all primitive types
-                    case value_t::boolean:
-                    case value_t::discarded:
-                    case value_t::null:
-                    case value_t::number_float:
-                    case value_t::number_integer:
-                    case value_t::string:
                     default:
                     {
                         return "";
@@ -6035,8 +5900,6 @@ class basic_json
                     return "<end of input>";
                 case token_type::parse_error:
                     return "<parse error>";
-                default:
-                    return "";
             }
         }
 
@@ -6264,11 +6127,6 @@ class basic_json
                                 // skip the next four characters (xxxx)
                                 i += 4;
                             }
-                            break;
-                        }
-
-                        default:
-                        {
                             break;
                         }
                     }
@@ -6567,13 +6425,6 @@ class basic_json
                     break;
                 }
 
-                case lexer::token_type::end_array:
-                case lexer::token_type::end_object:
-                case lexer::token_type::end_of_input:
-                case lexer::token_type::name_separator:
-                case lexer::token_type::parse_error:
-                case lexer::token_type::uninitialized:
-                case lexer::token_type::value_separator:
                 default:
                 {
                     // the last token was unexpected
