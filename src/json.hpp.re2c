@@ -1290,8 +1290,8 @@ class basic_json
         // is a string
         for (const auto& element : init)
         {
-            if (element.m_type != value_t::array or element.size() != 2
-                    or element[0].m_type != value_t::string)
+            if (not element.is_array() or element.size() != 2
+                    or not element[0].is_string())
             {
                 // we found an element that makes it impossible to use the
                 // initializer list as object
@@ -2012,7 +2012,7 @@ class basic_json
                   , int>::type = 0>
     T get_impl(T*) const
     {
-        if (m_type == value_t::object)
+        if (is_object())
         {
             return T(m_value.object->begin(), m_value.object->end());
         }
@@ -2025,7 +2025,7 @@ class basic_json
     /// get an object (explicit)
     object_t get_impl(object_t*) const
     {
-        if (m_type == value_t::object)
+        if (is_object())
         {
             return *(m_value.object);
         }
@@ -2046,7 +2046,7 @@ class basic_json
                   , int>::type = 0>
     T get_impl(T*) const
     {
-        if (m_type == value_t::array)
+        if (is_array())
         {
             T to_vector;
             std::transform(m_value.array->begin(), m_value.array->end(),
@@ -2070,7 +2070,7 @@ class basic_json
                   , int>::type = 0>
     std::vector<T> get_impl(std::vector<T>*) const
     {
-        if (m_type == value_t::array)
+        if (is_array())
         {
             std::vector<T> to_vector;
             to_vector.reserve(m_value.array->size());
@@ -2095,7 +2095,7 @@ class basic_json
                   , int>::type = 0>
     T get_impl(T*) const
     {
-        if (m_type == value_t::array)
+        if (is_array())
         {
             return T(m_value.array->begin(), m_value.array->end());
         }
@@ -2108,7 +2108,7 @@ class basic_json
     /// get an array (explicit)
     array_t get_impl(array_t*) const
     {
-        if (m_type == value_t::array)
+        if (is_array())
         {
             return *(m_value.array);
         }
@@ -2125,7 +2125,7 @@ class basic_json
                   , int>::type = 0>
     T get_impl(T*) const
     {
-        if (m_type == value_t::string)
+        if (is_string())
         {
             return *m_value.string;
         }
@@ -2164,7 +2164,7 @@ class basic_json
     /// get a boolean (explicit)
     boolean_t get_impl(boolean_t*) const
     {
-        if (m_type == value_t::boolean)
+        if (is_boolean())
         {
             return m_value.boolean;
         }
@@ -2454,12 +2454,14 @@ class basic_json
     reference at(size_type idx)
     {
         // at only works for arrays
-        if (m_type != value_t::array)
+        if (is_array())
+        {
+            return m_value.array->at(idx);
+        }
+        else
         {
             throw std::domain_error("cannot use at() with " + type_name());
         }
-
-        return m_value.array->at(idx);
     }
 
     /*!
@@ -2484,12 +2486,14 @@ class basic_json
     const_reference at(size_type idx) const
     {
         // at only works for arrays
-        if (m_type != value_t::array)
+        if (is_array())
+        {
+            return m_value.array->at(idx);
+        }
+        else
         {
             throw std::domain_error("cannot use at() with " + type_name());
         }
-
-        return m_value.array->at(idx);
     }
 
     /*!
@@ -2514,12 +2518,14 @@ class basic_json
     reference at(const typename object_t::key_type& key)
     {
         // at only works for objects
-        if (m_type != value_t::object)
+        if (is_object())
+        {
+            return m_value.object->at(key);
+        }
+        else
         {
             throw std::domain_error("cannot use at() with " + type_name());
         }
-
-        return m_value.object->at(key);
     }
 
     /*!
@@ -2544,12 +2550,14 @@ class basic_json
     const_reference at(const typename object_t::key_type& key) const
     {
         // at only works for objects
-        if (m_type != value_t::object)
+        if (is_object())
+        {
+            return m_value.object->at(key);
+        }
+        else
         {
             throw std::domain_error("cannot use at() with " + type_name());
         }
-
-        return m_value.object->at(key);
     }
 
     /*!
@@ -2577,24 +2585,26 @@ class basic_json
     reference operator[](size_type idx)
     {
         // implicitly convert null to object
-        if (m_type == value_t::null)
+        if (is_null())
         {
             m_type = value_t::array;
             m_value.array = create<array_t>();
         }
 
         // [] only works for arrays
-        if (m_type != value_t::array)
+        if (is_array())
+        {
+            for (size_t i = m_value.array->size(); i <= idx; ++i)
+            {
+                m_value.array->push_back(basic_json());
+            }
+
+            return m_value.array->operator[](idx);
+        }
+        else
         {
             throw std::domain_error("cannot use operator[] with " + type_name());
         }
-
-        for (size_t i = m_value.array->size(); i <= idx; ++i)
-        {
-            m_value.array->push_back(basic_json());
-        }
-
-        return m_value.array->operator[](idx);
     }
 
     /*!
@@ -2616,12 +2626,14 @@ class basic_json
     const_reference operator[](size_type idx) const
     {
         // at only works for arrays
-        if (m_type != value_t::array)
+        if (is_array())
+        {
+            return m_value.array->operator[](idx);
+        }
+        else
         {
             throw std::domain_error("cannot use operator[] with " + type_name());
         }
-
-        return m_value.array->operator[](idx);
     }
 
     /*!
@@ -2647,19 +2659,21 @@ class basic_json
     reference operator[](const typename object_t::key_type& key)
     {
         // implicitly convert null to object
-        if (m_type == value_t::null)
+        if (is_null())
         {
             m_type = value_t::object;
             m_value.object = create<object_t>();
         }
 
         // [] only works for objects
-        if (m_type != value_t::object)
+        if (is_object())
+        {
+            return m_value.object->operator[](key);
+        }
+        else
         {
             throw std::domain_error("cannot use operator[] with " + type_name());
         }
-
-        return m_value.object->operator[](key);
     }
 
     /*!
@@ -2688,19 +2702,21 @@ class basic_json
     reference operator[](const T (&key)[n])
     {
         // implicitly convert null to object
-        if (m_type == value_t::null)
+        if (is_null())
         {
             m_type = value_t::object;
             m_value = value_t::object;
         }
 
         // at only works for objects
-        if (m_type != value_t::object)
+        if (is_object())
+        {
+            return m_value.object->operator[](key);
+        }
+        else
         {
             throw std::domain_error("cannot use operator[] with " + type_name());
         }
-
-        return m_value.object->operator[](key);
     }
 
     /*!
@@ -2831,7 +2847,7 @@ class basic_json
                     throw std::out_of_range("iterator out of range");
                 }
 
-                if (m_type == value_t::string)
+                if (is_string())
                 {
                     delete m_value.string;
                     m_value.string = nullptr;
@@ -2924,7 +2940,7 @@ class basic_json
                     throw std::out_of_range("iterators out of range");
                 }
 
-                if (m_type == value_t::string)
+                if (is_string())
                 {
                     delete m_value.string;
                     m_value.string = nullptr;
@@ -2977,12 +2993,14 @@ class basic_json
     size_type erase(const typename object_t::key_type& key)
     {
         // this erase only works for objects
-        if (m_type != value_t::object)
+        if (is_object())
+        {
+            return m_value.object->erase(key);
+        }
+        else
         {
             throw std::domain_error("cannot use erase() with " + type_name());
         }
-
-        return m_value.object->erase(key);
     }
 
     /*!
@@ -3002,17 +3020,19 @@ class basic_json
     void erase(const size_type idx)
     {
         // this erase only works for arrays
-        if (m_type != value_t::array)
+        if (is_array())
+        {
+            if (idx >= size())
+            {
+                throw std::out_of_range("index out of range");
+            }
+
+            m_value.array->erase(m_value.array->begin() + static_cast<difference_type>(idx));
+        }
+        else
         {
             throw std::domain_error("cannot use erase() with " + type_name());
         }
-
-        if (idx >= size())
-        {
-            throw std::out_of_range("index out of range");
-        }
-
-        m_value.array->erase(m_value.array->begin() + static_cast<difference_type>(idx));
     }
 
     /*!
@@ -3034,7 +3054,7 @@ class basic_json
     {
         auto result = end();
 
-        if (m_type == value_t::object)
+        if (is_object())
         {
             result.m_it.object_iterator = m_value.object->find(key);
         }
@@ -3050,7 +3070,7 @@ class basic_json
     {
         auto result = cend();
 
-        if (m_type == value_t::object)
+        if (is_object())
         {
             result.m_it.object_iterator = m_value.object->find(key);
         }
@@ -3077,7 +3097,7 @@ class basic_json
     size_type count(typename object_t::key_type key) const
     {
         // return 0 for all nonobject types
-        return (m_type == value_t::object) ? m_value.object->count(key) : 0;
+        return (is_object()) ? m_value.object->count(key) : 0;
     }
 
     /// @}
@@ -3569,13 +3589,13 @@ class basic_json
     void push_back(basic_json&& value)
     {
         // push_back only works for null objects or arrays
-        if (not(m_type == value_t::null or m_type == value_t::array))
+        if (not(is_null() or is_array()))
         {
             throw std::domain_error("cannot use push_back() with " + type_name());
         }
 
         // transform null object into an array
-        if (m_type == value_t::null)
+        if (is_null())
         {
             m_type = value_t::array;
             m_value = value_t::array;
@@ -3604,13 +3624,13 @@ class basic_json
     void push_back(const basic_json& value)
     {
         // push_back only works for null objects or arrays
-        if (not(m_type == value_t::null or m_type == value_t::array))
+        if (not(is_null() or is_array()))
         {
             throw std::domain_error("cannot use push_back() with " + type_name());
         }
 
         // transform null object into an array
-        if (m_type == value_t::null)
+        if (is_null())
         {
             m_type = value_t::array;
             m_value = value_t::array;
@@ -3651,13 +3671,13 @@ class basic_json
     void push_back(const typename object_t::value_type& value)
     {
         // push_back only works for null objects or objects
-        if (not(m_type == value_t::null or m_type == value_t::object))
+        if (not(is_null() or is_object()))
         {
             throw std::domain_error("cannot use push_back() with " + type_name());
         }
 
         // transform null object into an object
-        if (m_type == value_t::null)
+        if (is_null())
         {
             m_type = value_t::object;
             m_value = value_t::object;
@@ -3698,21 +3718,23 @@ class basic_json
     iterator insert(const_iterator pos, const basic_json& value)
     {
         // insert only works for arrays
-        if (m_type != value_t::array)
+        if (is_array())
+        {
+            // check if iterator pos fits to this JSON value
+            if (pos.m_object != this)
+            {
+                throw std::domain_error("iterator does not fit current value");
+            }
+
+            // insert to array and return iterator
+            iterator result(this);
+            result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, value);
+            return result;
+        }
+        else
         {
             throw std::domain_error("cannot use insert() with " + type_name());
         }
-
-        // check if iterator pos fits to this JSON value
-        if (pos.m_object != this)
-        {
-            throw std::domain_error("iterator does not fit current value");
-        }
-
-        // insert to array and return iterator
-        iterator result(this);
-        result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, value);
-        return result;
     }
 
     /*!
@@ -3747,21 +3769,23 @@ class basic_json
     iterator insert(const_iterator pos, size_type count, const basic_json& value)
     {
         // insert only works for arrays
-        if (m_type != value_t::array)
+        if (is_array())
+        {
+            // check if iterator pos fits to this JSON value
+            if (pos.m_object != this)
+            {
+                throw std::domain_error("iterator does not fit current value");
+            }
+
+            // insert to array and return iterator
+            iterator result(this);
+            result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, count, value);
+            return result;
+        }
+        else
         {
             throw std::domain_error("cannot use insert() with " + type_name());
         }
-
-        // check if iterator pos fits to this JSON value
-        if (pos.m_object != this)
-        {
-            throw std::domain_error("iterator does not fit current value");
-        }
-
-        // insert to array and return iterator
-        iterator result(this);
-        result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, count, value);
-        return result;
     }
 
     /*!
@@ -3791,7 +3815,7 @@ class basic_json
     iterator insert(const_iterator pos, const_iterator first, const_iterator last)
     {
         // insert only works for arrays
-        if (m_type != value_t::array)
+        if (not is_array())
         {
             throw std::domain_error("cannot use insert() with " + type_name());
         }
@@ -3841,7 +3865,7 @@ class basic_json
     iterator insert(const_iterator pos, std::initializer_list<basic_json> ilist)
     {
         // insert only works for arrays
-        if (m_type != value_t::array)
+        if (not is_array())
         {
             throw std::domain_error("cannot use insert() with " + type_name());
         }
@@ -3904,13 +3928,14 @@ class basic_json
     void swap(array_t& other)
     {
         // swap only works for arrays
-        if (m_type != value_t::array)
+        if (is_array())
+        {
+            std::swap(*(m_value.array), other);
+        }
+        else
         {
             throw std::domain_error("cannot use swap() with " + type_name());
         }
-
-        // swap arrays
-        std::swap(*(m_value.array), other);
     }
 
     /*!
@@ -3933,13 +3958,14 @@ class basic_json
     void swap(object_t& other)
     {
         // swap only works for objects
-        if (m_type != value_t::object)
+        if (is_object())
+        {
+            std::swap(*(m_value.object), other);
+        }
+        else
         {
             throw std::domain_error("cannot use swap() with " + type_name());
         }
-
-        // swap objects
-        std::swap(*(m_value.object), other);
     }
 
     /*!
@@ -3962,13 +3988,14 @@ class basic_json
     void swap(string_t& other)
     {
         // swap only works for strings
-        if (m_type != value_t::string)
+        if (is_string())
+        {
+            std::swap(*(m_value.string), other);
+        }
+        else
         {
             throw std::domain_error("cannot use swap() with " + type_name());
         }
-
-        // swap strings
-        std::swap(*(m_value.string), other);
     }
 
     /// @}
@@ -5369,7 +5396,7 @@ class basic_json
         /// return the key of an object iterator
         typename object_t::key_type key() const
         {
-            if (m_object->m_type == basic_json::value_t::object)
+            if (m_object->is_object())
             {
                 return m_it.object_iterator->first;
             }
