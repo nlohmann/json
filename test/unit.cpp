@@ -9263,6 +9263,11 @@ TEST_CASE("iterator_wrapper")
                         CHECK(i.value() == json(2));
                         break;
                     }
+
+                    default:
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -9289,6 +9294,11 @@ TEST_CASE("iterator_wrapper")
                     {
                         CHECK(i.key() == "B");
                         CHECK(i.value() == json(2));
+                        break;
+                    }
+
+                    default:
+                    {
                         break;
                     }
                 }
@@ -9319,6 +9329,11 @@ TEST_CASE("iterator_wrapper")
                         CHECK(i.value() == json(2));
                         break;
                     }
+
+                    default:
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -9345,6 +9360,11 @@ TEST_CASE("iterator_wrapper")
                     {
                         CHECK(i.key() == "B");
                         CHECK(i.value() == json(2));
+                        break;
+                    }
+
+                    default:
+                    {
                         break;
                     }
                 }
@@ -9378,6 +9398,11 @@ TEST_CASE("iterator_wrapper")
                         CHECK(i.value() == "B");
                         break;
                     }
+
+                    default:
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -9404,6 +9429,11 @@ TEST_CASE("iterator_wrapper")
                     {
                         CHECK(i.key() == "1");
                         CHECK(i.value() == "B");
+                        break;
+                    }
+
+                    default:
+                    {
                         break;
                     }
                 }
@@ -9434,6 +9464,11 @@ TEST_CASE("iterator_wrapper")
                         CHECK(i.value() == "B");
                         break;
                     }
+
+                    default:
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -9460,6 +9495,11 @@ TEST_CASE("iterator_wrapper")
                     {
                         CHECK(i.key() == "1");
                         CHECK(i.value() == "B");
+                        break;
+                    }
+
+                    default:
+                    {
                         break;
                     }
                 }
