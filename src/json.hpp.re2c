@@ -70,25 +70,6 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
     using ssize_t = SSIZE_T;
 #endif
 
-// workaround for Android NDK (see https://github.com/nlohmann/json/issues/136)
-#ifdef __ANDROID__
-namespace std
-{
-template <typename T>
-std::string to_string(T v)
-{
-    std::ostringstream ss;
-    ss << v;
-    return ss.str();
-}
-
-inline long double strtold(const char* str, char** str_end)
-{
-    return strtod(str, str_end);
-}
-}
-#endif
-
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann

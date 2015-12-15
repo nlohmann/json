@@ -42,11 +42,14 @@ to the files you want to use JSON objects. That's it. Do not forget to set the n
 
 Though it's 2015 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.9 - 5.2 (and possible later)
-- Clang 3.4 - 3.7 (and possible later)
-- Microsoft Visual C++ 14.0 RC (and possible later)
+- GCC 4.9 - 5.2 (and possibly later)
+- Clang 3.4 - 3.7 (and possibly later)
+- Microsoft Visual C++ 14.0 RC (and possibly later)
 
 I would be happy to learn about other compilers/versions.
+
+For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. Please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug.
+
 
 ## Examples
 
