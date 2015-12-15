@@ -214,6 +214,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a4bf695ddf4a00ea8feea2c725ec847f1.html#a4bf695ddf4a00ea8feea2c725ec847f1">swap</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a57a96ab3ff1ce7b48a754129fb12c982.html#a57a96ab3ff1ce7b48a754129fb12c982">swap</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a42f9133f978dde4cce5851b2c2434a0c.html#a42f9133f978dde4cce5851b2c2434a0c">type</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2.html#a26b7e4876af25eae5800ce43f93aaef2">value</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a72442ccbb378b4464a24a2da1e784041.html#a72442ccbb378b4464a24a2da1e784041">value</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">value_t</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a7d0db3b728d820d4984df78d97d2b104.html#a7d0db3b728d820d4984df78d97d2b104">value_type</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aa6a24b176f9599a21d662cc5f8e1ca76.html#aa6a24b176f9599a21d662cc5f8e1ca76">~basic_json</a></td></tr>
@@ -262,7 +264,7 @@ template&lt;typename PointerType , typename std::enable_if&lt;                  
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div>
 <div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create a JSON number</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> value = 17;</div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> <a class="code" href="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2.html#a26b7e4876af25eae5800ce43f93aaef2">value</a> = 17;</div>
 <div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
 <div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="comment">// explicitly getting pointers</span></div>
 <div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <span class="keyword">auto</span> p1 = value.<a class="code" href="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html#a5f0aad50ed7e8aec3128fe018c18b3fe">get</a>&lt;<span class="keyword">const</span> <a class="code" href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">json::number_integer_t</a>*&gt;();</div>
@@ -276,8 +278,9 @@ template&lt;typename PointerType , typename std::enable_if&lt;                  
 <div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    std::cout &lt;&lt; std::boolalpha &lt;&lt; (p5 == <span class="keyword">nullptr</span>) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;}</div>
 <div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:200</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2_html_a26b7e4876af25eae5800ce43f93aaef2"><div class="ttname"><a href="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2.html#a26b7e4876af25eae5800ce43f93aaef2">nlohmann::basic_json::value</a></div><div class="ttdeci">ValueType value(const typename object_t::key_type &amp;key, ValueType default_value) const </div><div class="ttdoc">access specified object element with default value </div><div class="ttdef"><b>Definition:</b> json.hpp:2787</div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:96</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe_html_a5f0aad50ed7e8aec3128fe018c18b3fe"><div class="ttname"><a href="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html#a5f0aad50ed7e8aec3128fe018c18b3fe">nlohmann::basic_json::get</a></div><div class="ttdeci">ValueType get() const </div><div class="ttdoc">get a value (explicit) </div><div class="ttdef"><b>Definition:</b> json.hpp:2313</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe_html_a5f0aad50ed7e8aec3128fe018c18b3fe"><div class="ttname"><a href="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html#a5f0aad50ed7e8aec3128fe018c18b3fe">nlohmann::basic_json::get</a></div><div class="ttdeci">ValueType get() const </div><div class="ttdoc">get a value (explicit) </div><div class="ttdef"><b>Definition:</b> json.hpp:2289</div></div>
 <div class="ttc" id="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33_html_a6944904b3b59769b1cf62ac2532cbe33"><div class="ttname"><a href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">nlohmann::basic_json::number_integer_t</a></div><div class="ttdeci">NumberIntegerType number_integer_t</div><div class="ttdoc">a type for a number (integer) </div><div class="ttdef"><b>Definition:</b> json.hpp:516</div></div>
 <div class="ttc" id="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044_html_aacf6c869f6a9c66ac1bc99e93f310044"><div class="ttname"><a href="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044.html#aacf6c869f6a9c66ac1bc99e93f310044">nlohmann::basic_json::number_float_t</a></div><div class="ttdeci">NumberFloatType number_float_t</div><div class="ttdoc">a type for a number (floating-point) </div><div class="ttdef"><b>Definition:</b> json.hpp:576</div></div>
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/OQ6W9gVosCWDgJHS"><b>online</b></a>): <pre class="fragment">17 17 17 17
@@ -293,7 +296,7 @@ true
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Dec 13 2015 11:27:17 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Dec 15 2015 08:39:34 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

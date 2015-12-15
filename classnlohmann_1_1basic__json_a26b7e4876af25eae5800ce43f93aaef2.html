@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.10"/>
-<title>JSON for Modern C++: nlohmann::basic_json::at</title>
+<title>JSON for Modern C++: nlohmann::basic_json::value</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -88,7 +88,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_afc4223b5ad03b1b76e925374a8fff98e.html#afc4223b5ad03b1b76e925374a8fff98e">array</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba.html#ac82abedf356d252e0589850c3d8b35ba">array_t</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54.html#ada8e01109a60088e4db2a670d4903b54">at</a></td></tr>
-          <tr><td class="navtab"><a class="qindexHL" href="classnlohmann_1_1basic__json_af6b6050ccd906dddf7c9f47fe3ad62a5.html#af6b6050ccd906dddf7c9f47fe3ad62a5">at</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_af6b6050ccd906dddf7c9f47fe3ad62a5.html#af6b6050ccd906dddf7c9f47fe3ad62a5">at</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a652414dd930cb3af3b6f454cc535a23e.html#a652414dd930cb3af3b6f454cc535a23e">at</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a16a275d0201e9aedc87c933c764b8869.html#a16a275d0201e9aedc87c933c764b8869">at</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aa1f3b3f1dca79392d6727b81f9668c6c.html#aa1f3b3f1dca79392d6727b81f9668c6c">back</a></td></tr>
@@ -214,7 +214,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a4bf695ddf4a00ea8feea2c725ec847f1.html#a4bf695ddf4a00ea8feea2c725ec847f1">swap</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a57a96ab3ff1ce7b48a754129fb12c982.html#a57a96ab3ff1ce7b48a754129fb12c982">swap</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a42f9133f978dde4cce5851b2c2434a0c.html#a42f9133f978dde4cce5851b2c2434a0c">type</a></td></tr>
-          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2.html#a26b7e4876af25eae5800ce43f93aaef2">value</a></td></tr>
+          <tr><td class="navtab"><a class="qindexHL" href="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2.html#a26b7e4876af25eae5800ce43f93aaef2">value</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a72442ccbb378b4464a24a2da1e784041.html#a72442ccbb378b4464a24a2da1e784041">value</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522">value_t</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a7d0db3b728d820d4984df78d97d2b104.html#a7d0db3b728d820d4984df78d97d2b104">value_type</a></td></tr>
@@ -223,21 +223,33 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       </div>
    </td>
    <td valign="top" class="mempage">
-<a class="anchor" id="af6b6050ccd906dddf7c9f47fe3ad62a5"></a>
+<a class="anchor" id="a26b7e4876af25eae5800ce43f93aaef2"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;template&lt; typename U, typename V, typename...Args &gt; class ObjectType = std::map, template&lt; typename U, typename...Args &gt; class ArrayType = std::vector, class StringType  = std::string, class BooleanType  = bool, class NumberIntegerType  = int64_t, class NumberFloatType  = double, template&lt; typename U &gt; class AllocatorType = std::allocator&gt; </div>
+<div class="memtemplate">
+template&lt;class ValueType , typename std::enable_if&lt;                                                                  std::is_convertible&lt; basic_json_t, ValueType &gt;::value                                                               , int &gt;::type  = 0&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classnlohmann_1_1basic__json_ac4011bd0781e51afe4994d2b09fd27e9.html#ac4011bd0781e51afe4994d2b09fd27e9">const_reference</a> <a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::at </td>
+          <td class="memname">ValueType <a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::value </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html#a80ceaa3bdd346292273b309e08525c1c">size_type</a>&#160;</td>
-          <td class="paramname"><em>idx</em></td><td>)</td>
-          <td> const</td>
+          <td class="paramtype">const typename object_t::key_type &amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ValueType&#160;</td>
+          <td class="paramname"><em>default_value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
   </td>
@@ -246,50 +258,73 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns a const reference to the element at specified location <em>idx</em>, with bounds checking.</p>
+<p>Returns either a copy of an object's element at the specified key <em>key</em> or a given default value if no element with key <em>key</em> exists.</p>
+<p>The function is basically equivalent to executing </p><div class="fragment"><div class="line"><span class="keywordflow">try</span> {</div>
+<div class="line">    <span class="keywordflow">return</span> <a class="code" href="classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54.html#ada8e01109a60088e4db2a670d4903b54">at</a>(key);</div>
+<div class="line">} <span class="keywordflow">catch</span>(std::out_of_range) {</div>
+<div class="line">    <span class="keywordflow">return</span> default_value;</div>
+<div class="line">}</div>
+</div><!-- fragment --><dl class="section note"><dt>Note</dt><dd>Unlike <a class="el" href="classnlohmann_1_1basic__json_a652414dd930cb3af3b6f454cc535a23e.html#a652414dd930cb3af3b6f454cc535a23e">at(const typename object_t::key_type&amp;)</a>, this function does not throw if the given key <em>key</em> was not found.</dd>
+<dd>
+Unlike <a class="el" href="classnlohmann_1_1basic__json_af74581d177dafc38df5a126ccd358999.html#af74581d177dafc38df5a126ccd358999">operator[](const typename object_t::key_type&amp; key)</a>, this function does not implicitly add an element to the position defined by <em>key</em>. This function is furthermore also applicable to const objects.</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">idx</td><td>index of the element to access</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">key</td><td>key of the element to access </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">default_value</td><td>the value to return if <em>key</em> is not found</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const reference to the element at index <em>idx</em> </dd></dl>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">ValueType</td><td>type compatible to JSON values, for instance <code>int</code> for JSON integer numbers, <code>bool</code> for JSON booleans, or <code>std::vector</code> types for JSON arrays. Note the type of the expected value at <em>key</em> and the default value <em>default_value</em> must be compatible.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>copy of the element at key <em>key</em> or <em>default_value</em> if <em>key</em> is not found</dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">std::domain_error</td><td>if JSON is not an array </td></tr>
-    <tr><td class="paramname">std::out_of_range</td><td>if the index <em>idx</em> is out of range of the array; that is, <code>idx &gt;= size()</code></td></tr>
+    <tr><td class="paramname">std::domain_error</td><td>if JSON is not an object</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section user"><dt>Complexity</dt><dd>Constant.</dd></dl>
-<dl class="section user"><dt>Example</dt><dd>The example below shows how array elements can be read using at. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
+<dl class="section user"><dt>Complexity</dt><dd>Logarithmic in the size of the container.</dd></dl>
+<dl class="section user"><dt>Example</dt><dd>The example below shows how object elements can be queried with a default value. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="keyword">using namespace </span><a class="code" href="namespacenlohmann.html">nlohmann</a>;</div>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;</div>
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create JSON array</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> array = {<span class="stringliteral">&quot;first&quot;</span>, <span class="stringliteral">&quot;2nd&quot;</span>, <span class="stringliteral">&quot;third&quot;</span>, <span class="stringliteral">&quot;fourth&quot;</span>};</div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="comment">// output element at index 2 (third element)</span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    std::cout &lt;&lt; array.<a class="code" href="classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54.html#ada8e01109a60088e4db2a670d4903b54">at</a>(2) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="comment">// try to read beyond the array limit</span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    <span class="keywordflow">try</span></div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    {</div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;        std::cout &lt;&lt; array.<a class="code" href="classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54.html#ada8e01109a60088e4db2a670d4903b54">at</a>(5) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    }</div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    <span class="keywordflow">catch</span> (std::out_of_range)</div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    {</div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;        std::cout &lt;&lt; <span class="stringliteral">&quot;out of range&quot;</span> &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;    }</div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;}</div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create a JSON object with different entry types</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j =</div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;    {</div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;        {<span class="stringliteral">&quot;integer&quot;</span>, 1},</div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;        {<span class="stringliteral">&quot;floating&quot;</span>, 42.23},</div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;        {<span class="stringliteral">&quot;string&quot;</span>, <span class="stringliteral">&quot;hello world&quot;</span>},</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;        {<span class="stringliteral">&quot;boolean&quot;</span>, <span class="keyword">true</span>},</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;        {<span class="stringliteral">&quot;object&quot;</span>, {{<span class="stringliteral">&quot;key1&quot;</span>, 1}, {<span class="stringliteral">&quot;key2&quot;</span>, 2}}},</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;        {<span class="stringliteral">&quot;array&quot;</span>, {1, 2, 3}}</div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    };</div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    <span class="comment">// access existing values</span></div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    <span class="keywordtype">int</span> v_integer = j.<a class="code" href="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2.html#a26b7e4876af25eae5800ce43f93aaef2">value</a>(<span class="stringliteral">&quot;integer&quot;</span>, 0);</div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;    <span class="keywordtype">double</span> v_floating = j.<a class="code" href="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2.html#a26b7e4876af25eae5800ce43f93aaef2">value</a>(<span class="stringliteral">&quot;floating&quot;</span>, 47.11);</div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;</div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    <span class="comment">// access nonexisting values and rely on default value</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    std::string v_string = j.<a class="code" href="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2.html#a26b7e4876af25eae5800ce43f93aaef2">value</a>(<span class="stringliteral">&quot;nonexisting&quot;</span>, <span class="stringliteral">&quot;oops&quot;</span>);</div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;    <span class="keywordtype">bool</span> v_boolean = j.<a class="code" href="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2.html#a26b7e4876af25eae5800ce43f93aaef2">value</a>(<span class="stringliteral">&quot;nonexisting&quot;</span>, <span class="keyword">false</span>);</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;</div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;    <span class="comment">// output values</span></div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;    std::cout &lt;&lt; std::boolalpha &lt;&lt; v_integer &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v_floating</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;              &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v_string &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v_boolean &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;}</div>
 <div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:200</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54_html_ada8e01109a60088e4db2a670d4903b54"><div class="ttname"><a href="classnlohmann_1_1basic__json_ada8e01109a60088e4db2a670d4903b54.html#ada8e01109a60088e4db2a670d4903b54">nlohmann::basic_json::at</a></div><div class="ttdeci">reference at(size_type idx)</div><div class="ttdoc">access specified array element with bounds checking </div><div class="ttdef"><b>Definition:</b> json.hpp:2454</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2_html_a26b7e4876af25eae5800ce43f93aaef2"><div class="ttname"><a href="classnlohmann_1_1basic__json_a26b7e4876af25eae5800ce43f93aaef2.html#a26b7e4876af25eae5800ce43f93aaef2">nlohmann::basic_json::value</a></div><div class="ttdeci">ValueType value(const typename object_t::key_type &amp;key, ValueType default_value) const </div><div class="ttdoc">access specified object element with default value </div><div class="ttdef"><b>Definition:</b> json.hpp:2787</div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:96</div></div>
-</div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/Ti47m4DY2lV4SWNV"><b>online</b></a>): <pre class="fragment">"third"
-out of range
-</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/at__size_type_const.cpp -o at__size_type_const </pre> </dd></dl>
+</div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/pehnjdIduvv90qfX"><b>online</b></a>): <pre class="fragment">1 42.23 oops false
+</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/basic_json__value.cpp -o basic_json__value </pre></dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_a652414dd930cb3af3b6f454cc535a23e.html#a652414dd930cb3af3b6f454cc535a23e">at(const typename object_t::key_type&amp;)</a> for access by reference with range checking </dd>
+<dd>
+<a class="el" href="classnlohmann_1_1basic__json_af74581d177dafc38df5a126ccd358999.html#af74581d177dafc38df5a126ccd358999">operator[](const typename object_t::key_type&amp;)</a> for unchecked access by reference </dd></dl>
 
 </div>
 </div>
