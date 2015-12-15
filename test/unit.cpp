@@ -3082,6 +3082,101 @@ TEST_CASE("element access")
             }
         }
 
+        SECTION("access specified element with default value")
+        {
+            SECTION("access existing value")
+            {
+                CHECK(j.value("integer", 2) == 1);
+                CHECK(j.value("integer", 1.0) == Approx(1));
+                CHECK(j.value("null", json(1)) == json());
+                CHECK(j.value("boolean", false) == true);
+                CHECK(j.value("string", "bar") == "hello world");
+                CHECK(j.value("string", std::string("bar")) == "hello world");
+                CHECK(j.value("floating", 12.34) == Approx(42.23));
+                CHECK(j.value("floating", 12) == 42);
+                CHECK(j.value("object", json({{"foo", "bar"}})) == json(json::object()));
+                CHECK(j.value("array", json({10, 100})) == json({1, 2, 3}));
+
+                CHECK(j_const.value("integer", 2) == 1);
+                CHECK(j_const.value("integer", 1.0) == Approx(1));
+                CHECK(j_const.value("boolean", false) == true);
+                CHECK(j_const.value("string", "bar") == "hello world");
+                CHECK(j_const.value("string", std::string("bar")) == "hello world");
+                CHECK(j_const.value("floating", 12.34) == Approx(42.23));
+                CHECK(j_const.value("floating", 12) == 42);
+                CHECK(j_const.value("object", json({{"foo", "bar"}})) == json(json::object()));
+                CHECK(j_const.value("array", json({10, 100})) == json({1, 2, 3}));
+            }
+
+            SECTION("access non-existing value")
+            {
+                CHECK(j.value("_", 2) == 2);
+                CHECK(j.value("_", false) == false);
+                CHECK(j.value("_", "bar") == "bar");
+                CHECK(j.value("_", 12.34) == Approx(12.34));
+                CHECK(j.value("_", json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
+                CHECK(j.value("_", json({10, 100})) == json({10, 100}));
+
+                CHECK(j_const.value("_", 2) == 2);
+                CHECK(j_const.value("_", false) == false);
+                CHECK(j_const.value("_", "bar") == "bar");
+                CHECK(j_const.value("_", 12.34) == Approx(12.34));
+                CHECK(j_const.value("_", json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
+                CHECK(j_const.value("_", json({10, 100})) == json({10, 100}));
+            }
+
+            SECTION("access on non-object type")
+            {
+                SECTION("null")
+                {
+                    json j_nonobject(json::value_t::null);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                }
+
+                SECTION("boolean")
+                {
+                    json j_nonobject(json::value_t::boolean);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                }
+
+                SECTION("string")
+                {
+                    json j_nonobject(json::value_t::string);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                }
+
+                SECTION("array")
+                {
+                    json j_nonobject(json::value_t::array);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                }
+
+                SECTION("number (integer)")
+                {
+                    json j_nonobject(json::value_t::number_integer);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                }
+
+                SECTION("number (floating-point)")
+                {
+                    json j_nonobject(json::value_t::number_float);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                }
+            }
+        }
+
         SECTION("front and back")
         {
             // "array" is the smallest key

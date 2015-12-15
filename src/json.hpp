@@ -2514,6 +2514,10 @@ class basic_json
 
     @liveexample{The example below shows how object elements can be read and
     written using at.,at__object_t_key_type}
+
+    @sa @ref operator[](const typename object_t::key_type&) for unchecked
+    access by reference
+    @sa @ref value() for access by value with a default value
     */
     reference at(const typename object_t::key_type& key)
     {
@@ -2546,6 +2550,10 @@ class basic_json
 
     @liveexample{The example below shows how object elements can be read using
     at.,at__object_t_key_type_const}
+
+    @sa @ref operator[](const typename object_t::key_type&) for unchecked
+    access by reference
+    @sa @ref value() for access by value with a default value
     */
     const_reference at(const typename object_t::key_type& key) const
     {
@@ -2655,6 +2663,10 @@ class basic_json
 
     @liveexample{The example below shows how object elements can be read and
     written using the [] operator.,operatorarray__key_type}
+
+    @sa @ref at(const typename object_t::key_type&) for access by reference
+    with range checking
+    @sa @ref value() for access by value with a default value
     */
     reference operator[](const typename object_t::key_type& key)
     {
@@ -2697,6 +2709,10 @@ class basic_json
 
     @liveexample{The example below shows how object elements can be read and
     written using the [] operator.,operatorarray__key_type}
+
+    @sa @ref at(const typename object_t::key_type&) for access by reference
+    with range checking
+    @sa @ref value() for access by value with a default value
     */
     template<typename T, std::size_t n>
     reference operator[](const T (&key)[n])
@@ -2717,6 +2733,86 @@ class basic_json
         {
             throw std::domain_error("cannot use operator[] with " + type_name());
         }
+    }
+
+    /*!
+    @brief access specified object element with default value
+
+    Returns either a copy of an object's element at the specified key @a key or
+    a given default value if no element with key @a key exists.
+
+    The function is basically equivalent to executing
+    @code{.cpp}
+    try {
+        return at(key);
+    } catch(std::out_of_range) {
+        return default_value;
+    }
+    @endcode
+
+    @note Unlike @ref at(const typename object_t::key_type&), this function
+    does not throw if the given key @a key was not found.
+
+    @note Unlike @ref operator[](const typename object_t::key_type& key), this
+    function does not implicitly add an element to the position defined by @a
+    key. This function is furthermore also applicable to const objects.
+
+    @param[in] key  key of the element to access
+    @param[in] default_value  the value to return if @a key is not found
+
+    @tparam ValueType type compatible to JSON values, for instance `int` for
+    JSON integer numbers, `bool` for JSON booleans, or `std::vector` types for
+    JSON arrays. Note the type of the expected value at @a key and the default
+    value @a default_value must be compatible.
+
+    @return copy of the element at key @a key or @a default_value if @a key
+    is not found
+
+    @throw std::domain_error if JSON is not an object
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be queried
+    with a default value.,basic_json__value}
+
+    @sa @ref at(const typename object_t::key_type&) for access by reference
+    with range checking
+    @sa @ref operator[](const typename object_t::key_type&) for unchecked
+    access by reference
+    */
+    template <class ValueType, typename
+              std::enable_if<
+                  std::is_convertible<basic_json_t, ValueType>::value
+                  , int>::type = 0>
+    ValueType value(const typename object_t::key_type& key, ValueType default_value) const
+    {
+        // at only works for objects
+        if (is_object())
+        {
+            // if key is found, return value and given default value otherwise
+            const auto it = find(key);
+            if (it != end())
+            {
+                return *it;
+            }
+            else
+            {
+                return default_value;
+            }
+        }
+        else
+        {
+            throw std::domain_error("cannot use value() with " + type_name());
+        }
+    }
+
+    /*!
+    // overload for a default value of type const char*
+    @copydoc basic_json::value()
+    */
+    string_t value(const typename object_t::key_type& key, const char* default_value) const
+    {
+        return value(key, string_t(default_value));
     }
 
     /*!
@@ -5660,9 +5756,9 @@ class basic_json
     /*!
     @brief wrapper to access iterator member functions in range-based for
 
-    This class allows to access @ref key() and @ref value() during range-based
-    for loops. In these loops, a reference to the JSON values is returned, so
-    there is no access to the underlying iterator.
+    This class allows to access @ref iterator::key() and @ref iterator::value()
+    during range-based for loops. In these loops, a reference to the JSON
+    values is returned, so there is no access to the underlying iterator.
     */
     class iterator_wrapper
     {
