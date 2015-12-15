@@ -195,7 +195,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a74ccfa471a0c061876b247f820f3c741.html#a74ccfa471a0c061876b247f820f3c741">parse</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aa0422e861b4cbd7cdcaad7a11a1304a9.html#aa0422e861b4cbd7cdcaad7a11a1304a9">parse</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">parse_event_t</a></td></tr>
-          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">parser_callback_t</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aabe4661644ea549089f0886c2551d2ac.html#aabe4661644ea549089f0886c2551d2ac">parser_callback_t</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a6bbd3e72a870f1ba81ff6886b063b0fe.html#a6bbd3e72a870f1ba81ff6886b063b0fe">pointer</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a429c2606865483ff357cccc1b1c46569.html#a429c2606865483ff357cccc1b1c46569">push_back</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a749e58042d8069f4f048ee4d23c43f63.html#a749e58042d8069f4f048ee4d23c43f63">push_back</a></td></tr>
@@ -245,7 +245,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
   </tr>
 </table>
 </div><div class="memdoc">
-<p>This function returns true iff the JSON value was discarded during parsing with a callback function (see <a class="el" href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">parser_callback_t</a>).</p>
+<p>This function returns true iff the JSON value was discarded during parsing with a callback function (see <a class="el" href="classnlohmann_1_1basic__json_aabe4661644ea549089f0886c2551d2ac.html#aabe4661644ea549089f0886c2551d2ac">parser_callback_t</a>).</p>
 <dl class="section note"><dt>Note</dt><dd>This function will always be <code>false</code> for JSON values after parsing. That is, discarded values can only occur during parsing, but will be removed when inside a structured value or replaced by null in other cases.</dd></dl>
 <dl class="section return"><dt>Returns</dt><dd><code>true</code> if type is discarded, <code>false</code> otherwise.</dd></dl>
 <dl class="section user"><dt>Complexity</dt><dd>Constant.</dd></dl>
@@ -274,9 +274,9 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    std::cout &lt;&lt; j_array.<a class="code" href="classnlohmann_1_1basic__json_a53a2abfdd4f72c7df5aba1155bf03e48.html#a53a2abfdd4f72c7df5aba1155bf03e48">is_discarded</a>() &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;    std::cout &lt;&lt; j_string.<a class="code" href="classnlohmann_1_1basic__json_a53a2abfdd4f72c7df5aba1155bf03e48.html#a53a2abfdd4f72c7df5aba1155bf03e48">is_discarded</a>() &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;}</div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:200</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_a53a2abfdd4f72c7df5aba1155bf03e48_html_a53a2abfdd4f72c7df5aba1155bf03e48"><div class="ttname"><a href="classnlohmann_1_1basic__json_a53a2abfdd4f72c7df5aba1155bf03e48.html#a53a2abfdd4f72c7df5aba1155bf03e48">nlohmann::basic_json::is_discarded</a></div><div class="ttdeci">bool is_discarded() const  noexcept</div><div class="ttdoc">return whether value is discarded </div><div class="ttdef"><b>Definition:</b> json.hpp:1977</div></div>
-<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:96</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:181</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a53a2abfdd4f72c7df5aba1155bf03e48_html_a53a2abfdd4f72c7df5aba1155bf03e48"><div class="ttname"><a href="classnlohmann_1_1basic__json_a53a2abfdd4f72c7df5aba1155bf03e48.html#a53a2abfdd4f72c7df5aba1155bf03e48">nlohmann::basic_json::is_discarded</a></div><div class="ttdeci">bool is_discarded() const  noexcept</div><div class="ttdoc">return whether value is discarded </div><div class="ttdef"><b>Definition:</b> json.hpp:2062</div></div>
+<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:77</div></div>
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/Fz9sE7wOVCDCxuqw"><b>online</b></a>): <pre class="fragment">false
 false
 false
@@ -294,7 +294,7 @@ false
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Dec 15 2015 08:39:34 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Dec 15 2015 19:42:39 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

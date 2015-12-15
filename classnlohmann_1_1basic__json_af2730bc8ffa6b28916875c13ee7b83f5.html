@@ -195,7 +195,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a74ccfa471a0c061876b247f820f3c741.html#a74ccfa471a0c061876b247f820f3c741">parse</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aa0422e861b4cbd7cdcaad7a11a1304a9.html#aa0422e861b4cbd7cdcaad7a11a1304a9">parse</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">parse_event_t</a></td></tr>
-          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">parser_callback_t</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aabe4661644ea549089f0886c2551d2ac.html#aabe4661644ea549089f0886c2551d2ac">parser_callback_t</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a6bbd3e72a870f1ba81ff6886b063b0fe.html#a6bbd3e72a870f1ba81ff6886b063b0fe">pointer</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a429c2606865483ff357cccc1b1c46569.html#a429c2606865483ff357cccc1b1c46569">push_back</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a749e58042d8069f4f048ee4d23c43f63.html#a749e58042d8069f4f048ee4d23c43f63">push_back</a></td></tr>
@@ -241,7 +241,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">parser_callback_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classnlohmann_1_1basic__json_aabe4661644ea549089f0886c2551d2ac.html#aabe4661644ea549089f0886c2551d2ac">parser_callback_t</a>&#160;</td>
           <td class="paramname"><em>cb</em> = <code>nullptr</code>&#160;</td>
         </tr>
         <tr>
@@ -259,7 +259,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">s</td><td>string to read a serialized JSON value from </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb</td><td>a parser callback function of type <a class="el" href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">parser_callback_t</a> which is used to control the deserialization by filtering unwanted values (optional)</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cb</td><td>a parser callback function of type <a class="el" href="classnlohmann_1_1basic__json_aabe4661644ea549089f0886c2551d2ac.html#aabe4661644ea549089f0886c2551d2ac">parser_callback_t</a> which is used to control the deserialization by filtering unwanted values (optional)</td></tr>
   </table>
   </dd>
 </dl>
@@ -296,7 +296,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;</div>
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    <span class="comment">// define parser callback</span></div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">json::parser_callback_t</a> cb = [](<span class="keywordtype">int</span> depth, <a class="code" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">json::parse_event_t</a> event, <a class="code" href="classnlohmann_1_1basic__json.html">json</a> &amp; parsed)</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json_aabe4661644ea549089f0886c2551d2ac.html#aabe4661644ea549089f0886c2551d2ac">json::parser_callback_t</a> cb = [](<span class="keywordtype">int</span> depth, <a class="code" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">json::parse_event_t</a> event, <a class="code" href="classnlohmann_1_1basic__json.html">json</a> &amp; parsed)</div>
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    {</div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;        <span class="comment">// skip object elements with key &quot;Thumbnail&quot;</span></div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;        <span class="keywordflow">if</span> (event == <a class="code" href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafea3c6e0b8a9c15224a8228b9a98ca1531d">json::parse_event_t::key</a> and parsed == <a class="code" href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">json</a>(<span class="stringliteral">&quot;Thumbnail&quot;</span>))</div>
@@ -313,13 +313,13 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_filtered = <a class="code" href="classnlohmann_1_1basic__json_af2730bc8ffa6b28916875c13ee7b83f5.html#af2730bc8ffa6b28916875c13ee7b83f5">json::parse</a>(text, cb);</div>
 <div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    std::cout &lt;&lt; std::setw(4) &lt;&lt; j_filtered &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;}</div>
-<div class="ttc" id="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474_html_a2bfd99e845a2e5cd90aeaf1b1431f474"><div class="ttname"><a href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">nlohmann::json</a></div><div class="ttdeci">basic_json&lt;&gt; json</div><div class="ttdoc">default JSON class </div><div class="ttdef"><b>Definition:</b> json.hpp:7340</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:200</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a_html_aa8e533b4290ade5bf5a33104a69b202a"><div class="ttname"><a href="classnlohmann_1_1basic__json_aa8e533b4290ade5bf5a33104a69b202a.html#aa8e533b4290ade5bf5a33104a69b202a">nlohmann::basic_json::parser_callback_t</a></div><div class="ttdeci">std::function&lt; bool(int depth, parse_event_t event, basic_json &amp;parsed)&gt; parser_callback_t</div><div class="ttdoc">per-element parser callback type </div><div class="ttdef"><b>Definition:</b> json.hpp:791</div></div>
-<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:96</div></div>
+<div class="ttc" id="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474_html_a2bfd99e845a2e5cd90aeaf1b1431f474"><div class="ttname"><a href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">nlohmann::json</a></div><div class="ttdeci">basic_json&lt;&gt; json</div><div class="ttdoc">default JSON class </div><div class="ttdef"><b>Definition:</b> json.hpp:7425</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> json.hpp:181</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_aabe4661644ea549089f0886c2551d2ac_html_aabe4661644ea549089f0886c2551d2ac"><div class="ttname"><a href="classnlohmann_1_1basic__json_aabe4661644ea549089f0886c2551d2ac.html#aabe4661644ea549089f0886c2551d2ac">nlohmann::basic_json::parser_callback_t</a></div><div class="ttdeci">std::function&lt; bool(int depth, parse_event_t event, basic_json &amp;parsed)&gt; parser_callback_t</div><div class="ttdoc">per-element parser callback type </div><div class="ttdef"><b>Definition:</b> json.hpp:803</div></div>
+<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> json.hpp:77</div></div>
 <div class="ttc" id="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe_html_aea1c863b719b4ca5b77188c171bbfafea3c6e0b8a9c15224a8228b9a98ca1531d"><div class="ttname"><a href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafea3c6e0b8a9c15224a8228b9a98ca1531d">nlohmann::basic_json::parse_event_t::key</a></div><div class="ttdoc">the parser read a key of a value in an object </div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_af2730bc8ffa6b28916875c13ee7b83f5_html_af2730bc8ffa6b28916875c13ee7b83f5"><div class="ttname"><a href="classnlohmann_1_1basic__json_af2730bc8ffa6b28916875c13ee7b83f5.html#af2730bc8ffa6b28916875c13ee7b83f5">nlohmann::basic_json::parse</a></div><div class="ttdeci">static basic_json parse(const string_t &amp;s, parser_callback_t cb=nullptr)</div><div class="ttdoc">deserialize from string </div><div class="ttdef"><b>Definition:</b> json.hpp:4489</div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe_html_aea1c863b719b4ca5b77188c171bbfafe"><div class="ttname"><a href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">nlohmann::basic_json::parse_event_t</a></div><div class="ttdeci">parse_event_t</div><div class="ttdoc">JSON callback events. </div><div class="ttdef"><b>Definition:</b> json.hpp:727</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_af2730bc8ffa6b28916875c13ee7b83f5_html_af2730bc8ffa6b28916875c13ee7b83f5"><div class="ttname"><a href="classnlohmann_1_1basic__json_af2730bc8ffa6b28916875c13ee7b83f5.html#af2730bc8ffa6b28916875c13ee7b83f5">nlohmann::basic_json::parse</a></div><div class="ttdeci">static basic_json parse(const string_t &amp;s, parser_callback_t cb=nullptr)</div><div class="ttdoc">deserialize from string </div><div class="ttdef"><b>Definition:</b> json.hpp:4574</div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe_html_aea1c863b719b4ca5b77188c171bbfafe"><div class="ttname"><a href="classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafe">nlohmann::basic_json::parse_event_t</a></div><div class="ttdeci">parse_event_t</div><div class="ttdoc">JSON callback events. </div><div class="ttdef"><b>Definition:</b> json.hpp:738</div></div>
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/XD9GkEmVZI9ecPEL"><b>online</b></a>): <pre class="fragment">{
     "Image": {
         "Animated": false,
@@ -365,7 +365,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Dec 15 2015 08:39:34 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Dec 15 2015 19:42:39 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>
