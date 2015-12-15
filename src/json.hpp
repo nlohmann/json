@@ -314,10 +314,12 @@ class basic_json
 
     #### Storage
 
-    Objects are stored as pointers in a `basic_json` type. That is, for any
+    Objects are stored as pointers in a @ref basic_json type. That is, for any
     access to object values, a pointer of type `object_t*` must be dereferenced.
 
-    @sa array_t
+    @sa @ref array_t -- type for an array value
+
+    @since version 1.0
     */
     using object_t = ObjectType<StringType,
           basic_json,
@@ -359,8 +361,12 @@ class basic_json
 
     #### Storage
 
-    Arrays are stored as pointers in a `basic_json` type. That is, for any
+    Arrays are stored as pointers in a @ref basic_json type. That is, for any
     access to array values, a pointer of type `array_t*` must be dereferenced.
+
+    @sa @ref object_t -- type for an object value
+
+    @since version 1.0
     */
     using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
@@ -402,9 +408,11 @@ class basic_json
 
     #### Storage
 
-    String values are stored as pointers in a `basic_json` type. That is, for
-    any access to string values, a pointer of type `string_t*` must be
+    String values are stored as pointers in a @ref basic_json type. That is,
+    for any access to string values, a pointer of type `string_t*` must be
     dereferenced.
+
+    @since version 1.0
     */
     using string_t = StringType;
 
@@ -428,7 +436,9 @@ class basic_json
 
     #### Storage
 
-    Boolean values are stored directly inside a `basic_json` type.
+    Boolean values are stored directly inside a @ref basic_json type.
+
+    @since version 1.0
     */
     using boolean_t = BooleanType;
 
@@ -492,7 +502,11 @@ class basic_json
 
     #### Storage
 
-    Integer number values are stored directly inside a `basic_json` type.
+    Integer number values are stored directly inside a @ref basic_json type.
+
+    @sa @ref number_float_t -- type for number values (floating-point)
+
+    @since version 1.0
     */
     using number_integer_t = NumberIntegerType;
 
@@ -552,7 +566,12 @@ class basic_json
 
     #### Storage
 
-    Floating-point number values are stored directly inside a `basic_json` type.
+    Floating-point number values are stored directly inside a @ref basic_json
+    type.
+
+    @sa @ref number_integer_t -- type for number values (integer)
+
+    @since version 1.0
     */
     using number_float_t = NumberFloatType;
 
@@ -567,8 +586,11 @@ class basic_json
     @brief the JSON type enumeration
 
     This enumeration collects the different JSON types. It is internally used
-    to distinguish the stored values, and the functions is_null, is_object,
-    is_array, is_string, is_boolean, is_number, and is_discarded rely on it.
+    to distinguish the stored values, and the functions @ref is_null(), @ref
+    is_object(), @ref is_array(), @ref is_string(), @ref is_boolean(), @ref
+    is_number(), and @ref is_discarded() rely on it.
+
+    @since version 1.0
     */
     enum class value_t : uint8_t
     {
@@ -602,7 +624,13 @@ class basic_json
     // JSON value storage //
     ////////////////////////
 
-    /// a JSON value
+    /*!
+    @brief a JSON value
+
+    The actual storage for a JSON value of the @ref basic_json class.
+
+    @since version 1.0
+    */
     union json_value
     {
         /// object (stored with pointer to save storage)
@@ -704,6 +732,8 @@ class basic_json
 
     This enumeration lists the parser events that can trigger calling a
     callback function of type @ref parser_callback_t during parsing.
+
+    @since version 1.0
     */
     enum class parse_event_t : uint8_t
     {
@@ -767,9 +797,10 @@ class basic_json
 
     @sa @ref parse(std::istream&, parser_callback_t) or
     @ref parse(const string_t&, parser_callback_t) for examples
+
+    @since version 1.0
     */
-    using parser_callback_t = std::function<bool(
-                                  int depth, parse_event_t event, basic_json& parsed)>;
+    using parser_callback_t = std::function<bool(int depth, parse_event_t event, basic_json& parsed)>;
 
 
     //////////////////
@@ -800,6 +831,14 @@ class basic_json
 
     @liveexample{The following code shows the constructor for different @ref
     value_t values,basic_json__value_t}
+
+    @sa @ref basic_json(std::nullptr_t) -- create a `null` value
+    @sa @ref basic_json(boolean_t value) -- create a boolean value
+    @sa @ref basic_json(const string_t&) -- create a string value
+    @sa @ref basic_json(const object_t&) -- create a object value
+    @sa @ref basic_json(const array_t&) -- create a array value
+
+    @since version 1.0
     */
     basic_json(const value_t value)
         : m_type(value), m_value(value)
@@ -820,7 +859,9 @@ class basic_json
     @liveexample{The following code shows the constructor for a `null` JSON
     value.,basic_json}
 
-    @sa basic_json(std::nullptr_t)
+    @sa @ref basic_json(std::nullptr_t) -- create a `null` value
+
+    @since version 1.0
     */
     basic_json() noexcept = default;
 
@@ -838,7 +879,10 @@ class basic_json
     @liveexample{The following code shows the constructor with null pointer
     parameter.,basic_json__nullptr_t}
 
-    @sa basic_json()
+    @sa @ref basic_json() -- default constructor (implicitly creating a `null`
+    value)
+
+    @since version 1.0
     */
     basic_json(std::nullptr_t) noexcept
         : basic_json(value_t::null)
@@ -858,7 +902,10 @@ class basic_json
     @liveexample{The following code shows the constructor with an @ref object_t
     parameter.,basic_json__object_t}
 
-    @sa basic_json(const CompatibleObjectType&)
+    @sa @ref basic_json(const CompatibleObjectType&) -- create an object value
+    from a compatible STL container
+
+    @since version 1.0
     */
     basic_json(const object_t& value)
         : m_type(value_t::object), m_value(value)
@@ -883,7 +930,9 @@ class basic_json
     @liveexample{The following code shows the constructor with several
     compatible object type parameters.,basic_json__CompatibleObjectType}
 
-    @sa basic_json(const object_t&)
+    @sa @ref basic_json(const object_t&) -- create an object value
+
+    @since version 1.0
     */
     template <class CompatibleObjectType, typename
               std::enable_if<
@@ -912,7 +961,10 @@ class basic_json
     @liveexample{The following code shows the constructor with an @ref array_t
     parameter.,basic_json__array_t}
 
-    @sa basic_json(const CompatibleArrayType&)
+    @sa @ref basic_json(const CompatibleArrayType&) -- create an array value
+    from a compatible STL containers
+
+    @since version 1.0
     */
     basic_json(const array_t& value)
         : m_type(value_t::array), m_value(value)
@@ -937,7 +989,9 @@ class basic_json
     @liveexample{The following code shows the constructor with several
     compatible array type parameters.,basic_json__CompatibleArrayType}
 
-    @sa basic_json(const array_t&)
+    @sa @ref basic_json(const array_t&) -- create an array value
+
+    @since version 1.0
     */
     template <class CompatibleArrayType, typename
               std::enable_if<
@@ -971,8 +1025,12 @@ class basic_json
     @liveexample{The following code shows the constructor with an @ref string_t
     parameter.,basic_json__string_t}
 
-    @sa basic_json(const typename string_t::value_type*)
-    @sa basic_json(const CompatibleStringType&)
+    @sa @ref basic_json(const typename string_t::value_type*) -- create a
+    string value from a character pointer
+    @sa @ref basic_json(const CompatibleStringType&) -- create a string value
+    from a compatible string container
+
+    @since version 1.0
     */
     basic_json(const string_t& value)
         : m_type(value_t::string), m_value(value)
@@ -992,8 +1050,11 @@ class basic_json
     @liveexample{The following code shows the constructor with string literal
     parameter.,basic_json__string_t_value_type}
 
-    @sa basic_json(const string_t&)
-    @sa basic_json(const CompatibleStringType&)
+    @sa @ref basic_json(const string_t&) -- create a string value
+    @sa @ref basic_json(const CompatibleStringType&) -- create a string value
+    from a compatible string container
+
+    @since version 1.0
     */
     basic_json(const typename string_t::value_type* value)
         : basic_json(string_t(value))
@@ -1016,7 +1077,11 @@ class basic_json
     @liveexample{The following code shows the construction of a string value
     from a compatible type.,basic_json__CompatibleStringType}
 
-    @sa basic_json(const string_t&)
+    @sa @ref basic_json(const string_t&) -- create a string value
+    @sa @ref basic_json(const typename string_t::value_type*) -- create a
+    string value from a character pointer
+
+    @since version 1.0
     */
     template <class CompatibleStringType, typename
               std::enable_if<
@@ -1037,6 +1102,8 @@ class basic_json
 
     @liveexample{The example below demonstrates boolean
     values.,basic_json__boolean_t}
+
+    @since version 1.0
     */
     basic_json(boolean_t value)
         : m_type(value_t::boolean), m_value(value)
@@ -1061,7 +1128,11 @@ class basic_json
     @liveexample{The example below shows the construction of a JSON integer
     number value.,basic_json__number_integer_t}
 
-    @sa basic_json(const int)
+    @sa @ref basic_json(const int) -- create a number value (integer)
+    @sa @ref basic_json(const CompatibleNumberIntegerType) -- create a number
+    value (integer) from a compatible number type
+
+    @since version 1.0
     */
     template<typename T,
              typename std::enable_if<
@@ -1090,7 +1161,12 @@ class basic_json
     @liveexample{The example below shows the construction of a JSON integer
     number value from an anonymous enum.,basic_json__const_int}
 
-    @sa basic_json(const number_integer_t)
+    @sa @ref basic_json(const number_integer_t) -- create a number value
+    (integer)
+    @sa @ref basic_json(const CompatibleNumberIntegerType) -- create a number
+    value (integer) from a compatible number type
+
+    @since version 1.0
     */
     basic_json(const int value)
         : m_type(value_t::number_integer),
@@ -1116,7 +1192,11 @@ class basic_json
     integer number values from compatible
     types.,basic_json__CompatibleIntegerNumberType}
 
-    @sa basic_json(const number_integer_t)
+    @sa @ref basic_json(const number_integer_t) -- create a number value
+    (integer)
+    @sa @ref basic_json(const int) -- create a number value (integer)
+
+    @since version 1.0
     */
     template<typename CompatibleNumberIntegerType, typename
              std::enable_if<
@@ -1146,6 +1226,11 @@ class basic_json
 
     @liveexample{The following example creates several floating-point
     values.,basic_json__number_float_t}
+
+    @sa @ref basic_json(const CompatibleNumberFloatType) -- create a number
+    value (floating-point) from a compatible number type
+
+    @since version 1.0
     */
     basic_json(const number_float_t value)
         : m_type(value_t::number_float), m_value(value)
@@ -1183,7 +1268,10 @@ class basic_json
     floating-point number values from compatible
     types.,basic_json__CompatibleNumberFloatType}
 
-    @sa basic_json(const number_float_t)
+    @sa @ref basic_json(const number_float_t) -- create a number value
+    (floating-point)
+
+    @since version 1.0
     */
     template<typename CompatibleNumberFloatType, typename = typename
              std::enable_if<
@@ -1255,10 +1343,12 @@ class basic_json
     @liveexample{The example below shows how JSON values are created from
     initializer lists,basic_json__list_init_t}
 
-    @sa basic_json array(std::initializer_list<basic_json>) - create a JSON
-    array value from an initializer list
-    @sa basic_json object(std::initializer_list<basic_json>) - create a JSON
-    object value from an initializer list
+    @sa @ref array(std::initializer_list<basic_json>) - create a JSON array
+    value from an initializer list
+    @sa @ref object(std::initializer_list<basic_json>) - create a JSON object
+    value from an initializer list
+
+    @since version 1.0
     */
     basic_json(std::initializer_list<basic_json> init,
                bool type_deduction = true,
@@ -1343,10 +1433,12 @@ class basic_json
     @liveexample{The following code shows an example for the @ref array
     function.,array}
 
-    @sa basic_json(std::initializer_list<basic_json>, bool, value_t) - create a
-    JSON value from an initializer list
-    @sa basic_json object(std::initializer_list<basic_json>) - create a JSON
-    object value from an initializer list
+    @sa @ref basic_json(std::initializer_list<basic_json>, bool, value_t) --
+    create a JSON value from an initializer list
+    @sa @ref object(std::initializer_list<basic_json>) -- create a JSON object
+    value from an initializer list
+
+    @since version 1.0
     */
     static basic_json array(std::initializer_list<basic_json> init =
                                 std::initializer_list<basic_json>())
@@ -1362,29 +1454,31 @@ class basic_json
     the initializer list is empty, the empty object `{}` is created.
 
     @note This function is only added for symmetry reasons. In contrast to the
-    related function @ref basic_json array(std::initializer_list<basic_json>),
-    there are no cases which can only be expressed by this function. That is,
-    any initializer list @a init can also be passed to the initializer list
-    constructor @ref basic_json(std::initializer_list<basic_json>, bool,
-    value_t).
+    related function @ref array(std::initializer_list<basic_json>), there are
+    no cases which can only be expressed by this function. That is, any
+    initializer list @a init can also be passed to the initializer list
+    constructor
+    @ref basic_json(std::initializer_list<basic_json>, bool, value_t).
 
     @param[in] init  initializer list to create an object from (optional)
 
     @return JSON object value
 
     @throw std::domain_error if @a init is not a pair whose first elements are
-    strings; thrown by @ref basic_json(std::initializer_list<basic_json>, bool,
-    value_t)
+    strings; thrown by
+    @ref basic_json(std::initializer_list<basic_json>, bool, value_t)
 
     @complexity Linear in the size of @a init.
 
     @liveexample{The following code shows an example for the @ref object
     function.,object}
 
-    @sa basic_json(std::initializer_list<basic_json>, bool, value_t) - create a
-    JSON value from an initializer list
-    @sa basic_json array(std::initializer_list<basic_json>) - create a JSON
-    array value from an initializer list
+    @sa @ref basic_json(std::initializer_list<basic_json>, bool, value_t) --
+    create a JSON value from an initializer list
+    @sa @ref array(std::initializer_list<basic_json>) -- create a JSON array
+    value from an initializer list
+
+    @since version 1.0
     */
     static basic_json object(std::initializer_list<basic_json> init =
                                  std::initializer_list<basic_json>())
@@ -1407,6 +1501,8 @@ class basic_json
     @liveexample{The following code shows examples for the @ref
     basic_json(size_type\, const basic_json&)
     constructor.,basic_json__size_type_basic_json}
+
+    @since version 1.0
     */
     basic_json(size_type count, const basic_json& value)
         : m_type(value_t::array)
@@ -1443,6 +1539,8 @@ class basic_json
 
     @liveexample{The example below shows several ways to create JSON values by
     specifying a subrange with iterators.,basic_json__InputIt_InputIt}
+
+    @since version 1.0
     */
     template <class InputIT, typename
               std::enable_if<
@@ -1545,6 +1643,8 @@ class basic_json
 
     @liveexample{The following code shows an example for the copy
     constructor.,basic_json__basic_json}
+
+    @since version 1.0
     */
     basic_json(const basic_json& other)
         : m_type(other.m_type)
@@ -1609,6 +1709,8 @@ class basic_json
 
     @liveexample{The code below shows the move constructor explicitly called
     via std::move.,basic_json__moveconstructor}
+
+    @since version 1.0
     */
     basic_json(basic_json&& other) noexcept
         : m_type(std::move(other.m_type)),
@@ -1661,6 +1763,8 @@ class basic_json
     @requirement This function satisfies the Container requirements:
     - The complexity is linear.
     - All stored elements are destroyed and all memory is freed.
+
+    @since version 1.0
     */
     ~basic_json()
     {
@@ -2723,7 +2827,7 @@ class basic_json
     a given default value if no element with key @a key exists.
 
     The function is basically equivalent to executing
-    @code{.cpp}
+    @code {.cpp}
     try {
         return at(key);
     } catch(std::out_of_range) {
