@@ -2382,8 +2382,7 @@ class basic_json
     Explicit pointer access to the internally stored JSON value. No copies are
     made.
 
-    @warning Writing data to the pointee of the result yields an undefined
-    state.
+    @warning The pointer becomes invalid if the underlying JSON object changes.
 
     @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
     object_t, @ref string_t, @ref boolean_t, @ref number_integer_t, or @ref
