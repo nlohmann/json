@@ -237,7 +237,14 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <p><a href="http://rfc7159.net/rfc7159">RFC 7159</a> describes JSON arrays as follows: </p><blockquote class="doxtable">
 <p>An array is an ordered sequence of zero or more values. </p>
 </blockquote>
-<p>To store objects in C++, a type is defined by the template parameters <em>ArrayType</em> which chooses the container (e.g., <code>std::vector</code> or <code>std::list</code>) and <em>AllocatorType</em> which chooses the allocator to use.</p>
+<p>To store objects in C++, a type is defined by the template parameters explained below.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">ArrayType</td><td>container type to store arrays (e.g., <code>std::vector</code> or <code>std::list</code>) </td></tr>
+    <tr><td class="paramname">AllocatorType</td><td>allocator to use for arrays (e.g., <code>std::allocator</code>)</td></tr>
+  </table>
+  </dd>
+</dl>
 <h4>Default type</h4>
 <p>With the default values for <em>ArrayType</em> (<code>std::vector</code>) and <em>AllocatorType</em> (<code>std::allocator</code>), the default value for <em>array_t</em> is:</p>
 <div class="fragment"><div class="line">std::vector&lt;</div>
@@ -254,7 +261,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_a63691315292df8e1522b00d37ebb1ffc.html#a63691315292df8e1522b00d37ebb1ffc">object_t</a> &ndash; type for an object value</dd></dl>
 <dl class="section since"><dt>Since</dt><dd>version 1.0 </dd></dl>
 
-<p>Definition at line <a class="el" href="json_8hpp_source.html#l00371">371</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p>Definition at line <a class="el" href="json_8hpp_source.html#l00386">386</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 
 </div>
 </div>
@@ -264,7 +271,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Dec 16 2015 12:10:52 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Dec 17 2015 15:49:46 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

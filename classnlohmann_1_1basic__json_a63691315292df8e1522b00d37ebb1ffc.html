@@ -237,7 +237,15 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <p><a href="http://rfc7159.net/rfc7159">RFC 7159</a> describes JSON objects as follows: </p><blockquote class="doxtable">
 <p>An object is an unordered collection of zero or more name/value pairs, where a name is a string and a value is a string, number, boolean, null, object, or array. </p>
 </blockquote>
-<p>To store objects in C++, a type is defined by the template parameters <em>ObjectType</em> which chooses the container (e.g., <code>std::map</code> or <code>std::unordered_map</code>), <em>StringType</em> which chooses the type of the keys or names, and <em>AllocatorType</em> which chooses the allocator to use.</p>
+<p>To store objects in C++, a type is defined by the template parameters described below.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">ObjectType</td><td>the container to store objects (e.g., <code>std::map</code> or <code>std::unordered_map</code>) </td></tr>
+    <tr><td class="paramname">StringType</td><td>the type of the keys or names (e.g., <code>std::string</code>). The comparison function <code>std::less&lt;StringType&gt;</code> is used to order elements inside the container. </td></tr>
+    <tr><td class="paramname">AllocatorType</td><td>the allocator to use for objects (e.g., <code>std::allocator</code>)</td></tr>
+  </table>
+  </dd>
+</dl>
 <h4>Default type</h4>
 <p>With the default values for <em>ObjectType</em> (<code>std::map</code>), <em>StringType</em> (<code>std::string</code>), and <em>AllocatorType</em> (<code>std::allocator</code>), the default value for <em>object_t</em> is:</p>
 <div class="fragment"><div class="line">std::map&lt;</div>
@@ -264,7 +272,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba.html#ac82abedf356d252e0589850c3d8b35ba">array_t</a> &ndash; type for an array value</dd></dl>
 <dl class="section since"><dt>Since</dt><dd>version 1.0 </dd></dl>
 
-<p>Definition at line <a class="el" href="json_8hpp_source.html#l00328">328</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p>Definition at line <a class="el" href="json_8hpp_source.html#l00340">340</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 
 </div>
 </div>
@@ -274,7 +282,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Dec 16 2015 12:10:52 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Dec 17 2015 15:49:46 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>

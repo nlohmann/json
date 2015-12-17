@@ -46,6 +46,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>get_allocator</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ad2c4513cef5d8db760c4b2d871eea42c.html</Path>
+    <Anchor>ad2c4513cef5d8db760c4b2d871eea42c</Anchor>
+    <Abstract>returns the allocator associated with the container </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>value_type</Name>
       <APILanguage>cpp</APILanguage>
       <Type>tdef</Type>
@@ -219,6 +231,30 @@
     <Path>classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044.html</Path>
     <Anchor>aacf6c869f6a9c66ac1bc99e93f310044</Anchor>
     <Abstract>a type for a number (floating-point) </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>array</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_afc4223b5ad03b1b76e925374a8fff98e.html</Path>
+    <Anchor>afc4223b5ad03b1b76e925374a8fff98e</Anchor>
+    <Abstract>explicitly create an array from an initializer list </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>object</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ad1f617d29e8923dd40c89153f792b1bc.html</Path>
+    <Anchor>ad1f617d29e8923dd40c89153f792b1bc</Anchor>
+    <Abstract>explicitly create an object from an initializer list </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -474,18 +510,6 @@
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>~basic_json</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_aa6a24b176f9599a21d662cc5f8e1ca76.html</Path>
-    <Anchor>aa6a24b176f9599a21d662cc5f8e1ca76</Anchor>
-    <Abstract>destructor </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
       <Name>operator=</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
@@ -494,6 +518,18 @@
     <Path>classnlohmann_1_1basic__json_adf5dea6fa9d7075ff89ca0796ab47a7e.html</Path>
     <Anchor>adf5dea6fa9d7075ff89ca0796ab47a7e</Anchor>
     <Abstract>copy assignment </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>~basic_json</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_aa6a24b176f9599a21d662cc5f8e1ca76.html</Path>
+    <Anchor>aa6a24b176f9599a21d662cc5f8e1ca76</Anchor>
+    <Abstract>destructor </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -853,7 +889,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a72442ccbb378b4464a24a2da1e784041.html</Path>
     <Anchor>a72442ccbb378b4464a24a2da1e784041</Anchor>
-    <Abstract>access specified object element with default value </Abstract>
+    <Abstract>overload for a default value of type const char* </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -1362,42 +1398,6 @@
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>array</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>clm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_afc4223b5ad03b1b76e925374a8fff98e.html</Path>
-    <Anchor>afc4223b5ad03b1b76e925374a8fff98e</Anchor>
-    <Abstract>explicitly create an array from an initializer list </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>get_allocator</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>clm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ad2c4513cef5d8db760c4b2d871eea42c.html</Path>
-    <Anchor>ad2c4513cef5d8db760c4b2d871eea42c</Anchor>
-    <Abstract>returns the allocator associated with the container </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>object</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>clm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ad1f617d29e8923dd40c89153f792b1bc.html</Path>
-    <Anchor>ad1f617d29e8923dd40c89153f792b1bc</Anchor>
-    <Abstract>explicitly create an object from an initializer list </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
       <Name>operator&lt;</Name>
       <APILanguage>cpp</APILanguage>
       <Type>ffunc</Type>
@@ -1585,6 +1585,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_aa0422e861b4cbd7cdcaad7a11a1304a9.html</Path>
     <Anchor>aa0422e861b4cbd7cdcaad7a11a1304a9</Anchor>
+    <Abstract>deserialize from stream </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>

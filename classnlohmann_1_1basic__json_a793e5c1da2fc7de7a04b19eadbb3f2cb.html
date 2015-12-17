@@ -300,9 +300,9 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    std::cout &lt;&lt; j_array &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    std::cout &lt;&lt; j_string &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;}</div>
-<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00181">json.hpp:181</a></div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00187">json.hpp:187</a></div></div>
 <div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522aa8cfde6331bd59eb2ac96f8911c4b666"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522aa8cfde6331bd59eb2ac96f8911c4b666">nlohmann::basic_json::value_t::object</a></div><div class="ttdoc">object (unordered set of name/value pairs) </div></div>
-<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00077">json.hpp:77</a></div></div>
+<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00078">json.hpp:78</a></div></div>
 <div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522ab45cffe084dd3d20d928bee85e7b0f21"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522ab45cffe084dd3d20d928bee85e7b0f21">nlohmann::basic_json::value_t::string</a></div><div class="ttdoc">string value </div></div>
 <div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522af1f713c9e000f5d3f280adbd124df4f5"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522af1f713c9e000f5d3f280adbd124df4f5">nlohmann::basic_json::value_t::array</a></div><div class="ttdoc">array (ordered collection of values) </div></div>
 <div class="ttc" id="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522_html_a231b02148577b69a154b2ce2c87a5522a37a6259cc0c1dae299a7866489dff0bd"><div class="ttname"><a href="classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522a37a6259cc0c1dae299a7866489dff0bd">nlohmann::basic_json::value_t::null</a></div><div class="ttdoc">null value </div></div>
@@ -325,10 +325,14 @@ false
 <dd>
 <a class="el" href="classnlohmann_1_1basic__json_a0a9c6a1fccc4db365860463e8203eb38.html#a0a9c6a1fccc4db365860463e8203eb38">basic_json(const object_t&amp;)</a> &ndash; create a object value </dd>
 <dd>
-<a class="el" href="classnlohmann_1_1basic__json_af93e556bf708cb81b22ce223af1aa727.html#af93e556bf708cb81b22ce223af1aa727">basic_json(const array_t&amp;)</a> &ndash; create a array value</dd></dl>
+<a class="el" href="classnlohmann_1_1basic__json_af93e556bf708cb81b22ce223af1aa727.html#af93e556bf708cb81b22ce223af1aa727">basic_json(const array_t&amp;)</a> &ndash; create a array value </dd>
+<dd>
+<a class="el" href="classnlohmann_1_1basic__json_a80a89ddbe4cb7ef15b049febee208cc8.html#a80a89ddbe4cb7ef15b049febee208cc8">basic_json(const number_float_t)</a> &ndash; create a number (floating-point) value </dd>
+<dd>
+<a class="el" href="classnlohmann_1_1basic__json_a190d719446e7016879c4b961c9cf9072.html#a190d719446e7016879c4b961c9cf9072">basic_json(const number_integer_t)</a> &ndash; create a number (integer) value</dd></dl>
 <dl class="section since"><dt>Since</dt><dd>version 1.0 </dd></dl>
 
-<p>Definition at line <a class="el" href="json_8hpp_source.html#l00843">843</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p>Definition at line <a class="el" href="json_8hpp_source.html#l00866">866</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 
 </div>
 </div>
@@ -338,7 +342,7 @@ false
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Dec 16 2015 12:10:53 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Dec 17 2015 15:49:46 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>
