@@ -6301,6 +6301,11 @@ class basic_json
                     return "<parse error>";
                 case token_type::end_of_input:
                     return "<end of input>";
+                default:
+                {
+                    // catch non-enum values
+                    return "unknown token"; // LCOV_EXCL_LINE
+                }
             }
         }
 
