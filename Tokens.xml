@@ -263,8 +263,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a793e5c1da2fc7de7a04b19eadbb3f2cb.html</Path>
-    <Anchor>a793e5c1da2fc7de7a04b19eadbb3f2cb</Anchor>
+    <Path>classnlohmann_1_1basic__json_a0afa4512f03406db0d0432657e9c7361.html</Path>
+    <Anchor>a0afa4512f03406db0d0432657e9c7361</Anchor>
     <Abstract>create an empty value with a given type </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -299,8 +299,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a0a9c6a1fccc4db365860463e8203eb38.html</Path>
-    <Anchor>a0a9c6a1fccc4db365860463e8203eb38</Anchor>
+    <Path>classnlohmann_1_1basic__json_a3d4e4bab95b24ccab42ed37e0ede2d98.html</Path>
+    <Anchor>a3d4e4bab95b24ccab42ed37e0ede2d98</Anchor>
     <Abstract>create an object (explicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -311,8 +311,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a951a76ba057b3be948e7ba5c2c01cd5a.html</Path>
-    <Anchor>a951a76ba057b3be948e7ba5c2c01cd5a</Anchor>
+    <Path>classnlohmann_1_1basic__json_aa6c32f669a2e523666072003d0ea46f4.html</Path>
+    <Anchor>aa6c32f669a2e523666072003d0ea46f4</Anchor>
     <Abstract>create an object (implicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -323,8 +323,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_af93e556bf708cb81b22ce223af1aa727.html</Path>
-    <Anchor>af93e556bf708cb81b22ce223af1aa727</Anchor>
+    <Path>classnlohmann_1_1basic__json_a457fec897d7b6283c60ca236ebb1f5e8.html</Path>
+    <Anchor>a457fec897d7b6283c60ca236ebb1f5e8</Anchor>
     <Abstract>create an array (explicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -335,8 +335,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ad7067a1a8ad2d88125915ada6d4d79b7.html</Path>
-    <Anchor>ad7067a1a8ad2d88125915ada6d4d79b7</Anchor>
+    <Path>classnlohmann_1_1basic__json_ab7d60fb6cb8e8f5740e588f9dc953819.html</Path>
+    <Anchor>ab7d60fb6cb8e8f5740e588f9dc953819</Anchor>
     <Abstract>create an array (implicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -347,8 +347,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a15e468968cd4d0e4fd566044d66ada24.html</Path>
-    <Anchor>a15e468968cd4d0e4fd566044d66ada24</Anchor>
+    <Path>classnlohmann_1_1basic__json_a48c8d153bc2fd1af655063a4b984feac.html</Path>
+    <Anchor>a48c8d153bc2fd1af655063a4b984feac</Anchor>
     <Abstract>create a string (explicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -359,8 +359,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a2448b2777e8a3e48614e1b3c41b96f7c.html</Path>
-    <Anchor>a2448b2777e8a3e48614e1b3c41b96f7c</Anchor>
+    <Path>classnlohmann_1_1basic__json_af127fb69c580c17821da5f5be57e3585.html</Path>
+    <Anchor>af127fb69c580c17821da5f5be57e3585</Anchor>
     <Abstract>create a string (explicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -371,8 +371,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ae42d32c34c8014b1bf677fdb7baa5401.html</Path>
-    <Anchor>ae42d32c34c8014b1bf677fdb7baa5401</Anchor>
+    <Path>classnlohmann_1_1basic__json_a1dc0c521042807e216d11110d2f002ff.html</Path>
+    <Anchor>a1dc0c521042807e216d11110d2f002ff</Anchor>
     <Abstract>create a string (implicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -383,8 +383,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ae2980ed978451f844e6e9a0890b637a6.html</Path>
-    <Anchor>ae2980ed978451f844e6e9a0890b637a6</Anchor>
+    <Path>classnlohmann_1_1basic__json_adeaef2ab021997a11a826c378c2365e1.html</Path>
+    <Anchor>adeaef2ab021997a11a826c378c2365e1</Anchor>
     <Abstract>create a boolean (explicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -395,8 +395,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a190d719446e7016879c4b961c9cf9072.html</Path>
-    <Anchor>a190d719446e7016879c4b961c9cf9072</Anchor>
+    <Path>classnlohmann_1_1basic__json_acd08f9179c8c1e9f2cd7575a724ce27e.html</Path>
+    <Anchor>acd08f9179c8c1e9f2cd7575a724ce27e</Anchor>
     <Abstract>create an integer number (explicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -407,8 +407,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_acbf7f957ecb6ce19cdc5b40b5d6b6333.html</Path>
-    <Anchor>acbf7f957ecb6ce19cdc5b40b5d6b6333</Anchor>
+    <Path>classnlohmann_1_1basic__json_ac160789f17d206a5404981ca0957e303.html</Path>
+    <Anchor>ac160789f17d206a5404981ca0957e303</Anchor>
     <Abstract>create an integer number from an enum type (explicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -419,8 +419,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a0bb6ea56c89560cce8003485bffe49d4.html</Path>
-    <Anchor>a0bb6ea56c89560cce8003485bffe49d4</Anchor>
+    <Path>classnlohmann_1_1basic__json_ab74b2398f29acc6ffbf48f1b8974a848.html</Path>
+    <Anchor>ab74b2398f29acc6ffbf48f1b8974a848</Anchor>
     <Abstract>create an integer number (implicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -431,8 +431,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a80a89ddbe4cb7ef15b049febee208cc8.html</Path>
-    <Anchor>a80a89ddbe4cb7ef15b049febee208cc8</Anchor>
+    <Path>classnlohmann_1_1basic__json_a74472977b798c7b7989e6e7cb960ecff.html</Path>
+    <Anchor>a74472977b798c7b7989e6e7cb960ecff</Anchor>
     <Abstract>create a floating-point number (explicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -443,8 +443,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a034bccea9f5400650443e9f12e67b079.html</Path>
-    <Anchor>a034bccea9f5400650443e9f12e67b079</Anchor>
+    <Path>classnlohmann_1_1basic__json_ad6734c2b91b1b77aa2b43b65c3619c05.html</Path>
+    <Anchor>ad6734c2b91b1b77aa2b43b65c3619c05</Anchor>
     <Abstract>create an floating-point number (implicit) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -467,8 +467,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_add77b50f69debb20e98d5a8c6c11c90c.html</Path>
-    <Anchor>add77b50f69debb20e98d5a8c6c11c90c</Anchor>
+    <Path>classnlohmann_1_1basic__json_a9a73d1b71c9e913aa2888d8b40c72ee9.html</Path>
+    <Anchor>a9a73d1b71c9e913aa2888d8b40c72ee9</Anchor>
     <Abstract>construct an array with count copies of given value </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1223,8 +1223,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a429c2606865483ff357cccc1b1c46569.html</Path>
-    <Anchor>a429c2606865483ff357cccc1b1c46569</Anchor>
+    <Path>classnlohmann_1_1basic__json_a66f936cfbd252f85bd3dc2598e37a64b.html</Path>
+    <Anchor>a66f936cfbd252f85bd3dc2598e37a64b</Anchor>
     <Abstract>add an object to an array </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1235,8 +1235,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a6a67c72ba65322bfcb28d170617dcdff.html</Path>
-    <Anchor>a6a67c72ba65322bfcb28d170617dcdff</Anchor>
+    <Path>classnlohmann_1_1basic__json_a3173944e7b1809a333def4078a0b92a3.html</Path>
+    <Anchor>a3173944e7b1809a333def4078a0b92a3</Anchor>
     <Abstract>add an object to an array </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1247,8 +1247,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a749e58042d8069f4f048ee4d23c43f63.html</Path>
-    <Anchor>a749e58042d8069f4f048ee4d23c43f63</Anchor>
+    <Path>classnlohmann_1_1basic__json_a5114ed5eb394a2805da0bd1acba95ae2.html</Path>
+    <Anchor>a5114ed5eb394a2805da0bd1acba95ae2</Anchor>
     <Abstract>add an object to an array </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1259,8 +1259,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a0a7560122349628cf4942a316aa6d21f.html</Path>
-    <Anchor>a0a7560122349628cf4942a316aa6d21f</Anchor>
+    <Path>classnlohmann_1_1basic__json_a960962c683909619d1d2fbbe856c022e.html</Path>
+    <Anchor>a960962c683909619d1d2fbbe856c022e</Anchor>
     <Abstract>add an object to an array </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1271,8 +1271,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_aeda4ec7473c17fae51e6d1eba0faf720.html</Path>
-    <Anchor>aeda4ec7473c17fae51e6d1eba0faf720</Anchor>
+    <Path>classnlohmann_1_1basic__json_a2f07bcf7e75c34396476dd1790f26ce8.html</Path>
+    <Anchor>a2f07bcf7e75c34396476dd1790f26ce8</Anchor>
     <Abstract>add an object to an object </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1283,8 +1283,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a0e372f4c5a90c6be7242a2d7a3709b48.html</Path>
-    <Anchor>a0e372f4c5a90c6be7242a2d7a3709b48</Anchor>
+    <Path>classnlohmann_1_1basic__json_a0703ae5cbd2daac5e6c0ae01d3a1b114.html</Path>
+    <Anchor>a0703ae5cbd2daac5e6c0ae01d3a1b114</Anchor>
     <Abstract>add an object to an object </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1295,8 +1295,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ae5ae3b1c6c67f52e9495ac092f6fb43e.html</Path>
-    <Anchor>ae5ae3b1c6c67f52e9495ac092f6fb43e</Anchor>
+    <Path>classnlohmann_1_1basic__json_af7d0adc984d04fc70c3d29fcd63e096a.html</Path>
+    <Anchor>af7d0adc984d04fc70c3d29fcd63e096a</Anchor>
     <Abstract>inserts element </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1307,8 +1307,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ab67345ba5c81c903eddd4eb2a24ac658.html</Path>
-    <Anchor>ab67345ba5c81c903eddd4eb2a24ac658</Anchor>
+    <Path>classnlohmann_1_1basic__json_a07c9c38a1f01675759e05d5d34627343.html</Path>
+    <Anchor>a07c9c38a1f01675759e05d5d34627343</Anchor>
     <Abstract>inserts element </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1319,8 +1319,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a55edaf09e1f7785463475f809d987cee.html</Path>
-    <Anchor>a55edaf09e1f7785463475f809d987cee</Anchor>
+    <Path>classnlohmann_1_1basic__json_a6b7428e8c1169497f47b81667001cbfb.html</Path>
+    <Anchor>a6b7428e8c1169497f47b81667001cbfb</Anchor>
     <Abstract>inserts elements </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
