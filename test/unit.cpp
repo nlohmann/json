@@ -10323,6 +10323,19 @@ TEST_CASE("regression tests")
         CHECK(j["string"] == "\u0007\u0007");
     }
 
+    SECTION("issue #144 - implicit assignment to std::string fails")
+    {
+        json o = {{"name", "value"}};
+
+        std::string s1 = o["name"];
+        CHECK(s1 == "value");
+
+        std::string s2;
+        s2 = o["name"];
+
+        CHECK(s2 == "value");
+    }
+
     SECTION("character following a surrogate pair is skipped")
     {
         CHECK(json::parse("\"\\ud80c\\udc60abc\"").get<json::string_t>() == u8"\U00013060abc");

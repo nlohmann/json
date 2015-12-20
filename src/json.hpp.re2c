@@ -2550,7 +2550,9 @@ class basic_json
 
     @tparam ValueType non-pointer type compatible to the JSON value, for
     instance `int` for JSON integer numbers, `bool` for JSON booleans, or
-    `std::vector` types for JSON arrays
+    `std::vector` types for JSON arrays. The character type of @ref string_t
+    as well as an initializer list of this type is excluded to avoid
+    ambiguities as these types implicitly convert to `std::string`.
 
     @return copy of the JSON value, converted to type @a ValueType
 
@@ -2571,6 +2573,8 @@ class basic_json
     template<typename ValueType, typename
              std::enable_if<
                  not std::is_pointer<ValueType>::value
+                 and not std::is_same<ValueType, typename string_t::value_type>::value
+                 and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
                  , int>::type = 0>
     operator ValueType() const
     {
