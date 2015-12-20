@@ -229,7 +229,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="memtemplate">
 template&lt;template&lt; typename U, typename V, typename...Args &gt; class ObjectType = std::map, template&lt; typename U, typename...Args &gt; class ArrayType = std::vector, class StringType  = std::string, class BooleanType  = bool, class NumberIntegerType  = int64_t, class NumberFloatType  = double, template&lt; typename U &gt; class AllocatorType = std::allocator&gt; </div>
 <div class="memtemplate">
-template&lt;typename ValueType , typename std::enable_if&lt;                                                              not std::is_pointer&lt; ValueType &gt;::value                                                           , int &gt;::type  = 0&gt; </div>
+template&lt;typename ValueType , typename std::enable_if&lt;                                                              not std::is_pointer&lt; ValueType &gt;::value                                                           and not std::is_same&lt; ValueType, typename string_t::value_type &gt;::value                                                           and not std::is_same&lt; ValueType, std::initializer_list&lt; typename string_t::value_type &gt;&gt;::value                                                           , int &gt;::type  = 0&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -250,7 +250,7 @@ template&lt;typename ValueType , typename std::enable_if&lt;                    
 <p>Implict type conversion between the JSON value and a compatible value. The call is realized by calling <a class="el" href="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html#a5f0aad50ed7e8aec3128fe018c18b3fe">get() const</a>.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">ValueType</td><td>non-pointer type compatible to the JSON value, for instance <code>int</code> for JSON integer numbers, <code>bool</code> for JSON booleans, or <code>std::vector</code> types for JSON arrays</td></tr>
+    <tr><td class="paramname">ValueType</td><td>non-pointer type compatible to the JSON value, for instance <code>int</code> for JSON integer numbers, <code>bool</code> for JSON booleans, or <code>std::vector</code> types for JSON arrays. The character type of <a class="el" href="classnlohmann_1_1basic__json_ace8338e57fdb11e1955c2a0c2d782069.html#ace8338e57fdb11e1955c2a0c2d782069">string_t</a> as well as an initializer list of this type is excluded to avoid ambiguities as these types implicitly convert to <code>std::string</code>.</td></tr>
   </table>
   </dd>
 </dl>
@@ -327,7 +327,7 @@ array: [1,2,3,4,5]
 </pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/operator__ValueType.cpp -o operator__ValueType </pre></dd></dl>
 <dl class="section since"><dt>Since</dt><dd>version 1.0 </dd></dl>
 
-<p>Definition at line <a class="el" href="json_8hpp_source.html#l02575">2575</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p>Definition at line <a class="el" href="json_8hpp_source.html#l02579">2579</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 
 </div>
 </div>
@@ -337,7 +337,7 @@ array: [1,2,3,4,5]
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Dec 17 2015 16:22:37 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Dec 20 2015 15:47:40 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>
