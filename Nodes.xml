@@ -985,8 +985,18 @@
                </Node>
                <Node>
                 <Name>operator[]</Name>
+                <Path>classnlohmann_1_1basic__json_a8e34088252a3ee6b2377f3a1f26dd1ba.html</Path>
+                <Anchor>a8e34088252a3ee6b2377f3a1f26dd1ba</Anchor>
+               </Node>
+               <Node>
+                <Name>operator[]</Name>
                 <Path>classnlohmann_1_1basic__json_a266c4dd24d11a86e4831523af5d9df4d.html</Path>
                 <Anchor>a266c4dd24d11a86e4831523af5d9df4d</Anchor>
+               </Node>
+               <Node>
+                <Name>operator[]</Name>
+                <Path>classnlohmann_1_1basic__json_a9daafb4c15ed5a008cb825bbd8c29d87.html</Path>
+                <Anchor>a9daafb4c15ed5a008cb825bbd8c29d87</Anchor>
                </Node>
                <Node>
                 <Name>parse</Name>
