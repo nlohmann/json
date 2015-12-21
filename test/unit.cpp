@@ -3211,6 +3211,27 @@ TEST_CASE("element access")
 
                 CHECK(j["array"] == json({1, 2, 3}));
                 CHECK(j[json::object_t::key_type("array")] == j["array"]);
+
+                CHECK(j_const["integer"] == json(1));
+                CHECK(j_const[json::object_t::key_type("integer")] == j["integer"]);
+
+                CHECK(j_const["boolean"] == json(true));
+                CHECK(j_const[json::object_t::key_type("boolean")] == j["boolean"]);
+
+                CHECK(j_const["null"] == json(nullptr));
+                CHECK(j_const[json::object_t::key_type("null")] == j["null"]);
+
+                CHECK(j_const["string"] == json("hello world"));
+                CHECK(j_const[json::object_t::key_type("string")] == j["string"]);
+
+                CHECK(j_const["floating"] == json(42.23));
+                CHECK(j_const[json::object_t::key_type("floating")] == j["floating"]);
+
+                CHECK(j_const["object"] == json(json::object()));
+                CHECK(j_const[json::object_t::key_type("object")] == j["object"]);
+
+                CHECK(j_const["array"] == json({1, 2, 3}));
+                CHECK(j_const[json::object_t::key_type("array")] == j["array"]);
             }
 
             SECTION("access on non-object type")
@@ -3222,6 +3243,8 @@ TEST_CASE("element access")
                     const json j_const_nonobject(j_nonobject);
                     CHECK_NOTHROW(j_nonobject["foo"]);
                     CHECK_NOTHROW(j_nonobject2[json::object_t::key_type("foo")]);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
 
                 SECTION("boolean")
@@ -3230,6 +3253,8 @@ TEST_CASE("element access")
                     const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
 
                 SECTION("string")
@@ -3238,6 +3263,8 @@ TEST_CASE("element access")
                     const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
 
                 SECTION("array")
@@ -3246,6 +3273,8 @@ TEST_CASE("element access")
                     const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
 
                 SECTION("number (integer)")
@@ -3254,6 +3283,8 @@ TEST_CASE("element access")
                     const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
 
                 SECTION("number (floating-point)")
@@ -3262,6 +3293,8 @@ TEST_CASE("element access")
                     const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
                 }
             }
         }
