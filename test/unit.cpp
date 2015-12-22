@@ -9555,6 +9555,10 @@ TEST_CASE("iterator_wrapper")
                     {
                         CHECK(i.key() == "A");
                         CHECK(i.value() == json(1));
+
+                        // change the value
+                        i.value() = json(11);
+                        CHECK(i.value() == json(11));
                         break;
                     }
 
@@ -9562,6 +9566,10 @@ TEST_CASE("iterator_wrapper")
                     {
                         CHECK(i.key() == "B");
                         CHECK(i.value() == json(2));
+
+                        // change the value
+                        i.value() = json(22);
+                        CHECK(i.value() == json(22));
                         break;
                     }
 
@@ -9573,6 +9581,9 @@ TEST_CASE("iterator_wrapper")
             }
 
             CHECK(counter == 3);
+
+            // check if values where changed
+            CHECK(j == json({{"A", 11}, {"B", 22}}));
         }
 
         SECTION("const value")
@@ -9690,6 +9701,10 @@ TEST_CASE("iterator_wrapper")
                     {
                         CHECK(i.key() == "0");
                         CHECK(i.value() == "A");
+
+                        // change the value
+                        i.value() = "AA";
+                        CHECK(i.value() == "AA");
                         break;
                     }
 
@@ -9697,6 +9712,10 @@ TEST_CASE("iterator_wrapper")
                     {
                         CHECK(i.key() == "1");
                         CHECK(i.value() == "B");
+
+                        // change the value
+                        i.value() = "BB";
+                        CHECK(i.value() == "BB");
                         break;
                     }
 
@@ -9708,6 +9727,9 @@ TEST_CASE("iterator_wrapper")
             }
 
             CHECK(counter == 3);
+
+            // check if values where changed
+            CHECK(j == json({"AA", "BB"}));
         }
 
         SECTION("const value")

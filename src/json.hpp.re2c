@@ -6163,7 +6163,7 @@ class basic_json
     {
       private:
         /// the container to iterate
-        basic_json& container;
+        typename basic_json::reference container;
         /// the type of the iterator to use while iteration
         using json_iterator = decltype(std::begin(container));
 
@@ -6236,7 +6236,7 @@ class basic_json
 
       public:
         /// construct iterator wrapper from a container
-        iterator_wrapper(basic_json& cont)
+        iterator_wrapper(typename basic_json::reference cont)
             : container(cont)
         {}
 
