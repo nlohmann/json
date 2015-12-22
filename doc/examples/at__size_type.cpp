@@ -21,8 +21,8 @@ int main()
     {
         array.at(5) = "sixth";
     }
-    catch (std::out_of_range)
+    catch (std::out_of_range& e)
     {
-        std::cout << "out of range" << '\n';
+        std::cout << "out of range: " << e.what() << '\n';
     }
 }

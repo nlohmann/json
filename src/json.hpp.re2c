@@ -2602,9 +2602,10 @@ class basic_json
 
     @return reference to the element at index @a idx
 
-    @throw std::domain_error if JSON is not an array
+    @throw std::domain_error if the JSON value is not an array; example:
+    `"cannot use at() with string"`
     @throw std::out_of_range if the index @a idx is out of range of the array;
-    that is, `idx >= size()`
+    that is, `idx >= size()`; example: `"array index 7 is out of range"`
 
     @complexity Constant.
 
@@ -2618,7 +2619,15 @@ class basic_json
         // at only works for arrays
         if (is_array())
         {
-            return m_value.array->at(idx);
+            try
+            {
+                return m_value.array->at(idx);
+            }
+            catch (std::out_of_range& e)
+            {
+                // create better exception explanation
+                throw std::out_of_range("array index " + std::to_string(idx) + " is out of range");
+            }
         }
         else
         {
@@ -2636,9 +2645,10 @@ class basic_json
 
     @return const reference to the element at index @a idx
 
-    @throw std::domain_error if JSON is not an array
+    @throw std::domain_error if the JSON value is not an array; example:
+    `"cannot use at() with string"`
     @throw std::out_of_range if the index @a idx is out of range of the array;
-    that is, `idx >= size()`
+    that is, `idx >= size()`; example: `"array index 7 is out of range"`
 
     @complexity Constant.
 
@@ -2652,7 +2662,15 @@ class basic_json
         // at only works for arrays
         if (is_array())
         {
-            return m_value.array->at(idx);
+            try
+            {
+                return m_value.array->at(idx);
+            }
+            catch (std::out_of_range& e)
+            {
+                // create better exception explanation
+                throw std::out_of_range("array index " + std::to_string(idx) + " is out of range");
+            }
         }
         else
         {
@@ -2670,9 +2688,10 @@ class basic_json
 
     @return reference to the element at key @a key
 
-    @throw std::domain_error if JSON is not an object
+    @throw std::domain_error if the JSON value is not an object; example:
+    `"cannot use at() with boolean"`
     @throw std::out_of_range if the key @a key is is not stored in the object;
-    that is, `find(key) == end()`
+    that is, `find(key) == end()`; example: `"key "the fast" not found"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -2690,7 +2709,15 @@ class basic_json
         // at only works for objects
         if (is_object())
         {
-            return m_value.object->at(key);
+            try
+            {
+                return m_value.object->at(key);
+            }
+            catch (std::out_of_range& e)
+            {
+                // create better exception explanation
+                throw std::out_of_range("key '" + key + "' not found");
+            }
         }
         else
         {
@@ -2708,9 +2735,10 @@ class basic_json
 
     @return const reference to the element at key @a key
 
-    @throw std::domain_error if JSON is not an object
+    @throw std::domain_error if the JSON value is not an object; example:
+    `"cannot use at() with boolean"`
     @throw std::out_of_range if the key @a key is is not stored in the object;
-    that is, `find(key) == end()`
+    that is, `find(key) == end()`; example: `"key "the fast" not found"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -2728,7 +2756,15 @@ class basic_json
         // at only works for objects
         if (is_object())
         {
-            return m_value.object->at(key);
+            try
+            {
+                return m_value.object->at(key);
+            }
+            catch (std::out_of_range& e)
+            {
+                // create better exception explanation
+                throw std::out_of_range("key '" + key + "' not found");
+            }
         }
         else
         {

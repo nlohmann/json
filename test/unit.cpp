@@ -2662,6 +2662,16 @@ TEST_CASE("element access")
             {
                 CHECK_THROWS_AS(j.at(7), std::out_of_range);
                 CHECK_THROWS_AS(j_const.at(7), std::out_of_range);
+
+                // exception name
+                try
+                {
+                    j.at(7);
+                }
+                catch (std::out_of_range& e)
+                {
+                    CHECK(std::string(e.what()) == "array index 7 is out of range");
+                }
             }
 
             SECTION("access on non-array type")
@@ -2672,6 +2682,16 @@ TEST_CASE("element access")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonarray.at(0);
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with null");
+                    }
                 }
 
                 SECTION("boolean")
@@ -2680,6 +2700,16 @@ TEST_CASE("element access")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonarray.at(0);
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with boolean");
+                    }
                 }
 
                 SECTION("string")
@@ -2688,6 +2718,16 @@ TEST_CASE("element access")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonarray.at(0);
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with string");
+                    }
                 }
 
                 SECTION("object")
@@ -2696,6 +2736,16 @@ TEST_CASE("element access")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonarray.at(0);
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with object");
+                    }
                 }
 
                 SECTION("number (integer)")
@@ -2704,6 +2754,16 @@ TEST_CASE("element access")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonarray.at(0);
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with number");
+                    }
                 }
 
                 SECTION("number (floating-point)")
@@ -2712,6 +2772,16 @@ TEST_CASE("element access")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonarray.at(0);
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with number");
+                    }
                 }
             }
         }
@@ -3028,6 +3098,16 @@ TEST_CASE("element access")
             {
                 CHECK_THROWS_AS(j.at("foo"), std::out_of_range);
                 CHECK_THROWS_AS(j_const.at("foo"), std::out_of_range);
+
+                // exception name
+                try
+                {
+                    j.at("foo");
+                }
+                catch (std::out_of_range& e)
+                {
+                    CHECK(std::string(e.what()) == "key 'foo' not found");
+                }
             }
 
             SECTION("access on non-object type")
@@ -3038,6 +3118,16 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonobject.at("foo");
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with null");
+                    }
                 }
 
                 SECTION("boolean")
@@ -3046,6 +3136,16 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonobject.at("foo");
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with boolean");
+                    }
                 }
 
                 SECTION("string")
@@ -3054,6 +3154,16 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonobject.at("foo");
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with string");
+                    }
                 }
 
                 SECTION("array")
@@ -3062,6 +3172,16 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonobject.at("foo");
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with array");
+                    }
                 }
 
                 SECTION("number (integer)")
@@ -3070,6 +3190,16 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonobject.at("foo");
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with number");
+                    }
                 }
 
                 SECTION("number (floating-point)")
@@ -3078,6 +3208,16 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j_nonobject.at("foo");
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(std::string(e.what()) == "cannot use at() with number");
+                    }
                 }
             }
         }

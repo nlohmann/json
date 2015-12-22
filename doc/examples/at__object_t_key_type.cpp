@@ -26,8 +26,8 @@ int main()
     {
         object.at("the fast") = "il rapido";
     }
-    catch (std::out_of_range)
+    catch (std::out_of_range& e)
     {
-        std::cout << "out of range" << '\n';
+        std::cout << "out of range: " << e.what() << '\n';
     }
 }
