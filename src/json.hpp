@@ -3767,6 +3767,32 @@ class basic_json
         return const_reverse_iterator(cbegin());
     }
 
+  private:
+    // forward declaration
+    template<typename IteratorType> class iteration_proxy;
+
+  public:
+    /*!
+    @brief wrapper to access iterator member functions in range-based for
+
+    This functuion allows to access @ref iterator::key() and @ref
+    iterator::value() during range-based for loops. In these loops, a reference
+    to the JSON values is returned, so there is no access to the underlying
+    iterator.
+    */
+    static iteration_proxy<iterator> iterator_wrapper(reference cont)
+    {
+        return iteration_proxy<iterator>(cont);
+    }
+
+    /*!
+    @copydoc iterator_wrapper(reference)
+    */
+    static iteration_proxy<const_iterator> iterator_wrapper(const_reference cont)
+    {
+        return iteration_proxy<const_iterator>(cont);
+    }
+
     /// @}
 
 
@@ -6247,28 +6273,6 @@ class basic_json
             return iteration_proxy_internal(container.end());
         }
     };
-
-  public:
-    /*!
-    @brief wrapper to access iterator member functions in range-based for
-
-    This functuion allows to access @ref iterator::key() and @ref
-    iterator::value() during range-based for loops. In these loops, a reference
-    to the JSON values is returned, so there is no access to the underlying
-    iterator.
-    */
-    static iteration_proxy<iterator> iterator_wrapper(reference cont)
-    {
-        return iteration_proxy<iterator>(cont);
-    }
-
-    /*!
-    @copydoc iterator_wrapper(reference)
-    */
-    static iteration_proxy<const_iterator> iterator_wrapper(const_reference cont)
-    {
-        return iteration_proxy<const_iterator>(cont);
-    }
 
 
   private:
