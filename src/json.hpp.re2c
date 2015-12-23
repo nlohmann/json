@@ -6152,43 +6152,35 @@ class basic_json
         }
     };
 
-    /*!
-    @brief wrapper to access iterator member functions in range-based for
 
-    This class allows to access @ref iterator::key() and @ref iterator::value()
-    during range-based for loops. In these loops, a reference to the JSON
-    values is returned, so there is no access to the underlying iterator.
-    */
-    class iterator_wrapper
+  private:
+    /// proxy class for the iterator_wrapper functions
+    template<typename IteratorType>
+    class iteration_proxy
     {
       private:
-        /// the container to iterate
-        typename basic_json::reference container;
-        /// the type of the iterator to use while iteration
-        using json_iterator = decltype(std::begin(container));
-
-        /// internal iterator wrapper
-        class iterator_wrapper_internal
+        /// helper class for iteration
+        class iteration_proxy_internal
         {
           private:
             /// the iterator
-            json_iterator anchor;
+            IteratorType anchor;
             /// an index for arrays
             size_t array_index = 0;
 
           public:
-            /// construct wrapper given an iterator
-            iterator_wrapper_internal(json_iterator i) : anchor(i)
+            iteration_proxy_internal(IteratorType it)
+                : anchor(it)
             {}
 
             /// dereference operator (needed for range-based for)
-            iterator_wrapper_internal& operator*()
+            iteration_proxy_internal& operator*()
             {
                 return *this;
             }
 
             /// increment operator (needed for range-based for)
-            iterator_wrapper_internal& operator++()
+            iteration_proxy_internal& operator++()
             {
                 ++anchor;
                 ++array_index;
@@ -6197,7 +6189,7 @@ class basic_json
             }
 
             /// inequality operator (needed for range-based for)
-            bool operator!= (const iterator_wrapper_internal& o)
+            bool operator!= (const iteration_proxy_internal& o)
             {
                 return anchor != o.anchor;
             }
@@ -6228,30 +6220,56 @@ class basic_json
             }
 
             /// return value of the iterator
-            typename json_iterator::reference value() const
+            typename IteratorType::reference value() const
             {
                 return anchor.value();
             }
         };
 
+        /// the container to iterate
+        typename IteratorType::reference container;
+
       public:
-        /// construct iterator wrapper from a container
-        iterator_wrapper(typename basic_json::reference cont)
+        /// construct iteration proxy from a container
+        iteration_proxy(typename IteratorType::reference cont)
             : container(cont)
         {}
 
         /// return iterator begin (needed for range-based for)
-        iterator_wrapper_internal begin()
+        iteration_proxy_internal begin()
         {
-            return iterator_wrapper_internal(container.begin());
+            return iteration_proxy_internal(container.begin());
         }
 
         /// return iterator end (needed for range-based for)
-        iterator_wrapper_internal end()
+        iteration_proxy_internal end()
         {
-            return iterator_wrapper_internal(container.end());
+            return iteration_proxy_internal(container.end());
         }
     };
+
+  public:
+    /*!
+    @brief wrapper to access iterator member functions in range-based for
+
+    This functuion allows to access @ref iterator::key() and @ref
+    iterator::value() during range-based for loops. In these loops, a reference
+    to the JSON values is returned, so there is no access to the underlying
+    iterator.
+    */
+    static iteration_proxy<iterator> iterator_wrapper(reference cont)
+    {
+        return iteration_proxy<iterator>(cont);
+    }
+
+    /*!
+    @copydoc iterator_wrapper(reference)
+    */
+    static iteration_proxy<const_iterator> iterator_wrapper(const_reference cont)
+    {
+        return iteration_proxy<const_iterator>(cont);
+    }
+
 
   private:
     //////////////////////
