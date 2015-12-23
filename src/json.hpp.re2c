@@ -3779,6 +3779,9 @@ class basic_json
     iterator::value() during range-based for loops. In these loops, a reference
     to the JSON values is returned, so there is no access to the underlying
     iterator.
+
+    @note The name of this function is not yet final and may change in the
+    future.
     */
     static iteration_proxy<iterator> iterator_wrapper(reference cont)
     {
@@ -5432,6 +5435,100 @@ class basic_json
         {}
     };
 
+    /// proxy class for the iterator_wrapper functions
+    template<typename IteratorType>
+    class iteration_proxy
+    {
+      private:
+        /// helper class for iteration
+        class iteration_proxy_internal
+        {
+          private:
+            /// the iterator
+            IteratorType anchor;
+            /// an index for arrays (used to create key names)
+            size_t array_index = 0;
+
+          public:
+            iteration_proxy_internal(IteratorType it)
+                : anchor(it)
+            {}
+
+            /// dereference operator (needed for range-based for)
+            iteration_proxy_internal& operator*()
+            {
+                return *this;
+            }
+
+            /// increment operator (needed for range-based for)
+            iteration_proxy_internal& operator++()
+            {
+                ++anchor;
+                ++array_index;
+
+                return *this;
+            }
+
+            /// inequality operator (needed for range-based for)
+            bool operator!= (const iteration_proxy_internal& o)
+            {
+                return anchor != o.anchor;
+            }
+
+            /// return key of the iterator
+            typename basic_json::string_t key() const
+            {
+                switch (anchor.m_object->type())
+                {
+                    // use integer array index as key
+                    case value_t::array:
+                    {
+                        return std::to_string(array_index);
+                    }
+
+                    // use key from the object
+                    case value_t::object:
+                    {
+                        return anchor.key();
+                    }
+
+                    // use an empty key for all primitive types
+                    default:
+                    {
+                        return "";
+                    }
+                }
+            }
+
+            /// return value of the iterator
+            typename IteratorType::reference value() const
+            {
+                return anchor.value();
+            }
+        };
+
+        /// the container to iterate
+        typename IteratorType::reference container;
+
+      public:
+        /// construct iteration proxy from a container
+        iteration_proxy(typename IteratorType::reference cont)
+            : container(cont)
+        {}
+
+        /// return iterator begin (needed for range-based for)
+        iteration_proxy_internal begin()
+        {
+            return iteration_proxy_internal(container.begin());
+        }
+
+        /// return iterator end (needed for range-based for)
+        iteration_proxy_internal end()
+        {
+            return iteration_proxy_internal(container.end());
+        }
+    };
+
   public:
     /*!
     @brief a const random access iterator for the @ref basic_json class
@@ -5959,7 +6056,8 @@ class basic_json
         iterator() = default;
 
         /// constructor for a given JSON instance
-        iterator(pointer object) noexcept : base_iterator(object)
+        iterator(pointer object) noexcept
+            : base_iterator(object)
         {}
 
         /// copy constructor
@@ -6097,10 +6195,13 @@ class basic_json
 
         /// create reverse iterator from iterator
         json_reverse_iterator(const typename base_iterator::iterator_type& it)
-            : base_iterator(it) {}
+            : base_iterator(it)
+        {}
 
         /// create reverse iterator from base class
-        json_reverse_iterator(const base_iterator& it) : base_iterator(it) {}
+        json_reverse_iterator(const base_iterator& it)
+            : base_iterator(it)
+        {}
 
         /// post-increment (it++)
         json_reverse_iterator operator++(int)
@@ -6175,102 +6276,6 @@ class basic_json
         {
             auto it = --this->base();
             return it.operator * ();
-        }
-    };
-
-
-  private:
-    /// proxy class for the iterator_wrapper functions
-    template<typename IteratorType>
-    class iteration_proxy
-    {
-      private:
-        /// helper class for iteration
-        class iteration_proxy_internal
-        {
-          private:
-            /// the iterator
-            IteratorType anchor;
-            /// an index for arrays
-            size_t array_index = 0;
-
-          public:
-            iteration_proxy_internal(IteratorType it)
-                : anchor(it)
-            {}
-
-            /// dereference operator (needed for range-based for)
-            iteration_proxy_internal& operator*()
-            {
-                return *this;
-            }
-
-            /// increment operator (needed for range-based for)
-            iteration_proxy_internal& operator++()
-            {
-                ++anchor;
-                ++array_index;
-
-                return *this;
-            }
-
-            /// inequality operator (needed for range-based for)
-            bool operator!= (const iteration_proxy_internal& o)
-            {
-                return anchor != o.anchor;
-            }
-
-            /// return key of the iterator
-            typename basic_json::string_t key() const
-            {
-                switch (anchor.m_object->type())
-                {
-                    // use integer array index as key
-                    case value_t::array:
-                    {
-                        return std::to_string(array_index);
-                    }
-
-                    // use key from the object
-                    case value_t::object:
-                    {
-                        return anchor.key();
-                    }
-
-                    // use an empty key for all primitive types
-                    default:
-                    {
-                        return "";
-                    }
-                }
-            }
-
-            /// return value of the iterator
-            typename IteratorType::reference value() const
-            {
-                return anchor.value();
-            }
-        };
-
-        /// the container to iterate
-        typename IteratorType::reference container;
-
-      public:
-        /// construct iteration proxy from a container
-        iteration_proxy(typename IteratorType::reference cont)
-            : container(cont)
-        {}
-
-        /// return iterator begin (needed for range-based for)
-        iteration_proxy_internal begin()
-        {
-            return iteration_proxy_internal(container.begin());
-        }
-
-        /// return iterator end (needed for range-based for)
-        iteration_proxy_internal end()
-        {
-            return iteration_proxy_internal(container.end());
         }
     };
 
