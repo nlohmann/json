@@ -58,30 +58,6 @@
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>iterator_wrapper</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>clm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a317b01b0fba3ac458561f1634759ea3b.html</Path>
-    <Anchor>a317b01b0fba3ac458561f1634759ea3b</Anchor>
-    <Abstract>wrapper to access iterator member functions in range-based for </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>iterator_wrapper</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>clm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a8e4e11999b4e7faa8f31f21164ebd65a.html</Path>
-    <Anchor>a8e4e11999b4e7faa8f31f21164ebd65a</Anchor>
-    <Abstract>wrapper to access iterator member functions in range-based for </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
       <Name>value_type</Name>
       <APILanguage>cpp</APILanguage>
       <Type>tdef</Type>
@@ -1070,6 +1046,30 @@
     <Path>classnlohmann_1_1basic__json_a01a2643289b69cd71d9b3f3fc209b748.html</Path>
     <Anchor>a01a2643289b69cd71d9b3f3fc209b748</Anchor>
     <Abstract>returns the number of occurrences of a key in a JSON object </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>iterator_wrapper</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a317b01b0fba3ac458561f1634759ea3b.html</Path>
+    <Anchor>a317b01b0fba3ac458561f1634759ea3b</Anchor>
+    <Abstract>wrapper to access iterator member functions in range-based for </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>iterator_wrapper</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a8e4e11999b4e7faa8f31f21164ebd65a.html</Path>
+    <Anchor>a8e4e11999b4e7faa8f31f21164ebd65a</Anchor>
+    <Abstract>wrapper to access iterator member functions in range-based for </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
