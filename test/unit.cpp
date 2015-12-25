@@ -5941,11 +5941,15 @@ TEST_CASE("iterators")
                     auto it = j_object.begin();
                     CHECK_THROWS_AS(it[0], std::domain_error);
                     CHECK_THROWS_AS(it[1], std::domain_error);
+                    CHECK_THROWS_NAME(it[0], std::domain_error, "cannot use operator[] for object iterators");
+                    CHECK_THROWS_NAME(it[1], std::domain_error, "cannot use operator[] for object iterators");
                 }
                 {
                     auto it = j_object.cbegin();
                     CHECK_THROWS_AS(it[0], std::domain_error);
                     CHECK_THROWS_AS(it[1], std::domain_error);
+                    CHECK_THROWS_NAME(it[0], std::domain_error, "cannot use operator[] for object iterators");
+                    CHECK_THROWS_NAME(it[1], std::domain_error, "cannot use operator[] for object iterators");
                 }
             }
 
@@ -5977,11 +5981,15 @@ TEST_CASE("iterators")
                     auto it = j_null.begin();
                     CHECK_THROWS_AS(it[0], std::out_of_range);
                     CHECK_THROWS_AS(it[1], std::out_of_range);
+                    CHECK_THROWS_NAME(it[0], std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(it[1], std::out_of_range, "cannot get value");
                 }
                 {
                     auto it = j_null.cbegin();
                     CHECK_THROWS_AS(it[0], std::out_of_range);
                     CHECK_THROWS_AS(it[1], std::out_of_range);
+                    CHECK_THROWS_NAME(it[0], std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(it[1], std::out_of_range, "cannot get value");
                 }
             }
 
@@ -5991,11 +5999,13 @@ TEST_CASE("iterators")
                     auto it = j_value.begin();
                     CHECK(it[0] == json(42));
                     CHECK_THROWS_AS(it[1], std::out_of_range);
+                    CHECK_THROWS_NAME(it[1], std::out_of_range, "cannot get value");
                 }
                 {
                     auto it = j_value.cbegin();
                     CHECK(it[0] == json(42));
                     CHECK_THROWS_AS(it[1], std::out_of_range);
+                    CHECK_THROWS_NAME(it[1], std::out_of_range, "cannot get value");
                 }
             }
         }
@@ -6057,6 +6067,14 @@ TEST_CASE("iterators")
                     CHECK_THROWS_AS(it1_c < it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c < it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c < it3_c, std::domain_error);
+                    CHECK_THROWS_NAME(it1 < it1, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 < it2, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2 < it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 < it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c < it1_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c < it2_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2_c < it3_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c < it3_c, std::domain_error, "cannot compare order of object iterators");
                 }
                 else
                 {
@@ -6083,6 +6101,14 @@ TEST_CASE("iterators")
                     CHECK_THROWS_AS(it1_c <= it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c <= it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c <= it3_c, std::domain_error);
+                    CHECK_THROWS_NAME(it1 <= it1, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 <= it2, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2 <= it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 <= it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c <= it1_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c <= it2_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2_c <= it3_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c <= it3_c, std::domain_error, "cannot compare order of object iterators");
                 }
                 else
                 {
@@ -6110,6 +6136,14 @@ TEST_CASE("iterators")
                     CHECK_THROWS_AS(it1_c > it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c > it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c > it3_c, std::domain_error);
+                    CHECK_THROWS_NAME(it1 > it1, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 > it2, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2 > it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 > it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c > it1_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c > it2_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2_c > it3_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c > it3_c, std::domain_error, "cannot compare order of object iterators");
                 }
                 else
                 {
@@ -6137,6 +6171,14 @@ TEST_CASE("iterators")
                     CHECK_THROWS_AS(it1_c >= it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c >= it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c >= it3_c, std::domain_error);
+                    CHECK_THROWS_NAME(it1 >= it1, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 >= it2, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2 >= it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 >= it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c >= it1_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c >= it2_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2_c >= it3_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c >= it3_c, std::domain_error, "cannot compare order of object iterators");
                 }
                 else
                 {
@@ -6162,9 +6204,17 @@ TEST_CASE("iterators")
                 {
                     CHECK_THROWS_AS(j.rbegin() == k.rbegin(), std::domain_error);
                     CHECK_THROWS_AS(j.crbegin() == k.crbegin(), std::domain_error);
+                    CHECK_THROWS_NAME(j.rbegin() == k.rbegin(), std::domain_error,
+                                      "cannot compare iterators of different containers");
+                    CHECK_THROWS_NAME(j.crbegin() == k.crbegin(), std::domain_error,
+                                      "cannot compare iterators of different containers");
 
                     CHECK_THROWS_AS(j.rbegin() < k.rbegin(), std::domain_error);
                     CHECK_THROWS_AS(j.crbegin() < k.crbegin(), std::domain_error);
+                    CHECK_THROWS_NAME(j.rbegin() < k.rbegin(), std::domain_error,
+                                      "cannot compare iterators of different containers");
+                    CHECK_THROWS_NAME(j.crbegin() < k.crbegin(), std::domain_error,
+                                      "cannot compare iterators of different containers");
                 }
             }
         }
@@ -6184,42 +6234,52 @@ TEST_CASE("iterators")
                 {
                     auto it = j_object.rbegin();
                     CHECK_THROWS_AS(it += 1, std::domain_error);
+                    CHECK_THROWS_NAME(it += 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.crbegin();
                     CHECK_THROWS_AS(it += 1, std::domain_error);
+                    CHECK_THROWS_NAME(it += 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.rbegin();
                     CHECK_THROWS_AS(it + 1, std::domain_error);
+                    CHECK_THROWS_NAME(it + 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.crbegin();
                     CHECK_THROWS_AS(it + 1, std::domain_error);
+                    CHECK_THROWS_NAME(it + 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.rbegin();
                     CHECK_THROWS_AS(it -= 1, std::domain_error);
+                    CHECK_THROWS_NAME(it -= 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.crbegin();
                     CHECK_THROWS_AS(it -= 1, std::domain_error);
+                    CHECK_THROWS_NAME(it -= 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.rbegin();
                     CHECK_THROWS_AS(it - 1, std::domain_error);
+                    CHECK_THROWS_NAME(it - 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.crbegin();
                     CHECK_THROWS_AS(it - 1, std::domain_error);
+                    CHECK_THROWS_NAME(it - 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.rbegin();
                     CHECK_THROWS_AS(it - it, std::domain_error);
+                    CHECK_THROWS_NAME(it - it, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.crbegin();
                     CHECK_THROWS_AS(it - it, std::domain_error);
+                    CHECK_THROWS_NAME(it - it, std::domain_error, "cannot use offsets with object iterators");
                 }
             }
 
@@ -6304,11 +6364,15 @@ TEST_CASE("iterators")
                     auto it = j_object.rbegin();
                     CHECK_THROWS_AS(it[0], std::domain_error);
                     CHECK_THROWS_AS(it[1], std::domain_error);
+                    CHECK_THROWS_NAME(it[0], std::domain_error, "cannot use offsets with object iterators");
+                    CHECK_THROWS_NAME(it[1], std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.crbegin();
                     CHECK_THROWS_AS(it[0], std::domain_error);
                     CHECK_THROWS_AS(it[1], std::domain_error);
+                    CHECK_THROWS_NAME(it[0], std::domain_error, "cannot use offsets with object iterators");
+                    CHECK_THROWS_NAME(it[1], std::domain_error, "cannot use offsets with object iterators");
                 }
             }
 
@@ -6340,11 +6404,15 @@ TEST_CASE("iterators")
                     auto it = j_null.rbegin();
                     CHECK_THROWS_AS(it[0], std::out_of_range);
                     CHECK_THROWS_AS(it[1], std::out_of_range);
+                    CHECK_THROWS_NAME(it[0], std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(it[1], std::out_of_range, "cannot get value");
                 }
                 {
                     auto it = j_null.crbegin();
                     CHECK_THROWS_AS(it[0], std::out_of_range);
                     CHECK_THROWS_AS(it[1], std::out_of_range);
+                    CHECK_THROWS_NAME(it[0], std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(it[1], std::out_of_range, "cannot get value");
                 }
             }
 
@@ -6354,11 +6422,13 @@ TEST_CASE("iterators")
                     auto it = j_value.rbegin();
                     CHECK(it[0] == json(42));
                     CHECK_THROWS_AS(it[1], std::out_of_range);
+                    CHECK_THROWS_NAME(it[1], std::out_of_range, "cannot get value");
                 }
                 {
                     auto it = j_value.crbegin();
                     CHECK(it[0] == json(42));
                     CHECK_THROWS_AS(it[1], std::out_of_range);
+                    CHECK_THROWS_NAME(it[1], std::out_of_range, "cannot get value");
                 }
             }
         }
@@ -6959,16 +7029,7 @@ TEST_CASE("modifiers")
                 {
                     json j = 1;
                     CHECK_THROWS_AS(j.push_back("Hello"), std::domain_error);
-
-                    // exception name
-                    try
-                    {
-                        j.push_back("Hello");
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(e.what() == std::string("cannot use push_back() with number"));
-                    }
+                    CHECK_THROWS_NAME(j.push_back("Hello"), std::domain_error, "cannot use push_back() with number");
                 }
             }
 
@@ -6998,16 +7059,7 @@ TEST_CASE("modifiers")
                     json j = 1;
                     json k("Hello");
                     CHECK_THROWS_AS(j.push_back(k), std::domain_error);
-
-                    // exception name
-                    try
-                    {
-                        j.push_back(k);
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(e.what() == std::string("cannot use push_back() with number"));
-                    }
+                    CHECK_THROWS_NAME(j.push_back(k), std::domain_error, "cannot use push_back() with number");
                 }
             }
         }
@@ -7040,16 +7092,8 @@ TEST_CASE("modifiers")
                 json j = 1;
                 json k("Hello");
                 CHECK_THROWS_AS(j.push_back(json::object_t::value_type({"one", 1})), std::domain_error);
-
-                // exception name
-                try
-                {
-                    j.push_back(k);
-                }
-                catch (std::domain_error& e)
-                {
-                    CHECK(e.what() == std::string("cannot use push_back() with number"));
-                }
+                CHECK_THROWS_NAME(j.push_back(json::object_t::value_type({"one", 1})), std::domain_error,
+                                  "cannot use push_back() with number");
             }
         }
     }
@@ -7081,16 +7125,7 @@ TEST_CASE("modifiers")
                 {
                     json j = 1;
                     CHECK_THROWS_AS(j += "Hello", std::domain_error);
-
-                    // exception name
-                    try
-                    {
-                        j += "Hello";
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(e.what() == std::string("cannot use push_back() with number"));
-                    }
+                    CHECK_THROWS_NAME(j += "Hello", std::domain_error, "cannot use push_back() with number");
                 }
             }
 
@@ -7120,16 +7155,7 @@ TEST_CASE("modifiers")
                     json j = 1;
                     json k("Hello");
                     CHECK_THROWS_AS(j += k, std::domain_error);
-
-                    // exception name
-                    try
-                    {
-                        j += k;
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(e.what() == std::string("cannot use push_back() with number"));
-                    }
+                    CHECK_THROWS_NAME(j += k, std::domain_error, "cannot use push_back() with number");
                 }
             }
         }
@@ -7162,17 +7188,8 @@ TEST_CASE("modifiers")
                 json j = 1;
                 json k("Hello");
                 CHECK_THROWS_AS(j += json::object_t::value_type({"one", 1}), std::domain_error);
-
-
-                // exception name
-                try
-                {
-                    j += json::object_t::value_type({"one", 1});
-                }
-                catch (std::domain_error& e)
-                {
-                    CHECK(e.what() == std::string("cannot use push_back() with number"));
-                }
+                CHECK_THROWS_NAME(j += json::object_t::value_type({"one", 1}), std::domain_error,
+                                  "cannot use push_back() with number");
             }
         }
     }
@@ -7310,24 +7327,10 @@ TEST_CASE("modifiers")
                 CHECK_THROWS_AS(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()),
                                 std::domain_error);
 
-                // exception names
-                try
-                {
-                    j_array.insert(j_array.end(), j_array.begin(), j_array.end());
-                }
-                catch (std::domain_error& e)
-                {
-                    CHECK(e.what() == std::string("passed iterators may not belong to container"));
-                }
-
-                try
-                {
-                    j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end());
-                }
-                catch (std::domain_error& e)
-                {
-                    CHECK(e.what() == std::string("iterators do not fit"));
-                }
+                CHECK_THROWS_NAME(j_array.insert(j_array.end(), j_array.begin(), j_array.end()), std::domain_error,
+                                  "passed iterators may not belong to container");
+                CHECK_THROWS_NAME(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()),
+                                  std::domain_error, "iterators do not fit");
             }
         }
 
@@ -7372,6 +7375,17 @@ TEST_CASE("modifiers")
             CHECK_THROWS_AS(j_array.insert(j_another_array.end(), j_yet_another_array.begin(),
                                            j_yet_another_array.end()), std::domain_error);
             CHECK_THROWS_AS(j_array.insert(j_another_array.end(), {1, 2, 3, 4}), std::domain_error);
+
+            CHECK_THROWS_NAME(j_array.insert(j_another_array.end(), 10), std::domain_error,
+                              "iterator does not fit current value");
+            CHECK_THROWS_NAME(j_array.insert(j_another_array.end(), j_value), std::domain_error,
+                              "iterator does not fit current value");
+            CHECK_THROWS_NAME(j_array.insert(j_another_array.end(), 10, 11), std::domain_error,
+                              "iterator does not fit current value");
+            CHECK_THROWS_NAME(j_array.insert(j_another_array.end(), j_yet_another_array.begin(),
+                                             j_yet_another_array.end()), std::domain_error, "iterator does not fit current value");
+            CHECK_THROWS_NAME(j_array.insert(j_another_array.end(), {1, 2, 3, 4}), std::domain_error,
+                              "iterator does not fit current value");
         }
 
         SECTION("non-array type")
@@ -7385,6 +7399,17 @@ TEST_CASE("modifiers")
             CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), j_yet_another_array.begin(),
                                               j_yet_another_array.end()), std::domain_error);
             CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), {1, 2, 3, 4}), std::domain_error);
+
+            CHECK_THROWS_NAME(j_nonarray.insert(j_nonarray.end(), 10), std::domain_error,
+                              "cannot use insert() with number");
+            CHECK_THROWS_NAME(j_nonarray.insert(j_nonarray.end(), j_value), std::domain_error,
+                              "cannot use insert() with number");
+            CHECK_THROWS_NAME(j_nonarray.insert(j_nonarray.end(), 10, 11), std::domain_error,
+                              "cannot use insert() with number");
+            CHECK_THROWS_NAME(j_nonarray.insert(j_nonarray.end(), j_yet_another_array.begin(),
+                                                j_yet_another_array.end()), std::domain_error, "cannot use insert() with number");
+            CHECK_THROWS_NAME(j_nonarray.insert(j_nonarray.end(), {1, 2, 3, 4}), std::domain_error,
+                              "cannot use insert() with number");
         }
     }
 
@@ -7437,6 +7462,7 @@ TEST_CASE("modifiers")
                 json::array_t a = {"foo", "bar", "baz"};
 
                 CHECK_THROWS_AS(j.swap(a), std::domain_error);
+                CHECK_THROWS_NAME(j.swap(a), std::domain_error, "cannot use swap() with number");
             }
         }
 
@@ -7462,6 +7488,7 @@ TEST_CASE("modifiers")
                 json::object_t o = {{"cow", "Kuh"}, {"chicken", "Huhn"}};
 
                 CHECK_THROWS_AS(j.swap(o), std::domain_error);
+                CHECK_THROWS_NAME(j.swap(o), std::domain_error, "cannot use swap() with number");
             }
         }
 
@@ -7487,6 +7514,7 @@ TEST_CASE("modifiers")
                 json::string_t s = "Hallo Welt";
 
                 CHECK_THROWS_AS(j.swap(s), std::domain_error);
+                CHECK_THROWS_NAME(j.swap(s), std::domain_error, "cannot use swap() with number");
             }
         }
     }
@@ -7871,6 +7899,7 @@ TEST_CASE("iterator class")
                 json j(json::value_t::null);
                 json::iterator it = j.begin();
                 CHECK_THROWS_AS(*it, std::out_of_range);
+                CHECK_THROWS_NAME(*it, std::out_of_range, "cannot get value");
             }
 
             SECTION("number")
@@ -7880,6 +7909,7 @@ TEST_CASE("iterator class")
                 CHECK(*it == json(17));
                 it = j.end();
                 CHECK_THROWS_AS(*it, std::out_of_range);
+                CHECK_THROWS_NAME(*it, std::out_of_range, "cannot get value");
             }
 
             SECTION("object")
@@ -7904,6 +7934,7 @@ TEST_CASE("iterator class")
                 json j(json::value_t::null);
                 json::iterator it = j.begin();
                 CHECK_THROWS_AS(it->type_name(), std::out_of_range);
+                CHECK_THROWS_NAME(it->type_name(), std::out_of_range, "cannot get value");
             }
 
             SECTION("number")
@@ -7913,6 +7944,7 @@ TEST_CASE("iterator class")
                 CHECK(it->type_name() == "number");
                 it = j.end();
                 CHECK_THROWS_AS(it->type_name(), std::out_of_range);
+                CHECK_THROWS_NAME(it->type_name(), std::out_of_range, "cannot get value");
             }
 
             SECTION("object")
@@ -8235,6 +8267,7 @@ TEST_CASE("const_iterator class")
                 json j(json::value_t::null);
                 json::const_iterator it = j.cbegin();
                 CHECK_THROWS_AS(*it, std::out_of_range);
+                CHECK_THROWS_NAME(*it, std::out_of_range, "cannot get value");
             }
 
             SECTION("number")
@@ -8244,6 +8277,7 @@ TEST_CASE("const_iterator class")
                 CHECK(*it == json(17));
                 it = j.cend();
                 CHECK_THROWS_AS(*it, std::out_of_range);
+                CHECK_THROWS_NAME(*it, std::out_of_range, "cannot get value");
             }
 
             SECTION("object")
@@ -8268,6 +8302,7 @@ TEST_CASE("const_iterator class")
                 json j(json::value_t::null);
                 json::const_iterator it = j.cbegin();
                 CHECK_THROWS_AS(it->type_name(), std::out_of_range);
+                CHECK_THROWS_NAME(it->type_name(), std::out_of_range, "cannot get value");
             }
 
             SECTION("number")
@@ -8277,6 +8312,7 @@ TEST_CASE("const_iterator class")
                 CHECK(it->type_name() == "number");
                 it = j.cend();
                 CHECK_THROWS_AS(it->type_name(), std::out_of_range);
+                CHECK_THROWS_NAME(it->type_name(), std::out_of_range, "cannot get value");
             }
 
             SECTION("object")
@@ -8675,6 +8711,8 @@ TEST_CASE("lexer class")
     {
         CHECK(json::lexer::to_unicode(0x1F4A9) == "💩");
         CHECK_THROWS_AS(json::lexer::to_unicode(0x200000), std::out_of_range);
+        CHECK_THROWS_NAME(json::lexer::to_unicode(0x200000), std::out_of_range,
+                          "code points above 0x10FFFF are invalid");
     }
 }
 
@@ -8734,11 +8772,19 @@ TEST_CASE("parser class")
             {
                 // error: tab in string
                 CHECK_THROWS_AS(json::parser("\"\t\"").parse(), std::invalid_argument);
+                CHECK_THROWS_NAME(json::parser("\"\t\"").parse(), std::invalid_argument,
+                                  "parse error - unexpected '\"'");
                 // error: newline in string
                 CHECK_THROWS_AS(json::parser("\"\n\"").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("\"\r\"").parse(), std::invalid_argument);
+                CHECK_THROWS_NAME(json::parser("\"\n\"").parse(), std::invalid_argument,
+                                  "parse error - unexpected '\"'");
+                CHECK_THROWS_NAME(json::parser("\"\r\"").parse(), std::invalid_argument,
+                                  "parse error - unexpected '\"'");
                 // error: backspace in string
                 CHECK_THROWS_AS(json::parser("\"\b\"").parse(), std::invalid_argument);
+                CHECK_THROWS_NAME(json::parser("\"\b\"").parse(), std::invalid_argument,
+                                  "parse error - unexpected '\"'");
             }
 
             SECTION("escaped")
@@ -8875,6 +8921,39 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("-0e0-:").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("-0e-:").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("-0f").parse(), std::invalid_argument);
+
+                CHECK_THROWS_NAME(json::parser("01").parse(), std::invalid_argument,
+                                  "parse error - 0 is not a number");
+                CHECK_THROWS_NAME(json::parser("--1").parse(), std::invalid_argument,
+                                  "parse error - unexpected '-'");
+                CHECK_THROWS_NAME(json::parser("1.").parse(), std::invalid_argument,
+                                  "parse error - 1 is not a number");
+                CHECK_THROWS_NAME(json::parser("1E").parse(), std::invalid_argument,
+                                  "parse error - unexpected 'E' (<parse error>); expected <end of input>");
+                CHECK_THROWS_NAME(json::parser("1E-").parse(), std::invalid_argument,
+                                  "parse error - unexpected 'E' (<parse error>); expected <end of input>");
+                CHECK_THROWS_NAME(json::parser("1.E1").parse(), std::invalid_argument,
+                                  "parse error - 1 is not a number");
+                CHECK_THROWS_NAME(json::parser("-1E").parse(), std::invalid_argument,
+                                  "parse error - unexpected 'E' (<parse error>); expected <end of input>");
+                CHECK_THROWS_NAME(json::parser("-0E#").parse(), std::invalid_argument,
+                                  "parse error - unexpected 'E' (<parse error>); expected <end of input>");
+                CHECK_THROWS_NAME(json::parser("-0E-#").parse(), std::invalid_argument,
+                                  "parse error - unexpected 'E' (<parse error>); expected <end of input>");
+                CHECK_THROWS_NAME(json::parser("-0#").parse(), std::invalid_argument,
+                                  "parse error - unexpected '#' (<parse error>); expected <end of input>");
+                CHECK_THROWS_NAME(json::parser("-0.0:").parse(), std::invalid_argument,
+                                  "parse error - unexpected ':' (:); expected <end of input>");
+                CHECK_THROWS_NAME(json::parser("-0.0Z").parse(), std::invalid_argument,
+                                  "parse error - unexpected 'Z' (<parse error>); expected <end of input>");
+                CHECK_THROWS_NAME(json::parser("-0E123:").parse(), std::invalid_argument,
+                                  "parse error - unexpected ':' (:); expected <end of input>");
+                CHECK_THROWS_NAME(json::parser("-0e0-:").parse(), std::invalid_argument,
+                                  "parse error - unexpected '-' (<parse error>); expected <end of input>");
+                CHECK_THROWS_NAME(json::parser("-0e-:").parse(), std::invalid_argument,
+                                  "parse error - unexpected 'e' (<parse error>); expected <end of input>");
+                CHECK_THROWS_NAME(json::parser("-0f").parse(), std::invalid_argument,
+                                  "parse error - unexpected 'f' (<parse error>); expected <end of input>");
             }
         }
     }
@@ -8899,44 +8978,89 @@ TEST_CASE("parser class")
 
         // unexpected end of null
         CHECK_THROWS_AS(json::parser("n").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("n").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("nu").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("nul").parse(), std::invalid_argument);
+        CHECK_THROWS_NAME(json::parser("n").parse(), std::invalid_argument, "parse error - unexpected 'n'");
+        CHECK_THROWS_NAME(json::parser("nu").parse(), std::invalid_argument,
+                          "parse error - unexpected 'n'");
+        CHECK_THROWS_NAME(json::parser("nul").parse(), std::invalid_argument,
+                          "parse error - unexpected 'n'");
 
         // unexpected end of true
         CHECK_THROWS_AS(json::parser("t").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("t").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("tr").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("tru").parse(), std::invalid_argument);
+        CHECK_THROWS_NAME(json::parser("t").parse(), std::invalid_argument, "parse error - unexpected 't'");
+        CHECK_THROWS_NAME(json::parser("tr").parse(), std::invalid_argument,
+                          "parse error - unexpected 't'");
+        CHECK_THROWS_NAME(json::parser("tru").parse(), std::invalid_argument,
+                          "parse error - unexpected 't'");
 
         // unexpected end of false
         CHECK_THROWS_AS(json::parser("f").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("fa").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("fal").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("fals").parse(), std::invalid_argument);
+        CHECK_THROWS_NAME(json::parser("f").parse(), std::invalid_argument, "parse error - unexpected 'f'");
+        CHECK_THROWS_NAME(json::parser("fa").parse(), std::invalid_argument,
+                          "parse error - unexpected 'f'");
+        CHECK_THROWS_NAME(json::parser("fal").parse(), std::invalid_argument,
+                          "parse error - unexpected 'f'");
+        CHECK_THROWS_NAME(json::parser("fals").parse(), std::invalid_argument,
+                          "parse error - unexpected 'f'");
 
-        // unexpected end of array
+        // missing/unexpected end of array
+        // TODO: Better error messages - "parse error - unexpected '" just ends
         CHECK_THROWS_AS(json::parser("[").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("[1").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("[1,").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("[1,]").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("]").parse(), std::invalid_argument);
+        CHECK_THROWS_NAME(json::parser("[").parse(), std::invalid_argument, "parse error - unexpected '");
+        CHECK_THROWS_NAME(json::parser("[1").parse(), std::invalid_argument, "parse error - unexpected '");
+        CHECK_THROWS_NAME(json::parser("[1,").parse(), std::invalid_argument, "parse error - unexpected '");
+        CHECK_THROWS_NAME(json::parser("[1,]").parse(), std::invalid_argument,
+                          "parse error - unexpected ']'");
+        CHECK_THROWS_NAME(json::parser("]").parse(), std::invalid_argument, "parse error - unexpected ']'");
 
-        // unexpected end of object
+        // missing/unexpected end of object
+        // TODO: Better error messages - "parse error - unexpected '" just ends
         CHECK_THROWS_AS(json::parser("{").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("{\"foo\"").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("{\"foo\":").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("{\"foo\":}").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("{\"foo\":1,}").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("}").parse(), std::invalid_argument);
+        CHECK_THROWS_NAME(json::parser("{").parse(), std::invalid_argument, "parse error - unexpected '");
+        CHECK_THROWS_NAME(json::parser("{\"foo\"").parse(), std::invalid_argument,
+                          "parse error - unexpected '");
+        CHECK_THROWS_NAME(json::parser("{\"foo\":").parse(), std::invalid_argument,
+                          "parse error - unexpected '");
+        CHECK_THROWS_NAME(json::parser("{\"foo\":}").parse(), std::invalid_argument,
+                          "parse error - unexpected '}'");
+        CHECK_THROWS_NAME(json::parser("{\"foo\":1,}").parse(), std::invalid_argument,
+                          "parse error - unexpected '}' (}); expected string literal");
+        CHECK_THROWS_NAME(json::parser("}").parse(), std::invalid_argument, "parse error - unexpected '}'");
 
-        // unexpected end of string
+        // missing/unexpected end of string
         CHECK_THROWS_AS(json::parser("\"").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("\"\\\"").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("\"\\u\"").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("\"\\u0\"").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("\"\\u01\"").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("\"\\u012\"").parse(), std::invalid_argument);
+        CHECK_THROWS_NAME(json::parser("\"").parse(), std::invalid_argument,
+                          "parse error - unexpected '\"'");
+        CHECK_THROWS_NAME(json::parser("\"\\\"").parse(), std::invalid_argument,
+                          "parse error - unexpected '\"'");
+        CHECK_THROWS_NAME(json::parser("\"\\u\"").parse(), std::invalid_argument,
+                          "parse error - unexpected '\"'");
+        CHECK_THROWS_NAME(json::parser("\"\\u0\"").parse(), std::invalid_argument,
+                          "parse error - unexpected '\"'");
+        CHECK_THROWS_NAME(json::parser("\"\\u01\"").parse(), std::invalid_argument,
+                          "parse error - unexpected '\"'");
+        CHECK_THROWS_NAME(json::parser("\"\\u012\"").parse(), std::invalid_argument,
+                          "parse error - unexpected '\"'");
 
         // invalid escapes
         for (int c = 1; c < 128; ++c)
@@ -8969,6 +9093,7 @@ TEST_CASE("parser class")
                 default:
                 {
                     CHECK_THROWS_AS(json::parser(s).parse(), std::invalid_argument);
+                    CHECK_THROWS_NAME(json::parser(s).parse(), std::invalid_argument, "parse error - unexpected '\"'");
                     break;
                 }
             }
@@ -9037,16 +9162,28 @@ TEST_CASE("parser class")
                     CHECK_THROWS_AS(json::parser(s2).parse(), std::invalid_argument);
                     CHECK_THROWS_AS(json::parser(s3).parse(), std::invalid_argument);
                     CHECK_THROWS_AS(json::parser(s4).parse(), std::invalid_argument);
+
+                    CHECK_THROWS_NAME(json::parser(s1).parse(), std::invalid_argument, "parse error - unexpected '\"'");
+                    CHECK_THROWS_NAME(json::parser(s2).parse(), std::invalid_argument, "parse error - unexpected '\"'");
+                    CHECK_THROWS_NAME(json::parser(s3).parse(), std::invalid_argument, "parse error - unexpected '\"'");
+                    CHECK_THROWS_NAME(json::parser(s4).parse(), std::invalid_argument, "parse error - unexpected '\"'");
                 }
             }
         }
 
         // missing part of a surrogate pair
         CHECK_THROWS_AS(json::parse("\"\\uD80C\""), std::invalid_argument);
+        CHECK_THROWS_NAME(json::parse("\"\\uD80C\""), std::invalid_argument, "missing low surrogate");
         // invalid surrogate pair
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\uD80C\""), std::invalid_argument);
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\u0000\""), std::invalid_argument);
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\uFFFF\""), std::invalid_argument);
+        CHECK_THROWS_NAME(json::parse("\"\\uD80C\\uD80C\""), std::invalid_argument,
+                          "missing or wrong low surrogate");
+        CHECK_THROWS_NAME(json::parse("\"\\uD80C\\u0000\""), std::invalid_argument,
+                          "missing or wrong low surrogate");
+        CHECK_THROWS_NAME(json::parse("\"\\uD80C\\uFFFF\""), std::invalid_argument,
+                          "missing or wrong low surrogate");
     }
 
     SECTION("callback function")
@@ -9639,6 +9776,8 @@ TEST_CASE("algorithms")
             {
                 json j({{"one", 1}, {"two", 2}});
                 CHECK_THROWS_AS(std::sort(j.begin(), j.end()), std::domain_error);
+                CHECK_THROWS_NAME(std::sort(j.begin(), j.end()), std::domain_error,
+                                  "cannot use offsets with object iterators");
             }
         }
 

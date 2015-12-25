@@ -6371,7 +6371,8 @@ class basic_json
         @param[in] codepoint1  the code point (can be high surrogate)
         @param[in] codepoint2  the code point (can be low surrogate or 0)
         @return string representation of the code point
-        @throw std::out_of_range if code point is >0x10ffff
+        @throw std::out_of_range if code point is >0x10ffff; example: `"code
+        points above 0x10FFFF are invalid"`
         @throw std::invalid_argument if the low surrogate is invalid
 
         @see <http://en.wikipedia.org/wiki/UTF-8#Sample_code>
@@ -7044,8 +7045,7 @@ class basic_json
             {
                 std::string error_msg = "parse error - unexpected \'";
                 error_msg += m_lexer.get_token();
-                error_msg += "\' (";
-                error_msg += lexer::token_type_name(last_token) + ")";
+                error_msg += "\'";
                 throw std::invalid_argument(error_msg);
             }
         }
