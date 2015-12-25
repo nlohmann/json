@@ -10,6 +10,9 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
+// macro to check exception names (see https://github.com/philsquared/Catch/issues/563)
+#define CHECK_THROWS_NAME(block, exception, name) { try { block; } catch ( exception &e ) { CHECK(e.what() == std::string(name)); } }
+
 #include <array>
 #include <deque>
 #include <forward_list>
@@ -895,6 +898,8 @@ TEST_CASE("constructors")
             SECTION("object with error")
             {
                 CHECK_THROWS_AS(json::object({ {"one", 1}, {"two", 2.2}, {"three", false}, 13 }), std::logic_error);
+                CHECK_THROWS_NAME(json::object({ {"one", 1}, {"two", 2.2}, {"three", false}, 13 }),
+                std::logic_error, "cannot create object from initializer list");
             }
 
             SECTION("empty array")
@@ -968,12 +973,20 @@ TEST_CASE("constructors")
                     json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
                     CHECK_THROWS_AS(json(jobject.begin(), jobject2.end()), std::domain_error);
                     CHECK_THROWS_AS(json(jobject2.begin(), jobject.end()), std::domain_error);
+                    CHECK_THROWS_NAME(json(jobject.begin(), jobject2.end()), std::domain_error,
+                                      "iterators are not compatible");
+                    CHECK_THROWS_NAME(json(jobject2.begin(), jobject.end()), std::domain_error,
+                                      "iterators are not compatible");
                 }
                 {
                     json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
                     json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
                     CHECK_THROWS_AS(json(jobject.cbegin(), jobject2.cend()), std::domain_error);
                     CHECK_THROWS_AS(json(jobject2.cbegin(), jobject.cend()), std::domain_error);
+                    CHECK_THROWS_NAME(json(jobject.cbegin(), jobject2.cend()), std::domain_error,
+                                      "iterators are not compatible");
+                    CHECK_THROWS_NAME(json(jobject2.cbegin(), jobject.cend()), std::domain_error,
+                                      "iterators are not compatible");
                 }
             }
         }
@@ -1029,12 +1042,20 @@ TEST_CASE("constructors")
                     json jarray2 = {2, 3, 4, 5};
                     CHECK_THROWS_AS(json(jarray.begin(), jarray2.end()), std::domain_error);
                     CHECK_THROWS_AS(json(jarray2.begin(), jarray.end()), std::domain_error);
+                    CHECK_THROWS_NAME(json(jarray.begin(), jarray2.end()), std::domain_error,
+                                      "iterators are not compatible");
+                    CHECK_THROWS_NAME(json(jarray2.begin(), jarray.end()), std::domain_error,
+                                      "iterators are not compatible");
                 }
                 {
                     json jarray = {1, 2, 3, 4};
                     json jarray2 = {2, 3, 4, 5};
                     CHECK_THROWS_AS(json(jarray.cbegin(), jarray2.cend()), std::domain_error);
                     CHECK_THROWS_AS(json(jarray2.cbegin(), jarray.cend()), std::domain_error);
+                    CHECK_THROWS_NAME(json(jarray.cbegin(), jarray2.cend()), std::domain_error,
+                                      "iterators are not compatible");
+                    CHECK_THROWS_NAME(json(jarray2.cbegin(), jarray.cend()), std::domain_error,
+                                      "iterators are not compatible");
                 }
             }
         }
@@ -1048,10 +1069,14 @@ TEST_CASE("constructors")
                     {
                         json j;
                         CHECK_THROWS_AS(json(j.begin(), j.end()), std::domain_error);
+                        CHECK_THROWS_NAME(json(j.begin(), j.end()), std::domain_error,
+                                          "cannot use construct with iterators from null");
                     }
                     {
                         json j;
                         CHECK_THROWS_AS(json(j.cbegin(), j.cend()), std::domain_error);
+                        CHECK_THROWS_NAME(json(j.cbegin(), j.cend()), std::domain_error,
+                                          "cannot use construct with iterators from null");
                     }
                 }
 
@@ -1120,11 +1145,15 @@ TEST_CASE("constructors")
                         json j = "foo";
                         CHECK_THROWS_AS(json(j.end(), j.end()), std::out_of_range);
                         CHECK_THROWS_AS(json(j.begin(), j.begin()), std::out_of_range);
+                        CHECK_THROWS_NAME(json(j.end(), j.end()), std::out_of_range, "iterators out of range");
+                        CHECK_THROWS_NAME(json(j.begin(), j.begin()), std::out_of_range, "iterators out of range");
                     }
                     {
                         json j = "bar";
                         CHECK_THROWS_AS(json(j.cend(), j.cend()), std::out_of_range);
                         CHECK_THROWS_AS(json(j.cbegin(), j.cbegin()), std::out_of_range);
+                        CHECK_THROWS_NAME(json(j.cend(), j.cend()), std::out_of_range, "iterators out of range");
+                        CHECK_THROWS_NAME(json(j.cbegin(), j.cbegin()), std::out_of_range, "iterators out of range");
                     }
                 }
 
@@ -1134,11 +1163,15 @@ TEST_CASE("constructors")
                         json j = false;
                         CHECK_THROWS_AS(json(j.end(), j.end()), std::out_of_range);
                         CHECK_THROWS_AS(json(j.begin(), j.begin()), std::out_of_range);
+                        CHECK_THROWS_NAME(json(j.end(), j.end()), std::out_of_range, "iterators out of range");
+                        CHECK_THROWS_NAME(json(j.begin(), j.begin()), std::out_of_range, "iterators out of range");
                     }
                     {
                         json j = true;
                         CHECK_THROWS_AS(json(j.cend(), j.cend()), std::out_of_range);
                         CHECK_THROWS_AS(json(j.cbegin(), j.cbegin()), std::out_of_range);
+                        CHECK_THROWS_NAME(json(j.cend(), j.cend()), std::out_of_range, "iterators out of range");
+                        CHECK_THROWS_NAME(json(j.cbegin(), j.cbegin()), std::out_of_range, "iterators out of range");
                     }
                 }
 
@@ -1148,11 +1181,15 @@ TEST_CASE("constructors")
                         json j = 17;
                         CHECK_THROWS_AS(json(j.end(), j.end()), std::out_of_range);
                         CHECK_THROWS_AS(json(j.begin(), j.begin()), std::out_of_range);
+                        CHECK_THROWS_NAME(json(j.end(), j.end()), std::out_of_range, "iterators out of range");
+                        CHECK_THROWS_NAME(json(j.begin(), j.begin()), std::out_of_range, "iterators out of range");
                     }
                     {
                         json j = 17;
                         CHECK_THROWS_AS(json(j.cend(), j.cend()), std::out_of_range);
                         CHECK_THROWS_AS(json(j.cbegin(), j.cbegin()), std::out_of_range);
+                        CHECK_THROWS_NAME(json(j.cend(), j.cend()), std::out_of_range, "iterators out of range");
+                        CHECK_THROWS_NAME(json(j.cbegin(), j.cbegin()), std::out_of_range, "iterators out of range");
                     }
                 }
 
@@ -1162,11 +1199,15 @@ TEST_CASE("constructors")
                         json j = 23.42;
                         CHECK_THROWS_AS(json(j.end(), j.end()), std::out_of_range);
                         CHECK_THROWS_AS(json(j.begin(), j.begin()), std::out_of_range);
+                        CHECK_THROWS_NAME(json(j.end(), j.end()), std::out_of_range, "iterators out of range");
+                        CHECK_THROWS_NAME(json(j.begin(), j.begin()), std::out_of_range, "iterators out of range");
                     }
                     {
                         json j = 23.42;
                         CHECK_THROWS_AS(json(j.cend(), j.cend()), std::out_of_range);
                         CHECK_THROWS_AS(json(j.cbegin(), j.cbegin()), std::out_of_range);
+                        CHECK_THROWS_NAME(json(j.cend(), j.cend()), std::out_of_range, "iterators out of range");
+                        CHECK_THROWS_NAME(json(j.cbegin(), j.cbegin()), std::out_of_range, "iterators out of range");
                     }
                 }
             }
@@ -1645,6 +1686,19 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::boolean).get<json::object_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::object_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_float).get<json::object_t>(), std::logic_error);
+
+            CHECK_THROWS_NAME(json(json::value_t::null).get<json::object_t>(), std::logic_error,
+                              "type must be object, but is null");
+            CHECK_THROWS_NAME(json(json::value_t::array).get<json::object_t>(), std::logic_error,
+                              "type must be object, but is array");
+            CHECK_THROWS_NAME(json(json::value_t::string).get<json::object_t>(), std::logic_error,
+                              "type must be object, but is string");
+            CHECK_THROWS_NAME(json(json::value_t::boolean).get<json::object_t>(), std::logic_error,
+                              "type must be object, but is boolean");
+            CHECK_THROWS_NAME(json(json::value_t::number_integer).get<json::object_t>(), std::logic_error,
+                              "type must be object, but is number");
+            CHECK_THROWS_NAME(json(json::value_t::number_float).get<json::object_t>(), std::logic_error,
+                              "type must be object, but is number");
         }
     }
 
@@ -1727,6 +1781,19 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::boolean).get<json::array_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::array_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_float).get<json::array_t>(), std::logic_error);
+
+            CHECK_THROWS_NAME(json(json::value_t::null).get<json::array_t>(), std::logic_error,
+                              "type must be array, but is null");
+            CHECK_THROWS_NAME(json(json::value_t::object).get<json::array_t>(), std::logic_error,
+                              "type must be array, but is object");
+            CHECK_THROWS_NAME(json(json::value_t::string).get<json::array_t>(), std::logic_error,
+                              "type must be array, but is string");
+            CHECK_THROWS_NAME(json(json::value_t::boolean).get<json::array_t>(), std::logic_error,
+                              "type must be array, but is boolean");
+            CHECK_THROWS_NAME(json(json::value_t::number_integer).get<json::array_t>(), std::logic_error,
+                              "type must be array, but is number");
+            CHECK_THROWS_NAME(json(json::value_t::number_float).get<json::array_t>(), std::logic_error,
+                              "type must be array, but is number");
         }
     }
 
@@ -1791,6 +1858,19 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::boolean).get<json::string_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::string_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_float).get<json::string_t>(), std::logic_error);
+
+            CHECK_THROWS_NAME(json(json::value_t::null).get<json::string_t>(), std::logic_error,
+                              "type must be string, but is null");
+            CHECK_THROWS_NAME(json(json::value_t::object).get<json::string_t>(), std::logic_error,
+                              "type must be string, but is object");
+            CHECK_THROWS_NAME(json(json::value_t::array).get<json::string_t>(), std::logic_error,
+                              "type must be string, but is array");
+            CHECK_THROWS_NAME(json(json::value_t::boolean).get<json::string_t>(), std::logic_error,
+                              "type must be string, but is boolean");
+            CHECK_THROWS_NAME(json(json::value_t::number_integer).get<json::string_t>(), std::logic_error,
+                              "type must be string, but is number");
+            CHECK_THROWS_NAME(json(json::value_t::number_float).get<json::string_t>(), std::logic_error,
+                              "type must be string, but is number");
         }
     }
 
@@ -1837,6 +1917,19 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::string).get<json::boolean_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::boolean_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_float).get<json::boolean_t>(), std::logic_error);
+
+            CHECK_THROWS_NAME(json(json::value_t::null).get<json::boolean_t>(), std::logic_error,
+                              "type must be boolean, but is null");
+            CHECK_THROWS_NAME(json(json::value_t::object).get<json::boolean_t>(), std::logic_error,
+                              "type must be boolean, but is object");
+            CHECK_THROWS_NAME(json(json::value_t::array).get<json::boolean_t>(), std::logic_error,
+                              "type must be boolean, but is array");
+            CHECK_THROWS_NAME(json(json::value_t::string).get<json::boolean_t>(), std::logic_error,
+                              "type must be boolean, but is string");
+            CHECK_THROWS_NAME(json(json::value_t::number_integer).get<json::boolean_t>(), std::logic_error,
+                              "type must be boolean, but is number");
+            CHECK_THROWS_NAME(json(json::value_t::number_float).get<json::boolean_t>(), std::logic_error,
+                              "type must be boolean, but is number");
         }
     }
 
@@ -2068,6 +2161,18 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::array).get<json::number_integer_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::string).get<json::number_integer_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::boolean).get<json::number_integer_t>(), std::logic_error);
+
+            CHECK_THROWS_NAME(json(json::value_t::null).get<json::number_integer_t>(), std::logic_error,
+                              "type must be number, but is null");
+            CHECK_THROWS_NAME(json(json::value_t::object).get<json::number_integer_t>(), std::logic_error,
+                              "type must be number, but is object");
+            CHECK_THROWS_NAME(json(json::value_t::array).get<json::number_integer_t>(), std::logic_error,
+                              "type must be number, but is array");
+            CHECK_THROWS_NAME(json(json::value_t::string).get<json::number_integer_t>(), std::logic_error,
+                              "type must be number, but is string");
+            CHECK_THROWS_NAME(json(json::value_t::boolean).get<json::number_integer_t>(), std::logic_error,
+                              "type must be number, but is boolean");
+
             CHECK_NOTHROW(json(json::value_t::number_float).get<json::number_integer_t>());
         }
     }
@@ -2306,6 +2411,18 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::array).get<json::number_float_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::string).get<json::number_float_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::boolean).get<json::number_float_t>(), std::logic_error);
+
+            CHECK_THROWS_NAME(json(json::value_t::null).get<json::number_float_t>(), std::logic_error,
+                              "type must be number, but is null");
+            CHECK_THROWS_NAME(json(json::value_t::object).get<json::number_float_t>(), std::logic_error,
+                              "type must be number, but is object");
+            CHECK_THROWS_NAME(json(json::value_t::array).get<json::number_float_t>(), std::logic_error,
+                              "type must be number, but is array");
+            CHECK_THROWS_NAME(json(json::value_t::string).get<json::number_float_t>(), std::logic_error,
+                              "type must be number, but is string");
+            CHECK_THROWS_NAME(json(json::value_t::boolean).get<json::number_float_t>(), std::logic_error,
+                              "type must be number, but is boolean");
+
             CHECK_NOTHROW(json(json::value_t::number_integer).get<json::number_float_t>());
         }
     }
@@ -2381,6 +2498,8 @@ TEST_CASE("value conversion")
             SECTION("exception in case of a non-object type")
             {
                 CHECK_THROWS_AS((json().get<std::map<std::string, int>>()), std::logic_error);
+                CHECK_THROWS_NAME((json().get<std::map<std::string, int>>()), std::logic_error,
+                                  "type must be object, but is null");
             }
         }
 
@@ -2445,6 +2564,15 @@ TEST_CASE("value conversion")
                 CHECK_THROWS_AS((json().get<std::vector<int>>()), std::logic_error);
                 CHECK_THROWS_AS((json().get<std::vector<json>>()), std::logic_error);
                 CHECK_THROWS_AS((json().get<std::list<json>>()), std::logic_error);
+
+                CHECK_THROWS_NAME((json().get<std::list<int>>()), std::logic_error,
+                                  "type must be array, but is null");
+                CHECK_THROWS_NAME((json().get<std::vector<int>>()), std::logic_error,
+                                  "type must be array, but is null");
+                CHECK_THROWS_NAME((json().get<std::vector<json>>()), std::logic_error,
+                                  "type must be array, but is null");
+                CHECK_THROWS_NAME((json().get<std::list<json>>()), std::logic_error,
+                                  "type must be array, but is null");
             }
         }
     }
@@ -2663,15 +2791,8 @@ TEST_CASE("element access")
                 CHECK_THROWS_AS(j.at(7), std::out_of_range);
                 CHECK_THROWS_AS(j_const.at(7), std::out_of_range);
 
-                // exception name
-                try
-                {
-                    j.at(7);
-                }
-                catch (std::out_of_range& e)
-                {
-                    CHECK(std::string(e.what()) == "array index 7 is out of range");
-                }
+                CHECK_THROWS_NAME(j.at(7), std::out_of_range, "array index 7 is out of range");
+                CHECK_THROWS_NAME(j_const.at(7), std::out_of_range, "array index 7 is out of range");
             }
 
             SECTION("access on non-array type")
@@ -2683,15 +2804,8 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
 
-                    // exception name
-                    try
-                    {
-                        j_nonarray.at(0);
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with null");
-                    }
+                    CHECK_THROWS_NAME(j_nonarray.at(0), std::domain_error, "cannot use at() with null");
+                    CHECK_THROWS_NAME(j_nonarray_const.at(0), std::domain_error, "cannot use at() with null");
                 }
 
                 SECTION("boolean")
@@ -2701,15 +2815,8 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
 
-                    // exception name
-                    try
-                    {
-                        j_nonarray.at(0);
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with boolean");
-                    }
+                    CHECK_THROWS_NAME(j_nonarray.at(0), std::domain_error, "cannot use at() with boolean");
+                    CHECK_THROWS_NAME(j_nonarray_const.at(0), std::domain_error, "cannot use at() with boolean");
                 }
 
                 SECTION("string")
@@ -2719,15 +2826,8 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
 
-                    // exception name
-                    try
-                    {
-                        j_nonarray.at(0);
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with string");
-                    }
+                    CHECK_THROWS_NAME(j_nonarray.at(0), std::domain_error, "cannot use at() with string");
+                    CHECK_THROWS_NAME(j_nonarray_const.at(0), std::domain_error, "cannot use at() with string");
                 }
 
                 SECTION("object")
@@ -2737,15 +2837,8 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
 
-                    // exception name
-                    try
-                    {
-                        j_nonarray.at(0);
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with object");
-                    }
+                    CHECK_THROWS_NAME(j_nonarray.at(0), std::domain_error, "cannot use at() with object");
+                    CHECK_THROWS_NAME(j_nonarray_const.at(0), std::domain_error, "cannot use at() with object");
                 }
 
                 SECTION("number (integer)")
@@ -2755,15 +2848,8 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
 
-                    // exception name
-                    try
-                    {
-                        j_nonarray.at(0);
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with number");
-                    }
+                    CHECK_THROWS_NAME(j_nonarray.at(0), std::domain_error, "cannot use at() with number");
+                    CHECK_THROWS_NAME(j_nonarray_const.at(0), std::domain_error, "cannot use at() with number");
                 }
 
                 SECTION("number (floating-point)")
@@ -2773,15 +2859,8 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
 
-                    // exception name
-                    try
-                    {
-                        j_nonarray.at(0);
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with number");
-                    }
+                    CHECK_THROWS_NAME(j_nonarray.at(0), std::domain_error, "cannot use at() with number");
+                    CHECK_THROWS_NAME(j_nonarray_const.at(0), std::domain_error, "cannot use at() with number");
                 }
             }
         }
@@ -2825,6 +2904,7 @@ TEST_CASE("element access")
                         const json j_nonarray_const(j_nonarray);
                         CHECK_NOTHROW(j_nonarray[0]);
                         CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
+                        CHECK_THROWS_NAME(j_nonarray_const[0], std::domain_error, "cannot use operator[] with null");
                     }
 
                     SECTION("implicit transformation to properly filled array")
@@ -2841,6 +2921,8 @@ TEST_CASE("element access")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
+                    CHECK_THROWS_NAME(j_nonarray[0], std::domain_error, "cannot use operator[] with boolean");
+                    CHECK_THROWS_NAME(j_nonarray_const[0], std::domain_error, "cannot use operator[] with boolean");
                 }
 
                 SECTION("string")
@@ -2849,6 +2931,8 @@ TEST_CASE("element access")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
+                    CHECK_THROWS_NAME(j_nonarray[0], std::domain_error, "cannot use operator[] with string");
+                    CHECK_THROWS_NAME(j_nonarray_const[0], std::domain_error, "cannot use operator[] with string");
                 }
 
                 SECTION("object")
@@ -2857,6 +2941,8 @@ TEST_CASE("element access")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
+                    CHECK_THROWS_NAME(j_nonarray[0], std::domain_error, "cannot use operator[] with object");
+                    CHECK_THROWS_NAME(j_nonarray_const[0], std::domain_error, "cannot use operator[] with object");
                 }
 
                 SECTION("number (integer)")
@@ -2865,6 +2951,8 @@ TEST_CASE("element access")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
+                    CHECK_THROWS_NAME(j_nonarray[0], std::domain_error, "cannot use operator[] with number");
+                    CHECK_THROWS_NAME(j_nonarray_const[0], std::domain_error, "cannot use operator[] with number");
                 }
 
                 SECTION("number (floating-point)")
@@ -2873,6 +2961,8 @@ TEST_CASE("element access")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
                     CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
+                    CHECK_THROWS_NAME(j_nonarray[0], std::domain_error, "cannot use operator[] with number");
+                    CHECK_THROWS_NAME(j_nonarray_const[0], std::domain_error, "cannot use operator[] with number");
                 }
             }
         }
@@ -2919,6 +3009,7 @@ TEST_CASE("element access")
                 {
                     json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                     CHECK_THROWS_AS(jarray.erase(7), std::out_of_range);
+                    CHECK_THROWS_NAME(jarray.erase(7), std::out_of_range, "index out of range");
                 }
             }
 
@@ -3015,6 +3106,15 @@ TEST_CASE("element access")
                         CHECK_THROWS_AS(jarray.erase(jarray.begin(), jarray2.end()), std::domain_error);
                         CHECK_THROWS_AS(jarray.erase(jarray2.begin(), jarray.end()), std::domain_error);
                         CHECK_THROWS_AS(jarray.erase(jarray2.begin(), jarray2.end()), std::domain_error);
+
+                        CHECK_THROWS_NAME(jarray.erase(jarray2.begin()), std::domain_error,
+                                          "iterator does not fit current value");
+                        CHECK_THROWS_NAME(jarray.erase(jarray.begin(), jarray2.end()), std::domain_error,
+                                          "iterators do not fit current value");
+                        CHECK_THROWS_NAME(jarray.erase(jarray2.begin(), jarray.end()), std::domain_error,
+                                          "iterators do not fit current value");
+                        CHECK_THROWS_NAME(jarray.erase(jarray2.begin(), jarray2.end()), std::domain_error,
+                                          "iterators do not fit current value");
                     }
                     {
                         json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
@@ -3023,6 +3123,15 @@ TEST_CASE("element access")
                         CHECK_THROWS_AS(jarray.erase(jarray.cbegin(), jarray2.cend()), std::domain_error);
                         CHECK_THROWS_AS(jarray.erase(jarray2.cbegin(), jarray.cend()), std::domain_error);
                         CHECK_THROWS_AS(jarray.erase(jarray2.cbegin(), jarray2.cend()), std::domain_error);
+
+                        CHECK_THROWS_NAME(jarray.erase(jarray2.cbegin()), std::domain_error,
+                                          "iterator does not fit current value");
+                        CHECK_THROWS_NAME(jarray.erase(jarray.cbegin(), jarray2.cend()), std::domain_error,
+                                          "iterators do not fit current value");
+                        CHECK_THROWS_NAME(jarray.erase(jarray2.cbegin(), jarray.cend()), std::domain_error,
+                                          "iterators do not fit current value");
+                        CHECK_THROWS_NAME(jarray.erase(jarray2.cbegin(), jarray2.cend()), std::domain_error,
+                                          "iterators do not fit current value");
                     }
                 }
             }
@@ -3033,36 +3142,42 @@ TEST_CASE("element access")
                 {
                     json j_nonobject(json::value_t::null);
                     CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase(0), std::domain_error, "cannot use erase() with null");
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
                     CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase(0), std::domain_error, "cannot use erase() with boolean");
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
                     CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase(0), std::domain_error, "cannot use erase() with string");
                 }
 
                 SECTION("object")
                 {
                     json j_nonobject(json::value_t::object);
                     CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase(0), std::domain_error, "cannot use erase() with object");
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
                     CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase(0), std::domain_error, "cannot use erase() with number");
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
                     CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase(0), std::domain_error, "cannot use erase() with number");
                 }
             }
         }
@@ -3098,16 +3213,8 @@ TEST_CASE("element access")
             {
                 CHECK_THROWS_AS(j.at("foo"), std::out_of_range);
                 CHECK_THROWS_AS(j_const.at("foo"), std::out_of_range);
-
-                // exception name
-                try
-                {
-                    j.at("foo");
-                }
-                catch (std::out_of_range& e)
-                {
-                    CHECK(std::string(e.what()) == "key 'foo' not found");
-                }
+                CHECK_THROWS_NAME(j.at("foo"), std::out_of_range, "key 'foo' not found");
+                CHECK_THROWS_NAME(j_const.at("foo"), std::out_of_range, "key 'foo' not found");
             }
 
             SECTION("access on non-object type")
@@ -3118,16 +3225,8 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-
-                    // exception name
-                    try
-                    {
-                        j_nonobject.at("foo");
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with null");
-                    }
+                    CHECK_THROWS_NAME(j_nonobject.at("foo"), std::domain_error, "cannot use at() with null");
+                    CHECK_THROWS_NAME(j_nonobject_const.at("foo"), std::domain_error, "cannot use at() with null");
                 }
 
                 SECTION("boolean")
@@ -3136,16 +3235,8 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-
-                    // exception name
-                    try
-                    {
-                        j_nonobject.at("foo");
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with boolean");
-                    }
+                    CHECK_THROWS_NAME(j_nonobject.at("foo"), std::domain_error, "cannot use at() with boolean");
+                    CHECK_THROWS_NAME(j_nonobject_const.at("foo"), std::domain_error, "cannot use at() with boolean");
                 }
 
                 SECTION("string")
@@ -3154,16 +3245,8 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-
-                    // exception name
-                    try
-                    {
-                        j_nonobject.at("foo");
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with string");
-                    }
+                    CHECK_THROWS_NAME(j_nonobject.at("foo"), std::domain_error, "cannot use at() with string");
+                    CHECK_THROWS_NAME(j_nonobject_const.at("foo"), std::domain_error, "cannot use at() with string");
                 }
 
                 SECTION("array")
@@ -3172,16 +3255,8 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-
-                    // exception name
-                    try
-                    {
-                        j_nonobject.at("foo");
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with array");
-                    }
+                    CHECK_THROWS_NAME(j_nonobject.at("foo"), std::domain_error, "cannot use at() with array");
+                    CHECK_THROWS_NAME(j_nonobject_const.at("foo"), std::domain_error, "cannot use at() with array");
                 }
 
                 SECTION("number (integer)")
@@ -3190,16 +3265,8 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-
-                    // exception name
-                    try
-                    {
-                        j_nonobject.at("foo");
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with number");
-                    }
+                    CHECK_THROWS_NAME(j_nonobject.at("foo"), std::domain_error, "cannot use at() with number");
+                    CHECK_THROWS_NAME(j_nonobject_const.at("foo"), std::domain_error, "cannot use at() with number");
                 }
 
                 SECTION("number (floating-point)")
@@ -3208,16 +3275,8 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-
-                    // exception name
-                    try
-                    {
-                        j_nonobject.at("foo");
-                    }
-                    catch (std::domain_error& e)
-                    {
-                        CHECK(std::string(e.what()) == "cannot use at() with number");
-                    }
+                    CHECK_THROWS_NAME(j_nonobject.at("foo"), std::domain_error, "cannot use at() with number");
+                    CHECK_THROWS_NAME(j_nonobject_const.at("foo"), std::domain_error, "cannot use at() with number");
                 }
             }
         }
@@ -3273,6 +3332,9 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.value("foo", 1), std::domain_error, "cannot use value() with null");
+                    CHECK_THROWS_NAME(j_nonobject_const.value("foo", 1), std::domain_error,
+                                      "cannot use value() with null");
                 }
 
                 SECTION("boolean")
@@ -3281,6 +3343,10 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.value("foo", 1), std::domain_error,
+                                      "cannot use value() with boolean");
+                    CHECK_THROWS_NAME(j_nonobject_const.value("foo", 1), std::domain_error,
+                                      "cannot use value() with boolean");
                 }
 
                 SECTION("string")
@@ -3289,6 +3355,9 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.value("foo", 1), std::domain_error, "cannot use value() with string");
+                    CHECK_THROWS_NAME(j_nonobject_const.value("foo", 1), std::domain_error,
+                                      "cannot use value() with string");
                 }
 
                 SECTION("array")
@@ -3297,6 +3366,9 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.value("foo", 1), std::domain_error, "cannot use value() with array");
+                    CHECK_THROWS_NAME(j_nonobject_const.value("foo", 1), std::domain_error,
+                                      "cannot use value() with array");
                 }
 
                 SECTION("number (integer)")
@@ -3305,6 +3377,9 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.value("foo", 1), std::domain_error, "cannot use value() with number");
+                    CHECK_THROWS_NAME(j_nonobject_const.value("foo", 1), std::domain_error,
+                                      "cannot use value() with number");
                 }
 
                 SECTION("number (floating-point)")
@@ -3313,6 +3388,9 @@ TEST_CASE("element access")
                     const json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
                     CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.value("foo", 1), std::domain_error, "cannot use value() with number");
+                    CHECK_THROWS_NAME(j_nonobject_const.value("foo", 1), std::domain_error,
+                                      "cannot use value() with number");
                 }
             }
         }
@@ -3385,6 +3463,9 @@ TEST_CASE("element access")
                     CHECK_NOTHROW(j_nonobject2[json::object_t::key_type("foo")]);
                     CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
                     CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_NAME(j_const_nonobject["foo"], std::domain_error, "cannot use operator[] with null");
+                    CHECK_THROWS_NAME(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error,
+                                      "cannot use operator[] with null");
                 }
 
                 SECTION("boolean")
@@ -3395,6 +3476,13 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
                     CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
                     CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject["foo"], std::domain_error, "cannot use operator[] with boolean");
+                    CHECK_THROWS_NAME(j_nonobject[json::object_t::key_type("foo")], std::domain_error,
+                                      "cannot use operator[] with boolean");
+                    CHECK_THROWS_NAME(j_const_nonobject["foo"], std::domain_error,
+                                      "cannot use operator[] with boolean");
+                    CHECK_THROWS_NAME(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error,
+                                      "cannot use operator[] with boolean");
                 }
 
                 SECTION("string")
@@ -3405,6 +3493,12 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
                     CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
                     CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject["foo"], std::domain_error, "cannot use operator[] with string");
+                    CHECK_THROWS_NAME(j_nonobject[json::object_t::key_type("foo")], std::domain_error,
+                                      "cannot use operator[] with string");
+                    CHECK_THROWS_NAME(j_const_nonobject["foo"], std::domain_error, "cannot use operator[] with string");
+                    CHECK_THROWS_NAME(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error,
+                                      "cannot use operator[] with string");
                 }
 
                 SECTION("array")
@@ -3415,6 +3509,12 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
                     CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
                     CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject["foo"], std::domain_error, "cannot use operator[] with array");
+                    CHECK_THROWS_NAME(j_nonobject[json::object_t::key_type("foo")], std::domain_error,
+                                      "cannot use operator[] with array");
+                    CHECK_THROWS_NAME(j_const_nonobject["foo"], std::domain_error, "cannot use operator[] with array");
+                    CHECK_THROWS_NAME(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error,
+                                      "cannot use operator[] with array");
                 }
 
                 SECTION("number (integer)")
@@ -3425,6 +3525,12 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
                     CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
                     CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject["foo"], std::domain_error, "cannot use operator[] with number");
+                    CHECK_THROWS_NAME(j_nonobject[json::object_t::key_type("foo")], std::domain_error,
+                                      "cannot use operator[] with number");
+                    CHECK_THROWS_NAME(j_const_nonobject["foo"], std::domain_error, "cannot use operator[] with number");
+                    CHECK_THROWS_NAME(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error,
+                                      "cannot use operator[] with number");
                 }
 
                 SECTION("number (floating-point)")
@@ -3435,6 +3541,12 @@ TEST_CASE("element access")
                     CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
                     CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
                     CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject["foo"], std::domain_error, "cannot use operator[] with number");
+                    CHECK_THROWS_NAME(j_nonobject[json::object_t::key_type("foo")], std::domain_error,
+                                      "cannot use operator[] with number");
+                    CHECK_THROWS_NAME(j_const_nonobject["foo"], std::domain_error, "cannot use operator[] with number");
+                    CHECK_THROWS_NAME(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error,
+                                      "cannot use operator[] with number");
                 }
             }
         }
@@ -3572,6 +3684,14 @@ TEST_CASE("element access")
                         CHECK_THROWS_AS(jobject.erase(jobject.begin(), jobject2.end()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject.end()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject2.end()), std::domain_error);
+                        CHECK_THROWS_NAME(jobject.erase(jobject2.begin()), std::domain_error,
+                                          "iterator does not fit current value");
+                        CHECK_THROWS_NAME(jobject.erase(jobject.begin(), jobject2.end()), std::domain_error,
+                                          "iterators do not fit current value");
+                        CHECK_THROWS_NAME(jobject.erase(jobject2.begin(), jobject.end()), std::domain_error,
+                                          "iterators do not fit current value");
+                        CHECK_THROWS_NAME(jobject.erase(jobject2.begin(), jobject2.end()), std::domain_error,
+                                          "iterators do not fit current value");
                     }
                     {
                         json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
@@ -3580,6 +3700,14 @@ TEST_CASE("element access")
                         CHECK_THROWS_AS(jobject.erase(jobject.cbegin(), jobject2.cend()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject.cend()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject2.cend()), std::domain_error);
+                        CHECK_THROWS_NAME(jobject.erase(jobject2.cbegin()), std::domain_error,
+                                          "iterator does not fit current value");
+                        CHECK_THROWS_NAME(jobject.erase(jobject.cbegin(), jobject2.cend()), std::domain_error,
+                                          "iterators do not fit current value");
+                        CHECK_THROWS_NAME(jobject.erase(jobject2.cbegin(), jobject.cend()), std::domain_error,
+                                          "iterators do not fit current value");
+                        CHECK_THROWS_NAME(jobject.erase(jobject2.cbegin(), jobject2.cend()), std::domain_error,
+                                          "iterators do not fit current value");
                     }
                 }
             }
@@ -3590,36 +3718,42 @@ TEST_CASE("element access")
                 {
                     json j_nonobject(json::value_t::null);
                     CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase("foo"), std::domain_error, "cannot use erase() with null");
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
                     CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase("foo"), std::domain_error, "cannot use erase() with boolean");
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
                     CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase("foo"), std::domain_error, "cannot use erase() with string");
                 }
 
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
                     CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase("foo"), std::domain_error, "cannot use erase() with array");
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
                     CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase("foo"), std::domain_error, "cannot use erase() with number");
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
                     CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
+                    CHECK_THROWS_NAME(j_nonobject.erase("foo"), std::domain_error, "cannot use erase() with number");
                 }
             }
         }
@@ -3795,11 +3929,15 @@ TEST_CASE("element access")
                     json j;
                     CHECK_THROWS_AS(j.front(), std::out_of_range);
                     CHECK_THROWS_AS(j.back(), std::out_of_range);
+                    CHECK_THROWS_NAME(j.front(), std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(j.back(), std::out_of_range, "cannot get value");
                 }
                 {
                     const json j{};
                     CHECK_THROWS_AS(j.front(), std::out_of_range);
                     CHECK_THROWS_AS(j.back(), std::out_of_range);
+                    CHECK_THROWS_NAME(j.front(), std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(j.back(), std::out_of_range, "cannot get value");
                 }
             }
 
@@ -3809,11 +3947,15 @@ TEST_CASE("element access")
                     json j = "foo";
                     CHECK(j.front() == j);
                     CHECK(j.back() == j);
+                    CHECK_THROWS_NAME(j.front(), std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(j.back(), std::out_of_range, "cannot get value");
                 }
                 {
                     const json j = "bar";
                     CHECK(j.front() == j);
                     CHECK(j.back() == j);
+                    CHECK_THROWS_NAME(j.front(), std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(j.back(), std::out_of_range, "cannot get value");
                 }
             }
 
@@ -3823,11 +3965,15 @@ TEST_CASE("element access")
                     json j = false;
                     CHECK(j.front() == j);
                     CHECK(j.back() == j);
+                    CHECK_THROWS_NAME(j.front(), std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(j.back(), std::out_of_range, "cannot get value");
                 }
                 {
                     const json j = true;
                     CHECK(j.front() == j);
                     CHECK(j.back() == j);
+                    CHECK_THROWS_NAME(j.front(), std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(j.back(), std::out_of_range, "cannot get value");
                 }
             }
 
@@ -3837,11 +3983,15 @@ TEST_CASE("element access")
                     json j = 17;
                     CHECK(j.front() == j);
                     CHECK(j.back() == j);
+                    CHECK_THROWS_NAME(j.front(), std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(j.back(), std::out_of_range, "cannot get value");
                 }
                 {
                     const json j = 17;
                     CHECK(j.front() == j);
                     CHECK(j.back() == j);
+                    CHECK_THROWS_NAME(j.front(), std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(j.back(), std::out_of_range, "cannot get value");
                 }
             }
 
@@ -3851,11 +4001,15 @@ TEST_CASE("element access")
                     json j = 23.42;
                     CHECK(j.front() == j);
                     CHECK(j.back() == j);
+                    CHECK_THROWS_NAME(j.front(), std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(j.back(), std::out_of_range, "cannot get value");
                 }
                 {
                     const json j = 23.42;
                     CHECK(j.front() == j);
                     CHECK(j.back() == j);
+                    CHECK_THROWS_NAME(j.front(), std::out_of_range, "cannot get value");
+                    CHECK_THROWS_NAME(j.back(), std::out_of_range, "cannot get value");
                 }
             }
         }
@@ -3867,10 +4021,12 @@ TEST_CASE("element access")
                 {
                     json j;
                     CHECK_THROWS_AS(j.erase(j.begin()), std::domain_error);
+                    CHECK_THROWS_NAME(j.erase(j.begin()), std::domain_error, "cannot use erase() with null");
                 }
                 {
                     json j;
                     CHECK_THROWS_AS(j.erase(j.cbegin()), std::domain_error);
+                    CHECK_THROWS_NAME(j.erase(j.begin()), std::domain_error, "cannot use erase() with null");
                 }
             }
 
@@ -3946,10 +4102,12 @@ TEST_CASE("element access")
                 {
                     json j = "foo";
                     CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.end()), std::out_of_range, "iterator out of range");
                 }
                 {
                     json j = "bar";
                     CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.cend()), std::out_of_range, "iterator out of range");
                 }
             }
 
@@ -3958,10 +4116,12 @@ TEST_CASE("element access")
                 {
                     json j = false;
                     CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.end()), std::out_of_range, "iterator out of range");
                 }
                 {
                     json j = true;
                     CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.cend()), std::out_of_range, "iterator out of range");
                 }
             }
 
@@ -3970,10 +4130,12 @@ TEST_CASE("element access")
                 {
                     json j = 17;
                     CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.end()), std::out_of_range, "iterator out of range");
                 }
                 {
                     json j = 17;
                     CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.cend()), std::out_of_range, "iterator out of range");
                 }
             }
 
@@ -3982,10 +4144,12 @@ TEST_CASE("element access")
                 {
                     json j = 23.42;
                     CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.end()), std::out_of_range, "iterator out of range");
                 }
                 {
                     json j = 23.42;
                     CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.cend()), std::out_of_range, "iterator out of range");
                 }
             }
         }
@@ -3997,10 +4161,12 @@ TEST_CASE("element access")
                 {
                     json j;
                     CHECK_THROWS_AS(j.erase(j.begin(), j.end()), std::domain_error);
+                    CHECK_THROWS_NAME(j.erase(j.begin(), j.end()), std::domain_error, "cannot use erase() with null");
                 }
                 {
                     json j;
                     CHECK_THROWS_AS(j.erase(j.cbegin(), j.cend()), std::domain_error);
+                    CHECK_THROWS_NAME(j.erase(j.cbegin(), j.cend()), std::domain_error, "cannot use erase() with null");
                 }
             }
 
@@ -4077,11 +4243,15 @@ TEST_CASE("element access")
                     json j = "foo";
                     CHECK_THROWS_AS(j.erase(j.end(), j.end()), std::out_of_range);
                     CHECK_THROWS_AS(j.erase(j.begin(), j.begin()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.end(), j.end()), std::out_of_range, "iterators out of range");
+                    CHECK_THROWS_NAME(j.erase(j.begin(), j.begin()), std::out_of_range, "iterators out of range");
                 }
                 {
                     json j = "bar";
                     CHECK_THROWS_AS(j.erase(j.cend(), j.cend()), std::out_of_range);
                     CHECK_THROWS_AS(j.erase(j.cbegin(), j.cbegin()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.cend(), j.cend()), std::out_of_range, "iterators out of range");
+                    CHECK_THROWS_NAME(j.erase(j.cbegin(), j.cbegin()), std::out_of_range, "iterators out of range");
                 }
             }
 
@@ -4091,11 +4261,15 @@ TEST_CASE("element access")
                     json j = false;
                     CHECK_THROWS_AS(j.erase(j.end(), j.end()), std::out_of_range);
                     CHECK_THROWS_AS(j.erase(j.begin(), j.begin()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.end(), j.end()), std::out_of_range, "iterators out of range");
+                    CHECK_THROWS_NAME(j.erase(j.begin(), j.begin()), std::out_of_range, "iterators out of range");
                 }
                 {
                     json j = true;
                     CHECK_THROWS_AS(j.erase(j.cend(), j.cend()), std::out_of_range);
                     CHECK_THROWS_AS(j.erase(j.cbegin(), j.cbegin()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.cend(), j.cend()), std::out_of_range, "iterators out of range");
+                    CHECK_THROWS_NAME(j.erase(j.cbegin(), j.cbegin()), std::out_of_range, "iterators out of range");
                 }
             }
 
@@ -4105,11 +4279,15 @@ TEST_CASE("element access")
                     json j = 17;
                     CHECK_THROWS_AS(j.erase(j.end(), j.end()), std::out_of_range);
                     CHECK_THROWS_AS(j.erase(j.begin(), j.begin()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.end(), j.end()), std::out_of_range, "iterators out of range");
+                    CHECK_THROWS_NAME(j.erase(j.begin(), j.begin()), std::out_of_range, "iterators out of range");
                 }
                 {
                     json j = 17;
                     CHECK_THROWS_AS(j.erase(j.cend(), j.cend()), std::out_of_range);
                     CHECK_THROWS_AS(j.erase(j.cbegin(), j.cbegin()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.cend(), j.cend()), std::out_of_range, "iterators out of range");
+                    CHECK_THROWS_NAME(j.erase(j.cbegin(), j.cbegin()), std::out_of_range, "iterators out of range");
                 }
             }
 
@@ -4119,11 +4297,15 @@ TEST_CASE("element access")
                     json j = 23.42;
                     CHECK_THROWS_AS(j.erase(j.end(), j.end()), std::out_of_range);
                     CHECK_THROWS_AS(j.erase(j.begin(), j.begin()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.end(), j.end()), std::out_of_range, "iterators out of range");
+                    CHECK_THROWS_NAME(j.erase(j.begin(), j.begin()), std::out_of_range, "iterators out of range");
                 }
                 {
                     json j = 23.42;
                     CHECK_THROWS_AS(j.erase(j.cend(), j.cend()), std::out_of_range);
                     CHECK_THROWS_AS(j.erase(j.cbegin(), j.cbegin()), std::out_of_range);
+                    CHECK_THROWS_NAME(j.erase(j.cend(), j.cend()), std::out_of_range, "iterators out of range");
+                    CHECK_THROWS_NAME(j.erase(j.cbegin(), j.cbegin()), std::out_of_range, "iterators out of range");
                 }
             }
         }
@@ -4328,8 +4510,10 @@ TEST_CASE("iterators")
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
                 CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK_THROWS_NAME(it.key(), std::domain_error, "cannot use key() for non-object iterators");
                 CHECK(it.value() == json(true));
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK_THROWS_NAME(cit.key(), std::domain_error, "cannot use key() for non-object iterators");
                 CHECK(cit.value() == json(true));
 
                 auto rit = j.rend();
@@ -4338,6 +4522,10 @@ TEST_CASE("iterators")
                 CHECK_THROWS_AS(rit.value(), std::out_of_range);
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
                 CHECK_THROWS_AS(crit.value(), std::out_of_range);
+                CHECK_THROWS_NAME(rit.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(rit.value(), std::out_of_range, "cannot get value");
+                CHECK_THROWS_NAME(crit.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(crit.value(), std::out_of_range, "cannot get value");
             }
         }
 
@@ -4526,8 +4714,10 @@ TEST_CASE("iterators")
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
                 CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK_THROWS_NAME(it.key(), std::domain_error, "cannot use key() for non-object iterators");
                 CHECK(it.value() == json("hello world"));
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK_THROWS_NAME(cit.key(), std::domain_error, "cannot use key() for non-object iterators");
                 CHECK(cit.value() == json("hello world"));
 
                 auto rit = j.rend();
@@ -4536,6 +4726,10 @@ TEST_CASE("iterators")
                 CHECK_THROWS_AS(rit.value(), std::out_of_range);
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
                 CHECK_THROWS_AS(crit.value(), std::out_of_range);
+                CHECK_THROWS_NAME(rit.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(rit.value(), std::out_of_range, "cannot get value");
+                CHECK_THROWS_NAME(crit.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(crit.value(), std::out_of_range, "cannot get value");
             }
         }
 
@@ -4717,8 +4911,10 @@ TEST_CASE("iterators")
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
                 CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK_THROWS_NAME(it.key(), std::domain_error, "cannot use key() for non-object iterators");
                 CHECK(it.value() == json(1));
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK_THROWS_NAME(cit.key(), std::domain_error, "cannot use key() for non-object iterators");
                 CHECK(cit.value() == json(1));
             }
         }
@@ -5092,8 +5288,10 @@ TEST_CASE("iterators")
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
                 CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK_THROWS_NAME(it.key(), std::domain_error, "cannot use key() for non-object iterators");
                 CHECK(it.value() == json(23));
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK_THROWS_NAME(cit.key(), std::domain_error, "cannot use key() for non-object iterators");
                 CHECK(cit.value() == json(23));
 
                 auto rit = j.rend();
@@ -5102,6 +5300,10 @@ TEST_CASE("iterators")
                 CHECK_THROWS_AS(rit.value(), std::out_of_range);
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
                 CHECK_THROWS_AS(crit.value(), std::out_of_range);
+                CHECK_THROWS_NAME(rit.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(rit.value(), std::out_of_range, "cannot get value");
+                CHECK_THROWS_NAME(crit.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(crit.value(), std::out_of_range, "cannot get value");
             }
         }
 
@@ -5290,8 +5492,10 @@ TEST_CASE("iterators")
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
                 CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK_THROWS_NAME(it.key(), std::domain_error, "cannot use key() for non-object iterators");
                 CHECK(it.value() == json(23.42));
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK_THROWS_NAME(cit.key(), std::domain_error, "cannot use key() for non-object iterators");
                 CHECK(cit.value() == json(23.42));
 
                 auto rit = j.rend();
@@ -5300,6 +5504,10 @@ TEST_CASE("iterators")
                 CHECK_THROWS_AS(rit.value(), std::out_of_range);
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
                 CHECK_THROWS_AS(crit.value(), std::out_of_range);
+                CHECK_THROWS_NAME(rit.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(rit.value(), std::out_of_range, "cannot get value");
+                CHECK_THROWS_NAME(crit.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(crit.value(), std::out_of_range, "cannot get value");
             }
         }
 
@@ -5361,6 +5569,10 @@ TEST_CASE("iterators")
                 CHECK_THROWS_AS(it.value(), std::out_of_range);
                 CHECK_THROWS_AS(cit.key(), std::domain_error);
                 CHECK_THROWS_AS(cit.value(), std::out_of_range);
+                CHECK_THROWS_NAME(it.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(it.value(), std::out_of_range, "cannot get value");
+                CHECK_THROWS_NAME(cit.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(cit.value(), std::out_of_range, "cannot get value");
 
                 auto rit = j.rend();
                 auto crit = j.crend();
@@ -5368,6 +5580,10 @@ TEST_CASE("iterators")
                 CHECK_THROWS_AS(rit.value(), std::out_of_range);
                 CHECK_THROWS_AS(crit.key(), std::domain_error);
                 CHECK_THROWS_AS(crit.value(), std::out_of_range);
+                CHECK_THROWS_NAME(rit.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(rit.value(), std::out_of_range, "cannot get value");
+                CHECK_THROWS_NAME(crit.key(), std::domain_error, "cannot use key() for non-object iterators");
+                CHECK_THROWS_NAME(crit.value(), std::out_of_range, "cannot get value");
             }
         }
     }
@@ -5428,6 +5644,14 @@ TEST_CASE("iterators")
                     CHECK_THROWS_AS(it1_c < it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c < it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c < it3_c, std::domain_error);
+                    CHECK_THROWS_NAME(it1 < it1, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 < it2, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2 < it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 < it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c < it1_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c < it2_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2_c < it3_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c < it3_c, std::domain_error, "cannot compare order of object iterators");
                 }
                 else
                 {
@@ -5454,6 +5678,14 @@ TEST_CASE("iterators")
                     CHECK_THROWS_AS(it1_c <= it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c <= it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c <= it3_c, std::domain_error);
+                    CHECK_THROWS_NAME(it1 <= it1, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 <= it2, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2 <= it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 <= it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c <= it1_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c <= it2_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2_c <= it3_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c <= it3_c, std::domain_error, "cannot compare order of object iterators");
                 }
                 else
                 {
@@ -5481,6 +5713,14 @@ TEST_CASE("iterators")
                     CHECK_THROWS_AS(it1_c > it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c > it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c > it3_c, std::domain_error);
+                    CHECK_THROWS_NAME(it1 > it1, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 > it2, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2 > it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 > it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c > it1_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c > it2_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2_c > it3_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c > it3_c, std::domain_error, "cannot compare order of object iterators");
                 }
                 else
                 {
@@ -5508,6 +5748,14 @@ TEST_CASE("iterators")
                     CHECK_THROWS_AS(it1_c >= it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c >= it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c >= it3_c, std::domain_error);
+                    CHECK_THROWS_NAME(it1 >= it1, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 >= it2, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2 >= it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1 >= it3, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c >= it1_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c >= it2_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it2_c >= it3_c, std::domain_error, "cannot compare order of object iterators");
+                    CHECK_THROWS_NAME(it1_c >= it3_c, std::domain_error, "cannot compare order of object iterators");
                 }
                 else
                 {
@@ -5533,9 +5781,17 @@ TEST_CASE("iterators")
                 {
                     CHECK_THROWS_AS(j.begin() == k.begin(), std::domain_error);
                     CHECK_THROWS_AS(j.cbegin() == k.cbegin(), std::domain_error);
+                    CHECK_THROWS_NAME(j.begin() == k.begin(), std::domain_error,
+                                      "cannot compare iterators of different containers");
+                    CHECK_THROWS_NAME(j.cbegin() == k.cbegin(), std::domain_error,
+                                      "cannot compare iterators of different containers");
 
                     CHECK_THROWS_AS(j.begin() < k.begin(), std::domain_error);
                     CHECK_THROWS_AS(j.cbegin() < k.cbegin(), std::domain_error);
+                    CHECK_THROWS_NAME(j.begin() < k.begin(), std::domain_error,
+                                      "cannot compare iterators of different containers");
+                    CHECK_THROWS_NAME(j.cbegin() < k.cbegin(), std::domain_error,
+                                      "cannot compare iterators of different containers");
                 }
             }
         }
@@ -5555,42 +5811,52 @@ TEST_CASE("iterators")
                 {
                     auto it = j_object.begin();
                     CHECK_THROWS_AS(it += 1, std::domain_error);
+                    CHECK_THROWS_NAME(it += 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.cbegin();
                     CHECK_THROWS_AS(it += 1, std::domain_error);
+                    CHECK_THROWS_NAME(it += 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.begin();
                     CHECK_THROWS_AS(it + 1, std::domain_error);
+                    CHECK_THROWS_NAME(it + 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.cbegin();
                     CHECK_THROWS_AS(it + 1, std::domain_error);
+                    CHECK_THROWS_NAME(it + 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.begin();
                     CHECK_THROWS_AS(it -= 1, std::domain_error);
+                    CHECK_THROWS_NAME(it -= 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.cbegin();
                     CHECK_THROWS_AS(it -= 1, std::domain_error);
+                    CHECK_THROWS_NAME(it -= 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.begin();
                     CHECK_THROWS_AS(it - 1, std::domain_error);
+                    CHECK_THROWS_NAME(it - 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.cbegin();
                     CHECK_THROWS_AS(it - 1, std::domain_error);
+                    CHECK_THROWS_NAME(it - 1, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.begin();
                     CHECK_THROWS_AS(it - it, std::domain_error);
+                    CHECK_THROWS_NAME(it - it, std::domain_error, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.cbegin();
                     CHECK_THROWS_AS(it - it, std::domain_error);
+                    CHECK_THROWS_NAME(it - it, std::domain_error, "cannot use offsets with object iterators");
                 }
             }
 
@@ -6693,6 +6959,16 @@ TEST_CASE("modifiers")
                 {
                     json j = 1;
                     CHECK_THROWS_AS(j.push_back("Hello"), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j.push_back("Hello");
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(e.what() == std::string("cannot use push_back() with number"));
+                    }
                 }
             }
 
@@ -6722,6 +6998,16 @@ TEST_CASE("modifiers")
                     json j = 1;
                     json k("Hello");
                     CHECK_THROWS_AS(j.push_back(k), std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j.push_back(k);
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(e.what() == std::string("cannot use push_back() with number"));
+                    }
                 }
             }
         }
@@ -6754,6 +7040,16 @@ TEST_CASE("modifiers")
                 json j = 1;
                 json k("Hello");
                 CHECK_THROWS_AS(j.push_back(json::object_t::value_type({"one", 1})), std::domain_error);
+
+                // exception name
+                try
+                {
+                    j.push_back(k);
+                }
+                catch (std::domain_error& e)
+                {
+                    CHECK(e.what() == std::string("cannot use push_back() with number"));
+                }
             }
         }
     }
@@ -6785,6 +7081,16 @@ TEST_CASE("modifiers")
                 {
                     json j = 1;
                     CHECK_THROWS_AS(j += "Hello", std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j += "Hello";
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(e.what() == std::string("cannot use push_back() with number"));
+                    }
                 }
             }
 
@@ -6814,6 +7120,16 @@ TEST_CASE("modifiers")
                     json j = 1;
                     json k("Hello");
                     CHECK_THROWS_AS(j += k, std::domain_error);
+
+                    // exception name
+                    try
+                    {
+                        j += k;
+                    }
+                    catch (std::domain_error& e)
+                    {
+                        CHECK(e.what() == std::string("cannot use push_back() with number"));
+                    }
                 }
             }
         }
@@ -6846,6 +7162,17 @@ TEST_CASE("modifiers")
                 json j = 1;
                 json k("Hello");
                 CHECK_THROWS_AS(j += json::object_t::value_type({"one", 1}), std::domain_error);
+
+
+                // exception name
+                try
+                {
+                    j += json::object_t::value_type({"one", 1});
+                }
+                catch (std::domain_error& e)
+                {
+                    CHECK(e.what() == std::string("cannot use push_back() with number"));
+                }
             }
         }
     }
@@ -6982,6 +7309,25 @@ TEST_CASE("modifiers")
                 CHECK_THROWS_AS(j_array.insert(j_array.end(), j_array.begin(), j_array.end()), std::domain_error);
                 CHECK_THROWS_AS(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()),
                                 std::domain_error);
+
+                // exception names
+                try
+                {
+                    j_array.insert(j_array.end(), j_array.begin(), j_array.end());
+                }
+                catch (std::domain_error& e)
+                {
+                    CHECK(e.what() == std::string("passed iterators may not belong to container"));
+                }
+
+                try
+                {
+                    j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end());
+                }
+                catch (std::domain_error& e)
+                {
+                    CHECK(e.what() == std::string("iterators do not fit"));
+                }
             }
         }
 

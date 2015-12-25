@@ -1359,7 +1359,8 @@ class basic_json
 
     @throw std::domain_error if @a type_deduction is `false`, @a manual_type is
     `value_t::object`, but @a init contains an element which is not a pair
-    whose first element is a string
+    whose first element is a string; example: `"cannot create object from
+    initializer list"`
 
     @complexity Linear in the size of the initializer list @a init.
 
@@ -1552,11 +1553,13 @@ class basic_json
     @param[in] last end of the range to copy from (excluded)
 
     @throw std::domain_error if iterators are not compatible; that is, do not
-    belong to the same JSON value
+    belong to the same JSON value; example: `"iterators are not compatible"`
     @throw std::out_of_range if iterators are for a primitive type (number,
-    boolean, or string) where an out of range error can be detected easily
+    boolean, or string) where an out of range error can be detected easily;
+    example: `"iterators out of range"`
     @throw std::bad_alloc if allocation for object, array, or string fails
-    @throw std::domain_error if called with a null value
+    @throw std::domain_error if called with a null value; example: `"cannot use
+    construct with iterators from null"`
 
     @complexity Linear in distance between @a first and @a last.
 
@@ -2412,7 +2415,7 @@ class basic_json
     @return copy of the JSON value, converted to type @a ValueType
 
     @throw std::domain_error in case passed type @a ValueType is incompatible
-    to JSON
+    to JSON; example: `"type must be object, but is null"`
 
     @complexity Linear in the size of the JSON value.
 
@@ -2785,7 +2788,8 @@ class basic_json
 
     @return reference to the element at index @a idx
 
-    @throw std::domain_error if JSON is not an array or null
+    @throw std::domain_error if JSON is not an array or null; example: `"cannot
+    use operator[] with null"`
 
     @complexity Constant if @a idx is in the range of the array. Otherwise
     linear in `idx - size()`.
@@ -2830,7 +2834,8 @@ class basic_json
 
     @return const reference to the element at index @a idx
 
-    @throw std::domain_error if JSON is not an array
+    @throw std::domain_error if JSON is not an array; example: `"cannot use
+    operator[] with null"`
 
     @complexity Constant.
 
@@ -2865,7 +2870,8 @@ class basic_json
 
     @return reference to the element at key @a key
 
-    @throw std::domain_error if JSON is not an object or null
+    @throw std::domain_error if JSON is not an object or null; example:
+    `"cannot use operator[] with null"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -2911,7 +2917,8 @@ class basic_json
 
     @return const reference to the element at key @a key
 
-    @throw std::domain_error if JSON is not an object
+    @throw std::domain_error if JSON is not an object; example: `"cannot use
+    operator[] with null"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -2952,7 +2959,8 @@ class basic_json
 
     @return reference to the element at key @a key
 
-    @throw std::domain_error if JSON is not an object or null
+    @throw std::domain_error if JSON is not an object or null; example:
+    `"cannot use operator[] with null"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -3001,7 +3009,8 @@ class basic_json
 
     @return const reference to the element at key @a key
 
-    @throw std::domain_error if JSON is not an object
+    @throw std::domain_error if JSON is not an object; example: `"cannot use
+    operator[] with null"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -3061,7 +3070,8 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
-    @throw std::domain_error if JSON is not an object
+    @throw std::domain_error if JSON is not an object; example: `"cannot use
+    value() with null"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -3199,11 +3209,13 @@ class basic_json
 
     @tparam InteratorType an @ref iterator or @ref const_iterator
 
-    @throw std::domain_error if called on a `null` value
+    @throw std::domain_error if called on a `null` value; example: `"cannot use
+    erase() with null"`
     @throw std::domain_error if called on an iterator which does not belong to
-    the current JSON value
+    the current JSON value; example: `"iterator does not fit current value"`
     @throw std::out_of_range if called on a primitive type with invalid
-    iterator (i.e., any iterator which is not end())
+    iterator (i.e., any iterator which is not end()); example: `"iterator out
+    of range"`
 
     @complexity The complexity depends on the type:
     - objects: amortized constant
@@ -3300,11 +3312,13 @@ class basic_json
 
     @tparam InteratorType an @ref iterator or @ref const_iterator
 
-    @throw std::domain_error if called on a `null` value
+    @throw std::domain_error if called on a `null` value; example: `"cannot use
+    erase() with null"`
     @throw std::domain_error if called on iterators which does not belong to
-    the current JSON value
+    the current JSON value; example: `"iterators do not fit current value"`
     @throw std::out_of_range if called on a primitive type with invalid
-    iterators (i.e., if `first != begin()` and `last != end()`)
+    iterators (i.e., if `first != begin()` and `last != end()`); example:
+    `"iterators out of range"`
 
     @complexity The complexity depends on the type:
     - objects: `log(size()) + std::distance(first, last)`
@@ -3378,7 +3392,7 @@ class basic_json
 
             default:
             {
-                throw std::domain_error("cannot use erase with " + type_name());
+                throw std::domain_error("cannot use erase() with " + type_name());
             }
         }
 
@@ -3396,7 +3410,8 @@ class basic_json
     type, the return value will always be `0` (@a key was not found) or `1` (@a
     key was found).
 
-    @throw std::domain_error when called on a type other than JSON object
+    @throw std::domain_error when called on a type other than JSON object;
+    example: `"cannot use erase() with null"`
 
     @complexity `log(size()) + count(key)`
 
@@ -3430,8 +3445,10 @@ class basic_json
 
     @param[in] idx index of the element to remove
 
-    @throw std::domain_error when called on a type other than JSON array
-    @throw std::out_of_range when `idx >= size()`
+    @throw std::domain_error when called on a type other than JSON array;
+    example: `"cannot use erase() with null"`
+    @throw std::out_of_range when `idx >= size()`; example: `"index out of
+    range"`
 
     @complexity Linear in distance between @a idx and the end of the container.
 
@@ -4065,7 +4082,8 @@ class basic_json
 
     @param val the value to add to the JSON array
 
-    @throw std::domain_error when called on a type other than JSON array or null
+    @throw std::domain_error when called on a type other than JSON array or
+    null; example: `"cannot use push_back() with number"`
 
     @complexity Amortized constant.
 
@@ -4149,7 +4167,7 @@ class basic_json
     @param[in] val the value to add to the JSON object
 
     @throw std::domain_error when called on a type other than JSON object or
-    null
+    null; example: `"cannot use push_back() with number"`
 
     @complexity Logarithmic in the size of the container, O(log(`size()`)).
 
@@ -4199,7 +4217,8 @@ class basic_json
     @return iterator pointing to the inserted @a val.
 
     @throw std::domain_error if called on JSON values other than arrays
-    @throw std::domain_error if @a pos is not an iterator of *this
+    @throw std::domain_error if @a pos is not an iterator of *this; example:
+    `"iterator does not fit current value"`
 
     @complexity Constant plus linear in the distance between pos and end of the
     container.
@@ -4252,7 +4271,8 @@ class basic_json
     `cnt==0`
 
     @throw std::domain_error if called on JSON values other than arrays
-    @throw std::domain_error if @a pos is not an iterator of *this
+    @throw std::domain_error if @a pos is not an iterator of *this; example:
+    `"iterator does not fit current value"`
 
     @complexity Linear in @a cnt plus linear in the distance between @a pos
     and end of the container.
@@ -4294,11 +4314,14 @@ class basic_json
     @param[in] last end of the range of elements to insert
 
     @throw std::domain_error if called on JSON values other than arrays
-    @throw std::domain_error if @a pos is not an iterator of *this
+    @throw std::domain_error if @a pos is not an iterator of *this; example:
+    `"iterator does not fit current value"`
     @throw std::domain_error if @a first and @a last do not belong to the same
-    JSON value
+    JSON value; example: `"iterators do not fit"`
     @throw std::domain_error if @a first or @a last are iterators into
-    container for which insert is called
+    container for which insert is called; example: `"passed iterators may not
+    belong to container"`
+
     @return iterator pointing to the first element inserted, or @a pos if
     `first==last`
 
@@ -4352,7 +4375,8 @@ class basic_json
     @param[in] ilist initializer list to insert the values from
 
     @throw std::domain_error if called on JSON values other than arrays
-    @throw std::domain_error if @a pos is not an iterator of *this
+    @throw std::domain_error if @a pos is not an iterator of *this; example:
+    `"iterator does not fit current value"`
     @return iterator pointing to the first element inserted, or @a pos if
     `ilist` is empty
 
@@ -5870,7 +5894,7 @@ class basic_json
             {
                 case basic_json::value_t::object:
                 {
-                    throw std::domain_error("cannot use operator< for object iterators");
+                    throw std::domain_error("cannot compare order of object iterators");
                 }
 
                 case basic_json::value_t::array:
@@ -5910,7 +5934,7 @@ class basic_json
             {
                 case basic_json::value_t::object:
                 {
-                    throw std::domain_error("cannot use operator+= for object iterators");
+                    throw std::domain_error("cannot use offsets with object iterators");
                 }
 
                 case basic_json::value_t::array:
@@ -5958,7 +5982,7 @@ class basic_json
             {
                 case basic_json::value_t::object:
                 {
-                    throw std::domain_error("cannot use operator- for object iterators");
+                    throw std::domain_error("cannot use offsets with object iterators");
                 }
 
                 case basic_json::value_t::array:
