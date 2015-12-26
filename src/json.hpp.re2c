@@ -6441,7 +6441,7 @@ class basic_json
             return result;
         }
 
-        /// return name of values of type token_type
+        /// return name of values of type token_type (only used for errors)
         static std::string token_type_name(token_type t)
         {
             switch (t)
@@ -6459,21 +6459,21 @@ class basic_json
                 case token_type::value_number:
                     return "number literal";
                 case token_type::begin_array:
-                    return "[";
+                    return "'['";
                 case token_type::begin_object:
-                    return "{";
+                    return "'{'";
                 case token_type::end_array:
-                    return "]";
+                    return "']'";
                 case token_type::end_object:
-                    return "}";
+                    return "'}'";
                 case token_type::name_separator:
-                    return ":";
+                    return "':'";
                 case token_type::value_separator:
-                    return ",";
+                    return "','";
                 case token_type::parse_error:
                     return "<parse error>";
                 case token_type::end_of_input:
-                    return "<end of input>";
+                    return "end of input";
                 default:
                 {
                     // catch non-enum values
@@ -7031,10 +7031,10 @@ class basic_json
         {
             if (t != last_token)
             {
-                std::string error_msg = "parse error - unexpected \'";
-                error_msg += m_lexer.get_token();
-                error_msg += "\' (" + lexer::token_type_name(last_token);
-                error_msg += "); expected " + lexer::token_type_name(t);
+                std::string error_msg = "parse error - unexpected ";
+                error_msg += (last_token == lexer::token_type::parse_error ? ("'" +  m_lexer.get_token() + "'") :
+                              lexer::token_type_name(last_token));
+                error_msg += "; expected " + lexer::token_type_name(t);
                 throw std::invalid_argument(error_msg);
             }
         }
@@ -7043,9 +7043,9 @@ class basic_json
         {
             if (t == last_token)
             {
-                std::string error_msg = "parse error - unexpected \'";
-                error_msg += m_lexer.get_token();
-                error_msg += "\'";
+                std::string error_msg = "parse error - unexpected ";
+                error_msg += (last_token == lexer::token_type::parse_error ? ("'" +  m_lexer.get_token() + "'") :
+                              lexer::token_type_name(last_token));
                 throw std::invalid_argument(error_msg);
             }
         }
