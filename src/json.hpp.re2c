@@ -2457,8 +2457,8 @@ class basic_json
     object_t, @ref string_t, @ref boolean_t, @ref number_integer_t, or @ref
     number_float_t.
 
-    @return pointer to the internally stored JSON value if the requested pointer
-    type @a PointerType fits to the JSON value; `nullptr` otherwise
+    @return pointer to the internally stored JSON value if the requested
+    pointer type @a PointerType fits to the JSON value; `nullptr` otherwise
 
     @complexity Constant.
 
@@ -2508,8 +2508,8 @@ class basic_json
     object_t, @ref string_t, @ref boolean_t, @ref number_integer_t, or @ref
     number_float_t.
 
-    @return pointer to the internally stored JSON value if the requested pointer
-    type @a PointerType fits to the JSON value; `nullptr` otherwise
+    @return pointer to the internally stored JSON value if the requested
+    pointer type @a PointerType fits to the JSON value; `nullptr` otherwise
 
     @complexity Constant.
 
@@ -3897,8 +3897,7 @@ class basic_json
             array       | result of function array_t::size()
 
     @complexity Constant, as long as @ref array_t and @ref object_t satisfy the
-                Container concept; that is, their size() functions have
-                constant complexity.
+    Container concept; that is, their size() functions have constant complexity.
 
     @requirement This function satisfies the Container requirements:
     - The complexity is constant.
@@ -3956,8 +3955,8 @@ class basic_json
             array       | result of function array_t::max_size()
 
     @complexity Constant, as long as @ref array_t and @ref object_t satisfy the
-                Container concept; that is, their max_size() functions have
-                constant complexity.
+    Container concept; that is, their max_size() functions have constant
+    complexity.
 
     @requirement This function satisfies the Container requirements:
     - The complexity is constant.
@@ -4216,7 +4215,8 @@ class basic_json
     @param[in] val element to insert
     @return iterator pointing to the inserted @a val.
 
-    @throw std::domain_error if called on JSON values other than arrays
+    @throw std::domain_error if called on JSON values other than arrays;
+    example: `"cannot use insert() with string"`
     @throw std::domain_error if @a pos is not an iterator of *this; example:
     `"iterator does not fit current value"`
 
@@ -4270,7 +4270,8 @@ class basic_json
     @return iterator pointing to the first element inserted, or @a pos if
     `cnt==0`
 
-    @throw std::domain_error if called on JSON values other than arrays
+    @throw std::domain_error if called on JSON values other than arrays;
+    example: `"cannot use insert() with string"`
     @throw std::domain_error if @a pos is not an iterator of *this; example:
     `"iterator does not fit current value"`
 
@@ -4313,7 +4314,8 @@ class basic_json
     @param[in] first begin of the range of elements to insert
     @param[in] last end of the range of elements to insert
 
-    @throw std::domain_error if called on JSON values other than arrays
+    @throw std::domain_error if called on JSON values other than arrays;
+    example: `"cannot use insert() with string"`
     @throw std::domain_error if @a pos is not an iterator of *this; example:
     `"iterator does not fit current value"`
     @throw std::domain_error if @a first and @a last do not belong to the same
@@ -4374,9 +4376,11 @@ class basic_json
     the end() iterator
     @param[in] ilist initializer list to insert the values from
 
-    @throw std::domain_error if called on JSON values other than arrays
+    @throw std::domain_error if called on JSON values other than arrays;
+    example: `"cannot use insert() with string"`
     @throw std::domain_error if @a pos is not an iterator of *this; example:
     `"iterator does not fit current value"`
+
     @return iterator pointing to the first element inserted, or @a pos if
     `ilist` is empty
 
@@ -4445,7 +4449,8 @@ class basic_json
 
     @param[in,out] other array to exchange the contents with
 
-    @throw std::domain_error when JSON value is not an array
+    @throw std::domain_error when JSON value is not an array; example: `"cannot
+    use swap() with string"`
 
     @complexity Constant.
 
@@ -4477,7 +4482,8 @@ class basic_json
 
     @param[in,out] other object to exchange the contents with
 
-    @throw std::domain_error when JSON value is not an object
+    @throw std::domain_error when JSON value is not an object; example:
+    `"cannot use swap() with string"`
 
     @complexity Constant.
 
@@ -4509,7 +4515,8 @@ class basic_json
 
     @param[in,out] other string to exchange the contents with
 
-    @throw std::domain_error when JSON value is not a string
+    @throw std::domain_error when JSON value is not a string; example: `"cannot
+    use swap() with boolean"`
 
     @complexity Constant.
 
@@ -6349,6 +6356,8 @@ class basic_json
             m_start = m_cursor = m_content;
             m_limit = m_content + s.size();
         }
+
+        /// constructor with a given stream
         explicit lexer(std::istream* s) noexcept
             : m_stream(s), m_buffer()
         {
@@ -6361,7 +6370,7 @@ class basic_json
         /// default constructor
         lexer() = default;
 
-        // switch of unwanted functions
+        // switch off unwanted functions
         lexer(const lexer&) = delete;
         lexer operator=(const lexer&) = delete;
 
@@ -6370,10 +6379,13 @@ class basic_json
 
         @param[in] codepoint1  the code point (can be high surrogate)
         @param[in] codepoint2  the code point (can be low surrogate or 0)
+
         @return string representation of the code point
+
         @throw std::out_of_range if code point is >0x10ffff; example: `"code
         points above 0x10FFFF are invalid"`
-        @throw std::invalid_argument if the low surrogate is invalid
+        @throw std::invalid_argument if the low surrogate is invalid; example:
+        `""missing or wrong low surrogate""`
 
         @see <http://en.wikipedia.org/wiki/UTF-8#Sample_code>
         */
