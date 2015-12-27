@@ -261,7 +261,7 @@ template&lt;typename ValueType , typename std::enable_if&lt;                    
 <dl class="section return"><dt>Returns</dt><dd>copy of the JSON value, converted to type <em>ValueType</em> </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">std::domain_error</td><td>in case passed type <em>ValueType</em> is incompatible to JSON</td></tr>
+    <tr><td class="paramname">std::domain_error</td><td>in case passed type <em>ValueType</em> is incompatible to JSON; example: <code>"type must be object, but is null"</code></td></tr>
   </table>
   </dd>
 </dl>
@@ -317,7 +317,7 @@ template&lt;typename ValueType , typename std::enable_if&lt;                    
 <div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;}</div>
 <div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00187">json.hpp:187</a></div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00078">json.hpp:78</a></div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe_html_a5f0aad50ed7e8aec3128fe018c18b3fe"><div class="ttname"><a href="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html#a5f0aad50ed7e8aec3128fe018c18b3fe">nlohmann::basic_json::get</a></div><div class="ttdeci">ValueType get() const </div><div class="ttdoc">get a value (explicit) </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l02440">json.hpp:2440</a></div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe_html_a5f0aad50ed7e8aec3128fe018c18b3fe"><div class="ttname"><a href="classnlohmann_1_1basic__json_a5f0aad50ed7e8aec3128fe018c18b3fe.html#a5f0aad50ed7e8aec3128fe018c18b3fe">nlohmann::basic_json::get</a></div><div class="ttdeci">ValueType get() const </div><div class="ttdoc">get a value (explicit) </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l02443">json.hpp:2443</a></div></div>
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/4OkGAXhiCsa1E5Jx"><b>online</b></a>): <pre class="fragment">1
 42 42
 17.23 17
@@ -335,7 +335,7 @@ array: [1,2,3,4,5]
 <a class="el" href="classnlohmann_1_1basic__json_ae50f22a1c646b8627e88f1313cceffd4.html#ae50f22a1c646b8627e88f1313cceffd4">get()</a> for pointer-member access</dd></dl>
 <dl class="section since"><dt>Since</dt><dd>version 1.0 </dd></dl>
 
-<p>Definition at line <a class="el" href="json_8hpp_source.html#l02440">2440</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p>Definition at line <a class="el" href="json_8hpp_source.html#l02443">2443</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 
 </div>
 </div>
@@ -345,7 +345,7 @@ array: [1,2,3,4,5]
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Dec 23 2015 08:44:40 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Dec 27 2015 15:32:04 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>
