@@ -5501,7 +5501,7 @@ class basic_json
             }
 
             /// inequality operator (needed for range-based for)
-            bool operator!= (const iteration_proxy_internal& o)
+            bool operator!= (const iteration_proxy_internal& o) const
             {
                 return anchor != o.anchor;
             }
