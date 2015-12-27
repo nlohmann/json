@@ -6441,7 +6441,7 @@ class basic_json
             return result;
         }
 
-        /// return name of values of type token_type
+        /// return name of values of type token_type (only used for errors)
         static std::string token_type_name(token_type t)
         {
             switch (t)
