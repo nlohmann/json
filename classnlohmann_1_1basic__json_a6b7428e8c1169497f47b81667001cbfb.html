@@ -278,7 +278,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <dl class="section return"><dt>Returns</dt><dd>iterator pointing to the first element inserted, or <em>pos</em> if <code>cnt==0</code></dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">std::domain_error</td><td>if called on JSON values other than arrays </td></tr>
+    <tr><td class="paramname">std::domain_error</td><td>if called on JSON values other than arrays; example: <code>"cannot use insert() with string"</code> </td></tr>
     <tr><td class="paramname">std::domain_error</td><td>if <em>pos</em> is not an iterator of *this; example: <code>"iterator does not fit current value"</code></td></tr>
   </table>
   </dd>
@@ -307,9 +307,9 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/kZCcDOrWRsmOCjOn"><b>online</b></a>): <pre class="fragment">7
 [1,2,7,7,7,7,7,7,7,3,4]
 </pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/insert__count.cpp -o insert__count </pre></dd></dl>
-<dl class="section since"><dt>Since</dt><dd>version 1.0 </dd></dl>
+<dl class="section since"><dt>Since</dt><dd>version 1.0.0 </dd></dl>
 
-<p>Definition at line <a class="el" href="json_8hpp_source.html#l04284">4284</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p>Definition at line <a class="el" href="json_8hpp_source.html#l04285">4285</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 
 </div>
 </div>
@@ -319,7 +319,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Dec 27 2015 15:32:04 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 28 2015 14:59:16 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>
