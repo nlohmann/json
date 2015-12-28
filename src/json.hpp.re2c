@@ -32,7 +32,7 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 1.0
+@version 1.0.0
 */
 
 #ifndef NLOHMANN_JSON_HPP
@@ -73,7 +73,7 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann
-@since version 1.0
+@since version 1.0.0
 */
 namespace nlohmann
 {
@@ -81,7 +81,7 @@ namespace nlohmann
 
 /*!
 @brief unnamed namespace with internal helper functions
-@since version 1.0
+@since version 1.0.0
 */
 namespace
 {
@@ -171,7 +171,7 @@ default)
 
 @see RFC 7159 <http://rfc7159.net/rfc7159>
 
-@since version 1.0
+@since version 1.0.0
 
 @nosubgrouping
 */
@@ -331,7 +331,7 @@ class basic_json
 
     @sa @ref array_t -- type for an array value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     using object_t = ObjectType<StringType,
           basic_json,
@@ -381,7 +381,7 @@ class basic_json
 
     @sa @ref object_t -- type for an object value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
@@ -428,7 +428,7 @@ class basic_json
     for any access to string values, a pointer of type `string_t*` must be
     dereferenced.
 
-    @since version 1.0
+    @since version 1.0.0
     */
     using string_t = StringType;
 
@@ -454,7 +454,7 @@ class basic_json
 
     Boolean values are stored directly inside a @ref basic_json type.
 
-    @since version 1.0
+    @since version 1.0.0
     */
     using boolean_t = BooleanType;
 
@@ -522,7 +522,7 @@ class basic_json
 
     @sa @ref number_float_t -- type for number values (floating-point)
 
-    @since version 1.0
+    @since version 1.0.0
     */
     using number_integer_t = NumberIntegerType;
 
@@ -587,7 +587,7 @@ class basic_json
 
     @sa @ref number_integer_t -- type for number values (integer)
 
-    @since version 1.0
+    @since version 1.0.0
     */
     using number_float_t = NumberFloatType;
 
@@ -606,7 +606,7 @@ class basic_json
     is_object(), @ref is_array(), @ref is_string(), @ref is_boolean(), @ref
     is_number(), and @ref is_discarded() rely on it.
 
-    @since version 1.0
+    @since version 1.0.0
     */
     enum class value_t : uint8_t
     {
@@ -645,7 +645,7 @@ class basic_json
 
     The actual storage for a JSON value of the @ref basic_json class.
 
-    @since version 1.0
+    @since version 1.0.0
     */
     union json_value
     {
@@ -749,7 +749,7 @@ class basic_json
     This enumeration lists the parser events that can trigger calling a
     callback function of type @ref parser_callback_t during parsing.
 
-    @since version 1.0
+    @since version 1.0.0
     */
     enum class parse_event_t : uint8_t
     {
@@ -814,7 +814,7 @@ class basic_json
     @sa @ref parse(std::istream&, parser_callback_t) or
     @ref parse(const string_t&, parser_callback_t) for examples
 
-    @since version 1.0
+    @since version 1.0.0
     */
     using parser_callback_t = std::function<bool(int depth, parse_event_t event, basic_json& parsed)>;
 
@@ -861,7 +861,7 @@ class basic_json
     @sa @ref basic_json(const number_integer_t) -- create a number (integer)
     value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(const value_t value_type)
         : m_type(value_type), m_value(value_type)
@@ -884,7 +884,7 @@ class basic_json
 
     @sa @ref basic_json(std::nullptr_t) -- create a `null` value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json() noexcept = default;
 
@@ -905,7 +905,7 @@ class basic_json
     @sa @ref basic_json() -- default constructor (implicitly creating a `null`
     value)
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(std::nullptr_t) noexcept
         : basic_json(value_t::null)
@@ -928,7 +928,7 @@ class basic_json
     @sa @ref basic_json(const CompatibleObjectType&) -- create an object value
     from a compatible STL container
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(const object_t& val)
         : m_type(value_t::object), m_value(val)
@@ -955,7 +955,7 @@ class basic_json
 
     @sa @ref basic_json(const object_t&) -- create an object value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template <class CompatibleObjectType, typename
               std::enable_if<
@@ -987,7 +987,7 @@ class basic_json
     @sa @ref basic_json(const CompatibleArrayType&) -- create an array value
     from a compatible STL containers
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(const array_t& val)
         : m_type(value_t::array), m_value(val)
@@ -1014,7 +1014,7 @@ class basic_json
 
     @sa @ref basic_json(const array_t&) -- create an array value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template <class CompatibleArrayType, typename
               std::enable_if<
@@ -1053,7 +1053,7 @@ class basic_json
     @sa @ref basic_json(const CompatibleStringType&) -- create a string value
     from a compatible string container
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(const string_t& val)
         : m_type(value_t::string), m_value(val)
@@ -1077,7 +1077,7 @@ class basic_json
     @sa @ref basic_json(const CompatibleStringType&) -- create a string value
     from a compatible string container
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(const typename string_t::value_type* val)
         : basic_json(string_t(val))
@@ -1104,7 +1104,7 @@ class basic_json
     @sa @ref basic_json(const typename string_t::value_type*) -- create a
     string value from a character pointer
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template <class CompatibleStringType, typename
               std::enable_if<
@@ -1126,7 +1126,7 @@ class basic_json
     @liveexample{The example below demonstrates boolean
     values.,basic_json__boolean_t}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(boolean_t val)
         : m_type(value_t::boolean), m_value(val)
@@ -1155,7 +1155,7 @@ class basic_json
     @sa @ref basic_json(const CompatibleNumberIntegerType) -- create a number
     value (integer) from a compatible number type
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template<typename T,
              typename std::enable_if<
@@ -1189,7 +1189,7 @@ class basic_json
     @sa @ref basic_json(const CompatibleNumberIntegerType) -- create a number
     value (integer) from a compatible number type
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(const int val)
         : m_type(value_t::number_integer),
@@ -1219,7 +1219,7 @@ class basic_json
     (integer)
     @sa @ref basic_json(const int) -- create a number value (integer)
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template<typename CompatibleNumberIntegerType, typename
              std::enable_if<
@@ -1253,7 +1253,7 @@ class basic_json
     @sa @ref basic_json(const CompatibleNumberFloatType) -- create a number
     value (floating-point) from a compatible number type
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(const number_float_t val)
         : m_type(value_t::number_float), m_value(val)
@@ -1294,7 +1294,7 @@ class basic_json
     @sa @ref basic_json(const number_float_t) -- create a number value
     (floating-point)
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template<typename CompatibleNumberFloatType, typename = typename
              std::enable_if<
@@ -1372,7 +1372,7 @@ class basic_json
     @sa @ref object(std::initializer_list<basic_json>) -- create a JSON object
     value from an initializer list
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(std::initializer_list<basic_json> init,
                bool type_deduction = true,
@@ -1462,7 +1462,7 @@ class basic_json
     @sa @ref object(std::initializer_list<basic_json>) -- create a JSON object
     value from an initializer list
 
-    @since version 1.0
+    @since version 1.0.0
     */
     static basic_json array(std::initializer_list<basic_json> init =
                                 std::initializer_list<basic_json>())
@@ -1502,7 +1502,7 @@ class basic_json
     @sa @ref array(std::initializer_list<basic_json>) -- create a JSON array
     value from an initializer list
 
-    @since version 1.0
+    @since version 1.0.0
     */
     static basic_json object(std::initializer_list<basic_json> init =
                                  std::initializer_list<basic_json>())
@@ -1526,7 +1526,7 @@ class basic_json
     basic_json(size_type\, const basic_json&)
     constructor.,basic_json__size_type_basic_json}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(size_type cnt, const basic_json& val)
         : m_type(value_t::array)
@@ -1566,7 +1566,7 @@ class basic_json
     @liveexample{The example below shows several ways to create JSON values by
     specifying a subrange with iterators.,basic_json__InputIt_InputIt}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template <class InputIT, typename
               std::enable_if<
@@ -1670,7 +1670,7 @@ class basic_json
     @liveexample{The following code shows an example for the copy
     constructor.,basic_json__basic_json}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(const basic_json& other)
         : m_type(other.m_type)
@@ -1736,7 +1736,7 @@ class basic_json
     @liveexample{The code below shows the move constructor explicitly called
     via std::move.,basic_json__moveconstructor}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     basic_json(basic_json&& other) noexcept
         : m_type(std::move(other.m_type)),
@@ -1766,7 +1766,7 @@ class basic_json
     copy of `a` (which is the null value after the swap) is
     destroyed.,basic_json__copyassignment}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     reference& operator=(basic_json other) noexcept (
         std::is_nothrow_move_constructible<value_t>::value and
@@ -1792,7 +1792,7 @@ class basic_json
     - The complexity is linear.
     - All stored elements are destroyed and all memory is freed.
 
-    @since version 1.0
+    @since version 1.0.0
     */
     ~basic_json()
     {
@@ -1861,7 +1861,7 @@ class basic_json
 
     @see https://docs.python.org/2/library/json.html#json.dump
 
-    @since version 1.0
+    @since version 1.0.0
     */
     string_t dump(const int indent = -1) const
     {
@@ -1892,7 +1892,7 @@ class basic_json
     @liveexample{The following code exemplifies @ref type() for all JSON
     types.,type}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     value_t type() const noexcept
     {
@@ -1913,7 +1913,7 @@ class basic_json
     @liveexample{The following code exemplifies @ref is_primitive for all JSON
     types.,is_primitive}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool is_primitive() const noexcept
     {
@@ -1933,7 +1933,7 @@ class basic_json
     @liveexample{The following code exemplifies @ref is_structured for all JSON
     types.,is_structured}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool is_structured() const noexcept
     {
@@ -1952,7 +1952,7 @@ class basic_json
     @liveexample{The following code exemplifies @ref is_null for all JSON
     types.,is_null}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool is_null() const noexcept
     {
@@ -1971,7 +1971,7 @@ class basic_json
     @liveexample{The following code exemplifies @ref is_boolean for all JSON
     types.,is_boolean}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool is_boolean() const noexcept
     {
@@ -1995,7 +1995,7 @@ class basic_json
     @sa @ref is_number_integer() -- check if value is an integer number
     @sa @ref is_number_float() -- check if value is a floating-point number
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool is_number() const noexcept
     {
@@ -2018,7 +2018,7 @@ class basic_json
     @sa @ref is_number() -- check if value is a number
     @sa @ref is_number_float() -- check if value is a floating-point number
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool is_number_integer() const noexcept
     {
@@ -2041,7 +2041,7 @@ class basic_json
     @sa @ref is_number() -- check if value is number
     @sa @ref is_number_integer() -- check if value is an integer number
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool is_number_float() const noexcept
     {
@@ -2060,7 +2060,7 @@ class basic_json
     @liveexample{The following code exemplifies @ref is_object for all JSON
     types.,is_object}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool is_object() const noexcept
     {
@@ -2079,7 +2079,7 @@ class basic_json
     @liveexample{The following code exemplifies @ref is_array for all JSON
     types.,is_array}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool is_array() const noexcept
     {
@@ -2098,7 +2098,7 @@ class basic_json
     @liveexample{The following code exemplifies @ref is_string for all JSON
     types.,is_string}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool is_string() const noexcept
     {
@@ -2122,7 +2122,7 @@ class basic_json
     @liveexample{The following code exemplifies @ref is_discarded for all JSON
     types.,is_discarded}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool is_discarded() const noexcept
     {
@@ -2142,7 +2142,7 @@ class basic_json
     @liveexample{The following code exemplifies the value_t operator for all
     JSON types.,operator__value_t}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     operator value_t() const noexcept
     {
@@ -2434,7 +2434,7 @@ class basic_json
     @sa @ref operator ValueType() const for implicit conversion
     @sa @ref get() for pointer-member access
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template<typename ValueType, typename
              std::enable_if<
@@ -2469,7 +2469,7 @@ class basic_json
 
     @sa @ref get_ptr() for explicit pointer-member access
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template<typename PointerType, typename
              std::enable_if<
@@ -2518,7 +2518,7 @@ class basic_json
     `nullptr` is returned if the value and the requested pointer type does not
     match.,get_ptr}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template<typename PointerType, typename
              std::enable_if<
@@ -2571,7 +2571,7 @@ class basic_json
     assiciative containers such as `std::unordered_map<std::string\,
     json>`.,operator__ValueType}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template<typename ValueType, typename
              std::enable_if<
@@ -2615,7 +2615,7 @@ class basic_json
     @liveexample{The example below shows how array elements can be read and
     written using at.,at__size_type}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     reference at(size_type idx)
     {
@@ -2658,7 +2658,7 @@ class basic_json
     @liveexample{The example below shows how array elements can be read using
     at.,at__size_type_const}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     const_reference at(size_type idx) const
     {
@@ -2705,7 +2705,7 @@ class basic_json
     access by reference
     @sa @ref value() for access by value with a default value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     reference at(const typename object_t::key_type& key)
     {
@@ -2752,7 +2752,7 @@ class basic_json
     access by reference
     @sa @ref value() for access by value with a default value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     const_reference at(const typename object_t::key_type& key) const
     {
@@ -2798,7 +2798,7 @@ class basic_json
     written using [] operator. Note the addition of `null`
     values.,operatorarray__size_type}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     reference operator[](size_type idx)
     {
@@ -2842,7 +2842,7 @@ class basic_json
     @liveexample{The example below shows how array elements can be read using
     the [] operator.,operatorarray__size_type_const}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     const_reference operator[](size_type idx) const
     {
@@ -2882,7 +2882,7 @@ class basic_json
     with range checking
     @sa @ref value() for access by value with a default value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     reference operator[](const typename object_t::key_type& key)
     {
@@ -2929,7 +2929,7 @@ class basic_json
     with range checking
     @sa @ref value() for access by value with a default value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     const_reference operator[](const typename object_t::key_type& key) const
     {
@@ -2971,7 +2971,7 @@ class basic_json
     with range checking
     @sa @ref value() for access by value with a default value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template<typename T, std::size_t n>
     reference operator[](const T (&key)[n])
@@ -3021,7 +3021,7 @@ class basic_json
     with range checking
     @sa @ref value() for access by value with a default value
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template<typename T, std::size_t n>
     const_reference operator[](const T (&key)[n]) const
@@ -3083,7 +3083,7 @@ class basic_json
     @sa @ref operator[](const typename object_t::key_type&) for unchecked
     access by reference
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template <class ValueType, typename
               std::enable_if<
@@ -3138,7 +3138,7 @@ class basic_json
 
     @liveexample{The following code shows an example for @ref front.,front}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     reference front()
     {
@@ -3172,7 +3172,7 @@ class basic_json
 
     @liveexample{The following code shows an example for @ref back.,back}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     reference back()
     {
@@ -3233,7 +3233,7 @@ class basic_json
     @sa @ref erase(const size_type) -- removes the element from an array at the
     given index
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template <class InteratorType, typename
               std::enable_if<
@@ -3336,7 +3336,7 @@ class basic_json
     @sa @ref erase(const size_type) -- removes the element from an array at the
     given index
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template <class InteratorType, typename
               std::enable_if<
@@ -3423,7 +3423,7 @@ class basic_json
     @sa @ref erase(const size_type) -- removes the element from an array at the
     given index
 
-    @since version 1.0
+    @since version 1.0.0
     */
     size_type erase(const typename object_t::key_type& key)
     {
@@ -3460,7 +3460,7 @@ class basic_json
     @sa @ref erase(const typename object_t::key_type&) -- remvoes the element
     from an object at the given key
 
-    @since version 1.0
+    @since version 1.0.0
     */
     void erase(const size_type idx)
     {
@@ -3495,7 +3495,7 @@ class basic_json
 
     @liveexample{The example shows how find is used.,find__key_type}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     iterator find(typename object_t::key_type key)
     {
@@ -3541,7 +3541,7 @@ class basic_json
 
     @liveexample{The example shows how count is used.,count}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     size_type count(typename object_t::key_type key) const
     {
@@ -3575,7 +3575,7 @@ class basic_json
 
     @liveexample{The following code shows an example for @ref begin.,begin}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     iterator begin()
     {
@@ -3609,7 +3609,7 @@ class basic_json
 
     @liveexample{The following code shows an example for @ref cbegin.,cbegin}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     const_iterator cbegin() const
     {
@@ -3634,7 +3634,7 @@ class basic_json
 
     @liveexample{The following code shows an example for @ref end.,end}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     iterator end()
     {
@@ -3668,7 +3668,7 @@ class basic_json
 
     @liveexample{The following code shows an example for @ref cend.,cend}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     const_iterator cend() const
     {
@@ -3692,7 +3692,7 @@ class basic_json
 
     @liveexample{The following code shows an example for @ref rbegin.,rbegin}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     reverse_iterator rbegin()
     {
@@ -3723,7 +3723,7 @@ class basic_json
 
     @liveexample{The following code shows an example for @ref rend.,rend}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     reverse_iterator rend()
     {
@@ -3754,7 +3754,7 @@ class basic_json
 
     @liveexample{The following code shows an example for @ref crbegin.,crbegin}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     const_reverse_iterator crbegin() const
     {
@@ -3777,7 +3777,7 @@ class basic_json
 
     @liveexample{The following code shows an example for @ref crend.,crend}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     const_reverse_iterator crend() const
     {
@@ -3850,7 +3850,7 @@ class basic_json
     @liveexample{The following code uses @ref empty to check if a @ref json
     object contains any elements.,empty}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     bool empty() const noexcept
     {
@@ -3906,7 +3906,7 @@ class basic_json
     @liveexample{The following code calls @ref size on the different value
     types.,size}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     size_type size() const noexcept
     {
@@ -3966,7 +3966,7 @@ class basic_json
     @liveexample{The following code calls @ref max_size on the different value
     types. Note the output is implementation specific.,max_size}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     size_type max_size() const noexcept
     {
@@ -4023,7 +4023,7 @@ class basic_json
     @liveexample{The example below shows the effect of @ref clear to different
     JSON types.,clear}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     void clear() noexcept
     {
@@ -4090,7 +4090,7 @@ class basic_json
     elements to a JSON array. Note how the `null` value was silently converted
     to a JSON array.,push_back}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     void push_back(basic_json&& val)
     {
@@ -4174,7 +4174,7 @@ class basic_json
     elements to a JSON object. Note how the `null` value was silently converted
     to a JSON object.,push_back__object_t__value}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     void push_back(const typename object_t::value_type& val)
     {
@@ -4225,7 +4225,7 @@ class basic_json
 
     @liveexample{The example shows how insert is used.,insert}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     iterator insert(const_iterator pos, const basic_json& val)
     {
@@ -4280,7 +4280,7 @@ class basic_json
 
     @liveexample{The example shows how insert is used.,insert__count}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     iterator insert(const_iterator pos, size_type cnt, const basic_json& val)
     {
@@ -4332,7 +4332,7 @@ class basic_json
 
     @liveexample{The example shows how insert is used.,insert__range}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     iterator insert(const_iterator pos, const_iterator first, const_iterator last)
     {
@@ -4389,7 +4389,7 @@ class basic_json
 
     @liveexample{The example shows how insert is used.,insert__ilist}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     iterator insert(const_iterator pos, std::initializer_list<basic_json> ilist)
     {
@@ -4426,7 +4426,7 @@ class basic_json
     @liveexample{The example below shows how JSON arrays can be
     swapped.,swap__reference}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     void swap(reference other) noexcept (
         std::is_nothrow_move_constructible<value_t>::value and
@@ -4457,7 +4457,7 @@ class basic_json
     @liveexample{The example below shows how JSON values can be
     swapped.,swap__array_t}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     void swap(array_t& other)
     {
@@ -4490,7 +4490,7 @@ class basic_json
     @liveexample{The example below shows how JSON values can be
     swapped.,swap__object_t}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     void swap(object_t& other)
     {
@@ -4523,7 +4523,7 @@ class basic_json
     @liveexample{The example below shows how JSON values can be
     swapped.,swap__string_t}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     void swap(string_t& other)
     {
@@ -4556,7 +4556,7 @@ class basic_json
     - order: null < boolean < number < object < array < string
     - furthermore, each type is not smaller than itself
 
-    @since version 1.0
+    @since version 1.0.0
     */
     friend bool operator<(const value_t lhs, const value_t rhs)
     {
@@ -4602,7 +4602,7 @@ class basic_json
     @liveexample{The example demonstrates comparing several JSON
     types.,operator__equal}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     friend bool operator==(const_reference lhs, const_reference rhs) noexcept
     {
@@ -4660,7 +4660,7 @@ class basic_json
     @liveexample{The example compares several JSON types to the null pointer.
     ,operator__equal__nullptr_t}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     friend bool operator==(const_reference v, std::nullptr_t) noexcept
     {
@@ -4690,7 +4690,7 @@ class basic_json
     @liveexample{The example demonstrates comparing several JSON
     types.,operator__notequal}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     friend bool operator!=(const_reference lhs, const_reference rhs) noexcept
     {
@@ -4713,7 +4713,7 @@ class basic_json
     @liveexample{The example compares several JSON types to the null pointer.
     ,operator__notequal__nullptr_t}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     friend bool operator!=(const_reference v, std::nullptr_t) noexcept
     {
@@ -4751,7 +4751,7 @@ class basic_json
     @liveexample{The example demonstrates comparing several JSON
     types.,operator__less}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     friend bool operator<(const_reference lhs, const_reference rhs) noexcept
     {
@@ -4812,7 +4812,7 @@ class basic_json
     @liveexample{The example demonstrates comparing several JSON
     types.,operator__greater}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     friend bool operator<=(const_reference lhs, const_reference rhs) noexcept
     {
@@ -4834,7 +4834,7 @@ class basic_json
     @liveexample{The example demonstrates comparing several JSON
     types.,operator__lessequal}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     friend bool operator>(const_reference lhs, const_reference rhs) noexcept
     {
@@ -4856,7 +4856,7 @@ class basic_json
     @liveexample{The example demonstrates comparing several JSON
     types.,operator__greaterequal}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     friend bool operator>=(const_reference lhs, const_reference rhs) noexcept
     {
@@ -4893,7 +4893,7 @@ class basic_json
     @liveexample{The example below shows the serialization with different
     parameters to `width` to adjust the indentation level.,operator_serialize}
 
-    @since version 1.0
+    @since version 1.0.0
     */
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
     {
@@ -4950,7 +4950,7 @@ class basic_json
     @sa @ref parse(std::istream&, parser_callback_t) for a version that reads
     from an input stream
 
-    @since version 1.0
+    @since version 1.0.0
     */
     static basic_json parse(const string_t& s, parser_callback_t cb = nullptr)
     {
@@ -4979,7 +4979,7 @@ class basic_json
     @sa @ref parse(const string_t&, parser_callback_t) for a version that reads
     from a string
 
-    @since version 1.0
+    @since version 1.0.0
     */
     static basic_json parse(std::istream& i, parser_callback_t cb = nullptr)
     {
@@ -5015,7 +5015,7 @@ class basic_json
     @sa parse(std::istream&, parser_callback_t) for a variant with a parser
     callback function to filter values while parsing
 
-    @since version 1.0
+    @since version 1.0.0
     */
     friend std::istream& operator<<(basic_json& j, std::istream& i)
     {
@@ -5572,7 +5572,7 @@ class basic_json
       The iterator that can be moved to point (forward and backward) to any
       element in constant time.
 
-    @since version 1.0
+    @since version 1.0.0
     */
     class const_iterator : public std::iterator<std::random_access_iterator_tag, const basic_json>
     {
@@ -6074,7 +6074,7 @@ class basic_json
     - [OutputIterator](http://en.cppreference.com/w/cpp/concept/OutputIterator):
       It is possible to write to the pointed-to element.
 
-    @since version 1.0
+    @since version 1.0.0
     */
     class iterator : public const_iterator
     {
@@ -6213,7 +6213,7 @@ class basic_json
       It is possible to write to the pointed-to element (only if @a Base is
       @ref iterator).
 
-    @since version 1.0
+    @since version 1.0.0
     */
     template<typename Base>
     class json_reverse_iterator : public std::reverse_iterator<Base>
@@ -7085,7 +7085,7 @@ class basic_json
 This type is the default specialization of the @ref basic_json class which uses
 the standard template types.
 
-@since version 1.0
+@since version 1.0.0
 */
 using json = basic_json<>;
 }
@@ -7101,7 +7101,7 @@ namespace std
 /*!
 @brief exchanges the values of two JSON objects
 
-@since version 1.0
+@since version 1.0.0
 */
 template <>
 inline void swap(nlohmann::json& j1,
@@ -7120,7 +7120,7 @@ struct hash<nlohmann::json>
     /*!
     @brief return a hash value for a JSON object
 
-    @since version 1.0
+    @since version 1.0.0
     */
     std::size_t operator()(const nlohmann::json& j) const
     {
@@ -7141,7 +7141,7 @@ no parse error occurred.
 @param[in] s  a string representation of a JSON object
 @return a JSON object
 
-@since version 1.0
+@since version 1.0.0
 */
 inline nlohmann::json operator "" _json(const char* s, std::size_t)
 {
