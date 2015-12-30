@@ -116,17 +116,11 @@ struct void_converter
 };
 
 // Type to help determine between a map or unordered-map type for the
-// object_t type alias.  Takes advantage of the fact that a map has a
-// key_comparer member type and unordered_map has a hasher member type
+// object_t type alias.  Takes advantage of the fact that an unordered_map
+// has a hasher member type
 template<template<typename...> class ObjectType, class Key, class Value,
     template<typename> class AllocatorType, typename Enable = void>
-struct object_t_helper{};
-// Specialization that works for the 'map' type
-template<template<typename...> class ObjectType, class Key, class Value,
-    template<typename> class AllocatorType>
-struct object_t_helper<ObjectType, Key, Value, AllocatorType,
-    typename void_converter<typename ObjectType<char,char>::key_compare>::type
-    >
+struct object_t_helper
 {
     using type = ObjectType<
         Key,
