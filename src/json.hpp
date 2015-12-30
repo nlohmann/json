@@ -105,6 +105,49 @@ static bool approx(const T a, const T b)
 {
     return not (a > b or a < b);
 }
+
+/*!
+@brief Type Trait to convert a type to a void for SFINAE purposes
+*/
+template<typename T>
+struct void_converter
+{
+    using type = void;
+};
+
+// Type to help determine between a map or unordered-map type for the
+// object_t type alias.  Takes advantage of the fact that a map has a
+// key_comparer member type and unordered_map has a hasher member type
+template<template<typename...> class ObjectType, class Key, class Value,
+    template<typename> class AllocatorType, typename Enable = void>
+struct object_t_helper{};
+// Specialization that works for the 'map' type
+template<template<typename...> class ObjectType, class Key, class Value,
+    template<typename> class AllocatorType>
+struct object_t_helper<ObjectType, Key, Value, AllocatorType,
+    typename void_converter<typename ObjectType<char,char>::key_compare>::type
+    >
+{
+    using type = ObjectType<
+        Key,
+        Value,
+        std::less<Key>,
+        AllocatorType<std::pair<Key,Value>>>;
+};
+// Specialization that works for the 'unordered_map' type
+template<template<typename...> class ObjectType, class Key, class Value,
+    template<typename> class AllocatorType>
+struct object_t_helper<ObjectType, Key, Value, AllocatorType,
+    typename void_converter<typename ObjectType<char,char>::hasher>::type
+    >
+{
+    using type = ObjectType<
+        Key,
+        Value,
+        std::hash<Key>,
+        std::equal_to<Key>,
+        AllocatorType<std::pair<Key,Value>>>;
+};
 }
 
 /*!
@@ -333,11 +376,12 @@ class basic_json
 
     @since version 1.0.0
     */
-    using object_t = ObjectType<StringType,
-          basic_json,
-          std::less<StringType>,
-          AllocatorType<std::pair<const StringType,
-          basic_json>>>;
+    using object_t = typename object_t_helper<
+            ObjectType,
+            StringType,
+            basic_json,
+            AllocatorType
+            >::type;
 
     /*!
     @brief a type for an array

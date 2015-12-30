@@ -11314,6 +11314,12 @@ TEST_CASE("regression tests")
         CHECK(s2 == "value");
     }
 
+    SECTION("issue #164 - std::unordered_map cannot be used as ObjectType")
+    {
+        // create JSON class with std::unordered_map instead of a std::map
+        nlohmann::basic_json<std::unordered_map> unordered_json;
+    }
+
     SECTION("character following a surrogate pair is skipped")
     {
         CHECK(json::parse("\"\\ud80c\\udc60abc\"").get<json::string_t>() == u8"\U00013060abc");
