@@ -94,9 +94,9 @@ struct has_mapped_type
 {
   private:
     template<typename C> static char test(typename C::mapped_type*);
-    template<typename C> static int  test(...);
+    template<typename C> static char (&test(...))[2];
   public:
-    enum { value = sizeof(test<T>(0)) == sizeof(char) };
+    static constexpr bool value = sizeof(test<T>(0)) == 1;
 };
 
 /// "equality" comparison for floating point numbers

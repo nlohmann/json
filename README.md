@@ -386,6 +386,7 @@ I deeply appreciate the help of the following people.
 - [ZahlGraf](https://github.com/ZahlGraf) added a workaround that allows compilation using Android NDK.
 - [whackashoe](https://github.com/whackashoe) replaced a function that was marked as unsafe by Visual Studio.
 - [406345](https://github.com/406345) fixed two small warnings.
+- [Glen Fernandes](https://github.com/glenfe) noted a potential portability problem in the `has_mapped_type` function.
 
 Thanks a lot for helping out!
 
