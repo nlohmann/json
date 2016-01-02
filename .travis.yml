@@ -45,14 +45,14 @@ matrix:
           packages: ['clang-3.7', 'valgrind']
       env: COMPILER=clang++-3.7
      
-    - os: osx
-      compiler: clang
-      env: COMPILER=clang
-      before_install:
-        - brew update
-        - brew install valgrind
+   # - os: osx
+   #   compiler: clang
+   #   env: COMPILER=clang
+   #   before_install:
+   #     - brew update
+   #     - brew install valgrind
 
 script:
   - make CXX=$COMPILER CXXFLAGS="-lstdc++"
   - ./json_unit "*"
-  - valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./json_unit
+  - valgrind --error-exitcode=1 --leak-check=full ./json_unit
