@@ -45,14 +45,6 @@ matrix:
           packages: ['clang-3.7', 'valgrind']
       env: COMPILER=clang++-3.7
 
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
-          packages: ['clang-3.8', 'valgrind']
-      env: COMPILER=clang++-3.8
-
 script:
   - make CXX=$COMPILER CXXFLAGS="-lstdc++"
   - ./json_unit "*"
