@@ -55,4 +55,4 @@ matrix:
 script:
   - make CXX=$COMPILER CXXFLAGS="-lstdc++"
   - ./json_unit "*"
-  - valgrind --error-exitcode=1 --leak-check=full ./json_unit
+  - valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./json_unit
