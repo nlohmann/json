@@ -916,7 +916,7 @@ TEST_CASE("constructors")
     SECTION("create an array of n copies of a given value")
     {
         json v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2}}};
-        json arr(3, v);
+        json arr = json::array(3, v);
         CHECK(arr.size() == 3);
         for (auto& x : arr)
         {
