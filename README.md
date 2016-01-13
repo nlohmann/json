@@ -390,6 +390,10 @@ I deeply appreciate the help of the following people.
 
 Thanks a lot for helping out!
 
+## Notes
+
+- The code contains numerous debug assertions which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](http://en.cppreference.com/w/cpp/error/assert).
+
 ## Execute unit tests
 
 To compile and run the tests, you need to execute
