@@ -133,7 +133,7 @@ default)
  - [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible):
    A JSON value can be constructed from an rvalue argument.
  - [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible):
-   A JSON value can be copy-constrcuted from an lvalue expression.
+   A JSON value can be copy-constructed from an lvalue expression.
  - [MoveAssignable](http://en.cppreference.com/w/cpp/concept/MoveAssignable):
    A JSON value van be assigned from an rvalue argument.
  - [CopyAssignable](http://en.cppreference.com/w/cpp/concept/CopyAssignable):
@@ -578,7 +578,7 @@ class basic_json
 
     This implementation does exactly follow this approach, as it uses double
     precision floating-point numbers. Note values smaller than
-    `-1.79769313486232e+308` and values greather than `1.79769313486232e+308`
+    `-1.79769313486232e+308` and values greater than `1.79769313486232e+308`
     will be stored as NaN internally and be serialized to `null`.
 
     #### Storage
@@ -1136,7 +1136,7 @@ class basic_json
     /*!
     @brief create an integer number (explicit)
 
-    Create an interger number JSON value with a given content.
+    Create an integer number JSON value with a given content.
 
     @tparam T  helper type to compare number_integer_t and int (not visible in)
     the interface.
@@ -1321,7 +1321,7 @@ class basic_json
     3. In all other cases, an array is created.
 
     The rules aim to create the best fit between a C++ initializer list and
-    JSON values. The ratioinale is as follows:
+    JSON values. The rationale is as follows:
 
     1. The empty initializer list is written as `{}` which is exactly an empty
     JSON object.
@@ -1477,7 +1477,7 @@ class basic_json
     @brief explicitly create an object from an initializer list
 
     Creates a JSON object value from a given initializer list. The initializer
-    lists elements must be pairs, and their first elments must be strings. If
+    lists elements must be pairs, and their first elements must be strings. If
     the initializer list is empty, the empty object `{}` is created.
 
     @note This function is only added for symmetry reasons. In contrast to the
@@ -1854,7 +1854,7 @@ class basic_json
     /*!
     @brief serialization
 
-    Serialization function for JSON values. The function tries to mimick
+    Serialization function for JSON values. The function tries to mimic
     Python's @p json.dumps() function, and currently supports its @p indent
     parameter.
 
@@ -1868,7 +1868,7 @@ class basic_json
     @complexity Linear.
 
     @liveexample{The following example shows the effect of different @a indent
-    parameters to the result of the serializaion.,dump}
+    parameters to the result of the serialization.,dump}
 
     @see https://docs.python.org/2/library/json.html#json.dump
 
@@ -2437,11 +2437,11 @@ class basic_json
 
     @complexity Linear in the size of the JSON value.
 
-    @liveexample{The example below shows serveral conversions from JSON values
+    @liveexample{The example below shows several conversions from JSON values
     to other types. There a few things to note: (1) Floating-point numbers can
     be converted to integers\, (2) A JSON array can be converted to a standard
     `std::vector<short>`\, (3) A JSON object can be converted to C++
-    assiciative containers such as `std::unordered_map<std::string\,
+    associative containers such as `std::unordered_map<std::string\,
     json>`.,get__ValueType_const}
 
     @internal
@@ -2516,7 +2516,7 @@ class basic_json
     /*!
     @brief get a pointer value (implicit)
 
-    Implict pointer access to the internally stored JSON value. No copies are
+    Implicit pointer access to the internally stored JSON value. No copies are
     made.
 
     @warning Writing data to the pointee of the result yields an undefined
@@ -2566,7 +2566,7 @@ class basic_json
     /*!
     @brief get a value (implicit)
 
-    Implict type conversion between the JSON value and a compatible value. The
+    Implicit type conversion between the JSON value and a compatible value. The
     call is realized by calling @ref get() const.
 
     @tparam ValueType non-pointer type compatible to the JSON value, for
@@ -2582,11 +2582,11 @@ class basic_json
 
     @complexity Linear in the size of the JSON value.
 
-    @liveexample{The example below shows serveral conversions from JSON values
+    @liveexample{The example below shows several conversions from JSON values
     to other types. There a few things to note: (1) Floating-point numbers can
     be converted to integers\, (2) A JSON array can be converted to a standard
     `std::vector<short>`\, (3) A JSON object can be converted to C++
-    assiciative containers such as `std::unordered_map<std::string\,
+    associative containers such as `std::unordered_map<std::string\,
     json>`.,operator__ValueType}
 
     @since version 1.0.0
@@ -3227,7 +3227,7 @@ class basic_json
     Removes the element specified by iterator @a pos. Invalidates iterators and
     references at or after the point of the erase, including the end()
     iterator. The iterator @a pos must be valid and dereferenceable. Thus the
-    end() iterator (which is valid, but is not dereferencable) cannot be used
+    end() iterator (which is valid, but is not dereferenceable) cannot be used
     as a value for @a pos.
 
     If called on a primitive type other than null, the resulting JSON value
@@ -3258,7 +3258,7 @@ class basic_json
 
     @sa @ref erase(InteratorType, InteratorType) -- removes the elements in the
     given range
-    @sa @ref erase(const typename object_t::key_type&) -- remvoes the element
+    @sa @ref erase(const typename object_t::key_type&) -- removes the element
     from an object at the given key
     @sa @ref erase(const size_type) -- removes the element from an array at the
     given index
@@ -3363,7 +3363,7 @@ class basic_json
     types.,erase__IteratorType_IteratorType}
 
     @sa @ref erase(InteratorType) -- removes the element at a given position
-    @sa @ref erase(const typename object_t::key_type&) -- remvoes the element
+    @sa @ref erase(const typename object_t::key_type&) -- removes the element
     from an object at the given key
     @sa @ref erase(const size_type) -- removes the element from an array at the
     given index
@@ -3492,7 +3492,7 @@ class basic_json
     @sa @ref erase(InteratorType) -- removes the element at a given position
     @sa @ref erase(InteratorType, InteratorType) -- removes the elements in the
     given range
-    @sa @ref erase(const typename object_t::key_type&) -- remvoes the element
+    @sa @ref erase(const typename object_t::key_type&) -- removes the element
     from an object at the given key
 
     @since version 1.0.0
@@ -3831,7 +3831,7 @@ class basic_json
     /*!
     @brief wrapper to access iterator member functions in range-based for
 
-    This functuion allows to access @ref iterator::key() and @ref
+    This function allows to access @ref iterator::key() and @ref
     iterator::value() during range-based for loops. In these loops, a reference
     to the JSON values is returned, so there is no access to the underlying
     iterator.
@@ -5331,12 +5331,12 @@ class basic_json
     @brief internal implementation of the serialization function
 
     This function is called by the public member function dump and organizes
-    the serializaion internally. The indentation level is propagated as
+    the serialization internally. The indentation level is propagated as
     additional parameter. In case of arrays and objects, the function is called
     recursively. Note that
 
     - strings and object keys are escaped using escape_string()
-    - integer numbers are converted implictly via operator<<
+    - integer numbers are converted implicitly via operator<<
     - floating-point numbers are converted to a string using "%g" format
 
     @param[out] o              stream to write to
@@ -6561,7 +6561,7 @@ class basic_json
                         // low surrogate occupies the least significant 15 bits
                         + codepoint2
                         // there is still the 0xD800, 0xDC00 and 0x10000 noise
-                        // in the result so we have to substract with:
+                        // in the result so we have to subtract with:
                         // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
                         - 0x35FDC00;
                 }
