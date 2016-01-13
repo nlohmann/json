@@ -24,7 +24,7 @@ There are currently two files which need to be edited:
 
 1. [`src/json.hpp.re2c`](https://github.com/nlohmann/json/blob/master/src/json.hpp.re2c) (note the `.re2c` suffix) - This file contains a comment section which describes the JSON lexic. This section is translated by [`re2c`](http://re2c.org) into file [`src/json.hpp`](https://github.com/nlohmann/json/blob/master/src/json.hpp) which is plain "vanilla" C++11 code. (In fact, the generated lexer consists of some hundred lines of `goto`s, which is a hint you never want to edit this file...).
 
-   If you only edit file `src.json.hpp` (without the `.re2c`) suffix, your changes will be overwritten as soon as the lexer is touched again. To generate the `src.json.hpp` file which is actually used during compilation of the tests and all other code, please execute
+   If you only edit file `src/json.hpp` (without the `.re2c`) suffix, your changes will be overwritten as soon as the lexer is touched again. To generate the `src/json.hpp` file which is actually used during compilation of the tests and all other code, please execute
 
    ```sh
    make re2c
