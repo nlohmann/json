@@ -2645,7 +2645,7 @@ class basic_json
                 assert(m_value.array != nullptr);
                 return m_value.array->at(idx);
             }
-            catch (std::out_of_range& e)
+            catch (std::out_of_range&)
             {
                 // create better exception explanation
                 throw std::out_of_range("array index " + std::to_string(idx) + " is out of range");
@@ -2689,7 +2689,7 @@ class basic_json
                 assert(m_value.array != nullptr);
                 return m_value.array->at(idx);
             }
-            catch (std::out_of_range& e)
+            catch (std::out_of_range&)
             {
                 // create better exception explanation
                 throw std::out_of_range("array index " + std::to_string(idx) + " is out of range");
@@ -2737,7 +2737,7 @@ class basic_json
                 assert(m_value.object != nullptr);
                 return m_value.object->at(key);
             }
-            catch (std::out_of_range& e)
+            catch (std::out_of_range&)
             {
                 // create better exception explanation
                 throw std::out_of_range("key '" + key + "' not found");
@@ -2785,7 +2785,7 @@ class basic_json
                 assert(m_value.object != nullptr);
                 return m_value.object->at(key);
             }
-            catch (std::out_of_range& e)
+            catch (std::out_of_range&)
             {
                 // create better exception explanation
                 throw std::out_of_range("key '" + key + "' not found");
