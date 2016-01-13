@@ -24,24 +24,30 @@ There are currently two files which need to be edited:
 
 1. [`src/json.hpp.re2c`](https://github.com/nlohmann/json/blob/master/src/json.hpp.re2c) (note the `.re2c` suffix) - This file contains a comment section which describes the JSON lexic. This section is translated by [`re2c`](http://re2c.org) into file [`src/json.hpp`](https://github.com/nlohmann/json/blob/master/src/json.hpp) which is plain "vanilla" C++11 code. (In fact, the generated lexer consists of some hundred lines of `goto`s, which is a hint you never want to edit this file...).
 
-⋅⋅⋅If you only edit file `src.json.hpp` (without the `.re2c`) suffix, your changes will be overwritten as soon as the lexer is touched again. To generate the `src.json.hpp` file which is actually used during compilation of the tests and all other code, please execute
+   If you only edit file `src.json.hpp` (without the `.re2c`) suffix, your changes will be overwritten as soon as the lexer is touched again. To generate the `src.json.hpp` file which is actually used during compilation of the tests and all other code, please execute
 
-...    make re2c
+   ```sh
+   make re2c
+   ```
 
-...To run [`re2c`](http://re2c.org) and generate/overwrite file `src/json.hpp` with your changes in file `src/json.hpp.re2c`.
+   To run [`re2c`](http://re2c.org) and generate/overwrite file `src/json.hpp` with your changes in file `src/json.hpp.re2c`.
 
 
 2. [`test/unit.cpp`](https://github.com/nlohmann/json/blob/master/test/unit.cpp) - This contains the [Catch](https://github.com/philsquared/Catch) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
 
-...If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled with
+   If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled with
 
-...    make
+   ```sh
+   make
+   ```
 
-...and can be executed with
+   and can be executed with
 
-...    ./json_unit
+   ```sh
+   ./json_unit
+   ```
 
-...The test cases are also executed with several different compilers on [Travis](https://travis-ci.org/nlohmann/json) once you opened a pull request.
+   The test cases are also executed with several different compilers on [Travis](https://travis-ci.org/nlohmann/json) once you opened a pull request.
 
 Please understand that I cannot accept pull requests changing only file `src/json.hpp`.
 
