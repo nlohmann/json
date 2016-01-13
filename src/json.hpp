@@ -9,7 +9,7 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 @copyright The code is licensed under the [MIT
   License](http://opensource.org/licenses/MIT):
   <br>
-  Copyright &copy; 2013-2015 Niels Lohmann.
+  Copyright &copy; 2013-2016 Niels Lohmann.
   <br>
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
