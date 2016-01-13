@@ -1,4 +1,4 @@
-/* The standard CSS for doxygen 1.8.10 */
+/* The standard CSS for doxygen 1.8.11 */
 
 body, table, div, p, dl {
 	font: 400 14px/22px Roboto,sans-serif;
@@ -206,6 +206,11 @@ div.line {
 	transition-duration: 0.5s;
 }
 
+div.line:after {
+    content:"\000A";
+    white-space: pre;
+}
+
 div.line.glow {
 	background-color: cyan;
 	box-shadow: 0 0 10px cyan;
@@ -242,7 +247,7 @@ div.ah, span.ah {
 	-webkit-box-shadow: 2px 2px 3px #999;
 	-moz-box-shadow: rgba(0, 0, 0, 0.15) 2px 2px 2px;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#000),color-stop(0.3, #444));
-	background-image: -moz-linear-gradient(center top, #eee 0%, #444 40%, #000);
+	background-image: -moz-linear-gradient(center top, #eee 0%, #444 40%, #000 110%);
 }
 
 div.classindex ul {
@@ -832,6 +837,10 @@ address {
 	color: #2A3D61;
 }
 
+table.doxtable caption {
+	caption-side: top;
+}
+
 table.doxtable {
 	border-collapse:collapse;
         margin-top: 4px;
@@ -995,6 +1004,18 @@ div.summary
 div.summary a
 {
 	white-space: nowrap;
+}
+
+table.classindex
+{
+        margin: 10px;
+        white-space: nowrap;
+        margin-left: 3%;
+        margin-right: 3%;
+        width: 94%;
+        border: 0;
+        border-spacing: 0; 
+        padding: 0;
 }
 
 div.ingroups
@@ -1196,7 +1217,7 @@ div.toc {
         border-radius: 7px 7px 7px 7px;
         float: right;
         height: auto;
-        margin: 0 20px 10px 10px;
+        margin: 0 8px 10px 10px;
         width: 200px;
 }
 
