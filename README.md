@@ -387,6 +387,7 @@ I deeply appreciate the help of the following people.
 - [whackashoe](https://github.com/whackashoe) replaced a function that was marked as unsafe by Visual Studio.
 - [406345](https://github.com/406345) fixed two small warnings.
 - [Glen Fernandes](https://github.com/glenfe) noted a potential portability problem in the `has_mapped_type` function.
+- [Corbin Hughes](https://github.com/nibroc) fixed some typos in the contribution guidelines.
 
 Thanks a lot for helping out!
 
