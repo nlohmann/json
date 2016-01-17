@@ -534,7 +534,7 @@ class basic_json
     */
     using number_integer_t = NumberIntegerType;
 
-        /*!
+    /*!
     @brief a type for a number (unsigned)
 
     [RFC 7159](http://rfc7159.net/rfc7159) describes numbers as follows:
@@ -7498,7 +7498,7 @@ basic_json_parser_64:
         */
         void get_number(basic_json& result) const
         {
-            typename string_t::value_type* float_endptr, *endptr;
+            typename string_t::value_type* endptr;
             assert(m_start != nullptr);
     
             // Parse it as an integer
