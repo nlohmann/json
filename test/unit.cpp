@@ -78,6 +78,13 @@ TEST_CASE("constructors")
             CHECK(j.type() == t);
         }
 
+        SECTION("number_unsigned")
+        {
+            auto t = json::value_t::number_unsigned;
+            json j(t);
+            CHECK(j.type() == t);
+        }
+
         SECTION("number_float")
         {
             auto t = json::value_t::number_float;
@@ -115,7 +122,7 @@ TEST_CASE("constructors")
 
         SECTION("filled object")
         {
-            json::object_t o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
+            json::object_t o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
             json j(o);
             CHECK(j.type() == json::value_t::object);
         }
@@ -124,12 +131,12 @@ TEST_CASE("constructors")
     SECTION("create an object (implicit)")
     {
         // reference object
-        json::object_t o_reference {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
+        json::object_t o_reference {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
         json j_reference(o_reference);
 
         SECTION("std::map<json::string_t, json>")
         {
-            std::map<json::string_t, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
+            std::map<json::string_t, json> o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
             json j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
@@ -137,7 +144,7 @@ TEST_CASE("constructors")
 
         SECTION("std::map<const char*, json>")
         {
-            std::map<const char*, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
+            std::map<const char*, json> o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
             json j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
@@ -145,7 +152,7 @@ TEST_CASE("constructors")
 
         SECTION("std::multimap<json::string_t, json>")
         {
-            std::multimap<json::string_t, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
+            std::multimap<json::string_t, json> o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
             json j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
@@ -153,7 +160,7 @@ TEST_CASE("constructors")
 
         SECTION("std::unordered_map<json::string_t, json>")
         {
-            std::unordered_map<json::string_t, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
+            std::unordered_map<json::string_t, json> o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
             json j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
@@ -161,7 +168,7 @@ TEST_CASE("constructors")
 
         SECTION("std::unordered_multimap<json::string_t, json>")
         {
-            std::unordered_multimap<json::string_t, json> o {{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}};
+            std::unordered_multimap<json::string_t, json> o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
             json j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
@@ -169,7 +176,7 @@ TEST_CASE("constructors")
 
         SECTION("associative container literal")
         {
-            json j({{"a", json(1)}, {"b", json(2.2)}, {"c", json(false)}, {"d", json("string")}, {"e", json()}});
+            json j({{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}});
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
         }
@@ -186,7 +193,7 @@ TEST_CASE("constructors")
 
         SECTION("filled array")
         {
-            json::array_t a {json(1), json(2.2), json(false), json("string"), json()};
+            json::array_t a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
             json j(a);
             CHECK(j.type() == json::value_t::array);
         }
@@ -195,12 +202,12 @@ TEST_CASE("constructors")
     SECTION("create an array (implicit)")
     {
         // reference array
-        json::array_t a_reference {json(1), json(2.2), json(false), json("string"), json()};
+        json::array_t a_reference {json(1), json(1u), json(2.2), json(false), json("string"), json()};
         json j_reference(a_reference);
 
         SECTION("std::list<json>")
         {
-            std::list<json> a {json(1), json(2.2), json(false), json("string"), json()};
+            std::list<json> a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
             json j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
@@ -208,7 +215,7 @@ TEST_CASE("constructors")
 
         SECTION("std::forward_list<json>")
         {
-            std::forward_list<json> a {json(1), json(2.2), json(false), json("string"), json()};
+            std::forward_list<json> a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
             json j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
@@ -216,7 +223,7 @@ TEST_CASE("constructors")
 
         SECTION("std::array<json, 5>")
         {
-            std::array<json, 5> a {{json(1), json(2.2), json(false), json("string"), json()}};
+            std::array<json, 6> a {{json(1), json(1u), json(2.2), json(false), json("string"), json()}};
             json j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
@@ -224,7 +231,7 @@ TEST_CASE("constructors")
 
         SECTION("std::vector<json>")
         {
-            std::vector<json> a {json(1), json(2.2), json(false), json("string"), json()};
+            std::vector<json> a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
             json j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
@@ -232,7 +239,7 @@ TEST_CASE("constructors")
 
         SECTION("std::deque<json>")
         {
-            std::deque<json> a {json(1), json(2.2), json(false), json("string"), json()};
+            std::deque<json> a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
             json j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
@@ -240,7 +247,7 @@ TEST_CASE("constructors")
 
         SECTION("std::set<json>")
         {
-            std::set<json> a {json(1), json(2.2), json(false), json("string"), json()};
+            std::set<json> a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
             json j(a);
             CHECK(j.type() == json::value_t::array);
             // we cannot really check for equality here
@@ -248,7 +255,7 @@ TEST_CASE("constructors")
 
         SECTION("std::unordered_set<json>")
         {
-            std::unordered_set<json> a {json(1), json(2.2), json(false), json("string"), json()};
+            std::unordered_set<json> a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
             json j(a);
             CHECK(j.type() == json::value_t::array);
             // we cannot really check for equality here
@@ -256,7 +263,7 @@ TEST_CASE("constructors")
 
         SECTION("sequence container literal")
         {
-            json j({json(1), json(2.2), json(false), json("string"), json()});
+            json j({json(1), json(1u), json(2.2), json(false), json("string"), json()});
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
         }
@@ -358,9 +365,11 @@ TEST_CASE("constructors")
 
     SECTION("create an integer number (implicit)")
     {
-        // reference object
+        // reference objects
         json::number_integer_t n_reference = 42;
         json j_reference(n_reference);
+        json::number_unsigned_t n_unsigned_reference = 42;
+        json j_unsigned_reference(n_unsigned_reference);
 
         SECTION("short")
         {
@@ -374,8 +383,8 @@ TEST_CASE("constructors")
         {
             unsigned short n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("int")
@@ -390,8 +399,8 @@ TEST_CASE("constructors")
         {
             unsigned int n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("long")
@@ -404,10 +413,10 @@ TEST_CASE("constructors")
 
         SECTION("unsigned long")
         {
-            short n = 42;
+            unsigned long n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("long long")
@@ -422,8 +431,8 @@ TEST_CASE("constructors")
         {
             unsigned long long n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("int8_t")
@@ -526,96 +535,96 @@ TEST_CASE("constructors")
         {
             uint8_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("uint16_t")
         {
             uint16_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("uint32_t")
         {
             uint32_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("uint64_t")
         {
             uint64_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("uint_fast8_t")
         {
             uint_fast8_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("uint_fast16_t")
         {
             uint_fast16_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("uint_fast32_t")
         {
             uint_fast32_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("uint_fast64_t")
         {
             uint_fast64_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("uint_least8_t")
         {
             uint_least8_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("uint_least16_t")
         {
             uint_least16_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("uint_least32_t")
         {
             uint_least32_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("uint_least64_t")
         {
             uint_least64_t n = 42;
             json j(n);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("integer literal without suffix")
@@ -628,8 +637,8 @@ TEST_CASE("constructors")
         SECTION("integer literal with u suffix")
         {
             json j(42u);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("integer literal with l suffix")
@@ -642,8 +651,8 @@ TEST_CASE("constructors")
         SECTION("integer literal with ul suffix")
         {
             json j(42ul);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
 
         SECTION("integer literal with ll suffix")
@@ -656,8 +665,8 @@ TEST_CASE("constructors")
         SECTION("integer literal with ull suffix")
         {
             json j(42ull);
-            CHECK(j.type() == json::value_t::number_integer);
-            CHECK(j == j_reference);
+            CHECK(j.type() == json::value_t::number_unsigned);
+            CHECK(j == j_unsigned_reference);
         }
     }
 
@@ -830,6 +839,22 @@ TEST_CASE("constructors")
                 }
             }
 
+            SECTION("number (unsigned)")
+            {
+                SECTION("explicit")
+                {
+                    std::initializer_list<json> l = {json(1u)};
+                    json j(l);
+                    CHECK(j.type() == json::value_t::array);
+                }
+
+                SECTION("implicit")
+                {
+                    json j {1u};
+                    CHECK(j.type() == json::value_t::array);
+                }
+            }
+
             SECTION("number (floating-point)")
             {
                 SECTION("explicit")
@@ -851,14 +876,14 @@ TEST_CASE("constructors")
         {
             SECTION("explicit")
             {
-                std::initializer_list<json> l = {1, 42.23, true, nullptr, json::object_t(), json::array_t()};
+                std::initializer_list<json> l = {1, 1u, 42.23, true, nullptr, json::object_t(), json::array_t()};
                 json j(l);
                 CHECK(j.type() == json::value_t::array);
             }
 
             SECTION("implicit")
             {
-                json j {1, 42.23, true, nullptr, json::object_t(), json::array_t()};
+                json j {1, 1u, 42.23, true, nullptr, json::object_t(), json::array_t()};
                 CHECK(j.type() == json::value_t::array);
             }
         }
@@ -867,13 +892,13 @@ TEST_CASE("constructors")
         {
             SECTION("object")
             {
-                json j { {"one", 1}, {"two", 2.2}, {"three", false} };
+                json j { {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false} };
                 CHECK(j.type() == json::value_t::object);
             }
 
             SECTION("array")
             {
-                json j { {"one", 1}, {"two", 2.2}, {"three", false}, 13 };
+                json j { {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false} , 13 };
                 CHECK(j.type() == json::value_t::array);
             }
         }
@@ -888,14 +913,14 @@ TEST_CASE("constructors")
 
             SECTION("object")
             {
-                json j = json::object({ {"one", 1}, {"two", 2.2}, {"three", false} });
+                json j = json::object({ {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false} });
                 CHECK(j.type() == json::value_t::object);
             }
 
             SECTION("object with error")
             {
-                CHECK_THROWS_AS(json::object({ {"one", 1}, {"two", 2.2}, {"three", false}, 13 }), std::logic_error);
-                CHECK_THROWS_WITH(json::object({ {"one", 1}, {"two", 2.2}, {"three", false}, 13 }),
+                CHECK_THROWS_AS(json::object({ {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false}, 13 }), std::logic_error);
+                CHECK_THROWS_WITH(json::object({ {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false}, 13 }),
                 "cannot create object from initializer list");
             }
 
@@ -907,7 +932,7 @@ TEST_CASE("constructors")
 
             SECTION("array")
             {
-                json j = json::array({ {"one", 1}, {"two", 2.2}, {"three", false} });
+                json j = json::array({ {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false} });
                 CHECK(j.type() == json::value_t::array);
             }
         }
@@ -915,7 +940,7 @@ TEST_CASE("constructors")
 
     SECTION("create an array of n copies of a given value")
     {
-        json v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2}}};
+        json v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2u}}};
         json arr(3, v);
         CHECK(arr.size() == 3);
         for (auto& x : arr)
@@ -931,12 +956,12 @@ TEST_CASE("constructors")
             SECTION("json(begin(), end())")
             {
                 {
-                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                     json j_new(jobject.begin(), jobject.end());
                     CHECK(j_new == jobject);
                 }
                 {
-                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                     json j_new(jobject.cbegin(), jobject.cend());
                     CHECK(j_new == jobject);
                 }
@@ -945,12 +970,12 @@ TEST_CASE("constructors")
             SECTION("json(begin(), begin())")
             {
                 {
-                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                     json j_new(jobject.begin(), jobject.begin());
                     CHECK(j_new == json::object());
                 }
                 {
-                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                     json j_new(jobject.cbegin(), jobject.cbegin());
                     CHECK(j_new == json::object());
                 }
@@ -958,24 +983,24 @@ TEST_CASE("constructors")
 
             SECTION("construct from subrange")
             {
-                json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
+                json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
                 json j_new(jobject.find("b"), jobject.find("e"));
-                CHECK(j_new == json({{"b", 1}, {"c", 17}, {"d", false}}));
+                CHECK(j_new == json({{"b", 1}, {"c", 17u}, {"d", false}}));
             }
 
             SECTION("incompatible iterators")
             {
                 {
-                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
-                    json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
+                    json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                     CHECK_THROWS_AS(json(jobject.begin(), jobject2.end()), std::domain_error);
                     CHECK_THROWS_AS(json(jobject2.begin(), jobject.end()), std::domain_error);
                     CHECK_THROWS_WITH(json(jobject.begin(), jobject2.end()), "iterators are not compatible");
                     CHECK_THROWS_WITH(json(jobject2.begin(), jobject.end()), "iterators are not compatible");
                 }
                 {
-                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
-                    json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                    json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
+                    json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                     CHECK_THROWS_AS(json(jobject.cbegin(), jobject2.cend()), std::domain_error);
                     CHECK_THROWS_AS(json(jobject2.cbegin(), jobject.cend()), std::domain_error);
                     CHECK_THROWS_WITH(json(jobject.cbegin(), jobject2.cend()), "iterators are not compatible");
@@ -1109,6 +1134,20 @@ TEST_CASE("constructors")
                     }
                 }
 
+                SECTION("number (unsigned)")
+                {
+                    {
+                        json j = 17u;
+                        json j_new(j.begin(), j.end());
+                        CHECK(j == j_new);
+                    }
+                    {
+                        json j = 17u;
+                        json j_new(j.cbegin(), j.cend());
+                        CHECK(j == j_new);
+                    }
+                }
+
                 SECTION("number (floating point)")
                 {
                     {
@@ -1173,6 +1212,24 @@ TEST_CASE("constructors")
                     }
                     {
                         json j = 17;
+                        CHECK_THROWS_AS(json(j.cend(), j.cend()), std::out_of_range);
+                        CHECK_THROWS_AS(json(j.cbegin(), j.cbegin()), std::out_of_range);
+                        CHECK_THROWS_WITH(json(j.cend(), j.cend()), "iterators out of range");
+                        CHECK_THROWS_WITH(json(j.cbegin(), j.cbegin()), "iterators out of range");
+                    }
+                }
+
+                SECTION("number (integer)")
+                {
+                    {
+                        json j = 17u;
+                        CHECK_THROWS_AS(json(j.end(), j.end()), std::out_of_range);
+                        CHECK_THROWS_AS(json(j.begin(), j.begin()), std::out_of_range);
+                        CHECK_THROWS_WITH(json(j.end(), j.end()), "iterators out of range");
+                        CHECK_THROWS_WITH(json(j.begin(), j.begin()), "iterators out of range");
+                    }
+                    {
+                        json j = 17u;
                         CHECK_THROWS_AS(json(j.cend(), j.cend()), std::out_of_range);
                         CHECK_THROWS_AS(json(j.cbegin(), j.cbegin()), std::out_of_range);
                         CHECK_THROWS_WITH(json(j.cend(), j.cend()), "iterators out of range");
@@ -1248,6 +1305,13 @@ TEST_CASE("other constructors and destructor")
             CHECK(j == k);
         }
 
+        SECTION("number (unsigned)")
+        {
+            json j(42u);
+            json k(j);
+            CHECK(j == k);
+        }
+
         SECTION("number (floating-point)")
         {
             json j(42.23);
@@ -1258,7 +1322,7 @@ TEST_CASE("other constructors and destructor")
 
     SECTION("move constructor")
     {
-        json j {{"foo", "bar"}, {"baz", {1, 2, 3, 4}}, {"a", 42.23}, {"b", nullptr}};
+        json j {{"foo", "bar"}, {"baz", {1, 2, 3, 4}}, {"a", 42u}, {"b", 42.23}, {"c", nullptr}};
         CHECK(j.type() == json::value_t::object);
         json k(std::move(j));
         CHECK(k.type() == json::value_t::object);
@@ -1315,6 +1379,14 @@ TEST_CASE("other constructors and destructor")
             CHECK(j == k);
         }
 
+        SECTION("number (unsigned)")
+        {
+            json j(42u);
+            json k;
+            k = j;
+            CHECK(j == k);
+        }
+
         SECTION("number (floating-point)")
         {
             json j(42.23);
@@ -1334,7 +1406,7 @@ TEST_CASE("other constructors and destructor")
 
         SECTION("array")
         {
-            auto j = new json {"foo", 1, false, 23.42};
+            auto j = new json {"foo", 1, 1u, false, 23.42};
             delete j;
         }
 
@@ -1357,6 +1429,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_boolean());
             CHECK(not j.is_number());
             CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
             CHECK(j.is_object());
             CHECK(not j.is_array());
@@ -1368,11 +1441,12 @@ TEST_CASE("object inspection")
 
         SECTION("array")
         {
-            json j {"foo", 1, 42.23, false};
+            json j {"foo", 1, 1u, 42.23, false};
             CHECK(not j.is_null());
             CHECK(not j.is_boolean());
             CHECK(not j.is_number());
             CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(j.is_array());
@@ -1389,6 +1463,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_boolean());
             CHECK(not j.is_number());
             CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
@@ -1405,6 +1480,7 @@ TEST_CASE("object inspection")
             CHECK(j.is_boolean());
             CHECK(not j.is_number());
             CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
@@ -1421,6 +1497,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_boolean());
             CHECK(not j.is_number());
             CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
@@ -1437,6 +1514,24 @@ TEST_CASE("object inspection")
             CHECK(not j.is_boolean());
             CHECK(j.is_number());
             CHECK(j.is_number_integer());
+            CHECK(not j.is_number_unsigned());
+            CHECK(not j.is_number_float());
+            CHECK(not j.is_object());
+            CHECK(not j.is_array());
+            CHECK(not j.is_string());
+            CHECK(not j.is_discarded());
+            CHECK(j.is_primitive());
+            CHECK(not j.is_structured());
+        }
+
+        SECTION("number (unsigned)")
+        {
+            json j(42u);
+            CHECK(not j.is_null());
+            CHECK(not j.is_boolean());
+            CHECK(j.is_number());
+            CHECK(j.is_number_integer());
+            CHECK(j.is_number_unsigned());
             CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
@@ -1453,6 +1548,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_boolean());
             CHECK(j.is_number());
             CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_unsigned());
             CHECK(j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
@@ -1469,6 +1565,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_boolean());
             CHECK(not j.is_number());
             CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
@@ -1567,6 +1664,12 @@ TEST_CASE("object inspection")
             CHECK(j.type() == json::value_t::number_integer);
         }
 
+        SECTION("number (unsigned)")
+        {
+            json j = 23u;
+            CHECK(j.type() == json::value_t::number_unsigned);
+        }
+
         SECTION("number (floating-point)")
         {
             json j = 42.23;
@@ -1614,6 +1717,13 @@ TEST_CASE("object inspection")
         SECTION("number (integer)")
         {
             json j = 23;
+            json::value_t t = j;
+            CHECK(t == j.type());
+        }
+
+        SECTION("number (unsigned)")
+        {
+            json j = 23u;
             json::value_t t = j;
             CHECK(t == j.type());
         }
@@ -1672,6 +1782,7 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::string).get<json::object_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::boolean).get<json::object_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::object_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_unsigned).get<json::object_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_float).get<json::object_t>(), std::logic_error);
 
             CHECK_THROWS_WITH(json(json::value_t::null).get<json::object_t>(),
@@ -1683,6 +1794,8 @@ TEST_CASE("value conversion")
             CHECK_THROWS_WITH(json(json::value_t::boolean).get<json::object_t>(),
                               "type must be object, but is boolean");
             CHECK_THROWS_WITH(json(json::value_t::number_integer).get<json::object_t>(),
+                              "type must be object, but is number");
+            CHECK_THROWS_WITH(json(json::value_t::number_unsigned).get<json::object_t>(),
                               "type must be object, but is number");
             CHECK_THROWS_WITH(json(json::value_t::number_float).get<json::object_t>(),
                               "type must be object, but is number");
@@ -1727,7 +1840,7 @@ TEST_CASE("value conversion")
 
     SECTION("get an array (explicit)")
     {
-        json::array_t a_reference {json(1), json(2.2), json(false), json("string"), json()};
+        json::array_t a_reference {json(1), json(1u), json(2.2), json(false), json("string"), json()};
         json j(a_reference);
 
         SECTION("json::array_t")
@@ -1767,6 +1880,7 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::string).get<json::array_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::boolean).get<json::array_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::array_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_unsigned).get<json::array_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_float).get<json::array_t>(), std::logic_error);
 
             CHECK_THROWS_WITH(json(json::value_t::null).get<json::array_t>(),
@@ -1779,6 +1893,8 @@ TEST_CASE("value conversion")
                               "type must be array, but is boolean");
             CHECK_THROWS_WITH(json(json::value_t::number_integer).get<json::array_t>(),
                               "type must be array, but is number");
+            CHECK_THROWS_WITH(json(json::value_t::number_unsigned).get<json::array_t>(),
+                              "type must be array, but is number");
             CHECK_THROWS_WITH(json(json::value_t::number_float).get<json::array_t>(),
                               "type must be array, but is number");
         }
@@ -1786,7 +1902,7 @@ TEST_CASE("value conversion")
 
     SECTION("get an array (implicit)")
     {
-        json::array_t a_reference {json(1), json(2.2), json(false), json("string"), json()};
+        json::array_t a_reference {json(1), json(1u), json(2.2), json(false), json("string"), json()};
         json j(a_reference);
 
         SECTION("json::array_t")
@@ -1844,6 +1960,7 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::array).get<json::string_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::boolean).get<json::string_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::string_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_unsigned).get<json::string_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_float).get<json::string_t>(), std::logic_error);
 
             CHECK_THROWS_WITH(json(json::value_t::null).get<json::string_t>(),
@@ -1855,6 +1972,8 @@ TEST_CASE("value conversion")
             CHECK_THROWS_WITH(json(json::value_t::boolean).get<json::string_t>(),
                               "type must be string, but is boolean");
             CHECK_THROWS_WITH(json(json::value_t::number_integer).get<json::string_t>(),
+                              "type must be string, but is number");
+            CHECK_THROWS_WITH(json(json::value_t::number_unsigned).get<json::string_t>(),
                               "type must be string, but is number");
             CHECK_THROWS_WITH(json(json::value_t::number_float).get<json::string_t>(),
                               "type must be string, but is number");
@@ -1903,6 +2022,7 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::array).get<json::boolean_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::string).get<json::boolean_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_integer).get<json::boolean_t>(), std::logic_error);
+            CHECK_THROWS_AS(json(json::value_t::number_unsigned).get<json::boolean_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_float).get<json::boolean_t>(), std::logic_error);
 
             CHECK_THROWS_WITH(json(json::value_t::null).get<json::boolean_t>(),
@@ -1914,6 +2034,8 @@ TEST_CASE("value conversion")
             CHECK_THROWS_WITH(json(json::value_t::string).get<json::boolean_t>(),
                               "type must be boolean, but is string");
             CHECK_THROWS_WITH(json(json::value_t::number_integer).get<json::boolean_t>(),
+                              "type must be boolean, but is number");
+            CHECK_THROWS_WITH(json(json::value_t::number_unsigned).get<json::boolean_t>(),
                               "type must be boolean, but is number");
             CHECK_THROWS_WITH(json(json::value_t::number_float).get<json::boolean_t>(),
                               "type must be boolean, but is number");
@@ -1942,11 +2064,19 @@ TEST_CASE("value conversion")
     {
         json::number_integer_t n_reference {42};
         json j(n_reference);
+        json::number_unsigned_t n_unsigned_reference {42u};
+        json j_unsigned(n_unsigned_reference);
 
         SECTION("number_integer_t")
         {
             json::number_integer_t n = j.get<json::number_integer_t>();
             CHECK(json(n) == j);
+        }
+
+        SECTION("number_unsigned_t")
+        {
+            json::number_unsigned_t n = j_unsigned.get<json::number_unsigned_t>();
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("short")
@@ -2161,6 +2291,7 @@ TEST_CASE("value conversion")
                               "type must be number, but is boolean");
 
             CHECK_NOTHROW(json(json::value_t::number_float).get<json::number_integer_t>());
+            CHECK_NOTHROW(json(json::value_t::number_float).get<json::number_unsigned_t>());
         }
     }
 
@@ -2168,11 +2299,19 @@ TEST_CASE("value conversion")
     {
         json::number_integer_t n_reference {42};
         json j(n_reference);
+        json::number_unsigned_t n_unsigned_reference {42u};
+        json j_unsigned(n_unsigned_reference);
 
         SECTION("number_integer_t")
         {
             json::number_integer_t n = j.get<json::number_integer_t>();
             CHECK(json(n) == j);
+        }
+        
+        SECTION("number_unsigned_t")
+        {
+            json::number_unsigned_t n = j_unsigned.get<json::number_unsigned_t>();
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("short")
@@ -2183,8 +2322,8 @@ TEST_CASE("value conversion")
 
         SECTION("unsigned short")
         {
-            unsigned short n = j;
-            CHECK(json(n) == j);
+            unsigned short n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("int")
@@ -2195,8 +2334,8 @@ TEST_CASE("value conversion")
 
         SECTION("unsigned int")
         {
-            unsigned int n = j;
-            CHECK(json(n) == j);
+            unsigned int n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("long")
@@ -2207,8 +2346,8 @@ TEST_CASE("value conversion")
 
         SECTION("unsigned long")
         {
-            unsigned long n = j;
-            CHECK(json(n) == j);
+            unsigned long n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("long long")
@@ -2219,8 +2358,8 @@ TEST_CASE("value conversion")
 
         SECTION("unsigned long long")
         {
-            unsigned long long n = j;
-            CHECK(json(n) == j);
+            unsigned long long n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("int8_t")
@@ -2297,74 +2436,74 @@ TEST_CASE("value conversion")
 
         SECTION("uint8_t")
         {
-            uint8_t n = j;
-            CHECK(json(n) == j);
+            uint8_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint16_t")
         {
-            uint16_t n = j;
-            CHECK(json(n) == j);
+            uint16_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint32_t")
         {
-            uint32_t n = j;
-            CHECK(json(n) == j);
+            uint32_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint64_t")
         {
-            uint64_t n = j;
-            CHECK(json(n) == j);
+            uint64_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint8_fast_t")
         {
-            uint_fast8_t n = j;
-            CHECK(json(n) == j);
+            uint_fast8_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint16_fast_t")
         {
-            uint_fast16_t n = j;
-            CHECK(json(n) == j);
+            uint_fast16_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint32_fast_t")
         {
-            uint_fast32_t n = j;
-            CHECK(json(n) == j);
+            uint_fast32_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint64_fast_t")
         {
-            uint_fast64_t n = j;
-            CHECK(json(n) == j);
+            uint_fast64_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint8_least_t")
         {
-            uint_least8_t n = j;
-            CHECK(json(n) == j);
+            uint_least8_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint16_least_t")
         {
-            uint_least16_t n = j;
-            CHECK(json(n) == j);
+            uint_least16_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint32_least_t")
         {
-            uint_least32_t n = j;
-            CHECK(json(n) == j);
+            uint_least32_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint64_least_t")
         {
-            uint_least64_t n = j;
-            CHECK(json(n) == j);
+            uint_least64_t n = j_unsigned;
+            CHECK(json(n) == j_unsigned);
         }
     }
 
@@ -2411,6 +2550,7 @@ TEST_CASE("value conversion")
                               "type must be number, but is boolean");
 
             CHECK_NOTHROW(json(json::value_t::number_integer).get<json::number_float_t>());
+            CHECK_NOTHROW(json(json::value_t::number_unsigned).get<json::number_float_t>());
         }
     }
 
@@ -2443,43 +2583,48 @@ TEST_CASE("value conversion")
         SECTION("object-like STL containers")
         {
             json j1 = {{"one", 1}, {"two", 2}, {"three", 3}};
-            json j2 = {{"one", 1.1}, {"two", 2.2}, {"three", 3.3}};
-            json j3 = {{"one", true}, {"two", false}, {"three", true}};
-            json j4 = {{"one", "eins"}, {"two", "zwei"}, {"three", "drei"}};
+            json j2 = {{"one", 1u}, {"two", 2u}, {"three", 3u}};
+            json j3 = {{"one", 1.1}, {"two", 2.2}, {"three", 3.3}};
+            json j4 = {{"one", true}, {"two", false}, {"three", true}};
+            json j5 = {{"one", "eins"}, {"two", "zwei"}, {"three", "drei"}};
 
             SECTION("std::map")
             {
                 auto m1 = j1.get<std::map<std::string, int>>();
-                auto m2 = j2.get<std::map<std::string, double>>();
-                auto m3 = j3.get<std::map<std::string, bool>>();
-                //auto m4 = j4.get<std::map<std::string, std::string>>();
+                auto m2 = j2.get<std::map<std::string, unsigned int>>();
+                auto m3 = j3.get<std::map<std::string, double>>();
+                auto m4 = j4.get<std::map<std::string, bool>>();
+                //auto m5 = j5.get<std::map<std::string, std::string>>();
             }
 
             SECTION("std::unordered_map")
             {
                 auto m1 = j1.get<std::unordered_map<std::string, int>>();
-                auto m2 = j2.get<std::unordered_map<std::string, double>>();
-                auto m3 = j3.get<std::unordered_map<std::string, bool>>();
-                //auto m4 = j4.get<std::unordered_map<std::string, std::string>>();
-                //CHECK(m4["one"] == "eins");
+                auto m2 = j2.get<std::unordered_map<std::string, unsigned int>>();
+                auto m3 = j3.get<std::unordered_map<std::string, double>>();
+                auto m4 = j4.get<std::unordered_map<std::string, bool>>();
+                //auto m5 = j5.get<std::unordered_map<std::string, std::string>>();
+                //CHECK(m5["one"] == "eins");
             }
 
             SECTION("std::multimap")
             {
                 auto m1 = j1.get<std::multimap<std::string, int>>();
-                auto m2 = j2.get<std::multimap<std::string, double>>();
-                auto m3 = j3.get<std::multimap<std::string, bool>>();
-                //auto m4 = j4.get<std::multimap<std::string, std::string>>();
-                //CHECK(m4["one"] == "eins");
+                auto m2 = j2.get<std::multimap<std::string, unsigned int>>();
+                auto m3 = j3.get<std::multimap<std::string, double>>();
+                auto m4 = j4.get<std::multimap<std::string, bool>>();
+                //auto m5 = j5.get<std::multimap<std::string, std::string>>();
+                //CHECK(m5["one"] == "eins");
             }
 
             SECTION("std::unordered_multimap")
             {
                 auto m1 = j1.get<std::unordered_multimap<std::string, int>>();
-                auto m2 = j2.get<std::unordered_multimap<std::string, double>>();
-                auto m3 = j3.get<std::unordered_multimap<std::string, bool>>();
-                //auto m4 = j4.get<std::unordered_multimap<std::string, std::string>>();
-                //CHECK(m4["one"] == "eins");
+                auto m2 = j2.get<std::unordered_multimap<std::string, unsigned int>>();
+                auto m3 = j3.get<std::unordered_multimap<std::string, double>>();
+                auto m4 = j4.get<std::unordered_multimap<std::string, bool>>();
+                //auto m5 = j5.get<std::unordered_multimap<std::string, std::string>>();
+                //CHECK(m5["one"] == "eins");
             }
 
             SECTION("exception in case of a non-object type")
@@ -2492,56 +2637,63 @@ TEST_CASE("value conversion")
         SECTION("array-like STL containers")
         {
             json j1 = {1, 2, 3, 4};
-            json j2 = {1.2, 2.3, 3.4, 4.5};
-            json j3 = {true, false, true};
-            json j4 = {"one", "two", "three"};
+            json j2 = {1u, 2u, 3u, 4u};
+            json j3 = {1.2, 2.3, 3.4, 4.5};
+            json j4 = {true, false, true};
+            json j5 = {"one", "two", "three"};
 
             SECTION("std::list")
             {
                 auto m1 = j1.get<std::list<int>>();
-                auto m2 = j2.get<std::list<double>>();
-                auto m3 = j3.get<std::list<bool>>();
-                auto m4 = j4.get<std::list<std::string>>();
+                auto m2 = j2.get<std::list<unsigned int>>();
+                auto m3 = j3.get<std::list<double>>();
+                auto m4 = j4.get<std::list<bool>>();
+                auto m5 = j5.get<std::list<std::string>>();
             }
 
             //SECTION("std::forward_list")
             //{
             //    auto m1 = j1.get<std::forward_list<int>>();
-            //    auto m2 = j2.get<std::forward_list<double>>();
-            //    auto m3 = j3.get<std::forward_list<bool>>();
-            //    auto m4 = j4.get<std::forward_list<std::string>>();
+            //    auto m2 = j2.get<std::forward_list<unsigned int>>();
+            //    auto m3 = j3.get<std::forward_list<double>>();
+            //    auto m4 = j4.get<std::forward_list<bool>>();
+            //    auto m5 = j5.get<std::forward_list<std::string>>();
             //}
 
             SECTION("std::vector")
             {
                 auto m1 = j1.get<std::vector<int>>();
-                auto m2 = j2.get<std::vector<double>>();
-                auto m3 = j3.get<std::vector<bool>>();
-                auto m4 = j4.get<std::vector<std::string>>();
+                auto m2 = j2.get<std::vector<unsigned int>>();
+                auto m3 = j3.get<std::vector<double>>();
+                auto m4 = j4.get<std::vector<bool>>();
+                auto m5 = j5.get<std::vector<std::string>>();
             }
 
             SECTION("std::deque")
             {
                 auto m1 = j1.get<std::deque<int>>();
-                auto m2 = j2.get<std::deque<double>>();
-                auto m3 = j3.get<std::deque<bool>>();
-                auto m4 = j4.get<std::deque<std::string>>();
+                auto m2 = j2.get<std::deque<unsigned int>>();
+                auto m3 = j2.get<std::deque<double>>();
+                auto m4 = j4.get<std::deque<bool>>();
+                auto m5 = j5.get<std::deque<std::string>>();
             }
 
             SECTION("std::set")
             {
                 auto m1 = j1.get<std::set<int>>();
-                auto m2 = j2.get<std::set<double>>();
-                auto m3 = j3.get<std::set<bool>>();
-                auto m4 = j4.get<std::set<std::string>>();
+                auto m2 = j2.get<std::set<unsigned int>>();
+                auto m3 = j3.get<std::set<double>>();
+                auto m4 = j4.get<std::set<bool>>();
+                auto m5 = j5.get<std::set<std::string>>();
             }
 
             SECTION("std::unordered_set")
             {
                 auto m1 = j1.get<std::unordered_set<int>>();
-                auto m2 = j2.get<std::unordered_set<double>>();
-                auto m3 = j3.get<std::unordered_set<bool>>();
-                auto m4 = j4.get<std::unordered_set<std::string>>();
+                auto m2 = j2.get<std::unordered_set<unsigned int>>();
+                auto m3 = j3.get<std::unordered_set<double>>();
+                auto m4 = j4.get<std::unordered_set<bool>>();
+                auto m5 = j5.get<std::unordered_set<std::string>>();
             }
 
             SECTION("exception in case of a non-object type")
@@ -2569,6 +2721,7 @@ TEST_CASE("pointer access")
         {
             "number", {
                 {"integer", 42},
+                {"unsigned", 42u},
                 {"floating-point", 17.23}
             }
         },
@@ -2601,6 +2754,7 @@ TEST_CASE("pointer access")
         CHECK(value.get_ptr<json::string_t*>() == nullptr);
         CHECK(value.get_ptr<json::boolean_t*>() == nullptr);
         CHECK(value.get_ptr<json::number_integer_t*>() == nullptr);
+        CHECK(value.get_ptr<json::number_unsigned_t*>() == nullptr);
         CHECK(value.get_ptr<json::number_float_t*>() == nullptr);
     }
 
@@ -2628,6 +2782,7 @@ TEST_CASE("pointer access")
         CHECK(value.get_ptr<json::string_t*>() == nullptr);
         CHECK(value.get_ptr<json::boolean_t*>() == nullptr);
         CHECK(value.get_ptr<json::number_integer_t*>() == nullptr);
+        CHECK(value.get_ptr<json::number_unsigned_t*>() == nullptr);
         CHECK(value.get_ptr<json::number_float_t*>() == nullptr);
     }
 
@@ -2655,6 +2810,7 @@ TEST_CASE("pointer access")
         CHECK(value.get_ptr<json::string_t*>() != nullptr);
         CHECK(value.get_ptr<json::boolean_t*>() == nullptr);
         CHECK(value.get_ptr<json::number_integer_t*>() == nullptr);
+        CHECK(value.get_ptr<json::number_unsigned_t*>() == nullptr);
         CHECK(value.get_ptr<json::number_float_t*>() == nullptr);
     }
 
@@ -2682,6 +2838,7 @@ TEST_CASE("pointer access")
         CHECK(value.get_ptr<json::string_t*>() == nullptr);
         CHECK(value.get_ptr<json::boolean_t*>() != nullptr);
         CHECK(value.get_ptr<json::number_integer_t*>() == nullptr);
+        CHECK(value.get_ptr<json::number_unsigned_t*>() == nullptr);
         CHECK(value.get_ptr<json::number_float_t*>() == nullptr);
     }
 
@@ -2709,6 +2866,35 @@ TEST_CASE("pointer access")
         CHECK(value.get_ptr<json::string_t*>() == nullptr);
         CHECK(value.get_ptr<json::boolean_t*>() == nullptr);
         CHECK(value.get_ptr<json::number_integer_t*>() != nullptr);
+        CHECK(value.get_ptr<json::number_unsigned_t*>() == nullptr);
+        CHECK(value.get_ptr<json::number_float_t*>() == nullptr);
+    }
+
+    SECTION("pointer access to number_unsigned_t")
+    {
+        using test_type = json::number_unsigned_t;
+        json value = 23u;
+
+        // check if pointers are returned correctly
+        test_type* p1 = value.get_ptr<test_type*>();
+        CHECK(p1 == value.get_ptr<test_type*>());
+        CHECK(*p1 == value.get<test_type>());
+
+        const test_type* p2 = value.get_ptr<const test_type*>();
+        CHECK(p1 == value.get_ptr<const test_type*>());
+        CHECK(*p2 == value.get<test_type>());
+
+        const test_type* const p3 = value.get_ptr<const test_type* const>();
+        CHECK(p1 == value.get_ptr<const test_type* const>());
+        CHECK(*p3 == value.get<test_type>());
+
+        // check if null pointers are returned correctly
+        CHECK(value.get_ptr<json::object_t*>() == nullptr);
+        CHECK(value.get_ptr<json::array_t*>() == nullptr);
+        CHECK(value.get_ptr<json::string_t*>() == nullptr);
+        CHECK(value.get_ptr<json::boolean_t*>() == nullptr);
+        CHECK(value.get_ptr<json::number_integer_t*>() != nullptr);
+        CHECK(value.get_ptr<json::number_unsigned_t*>() != nullptr);
         CHECK(value.get_ptr<json::number_float_t*>() == nullptr);
     }
 
@@ -2736,6 +2922,7 @@ TEST_CASE("pointer access")
         CHECK(value.get_ptr<json::string_t*>() == nullptr);
         CHECK(value.get_ptr<json::boolean_t*>() == nullptr);
         CHECK(value.get_ptr<json::number_integer_t*>() == nullptr);
+        CHECK(value.get_ptr<json::number_unsigned_t*>() == nullptr);
         CHECK(value.get_ptr<json::number_float_t*>() != nullptr);
     }
 }
@@ -2744,7 +2931,7 @@ TEST_CASE("element access")
 {
     SECTION("array")
     {
-        json j = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+        json j = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
         const json j_const = j;
 
         SECTION("access specified element with bounds checking")
@@ -2752,29 +2939,31 @@ TEST_CASE("element access")
             SECTION("access within bounds")
             {
                 CHECK(j.at(0) == json(1));
-                CHECK(j.at(1) == json(true));
-                CHECK(j.at(2) == json(nullptr));
-                CHECK(j.at(3) == json("string"));
-                CHECK(j.at(4) == json(42.23));
-                CHECK(j.at(5) == json(json::object()));
-                CHECK(j.at(6) == json({1, 2, 3}));
+                CHECK(j.at(1) == json(1u));
+                CHECK(j.at(2) == json(true));
+                CHECK(j.at(3) == json(nullptr));
+                CHECK(j.at(4) == json("string"));
+                CHECK(j.at(5) == json(42.23));
+                CHECK(j.at(6) == json(json::object()));
+                CHECK(j.at(7) == json({1, 2, 3}));
 
                 CHECK(j_const.at(0) == json(1));
-                CHECK(j_const.at(1) == json(true));
-                CHECK(j_const.at(2) == json(nullptr));
-                CHECK(j_const.at(3) == json("string"));
-                CHECK(j_const.at(4) == json(42.23));
-                CHECK(j_const.at(5) == json(json::object()));
-                CHECK(j_const.at(6) == json({1, 2, 3}));
+                CHECK(j_const.at(1) == json(1u));
+                CHECK(j_const.at(2) == json(true));
+                CHECK(j_const.at(3) == json(nullptr));
+                CHECK(j_const.at(4) == json("string"));
+                CHECK(j_const.at(5) == json(42.23));
+                CHECK(j_const.at(6) == json(json::object()));
+                CHECK(j_const.at(7) == json({1, 2, 3}));
             }
 
             SECTION("access outside bounds")
             {
-                CHECK_THROWS_AS(j.at(7), std::out_of_range);
-                CHECK_THROWS_AS(j_const.at(7), std::out_of_range);
+                CHECK_THROWS_AS(j.at(8), std::out_of_range);
+                CHECK_THROWS_AS(j_const.at(8), std::out_of_range);
 
-                CHECK_THROWS_WITH(j.at(7), "array index 7 is out of range");
-                CHECK_THROWS_WITH(j_const.at(7), "array index 7 is out of range");
+                CHECK_THROWS_WITH(j.at(8), "array index 8 is out of range");
+                CHECK_THROWS_WITH(j_const.at(8), "array index 8 is out of range");
             }
 
             SECTION("access on non-array type")
@@ -2834,6 +3023,17 @@ TEST_CASE("element access")
                     CHECK_THROWS_WITH(j_nonarray_const.at(0), "cannot use at() with number");
                 }
 
+                SECTION("number (unsigned)")
+                {
+                    json j_nonarray(json::value_t::number_unsigned);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray.at(0), std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const.at(0), std::domain_error);
+
+                    CHECK_THROWS_WITH(j_nonarray.at(0), "cannot use at() with number");
+                    CHECK_THROWS_WITH(j_nonarray_const.at(0), "cannot use at() with number");
+                }
+
                 SECTION("number (floating-point)")
                 {
                     json j_nonarray(json::value_t::number_float);
@@ -2860,20 +3060,22 @@ TEST_CASE("element access")
             SECTION("access within bounds")
             {
                 CHECK(j[0] == json(1));
-                CHECK(j[1] == json(true));
-                CHECK(j[2] == json(nullptr));
-                CHECK(j[3] == json("string"));
-                CHECK(j[4] == json(42.23));
-                CHECK(j[5] == json(json::object()));
-                CHECK(j[6] == json({1, 2, 3}));
+                CHECK(j[1] == json(1u));
+                CHECK(j[2] == json(true));
+                CHECK(j[3] == json(nullptr));
+                CHECK(j[4] == json("string"));
+                CHECK(j[5] == json(42.23));
+                CHECK(j[6] == json(json::object()));
+                CHECK(j[7] == json({1, 2, 3}));
 
                 CHECK(j_const[0] == json(1));
-                CHECK(j_const[1] == json(true));
-                CHECK(j_const[2] == json(nullptr));
-                CHECK(j_const[3] == json("string"));
-                CHECK(j_const[4] == json(42.23));
-                CHECK(j_const[5] == json(json::object()));
-                CHECK(j_const[6] == json({1, 2, 3}));
+                CHECK(j_const[1] == json(1u));
+                CHECK(j_const[2] == json(true));
+                CHECK(j_const[3] == json(nullptr));
+                CHECK(j_const[4] == json("string"));
+                CHECK(j_const[5] == json(42.23));
+                CHECK(j_const[6] == json(json::object()));
+                CHECK(j_const[7] == json({1, 2, 3}));
             }
 
             SECTION("access on non-array type")
@@ -2937,6 +3139,16 @@ TEST_CASE("element access")
                     CHECK_THROWS_WITH(j_nonarray_const[0], "cannot use operator[] with number");
                 }
 
+                SECTION("number (unsigned)")
+                {
+                    json j_nonarray(json::value_t::number_unsigned);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
+                    CHECK_THROWS_WITH(j_nonarray[0], "cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "cannot use operator[] with number");
+                }
+
                 SECTION("number (floating-point)")
                 {
                     json j_nonarray(json::value_t::number_float);
@@ -2954,44 +3166,49 @@ TEST_CASE("element access")
             SECTION("remove element by index")
             {
                 {
-                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                     jarray.erase(0);
-                    CHECK(jarray == json({true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                    CHECK(jarray == json({1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
                 }
                 {
-                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                     jarray.erase(1);
-                    CHECK(jarray == json({1, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                    CHECK(jarray == json({1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
                 }
                 {
-                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                     jarray.erase(2);
-                    CHECK(jarray == json({1, true, "string", 42.23, json::object(), {1, 2, 3}}));
+                    CHECK(jarray == json({1, 1u, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
                 }
                 {
-                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                     jarray.erase(3);
-                    CHECK(jarray == json({1, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
+                    CHECK(jarray == json({1, 1u, true, "string", 42.23, json::object(), {1, 2, 3}}));
                 }
                 {
-                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                     jarray.erase(4);
-                    CHECK(jarray == json({1, true, nullptr, "string", json::object(), {1, 2, 3}}));
+                    CHECK(jarray == json({1, 1u, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
                 }
                 {
-                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                     jarray.erase(5);
-                    CHECK(jarray == json({1, true, nullptr, "string", 42.23, {1, 2, 3}}));
+                    CHECK(jarray == json({1, 1u, true, nullptr, "string", json::object(), {1, 2, 3}}));
                 }
                 {
-                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                     jarray.erase(6);
-                    CHECK(jarray == json({1, true, nullptr, "string", 42.23, json::object()}));
+                    CHECK(jarray == json({1, 1u, true, nullptr, "string", 42.23, {1, 2, 3}}));
                 }
                 {
-                    json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
-                    CHECK_THROWS_AS(jarray.erase(7), std::out_of_range);
-                    CHECK_THROWS_WITH(jarray.erase(7), "index out of range");
+                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    jarray.erase(7);
+                    CHECK(jarray == json({1, 1u, true, nullptr, "string", 42.23, json::object()}));
+                }
+                {
+                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    CHECK_THROWS_AS(jarray.erase(8), std::out_of_range);
+                    CHECK_THROWS_WITH(jarray.erase(8), "index out of range");
                 }
             }
 
@@ -3000,29 +3217,29 @@ TEST_CASE("element access")
                 SECTION("erase(begin())")
                 {
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json::iterator it2 = jarray.erase(jarray.begin());
-                        CHECK(jarray == json({true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
-                        CHECK(*it2 == json(true));
+                        CHECK(jarray == json({1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(*it2 == json(1u));
                     }
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json::const_iterator it2 = jarray.erase(jarray.cbegin());
-                        CHECK(jarray == json({true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
-                        CHECK(*it2 == json(true));
+                        CHECK(jarray == json({1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(*it2 == json(1u));
                     }
                 }
 
                 SECTION("erase(begin(), end())")
                 {
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json::iterator it2 = jarray.erase(jarray.begin(), jarray.end());
                         CHECK(jarray == json::array());
                         CHECK(it2 == jarray.end());
                     }
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json::const_iterator it2 = jarray.erase(jarray.cbegin(), jarray.cend());
                         CHECK(jarray == json::array());
                         CHECK(it2 == jarray.cend());
@@ -3032,15 +3249,15 @@ TEST_CASE("element access")
                 SECTION("erase(begin(), begin())")
                 {
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json::iterator it2 = jarray.erase(jarray.begin(), jarray.begin());
-                        CHECK(jarray == json({1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
                         CHECK(*it2 == json(1));
                     }
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json::const_iterator it2 = jarray.erase(jarray.cbegin(), jarray.cbegin());
-                        CHECK(jarray == json({1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
                         CHECK(*it2 == json(1));
                     }
                 }
@@ -3048,17 +3265,17 @@ TEST_CASE("element access")
                 SECTION("erase at offset")
                 {
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
-                        json::iterator it = jarray.begin() + 3;
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::iterator it = jarray.begin() + 4;
                         json::iterator it2 = jarray.erase(it);
-                        CHECK(jarray == json({1, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({1, 1u, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
                         CHECK(*it2 == json(42.23));
                     }
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
-                        json::const_iterator it = jarray.cbegin() + 3;
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::const_iterator it = jarray.cbegin() + 4;
                         json::const_iterator it2 = jarray.erase(it);
-                        CHECK(jarray == json({1, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({1, 1u, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
                         CHECK(*it2 == json(42.23));
                     }
                 }
@@ -3066,15 +3283,15 @@ TEST_CASE("element access")
                 SECTION("erase subrange")
                 {
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
-                        json::iterator it2 = jarray.erase(jarray.begin() + 2, jarray.begin() + 5);
-                        CHECK(jarray == json({1, true, json::object(), {1, 2, 3}}));
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::iterator it2 = jarray.erase(jarray.begin() + 3, jarray.begin() + 6);
+                        CHECK(jarray == json({1, 1u, true, json::object(), {1, 2, 3}}));
                         CHECK(*it2 == json::object());
                     }
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
-                        json::const_iterator it2 = jarray.erase(jarray.cbegin() + 2, jarray.cbegin() + 5);
-                        CHECK(jarray == json({1, true, json::object(), {1, 2, 3}}));
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json::const_iterator it2 = jarray.erase(jarray.cbegin() + 3, jarray.cbegin() + 6);
+                        CHECK(jarray == json({1, 1u, true, json::object(), {1, 2, 3}}));
                         CHECK(*it2 == json::object());
                     }
                 }
@@ -3082,7 +3299,7 @@ TEST_CASE("element access")
                 SECTION("different arrays")
                 {
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json jarray2 = {"foo", "bar"};
                         CHECK_THROWS_AS(jarray.erase(jarray2.begin()), std::domain_error);
                         CHECK_THROWS_AS(jarray.erase(jarray.begin(), jarray2.end()), std::domain_error);
@@ -3098,7 +3315,7 @@ TEST_CASE("element access")
                                           "iterators do not fit current value");
                     }
                     {
-                        json jarray = {1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json jarray2 = {"foo", "bar"};
                         CHECK_THROWS_AS(jarray.erase(jarray2.cbegin()), std::domain_error);
                         CHECK_THROWS_AS(jarray.erase(jarray.cbegin(), jarray2.cend()), std::domain_error);
@@ -3153,6 +3370,13 @@ TEST_CASE("element access")
                     CHECK_THROWS_WITH(j_nonobject.erase(0), "cannot use erase() with number");
                 }
 
+                SECTION("number (unsigned)")
+                {
+                    json j_nonobject(json::value_t::number_unsigned);
+                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase(0), "cannot use erase() with number");
+                }
+
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
@@ -3165,7 +3389,7 @@ TEST_CASE("element access")
 
     SECTION("object")
     {
-        json j = {{"integer", 1}, {"floating", 42.23}, {"null", nullptr}, {"string", "hello world"}, {"boolean", true}, {"object", json::object()}, {"array", {1, 2, 3}}};
+        json j = {{"integer", 1}, {"unsigned", 1u}, {"floating", 42.23}, {"null", nullptr}, {"string", "hello world"}, {"boolean", true}, {"object", json::object()}, {"array", {1, 2, 3}}};
         const json j_const = j;
 
         SECTION("access specified element with bounds checking")
@@ -3173,6 +3397,7 @@ TEST_CASE("element access")
             SECTION("access within bounds")
             {
                 CHECK(j.at("integer") == json(1));
+                CHECK(j.at("unsigned") == json(1u));
                 CHECK(j.at("boolean") == json(true));
                 CHECK(j.at("null") == json(nullptr));
                 CHECK(j.at("string") == json("hello world"));
@@ -3181,6 +3406,7 @@ TEST_CASE("element access")
                 CHECK(j.at("array") == json({1, 2, 3}));
 
                 CHECK(j_const.at("integer") == json(1));
+                CHECK(j_const.at("unsigned") == json(1u));
                 CHECK(j_const.at("boolean") == json(true));
                 CHECK(j_const.at("null") == json(nullptr));
                 CHECK(j_const.at("string") == json("hello world"));
@@ -3248,7 +3474,17 @@ TEST_CASE("element access")
                     CHECK_THROWS_WITH(j_nonobject.at("foo"), "cannot use at() with number");
                     CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "cannot use at() with number");
                 }
-
+                
+                SECTION("number (unsigned)")
+                {
+                    json j_nonobject(json::value_t::number_unsigned);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
+                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "cannot use at() with number");
+                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "cannot use at() with number");
+                }
+                
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
@@ -3267,6 +3503,8 @@ TEST_CASE("element access")
             {
                 CHECK(j.value("integer", 2) == 1);
                 CHECK(j.value("integer", 1.0) == Approx(1));
+                CHECK(j.value("unsigned", 2) == 1u);
+                CHECK(j.value("unsigned", 1.0) == Approx(1u));
                 CHECK(j.value("null", json(1)) == json());
                 CHECK(j.value("boolean", false) == true);
                 CHECK(j.value("string", "bar") == "hello world");
@@ -3278,6 +3516,8 @@ TEST_CASE("element access")
 
                 CHECK(j_const.value("integer", 2) == 1);
                 CHECK(j_const.value("integer", 1.0) == Approx(1));
+                CHECK(j_const.value("unsigned", 2) == 1u);
+                CHECK(j_const.value("unsigned", 1.0) == Approx(1u));
                 CHECK(j_const.value("boolean", false) == true);
                 CHECK(j_const.value("string", "bar") == "hello world");
                 CHECK(j_const.value("string", std::string("bar")) == "hello world");
@@ -3290,6 +3530,7 @@ TEST_CASE("element access")
             SECTION("access non-existing value")
             {
                 CHECK(j.value("_", 2) == 2);
+                CHECK(j.value("_", 2u) == 2u);
                 CHECK(j.value("_", false) == false);
                 CHECK(j.value("_", "bar") == "bar");
                 CHECK(j.value("_", 12.34) == Approx(12.34));
@@ -3297,6 +3538,7 @@ TEST_CASE("element access")
                 CHECK(j.value("_", json({10, 100})) == json({10, 100}));
 
                 CHECK(j_const.value("_", 2) == 2);
+                CHECK(j_const.value("_", 2u) == 2u);
                 CHECK(j_const.value("_", false) == false);
                 CHECK(j_const.value("_", "bar") == "bar");
                 CHECK(j_const.value("_", 12.34) == Approx(12.34));
@@ -3356,6 +3598,16 @@ TEST_CASE("element access")
                     CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with number");
                 }
 
+                SECTION("number (unsigned)")
+                {
+                    json j_nonobject(json::value_t::number_unsigned);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                    CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with number");
+                    CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with number");
+                }
+
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
@@ -3373,9 +3625,9 @@ TEST_CASE("element access")
             // "array" is the smallest key
             CHECK(j.front() == json({1, 2, 3}));
             CHECK(j_const.front() == json({1, 2, 3}));
-            // "string" is the largest key
-            CHECK(j.back() == json("hello world"));
-            CHECK(j_const.back() == json("hello world"));
+            // "unsigned" is the largest key
+            CHECK(j.back() == json(1u));
+            CHECK(j_const.back() == json(1u));
         }
 
         SECTION("access specified element")
@@ -3384,6 +3636,9 @@ TEST_CASE("element access")
             {
                 CHECK(j["integer"] == json(1));
                 CHECK(j[json::object_t::key_type("integer")] == j["integer"]);
+
+                CHECK(j["unsigned"] == json(1u));
+                CHECK(j[json::object_t::key_type("unsigned")] == j["unsigned"]);
 
                 CHECK(j["boolean"] == json(true));
                 CHECK(j[json::object_t::key_type("boolean")] == j["boolean"]);
@@ -3504,6 +3759,22 @@ TEST_CASE("element access")
                                       "cannot use operator[] with number");
                 }
 
+                SECTION("number (unsigned)")
+                {
+                    json j_nonobject(json::value_t::number_unsigned);
+                    const json j_const_nonobject(j_nonobject);
+                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
+                    CHECK_THROWS_WITH(j_nonobject["foo"], "cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")],
+                                      "cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_const_nonobject["foo"], "cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
+                                      "cannot use operator[] with number");
+                }
+
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
@@ -3530,6 +3801,11 @@ TEST_CASE("element access")
                 CHECK(j.erase("integer") == 1);
                 CHECK(j.find("integer") == j.end());
                 CHECK(j.erase("integer") == 0);
+
+                CHECK(j.find("unsigned") != j.end());
+                CHECK(j.erase("unsigned") == 1);
+                CHECK(j.find("unsigned") == j.end());
+                CHECK(j.erase("unsigned") == 0);
 
                 CHECK(j.find("boolean") != j.end());
                 CHECK(j.erase("boolean") == 1);
@@ -3567,15 +3843,15 @@ TEST_CASE("element access")
                 SECTION("erase(begin())")
                 {
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         json::iterator it2 = jobject.erase(jobject.begin());
-                        CHECK(jobject == json({{"b", 1}, {"c", 17}}));
+                        CHECK(jobject == json({{"b", 1}, {"c", 17u}}));
                         CHECK(*it2 == json(1));
                     }
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         json::const_iterator it2 = jobject.erase(jobject.cbegin());
-                        CHECK(jobject == json({{"b", 1}, {"c", 17}}));
+                        CHECK(jobject == json({{"b", 1}, {"c", 17u}}));
                         CHECK(*it2 == json(1));
                     }
                 }
@@ -3583,13 +3859,13 @@ TEST_CASE("element access")
                 SECTION("erase(begin(), end())")
                 {
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         json::iterator it2 = jobject.erase(jobject.begin(), jobject.end());
                         CHECK(jobject == json::object());
                         CHECK(it2 == jobject.end());
                     }
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         json::const_iterator it2 = jobject.erase(jobject.cbegin(), jobject.cend());
                         CHECK(jobject == json::object());
                         CHECK(it2 == jobject.cend());
@@ -3599,15 +3875,15 @@ TEST_CASE("element access")
                 SECTION("erase(begin(), begin())")
                 {
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         json::iterator it2 = jobject.erase(jobject.begin(), jobject.begin());
-                        CHECK(jobject == json({{"a", "a"}, {"b", 1}, {"c", 17}}));
+                        CHECK(jobject == json({{"a", "a"}, {"b", 1}, {"c", 17u}}));
                         CHECK(*it2 == json("a"));
                     }
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         json::const_iterator it2 = jobject.erase(jobject.cbegin(), jobject.cbegin());
-                        CHECK(jobject == json({{"a", "a"}, {"b", 1}, {"c", 17}}));
+                        CHECK(jobject == json({{"a", "a"}, {"b", 1}, {"c", 17u}}));
                         CHECK(*it2 == json("a"));
                     }
                 }
@@ -3615,17 +3891,17 @@ TEST_CASE("element access")
                 SECTION("erase at offset")
                 {
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         json::iterator it = jobject.find("b");
                         json::iterator it2 = jobject.erase(it);
-                        CHECK(jobject == json({{"a", "a"}, {"c", 17}}));
+                        CHECK(jobject == json({{"a", "a"}, {"c", 17u}}));
                         CHECK(*it2 == json(17));
                     }
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         json::const_iterator it = jobject.find("b");
                         json::const_iterator it2 = jobject.erase(it);
-                        CHECK(jobject == json({{"a", "a"}, {"c", 17}}));
+                        CHECK(jobject == json({{"a", "a"}, {"c", 17u}}));
                         CHECK(*it2 == json(17));
                     }
                 }
@@ -3633,13 +3909,13 @@ TEST_CASE("element access")
                 SECTION("erase subrange")
                 {
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
                         json::iterator it2 = jobject.erase(jobject.find("b"), jobject.find("e"));
                         CHECK(jobject == json({{"a", "a"}, {"e", true}}));
                         CHECK(*it2 == json(true));
                     }
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
                         json::const_iterator it2 = jobject.erase(jobject.find("b"), jobject.find("e"));
                         CHECK(jobject == json({{"a", "a"}, {"e", true}}));
                         CHECK(*it2 == json(true));
@@ -3649,8 +3925,8 @@ TEST_CASE("element access")
                 SECTION("different objects")
                 {
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
-                        json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
+                        json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         CHECK_THROWS_AS(jobject.erase(jobject2.begin()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject.begin(), jobject2.end()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject.end()), std::domain_error);
@@ -3664,8 +3940,8 @@ TEST_CASE("element access")
                                           "iterators do not fit current value");
                     }
                     {
-                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17}, {"d", false}, {"e", true}};
-                        json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17}};
+                        json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
+                        json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         CHECK_THROWS_AS(jobject.erase(jobject2.cbegin()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject.cbegin(), jobject2.cend()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject.cend()), std::domain_error);
@@ -3732,7 +4008,7 @@ TEST_CASE("element access")
             SECTION("existing element")
             {
                 for (auto key :
-                        {"integer", "floating", "null", "string", "boolean", "object", "array"
+                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
                         })
                 {
                     CHECK(j.find(key) != j.end());
@@ -3798,6 +4074,14 @@ TEST_CASE("element access")
                     CHECK(j_nonarray_const.find("foo") == j_nonarray_const.end());
                 }
 
+                SECTION("number (unsigned)")
+                {
+                    json j_nonarray(json::value_t::number_unsigned);
+                    const json j_nonarray_const(j_nonarray);
+                    CHECK(j_nonarray.find("foo") == j_nonarray.end());
+                    CHECK(j_nonarray_const.find("foo") == j_nonarray_const.end());
+                }
+
                 SECTION("number (floating-point)")
                 {
                     json j_nonarray(json::value_t::number_float);
@@ -3813,7 +4097,7 @@ TEST_CASE("element access")
             SECTION("existing element")
             {
                 for (auto key :
-                        {"integer", "floating", "null", "string", "boolean", "object", "array"
+                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
                         })
                 {
                     CHECK(j.count(key) == 1);
@@ -3872,6 +4156,14 @@ TEST_CASE("element access")
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.count("foo") == 0);
+                    CHECK(j_nonobject_const.count("foo") == 0);
+                }
+
+                SECTION("number (unsigned)")
+                {
+                    json j_nonobject(json::value_t::number_unsigned);
                     const json j_nonobject_const(j_nonobject);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
@@ -3947,6 +4239,20 @@ TEST_CASE("element access")
                 }
                 {
                     const json j = 17;
+                    CHECK(j.front() == j);
+                    CHECK(j.back() == j);
+                }
+            }
+
+            SECTION("number (unsigned)")
+            {
+                {
+                    json j = 17u;
+                    CHECK(j.front() == j);
+                    CHECK(j.back() == j);
+                }
+                {
+                    const json j = 17u;
                     CHECK(j.front() == j);
                     CHECK(j.back() == j);
                 }
@@ -4031,6 +4337,22 @@ TEST_CASE("element access")
                 }
             }
 
+            SECTION("number (unsigned)")
+            {
+                {
+                    json j = 17u;
+                    json::iterator it = j.erase(j.begin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+                {
+                    json j = 17u;
+                    json::const_iterator it = j.erase(j.cbegin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+            }
+
             SECTION("number (floating point)")
             {
                 {
@@ -4087,6 +4409,20 @@ TEST_CASE("element access")
                 }
                 {
                     json j = 17;
+                    CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
+                    CHECK_THROWS_WITH(j.erase(j.cend()), "iterator out of range");
+                }
+            }
+
+            SECTION("number (unsigned)")
+            {
+                {
+                    json j = 17u;
+                    CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
+                    CHECK_THROWS_WITH(j.erase(j.end()), "iterator out of range");
+                }
+                {
+                    json j = 17u;
                     CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
                     CHECK_THROWS_WITH(j.erase(j.cend()), "iterator out of range");
                 }
@@ -4171,6 +4507,22 @@ TEST_CASE("element access")
                 }
             }
 
+            SECTION("number (unsigned)")
+            {
+                {
+                    json j = 17u;
+                    json::iterator it = j.erase(j.begin(), j.end());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+                {
+                    json j = 17u;
+                    json::const_iterator it = j.erase(j.cbegin(), j.cend());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+            }
+
             SECTION("number (floating point)")
             {
                 {
@@ -4237,6 +4589,24 @@ TEST_CASE("element access")
                 }
                 {
                     json j = 17;
+                    CHECK_THROWS_AS(j.erase(j.cend(), j.cend()), std::out_of_range);
+                    CHECK_THROWS_AS(j.erase(j.cbegin(), j.cbegin()), std::out_of_range);
+                    CHECK_THROWS_WITH(j.erase(j.cend(), j.cend()), "iterators out of range");
+                    CHECK_THROWS_WITH(j.erase(j.cbegin(), j.cbegin()), "iterators out of range");
+                }
+            }
+
+            SECTION("number (unsigned)")
+            {
+                {
+                    json j = 17u;
+                    CHECK_THROWS_AS(j.erase(j.end(), j.end()), std::out_of_range);
+                    CHECK_THROWS_AS(j.erase(j.begin(), j.begin()), std::out_of_range);
+                    CHECK_THROWS_WITH(j.erase(j.end(), j.end()), "iterators out of range");
+                    CHECK_THROWS_WITH(j.erase(j.begin(), j.begin()), "iterators out of range");
+                }
+                {
+                    json j = 17u;
                     CHECK_THROWS_AS(j.erase(j.cend(), j.cend()), std::out_of_range);
                     CHECK_THROWS_AS(j.erase(j.cbegin(), j.cbegin()), std::out_of_range);
                     CHECK_THROWS_WITH(j.erase(j.cend(), j.cend()), "iterators out of range");
@@ -5260,6 +5630,210 @@ TEST_CASE("iterators")
             }
         }
 
+        SECTION("number (unsigned)")
+        {
+            json j = 23u;
+            json j_const(j);
+
+            SECTION("json + begin/end")
+            {
+                json::iterator it = j.begin();
+                CHECK(it != j.end());
+                CHECK(*it == j);
+
+                it++;
+                CHECK(it != j.begin());
+                CHECK(it == j.end());
+
+                it--;
+                CHECK(it == j.begin());
+                CHECK(it != j.end());
+                CHECK(*it == j);
+
+                ++it;
+                CHECK(it != j.begin());
+                CHECK(it == j.end());
+
+                --it;
+                CHECK(it == j.begin());
+                CHECK(it != j.end());
+                CHECK(*it == j);
+            }
+
+            SECTION("const json + begin/end")
+            {
+                json::const_iterator it = j_const.begin();
+                CHECK(it != j_const.end());
+                CHECK(*it == j_const);
+
+                it++;
+                CHECK(it != j_const.begin());
+                CHECK(it == j_const.end());
+
+                it--;
+                CHECK(it == j_const.begin());
+                CHECK(it != j_const.end());
+                CHECK(*it == j_const);
+
+                ++it;
+                CHECK(it != j_const.begin());
+                CHECK(it == j_const.end());
+
+                --it;
+                CHECK(it == j_const.begin());
+                CHECK(it != j_const.end());
+                CHECK(*it == j_const);
+            }
+
+            SECTION("json + cbegin/cend")
+            {
+                json::const_iterator it = j.cbegin();
+                CHECK(it != j.cend());
+                CHECK(*it == j);
+
+                it++;
+                CHECK(it != j.cbegin());
+                CHECK(it == j.cend());
+
+                it--;
+                CHECK(it == j.cbegin());
+                CHECK(it != j.cend());
+                CHECK(*it == j);
+
+                ++it;
+                CHECK(it != j.cbegin());
+                CHECK(it == j.cend());
+
+                --it;
+                CHECK(it == j.cbegin());
+                CHECK(it != j.cend());
+                CHECK(*it == j);
+            }
+
+            SECTION("const json + cbegin/cend")
+            {
+                json::const_iterator it = j_const.cbegin();
+                CHECK(it != j_const.cend());
+                CHECK(*it == j_const);
+
+                it++;
+                CHECK(it != j_const.cbegin());
+                CHECK(it == j_const.cend());
+
+                it--;
+                CHECK(it == j_const.cbegin());
+                CHECK(it != j_const.cend());
+                CHECK(*it == j_const);
+
+                ++it;
+                CHECK(it != j_const.cbegin());
+                CHECK(it == j_const.cend());
+
+                --it;
+                CHECK(it == j_const.cbegin());
+                CHECK(it != j_const.cend());
+                CHECK(*it == j_const);
+            }
+
+            SECTION("json + rbegin/rend")
+            {
+                json::reverse_iterator it = j.rbegin();
+                CHECK(it != j.rend());
+                CHECK(*it == j);
+
+                it++;
+                CHECK(it != j.rbegin());
+                CHECK(it == j.rend());
+
+                it--;
+                CHECK(it == j.rbegin());
+                CHECK(it != j.rend());
+                CHECK(*it == j);
+
+                ++it;
+                CHECK(it != j.rbegin());
+                CHECK(it == j.rend());
+
+                --it;
+                CHECK(it == j.rbegin());
+                CHECK(it != j.rend());
+                CHECK(*it == j);
+            }
+
+            SECTION("json + crbegin/crend")
+            {
+                json::const_reverse_iterator it = j.crbegin();
+                CHECK(it != j.crend());
+                CHECK(*it == j);
+
+                it++;
+                CHECK(it != j.crbegin());
+                CHECK(it == j.crend());
+
+                it--;
+                CHECK(it == j.crbegin());
+                CHECK(it != j.crend());
+                CHECK(*it == j);
+
+                ++it;
+                CHECK(it != j.crbegin());
+                CHECK(it == j.crend());
+
+                --it;
+                CHECK(it == j.crbegin());
+                CHECK(it != j.crend());
+                CHECK(*it == j);
+            }
+
+            SECTION("const json + crbegin/crend")
+            {
+                json::const_reverse_iterator it = j_const.crbegin();
+                CHECK(it != j_const.crend());
+                CHECK(*it == j_const);
+
+                it++;
+                CHECK(it != j_const.crbegin());
+                CHECK(it == j_const.crend());
+
+                it--;
+                CHECK(it == j_const.crbegin());
+                CHECK(it != j_const.crend());
+                CHECK(*it == j_const);
+
+                ++it;
+                CHECK(it != j_const.crbegin());
+                CHECK(it == j_const.crend());
+
+                --it;
+                CHECK(it == j_const.crbegin());
+                CHECK(it != j_const.crend());
+                CHECK(*it == j_const);
+            }
+
+            SECTION("key/value")
+            {
+                auto it = j.begin();
+                auto cit = j_const.cbegin();
+                CHECK_THROWS_AS(it.key(), std::domain_error);
+                CHECK_THROWS_WITH(it.key(), "cannot use key() for non-object iterators");
+                CHECK(it.value() == json(23));
+                CHECK_THROWS_AS(cit.key(), std::domain_error);
+                CHECK_THROWS_WITH(cit.key(), "cannot use key() for non-object iterators");
+                CHECK(cit.value() == json(23));
+
+                auto rit = j.rend();
+                auto crit = j.crend();
+                CHECK_THROWS_AS(rit.key(), std::domain_error);
+                CHECK_THROWS_AS(rit.value(), std::out_of_range);
+                CHECK_THROWS_AS(crit.key(), std::domain_error);
+                CHECK_THROWS_AS(crit.value(), std::out_of_range);
+                CHECK_THROWS_WITH(rit.key(), "cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH(rit.value(), "cannot get value");
+                CHECK_THROWS_WITH(crit.key(), "cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH(crit.value(), "cannot get value");
+            }
+        }
+
         SECTION("number (float)")
         {
             json j = 23.42;
@@ -5543,7 +6117,7 @@ TEST_CASE("iterators")
 
     SECTION("iterator comparisons")
     {
-        json j_values = {nullptr, true, 42, 23.23, {{"one", 1}, {"two", 2}}, {1, 2, 3, 4, 5}, "Hello, world"};
+        json j_values = {nullptr, true, 42, 42u, 23.23, {{"one", 1}, {"two", 2}}, {1, 2, 3, 4, 5}, "Hello, world"};
 
         for (json& j : j_values)
         {
@@ -5962,7 +6536,7 @@ TEST_CASE("iterators")
 
     SECTION("reverse iterator comparisons")
     {
-        json j_values = {nullptr, true, 42, 23.23, {{"one", 1}, {"two", 2}}, {1, 2, 3, 4, 5}, "Hello, world"};
+        json j_values = {nullptr, true, 42, 42u, 23.23, {{"one", 1}, {"two", 2}}, {1, 2, 3, 4, 5}, "Hello, world"};
 
         for (json& j : j_values)
         {
@@ -6516,6 +7090,24 @@ TEST_CASE("capacity")
             }
         }
 
+        SECTION("number (unsigned)")
+        {
+            json j = 23u;
+            json j_const(j);
+
+            SECTION("result of empty")
+            {
+                CHECK(j.empty() == false);
+                CHECK(j_const.empty() == false);
+            }
+
+            SECTION("definition of empty")
+            {
+                CHECK(j.begin() != j.end());
+                CHECK(j_const.begin() != j_const.end());
+            }
+        }
+
         SECTION("number (float)")
         {
             json j = 23.42;
@@ -6701,6 +7293,26 @@ TEST_CASE("capacity")
             }
         }
 
+        SECTION("number (unsigned)")
+        {
+            json j = 23u;
+            json j_const(j);
+
+            SECTION("result of size")
+            {
+                CHECK(j.size() == 1);
+                CHECK(j_const.size() == 1);
+            }
+
+            SECTION("definition of size")
+            {
+                CHECK(std::distance(j.begin(), j.end()) == j.size());
+                CHECK(std::distance(j_const.begin(), j_const.end()) == j_const.size());
+                CHECK(std::distance(j.rbegin(), j.rend()) == j.size());
+                CHECK(std::distance(j_const.crbegin(), j_const.crend()) == j_const.size());
+            }
+        }
+
         SECTION("number (float)")
         {
             json j = 23.42;
@@ -6834,6 +7446,18 @@ TEST_CASE("capacity")
             }
         }
 
+        SECTION("number (unsigned)")
+        {
+            json j = 23u;
+            json j_const(j);
+
+            SECTION("result of max_size")
+            {
+                CHECK(j.max_size() == 1);
+                CHECK(j_const.max_size() == 1);
+            }
+        }
+
         SECTION("number (float)")
         {
             json j = 23.42;
@@ -6925,6 +7549,14 @@ TEST_CASE("modifiers")
         SECTION("number (integer)")
         {
             json j = 23;
+
+            j.clear();
+            CHECK(j == json(json::value_t::number_integer));
+        }
+
+        SECTION("number (unsigned)")
+        {
+            json j = 23u;
 
             j.clear();
             CHECK(j == json(json::value_t::number_integer));
@@ -7470,6 +8102,7 @@ TEST_CASE("lexicographical comparison operators")
             json::value_t::null,
             json::value_t::boolean,
             json::value_t::number_integer,
+            json::value_t::number_unsigned,
             json::value_t::number_float,
             json::value_t::object,
             json::value_t::array,
@@ -7480,13 +8113,14 @@ TEST_CASE("lexicographical comparison operators")
         {
             std::vector<std::vector<bool>> expected =
             {
-                {false, true, true, true, true, true, true},
-                {false, false, true, true, true, true, true},
-                {false, false, false, false, true, true, true},
-                {false, false, false, false, true, true, true},
-                {false, false, false, false, false, true, true},
-                {false, false, false, false, false, false, true},
-                {false, false, false, false, false, false, false}
+                {false, true, true, true, true, true, true, true},
+                {false, false, true, true, true, true, true, true},
+                {false, false, false, false, false, true, true, true},
+                {false, false, false, false, false, true, true, true},
+                {false, false, false, false, false, true, true, true},
+                {false, false, false, false, false, false, true, true},
+                {false, false, false, false, false, false, false, true},
+                {false, false, false, false, false, false, false, false}
             };
 
             for (size_t i = 0; i < j_types.size(); ++i)
@@ -7508,6 +8142,7 @@ TEST_CASE("lexicographical comparison operators")
         {
             nullptr, nullptr,
             17, 42,
+            8u, 13u,
             3.14159, 23.42,
             "foo", "bar",
             true, false,
@@ -7519,26 +8154,30 @@ TEST_CASE("lexicographical comparison operators")
         {
             std::vector<std::vector<bool>> expected =
             {
-                {true, true, false, false, false, false, false, false, false, false, false, false, false, false},
-                {true, true, false, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, true, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, true, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, true, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, true, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, true, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, true, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, true, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, false, true, false, false, false, false},
-                {false, false, false, false, false, false, false, false, false, false, true, false, false, false},
-                {false, false, false, false, false, false, false, false, false, false, false, true, false, false},
-                {false, false, false, false, false, false, false, false, false, false, false, false, true, false},
-                {false, false, false, false, false, false, false, false, false, false, false, false, false, true}
+                {true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+                {true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true}
             };
 
             for (size_t i = 0; i < j_values.size(); ++i)
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
+                    CAPTURE(i);
+                    CAPTURE(j);
                     // check precomputed values
                     CHECK( (j_values[i] == j_values[j]) == expected[i][j] );
                 }
@@ -7565,6 +8204,8 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
+                    CAPTURE(i);
+                    CAPTURE(j);
                     // check definition
                     CHECK( (j_values[i] != j_values[j]) == not(j_values[i] == j_values[j]) );
                 }
@@ -7582,26 +8223,30 @@ TEST_CASE("lexicographical comparison operators")
         {
             std::vector<std::vector<bool>> expected =
             {
-                {false, false, true, true, true, true, true, true, true, true, true, true, true, true},
-                {false, false, true, true, true, true, true, true, true, true, true, true, true, true},
-                {false, false, false, true, false, true, true, true, false, false, true, true, true, true},
-                {false, false, false, false, false, false, true, true, false, false, true, true, true, true},
-                {false, false, true, true, false, true, true, true, false, false, true, true, true, true},
-                {false, false, false, true, false, false, true, true, false, false, true, true, true, true},
-                {false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, true, false, false, false, false, false, false, false},
-                {false, false, true, true, true, true, true, true, false, false, true, true, true, true},
-                {false, false, true, true, true, true, true, true, true, false, true, true, true, true},
-                {false, false, false, false, false, false, true, true, false, false, false, true, false, false},
-                {false, false, false, false, false, false, true, true, false, false, false, false, false, false},
-                {false, false, false, false, false, false, true, true, false, false, true, true, false, false},
-                {false, false, false, false, false, false, true, true, false, false, true, true, true, false}
+                {false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
+                {false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
+                {false, false, false, true, false, false, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, false, false, false, false, false, true, true, false, false, true, true, true, true},
+                {false, false, true, true, false, true, false, true, true, true, false, false, true, true, true, true},
+                {false, false, true, true, false, false, false, true, true, true, false, false, true, true, true, true},
+                {false, false, true, true, true, true, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, true, false, false, false, false, true, true, false, false, true, true, true, true},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false},
+                {false, false, true, true, true, true, true, true, true, true, false, false, true, true, true, true},
+                {false, false, true, true, true, true, true, true, true, true, true, false, true, true, true, true},
+                {false, false, false, false, false, false, false, false, true, true, false, false, false, true, false, false},
+                {false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, true, true, false, false, true, true, false, false},
+                {false, false, false, false, false, false, false, false, true, true, false, false, true, true, true, false}
             };
 
             for (size_t i = 0; i < j_values.size(); ++i)
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
+                    CAPTURE(i);
+                    CAPTURE(j);
                     // check precomputed values
                     CHECK( (j_values[i] < j_values[j]) == expected[i][j] );
                 }
@@ -7611,6 +8256,7 @@ TEST_CASE("lexicographical comparison operators")
             json j_discarded(json::value_t::discarded);
             for (size_t i = 0; i < j_values.size(); ++i)
             {
+                CAPTURE(i);
                 CHECK( (j_values[i] < j_discarded) == false);
                 CHECK( (j_discarded < j_values[i]) == false);
                 CHECK( (j_discarded < j_discarded) == false);
@@ -7623,6 +8269,8 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
+                    CAPTURE(i);
+                    CAPTURE(j);
                     // check definition
                     CHECK( (j_values[i] <= j_values[j]) == not(j_values[j] < j_values[i]) );
                 }
@@ -7635,6 +8283,8 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
+                    CAPTURE(i);
+                    CAPTURE(j);
                     // check definition
                     CHECK( (j_values[i] > j_values[j]) == (j_values[j] < j_values[i]) );
                 }
@@ -7647,6 +8297,8 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
+                    CAPTURE(i);
+                    CAPTURE(j);
                     // check definition
                     CHECK( (j_values[i] >= j_values[j]) == not(j_values[i] < j_values[j]) );
                 }
@@ -8817,6 +9469,23 @@ TEST_CASE("parser class")
                     CHECK(json::parser("-9007199254740991").parse().get<int64_t>() == -9007199254740991);
                     // (2**53)-1
                     CHECK(json::parser("9007199254740991").parse().get<int64_t>() == 9007199254740991);
+                }
+                
+                SECTION("over the edge cases")  // issue #178 - Integer conversion to unsigned (incorrect handling of 64 bit integers)
+                {
+                    // While RFC7159, Section 6 specifies a preference for support
+                    // for ranges in range of IEEE 754-2008 binary64 (double precision)
+                    // this does not accommodate 64 bit integers without loss of accuracy.
+                    // As 64 bit integers are now widely used in software, it is desirable
+                    // to expand support to to the full 64 bit (signed and unsigned) range
+                    // i.e. -(2**63) -> (2**64)-1.
+
+                    // -(2**63)    ** Note: compilers see negative literals as negated positive numbers (hence the -1))
+                    CHECK(json::parser("-9223372036854775808").parse().get<int64_t>() == -9223372036854775807-1);
+                    // (2**63)-1
+                    CHECK(json::parser("9223372036854775807").parse().get<int64_t>() == 9223372036854775807);
+                    // (2**64)-1
+                    CHECK(json::parser("18446744073709551615").parse().get<uint64_t>() == 18446744073709551615u);
                 }
             }
 
