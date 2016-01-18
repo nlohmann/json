@@ -40,13 +40,16 @@ to the files you want to use JSON objects. That's it. Do not forget to set the n
 
 ## Supported compilers
 
-Though it's 2015 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2016 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8 - 5.2
-- Clang 3.4 - 3.7
-- Microsoft Visual C++ 14.0 RC
+- GCC 4.9 - 6.0 (and possibly later)
+- Clang 3.4 - 3.8 (and possibly later)
+- Microsoft Visual C++ 14.0 RC (and possibly later)
 
 I would be happy to learn about other compilers/versions.
+
+For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. Please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug.
+
 
 ## Examples
 
@@ -348,7 +351,7 @@ int vi = jn.get<int>();
 
 The class is licensed under the [MIT License](http://opensource.org/licenses/MIT):
 
-Copyright &copy; 2013-2015 [Niels Lohmann](http://nlohmann.me)
+Copyright &copy; 2013-2016 [Niels Lohmann](http://nlohmann.me)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -372,15 +375,25 @@ I deeply appreciate the help of the following people.
 - [Eric Cornelius](https://github.com/EricMCornelius) pointed out a bug in the handling with NaN and infinity values. He also improved the performance of the string escaping.
 - [易思龙](https://github.com/likebeta) implemented a conversion from anonymous enums.
 - [kepkin](https://github.com/kepkin) patiently pushed forward the support for Microsoft Visual studio.
-- [gregmarr](https://github.com/gregmarr) simplified the implementation of reverse iterators.
+- [gregmarr](https://github.com/gregmarr) simplified the implementation of reverse iterators and helped with numerous hints and improvements.
 - [Caio Luppi](https://github.com/caiovlp) fixed a bug in the Unicode handling.
 - [dariomt](https://github.com/dariomt) fixed some typos in the examples.
 - [Daniel Frey](https://github.com/d-frey) cleaned up some pointers and implemented exception-safe memory allocation.
 - [Colin Hirsch](https://github.com/ColinH) took care of a small namespace issue.
 - [Huu Nguyen](https://github.com/whoshuu) correct a variable name in the documentation.
 - [Silverweed](https://github.com/silverweed) overloaded `parse()` to accept an rvalue reference.
+- [dariomt](https://github.com/dariomt) fixed a subtlety in MSVC type support.
+- [ZahlGraf](https://github.com/ZahlGraf) added a workaround that allows compilation using Android NDK.
+- [whackashoe](https://github.com/whackashoe) replaced a function that was marked as unsafe by Visual Studio.
+- [406345](https://github.com/406345) fixed two small warnings.
+- [Glen Fernandes](https://github.com/glenfe) noted a potential portability problem in the `has_mapped_type` function.
+- [Corbin Hughes](https://github.com/nibroc) fixed some typos in the contribution guidelines.
 
 Thanks a lot for helping out!
+
+## Notes
+
+- The code contains numerous debug assertions which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](http://en.cppreference.com/w/cpp/error/assert).
 
 ## Execute unit tests
 
@@ -391,7 +404,7 @@ $ make
 $ ./json_unit "*"
 
 ===============================================================================
-All tests passed (3341774 assertions in 27 test cases)
+All tests passed (3343239 assertions in 28 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

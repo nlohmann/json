@@ -5,7 +5,7 @@ using namespace nlohmann;
 int main()
 {
     // create a JSON object
-    json object =
+    const json object =
     {
         {"one", 1}, {"two", 2}, {"three", 2.9}
     };

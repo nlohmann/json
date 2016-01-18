@@ -1,5 +1,27 @@
 # JSON for Modern C++
 
+## Version 1.0.0
+
+- Release date: 2015-12-28
+- MD5: 331c30e4407ecdcf591e9e3ed85100d0
+
+### Summary
+
+This is the first official release. Compared to the [prerelease version 1.0.0-rc1](https://github.com/nlohmann/json/releases/tag/v1.0.0-rc1), only a few minor improvements have been made:
+
+### Changes
+
+- *Changed*: A **UTF-8 byte order mark** is silently ignored.
+- *Changed*: `sprintf` is no longer used.
+- *Changed*: `iterator_wrapper` also works for const objects; note: the name may change!
+- *Changed*: **Error messages** during deserialization have been improved.
+- *Added*: The `parse` function now also works with type `std::istream&&`.
+- *Added*: Function `value(key, default_value)` returns either a copy of an object's element at the specified key or a given default value if no element with the key exists.
+- *Added*: Public functions are tagged with the version they were introduced. This shall allow for better **versioning** in the future.
+- *Added*: All public functions and types are **documented** (see http://nlohmann.github.io/json/) including executable examples.
+- *Added*: Allocation of all types (in particular arrays, strings, and objects) is now exception-safe.
+- *Added*: They descriptions of thrown exceptions have been overworked and are part of the tests suite and documentation.
+
 ## Version 1.0.0-rc1
 
 - Release date: 2015-07-26
