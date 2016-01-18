@@ -602,7 +602,7 @@ class basic_json
 
     @sa @ref number_integer_t -- type for number values (integer)
 
-    @since version 1.0.0
+    @since version 2.0.0
     */
     using number_unsigned_t = NumberUnsignedType;
     
@@ -699,9 +699,9 @@ class basic_json
         string,         ///< string value
         boolean,        ///< boolean value
         number_integer, ///< number value (integer)
+        number_unsigned,///< number value (unsigned integer)
         number_float,   ///< number value (floating-point)
-        discarded,      ///< discarded by the the parser callback function
-        number_unsigned ///< number value (unsigned integer)
+        discarded       ///< discarded by the the parser callback function
     };
 
 
@@ -1343,7 +1343,7 @@ class basic_json
     @sa @ref basic_json(const CompatibleNumberUnsignedType) -- create a number
     value (unsigned integer) from a compatible number type
 
-    @since version 1.0.0
+    @since version 2.0.0
     */
     template<typename T,
              typename std::enable_if<
@@ -1372,7 +1372,7 @@ class basic_json
     @sa @ref basic_json(const number_unsigned_t) -- create a number value
     (unsigned)
 
-    @since version 1.0.0
+    @since version 2.0.0
     */
     template<typename CompatibleNumberUnsignedType, typename
              std::enable_if<
@@ -2159,7 +2159,7 @@ class basic_json
     /*!
     @brief return whether value is a number
 
-    This function returns true if the JSON value is a number. This includes
+    This function returns true iff the JSON value is a number. This includes
     both integer and floating-point values.
 
     @return `true` if type is number (regardless whether integer, unsigned
@@ -2185,7 +2185,7 @@ class basic_json
     /*!
     @brief return whether value is an integer number
 
-    This function returns true if the JSON value is an integer or unsigned 
+    This function returns true iff the JSON value is an integer or unsigned 
     integer number. This excludes floating-point values.
 
     @return `true` if type is an integer or unsigned integer number, `false` 
@@ -2210,7 +2210,7 @@ class basic_json
     /*!
     @brief return whether value is an unsigned integer number
 
-    This function returns true if the JSON value is an unsigned integer number. 
+    This function returns true iff the JSON value is an unsigned integer number. 
     This excludes floating-point and (signed) integer values.
 
     @return `true` if type is an unsigned integer number, `false` otherwise.
@@ -2222,7 +2222,7 @@ class basic_json
     integer number
     @sa @ref is_number_float() -- check if value is a floating-point number
 
-    @since version 1.0.0
+    @since version 2.0.0
     */
     bool is_number_unsigned() const noexcept
     {
@@ -2232,7 +2232,7 @@ class basic_json
     /*!
     @brief return whether value is a floating-point number
 
-    This function returns true if the JSON value is a floating-point number.
+    This function returns true iff the JSON value is a floating-point number.
     This excludes integer and unsigned integer values.
 
     @return `true` if type is a floating-point number, `false` otherwise.
@@ -4837,16 +4837,15 @@ class basic_json
     */
     friend bool operator<(const value_t lhs, const value_t rhs)
     {
-        static constexpr std::array<uint8_t, 9> order = {{
+        static constexpr std::array<uint8_t, 8> order = {{
                 0, // null
                 3, // object
                 4, // array
                 5, // string
                 1, // boolean
                 2, // integer
+                2, // unsigned
                 2, // float
-                0, // filler for discarded (preserves existing value_t values)
-                2  // unsigned
             }
         };
 
@@ -7164,53 +7163,99 @@ class basic_json
         /*!
         @brief return number value for number tokens
 
-        This function translates the last token into a floating point number.
-        The pointer m_start points to the beginning of the parsed number. We
-        pass this pointer to std::strtod which sets endptr to the first
-        character past the converted number. If this pointer is not the same as
-        m_cursor, then either more or less characters have been used during the
-        comparison. This can happen for inputs like "01" which will be treated
-        like number 0 followed by number 1.
+        This function translates the last token into the most appropriate 
+        number type (either integer, unsigned integer or floating point), 
+        which is passed back to the caller via the result parameter. The pointer 
+        m_start points to the beginning of the parsed number. We first examine
+        the first character to determine the sign of the number and then pass
+        this pointer to either std::strtoull (if positive) or std::strtoll
+        (if negative), both of which set endptr to the first character past the 
+        converted number. If this pointer is not the same as m_cursor, then 
+        either more or less characters have been used during the comparison. 
+        
+        This can happen for inputs like "01" which will be treated like number 0 
+        followed by number 1.  This will also occur for valid floating point 
+        inputs like "12e3" will be incorrectly read as 12.  Numbers that are too
+        large or too small to be stored in the number_integer_t or 
+        number_unsigned_t types will cause a range error (errno set to ERANGE).
+        In both cases (more/less characters read, or a range error) the pointer
+        is passed to std:strtod, which also sets endptr to the first character
+        past the converted number.
+        
+        The resulting number_float_t is then cast to a number_integer_t or,
+        if positive, to a number_unsigned_t and compared to the original. If 
+        there is no loss of precision then it is stored as a number_integer_t
+        or, if positive a number_unsigned_t, otherwise as a number_float_t.
+        
+        A final comparison is made of endptr and if still not the same as 
+        m_cursor a bad input is assumed and result parameter is set to NAN.        
 
-        @return the result of the number conversion or NAN if the conversion
-        read past the current token. The latter case needs to be treated by the
-        caller function.
-
-        @throw std::range_error if passed value is out of range
+        @param[out] result basic_json object to receive the number, or NAN if the
+        conversion read past the current token. The latter case needs to be 
+        treated by the caller function.
         */
         void get_number(basic_json& result) const
         {
             typename string_t::value_type* endptr;
             assert(m_start != nullptr);
-    
-            // Parse it as an integer
-            if(*reinterpret_cast<typename string_t::const_pointer>(m_start) != '-')  {
-                // Unsigned
-                result.m_value.number_unsigned = strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start),&endptr,10);
+            
+            // Attempt to parse it as an integer - first checking for a negative number
+            if(*reinterpret_cast<typename string_t::const_pointer>(m_start) != '-')
+            {
+                // Positive, parse with strtoull
+                result.m_value.number_unsigned = std::strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start),&endptr,10);
                 result.m_type = value_t::number_unsigned;
             }
-            else  {
-                // Signed
-                result.m_value.number_integer = strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start),&endptr,10);
+            else
+            {
+                // Negative, parse with strtoll
+                result.m_value.number_integer = std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start),&endptr,10);
                 result.m_type = value_t::number_integer;
             }
 
-            // Parse it as a double
-            const auto float_val = strtold(reinterpret_cast<typename string_t::const_pointer>(m_start),&endptr);
-            long double int_part;
-            const auto frac_part = std::modf(float_val, &int_part);
+            // Check the end of the number was reached and no range error occurred
+            if(reinterpret_cast<lexer_char_t*>(endptr) != m_cursor || errno == ERANGE)
+            {
+                // Either the number won't fit in an integer (range error) or there was
+                // something else after the number, which could be an exponent
+                
+                // Parse with strtod
+                result.m_value.number_float = std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start),&endptr);
+                
+                // Check if it can be stored as an integer without loss of precision e.g. 1.2e3 = 1200
+                if (result.m_type == value_t::number_integer)
+                {
+                    auto int_val = static_cast<number_integer_t>(result.m_value.number_float);
+                    if (approx(result.m_value.number_float, static_cast<number_float_t>(int_val)))
+                    {
+                        // we would not lose precision -> return int
+                        result.m_value.number_integer = int_val;
+                    }
+                    else
+                    {
+                        result.m_type = value_t::number_float;
+                    }
+                }
+                else
+                {
+                    auto int_val = static_cast<number_unsigned_t>(result.m_value.number_float);
+                    if (approx(result.m_value.number_float, static_cast<number_float_t>(int_val)))
+                    {
+                        // we would not lose precision -> return int
+                        result.m_value.number_unsigned = int_val;
+                    }
+                    else
+                    {
+                        result.m_type = value_t::number_float;
+                    }
+                }
 
-            // Test if the double or integer is a better representation
-            if(!approx(frac_part, static_cast<long double>(0)) ||
-                    (result.m_type == value_t::number_unsigned && !approx(int_part, static_cast<long double>(result.m_value.number_unsigned))) ||
-                    (result.m_type == value_t::number_integer && !approx(int_part, static_cast<long double>(result.m_value.number_integer)))) {
-                result.m_value.number_float = float_val;
-                result.m_type = value_t::number_float;
-            }
-            
-            if(reinterpret_cast<lexer_char_t*>(endptr) != m_cursor) {
-                result.m_value.number_float = NAN;
-                result.m_type = value_t::number_float;
+                // Anything after the number is an error
+                if(reinterpret_cast<lexer_char_t*>(endptr) != m_cursor)
+                {
+                    result.m_value.number_float = NAN;
+                    result.m_type = value_t::number_float;
+                }
             }
         }
 

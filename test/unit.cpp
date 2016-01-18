@@ -9529,12 +9529,12 @@ TEST_CASE("parser class")
 
                 CHECK_THROWS_WITH(json::parser("01").parse(), "parse error - 0 is not a number");
                 CHECK_THROWS_WITH(json::parser("--1").parse(), "parse error - unexpected '-'");
-                CHECK_THROWS_WITH(json::parser("1.").parse(), "parse error - 1 is not a number");
+                CHECK_THROWS_WITH(json::parser("1.").parse(), "parse error - unexpected '.'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("1E").parse(),
                                   "parse error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("1E-").parse(),
                                   "parse error - unexpected 'E'; expected end of input");
-                CHECK_THROWS_WITH(json::parser("1.E1").parse(), "parse error - 1 is not a number");
+                CHECK_THROWS_WITH(json::parser("1.E1").parse(), "parse error - unexpected '.'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-1E").parse(),
                                   "parse error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0E#").parse(),
@@ -9576,18 +9576,18 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("1E.").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("1E/").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("1E:").parse(), std::invalid_argument);
-        CHECK_THROWS_WITH(json::parser("0.").parse(), "parse error - 0 is not a number");
+        CHECK_THROWS_WITH(json::parser("0.").parse(), "parse error - unexpected '.'; expected end of input");
         CHECK_THROWS_WITH(json::parser("-").parse(), "parse error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("--").parse(),
                           "parse error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("-0.").parse(),
-                          "parse error - -0 is not a number");
+                          "parse error - unexpected '.'; expected end of input");
         CHECK_THROWS_WITH(json::parser("-.").parse(),
                           "parse error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("-:").parse(),
                           "parse error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("0.:").parse(),
-                          "parse error - 0 is not a number");
+                          "parse error - unexpected '.'; expected end of input");
         CHECK_THROWS_WITH(json::parser("e.").parse(),
                           "parse error - unexpected 'e'");
         CHECK_THROWS_WITH(json::parser("1e.").parse(),
