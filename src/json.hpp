@@ -2422,7 +2422,7 @@ class basic_json
 	template<typename ReferenceType, typename ThisType>
     static ReferenceType get_ref_impl(ThisType& obj)
     {
-		using PointerType = std::add_pointer<ReferenceType>::type;
+		using PointerType = typename std::add_pointer<ReferenceType>::type;
         // delegate the call to get_ptr<>()
         auto ptr = obj.get_ptr<PointerType>();
 		if (ptr) return *ptr;
