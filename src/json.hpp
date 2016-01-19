@@ -2424,7 +2424,7 @@ class basic_json
     {
 		using PointerType = typename std::add_pointer<ReferenceType>::type;
         // delegate the call to get_ptr<>()
-        auto ptr = obj.get_ptr<PointerType>();
+        auto ptr = obj.template get_ptr<PointerType>();
 		if (ptr) return *ptr;
 		throw std::domain_error("incompatible ReferenceType for get_ref, actual type is " + obj.type_name());
     }
