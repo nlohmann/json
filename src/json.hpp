@@ -108,6 +108,12 @@ static bool approx(const T a, const T b)
 }
 }
 
+template<typename K, typename V>
+using default_object_type = std::map<K,V>;
+
+template<typename V>
+using default_array_type = std::vector<V>;
+
 /*!
 @brief a class to store JSON values
 
@@ -177,8 +183,8 @@ default)
 @nosubgrouping
 */
 template <
-    template<typename U, typename V, typename... Args> class ObjectType = std::map,
-    template<typename U, typename... Args> class ArrayType = std::vector,
+    template<typename K, typename V> class ObjectType = default_object_type,
+    template<typename V> class ArrayType = default_array_type,
     class StringType = std::string,
     class BooleanType = bool,
     class NumberIntegerType = int64_t,
@@ -334,11 +340,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    using object_t = ObjectType<StringType,
-          basic_json,
-          std::less<StringType>,
-          AllocatorType<std::pair<const StringType,
-          basic_json>>>;
+    using object_t = ObjectType<StringType, basic_json>;
 
     /*!
     @brief a type for an array
@@ -384,7 +386,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
+    using array_t = ArrayType<basic_json>;
 
     /*!
     @brief a type for a string
@@ -960,7 +962,7 @@ class basic_json
     */
     template <class CompatibleObjectType, typename
               std::enable_if<
-                  std::is_constructible<typename object_t::key_type, typename CompatibleObjectType::key_type>::value and
+                  std::is_constructible<StringType, typename CompatibleObjectType::key_type>::value and
                   std::is_constructible<basic_json, typename CompatibleObjectType::mapped_type>::value, int>::type
               = 0>
     basic_json(const CompatibleObjectType& val)
@@ -2170,7 +2172,7 @@ class basic_json
     /// get an object (explicit)
     template <class T, typename
               std::enable_if<
-                  std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
+                  std::is_convertible<StringType, typename T::key_type>::value and
                   std::is_convertible<basic_json_t, typename T::mapped_type>::value
                   , int>::type = 0>
     T get_impl(T*) const
@@ -2807,7 +2809,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    reference at(const typename object_t::key_type& key)
+    reference at(const StringType& key)
     {
         // at only works for objects
         if (is_object())
@@ -2855,7 +2857,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    const_reference at(const typename object_t::key_type& key) const
+    const_reference at(const StringType& key) const
     {
         // at only works for objects
         if (is_object())
@@ -2988,7 +2990,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    reference operator[](const typename object_t::key_type& key)
+    reference operator[](const StringType& key)
     {
         // implicitly convert null to object
         if (is_null())
@@ -3036,7 +3038,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    const_reference operator[](const typename object_t::key_type& key) const
+    const_reference operator[](const StringType& key) const
     {
         // [] only works for objects
         if (is_object())
@@ -3199,7 +3201,7 @@ class basic_json
               std::enable_if<
                   std::is_convertible<basic_json_t, ValueType>::value
                   , int>::type = 0>
-    ValueType value(const typename object_t::key_type& key, ValueType default_value) const
+    ValueType value(const StringType& key, ValueType default_value) const
     {
         // at only works for objects
         if (is_object())
@@ -3225,7 +3227,7 @@ class basic_json
     @brief overload for a default value of type const char*
     @copydoc basic_json::value()
     */
-    string_t value(const typename object_t::key_type& key, const char* default_value) const
+    string_t value(const StringType& key, const char* default_value) const
     {
         return value(key, string_t(default_value));
     }
@@ -3539,7 +3541,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    size_type erase(const typename object_t::key_type& key)
+    size_type erase(const StringType& key)
     {
         // this erase only works for objects
         if (is_object())
@@ -3613,7 +3615,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    iterator find(typename object_t::key_type key)
+    iterator find(StringType key)
     {
         auto result = end();
 
@@ -3630,7 +3632,7 @@ class basic_json
     @brief find an element in a JSON object
     @copydoc find(typename object_t::key_type)
     */
-    const_iterator find(typename object_t::key_type key) const
+    const_iterator find(StringType key) const
     {
         auto result = cend();
 
@@ -3661,7 +3663,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    size_type count(typename object_t::key_type key) const
+    size_type count(StringType key) const
     {
         // return 0 for all nonobject types
         assert(not is_object() or m_value.object != nullptr);
@@ -4306,7 +4308,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    void push_back(const typename object_t::value_type& val)
+    void push_back(const std::pair<StringType, basic_json>& val)
     {
         // push_back only works for null objects or objects
         if (not(is_null() or is_object()))
@@ -4330,7 +4332,7 @@ class basic_json
     @brief add an object to an object
     @copydoc push_back(const typename object_t::value_type&)
     */
-    reference operator+=(const typename object_t::value_type& val)
+    reference operator+=(const std::pair<StringType, basic_json>& val)
     {
         push_back(val);
         return operator[](val.first);
