@@ -13,13 +13,13 @@ int main()
 
     // print the values
     std::cout << r1 << ' ' << r2 << '\n';
-    
+
     // incompatible type throws exception
     try
     {
         auto r3 = value.get_ref<json::number_float_t&>();
     }
-    catch(std::domain_error& ex)
+    catch (std::domain_error& ex)
     {
         std::cout << ex.what() << '\n';
     }

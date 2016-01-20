@@ -2416,17 +2416,33 @@ class basic_json
         return is_number_float() ? &m_value.number_float : nullptr;
     }
 
-	/// helper function to implement get_ref without code duplication 
-	/// for const and non-const overloads
-	/// ThisType will be deduced as 'basic_jason' or 'const basic_json'
-	template<typename ReferenceType, typename ThisType>
+    /*!
+    @brief helper function to implement get_ref()
+
+    This funcion helps to implement get_ref() without code duplication for
+    const and non-const overloads
+
+    @tparam ThisType will be deduced as `basic_json` or `const basic_json`
+
+    @throw std::domain_error if ReferenceType does not match underlying value
+    type of the current JSON
+    */
+    template<typename ReferenceType, typename ThisType>
     static ReferenceType get_ref_impl(ThisType& obj)
     {
-		using PointerType = typename std::add_pointer<ReferenceType>::type;
         // delegate the call to get_ptr<>()
+        using PointerType = typename std::add_pointer<ReferenceType>::type;
         auto ptr = obj.template get_ptr<PointerType>();
-		if (ptr) return *ptr;
-		throw std::domain_error("incompatible ReferenceType for get_ref, actual type is " + obj.type_name());
+
+        if (ptr != nullptr)
+        {
+            return *ptr;
+        }
+        else
+        {
+            throw std::domain_error("incompatible ReferenceType for get_ref, actual type is " +
+                                    obj.type_name());
+        }
     }
 
   public:
@@ -2576,7 +2592,7 @@ class basic_json
         return get_impl_ptr(static_cast<const PointerType>(nullptr));
     }
 
-	/*!
+    /*!
     @brief get a reference value (implicit)
 
     Implict reference access to the internally stored JSON value. No copies are
@@ -2585,17 +2601,22 @@ class basic_json
     @warning Writing data to the referee of the result yields an undefined
     state.
 
-    @tparam ReferenceType reference type; must be a reference to @ref array_t, @ref
-    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t, or @ref
-    number_float_t.
+    @tparam ReferenceType reference type; must be a reference to @ref array_t,
+    @ref object_t, @ref string_t, @ref boolean_t, @ref number_integer_t, or
+    @ref number_float_t.
 
-    @return reference to the internally stored JSON value if the requested reference
-    type @a ReferenceType fits to the JSON value; throws std::domain_error otherwise
+    @return reference to the internally stored JSON value if the requested
+    reference type @a ReferenceType fits to the JSON value; throws
+    std::domain_error otherwise
 
-	@throw std::domain_error in case passed type @a ReferenceType is incompatible
-    with the stored JSON value
+    @throw std::domain_error in case passed type @a ReferenceType is
+    incompatible with the stored JSON value
 
     @complexity Constant.
+
+    @liveexample{The example shows several calls to `get_ref()`.,get_ref}
+
+    @since version 1.0.1
     */
     template<typename ReferenceType, typename
              std::enable_if<
@@ -2603,8 +2624,8 @@ class basic_json
                  , int>::type = 0>
     ReferenceType get_ref()
     {
-		// delegate call to get_ref_impl
-		return get_ref_impl<ReferenceType>(*this);
+        // delegate call to get_ref_impl
+        return get_ref_impl<ReferenceType>(*this);
     }
 
     /*!
@@ -2614,12 +2635,12 @@ class basic_json
     template<typename ReferenceType, typename
              std::enable_if<
                  std::is_reference<ReferenceType>::value
-                 and std::is_const< typename std::remove_reference<ReferenceType>::type >::value
+                 and std::is_const<typename std::remove_reference<ReferenceType>::type>::value
                  , int>::type = 0>
     ReferenceType get_ref() const
     {
-		// delegate call to get_ref_impl
-		return get_ref_impl<ReferenceType>(*this);
+        // delegate call to get_ref_impl
+        return get_ref_impl<ReferenceType>(*this);
     }
 
     /*!

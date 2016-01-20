@@ -2604,13 +2604,13 @@ TEST_CASE("pointer access")
         CHECK(value.get_ptr<json::number_float_t*>() == nullptr);
     }
 
-	SECTION("pointer access to const object_t")
+    SECTION("pointer access to const object_t")
     {
         using test_type = json::object_t;
         const json value = {{"one", 1}, {"two", 2}};
 
-		// this should not compile
-		// test_type* p1 = value.get_ptr<test_type*>();
+        // this should not compile
+        // test_type* p1 = value.get_ptr<test_type*>();
 
         // check if pointers are returned correctly
         const test_type* p2 = value.get_ptr<const test_type*>();
@@ -2781,14 +2781,14 @@ TEST_CASE("reference access")
         // check if references are returned correctly
         test_type& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
-		CHECK(p1 == value.get<test_type>());
+        CHECK(p1 == value.get<test_type>());
 
         const test_type& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
         CHECK(p2 == value.get<test_type>());
 
         // check if mismatching references throw correctly
-		CHECK_NOTHROW(value.get_ref<json::object_t&>());
+        CHECK_NOTHROW(value.get_ref<json::object_t&>());
         CHECK_THROWS(value.get_ref<json::array_t&>());
         CHECK_THROWS(value.get_ref<json::string_t&>());
         CHECK_THROWS(value.get_ref<json::boolean_t&>());
@@ -2796,13 +2796,13 @@ TEST_CASE("reference access")
         CHECK_THROWS(value.get_ref<json::number_float_t&>());
     }
 
-	SECTION("const reference access to const object_t")
+    SECTION("const reference access to const object_t")
     {
         using test_type = json::object_t;
         const json value = {{"one", 1}, {"two", 2}};
 
-		// this should not compile
-		// test_type& p1 = value.get_ref<test_type&>();
+        // this should not compile
+        // test_type& p1 = value.get_ref<test_type&>();
 
         // check if references are returned correctly
         const test_type& p2 = value.get_ref<const test_type&>();
@@ -2818,7 +2818,7 @@ TEST_CASE("reference access")
         // check if references are returned correctly
         test_type& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
-		CHECK(p1 == value.get<test_type>());
+        CHECK(p1 == value.get<test_type>());
 
         const test_type& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
@@ -2841,7 +2841,7 @@ TEST_CASE("reference access")
         // check if references are returned correctly
         test_type& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
-		CHECK(p1 == value.get<test_type>());
+        CHECK(p1 == value.get<test_type>());
 
         const test_type& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
@@ -2864,7 +2864,7 @@ TEST_CASE("reference access")
         // check if references are returned correctly
         test_type& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
-		CHECK(p1 == value.get<test_type>());
+        CHECK(p1 == value.get<test_type>());
 
         const test_type& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
@@ -2884,10 +2884,10 @@ TEST_CASE("reference access")
         using test_type = json::number_integer_t;
         json value = 23;
 
-		// check if references are returned correctly
+        // check if references are returned correctly
         test_type& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
-		CHECK(p1 == value.get<test_type>());
+        CHECK(p1 == value.get<test_type>());
 
         const test_type& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
@@ -2907,10 +2907,10 @@ TEST_CASE("reference access")
         using test_type = json::number_float_t;
         json value = 42.23;
 
-		// check if references are returned correctly
+        // check if references are returned correctly
         test_type& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
-		CHECK(p1 == value.get<test_type>());
+        CHECK(p1 == value.get<test_type>());
 
         const test_type& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
