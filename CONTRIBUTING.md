@@ -52,6 +52,10 @@ There are currently two files which need to be edited:
 Please understand that I cannot accept pull requests changing only file `src/json.hpp`.
 
 
+## Note
+
+- If you open a pull request, the code will be automatically tested with [Valgrind](http://valgrind.org)'s Memcheck tool to detect memory leaks. Please be aware that the execution with Valgrind _may_ in rare cases yield different behavior than running the code directly. This can result in failing unit tests which run successfully without Valgrind.
+
 ## Please don't
 
 - Only make changes to file `src/json.hpp` -- please read the paragraph above and understand why `src/json.hpp.re2c` exists.
