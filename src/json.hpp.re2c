@@ -65,6 +65,12 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
     #endif
 #endif
 
+// disable float-equal warnings on GCC/clang
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+
 // enable ssize_t for MSVC
 #ifdef _MSC_VER
     #include <basetsd.h>
@@ -99,13 +105,6 @@ struct has_mapped_type
   public:
     static constexpr bool value = sizeof(test<T>(0)) == 1;
 };
-
-/// "equality" comparison for floating point numbers
-template<typename T>
-static bool approx(const T a, const T b)
-{
-    return not (a > b or a < b);
-}
 }
 
 /*!
@@ -2806,7 +2805,9 @@ class basic_json
              std::enable_if<
                  not std::is_pointer<ValueType>::value
                  and not std::is_same<ValueType, typename string_t::value_type>::value
+#ifndef _MSC_VER  // Fix for issue #167 operator<< abiguity under VS2015
                  and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
+#endif
                  , int>::type = 0>
     operator ValueType() const
     {
@@ -4927,7 +4928,7 @@ class basic_json
                 }
                 case value_t::number_float:
                 {
-                    return approx(lhs.m_value.number_float, rhs.m_value.number_float);
+                    return lhs.m_value.number_float == rhs.m_value.number_float;
                 }
                 default:
                 {
@@ -4937,23 +4938,23 @@ class basic_json
         }
         else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
         {
-            return approx(static_cast<number_float_t>(lhs.m_value.number_integer),
-                          rhs.m_value.number_float);
+            return static_cast<number_float_t>(lhs.m_value.number_integer) ==
+                          rhs.m_value.number_float;
         }
         else if (lhs_type == value_t::number_float and rhs_type == value_t::number_integer)
         {
-            return approx(lhs.m_value.number_float,
-                          static_cast<number_float_t>(rhs.m_value.number_integer));
+            return lhs.m_value.number_float ==
+                          static_cast<number_float_t>(rhs.m_value.number_integer);
         }
         else if (lhs_type == value_t::number_unsigned and rhs_type == value_t::number_float)
         {
-            return approx(static_cast<number_float_t>(lhs.m_value.number_unsigned),
-                          rhs.m_value.number_float);
+            return static_cast<number_float_t>(lhs.m_value.number_unsigned) ==
+                          rhs.m_value.number_float;
         }
         else if (lhs_type == value_t::number_float and rhs_type == value_t::number_unsigned)
         {
-            return approx(lhs.m_value.number_float,
-                          static_cast<number_float_t>(rhs.m_value.number_unsigned));
+            return lhs.m_value.number_float ==
+                          static_cast<number_float_t>(rhs.m_value.number_unsigned);
         }
         else if (lhs_type == value_t::number_unsigned and rhs_type == value_t::number_integer)
         {
@@ -7160,37 +7161,57 @@ class basic_json
             return result;
         }
 
+		/*!
+		@brief static_cast between two types and indicate if it results in error
+
+		This function performs a static_cast between @a source and @a dest.  It 
+		then checks if a static_cast back to @a dest produces an error.
+
+		@param[in] source  the value to cast from 
+
+		@param[out] dest  the value to cast to
+
+		@return @a true if the cast was performed without error, @a false otherwise
+		*/
+		template <typename T_A, typename T_B>
+		bool attempt_cast(T_A source, T_B & dest) const
+		{
+			dest = static_cast<T_B>(source);
+			return (source == static_cast<T_A>(dest));
+		}
+
         /*!
         @brief return number value for number tokens
 
         This function translates the last token into the most appropriate 
         number type (either integer, unsigned integer or floating point), 
         which is passed back to the caller via the result parameter. The pointer 
-        m_start points to the beginning of the parsed number. We first examine
+        @a m_start points to the beginning of the parsed number. We first examine
         the first character to determine the sign of the number and then pass
-        this pointer to either std::strtoull (if positive) or std::strtoll
-        (if negative), both of which set endptr to the first character past the 
-        converted number. If this pointer is not the same as m_cursor, then 
+        this pointer to either @a std::strtoull (if positive) or @a std::strtoll
+        (if negative), both of which set @a endptr to the first character past the 
+        converted number. If this pointer is not the same as @a m_cursor, then 
         either more or less characters have been used during the comparison. 
         
         This can happen for inputs like "01" which will be treated like number 0 
         followed by number 1.  This will also occur for valid floating point 
         inputs like "12e3" will be incorrectly read as 12.  Numbers that are too
-        large or too small to be stored in the number_integer_t or 
-        number_unsigned_t types will cause a range error (errno set to ERANGE).
-        In both cases (more/less characters read, or a range error) the pointer
-        is passed to std:strtod, which also sets endptr to the first character
-        past the converted number.
-        
-        The resulting number_float_t is then cast to a number_integer_t or,
-        if positive, to a number_unsigned_t and compared to the original. If 
-        there is no loss of precision then it is stored as a number_integer_t
-        or, if positive a number_unsigned_t, otherwise as a number_float_t.
-        
-        A final comparison is made of endptr and if still not the same as 
-        m_cursor a bad input is assumed and result parameter is set to NAN.        
+        large or too small for a signed/unsigned long long will cause a range
+		error (@a errno set to ERANGE). The parsed number is cast to a @ref
+		number_integer_t/@ref number_unsigned_t using the helper function @ref attempt_cast,
+		which returns @a false if the cast could not be peformed without error.
 
-        @param[out] result basic_json object to receive the number, or NAN if the
+		In any of these cases (more/less characters read, range error or a cast
+		error) the pointer is passed to @a std:strtod, which also sets @a endptr to the
+		first character past the converted number. The resulting @ref number_float_t 
+		is then cast to a @ref number_integer_t/@ref number_unsigned_t using
+		@ref attempt_cast and if no error occurs is stored in that form, otherwise
+		it is stored as	a @ref number_float_t.
+        
+        A final comparison is made of @a endptr and if still not the same as 
+        @ref m_cursor a bad input is assumed and @a result parameter is set to NAN.        
+
+        @param[out] result  @ref basic_json object to receive the number, or NAN if the
         conversion read past the current token. The latter case needs to be 
         treated by the caller function.
         */
@@ -7198,59 +7219,47 @@ class basic_json
         {
             typename string_t::value_type* endptr;
             assert(m_start != nullptr);
+			errno = 0;
             
             // Attempt to parse it as an integer - first checking for a negative number
-            if(*reinterpret_cast<typename string_t::const_pointer>(m_start) != '-')
+            if (*reinterpret_cast<typename string_t::const_pointer>(m_start) != '-')
             {
-                // Positive, parse with strtoull
-                result.m_value.number_unsigned = std::strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start),&endptr,10);
-                result.m_type = value_t::number_unsigned;
+                // Positive, parse with strtoull and attempt cast to number_unsigned_t
+				if (attempt_cast(std::strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
+					result.m_type = value_t::number_unsigned;
+				else result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
             }
             else
             {
-                // Negative, parse with strtoll
-                result.m_value.number_integer = std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start),&endptr,10);
-                result.m_type = value_t::number_integer;
+                // Negative, parse with strtoll and attempt cast to number_integer_t
+				if (attempt_cast(std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
+					result.m_type = value_t::number_integer;
+				else result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
             }
 
-            // Check the end of the number was reached and no range error occurred
-            if(reinterpret_cast<lexer_char_t*>(endptr) != m_cursor || errno == ERANGE)
+			// Check the end of the number was reached and no range error or overflow occurred
+            if (reinterpret_cast<lexer_char_t*>(endptr) != m_cursor || errno == ERANGE || result.m_type  == value_t::number_float)
             {
-                // Either the number won't fit in an integer (range error) or there was
+                // Either the number won't fit in an integer (range error from strtoull/strtoll or overflow on cast) or there was 
                 // something else after the number, which could be an exponent
                 
                 // Parse with strtod
-                result.m_value.number_float = std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start),&endptr);
-                
-                // Check if it can be stored as an integer without loss of precision e.g. 1.2e3 = 1200
-                if (result.m_type == value_t::number_integer)
-                {
-                    auto int_val = static_cast<number_integer_t>(result.m_value.number_float);
-                    if (approx(result.m_value.number_float, static_cast<number_float_t>(int_val)))
-                    {
-                        // we would not lose precision -> return int
-                        result.m_value.number_integer = int_val;
-                    }
-                    else
-                    {
-                        result.m_type = value_t::number_float;
-                    }
-                }
-                else
-                {
-                    auto int_val = static_cast<number_unsigned_t>(result.m_value.number_float);
-                    if (approx(result.m_value.number_float, static_cast<number_float_t>(int_val)))
-                    {
-                        // we would not lose precision -> return int
-                        result.m_value.number_unsigned = int_val;
-                    }
-                    else
-                    {
-                        result.m_type = value_t::number_float;
-                    }
-                }
+				auto float_val = std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr);
 
-                // Anything after the number is an error
+				// Check if it can be stored as an integer without loss of precision e.g. 1.2e3 = 1200
+				if (result.m_type == value_t::number_unsigned)
+				{
+					if (!attempt_cast(float_val, result.m_value.number_unsigned)) result.m_type = value_t::number_float;
+				}
+				else if (result.m_type == value_t::number_integer)
+				{
+					if (!attempt_cast(float_val, result.m_value.number_integer)) result.m_type = value_t::number_float;
+				}
+
+				// Actually store the float
+				if (result.m_type == value_t::number_float) result.m_value.number_float = static_cast<number_float_t>(float_val);
+
+				// Anything after the number is an error
                 if(reinterpret_cast<lexer_char_t*>(endptr) != m_cursor)
                 {
                     result.m_value.number_float = NAN;
@@ -7632,4 +7641,11 @@ inline nlohmann::json operator "" _json(const char* s, std::size_t)
     return nlohmann::json::parse(reinterpret_cast<const nlohmann::json::string_t::value_type*>(s));
 }
 
+// restore GCC/clang diagnostic settings
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+	#pragma GCC diagnostic pop
 #endif
+
+#endif
+
+
