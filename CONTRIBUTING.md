@@ -52,6 +52,10 @@ There are currently two files which need to be edited:
 Please understand that I cannot accept pull requests changing only file `src/json.hpp`.
 
 
+## Note
+
+- If you open a pull request, the code will be automatically tested with [Valgrind](http://valgrind.org)'s Memcheck tool to detect memory leaks. Please be aware that the execution with Valgrind _may_ in rare cases yield different behavior than running the code directly. This can result in failing unit tests which run successfully without Valgrind.
+
 ## Please don't
 
 - Only make changes to file `src/json.hpp` -- please read the paragraph above and understand why `src/json.hpp.re2c` exists.
@@ -67,3 +71,4 @@ The following areas really need contribution:
 - Extending the **continuous integration** beyond Linux running some versions of GCC and Clang on [Travis](https://travis-ci.org/nlohmann/json) and Microsoft Visual Studio on [AppVeyor](https://ci.appveyor.com/project/nlohmann/json). We have found a lot of bugs just because several compilers behave in a slightly different manner.
 - Improving the efficiency of the **JSON parser**. The current parser is implemented as a naive recursive descent parser with hand coded string handling. More sophisticated approaches like LALR parsers would be really appreciated. That said, parser generators like Bison or ANTLR do not play nice with single-header files -- I really would like to keep the parser inside the `json.hpp` header, and I am not aware of approaches similar to [`re2c`](http://re2c.org) for parsing.
 - Extending and updating existing **benchmarks** to include (the most recent version of) this library. Though efficiency is not everything, speed and memory consumption are very important characteristics for C++ developers, so having proper comparisons would be interesting.
+- Check the code with [Coverity](https://scan.coverity.com).

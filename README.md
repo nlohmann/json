@@ -382,7 +382,7 @@ I deeply appreciate the help of the following people.
 - [Colin Hirsch](https://github.com/ColinH) took care of a small namespace issue.
 - [Huu Nguyen](https://github.com/whoshuu) correct a variable name in the documentation.
 - [Silverweed](https://github.com/silverweed) overloaded `parse()` to accept an rvalue reference.
-- [dariomt](https://github.com/dariomt) fixed a subtlety in MSVC type support.
+- [dariomt](https://github.com/dariomt) fixed a subtlety in MSVC type support and implemented the `get_ref()` function to get a reference to stored values.
 - [ZahlGraf](https://github.com/ZahlGraf) added a workaround that allows compilation using Android NDK.
 - [whackashoe](https://github.com/whackashoe) replaced a function that was marked as unsafe by Visual Studio.
 - [406345](https://github.com/406345) fixed two small warnings.
