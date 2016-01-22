@@ -67,8 +67,8 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 
 // disable float-equal warnings on GCC/clang
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wfloat-equal"
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
 
 // enable ssize_t for MSVC
@@ -7559,24 +7559,24 @@ basic_json_parser_64:
             return result;
         }
 
-		/*!
-		@brief static_cast between two types and indicate if it results in error
+        /*!
+        @brief static_cast between two types and indicate if it results in error
 
-		This function performs a static_cast between @a source and @a dest.  It 
-		then checks if a static_cast back to @a dest produces an error.
+        This function performs a static_cast between @a source and @a dest.  It 
+        then checks if a static_cast back to @a dest produces an error.
 
-		@param[in] source  the value to cast from 
+        @param[in] source  the value to cast from 
 
-		@param[out] dest  the value to cast to
+        @param[out] dest  the value to cast to
 
-		@return @a true if the cast was performed without error, @a false otherwise
-		*/
-		template <typename T_A, typename T_B>
-		bool attempt_cast(T_A source, T_B & dest) const
-		{
-			dest = static_cast<T_B>(source);
-			return (source == static_cast<T_A>(dest));
-		}
+        @return @a true if the cast was performed without error, @a false otherwise
+        */
+        template <typename T_A, typename T_B>
+        bool attempt_cast(T_A source, T_B & dest) const
+        {
+            dest = static_cast<T_B>(source);
+            return (source == static_cast<T_A>(dest));
+        }
 
         /*!
         @brief return number value for number tokens
@@ -7595,16 +7595,16 @@ basic_json_parser_64:
         followed by number 1.  This will also occur for valid floating point 
         inputs like "12e3" will be incorrectly read as 12.  Numbers that are too
         large or too small for a signed/unsigned long long will cause a range
-		error (@a errno set to ERANGE). The parsed number is cast to a @ref
-		number_integer_t/@ref number_unsigned_t using the helper function @ref attempt_cast,
-		which returns @a false if the cast could not be peformed without error.
+        error (@a errno set to ERANGE). The parsed number is cast to a @ref
+        number_integer_t/@ref number_unsigned_t using the helper function @ref attempt_cast,
+        which returns @a false if the cast could not be peformed without error.
 
-		In any of these cases (more/less characters read, range error or a cast
-		error) the pointer is passed to @a std:strtod, which also sets @a endptr to the
-		first character past the converted number. The resulting @ref number_float_t 
-		is then cast to a @ref number_integer_t/@ref number_unsigned_t using
-		@ref attempt_cast and if no error occurs is stored in that form, otherwise
-		it is stored as	a @ref number_float_t.
+        In any of these cases (more/less characters read, range error or a cast
+        error) the pointer is passed to @a std:strtod, which also sets @a endptr to the
+        first character past the converted number. The resulting @ref number_float_t 
+        is then cast to a @ref number_integer_t/@ref number_unsigned_t using
+        @ref attempt_cast and if no error occurs is stored in that form, otherwise
+        it is stored as a @ref number_float_t.
         
         A final comparison is made of @a endptr and if still not the same as 
         @ref m_cursor a bad input is assumed and @a result parameter is set to NAN.        
@@ -7617,47 +7617,47 @@ basic_json_parser_64:
         {
             typename string_t::value_type* endptr;
             assert(m_start != nullptr);
-			errno = 0;
+            errno = 0;
             
             // Attempt to parse it as an integer - first checking for a negative number
             if (*reinterpret_cast<typename string_t::const_pointer>(m_start) != '-')
             {
                 // Positive, parse with strtoull and attempt cast to number_unsigned_t
-				if (attempt_cast(std::strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
-					result.m_type = value_t::number_unsigned;
-				else result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
+                if (attempt_cast(std::strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
+                    result.m_type = value_t::number_unsigned;
+                else result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
             }
             else
             {
                 // Negative, parse with strtoll and attempt cast to number_integer_t
-				if (attempt_cast(std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
-					result.m_type = value_t::number_integer;
-				else result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
+                if (attempt_cast(std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
+                    result.m_type = value_t::number_integer;
+                else result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
             }
 
-			// Check the end of the number was reached and no range error or overflow occurred
+            // Check the end of the number was reached and no range error or overflow occurred
             if (reinterpret_cast<lexer_char_t*>(endptr) != m_cursor || errno == ERANGE || result.m_type  == value_t::number_float)
             {
                 // Either the number won't fit in an integer (range error from strtoull/strtoll or overflow on cast) or there was 
                 // something else after the number, which could be an exponent
                 
                 // Parse with strtod
-				auto float_val = std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr);
+                auto float_val = std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr);
 
-				// Check if it can be stored as an integer without loss of precision e.g. 1.2e3 = 1200
-				if (result.m_type == value_t::number_unsigned)
-				{
-					if (!attempt_cast(float_val, result.m_value.number_unsigned)) result.m_type = value_t::number_float;
-				}
-				else if (result.m_type == value_t::number_integer)
-				{
-					if (!attempt_cast(float_val, result.m_value.number_integer)) result.m_type = value_t::number_float;
-				}
+                // Check if it can be stored as an integer without loss of precision e.g. 1.2e3 = 1200
+                if (result.m_type == value_t::number_unsigned)
+                {
+                    if (!attempt_cast(float_val, result.m_value.number_unsigned)) result.m_type = value_t::number_float;
+                }
+                else if (result.m_type == value_t::number_integer)
+                {
+                    if (!attempt_cast(float_val, result.m_value.number_integer)) result.m_type = value_t::number_float;
+                }
 
-				// Actually store the float
-				if (result.m_type == value_t::number_float) result.m_value.number_float = static_cast<number_float_t>(float_val);
+                // Actually store the float
+                if (result.m_type == value_t::number_float) result.m_value.number_float = static_cast<number_float_t>(float_val);
 
-				// Anything after the number is an error
+                // Anything after the number is an error
                 if(reinterpret_cast<lexer_char_t*>(endptr) != m_cursor)
                 {
                     result.m_value.number_float = NAN;
@@ -8041,7 +8041,7 @@ inline nlohmann::json operator "" _json(const char* s, std::size_t)
 
 // restore GCC/clang diagnostic settings
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-	#pragma GCC diagnostic pop
+    #pragma GCC diagnostic pop
 #endif
 
 #endif

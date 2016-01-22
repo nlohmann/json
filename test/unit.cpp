@@ -12076,34 +12076,34 @@ TEST_CASE("regression tests")
     SECTION("issue #89 - nonstandard integer type")
     {
         // create JSON class with nonstandard integer number type
-		using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, uint32_t, float>;
+        using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, uint32_t, float>;
         custom_json j;
         j["int_1"] = 1;
         // we need to cast to int to compile with Catch - the value is int32_t
         CHECK(static_cast<int>(j["int_1"]) == 1);
 
-		// tests for correct handling of non-standard integers that overflow the type selected by the user
-		
-		// unsigned integer object creation - expected to wrap and still be stored as an integer
-		j = 4294967296U; // 2^32
-		CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_unsigned));
-		CHECK(j.get<uint32_t>() == 0);  // Wrap
+        // tests for correct handling of non-standard integers that overflow the type selected by the user
+        
+        // unsigned integer object creation - expected to wrap and still be stored as an integer
+        j = 4294967296U; // 2^32
+        CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_unsigned));
+        CHECK(j.get<uint32_t>() == 0);  // Wrap
 
-		// unsigned integer parsing - expected to overflow and be stored as a float
-		j = custom_json::parse("4294967296"); // 2^32
-		CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_float));
-		CHECK(j.get<float>() == 4294967296.0);
+        // unsigned integer parsing - expected to overflow and be stored as a float
+        j = custom_json::parse("4294967296"); // 2^32
+        CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_float));
+        CHECK(j.get<float>() == 4294967296.0);
 
-		// integer object creation - expected to wrap and still be stored as an integer
-		j = -2147483649LL; // -2^31-1
-		CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_integer));
-		CHECK(j.get<int32_t>() == 2147483647.0);  // Wrap
+        // integer object creation - expected to wrap and still be stored as an integer
+        j = -2147483649LL; // -2^31-1
+        CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_integer));
+        CHECK(j.get<int32_t>() == 2147483647.0);  // Wrap
 
-		// integer parsing - expected to overflow and be stored as a float
-		j = custom_json::parse("-2147483648"); // -2^31
-		CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_float));
-		CHECK(j.get<float>() == -2147483648.0);
-	}
+        // integer parsing - expected to overflow and be stored as a float
+        j = custom_json::parse("-2147483648"); // -2^31
+        CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_float));
+        CHECK(j.get<float>() == -2147483648.0);
+    }
 
     SECTION("issue #93 reverse_iterator operator inheritance problem")
     {
