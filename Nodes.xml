@@ -828,6 +828,16 @@
                 <Anchor>a234f03dce002783748ca401a42bc6472</Anchor>
                </Node>
                <Node>
+                <Name>get_ref</Name>
+                <Path>classnlohmann_1_1basic__json_a1b058496e6a67565a096233cd113505b.html</Path>
+                <Anchor>a1b058496e6a67565a096233cd113505b</Anchor>
+               </Node>
+               <Node>
+                <Name>get_ref</Name>
+                <Path>classnlohmann_1_1basic__json_a2f1f7ca08995781acb63bd66b26ad1c1.html</Path>
+                <Anchor>a2f1f7ca08995781acb63bd66b26ad1c1</Anchor>
+               </Node>
+               <Node>
                 <Name>insert</Name>
                 <Path>classnlohmann_1_1basic__json_af7d0adc984d04fc70c3d29fcd63e096a.html</Path>
                 <Anchor>af7d0adc984d04fc70c3d29fcd63e096a</Anchor>

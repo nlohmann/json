@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.11"/>
-<title>JSON for Modern C++: nlohmann::basic_json::size_type</title>
+<title>JSON for Modern C++: nlohmann::basic_json::get_ref</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -146,7 +146,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html#a656939a3dc9a6047e4afacd9e11b83a6">get_ptr</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a234f03dce002783748ca401a42bc6472.html#a234f03dce002783748ca401a42bc6472">get_ptr</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a1b058496e6a67565a096233cd113505b.html#a1b058496e6a67565a096233cd113505b">get_ref</a></td></tr>
-          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a2f1f7ca08995781acb63bd66b26ad1c1.html#a2f1f7ca08995781acb63bd66b26ad1c1">get_ref</a></td></tr>
+          <tr><td class="navtab"><a class="qindexHL" href="classnlohmann_1_1basic__json_a2f1f7ca08995781acb63bd66b26ad1c1.html#a2f1f7ca08995781acb63bd66b26ad1c1">get_ref</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_af7d0adc984d04fc70c3d29fcd63e096a.html#af7d0adc984d04fc70c3d29fcd63e096a">insert</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a07c9c38a1f01675759e05d5d34627343.html#a07c9c38a1f01675759e05d5d34627343">insert</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a6b7428e8c1169497f47b81667001cbfb.html#a6b7428e8c1169497f47b81667001cbfb">insert</a></td></tr>
@@ -213,7 +213,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a4ad3f27ecece8f644e8dca69a97eb67f.html#a4ad3f27ecece8f644e8dca69a97eb67f">rend</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a1683189bd539313b5559f07961166c8b.html#a1683189bd539313b5559f07961166c8b">reverse_iterator</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ab9a20bd1d391e9cb968db50c246f728d.html#ab9a20bd1d391e9cb968db50c246f728d">size</a></td></tr>
-          <tr><td class="navtab"><a class="qindexHL" href="classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html#a80ceaa3bdd346292273b309e08525c1c">size_type</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html#a80ceaa3bdd346292273b309e08525c1c">size_type</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ace8338e57fdb11e1955c2a0c2d782069.html#ace8338e57fdb11e1955c2a0c2d782069">string_t</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_af073eec08d2e68924098aef09e9a10ba.html#af073eec08d2e68924098aef09e9a10ba">swap</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aa71e977d31f470689883ac60d16ea4ac.html#aa71e977d31f470689883ac60d16ea4ac">swap</a></td></tr>
@@ -229,19 +229,57 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       </div>
    </td>
    <td valign="top" class="mempage">
-<a class="anchor" id="a80ceaa3bdd346292273b309e08525c1c"></a>
+<a class="anchor" id="a2f1f7ca08995781acb63bd66b26ad1c1"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;template&lt; typename U, typename V, typename...Args &gt; class ObjectType = std::map, template&lt; typename U, typename...Args &gt; class ArrayType = std::vector, class StringType  = std::string, class BooleanType  = bool, class NumberIntegerType  = int64_t, class NumberFloatType  = double, template&lt; typename U &gt; class AllocatorType = std::allocator&gt; </div>
+<div class="memtemplate">
+template&lt;typename ReferenceType , typename std::enable_if&lt;                                                              std::is_reference&lt; ReferenceType &gt;::value                                                           and std::is_const&lt; typename std::remove_reference&lt; ReferenceType &gt;::type &gt;::value                                                           , int &gt;::type  = 0&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::<a class="el" href="classnlohmann_1_1basic__json_a80ceaa3bdd346292273b309e08525c1c.html#a80ceaa3bdd346292273b309e08525c1c">size_type</a> =  std::size_t</td>
+          <td class="memname">ReferenceType <a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::get_ref </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
+<p>get a reference value (implicit) Implict reference access to the internally stored JSON value. No copies are made.</p>
+<dl class="section warning"><dt>Warning</dt><dd>Writing data to the referee of the result yields an undefined state.</dd></dl>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">ReferenceType</td><td>reference type; must be a reference to <a class="el" href="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba.html#ac82abedf356d252e0589850c3d8b35ba">array_t</a>, <a class="el" href="classnlohmann_1_1basic__json_a63691315292df8e1522b00d37ebb1ffc.html#a63691315292df8e1522b00d37ebb1ffc">object_t</a>, <a class="el" href="classnlohmann_1_1basic__json_ace8338e57fdb11e1955c2a0c2d782069.html#ace8338e57fdb11e1955c2a0c2d782069">string_t</a>, <a class="el" href="classnlohmann_1_1basic__json_aafa839f2a74dc1b5060314b3423143b8.html#aafa839f2a74dc1b5060314b3423143b8">boolean_t</a>, <a class="el" href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">number_integer_t</a>, or <a class="el" href="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044.html#aacf6c869f6a9c66ac1bc99e93f310044">number_float_t</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>reference to the internally stored JSON value if the requested reference type <em>ReferenceType</em> fits to the JSON value; throws std::domain_error otherwise</dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::domain_error</td><td>in case passed type <em>ReferenceType</em> is incompatible with the stored JSON value</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section user"><dt>Complexity</dt><dd>Constant.</dd></dl>
+<dl class="section user"><dt>Example</dt><dd>The example shows several calls to <code>get_ref()</code>. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="keyword">using namespace </span><a class="code" href="namespacenlohmann.html">nlohmann</a>;</div><div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;</div><div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div><div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div><div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create a JSON number</span></div><div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> value = 17;</div><div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div><div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="comment">// explicitly getting references</span></div><div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <span class="keyword">auto</span> r1 = value.<a class="code" href="classnlohmann_1_1basic__json_a1b058496e6a67565a096233cd113505b.html#a1b058496e6a67565a096233cd113505b">get_ref</a>&lt;<span class="keyword">const</span> <a class="code" href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">json::number_integer_t</a>&amp;&gt;();</div><div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    <span class="keyword">auto</span> r2 = value.<a class="code" href="classnlohmann_1_1basic__json_a1b058496e6a67565a096233cd113505b.html#a1b058496e6a67565a096233cd113505b">get_ref</a>&lt;<a class="code" href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">json::number_integer_t</a>&amp;&gt;();</div><div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;</div><div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    <span class="comment">// print the values</span></div><div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    std::cout &lt;&lt; r1 &lt;&lt; <span class="charliteral">&#39; &#39;</span> &lt;&lt; r2 &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div><div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;</div><div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    <span class="comment">// incompatible type throws exception</span></div><div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    <span class="keywordflow">try</span></div><div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    {</div><div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;        <span class="keyword">auto</span> r3 = value.<a class="code" href="classnlohmann_1_1basic__json_a1b058496e6a67565a096233cd113505b.html#a1b058496e6a67565a096233cd113505b">get_ref</a>&lt;<a class="code" href="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044.html#aacf6c869f6a9c66ac1bc99e93f310044">json::number_float_t</a>&amp;&gt;();</div><div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;    }</div><div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    <span class="keywordflow">catch</span> (std::domain_error&amp; ex)</div><div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    {</div><div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;        std::cout &lt;&lt; ex.what() &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div><div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    }</div><div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;}</div><div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00188">json.hpp:188</a></div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a1b058496e6a67565a096233cd113505b_html_a1b058496e6a67565a096233cd113505b"><div class="ttname"><a href="classnlohmann_1_1basic__json_a1b058496e6a67565a096233cd113505b.html#a1b058496e6a67565a096233cd113505b">nlohmann::basic_json::get_ref</a></div><div class="ttdeci">ReferenceType get_ref()</div><div class="ttdoc">get a reference value (implicit) </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l02625">json.hpp:2625</a></div></div>
+<div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00079">json.hpp:79</a></div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33_html_a6944904b3b59769b1cf62ac2532cbe33"><div class="ttname"><a href="classnlohmann_1_1basic__json_a6944904b3b59769b1cf62ac2532cbe33.html#a6944904b3b59769b1cf62ac2532cbe33">nlohmann::basic_json::number_integer_t</a></div><div class="ttdeci">NumberIntegerType number_integer_t</div><div class="ttdoc">a type for a number (integer) </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00528">json.hpp:528</a></div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044_html_aacf6c869f6a9c66ac1bc99e93f310044"><div class="ttname"><a href="classnlohmann_1_1basic__json_aacf6c869f6a9c66ac1bc99e93f310044.html#aacf6c869f6a9c66ac1bc99e93f310044">nlohmann::basic_json::number_float_t</a></div><div class="ttdeci">NumberFloatType number_float_t</div><div class="ttdoc">a type for a number (floating-point) </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00593">json.hpp:593</a></div></div>
+</div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/nBNBANVonG9HCQqQ"><b>online</b></a>): <pre class="fragment">17 17
+incompatible ReferenceType for get_ref, actual type is number
+</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/get_ref.cpp -o get_ref </pre></dd></dl>
+<dl class="section since"><dt>Since</dt><dd>version 1.0.1 </dd></dl>
 
-<p>Definition at line <a class="el" href="json_8hpp_source.html#l00222">222</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p>Definition at line <a class="el" href="json_8hpp_source.html#l02640">2640</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 
 </div>
 </div>

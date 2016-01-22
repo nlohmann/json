@@ -145,6 +145,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ad2c4513cef5d8db760c4b2d871eea42c.html#ad2c4513cef5d8db760c4b2d871eea42c">get_allocator</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a656939a3dc9a6047e4afacd9e11b83a6.html#a656939a3dc9a6047e4afacd9e11b83a6">get_ptr</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a234f03dce002783748ca401a42bc6472.html#a234f03dce002783748ca401a42bc6472">get_ptr</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a1b058496e6a67565a096233cd113505b.html#a1b058496e6a67565a096233cd113505b">get_ref</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a2f1f7ca08995781acb63bd66b26ad1c1.html#a2f1f7ca08995781acb63bd66b26ad1c1">get_ref</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_af7d0adc984d04fc70c3d29fcd63e096a.html#af7d0adc984d04fc70c3d29fcd63e096a">insert</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a07c9c38a1f01675759e05d5d34627343.html#a07c9c38a1f01675759e05d5d34627343">insert</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a6b7428e8c1169497f47b81667001cbfb.html#a6b7428e8c1169497f47b81667001cbfb">insert</a></td></tr>
@@ -268,7 +270,7 @@ range"</code></td></tr>
 <dl class="section user"><dt>Complexity</dt><dd>Linear in distance between <em>idx</em> and the end of the container.</dd></dl>
 <dl class="section user"><dt>Example</dt><dd>The example shows the effect of erase. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="keyword">using namespace </span><a class="code" href="namespacenlohmann.html">nlohmann</a>;</div><div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;</div><div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div><div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div><div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create a JSON array</span></div><div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="classnlohmann_1_1basic__json.html">json</a> j_array = {0, 1, 2, 3, 4, 5};</div><div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div><div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="comment">// call erase</span></div><div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    j_array.<a class="code" href="classnlohmann_1_1basic__json_a75a1754e0d39f33095d3102a8bdb9881.html#a75a1754e0d39f33095d3102a8bdb9881">erase</a>(2);</div><div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div><div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="comment">// print values</span></div><div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    std::cout &lt;&lt; j_array &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div><div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;}</div><div class="ttc" id="classnlohmann_1_1basic__json_html"><div class="ttname"><a href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a></div><div class="ttdoc">a class to store JSON values </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00188">json.hpp:188</a></div></div>
 <div class="ttc" id="namespacenlohmann_html"><div class="ttname"><a href="namespacenlohmann.html">nlohmann</a></div><div class="ttdoc">namespace for Niels Lohmann </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l00079">json.hpp:79</a></div></div>
-<div class="ttc" id="classnlohmann_1_1basic__json_a75a1754e0d39f33095d3102a8bdb9881_html_a75a1754e0d39f33095d3102a8bdb9881"><div class="ttname"><a href="classnlohmann_1_1basic__json_a75a1754e0d39f33095d3102a8bdb9881.html#a75a1754e0d39f33095d3102a8bdb9881">nlohmann::basic_json::erase</a></div><div class="ttdeci">InteratorType erase(InteratorType pos)</div><div class="ttdoc">remove element given an iterator </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l03274">json.hpp:3274</a></div></div>
+<div class="ttc" id="classnlohmann_1_1basic__json_a75a1754e0d39f33095d3102a8bdb9881_html_a75a1754e0d39f33095d3102a8bdb9881"><div class="ttname"><a href="classnlohmann_1_1basic__json_a75a1754e0d39f33095d3102a8bdb9881.html#a75a1754e0d39f33095d3102a8bdb9881">nlohmann::basic_json::erase</a></div><div class="ttdeci">InteratorType erase(InteratorType pos)</div><div class="ttdoc">remove element given an iterator </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l03354">json.hpp:3354</a></div></div>
 </div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/foNekpKoDDTEfKuy"><b>online</b></a>): <pre class="fragment">[0,1,3,4,5]
 </pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/erase__size_type.cpp -o erase__size_type </pre></dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_a75a1754e0d39f33095d3102a8bdb9881.html#a75a1754e0d39f33095d3102a8bdb9881">erase(InteratorType)</a> &ndash; removes the element at a given position </dd>
@@ -278,7 +280,7 @@ range"</code></td></tr>
 <a class="el" href="classnlohmann_1_1basic__json_a7d1b990f2c12fecb57db1504fdadd0bb.html#a7d1b990f2c12fecb57db1504fdadd0bb">erase(const typename object_t::key_type&amp;)</a> &ndash; removes the element from an object at the given key</dd></dl>
 <dl class="section since"><dt>Since</dt><dd>version 1.0.0 </dd></dl>
 
-<p>Definition at line <a class="el" href="json_8hpp_source.html#l03500">3500</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p>Definition at line <a class="el" href="json_8hpp_source.html#l03580">3580</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 
 </div>
 </div>
@@ -288,7 +290,7 @@ range"</code></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 13 2016 20:30:37 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jan 22 2016 19:39:35 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>

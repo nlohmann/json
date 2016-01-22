@@ -762,6 +762,30 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>get_ref</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a1b058496e6a67565a096233cd113505b.html</Path>
+    <Anchor>a1b058496e6a67565a096233cd113505b</Anchor>
+    <Abstract>get a reference value (implicit) </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>get_ref</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a2f1f7ca08995781acb63bd66b26ad1c1.html</Path>
+    <Anchor>a2f1f7ca08995781acb63bd66b26ad1c1</Anchor>
+    <Abstract>get a reference value (implicit) </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>operator ValueType</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
