@@ -3062,8 +3062,6 @@ class basic_json
     the object and filled with a `null` value to make `key` a valid reference.
     In case the value was `null` before, it is converted to an object.
 
-    @note This function is required for compatibility reasons with Clang.
-
     @param[in] key  key of the element to access
 
     @return reference to the element at key @a key
@@ -3083,25 +3081,9 @@ class basic_json
     @since version 1.0.0
     */
     template<typename T, std::size_t n>
-    reference operator[](const T (&key)[n])
+    reference operator[](T* (&key)[n])
     {
-        // implicitly convert null to object
-        if (is_null())
-        {
-            m_type = value_t::object;
-            m_value = value_t::object;
-        }
-
-        // at only works for objects
-        if (is_object())
-        {
-            assert(m_value.object != nullptr);
-            return m_value.object->operator[](key);
-        }
-        else
-        {
-            throw std::domain_error("cannot use operator[] with " + type_name());
-        }
+        return operator[](static_cast<const T>(key));
     }
 
     /*!
@@ -3134,7 +3116,89 @@ class basic_json
     @since version 1.0.0
     */
     template<typename T, std::size_t n>
-    const_reference operator[](const T (&key)[n]) const
+    const_reference operator[](T* (&key)[n]) const
+    {
+        return operator[](static_cast<const T>(key));
+    }
+
+    /*!
+    @brief access specified object element
+
+    Returns a reference to the element at with specified key @a key.
+
+    @note If @a key is not found in the object, then it is silently added to
+    the object and filled with a `null` value to make `key` a valid reference.
+    In case the value was `null` before, it is converted to an object.
+
+    @param[in] key  key of the element to access
+
+    @return reference to the element at key @a key
+
+    @throw std::domain_error if JSON is not an object or null; example:
+    `"cannot use operator[] with null"`
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read and
+    written using the [] operator.,operatorarray__key_type}
+
+    @sa @ref at(const typename object_t::key_type&) for access by reference
+    with range checking
+    @sa @ref value() for access by value with a default value
+
+    @since version 1.0.1
+    */
+    template<typename T>
+    reference operator[](T* key)
+    {
+        // implicitly convert null to object
+        if (is_null())
+        {
+            m_type = value_t::object;
+            m_value = value_t::object;
+        }
+
+        // at only works for objects
+        if (is_object())
+        {
+            assert(m_value.object != nullptr);
+            return m_value.object->operator[](key);
+        }
+        else
+        {
+            throw std::domain_error("cannot use operator[] with " + type_name());
+        }
+    }
+
+    /*!
+    @brief read-only access specified object element
+
+    Returns a const reference to the element at with specified key @a key. No
+    bounds checking is performed.
+
+    @warning If the element with key @a key does not exist, the behavior is
+    undefined.
+
+    @param[in] key  key of the element to access
+
+    @return const reference to the element at key @a key
+
+    @throw std::domain_error if JSON is not an object; example: `"cannot use
+    operator[] with null"`
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read using
+    the [] operator.,operatorarray__key_type_const}
+
+    @sa @ref at(const typename object_t::key_type&) for access by reference
+    with range checking
+    @sa @ref value() for access by value with a default value
+
+    @since version 1.0.1
+    */
+    template<typename T>
+    const_reference operator[](T* key) const
     {
         // at only works for objects
         if (is_object())
