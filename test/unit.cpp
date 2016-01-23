@@ -11537,19 +11537,19 @@ TEST_CASE("regression tests")
 
         const json j_const = j;
 
-        // Non-const access with key as "char []"
+        // Const access with key as "char []"
         CHECK(j_const[array_key] == json(1));
 
-        // Non-const access with key as "const char[]"
+        // Const access with key as "const char[]"
         CHECK(j_const[const_array_key] == json(2));
 
-        // Non-const access with key as "char *"
+        //Const access with key as "char *"
         CHECK(j_const[ptr_key] == json(3));
 
-        // Non-const access with key as "const char *"
+        // Const access with key as "const char *"
         CHECK(j_const[const_ptr_key] == json(4));
 
-        // Non-const access with key as "static constexpr const char *"
+        // Const access with key as "static constexpr const char *"
         CHECK(j_const[constexpr_ptr_key] == json(5));
     }
 }
