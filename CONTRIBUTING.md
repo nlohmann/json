@@ -1,3 +1,5 @@
+[![Issue Stats](http://issuestats.com/github/nlohmann/json/badge/pr?style=flat)](http://issuestats.com/github/nlohmann/json) [![Issue Stats](http://issuestats.com/github/nlohmann/json/badge/issue?style=flat)](http://issuestats.com/github/nlohmann/json)
+
 # How to contribute
 
 This project started as a little excuse to exercise some of the cool new C++11 features. Over time, people actually started to use the JSON library (yey!) and started to help improve it by proposing features, finding bugs, or even fixing my mistakes. I am really [thankful](https://github.com/nlohmann/json/blob/master/README.md#thanks) for this and try to keep track of all the helpers.
