@@ -43,7 +43,9 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 #include <cassert>
 #include <ciso646>
 #include <cmath>
+#include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <functional>
 #include <initializer_list>
 #include <iomanip>
@@ -53,6 +55,7 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 #include <map>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -63,6 +66,12 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
     #ifdef __MINGW32__
         #include <sys/types.h>
     #endif
+#endif
+
+// disable float-equal warnings on GCC/clang
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
 
 // enable ssize_t for MSVC
@@ -100,12 +109,6 @@ struct has_mapped_type
     static constexpr bool value = sizeof(test<T>(0)) == 1;
 };
 
-/// "equality" comparison for floating point numbers
-template<typename T>
-static bool approx(const T a, const T b)
-{
-    return not (a > b or a < b);
-}
 }
 
 /*!
@@ -2671,14 +2674,14 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<typename ValueType, typename
-             std::enable_if<
-                 not std::is_pointer<ValueType>::value
-                 and not std::is_same<ValueType, typename string_t::value_type>::value
+    template < typename ValueType, typename
+               std::enable_if <
+                   not std::is_pointer<ValueType>::value
+                   and not std::is_same<ValueType, typename string_t::value_type>::value
 #ifndef _MSC_VER  // Fix for issue #167 operator<< abiguity under VS2015
-                 and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
+                   and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
-                 , int>::type = 0>
+                   , int >::type = 0 >
     operator ValueType() const
     {
         // delegate the call to get<>() const
@@ -3062,8 +3065,6 @@ class basic_json
     the object and filled with a `null` value to make `key` a valid reference.
     In case the value was `null` before, it is converted to an object.
 
-    @note This function is required for compatibility reasons with Clang.
-
     @param[in] key  key of the element to access
 
     @return reference to the element at key @a key
@@ -3083,25 +3084,9 @@ class basic_json
     @since version 1.0.0
     */
     template<typename T, std::size_t n>
-    reference operator[](const T (&key)[n])
+    reference operator[](T * (&key)[n])
     {
-        // implicitly convert null to object
-        if (is_null())
-        {
-            m_type = value_t::object;
-            m_value = value_t::object;
-        }
-
-        // at only works for objects
-        if (is_object())
-        {
-            assert(m_value.object != nullptr);
-            return m_value.object->operator[](key);
-        }
-        else
-        {
-            throw std::domain_error("cannot use operator[] with " + type_name());
-        }
+        return operator[](static_cast<const T>(key));
     }
 
     /*!
@@ -3134,7 +3119,89 @@ class basic_json
     @since version 1.0.0
     */
     template<typename T, std::size_t n>
-    const_reference operator[](const T (&key)[n]) const
+    const_reference operator[](T * (&key)[n]) const
+    {
+        return operator[](static_cast<const T>(key));
+    }
+
+    /*!
+    @brief access specified object element
+
+    Returns a reference to the element at with specified key @a key.
+
+    @note If @a key is not found in the object, then it is silently added to
+    the object and filled with a `null` value to make `key` a valid reference.
+    In case the value was `null` before, it is converted to an object.
+
+    @param[in] key  key of the element to access
+
+    @return reference to the element at key @a key
+
+    @throw std::domain_error if JSON is not an object or null; example:
+    `"cannot use operator[] with null"`
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read and
+    written using the [] operator.,operatorarray__key_type}
+
+    @sa @ref at(const typename object_t::key_type&) for access by reference
+    with range checking
+    @sa @ref value() for access by value with a default value
+
+    @since version 1.0.1
+    */
+    template<typename T>
+    reference operator[](T* key)
+    {
+        // implicitly convert null to object
+        if (is_null())
+        {
+            m_type = value_t::object;
+            m_value = value_t::object;
+        }
+
+        // at only works for objects
+        if (is_object())
+        {
+            assert(m_value.object != nullptr);
+            return m_value.object->operator[](key);
+        }
+        else
+        {
+            throw std::domain_error("cannot use operator[] with " + type_name());
+        }
+    }
+
+    /*!
+    @brief read-only access specified object element
+
+    Returns a const reference to the element at with specified key @a key. No
+    bounds checking is performed.
+
+    @warning If the element with key @a key does not exist, the behavior is
+    undefined.
+
+    @param[in] key  key of the element to access
+
+    @return const reference to the element at key @a key
+
+    @throw std::domain_error if JSON is not an object; example: `"cannot use
+    operator[] with null"`
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read using
+    the [] operator.,operatorarray__key_type_const}
+
+    @sa @ref at(const typename object_t::key_type&) for access by reference
+    with range checking
+    @sa @ref value() for access by value with a default value
+
+    @since version 1.0.1
+    */
+    template<typename T>
+    const_reference operator[](T* key) const
     {
         // at only works for objects
         if (is_object())
@@ -4785,7 +4852,7 @@ class basic_json
                 }
                 case value_t::number_float:
                 {
-                    return approx(lhs.m_value.number_float, rhs.m_value.number_float);
+                    return lhs.m_value.number_float == rhs.m_value.number_float;
                 }
                 default:
                 {
@@ -4795,13 +4862,11 @@ class basic_json
         }
         else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
         {
-            return approx(static_cast<number_float_t>(lhs.m_value.number_integer),
-                          rhs.m_value.number_float);
+            return static_cast<number_float_t>(lhs.m_value.number_integer == rhs.m_value.number_float);
         }
         else if (lhs_type == value_t::number_float and rhs_type == value_t::number_integer)
         {
-            return approx(lhs.m_value.number_float,
-                          static_cast<number_float_t>(rhs.m_value.number_integer));
+            return lhs.m_value.number_float == static_cast<number_float_t>(rhs.m_value.number_integer);
         }
         return false;
     }
@@ -7304,7 +7369,7 @@ class basic_json
 
                     // check if conversion loses precision (special case -0.0 always loses precision)
                     const auto int_val = static_cast<number_integer_t>(result.m_value.number_float);
-                    if (approx(result.m_value.number_float, static_cast<number_float_t>(int_val)) &&
+                    if (result.m_value.number_float == static_cast<number_float_t>(int_val) &&
                         result.m_value.number_integer != json_value(-0.0f).number_integer)
                     {
                         // we would not lose precision -> return int
@@ -7448,5 +7513,10 @@ inline nlohmann::json operator "" _json(const char* s, std::size_t)
 {
     return nlohmann::json::parse(reinterpret_cast<const nlohmann::json::string_t::value_type*>(s));
 }
+
+// restore GCC/clang diagnostic settings
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+    #pragma GCC diagnostic pop
+#endif
 
 #endif

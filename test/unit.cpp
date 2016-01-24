@@ -25,6 +25,11 @@
 #include "json.hpp"
 using nlohmann::json;
 
+// disable float-equal warnings on GCC/clang
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+    #pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+
 TEST_CASE("constructors")
 {
     SECTION("create an empty value with a given type")
@@ -11501,9 +11506,57 @@ TEST_CASE("regression tests")
         CHECK(s2 == "value");
     }
 
-    SECTION("character following a surrogate pair is skipped")
+    SECTION("issue #146 - character following a surrogate pair is skipped")
     {
         CHECK(json::parse("\"\\ud80c\\udc60abc\"").get<json::string_t>() == u8"\U00013060abc");
+    }
+
+    SECTION("issue #171 - Cannot index by key of type static constexpr const char*")
+    {
+        json j;
+
+        // Non-const access with key as "char []"
+        char array_key[] = "Key1";
+        CHECK_NOTHROW(j[array_key] = 1);
+        CHECK(j[array_key] == json(1));
+
+        // Non-const access with key as "const char[]"
+        const char const_array_key[] = "Key2";
+        CHECK_NOTHROW(j[const_array_key] = 2);
+        CHECK(j[const_array_key] == json(2));
+
+        // Non-const access with key as "char *"
+        char _ptr_key[] = "Key3";
+        char* ptr_key = &_ptr_key[0];
+        CHECK_NOTHROW(j[ptr_key] = 3);
+        CHECK(j[ptr_key] == json(3));
+
+        // Non-const access with key as "const char *"
+        const char* const_ptr_key = "Key4";
+        CHECK_NOTHROW(j[const_ptr_key] = 4);
+        CHECK(j[const_ptr_key] == json(4));
+
+        // Non-const access with key as "static constexpr const char *"
+        static constexpr const char* constexpr_ptr_key = "Key5";
+        CHECK_NOTHROW(j[constexpr_ptr_key] = 5);
+        CHECK(j[constexpr_ptr_key] == json(5));
+
+        const json j_const = j;
+
+        // Const access with key as "char []"
+        CHECK(j_const[array_key] == json(1));
+
+        // Const access with key as "const char[]"
+        CHECK(j_const[const_array_key] == json(2));
+
+        //Const access with key as "char *"
+        CHECK(j_const[ptr_key] == json(3));
+
+        // Const access with key as "const char *"
+        CHECK(j_const[const_ptr_key] == json(4));
+
+        // Const access with key as "static constexpr const char *"
+        CHECK(j_const[constexpr_ptr_key] == json(5));
     }
 
     SECTION("issue #186 miloyip/nativejson-benchmark: floating-point parsing")
@@ -11520,7 +11573,7 @@ TEST_CASE("regression tests")
         CHECK(j.get<double>() == 0.99999999999999989);
 
         // Test fails under GCC/clang due to strtod() error (may originate in libstdc++
-        // but seems to have been fixed in the most current versions)
+        // but seems to have been fixed in the most current versions - just not on Travis)
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
         j = json::parse("1.00000000000000011102230246251565404236316680908203126");
         CHECK(j.get<double>() == 1.00000000000000022);
