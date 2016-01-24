@@ -11521,6 +11521,13 @@ TEST_CASE("regression tests")
 
         j = json::parse("1.00000000000000011102230246251565404236316680908203126");
         CHECK(j.get<double>() == 1.00000000000000022);
+        union double_union { double _double; uint64_t _uint64_t; };
+        double_union A, B;
+        A._double = 1.00000000000000022;
+        B._double = j.get<double>();
+        std::cout << "Literal -> " << std::hex << A._uint64_t << std::endl;
+        std::cout << "Parsed  -> " << std::hex << B._uint64_t << std::endl;
+        std::cout << "Type == " << std::dec << static_cast<int>(j.type()) << std::endl;
 
         j = json::parse("7205759403792793199999e-5");
         CHECK(j.get<double>() == 72057594037927928.0);
