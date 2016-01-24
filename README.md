@@ -390,7 +390,7 @@ I deeply appreciate the help of the following people.
 - [406345](https://github.com/406345) fixed two small warnings.
 - [Glen Fernandes](https://github.com/glenfe) noted a potential portability problem in the `has_mapped_type` function.
 - [Corbin Hughes](https://github.com/nibroc) fixed some typos in the contribution guidelines.
-- [twelsby](https://github.com/twelsby) fixed the array subscript operator and an issue that failed the MSVC build.
+- [twelsby](https://github.com/twelsby) fixed the array subscript operator, an issue that failed the MSVC build, and floating-point parsing/dumping.
 
 Thanks a lot for helping out!
 
@@ -407,7 +407,7 @@ $ make
 $ ./json_unit "*"
 
 ===============================================================================
-All tests passed (3343318 assertions in 29 test cases)
+All tests passed (3343329 assertions in 29 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

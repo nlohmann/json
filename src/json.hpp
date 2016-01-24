@@ -5873,13 +5873,20 @@ class basic_json
 
             case value_t::number_float:
             {
-                // If the number is an integer then output as a fixed with with precision 1
-                // to output "0.0", "1.0" etc as expected for some round trip tests otherwise
-                // 15 digits of precision allows round-trip IEEE 754 string->double->string; 
-                // to be safe, we read this value from std::numeric_limits<number_float_t>::digits10
-                if (std::fmod(m_value.number_float, 1) == 0) o << std::fixed << std::setprecision(1);
-                else {
-                    o.unsetf(std::ios_base::floatfield);  // std::defaultfloat not supported in gcc version < 5
+                // If the number is an integer then output as a fixed with with
+                // precision 1 to output "0.0", "1.0" etc as expected for some
+                // round trip tests otherwise  15 digits of precision allows
+                // round-trip IEEE 754 string->double->string; to be safe, we
+                // read this value from
+                // std::numeric_limits<number_float_t>::digits10
+                if (std::fmod(m_value.number_float, 1) == 0)
+                {
+                    o << std::fixed << std::setprecision(1);
+                }
+                else
+                {
+                    // std::defaultfloat not supported in gcc version < 5
+                    o.unsetf(std::ios_base::floatfield);
                     o << std::setprecision(std::numeric_limits<double>::digits10);
                 }
                 o << m_value.number_float;
@@ -7637,11 +7644,17 @@ basic_json_parser_64:
         supplied via the first parameter.  Set this to
         @a static_cast<number_float_t*>(nullptr).
 
-        @param type  the @ref number_float_t in use
+        @param[in] type  the @ref number_float_t in use
 
-        @param endptr  recieves a pointer to the first character after the number
+        @param[in,out] endptr recieves a pointer to the first character after
+        the number
 
         @return the floating point number
+
+        @warning This function uses `std::strtof`, `std::strtod`, or
+        `std::strtold` which use the current C locale to determine which
+        character is used as decimal point character. This may yield to parse
+        errors if the locale does not used `.`.
         */
         long double str_to_float_t(long double* /* type */, char** endptr) const
         {
