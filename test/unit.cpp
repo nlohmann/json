@@ -11751,15 +11751,15 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     "test/json_roundtrip/roundtrip10.json",
                     "test/json_roundtrip/roundtrip11.json",
                     "test/json_roundtrip/roundtrip12.json",
-                    //"test/json_roundtrip/roundtrip13.json",
+                    "test/json_roundtrip/roundtrip13.json",
                     "test/json_roundtrip/roundtrip14.json",
                     "test/json_roundtrip/roundtrip15.json",
                     "test/json_roundtrip/roundtrip16.json",
                     "test/json_roundtrip/roundtrip17.json",
-                    //"test/json_roundtrip/roundtrip18.json",
-                    //"test/json_roundtrip/roundtrip19.json",
-                    //"test/json_roundtrip/roundtrip20.json",
-                    //"test/json_roundtrip/roundtrip21.json",
+                    "test/json_roundtrip/roundtrip18.json",
+                    "test/json_roundtrip/roundtrip19.json",
+                    "test/json_roundtrip/roundtrip20.json",
+                    "test/json_roundtrip/roundtrip21.json",
                     "test/json_roundtrip/roundtrip22.json",
                     "test/json_roundtrip/roundtrip23.json",
                     //"test/json_roundtrip/roundtrip24.json",
@@ -12263,6 +12263,8 @@ TEST_CASE("regression tests")
         j = json::parse("0.999999999999999944488848768742172978818416595458984374");
         CHECK(j.get<double>() == 0.99999999999999989);
 
+        // Test fails under GCC/clang due to strtod() error (may originate in libstdc++
+        // but seems to have been fixed in the most current versions - just not on Travis)
 #if !defined(__clang__) && !defined(__GNUC__) && !defined(__GNUG__)
         j = json::parse("1.00000000000000011102230246251565404236316680908203126");
         CHECK(j.get<double>() == 1.00000000000000022);
