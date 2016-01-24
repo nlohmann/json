@@ -32,7 +32,7 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 1.0.0
+@version 1.1.0
 */
 
 #ifndef NLOHMANN_JSON_HPP
