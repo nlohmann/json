@@ -899,8 +899,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a266c4dd24d11a86e4831523af5d9df4d.html</Path>
-    <Anchor>a266c4dd24d11a86e4831523af5d9df4d</Anchor>
+    <Path>classnlohmann_1_1basic__json_adc5605cf6f8ff0cc6c3bb04a5d7c2f2d.html</Path>
+    <Anchor>adc5605cf6f8ff0cc6c3bb04a5d7c2f2d</Anchor>
     <Abstract>access specified object element </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -911,8 +911,32 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a9daafb4c15ed5a008cb825bbd8c29d87.html</Path>
-    <Anchor>a9daafb4c15ed5a008cb825bbd8c29d87</Anchor>
+    <Path>classnlohmann_1_1basic__json_aad7eff162b0b991ef233503c592c1e2a.html</Path>
+    <Anchor>aad7eff162b0b991ef233503c592c1e2a</Anchor>
+    <Abstract>read-only access specified object element </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator[]</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a0ff73601e88f8ace62ff0b453ebb9043.html</Path>
+    <Anchor>a0ff73601e88f8ace62ff0b453ebb9043</Anchor>
+    <Abstract>access specified object element </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator[]</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ae7e36437700ef7353ad9961c8dd16a95.html</Path>
+    <Anchor>ae7e36437700ef7353ad9961c8dd16a95</Anchor>
     <Abstract>read-only access specified object element </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
