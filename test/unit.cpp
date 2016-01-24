@@ -11574,7 +11574,7 @@ TEST_CASE("regression tests")
 
         // Test fails under GCC/clang due to strtod() error (may originate in libstdc++
         // but seems to have been fixed in the most current versions - just not on Travis)
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+#if !defined(__clang__) && !defined(__GNUC__) && !defined(__GNUG__)
         j = json::parse("1.00000000000000011102230246251565404236316680908203126");
         CHECK(j.get<double>() == 1.00000000000000022);
 #endif
