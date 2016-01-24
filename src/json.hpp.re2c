@@ -214,13 +214,11 @@ class basic_json
 
     /// the type of an element reference
     using reference = value_type&;
-
     /// the type of an element const reference
     using const_reference = const value_type&;
 
     /// a type to represent differences between iterators
     using difference_type = std::ptrdiff_t;
-
     /// a type to represent container sizes
     using size_type = std::size_t;
 
@@ -336,6 +334,14 @@ class basic_json
     @sa @ref array_t -- type for an array value
 
     @since version 1.0.0
+
+    @note The order name/value pairs are added to the object is *not* preserved
+    by the library. Therefore, iterating an object may return name/value pairs
+    in a different order than they were originally stored. In fact, keys will
+    be traversed in alphabetical order as `std::map` with `std::less` is used
+    by default. Please note this behavior conforms to [RFC
+    7159](http://rfc7159.net/rfc7159), because any order implements the
+    specified "unordered" nature of JSON objects.
     */
     using object_t = ObjectType<StringType,
           basic_json,
@@ -7064,10 +7070,10 @@ class basic_json
 
         @return the floating point number
 
-        @warning This function uses `std::strtof`, `std::strtod`, or
-        `std::strtold` which use the current C locale to determine which
-        character is used as decimal point character. This may yield to parse
-        errors if the locale does not used `.`.
+        @bug This function uses `std::strtof`, `std::strtod`, or `std::strtold`
+        which use the current C locale to determine which character is used as
+        decimal point character. This may yield to parse errors if the locale
+        does not used `.`.
         */
         long double str_to_float_t(long double* /* type */, char** endptr) const
         {
