@@ -11504,4 +11504,52 @@ TEST_CASE("regression tests")
     {
         CHECK(json::parse("\"\\ud80c\\udc60abc\"").get<json::string_t>() == u8"\U00013060abc");
     }
+
+    SECTION("issue #144 - Cannot index by key of type static constexpr const char*")
+    {
+        json j;
+
+        // Non-const access with key as "char []"
+        char array_key[] = "Key1";
+        CHECK_NOTHROW(j[array_key] = 1);
+        CHECK(j[array_key] == json(1));
+
+        // Non-const access with key as "const char[]"
+        const char const_array_key[] = "Key2";
+        CHECK_NOTHROW(j[const_array_key] = 2);
+        CHECK(j[const_array_key] == json(2));
+
+        // Non-const access with key as "char *"
+        char _ptr_key[] = "Key3";
+        char * ptr_key = &_ptr_key[0];
+        CHECK_NOTHROW(j[ptr_key] = 3);
+        CHECK(j[ptr_key] == json(3));
+
+        // Non-const access with key as "const char *"
+        const char * const_ptr_key = "Key4";
+        CHECK_NOTHROW(j[const_ptr_key] = 4);
+        CHECK(j[const_ptr_key] == json(4));
+
+        // Non-const access with key as "static constexpr const char *"
+        static constexpr const char* constexpr_ptr_key = "Key5";
+        CHECK_NOTHROW(j[constexpr_ptr_key] = 5);
+        CHECK(j[constexpr_ptr_key] == json(5));
+
+        const json j_const = j;
+
+        // Const access with key as "char []"
+        CHECK(j_const[array_key] == json(1));
+
+        // Const access with key as "const char[]"
+        CHECK(j_const[const_array_key] == json(2));
+
+        //Const access with key as "char *"
+        CHECK(j_const[ptr_key] == json(3));
+
+        // Const access with key as "const char *"
+        CHECK(j_const[const_ptr_key] == json(4));
+
+        // Const access with key as "static constexpr const char *"
+        CHECK(j_const[constexpr_ptr_key] == json(5));
+    }
 }
