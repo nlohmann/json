@@ -11602,7 +11602,8 @@ TEST_CASE("regression tests")
         CHECK(j_double.get<double>() == 1.23e45);
 
         // long double
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, long double> j_long_double = 1.23e45L;
+        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, long double> j_long_double =
+            1.23e45L;
         CHECK(j_long_double.get<long double>() == 1.23e45L);
     }
 }
