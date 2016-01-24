@@ -2671,14 +2671,14 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<typename ValueType, typename
-             std::enable_if<
-                 not std::is_pointer<ValueType>::value
-                 and not std::is_same<ValueType, typename string_t::value_type>::value
+    template < typename ValueType, typename
+               std::enable_if <
+                   not std::is_pointer<ValueType>::value
+                   and not std::is_same<ValueType, typename string_t::value_type>::value
 #ifndef _MSC_VER  // Fix for issue #167 operator<< abiguity under VS2015
-                 and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
+                   and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
-                 , int>::type = 0>
+                   , int >::type = 0 >
     operator ValueType() const
     {
         // delegate the call to get<>() const
@@ -3081,7 +3081,7 @@ class basic_json
     @since version 1.0.0
     */
     template<typename T, std::size_t n>
-    reference operator[](T* (&key)[n])
+    reference operator[](T * (&key)[n])
     {
         return operator[](static_cast<const T>(key));
     }
@@ -3116,7 +3116,7 @@ class basic_json
     @since version 1.0.0
     */
     template<typename T, std::size_t n>
-    const_reference operator[](T* (&key)[n]) const
+    const_reference operator[](T * (&key)[n]) const
     {
         return operator[](static_cast<const T>(key));
     }
@@ -6811,386 +6811,789 @@ class basic_json
             m_start = m_cursor;
             assert(m_start != nullptr);
 
-            
-    {
-        lexer_char_t yych;
-        unsigned int yyaccept = 0;
-        static const unsigned char yybm[] = {
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,  32,  32,   0,   0,  32,   0,   0, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             96,  64,   0,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-            192, 192, 192, 192, 192, 192, 192, 192, 
-            192, 192,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,   0,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-             64,  64,  64,  64,  64,  64,  64,  64, 
-        };
-        if ((m_limit - m_cursor) < 5) yyfill(); // LCOV_EXCL_LINE;
-        yych = *m_cursor;
-        if (yych <= ':') {
-            if (yych <= ' ') {
-                if (yych <= '\n') {
-                    if (yych <= 0x00) goto basic_json_parser_28;
-                    if (yych <= 0x08) goto basic_json_parser_30;
-                    if (yych >= '\n') goto basic_json_parser_4;
-                } else {
-                    if (yych == '\r') goto basic_json_parser_2;
-                    if (yych <= 0x1F) goto basic_json_parser_30;
+
+            {
+                lexer_char_t yych;
+                unsigned int yyaccept = 0;
+                static const unsigned char yybm[] =
+                {
+                    0,   0,   0,   0,   0,   0,   0,   0,
+                    0,  32,  32,   0,   0,  32,   0,   0,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    96,  64,   0,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    192, 192, 192, 192, 192, 192, 192, 192,
+                    192, 192,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,   0,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                };
+                if ((m_limit - m_cursor) < 5)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
                 }
-            } else {
-                if (yych <= ',') {
-                    if (yych == '"') goto basic_json_parser_27;
-                    if (yych <= '+') goto basic_json_parser_30;
-                    goto basic_json_parser_16;
-                } else {
-                    if (yych <= '/') {
-                        if (yych <= '-') goto basic_json_parser_23;
-                        goto basic_json_parser_30;
-                    } else {
-                        if (yych <= '0') goto basic_json_parser_24;
-                        if (yych <= '9') goto basic_json_parser_26;
-                        goto basic_json_parser_18;
+                yych = *m_cursor;
+                if (yych <= ':')
+                {
+                    if (yych <= ' ')
+                    {
+                        if (yych <= '\n')
+                        {
+                            if (yych <= 0x00)
+                            {
+                                goto basic_json_parser_28;
+                            }
+                            if (yych <= 0x08)
+                            {
+                                goto basic_json_parser_30;
+                            }
+                            if (yych >= '\n')
+                            {
+                                goto basic_json_parser_4;
+                            }
+                        }
+                        else
+                        {
+                            if (yych == '\r')
+                            {
+                                goto basic_json_parser_2;
+                            }
+                            if (yych <= 0x1F)
+                            {
+                                goto basic_json_parser_30;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (yych <= ',')
+                        {
+                            if (yych == '"')
+                            {
+                                goto basic_json_parser_27;
+                            }
+                            if (yych <= '+')
+                            {
+                                goto basic_json_parser_30;
+                            }
+                            goto basic_json_parser_16;
+                        }
+                        else
+                        {
+                            if (yych <= '/')
+                            {
+                                if (yych <= '-')
+                                {
+                                    goto basic_json_parser_23;
+                                }
+                                goto basic_json_parser_30;
+                            }
+                            else
+                            {
+                                if (yych <= '0')
+                                {
+                                    goto basic_json_parser_24;
+                                }
+                                if (yych <= '9')
+                                {
+                                    goto basic_json_parser_26;
+                                }
+                                goto basic_json_parser_18;
+                            }
+                        }
                     }
                 }
-            }
-        } else {
-            if (yych <= 'n') {
-                if (yych <= ']') {
-                    if (yych == '[') goto basic_json_parser_8;
-                    if (yych <= '\\') goto basic_json_parser_30;
-                    goto basic_json_parser_10;
-                } else {
-                    if (yych == 'f') goto basic_json_parser_22;
-                    if (yych <= 'm') goto basic_json_parser_30;
-                    goto basic_json_parser_20;
-                }
-            } else {
-                if (yych <= '{') {
-                    if (yych == 't') goto basic_json_parser_21;
-                    if (yych <= 'z') goto basic_json_parser_30;
-                    goto basic_json_parser_12;
-                } else {
-                    if (yych <= '}') {
-                        if (yych <= '|') goto basic_json_parser_30;
-                        goto basic_json_parser_14;
-                    } else {
-                        if (yych == 0xEF) goto basic_json_parser_6;
-                        goto basic_json_parser_30;
+                else
+                {
+                    if (yych <= 'n')
+                    {
+                        if (yych <= ']')
+                        {
+                            if (yych == '[')
+                            {
+                                goto basic_json_parser_8;
+                            }
+                            if (yych <= '\\')
+                            {
+                                goto basic_json_parser_30;
+                            }
+                            goto basic_json_parser_10;
+                        }
+                        else
+                        {
+                            if (yych == 'f')
+                            {
+                                goto basic_json_parser_22;
+                            }
+                            if (yych <= 'm')
+                            {
+                                goto basic_json_parser_30;
+                            }
+                            goto basic_json_parser_20;
+                        }
+                    }
+                    else
+                    {
+                        if (yych <= '{')
+                        {
+                            if (yych == 't')
+                            {
+                                goto basic_json_parser_21;
+                            }
+                            if (yych <= 'z')
+                            {
+                                goto basic_json_parser_30;
+                            }
+                            goto basic_json_parser_12;
+                        }
+                        else
+                        {
+                            if (yych <= '}')
+                            {
+                                if (yych <= '|')
+                                {
+                                    goto basic_json_parser_30;
+                                }
+                                goto basic_json_parser_14;
+                            }
+                            else
+                            {
+                                if (yych == 0xEF)
+                                {
+                                    goto basic_json_parser_6;
+                                }
+                                goto basic_json_parser_30;
+                            }
+                        }
                     }
                 }
-            }
-        }
 basic_json_parser_2:
-        ++m_cursor;
-        yych = *m_cursor;
-        goto basic_json_parser_5;
+                ++m_cursor;
+                yych = *m_cursor;
+                goto basic_json_parser_5;
 basic_json_parser_3:
-        { return scan(); }
+                {
+                    return scan();
+                }
 basic_json_parser_4:
-        ++m_cursor;
-        if (m_limit <= m_cursor) yyfill(); // LCOV_EXCL_LINE;
-        yych = *m_cursor;
+                ++m_cursor;
+                if (m_limit <= m_cursor)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
 basic_json_parser_5:
-        if (yybm[0+yych] & 32) {
-            goto basic_json_parser_4;
-        }
-        goto basic_json_parser_3;
+                if (yybm[0 + yych] & 32)
+                {
+                    goto basic_json_parser_4;
+                }
+                goto basic_json_parser_3;
 basic_json_parser_6:
-        yyaccept = 0;
-        yych = *(m_marker = ++m_cursor);
-        if (yych == 0xBB) goto basic_json_parser_64;
+                yyaccept = 0;
+                yych = *(m_marker = ++m_cursor);
+                if (yych == 0xBB)
+                {
+                    goto basic_json_parser_64;
+                }
 basic_json_parser_7:
-        { return token_type::parse_error; }
+                {
+                    return token_type::parse_error;
+                }
 basic_json_parser_8:
-        ++m_cursor;
-        { return token_type::begin_array; }
+                ++m_cursor;
+                {
+                    return token_type::begin_array;
+                }
 basic_json_parser_10:
-        ++m_cursor;
-        { return token_type::end_array; }
+                ++m_cursor;
+                {
+                    return token_type::end_array;
+                }
 basic_json_parser_12:
-        ++m_cursor;
-        { return token_type::begin_object; }
+                ++m_cursor;
+                {
+                    return token_type::begin_object;
+                }
 basic_json_parser_14:
-        ++m_cursor;
-        { return token_type::end_object; }
+                ++m_cursor;
+                {
+                    return token_type::end_object;
+                }
 basic_json_parser_16:
-        ++m_cursor;
-        { return token_type::value_separator; }
+                ++m_cursor;
+                {
+                    return token_type::value_separator;
+                }
 basic_json_parser_18:
-        ++m_cursor;
-        { return token_type::name_separator; }
+                ++m_cursor;
+                {
+                    return token_type::name_separator;
+                }
 basic_json_parser_20:
-        yyaccept = 0;
-        yych = *(m_marker = ++m_cursor);
-        if (yych == 'u') goto basic_json_parser_60;
-        goto basic_json_parser_7;
+                yyaccept = 0;
+                yych = *(m_marker = ++m_cursor);
+                if (yych == 'u')
+                {
+                    goto basic_json_parser_60;
+                }
+                goto basic_json_parser_7;
 basic_json_parser_21:
-        yyaccept = 0;
-        yych = *(m_marker = ++m_cursor);
-        if (yych == 'r') goto basic_json_parser_56;
-        goto basic_json_parser_7;
+                yyaccept = 0;
+                yych = *(m_marker = ++m_cursor);
+                if (yych == 'r')
+                {
+                    goto basic_json_parser_56;
+                }
+                goto basic_json_parser_7;
 basic_json_parser_22:
-        yyaccept = 0;
-        yych = *(m_marker = ++m_cursor);
-        if (yych == 'a') goto basic_json_parser_51;
-        goto basic_json_parser_7;
+                yyaccept = 0;
+                yych = *(m_marker = ++m_cursor);
+                if (yych == 'a')
+                {
+                    goto basic_json_parser_51;
+                }
+                goto basic_json_parser_7;
 basic_json_parser_23:
-        yych = *++m_cursor;
-        if (yych <= '/') goto basic_json_parser_7;
-        if (yych <= '0') goto basic_json_parser_50;
-        if (yych <= '9') goto basic_json_parser_41;
-        goto basic_json_parser_7;
+                yych = *++m_cursor;
+                if (yych <= '/')
+                {
+                    goto basic_json_parser_7;
+                }
+                if (yych <= '0')
+                {
+                    goto basic_json_parser_50;
+                }
+                if (yych <= '9')
+                {
+                    goto basic_json_parser_41;
+                }
+                goto basic_json_parser_7;
 basic_json_parser_24:
-        yyaccept = 1;
-        yych = *(m_marker = ++m_cursor);
-        if (yych <= 'D') {
-            if (yych == '.') goto basic_json_parser_43;
-        } else {
-            if (yych <= 'E') goto basic_json_parser_44;
-            if (yych == 'e') goto basic_json_parser_44;
-        }
+                yyaccept = 1;
+                yych = *(m_marker = ++m_cursor);
+                if (yych <= 'D')
+                {
+                    if (yych == '.')
+                    {
+                        goto basic_json_parser_43;
+                    }
+                }
+                else
+                {
+                    if (yych <= 'E')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                    if (yych == 'e')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                }
 basic_json_parser_25:
-        { return token_type::value_number; }
+                {
+                    return token_type::value_number;
+                }
 basic_json_parser_26:
-        yyaccept = 1;
-        yych = *(m_marker = ++m_cursor);
-        goto basic_json_parser_42;
+                yyaccept = 1;
+                yych = *(m_marker = ++m_cursor);
+                goto basic_json_parser_42;
 basic_json_parser_27:
-        yyaccept = 0;
-        yych = *(m_marker = ++m_cursor);
-        if (yych <= 0x0F) goto basic_json_parser_7;
-        goto basic_json_parser_32;
+                yyaccept = 0;
+                yych = *(m_marker = ++m_cursor);
+                if (yych <= 0x0F)
+                {
+                    goto basic_json_parser_7;
+                }
+                goto basic_json_parser_32;
 basic_json_parser_28:
-        ++m_cursor;
-        { return token_type::end_of_input; }
+                ++m_cursor;
+                {
+                    return token_type::end_of_input;
+                }
 basic_json_parser_30:
-        yych = *++m_cursor;
-        goto basic_json_parser_7;
+                yych = *++m_cursor;
+                goto basic_json_parser_7;
 basic_json_parser_31:
-        ++m_cursor;
-        if (m_limit <= m_cursor) yyfill(); // LCOV_EXCL_LINE;
-        yych = *m_cursor;
+                ++m_cursor;
+                if (m_limit <= m_cursor)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
 basic_json_parser_32:
-        if (yybm[0+yych] & 64) {
-            goto basic_json_parser_31;
-        }
-        if (yych <= 0x0F) goto basic_json_parser_33;
-        if (yych <= '"') goto basic_json_parser_35;
-        goto basic_json_parser_34;
-basic_json_parser_33:
-        m_cursor = m_marker;
-        if (yyaccept == 0) {
-            goto basic_json_parser_7;
-        } else {
-            goto basic_json_parser_25;
-        }
-basic_json_parser_34:
-        ++m_cursor;
-        if (m_limit <= m_cursor) yyfill(); // LCOV_EXCL_LINE;
-        yych = *m_cursor;
-        if (yych <= 'e') {
-            if (yych <= '/') {
-                if (yych == '"') goto basic_json_parser_31;
-                if (yych <= '.') goto basic_json_parser_33;
-                goto basic_json_parser_31;
-            } else {
-                if (yych <= '\\') {
-                    if (yych <= '[') goto basic_json_parser_33;
+                if (yybm[0 + yych] & 64)
+                {
                     goto basic_json_parser_31;
-                } else {
-                    if (yych == 'b') goto basic_json_parser_31;
+                }
+                if (yych <= 0x0F)
+                {
                     goto basic_json_parser_33;
                 }
-            }
-        } else {
-            if (yych <= 'q') {
-                if (yych <= 'f') goto basic_json_parser_31;
-                if (yych == 'n') goto basic_json_parser_31;
-                goto basic_json_parser_33;
-            } else {
-                if (yych <= 's') {
-                    if (yych <= 'r') goto basic_json_parser_31;
-                    goto basic_json_parser_33;
-                } else {
-                    if (yych <= 't') goto basic_json_parser_31;
-                    if (yych <= 'u') goto basic_json_parser_37;
-                    goto basic_json_parser_33;
+                if (yych <= '"')
+                {
+                    goto basic_json_parser_35;
                 }
-            }
-        }
+                goto basic_json_parser_34;
+basic_json_parser_33:
+                m_cursor = m_marker;
+                if (yyaccept == 0)
+                {
+                    goto basic_json_parser_7;
+                }
+                else
+                {
+                    goto basic_json_parser_25;
+                }
+basic_json_parser_34:
+                ++m_cursor;
+                if (m_limit <= m_cursor)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
+                if (yych <= 'e')
+                {
+                    if (yych <= '/')
+                    {
+                        if (yych == '"')
+                        {
+                            goto basic_json_parser_31;
+                        }
+                        if (yych <= '.')
+                        {
+                            goto basic_json_parser_33;
+                        }
+                        goto basic_json_parser_31;
+                    }
+                    else
+                    {
+                        if (yych <= '\\')
+                        {
+                            if (yych <= '[')
+                            {
+                                goto basic_json_parser_33;
+                            }
+                            goto basic_json_parser_31;
+                        }
+                        else
+                        {
+                            if (yych == 'b')
+                            {
+                                goto basic_json_parser_31;
+                            }
+                            goto basic_json_parser_33;
+                        }
+                    }
+                }
+                else
+                {
+                    if (yych <= 'q')
+                    {
+                        if (yych <= 'f')
+                        {
+                            goto basic_json_parser_31;
+                        }
+                        if (yych == 'n')
+                        {
+                            goto basic_json_parser_31;
+                        }
+                        goto basic_json_parser_33;
+                    }
+                    else
+                    {
+                        if (yych <= 's')
+                        {
+                            if (yych <= 'r')
+                            {
+                                goto basic_json_parser_31;
+                            }
+                            goto basic_json_parser_33;
+                        }
+                        else
+                        {
+                            if (yych <= 't')
+                            {
+                                goto basic_json_parser_31;
+                            }
+                            if (yych <= 'u')
+                            {
+                                goto basic_json_parser_37;
+                            }
+                            goto basic_json_parser_33;
+                        }
+                    }
+                }
 basic_json_parser_35:
-        ++m_cursor;
-        { return token_type::value_string; }
+                ++m_cursor;
+                {
+                    return token_type::value_string;
+                }
 basic_json_parser_37:
-        ++m_cursor;
-        if (m_limit <= m_cursor) yyfill(); // LCOV_EXCL_LINE;
-        yych = *m_cursor;
-        if (yych <= '@') {
-            if (yych <= '/') goto basic_json_parser_33;
-            if (yych >= ':') goto basic_json_parser_33;
-        } else {
-            if (yych <= 'F') goto basic_json_parser_38;
-            if (yych <= '`') goto basic_json_parser_33;
-            if (yych >= 'g') goto basic_json_parser_33;
-        }
+                ++m_cursor;
+                if (m_limit <= m_cursor)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
+                if (yych <= '@')
+                {
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych >= ':')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
+                else
+                {
+                    if (yych <= 'F')
+                    {
+                        goto basic_json_parser_38;
+                    }
+                    if (yych <= '`')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych >= 'g')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
 basic_json_parser_38:
-        ++m_cursor;
-        if (m_limit <= m_cursor) yyfill(); // LCOV_EXCL_LINE;
-        yych = *m_cursor;
-        if (yych <= '@') {
-            if (yych <= '/') goto basic_json_parser_33;
-            if (yych >= ':') goto basic_json_parser_33;
-        } else {
-            if (yych <= 'F') goto basic_json_parser_39;
-            if (yych <= '`') goto basic_json_parser_33;
-            if (yych >= 'g') goto basic_json_parser_33;
-        }
+                ++m_cursor;
+                if (m_limit <= m_cursor)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
+                if (yych <= '@')
+                {
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych >= ':')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
+                else
+                {
+                    if (yych <= 'F')
+                    {
+                        goto basic_json_parser_39;
+                    }
+                    if (yych <= '`')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych >= 'g')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
 basic_json_parser_39:
-        ++m_cursor;
-        if (m_limit <= m_cursor) yyfill(); // LCOV_EXCL_LINE;
-        yych = *m_cursor;
-        if (yych <= '@') {
-            if (yych <= '/') goto basic_json_parser_33;
-            if (yych >= ':') goto basic_json_parser_33;
-        } else {
-            if (yych <= 'F') goto basic_json_parser_40;
-            if (yych <= '`') goto basic_json_parser_33;
-            if (yych >= 'g') goto basic_json_parser_33;
-        }
+                ++m_cursor;
+                if (m_limit <= m_cursor)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
+                if (yych <= '@')
+                {
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych >= ':')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
+                else
+                {
+                    if (yych <= 'F')
+                    {
+                        goto basic_json_parser_40;
+                    }
+                    if (yych <= '`')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych >= 'g')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
 basic_json_parser_40:
-        ++m_cursor;
-        if (m_limit <= m_cursor) yyfill(); // LCOV_EXCL_LINE;
-        yych = *m_cursor;
-        if (yych <= '@') {
-            if (yych <= '/') goto basic_json_parser_33;
-            if (yych <= '9') goto basic_json_parser_31;
-            goto basic_json_parser_33;
-        } else {
-            if (yych <= 'F') goto basic_json_parser_31;
-            if (yych <= '`') goto basic_json_parser_33;
-            if (yych <= 'f') goto basic_json_parser_31;
-            goto basic_json_parser_33;
-        }
+                ++m_cursor;
+                if (m_limit <= m_cursor)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
+                if (yych <= '@')
+                {
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych <= '9')
+                    {
+                        goto basic_json_parser_31;
+                    }
+                    goto basic_json_parser_33;
+                }
+                else
+                {
+                    if (yych <= 'F')
+                    {
+                        goto basic_json_parser_31;
+                    }
+                    if (yych <= '`')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych <= 'f')
+                    {
+                        goto basic_json_parser_31;
+                    }
+                    goto basic_json_parser_33;
+                }
 basic_json_parser_41:
-        yyaccept = 1;
-        m_marker = ++m_cursor;
-        if ((m_limit - m_cursor) < 3) yyfill(); // LCOV_EXCL_LINE;
-        yych = *m_cursor;
+                yyaccept = 1;
+                m_marker = ++m_cursor;
+                if ((m_limit - m_cursor) < 3)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
 basic_json_parser_42:
-        if (yybm[0+yych] & 128) {
-            goto basic_json_parser_41;
-        }
-        if (yych <= 'D') {
-            if (yych != '.') goto basic_json_parser_25;
-        } else {
-            if (yych <= 'E') goto basic_json_parser_44;
-            if (yych == 'e') goto basic_json_parser_44;
-            goto basic_json_parser_25;
-        }
+                if (yybm[0 + yych] & 128)
+                {
+                    goto basic_json_parser_41;
+                }
+                if (yych <= 'D')
+                {
+                    if (yych != '.')
+                    {
+                        goto basic_json_parser_25;
+                    }
+                }
+                else
+                {
+                    if (yych <= 'E')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                    if (yych == 'e')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                    goto basic_json_parser_25;
+                }
 basic_json_parser_43:
-        yych = *++m_cursor;
-        if (yych <= '/') goto basic_json_parser_33;
-        if (yych <= '9') goto basic_json_parser_48;
-        goto basic_json_parser_33;
+                yych = *++m_cursor;
+                if (yych <= '/')
+                {
+                    goto basic_json_parser_33;
+                }
+                if (yych <= '9')
+                {
+                    goto basic_json_parser_48;
+                }
+                goto basic_json_parser_33;
 basic_json_parser_44:
-        yych = *++m_cursor;
-        if (yych <= ',') {
-            if (yych != '+') goto basic_json_parser_33;
-        } else {
-            if (yych <= '-') goto basic_json_parser_45;
-            if (yych <= '/') goto basic_json_parser_33;
-            if (yych <= '9') goto basic_json_parser_46;
-            goto basic_json_parser_33;
-        }
+                yych = *++m_cursor;
+                if (yych <= ',')
+                {
+                    if (yych != '+')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
+                else
+                {
+                    if (yych <= '-')
+                    {
+                        goto basic_json_parser_45;
+                    }
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych <= '9')
+                    {
+                        goto basic_json_parser_46;
+                    }
+                    goto basic_json_parser_33;
+                }
 basic_json_parser_45:
-        yych = *++m_cursor;
-        if (yych <= '/') goto basic_json_parser_33;
-        if (yych >= ':') goto basic_json_parser_33;
+                yych = *++m_cursor;
+                if (yych <= '/')
+                {
+                    goto basic_json_parser_33;
+                }
+                if (yych >= ':')
+                {
+                    goto basic_json_parser_33;
+                }
 basic_json_parser_46:
-        ++m_cursor;
-        if (m_limit <= m_cursor) yyfill(); // LCOV_EXCL_LINE;
-        yych = *m_cursor;
-        if (yych <= '/') goto basic_json_parser_25;
-        if (yych <= '9') goto basic_json_parser_46;
-        goto basic_json_parser_25;
+                ++m_cursor;
+                if (m_limit <= m_cursor)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
+                if (yych <= '/')
+                {
+                    goto basic_json_parser_25;
+                }
+                if (yych <= '9')
+                {
+                    goto basic_json_parser_46;
+                }
+                goto basic_json_parser_25;
 basic_json_parser_48:
-        yyaccept = 1;
-        m_marker = ++m_cursor;
-        if ((m_limit - m_cursor) < 3) yyfill(); // LCOV_EXCL_LINE;
-        yych = *m_cursor;
-        if (yych <= 'D') {
-            if (yych <= '/') goto basic_json_parser_25;
-            if (yych <= '9') goto basic_json_parser_48;
-            goto basic_json_parser_25;
-        } else {
-            if (yych <= 'E') goto basic_json_parser_44;
-            if (yych == 'e') goto basic_json_parser_44;
-            goto basic_json_parser_25;
-        }
+                yyaccept = 1;
+                m_marker = ++m_cursor;
+                if ((m_limit - m_cursor) < 3)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
+                if (yych <= 'D')
+                {
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_25;
+                    }
+                    if (yych <= '9')
+                    {
+                        goto basic_json_parser_48;
+                    }
+                    goto basic_json_parser_25;
+                }
+                else
+                {
+                    if (yych <= 'E')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                    if (yych == 'e')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                    goto basic_json_parser_25;
+                }
 basic_json_parser_50:
-        yyaccept = 1;
-        yych = *(m_marker = ++m_cursor);
-        if (yych <= 'D') {
-            if (yych == '.') goto basic_json_parser_43;
-            goto basic_json_parser_25;
-        } else {
-            if (yych <= 'E') goto basic_json_parser_44;
-            if (yych == 'e') goto basic_json_parser_44;
-            goto basic_json_parser_25;
-        }
+                yyaccept = 1;
+                yych = *(m_marker = ++m_cursor);
+                if (yych <= 'D')
+                {
+                    if (yych == '.')
+                    {
+                        goto basic_json_parser_43;
+                    }
+                    goto basic_json_parser_25;
+                }
+                else
+                {
+                    if (yych <= 'E')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                    if (yych == 'e')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                    goto basic_json_parser_25;
+                }
 basic_json_parser_51:
-        yych = *++m_cursor;
-        if (yych != 'l') goto basic_json_parser_33;
-        yych = *++m_cursor;
-        if (yych != 's') goto basic_json_parser_33;
-        yych = *++m_cursor;
-        if (yych != 'e') goto basic_json_parser_33;
-        ++m_cursor;
-        { return token_type::literal_false; }
+                yych = *++m_cursor;
+                if (yych != 'l')
+                {
+                    goto basic_json_parser_33;
+                }
+                yych = *++m_cursor;
+                if (yych != 's')
+                {
+                    goto basic_json_parser_33;
+                }
+                yych = *++m_cursor;
+                if (yych != 'e')
+                {
+                    goto basic_json_parser_33;
+                }
+                ++m_cursor;
+                {
+                    return token_type::literal_false;
+                }
 basic_json_parser_56:
-        yych = *++m_cursor;
-        if (yych != 'u') goto basic_json_parser_33;
-        yych = *++m_cursor;
-        if (yych != 'e') goto basic_json_parser_33;
-        ++m_cursor;
-        { return token_type::literal_true; }
+                yych = *++m_cursor;
+                if (yych != 'u')
+                {
+                    goto basic_json_parser_33;
+                }
+                yych = *++m_cursor;
+                if (yych != 'e')
+                {
+                    goto basic_json_parser_33;
+                }
+                ++m_cursor;
+                {
+                    return token_type::literal_true;
+                }
 basic_json_parser_60:
-        yych = *++m_cursor;
-        if (yych != 'l') goto basic_json_parser_33;
-        yych = *++m_cursor;
-        if (yych != 'l') goto basic_json_parser_33;
-        ++m_cursor;
-        { return token_type::literal_null; }
+                yych = *++m_cursor;
+                if (yych != 'l')
+                {
+                    goto basic_json_parser_33;
+                }
+                yych = *++m_cursor;
+                if (yych != 'l')
+                {
+                    goto basic_json_parser_33;
+                }
+                ++m_cursor;
+                {
+                    return token_type::literal_null;
+                }
 basic_json_parser_64:
-        yych = *++m_cursor;
-        if (yych != 0xBF) goto basic_json_parser_33;
-        ++m_cursor;
-        { return scan(); }
-    }
+                yych = *++m_cursor;
+                if (yych != 0xBF)
+                {
+                    goto basic_json_parser_33;
+                }
+                ++m_cursor;
+                {
+                    return scan();
+                }
+            }
 
 
         }

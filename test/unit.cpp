@@ -11500,12 +11500,12 @@ TEST_CASE("regression tests")
         CHECK(s2 == "value");
     }
 
-    SECTION("character following a surrogate pair is skipped")
+    SECTION("issue #146 - character following a surrogate pair is skipped")
     {
         CHECK(json::parse("\"\\ud80c\\udc60abc\"").get<json::string_t>() == u8"\U00013060abc");
     }
 
-    SECTION("issue #144 - Cannot index by key of type static constexpr const char*")
+    SECTION("issue #171 - Cannot index by key of type static constexpr const char*")
     {
         json j;
 
@@ -11521,12 +11521,12 @@ TEST_CASE("regression tests")
 
         // Non-const access with key as "char *"
         char _ptr_key[] = "Key3";
-        char * ptr_key = &_ptr_key[0];
+        char* ptr_key = &_ptr_key[0];
         CHECK_NOTHROW(j[ptr_key] = 3);
         CHECK(j[ptr_key] == json(3));
 
         // Non-const access with key as "const char *"
-        const char * const_ptr_key = "Key4";
+        const char* const_ptr_key = "Key4";
         CHECK_NOTHROW(j[const_ptr_key] = 4);
         CHECK(j[const_ptr_key] == json(4));
 
