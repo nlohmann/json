@@ -2625,7 +2625,7 @@ class basic_json
 
     @liveexample{The example shows several calls to `get_ref()`.,get_ref}
 
-    @since version 1.0.1
+    @since version 1.1.0
     */
     template<typename ReferenceType, typename
              std::enable_if<
@@ -3155,7 +3155,7 @@ class basic_json
     with range checking
     @sa @ref value() for access by value with a default value
 
-    @since version 1.0.1
+    @since version 1.1.0
     */
     template<typename T>
     reference operator[](T* key)
@@ -3204,7 +3204,7 @@ class basic_json
     with range checking
     @sa @ref value() for access by value with a default value
 
-    @since version 1.0.1
+    @since version 1.1.0
     */
     template<typename T>
     const_reference operator[](T* key) const
