@@ -5604,10 +5604,16 @@ class basic_json
 
             case value_t::number_float:
             {
-                // 15 digits of precision allows round-trip IEEE 754
-                // string->double->string; to be safe, we read this value from
-                // std::numeric_limits<number_float_t>::digits10
-                o << std::setprecision(std::numeric_limits<number_float_t>::digits10) << m_value.number_float;
+                // If the number is an integer then output as a fixed with with precision 1
+                // to output "0.0", "1.0" etc as expected for some round trip tests otherwise
+                // 15 digits of precision allows round-trip IEEE 754 string->double->string; 
+                // to be safe, we read this value from std::numeric_limits<number_float_t>::digits10
+                if (std::fmod(m_value.number_float, 1) == 0) o << std::fixed << std::setprecision(1);
+                else {
+                    o.unsetf(std::ios_base::floatfield);  // std::defaultfloat not supported in gcc version < 5
+                    o << std::setprecision(std::numeric_limits<double>::digits10);
+                }
+                o << m_value.number_float;
                 return;
             }
 
@@ -7037,6 +7043,63 @@ class basic_json
         }
 
         /*!
+        @brief parse floating point number
+
+        This function (and its overloads) serves to select the most approprate
+        standard floating point number parsing function based on the type
+        supplied via the first parameter.  Set this to 
+        @a static_cast<number_float_t>(nullptr).
+
+        @param type  the @ref number_float_t in use
+
+        @param endptr  recieves a pointer to the first character after the number
+
+        @return the floating point number
+        */
+        long double str_to_float_t(long double* /* type */, char** endptr) const
+        {
+            return std::strtold(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
+        }
+
+        /*!
+        @brief parse floating point number
+
+        This function (and its overloads) serves to select the most approprate
+        standard floating point number parsing function based on the type
+        supplied via the first parameter.  Set this to
+        @a static_cast<number_float_t>(nullptr).
+
+        @param type  the @ref number_float_t in use
+
+        @param endptr  recieves a pointer to the first character after the number
+
+        @return the floating point number
+        */
+        double str_to_float_t(double* /* type */, char** endptr) const
+        {
+            return std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
+        }
+
+        /*!
+        @brief parse floating point number
+
+        This function (and its overloads) serves to select the most approprate
+        standard floating point number parsing function based on the type
+        supplied via the first parameter.  Set this to 
+        @a static_cast<number_float_t>(nullptr).
+
+        @param type  the @ref number_float_t in use
+
+        @param endptr  recieves a pointer to the first character after the number
+
+        @return the floating point number
+        */
+        float str_to_float_t(float* /* type */, char** endptr) const
+        {
+            return std::strtof(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
+        }
+
+        /*!
         @brief return number value for number tokens
 
         This function translates the last token into a floating point number.
@@ -7053,13 +7116,12 @@ class basic_json
 
         @throw std::range_error if passed value is out of range
         */
-        long double get_number() const
+        number_float_t get_number() const
         {
             // conversion
             typename string_t::value_type* endptr;
             assert(m_start != nullptr);
-            const auto float_val = std::strtold(reinterpret_cast<typename string_t::const_pointer>(m_start),
-                                                &endptr);
+            number_float_t float_val = str_to_float_t(static_cast<number_float_t*>(nullptr), &endptr);
 
             // return float_val if the whole number was translated and NAN
             // otherwise
@@ -7293,11 +7355,11 @@ class basic_json
 
                 case lexer::token_type::value_number:
                 {
-                    auto float_val = m_lexer.get_number();
+                    result.m_value = m_lexer.get_number();
 
                     // NAN is returned if token could not be translated
                     // completely
-                    if (std::isnan(float_val))
+                    if (std::isnan(result.m_value.number_float))
                     {
                         throw std::invalid_argument(std::string("parse error - ") +
                                                     m_lexer.get_token() + " is not a number");
@@ -7305,9 +7367,10 @@ class basic_json
 
                     get_token();
 
-                    // check if conversion loses precision
-                    const auto int_val = static_cast<number_integer_t>(float_val);
-                    if (float_val == static_cast<long double>(int_val))
+                    // check if conversion loses precision (special case -0.0 always loses precision)
+                    const auto int_val = static_cast<number_integer_t>(result.m_value.number_float);
+                    if (result.m_value.number_float == static_cast<number_float_t>(int_val) &&
+                        result.m_value.number_integer != json_value(-0.0f).number_integer)
                     {
                         // we would not lose precision -> return int
                         result.m_type = value_t::number_integer;
@@ -7317,7 +7380,6 @@ class basic_json
                     {
                         // we would lose precision -> return float
                         result.m_type = value_t::number_float;
-                        result.m_value = static_cast<number_float_t>(float_val);
                     }
                     break;
                 }

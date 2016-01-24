@@ -11090,7 +11090,7 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     //"test/json_roundtrip/roundtrip18.json",
                     //"test/json_roundtrip/roundtrip19.json",
                     //"test/json_roundtrip/roundtrip20.json",
-                    //"test/json_roundtrip/roundtrip21.json",
+                    "test/json_roundtrip/roundtrip21.json",
                     "test/json_roundtrip/roundtrip22.json",
                     "test/json_roundtrip/roundtrip23.json",
                     //"test/json_roundtrip/roundtrip24.json",
@@ -11407,7 +11407,8 @@ TEST_CASE("regression tests")
     SECTION("issue #89 - nonstandard integer type")
     {
         // create JSON class with nonstandard integer number type
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, float> j;
+        using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, float>;
+        custom_json j;
         j["int_1"] = 1;
         // we need to cast to int to compile with Catch - the value is int32_t
         CHECK(static_cast<int>(j["int_1"]) == 1);
@@ -11556,5 +11557,52 @@ TEST_CASE("regression tests")
 
         // Const access with key as "static constexpr const char *"
         CHECK(j_const[constexpr_ptr_key] == json(5));
+    }
+
+    SECTION("issue #186 miloyip/nativejson-benchmark: floating-point parsing")
+    {
+        json j;
+
+        j = json::parse("-0.0");
+        CHECK(j.get<double>() == -0.0);
+
+        j = json::parse("2.22507385850720113605740979670913197593481954635164564e-308");
+        CHECK(j.get<double>() == 2.2250738585072009e-308);
+
+        j = json::parse("0.999999999999999944488848768742172978818416595458984374");
+        CHECK(j.get<double>() == 0.99999999999999989);
+
+        // Test fails under GCC/clang due to strtod() error (may originate in libstdc++
+        // but seems to have been fixed in the most current versions - just not on Travis)
+#if !defined(__clang__) && !defined(__GNUC__) && !defined(__GNUG__)
+        j = json::parse("1.00000000000000011102230246251565404236316680908203126");
+        CHECK(j.get<double>() == 1.00000000000000022);
+#endif
+
+        j = json::parse("7205759403792793199999e-5");
+        CHECK(j.get<double>() == 72057594037927928.0);
+
+        j = json::parse("922337203685477529599999e-5");
+        CHECK(j.get<double>() == 9223372036854774784.0);
+
+        j = json::parse("1014120480182583464902367222169599999e-5");
+        CHECK(j.get<double>() == 10141204801825834086073718800384.0);
+
+        j = json::parse("5708990770823839207320493820740630171355185151999e-3");
+        CHECK(j.get<double>() == 5708990770823838890407843763683279797179383808.0);
+
+        // create JSON class with nonstandard float number type
+
+        // float
+        nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, float> j_float = 1.23e25f;
+        CHECK(j_float.get<float>() == 1.23e25f);
+
+        // double
+        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, double> j_double = 1.23e45;
+        CHECK(j_double.get<double>() == 1.23e45);
+
+        // long double
+        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, long double> j_long_double = 1.23e45L;
+        CHECK(j_long_double.get<long double>() == 1.23e45L);
     }
 }
