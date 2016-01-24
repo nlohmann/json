@@ -7637,7 +7637,7 @@ basic_json_parser_64:
 
         @return the floating point number
         */
-        long double str_to_float_t(long double* type, char** endptr) const
+        long double str_to_float_t(long double* /* type */, char** endptr) const
         {
             return std::strtold(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
         }
@@ -7656,7 +7656,7 @@ basic_json_parser_64:
 
         @return the floating point number
         */
-        double str_to_float_t(double* type, char** endptr) const
+        double str_to_float_t(double* /* type */, char** endptr) const
         {
             return std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
         }
@@ -7675,7 +7675,7 @@ basic_json_parser_64:
 
         @return the floating point number
         */
-        float str_to_float_t(float* type, char** endptr) const
+        float str_to_float_t(float* /* type */, char** endptr) const
         {
             return std::strtof(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
         }
