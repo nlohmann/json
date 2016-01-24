@@ -43,7 +43,9 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 #include <cassert>
 #include <ciso646>
 #include <cmath>
+#include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <functional>
 #include <initializer_list>
 #include <iomanip>
@@ -53,6 +55,7 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 #include <map>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
