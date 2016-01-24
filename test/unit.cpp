@@ -25,6 +25,11 @@
 #include "json.hpp"
 using nlohmann::json;
 
+// disable float-equal warnings on GCC/clang
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+
 TEST_CASE("constructors")
 {
     SECTION("create an empty value with a given type")

@@ -65,6 +65,12 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
     #endif
 #endif
 
+// disable float-equal warnings on GCC/clang
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+
 // enable ssize_t for MSVC
 #ifdef _MSC_VER
     #include <basetsd.h>
@@ -100,12 +106,6 @@ struct has_mapped_type
     static constexpr bool value = sizeof(test<T>(0)) == 1;
 };
 
-/// "equality" comparison for floating point numbers
-template<typename T>
-static bool approx(const T a, const T b)
-{
-    return not (a > b or a < b);
-}
 }
 
 /*!
@@ -4849,7 +4849,7 @@ class basic_json
                 }
                 case value_t::number_float:
                 {
-                    return approx(lhs.m_value.number_float, rhs.m_value.number_float);
+                    return lhs.m_value.number_float == rhs.m_value.number_float;
                 }
                 default:
                 {
@@ -4859,13 +4859,11 @@ class basic_json
         }
         else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
         {
-            return approx(static_cast<number_float_t>(lhs.m_value.number_integer),
-                          rhs.m_value.number_float);
+            return static_cast<number_float_t>(lhs.m_value.number_integer == rhs.m_value.number_float);
         }
         else if (lhs_type == value_t::number_float and rhs_type == value_t::number_integer)
         {
-            return approx(lhs.m_value.number_float,
-                          static_cast<number_float_t>(rhs.m_value.number_integer));
+            return lhs.m_value.number_float == static_cast<number_float_t>(rhs.m_value.number_integer);
         }
         return false;
     }
@@ -7306,7 +7304,7 @@ class basic_json
 
                     // check if conversion loses precision
                     const auto int_val = static_cast<number_integer_t>(float_val);
-                    if (approx(float_val, static_cast<long double>(int_val)))
+                    if (float_val == static_cast<long double>(int_val))
                     {
                         // we would not lose precision -> return int
                         result.m_type = value_t::number_integer;
@@ -7450,5 +7448,10 @@ inline nlohmann::json operator "" _json(const char* s, std::size_t)
 {
     return nlohmann::json::parse(reinterpret_cast<const nlohmann::json::string_t::value_type*>(s));
 }
+
+// restore GCC/clang diagnostic settings
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+    #pragma GCC diagnostic pop
+#endif
 
 #endif
