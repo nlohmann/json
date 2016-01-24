@@ -272,9 +272,10 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <h4>Storage</h4>
 <p>Objects are stored as pointers in a <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> type. That is, for any access to object values, a pointer of type <code>object_t*</code> must be dereferenced.</p>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_ac82abedf356d252e0589850c3d8b35ba.html#ac82abedf356d252e0589850c3d8b35ba">array_t</a> &ndash; type for an array value</dd></dl>
-<dl class="section since"><dt>Since</dt><dd>version 1.0.0 </dd></dl>
+<dl class="section since"><dt>Since</dt><dd>version 1.0.0</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>The order name/value pairs are added to the object is <em>not</em> preserved by the library. Therefore, iterating an object may return name/value pairs in a different order than they were originally stored. In fact, keys will be traversed in alphabetical order as <code>std::map</code> with <code>std::less</code> is used by default. Please note this behavior conforms to <a href="http://rfc7159.net/rfc7159">RFC 7159</a>, because any order implements the specified "unordered" nature of JSON objects. </dd></dl>
 
-<p>Definition at line <a class="el" href="json_8hpp_source.html#l00341">341</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p>Definition at line <a class="el" href="json_8hpp_source.html#l00350">350</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 
 </div>
 </div>
@@ -284,7 +285,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jan 24 2016 11:08:58 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jan 24 2016 22:32:55 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>
