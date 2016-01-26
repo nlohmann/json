@@ -66,4 +66,5 @@ json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/
 ##########################################################################
 
 ChangeLog.md:
-	github_changelog_generator -o ChangeLog.md --simple-list -t c4d32c07b91e0893e78a8e6aabd04f2d71fea8c8
+	github_changelog_generator -o ChangeLog.md --simple-list -t 6b6238b83152d6eefafe1b0dbb1e571fcf2e88e9 --release-url https://github.com/nlohmann/json/releases/tag/%s
+	gsed -i 's|https://github.com/nlohmann/json/releases/tag/HEAD|https://github.com/nlohmann/json/tree/HEAD|' ChangeLog.md

@@ -15,7 +15,7 @@
 
 - Fix broken link [\#197](https://github.com/nlohmann/json/pull/197) ([vog](https://github.com/vog))
 
-## [v1.1.0](https://github.com/nlohmann/json/tree/v1.1.0) (2016-01-24)
+## [v1.1.0](https://github.com/nlohmann/json/releases/tag/v1.1.0) (2016-01-24)
 [Full Changelog](https://github.com/nlohmann/json/compare/v1.0.0...v1.1.0)
 
 - JSON performance benchmark comparision [\#177](https://github.com/nlohmann/json/issues/177)
@@ -43,7 +43,7 @@
 - Issue \#185 - remove approx\(\) and use \#pragma to kill warnings [\#190](https://github.com/nlohmann/json/pull/190) ([twelsby](https://github.com/twelsby))
 - Fixed some typos in CONTRIBUTING.md [\#182](https://github.com/nlohmann/json/pull/182) ([nibroc](https://github.com/nibroc))
 
-## [v1.0.0](https://github.com/nlohmann/json/tree/v1.0.0) (2015-12-27)
+## [v1.0.0](https://github.com/nlohmann/json/releases/tag/v1.0.0) (2015-12-27)
 [Full Changelog](https://github.com/nlohmann/json/compare/v1.0.0-rc1...v1.0.0)
 
 - add key name to exception [\#160](https://github.com/nlohmann/json/issues/160)
@@ -92,7 +92,7 @@
 - Overload parse\(\) to accept an rvalue reference [\#120](https://github.com/nlohmann/json/pull/120) ([silverweed](https://github.com/silverweed))
 - Use the right variable name in doc string [\#115](https://github.com/nlohmann/json/pull/115) ([whoshuu](https://github.com/whoshuu))
 
-## [v1.0.0-rc1](https://github.com/nlohmann/json/tree/v1.0.0-rc1) (2015-07-26)
+## [v1.0.0-rc1](https://github.com/nlohmann/json/releases/tag/v1.0.0-rc1) (2015-07-26)
 - Adjust wording to JSON RFC [\#97](https://github.com/nlohmann/json/issues/97)
 - access by \(const\) reference [\#91](https://github.com/nlohmann/json/issues/91)
 - is\_integer and is\_float tests [\#90](https://github.com/nlohmann/json/issues/90)
