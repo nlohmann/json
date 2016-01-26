@@ -391,6 +391,7 @@ I deeply appreciate the help of the following people.
 - [Glen Fernandes](https://github.com/glenfe) noted a potential portability problem in the `has_mapped_type` function.
 - [Corbin Hughes](https://github.com/nibroc) fixed some typos in the contribution guidelines.
 - [twelsby](https://github.com/twelsby) fixed the array subscript operator, an issue that failed the MSVC build, and floating-point parsing/dumping.
+- [Volker Diels-Grabsch](https://github.com/vog) fixed a link in the README file.
 
 Thanks a lot for helping out!
 
