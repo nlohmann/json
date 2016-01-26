@@ -1,4 +1,4 @@
-.PHONY: pretty clean
+.PHONY: pretty clean ChangeLog.md
 
 # used programs
 RE2C = re2c
@@ -59,3 +59,11 @@ pretty:
 json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/cxxopts.hpp src/json.hpp
 	$(CXX) -std=c++11 $(CXXFLAGS) -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
 	./json_benchmarks
+
+
+##########################################################################
+# changelog
+##########################################################################
+
+ChangeLog.md:
+	github_changelog_generator -o ChangeLog.md --simple-list -t c4d32c07b91e0893e78a8e6aabd04f2d71fea8c8
