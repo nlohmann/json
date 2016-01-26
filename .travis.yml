@@ -57,3 +57,11 @@ script:
   - make CXX=$COMPILER CXXFLAGS="-lstdc++"
   - ./json_unit "*"
   - valgrind --error-exitcode=1 --leak-check=full ./json_unit
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/f1196addb0e97a5ff396
+    on_success: change
+    on_failure: always
+    on_start: never
