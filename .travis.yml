@@ -1,6 +1,7 @@
 language: cpp
 
-sudo: false
+dist: trusty
+sudo: required
 
 # from http://stackoverflow.com/a/32127147/266378
 matrix:
