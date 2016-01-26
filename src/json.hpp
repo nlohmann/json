@@ -32,7 +32,7 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 1.1.0
+@version 2.0.0
 */
 
 #ifndef NLOHMANN_JSON_HPP
@@ -2231,6 +2231,9 @@ class basic_json
     @return `true` if type is an unsigned integer number, `false` otherwise.
 
     @complexity Constant.
+
+    @liveexample{The following code exemplifies @ref is_number_unsigned for all
+    JSON types.,is_number_unsigned}
 
     @sa @ref is_number() -- check if value is a number
     @sa @ref is_number_integer() -- check if value is an integer or unsigned
