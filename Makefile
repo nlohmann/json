@@ -66,6 +66,6 @@ json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/
 ##########################################################################
 
 ChangeLog.md:
-	github_changelog_generator -o ChangeLog.md --simple-list -t 6b6238b83152d6eefafe1b0dbb1e571fcf2e88e9 --release-url https://github.com/nlohmann/json/releases/tag/%s
+	github_changelog_generator -o ChangeLog.md --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s
 	gsed -i 's|https://github.com/nlohmann/json/releases/tag/HEAD|https://github.com/nlohmann/json/tree/HEAD|' ChangeLog.md
 	gsed -i '2i All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).' ChangeLog.md
