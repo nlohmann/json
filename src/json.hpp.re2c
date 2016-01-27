@@ -694,7 +694,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    enum class value_t : uint8_t
+    enum class value_t : uint16_t
     {
         null,           ///< null value
         object,         ///< object (unordered set of name/value pairs)
@@ -704,7 +704,8 @@ class basic_json
         number_integer, ///< number value (integer)
         number_unsigned,///< number value (unsigned integer)
         number_float,   ///< number value (floating-point)
-        discarded       ///< discarded by the the parser callback function
+        discarded,      ///< discarded by the the parser callback function
+        precision_mask = 0xFF
     };
 
 
@@ -1746,7 +1747,7 @@ class basic_json
         }
 
         // check if iterator range is complete for primitive values
-        switch (m_type)
+        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
         {
             case value_t::boolean:
             case value_t::number_float:
@@ -1767,7 +1768,7 @@ class basic_json
             }
         }
 
-        switch (m_type)
+        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
         {
             case value_t::number_integer:
             {
@@ -1851,7 +1852,7 @@ class basic_json
     basic_json(const basic_json& other)
         : m_type(other.m_type)
     {
-        switch (m_type)
+        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
         {
             case value_t::object:
             {
@@ -2081,7 +2082,7 @@ class basic_json
     */
     value_t type() const noexcept
     {
-        return m_type;
+        return static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask));
     }
 
     /*!
@@ -2257,7 +2258,7 @@ class basic_json
     */
     bool is_number_float() const noexcept
     {
-        return m_type == value_t::number_float;
+        return (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask))) == value_t::number_float;
     }
 
     /*!
@@ -2358,7 +2359,7 @@ class basic_json
     */
     operator value_t() const noexcept
     {
-        return m_type;
+        return (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)));
     }
 
     /// @}
@@ -2513,7 +2514,7 @@ class basic_json
                  , int>::type = 0>
     T get_impl(T*) const
     {
-        switch (m_type)
+        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
         {
             case value_t::number_integer:
             {
@@ -3645,7 +3646,7 @@ class basic_json
 
         InteratorType result = end();
 
-        switch (m_type)
+        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
         {
             case value_t::boolean:
             case value_t::number_float:
@@ -3751,7 +3752,7 @@ class basic_json
 
         InteratorType result = end();
 
-        switch (m_type)
+        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
         {
             case value_t::boolean:
             case value_t::number_float:
@@ -5762,7 +5763,7 @@ class basic_json
         // variable to hold indentation for recursive calls
         unsigned int new_indent = current_indent;
 
-        switch (m_type)
+        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
         {
             case value_t::object:
             {
@@ -5873,22 +5874,24 @@ class basic_json
 
             case value_t::number_float:
             {
-                // If the number is an integer then output as a fixed with with
-                // precision 1 to output "0.0", "1.0" etc as expected for some
-                // round trip tests otherwise  15 digits of precision allows
-                // round-trip IEEE 754 string->double->string; to be safe, we
-                // read this value from
+                // If the number was parsed from a string use the same precision
+                // otherwise 15 digits of precision allows round-trip IEEE 754 
+                // string->double->string; to be safe, we read this value from
                 // std::numeric_limits<number_float_t>::digits10
-                if (std::fmod(m_value.number_float, 1) == 0)
-                {
-                    o << std::fixed << std::setprecision(1);
-                }
-                else
-                {
-                    // std::defaultfloat not supported in gcc version < 5
-                    o.unsetf(std::ios_base::floatfield);
-                    o << std::setprecision(std::numeric_limits<double>::digits10);
-                }
+                int precision = static_cast<int>(m_type) >> 8;
+                if (!precision) precision = std::numeric_limits<double>::digits10;
+
+                // Special case for zero - use fixed precision to get "0.0"
+                    if (m_value.number_float == 0)
+                    {
+                        o << std::fixed << std::setprecision(1);
+                    }
+                    else
+                    {
+                        // std::defaultfloat not supported in gcc version < 5
+                        o.unsetf(std::ios_base::floatfield);
+                        o << std::setprecision(precision);
+                    }
                 o << m_value.number_float;
                 return;
             }
@@ -7437,39 +7440,73 @@ class basic_json
         */
         void get_number(basic_json& result) const
         {
-            typename string_t::value_type* endptr;
             assert(m_start != nullptr);
+
+            // Count the significant figures
+            int precision = 0;
+            {
+                const lexer::lexer_char_t *curptr;
+
+                // Assume unsigned integer for now
+                result.m_type = value_t::number_unsigned;
+                for (curptr = m_start; curptr < m_cursor; curptr++) {
+                    switch (*curptr) {
+                    case '-':
+                        // Found minus sign: change to integer
+                        result.m_type = value_t::number_integer;
+                    case '.':
+                        // Don't count either '.' or '-'
+                        continue;
+                    case 'e':
+                    case 'E':
+                        // Found exponent: change to float and stop counting
+                        result.m_type = value_t::number_float;
+                        break;
+                    default:
+                        // Found a signficant figure
+                        precision++;
+                        continue;
+                    }
+                    break;
+                }
+
+                // Characters after number - shouldn't happen, but try parsing as float
+                if (curptr != m_cursor) result.m_type = value_t::number_float;
+            }
+
             errno = 0;
-            
+            typename string_t::value_type* endptr = 0;
+
             // Attempt to parse it as an integer - first checking for a negative number
-            if (*reinterpret_cast<typename string_t::const_pointer>(m_start) != '-')
+            if (result.m_type == value_t::number_unsigned)
             {
                 // Positive, parse with strtoull and attempt cast to number_unsigned_t
-                if (attempt_cast(std::strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
-                    result.m_type = value_t::number_unsigned;
-                else result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
+                if (!attempt_cast(std::strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
+                    result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
             }
-            else
+            else if (result.m_type == value_t::number_integer)
             {
                 // Negative, parse with strtoll and attempt cast to number_integer_t
-                if (attempt_cast(std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
-                    result.m_type = value_t::number_integer;
-                else result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
+                if (!attempt_cast(std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
+                    result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
             }
 
             // Check the end of the number was reached and no range error occurred
             if (reinterpret_cast<lexer_char_t*>(endptr) != m_cursor || errno == ERANGE) result.m_type = value_t::number_float;
 
-            if (result.m_type  == value_t::number_float)
+            if (result.m_type == value_t::number_float)
             {
                 // Either the number won't fit in an integer (range error from strtoull/strtoll or overflow on cast) or there was 
                 // something else after the number, which could be an exponent
-                
+
                 // Parse with strtod
                 result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), &endptr);
 
+                // Add the precision bits
+                result.m_type = static_cast<value_t>(static_cast<int>(result.m_type) | (precision << 8));
+
                 // Anything after the number is an error
-                if(reinterpret_cast<lexer_char_t*>(endptr) != m_cursor) 
+                if (reinterpret_cast<lexer_char_t*>(endptr) != m_cursor && *m_cursor != '.')
                     throw std::invalid_argument(std::string("parse error - ") + get_token() + " is not a number");
             }
         }

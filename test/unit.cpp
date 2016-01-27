@@ -11762,10 +11762,10 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     "test/json_roundtrip/roundtrip21.json",
                     "test/json_roundtrip/roundtrip22.json",
                     "test/json_roundtrip/roundtrip23.json",
-                    //"test/json_roundtrip/roundtrip24.json",
-                    //"test/json_roundtrip/roundtrip25.json",
-                    //"test/json_roundtrip/roundtrip26.json",
-                    //"test/json_roundtrip/roundtrip27.json"
+                    "test/json_roundtrip/roundtrip24.json",
+                    "test/json_roundtrip/roundtrip25.json",
+                    "test/json_roundtrip/roundtrip26.json",
+                    "test/json_roundtrip/roundtrip27.json"
                 })
         {
             CAPTURE(filename);
