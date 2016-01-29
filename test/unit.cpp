@@ -924,7 +924,8 @@ TEST_CASE("constructors")
 
             SECTION("object with error")
             {
-                CHECK_THROWS_AS(json::object({ {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false}, 13 }), std::logic_error);
+                CHECK_THROWS_AS(json::object({ {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false}, 13 }),
+                std::logic_error);
                 CHECK_THROWS_WITH(json::object({ {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false}, 13 }),
                 "cannot create object from initializer list");
             }
@@ -2312,7 +2313,7 @@ TEST_CASE("value conversion")
             json::number_integer_t n = j.get<json::number_integer_t>();
             CHECK(json(n) == j);
         }
-        
+
         SECTION("number_unsigned_t")
         {
             json::number_unsigned_t n = j_unsigned.get<json::number_unsigned_t>();
@@ -3665,7 +3666,7 @@ TEST_CASE("element access")
                     CHECK_THROWS_WITH(j_nonobject.at("foo"), "cannot use at() with number");
                     CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "cannot use at() with number");
                 }
-                
+
                 SECTION("number (unsigned)")
                 {
                     json j_nonobject(json::value_t::number_unsigned);
@@ -3675,7 +3676,7 @@ TEST_CASE("element access")
                     CHECK_THROWS_WITH(j_nonobject.at("foo"), "cannot use at() with number");
                     CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "cannot use at() with number");
                 }
-                
+
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
@@ -5435,7 +5436,7 @@ TEST_CASE("iterators")
 
         SECTION("object")
         {
-            json j = {{"A", 1},{"B", 2},{"C", 3}};
+            json j = {{"A", 1}, {"B", 2}, {"C", 3}};
             json j_const(j);
 
             SECTION("json + begin/end")
@@ -9661,7 +9662,7 @@ TEST_CASE("parser class")
                     // (2**53)-1
                     CHECK(json::parser("9007199254740991").parse().get<int64_t>() == 9007199254740991);
                 }
-                
+
                 SECTION("over the edge cases")  // issue #178 - Integer conversion to unsigned (incorrect handling of 64 bit integers)
                 {
                     // While RFC7159, Section 6 specifies a preference for support
@@ -9672,7 +9673,7 @@ TEST_CASE("parser class")
                     // i.e. -(2**63) -> (2**64)-1.
 
                     // -(2**63)    ** Note: compilers see negative literals as negated positive numbers (hence the -1))
-                    CHECK(json::parser("-9223372036854775808").parse().get<int64_t>() == -9223372036854775807-1);
+                    CHECK(json::parser("-9223372036854775808").parse().get<int64_t>() == -9223372036854775807 - 1);
                     // (2**63)-1
                     CHECK(json::parser("9223372036854775807").parse().get<int64_t>() == 9223372036854775807);
                     // (2**64)-1
@@ -9718,14 +9719,17 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("-0e-:").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("-0f").parse(), std::invalid_argument);
 
-                CHECK_THROWS_WITH(json::parser("01").parse(), "parse error - 0 is not a number");
+                CHECK_THROWS_WITH(json::parser("01").parse(),
+                                  "parse error - unexpected number literal; expected end of input");
                 CHECK_THROWS_WITH(json::parser("--1").parse(), "parse error - unexpected '-'");
-                CHECK_THROWS_WITH(json::parser("1.").parse(), "parse error - unexpected '.'; expected end of input");
+                CHECK_THROWS_WITH(json::parser("1.").parse(),
+                                  "parse error - unexpected '.'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("1E").parse(),
                                   "parse error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("1E-").parse(),
                                   "parse error - unexpected 'E'; expected end of input");
-                CHECK_THROWS_WITH(json::parser("1.E1").parse(), "parse error - unexpected '.'; expected end of input");
+                CHECK_THROWS_WITH(json::parser("1.E1").parse(),
+                                  "parse error - unexpected '.'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-1E").parse(),
                                   "parse error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0E#").parse(),
@@ -9767,7 +9771,8 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("1E.").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("1E/").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("1E:").parse(), std::invalid_argument);
-        CHECK_THROWS_WITH(json::parser("0.").parse(), "parse error - unexpected '.'; expected end of input");
+        CHECK_THROWS_WITH(json::parser("0.").parse(),
+                          "parse error - unexpected '.'; expected end of input");
         CHECK_THROWS_WITH(json::parser("-").parse(), "parse error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("--").parse(),
                           "parse error - unexpected '-'");
@@ -11765,7 +11770,12 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     "test/json_roundtrip/roundtrip24.json",
                     "test/json_roundtrip/roundtrip25.json",
                     "test/json_roundtrip/roundtrip26.json",
-                    "test/json_roundtrip/roundtrip27.json"
+                    "test/json_roundtrip/roundtrip27.json",
+                    "test/json_roundtrip/roundtrip28.json",
+                    "test/json_roundtrip/roundtrip29.json",
+                    "test/json_roundtrip/roundtrip30.json",
+                    "test/json_roundtrip/roundtrip31.json",
+                    "test/json_roundtrip/roundtrip32.json"
                 })
         {
             CAPTURE(filename);
@@ -12076,14 +12086,15 @@ TEST_CASE("regression tests")
     SECTION("issue #89 - nonstandard integer type")
     {
         // create JSON class with nonstandard integer number type
-        using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, uint32_t, float>;
+        using custom_json =
+            nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, uint32_t, float>;
         custom_json j;
         j["int_1"] = 1;
         // we need to cast to int to compile with Catch - the value is int32_t
         CHECK(static_cast<int>(j["int_1"]) == 1);
 
         // tests for correct handling of non-standard integers that overflow the type selected by the user
-        
+
         // unsigned integer object creation - expected to wrap and still be stored as an integer
         j = 4294967296U; // 2^32
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_unsigned));
@@ -12092,17 +12103,17 @@ TEST_CASE("regression tests")
         // unsigned integer parsing - expected to overflow and be stored as a float
         j = custom_json::parse("4294967296"); // 2^32
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_float));
-        CHECK(j.get<float>() == 4294967296.0);
+        CHECK(j.get<float>() == 4294967296.0f);
 
         // integer object creation - expected to wrap and still be stored as an integer
         j = -2147483649LL; // -2^31-1
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_integer));
-        CHECK(j.get<int32_t>() == 2147483647.0);  // Wrap
+        CHECK(j.get<int32_t>() == 2147483647.0f);  // Wrap
 
-        // integer parsing - expected to overflow and be stored as a float
-        j = custom_json::parse("-2147483648"); // -2^31
+        // integer parsing - expected to overflow and be stored as a float with rounding
+        j = custom_json::parse("-2147483649"); // -2^31
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_float));
-        CHECK(j.get<float>() == -2147483648.0);
+        CHECK(j.get<float>() == -2147483650.0f);
     }
 
     SECTION("issue #93 reverse_iterator operator inheritance problem")
@@ -12201,11 +12212,11 @@ TEST_CASE("regression tests")
     {
         CHECK(json::parse("\"\\ud80c\\udc60abc\"").get<json::string_t>() == u8"\U00013060abc");
     }
-    
+
     SECTION("issue #171 - Cannot index by key of type static constexpr const char*")
     {
         json j;
-        
+
         // Non-const access with key as "char []"
         char array_key[] = "Key1";
         CHECK_NOTHROW(j[array_key] = 1);
@@ -12263,12 +12274,8 @@ TEST_CASE("regression tests")
         j = json::parse("0.999999999999999944488848768742172978818416595458984374");
         CHECK(j.get<double>() == 0.99999999999999989);
 
-        // Test fails under GCC/clang due to strtod() error (may originate in libstdc++
-        // but seems to have been fixed in the most current versions - just not on Travis)
-#if !defined(__clang__) && !defined(__GNUC__) && !defined(__GNUG__)
         j = json::parse("1.00000000000000011102230246251565404236316680908203126");
         CHECK(j.get<double>() == 1.00000000000000022);
-#endif
 
         j = json::parse("7205759403792793199999e-5");
         CHECK(j.get<double>() == 72057594037927928.0);
@@ -12285,15 +12292,18 @@ TEST_CASE("regression tests")
         // create JSON class with nonstandard float number type
 
         // float
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, uint32_t, float> j_float = 1.23e25f;
+        nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, uint32_t, float> j_float =
+            1.23e25f;
         CHECK(j_float.get<float>() == 1.23e25f);
 
         // double
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, double> j_double = 1.23e35f;
+        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, double> j_double =
+            1.23e35f;
         CHECK(j_double.get<double>() == 1.23e35f);
 
         // long double
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, long double> j_long_double = 1.23e45L;
+        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, long double>
+        j_long_double = 1.23e45L;
         CHECK(j_long_double.get<long double>() == 1.23e45L);
     }
 }

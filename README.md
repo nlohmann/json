@@ -3,11 +3,12 @@
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/GnGKwji06WeVonlI)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/WSW3gHHE4UcZ9K3G)
 [![Documentation Status](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
 [![Github Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
+[![Gitter](https://badges.gitter.im/nlohmann/json.svg)](https://gitter.im/nlohmann/json?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Design goals
 
@@ -21,11 +22,11 @@ There are myriads of [JSON](http://json.org) libraries out there, and each may e
 
 Other aspects were not so important to us:
 
-- **Memory efficiency**. Each JSON object has an overhead of one pointer (the maximal size of a union) and one enumeration element (1 byte). The default generalization uses the following C++ data types: `std::string` for strings, `int64_t` or `double` for numbers, `std::map` for objects, `std::vector` for arrays, and `bool` for Booleans. However, you can template the generalized class `basic_json` to your needs.
+- **Memory efficiency**. Each JSON object has an overhead of one pointer (the maximal size of a union) and one enumeration element (1 byte). The default generalization uses the following C++ data types: `std::string` for strings, `int64_t`, `uint64_t` or `double` for numbers, `std::map` for objects, `std::vector` for arrays, and `bool` for Booleans. However, you can template the generalized class `basic_json` to your needs.
 
 - **Speed**. We currently implement the parser as naive [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser) with hand coded string handling. It is fast enough, but a [LALR-parser](http://en.wikipedia.org/wiki/LALR_parser) with a decent regular expression processor should be even faster (but would consist of more files which makes the integration harder).
 
-See the [https://github.com/nlohmann/json/blob/master/CONTRIBUTING.md#please-dont](contribution guidelines) for more information.
+See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/CONTRIBUTING.md#please-dont) for more information.
 
 ## Integration
 
@@ -390,13 +391,15 @@ I deeply appreciate the help of the following people.
 - [406345](https://github.com/406345) fixed two small warnings.
 - [Glen Fernandes](https://github.com/glenfe) noted a potential portability problem in the `has_mapped_type` function.
 - [Corbin Hughes](https://github.com/nibroc) fixed some typos in the contribution guidelines.
-- [twelsby](https://github.com/twelsby) fixed the array subscript operator, an issue that failed the MSVC build, and floating-point parsing/dumping.
+- [twelsby](https://github.com/twelsby) fixed the array subscript operator, an issue that failed the MSVC build, and floating-point parsing/dumping. He further added support for unsigned integer numbers.
+- [Volker Diels-Grabsch](https://github.com/vog) fixed a link in the README file.
 
 Thanks a lot for helping out!
 
 ## Notes
 
-- The code contains numerous debug assertions which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](http://en.cppreference.com/w/cpp/error/assert).
+- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](http://en.cppreference.com/w/cpp/error/assert).
+- As the exact type of a number is not defined in the [JSON specification](http://rfc7159.net/rfc7159), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
 
 ## Execute unit tests
 
@@ -407,7 +410,7 @@ $ make
 $ ./json_unit "*"
 
 ===============================================================================
-All tests passed (3343329 assertions in 29 test cases)
+All tests passed (3344278 assertions in 29 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

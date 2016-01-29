@@ -1,4 +1,4 @@
-.PHONY: pretty clean
+.PHONY: pretty clean ChangeLog.md
 
 # used programs
 RE2C = re2c
@@ -59,3 +59,13 @@ pretty:
 json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/cxxopts.hpp src/json.hpp
 	$(CXX) -std=c++11 $(CXXFLAGS) -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
 	./json_benchmarks
+
+
+##########################################################################
+# changelog
+##########################################################################
+
+ChangeLog.md:
+	github_changelog_generator -o ChangeLog.md --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s
+	gsed -i 's|https://github.com/nlohmann/json/releases/tag/HEAD|https://github.com/nlohmann/json/tree/HEAD|' ChangeLog.md
+	gsed -i '2i All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).' ChangeLog.md

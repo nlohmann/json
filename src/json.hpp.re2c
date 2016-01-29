@@ -32,7 +32,7 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 1.0.0
+@version 2.0.0
 */
 
 #ifndef NLOHMANN_JSON_HPP
@@ -124,8 +124,8 @@ default; will be used in @ref string_t)
 in @ref boolean_t)
 @tparam NumberIntegerType type for JSON integer numbers (@c `int64_t` by
 default; will be used in @ref number_integer_t)
-@tparam NumberUnsignedType type for JSON unsigned integer numbers (@c `uint64_t` by
-default; will be used in @ref number_unsigned_t)
+@tparam NumberUnsignedType type for JSON unsigned integer numbers (@c
+`uint64_t` by default; will be used in @ref number_unsigned_t)
 @tparam NumberFloatType type for JSON floating-point numbers (@c `double` by
 default; will be used in @ref number_float_t)
 @tparam AllocatorType type of the allocator to use (@c `std::allocator` by
@@ -218,13 +218,11 @@ class basic_json
 
     /// the type of an element reference
     using reference = value_type&;
-
     /// the type of an element const reference
     using const_reference = const value_type&;
 
     /// a type to represent differences between iterators
     using difference_type = std::ptrdiff_t;
-
     /// a type to represent container sizes
     using size_type = std::size_t;
 
@@ -340,6 +338,14 @@ class basic_json
     @sa @ref array_t -- type for an array value
 
     @since version 1.0.0
+
+    @note The order name/value pairs are added to the object is *not* preserved
+    by the library. Therefore, iterating an object may return name/value pairs
+    in a different order than they were originally stored. In fact, keys will
+    be traversed in alphabetical order as `std::map` with `std::less` is used
+    by default. Please note this behavior conforms to [RFC
+    7159](http://rfc7159.net/rfc7159), because any order implements the
+    specified "unordered" nature of JSON objects.
     */
     using object_t = ObjectType<StringType,
           basic_json,
@@ -479,9 +485,9 @@ class basic_json
     > permitted.
 
     This description includes both integer and floating-point numbers. However,
-    C++ allows more precise storage if it is known whether the number is a 
+    C++ allows more precise storage if it is known whether the number is a
     signed integer, an unsigned integer or a floating-point number. Therefore,
-    three different types, @ref number_integer_t,  @ref number_unsigned_t and 
+    three different types, @ref number_integer_t,  @ref number_unsigned_t and
     @ref number_float_t are used.
 
     To store integer numbers in C++, a type is defined by the template
@@ -550,9 +556,9 @@ class basic_json
     > permitted.
 
     This description includes both integer and floating-point numbers. However,
-    C++ allows more precise storage if it is known whether the number is a 
+    C++ allows more precise storage if it is known whether the number is a
     signed integer, an unsigned integer or a floating-point number. Therefore,
-    three different types, @ref number_integer_t,  @ref number_unsigned_t and 
+    three different types, @ref number_integer_t,  @ref number_unsigned_t and
     @ref number_float_t are used.
 
     To store unsigned integer numbers in C++, a type is defined by the template
@@ -582,11 +588,11 @@ class basic_json
     > An implementation may set limits on the range and precision of numbers.
 
     When the default type is used, the maximal integer number that can be
-    stored is `18446744073709551615` (UINT64_MAX) and the minimal integer number
-    that can be stored is `0`. Integer numbers
-    that are out of range will yield over/underflow when used in a constructor.
-    During deserialization, too large or small integer numbers will be
-    automatically be stored as @ref number_integer_t or @ref number_float_t.
+    stored is `18446744073709551615` (UINT64_MAX) and the minimal integer
+    number that can be stored is `0`. Integer numbers that are out of range
+    will yield over/underflow when used in a constructor. During
+    deserialization, too large or small integer numbers will be automatically
+    be stored as @ref number_integer_t or @ref number_float_t.
 
     [RFC 7159](http://rfc7159.net/rfc7159) further states:
     > Note that when such software is used, numbers that are integers and are
@@ -594,7 +600,7 @@ class basic_json
     > that implementations will agree exactly on their numeric values.
 
     As this range is a subrange (when considered in conjunction with the
-    number_integer_t type) of the exactly supported range [0, UINT64_MAX], this 
+    number_integer_t type) of the exactly supported range [0, UINT64_MAX], this
     class's integer type is interoperable.
 
     #### Storage
@@ -608,7 +614,7 @@ class basic_json
     @since version 2.0.0
     */
     using number_unsigned_t = NumberUnsignedType;
-    
+
     /*!
     @brief a type for a number (floating-point)
 
@@ -622,9 +628,9 @@ class basic_json
     > permitted.
 
     This description includes both integer and floating-point numbers. However,
-    C++ allows more precise storage if it is known whether the number is a 
+    C++ allows more precise storage if it is known whether the number is a
     signed integer, an unsigned integer or a floating-point number. Therefore,
-    three different types, @ref number_integer_t,  @ref number_unsigned_t and 
+    three different types, @ref number_integer_t,  @ref number_unsigned_t and
     @ref number_float_t are used.
 
     To store floating-point numbers in C++, a type is defined by the template
@@ -694,7 +700,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    enum class value_t : uint16_t
+    enum class value_t : uint8_t
     {
         null,           ///< null value
         object,         ///< object (unordered set of name/value pairs)
@@ -704,12 +710,78 @@ class basic_json
         number_integer, ///< number value (integer)
         number_unsigned,///< number value (unsigned integer)
         number_float,   ///< number value (floating-point)
-        discarded,      ///< discarded by the the parser callback function
-        precision_mask = 0xFF
+        discarded       ///< discarded by the the parser callback function
     };
 
 
   private:
+
+    /*!
+    @brief a type to hold JSON type information
+
+    This bitfield type holds information about JSON types. It is internally
+    used to hold the basic JSON type enumeration, as well as additional
+    information in the case of values that have been parsed from a string
+    including whether of not it was created directly or parsed, and
+    in the case of floating point numbers the number of significant
+    figures in the original representaiton and if it was in exponential
+    form, if a '+' was included in the exponent and the capitilization of
+    the exponent marker.  The sole purpose of this information is to permit
+    accurate round trips.
+
+    @since version 2.0.0
+    */
+    union type_data_t {
+        struct {
+            uint16_t type : 4;
+            uint16_t parsed : 1;
+            uint16_t has_exp : 1;
+            uint16_t exp_plus : 1;
+            uint16_t exp_cap : 1;
+            uint16_t precision : 8;
+        } bits;
+        uint16_t data;
+
+        // Return the type
+        value_t get() const
+        {
+            return static_cast<value_t>(bits.type);
+        }
+
+        // Test type for equality (ignore other fields)
+        bool operator==(const value_t& rhs) const
+        {
+            return static_cast<value_t>(bits.type) == rhs;
+        }
+
+        // Assignment
+        type_data_t & operator=(value_t rhs)
+        {
+            bits.type = static_cast<uint16_t>(rhs);
+            return *this;
+        }
+
+        // Construct from value_t
+        type_data_t(value_t t) noexcept
+        {
+            *reinterpret_cast<uint16_t*>(this) = 0;
+            bits.type = static_cast<uint16_t>(t);
+        }
+
+        // Default constructor
+        type_data_t() noexcept
+        {
+            data = 0;
+            bits.type = reinterpret_cast<uint16_t>(value_t::null);
+        }
+
+        // Copy constructor
+        type_data_t(const type_data_t& t) noexcept
+        {
+            data = t.data;
+        }
+    };
+
     /// helper for exception-safe object creation
     template<typename T, typename... Args>
     static T* create(Args&& ... args)
@@ -796,7 +868,7 @@ class basic_json
                     number_integer = number_integer_t(0);
                     break;
                 }
-                
+
                 case value_t::number_unsigned:
                 {
                     number_unsigned = number_unsigned_t(0);
@@ -1325,8 +1397,8 @@ class basic_json
     template<typename CompatibleNumberIntegerType, typename
              std::enable_if<
                  std::is_constructible<number_integer_t, CompatibleNumberIntegerType>::value and
-                 std::numeric_limits<CompatibleNumberIntegerType>::is_integer and 
-                 std::numeric_limits<CompatibleNumberIntegerType>::is_signed, 
+                 std::numeric_limits<CompatibleNumberIntegerType>::is_integer and
+                 std::numeric_limits<CompatibleNumberIntegerType>::is_signed,
                  CompatibleNumberIntegerType>::type
              = 0>
     basic_json(const CompatibleNumberIntegerType val) noexcept
@@ -1339,7 +1411,7 @@ class basic_json
 
     Create an unsigned integer number JSON value with a given content.
 
-    @tparam T  helper type to compare number_unsigned_t and unsigned int 
+    @tparam T  helper type to compare number_unsigned_t and unsigned int
     (not visible in) the interface.
 
     @param[in] val  an integer to create a JSON number from
@@ -1360,14 +1432,14 @@ class basic_json
     basic_json(const number_unsigned_t val)
         : m_type(value_t::number_unsigned), m_value(val)
     {}
-    
+
     /*!
     @brief create an unsigned number (implicit)
 
     Create an unsigned number JSON value with a given content. This constructor
     allows any type that can be used to construct values of type @ref
-    number_unsigned_t. Examples may include the types `unsigned int`, `uint32_t`,
-    or `unsigned short`.
+    number_unsigned_t. Examples may include the types `unsigned int`,
+    `uint32_t`, or `unsigned short`.
 
     @tparam CompatibleNumberUnsignedType an integer type which is compatible to
     @ref number_unsigned_t.
@@ -1381,13 +1453,13 @@ class basic_json
 
     @since version 2.0.0
     */
-    template<typename CompatibleNumberUnsignedType, typename
-             std::enable_if<
-                 std::is_constructible<number_unsigned_t, CompatibleNumberUnsignedType>::value and
-                 std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and 
-                 !std::numeric_limits<CompatibleNumberUnsignedType>::is_signed, 
-                 CompatibleNumberUnsignedType>::type
-             = 0>
+    template < typename CompatibleNumberUnsignedType, typename
+               std::enable_if <
+                   std::is_constructible<number_unsigned_t, CompatibleNumberUnsignedType>::value and
+                   std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and
+                   !std::numeric_limits<CompatibleNumberUnsignedType>::is_signed,
+                   CompatibleNumberUnsignedType >::type
+               = 0 >
     basic_json(const CompatibleNumberUnsignedType val) noexcept
         : m_type(value_t::number_unsigned),
           m_value(static_cast<number_unsigned_t>(val))
@@ -1747,7 +1819,7 @@ class basic_json
         }
 
         // check if iterator range is complete for primitive values
-        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
+        switch (m_type.get())
         {
             case value_t::boolean:
             case value_t::number_float:
@@ -1768,7 +1840,7 @@ class basic_json
             }
         }
 
-        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
+        switch (m_type.get())
         {
             case value_t::number_integer:
             {
@@ -1776,7 +1848,7 @@ class basic_json
                 m_value.number_integer = first.m_object->m_value.number_integer;
                 break;
             }
-            
+
             case value_t::number_unsigned:
             {
                 assert(first.m_object != nullptr);
@@ -1852,7 +1924,7 @@ class basic_json
     basic_json(const basic_json& other)
         : m_type(other.m_type)
     {
-        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
+        switch (m_type.get())
         {
             case value_t::object:
             {
@@ -1886,7 +1958,7 @@ class basic_json
                 m_value = other.m_value.number_integer;
                 break;
             }
-            
+
             case value_t::number_unsigned:
             {
                 m_value = other.m_value.number_unsigned;
@@ -1982,7 +2054,7 @@ class basic_json
     */
     ~basic_json()
     {
-        switch (m_type)
+        switch (m_type.get())
         {
             case value_t::object:
             {
@@ -2082,7 +2154,7 @@ class basic_json
     */
     value_t type() const noexcept
     {
-        return static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask));
+        return m_type.get();
     }
 
     /*!
@@ -2178,9 +2250,10 @@ class basic_json
     @liveexample{The following code exemplifies @ref is_number for all JSON
     types.,is_number}
 
-    @sa @ref is_number_integer() -- check if value is an integer or unsigned 
+    @sa @ref is_number_integer() -- check if value is an integer or unsigned
     integer number
-    @sa @ref is_number_unsigned() -- check if value is an unsigned integer number
+    @sa @ref is_number_unsigned() -- check if value is an unsigned integer
+    number
     @sa @ref is_number_float() -- check if value is a floating-point number
 
     @since version 1.0.0
@@ -2193,10 +2266,10 @@ class basic_json
     /*!
     @brief return whether value is an integer number
 
-    This function returns true iff the JSON value is an integer or unsigned 
+    This function returns true iff the JSON value is an integer or unsigned
     integer number. This excludes floating-point values.
 
-    @return `true` if type is an integer or unsigned integer number, `false` 
+    @return `true` if type is an integer or unsigned integer number, `false`
     otherwise.
 
     @complexity Constant.
@@ -2205,7 +2278,8 @@ class basic_json
     JSON types.,is_number_integer}
 
     @sa @ref is_number() -- check if value is a number
-    @sa @ref is_number_unsigned() -- check if value is an unsigned integer number
+    @sa @ref is_number_unsigned() -- check if value is an unsigned integer
+    number
     @sa @ref is_number_float() -- check if value is a floating-point number
 
     @since version 1.0.0
@@ -2214,19 +2288,22 @@ class basic_json
     {
         return m_type == value_t::number_integer or m_type == value_t::number_unsigned;
     }
-    
+
     /*!
     @brief return whether value is an unsigned integer number
 
-    This function returns true iff the JSON value is an unsigned integer number. 
-    This excludes floating-point and (signed) integer values.
+    This function returns true iff the JSON value is an unsigned integer
+    number. This excludes floating-point and (signed) integer values.
 
     @return `true` if type is an unsigned integer number, `false` otherwise.
 
     @complexity Constant.
 
+    @liveexample{The following code exemplifies @ref is_number_unsigned for all
+    JSON types.,is_number_unsigned}
+
     @sa @ref is_number() -- check if value is a number
-    @sa @ref is_number_integer() -- check if value is an integer or unsigned 
+    @sa @ref is_number_integer() -- check if value is an integer or unsigned
     integer number
     @sa @ref is_number_float() -- check if value is a floating-point number
 
@@ -2252,13 +2329,14 @@ class basic_json
 
     @sa @ref is_number() -- check if value is number
     @sa @ref is_number_integer() -- check if value is an integer number
-    @sa @ref is_number_unsigned() -- check if value is an unsigned integer number
+    @sa @ref is_number_unsigned() -- check if value is an unsigned integer
+    number
 
     @since version 1.0.0
     */
     bool is_number_float() const noexcept
     {
-        return (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask))) == value_t::number_float;
+        return m_type == value_t::number_float;
     }
 
     /*!
@@ -2359,7 +2437,7 @@ class basic_json
     */
     operator value_t() const noexcept
     {
-        return (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)));
+        return m_type.get();
     }
 
     /// @}
@@ -2514,13 +2592,13 @@ class basic_json
                  , int>::type = 0>
     T get_impl(T*) const
     {
-        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
+        switch (m_type.get())
         {
             case value_t::number_integer:
             {
                 return static_cast<T>(m_value.number_integer);
             }
-            
+
             case value_t::number_unsigned:
             {
                 return static_cast<T>(m_value.number_unsigned);
@@ -2610,7 +2688,7 @@ class basic_json
     {
         return is_number_integer() ? &m_value.number_integer : nullptr;
     }
-    
+
     /// get a pointer to the value (unsigned number)
     number_unsigned_t* get_impl_ptr(number_unsigned_t*) noexcept
     {
@@ -2622,7 +2700,7 @@ class basic_json
     {
         return is_number_unsigned() ? &m_value.number_unsigned : nullptr;
     }
-    
+
     /// get a pointer to the value (floating-point number)
     number_float_t* get_impl_ptr(number_float_t*) noexcept
     {
@@ -2720,7 +2798,7 @@ class basic_json
     @warning The pointer becomes invalid if the underlying JSON object changes.
 
     @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
-    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t, 
+    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t,
     @ref number_unsigned_t, or @ref number_float_t.
 
     @return pointer to the internally stored JSON value if the requested
@@ -2771,7 +2849,7 @@ class basic_json
     state.
 
     @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
-    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t, 
+    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t,
     @ref number_unsigned_t, or @ref number_float_t.
 
     @return pointer to the internally stored JSON value if the requested
@@ -2835,7 +2913,7 @@ class basic_json
 
     @liveexample{The example shows several calls to `get_ref()`.,get_ref}
 
-    @since version 1.0.1
+    @since version 1.1.0
     */
     template<typename ReferenceType, typename
              std::enable_if<
@@ -2890,14 +2968,14 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<typename ValueType, typename
-             std::enable_if<
-                 not std::is_pointer<ValueType>::value
-                 and not std::is_same<ValueType, typename string_t::value_type>::value
+    template < typename ValueType, typename
+               std::enable_if <
+                   not std::is_pointer<ValueType>::value
+                   and not std::is_same<ValueType, typename string_t::value_type>::value
 #ifndef _MSC_VER  // Fix for issue #167 operator<< abiguity under VS2015
-                 and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
+                   and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
-                 , int>::type = 0>
+                   , int >::type = 0 >
     operator ValueType() const
     {
         // delegate the call to get<>() const
@@ -3365,7 +3443,7 @@ class basic_json
     with range checking
     @sa @ref value() for access by value with a default value
 
-    @since version 1.0.1
+    @since version 1.1.0
     */
     template<typename T>
     reference operator[](T* key)
@@ -3414,7 +3492,7 @@ class basic_json
     with range checking
     @sa @ref value() for access by value with a default value
 
-    @since version 1.0.1
+    @since version 1.1.0
     */
     template<typename T>
     const_reference operator[](T* key) const
@@ -3646,7 +3724,7 @@ class basic_json
 
         InteratorType result = end();
 
-        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
+        switch (m_type.get())
         {
             case value_t::boolean:
             case value_t::number_float:
@@ -3665,7 +3743,7 @@ class basic_json
                     m_value.string = nullptr;
                 }
 
-                m_type = value_t::null;
+                m_type = type_data_t(value_t::null);
                 break;
             }
 
@@ -3752,7 +3830,7 @@ class basic_json
 
         InteratorType result = end();
 
-        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
+        switch (m_type.get())
         {
             case value_t::boolean:
             case value_t::number_float:
@@ -3771,7 +3849,7 @@ class basic_json
                     m_value.string = nullptr;
                 }
 
-                m_type = value_t::null;
+                m_type = type_data_t(value_t::null);
                 break;
             }
 
@@ -4260,7 +4338,7 @@ class basic_json
     */
     bool empty() const noexcept
     {
-        switch (m_type)
+        switch (m_type.get())
         {
             case value_t::null:
             {
@@ -4318,7 +4396,7 @@ class basic_json
     */
     size_type size() const noexcept
     {
-        switch (m_type)
+        switch (m_type.get())
         {
             case value_t::null:
             {
@@ -4380,7 +4458,7 @@ class basic_json
     */
     size_type max_size() const noexcept
     {
-        switch (m_type)
+        switch (m_type.get())
         {
             case value_t::array:
             {
@@ -4439,7 +4517,7 @@ class basic_json
     */
     void clear() noexcept
     {
-        switch (m_type)
+        switch (m_type.get())
         {
             case value_t::number_integer:
             {
@@ -4532,7 +4610,7 @@ class basic_json
         assert(m_value.array != nullptr);
         m_value.array->push_back(std::move(val));
         // invalidate object
-        val.m_type = value_t::null;
+        val.m_type = type_data_t(value_t::null);
     }
 
     /*!
@@ -5557,7 +5635,7 @@ class basic_json
     /// return the type as string
     string_t type_name() const
     {
-        switch (m_type)
+        switch (m_type.get())
         {
             case value_t::null:
                 return "null";
@@ -5763,7 +5841,7 @@ class basic_json
         // variable to hold indentation for recursive calls
         unsigned int new_indent = current_indent;
 
-        switch (static_cast<value_t>(static_cast<int>(m_type) & static_cast<int>(value_t::precision_mask)))
+        switch (m_type.get())
         {
             case value_t::object:
             {
@@ -5874,25 +5952,58 @@ class basic_json
 
             case value_t::number_float:
             {
-                // If the number was parsed from a string use the same precision
-                // otherwise 15 digits of precision allows round-trip IEEE 754 
-                // string->double->string; to be safe, we read this value from
-                // std::numeric_limits<number_float_t>::digits10
-                int precision = static_cast<int>(m_type) >> 8;
-                if (!precision) precision = std::numeric_limits<double>::digits10;
+                // Buffer size: precision (2^8-1 = 255) + other ('-.e-xxx' = 7) + null (1)
+                char buf[263];
+                int len;
 
-                // Special case for zero - use fixed precision to get "0.0"
-                    if (m_value.number_float == 0)
+                if (m_type.bits.parsed)
+                {
+                    // Number was parsed from a string so use the same precision
+                    if (m_type.bits.has_exp)
                     {
-                        o << std::fixed << std::setprecision(1);
+                        // Exponent - output in exponential form - handle capitalization of e/E
+                        if (m_type.bits.exp_cap)
+                        {
+                            len = snprintf(buf, sizeof(buf), "%.*E", m_type.bits.precision, m_value.number_float) + 1;
+                        }
+                        else
+                        {
+                            len = snprintf(buf, sizeof(buf), "%.*e", m_type.bits.precision, m_value.number_float) + 1;
+                        }
+
+                        // Remove '+' sign from the exponent if necessary
+                        if (!m_type.bits.exp_plus)
+                        {
+                            if (static_cast<size_t>(len) > sizeof(buf)) len = sizeof(buf);
+                            for (size_t i = 0; i < static_cast<size_t>(len); i++)
+                            {
+                                if (buf[i] == '+')
+                                {
+                                    for (; i + 1 < static_cast<size_t>(len); i++) buf[i] = buf[i + 1];
+                                }
+                            }
+                        }
                     }
                     else
                     {
-                        // std::defaultfloat not supported in gcc version < 5
-                        o.unsetf(std::ios_base::floatfield);
-                        o << std::setprecision(precision);
+                        // No exponent - output as a decimal
+                        snprintf(buf, sizeof(buf), "%.*f", m_type.bits.precision, m_value.number_float);
                     }
-                o << m_value.number_float;
+                }
+                else if (m_value.number_float == 0)
+                {
+                    // Special case for zero - use fixed precision to get "0.0"
+                    snprintf(buf, sizeof(buf), "%#.1f", m_value.number_float);
+                }
+                else
+                {
+                    // Otherwise 15 digits of precision allows round-trip IEEE 754
+                    // string->double->string; to be safe, we read this value from
+                    // std::numeric_limits<number_float_t>::digits10
+                    snprintf(buf, sizeof(buf), "%.*g", std::numeric_limits<double>::digits10, m_value.number_float);
+                }
+
+                o << buf;
                 return;
             }
 
@@ -5916,7 +6027,7 @@ class basic_json
     //////////////////////
 
     /// the type of the current element
-    value_t m_type = value_t::null;
+    type_data_t m_type = type_data_t(value_t::null);
 
     /// the value of the current element
     json_value m_value = {};
@@ -6140,7 +6251,7 @@ class basic_json
         {
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6167,7 +6278,7 @@ class basic_json
         {
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6213,7 +6324,7 @@ class basic_json
         {
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6249,7 +6360,7 @@ class basic_json
         {
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6279,7 +6390,7 @@ class basic_json
         {
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6319,7 +6430,7 @@ class basic_json
         {
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6362,7 +6473,7 @@ class basic_json
         {
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6399,7 +6510,7 @@ class basic_json
         {
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6434,7 +6545,7 @@ class basic_json
 
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6470,7 +6581,7 @@ class basic_json
 
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6512,7 +6623,7 @@ class basic_json
         {
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6562,7 +6673,7 @@ class basic_json
         {
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -6586,7 +6697,7 @@ class basic_json
         {
             assert(m_object != nullptr);
 
-            switch (m_object->m_type)
+            switch (m_object->m_type.get())
             {
                 case basic_json::value_t::object:
                 {
@@ -7336,10 +7447,10 @@ class basic_json
 
         @return the floating point number
 
-        @warning This function uses `std::strtof`, `std::strtod`, or
-        `std::strtold` which use the current C locale to determine which
-        character is used as decimal point character. This may yield to parse
-        errors if the locale does not used `.`.
+        @bug This function uses `std::strtof`, `std::strtod`, or `std::strtold`
+        which use the current C locale to determine which character is used as
+        decimal point character. This may yield to parse errors if the locale
+        does not used `.`.
         */
         long double str_to_float_t(long double* /* type */, char** endptr) const
         {
@@ -7387,127 +7498,165 @@ class basic_json
         /*!
         @brief static_cast between two types and indicate if it results in error
 
-        This function performs a static_cast between @a source and @a dest.  It 
+        This function performs a static_cast between @a source and @a dest.  It
         then checks if a static_cast back to @a dest produces an error.
 
-        @param[in] source  the value to cast from 
+        @param[in] source  the value to cast from
 
         @param[out] dest  the value to cast to
 
         @return @a true if the cast was performed without error, @a false otherwise
         */
         template <typename T_A, typename T_B>
-        bool attempt_cast(T_A source, T_B & dest) const
+        bool attempt_cast(T_A source, T_B& dest) const
         {
             dest = static_cast<T_B>(source);
             return (source == static_cast<T_A>(dest));
         }
 
         /*!
+        @brief peek ahead and guess the number type and floating point representation
+
+        This function scans the number to identify the number type.  In addition it
+        counts the significant figures after the decimal point, whether the
+        number is in exponential or decimal form, the capitalization of the
+        exponent marker, and if the optional '+' is present in the exponent. This
+        information is necessary to perform accurate round trips of floating point
+        numbers.
+
+        @param[out] type  @ref type_data_t object to receive the type information.
+        */
+        void guess_type(type_data_t & type) const
+        {
+            const lexer::lexer_char_t *curptr = m_start;
+            type.bits.parsed = true;
+
+            uint8_t found_radix_point = 0;
+            uint8_t precision = 0;
+
+            // Look for sign
+            if (*curptr == '-') {
+                type = value_t::number_integer;
+                curptr++;
+            }
+            else {
+                type = value_t::number_unsigned;
+                if (*curptr == '+') curptr++;
+            }
+
+            // Count the significant figures
+            for (; curptr < m_cursor; curptr++)
+            {
+
+                // Quickly skip tests if a digit
+                if (*curptr < '0' || *curptr > '9')
+                {
+                    if (*curptr == '.')
+                    {
+                        // Don't count '.' but change to float
+                        type = value_t::number_float;
+
+                        // Reset precision count
+                        precision = 0;
+                        found_radix_point = 0xFF;
+                        continue;
+                    }
+                    // Assume exponent (if not it is a bad number and will fail
+                    // parse anyway - could throw here instead): change to
+                    // float, stop counting and record exponent details
+                    type = value_t::number_float;
+                    type.bits.has_exp = true;
+
+                    // Exponent capitalization
+                    type.bits.exp_cap = (*curptr == 'E');
+
+                    // Exponent '+' sign
+                    type.bits.exp_plus = (*(++curptr) == '+');
+                    break;
+                }
+                precision++;
+            }
+
+            // If no radix was found then precision would now be set to
+            // the number of digits, which is wrong - clear it
+            type.bits.precision = precision & found_radix_point;
+        }
+
+        /*!
         @brief return number value for number tokens
 
-        This function translates the last token into the most appropriate 
-        number type (either integer, unsigned integer or floating point), 
-        which is passed back to the caller via the result parameter. The pointer 
-        @a m_start points to the beginning of the parsed number. We first examine
-        the first character to determine the sign of the number and then pass
-        this pointer to either @a std::strtoull (if positive) or @a std::strtoll
-        (if negative), both of which set @a endptr to the first character past the 
-        converted number. If this pointer is not the same as @a m_cursor, then 
-        either more or less characters have been used during the comparison. 
-        
-        This can happen for inputs like "01" which will be treated like number 0 
-        followed by number 1.  This will also occur for valid floating point 
-        inputs like "12e3" will be incorrectly read as 12.  Numbers that are too
-        large or too small for a signed/unsigned long long will cause a range
-        error (@a errno set to ERANGE). The parsed number is cast to a @ref
-        number_integer_t/@ref number_unsigned_t using the helper function @ref attempt_cast,
-        which returns @a false if the cast could not be peformed without error.
+        This function translates the last token into the most appropriate number
+        type (either integer, unsigned integer or floating point), which is
+        passed back to the caller via the result parameter.
 
-        In any of these cases (more/less characters read, range error or a cast
-        error) the pointer is passed to @a std:strtod, which also sets @a endptr to the
-        first character past the converted number. The resulting @ref number_float_t 
-        is then cast to a @ref number_integer_t/@ref number_unsigned_t using
-        @ref attempt_cast and if no error occurs is stored in that form, otherwise
-        it is stored as a @ref number_float_t.
-        
-        A final comparison is made of @a endptr and if still not the same as 
-        @ref m_cursor a bad input is assumed and @a result parameter is set to NAN.        
+        First @ref guess_type() is called to determine the type and to retrieve
+        information about the floating point representation (if applicable)
+        that can be used to accurately render the number to a string later.
+
+        Depending on the type, either @a std::strtoull (if number_unsigned_t) or
+        @a std::strtoll (if number_integer_t) is then called to attempt to parse the
+        number as an integer.  Numbers that are too large or too small for a
+        signed/unsigned long long will cause a range error (@a errno set to ERANGE).
+        The parsed number is cast to a @ref number_integer_t/@ref number_unsigned_t
+        using the helper function @ref attempt_cast, which returns @a false if the
+        cast could not be peformed without error.
+
+        In either of these cases (range error or a cast error) the number is parsed
+        using @a std:strtod (or @a std:strtof or @a std::strtold), which sets
+        @a endptr to the first character past the converted number.  If it is not
+        the same as @ref m_cursor a bad input is assumed and @a result parameter is
+        set to NAN.
 
         @param[out] result  @ref basic_json object to receive the number, or NAN if the
-        conversion read past the current token. The latter case needs to be 
+        conversion read past the current token. The latter case needs to be
         treated by the caller function.
         */
         void get_number(basic_json& result) const
         {
             assert(m_start != nullptr);
 
-            // Count the significant figures
-            int precision = 0;
-            {
-                const lexer::lexer_char_t *curptr;
-
-                // Assume unsigned integer for now
-                result.m_type = value_t::number_unsigned;
-                for (curptr = m_start; curptr < m_cursor; curptr++) {
-                    switch (*curptr) {
-                    case '-':
-                        // Found minus sign: change to integer
-                        result.m_type = value_t::number_integer;
-                    case '.':
-                        // Don't count either '.' or '-'
-                        continue;
-                    case 'e':
-                    case 'E':
-                        // Found exponent: change to float and stop counting
-                        result.m_type = value_t::number_float;
-                        break;
-                    default:
-                        // Found a signficant figure
-                        precision++;
-                        continue;
-                    }
-                    break;
-                }
-
-                // Characters after number - shouldn't happen, but try parsing as float
-                if (curptr != m_cursor) result.m_type = value_t::number_float;
-            }
+            guess_type(result.m_type);
 
             errno = 0;
-            typename string_t::value_type* endptr = 0;
 
-            // Attempt to parse it as an integer - first checking for a negative number
+            // Attempt to parse it as an integer
             if (result.m_type == value_t::number_unsigned)
             {
                 // Positive, parse with strtoull and attempt cast to number_unsigned_t
-                if (!attempt_cast(std::strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
+                if (!attempt_cast(std::strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start), NULL,
+                                                10), result.m_value.number_unsigned))
+                {
                     result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
+                }
             }
             else if (result.m_type == value_t::number_integer)
             {
                 // Negative, parse with strtoll and attempt cast to number_integer_t
-                if (!attempt_cast(std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr, 10), result.m_value.number_unsigned))
+                if (!attempt_cast(std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start), NULL,
+                                               10), result.m_value.number_integer))
+                {
                     result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
+                }
             }
 
             // Check the end of the number was reached and no range error occurred
-            if (reinterpret_cast<lexer_char_t*>(endptr) != m_cursor || errno == ERANGE) result.m_type = value_t::number_float;
+            if (errno == ERANGE) result.m_type = value_t::number_float;
 
             if (result.m_type == value_t::number_float)
             {
-                // Either the number won't fit in an integer (range error from strtoull/strtoll or overflow on cast) or there was 
-                // something else after the number, which could be an exponent
+                // Either the number won't fit in an integer (range error from
+                // strtoull/strtoll or overflow on cast) or there was something
+                // else after the number, which could be an exponent
 
                 // Parse with strtod
+                typename string_t::value_type* endptr;
                 result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), &endptr);
-
-                // Add the precision bits
-                result.m_type = static_cast<value_t>(static_cast<int>(result.m_type) | (precision << 8));
 
                 // Anything after the number is an error
                 if (reinterpret_cast<lexer_char_t*>(endptr) != m_cursor && *m_cursor != '.')
+                {
                     throw std::invalid_argument(std::string("parse error - ") + get_token() + " is not a number");
+                }
             }
         }
 
@@ -7879,5 +8028,3 @@ inline nlohmann::json operator "" _json(const char* s, std::size_t)
 #endif
 
 #endif
-
-
