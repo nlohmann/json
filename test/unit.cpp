@@ -1,10 +1,11 @@
-/*!
-@file
-@copyright The code is licensed under the MIT License
-           <http://opensource.org/licenses/MIT>,
-           Copyright (c) 2013-2015 Niels Lohmann.
-@author Niels Lohmann <http://nlohmann.me>
-@see https://github.com/nlohmann/json
+/*
+    __ _____ _____ _____
+ __|  |   __|     |   | |  JSON for Modern C++ (test suite)
+|  |  |__   |  |  | | | |  version 2.0.0
+|_____|_____|_____|_|___|  https://github.com/nlohmann/json
+
+Copyright (c) 2013-2016 Niels Lohmann <http://nlohmann.me>.
+Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 */
 
 #define CATCH_CONFIG_MAIN
