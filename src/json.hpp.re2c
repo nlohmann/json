@@ -7478,7 +7478,7 @@ class basic_json
                 // Negative, parse with strtoll and attempt cast to
                 // number_integer_t
                 if (attempt_cast(std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr,
-                                              10), result.m_value.number_unsigned))
+                                              10), result.m_value.number_integer))
                 {
                     result.m_type = value_t::number_integer;
                 }
