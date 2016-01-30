@@ -9719,7 +9719,8 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("-0e-:").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("-0f").parse(), std::invalid_argument);
 
-                CHECK_THROWS_WITH(json::parser("01").parse(), "parse error - 0 is not a number");
+                CHECK_THROWS_WITH(json::parser("01").parse(),
+                                  "parse error - unexpected number literal; expected end of input");
                 CHECK_THROWS_WITH(json::parser("--1").parse(), "parse error - unexpected '-'");
                 CHECK_THROWS_WITH(json::parser("1.").parse(),
                                   "parse error - unexpected '.'; expected end of input");
@@ -11766,10 +11767,15 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     "test/json_roundtrip/roundtrip21.json",
                     "test/json_roundtrip/roundtrip22.json",
                     "test/json_roundtrip/roundtrip23.json",
-                    //"test/json_roundtrip/roundtrip24.json",
-                    //"test/json_roundtrip/roundtrip25.json",
-                    //"test/json_roundtrip/roundtrip26.json",
-                    //"test/json_roundtrip/roundtrip27.json"
+                    "test/json_roundtrip/roundtrip24.json",
+                    "test/json_roundtrip/roundtrip25.json",
+                    "test/json_roundtrip/roundtrip26.json",
+                    "test/json_roundtrip/roundtrip27.json",
+                    "test/json_roundtrip/roundtrip28.json",
+                    "test/json_roundtrip/roundtrip29.json",
+                    "test/json_roundtrip/roundtrip30.json",
+                    "test/json_roundtrip/roundtrip31.json",
+                    "test/json_roundtrip/roundtrip32.json"
                 })
         {
             CAPTURE(filename);
@@ -12097,17 +12103,17 @@ TEST_CASE("regression tests")
         // unsigned integer parsing - expected to overflow and be stored as a float
         j = custom_json::parse("4294967296"); // 2^32
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_float));
-        CHECK(j.get<float>() == 4294967296.0);
+        CHECK(j.get<float>() == 4294967296.0f);
 
         // integer object creation - expected to wrap and still be stored as an integer
         j = -2147483649LL; // -2^31-1
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_integer));
-        CHECK(j.get<int32_t>() == 2147483647.0);  // Wrap
+        CHECK(j.get<int32_t>() == 2147483647);  // Wrap
 
-        // integer parsing - expected to overflow and be stored as a float
-        j = custom_json::parse("-2147483648"); // -2^31
+        // integer parsing - expected to overflow and be stored as a float with rounding
+        j = custom_json::parse("-2147483649"); // -2^31
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_float));
-        CHECK(j.get<float>() == -2147483648.0);
+        CHECK(j.get<float>() == -2147483650.0f);
     }
 
     SECTION("issue #93 reverse_iterator operator inheritance problem")
