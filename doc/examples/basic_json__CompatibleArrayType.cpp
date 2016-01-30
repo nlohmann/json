@@ -5,7 +5,7 @@
 #include <set>
 #include <unordered_set>
 
-using namespace nlohmann;
+using json = nlohmann::json;
 
 int main()
 {

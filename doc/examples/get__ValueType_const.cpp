@@ -1,7 +1,7 @@
 #include <json.hpp>
 #include <unordered_map>
 
-using namespace nlohmann;
+using json = nlohmann::json;
 
 int main()
 {

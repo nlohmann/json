@@ -1,6 +1,6 @@
 #include <json.hpp>
 
-using namespace nlohmann;
+using json = nlohmann::json;
 
 int main()
 {
