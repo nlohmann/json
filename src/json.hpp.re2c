@@ -5974,12 +5974,12 @@ class basic_json
                         // Remove '+' sign from the exponent if necessary
                         if (!m_type.bits.exp_plus)
                         {
-                            if (static_cast<size_t>(len) > sizeof(buf)) len = sizeof(buf);
-                            for (size_t i = 0; i < static_cast<size_t>(len); i++)
+                            if (len > static_cast<int>(sizeof(buf))) len = sizeof(buf);
+                            for (int i = 0; i < len; i++)
                             {
                                 if (buf[i] == '+')
                                 {
-                                    for (; i + 1 < static_cast<size_t>(len); i++) buf[i] = buf[i + 1];
+                                    for (; i + 1 < len; i++) buf[i] = buf[i + 1];
                                 }
                             }
                         }
@@ -5992,14 +5992,16 @@ class basic_json
                 }
                 else if (m_value.number_float == 0)
                 {
-                    // Special case for zero - use fixed precision to get "0.0"
-                    snprintf(buf, sizeof(buf), "%#.1f", m_value.number_float);
+                    // Special case for zero to get "0.0"/"-0.0"
+                    if (std::signbit(m_value.number_float)) o << "-0.0";
+                    else o << "0.0";
+                    return;
                 }
                 else
                 {
-                    // Otherwise 15 digits of precision allows round-trip IEEE 754
-                    // string->double->string; to be safe, we read this value from
-                    // std::numeric_limits<number_float_t>::digits10
+                    // Otherwise 6, 15 or 16 digits of precision allows round-trip IEEE 754
+                    // string->float->string, string->double->string or string->long double->string;
+                    // to be safe, we read this value from std::numeric_limits<number_float_t>::digits10
                     snprintf(buf, sizeof(buf), "%.*g", std::numeric_limits<double>::digits10, m_value.number_float);
                 }
 
@@ -7496,23 +7498,35 @@ class basic_json
         }
 
         /*!
-        @brief attempt to parse an integer, otherwise get the floating point representation
+        @brief return number value for number tokens
 
-        This function parses the integer component up to the radix point or exponent.
-        It also collects information about the floating point representation, which
+        This function translates the last token into the most appropriate number
+        type (either integer, unsigned integer or floating point), which is
+        passed back to the caller via the result parameter.
+
+        This function parses the integer component up to the radix point or exponent
+        while collecting information about the 'floating point representation', which
         it stores in the result parameter.  If there is no radix point or exponent,
         and the number can fit into a @ref number_integer_t or @ref number_unsigned_t
-        then it sets the result parameter accordingly.  The 'floating point
-        representation' includes the number of significant figures after the radix
-        point, whether the number is in exponential or decimal form, the
-        capitalization of the exponent marker, and if the optional '+' is present in
-        the exponent. This information is necessary to perform accurate round trips
+        then it sets the result parameter accordingly.
+
+        The 'floating point representation' includes the number of significant figures
+        after the radix point, whether the number is in exponential or decimal form,
+        the capitalization of the exponent marker, and if the optional '+' is present
+        in the exponent. This information is necessary to perform accurate round trips
         of floating point numbers.
 
-        @param[out] result  @ref basic_json object to receive the result.
+        If the number is a floating point number the number is then parsed using
+        @a std:strtod (or @a std:strtof or @a std::strtold).
+
+        @param[out] result  @ref basic_json object to receive the number, or NAN if the
+        conversion read past the current token. The latter case needs to be
+        treated by the caller function.
         */
-        value_t get_integer(basic_json& result) const
+        void get_number(basic_json& result) const
         {
+            assert(m_start != nullptr);
+
             const lexer::lexer_char_t *curptr = m_start;
             result.m_type.bits.parsed = true;
 
@@ -7526,7 +7540,7 @@ class basic_json
             number_unsigned_t value = 0;
 
             // Maximum absolute value of the relevant integer type
-            uint64_t max;
+            number_unsigned_t max;
 
             // Temporarily store the type to avoid unecessary bitfield access
             value_t type;
@@ -7599,49 +7613,18 @@ class basic_json
             result.m_type.bits.precision = precision & found_radix_point;
 
             // Save the value (if not a float)
-            if (type == value_t::number_unsigned) result.m_value.number_unsigned = value;
-            else if (type == value_t::number_integer) result.m_value.number_integer = -static_cast<number_integer_t>(value);
-
-            // Return the type (don't save it yet)
-            return type;
-        }
-
-        /*!
-        @brief return number value for number tokens
-
-        This function translates the last token into the most appropriate number
-        type (either integer, unsigned integer or floating point), which is
-        passed back to the caller via the result parameter.
-
-        First @ref guess_type() is called to attempt to parse as an integer
-        and to retrieve information about the floating point representation 
-        (if applicable) that can be used to accurately render the number to a 
-        string later.
-
-        If the number is a floating point number the number is then parsed using 
-        @a std:strtod (or @a std:strtof or @a std::strtold), which sets @a endptr 
-        to the first character past the converted number.  If it is not the same as 
-        @ref m_cursor a bad input is assumed and @a result parameter is set to NAN.
-
-        @param[out] result  @ref basic_json object to receive the number, or NAN if the
-        conversion read past the current token. The latter case needs to be
-        treated by the caller function.
-        */
-        void get_number(basic_json& result) const
-        {
-            assert(m_start != nullptr);
-
-            value_t type = get_integer(result);
-
-            if (type == value_t::number_float)
+            if (type == value_t::number_unsigned)
+            {
+                result.m_value.number_unsigned = value;
+            }
+            else if (type == value_t::number_integer)
+            {
+                result.m_value.number_integer = -static_cast<number_integer_t>(value);
+            }
+            else
             {
                 // Parse with strtod
-                typename string_t::value_type* endptr;
-                result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), &endptr);
-
-                // Anything after the number is an error
-                if (reinterpret_cast<lexer_char_t*>(endptr) != m_cursor && *m_cursor != '.')
-                    throw std::invalid_argument(std::string("parse error - ") + get_token() + " is not a number");
+                result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), NULL);
             }
 
             // Save the type
