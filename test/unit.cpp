@@ -12108,7 +12108,7 @@ TEST_CASE("regression tests")
         // integer object creation - expected to wrap and still be stored as an integer
         j = -2147483649LL; // -2^31-1
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_integer));
-        CHECK(j.get<int32_t>() == 2147483647.0f);  // Wrap
+        CHECK(j.get<int32_t>() == 2147483647);  // Wrap
 
         // integer parsing - expected to overflow and be stored as a float with rounding
         j = custom_json::parse("-2147483649"); // -2^31

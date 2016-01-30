@@ -7496,51 +7496,50 @@ class basic_json
         }
 
         /*!
-        @brief static_cast between two types and indicate if it results in error
+        @brief attempt to parse an integer, otherwise get the floating point representation
 
-        This function performs a static_cast between @a source and @a dest.  It
-        then checks if a static_cast back to @a dest produces an error.
+        This function parses the integer component up to the radix point or exponent.
+        It also collects information about the floating point representation, which
+        it stores in the result parameter.  If there is no radix point or exponent,
+        and the number can fit into a @ref number_integer_t or @ref number_unsigned_t
+        then it sets the result parameter accordingly.  The 'floating point
+        representation' includes the number of significant figures after the radix
+        point, whether the number is in exponential or decimal form, the
+        capitalization of the exponent marker, and if the optional '+' is present in
+        the exponent. This information is necessary to perform accurate round trips
+        of floating point numbers.
 
-        @param[in] source  the value to cast from
-
-        @param[out] dest  the value to cast to
-
-        @return @a true if the cast was performed without error, @a false otherwise
+        @param[out] result  @ref basic_json object to receive the result.
         */
-        template <typename T_A, typename T_B>
-        bool attempt_cast(T_A source, T_B& dest) const
-        {
-            dest = static_cast<T_B>(source);
-            return (source == static_cast<T_A>(dest));
-        }
-
-        /*!
-        @brief peek ahead and guess the number type and floating point representation
-
-        This function scans the number to identify the number type.  In addition it
-        counts the significant figures after the decimal point, whether the
-        number is in exponential or decimal form, the capitalization of the
-        exponent marker, and if the optional '+' is present in the exponent. This
-        information is necessary to perform accurate round trips of floating point
-        numbers.
-
-        @param[out] type  @ref type_data_t object to receive the type information.
-        */
-        void guess_type(type_data_t & type) const
+        value_t get_integer(basic_json& result) const
         {
             const lexer::lexer_char_t *curptr = m_start;
-            type.bits.parsed = true;
+            result.m_type.bits.parsed = true;
 
+            // 'found_radix_point' will be set to 0xFF upon finding a radix point 
+            // and later used to mask in/out the precision depending whether a
+            // radix is found i.e. 'precision &= found_radix_point'
             uint8_t found_radix_point = 0;
             uint8_t precision = 0;
+
+            // Accumulate the integer conversion result (unsigned for now)
+            number_unsigned_t value = 0;
+
+            // Maximum absolute value of the relevant integer type
+            uint64_t max;
+
+            // Temporarily store the type to avoid unecessary bitfield access
+            value_t type;
 
             // Look for sign
             if (*curptr == '-') {
                 type = value_t::number_integer;
+                max = static_cast<uint64_t>(std::numeric_limits<number_integer_t>::max()) + 1;
                 curptr++;
             }
             else {
                 type = value_t::number_unsigned;
+                max = static_cast<uint64_t>(std::numeric_limits<number_unsigned_t>::max());
                 if (*curptr == '+') curptr++;
             }
 
@@ -7561,25 +7560,50 @@ class basic_json
                         found_radix_point = 0xFF;
                         continue;
                     }
-                    // Assume exponent (if not it is a bad number and will fail
-                    // parse anyway - could throw here instead): change to
+                    // Assume exponent (if not then will fail parse): change to 
                     // float, stop counting and record exponent details
                     type = value_t::number_float;
-                    type.bits.has_exp = true;
+                    result.m_type.bits.has_exp = true;
 
                     // Exponent capitalization
-                    type.bits.exp_cap = (*curptr == 'E');
+                    result.m_type.bits.exp_cap = (*curptr == 'E');
 
                     // Exponent '+' sign
-                    type.bits.exp_plus = (*(++curptr) == '+');
+                    result.m_type.bits.exp_plus = (*(++curptr) == '+');
                     break;
+                }
+
+                // Skip if definitely not an integer 
+                if (type != value_t::number_float) {
+
+                    // Multiply last value by ten and add the new digit
+                    auto temp = value * 10 + *curptr - 0x30;
+
+                    // Test for overflow
+                    if (temp < value || temp > max)
+                    {
+                        // Overflow
+                        type = value_t::number_float;
+                    }
+                    else
+                    {
+                        // No overflow - save it
+                        value = temp;
+                    }
                 }
                 precision++;
             }
 
-            // If no radix was found then precision would now be set to
+            // If no radix point was found then precision would now be set to 
             // the number of digits, which is wrong - clear it
-            type.bits.precision = precision & found_radix_point;
+            result.m_type.bits.precision = precision & found_radix_point;
+
+            // Save the value (if not a float)
+            if (type == value_t::number_unsigned) result.m_value.number_unsigned = value;
+            else if (type == value_t::number_integer) result.m_value.number_integer = -static_cast<number_integer_t>(value);
+
+            // Return the type (don't save it yet)
+            return type;
         }
 
         /*!
@@ -7589,23 +7613,15 @@ class basic_json
         type (either integer, unsigned integer or floating point), which is
         passed back to the caller via the result parameter.
 
-        First @ref guess_type() is called to determine the type and to retrieve
-        information about the floating point representation (if applicable)
-        that can be used to accurately render the number to a string later.
+        First @ref guess_type() is called to attempt to parse as an integer
+        and to retrieve information about the floating point representation 
+        (if applicable) that can be used to accurately render the number to a 
+        string later.
 
-        Depending on the type, either @a std::strtoull (if number_unsigned_t) or
-        @a std::strtoll (if number_integer_t) is then called to attempt to parse the
-        number as an integer.  Numbers that are too large or too small for a
-        signed/unsigned long long will cause a range error (@a errno set to ERANGE).
-        The parsed number is cast to a @ref number_integer_t/@ref number_unsigned_t
-        using the helper function @ref attempt_cast, which returns @a false if the
-        cast could not be peformed without error.
-
-        In either of these cases (range error or a cast error) the number is parsed
-        using @a std:strtod (or @a std:strtof or @a std::strtold), which sets
-        @a endptr to the first character past the converted number.  If it is not
-        the same as @ref m_cursor a bad input is assumed and @a result parameter is
-        set to NAN.
+        If the number is a floating point number the number is then parsed using 
+        @a std:strtod (or @a std:strtof or @a std::strtold), which sets @a endptr 
+        to the first character past the converted number.  If it is not the same as 
+        @ref m_cursor a bad input is assumed and @a result parameter is set to NAN.
 
         @param[out] result  @ref basic_json object to receive the number, or NAN if the
         conversion read past the current token. The latter case needs to be
@@ -7615,49 +7631,21 @@ class basic_json
         {
             assert(m_start != nullptr);
 
-            guess_type(result.m_type);
+            value_t type = get_integer(result);
 
-            errno = 0;
-
-            // Attempt to parse it as an integer
-            if (result.m_type == value_t::number_unsigned)
+            if (type == value_t::number_float)
             {
-                // Positive, parse with strtoull and attempt cast to number_unsigned_t
-                if (!attempt_cast(std::strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start), NULL,
-                                                10), result.m_value.number_unsigned))
-                {
-                    result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
-                }
-            }
-            else if (result.m_type == value_t::number_integer)
-            {
-                // Negative, parse with strtoll and attempt cast to number_integer_t
-                if (!attempt_cast(std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start), NULL,
-                                               10), result.m_value.number_integer))
-                {
-                    result.m_type = value_t::number_float;  // Cast failed due to overflow - store as float
-                }
-            }
-
-            // Check the end of the number was reached and no range error occurred
-            if (errno == ERANGE) result.m_type = value_t::number_float;
-
-            if (result.m_type == value_t::number_float)
-            {
-                // Either the number won't fit in an integer (range error from
-                // strtoull/strtoll or overflow on cast) or there was something
-                // else after the number, which could be an exponent
-
                 // Parse with strtod
                 typename string_t::value_type* endptr;
                 result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), &endptr);
 
                 // Anything after the number is an error
                 if (reinterpret_cast<lexer_char_t*>(endptr) != m_cursor && *m_cursor != '.')
-                {
                     throw std::invalid_argument(std::string("parse error - ") + get_token() + " is not a number");
-                }
             }
+
+            // Save the type
+            result.m_type = type;
         }
 
       private:
