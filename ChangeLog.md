@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. This projec
 
 - Issue \#178 - Extending support to full uint64\_t/int64\_t range and unsigned type \(updated\) [\#193](https://github.com/nlohmann/json/pull/193) ([twelsby](https://github.com/twelsby))
 
+- Small bugs in json.hpp \(get\_number\) and unit.cpp \(non-standard integer type test\) [\#199](https://github.com/nlohmann/json/issues/199)
 - GCC/clang floating point parsing bug in strtod\(\) [\#195](https://github.com/nlohmann/json/issues/195)
 - Floating point exceptions [\#181](https://github.com/nlohmann/json/issues/181)
 - Implicit assignment to std::string fails [\#144](https://github.com/nlohmann/json/issues/144)
@@ -14,6 +15,7 @@ All notable changes to this project will be documented in this file. This projec
 
 - Integer conversion to unsigned [\#178](https://github.com/nlohmann/json/issues/178)
 
+- Fixed issue \#199 - Small bugs in json.hpp \(get\_number\) and unit.cpp \(non-standard integer type test\) [\#200](https://github.com/nlohmann/json/pull/200) ([twelsby](https://github.com/twelsby))
 - Fix broken link [\#197](https://github.com/nlohmann/json/pull/197) ([vog](https://github.com/vog))
 
 ## [v1.1.0](https://github.com/nlohmann/json/releases/tag/v1.1.0) (2016-01-24)
