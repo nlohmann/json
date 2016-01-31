@@ -21,8 +21,8 @@ int main()
     std::cout << j_number_integer.back() << '\n';
     std::cout << j_number_float.back() << '\n';
     std::cout << j_object.back() << '\n';
-    //std::cout << j_object_empty.back() << '\n';  // would throw
+    //std::cout << j_object_empty.back() << '\n';  // undefined behavior
     std::cout << j_array.back() << '\n';
-    //std::cout << j_array_empty.back() << '\n';   // would throw
+    //std::cout << j_array_empty.back() << '\n';   // undefined behavior
     std::cout << j_string.back() << '\n';
 }

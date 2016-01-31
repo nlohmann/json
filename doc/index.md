@@ -3,6 +3,7 @@
 These pages contain the API documentation of JSON for Modern C++, a C++11 header-only JSON class.
 
 - @link nlohmann::basic_json `basic_json` class @endlink
+- [Function index](functions_func.html)
 - Types
   - @link nlohmann::basic_json::array_t arrays @endlink
   - @link nlohmann::basic_json::object_t objects @endlink

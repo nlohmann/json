@@ -87,21 +87,21 @@ struct has_mapped_type
 /*!
 @brief a class to store JSON values
 
-@tparam ObjectType type for JSON objects (@c std::map by default; will be used
+@tparam ObjectType type for JSON objects (`std::map` by default; will be used
 in @ref object_t)
-@tparam ArrayType type for JSON arrays (@c std::vector by default; will be used
+@tparam ArrayType type for JSON arrays (`std::vector` by default; will be used
 in @ref array_t)
-@tparam StringType type for JSON strings and object keys (@c std::string by
+@tparam StringType type for JSON strings and object keys (`std::string` by
 default; will be used in @ref string_t)
-@tparam BooleanType type for JSON booleans (@c `bool` by default; will be used
+@tparam BooleanType type for JSON booleans (`bool` by default; will be used
 in @ref boolean_t)
-@tparam NumberIntegerType type for JSON integer numbers (@c `int64_t` by
+@tparam NumberIntegerType type for JSON integer numbers (`int64_t` by
 default; will be used in @ref number_integer_t)
 @tparam NumberUnsignedType type for JSON unsigned integer numbers (@c
 `uint64_t` by default; will be used in @ref number_unsigned_t)
-@tparam NumberFloatType type for JSON floating-point numbers (@c `double` by
+@tparam NumberFloatType type for JSON floating-point numbers (`double` by
 default; will be used in @ref number_float_t)
-@tparam AllocatorType type of the allocator to use (@c `std::allocator` by
+@tparam AllocatorType type of the allocator to use (`std::allocator` by
 default)
 
 @requirement The class satisfies the following concept requirements:
@@ -461,7 +461,7 @@ class basic_json
     This description includes both integer and floating-point numbers. However,
     C++ allows more precise storage if it is known whether the number is a
     signed integer, an unsigned integer or a floating-point number. Therefore,
-    three different types, @ref number_integer_t,  @ref number_unsigned_t and
+    three different types, @ref number_integer_t, @ref number_unsigned_t and
     @ref number_float_t are used.
 
     To store integer numbers in C++, a type is defined by the template
@@ -532,7 +532,7 @@ class basic_json
     This description includes both integer and floating-point numbers. However,
     C++ allows more precise storage if it is known whether the number is a
     signed integer, an unsigned integer or a floating-point number. Therefore,
-    three different types, @ref number_integer_t,  @ref number_unsigned_t and
+    three different types, @ref number_integer_t, @ref number_unsigned_t and
     @ref number_float_t are used.
 
     To store unsigned integer numbers in C++, a type is defined by the template
@@ -604,7 +604,7 @@ class basic_json
     This description includes both integer and floating-point numbers. However,
     C++ allows more precise storage if it is known whether the number is a
     signed integer, an unsigned integer or a floating-point number. Therefore,
-    three different types, @ref number_integer_t,  @ref number_unsigned_t and
+    three different types, @ref number_integer_t, @ref number_unsigned_t and
     @ref number_float_t are used.
 
     To store floating-point numbers in C++, a type is defined by the template
@@ -676,15 +676,15 @@ class basic_json
     */
     enum class value_t : uint8_t
     {
-        null,           ///< null value
-        object,         ///< object (unordered set of name/value pairs)
-        array,          ///< array (ordered collection of values)
-        string,         ///< string value
-        boolean,        ///< boolean value
-        number_integer, ///< number value (integer)
-        number_unsigned,///< number value (unsigned integer)
-        number_float,   ///< number value (floating-point)
-        discarded       ///< discarded by the the parser callback function
+        null,            ///< null value
+        object,          ///< object (unordered set of name/value pairs)
+        array,           ///< array (ordered collection of values)
+        string,          ///< string value
+        boolean,         ///< boolean value
+        number_integer,  ///< number value (integer)
+        number_unsigned, ///< number value (unsigned integer)
+        number_float,    ///< number value (floating-point)
+        discarded        ///< discarded by the the parser callback function
     };
 
 
@@ -954,7 +954,9 @@ class basic_json
 
     @complexity Constant.
 
-    @requirement This function satisfies the Container requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    requirements:
     - The complexity is constant.
     - As postcondition, it holds: `basic_json().empty() == true`.
 
@@ -972,7 +974,7 @@ class basic_json
 
     Create a `null` JSON value. This is the explicitly version of the `null`
     value constructor as it takes a null pointer as parameter. It allows to
-    create `null` values by explicitly assigning a @c nullptr to a JSON value.
+    create `null` values by explicitly assigning a `nullptr` to a JSON value.
     The passed null pointer itself is not read -- it is only used to choose the
     right constructor.
 
@@ -1227,7 +1229,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The example below shows the construction of a JSON integer
+    @liveexample{The example below shows the construction of an integer
     number value.,basic_json__number_integer_t}
 
     @sa @ref basic_json(const int) -- create a number value (integer)
@@ -1261,7 +1263,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The example below shows the construction of a JSON integer
+    @liveexample{The example below shows the construction of an integer
     number value from an anonymous enum.,basic_json__const_int}
 
     @sa @ref basic_json(const number_integer_t) -- create a number value
@@ -1291,8 +1293,8 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The example below shows the construction of several JSON
-    integer number values from compatible
+    @liveexample{The example below shows the construction of several integer
+    number values from compatible
     types.,basic_json__CompatibleIntegerNumberType}
 
     @sa @ref basic_json(const number_integer_t) -- create a number value
@@ -1428,7 +1430,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The example below shows the construction of several JSON
+    @liveexample{The example below shows the construction of several
     floating-point number values from compatible
     types.,basic_json__CompatibleNumberFloatType}
 
@@ -1506,7 +1508,7 @@ class basic_json
     @complexity Linear in the size of the initializer list @a init.
 
     @liveexample{The example below shows how JSON values are created from
-    initializer lists,basic_json__list_init_t}
+    initializer lists.,basic_json__list_init_t}
 
     @sa @ref array(std::initializer_list<basic_json>) -- create a JSON array
     value from an initializer list
@@ -1597,7 +1599,7 @@ class basic_json
 
     @complexity Linear in the size of @a init.
 
-    @liveexample{The following code shows an example for the @ref array
+    @liveexample{The following code shows an example for the `array`
     function.,array}
 
     @sa @ref basic_json(std::initializer_list<basic_json>, bool, value_t) --
@@ -1637,7 +1639,7 @@ class basic_json
 
     @complexity Linear in the size of @a init.
 
-    @liveexample{The following code shows an example for the @ref object
+    @liveexample{The following code shows an example for the `object`
     function.,object}
 
     @sa @ref basic_json(std::initializer_list<basic_json>, bool, value_t) --
@@ -1817,7 +1819,9 @@ class basic_json
 
     @complexity Linear in the size of @a other.
 
-    @requirement This function satisfies the Container requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    requirements:
     - The complexity is linear.
     - As postcondition, it holds: `other == basic_json(other)`.
 
@@ -1923,7 +1927,9 @@ class basic_json
 
     @complexity Linear.
 
-    @requirement This function satisfies the Container requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    requirements:
     - The complexity is linear.
 
     @liveexample{The code below shows and example for the copy assignment. It
@@ -1953,7 +1959,9 @@ class basic_json
 
     @complexity Linear.
 
-    @requirement This function satisfies the Container requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    requirements:
     - The complexity is linear.
     - All stored elements are destroyed and all memory is freed.
 
@@ -2054,7 +2062,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref type() for all JSON
+    @liveexample{The following code exemplifies `type()` for all JSON
     types.,type}
 
     @since version 1.0.0
@@ -2075,8 +2083,14 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_primitive for all JSON
+    @liveexample{The following code exemplifies `is_primitive()` for all JSON
     types.,is_primitive}
+
+    @sa @ref is_structured() -- returns whether JSON value is structured
+    @sa @ref is_null() -- returns whether JSON value is `null`
+    @sa @ref is_string() -- returns whether JSON value is a string
+    @sa @ref is_boolean() -- returns whether JSON value is a boolean
+    @sa @ref is_number() -- returns whether JSON value is a number
 
     @since version 1.0.0
     */
@@ -2095,8 +2109,12 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_structured for all JSON
+    @liveexample{The following code exemplifies `is_structured()` for all JSON
     types.,is_structured}
+
+    @sa @ref is_primitive() -- returns whether value is primitive
+    @sa @ref is_array() -- returns whether value is an array
+    @sa @ref is_object() -- returns whether value is an object
 
     @since version 1.0.0
     */
@@ -2114,7 +2132,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_null for all JSON
+    @liveexample{The following code exemplifies `is_null()` for all JSON
     types.,is_null}
 
     @since version 1.0.0
@@ -2133,7 +2151,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_boolean for all JSON
+    @liveexample{The following code exemplifies `is_boolean()` for all JSON
     types.,is_boolean}
 
     @since version 1.0.0
@@ -2154,7 +2172,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_number for all JSON
+    @liveexample{The following code exemplifies `is_number()` for all JSON
     types.,is_number}
 
     @sa @ref is_number_integer() -- check if value is an integer or unsigned
@@ -2181,7 +2199,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_number_integer for all
+    @liveexample{The following code exemplifies `is_number_integer()` for all
     JSON types.,is_number_integer}
 
     @sa @ref is_number() -- check if value is a number
@@ -2206,7 +2224,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_number_unsigned for all
+    @liveexample{The following code exemplifies `is_number_unsigned()` for all
     JSON types.,is_number_unsigned}
 
     @sa @ref is_number() -- check if value is a number
@@ -2231,7 +2249,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_number_float for all
+    @liveexample{The following code exemplifies `is_number_float()` for all
     JSON types.,is_number_float}
 
     @sa @ref is_number() -- check if value is number
@@ -2255,7 +2273,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_object for all JSON
+    @liveexample{The following code exemplifies `is_object()` for all JSON
     types.,is_object}
 
     @since version 1.0.0
@@ -2274,7 +2292,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_array for all JSON
+    @liveexample{The following code exemplifies `is_array()` for all JSON
     types.,is_array}
 
     @since version 1.0.0
@@ -2293,7 +2311,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_string for all JSON
+    @liveexample{The following code exemplifies `is_string()` for all JSON
     types.,is_string}
 
     @since version 1.0.0
@@ -2317,7 +2335,7 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies @ref is_discarded for all JSON
+    @liveexample{The following code exemplifies `is_discarded()` for all JSON
     types.,is_discarded}
 
     @since version 1.0.0
@@ -2337,8 +2355,8 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The following code exemplifies the value_t operator for all
-    JSON types.,operator__value_t}
+    @liveexample{The following code exemplifies the @ref value_t operator for
+    all JSON types.,operator__value_t}
 
     @since version 1.0.0
     */
@@ -2855,9 +2873,9 @@ class basic_json
 
     @tparam ValueType non-pointer type compatible to the JSON value, for
     instance `int` for JSON integer numbers, `bool` for JSON booleans, or
-    `std::vector` types for JSON arrays. The character type of @ref string_t
-    as well as an initializer list of this type is excluded to avoid
-    ambiguities as these types implicitly convert to `std::string`.
+    `std::vector` types for JSON arrays. The character type of @ref string_t as
+    well as an initializer list of this type is excluded to avoid ambiguities
+    as these types implicitly convert to `std::string`.
 
     @return copy of the JSON value, converted to type @a ValueType
 
@@ -2917,7 +2935,7 @@ class basic_json
     @complexity Constant.
 
     @liveexample{The example below shows how array elements can be read and
-    written using at.,at__size_type}
+    written using `at()`.,at__size_type}
 
     @since version 1.0.0
     */
@@ -2961,7 +2979,7 @@ class basic_json
     @complexity Constant.
 
     @liveexample{The example below shows how array elements can be read using
-    at.,at__size_type_const}
+    `at()`.,at__size_type_const}
 
     @since version 1.0.0
     */
@@ -3005,7 +3023,7 @@ class basic_json
     @complexity Logarithmic in the size of the container.
 
     @liveexample{The example below shows how object elements can be read and
-    written using at.,at__object_t_key_type}
+    written using `at()`.,at__object_t_key_type}
 
     @sa @ref operator[](const typename object_t::key_type&) for unchecked
     access by reference
@@ -3053,7 +3071,7 @@ class basic_json
     @complexity Logarithmic in the size of the container.
 
     @liveexample{The example below shows how object elements can be read using
-    at.,at__object_t_key_type_const}
+    `at()`.,at__object_t_key_type_const}
 
     @sa @ref operator[](const typename object_t::key_type&) for unchecked
     access by reference
@@ -3103,7 +3121,7 @@ class basic_json
     linear in `idx - size()`.
 
     @liveexample{The example below shows how array elements can be read and
-    written using [] operator. Note the addition of `null`
+    written using `[]` operator. Note the addition of `null`
     values.,operatorarray__size_type}
 
     @since version 1.0.0
@@ -3149,7 +3167,7 @@ class basic_json
     @complexity Constant.
 
     @liveexample{The example below shows how array elements can be read using
-    the [] operator.,operatorarray__size_type_const}
+    the `[]` operator.,operatorarray__size_type_const}
 
     @since version 1.0.0
     */
@@ -3186,7 +3204,7 @@ class basic_json
     @complexity Logarithmic in the size of the container.
 
     @liveexample{The example below shows how object elements can be read and
-    written using the [] operator.,operatorarray__key_type}
+    written using the `[]` operator.,operatorarray__key_type}
 
     @sa @ref at(const typename object_t::key_type&) for access by reference
     with range checking
@@ -3234,7 +3252,7 @@ class basic_json
     @complexity Logarithmic in the size of the container.
 
     @liveexample{The example below shows how object elements can be read using
-    the [] operator.,operatorarray__key_type_const}
+    the `[]` operator.,operatorarray__key_type_const}
 
     @sa @ref at(const typename object_t::key_type&) for access by reference
     with range checking
@@ -3276,7 +3294,7 @@ class basic_json
     @complexity Logarithmic in the size of the container.
 
     @liveexample{The example below shows how object elements can be read and
-    written using the [] operator.,operatorarray__key_type}
+    written using the `[]` operator.,operatorarray__key_type}
 
     @sa @ref at(const typename object_t::key_type&) for access by reference
     with range checking
@@ -3311,7 +3329,7 @@ class basic_json
     @complexity Logarithmic in the size of the container.
 
     @liveexample{The example below shows how object elements can be read using
-    the [] operator.,operatorarray__key_type_const}
+    the `[]` operator.,operatorarray__key_type_const}
 
     @sa @ref at(const typename object_t::key_type&) for access by reference
     with range checking
@@ -3344,7 +3362,7 @@ class basic_json
     @complexity Logarithmic in the size of the container.
 
     @liveexample{The example below shows how object elements can be read and
-    written using the [] operator.,operatorarray__key_type}
+    written using the `[]` operator.,operatorarray__key_type}
 
     @sa @ref at(const typename object_t::key_type&) for access by reference
     with range checking
@@ -3393,7 +3411,7 @@ class basic_json
     @complexity Logarithmic in the size of the container.
 
     @liveexample{The example below shows how object elements can be read using
-    the [] operator.,operatorarray__key_type_const}
+    the `[]` operator.,operatorarray__key_type_const}
 
     @sa @ref at(const typename object_t::key_type&) for access by reference
     with range checking
@@ -3512,11 +3530,15 @@ class basic_json
 
     @complexity Constant.
 
-    @note Calling `front` on an empty container is undefined.
+    @pre The JSON value must not be `null` (would throw `std::out_of_range`) or
+    an empty array or object (undefined behavior, guarded by assertions).
+    @post The JSON value remains unchanged.
 
-    @throw std::out_of_range when called on null value
+    @throw std::out_of_range when called on `null` value
 
-    @liveexample{The following code shows an example for @ref front.,front}
+    @liveexample{The following code shows an example for `front()`.,front}
+
+    @sa @ref back() -- access the last element
 
     @since version 1.0.0
     */
@@ -3546,11 +3568,15 @@ class basic_json
 
     @complexity Constant.
 
-    @note Calling `back` on an empty container is undefined.
+    @pre The JSON value must not be `null` (would throw `std::out_of_range`) or
+    an empty array or object (undefined behavior, guarded by assertions).
+    @post The JSON value remains unchanged.
 
     @throw std::out_of_range when called on null value.
 
-    @liveexample{The following code shows an example for @ref back.,back}
+    @liveexample{The following code shows an example for `back()`.,back}
+
+    @sa @ref front() -- access the first element
 
     @since version 1.0.0
     */
@@ -3603,7 +3629,7 @@ class basic_json
     - strings: linear in the length of the string
     - other types: constant
 
-    @liveexample{The example shows the result of erase for different JSON
+    @liveexample{The example shows the result of `erase()` for different JSON
     types.,erase__IteratorType}
 
     @sa @ref erase(InteratorType, InteratorType) -- removes the elements in the
@@ -3710,7 +3736,7 @@ class basic_json
     - strings: linear in the length of the string
     - other types: constant
 
-    @liveexample{The example shows the result of erase for different JSON
+    @liveexample{The example shows the result of `erase()` for different JSON
     types.,erase__IteratorType_IteratorType}
 
     @sa @ref erase(InteratorType) -- removes the element at a given position
@@ -3801,7 +3827,7 @@ class basic_json
 
     @complexity `log(size()) + count(key)`
 
-    @liveexample{The example shows the effect of erase.,erase__key_type}
+    @liveexample{The example shows the effect of `erase()`.,erase__key_type}
 
     @sa @ref erase(InteratorType) -- removes the element at a given position
     @sa @ref erase(InteratorType, InteratorType) -- removes the elements in the
@@ -3839,7 +3865,7 @@ class basic_json
 
     @complexity Linear in distance between @a idx and the end of the container.
 
-    @liveexample{The example shows the effect of erase.,erase__size_type}
+    @liveexample{The example shows the effect of `erase()`.,erase__size_type}
 
     @sa @ref erase(InteratorType) -- removes the element at a given position
     @sa @ref erase(InteratorType, InteratorType) -- removes the elements in the
@@ -3881,7 +3907,7 @@ class basic_json
 
     @complexity Logarithmic in the size of the JSON object.
 
-    @liveexample{The example shows how find is used.,find__key_type}
+    @liveexample{The example shows how `find()` is used.,find__key_type}
 
     @since version 1.0.0
     */
@@ -3929,7 +3955,7 @@ class basic_json
 
     @complexity Logarithmic in the size of the JSON object.
 
-    @liveexample{The example shows how count is used.,count}
+    @liveexample{The example shows how `count()` is used.,count}
 
     @since version 1.0.0
     */
@@ -3961,10 +3987,16 @@ class basic_json
 
     @complexity Constant.
 
-    @requirement This function satisfies the Container requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    requirements:
     - The complexity is constant.
 
-    @liveexample{The following code shows an example for @ref begin.,begin}
+    @liveexample{The following code shows an example for `begin()`.,begin}
+
+    @sa @ref cbegin() -- returns a const iterator to the beginning
+    @sa @ref end() -- returns an iterator to the end
+    @sa @ref cend() -- returns a const iterator to the end
 
     @since version 1.0.0
     */
@@ -3994,11 +4026,17 @@ class basic_json
 
     @complexity Constant.
 
-    @requirement This function satisfies the Container requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).begin()`.
 
-    @liveexample{The following code shows an example for @ref cbegin.,cbegin}
+    @liveexample{The following code shows an example for `cbegin()`.,cbegin}
+
+    @sa @ref begin() -- returns an iterator to the beginning
+    @sa @ref end() -- returns an iterator to the end
+    @sa @ref cend() -- returns a const iterator to the end
 
     @since version 1.0.0
     */
@@ -4020,10 +4058,16 @@ class basic_json
 
     @complexity Constant.
 
-    @requirement This function satisfies the Container requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    requirements:
     - The complexity is constant.
 
-    @liveexample{The following code shows an example for @ref end.,end}
+    @liveexample{The following code shows an example for `end()`.,end}
+
+    @sa @ref cend() -- returns a const iterator to the end
+    @sa @ref begin() -- returns an iterator to the beginning
+    @sa @ref cbegin() -- returns a const iterator to the beginning
 
     @since version 1.0.0
     */
@@ -4053,11 +4097,17 @@ class basic_json
 
     @complexity Constant.
 
-    @requirement This function satisfies the Container requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).end()`.
 
-    @liveexample{The following code shows an example for @ref cend.,cend}
+    @liveexample{The following code shows an example for `cend()`.,cend}
+
+    @sa @ref end() -- returns an iterator to the end
+    @sa @ref begin() -- returns an iterator to the beginning
+    @sa @ref cbegin() -- returns a const iterator to the beginning
 
     @since version 1.0.0
     */
@@ -4077,11 +4127,17 @@ class basic_json
 
     @complexity Constant.
 
-    @requirement This function satisfies the ReversibleContainer requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    requirements:
     - The complexity is constant.
     - Has the semantics of `reverse_iterator(end())`.
 
-    @liveexample{The following code shows an example for @ref rbegin.,rbegin}
+    @liveexample{The following code shows an example for `rbegin()`.,rbegin}
+
+    @sa @ref crbegin() -- returns a const reverse iterator to the beginning
+    @sa @ref rend() -- returns a reverse iterator to the end
+    @sa @ref crend() -- returns a const reverse iterator to the end
 
     @since version 1.0.0
     */
@@ -4108,11 +4164,17 @@ class basic_json
 
     @complexity Constant.
 
-    @requirement This function satisfies the ReversibleContainer requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    requirements:
     - The complexity is constant.
     - Has the semantics of `reverse_iterator(begin())`.
 
-    @liveexample{The following code shows an example for @ref rend.,rend}
+    @liveexample{The following code shows an example for `rend()`.,rend}
+
+    @sa @ref crend() -- returns a const reverse iterator to the end
+    @sa @ref rbegin() -- returns a reverse iterator to the beginning
+    @sa @ref crbegin() -- returns a const reverse iterator to the beginning
 
     @since version 1.0.0
     */
@@ -4139,11 +4201,17 @@ class basic_json
 
     @complexity Constant.
 
-    @requirement This function satisfies the ReversibleContainer requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).rbegin()`.
 
-    @liveexample{The following code shows an example for @ref crbegin.,crbegin}
+    @liveexample{The following code shows an example for `crbegin()`.,crbegin}
+
+    @sa @ref rbegin() -- returns a reverse iterator to the beginning
+    @sa @ref rend() -- returns a reverse iterator to the end
+    @sa @ref crend() -- returns a const reverse iterator to the end
 
     @since version 1.0.0
     */
@@ -4162,11 +4230,17 @@ class basic_json
 
     @complexity Constant.
 
-    @requirement This function satisfies the ReversibleContainer requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).rend()`.
 
-    @liveexample{The following code shows an example for @ref crend.,crend}
+    @liveexample{The following code shows an example for `crend()`.,crend}
+
+    @sa @ref rend() -- returns a reverse iterator to the end
+    @sa @ref rbegin() -- returns a reverse iterator to the beginning
+    @sa @ref crbegin() -- returns a const reverse iterator to the beginning
 
     @since version 1.0.0
     */
@@ -4223,23 +4297,27 @@ class basic_json
             defined as follows:
             Value type  | return value
             ----------- | -------------
-            null        | @c true
-            boolean     | @c false
-            string      | @c false
-            number      | @c false
-            object      | result of function object_t::empty()
-            array       | result of function array_t::empty()
+            null        | `true`
+            boolean     | `false`
+            string      | `false`
+            number      | `false`
+            object      | result of function `object_t::empty()`
+            array       | result of function `array_t::empty()`
 
     @complexity Constant, as long as @ref array_t and @ref object_t satisfy the
-    Container concept; that is, their empty() functions have constant
+    Container concept; that is, their `empty()` functions have constant
     complexity.
 
-    @requirement This function satisfies the Container requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    requirements:
     - The complexity is constant.
     - Has the semantics of `begin() == end()`.
 
-    @liveexample{The following code uses @ref empty to check if a @ref json
+    @liveexample{The following code uses `empty()` to check if a JSON
     object contains any elements.,empty}
+
+    @sa @ref size() -- returns the number of elements
 
     @since version 1.0.0
     */
@@ -4282,22 +4360,27 @@ class basic_json
             defined as follows:
             Value type  | return value
             ----------- | -------------
-            null        | @c 0
-            boolean     | @c 1
-            string      | @c 1
-            number      | @c 1
+            null        | `0`
+            boolean     | `1`
+            string      | `1`
+            number      | `1`
             object      | result of function object_t::size()
             array       | result of function array_t::size()
 
     @complexity Constant, as long as @ref array_t and @ref object_t satisfy the
     Container concept; that is, their size() functions have constant complexity.
 
-    @requirement This function satisfies the Container requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    requirements:
     - The complexity is constant.
     - Has the semantics of `std::distance(begin(), end())`.
 
-    @liveexample{The following code calls @ref size on the different value
+    @liveexample{The following code calls `size()` on the different value
     types.,size}
+
+    @sa @ref empty() -- checks whether the container is empty
+    @sa @ref max_size() -- returns the maximal number of elements
 
     @since version 1.0.0
     */
@@ -4342,24 +4425,28 @@ class basic_json
             defined as follows:
             Value type  | return value
             ----------- | -------------
-            null        | @c 0 (same as size())
-            boolean     | @c 1 (same as size())
-            string      | @c 1 (same as size())
-            number      | @c 1 (same as size())
-            object      | result of function object_t::max_size()
-            array       | result of function array_t::max_size()
+            null        | `0` (same as `size()`)
+            boolean     | `1` (same as `size()`)
+            string      | `1` (same as `size()`)
+            number      | `1` (same as `size()`)
+            object      | result of function `object_t::max_size()`
+            array       | result of function `array_t::max_size()`
 
     @complexity Constant, as long as @ref array_t and @ref object_t satisfy the
-    Container concept; that is, their max_size() functions have constant
+    Container concept; that is, their `max_size()` functions have constant
     complexity.
 
-    @requirement This function satisfies the Container requirements:
+    @requirement This function helps `basic_json` satisfying the
+    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    requirements:
     - The complexity is constant.
     - Has the semantics of returning `b.size()` where `b` is the largest
       possible JSON value.
 
-    @liveexample{The following code calls @ref max_size on the different value
+    @liveexample{The following code calls `max_size()` on the different value
     types. Note the output is implementation specific.,max_size}
+
+    @sa @ref size() -- returns the number of elements
 
     @since version 1.0.0
     */
@@ -4417,7 +4504,7 @@ class basic_json
 
     @complexity Linear in the size of the JSON value.
 
-    @liveexample{The example below shows the effect of @ref clear to different
+    @liveexample{The example below shows the effect of `clear()` to different
     JSON types.,clear}
 
     @since version 1.0.0
@@ -4485,16 +4572,16 @@ class basic_json
     function is called on a JSON null value, an empty array is created before
     appending @a val.
 
-    @param val the value to add to the JSON array
+    @param[in] val the value to add to the JSON array
 
     @throw std::domain_error when called on a type other than JSON array or
     null; example: `"cannot use push_back() with number"`
 
     @complexity Amortized constant.
 
-    @liveexample{The example shows how `push_back` and `+=` can be used to add
-    elements to a JSON array. Note how the `null` value was silently converted
-    to a JSON array.,push_back}
+    @liveexample{The example shows how `push_back()` and `+=` can be used to
+    add elements to a JSON array. Note how the `null` value was silently
+    converted to a JSON array.,push_back}
 
     @since version 1.0.0
     */
@@ -4578,9 +4665,9 @@ class basic_json
 
     @complexity Logarithmic in the size of the container, O(log(`size()`)).
 
-    @liveexample{The example shows how `push_back` and `+=` can be used to add
-    elements to a JSON object. Note how the `null` value was silently converted
-    to a JSON object.,push_back__object_t__value}
+    @liveexample{The example shows how `push_back()` and `+=` can be used to
+    add elements to a JSON object. Note how the `null` value was silently
+    converted to a JSON object.,push_back__object_t__value}
 
     @since version 1.0.0
     */
@@ -4632,7 +4719,7 @@ class basic_json
     @complexity Constant plus linear in the distance between pos and end of the
     container.
 
-    @liveexample{The example shows how insert is used.,insert}
+    @liveexample{The example shows how `insert()` is used.,insert}
 
     @since version 1.0.0
     */
@@ -4688,7 +4775,7 @@ class basic_json
     @complexity Linear in @a cnt plus linear in the distance between @a pos
     and end of the container.
 
-    @liveexample{The example shows how insert is used.,insert__count}
+    @liveexample{The example shows how `insert()` is used.,insert__count}
 
     @since version 1.0.0
     */
@@ -4741,7 +4828,7 @@ class basic_json
     @complexity Linear in `std::distance(first, last)` plus linear in the
     distance between @a pos and end of the container.
 
-    @liveexample{The example shows how insert is used.,insert__range}
+    @liveexample{The example shows how `insert()` is used.,insert__range}
 
     @since version 1.0.0
     */
@@ -4799,7 +4886,7 @@ class basic_json
     @complexity Linear in `ilist.size()` plus linear in the distance between @a
     pos and end of the container.
 
-    @liveexample{The example shows how insert is used.,insert__ilist}
+    @liveexample{The example shows how `insert()` is used.,insert__ilist}
 
     @since version 1.0.0
     */
@@ -4836,8 +4923,8 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The example below shows how JSON arrays can be
-    swapped.,swap__reference}
+    @liveexample{The example below shows how JSON values can be swapped with
+    `swap()`.,swap__reference}
 
     @since version 1.0.0
     */
@@ -4867,8 +4954,8 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The example below shows how JSON values can be
-    swapped.,swap__array_t}
+    @liveexample{The example below shows how arrays can be swapped with
+    `swap()`.,swap__array_t}
 
     @since version 1.0.0
     */
@@ -4901,8 +4988,8 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The example below shows how JSON values can be
-    swapped.,swap__object_t}
+    @liveexample{The example below shows how objects can be swapped with
+    `swap()`.,swap__object_t}
 
     @since version 1.0.0
     */
@@ -4935,8 +5022,8 @@ class basic_json
 
     @complexity Constant.
 
-    @liveexample{The example below shows how JSON values can be
-    swapped.,swap__string_t}
+    @liveexample{The example below shows how strings can be swapped with
+    `swap()`.,swap__string_t}
 
     @since version 1.0.0
     */
@@ -5442,7 +5529,7 @@ class basic_json
 
     @note A UTF-8 byte order mark is silently ignored.
 
-    @liveexample{The example below demonstrates the parse function with and
+    @liveexample{The example below demonstrates the `parse()` function with and
     without callback function.,parse__string__parser_callback_t}
 
     @sa @ref parse(std::istream&, parser_callback_t) for a version that reads
@@ -5471,7 +5558,7 @@ class basic_json
 
     @note A UTF-8 byte order mark is silently ignored.
 
-    @liveexample{The example below demonstrates the parse function with and
+    @liveexample{The example below demonstrates the `parse()` function with and
     without callback function.,parse__istream__parser_callback_t}
 
     @sa @ref parse(const string_t&, parser_callback_t) for a version that reads
@@ -5694,7 +5781,8 @@ class basic_json
                 {
                     if (c >= 0x00 and c <= 0x1f)
                     {
-                        // convert a number 0..15 to its hex representation (0..f)
+                        // convert a number 0..15 to its hex representation
+                        // (0..f)
                         auto hexify = [](const char v) -> char
                         {
                             return (v < 10) ? ('0' + v) : ('a' + v - 10);
@@ -5731,9 +5819,9 @@ class basic_json
     additional parameter. In case of arrays and objects, the function is called
     recursively. Note that
 
-    - strings and object keys are escaped using escape_string()
-    - integer numbers are converted implicitly via operator<<
-    - floating-point numbers are converted to a string using "%g" format
+    - strings and object keys are escaped using `escape_string()`
+    - integer numbers are converted implicitly via `operator<<`
+    - floating-point numbers are converted to a string using `"%g"` format
 
     @param[out] o              stream to write to
     @param[in] pretty_print    whether the output shall be pretty-printed
@@ -6744,6 +6832,7 @@ class basic_json
             return result;
         }
 
+        /// return difference
         difference_type operator-(const iterator& other) const
         {
             return base_iterator::operator-(other);
@@ -6893,20 +6982,20 @@ class basic_json
         /// token types for the parser
         enum class token_type
         {
-            uninitialized,    ///< indicating the scanner is uninitialized
-            literal_true,     ///< the "true" literal
-            literal_false,    ///< the "false" literal
-            literal_null,     ///< the "null" literal
-            value_string,     ///< a string -- use get_string() for actual value
-            value_number,     ///< a number -- use get_number() for actual value
-            begin_array,      ///< the character for array begin "["
-            begin_object,     ///< the character for object begin "{"
-            end_array,        ///< the character for array end "]"
-            end_object,       ///< the character for object end "}"
-            name_separator,   ///< the name separator ":"
-            value_separator,  ///< the value separator ","
-            parse_error,      ///< indicating a parse error
-            end_of_input      ///< indicating the end of the input buffer
+            uninitialized,   ///< indicating the scanner is uninitialized
+            literal_true,    ///< the "true" literal
+            literal_false,   ///< the "false" literal
+            literal_null,    ///< the "null" literal
+            value_string,    ///< a string -- use get_string() for actual value
+            value_number,    ///< a number -- use get_number() for actual value
+            begin_array,     ///< the character for array begin "["
+            begin_object,    ///< the character for object begin "{"
+            end_array,       ///< the character for array end "]"
+            end_object,      ///< the character for object end "}"
+            name_separator,  ///< the name separator ":"
+            value_separator, ///< the value separator ","
+            parse_error,     ///< indicating a parse error
+            end_of_input     ///< indicating the end of the input buffer
         };
 
         /// the char type to use in the lexer
@@ -6959,8 +7048,6 @@ class basic_json
         static string_t to_unicode(const std::size_t codepoint1,
                                    const std::size_t codepoint2 = 0)
         {
-            string_t result;
-
             // calculate the codepoint from the given code points
             std::size_t codepoint = codepoint1;
 
@@ -6985,6 +7072,8 @@ class basic_json
                     throw std::invalid_argument("missing or wrong low surrogate");
                 }
             }
+
+            string_t result;
 
             if (codepoint < 0x80)
             {
@@ -7192,9 +7281,9 @@ class basic_json
 
         1. Escaped characters. In this case, a new character is constructed
            according to the nature of the escape. Some escapes create new
-           characters (e.g., @c "\\n" is replaced by @c "\n"), some are copied
-           as is (e.g., @c "\\\\"). Furthermore, Unicode escapes of the shape
-           @c "\\uxxxx" need special care. In this case, to_unicode takes care
+           characters (e.g., `"\\n"` is replaced by `"\n"`), some are copied as
+           is (e.g., `"\\\\"`). Furthermore, Unicode escapes of the shape
+           `"\\uxxxx"` need special care. In this case, to_unicode takes care
            of the construction of the values.
         2. Unescaped characters are copied as is.
 
@@ -7337,9 +7426,10 @@ class basic_json
         supplied via the first parameter.  Set this to
         @a static_cast<number_float_t*>(nullptr).
 
-        @param type  the @ref number_float_t in use
+        @param[in] type  the @ref number_float_t in use
 
-        @param endptr  recieves a pointer to the first character after the number
+        @param[in,out] endptr  recieves a pointer to the first character after
+        the number
 
         @return the floating point number
         */
@@ -7356,9 +7446,10 @@ class basic_json
         supplied via the first parameter.  Set this to
         @a static_cast<number_float_t*>(nullptr).
 
-        @param type  the @ref number_float_t in use
+        @param[in] type  the @ref number_float_t in use
 
-        @param endptr  recieves a pointer to the first character after the number
+        @param[in,out] endptr  recieves a pointer to the first character after
+        the number
 
         @return the floating point number
         */
