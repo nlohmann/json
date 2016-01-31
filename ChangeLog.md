@@ -5,10 +5,12 @@ All notable changes to this project will be documented in this file. This projec
 
 [Full Changelog](https://github.com/nlohmann/json/compare/v1.1.0...HEAD)
 
+- Provide a FAQ [\#163](https://github.com/nlohmann/json/issues/163)
 - Issue \#178 - Extending support to full uint64\_t/int64\_t range and unsigned type \(updated\) [\#193](https://github.com/nlohmann/json/pull/193) ([twelsby](https://github.com/twelsby))
 
 - Small bugs in json.hpp \(get\_number\) and unit.cpp \(non-standard integer type test\) [\#199](https://github.com/nlohmann/json/issues/199)
 - GCC/clang floating point parsing bug in strtod\(\) [\#195](https://github.com/nlohmann/json/issues/195)
+- Bugs in miloyip/nativejson-benchmark: roundtrips [\#187](https://github.com/nlohmann/json/issues/187)
 - Floating point exceptions [\#181](https://github.com/nlohmann/json/issues/181)
 - Implicit assignment to std::string fails [\#144](https://github.com/nlohmann/json/issues/144)
 - Issue \#195 - update Travis to Trusty due to gcc/clang strtod\(\) bug [\#196](https://github.com/nlohmann/json/pull/196) ([twelsby](https://github.com/twelsby))

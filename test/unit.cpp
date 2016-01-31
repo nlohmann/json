@@ -9566,6 +9566,8 @@ TEST_CASE("parser class")
                 // error: backspace in string
                 CHECK_THROWS_AS(json::parser("\"\b\"").parse(), std::invalid_argument);
                 CHECK_THROWS_WITH(json::parser("\"\b\"").parse(), "parse error - unexpected '\"'");
+                // improve code coverage
+                CHECK_THROWS_AS(json::parser("\uFF01").parse(), std::invalid_argument);
             }
 
             SECTION("escaped")
