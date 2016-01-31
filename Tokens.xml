@@ -2675,6 +2675,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_1_1iterator_a9f3940ac5fb2c6ff8045ed59b8a0866f.html</Path>
     <Anchor>a9f3940ac5fb2c6ff8045ed59b8a0866f</Anchor>
+    <Abstract>return difference </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
