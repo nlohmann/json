@@ -143,9 +143,6 @@ default)
  - [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer);
    JSON values can be used like STL containers and provide reverse iterator
    access.
-- Container Elements
- - [Eraseable](http://en.cppreference.com/w/cpp/concept/Erasable):
-   JSON values can be destroyed by a given allocator.
 
 @internal
 @note ObjectType trick from http://stackoverflow.com/a/9860911

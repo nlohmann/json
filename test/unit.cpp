@@ -10767,24 +10767,6 @@ TEST_CASE("concepts")
 
         // the expression "X()" has the post-condition "X().empty()"
         CHECK(json().empty());
-
-
-        // from http://en.cppreference.com/w/cpp/concept/Container:
-        // T must be Eraseable
-        {
-            // prepare
-            auto m = json::get_allocator();
-            json* p = m.allocate(1);
-            m.construct(p, "foo");
-
-            // required
-            std::allocator_traits<json::allocator_type>::destroy(m, p);
-
-            CHECK(*p == "foo");
-
-            // cleanup
-            m.deallocate(p, 1);
-        }
     }
 
     SECTION("class json")
