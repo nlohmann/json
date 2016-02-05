@@ -526,6 +526,18 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a9857835334d38ba04959e348ca6be208.html</Path>
+    <Anchor>a9857835334d38ba04959e348ca6be208</Anchor>
+    <Abstract>construct a JSON value given an input stream </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>basic_json</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a4ab93491f82545342562c7ee7e3166c7.html</Path>
     <Anchor>a4ab93491f82545342562c7ee7e3166c7</Anchor>
     <Abstract>copy constructor </Abstract>
