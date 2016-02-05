@@ -1019,11 +1019,14 @@ class basic_json
     @brief create an object (implicit)
 
     Create an object JSON value with a given content. This constructor allows
-    any type that can be used to construct values of type @ref object_t.
-    Examples include the types `std::map` and `std::unordered_map`.
+    any type @a CompatibleObjectType that can be used to construct values of
+    type @ref object_t.
 
-    @tparam CompatibleObjectType an object type whose `key_type` and
-    `value_type` is compatible to @ref object_t
+    @tparam CompatibleObjectType An object type whose `key_type` and
+    `value_type` is compatible to @ref object_t. Examples include `std::map`,
+    `std::unordered_map`, `std::multimap`, and `std::unordered_multimap` with
+    a `key_type` of `std::string`, and a `value_type` from which a @ref
+    basic_json value can be constructed.
 
     @param[in] val  a value for the object
 
@@ -1078,11 +1081,14 @@ class basic_json
     @brief create an array (implicit)
 
     Create an array JSON value with a given content. This constructor allows
-    any type that can be used to construct values of type @ref array_t.
-    Examples include the types `std::vector`, `std::list`, and `std::set`.
+    any type @a CompatibleArrayType that can be used to construct values of
+    type @ref array_t.
 
-    @tparam CompatibleArrayType an object type whose `value_type` is compatible
-    to @ref array_t
+    @tparam CompatibleArrayType An object type whose `value_type` is compatible
+    to @ref array_t. Examples include `std::vector`, `std::deque`, `std::list`,
+    `std::forward_list`, `std::array`, `std::set`, `std::unordered_set`,
+    `std::multiset`, and `unordered_multiset` with a `value_type` from which a
+    @ref basic_json value can be constructed.
 
     @param[in] val  a value for the array
 
@@ -1172,7 +1178,7 @@ class basic_json
     @param[in] val  a value for the string
 
     @tparam CompatibleStringType an string type which is compatible to @ref
-    string_t
+    string_t, for instance `std::string`.
 
     @complexity Linear in the size of the passed @a val.
 
@@ -1218,14 +1224,12 @@ class basic_json
 
     Create an integer number JSON value with a given content.
 
-    @tparam T  helper type to compare number_integer_t and int (not visible in)
-    the interface.
+    @tparam T A helper type to remove this function via SFINAE in case @ref
+    number_integer_t is the same as `int`. In this case, this constructor would
+    have the same signature as @ref basic_json(const int value). Note the
+    helper type @a T is not visible in this constructor's interface.
 
     @param[in] val  an integer to create a JSON number from
-
-    @note This constructor would have the same signature as @ref
-    basic_json(const int value), so we need to switch this one off in case
-    number_integer_t is the same as int. This is done via the helper type @a T.
 
     @complexity Constant.
 
@@ -1282,12 +1286,12 @@ class basic_json
     @brief create an integer number (implicit)
 
     Create an integer number JSON value with a given content. This constructor
-    allows any type that can be used to construct values of type @ref
-    number_integer_t. Examples may include the types `int`, `int32_t`, or
-    `short`.
+    allows any type @a CompatibleNumberIntegerType that can be used to
+    construct values of type @ref number_integer_t.
 
-    @tparam CompatibleNumberIntegerType an integer type which is compatible to
-    @ref number_integer_t.
+    @tparam CompatibleNumberIntegerType An integer type which is compatible to
+    @ref number_integer_t. Examples include the types `int`, `int32_t`, `long`,
+    and `short`.
 
     @param[in] val  an integer to create a JSON number from
 
@@ -1346,12 +1350,12 @@ class basic_json
     @brief create an unsigned number (implicit)
 
     Create an unsigned number JSON value with a given content. This constructor
-    allows any type that can be used to construct values of type @ref
-    number_unsigned_t. Examples may include the types `unsigned int`,
-    `uint32_t`, or `unsigned short`.
+    allows any type @a CompatibleNumberUnsignedType that can be used to
+    construct values of type @ref number_unsigned_t.
 
-    @tparam CompatibleNumberUnsignedType an integer type which is compatible to
-    @ref number_unsigned_t.
+    @tparam CompatibleNumberUnsignedType An integer type which is compatible to
+    @ref number_unsigned_t. Examples may include the types `unsigned int`,
+    `uint32_t`, or `unsigned short`.
 
     @param[in] val  an unsigned integer to create a JSON number from
 
@@ -1413,11 +1417,11 @@ class basic_json
     @brief create an floating-point number (implicit)
 
     Create an floating-point number JSON value with a given content. This
-    constructor allows any type that can be used to construct values of type
-    @ref number_float_t. Examples may include the types `float`.
+    constructor allows any type @a CompatibleNumberFloatType that can be used
+    to construct values of type @ref number_float_t.
 
-    @tparam CompatibleNumberFloatType a floating-point type which is compatible
-    to @ref number_float_t.
+    @tparam CompatibleNumberFloatType A floating-point type which is compatible
+    to @ref number_float_t. Examples may include the types `float` or `double`.
 
     @param[in] val  a floating-point to create a JSON number from
 
@@ -1826,7 +1830,7 @@ class basic_json
 
     @since version 2.0.0
     */
-    basic_json(std::istream& i, parser_callback_t cb = nullptr)
+    explicit basic_json(std::istream& i, parser_callback_t cb = nullptr)
     {
         *this = parser(i, cb).parse();
     }
