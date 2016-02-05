@@ -82,7 +82,57 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="textblock"><p>These pages contain the API documentation of JSON for Modern C++, a C++11 header-only JSON class.</p>
 <ul>
 <li><a class="el" href="classnlohmann_1_1basic__json.html"><code>basic_json</code> class </a></li>
-<li><a href="functions_func.html">Function index</a></li>
+<li><a href="functions_func.html">Functions</a><ul>
+<li>object inspection<ul>
+<li><a class="el" href="classnlohmann_1_1basic__json_a805e3f3a2f374da0e14942eec7400e40.html#a805e3f3a2f374da0e14942eec7400e40">dump </a> &ndash; value serialization</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_ad09218e192a80ffa8df531941afdab60.html#ad09218e192a80ffa8df531941afdab60">type </a> &ndash; type of the value</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_ab856bebfdfbcf45061f1474ea8ba9924.html#ab856bebfdfbcf45061f1474ea8ba9924">is_primitive </a>, <a class="el" href="classnlohmann_1_1basic__json_afec7d87796b8b538119b3ddc0d6950fb.html#afec7d87796b8b538119b3ddc0d6950fb">is_structured </a>, <a class="el" href="classnlohmann_1_1basic__json_a5ffdd3a9d2e02ebcbad13cb90af57523.html#a5ffdd3a9d2e02ebcbad13cb90af57523">is_null </a>, <a class="el" href="classnlohmann_1_1basic__json_a08ad7169ceb437efff7b2d4a8c0dafe2.html#a08ad7169ceb437efff7b2d4a8c0dafe2">is_boolean </a>, <a class="el" href="classnlohmann_1_1basic__json_a791afb7d6974c52b134d66aa1f249164.html#a791afb7d6974c52b134d66aa1f249164">is_number </a>, <a class="el" href="classnlohmann_1_1basic__json_a245b34ee6341bed2e3a611e223c53c48.html#a245b34ee6341bed2e3a611e223c53c48">is_number_integer </a>, <a class="el" href="classnlohmann_1_1basic__json_ab7d704826813d13731fbcaf220160826.html#ab7d704826813d13731fbcaf220160826">is_number_unsigned </a>, <a class="el" href="classnlohmann_1_1basic__json_a5d288e4e8828c2ef03a4f9958ce3d175.html#a5d288e4e8828c2ef03a4f9958ce3d175">is_number_float </a>, <a class="el" href="classnlohmann_1_1basic__json_a8969119432218155193bb1dac30aa4ff.html#a8969119432218155193bb1dac30aa4ff">is_object </a>, <a class="el" href="classnlohmann_1_1basic__json_a73619da32d2a1388f5c7b37f2032138f.html#a73619da32d2a1388f5c7b37f2032138f">is_array </a>, <a class="el" href="classnlohmann_1_1basic__json_ad2f716992118a42aa8f8d57950a8d0bb.html#ad2f716992118a42aa8f8d57950a8d0bb">is_string </a>, <a class="el" href="classnlohmann_1_1basic__json_a626a27f30d6912d7f516eac511fd3362.html#a626a27f30d6912d7f516eac511fd3362">is_discarded </a> &ndash; check for value type</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a579c170c06dc73a97f5e4c54d0942616.html#a579c170c06dc73a97f5e4c54d0942616">operator value_t </a> &ndash; type of the value (implicit conversion)</li>
+</ul>
+</li>
+<li>value access<ul>
+<li><a class="el" href="classnlohmann_1_1basic__json_a20bfb2ca6d4c421c74bb3e53328cd437.html#a20bfb2ca6d4c421c74bb3e53328cd437">get </a> &ndash; get a value</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a7ab11375ed2e29c2fcb6119386851445.html#a7ab11375ed2e29c2fcb6119386851445">get_ptr </a> &ndash; get a value pointer</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a4f332e90f3cae562d0c3fa6ba48f74f9.html#a4f332e90f3cae562d0c3fa6ba48f74f9">get_ref </a> &ndash; get a value reference</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_aef496a56163710084e13612ab73e6ed2.html#aef496a56163710084e13612ab73e6ed2">operator ValueType </a> &ndash; get a value (implicit conversion)</li>
+</ul>
+</li>
+<li>element access<ul>
+<li><a class="el" href="classnlohmann_1_1basic__json_a214a8c22d616fd3567b88932c07436c9.html#a214a8c22d616fd3567b88932c07436c9">at </a> &ndash; access array element with bounds checking</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a7ed92d56cb313b243c1917696ffdf074.html#a7ed92d56cb313b243c1917696ffdf074">at </a> &ndash; access object element with bounds checking</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a59732a1de287a7301cca19a7a7748159.html#a59732a1de287a7301cca19a7a7748159">operator[] </a> &ndash; access array element</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a92fbb711a36b5ce78ee228b26787c034.html#a92fbb711a36b5ce78ee228b26787c034">operator[] </a> &ndash; access object element</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a0a2cbbd95862a623e7dc5c37e67dead0.html#a0a2cbbd95862a623e7dc5c37e67dead0">value </a> &ndash; access object element with default value</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_aa45753034bea87f9d2c0c42ace9ff75c.html#aa45753034bea87f9d2c0c42ace9ff75c">front </a> &ndash; access the first element</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a71b1d38ef402dfee58fba1fe01fa67f5.html#a71b1d38ef402dfee58fba1fe01fa67f5">back </a> &ndash; access the last element</li>
+</ul>
+</li>
+<li>iterators<ul>
+<li>begin, cbegin</li>
+<li>end, cend</li>
+<li>rbegin, crbegin</li>
+<li>rend, crend</li>
+</ul>
+</li>
+<li>capacity<ul>
+<li><a class="el" href="classnlohmann_1_1basic__json_a90239431815c94b0a334f7f4c55eb859.html#a90239431815c94b0a334f7f4c55eb859">empty </a> &ndash; checks whether the container is empty</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a01833b332b68d9af1f7cd7a816c39e49.html#a01833b332b68d9af1f7cd7a816c39e49">size </a> &ndash; returns the number of elements</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_ad5514a7435f246fc5335856465022a7a.html#ad5514a7435f246fc5335856465022a7a">max_size </a> &ndash; returns the maximum possible number of elements</li>
+</ul>
+</li>
+<li>modifiers<ul>
+<li><a class="el" href="classnlohmann_1_1basic__json_ad6e51670e9c0052856f3fee01df5c44f.html#ad6e51670e9c0052856f3fee01df5c44f">clear </a> &ndash; clears the contents</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a6f3dfd3e83a1e907d7946b47fcd7ceba.html#a6f3dfd3e83a1e907d7946b47fcd7ceba">push_back </a> &ndash; add an object to an array</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a80c21170db6b5ffd9274b3f351cebadc.html#a80c21170db6b5ffd9274b3f351cebadc">operator+= </a> &ndash; add an object to an array</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_a7f7bbb3a9efef2e2442f538a24c1c47b.html#a7f7bbb3a9efef2e2442f538a24c1c47b">insert </a> &ndash; inserts elements</li>
+<li><a class="el" href="classnlohmann_1_1basic__json_af77614992e38b355b9213940051cc582.html#af77614992e38b355b9213940051cc582">swap </a> &ndash; exchanges the values</li>
+</ul>
+</li>
+<li>lexicographical comparison operators</li>
+<li>serialization</li>
+<li>deserialization</li>
+</ul>
+</li>
 <li>Types<ul>
 <li><a class="el" href="classnlohmann_1_1basic__json_ab00b882d39306d663c23dab110f5cae0.html#ab00b882d39306d663c23dab110f5cae0">arrays </a></li>
 <li><a class="el" href="classnlohmann_1_1basic__json_a0ac9894c9de8dc551cf2e5f1c605537f.html#a0ac9894c9de8dc551cf2e5f1c605537f">objects </a></li>
@@ -104,7 +154,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Feb 5 2016 19:31:36 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 5 2016 22:31:44 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>
