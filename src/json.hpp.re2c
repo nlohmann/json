@@ -1806,6 +1806,31 @@ class basic_json
         }
     }
 
+    /*!
+    @brief construct a JSON value given an input stream
+
+    @param[in,out] i  stream to read a serialized JSON value from
+    @param[in] cb a parser callback function of type @ref parser_callback_t
+    which is used to control the deserialization by filtering unwanted values
+    (optional)
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser. The complexity can be higher if the parser callback function
+    @a cb has a super-linear complexity.
+
+    @note A UTF-8 byte order mark is silently ignored.
+
+    @liveexample{The example below demonstrates constructing a JSON value from
+    a `std::stringstream` with and without callback
+    function.,basic_json__istream}
+
+    @since version 2.0.0
+    */
+    basic_json(std::istream& i, parser_callback_t cb = nullptr)
+    {
+        *this = parser(i, cb).parse();
+    }
+
     ///////////////////////////////////////
     // other constructors and destructor //
     ///////////////////////////////////////

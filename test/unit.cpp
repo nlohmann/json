@@ -1264,6 +1264,42 @@ TEST_CASE("constructors")
             }
         }
     }
+
+    SECTION("create a JSON value from an input stream")
+    {
+        SECTION("sts::stringstream")
+        {
+            std::stringstream ss;
+            ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+            json j(ss);
+            CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+        }
+
+        SECTION("with callback function")
+        {
+            std::stringstream ss;
+            ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+            json j(ss, [](int, json::parse_event_t, const json & val)
+            {
+                // filter all number(2) elements
+                if (val == json(2))
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+            CHECK(j == json({"foo", 1, 3, false, {{"one", 1}}}));
+        }
+
+        SECTION("std::ifstream")
+        {
+            std::ifstream f("test/json_tests/pass1.json");
+            json j(f);
+        }
+    }
 }
 
 TEST_CASE("other constructors and destructor")
