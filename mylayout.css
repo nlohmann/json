@@ -16,3 +16,11 @@ pre.fragment {
 td.paramname {
     vertical-align: top;
 }
+
+.ok_green {
+    background-color: #89C35C;
+}
+
+.nok_throws {
+    background-color: #ffa500;
+}
