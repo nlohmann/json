@@ -100,7 +100,8 @@ def main():
         'code': open(cpp).read(),
         'codes': [{
             'file': os.path.relpath(header, directory),
-            'code': strip_comments(open(header).read())
+            #'code': strip_comments(open(header).read())
+            'code': open(header).read()
         } for header in headers(directory)],
         'options': 'boost-nothing,c++11',
         'compiler': 'gcc-4.9.2',
