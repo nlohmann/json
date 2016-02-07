@@ -3229,7 +3229,7 @@ class basic_json
     @return reference to the element at key @a key
 
     @throw std::domain_error if JSON is not an object or null; example:
-    `"cannot use operator[] with null"`
+    `"cannot use operator[] with string"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -3319,7 +3319,7 @@ class basic_json
     @return reference to the element at key @a key
 
     @throw std::domain_error if JSON is not an object or null; example:
-    `"cannot use operator[] with null"`
+    `"cannot use operator[] with string"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -3387,7 +3387,7 @@ class basic_json
     @return reference to the element at key @a key
 
     @throw std::domain_error if JSON is not an object or null; example:
-    `"cannot use operator[] with null"`
+    `"cannot use operator[] with string"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -3589,8 +3589,12 @@ class basic_json
     @brief access the last element
 
     Returns a reference to the last element in the container. For a JSON
-    container `c`, the expression `c.back()` is equivalent to `{ auto tmp =
-    c.end(); --tmp; return *tmp; }`.
+    container `c`, the expression `c.back()` is equivalent to
+    @code {.cpp}
+    auto tmp = c.end();
+    --tmp;
+    return *tmp;
+    @endcode
 
     @return In case of a structured type (array or object), a reference to the
     last element is returned. In cast of number, string, or boolean values, a
@@ -3602,7 +3606,7 @@ class basic_json
     an empty array or object (undefined behavior, guarded by assertions).
     @post The JSON value remains unchanged.
 
-    @throw std::out_of_range when called on null value.
+    @throw std::out_of_range when called on `null` value.
 
     @liveexample{The following code shows an example for `back()`.,back}
 
@@ -3630,28 +3634,29 @@ class basic_json
     /*!
     @brief remove element given an iterator
 
-    Removes the element specified by iterator @a pos. Invalidates iterators and
-    references at or after the point of the erase, including the end()
-    iterator. The iterator @a pos must be valid and dereferenceable. Thus the
-    end() iterator (which is valid, but is not dereferenceable) cannot be used
-    as a value for @a pos.
+    Removes the element specified by iterator @a pos. The iterator @a pos must
+    be valid and dereferenceable. Thus the `end()` iterator (which is valid,
+    but is not dereferenceable) cannot be used as a value for @a pos.
 
-    If called on a primitive type other than null, the resulting JSON value
+    If called on a primitive type other than `null`, the resulting JSON value
     will be `null`.
 
     @param[in] pos iterator to the element to remove
     @return Iterator following the last removed element. If the iterator @a pos
-    refers to the last element, the end() iterator is returned.
+    refers to the last element, the `end()` iterator is returned.
 
     @tparam InteratorType an @ref iterator or @ref const_iterator
+
+    @post Invalidates iterators and references at or after the point of the
+    erase, including the `end()` iterator.
 
     @throw std::domain_error if called on a `null` value; example: `"cannot use
     erase() with null"`
     @throw std::domain_error if called on an iterator which does not belong to
     the current JSON value; example: `"iterator does not fit current value"`
     @throw std::out_of_range if called on a primitive type with invalid
-    iterator (i.e., any iterator which is not end()); example: `"iterator out
-    of range"`
+    iterator (i.e., any iterator which is not `begin()`); example: `"iterator
+    out of range"`
 
     @complexity The complexity depends on the type:
     - objects: amortized constant
@@ -3736,20 +3741,22 @@ class basic_json
     /*!
     @brief remove elements given an iterator range
 
-    Removes the element specified by the range `[first; last)`. Invalidates
-    iterators and references at or after the point of the erase, including the
-    end() iterator. The iterator @a first does not need to be dereferenceable
-    if `first == last`: erasing an empty range is a no-op.
+    Removes the element specified by the range `[first; last)`. The iterator @a
+    first does not need to be dereferenceable if `first == last`: erasing an
+    empty range is a no-op.
 
-    If called on a primitive type other than null, the resulting JSON value
+    If called on a primitive type other than `null`, the resulting JSON value
     will be `null`.
 
     @param[in] first iterator to the beginning of the range to remove
     @param[in] last iterator past the end of the range to remove
     @return Iterator following the last removed element. If the iterator @a
-    second refers to the last element, the end() iterator is returned.
+    second refers to the last element, the `end()` iterator is returned.
 
     @tparam InteratorType an @ref iterator or @ref const_iterator
+
+    @post Invalidates iterators and references at or after the point of the
+    erase, including the `end()` iterator.
 
     @throw std::domain_error if called on a `null` value; example: `"cannot use
     erase() with null"`
@@ -3848,9 +3855,12 @@ class basic_json
 
     @param[in] key value of the elements to remove
 
-    @return Number of elements removed. If ObjectType is the default `std::map`
-    type, the return value will always be `0` (@a key was not found) or `1` (@a
-    key was found).
+    @return Number of elements removed. If @a ObjectType is the default
+    `std::map` type, the return value will always be `0` (@a key was not found)
+    or `1` (@a key was found).
+
+    @post References and iterators to the erased elements are invalidated.
+    Other references and iterators are not affected.
 
     @throw std::domain_error when called on a type other than JSON object;
     example: `"cannot use erase() with null"`
@@ -3923,6 +3933,16 @@ class basic_json
             throw std::domain_error("cannot use erase() with " + type_name());
         }
     }
+
+    /// @}
+
+
+    ////////////
+    // lookup //
+    ////////////
+
+    /// @name lookup
+    /// @{
 
     /*!
     @brief find an element in a JSON object
