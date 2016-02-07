@@ -8,7 +8,6 @@
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
 [![Github Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
-[![Gitter](https://badges.gitter.im/nlohmann/json.svg)](https://gitter.im/nlohmann/json?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Design goals
 
