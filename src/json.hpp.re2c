@@ -3144,7 +3144,7 @@ class basic_json
     @return reference to the element at index @a idx
 
     @throw std::domain_error if JSON is not an array or null; example: `"cannot
-    use operator[] with null"`
+    use operator[] with string"`
 
     @complexity Constant if @a idx is in the range of the array. Otherwise
     linear in `idx - size()`.
@@ -3157,16 +3157,17 @@ class basic_json
     */
     reference operator[](size_type idx)
     {
-        // implicitly convert null to object
+        // implicitly convert null value to an empty array
         if (is_null())
         {
             m_type = value_t::array;
             m_value.array = create<array_t>();
         }
 
-        // [] only works for arrays
+        // operator[] only works for arrays
         if (is_array())
         {
+            // fill up array with null values until given idx is reached
             assert(m_value.array != nullptr);
             for (size_t i = m_value.array->size(); i <= idx; ++i)
             {
@@ -3202,7 +3203,7 @@ class basic_json
     */
     const_reference operator[](size_type idx) const
     {
-        // at only works for arrays
+        // const operator[] only works for arrays
         if (is_array())
         {
             assert(m_value.array != nullptr);
@@ -3243,14 +3244,14 @@ class basic_json
     */
     reference operator[](const typename object_t::key_type& key)
     {
-        // implicitly convert null to object
+        // implicitly convert null value to an empty object
         if (is_null())
         {
             m_type = value_t::object;
             m_value.object = create<object_t>();
         }
 
-        // [] only works for objects
+        // operator[] only works for objects
         if (is_object())
         {
             assert(m_value.object != nullptr);
@@ -3291,7 +3292,7 @@ class basic_json
     */
     const_reference operator[](const typename object_t::key_type& key) const
     {
-        // [] only works for objects
+        // const operator[] only works for objects
         if (is_object())
         {
             assert(m_value.object != nullptr);
