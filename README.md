@@ -45,7 +45,7 @@ to the files you want to use JSON objects. That's it. Do not forget to set the n
 Though it's 2016 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
 - GCC 4.9 - 6.0 (and possibly later)
-- Clang 3.4 - 3.8 (and possibly later)
+- Clang 3.4 - 3.9 (and possibly later)
 - Microsoft Visual C++ 14.0 RC (and possibly later)
 
 I would be happy to learn about other compilers/versions.
