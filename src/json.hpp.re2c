@@ -7280,9 +7280,9 @@ class basic_json
                 return;
             }
 
-            const std::ptrdiff_t offset_start = m_start - m_content;
-            const std::ptrdiff_t offset_marker = m_marker - m_start;
-            const std::ptrdiff_t offset_cursor = m_cursor - m_start;
+            const auto offset_start = m_start - m_content;
+            const auto offset_marker = m_marker - m_start;
+            const auto offset_cursor = m_cursor - m_start;
 
             m_buffer.erase(0, static_cast<size_t>(offset_start));
             std::string line;
