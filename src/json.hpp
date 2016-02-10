@@ -34,23 +34,10 @@ Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #include <utility>
 #include <vector>
 
-// enable ssize_t on MinGW
-#ifdef __GNUC__
-    #ifdef __MINGW32__
-        #include <sys/types.h>
-    #endif
-#endif
-
 // disable float-equal warnings on GCC/clang
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-
-// enable ssize_t for MSVC
-#ifdef _MSC_VER
-    #include <basetsd.h>
-    using ssize_t = SSIZE_T;
 #endif
 
 /*!
@@ -7983,9 +7970,9 @@ basic_json_parser_63:
                 return;
             }
 
-            const ssize_t offset_start = m_start - m_content;
-            const ssize_t offset_marker = m_marker - m_start;
-            const ssize_t offset_cursor = m_cursor - m_start;
+            const std::ptrdiff_t offset_start = m_start - m_content;
+            const std::ptrdiff_t offset_marker = m_marker - m_start;
+            const std::ptrdiff_t offset_cursor = m_cursor - m_start;
 
             m_buffer.erase(0, static_cast<size_t>(offset_start));
             std::string line;
