@@ -9,7 +9,7 @@ all: json_unit
 
 # clean up
 clean:
-	rm -f json_unit json_benchmarks
+	rm -f json_unit json_benchmarks fuzz
 
 
 ##########################################################################
@@ -23,6 +23,16 @@ FLAGS = -Wall -Wextra -pedantic -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-pr
 json_unit: test/unit.cpp src/json.hpp test/catch.hpp
 	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src -I test $< $(LDFLAGS) -o $@
 
+
+##########################################################################
+# fuzzing
+##########################################################################
+
+fuzz: test/fuzz.cpp src/json.hpp
+	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src -I test $< $(LDFLAGS) -lstdc++ -lm -o $@
+fuzz_testcases:
+	mkdir -p testcases && find test/ -size -5k -name *json | xargs -I{} cp "{}" testcases
+	@echo "Test cases suitable for fuzzing have been copied into the testcases directory"
 
 ##########################################################################
 # static analyzer
@@ -48,7 +58,7 @@ pretty:
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none \
-	   src/json.hpp src/json.hpp.re2c test/unit.cpp benchmarks/benchmarks.cpp doc/examples/*.cpp
+	   src/json.hpp src/json.hpp.re2c test/unit.cpp test/fuzz.cpp benchmarks/benchmarks.cpp doc/examples/*.cpp
 
 
 ##########################################################################
