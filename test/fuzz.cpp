@@ -22,6 +22,7 @@ int main()
         try
         {
             json j(std::cin);
+            std::cout << j << std::endl;
         }
         catch (std::invalid_argument &e)
         {
