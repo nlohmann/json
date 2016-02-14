@@ -1,6 +1,6 @@
 /*
- *  Catch v1.3.1
- *  Generated: 2015-12-09 18:10:29.846134
+ *  Catch v1.3.4
+ *  Generated: 2016-02-10 19:24:03.089683
  *  ----------------------------------------------------------
  *  This file has been merged from multiple headers. Please don't edit it directly
  *  Copyright (c) 2012 Two Blue Cubes Ltd. All rights reserved.
@@ -1069,7 +1069,7 @@ namespace Matchers {
             virtual ~StartsWith();
 
             virtual bool match( std::string const& expr ) const {
-                return m_data.adjustString( expr ).find( m_data.m_str ) == 0;
+                return startsWith( m_data.adjustString( expr ), m_data.m_str );
             }
             virtual std::string toString() const {
                 return "starts with: \"" + m_data.m_str + "\"" + m_data.toStringSuffix();
@@ -1086,7 +1086,7 @@ namespace Matchers {
             virtual ~EndsWith();
 
             virtual bool match( std::string const& expr ) const {
-                return m_data.adjustString( expr ).find( m_data.m_str ) == expr.size() - m_data.m_str.size();
+                return endsWith( m_data.adjustString( expr ), m_data.m_str );
             }
             virtual std::string toString() const {
                 return "ends with: \"" + m_data.m_str + "\"" + m_data.toStringSuffix();
@@ -2026,7 +2026,7 @@ namespace Catch {
             __catchResult.useActiveException( Catch::ResultDisposition::Normal ); \
         } \
         INTERNAL_CATCH_REACT( __catchResult ) \
-    } while( Catch::isTrue( false && (expr) ) ) // expr here is never evaluated at runtime but it forces the compiler to give it a look
+    } while( Catch::isTrue( false && static_cast<bool>(expr) ) ) // expr here is never evaluated at runtime but it forces the compiler to give it a look
 
 ///////////////////////////////////////////////////////////////////////////////
 #define INTERNAL_CATCH_IF( expr, resultDisposition, macroName ) \
@@ -2115,7 +2115,7 @@ namespace Catch {
 ///////////////////////////////////////////////////////////////////////////////
 #define INTERNAL_CHECK_THAT( arg, matcher, resultDisposition, macroName ) \
     do { \
-        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #arg " " #matcher, resultDisposition ); \
+        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #arg ", " #matcher, resultDisposition ); \
         try { \
             std::string matcherAsString = (matcher).toString(); \
             __catchResult \
@@ -3572,6 +3572,8 @@ namespace Catch {
 #define STITCH_CLARA_OPEN_NAMESPACE namespace Catch {
 // #included from: ../external/clara.h
 
+// Version 0.0.1.1
+
 // Only use header guard if we are not using an outer namespace
 #if !defined(TWOBLUECUBES_CLARA_H_INCLUDED) || defined(STITCH_CLARA_OPEN_NAMESPACE)
 
@@ -3596,6 +3598,7 @@ namespace Catch {
 #include <string>
 #include <vector>
 #include <sstream>
+#include <algorithm>
 
 // Use optional outer namespace
 #ifdef STITCH_TBC_TEXT_FORMAT_OUTER_NAMESPACE
@@ -3730,12 +3733,158 @@ namespace Tbc {
 #endif // TBC_TEXT_FORMAT_H_INCLUDED
 
 // ----------- end of #include from tbc_text_format.h -----------
-// ........... back in /Users/philnash/Dev/OSS/Clara/srcs/clara.h
+// ........... back in clara.h
 
 #undef STITCH_TBC_TEXT_FORMAT_OPEN_NAMESPACE
 
+// ----------- #included from clara_compilers.h -----------
+
+#ifndef TWOBLUECUBES_CLARA_COMPILERS_H_INCLUDED
+#define TWOBLUECUBES_CLARA_COMPILERS_H_INCLUDED
+
+// Detect a number of compiler features - mostly C++11/14 conformance - by compiler
+// The following features are defined:
+//
+// CLARA_CONFIG_CPP11_NULLPTR : is nullptr supported?
+// CLARA_CONFIG_CPP11_NOEXCEPT : is noexcept supported?
+// CLARA_CONFIG_CPP11_GENERATED_METHODS : The delete and default keywords for compiler generated methods
+// CLARA_CONFIG_CPP11_OVERRIDE : is override supported?
+// CLARA_CONFIG_CPP11_UNIQUE_PTR : is unique_ptr supported (otherwise use auto_ptr)
+
+// CLARA_CONFIG_CPP11_OR_GREATER : Is C++11 supported?
+
+// CLARA_CONFIG_VARIADIC_MACROS : are variadic macros supported?
+
+// In general each macro has a _NO_<feature name> form
+// (e.g. CLARA_CONFIG_CPP11_NO_NULLPTR) which disables the feature.
+// Many features, at point of detection, define an _INTERNAL_ macro, so they
+// can be combined, en-mass, with the _NO_ forms later.
+
+// All the C++11 features can be disabled with CLARA_CONFIG_NO_CPP11
+
+#ifdef __clang__
+
+#if __has_feature(cxx_nullptr)
+#define CLARA_INTERNAL_CONFIG_CPP11_NULLPTR
+#endif
+
+#if __has_feature(cxx_noexcept)
+#define CLARA_INTERNAL_CONFIG_CPP11_NOEXCEPT
+#endif
+
+#endif // __clang__
+
+////////////////////////////////////////////////////////////////////////////////
+// GCC
+#ifdef __GNUC__
+
+#if __GNUC__ == 4 && __GNUC_MINOR__ >= 6 && defined(__GXX_EXPERIMENTAL_CXX0X__)
+#define CLARA_INTERNAL_CONFIG_CPP11_NULLPTR
+#endif
+
+// - otherwise more recent versions define __cplusplus >= 201103L
+// and will get picked up below
+
+#endif // __GNUC__
+
+////////////////////////////////////////////////////////////////////////////////
+// Visual C++
+#ifdef _MSC_VER
+
+#if (_MSC_VER >= 1600)
+#define CLARA_INTERNAL_CONFIG_CPP11_NULLPTR
+#define CLARA_INTERNAL_CONFIG_CPP11_UNIQUE_PTR
+#endif
+
+#if (_MSC_VER >= 1900 ) // (VC++ 13 (VS2015))
+#define CLARA_INTERNAL_CONFIG_CPP11_NOEXCEPT
+#define CLARA_INTERNAL_CONFIG_CPP11_GENERATED_METHODS
+#endif
+
+#endif // _MSC_VER
+
+////////////////////////////////////////////////////////////////////////////////
+// C++ language feature support
+
+// catch all support for C++11
+#if defined(__cplusplus) && __cplusplus >= 201103L
+
+#define CLARA_CPP11_OR_GREATER
+
+#if !defined(CLARA_INTERNAL_CONFIG_CPP11_NULLPTR)
+#define CLARA_INTERNAL_CONFIG_CPP11_NULLPTR
+#endif
+
+#ifndef CLARA_INTERNAL_CONFIG_CPP11_NOEXCEPT
+#define CLARA_INTERNAL_CONFIG_CPP11_NOEXCEPT
+#endif
+
+#ifndef CLARA_INTERNAL_CONFIG_CPP11_GENERATED_METHODS
+#define CLARA_INTERNAL_CONFIG_CPP11_GENERATED_METHODS
+#endif
+
+#if !defined(CLARA_INTERNAL_CONFIG_CPP11_OVERRIDE)
+#define CLARA_INTERNAL_CONFIG_CPP11_OVERRIDE
+#endif
+#if !defined(CLARA_INTERNAL_CONFIG_CPP11_UNIQUE_PTR)
+#define CLARA_INTERNAL_CONFIG_CPP11_UNIQUE_PTR
+#endif
+
+#endif // __cplusplus >= 201103L
+
+// Now set the actual defines based on the above + anything the user has configured
+#if defined(CLARA_INTERNAL_CONFIG_CPP11_NULLPTR) && !defined(CLARA_CONFIG_CPP11_NO_NULLPTR) && !defined(CLARA_CONFIG_CPP11_NULLPTR) && !defined(CLARA_CONFIG_NO_CPP11)
+#define CLARA_CONFIG_CPP11_NULLPTR
+#endif
+#if defined(CLARA_INTERNAL_CONFIG_CPP11_NOEXCEPT) && !defined(CLARA_CONFIG_CPP11_NO_NOEXCEPT) && !defined(CLARA_CONFIG_CPP11_NOEXCEPT) && !defined(CLARA_CONFIG_NO_CPP11)
+#define CLARA_CONFIG_CPP11_NOEXCEPT
+#endif
+#if defined(CLARA_INTERNAL_CONFIG_CPP11_GENERATED_METHODS) && !defined(CLARA_CONFIG_CPP11_NO_GENERATED_METHODS) && !defined(CLARA_CONFIG_CPP11_GENERATED_METHODS) && !defined(CLARA_CONFIG_NO_CPP11)
+#define CLARA_CONFIG_CPP11_GENERATED_METHODS
+#endif
+#if defined(CLARA_INTERNAL_CONFIG_CPP11_OVERRIDE) && !defined(CLARA_CONFIG_NO_OVERRIDE) && !defined(CLARA_CONFIG_CPP11_OVERRIDE) && !defined(CLARA_CONFIG_NO_CPP11)
+#define CLARA_CONFIG_CPP11_OVERRIDE
+#endif
+#if defined(CLARA_INTERNAL_CONFIG_CPP11_UNIQUE_PTR) && !defined(CLARA_CONFIG_NO_UNIQUE_PTR) && !defined(CLARA_CONFIG_CPP11_UNIQUE_PTR) && !defined(CLARA_CONFIG_NO_CPP11)
+#define CLARA_CONFIG_CPP11_UNIQUE_PTR
+#endif
+
+// noexcept support:
+#if defined(CLARA_CONFIG_CPP11_NOEXCEPT) && !defined(CLARA_NOEXCEPT)
+#define CLARA_NOEXCEPT noexcept
+#  define CLARA_NOEXCEPT_IS(x) noexcept(x)
+#else
+#define CLARA_NOEXCEPT throw()
+#  define CLARA_NOEXCEPT_IS(x)
+#endif
+
+// nullptr support
+#ifdef CLARA_CONFIG_CPP11_NULLPTR
+#define CLARA_NULL nullptr
+#else
+#define CLARA_NULL NULL
+#endif
+
+// override support
+#ifdef CLARA_CONFIG_CPP11_OVERRIDE
+#define CLARA_OVERRIDE override
+#else
+#define CLARA_OVERRIDE
+#endif
+
+// unique_ptr support
+#ifdef CLARA_CONFIG_CPP11_UNIQUE_PTR
+#   define CLARA_AUTO_PTR( T ) std::unique_ptr<T>
+#else
+#   define CLARA_AUTO_PTR( T ) std::auto_ptr<T>
+#endif
+
+#endif // TWOBLUECUBES_CLARA_COMPILERS_H_INCLUDED
+
+// ----------- end of #include from clara_compilers.h -----------
+// ........... back in clara.h
+
 #include <map>
-#include <algorithm>
 #include <stdexcept>
 #include <memory>
 
@@ -3761,6 +3910,9 @@ namespace Clara {
 #else
     const unsigned int consoleWidth = 80;
 #endif
+
+        // Use this to try and stop compiler from warning about unreachable code
+        inline bool isTrue( bool value ) { return value; }
 
         using namespace Tbc;
 
@@ -3802,16 +3954,17 @@ namespace Clara {
         }
         template<typename T>
         inline void convertInto( bool, T& ) {
-            throw std::runtime_error( "Invalid conversion" );
+            if( isTrue( true ) )
+                throw std::runtime_error( "Invalid conversion" );
         }
 
         template<typename ConfigT>
         struct IArgFunction {
             virtual ~IArgFunction() {}
-#  ifdef CATCH_CONFIG_CPP11_GENERATED_METHODS
+#ifdef CLARA_CONFIG_CPP11_GENERATED_METHODS
             IArgFunction()                      = default;
             IArgFunction( IArgFunction const& ) = default;
-#  endif
+#endif
             virtual void set( ConfigT& config, std::string const& value ) const = 0;
             virtual void setFlag( ConfigT& config ) const = 0;
             virtual bool takesArg() const = 0;
@@ -3821,11 +3974,11 @@ namespace Clara {
         template<typename ConfigT>
         class BoundArgFunction {
         public:
-            BoundArgFunction() : functionObj( CATCH_NULL ) {}
+            BoundArgFunction() : functionObj( CLARA_NULL ) {}
             BoundArgFunction( IArgFunction<ConfigT>* _functionObj ) : functionObj( _functionObj ) {}
-            BoundArgFunction( BoundArgFunction const& other ) : functionObj( other.functionObj ? other.functionObj->clone() : CATCH_NULL ) {}
+            BoundArgFunction( BoundArgFunction const& other ) : functionObj( other.functionObj ? other.functionObj->clone() : CLARA_NULL ) {}
             BoundArgFunction& operator = ( BoundArgFunction const& other ) {
-                IArgFunction<ConfigT>* newFunctionObj = other.functionObj ? other.functionObj->clone() : CATCH_NULL;
+                IArgFunction<ConfigT>* newFunctionObj = other.functionObj ? other.functionObj->clone() : CLARA_NULL;
                 delete functionObj;
                 functionObj = newFunctionObj;
                 return *this;
@@ -3841,7 +3994,7 @@ namespace Clara {
             bool takesArg() const { return functionObj->takesArg(); }
 
             bool isSet() const {
-                return functionObj != CATCH_NULL;
+                return functionObj != CLARA_NULL;
             }
         private:
             IArgFunction<ConfigT>* functionObj;
@@ -3949,7 +4102,7 @@ namespace Clara {
             std::string data;
         };
 
-        void parseIntoTokens( int argc, char const * const * argv, std::vector<Parser::Token>& tokens ) const {
+        void parseIntoTokens( int argc, char const* const argv[], std::vector<Parser::Token>& tokens ) const {
             const std::string doubleDash = "--";
             for( int i = 1; i < argc && argv[i] != doubleDash; ++i )
                 parseIntoTokens( argv[i] , tokens);
@@ -4059,7 +4212,7 @@ namespace Clara {
             }
         };
 
-        typedef CATCH_AUTO_PTR( Arg ) ArgAutoPtr;
+        typedef CLARA_AUTO_PTR( Arg ) ArgAutoPtr;
 
         friend void addOptName( Arg& arg, std::string const& optName )
         {
@@ -4135,8 +4288,8 @@ namespace Clara {
                 m_arg->description = description;
                 return *this;
             }
-            ArgBuilder& detail( std::string const& _detail ) {
-                m_arg->detail = _detail;
+            ArgBuilder& detail( std::string const& detail ) {
+                m_arg->detail = detail;
                 return *this;
             }
 
@@ -4219,14 +4372,14 @@ namespace Clara {
                 maxWidth = (std::max)( maxWidth, it->commands().size() );
 
             for( it = itBegin; it != itEnd; ++it ) {
-                Detail::Text usageText( it->commands(), Detail::TextAttributes()
+                Detail::Text usage( it->commands(), Detail::TextAttributes()
                                                         .setWidth( maxWidth+indent )
                                                         .setIndent( indent ) );
                 Detail::Text desc( it->description, Detail::TextAttributes()
                                                         .setWidth( width - maxWidth - 3 ) );
 
-                for( std::size_t i = 0; i < (std::max)( usageText.size(), desc.size() ); ++i ) {
-                    std::string usageCol = i < usageText.size() ? usageText[i] : "";
+                for( std::size_t i = 0; i < (std::max)( usage.size(), desc.size() ); ++i ) {
+                    std::string usageCol = i < usage.size() ? usage[i] : "";
                     os << usageCol;
 
                     if( i < desc.size() && !desc[i].empty() )
@@ -4283,13 +4436,13 @@ namespace Clara {
             return oss.str();
         }
 
-        ConfigT parse( int argc, char const * const * argv ) const {
+        ConfigT parse( int argc, char const* const argv[] ) const {
             ConfigT config;
             parseInto( argc, argv, config );
             return config;
         }
 
-        std::vector<Parser::Token> parseInto( int argc, char const * const * argv, ConfigT& config ) const {
+        std::vector<Parser::Token> parseInto( int argc, char const* argv[], ConfigT& config ) const {
             std::string processName = argv[0];
             std::size_t lastSlash = processName.find_last_of( "/\\" );
             if( lastSlash != std::string::npos )
@@ -6083,7 +6236,7 @@ namespace Catch {
             Catch::cout() << "For more detail usage please see the project docs\n" << std::endl;
         }
 
-        int applyCommandLine( int argc, char const* const argv[], OnUnusedOptions::DoWhat unusedOptionBehaviour = OnUnusedOptions::Fail ) {
+        int applyCommandLine( int argc, char const* argv[], OnUnusedOptions::DoWhat unusedOptionBehaviour = OnUnusedOptions::Fail ) {
             try {
                 m_cli.setThrowOnUnrecognisedTokens( unusedOptionBehaviour == OnUnusedOptions::Fail );
                 m_unusedTokens = m_cli.parseInto( argc, argv, m_configData );
@@ -6110,12 +6263,15 @@ namespace Catch {
             m_config.reset();
         }
 
-        int run( int argc, char const* const argv[] ) {
+        int run( int argc, char const* argv[] ) {
 
             int returnCode = applyCommandLine( argc, argv );
             if( returnCode == 0 )
                 returnCode = run();
             return returnCode;
+        }
+        int run( int argc, char* argv[] ) {
+            return run( argc, const_cast<char const**>( argv ) );
         }
 
         int run() {
@@ -7270,7 +7426,7 @@ namespace Catch {
         return os;
     }
 
-    Version libraryVersion( 1, 3, 1, "", 0 );
+    Version libraryVersion( 1, 3, 4, "", 0 );
 
 }
 
@@ -10090,7 +10246,7 @@ int main (int argc, char * const argv[]) {
     #define CATCH_TEST_CASE( ... ) INTERNAL_CATCH_TESTCASE( __VA_ARGS__ )
     #define CATCH_TEST_CASE_METHOD( className, ... ) INTERNAL_CATCH_TEST_CASE_METHOD( className, __VA_ARGS__ )
     #define CATCH_METHOD_AS_TEST_CASE( method, ... ) INTERNAL_CATCH_METHOD_AS_TEST_CASE( method, __VA_ARGS__ )
-    #define CATCH_REGISTER_TEST_CASE( ... ) INTERNAL_CATCH_REGISTER_TESTCASE( __VA_ARGS__ )
+    #define CATCH_REGISTER_TEST_CASE( Function, ... ) INTERNAL_CATCH_REGISTER_TESTCASE( Function, __VA_ARGS__ )
     #define CATCH_SECTION( ... ) INTERNAL_CATCH_SECTION( __VA_ARGS__ )
     #define CATCH_FAIL( ... ) INTERNAL_CATCH_MSG( Catch::ResultWas::ExplicitFailure, Catch::ResultDisposition::Normal, "CATCH_FAIL", __VA_ARGS__ )
     #define CATCH_SUCCEED( ... ) INTERNAL_CATCH_MSG( Catch::ResultWas::Ok, Catch::ResultDisposition::ContinueOnFailure, "CATCH_SUCCEED", __VA_ARGS__ )
@@ -10159,7 +10315,7 @@ int main (int argc, char * const argv[]) {
     #define TEST_CASE( ... ) INTERNAL_CATCH_TESTCASE( __VA_ARGS__ )
     #define TEST_CASE_METHOD( className, ... ) INTERNAL_CATCH_TEST_CASE_METHOD( className, __VA_ARGS__ )
     #define METHOD_AS_TEST_CASE( method, ... ) INTERNAL_CATCH_METHOD_AS_TEST_CASE( method, __VA_ARGS__ )
-    #define REGISTER_TEST_CASE( ... ) INTERNAL_CATCH_REGISTER_TESTCASE( __VA_ARGS__ )
+    #define REGISTER_TEST_CASE( Function, ... ) INTERNAL_CATCH_REGISTER_TESTCASE( Function, __VA_ARGS__ )
     #define SECTION( ... ) INTERNAL_CATCH_SECTION( __VA_ARGS__ )
     #define FAIL( ... ) INTERNAL_CATCH_MSG( Catch::ResultWas::ExplicitFailure, Catch::ResultDisposition::Normal, "FAIL", __VA_ARGS__ )
     #define SUCCEED( ... ) INTERNAL_CATCH_MSG( Catch::ResultWas::Ok, Catch::ResultDisposition::ContinueOnFailure, "SUCCEED", __VA_ARGS__ )
@@ -10167,7 +10323,7 @@ int main (int argc, char * const argv[]) {
     #define TEST_CASE( name, description ) INTERNAL_CATCH_TESTCASE( name, description )
     #define TEST_CASE_METHOD( className, name, description ) INTERNAL_CATCH_TEST_CASE_METHOD( className, name, description )
     #define METHOD_AS_TEST_CASE( method, name, description ) INTERNAL_CATCH_METHOD_AS_TEST_CASE( method, name, description )
-    #define REGISTER_TEST_CASE( ... ) INTERNAL_CATCH_REGISTER_TESTCASE( __VA_ARGS__ )
+    #define REGISTER_TEST_CASE( method, name, description ) INTERNAL_CATCH_REGISTER_TESTCASE( method, name, description )
     #define SECTION( name, description ) INTERNAL_CATCH_SECTION( name, description )
     #define FAIL( msg ) INTERNAL_CATCH_MSG( Catch::ResultWas::ExplicitFailure, Catch::ResultDisposition::Normal, "FAIL", msg )
     #define SUCCEED( msg ) INTERNAL_CATCH_MSG( Catch::ResultWas::Ok, Catch::ResultDisposition::ContinueOnFailure, "SUCCEED", msg )
