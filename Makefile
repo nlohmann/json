@@ -9,7 +9,7 @@ all: json_unit
 
 # clean up
 clean:
-	rm -f json_unit json_benchmarks
+	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM
 
 
 ##########################################################################
@@ -31,6 +31,24 @@ json_unit: test/unit.cpp src/json.hpp test/catch.hpp
 # compile example files and check output
 doctest:
 	make check_output -C doc
+
+
+##########################################################################
+# fuzzing
+##########################################################################
+
+# the overall fuzz testing target
+fuzz_testing:
+	rm -fr fuzz-testing
+	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
+	$(MAKE) fuzz CXX=afl-clang++
+	mv fuzz fuzz-testing
+	find test/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
+	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzz"
+
+# the fuzzer binary
+fuzz: test/fuzz.cpp src/json.hpp
+	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src $< $(LDFLAGS) -o $@
 
 
 ##########################################################################
@@ -57,7 +75,7 @@ pretty:
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none \
-	   src/json.hpp src/json.hpp.re2c test/unit.cpp benchmarks/benchmarks.cpp doc/examples/*.cpp
+	   src/json.hpp src/json.hpp.re2c test/unit.cpp test/fuzz.cpp benchmarks/benchmarks.cpp doc/examples/*.cpp
 
 
 ##########################################################################

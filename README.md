@@ -394,6 +394,7 @@ I deeply appreciate the help of the following people.
 - [Corbin Hughes](https://github.com/nibroc) fixed some typos in the contribution guidelines.
 - [twelsby](https://github.com/twelsby) fixed the array subscript operator, an issue that failed the MSVC build, and floating-point parsing/dumping. He further added support for unsigned integer numbers.
 - [Volker Diels-Grabsch](https://github.com/vog) fixed a link in the README file.
+- [msm-](https://github.com/msm-) added support for american fuzzy lop. 
 
 Thanks a lot for helping out!
 
