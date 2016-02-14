@@ -12020,6 +12020,12 @@ TEST_CASE("Unicode", "[hide]")
         json j;
         CHECK_NOTHROW(j << f);
     }
+
+    SECTION("error for incomplete/wrong BOM")
+    {
+        CHECK_THROWS_AS(json::parse("\xef\xbb"), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\xef\xbb\xbb"), std::invalid_argument);
+    }
 }
 
 TEST_CASE("regression tests")
