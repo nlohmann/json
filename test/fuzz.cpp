@@ -24,7 +24,7 @@ int main()
             json j(std::cin);
             std::cout << j << std::endl;
         }
-        catch (std::invalid_argument &e)
+        catch (std::invalid_argument& e)
         {
             std::cout << "Invalid argument in parsing" << e.what() << '\n';
         }
