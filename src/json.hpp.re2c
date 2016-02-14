@@ -719,7 +719,7 @@ class basic_json
         number_float_t number_float;
 
         /// default constructor (for null values)
-        json_value() noexcept = default;
+        json_value() = default;
         /// constructor for booleans
         json_value(boolean_t v) noexcept : boolean(v) {}
         /// constructor for numbers (integer)
@@ -957,7 +957,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    basic_json() noexcept = default;
+    basic_json() = default;
 
     /*!
     @brief create a null object (explicitly)
@@ -6284,7 +6284,7 @@ class basic_json
         using iterator_category = std::bidirectional_iterator_tag;
 
         /// default constructor
-        const_iterator() noexcept = default;
+        const_iterator() = default;
 
         /// constructor for a given JSON instance
         explicit const_iterator(pointer object) noexcept
@@ -6818,7 +6818,7 @@ class basic_json
         using reference = typename basic_json::reference;
 
         /// default constructor
-        iterator() noexcept = default;
+        iterator() = default;
 
         /// constructor for a given JSON instance
         explicit iterator(pointer object) noexcept
@@ -7106,7 +7106,7 @@ class basic_json
         }
 
         /// default constructor
-        lexer() noexcept = default;
+        lexer() = default;
 
         // switch off unwanted functions
         lexer(const lexer&) = delete;
