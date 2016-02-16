@@ -72,6 +72,36 @@ struct has_mapped_type
 }
 
 /*!
+@brief default type for objects
+
+This type is used to store objects if no other type is provided to @ref
+basic_json via the @a ObjectType template parameter. Defaults to `std::map<Key,
+T>`.
+
+@tparam Key  type of the object keys
+@tparam T  type of the object elements
+
+@since version 2.0.0
+*/
+template<typename Key, typename T>
+using default_object_type = std::map<Key, T>;
+
+/*!
+@brief default type for arrays
+
+This type is used to store arrays if no other type is provided to @ref
+basic_json via the @a ArrayType template parameter. Defaults to
+`std::vector<T>`.
+
+@tparam T  type of the array elements
+
+@since version 2.0.0
+*/
+template<typename T>
+using default_array_type = std::vector<T>;
+
+
+/*!
 @brief a class to store JSON values
 
 @tparam ObjectType type for JSON objects (`std::map` by default; will be used
@@ -143,8 +173,8 @@ Format](http://rfc7159.net/rfc7159)
 @nosubgrouping
 */
 template <
-    template<typename U, typename V, typename... Args> class ObjectType = std::map,
-    template<typename U, typename... Args> class ArrayType = std::vector,
+    template<typename Key, typename T> class ObjectType = default_object_type,
+    template<typename T> class ArrayType = default_array_type,
     class StringType = std::string,
     class BooleanType = bool,
     class NumberIntegerType = int64_t,
@@ -238,18 +268,20 @@ class basic_json
     described below.
 
     @tparam ObjectType  the container to store objects (e.g., `std::map` or
-    `std::unordered_map`)
-    @tparam StringType the type of the keys or names (e.g., `std::string`). The
-    comparison function `std::less<StringType>` is used to order elements
-    inside the container.
-    @tparam AllocatorType the allocator to use for objects (e.g.,
-    `std::allocator`)
+    `std::unordered_map`). This container must have exactly two template
+    arguments: @a Key for the keys and @a V for the stored values. That is,
+    `std::map` cannot be passed directly, because it has four template
+    arguments. Instead, a type alias (like @ref default_object_type) has to be
+    provided, e.g.
+    @code {.cpp}
+    template<typename Key, typename V>
+    using my_object_type = std::map<Key, V>;
+    @endcode
 
     #### Default type
 
-    With the default values for @a ObjectType (`std::map`), @a StringType
-    (`std::string`), and @a AllocatorType (`std::allocator`), the default value
-    for @a object_t is:
+    With the default values for @a ObjectType (@ref default_object_type) and @a
+    StringType (`std::string`), the default value for @a object_t is:
 
     @code {.cpp}
     std::map<
@@ -308,11 +340,7 @@ class basic_json
     7159](http://rfc7159.net/rfc7159), because any order implements the
     specified "unordered" nature of JSON objects.
     */
-    using object_t = ObjectType<StringType,
-          basic_json,
-          std::less<StringType>,
-          AllocatorType<std::pair<const StringType,
-          basic_json>>>;
+    using object_t = ObjectType<StringType, basic_json>;
 
     /*!
     @brief a type for an array
@@ -324,13 +352,19 @@ class basic_json
     explained below.
 
     @tparam ArrayType  container type to store arrays (e.g., `std::vector` or
-    `std::list`)
-    @tparam AllocatorType  allocator to use for arrays (e.g., `std::allocator`)
+    `std::list`). This container must have exactly one template arguments: @a V
+    for the stored values. That is, `std::vector` cannot be passed directly,
+    because it has two template arguments. Instead, a type alias (like @ref
+    default_array_type) has to be provided, e.g.
+    @code {.cpp}
+    template<typename V>
+    using my_array_type = std::vector<V>;
+    @endcode
 
     #### Default type
 
-    With the default values for @a ArrayType (`std::vector`) and @a
-    AllocatorType (`std::allocator`), the default value for @a array_t is:
+    With the default values for @a ArrayType (@ref default_array_type), the
+    default value for @a array_t is:
 
     @code {.cpp}
     std::vector<
@@ -358,7 +392,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
+    using array_t = ArrayType<basic_json>;
 
     /*!
     @brief a type for a string
