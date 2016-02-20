@@ -1,4 +1,4 @@
-/*
+﻿/*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
 |  |  |__   |  |  | | | |  version 2.0.0
@@ -4873,7 +4873,13 @@ class basic_json
             // insert to array and return iterator
             iterator result(this);
             assert(m_value.array != nullptr);
-            result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, cnt, val);
+            #if defined(__GNUC__) && __GNUC__ <= 4 && __GNUC_MINOR__ <= 8
+                 auto insert_pos = std::distance(m_value.array->begin(), pos.m_it.array_iterator);
+                 m_value.array->insert(pos.m_it.array_iterator, cnt, val);
+                 result.m_it.array_iterator = m_value.array->begin() + insert_pos;
+            #else
+                result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, cnt, val);
+            #endif
             return result;
         }
         else
@@ -4939,10 +4945,19 @@ class basic_json
         // insert to array and return iterator
         iterator result(this);
         assert(m_value.array != nullptr);
-        result.m_it.array_iterator = m_value.array->insert(
+        
+        #if defined(__GNUC__) && __GNUC__ <= 4 && __GNUC_MINOR__ <= 8
+            auto insert_pos = std::distance(m_value.array->begin(), pos.m_it.array_iterator);
+            m_value.array->insert(pos.m_it.array_iterator, 
+                                  first.m_it.array_iterator,
+                                  last.m_it.array_iterator);
+            result.m_it.array_iterator = m_value.array->begin() + insert_pos;
+        #else
+            result.m_it.array_iterator = m_value.array->insert(
                                          pos.m_it.array_iterator,
                                          first.m_it.array_iterator,
                                          last.m_it.array_iterator);
+        #endif
         return result;
     }
 
@@ -4987,7 +5002,13 @@ class basic_json
         // insert to array and return iterator
         iterator result(this);
         assert(m_value.array != nullptr);
-        result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, ilist);
+        #if defined(__GNUC__) && __GNUC__ <= 4 && __GNUC_MINOR__ <= 8
+            auto insert_pos = std::distance(m_value.array->begin(), pos.m_it.array_iterator);
+            m_value.array->insert(pos.m_it.array_iterator, ilist);
+            result.m_it.array_iterator = m_value.array->begin() + insert_pos;
+        #else
+            result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, ilist);
+        #endif
         return result;
     }
 
