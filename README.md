@@ -25,7 +25,7 @@ Other aspects were not so important to us:
 
 - **Speed**. We currently implement the parser as naive [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser) with hand coded string handling. It is fast enough, but a [LALR-parser](http://en.wikipedia.org/wiki/LALR_parser) with a decent regular expression processor should be even faster (but would consist of more files which makes the integration harder).
 
-See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/CONTRIBUTING.md#please-dont) for more information.
+See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.github/CONTRIBUTING.md#please-dont) for more information.
 
 ## Integration
 
