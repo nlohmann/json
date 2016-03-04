@@ -17,7 +17,7 @@ There are myriads of [JSON](http://json.org) libraries out there, and each may e
 
 - **Trivial integration**. Our whole code consists of a single header file `json.hpp`. That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
-- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/blob/master/test/json_unit.cc) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) that there are no memory leaks.
+- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/blob/master/test/unit.cpp) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) that there are no memory leaks.
 
 Other aspects were not so important to us:
 
@@ -395,6 +395,8 @@ I deeply appreciate the help of the following people.
 - [twelsby](https://github.com/twelsby) fixed the array subscript operator, an issue that failed the MSVC build, and floating-point parsing/dumping. He further added support for unsigned integer numbers.
 - [Volker Diels-Grabsch](https://github.com/vog) fixed a link in the README file.
 - [msm-](https://github.com/msm-) added support for american fuzzy lop. 
+- [Annihil](https://github.com/Annihil) fixed an example in the README file.
+- [Themercee](https://github.com/Themercee) noted a wrong URL in the README file.
 
 Thanks a lot for helping out!
 
