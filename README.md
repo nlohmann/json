@@ -301,7 +301,7 @@ Likewise, any associative key-value containers (`std::map`, `std::multimap`, `st
 ```cpp
 std::map<std::string, int> c_map { {"one", 1}, {"two", 2}, {"three", 3} };
 json j_map(c_map);
-// {"one": 1, "two": 2, "three": 3}
+// {"one": 1, "three": 3, "two": 2 }
 
 std::unordered_map<const char*, double> c_umap { {"one", 1.2}, {"two", 2.3}, {"three", 3.4} };
 json j_umap(c_umap);
