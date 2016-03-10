@@ -14,6 +14,7 @@ Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cerrno>
 #include <ciso646>
 #include <cmath>
 #include <cstddef>
