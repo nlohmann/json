@@ -240,7 +240,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;template&lt; typename U, typename V, typename...Args &gt; class ObjectType = std::map, template&lt; typename U, typename...Args &gt; class ArrayType = std::vector, class StringType  = std::string, class BooleanType  = bool, class NumberIntegerType  = int64_t, class NumberUnsignedType  = uint64_t, class NumberFloatType  = double, template&lt; typename U &gt; class AllocatorType = std::allocator&gt; </div>
+template&lt;template&lt; typename U, typename V, typename...Args &gt; class ObjectType = std::map, template&lt; typename U, typename...Args &gt; class ArrayType = std::vector, class StringType  = std::string, class BooleanType  = bool, class NumberIntegerType  = std::int64_t, class NumberUnsignedType  = std::uint64_t, class NumberFloatType  = double, template&lt; typename U &gt; class AllocatorType = std::allocator&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">using <a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::<a class="el" href="classnlohmann_1_1basic__json_a0ac9894c9de8dc551cf2e5f1c605537f.html#a0ac9894c9de8dc551cf2e5f1c605537f">object_t</a> =  ObjectType&lt;StringType, <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>, std::less&lt;StringType&gt;, AllocatorType&lt;std::pair&lt;const StringType, <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>&gt;&gt;&gt;</td>
@@ -280,7 +280,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 <dl class="section since"><dt>Since</dt><dd>version 1.0.0</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>The order name/value pairs are added to the object is <em>not</em> preserved by the library. Therefore, iterating an object may return name/value pairs in a different order than they were originally stored. In fact, keys will be traversed in alphabetical order as <code>std::map</code> with <code>std::less</code> is used by default. Please note this behavior conforms to <a href="http://rfc7159.net/rfc7159">RFC 7159</a>, because any order implements the specified "unordered" nature of JSON objects. </dd></dl>
 
-<p>Definition at line <a class="el" href="json_8hpp_source.html#l00315">315</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p>Definition at line <a class="el" href="json_8hpp_source.html#l00334">334</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 
 </div>
 </div>
@@ -290,7 +290,7 @@ template&lt;template&lt; typename U, typename V, typename...Args &gt; class Obje
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Feb 14 2016 22:26:22 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Mar 30 2016 20:26:58 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>
