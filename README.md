@@ -407,6 +407,7 @@ I deeply appreciate the help of the following people.
 - [Themercee](https://github.com/Themercee) noted a wrong URL in the README file.
 - [Lv Zheng](https://github.com/lv-zheng) fixed a namespace issue with `int64_t` and `uint64_t`.
 - [abc100m](https://github.com/abc100m) analyzed the issues with GCC 4.8 and proposed a [partial solution](https://github.com/nlohmann/json/pull/212).
+- [zewt](https://github.com/zewt) added useful notes to the README file about Android.
 
 Thanks a lot for helping out!
 
