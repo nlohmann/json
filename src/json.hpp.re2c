@@ -1580,14 +1580,14 @@ class basic_json
 
             for (auto& element : init)
             {
-                m_value.object->emplace(std::move(*(element[0].m_value.string)), std::move(element[1]));
+                m_value.object->emplace(*(element[0].m_value.string), element[1]);
             }
         }
         else
         {
             // the initializer list describes an array -> create array
             m_type = value_t::array;
-            m_value.array = create<array_t>(std::move(init));
+            m_value.array = create<array_t>(init);
         }
     }
 
