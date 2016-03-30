@@ -32,6 +32,7 @@ SOFTWARE.
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cerrno>
 #include <ciso646>
 #include <cmath>
 #include <cstddef>
