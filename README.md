@@ -52,7 +52,7 @@ I would be happy to learn about other compilers/versions.
 
 Please note:
 
-- GCC 4.8 does not work because of two bugs ([55817](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55817) and [57824](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57824)) in the C++11 support.
+- GCC 4.8 does not work because of two bugs ([55817](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55817) and [57824](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57824)) in the C++11 support. Note there is a [pull request](https://github.com/nlohmann/json/pull/212) to fix some of the issues.
 - For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. Please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug.
 
 ## Examples
@@ -397,6 +397,8 @@ I deeply appreciate the help of the following people.
 - [msm-](https://github.com/msm-) added support for american fuzzy lop. 
 - [Annihil](https://github.com/Annihil) fixed an example in the README file.
 - [Themercee](https://github.com/Themercee) noted a wrong URL in the README file.
+- [Lv Zheng](https://github.com/lv-zheng) fixed a namespace issue with `int64_t` and `uint64_t`.
+- [abc100m](https://github.com/abc100m) analyzed the issues with GCC 4.8 and proposed a [partial solution](https://github.com/nlohmann/json/pull/212).
 
 Thanks a lot for helping out!
 
