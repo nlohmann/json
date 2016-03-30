@@ -195,6 +195,8 @@ std::cout << std::setw(4) << j << std::endl;
 
 These operators work for any subclasses of `std::istream` or `std::ostream`.
 
+Please note that setting the exception bit for `failbit` is inappropriate for this use case. It will result in program termination due to the `noexcept` specifier in use.
+
 ### STL-like access
 
 We designed the JSON class to behave just like an STL container. In fact, it satisfies the [**ReversibleContainer**](http://en.cppreference.com/w/cpp/concept/ReversibleContainer) requirement.
