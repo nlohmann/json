@@ -9776,7 +9776,8 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("-0e-:").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("-0f").parse(), std::invalid_argument);
 
-                CHECK_THROWS_WITH(json::parser("01").parse(), "parse error - 0 is not a number");
+                CHECK_THROWS_WITH(json::parser("01").parse(),
+                                  "parse error - unexpected number literal; expected end of input");
                 CHECK_THROWS_WITH(json::parser("--1").parse(), "parse error - unexpected '-'");
                 CHECK_THROWS_WITH(json::parser("1.").parse(),
                                   "parse error - unexpected '.'; expected end of input");
@@ -11823,10 +11824,15 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     "test/json_roundtrip/roundtrip21.json",
                     "test/json_roundtrip/roundtrip22.json",
                     "test/json_roundtrip/roundtrip23.json",
-                    //"test/json_roundtrip/roundtrip24.json",
-                    //"test/json_roundtrip/roundtrip25.json",
-                    //"test/json_roundtrip/roundtrip26.json",
-                    //"test/json_roundtrip/roundtrip27.json"
+                    "test/json_roundtrip/roundtrip24.json",
+                    "test/json_roundtrip/roundtrip25.json",
+                    "test/json_roundtrip/roundtrip26.json",
+                    "test/json_roundtrip/roundtrip27.json",
+                    "test/json_roundtrip/roundtrip28.json",
+                    "test/json_roundtrip/roundtrip29.json",
+                    "test/json_roundtrip/roundtrip30.json",
+                    "test/json_roundtrip/roundtrip31.json",
+                    "test/json_roundtrip/roundtrip32.json"
                 })
         {
             CAPTURE(filename);

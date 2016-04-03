@@ -695,6 +695,74 @@ class basic_json
 
 
   private:
+
+    /*!
+    @brief a type to hold JSON type information
+
+    This bitfield type holds information about JSON types. It is internally
+    used to hold the basic JSON type enumeration, as well as additional
+    information in the case of values that have been parsed from a string
+    including whether of not it was created directly or parsed, and in the
+    case of floating point numbers the number of significant figures in the
+    original representaiton and if it was in exponential form, if a '+' was
+    included in the exponent and the capitilization of the exponent marker.
+    The sole purpose of this information is to permit accurate round trips.
+
+    @since version 2.0.0
+    */
+    union type_data_t
+    {
+        struct
+        {
+            /// the type of the value (@ref value_t)
+            uint16_t type : 4;
+            /// whether the number was parsed from a string
+            uint16_t parsed : 1;
+            /// whether parsed number contained an exponent ('e'/'E')
+            uint16_t has_exp : 1;
+            /// whether parsed number contained a plus in the exponent
+            uint16_t exp_plus : 1;
+            /// whether parsed number's exponent was capitalized ('E')
+            uint16_t exp_cap : 1;
+            /// the number of figures for a parsed number
+            uint16_t precision : 8;
+        } bits;
+        uint16_t data;
+
+        /// return the type as value_t
+        operator value_t() const
+        {
+            return static_cast<value_t>(bits.type);
+        }
+
+        /// test type for equality (ignore other fields)
+        bool operator==(const value_t& rhs) const
+        {
+            return static_cast<value_t>(bits.type) == rhs;
+        }
+
+        /// assignment
+        type_data_t& operator=(value_t rhs)
+        {
+            bits.type = static_cast<uint16_t>(rhs);
+            return *this;
+        }
+
+        /// construct from value_t
+        type_data_t(value_t t) noexcept
+        {
+            *reinterpret_cast<uint16_t*>(this) = 0;
+            bits.type = static_cast<uint16_t>(t);
+        }
+
+        /// default constructor
+        type_data_t() noexcept
+        {
+            data = 0;
+            bits.type = reinterpret_cast<uint16_t>(value_t::null);
+        }
+    };
+
     /// helper for exception-safe object creation
     template<typename T, typename... Args>
     static T* create(Args&& ... args)
@@ -6046,23 +6114,78 @@ class basic_json
 
             case value_t::number_float:
             {
-                // If the number is an integer then output as a fixed with with
-                // precision 1 to output "0.0", "1.0" etc as expected for some
-                // round trip tests otherwise  15 digits of precision allows
-                // round-trip IEEE 754 string->double->string; to be safe, we
-                // read this value from
-                // std::numeric_limits<number_float_t>::digits10
-                if (std::fmod(m_value.number_float, 1) == 0)
+                // buffer size: precision (2^8-1 = 255) + other ('-.e-xxx' = 7) + null (1)
+                char buf[263];
+                int len;
+
+                // check if number was parsed from a string
+                if (m_type.bits.parsed)
                 {
-                    o << std::fixed << std::setprecision(1);
+                    // check if parsed number had an exponent given
+                    if (m_type.bits.has_exp)
+                    {
+                        // handle capitalization of the exponent
+                        if (m_type.bits.exp_cap)
+                        {
+                            len = snprintf(buf, sizeof(buf), "%.*E", m_type.bits.precision, m_value.number_float) + 1;
+                        }
+                        else
+                        {
+                            len = snprintf(buf, sizeof(buf), "%.*e", m_type.bits.precision, m_value.number_float) + 1;
+                        }
+
+                        // remove '+' sign from the exponent if necessary
+                        if (not m_type.bits.exp_plus)
+                        {
+                            if (len > static_cast<int>(sizeof(buf)))
+                            {
+                                len = sizeof(buf);
+                            }
+                            for (int i = 0; i < len; i++)
+                            {
+                                if (buf[i] == '+')
+                                {
+                                    for (; i + 1 < len; i++)
+                                    {
+                                        buf[i] = buf[i + 1];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // no exponent - output as a decimal
+                        snprintf(buf, sizeof(buf), "%.*f",
+                                 m_type.bits.precision, m_value.number_float);
+                    }
+                }
+                else if (m_value.number_float == 0)
+                {
+                    // special case for zero to get "0.0"/"-0.0"
+                    if (std::signbit(m_value.number_float))
+                    {
+                        o << "-0.0";
+                    }
+                    else
+                    {
+                        o << "0.0";
+                    }
+                    return;
                 }
                 else
                 {
-                    // std::defaultfloat not supported in gcc version < 5
-                    o.unsetf(std::ios_base::floatfield);
-                    o << std::setprecision(std::numeric_limits<double>::digits10);
+                    // Otherwise 6, 15 or 16 digits of precision allows
+                    // round-trip IEEE 754 string->float->string,
+                    // string->double->string or string->long double->string;
+                    // to be safe, we read this value from
+                    // std::numeric_limits<number_float_t>::digits10
+                    snprintf(buf, sizeof(buf), "%.*g",
+                             std::numeric_limits<double>::digits10,
+                             m_value.number_float);
                 }
-                o << m_value.number_float;
+
+                o << buf;
                 return;
             }
 
@@ -6086,7 +6209,7 @@ class basic_json
     //////////////////////
 
     /// the type of the current element
-    value_t m_type = value_t::null;
+    type_data_t m_type = value_t::null;
 
     /// the value of the current element
     json_value m_value = {};
@@ -7278,323 +7401,322 @@ class basic_json
                 {
                     0,   0,   0,   0,   0,   0,   0,   0,
                     0,  32,  32,   0,   0,  32,   0,   0,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    160, 128,   0, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    96,  64,   0,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
                     192, 192, 192, 192, 192, 192, 192, 192,
-                    192, 192, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128,   0, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
-                    128, 128, 128, 128, 128, 128, 128, 128,
+                    192, 192,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,   0,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
+                    64,  64,  64,  64,  64,  64,  64,  64,
                 };
                 if ((m_limit - m_cursor) < 5)
                 {
                     yyfill();    // LCOV_EXCL_LINE;
                 }
                 yych = *m_cursor;
-                if (yybm[0 + yych] & 32)
+                if (yych <= ':')
                 {
-                    goto basic_json_parser_6;
-                }
-                if (yych <= '\\')
-                {
-                    if (yych <= '-')
+                    if (yych <= ' ')
                     {
-                        if (yych <= '"')
+                        if (yych <= '\n')
                         {
                             if (yych <= 0x00)
                             {
-                                goto basic_json_parser_2;
+                                goto basic_json_parser_28;
                             }
-                            if (yych <= '!')
+                            if (yych <= 0x08)
+                            {
+                                goto basic_json_parser_30;
+                            }
+                            if (yych >= '\n')
                             {
                                 goto basic_json_parser_4;
                             }
-                            goto basic_json_parser_9;
                         }
                         else
                         {
-                            if (yych <= '+')
+                            if (yych == '\r')
                             {
-                                goto basic_json_parser_4;
+                                goto basic_json_parser_2;
                             }
-                            if (yych <= ',')
+                            if (yych <= 0x1F)
                             {
-                                goto basic_json_parser_10;
+                                goto basic_json_parser_30;
                             }
-                            goto basic_json_parser_12;
                         }
                     }
                     else
                     {
-                        if (yych <= '9')
+                        if (yych <= ',')
                         {
-                            if (yych <= '/')
+                            if (yych == '"')
                             {
-                                goto basic_json_parser_4;
+                                goto basic_json_parser_27;
                             }
-                            if (yych <= '0')
+                            if (yych <= '+')
                             {
-                                goto basic_json_parser_13;
+                                goto basic_json_parser_30;
                             }
-                            goto basic_json_parser_15;
+                            goto basic_json_parser_16;
                         }
                         else
                         {
-                            if (yych <= ':')
+                            if (yych <= '/')
                             {
-                                goto basic_json_parser_17;
+                                if (yych <= '-')
+                                {
+                                    goto basic_json_parser_23;
+                                }
+                                goto basic_json_parser_30;
                             }
-                            if (yych == '[')
+                            else
                             {
-                                goto basic_json_parser_19;
+                                if (yych <= '0')
+                                {
+                                    goto basic_json_parser_24;
+                                }
+                                if (yych <= '9')
+                                {
+                                    goto basic_json_parser_26;
+                                }
+                                goto basic_json_parser_18;
                             }
-                            goto basic_json_parser_4;
                         }
                     }
                 }
                 else
                 {
-                    if (yych <= 't')
+                    if (yych <= 'n')
                     {
-                        if (yych <= 'f')
+                        if (yych <= ']')
                         {
-                            if (yych <= ']')
+                            if (yych == '[')
                             {
-                                goto basic_json_parser_21;
+                                goto basic_json_parser_8;
                             }
-                            if (yych <= 'e')
+                            if (yych <= '\\')
                             {
-                                goto basic_json_parser_4;
+                                goto basic_json_parser_30;
                             }
-                            goto basic_json_parser_23;
+                            goto basic_json_parser_10;
                         }
                         else
                         {
-                            if (yych == 'n')
+                            if (yych == 'f')
                             {
-                                goto basic_json_parser_24;
+                                goto basic_json_parser_22;
                             }
-                            if (yych <= 's')
+                            if (yych <= 'm')
                             {
-                                goto basic_json_parser_4;
+                                goto basic_json_parser_30;
                             }
-                            goto basic_json_parser_25;
+                            goto basic_json_parser_20;
                         }
                     }
                     else
                     {
-                        if (yych <= '|')
+                        if (yych <= '{')
                         {
-                            if (yych == '{')
+                            if (yych == 't')
                             {
-                                goto basic_json_parser_26;
+                                goto basic_json_parser_21;
                             }
-                            goto basic_json_parser_4;
+                            if (yych <= 'z')
+                            {
+                                goto basic_json_parser_30;
+                            }
+                            goto basic_json_parser_12;
                         }
                         else
                         {
                             if (yych <= '}')
                             {
-                                goto basic_json_parser_28;
+                                if (yych <= '|')
+                                {
+                                    goto basic_json_parser_30;
+                                }
+                                goto basic_json_parser_14;
                             }
-                            if (yych == 0xEF)
+                            else
                             {
+                                if (yych == 0xEF)
+                                {
+                                    goto basic_json_parser_6;
+                                }
                                 goto basic_json_parser_30;
                             }
-                            goto basic_json_parser_4;
                         }
                     }
                 }
 basic_json_parser_2:
                 ++m_cursor;
+                yych = *m_cursor;
+                goto basic_json_parser_5;
+basic_json_parser_3:
                 {
-                    return token_type::end_of_input;
+                    return scan();
                 }
 basic_json_parser_4:
-                ++m_cursor;
-basic_json_parser_5:
-                {
-                    return token_type::parse_error;
-                }
-basic_json_parser_6:
                 ++m_cursor;
                 if (m_limit <= m_cursor)
                 {
                     yyfill();    // LCOV_EXCL_LINE;
                 }
                 yych = *m_cursor;
+basic_json_parser_5:
                 if (yybm[0 + yych] & 32)
                 {
-                    goto basic_json_parser_6;
+                    goto basic_json_parser_4;
                 }
-                {
-                    return scan();
-                }
-basic_json_parser_9:
-                yyaccept = 0;
-                yych = *(m_marker = ++m_cursor);
-                if (yych <= 0x0F)
-                {
-                    goto basic_json_parser_5;
-                }
-                goto basic_json_parser_32;
-basic_json_parser_10:
-                ++m_cursor;
-                {
-                    return token_type::value_separator;
-                }
-basic_json_parser_12:
-                yych = *++m_cursor;
-                if (yych <= '/')
-                {
-                    goto basic_json_parser_5;
-                }
-                if (yych <= '0')
-                {
-                    goto basic_json_parser_13;
-                }
-                if (yych <= '9')
-                {
-                    goto basic_json_parser_15;
-                }
-                goto basic_json_parser_5;
-basic_json_parser_13:
-                yyaccept = 1;
-                yych = *(m_marker = ++m_cursor);
-                if (yych <= 'D')
-                {
-                    if (yych == '.')
-                    {
-                        goto basic_json_parser_37;
-                    }
-                }
-                else
-                {
-                    if (yych <= 'E')
-                    {
-                        goto basic_json_parser_38;
-                    }
-                    if (yych == 'e')
-                    {
-                        goto basic_json_parser_38;
-                    }
-                }
-basic_json_parser_14:
-                {
-                    return token_type::value_number;
-                }
-basic_json_parser_15:
-                yyaccept = 1;
-                m_marker = ++m_cursor;
-                if ((m_limit - m_cursor) < 3)
-                {
-                    yyfill();    // LCOV_EXCL_LINE;
-                }
-                yych = *m_cursor;
-                if (yybm[0 + yych] & 64)
-                {
-                    goto basic_json_parser_15;
-                }
-                if (yych <= 'D')
-                {
-                    if (yych == '.')
-                    {
-                        goto basic_json_parser_37;
-                    }
-                    goto basic_json_parser_14;
-                }
-                else
-                {
-                    if (yych <= 'E')
-                    {
-                        goto basic_json_parser_38;
-                    }
-                    if (yych == 'e')
-                    {
-                        goto basic_json_parser_38;
-                    }
-                    goto basic_json_parser_14;
-                }
-basic_json_parser_17:
-                ++m_cursor;
-                {
-                    return token_type::name_separator;
-                }
-basic_json_parser_19:
-                ++m_cursor;
-                {
-                    return token_type::begin_array;
-                }
-basic_json_parser_21:
-                ++m_cursor;
-                {
-                    return token_type::end_array;
-                }
-basic_json_parser_23:
-                yyaccept = 0;
-                yych = *(m_marker = ++m_cursor);
-                if (yych == 'a')
-                {
-                    goto basic_json_parser_39;
-                }
-                goto basic_json_parser_5;
-basic_json_parser_24:
-                yyaccept = 0;
-                yych = *(m_marker = ++m_cursor);
-                if (yych == 'u')
-                {
-                    goto basic_json_parser_40;
-                }
-                goto basic_json_parser_5;
-basic_json_parser_25:
-                yyaccept = 0;
-                yych = *(m_marker = ++m_cursor);
-                if (yych == 'r')
-                {
-                    goto basic_json_parser_41;
-                }
-                goto basic_json_parser_5;
-basic_json_parser_26:
-                ++m_cursor;
-                {
-                    return token_type::begin_object;
-                }
-basic_json_parser_28:
-                ++m_cursor;
-                {
-                    return token_type::end_object;
-                }
-basic_json_parser_30:
+                goto basic_json_parser_3;
+basic_json_parser_6:
                 yyaccept = 0;
                 yych = *(m_marker = ++m_cursor);
                 if (yych == 0xBB)
                 {
-                    goto basic_json_parser_42;
+                    goto basic_json_parser_64;
                 }
-                goto basic_json_parser_5;
+basic_json_parser_7:
+                {
+                    return token_type::parse_error;
+                }
+basic_json_parser_8:
+                ++m_cursor;
+                {
+                    return token_type::begin_array;
+                }
+basic_json_parser_10:
+                ++m_cursor;
+                {
+                    return token_type::end_array;
+                }
+basic_json_parser_12:
+                ++m_cursor;
+                {
+                    return token_type::begin_object;
+                }
+basic_json_parser_14:
+                ++m_cursor;
+                {
+                    return token_type::end_object;
+                }
+basic_json_parser_16:
+                ++m_cursor;
+                {
+                    return token_type::value_separator;
+                }
+basic_json_parser_18:
+                ++m_cursor;
+                {
+                    return token_type::name_separator;
+                }
+basic_json_parser_20:
+                yyaccept = 0;
+                yych = *(m_marker = ++m_cursor);
+                if (yych == 'u')
+                {
+                    goto basic_json_parser_60;
+                }
+                goto basic_json_parser_7;
+basic_json_parser_21:
+                yyaccept = 0;
+                yych = *(m_marker = ++m_cursor);
+                if (yych == 'r')
+                {
+                    goto basic_json_parser_56;
+                }
+                goto basic_json_parser_7;
+basic_json_parser_22:
+                yyaccept = 0;
+                yych = *(m_marker = ++m_cursor);
+                if (yych == 'a')
+                {
+                    goto basic_json_parser_51;
+                }
+                goto basic_json_parser_7;
+basic_json_parser_23:
+                yych = *++m_cursor;
+                if (yych <= '/')
+                {
+                    goto basic_json_parser_7;
+                }
+                if (yych <= '0')
+                {
+                    goto basic_json_parser_50;
+                }
+                if (yych <= '9')
+                {
+                    goto basic_json_parser_41;
+                }
+                goto basic_json_parser_7;
+basic_json_parser_24:
+                yyaccept = 1;
+                yych = *(m_marker = ++m_cursor);
+                if (yych <= 'D')
+                {
+                    if (yych == '.')
+                    {
+                        goto basic_json_parser_43;
+                    }
+                }
+                else
+                {
+                    if (yych <= 'E')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                    if (yych == 'e')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                }
+basic_json_parser_25:
+                {
+                    return token_type::value_number;
+                }
+basic_json_parser_26:
+                yyaccept = 1;
+                yych = *(m_marker = ++m_cursor);
+                goto basic_json_parser_42;
+basic_json_parser_27:
+                yyaccept = 0;
+                yych = *(m_marker = ++m_cursor);
+                if (yych <= 0x0F)
+                {
+                    goto basic_json_parser_7;
+                }
+                goto basic_json_parser_32;
+basic_json_parser_28:
+                ++m_cursor;
+                {
+                    return token_type::end_of_input;
+                }
+basic_json_parser_30:
+                yych = *++m_cursor;
+                goto basic_json_parser_7;
 basic_json_parser_31:
                 ++m_cursor;
                 if (m_limit <= m_cursor)
@@ -7603,7 +7725,7 @@ basic_json_parser_31:
                 }
                 yych = *m_cursor;
 basic_json_parser_32:
-                if (yybm[0 + yych] & 128)
+                if (yybm[0 + yych] & 64)
                 {
                     goto basic_json_parser_31;
                 }
@@ -7613,25 +7735,20 @@ basic_json_parser_32:
                 }
                 if (yych <= '"')
                 {
-                    goto basic_json_parser_34;
+                    goto basic_json_parser_35;
                 }
-                goto basic_json_parser_36;
+                goto basic_json_parser_34;
 basic_json_parser_33:
                 m_cursor = m_marker;
                 if (yyaccept == 0)
                 {
-                    goto basic_json_parser_5;
+                    goto basic_json_parser_7;
                 }
                 else
                 {
-                    goto basic_json_parser_14;
+                    goto basic_json_parser_25;
                 }
 basic_json_parser_34:
-                ++m_cursor;
-                {
-                    return token_type::value_string;
-                }
-basic_json_parser_36:
                 ++m_cursor;
                 if (m_limit <= m_cursor)
                 {
@@ -7704,78 +7821,117 @@ basic_json_parser_36:
                             }
                             if (yych <= 'u')
                             {
-                                goto basic_json_parser_43;
+                                goto basic_json_parser_37;
                             }
                             goto basic_json_parser_33;
                         }
                     }
                 }
+basic_json_parser_35:
+                ++m_cursor;
+                {
+                    return token_type::value_string;
+                }
 basic_json_parser_37:
-                yych = *++m_cursor;
-                if (yych <= '/')
+                ++m_cursor;
+                if (m_limit <= m_cursor)
                 {
-                    goto basic_json_parser_33;
+                    yyfill();    // LCOV_EXCL_LINE;
                 }
-                if (yych <= '9')
+                yych = *m_cursor;
+                if (yych <= '@')
                 {
-                    goto basic_json_parser_44;
-                }
-                goto basic_json_parser_33;
-basic_json_parser_38:
-                yych = *++m_cursor;
-                if (yych <= ',')
-                {
-                    if (yych == '+')
-                    {
-                        goto basic_json_parser_46;
-                    }
-                    goto basic_json_parser_33;
-                }
-                else
-                {
-                    if (yych <= '-')
-                    {
-                        goto basic_json_parser_46;
-                    }
                     if (yych <= '/')
                     {
                         goto basic_json_parser_33;
                     }
-                    if (yych <= '9')
+                    if (yych >= ':')
                     {
-                        goto basic_json_parser_47;
+                        goto basic_json_parser_33;
                     }
-                    goto basic_json_parser_33;
+                }
+                else
+                {
+                    if (yych <= 'F')
+                    {
+                        goto basic_json_parser_38;
+                    }
+                    if (yych <= '`')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych >= 'g')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
+basic_json_parser_38:
+                ++m_cursor;
+                if (m_limit <= m_cursor)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
+                if (yych <= '@')
+                {
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych >= ':')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
+                else
+                {
+                    if (yych <= 'F')
+                    {
+                        goto basic_json_parser_39;
+                    }
+                    if (yych <= '`')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych >= 'g')
+                    {
+                        goto basic_json_parser_33;
+                    }
                 }
 basic_json_parser_39:
-                yych = *++m_cursor;
-                if (yych == 'l')
+                ++m_cursor;
+                if (m_limit <= m_cursor)
                 {
-                    goto basic_json_parser_49;
+                    yyfill();    // LCOV_EXCL_LINE;
                 }
-                goto basic_json_parser_33;
+                yych = *m_cursor;
+                if (yych <= '@')
+                {
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych >= ':')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
+                else
+                {
+                    if (yych <= 'F')
+                    {
+                        goto basic_json_parser_40;
+                    }
+                    if (yych <= '`')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych >= 'g')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
 basic_json_parser_40:
-                yych = *++m_cursor;
-                if (yych == 'l')
-                {
-                    goto basic_json_parser_50;
-                }
-                goto basic_json_parser_33;
-basic_json_parser_41:
-                yych = *++m_cursor;
-                if (yych == 'u')
-                {
-                    goto basic_json_parser_51;
-                }
-                goto basic_json_parser_33;
-basic_json_parser_42:
-                yych = *++m_cursor;
-                if (yych == 0xBF)
-                {
-                    goto basic_json_parser_52;
-                }
-                goto basic_json_parser_33;
-basic_json_parser_43:
                 ++m_cursor;
                 if (m_limit <= m_cursor)
                 {
@@ -7790,7 +7946,7 @@ basic_json_parser_43:
                     }
                     if (yych <= '9')
                     {
-                        goto basic_json_parser_54;
+                        goto basic_json_parser_31;
                     }
                     goto basic_json_parser_33;
                 }
@@ -7798,7 +7954,7 @@ basic_json_parser_43:
                 {
                     if (yych <= 'F')
                     {
-                        goto basic_json_parser_54;
+                        goto basic_json_parser_31;
                     }
                     if (yych <= '`')
                     {
@@ -7806,11 +7962,105 @@ basic_json_parser_43:
                     }
                     if (yych <= 'f')
                     {
-                        goto basic_json_parser_54;
+                        goto basic_json_parser_31;
                     }
                     goto basic_json_parser_33;
                 }
+basic_json_parser_41:
+                yyaccept = 1;
+                m_marker = ++m_cursor;
+                if ((m_limit - m_cursor) < 3)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
+basic_json_parser_42:
+                if (yybm[0 + yych] & 128)
+                {
+                    goto basic_json_parser_41;
+                }
+                if (yych <= 'D')
+                {
+                    if (yych != '.')
+                    {
+                        goto basic_json_parser_25;
+                    }
+                }
+                else
+                {
+                    if (yych <= 'E')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                    if (yych == 'e')
+                    {
+                        goto basic_json_parser_44;
+                    }
+                    goto basic_json_parser_25;
+                }
+basic_json_parser_43:
+                yych = *++m_cursor;
+                if (yych <= '/')
+                {
+                    goto basic_json_parser_33;
+                }
+                if (yych <= '9')
+                {
+                    goto basic_json_parser_48;
+                }
+                goto basic_json_parser_33;
 basic_json_parser_44:
+                yych = *++m_cursor;
+                if (yych <= ',')
+                {
+                    if (yych != '+')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                }
+                else
+                {
+                    if (yych <= '-')
+                    {
+                        goto basic_json_parser_45;
+                    }
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_33;
+                    }
+                    if (yych <= '9')
+                    {
+                        goto basic_json_parser_46;
+                    }
+                    goto basic_json_parser_33;
+                }
+basic_json_parser_45:
+                yych = *++m_cursor;
+                if (yych <= '/')
+                {
+                    goto basic_json_parser_33;
+                }
+                if (yych >= ':')
+                {
+                    goto basic_json_parser_33;
+                }
+basic_json_parser_46:
+                ++m_cursor;
+                if (m_limit <= m_cursor)
+                {
+                    yyfill();    // LCOV_EXCL_LINE;
+                }
+                yych = *m_cursor;
+                if (yych <= '/')
+                {
+                    goto basic_json_parser_25;
+                }
+                if (yych <= '9')
+                {
+                    goto basic_json_parser_46;
+                }
+                goto basic_json_parser_25;
+basic_json_parser_48:
                 yyaccept = 1;
                 m_marker = ++m_cursor;
                 if ((m_limit - m_cursor) < 3)
@@ -7822,204 +8072,108 @@ basic_json_parser_44:
                 {
                     if (yych <= '/')
                     {
-                        goto basic_json_parser_14;
+                        goto basic_json_parser_25;
                     }
                     if (yych <= '9')
                     {
-                        goto basic_json_parser_44;
+                        goto basic_json_parser_48;
                     }
-                    goto basic_json_parser_14;
+                    goto basic_json_parser_25;
                 }
                 else
                 {
                     if (yych <= 'E')
                     {
-                        goto basic_json_parser_38;
+                        goto basic_json_parser_44;
                     }
                     if (yych == 'e')
                     {
-                        goto basic_json_parser_38;
+                        goto basic_json_parser_44;
                     }
-                    goto basic_json_parser_14;
+                    goto basic_json_parser_25;
                 }
-basic_json_parser_46:
-                yych = *++m_cursor;
-                if (yych <= '/')
-                {
-                    goto basic_json_parser_33;
-                }
-                if (yych >= ':')
-                {
-                    goto basic_json_parser_33;
-                }
-basic_json_parser_47:
-                ++m_cursor;
-                if (m_limit <= m_cursor)
-                {
-                    yyfill();    // LCOV_EXCL_LINE;
-                }
-                yych = *m_cursor;
-                if (yych <= '/')
-                {
-                    goto basic_json_parser_14;
-                }
-                if (yych <= '9')
-                {
-                    goto basic_json_parser_47;
-                }
-                goto basic_json_parser_14;
-basic_json_parser_49:
-                yych = *++m_cursor;
-                if (yych == 's')
-                {
-                    goto basic_json_parser_55;
-                }
-                goto basic_json_parser_33;
 basic_json_parser_50:
-                yych = *++m_cursor;
-                if (yych == 'l')
+                yyaccept = 1;
+                yych = *(m_marker = ++m_cursor);
+                if (yych <= 'D')
                 {
-                    goto basic_json_parser_56;
-                }
-                goto basic_json_parser_33;
-basic_json_parser_51:
-                yych = *++m_cursor;
-                if (yych == 'e')
-                {
-                    goto basic_json_parser_58;
-                }
-                goto basic_json_parser_33;
-basic_json_parser_52:
-                ++m_cursor;
-                {
-                    return scan();
-                }
-basic_json_parser_54:
-                ++m_cursor;
-                if (m_limit <= m_cursor)
-                {
-                    yyfill();    // LCOV_EXCL_LINE;
-                }
-                yych = *m_cursor;
-                if (yych <= '@')
-                {
-                    if (yych <= '/')
+                    if (yych == '.')
                     {
-                        goto basic_json_parser_33;
+                        goto basic_json_parser_43;
                     }
-                    if (yych <= '9')
-                    {
-                        goto basic_json_parser_60;
-                    }
-                    goto basic_json_parser_33;
+                    goto basic_json_parser_25;
                 }
                 else
                 {
-                    if (yych <= 'F')
+                    if (yych <= 'E')
                     {
-                        goto basic_json_parser_60;
+                        goto basic_json_parser_44;
                     }
-                    if (yych <= '`')
+                    if (yych == 'e')
                     {
-                        goto basic_json_parser_33;
+                        goto basic_json_parser_44;
                     }
-                    if (yych <= 'f')
-                    {
-                        goto basic_json_parser_60;
-                    }
+                    goto basic_json_parser_25;
+                }
+basic_json_parser_51:
+                yych = *++m_cursor;
+                if (yych != 'l')
+                {
                     goto basic_json_parser_33;
                 }
-basic_json_parser_55:
                 yych = *++m_cursor;
-                if (yych == 'e')
+                if (yych != 's')
                 {
-                    goto basic_json_parser_61;
+                    goto basic_json_parser_33;
                 }
-                goto basic_json_parser_33;
-basic_json_parser_56:
+                yych = *++m_cursor;
+                if (yych != 'e')
+                {
+                    goto basic_json_parser_33;
+                }
                 ++m_cursor;
                 {
-                    return token_type::literal_null;
+                    return token_type::literal_false;
                 }
-basic_json_parser_58:
+basic_json_parser_56:
+                yych = *++m_cursor;
+                if (yych != 'u')
+                {
+                    goto basic_json_parser_33;
+                }
+                yych = *++m_cursor;
+                if (yych != 'e')
+                {
+                    goto basic_json_parser_33;
+                }
                 ++m_cursor;
                 {
                     return token_type::literal_true;
                 }
 basic_json_parser_60:
-                ++m_cursor;
-                if (m_limit <= m_cursor)
+                yych = *++m_cursor;
+                if (yych != 'l')
                 {
-                    yyfill();    // LCOV_EXCL_LINE;
-                }
-                yych = *m_cursor;
-                if (yych <= '@')
-                {
-                    if (yych <= '/')
-                    {
-                        goto basic_json_parser_33;
-                    }
-                    if (yych <= '9')
-                    {
-                        goto basic_json_parser_63;
-                    }
                     goto basic_json_parser_33;
                 }
-                else
+                yych = *++m_cursor;
+                if (yych != 'l')
                 {
-                    if (yych <= 'F')
-                    {
-                        goto basic_json_parser_63;
-                    }
-                    if (yych <= '`')
-                    {
-                        goto basic_json_parser_33;
-                    }
-                    if (yych <= 'f')
-                    {
-                        goto basic_json_parser_63;
-                    }
                     goto basic_json_parser_33;
                 }
-basic_json_parser_61:
                 ++m_cursor;
                 {
-                    return token_type::literal_false;
+                    return token_type::literal_null;
                 }
-basic_json_parser_63:
+basic_json_parser_64:
+                yych = *++m_cursor;
+                if (yych != 0xBF)
+                {
+                    goto basic_json_parser_33;
+                }
                 ++m_cursor;
-                if (m_limit <= m_cursor)
                 {
-                    yyfill();    // LCOV_EXCL_LINE;
-                }
-                yych = *m_cursor;
-                if (yych <= '@')
-                {
-                    if (yych <= '/')
-                    {
-                        goto basic_json_parser_33;
-                    }
-                    if (yych <= '9')
-                    {
-                        goto basic_json_parser_31;
-                    }
-                    goto basic_json_parser_33;
-                }
-                else
-                {
-                    if (yych <= 'F')
-                    {
-                        goto basic_json_parser_31;
-                    }
-                    if (yych <= '`')
-                    {
-                        goto basic_json_parser_33;
-                    }
-                    if (yych <= 'f')
-                    {
-                        goto basic_json_parser_31;
-                    }
-                    goto basic_json_parser_33;
+                    return scan();
                 }
             }
 
@@ -8249,123 +8403,144 @@ basic_json_parser_63:
         }
 
         /*!
-        @brief static_cast between two types and indicate if it results in error
-
-        This function performs a `static_cast` between @a source and @a dest.
-        It then checks if a `static_cast` back to @a dest produces an error.
-
-        @param[in] source  the value to cast from
-
-        @param[in, out] dest  the value to cast to
-
-        @return true iff the cast was performed without error
-        */
-        template <typename T_A, typename T_B>
-        static bool attempt_cast(T_A source, T_B& dest)
-        {
-            dest = static_cast<T_B>(source);
-            return (source == static_cast<T_A>(dest));
-        }
-
-        /*!
         @brief return number value for number tokens
 
         This function translates the last token into the most appropriate
-        number type (either integer, unsigned integer or floating point), which
-        is passed back to the caller via the result parameter. The pointer @a
-        m_start points to the beginning of the parsed number. We first examine
-        the first character to determine the sign of the number and then pass
-        this pointer to either @a std::strtoull (if positive) or @a
-        std::strtoll (if negative), both of which set @a endptr to the first
-        character past the converted number. If this pointer is not the same as
-        @a m_cursor, then either more or less characters have been used during
-        the comparison.
+        number type (either integer, unsigned integer or floating point),
+        which is passed back to the caller via the result parameter.
 
-        This can happen for inputs like "01" which will be treated like number
-        0 followed by number 1. This will also occur for valid floating point
-        inputs like "12e3" will be incorrectly read as 12. Numbers that are too
-        large or too small for a signed/unsigned long long will cause a range
-        error (@a errno set to ERANGE). The parsed number is cast to a @ref
-        number_integer_t/@ref number_unsigned_t using the helper function @ref
-        attempt_cast, which returns @a false if the cast could not be peformed
-        without error.
+        This function parses the integer component up to the radix point or
+        exponent while collecting information about the 'floating point
+        representation', which it stores in the result parameter. If there is
+        no radix point or exponent, and the number can fit into a
+        @ref number_integer_t or @ref number_unsigned_t then it sets the
+        result parameter accordingly.
 
-        In any of these cases (more/less characters read, range error or a cast
-        error) the pointer is passed to @a std:strtod, which also sets @a
-        endptr to the first character past the converted number. The resulting
-        @ref number_float_t is then cast to a @ref number_integer_t/@ref
-        number_unsigned_t using @ref attempt_cast and if no error occurs is
-        stored in that form, otherwise it is stored as a @ref number_float_t.
+        The 'floating point representation' includes the number of significant
+        figures after the radix point, whether the number is in exponential
+        or decimal form, the capitalization of the exponent marker, and if the
+        optional '+' is present in the exponent. This information is necessary
+        to perform accurate round trips of floating point numbers.
 
-        A final comparison is made of @a endptr and if still not the same as
-        @ref m_cursor a bad input is assumed and @a result parameter is set to
-        NAN.
+        If the number is a floating point number the number is then parsed
+        using @a std:strtod (or @a std:strtof or @a std::strtold).
 
-        @param[out] result @ref basic_json object to receive the number, or NAN
-        if the conversion read past the current token. The latter case needs to
-        be treated by the caller function.
+        @param[out] result  @ref basic_json object to receive the number, or
+          NAN if the conversion read past the current token. The latter case
+          needs to be treated by the caller function.
         */
         void get_number(basic_json& result) const
         {
-            typename string_t::value_type* endptr;
             assert(m_start != nullptr);
-            errno = 0;
 
-            // attempt to parse it as an integer - first checking for a
-            // negative number
-            if (*reinterpret_cast<typename string_t::const_pointer>(m_start) != '-')
+            const lexer::lexer_char_t* curptr = m_start;
+
+            // remember this number was parsed (for later serialization)
+            result.m_type.bits.parsed = true;
+
+            // 'found_radix_point' will be set to 0xFF upon finding a radix
+            // point and later used to mask in/out the precision depending
+            // whether a radix is found i.e. 'precision &= found_radix_point'
+            uint8_t found_radix_point = 0;
+            uint8_t precision = 0;
+
+            // accumulate the integer conversion result (unsigned for now)
+            number_unsigned_t value = 0;
+
+            // maximum absolute value of the relevant integer type
+            number_unsigned_t max;
+
+            // temporarily store the type to avoid unecessary bitfield access
+            value_t type;
+
+            // look for sign
+            if (*curptr == '-')
             {
-                // positive, parse with strtoull and attempt cast to
-                // number_unsigned_t
-                if (attempt_cast(std::strtoull(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr,
-                                               10), result.m_value.number_unsigned))
-                {
-                    result.m_type = value_t::number_unsigned;
-                }
-                else
-                {
-                    // cast failed due to overflow - store as float
-                    result.m_type = value_t::number_float;
-                }
+                type = value_t::number_integer;
+                max = static_cast<uint64_t>(std::numeric_limits<number_integer_t>::max()) + 1;
+                curptr++;
             }
             else
             {
-                // Negative, parse with strtoll and attempt cast to
-                // number_integer_t
-                if (attempt_cast(std::strtoll(reinterpret_cast<typename string_t::const_pointer>(m_start), &endptr,
-                                              10), result.m_value.number_integer))
+                type = value_t::number_unsigned;
+                max = static_cast<uint64_t>(std::numeric_limits<number_unsigned_t>::max());
+                if (*curptr == '+')
                 {
-                    result.m_type = value_t::number_integer;
-                }
-                else
-                {
-                    // cast failed due to overflow - store as float
-                    result.m_type = value_t::number_float;
+                    curptr++;
                 }
             }
 
-            // check the end of the number was reached and no range error
-            // occurred
-            if (reinterpret_cast<lexer_char_t*>(endptr) != m_cursor || errno == ERANGE)
+            // count the significant figures
+            for (; curptr < m_cursor; curptr++)
             {
-                result.m_type = value_t::number_float;
+                // quickly skip tests if a digit
+                if (*curptr < '0' || *curptr > '9')
+                {
+                    if (*curptr == '.')
+                    {
+                        // don't count '.' but change to float
+                        type = value_t::number_float;
+
+                        // reset precision count
+                        precision = 0;
+                        found_radix_point = 0xFF;
+                        continue;
+                    }
+                    // assume exponent (if not then will fail parse): change to
+                    // float, stop counting and record exponent details
+                    type = value_t::number_float;
+                    result.m_type.bits.has_exp = true;
+
+                    // exponent capitalization
+                    result.m_type.bits.exp_cap = (*curptr == 'E');
+
+                    // exponent '+' sign
+                    result.m_type.bits.exp_plus = (*(++curptr) == '+');
+                    break;
+                }
+
+                // skip if definitely not an integer
+                if (type != value_t::number_float)
+                {
+                    // multiply last value by ten and add the new digit
+                    auto temp = value * 10 + *curptr - 0x30;
+
+                    // test for overflow
+                    if (temp < value || temp > max)
+                    {
+                        // overflow
+                        type = value_t::number_float;
+                    }
+                    else
+                    {
+                        // no overflow - save it
+                        value = temp;
+                    }
+                }
+                ++precision;
             }
 
-            if (result.m_type  == value_t::number_float)
-            {
-                // either the number won't fit in an integer (range error from
-                // strtoull/strtoll or overflow on cast) or there was something
-                // else after the number, which could be an exponent
+            // If no radix point was found then precision would now be set to
+            // the number of digits, which is wrong - clear it.
+            result.m_type.bits.precision = precision & found_radix_point;
 
+            // save the value (if not a float)
+            if (type == value_t::number_unsigned)
+            {
+                result.m_value.number_unsigned = value;
+            }
+            else if (type == value_t::number_integer)
+            {
+                result.m_value.number_integer = -static_cast<number_integer_t>(value);
+            }
+            else
+            {
                 // parse with strtod
-                result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), &endptr);
-
-                // anything after the number is an error
-                if (reinterpret_cast<lexer_char_t*>(endptr) != m_cursor)
-                {
-                    throw std::invalid_argument(std::string("parse error - ") + get_token() + " is not a number");
-                }
+                result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), NULL);
             }
+
+            // save the type
+            result.m_type = type;
         }
 
       private:
