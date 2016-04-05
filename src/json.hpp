@@ -2148,7 +2148,6 @@ class basic_json
     string_t dump(const int indent = -1) const
     {
         std::stringstream ss;
-        ss.imbue(std::locale("C"));
 
         if (indent >= 0)
         {
@@ -5654,20 +5653,11 @@ class basic_json
         const bool pretty_print = (o.width() > 0);
         const auto indentation = (pretty_print ? o.width() : 0);
 
-        // save locale of o
-        auto old_locale = o.getloc();
-        // set locale of o to "C"
-        o.imbue(std::locale("C"));
-
         // reset width to 0 for subsequent calls to this stream
         o.width(0);
 
         // do the actual serialization
         j.dump(o, pretty_print, static_cast<unsigned int>(indentation));
-
-        // reset locale
-        o.imbue(old_locale);
-
         return o;
     }
 
