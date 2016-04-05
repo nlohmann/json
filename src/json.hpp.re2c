@@ -88,6 +88,19 @@ struct has_mapped_type
     static constexpr bool value = sizeof(test<T>(0)) == 1;
 };
 
+/*!
+@brief helper class to create locales with decimal point
+@sa https://github.com/nlohmann/json/issues/51#issuecomment-86869315
+*/
+class DecimalSeparator : public std::numpunct<char>
+{
+  protected:
+    char do_decimal_point() const
+    {
+        return '.';
+    }
+};
+
 }
 
 /*!
@@ -6161,7 +6174,7 @@ class basic_json
                     {
                         // no exponent - output as a decimal
                         std::stringstream ss;
-                        ss.imbue(std::locale("C"));  // fix locale problems
+                        ss.imbue(std::locale(std::locale(), new DecimalSeparator));  // fix locale problems
                         ss << std::setprecision(m_type.bits.precision)
                            << std::fixed << m_value.number_float;
                         o << ss.str();
@@ -6182,7 +6195,7 @@ class basic_json
                         // to be safe, we read this value from
                         // std::numeric_limits<number_float_t>::digits10
                         std::stringstream ss;
-                        ss.imbue(std::locale("C"));  // fix locale problems
+                        ss.imbue(std::locale(std::locale(), new DecimalSeparator));  // fix locale problems
                         ss << std::setprecision(std::numeric_limits<double>::digits10)
                            << m_value.number_float;
                         o << ss.str();
