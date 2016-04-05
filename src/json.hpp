@@ -6114,24 +6114,26 @@ class basic_json
 
             case value_t::number_float:
             {
-                // buffer size: precision (2^8-1 = 255) + other ('-.e-xxx' = 7) + null (1)
-                char buf[263];
-                int len;
-
                 // check if number was parsed from a string
                 if (m_type.bits.parsed)
                 {
                     // check if parsed number had an exponent given
                     if (m_type.bits.has_exp)
                     {
+                        // buffer size: precision (2^8-1 = 255) + other ('-.e-xxx' = 7) + null (1)
+                        char buf[263];
+                        int len;
+
                         // handle capitalization of the exponent
                         if (m_type.bits.exp_cap)
                         {
-                            len = snprintf(buf, sizeof(buf), "%.*E", m_type.bits.precision, m_value.number_float) + 1;
+                            len = snprintf(buf, sizeof(buf), "%.*E",
+                                           m_type.bits.precision, m_value.number_float) + 1;
                         }
                         else
                         {
-                            len = snprintf(buf, sizeof(buf), "%.*e", m_type.bits.precision, m_value.number_float) + 1;
+                            len = snprintf(buf, sizeof(buf), "%.*e",
+                                           m_type.bits.precision, m_value.number_float) + 1;
                         }
 
                         // remove '+' sign from the exponent if necessary
@@ -6152,40 +6154,40 @@ class basic_json
                                 }
                             }
                         }
+
+                        o << buf;
                     }
                     else
                     {
                         // no exponent - output as a decimal
-                        snprintf(buf, sizeof(buf), "%.*f",
-                                 m_type.bits.precision, m_value.number_float);
+                        std::stringstream ss;
+                        ss.imbue(std::locale("C"));
+                        ss << std::setprecision(m_type.bits.precision)
+                           << std::fixed << m_value.number_float;
+                        o << ss.str();
                     }
-                }
-                else if (m_value.number_float == 0)
-                {
-                    // special case for zero to get "0.0"/"-0.0"
-                    if (std::signbit(m_value.number_float))
-                    {
-                        o << "-0.0";
-                    }
-                    else
-                    {
-                        o << "0.0";
-                    }
-                    return;
                 }
                 else
                 {
-                    // Otherwise 6, 15 or 16 digits of precision allows
-                    // round-trip IEEE 754 string->float->string,
-                    // string->double->string or string->long double->string;
-                    // to be safe, we read this value from
-                    // std::numeric_limits<number_float_t>::digits10
-                    snprintf(buf, sizeof(buf), "%.*g",
-                             std::numeric_limits<double>::digits10,
-                             m_value.number_float);
+                    if (m_value.number_float == 0)
+                    {
+                        // special case for zero to get "0.0"/"-0.0"
+                        o << (std::signbit(m_value.number_float) ? "-0.0" : "0.0");
+                    }
+                    else
+                    {
+                        // Otherwise 6, 15 or 16 digits of precision allows
+                        // round-trip IEEE 754 string->float->string,
+                        // string->double->string or string->long double->string;
+                        // to be safe, we read this value from
+                        // std::numeric_limits<number_float_t>::digits10
+                        std::stringstream ss;
+                        ss.imbue(std::locale("C"));
+                        ss << std::setprecision(std::numeric_limits<double>::digits10)
+                           << m_value.number_float;
+                        o << ss.str();
+                    }
                 }
-
-                o << buf;
                 return;
             }
 
