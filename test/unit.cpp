@@ -12383,7 +12383,18 @@ TEST_CASE("regression tests")
         json j3b = json::parse("10E3");
         json j3c = json::parse("10e3");
 
-        std::locale::global(std::locale("de_DE"));
+        // class to create a locale that would use a comma for decimals
+        class CommaDecimalSeparator : public std::numpunct<char>
+        {
+          protected:
+            char do_decimal_point() const
+            {
+                return ',';
+            }
+        };
+
+        // change locale to mess with decimal points
+        std::locale::global(std::locale(std::locale(), new CommaDecimalSeparator));
 
         CHECK(j1a.dump() == "23.42");
         CHECK(j1b.dump() == "23.42");
