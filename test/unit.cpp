@@ -11970,6 +11970,9 @@ TEST_CASE("RFC 7159 examples")
     }
 }
 
+template<typename Key, typename V>
+using unordered_map_type = std::unordered_map<Key, V>;
+
 TEST_CASE("Unicode", "[hide]")
 {
     SECTION("full enumeration of Unicode codepoints")
@@ -12150,8 +12153,17 @@ TEST_CASE("regression tests")
     {
         // create JSON class with nonstandard integer number type
         using custom_json =
-            nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, uint32_t, float>;
+            nlohmann::basic_json <
+            nlohmann::default_object_type,
+            nlohmann::default_array_type,
+            std::string,
+            bool,
+            int32_t,
+            uint32_t,
+            float >;
+
         custom_json j;
+
         j["int_1"] = 1;
         // we need to cast to int to compile with Catch - the value is int32_t
         CHECK(static_cast<int>(j["int_1"]) == 1);
@@ -12271,9 +12283,14 @@ TEST_CASE("regression tests")
         CHECK(s2 == "value");
     }
 
-    SECTION("issue #146 - character following a surrogate pair is skipped")
+    SECTION("issue #146 character following a surrogate pair is skipped")
     {
         CHECK(json::parse("\"\\ud80c\\udc60abc\"").get<json::string_t>() == u8"\U00013060abc");
+    }
+
+    SECTION("issue #164 - std::unordered_map cannot be used as Object Type")
+    {
+        nlohmann::basic_json<unordered_map_type> unordered_json;
     }
 
     SECTION("issue #171 - Cannot index by key of type static constexpr const char*")
@@ -12355,17 +12372,19 @@ TEST_CASE("regression tests")
         // create JSON class with nonstandard float number type
 
         // float
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, uint32_t, float> j_float =
+        nlohmann::basic_json<nlohmann::default_object_type, nlohmann::default_array_type, std::string, bool, int32_t, uint32_t, float>
+        j_float =
             1.23e25f;
         CHECK(j_float.get<float>() == 1.23e25f);
 
         // double
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, double> j_double =
+        nlohmann::basic_json<nlohmann::default_object_type, nlohmann::default_array_type, std::string, bool, int64_t, uint64_t, double>
+        j_double =
             1.23e35f;
         CHECK(j_double.get<double>() == 1.23e35f);
 
         // long double
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, long double>
+        nlohmann::basic_json<nlohmann::default_object_type, nlohmann::default_array_type, std::string, bool, int64_t, uint64_t, long double>
         j_long_double = 1.23e45L;
         CHECK(j_long_double.get<long double>() == 1.23e45L);
     }
