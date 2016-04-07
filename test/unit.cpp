@@ -12369,5 +12369,43 @@ TEST_CASE("regression tests")
         j_long_double = 1.23e45L;
         CHECK(j_long_double.get<long double>() == 1.23e45L);
     }
+
+    SECTION("issue #228 - double values are serialized with commas as decimal points")
+    {
+        json j1a = 23.42;
+        json j1b = json::parse("23.42");
+
+        json j2a = 2342e-2;
+        //issue #230
+        //json j2b = json::parse("2342e-2");
+
+        json j3a = 10E3;
+        json j3b = json::parse("10E3");
+        json j3c = json::parse("10e3");
+
+        // class to create a locale that would use a comma for decimals
+        class CommaDecimalSeparator : public std::numpunct<char>
+        {
+          protected:
+            char do_decimal_point() const
+            {
+                return ',';
+            }
+        };
+
+        // change locale to mess with decimal points
+        std::locale::global(std::locale(std::locale(), new CommaDecimalSeparator));
+
+        CHECK(j1a.dump() == "23.42");
+        CHECK(j1b.dump() == "23.42");
+
+        CHECK(j2a.dump() == "23.42");
+        //issue #230
+        //CHECK(j2b.dump() == "23.42");
+
+        CHECK(j3a.dump() == "10000");
+        CHECK(j3b.dump() == "1E04");
+        CHECK(j3c.dump() == "1e04");
+    }
 }
 
