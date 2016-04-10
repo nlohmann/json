@@ -6,17 +6,32 @@ All notable changes to this project will be documented in this file. This projec
 [Full Changelog](https://github.com/nlohmann/json/compare/v1.1.0...HEAD)
 
 - Provide a FAQ [\#163](https://github.com/nlohmann/json/issues/163)
+- Create PULL\_REQUEST\_TEMPLATE.md [\#213](https://github.com/nlohmann/json/pull/213) ([whackashoe](https://github.com/whackashoe))
+- fixed noexcept; added constexpr [\#208](https://github.com/nlohmann/json/pull/208) ([nlohmann](https://github.com/nlohmann))
+- Add support for afl-fuzz testing [\#207](https://github.com/nlohmann/json/pull/207) ([msm-](https://github.com/msm-))
 - Issue \#178 - Extending support to full uint64\_t/int64\_t range and unsigned type \(updated\) [\#193](https://github.com/nlohmann/json/pull/193) ([twelsby](https://github.com/twelsby))
 
+- double values are serialized with commas as decimal points [\#228](https://github.com/nlohmann/json/issues/228)
+- Move semantics with std::initializer\_list [\#225](https://github.com/nlohmann/json/issues/225)
+- abort during getline in yyfill [\#223](https://github.com/nlohmann/json/issues/223)
+- Wrong link in the README.md [\#217](https://github.com/nlohmann/json/issues/217)
 - Small bugs in json.hpp \(get\_number\) and unit.cpp \(non-standard integer type test\) [\#199](https://github.com/nlohmann/json/issues/199)
 - GCC/clang floating point parsing bug in strtod\(\) [\#195](https://github.com/nlohmann/json/issues/195)
 - Bugs in miloyip/nativejson-benchmark: roundtrips [\#187](https://github.com/nlohmann/json/issues/187)
 - Floating point exceptions [\#181](https://github.com/nlohmann/json/issues/181)
+- In basic\_json::basic\_json\(const CompatibleArrayType& val\), the requirement of CompatibleArrayType is not strict enough. [\#174](https://github.com/nlohmann/json/issues/174)
 - Implicit assignment to std::string fails [\#144](https://github.com/nlohmann/json/issues/144)
 - Issue \#195 - update Travis to Trusty due to gcc/clang strtod\(\) bug [\#196](https://github.com/nlohmann/json/pull/196) ([twelsby](https://github.com/twelsby))
 
+- Conflicting typedef of ssize\_t on Windows 32 bit when using Boost.Python [\#204](https://github.com/nlohmann/json/issues/204)
 - Integer conversion to unsigned [\#178](https://github.com/nlohmann/json/issues/178)
 
+- make serialization locale-independent [\#232](https://github.com/nlohmann/json/pull/232) ([nlohmann](https://github.com/nlohmann))
+- fixes \#223 by updating README.md [\#227](https://github.com/nlohmann/json/pull/227) ([kevin--](https://github.com/kevin--))
+- Use namespace std for int64\_t and uint64\_t [\#226](https://github.com/nlohmann/json/pull/226) ([lv-zheng](https://github.com/lv-zheng))
+- Added missing cerrno header to fix ERANGE compile error on android [\#222](https://github.com/nlohmann/json/pull/222) ([Teemperor](https://github.com/Teemperor))
+- Corrected readme [\#218](https://github.com/nlohmann/json/pull/218) ([Annihil](https://github.com/Annihil))
+- replaced ssize\_t occurrences with auto \(addresses \#204\) [\#205](https://github.com/nlohmann/json/pull/205) ([nlohmann](https://github.com/nlohmann))
 - Fixed issue \#199 - Small bugs in json.hpp \(get\_number\) and unit.cpp \(non-standard integer type test\) [\#200](https://github.com/nlohmann/json/pull/200) ([twelsby](https://github.com/twelsby))
 - Fix broken link [\#197](https://github.com/nlohmann/json/pull/197) ([vog](https://github.com/vog))
 
