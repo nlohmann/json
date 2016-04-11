@@ -12052,6 +12052,35 @@ TEST_CASE("Unicode", "[hide]")
     }
 }
 
+TEST_CASE("JSON pointers")
+{
+    SECTION("examples from RFC 6901")
+    {
+        json j = R"(
+        {
+            "foo": ["bar", "baz"],
+            "": 0,
+            "a/b": 1,
+            "c%d": 2,
+            "e^f": 3,
+            "g|h": 4,
+            "i\\j": 5,
+            "k\"l": 6,
+            " ": 7,
+            "m~n": 8
+        }
+        )"_json;
+
+        json::json_pointer jp0("");
+        json::json_pointer jp1("/foo");
+        //json::json_pointer jp2("/foo/0");
+
+        auto jp0_ = jp0.get(j);
+        auto jp1_ = jp1.get(j);
+        //auto jp2_ = jp2.get(j);
+    }
+}
+
 TEST_CASE("regression tests")
 {
     SECTION("issue #60 - Double quotation mark is not parsed correctly")

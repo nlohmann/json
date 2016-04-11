@@ -8123,6 +8123,79 @@ class basic_json
         /// the lexer
         lexer m_lexer;
     };
+
+  public:
+    class json_pointer
+    {
+      public:
+        /// empty reference token
+        json_pointer() = default;
+
+        /// nonempty reference token
+        json_pointer(const std::string& s)
+        {
+            split(s);
+        }
+
+        /// return referenced value
+        reference get(reference j)
+        {
+            reference result = j;
+
+            for (const auto& reference_token : reference_tokens)
+            {
+                switch (result.m_type)
+                {
+                    case value_t::object:
+                        result = result[reference_token];
+                        continue;
+
+                    case value_t::array:
+                        result = result[std::stoi(reference_token)];
+                        continue;
+
+                    default:
+                        throw std::domain_error("unresolved reference token '" + reference_token + "'");
+                }
+            }
+
+            return result;
+        }
+
+      private:
+        /// the reference tokens
+        std::vector<std::string> reference_tokens {};
+
+        /// split the string input to reference tokens
+        void split(std::string reference_string)
+        {
+            // special case: empty reference string -> no reference tokens
+            if (reference_string.empty())
+            {
+                return;
+            }
+
+            // check if nonempty reference string begins with slash
+            if (reference_string[0] != '/')
+            {
+                throw std::domain_error("JSON pointer must be empty or begin with '/'");
+            }
+
+            // tokenize reference string
+            auto ptr = std::strtok(&reference_string[0], "/");
+            while (ptr != nullptr)
+            {
+                reference_tokens.push_back(ptr);
+                ptr = std::strtok(NULL, "/");
+            }
+
+            // special case: reference string was just "/"
+            if (reference_tokens.empty())
+            {
+                reference_tokens.push_back("");
+            }
+        }
+    };
 };
 
 
