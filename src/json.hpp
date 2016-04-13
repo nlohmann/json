@@ -8911,10 +8911,21 @@ basic_json_parser_64:
         /// the reference tokens
         std::vector<std::string> reference_tokens {};
 
-        /// replace all occurrences of a substring by another string
-        void replace_substring(std::string& s,
-                               const std::string& f,
-                               const std::string& t)
+        /*!
+        @brief replace all occurrences of a substring by another string
+
+        @param[in,out] s  the string to manipulate
+        @param[in]     f  the substring to replace with @a t
+        @param[out]    t  the string to replace @a f
+
+        @return The string @a s where all occurrences of @a f are replaced
+                with @a t.
+
+        @pre The search string @f must not be empty.
+        */
+        static void replace_substring(std::string& s,
+                                      const std::string& f,
+                                      const std::string& t)
         {
             assert(not f.empty());
 
@@ -8941,26 +8952,49 @@ basic_json_parser_64:
                 throw std::domain_error("JSON pointer must be empty or begin with '/'");
             }
 
-            // tokenize reference string
-            auto ptr = std::strtok(&reference_string[0], "/");
-            while (ptr != nullptr)
+            // extract the reference tokens:
+            // - slash: position of the last read slash (or end of string)
+            // - start: position after the previous slash
+            for (
+                // search for the first slash after the first character
+                size_t slash = reference_string.find_first_of("/", 1),
+                // set the beginning of the first reference token
+                start = 1;
+                // we can stop if start == string::npos+1 = 0
+                start != 0;
+                // set the beginning of the next reference token
+                // (could be 0 if slash == std::string::npos)
+                start = slash + 1,
+                // find next slash
+                slash = reference_string.find_first_of("/", start))
             {
-                reference_tokens.push_back(ptr);
-                ptr = std::strtok(NULL, "/");
-            }
+                // use the text between the beginning of the reference token
+                // (start) and the last slash (slash).
+                auto reference_token = reference_string.substr(start, slash - start);
 
-            // special case: reference string was just "/"
-            if (reference_tokens.empty())
-            {
-                reference_tokens.push_back("");
-            }
+                // check reference tokens are properly escaped
+                for (size_t pos = reference_token.find_first_of("~");
+                        pos != std::string::npos;
+                        pos = reference_token.find_first_of("~", pos + 1))
+                {
+                    assert(reference_token[pos] == '~');
 
-            for (auto& reference_token : reference_tokens)
-            {
+                    // ~ must be followed by 0 or 1
+                    if (pos == reference_token.size() - 1 or
+                            (reference_token[pos + 1] != '0' and
+                             reference_token[pos + 1] != '1'))
+                    {
+                        throw std::domain_error("escape error: '~' must be followed with '0' or '1'");
+                    }
+                }
+
                 // first transform any occurrence of the sequence '~1' to '/'
                 replace_substring(reference_token, "~1", "/");
                 // then transform any occurrence of the sequence '~0' to '~'
                 replace_substring(reference_token, "~0", "~");
+
+                // store the reference token
+                reference_tokens.push_back(reference_token);
             }
         }
     };
@@ -9026,9 +9060,9 @@ struct hash<nlohmann::json>
 /*!
 @brief user-defined string literal for JSON values
 
-This operator implements a user-defined string literal for JSON objects. It can
-be used by adding \p "_json" to a string literal and returns a JSON object if
-no parse error occurred.
+This operator implements a user-defined string literal for JSON objects. It
+can be used by adding \p "_json" to a string literal and returns a JSON object
+if no parse error occurred.
 
 @param[in] s  a string representation of a JSON object
 @return a JSON object
@@ -9038,6 +9072,16 @@ no parse error occurred.
 inline nlohmann::json operator "" _json(const char* s, std::size_t)
 {
     return nlohmann::json::parse(reinterpret_cast<const nlohmann::json::string_t::value_type*>(s));
+}
+
+/*!
+@brief user-defined string literal for JSON pointer
+
+@since version 2.0.0
+*/
+inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t)
+{
+    return nlohmann::json::json_pointer(s);
 }
 
 // restore GCC/clang diagnostic settings

@@ -12118,6 +12118,29 @@ TEST_CASE("JSON pointers")
             CHECK(j_const[""] == json::json_pointer("/").get(j_const));
             CHECK(j_const[" "] == json::json_pointer("/ ").get(j_const));
         }
+
+        SECTION("user-defined string literal")
+        {
+            // the whole document
+            CHECK(""_json_pointer.get(j) == j);
+
+            // array access
+            CHECK("/foo"_json_pointer.get(j) == j["foo"]);
+            CHECK("/foo/0"_json_pointer.get(j) == j["foo"][0]);
+            CHECK("/foo/1"_json_pointer.get(j) == j["foo"][1]);
+        }
+
+        SECTION("errors")
+        {
+            CHECK_THROWS_AS(json::json_pointer("foo"), std::domain_error);
+            CHECK_THROWS_WITH(json::json_pointer("foo"), "JSON pointer must be empty or begin with '/'");
+
+            CHECK_THROWS_AS(json::json_pointer("/~~"), std::domain_error);
+            CHECK_THROWS_WITH(json::json_pointer("/~~"), "escape error: '~' must be followed with '0' or '1'");
+
+            CHECK_THROWS_AS(json::json_pointer("/~"), std::domain_error);
+            CHECK_THROWS_WITH(json::json_pointer("/~"), "escape error: '~' must be followed with '0' or '1'");
+        }
     }
 }
 
