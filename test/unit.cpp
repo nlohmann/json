@@ -12407,5 +12407,16 @@ TEST_CASE("regression tests")
         CHECK(j3b.dump() == "1E04");
         CHECK(j3c.dump() == "1e04");
     }
+
+    SECTION("issue #233 - Can't use basic_json::iterator as a base iterator for std::move_iterator")
+    {
+        json source = {"a", "b", "c"};   
+        json expected = {"a", "b"};
+        json dest;
+
+        std::copy_n(std::make_move_iterator(source.begin()), 2, std::back_inserter(dest));
+
+        CHECK(dest == expected);
+    }
 }
 
