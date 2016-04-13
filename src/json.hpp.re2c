@@ -8140,18 +8140,18 @@ class basic_json
         /// return referenced value
         reference get(reference j)
         {
-            reference result = j;
+            pointer result = &j;
 
             for (const auto& reference_token : reference_tokens)
             {
-                switch (result.m_type)
+                switch (result->m_type)
                 {
                     case value_t::object:
-                        result = result[reference_token];
+                        result = &result->at(reference_token);
                         continue;
 
                     case value_t::array:
-                        result = result[std::stoi(reference_token)];
+                        result = &result->at(static_cast<size_t>(std::stoi(reference_token)));
                         continue;
 
                     default:
@@ -8159,12 +8159,51 @@ class basic_json
                 }
             }
 
-            return result;
+            return *result;
+        }
+
+        const_reference get(const_reference j) const
+        {
+            const_pointer result = &j;
+
+            for (const auto& reference_token : reference_tokens)
+            {
+                switch (result->m_type)
+                {
+                    case value_t::object:
+                        result = &result->at(reference_token);
+                        continue;
+
+                    case value_t::array:
+                        result = &result->at(static_cast<size_t>(std::stoi(reference_token)));
+                        continue;
+
+                    default:
+                        throw std::domain_error("unresolved reference token '" + reference_token + "'");
+                }
+            }
+
+            return *result;
         }
 
       private:
         /// the reference tokens
         std::vector<std::string> reference_tokens {};
+
+        /// replace all occurrences of a substring by another string
+        void replace_substring(std::string& s,
+                               const std::string& f,
+                               const std::string& t)
+        {
+            assert(not f.empty());
+
+            for (
+                size_t pos = s.find(f);         // find first occurrence of f
+                pos != std::string::npos;       // make sure f was found
+                s.replace(pos, f.size(), t),    // replace with t
+                pos = s.find(f, pos + t.size()) // find next occurrence of f
+            );
+        }
 
         /// split the string input to reference tokens
         void split(std::string reference_string)
@@ -8193,6 +8232,14 @@ class basic_json
             if (reference_tokens.empty())
             {
                 reference_tokens.push_back("");
+            }
+
+            for (auto& reference_token : reference_tokens)
+            {
+                // first transform any occurrence of the sequence '~1' to '/'
+                replace_substring(reference_token, "~1", "/");
+                // then transform any occurrence of the sequence '~0' to '~'
+                replace_substring(reference_token, "~0", "~");
             }
         }
     };
