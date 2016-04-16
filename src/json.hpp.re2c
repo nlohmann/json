@@ -7000,13 +7000,13 @@ class basic_json
         }
 
         /// return a reference to the value pointed to by the iterator
-        reference operator*()
+        reference operator*() const
         {
             return const_cast<reference>(base_iterator::operator*());
         }
 
         /// dereference the iterator
-        pointer operator->()
+        pointer operator->() const
         {
             return const_cast<pointer>(base_iterator::operator->());
         }

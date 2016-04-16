@@ -410,6 +410,7 @@ I deeply appreciate the help of the following people.
 - [Lv Zheng](https://github.com/lv-zheng) fixed a namespace issue with `int64_t` and `uint64_t`.
 - [abc100m](https://github.com/abc100m) analyzed the issues with GCC 4.8 and proposed a [partial solution](https://github.com/nlohmann/json/pull/212).
 - [zewt](https://github.com/zewt) added useful notes to the README file about Android.
+- [Róbert Márki](https://github.com/robertmrk) added a fix to use move iterators.
 
 Thanks a lot for helping out!
 
@@ -427,7 +428,7 @@ $ make
 $ ./json_unit "*"
 
 ===============================================================================
-All tests passed (3344278 assertions in 29 test cases)
+All tests passed (3344299 assertions in 29 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
