@@ -12213,7 +12213,24 @@ TEST_CASE("JSON pointers")
             {"/object/~01", "tilde1"}
         };
 
+        // check if flattened result is as expected
         CHECK(j.flatten() == j_flatten);
+
+        // check if deflattened result is as expected
+        CHECK(j_flatten.deflatten() == j);
+
+        // explicit roundtrip check
+        CHECK(j.flatten().deflatten() == j);
+
+        // roundtrip for primitive values
+        json j_null;
+        CHECK(j_null.flatten().deflatten() == j_null);
+        json j_number = 42;
+        CHECK(j_number.flatten().deflatten() == j_number);
+        json j_boolean = false;
+        CHECK(j_boolean.flatten().deflatten() == j_boolean);
+        json j_string = "foo";
+        CHECK(j_string.flatten().deflatten() == j_string);
     }
 }
 

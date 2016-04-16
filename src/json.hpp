@@ -8855,7 +8855,6 @@ basic_json_parser_63:
         }
 
       private:
-        /// return referenced value
         reference get(reference j) const
         {
             pointer result = &j;
@@ -8874,6 +8873,49 @@ basic_json_parser_63:
 
                     default:
                         throw std::domain_error("unresolved reference token '" + reference_token + "'");
+                }
+            }
+
+            return *result;
+        }
+
+        reference get2(reference j) const
+        {
+            pointer result = &j;
+
+            for (const auto& reference_token : reference_tokens)
+            {
+                switch (result->m_type)
+                {
+                    case value_t::null:
+                    {
+                        if (reference_token == "0")
+                        {
+                            result = &result->operator[](0);
+                        }
+                        else
+                        {
+                            result = &result->operator[](reference_token);
+                        }
+                        continue;
+                    }
+
+                    case value_t::object:
+                    {
+                        result = &result->operator[](reference_token);
+                        continue;
+                    }
+
+                    case value_t::array:
+                    {
+                        result = &result->operator[](static_cast<size_t>(std::stoi(reference_token)));
+                        continue;
+                    }
+
+                    default:
+                    {
+                        throw std::domain_error("unresolved reference token '" + reference_token + "'");
+                    }
                 }
             }
 
@@ -9042,6 +9084,35 @@ basic_json_parser_63:
                 }
             }
         }
+
+        /*!
+        @param[in] value  flattened JSON
+
+        @return deflattened JSON
+        */
+        static basic_json deflatten(const basic_json& value)
+        {
+            if (not value.is_object())
+            {
+                throw std::domain_error("only objects can be deflattened");
+            }
+
+            basic_json result;
+
+            // iterate the JSON object values
+            for (const auto& element : *value.m_value.object)
+            {
+                if (not element.second.is_primitive())
+                {
+                    throw std::domain_error("values in object must be primitive");
+                }
+
+                // assign value to reference pointed to by JSON pointer
+                json_pointer(element.first).get2(result) = element.second;
+            }
+
+            return result;
+        }
     };
 
     /*!
@@ -9052,6 +9123,14 @@ basic_json_parser_63:
         basic_json result(value_t::object);
         json_pointer::flatten("", *this, result);
         return result;
+    }
+
+    /*!
+    @return the original JSON from a flattened version
+    */
+    basic_json deflatten() const
+    {
+        return json_pointer::deflatten(*this);
     }
 };
 
