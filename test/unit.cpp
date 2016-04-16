@@ -12168,6 +12168,53 @@ TEST_CASE("JSON pointers")
             CHECK_THROWS_WITH(json::json_pointer("/~"), "escape error: '~' must be followed with '0' or '1'");
         }
     }
+
+    SECTION("flatten")
+    {
+        json j =
+        {
+            {"pi", 3.141},
+            {"happy", true},
+            {"name", "Niels"},
+            {"nothing", nullptr},
+            {
+                "answer", {
+                    {"everything", 42}
+                }
+            },
+            {"list", {1, 0, 2}},
+            {
+                "object", {
+                    {"currency", "USD"},
+                    {"value", 42.99},
+                    {"", "empty string"},
+                    {"/", "slash"},
+                    {"~", "tilde"},
+                    {"~1", "tilde1"}
+                }
+            }
+        };
+
+        json j_flatten =
+        {
+            {"/pi", 3.141},
+            {"/happy", true},
+            {"/name", "Niels"},
+            {"/nothing", nullptr},
+            {"/answer/everything", 42},
+            {"/list/0", 1},
+            {"/list/1", 0},
+            {"/list/2", 2},
+            {"/object/currency", "USD"},
+            {"/object/value", 42.99},
+            {"/object/", "empty string"},
+            {"/object/~1", "slash"},
+            {"/object/~0", "tilde"},
+            {"/object/~01", "tilde1"}
+        };
+
+        CHECK(j.flatten() == j_flatten);
+    }
 }
 
 TEST_CASE("regression tests")

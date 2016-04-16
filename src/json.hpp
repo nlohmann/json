@@ -8907,32 +8907,6 @@ basic_json_parser_63:
         /// the reference tokens
         std::vector<std::string> reference_tokens {};
 
-        /*!
-        @brief replace all occurrences of a substring by another string
-
-        @param[in,out] s  the string to manipulate
-        @param[in]     f  the substring to replace with @a t
-        @param[out]    t  the string to replace @a f
-
-        @return The string @a s where all occurrences of @a f are replaced
-                with @a t.
-
-        @pre The search string @a f must not be empty.
-        */
-        static void replace_substring(std::string& s,
-                                      const std::string& f,
-                                      const std::string& t)
-        {
-            assert(not f.empty());
-
-            for (
-                size_t pos = s.find(f);         // find first occurrence of f
-                pos != std::string::npos;       // make sure f was found
-                s.replace(pos, f.size(), t),    // replace with t
-                pos = s.find(f, pos + t.size()) // find next occurrence of f
-            );
-        }
-
         /// split the string input to reference tokens
         void split(std::string reference_string)
         {
@@ -8993,7 +8967,92 @@ basic_json_parser_63:
                 reference_tokens.push_back(reference_token);
             }
         }
+
+        /*!
+        @brief replace all occurrences of a substring by another string
+
+        @param[in,out] s  the string to manipulate
+        @param[in]     f  the substring to replace with @a t
+        @param[out]    t  the string to replace @a f
+
+        @return The string @a s where all occurrences of @a f are replaced
+                with @a t.
+
+        @pre The search string @a f must not be empty.
+
+        @since version 2.0.0
+        */
+        static void replace_substring(std::string& s,
+                                      const std::string& f,
+                                      const std::string& t)
+        {
+            assert(not f.empty());
+
+            for (
+                size_t pos = s.find(f);         // find first occurrence of f
+                pos != std::string::npos;       // make sure f was found
+                s.replace(pos, f.size(), t),    // replace with t
+                pos = s.find(f, pos + t.size()) // find next occurrence of f
+            );
+        }
+
+        /*!
+        @param[in] reference_string  the reference string to the current value
+        @param[in] value             the value to consider
+        @param[in,out] result        the result object to insert values to
+        */
+        static void flatten(const std::string reference_string,
+                            const basic_json& value,
+                            basic_json& result)
+        {
+            switch (value.m_type)
+            {
+                case value_t::array:
+                {
+                    // iterate array and use index as reference string
+                    for (size_t i = 0; i < value.m_value.array->size(); ++i)
+                    {
+                        flatten(reference_string + "/" + std::to_string(i),
+                                value.m_value.array->operator[](i), result);
+                    }
+                    break;
+                }
+
+                case value_t::object:
+                {
+                    // iterate object and use keys as reference string
+                    for (const auto& element : *value.m_value.object)
+                    {
+                        // escape "~"" to "~0" and "/" to "~1"
+                        std::string key(element.first);
+                        replace_substring(key, "~", "~0");
+                        replace_substring(key, "/", "~1");
+
+                        flatten(reference_string + "/" + key,
+                                element.second, result);
+                    }
+                    break;
+                }
+
+                default:
+                {
+                    // add primitive value with its reference string
+                    result[reference_string] = value;
+                    break;
+                }
+            }
+        }
     };
+
+    /*!
+    @return an object that maps JSON pointers to primitve values
+    */
+    basic_json flatten() const
+    {
+        basic_json result(value_t::object);
+        json_pointer::flatten("", *this, result);
+        return result;
+    }
 };
 
 
