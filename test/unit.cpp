@@ -12410,7 +12410,7 @@ TEST_CASE("regression tests")
 
     SECTION("issue #233 - Can't use basic_json::iterator as a base iterator for std::move_iterator")
     {
-        json source = {"a", "b", "c"};   
+        json source = {"a", "b", "c"};
         json expected = {"a", "b"};
         json dest;
 

@@ -66,7 +66,7 @@ cppcheck:
 
 # create scanner with re2c
 re2c: src/json.hpp.re2c
-	$(RE2C) -b -s -i --no-generation-date $< | $(SED) '1d' > src/json.hpp
+	$(RE2C) --bit-vectors --nested-ifs --no-debug-info $< | $(SED) '1d' > src/json.hpp
 
 # pretty printer
 pretty:
@@ -74,7 +74,7 @@ pretty:
 	   --indent-switches --indent-preproc-block --indent-preproc-define \
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
-	   --lineend=linux --preserve-date --suffix=none \
+	   --lineend=linux --preserve-date --suffix=none --formatted \
 	   src/json.hpp src/json.hpp.re2c test/unit.cpp test/fuzz.cpp benchmarks/benchmarks.cpp doc/examples/*.cpp
 
 
