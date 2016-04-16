@@ -198,6 +198,9 @@ class basic_json
           AllocatorType>;
 
   public:
+    // forward declarations
+    template<typename Base> class json_reverse_iterator;
+    class json_pointer;
 
     /////////////////////
     // container types //
@@ -226,9 +229,6 @@ class basic_json
     using pointer = typename std::allocator_traits<allocator_type>::pointer;
     /// the type of an element const pointer
     using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer;
-
-    // forward declaration
-    template<typename Base> class json_reverse_iterator;
 
     /// an iterator for a basic_json container
     class iterator;
@@ -3593,6 +3593,28 @@ class basic_json
         {
             throw std::domain_error("cannot use operator[] with " + type_name());
         }
+    }
+
+    /*!
+    @brief access specified element via JSON Pointer
+
+    Returns a reference to the element at with specified JSON pointer @a ptr.
+
+    @param p  JSON pointer to the desired element
+
+    @since version 2.0.0
+    */
+    reference operator[](const json_pointer& ptr)
+    {
+        return ptr.get(*this);
+    }
+
+    /*!
+    @copydoc basic_json::operator[](const json_pointer&)
+    */
+    const_reference operator[](const json_pointer& ptr) const
+    {
+        return ptr.get(*this);
     }
 
     /*!
@@ -8815,6 +8837,11 @@ basic_json_parser_63:
     };
 
   public:
+    /*!
+    @brief JSON Pointer
+
+    @sa [RFC 6901](https://tools.ietf.org/html/rfc6901)
+    */
     class json_pointer
     {
       public:
@@ -8822,13 +8849,14 @@ basic_json_parser_63:
         json_pointer() = default;
 
         /// nonempty reference token
-        json_pointer(const std::string& s)
+        explicit json_pointer(const std::string& s)
         {
             split(s);
         }
 
+      private:
         /// return referenced value
-        reference get(reference j)
+        reference get(reference j) const
         {
             pointer result = &j;
 
@@ -8876,7 +8904,6 @@ basic_json_parser_63:
             return *result;
         }
 
-      private:
         /// the reference tokens
         std::vector<std::string> reference_tokens {};
 
@@ -8890,7 +8917,7 @@ basic_json_parser_63:
         @return The string @a s where all occurrences of @a f are replaced
                 with @a t.
 
-        @pre The search string @f must not be empty.
+        @pre The search string @a f must not be empty.
         */
         static void replace_substring(std::string& s,
                                       const std::string& f,
@@ -8932,7 +8959,7 @@ basic_json_parser_63:
                 // we can stop if start == string::npos+1 = 0
                 start != 0;
                 // set the beginning of the next reference token
-                // (could be 0 if slash == std::string::npos)
+                // (will eventually be 0 if slash == std::string::npos)
                 start = slash + 1,
                 // find next slash
                 slash = reference_string.find_first_of("/", start))
@@ -8962,7 +8989,7 @@ basic_json_parser_63:
                 // then transform any occurrence of the sequence '~0' to '~'
                 replace_substring(reference_token, "~0", "~");
 
-                // store the reference token
+                // finally, store the reference token
                 reference_tokens.push_back(reference_token);
             }
         }
