@@ -12365,6 +12365,11 @@ TEST_CASE("JSON pointers")
         CHECK_THROWS_AS(json({{"/1", {1, 2, 3}}}).unflatten(), std::domain_error);
         CHECK_THROWS_WITH(json({{"/1", {1, 2, 3}}}).unflatten(), "values in object must be primitive");
 
+        // error for conflicting values
+        json j_error = {{"", 42}, {"/foo", 17}};
+        CHECK_THROWS_AS(j_error.unflatten(), std::domain_error);
+        CHECK_THROWS_WITH(j_error.unflatten(), "unresolved reference token 'foo'");
+
         // explicit roundtrip check
         CHECK(j.flatten().unflatten() == j);
 

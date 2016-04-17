@@ -31,4 +31,7 @@ int main()
 
     // call flatten()
     std::cout << std::setw(4) << j.flatten() << '\n';
+
+    // flatten for a primitive value
+    std::cout << j["pi"].flatten() << '\n';
 }

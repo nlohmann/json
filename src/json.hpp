@@ -3273,8 +3273,8 @@ class basic_json
 
     @return reference to the element at index @a idx
 
-    @throw std::domain_error if JSON is not an array or null; example: `"cannot
-    use operator[] with string"`
+    @throw std::domain_error if JSON is not an array or null; example:
+    `"cannot use operator[] with string"`
 
     @complexity Constant if @a idx is in the range of the array. Otherwise
     linear in `idx - size()`.
@@ -3620,7 +3620,9 @@ class basic_json
 
     @complexity Linear in the length of the JSON pointer.
 
-    @throw std::out_of_range  if the JSON pointer can not be resolved
+    @throw std::out_of_range      if the JSON pointer can not be resolved
+    @throw std::domain_error      if an array index begins with '0'
+    @throw std::invalid_argument  if an array index was not a number
 
     @liveexample{The behavior is shown in the example.,operatorjson_pointer}
 
@@ -3645,8 +3647,9 @@ class basic_json
 
     @complexity Linear in the length of the JSON pointer.
 
-    @throw std::out_of_range  if the JSON pointer can not be resolved
-    @throw std::out_of_range  if the special value `-` is used for an array
+    @throw std::out_of_range      if the JSON pointer can not be resolved
+    @throw std::domain_error      if an array index begins with '0'
+    @throw std::invalid_argument  if an array index was not a number
 
     @liveexample{The behavior is shown in the example.,
     operatorjson_pointer_const}
@@ -8923,9 +8926,12 @@ basic_json_parser_63:
                       empty string is assumed which references the whole JSON
                       value
 
-        @throw std::domain_error  if reference token is nonempty and does not
-               begin with a slash (`/`), or if a tilde (`~`) is not followed
-               by `0` (representing `~`) or `1` (representing `/`).
+        @throw std::domain_error if reference token is nonempty and does not
+        begin with a slash (`/`); example: `"JSON pointer must be empty or
+        begin with /"`
+        @throw std::domain_error if a tilde (`~`) is not followed by `0`
+        (representing `~`) or `1` (representing `/`); example: `"escape error:
+        ~ must be followed with 0 or 1"`
 
         @liveexample{The example shows the construction several valid JSON
         pointers as well as the exceptional behavior.,json_pointer}
@@ -8944,6 +8950,8 @@ basic_json_parser_63:
         {
             pointer result = &j;
 
+            // in case no reference tokens exist, return a reference to the
+            // JSON value j which will be overwritten by a primitive value
             for (const auto& reference_token : reference_tokens)
             {
                 switch (result->m_type)
@@ -8952,10 +8960,12 @@ basic_json_parser_63:
                     {
                         if (reference_token == "0")
                         {
+                            // start a new array if reference token is 0
                             result = &result->operator[](0);
                         }
                         else
                         {
+                            // start a new object otherwise
                             result = &result->operator[](reference_token);
                         }
                         break;
@@ -8963,19 +8973,38 @@ basic_json_parser_63:
 
                     case value_t::object:
                     {
+                        // create an entry in the object
                         result = &result->operator[](reference_token);
                         break;
                     }
 
                     case value_t::array:
                     {
+                        // create an entry in the array
                         result = &result->operator[](static_cast<size_t>(std::stoi(reference_token)));
                         break;
                     }
 
+                    /*
+                    This function is only to be called from the unflatten()
+                    function. There, j is initially of type null.
+
+                    - In case the reference tokens are empty, a reference to
+                      j is returned and overwritten by the desired value by
+                      the unflatten() function.
+                    - If there are reference tokens, the null value of j will
+                      be changed to an object or array after reading the first
+                      reference token.
+                    - All subsequent tokens work on arrays or objects and will
+                      not change the type of j.
+
+                    Consequently, the type of @a j will always be null,
+                    object, or array. Hence, the following line is
+                    unreachable.
+                    */
                     default:
                     {
-                        throw std::domain_error("unresolved reference token '" + reference_token + "'");
+                        break; // LCOV_EXCL_LINE
                     }
                 }
             }
@@ -9361,7 +9390,11 @@ basic_json_parser_63:
                     throw std::domain_error("values in object must be primitive");
                 }
 
-                // assign value to reference pointed to by JSON pointer
+                // assign value to reference pointed to by JSON pointer;
+                // Note that if the JSON pointer is "" (i.e., points to the
+                // whole value), function get_and_create returns a reference
+                // to result itself. An assignment will then create a
+                // primitive value.
                 json_pointer(element.first).get_and_create(result) = element.second;
             }
 
@@ -9390,7 +9423,8 @@ basic_json_parser_63:
 
     @return an object that maps JSON pointers to primitve values
 
-    @note Empty objects and arrays are flattened to `null`.
+    @note Empty objects and arrays are flattened to `null` and will not be
+          reconstructed correctly by the @ref unflatten() function.
 
     @complexity Linear in the size the JSON value.
 
@@ -9427,6 +9461,8 @@ basic_json_parser_63:
           `j == j.flatten().unflatten()`.
 
     @complexity Linear in the size the JSON value.
+
+    @throws std::domain_error
 
     @liveexample{The following code shows how a flattened JSON object is
     unflattened into the original nested JSON object.,unflatten}
