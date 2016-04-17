@@ -8913,11 +8913,26 @@ basic_json_parser_63:
         friend class basic_json;
 
       public:
-        /// empty reference token
-        json_pointer() = default;
+        /*!
+        @brief create JSON pointer
 
-        /// nonempty reference token
-        explicit json_pointer(const std::string& s)
+        Create a JSON pointer according to the syntax described in
+        [Section 3 of RFC6901](https://tools.ietf.org/html/rfc6901#section-3).
+
+        @param[in] s  string representing the JSON pointer; if omitted, the
+                      empty string is assumed which references the whole JSON
+                      value
+
+        @throw std::domain_error  if reference token is nonempty and does not
+               begin with a slash (`/`), or if a tilde (`~`) is not followed
+               by `0` (representing `~`) or `1` (representing `/`).
+
+        @liveexample{The example shows the construction several valid JSON
+        pointers as well as the exceptional behavior.,json_pointer}
+
+        @since version 2.0.0
+        */
+        explicit json_pointer(const std::string& s = "")
             : reference_tokens(split(s))
         {}
 
@@ -8943,19 +8958,19 @@ basic_json_parser_63:
                         {
                             result = &result->operator[](reference_token);
                         }
-                        continue;
+                        break;
                     }
 
                     case value_t::object:
                     {
                         result = &result->operator[](reference_token);
-                        continue;
+                        break;
                     }
 
                     case value_t::array:
                     {
                         result = &result->operator[](static_cast<size_t>(std::stoi(reference_token)));
-                        continue;
+                        break;
                     }
 
                     default:
@@ -9066,7 +9081,7 @@ basic_json_parser_63:
                     case value_t::object:
                     {
                         ptr = &ptr->operator[](reference_token);
-                        continue;
+                        break;
                     }
 
                     case value_t::array:
@@ -9078,7 +9093,7 @@ basic_json_parser_63:
                                                     ") is out of range");
                         }
                         ptr = &ptr->operator[](static_cast<size_t>(std::stoi(reference_token)));
-                        continue;
+                        break;
                     }
 
                     default:
@@ -9100,7 +9115,7 @@ basic_json_parser_63:
                     case value_t::object:
                     {
                         ptr = &ptr->at(reference_token);
-                        continue;
+                        break;
                     }
 
                     case value_t::array:
@@ -9112,7 +9127,7 @@ basic_json_parser_63:
                                                     ") is out of range");
                         }
                         ptr = &ptr->at(static_cast<size_t>(std::stoi(reference_token)));
-                        continue;
+                        break;
                     }
 
                     default:
