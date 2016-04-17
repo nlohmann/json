@@ -3598,23 +3598,86 @@ class basic_json
     /*!
     @brief access specified element via JSON Pointer
 
-    Returns a reference to the element at with specified JSON pointer @a ptr.
+    Uses a JSON pointer to retrieve a reference to the respective JSON value.
+    No bound checking is performed. Similar to
+    @ref operator[](const typename object_t::key_type&), `null` values
+    are created in arrays and objects if necessary.
 
-    @param p  JSON pointer to the desired element
+    In particular:
+    - If the JSON pointer points to an object key that does not exist, it
+      is created an filled with a `null` value before a reference to it
+      is returned.
+    - If the JSON pointer points to an array index that does not exist, it
+      is created an filled with a `null` value before a reference to it
+      is returned. All indices between the current maximum and the given
+      index are also filled with `null`.
+    - The special value `-` is treated as a synonym for the index past the
+      end.
+
+    @param[in] ptr  a JSON pointer
+
+    @return reference to the JSON value pointed to by @a ptr
+
+    @complexity Linear in the length of the JSON pointer.
+
+    @throw std::out_of_range  if the JSON pointer can not be resolved
+
+    @liveexample{The behavior is shown in the example.,operatorjson_pointer}
 
     @since version 2.0.0
     */
     reference operator[](const json_pointer& ptr)
     {
-        return ptr.get(*this);
+        return ptr.get_unchecked(this);
     }
 
     /*!
-    @copydoc basic_json::operator[](const json_pointer&)
+    @brief access specified element via JSON Pointer
+
+    Uses a JSON pointer to retrieve a reference to the respective JSON value.
+    No bound checking is performed. The function does not change the JSON
+    value; no `null` values are created. In particular, the the special value
+    `-` yields an exception.
+
+    @param[in] ptr  a JSON pointer
+
+    @return reference to the JSON value pointed to by @a ptr
+
+    @complexity Linear in the length of the JSON pointer.
+
+    @throw std::out_of_range  if the JSON pointer can not be resolved
+    @throw std::out_of_range  if the special value `-` is used for an array
+
+    @liveexample{The behavior is shown in the example.,
+    operatorjson_pointer_const}
+
+    @since version 2.0.0
     */
     const_reference operator[](const json_pointer& ptr) const
     {
-        return ptr.get(*this);
+        return ptr.get_unchecked(this);
+    }
+
+    /*!
+    @brief access specified element via JSON Pointer
+
+    Returns a reference to the element at with specified JSON pointer @a ptr.
+
+    @param ptr  JSON pointer to the desired element
+
+    @since version 2.0.0
+    */
+    reference at(const json_pointer& ptr)
+    {
+        return ptr.get_checked(this);
+    }
+
+    /*!
+    @copydoc basic_json::at(const json_pointer&)
+    */
+    const_reference at(const json_pointer& ptr) const
+    {
+        return ptr.get_checked(this);
     }
 
     /*!
@@ -8841,45 +8904,28 @@ basic_json_parser_63:
     @brief JSON Pointer
 
     @sa [RFC 6901](https://tools.ietf.org/html/rfc6901)
+
+    @since version 2.0.0
     */
     class json_pointer
     {
+        /// allow basic_json to access private members
+        friend class basic_json;
+
       public:
         /// empty reference token
         json_pointer() = default;
 
         /// nonempty reference token
         explicit json_pointer(const std::string& s)
-        {
-            split(s);
-        }
+            : reference_tokens(split(s))
+        {}
 
       private:
-        reference get(reference j) const
-        {
-            pointer result = &j;
-
-            for (const auto& reference_token : reference_tokens)
-            {
-                switch (result->m_type)
-                {
-                    case value_t::object:
-                        result = &result->at(reference_token);
-                        continue;
-
-                    case value_t::array:
-                        result = &result->at(static_cast<size_t>(std::stoi(reference_token)));
-                        continue;
-
-                    default:
-                        throw std::domain_error("unresolved reference token '" + reference_token + "'");
-                }
-            }
-
-            return *result;
-        }
-
-        reference get2(reference j) const
+        /*!
+        @brief create and return a reference to the pointed to value
+        */
+        reference get_and_create(reference j) const
         {
             pointer result = &j;
 
@@ -8922,40 +8968,172 @@ basic_json_parser_63:
             return *result;
         }
 
-        const_reference get(const_reference j) const
-        {
-            const_pointer result = &j;
+        /*!
+        @brief return a reference to the pointed to value
 
+        @param[in] ptr  a JSON value
+
+        @return reference to the JSON value pointed to by the JSON pointer
+
+        @complexity Linear in the length of the JSON pointer.
+
+        @throw std::out_of_range  if the JSON pointer can not be resolved
+        */
+        reference get_unchecked(pointer ptr) const
+        {
             for (const auto& reference_token : reference_tokens)
             {
-                switch (result->m_type)
+                switch (ptr->m_type)
                 {
                     case value_t::object:
-                        result = &result->at(reference_token);
-                        continue;
+                    {
+                        ptr = &ptr->operator[](reference_token);
+                        break;
+                    }
 
                     case value_t::array:
-                        result = &result->at(static_cast<size_t>(std::stoi(reference_token)));
-                        continue;
+                    {
+                        if (reference_token == "-")
+                        {
+                            ptr = &ptr->operator[](ptr->m_value.array->size());
+                        }
+                        else
+                        {
+                            ptr = &ptr->operator[](static_cast<size_t>(std::stoi(reference_token)));
+                        }
+                        break;
+                    }
 
                     default:
-                        throw std::domain_error("unresolved reference token '" + reference_token + "'");
+                    {
+                        throw std::out_of_range("unresolved reference token '" + reference_token + "'");
+                    }
                 }
             }
 
-            return *result;
+            return *ptr;
         }
 
-        /// the reference tokens
-        std::vector<std::string> reference_tokens {};
+        reference get_checked(pointer ptr) const
+        {
+            for (const auto& reference_token : reference_tokens)
+            {
+                switch (ptr->m_type)
+                {
+                    case value_t::object:
+                    {
+                        ptr = &ptr->at(reference_token);
+                        break;
+                    }
+
+                    case value_t::array:
+                    {
+                        if (reference_token == "-")
+                        {
+                            throw std::out_of_range("cannot resolve reference token '-'");
+                        }
+                        else
+                        {
+                            ptr = &ptr->at(static_cast<size_t>(std::stoi(reference_token)));
+                        }
+                        break;
+                    }
+
+                    default:
+                    {
+                        throw std::out_of_range("unresolved reference token '" + reference_token + "'");
+                    }
+                }
+            }
+
+            return *ptr;
+        }
+
+        /*!
+        @brief return a const reference to the pointed to value
+
+        @param[in] ptr  a JSON value
+
+        @return const reference to the JSON value pointed to by the JSON
+                pointer
+        */
+        const_reference get_unchecked(const_pointer ptr) const
+        {
+            for (const auto& reference_token : reference_tokens)
+            {
+                switch (ptr->m_type)
+                {
+                    case value_t::object:
+                    {
+                        ptr = &ptr->operator[](reference_token);
+                        continue;
+                    }
+
+                    case value_t::array:
+                    {
+                        if (reference_token == "-")
+                        {
+                            throw std::out_of_range("array index '-' (" +
+                                                    std::to_string(ptr->m_value.array->size()) +
+                                                    ") is out of range");
+                        }
+                        ptr = &ptr->operator[](static_cast<size_t>(std::stoi(reference_token)));
+                        continue;
+                    }
+
+                    default:
+                    {
+                        throw std::out_of_range("unresolved reference token '" + reference_token + "'");
+                    }
+                }
+            }
+
+            return *ptr;
+        }
+
+        const_reference get_checked(const_pointer ptr) const
+        {
+            for (const auto& reference_token : reference_tokens)
+            {
+                switch (ptr->m_type)
+                {
+                    case value_t::object:
+                    {
+                        ptr = &ptr->at(reference_token);
+                        continue;
+                    }
+
+                    case value_t::array:
+                    {
+                        if (reference_token == "-")
+                        {
+                            throw std::out_of_range("array index '-' (" +
+                                                    std::to_string(ptr->m_value.array->size()) +
+                                                    ") is out of range");
+                        }
+                        ptr = &ptr->at(static_cast<size_t>(std::stoi(reference_token)));
+                        continue;
+                    }
+
+                    default:
+                    {
+                        throw std::out_of_range("unresolved reference token '" + reference_token + "'");
+                    }
+                }
+            }
+
+            return *ptr;
+        }
 
         /// split the string input to reference tokens
-        void split(std::string reference_string)
+        std::vector<std::string> split(std::string reference_string)
         {
+            std::vector<std::string> result;
+
             // special case: empty reference string -> no reference tokens
             if (reference_string.empty())
             {
-                return;
+                return result;
             }
 
             // check if nonempty reference string begins with slash
@@ -9006,10 +9184,13 @@ basic_json_parser_63:
                 replace_substring(reference_token, "~0", "~");
 
                 // finally, store the reference token
-                reference_tokens.push_back(reference_token);
+                result.push_back(reference_token);
             }
+
+            return result;
         }
 
+      private:
         /*!
         @brief replace all occurrences of a substring by another string
 
@@ -9042,6 +9223,8 @@ basic_json_parser_63:
         @param[in] reference_string  the reference string to the current value
         @param[in] value             the value to consider
         @param[in,out] result        the result object to insert values to
+
+        @note Empty objects or arrays are flattened to `null`.
         */
         static void flatten(const std::string reference_string,
                             const basic_json& value,
@@ -9051,27 +9234,43 @@ basic_json_parser_63:
             {
                 case value_t::array:
                 {
-                    // iterate array and use index as reference string
-                    for (size_t i = 0; i < value.m_value.array->size(); ++i)
+                    if (value.m_value.array->empty())
                     {
-                        flatten(reference_string + "/" + std::to_string(i),
-                                value.m_value.array->operator[](i), result);
+                        // flatten empty array as null
+                        result[reference_string] = nullptr;
+                    }
+                    else
+                    {
+                        // iterate array and use index as reference string
+                        for (size_t i = 0; i < value.m_value.array->size(); ++i)
+                        {
+                            flatten(reference_string + "/" + std::to_string(i),
+                                    value.m_value.array->operator[](i), result);
+                        }
                     }
                     break;
                 }
 
                 case value_t::object:
                 {
-                    // iterate object and use keys as reference string
-                    for (const auto& element : *value.m_value.object)
+                    if (value.m_value.object->empty())
                     {
-                        // escape "~"" to "~0" and "/" to "~1"
-                        std::string key(element.first);
-                        replace_substring(key, "~", "~0");
-                        replace_substring(key, "/", "~1");
+                        // flatten empty object as null
+                        result[reference_string] = nullptr;
+                    }
+                    else
+                    {
+                        // iterate object and use keys as reference string
+                        for (const auto& element : *value.m_value.object)
+                        {
+                            // escape "~"" to "~0" and "/" to "~1"
+                            std::string key(element.first);
+                            replace_substring(key, "~", "~0");
+                            replace_substring(key, "/", "~1");
 
-                        flatten(reference_string + "/" + key,
-                                element.second, result);
+                            flatten(reference_string + "/" + key,
+                                    element.second, result);
+                        }
                     }
                     break;
                 }
@@ -9088,13 +9287,13 @@ basic_json_parser_63:
         /*!
         @param[in] value  flattened JSON
 
-        @return deflattened JSON
+        @return unflattened JSON
         */
-        static basic_json deflatten(const basic_json& value)
+        static basic_json unflatten(const basic_json& value)
         {
             if (not value.is_object())
             {
-                throw std::domain_error("only objects can be deflattened");
+                throw std::domain_error("only objects can be unflattened");
             }
 
             basic_json result;
@@ -9108,15 +9307,44 @@ basic_json_parser_63:
                 }
 
                 // assign value to reference pointed to by JSON pointer
-                json_pointer(element.first).get2(result) = element.second;
+                json_pointer(element.first).get_and_create(result) = element.second;
             }
 
             return result;
         }
+
+      private:
+        /// the reference tokens
+        const std::vector<std::string> reference_tokens {};
     };
 
+    ////////////////////////////
+    // JSON Pointer functions //
+    ////////////////////////////
+
+    /// @name JSON Pointer functions
+    /// @{
+
     /*!
+    @brief return flattened JSON value
+
+    The function creates a JSON object whose keys are JSON pointers (see
+    [RFC 6901](https://tools.ietf.org/html/rfc6901)) and whose values are all
+    primitive. The original JSON value can be restored using the
+    @ref unflatten() function.
+
     @return an object that maps JSON pointers to primitve values
+
+    @note Empty objects and arrays are flattened to `null`.
+
+    @complexity Linear in the size the JSON value.
+
+    @liveexample{The following code shows how a JSON object is flattened to an
+    object whose keys consist of JSON pointers.,flatten}
+
+    @sa @ref unflatten() for the reverse function
+
+    @since version 2.0.0
     */
     basic_json flatten() const
     {
@@ -9126,12 +9354,38 @@ basic_json_parser_63:
     }
 
     /*!
+    @brief unflatten a previously flattened JSON value
+
+    The function restores the arbitrary nesting of a JSON value that has been
+    flattened before using the @ref flatten() function. The JSON value must
+    meet certain constraints:
+    1. The value must be an object.
+    2. The keys must be JSON pointers (see
+       [RFC 6901](https://tools.ietf.org/html/rfc6901))
+    3. The mapped values must be primitive JSON types.
+
     @return the original JSON from a flattened version
+
+    @note Empty objects and arrays are flattened by @ref flatten() to `null`
+          values and can not unflattened to their original type. Apart from
+          this example, for a JSON value `j`, the following is always true:
+          `j == j.flatten().unflatten()`.
+
+    @complexity Linear in the size the JSON value.
+
+    @liveexample{The following code shows how a flattened JSON object is
+    unflattened into the original nested JSON object.,unflatten}
+
+    @sa @ref flatten() for the reverse function
+
+    @since version 2.0.0
     */
-    basic_json deflatten() const
+    basic_json unflatten() const
     {
-        return json_pointer::deflatten(*this);
+        return json_pointer::unflatten(*this);
     }
+
+    /// @}
 };
 
 

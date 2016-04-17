@@ -1,0 +1,22 @@
+{
+    "answer": {
+        "everything": 42
+    },
+    "happy": true,
+    "list": [
+        1,
+        0,
+        2
+    ],
+    "name": "Niels",
+    "nothing": null,
+    "object": {
+        "": "empty string",
+        "/": "slash",
+        "currency": "USD",
+        "value": 42.99,
+        "~": "tilde",
+        "~1": "tilde1"
+    },
+    "pi": 3.141
+}

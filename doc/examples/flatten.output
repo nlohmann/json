@@ -1,0 +1,16 @@
+{
+    "/answer/everything": 42,
+    "/happy": true,
+    "/list/0": 1,
+    "/list/1": 0,
+    "/list/2": 2,
+    "/name": "Niels",
+    "/nothing": null,
+    "/object/": "empty string",
+    "/object/currency": "USD",
+    "/object/value": 42.99,
+    "/object/~0": "tilde",
+    "/object/~01": "tilde1",
+    "/object/~1": "slash",
+    "/pi": 3.141
+}
