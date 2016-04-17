@@ -12095,6 +12095,10 @@ TEST_CASE("JSON pointers")
             CHECK(j[json::json_pointer("/foo/1")] == j["foo"][1]);
             CHECK(j["/foo/1"_json_pointer] == j["foo"][1]);
 
+            // checked array access
+            CHECK(j.at(json::json_pointer("/foo/0")) == j["foo"][0]);
+            CHECK(j.at(json::json_pointer("/foo/1")) == j["foo"][1]);
+
             // empty string access
             CHECK(j[json::json_pointer("/")] == j[""]);
 
@@ -12106,6 +12110,14 @@ TEST_CASE("JSON pointers")
             CHECK(j[json::json_pointer("/i\\j")] == j["i\\j"]);
             CHECK(j[json::json_pointer("/k\"l")] == j["k\"l"]);
 
+            // checked access
+            CHECK(j.at(json::json_pointer("/ ")) == j[" "]);
+            CHECK(j.at(json::json_pointer("/c%d")) == j["c%d"]);
+            CHECK(j.at(json::json_pointer("/e^f")) == j["e^f"]);
+            CHECK(j.at(json::json_pointer("/g|h")) == j["g|h"]);
+            CHECK(j.at(json::json_pointer("/i\\j")) == j["i\\j"]);
+            CHECK(j.at(json::json_pointer("/k\"l")) == j["k\"l"]);
+
             // escaped access
             CHECK(j[json::json_pointer("/a~1b")] == j["a/b"]);
             CHECK(j[json::json_pointer("/m~0n")] == j["m~n"]);
@@ -12115,6 +12127,13 @@ TEST_CASE("JSON pointers")
             CHECK_THROWS_WITH(j[json::json_pointer("/a/b")], "unresolved reference token 'b'");
             // "/a/b" works for JSON {"a": {"b": 42}}
             CHECK(json({{"a", {{"b", 42}}}})[json::json_pointer("/a/b")] == json(42));
+
+            // unresolved access
+            json j_primitive = 1;
+            CHECK_THROWS_AS(j_primitive["/foo"_json_pointer], std::out_of_range);
+            CHECK_THROWS_WITH(j_primitive["/foo"_json_pointer], "unresolved reference token 'foo'");
+            CHECK_THROWS_AS(j_primitive.at("/foo"_json_pointer), std::out_of_range);
+            CHECK_THROWS_WITH(j_primitive.at("/foo"_json_pointer), "unresolved reference token 'foo'");
         }
 
         SECTION("const access")
@@ -12144,6 +12163,10 @@ TEST_CASE("JSON pointers")
             CHECK(j[json::json_pointer("/foo/1")] == j["foo"][1]);
             CHECK(j["/foo/1"_json_pointer] == j["foo"][1]);
 
+            // checked array access
+            CHECK(j.at(json::json_pointer("/foo/0")) == j["foo"][0]);
+            CHECK(j.at(json::json_pointer("/foo/1")) == j["foo"][1]);
+
             // empty string access
             CHECK(j[json::json_pointer("/")] == j[""]);
 
@@ -12155,6 +12178,14 @@ TEST_CASE("JSON pointers")
             CHECK(j[json::json_pointer("/i\\j")] == j["i\\j"]);
             CHECK(j[json::json_pointer("/k\"l")] == j["k\"l"]);
 
+            // checked access
+            CHECK(j.at(json::json_pointer("/ ")) == j[" "]);
+            CHECK(j.at(json::json_pointer("/c%d")) == j["c%d"]);
+            CHECK(j.at(json::json_pointer("/e^f")) == j["e^f"]);
+            CHECK(j.at(json::json_pointer("/g|h")) == j["g|h"]);
+            CHECK(j.at(json::json_pointer("/i\\j")) == j["i\\j"]);
+            CHECK(j.at(json::json_pointer("/k\"l")) == j["k\"l"]);
+
             // escaped access
             CHECK(j[json::json_pointer("/a~1b")] == j["a/b"]);
             CHECK(j[json::json_pointer("/m~0n")] == j["m~n"]);
@@ -12162,6 +12193,13 @@ TEST_CASE("JSON pointers")
             // unescaped access
             CHECK_THROWS_AS(j.at(json::json_pointer("/a/b")), std::out_of_range);
             CHECK_THROWS_WITH(j.at(json::json_pointer("/a/b")), "key 'a' not found");
+
+            // unresolved access
+            const json j_primitive = 1;
+            CHECK_THROWS_AS(j_primitive["/foo"_json_pointer], std::out_of_range);
+            CHECK_THROWS_WITH(j_primitive["/foo"_json_pointer], "unresolved reference token 'foo'");
+            CHECK_THROWS_AS(j_primitive.at("/foo"_json_pointer), std::out_of_range);
+            CHECK_THROWS_WITH(j_primitive.at("/foo"_json_pointer), "unresolved reference token 'foo'");
         }
 
         SECTION("user-defined string literal")
@@ -12318,6 +12356,14 @@ TEST_CASE("JSON pointers")
 
         // check if unflattened result is as expected
         CHECK(j_flatten.unflatten() == j);
+
+        // error for nonobjects
+        CHECK_THROWS_AS(json(1).unflatten(), std::domain_error);
+        CHECK_THROWS_WITH(json(1).unflatten(), "only objects can be unflattened");
+
+        // error for nonprimitve values
+        CHECK_THROWS_AS(json({{"/1", {1, 2, 3}}}).unflatten(), std::domain_error);
+        CHECK_THROWS_WITH(json({{"/1", {1, 2, 3}}}).unflatten(), "values in object must be primitive");
 
         // explicit roundtrip check
         CHECK(j.flatten().unflatten() == j);
