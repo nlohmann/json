@@ -12368,7 +12368,7 @@ TEST_CASE("JSON pointers")
         // error for conflicting values
         json j_error = {{"", 42}, {"/foo", 17}};
         CHECK_THROWS_AS(j_error.unflatten(), std::domain_error);
-        CHECK_THROWS_WITH(j_error.unflatten(), "unresolved reference token 'foo'");
+        CHECK_THROWS_WITH(j_error.unflatten(), "invalid value to unflatten");
 
         // explicit roundtrip check
         CHECK(j.flatten().unflatten() == j);

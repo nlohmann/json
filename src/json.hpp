@@ -8986,25 +8986,15 @@ basic_json_parser_63:
                     }
 
                     /*
-                    This function is only to be called from the unflatten()
-                    function. There, j is initially of type null.
-
-                    - In case the reference tokens are empty, a reference to
-                      j is returned and overwritten by the desired value by
-                      the unflatten() function.
-                    - If there are reference tokens, the null value of j will
-                      be changed to an object or array after reading the first
-                      reference token.
-                    - All subsequent tokens work on arrays or objects and will
-                      not change the type of j.
-
-                    Consequently, the type of @a j will always be null,
-                    object, or array. Hence, the following line is
-                    unreachable.
+                    The following code is only reached if there exists a
+                    reference token _and_ the current value is primitive. In
+                    this case, we have an error situation, because primitive
+                    values may only occur as single value; that is, with an
+                    empty list of reference tokens.
                     */
                     default:
                     {
-                        break; // LCOV_EXCL_LINE
+                        throw std::domain_error("invalid value to unflatten");
                     }
                 }
             }
@@ -9461,8 +9451,6 @@ basic_json_parser_63:
           `j == j.flatten().unflatten()`.
 
     @complexity Linear in the size the JSON value.
-
-    @throws std::domain_error
 
     @liveexample{The following code shows how a flattened JSON object is
     unflattened into the original nested JSON object.,unflatten}
