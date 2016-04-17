@@ -8992,7 +8992,9 @@ basic_json_parser_63:
 
         @complexity Linear in the length of the JSON pointer.
 
-        @throw std::out_of_range  if the JSON pointer can not be resolved
+        @throw std::out_of_range      if the JSON pointer can not be resolved
+        @throw std::domain_error      if an array index begins with '0'
+        @throw std::invalid_argument  if an array index was not a number
         */
         reference get_unchecked(pointer ptr) const
         {
@@ -9002,18 +9004,27 @@ basic_json_parser_63:
                 {
                     case value_t::object:
                     {
+                        // use unchecked object access
                         ptr = &ptr->operator[](reference_token);
                         break;
                     }
 
                     case value_t::array:
                     {
+                        // error condition (cf. RFC 6901, Sect. 4)
+                        if (reference_token.size() > 1 and reference_token[0] == '0')
+                        {
+                            throw std::domain_error("array index must not begin with '0'");
+                        }
+
                         if (reference_token == "-")
                         {
+                            // explicityly treat "-" as index beyond the end
                             ptr = &ptr->operator[](ptr->m_value.array->size());
                         }
                         else
                         {
+                            // convert array index to number; unchecked access
                             ptr = &ptr->operator[](static_cast<size_t>(std::stoi(reference_token)));
                         }
                         break;
@@ -9037,6 +9048,7 @@ basic_json_parser_63:
                 {
                     case value_t::object:
                     {
+                        // note: at performs range check
                         ptr = &ptr->at(reference_token);
                         break;
                     }
@@ -9045,12 +9057,20 @@ basic_json_parser_63:
                     {
                         if (reference_token == "-")
                         {
-                            throw std::out_of_range("cannot resolve reference token '-'");
+                            // "-" always fails the range check
+                            throw std::out_of_range("array index '-' (" +
+                                                    std::to_string(ptr->m_value.array->size()) +
+                                                    ") is out of range");
                         }
-                        else
+
+                        // error condition (cf. RFC 6901, Sect. 4)
+                        if (reference_token.size() > 1 and reference_token[0] == '0')
                         {
-                            ptr = &ptr->at(static_cast<size_t>(std::stoi(reference_token)));
+                            throw std::domain_error("array index must not begin with '0'");
                         }
+
+                        // note: at performs range check
+                        ptr = &ptr->at(static_cast<size_t>(std::stoi(reference_token)));
                         break;
                     }
 
@@ -9080,6 +9100,7 @@ basic_json_parser_63:
                 {
                     case value_t::object:
                     {
+                        // use unchecked object access
                         ptr = &ptr->operator[](reference_token);
                         break;
                     }
@@ -9088,10 +9109,19 @@ basic_json_parser_63:
                     {
                         if (reference_token == "-")
                         {
+                            // "-" cannot be used for const access
                             throw std::out_of_range("array index '-' (" +
                                                     std::to_string(ptr->m_value.array->size()) +
                                                     ") is out of range");
                         }
+
+                        // error condition (cf. RFC 6901, Sect. 4)
+                        if (reference_token.size() > 1 and reference_token[0] == '0')
+                        {
+                            throw std::domain_error("array index must not begin with '0'");
+                        }
+
+                        // use unchecked array access
                         ptr = &ptr->operator[](static_cast<size_t>(std::stoi(reference_token)));
                         break;
                     }
@@ -9114,6 +9144,7 @@ basic_json_parser_63:
                 {
                     case value_t::object:
                     {
+                        // note: at performs range check
                         ptr = &ptr->at(reference_token);
                         break;
                     }
@@ -9122,10 +9153,19 @@ basic_json_parser_63:
                     {
                         if (reference_token == "-")
                         {
+                            // "-" always fails the range check
                             throw std::out_of_range("array index '-' (" +
                                                     std::to_string(ptr->m_value.array->size()) +
                                                     ") is out of range");
                         }
+
+                        // error condition (cf. RFC 6901, Sect. 4)
+                        if (reference_token.size() > 1 and reference_token[0] == '0')
+                        {
+                            throw std::domain_error("array index must not begin with '0'");
+                        }
+
+                        // note: at performs range check
                         ptr = &ptr->at(static_cast<size_t>(std::stoi(reference_token)));
                         break;
                     }

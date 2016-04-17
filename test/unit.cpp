@@ -12196,6 +12196,7 @@ TEST_CASE("JSON pointers")
         SECTION("nonconst access")
         {
             json j = {1, 2, 3};
+            const json j_const = j;
 
             // check reading access
             CHECK(j["/0"_json_pointer] == j[0]);
@@ -12214,9 +12215,32 @@ TEST_CASE("JSON pointers")
             j["/5"_json_pointer] = 55;
             CHECK(j == json({1, 13, 3, 33, nullptr, 55}));
 
+            // error with leading 0
+            CHECK_THROWS_AS(j["/01"_json_pointer], std::domain_error);
+            CHECK_THROWS_WITH(j["/01"_json_pointer], "array index must not begin with '0'");
+            CHECK_THROWS_AS(j_const["/01"_json_pointer], std::domain_error);
+            CHECK_THROWS_WITH(j_const["/01"_json_pointer], "array index must not begin with '0'");
+            CHECK_THROWS_AS(j.at("/01"_json_pointer), std::domain_error);
+            CHECK_THROWS_WITH(j.at("/01"_json_pointer), "array index must not begin with '0'");
+            CHECK_THROWS_AS(j_const.at("/01"_json_pointer), std::domain_error);
+            CHECK_THROWS_WITH(j_const.at("/01"_json_pointer), "array index must not begin with '0'");
+
+            // error with incorrect numbers
+            CHECK_THROWS_AS(j["/one"_json_pointer] = 1, std::invalid_argument);
+
             // assign to "-"
             j["/-"_json_pointer] = 99;
             CHECK(j == json({1, 13, 3, 33, nullptr, 55, 99}));
+
+            // error when using "-" in const object
+            CHECK_THROWS_AS(j_const["/-"_json_pointer], std::out_of_range);
+            CHECK_THROWS_WITH(j_const["/-"_json_pointer], "array index '-' (3) is out of range");
+
+            // error when using "-" with at
+            CHECK_THROWS_AS(j.at("/-"_json_pointer), std::out_of_range);
+            CHECK_THROWS_WITH(j.at("/-"_json_pointer), "array index '-' (7) is out of range");
+            CHECK_THROWS_AS(j_const.at("/-"_json_pointer), std::out_of_range);
+            CHECK_THROWS_WITH(j_const.at("/-"_json_pointer), "array index '-' (3) is out of range");
         }
 
         SECTION("const access")
