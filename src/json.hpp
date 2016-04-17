@@ -3616,9 +3616,9 @@ class basic_json
 
     @param[in] ptr  a JSON pointer
 
-    @return reference to the JSON value pointed to by @a ptr
+    @return reference to the element pointed to by @a ptr
 
-    @complexity Linear in the length of the JSON pointer.
+    @complexity Constant.
 
     @throw std::out_of_range      if the JSON pointer can not be resolved
     @throw std::domain_error      if an array index begins with '0'
@@ -3641,18 +3641,17 @@ class basic_json
     value; no `null` values are created. In particular, the the special value
     `-` yields an exception.
 
-    @param[in] ptr  a JSON pointer
+    @param[in] ptr  JSON pointer to the desired element
 
-    @return reference to the JSON value pointed to by @a ptr
+    @return const reference to the element pointed to by @a ptr
 
-    @complexity Linear in the length of the JSON pointer.
+    @complexity Constant.
 
     @throw std::out_of_range      if the JSON pointer can not be resolved
     @throw std::domain_error      if an array index begins with '0'
     @throw std::invalid_argument  if an array index was not a number
 
-    @liveexample{The behavior is shown in the example.,
-    operatorjson_pointer_const}
+    @liveexample{The behavior is shown in the example.,operatorjson_pointer_const}
 
     @since version 2.0.0
     */
@@ -3664,9 +3663,20 @@ class basic_json
     /*!
     @brief access specified element via JSON Pointer
 
-    Returns a reference to the element at with specified JSON pointer @a ptr.
+    Returns a reference to the element at with specified JSON pointer @a ptr,
+    with bounds checking.
 
-    @param ptr  JSON pointer to the desired element
+    @param[in] ptr  JSON pointer to the desired element
+
+    @return reference to the element pointed to by @a ptr
+
+    @complexity Constant.
+
+    @throw std::out_of_range      if the JSON pointer can not be resolved
+    @throw std::domain_error      if an array index begins with '0'
+    @throw std::invalid_argument  if an array index was not a number
+
+    @liveexample{The behavior is shown in the example.,at_json_pointer}
 
     @since version 2.0.0
     */
@@ -3676,7 +3686,24 @@ class basic_json
     }
 
     /*!
-    @copydoc basic_json::at(const json_pointer&)
+    @brief access specified element via JSON Pointer
+
+    Returns a const reference to the element at with specified JSON pointer
+    @a ptr, with bounds checking.
+
+    @param[in] ptr  JSON pointer to the desired element
+
+    @return reference to the element pointed to by @a ptr
+
+    @complexity Constant.
+
+    @throw std::out_of_range      if the JSON pointer can not be resolved
+    @throw std::domain_error      if an array index begins with '0'
+    @throw std::invalid_argument  if an array index was not a number
+
+    @liveexample{The behavior is shown in the example.,at_json_pointer_const}
+
+    @since version 2.0.0
     */
     const_reference at(const json_pointer& ptr) const
     {
