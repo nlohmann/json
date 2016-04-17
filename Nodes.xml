@@ -232,8 +232,8 @@
                  </Node>
                  <Node>
                   <Name>operator*</Name>
-                  <Path>classnlohmann_1_1basic__json_1_1iterator_ab07728b4da636eda0a24e0a51b8b46d7.html</Path>
-                  <Anchor>ab07728b4da636eda0a24e0a51b8b46d7</Anchor>
+                  <Path>classnlohmann_1_1basic__json_1_1iterator_acbd82115f9232c3d3b5dacc78315b9da.html</Path>
+                  <Anchor>acbd82115f9232c3d3b5dacc78315b9da</Anchor>
                  </Node>
                  <Node>
                   <Name>operator+</Name>
@@ -282,8 +282,8 @@
                  </Node>
                  <Node>
                   <Name>operator-&gt;</Name>
-                  <Path>classnlohmann_1_1basic__json_1_1iterator_ae58cd597336ad125d9615cff87fcd87e.html</Path>
-                  <Anchor>ae58cd597336ad125d9615cff87fcd87e</Anchor>
+                  <Path>classnlohmann_1_1basic__json_1_1iterator_a8de46badb5b2177c85c672a71bcca017.html</Path>
+                  <Anchor>a8de46badb5b2177c85c672a71bcca017</Anchor>
                  </Node>
                  <Node>
                   <Name>operator=</Name>
@@ -299,6 +299,22 @@
                   <Name>value</Name>
                   <Path>classnlohmann_1_1basic__json_1_1iterator_a8ffbf287736048e683f58306fdb8701f.html</Path>
                   <Anchor>a8ffbf287736048e683f58306fdb8701f</Anchor>
+                 </Node>
+                </Subnodes>
+               </Node>
+               <Node>
+                <Name>json_pointer</Name>
+                <Path>classnlohmann_1_1basic__json_1_1json__pointer.html</Path>
+                <Subnodes>
+                 <Node>
+                  <Name>json_pointer</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1json__pointer_ae12db117a2742d826465080979d7c835.html</Path>
+                  <Anchor>ae12db117a2742d826465080979d7c835</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>basic_json</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1json__pointer_ada3100cdb8700566051828f1355fa745.html</Path>
+                  <Anchor>ada3100cdb8700566051828f1355fa745</Anchor>
                  </Node>
                 </Subnodes>
                </Node>
@@ -713,6 +729,16 @@
                 <Anchor>a674de1ee73e6bf4843fc5dc1351fb726</Anchor>
                </Node>
                <Node>
+                <Name>at</Name>
+                <Path>classnlohmann_1_1basic__json_a649aef71e5d952499da7ad3b8e7c9236.html</Path>
+                <Anchor>a649aef71e5d952499da7ad3b8e7c9236</Anchor>
+               </Node>
+               <Node>
+                <Name>at</Name>
+                <Path>classnlohmann_1_1basic__json_a0d46dd5ef4992fb80f9f0d9f56f16eae.html</Path>
+                <Anchor>a0d46dd5ef4992fb80f9f0d9f56f16eae</Anchor>
+               </Node>
+               <Node>
                 <Name>back</Name>
                 <Path>classnlohmann_1_1basic__json_a71b1d38ef402dfee58fba1fe01fa67f5.html</Path>
                 <Anchor>a71b1d38ef402dfee58fba1fe01fa67f5</Anchor>
@@ -811,6 +837,11 @@
                 <Name>find</Name>
                 <Path>classnlohmann_1_1basic__json_aaa687595d7627925fbf6d6eb97e2021e.html</Path>
                 <Anchor>aaa687595d7627925fbf6d6eb97e2021e</Anchor>
+               </Node>
+               <Node>
+                <Name>flatten</Name>
+                <Path>classnlohmann_1_1basic__json_a5327abb014dec211593b00959830650e.html</Path>
+                <Anchor>a5327abb014dec211593b00959830650e</Anchor>
                </Node>
                <Node>
                 <Name>front</Name>
@@ -1038,6 +1069,16 @@
                 <Anchor>aa6fd72df1ce9f80e61012784c598456e</Anchor>
                </Node>
                <Node>
+                <Name>operator[]</Name>
+                <Path>classnlohmann_1_1basic__json_a7605b20debcc12fc44bd9f2075122a87.html</Path>
+                <Anchor>a7605b20debcc12fc44bd9f2075122a87</Anchor>
+               </Node>
+               <Node>
+                <Name>operator[]</Name>
+                <Path>classnlohmann_1_1basic__json_a76347b37f07c75049f5164053a6cf81a.html</Path>
+                <Anchor>a76347b37f07c75049f5164053a6cf81a</Anchor>
+               </Node>
+               <Node>
                 <Name>parse</Name>
                 <Path>classnlohmann_1_1basic__json_a35303ad045a06c2a79dc28ac29652e86.html</Path>
                 <Anchor>a35303ad045a06c2a79dc28ac29652e86</Anchor>
@@ -1116,6 +1157,11 @@
                 <Name>type</Name>
                 <Path>classnlohmann_1_1basic__json_a848cbae3bd3502ffbf738320bf5eb3aa.html</Path>
                 <Anchor>a848cbae3bd3502ffbf738320bf5eb3aa</Anchor>
+               </Node>
+               <Node>
+                <Name>unflatten</Name>
+                <Path>classnlohmann_1_1basic__json_a0389c5dd86adc512e5826d7ff610f776.html</Path>
+                <Anchor>a0389c5dd86adc512e5826d7ff610f776</Anchor>
                </Node>
                <Node>
                 <Name>value</Name>
@@ -1258,6 +1304,10 @@
             </Subnodes>
            </Node>
            <Node>
+            <Name>nlohmann::basic_json&lt; ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType &gt;::json_pointer</Name>
+            <Path>classnlohmann_1_1basic__json_1_1json__pointer.html</Path>
+           </Node>
+           <Node>
             <Name>reverse_iterator</Name>
             <Path></Path>
             <Subnodes>
@@ -1344,6 +1394,10 @@
              <Node>
               <Name>t</Name>
               <Path>functions_t.html</Path>
+             </Node>
+             <Node>
+              <Name>u</Name>
+              <Path>functions_u.html</Path>
              </Node>
              <Node>
               <Name>v</Name>
