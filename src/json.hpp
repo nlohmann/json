@@ -9227,7 +9227,7 @@ basic_json_parser_63:
         }
 
         /// split the string input to reference tokens
-        std::vector<std::string> split(std::string reference_string)
+        static std::vector<std::string> split(std::string reference_string)
         {
             std::vector<std::string> result;
 
