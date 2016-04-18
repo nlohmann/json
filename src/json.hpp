@@ -9492,6 +9492,101 @@ basic_json_parser_63:
     }
 
     /// @}
+
+    /*!
+    @brief applies a JSON patch
+
+    @param[in] patch  JSON patch document
+    @return patched document
+
+    @note The original JSON value is not changed; that is, the patch is
+          applied to a copy of the value.
+
+    @sa [RFC 6902](https://tools.ietf.org/html/rfc6902)
+    */
+    basic_json apply_patch(const basic_json& patch) const
+    {
+        basic_json result = *this;
+
+        if (not patch.is_array())
+        {
+            // a JSON patch must be an array of objects
+            throw std::domain_error("JSON patch must be an array of objects");
+        }
+
+        for (const auto& val : patch)
+        {
+            if (not val.is_object())
+            {
+                throw std::domain_error("JSON patch must be an array of objects");
+            }
+
+            // collect members
+            const auto it_op = val.m_value.object->find("op");
+            const auto it_path = val.m_value.object->find("path");
+            const auto it_value = val.m_value.object->find("value");
+
+            if (it_op == val.m_value.object->end() or not it_op->second.is_string())
+            {
+                throw std::domain_error("operation must have a string 'op' member");
+            }
+
+            if (it_path == val.m_value.object->end() or not it_op->second.is_string())
+            {
+                throw std::domain_error("operation must have a string 'path' member");
+            }
+
+            const std::string op = it_op->second;
+            const std::string path = it_path->second;
+            const json_pointer ptr(path);
+
+            if (op == "add")
+            {
+                if (it_value == val.m_value.object->end())
+                {
+                    throw std::domain_error("'add' operation must have member 'value'");
+                }
+
+                result[ptr] = it_value->second;
+            }
+            else if (op == "remove")
+            {
+            }
+            else if (op == "replace")
+            {
+                if (it_value == val.m_value.object->end())
+                {
+                    throw std::domain_error("'replace' operation must have member 'value'");
+                }
+            }
+            else if (op == "move")
+            {
+            }
+            else if (op == "copy")
+            {
+            }
+            else if (op == "test")
+            {
+                if (it_value == val.m_value.object->end())
+                {
+                    throw std::domain_error("'test' operation must have member 'value'");
+                }
+
+                if (result.at(ptr) != it_value->second)
+                {
+                    throw std::domain_error("unsuccessful: " + val.dump());
+                }
+            }
+            else
+            {
+                // op must be "add", "remove", "replace", "move",
+                // "copy", or "test"
+                throw std::domain_error("operation value '" + op + "' is invalid");
+            }
+        }
+
+        return result;
+    }
 };
 
 

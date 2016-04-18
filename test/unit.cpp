@@ -12391,6 +12391,232 @@ TEST_CASE("JSON pointers")
     }
 }
 
+TEST_CASE("JSON patch")
+{
+    SECTION("examples from RFC 6902")
+    {
+        SECTION("example A.1 - Adding an Object Member")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                { "foo": "bar"}
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "add", "path": "/baz", "value": "qux" }
+                ]
+            )"_json;
+
+            // The resulting JSON document:
+            json expected = R"(
+                {
+                    "baz": "qux",
+                    "foo": "bar"
+                }
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+
+        SECTION("example A.8 - Testing a Value: Success")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                {
+                     "baz": "qux",
+                     "foo": [ "a", 2, "c" ]
+                }
+            )"_json;
+
+            // A JSON Patch document that will result in successful evaluation:
+            json patch = R"(
+                [
+                    { "op": "test", "path": "/baz", "value": "qux" },
+                    { "op": "test", "path": "/foo/1", "value": 2 }
+                ]
+            )"_json;
+
+            // check if evaluation does not throw
+            CHECK_NOTHROW(doc.apply_patch(patch));
+            // check if patched document is unchanged
+            CHECK(doc.apply_patch(patch) == doc);
+        }
+
+        SECTION("example A.9 - Testing a Value: Error")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                { "baz": "qux" }
+            )"_json;
+
+            // A JSON Patch document that will result in an error condition:
+            json patch = R"(
+                [
+                    { "op": "test", "path": "/baz", "value": "bar" }
+                ]
+            )"_json;
+
+            // check that evaluation throws
+            CHECK_THROWS_AS(doc.apply_patch(patch), std::domain_error);
+            CHECK_THROWS_WITH(doc.apply_patch(patch), "unsuccessful: " + patch[0].dump());
+        }
+
+        SECTION("example A.10 - Adding a Nested Member Object")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                { "foo": "bar" }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "add", "path": "/child", "value": { "grandchild": { } } }
+                ]
+            )"_json;
+
+            // The resulting JSON document:
+            json expected = R"(
+            {
+                "foo": "bar",
+                "child": {
+                    "grandchild": {
+                    }
+                }
+            }
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+
+        SECTION("example A.11 - Ignoring Unrecognized Elements")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                { "foo": "bar" }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "add", "path": "/baz", "value": "qux", "xyz": 123 }
+                ]
+            )"_json;
+
+            json expected = R"(
+                {
+                    "foo": "bar",
+                    "baz": "qux"
+                } 
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+
+        SECTION("example A.12 - Adding to a Nonexistent Target")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                { "foo": "bar" }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "add", "path": "/baz/bat", "value": "qux" }
+                ]
+            )"_json;
+
+            // This JSON Patch document, applied to the target JSON document
+            // above, would result in an error (therefore, it would not be
+            // applied), because the "add" operation's target location that
+            // references neither the root of the document, nor a member of
+            // an existing object, nor a member of an existing array.
+
+            CHECK_THROWS_AS(doc.apply_patch(patch), std::out_of_range);
+            CHECK_THROWS_WITH(doc.apply_patch(patch), "unresolved reference token 'bat'");
+        }
+
+        SECTION("example A.14 - Escape Ordering")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                {
+                    "/": 9,
+                    "~1": 10
+                }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    {"op": "test", "path": "/~01", "value": 10}
+                ]
+            )"_json;
+
+            json expected = R"(
+                {
+                    "/": 9,
+                    "~1": 10
+                } 
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+
+        SECTION("example A.15 - Comparing Strings and Numbers")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                {
+                    "/": 9,
+                    "~1": 10
+                } 
+            )"_json;
+
+            // A JSON Patch document that will result in an error condition:
+            json patch = R"(
+                [
+                    {"op": "test", "path": "/~01", "value": "10"}
+                ]
+            )"_json;
+
+            // check that evaluation throws
+            CHECK_THROWS_AS(doc.apply_patch(patch), std::domain_error);
+            CHECK_THROWS_WITH(doc.apply_patch(patch), "unsuccessful: " + patch[0].dump());
+        }
+
+        SECTION("example A.16 - Adding an Array Value")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                { "foo": ["bar"] }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "add", "path": "/foo/-", "value": ["abc", "def"] }
+                ]
+            )"_json;
+
+            // The resulting JSON document:
+            json expected = R"(
+                { "foo": ["bar", ["abc", "def"]] }
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+    }
+}
+
 TEST_CASE("regression tests")
 {
     SECTION("issue #60 - Double quotation mark is not parsed correctly")
