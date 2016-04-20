@@ -9525,6 +9525,7 @@ basic_json_parser_63:
             const auto it_op = val.m_value.object->find("op");
             const auto it_path = val.m_value.object->find("path");
             const auto it_value = val.m_value.object->find("value");
+            const auto it_from = val.m_value.object->find("from");
 
             if (it_op == val.m_value.object->end() or not it_op->second.is_string())
             {
@@ -9558,12 +9559,30 @@ basic_json_parser_63:
                 {
                     throw std::domain_error("'replace' operation must have member 'value'");
                 }
+
+                result.at(ptr) = it_value->second;
             }
             else if (op == "move")
             {
+                if (it_from == val.m_value.object->end())
+                {
+                    throw std::domain_error("'move' operation must have member 'from'");
+                }
+
+                const std::string from_path = it_from->second;
+                const json_pointer from_ptr(from_path);
             }
             else if (op == "copy")
             {
+                if (it_from == val.m_value.object->end())
+                {
+                    throw std::domain_error("'copy' operation must have member 'from'");
+                }
+
+                const std::string from_path = it_from->second;
+                const json_pointer from_ptr(from_path);
+
+                result[ptr] = result.at(from_ptr);
             }
             else if (op == "test")
             {

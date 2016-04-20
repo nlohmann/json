@@ -12421,6 +12421,34 @@ TEST_CASE("JSON patch")
             CHECK(doc.apply_patch(patch) == expected);
         }
 
+        SECTION("example A.5 - Replacing a Value")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                {
+                    "baz": "qux",
+                    "foo": "bar"
+                }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "replace", "path": "/baz", "value": "boo" }
+                ]
+            )"_json;
+
+            json expected = R"(
+                {
+                    "baz": "boo",
+                    "foo": "bar"
+                }
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+
         SECTION("example A.8 - Testing a Value: Success")
         {
             // An example target JSON document:
@@ -12609,6 +12637,48 @@ TEST_CASE("JSON patch")
             // The resulting JSON document:
             json expected = R"(
                 { "foo": ["bar", ["abc", "def"]] }
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+    }
+
+    SECTION("own examples")
+    {
+        SECTION("copy")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                {
+                    "foo": {
+                        "bar": "baz",
+                        "waldo": "fred"
+                    },
+                    "qux": {
+                       "corge": "grault"
+                    }
+                }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "copy", "from": "/foo/waldo", "path": "/qux/thud" }
+                ]
+            )"_json;
+
+            json expected = R"(
+                {
+                    "foo": {
+                        "bar": "baz",
+                        "waldo": "fred"
+                    },
+                    "qux": {
+                       "corge": "grault",
+                       "thud": "fred"
+                    }
+                }
             )"_json;
 
             // check if patched value is as expected
