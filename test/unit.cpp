@@ -12421,6 +12421,55 @@ TEST_CASE("JSON patch")
             CHECK(doc.apply_patch(patch) == expected);
         }
 
+        SECTION("example A.3 - Removing an Object Member")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                {
+                    "baz": "qux",
+                    "foo": "bar"
+                }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "remove", "path": "/baz" }
+                ]
+            )"_json;
+
+            // The resulting JSON document:
+            json expected = R"(
+                { "foo": "bar" }
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+
+        SECTION("example A.4 - Removing an Array Element")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                { "foo": [ "bar", "qux", "baz" ] }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "remove", "path": "/foo/1" }
+                ]
+            )"_json;
+
+            // The resulting JSON document:
+            json expected = R"(
+                { "foo": [ "bar", "baz" ] }
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+
         SECTION("example A.5 - Replacing a Value")
         {
             // An example target JSON document:

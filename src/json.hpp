@@ -8969,6 +8969,18 @@ basic_json_parser_63:
             : reference_tokens(split(s))
         {}
 
+        std::string pop_back()
+        {
+            if (reference_tokens.empty())
+            {
+                throw std::domain_error("JSON pointer has no parent");
+            }
+
+            auto last = reference_tokens.back();
+            reference_tokens.pop_back();
+            return last;
+        }
+
       private:
         /*!
         @brief create and return a reference to the pointed to value
@@ -9420,7 +9432,7 @@ basic_json_parser_63:
 
       private:
         /// the reference tokens
-        const std::vector<std::string> reference_tokens {};
+        std::vector<std::string> reference_tokens {};
     };
 
     ////////////////////////////
@@ -9539,7 +9551,7 @@ basic_json_parser_63:
 
             const std::string op = it_op->second;
             const std::string path = it_path->second;
-            const json_pointer ptr(path);
+            json_pointer ptr(path);
 
             if (op == "add")
             {
@@ -9552,6 +9564,16 @@ basic_json_parser_63:
             }
             else if (op == "remove")
             {
+                const auto last_path = ptr.pop_back();
+                basic_json& parent = result.at(ptr);
+                if (parent.is_object())
+                {
+                    parent.erase(parent.find(last_path));
+                }
+                else if (parent.is_array())
+                {
+                    parent.erase(parent.begin() + std::stoi(last_path));
+                }
             }
             else if (op == "replace")
             {
