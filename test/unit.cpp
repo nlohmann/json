@@ -12421,6 +12421,29 @@ TEST_CASE("JSON patch")
             CHECK(doc.apply_patch(patch) == expected);
         }
 
+        SECTION("example A.2 - Adding an Array Element")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                { "foo": [ "bar", "baz" ] }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "add", "path": "/foo/1", "value": "qux" }
+                ]
+            )"_json;
+
+            // The resulting JSON document:
+            json expected = R"(
+                { "foo": [ "bar", "qux", "baz" ] }
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+
         SECTION("example A.3 - Removing an Object Member")
         {
             // An example target JSON document:
@@ -12616,8 +12639,11 @@ TEST_CASE("JSON patch")
             // an existing object, nor a member of an existing array.
 
             CHECK_THROWS_AS(doc.apply_patch(patch), std::out_of_range);
-            CHECK_THROWS_WITH(doc.apply_patch(patch), "unresolved reference token 'bat'");
+            CHECK_THROWS_WITH(doc.apply_patch(patch), "key 'baz' not found");
         }
+
+        // A.13.  Invalid JSON Patch Document
+        // not applicable
 
         SECTION("example A.14 - Escape Ordering")
         {

@@ -9560,7 +9560,25 @@ basic_json_parser_63:
                     throw std::domain_error("'add' operation must have member 'value'");
                 }
 
-                result[ptr] = it_value->second;
+                const auto last_path = ptr.pop_back();
+                basic_json& parent = result.at(ptr);
+
+                if (parent.is_object())
+                {
+                    parent[last_path] = it_value->second;
+                }
+                else if (parent.is_array())
+                {
+                    if (last_path == "-")
+                    {
+                        parent.push_back(it_value->second);
+                    }
+                    else
+                    {
+                        parent.insert(parent.begin() + std::stoi(last_path),
+                                      it_value->second);
+                    }
+                }
             }
             else if (op == "remove")
             {
