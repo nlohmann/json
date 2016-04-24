@@ -9612,7 +9612,7 @@ basic_json_parser_63:
             // collect mandatory members
             const std::string op = get_value("op", "op", true);
             const std::string path = get_value(op, "path", true);
-            json_pointer ptr(get_value(op, "path", true));
+            json_pointer ptr(path);
 
             if (op == "add")
             {
