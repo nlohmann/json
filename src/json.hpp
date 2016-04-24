@@ -9526,6 +9526,44 @@ basic_json_parser_63:
             throw std::domain_error("JSON patch must be an array of objects");
         }
 
+        const auto operation_add = [&result](json_pointer & ptr,
+                                             basic_json & value)
+        {
+            const auto last_path = ptr.pop_back();
+            basic_json& parent = result.at(ptr);
+
+            if (parent.is_object())
+            {
+                parent[last_path] = value;
+            }
+            else if (parent.is_array())
+            {
+                if (last_path == "-")
+                {
+                    parent.push_back(value);
+                }
+                else
+                {
+                    parent.insert(parent.begin() + std::stoi(last_path),
+                                  value);
+                }
+            }
+        };
+
+        const auto operation_remove = [&result](json_pointer & ptr)
+        {
+            const auto last_path = ptr.pop_back();
+            basic_json& parent = result.at(ptr);
+            if (parent.is_object())
+            {
+                parent.erase(parent.find(last_path));
+            }
+            else if (parent.is_array())
+            {
+                parent.erase(parent.begin() + std::stoi(last_path));
+            }
+        };
+
         for (const auto& val : patch)
         {
             if (not val.is_object())
@@ -9560,38 +9598,11 @@ basic_json_parser_63:
                     throw std::domain_error("'add' operation must have member 'value'");
                 }
 
-                const auto last_path = ptr.pop_back();
-                basic_json& parent = result.at(ptr);
-
-                if (parent.is_object())
-                {
-                    parent[last_path] = it_value->second;
-                }
-                else if (parent.is_array())
-                {
-                    if (last_path == "-")
-                    {
-                        parent.push_back(it_value->second);
-                    }
-                    else
-                    {
-                        parent.insert(parent.begin() + std::stoi(last_path),
-                                      it_value->second);
-                    }
-                }
+                operation_add(ptr, it_value->second);
             }
             else if (op == "remove")
             {
-                const auto last_path = ptr.pop_back();
-                basic_json& parent = result.at(ptr);
-                if (parent.is_object())
-                {
-                    parent.erase(parent.find(last_path));
-                }
-                else if (parent.is_array())
-                {
-                    parent.erase(parent.begin() + std::stoi(last_path));
-                }
+                operation_remove(ptr);
             }
             else if (op == "replace")
             {
@@ -9610,7 +9621,11 @@ basic_json_parser_63:
                 }
 
                 const std::string from_path = it_from->second;
-                const json_pointer from_ptr(from_path);
+                json_pointer from_ptr(from_path);
+                basic_json v = result[from_ptr];
+
+                operation_remove(from_ptr);
+                operation_add(ptr, v);
             }
             else if (op == "copy")
             {

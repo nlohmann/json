@@ -12521,6 +12521,68 @@ TEST_CASE("JSON patch")
             CHECK(doc.apply_patch(patch) == expected);
         }
 
+        SECTION("example A.6 - Moving a Value")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                {
+                    "foo": {
+                       "bar": "baz",
+                        "waldo": "fred"
+                    },
+                    "qux": {
+                        "corge": "grault"
+                    }
+                }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "move", "from": "/foo/waldo", "path": "/qux/thud" }
+                ]
+            )"_json;
+
+            // The resulting JSON document:
+            json expected = R"(
+                {
+                    "foo": {
+                       "bar": "baz"
+                    },
+                    "qux": {
+                        "corge": "grault",
+                        "thud": "fred"
+                    }
+                }
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+
+        SECTION("example A.7 - Moving a Value")
+        {
+            // An example target JSON document:
+            json doc = R"(
+                { "foo": [ "all", "grass", "cows", "eat" ] }
+            )"_json;
+
+            // A JSON Patch document:
+            json patch = R"(
+                [
+                    { "op": "move", "from": "/foo/1", "path": "/foo/3" }
+                ]
+            )"_json;
+
+            // The resulting JSON document:
+            json expected = R"(
+                { "foo": [ "all", "cows", "eat", "grass" ] }
+            )"_json;
+
+            // check if patched value is as expected
+            CHECK(doc.apply_patch(patch) == expected);
+        }
+
         SECTION("example A.8 - Testing a Value: Success")
         {
             // An example target JSON document:
