@@ -8828,42 +8828,44 @@ class basic_json
     */
     basic_json apply_patch(const basic_json& patch) const
     {
+        // make a working copy to apply the patch to
         basic_json result = *this;
 
-        if (not patch.is_array())
+        // wrapper for "add" operation; add value at ptr
+        const auto operation_add = [&result](json_pointer & ptr, basic_json value)
         {
-            // a JSON patch must be an array of objects
-            throw std::domain_error("JSON patch must be an array of objects");
-        }
-
-        const auto operation_add = [&result](json_pointer & ptr,
-                                             basic_json & value)
-        {
+            // get reference to parent of JSON pointer ptr
             const auto last_path = ptr.pop_back();
             basic_json& parent = result.at(ptr);
 
             if (parent.is_object())
             {
+                // use operator[] to add value
                 parent[last_path] = value;
             }
             else if (parent.is_array())
             {
                 if (last_path == "-")
                 {
+                    // special case: append to back
                     parent.push_back(value);
                 }
                 else
                 {
-                    parent.insert(parent.begin() + std::stoi(last_path),
-                                  value);
+                    // default case: insert add offset
+                    parent.insert(parent.begin() + std::stoi(last_path), value);
                 }
             }
         };
 
+        // wrapper for "remove" operation; remove value at ptr
         const auto operation_remove = [&result](json_pointer & ptr)
         {
+            // get reference to parent of JSON pointer ptr
             const auto last_path = ptr.pop_back();
             basic_json& parent = result.at(ptr);
+
+            // remove child
             if (parent.is_object())
             {
                 parent.erase(parent.find(last_path));
@@ -8874,41 +8876,57 @@ class basic_json
             }
         };
 
+        // type check
+        if (not patch.is_array())
+        {
+            // a JSON patch must be an array of objects
+            throw std::domain_error("JSON patch must be an array of objects");
+        }
+
+        // iterate and apply th eoperations
         for (const auto& val : patch)
         {
+            // wrapper to get a value for an operation
+            const auto get_value = [&val](const std::string & op,
+                                          const std::string & member,
+                                          bool string_type = false) -> basic_json&
+            {
+                // find value
+                auto it = val.m_value.object->find(member);
+
+                // context-sensitive error message
+                const auto error_msg = (op == "op") ? "operation" : "operation '" + op + "'";
+
+                // check if desired value is present
+                if (it == val.m_value.object->end())
+                {
+                    throw std::domain_error(error_msg + " must have member '" + member + "'");
+                }
+
+                // check if result is of type string
+                if (string_type and not it->second.is_string())
+                {
+                    throw std::domain_error(error_msg + " must have string member '" + member + "'");
+                }
+
+                // no error: return value
+                return it->second;
+            };
+
+            // type check
             if (not val.is_object())
             {
                 throw std::domain_error("JSON patch must be an array of objects");
             }
 
-            // collect members
-            const auto it_op = val.m_value.object->find("op");
-            const auto it_path = val.m_value.object->find("path");
-            const auto it_value = val.m_value.object->find("value");
-            const auto it_from = val.m_value.object->find("from");
-
-            if (it_op == val.m_value.object->end() or not it_op->second.is_string())
-            {
-                throw std::domain_error("operation must have a string 'op' member");
-            }
-
-            if (it_path == val.m_value.object->end() or not it_op->second.is_string())
-            {
-                throw std::domain_error("operation must have a string 'path' member");
-            }
-
-            const std::string op = it_op->second;
-            const std::string path = it_path->second;
-            json_pointer ptr(path);
+            // collect mandatory members
+            const std::string op = get_value("op", "op", true);
+            const std::string path = get_value(op, "path", true);
+            json_pointer ptr(get_value(op, "path", true));
 
             if (op == "add")
             {
-                if (it_value == val.m_value.object->end())
-                {
-                    throw std::domain_error("'add' operation must have member 'value'");
-                }
-
-                operation_add(ptr, it_value->second);
+                operation_add(ptr, get_value("add", "value"));
             }
             else if (op == "remove")
             {
@@ -8916,21 +8934,11 @@ class basic_json
             }
             else if (op == "replace")
             {
-                if (it_value == val.m_value.object->end())
-                {
-                    throw std::domain_error("'replace' operation must have member 'value'");
-                }
-
-                result.at(ptr) = it_value->second;
+                result.at(ptr) = get_value("replace", "value");
             }
             else if (op == "move")
             {
-                if (it_from == val.m_value.object->end())
-                {
-                    throw std::domain_error("'move' operation must have member 'from'");
-                }
-
-                const std::string from_path = it_from->second;
+                const std::string from_path = get_value("move", "from", true);
                 json_pointer from_ptr(from_path);
                 basic_json v = result[from_ptr];
 
@@ -8939,32 +8947,22 @@ class basic_json
             }
             else if (op == "copy")
             {
-                if (it_from == val.m_value.object->end())
-                {
-                    throw std::domain_error("'copy' operation must have member 'from'");
-                }
-
-                const std::string from_path = it_from->second;
+                const std::string from_path = get_value("copy", "from", true);;
                 const json_pointer from_ptr(from_path);
 
                 result[ptr] = result.at(from_ptr);
             }
             else if (op == "test")
             {
-                if (it_value == val.m_value.object->end())
-                {
-                    throw std::domain_error("'test' operation must have member 'value'");
-                }
-
-                if (result.at(ptr) != it_value->second)
+                if (result.at(ptr) != get_value("test", "value"))
                 {
                     throw std::domain_error("unsuccessful: " + val.dump());
                 }
             }
             else
             {
-                // op must be "add", "remove", "replace", "move",
-                // "copy", or "test"
+                // op must be "add", "remove", "replace", "move", "copy", or
+                // "test"
                 throw std::domain_error("operation value '" + op + "' is invalid");
             }
         }
