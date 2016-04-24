@@ -9522,7 +9522,7 @@ basic_json_parser_63:
         basic_json result = *this;
 
         // wrapper for "add" operation; add value at ptr
-        const auto operation_add = [&result](json_pointer & ptr, basic_json value)
+        const auto operation_add = [&result](json_pointer & ptr, basic_json val)
         {
             // get reference to parent of JSON pointer ptr
             const auto last_path = ptr.pop_back();
@@ -9531,19 +9531,19 @@ basic_json_parser_63:
             if (parent.is_object())
             {
                 // use operator[] to add value
-                parent[last_path] = value;
+                parent[last_path] = val;
             }
             else if (parent.is_array())
             {
                 if (last_path == "-")
                 {
                     // special case: append to back
-                    parent.push_back(value);
+                    parent.push_back(val);
                 }
                 else
                 {
                     // default case: insert add offset
-                    parent.insert(parent.begin() + std::stoi(last_path), value);
+                    parent.insert(parent.begin() + std::stoi(last_path), val);
                 }
             }
         };
@@ -9579,7 +9579,7 @@ basic_json_parser_63:
             // wrapper to get a value for an operation
             const auto get_value = [&val](const std::string & op,
                                           const std::string & member,
-                                          bool string_type = false) -> basic_json&
+                                          bool string_type) -> basic_json&
             {
                 // find value
                 auto it = val.m_value.object->find(member);
@@ -9616,7 +9616,7 @@ basic_json_parser_63:
 
             if (op == "add")
             {
-                operation_add(ptr, get_value("add", "value"));
+                operation_add(ptr, get_value("add", "value", false));
             }
             else if (op == "remove")
             {
@@ -9624,7 +9624,7 @@ basic_json_parser_63:
             }
             else if (op == "replace")
             {
-                result.at(ptr) = get_value("replace", "value");
+                result.at(ptr) = get_value("replace", "value", false);
             }
             else if (op == "move")
             {
@@ -9644,7 +9644,7 @@ basic_json_parser_63:
             }
             else if (op == "test")
             {
-                if (result.at(ptr) != get_value("test", "value"))
+                if (result.at(ptr) != get_value("test", "value", false))
                 {
                     throw std::domain_error("unsuccessful: " + val.dump());
                 }
