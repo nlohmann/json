@@ -33,15 +33,15 @@ target_link_libraries(${JSON_UNITTEST_TARGET_NAME} ${JSON_TARGET_NAME})
 # generate a config and config version file for the package
 include(CMakePackageConfigHelpers)
 configure_package_config_file("cmake/config.cmake.in"
-    "${CMAKE_BINARY_DIR}/${JSON_CONFIG_FILENAME}"
+    "${CMAKE_CURRENT_BINARY_DIR}/${JSON_CONFIG_FILENAME}"
     INSTALL_DESTINATION ${JSON_CONFIG_DESTINATION})
-write_basic_package_version_file("${CMAKE_BINARY_DIR}/${JSON_CONFIGVERSION_FILENAME}"
+write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${JSON_CONFIGVERSION_FILENAME}"
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion)
 
 # export the library target and store build directory in package registry
 export(TARGETS ${JSON_TARGET_NAME}
-	FILE "${CMAKE_BINARY_DIR}/${JSON_TARGETS_FILENAME}")
+	FILE "${CMAKE_CURRENT_BINARY_DIR}/${JSON_TARGETS_FILENAME}")
 export(PACKAGE ${JSON_PACKAGE_NAME})
 
 # install library target and config files
@@ -52,6 +52,6 @@ install(FILES "src/json.hpp"
 install(EXPORT ${JSON_PACKAGE_NAME}
 	FILE ${JSON_TARGETS_FILENAME}
 	DESTINATION ${JSON_CONFIG_DESTINATION})
-install(FILES "${CMAKE_BINARY_DIR}/${JSON_CONFIG_FILENAME}"
-	"${CMAKE_BINARY_DIR}/${JSON_CONFIGVERSION_FILENAME}"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${JSON_CONFIG_FILENAME}"
+	"${CMAKE_CURRENT_BINARY_DIR}/${JSON_CONFIGVERSION_FILENAME}"
 	DESTINATION ${JSON_CONFIG_DESTINATION})
