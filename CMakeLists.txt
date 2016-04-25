@@ -1,18 +1,26 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 project(json CXX)
 
-add_library(${PROJECT_NAME} INTERFACE IMPORTED GLOBAL)
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(JSON_TARGET_NAME ${PROJECT_NAME})
+set(JSON_UNITTEST_TARGET_NAME "json_unit")
+set(JSON_PACKAGE_NAME ${JSON_TARGET_NAME})
+set(JSON_TARGETS_FILENAME "${JSON_PACKAGE_NAME}Targets.cmake")
 
-set(UNIT_TEST_NAME "json_unit")
-add_executable(${UNIT_TEST_NAME}
+add_library(${JSON_TARGET_NAME} INTERFACE)
+target_include_directories(${JSON_TARGET_NAME} INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
+
+add_executable(${JSON_UNITTEST_TARGET_NAME}
     "test/catch.hpp" "test/unit.cpp")
-set_target_properties(${UNIT_TEST_NAME} PROPERTIES
+set_target_properties(${JSON_UNITTEST_TARGET_NAME} PROPERTIES
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
     COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
     COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>")
-target_include_directories(${UNIT_TEST_NAME} PRIVATE "test")
-target_link_libraries(${UNIT_TEST_NAME} ${PROJECT_NAME})
+target_include_directories(${JSON_UNITTEST_TARGET_NAME} PRIVATE "test")
+target_link_libraries(${JSON_UNITTEST_TARGET_NAME} ${JSON_TARGET_NAME})
+
+export(TARGETS ${JSON_TARGET_NAME}
+	FILE "${CMAKE_BINARY_DIR}/${JSON_TARGETS_FILENAME}")
+export(PACKAGE ${JSON_PACKAGE_NAME})
