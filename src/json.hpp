@@ -6294,6 +6294,11 @@ class basic_json
                            << std::fixed << m_value.number_float;
                         o << ss.str();
                     }
+                    std::stringstream applesauce;
+                    applesauce << o.rdbuf();
+                    std::string s2 = applesauce.str();
+                    if(s2.compare("2e01") == 0)
+                        throw std::logic_error("found it");
                 }
                 else
                 {
