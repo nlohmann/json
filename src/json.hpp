@@ -8537,9 +8537,8 @@ basic_json_parser_63:
             // remember this number was parsed (for later serialization)
             result.m_type.bits.parsed = true;
 
-            // 'found_radix_point' will be set to 0xFF upon finding a radix
-            // point and later used to mask in/out the precision depending
-            // whether a radix is found i.e. 'precision &= found_radix_point'
+            // 'found_radix_point' will be set to true upon finding a radix
+            //  point.  If no radix point is found, the precision will be corrected
             uint8_t found_radix_point = 0;
             uint8_t precision = 0;
 
@@ -8620,24 +8619,23 @@ basic_json_parser_63:
             }
 
             // If no radix point was found then precision would now be set to
-            // the number of digits, which is wrong - clear it.
-            if(found_radix_point == 0) {
-                auto ptr = m_start;
+            // the number of digits, which is wrong - decrement it to sig figs - 1
+            if(found_radix_point == 0)
+            {
                 int trailing_zeros = 0;
-                for (int j = precision-1;j>=0;--j){
-                    if(*(ptr+j) == '0')
+                for (int j = precision-1;j>=0;--j)
+                {
+                    auto c = *(m_start+j);
+                    if(c == '0')
                         ++trailing_zeros;
-                    else if(*(ptr+j) > '0' and *(ptr+j) <= '9' or *(ptr+j) == '-')
+                    else if(c > '0' and c <= '9' or c == '-')
                         break;
                     else
-                        throw std::logic_error("wtf character did I grab?: "+std::to_string(*(ptr+j)));
+                        throw std::logic_error("unexpected character: "+std::to_string(c));
                 }
-                precision -= trailing_zeros;
-                result.m_type.bits.precision = precision-1;
+                precision -= (trailing_zeros + 1);
             }
-            else{
-                result.m_type.bits.precision = precision & found_radix_point;
-            }
+            result.m_type.bits.precision = precision;
 
             // save the value (if not a float)
             if (type == value_t::number_unsigned)
