@@ -30,14 +30,6 @@ matrix:
           packages: ['g++-5', 'valgrind']
       env: COMPILER=g++-5
 
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-mingw-w64']
-      env: COMPILER=i686-w64-mingw32-g++
-
 #    - os: linux
 #      compiler: gcc
 #      addons:
