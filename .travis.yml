@@ -69,16 +69,17 @@ matrix:
       compiler: clang
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.9']
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise']
           packages: ['clang-3.9', 'valgrind']
       env: COMPILER=clang++-3.9
      
-   # - os: osx
-   #   compiler: clang
-   #   env: COMPILER=clang
-   #   before_install:
-   #     - brew update
-   #     - brew install valgrind
+    - os: osx
+      osx_image: xcode7.3
+      compiler: clang
+      env: COMPILER=clang
+      before_install:
+        - brew update
+        - brew install valgrind
 
 script:
   - make CXX=$COMPILER CXXFLAGS="-lstdc++"
