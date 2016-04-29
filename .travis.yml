@@ -45,7 +45,7 @@ matrix:
       compiler: clang
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise']
           packages: ['clang-3.6', 'valgrind']
       env: COMPILER=clang++-3.6
 
@@ -53,7 +53,7 @@ matrix:
       compiler: clang
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise']
           packages: ['clang-3.7', 'valgrind']
       env: COMPILER=clang++-3.7
 
@@ -61,7 +61,7 @@ matrix:
       compiler: clang
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise']
           packages: ['clang-3.8', 'valgrind']
       env: COMPILER=clang++-3.8
 
@@ -72,7 +72,23 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise']
           packages: ['clang-3.9', 'valgrind']
       env: COMPILER=clang++-3.9
+
+    - os: osx
+      osx_image: xcode7.1
+      compiler: clang
+      env: COMPILER=clang
+      before_install:
+        - brew update
+        - brew install valgrind
      
+    - os: osx
+      osx_image: xcode7.2
+      compiler: clang
+      env: COMPILER=clang
+      before_install:
+        - brew update
+        - brew install valgrind
+
     - os: osx
       osx_image: xcode7.3
       compiler: clang
@@ -84,4 +100,6 @@ matrix:
 script:
   - make CXX=$COMPILER CXXFLAGS="-lstdc++"
   - ./json_unit "*"
-  - valgrind --error-exitcode=1 --leak-check=full ./json_unit
+  - if [ "${os}" = "linux" ]; then
+    valgrind --error-exitcode=1 --leak-check=full ./json_unit ;
+    fi
