@@ -38,13 +38,8 @@ matrix:
 #          packages: ['g++-6', 'valgrind']
 #      env: COMPILER=g++-6
 
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
-          packages: ['clang-3.5', 'valgrind']
-      env: COMPILER=clang++-3.5
+    # Clang 3.5 is not able to compile the code,
+    # see https://travis-ci.org/nlohmann/json/jobs/126720186
 
     - os: linux
       compiler: clang
@@ -69,6 +64,14 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
           packages: ['clang-3.8', 'valgrind']
       env: COMPILER=clang++-3.8
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.9']
+          packages: ['clang-3.9', 'valgrind']
+      env: COMPILER=clang++-3.9
      
    # - os: osx
    #   compiler: clang
