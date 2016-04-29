@@ -52,7 +52,6 @@ SOFTWARE.
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include "Issue230Helpers.h"
 
 // disable float-equal warnings on GCC/clang
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
