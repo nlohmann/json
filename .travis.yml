@@ -77,25 +77,16 @@ matrix:
       osx_image: xcode7.1
       compiler: clang
       env: COMPILER=clang
-      before_install:
-        - brew update
-        - brew install valgrind
      
     - os: osx
       osx_image: xcode7.2
       compiler: clang
       env: COMPILER=clang
-      before_install:
-        - brew update
-        - brew install valgrind
 
     - os: osx
       osx_image: xcode7.3
       compiler: clang
       env: COMPILER=clang
-      before_install:
-        - brew update
-        - brew install valgrind
 
 script:
   - make CXX=$COMPILER CXXFLAGS="-lstdc++"
