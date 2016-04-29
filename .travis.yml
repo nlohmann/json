@@ -36,7 +36,7 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-mingw-w64']
-      env: COMPILER=g++-mingw-w64
+      env: COMPILER=i686-w64-mingw32-g++
 
 #    - os: linux
 #      compiler: gcc
