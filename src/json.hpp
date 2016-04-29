@@ -6295,19 +6295,6 @@ class basic_json
                            << std::fixed << m_value.number_float;
                         o << ss.str();
                     }
-                    std::stringstream applesauce;
-                    applesauce << o.rdbuf();
-                    std::string s2 = applesauce.str();
-                    if(isIssue230(m_type,m_value)) {
-                        printf("m_type.bits.exp_cap    = %i \n",m_type.bits.exp_cap);
-                        printf("m_type.bits.exp_plus   = %i \n",m_type.bits.exp_plus);
-                        printf("m_type.bits.has_exp    = %i \n",m_type.bits.has_exp);
-                        printf("m_type.bits.parsed     = %i \n",m_type.bits.parsed);
-                        printf("m_type.bits.precision  = %i \n",m_type.bits.precision);
-                        printf("m_type.bits.type       = %i \n",m_type.bits.type);
-                        printf("m_value                = %f\n",m_value.number_float);
-                        throw std::logic_error("found it");
-                    }
                 }
                 else
                 {
@@ -8635,7 +8622,23 @@ basic_json_parser_63:
 
             // If no radix point was found then precision would now be set to
             // the number of digits, which is wrong - clear it.
-            result.m_type.bits.precision = precision & found_radix_point;
+            if(found_radix_point == 0) {
+                auto ptr = m_start;
+                int trailing_zeros = 0;
+                for (int j = precision-1;j>=0;--j){
+                    if(*(ptr+j) == '0')
+                        ++trailing_zeros;
+                    else if(*(ptr+j) > '0' and *(ptr+j) <= '9' or *(ptr+j) == '-')
+                        break;
+                    else
+                        throw std::logic_error("wtf character did I grab?: "+std::to_string(*(ptr+j)));
+                }
+                precision -= trailing_zeros;
+                result.m_type.bits.precision = precision-1;
+            }
+            else{
+                result.m_type.bits.precision = precision & found_radix_point;
+            }
 
             // save the value (if not a float)
             if (type == value_t::number_unsigned)
