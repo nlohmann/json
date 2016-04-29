@@ -52,6 +52,7 @@ SOFTWARE.
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include "Issue230Helpers.h"
 
 // disable float-equal warnings on GCC/clang
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
@@ -6297,8 +6298,16 @@ class basic_json
                     std::stringstream applesauce;
                     applesauce << o.rdbuf();
                     std::string s2 = applesauce.str();
-                    if(s2.compare("2e01") == 0)
+                    if(isIssue230(m_type,m_value)) {
+                        printf("m_type.bits.exp_cap    = %i \n",m_type.bits.exp_cap);
+                        printf("m_type.bits.exp_plus   = %i \n",m_type.bits.exp_plus);
+                        printf("m_type.bits.has_exp    = %i \n",m_type.bits.has_exp);
+                        printf("m_type.bits.parsed     = %i \n",m_type.bits.parsed);
+                        printf("m_type.bits.precision  = %i \n",m_type.bits.precision);
+                        printf("m_type.bits.type       = %i \n",m_type.bits.type);
+                        printf("m_value                = %f\n",m_value.number_float);
                         throw std::logic_error("found it");
+                    }
                 }
                 else
                 {
