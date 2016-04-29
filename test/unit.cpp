@@ -12035,6 +12035,36 @@ TEST_CASE("Unicode", "[hide]")
 
         // the array has 1112064 + 1 elemnts (a terminating "null" value)
         CHECK(j.size() == 1112065);
+
+        SECTION("check JSON Pointers")
+        {
+            for (auto s : j)
+            {
+                // skip non-string JSON values
+                if (not s.is_string())
+                {
+                    continue;
+                }
+
+                std::string ptr = s;
+
+                // tilde must be followed by 0 or 1
+                if (ptr == "~")
+                {
+                    ptr += "0";
+                }
+
+                // JSON Pointers must begin with "/"
+                ptr = "/" + ptr;
+
+                CHECK_NOTHROW(json::json_pointer("/" + ptr));
+
+                // check escape/unescape roundtrip
+                auto escaped = json::json_pointer::escape(ptr);
+                json::json_pointer::unescape(escaped);
+                CHECK(escaped == ptr);
+            }
+        }
     }
 
     SECTION("ignore byte-order-mark")
@@ -12388,6 +12418,17 @@ TEST_CASE("JSON pointers")
         CHECK(j_array.flatten().unflatten() == json());
         json j_object(json::value_t::object);
         CHECK(j_object.flatten().unflatten() == json());
+    }
+
+    SECTION("string representation")
+    {
+        for (auto ptr :
+                {"", "/foo", "/foo/0", "/", "/a~1b", "/c%d", "/e^f", "/g|h", "/i\\j", "/k\"l", "/ ", "/m~0n"
+                })
+        {
+            CHECK(json::json_pointer(ptr).to_string() == ptr);
+            CHECK(json::json_pointer(ptr) == ptr);
+        }
     }
 }
 

@@ -8128,6 +8128,10 @@ class basic_json
     /*!
     @brief JSON Pointer
 
+    A JSON pointer defines a string syntax for identifying a specific value
+    within a JSON document. It can be used with functions `at` and
+    `operator[]`. Furthermore, JSON pointers are the base for JSON patches.
+
     @sa [RFC 6901](https://tools.ietf.org/html/rfc6901)
 
     @since version 2.0.0
@@ -8164,10 +8168,37 @@ class basic_json
             : reference_tokens(split(s))
         {}
 
-        /// test for inequality
-        bool operator!=(const json_pointer& rhs) const
+        /*!
+        @brief return a string representation of the JSON pointer
+
+        @invariant For each JSON pointer `ptr`, it holds:
+        @code {.cpp}
+        ptr == json_pointer(ptr.to_string());
+        @endcode
+
+        @return a string representation of the JSON pointer
+
+        @liveexample{The example shows the result of `to_string`.,
+        json_pointer__to_string}
+
+        @since version 2.0.0
+        */
+        std::string to_string() const noexcept
         {
-            return reference_tokens != rhs.reference_tokens;
+            std::string result;
+
+            for (const auto& reference_token : reference_tokens)
+            {
+                result += "/" + escape(reference_token);
+            }
+
+            return result;
+        }
+
+        /// @copydoc to_string()
+        operator std::string() const
+        {
+            return to_string();
         }
 
       private:
