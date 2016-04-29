@@ -6078,9 +6078,11 @@ class basic_json
                     {
                         // convert a number 0..15 to its hex representation
                         // (0..f)
-                        auto hexify = [](const char v) -> char
+                        const auto hexify = [](const int v) -> char
                         {
-                            return (v < 10) ? ('0' + v) : ('a' + v - 10);
+                            return (v < 10)
+                            ? ('0' + static_cast<char>(v))
+                            : ('a' + static_cast<char>(v - 10));
                         };
 
                         // print character c as \uxxxx
