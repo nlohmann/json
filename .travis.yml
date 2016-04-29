@@ -30,6 +30,14 @@ matrix:
           packages: ['g++-5', 'valgrind']
       env: COMPILER=g++-5
 
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-mingw-w64']
+      env: COMPILER=g++-mingw-w64
+
 #    - os: linux
 #      compiler: gcc
 #      addons:
@@ -111,6 +119,6 @@ matrix:
 script:
   - make CXX=$COMPILER CXXFLAGS="-lstdc++"
   - ./json_unit "*"
-  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+  - if [ `which valgrind` ]; then
     valgrind --error-exitcode=1 --leak-check=full ./json_unit ;
     fi
