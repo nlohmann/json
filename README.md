@@ -82,6 +82,7 @@ The following compilers are currently used in [continuous integration](https://t
 | Clang Xcode 7.1 | Darwin Kernel Version 14.5.0 | Apple LLVM version 7.0.0 (clang-700.1.76) |
 | Clang Xcode 7.2 | Darwin Kernel Version 15.0.0 | Apple LLVM version 7.0.2 (clang-700.1.81) |
 | Clang Xcode 7.3 | Darwin Kernel Version 14.5.0 | Apple LLVM version 7.3.0 (clang-703.0.29) |
+| Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25123.0 | 
 
 ## Examples
 
