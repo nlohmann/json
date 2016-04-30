@@ -20,18 +20,11 @@ int main()
         {
             "object", {
                 {"currency", "USD"},
-                {"value", 42.99},
-                {"", "empty string"},
-                {"/", "slash"},
-                {"~", "tilde"},
-                {"~1", "tilde1"}
+                {"value", 42.99}
             }
         }
     };
 
     // call flatten()
     std::cout << std::setw(4) << j.flatten() << '\n';
-
-    // flatten for a primitive value
-    std::cout << j["pi"].flatten() << '\n';
 }
