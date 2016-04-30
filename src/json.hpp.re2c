@@ -6267,10 +6267,7 @@ class basic_json
                         // remove '+' sign from the exponent if necessary
                         if (not m_type.bits.exp_plus)
                         {
-                            if (len > static_cast<int>(sizeof(buf)))
-                            {
-                                len = sizeof(buf);
-                            }
+                            len = std::min(len, static_cast<int>(sizeof(buf)));
                             for (int i = 0; i < len; i++)
                             {
                                 if (buf[i] == '+')
