@@ -8253,8 +8253,6 @@ basic_json_parser_63:
                         ++trailing_zeros;
                     else if((c > '0' and c <= '9') or c == '-')
                         break;
-                    else
-                        throw std::logic_error("unexpected character: "+std::to_string(c));
                 }
                 precision -= (trailing_zeros + 1);
             }
