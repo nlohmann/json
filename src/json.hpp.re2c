@@ -7847,7 +7847,7 @@ class basic_json
             // remember this number was parsed (for later serialization)
             result.m_type.bits.parsed = true;
 
-            // 'found_radix_point' will be set to 0xFF upon finding a radix
+            // 'found_radix_point' will be set to true upon finding a radix
             // point.  if it is not found, then the precision will be updated
             bool found_radix_point = false;
             uint8_t precision = 0;
