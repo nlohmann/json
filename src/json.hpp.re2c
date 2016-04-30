@@ -7938,7 +7938,7 @@ class basic_json
                     auto c = *(m_start+j);
                     if(c == '0')
                         ++trailing_zeros;
-                    else if(c > '0' and c <= '9' or c == '-')
+                    else if((c > '0' and c <= '9') or c == '-')
                         break;
                     else
                         throw std::logic_error("unexpected character: "+std::to_string(c));

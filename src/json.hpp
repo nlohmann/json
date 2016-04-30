@@ -8160,7 +8160,7 @@ basic_json_parser_63:
             // remember this number was parsed (for later serialization)
             result.m_type.bits.parsed = true;
 
-            // 'found_radix_point' will be set to 0xFF upon finding a radix
+            // 'found_radix_point' will be set to true upon finding a radix
             // point.  if it is not found, then the precision will be updated
             bool found_radix_point = false;
             uint8_t precision = 0;
@@ -8251,7 +8251,7 @@ basic_json_parser_63:
                     auto c = *(m_start+j);
                     if(c == '0')
                         ++trailing_zeros;
-                    else if(c > '0' and c <= '9' or c == '-')
+                    else if((c > '0' and c <= '9') or c == '-')
                         break;
                     else
                         throw std::logic_error("unexpected character: "+std::to_string(c));
