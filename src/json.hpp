@@ -9708,7 +9708,8 @@ basic_json_parser_63:
 
                     default:
                     {
-                        throw std::domain_error("unexpected parent type " + parent.type_name());
+                        // if there exists a parent it cannot be primitive
+                        assert(false);  // LCOV_EXCL_LINE
                     }
                 }
             }
