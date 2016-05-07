@@ -1001,54 +1001,6 @@
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>operator[]</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a7605b20debcc12fc44bd9f2075122a87.html</Path>
-    <Anchor>a7605b20debcc12fc44bd9f2075122a87</Anchor>
-    <Abstract>access specified element via JSON Pointer </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator[]</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a76347b37f07c75049f5164053a6cf81a.html</Path>
-    <Anchor>a76347b37f07c75049f5164053a6cf81a</Anchor>
-    <Abstract>access specified element via JSON Pointer </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>at</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a649aef71e5d952499da7ad3b8e7c9236.html</Path>
-    <Anchor>a649aef71e5d952499da7ad3b8e7c9236</Anchor>
-    <Abstract>access specified element via JSON Pointer </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>at</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a0d46dd5ef4992fb80f9f0d9f56f16eae.html</Path>
-    <Anchor>a0d46dd5ef4992fb80f9f0d9f56f16eae</Anchor>
-    <Abstract>access specified element via JSON Pointer </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
       <Name>value</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
@@ -1817,6 +1769,54 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>operator[]</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a7605b20debcc12fc44bd9f2075122a87.html</Path>
+    <Anchor>a7605b20debcc12fc44bd9f2075122a87</Anchor>
+    <Abstract>access specified element via JSON Pointer </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator[]</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a76347b37f07c75049f5164053a6cf81a.html</Path>
+    <Anchor>a76347b37f07c75049f5164053a6cf81a</Anchor>
+    <Abstract>access specified element via JSON Pointer </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>at</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a649aef71e5d952499da7ad3b8e7c9236.html</Path>
+    <Anchor>a649aef71e5d952499da7ad3b8e7c9236</Anchor>
+    <Abstract>access specified element via JSON Pointer </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>at</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a0d46dd5ef4992fb80f9f0d9f56f16eae.html</Path>
+    <Anchor>a0d46dd5ef4992fb80f9f0d9f56f16eae</Anchor>
+    <Abstract>access specified element via JSON Pointer </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>flatten</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
@@ -1837,6 +1837,30 @@
     <Path>classnlohmann_1_1basic__json_a0389c5dd86adc512e5826d7ff610f776.html</Path>
     <Anchor>a0389c5dd86adc512e5826d7ff610f776</Anchor>
     <Abstract>unflatten a previously flattened JSON value </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>diff</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a928b98a9b2e7f23d93ffba4024cbcaf5.html</Path>
+    <Anchor>a928b98a9b2e7f23d93ffba4024cbcaf5</Anchor>
+    <Abstract>creates a diff as a JSON patch </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>patch</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a28dd7f9a1c3f47f9f016e142cd355131.html</Path>
+    <Anchor>a28dd7f9a1c3f47f9f016e142cd355131</Anchor>
+    <Abstract>applies a JSON patch </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -3167,6 +3191,30 @@
     <Path>classnlohmann_1_1basic__json_1_1json__pointer_ae12db117a2742d826465080979d7c835.html</Path>
     <Anchor>ae12db117a2742d826465080979d7c835</Anchor>
     <Abstract>create JSON pointer </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator std::string</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json::json_pointer</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_1_1json__pointer_a344b49c70c83ff591be767072c87336e.html</Path>
+    <Anchor>a344b49c70c83ff591be767072c87336e</Anchor>
+    <Abstract>return a string representation of the JSON pointer </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>to_string</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json::json_pointer</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_1_1json__pointer_a14fda25789660bdc3f2de652fec35f61.html</Path>
+    <Anchor>a14fda25789660bdc3f2de652fec35f61</Anchor>
+    <Abstract>return a string representation of the JSON pointer </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>

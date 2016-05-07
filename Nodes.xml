@@ -312,6 +312,16 @@
                   <Anchor>ae12db117a2742d826465080979d7c835</Anchor>
                  </Node>
                  <Node>
+                  <Name>operator std::string</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1json__pointer_a344b49c70c83ff591be767072c87336e.html</Path>
+                  <Anchor>a344b49c70c83ff591be767072c87336e</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>to_string</Name>
+                  <Path>classnlohmann_1_1basic__json_1_1json__pointer_a14fda25789660bdc3f2de652fec35f61.html</Path>
+                  <Anchor>a14fda25789660bdc3f2de652fec35f61</Anchor>
+                 </Node>
+                 <Node>
                   <Name>basic_json</Name>
                   <Path>classnlohmann_1_1basic__json_1_1json__pointer_ada3100cdb8700566051828f1355fa745.html</Path>
                   <Anchor>ada3100cdb8700566051828f1355fa745</Anchor>
@@ -789,6 +799,11 @@
                 <Anchor>aae7eb3b91d7f68e86396c5c6b683445f</Anchor>
                </Node>
                <Node>
+                <Name>diff</Name>
+                <Path>classnlohmann_1_1basic__json_a928b98a9b2e7f23d93ffba4024cbcaf5.html</Path>
+                <Anchor>a928b98a9b2e7f23d93ffba4024cbcaf5</Anchor>
+               </Node>
+               <Node>
                 <Name>dump</Name>
                 <Path>classnlohmann_1_1basic__json_a805e3f3a2f374da0e14942eec7400e40.html</Path>
                 <Anchor>a805e3f3a2f374da0e14942eec7400e40</Anchor>
@@ -1092,6 +1107,11 @@
                 <Name>parse</Name>
                 <Path>classnlohmann_1_1basic__json_ab81f2801779e6cb9d98770860af2e39a.html</Path>
                 <Anchor>ab81f2801779e6cb9d98770860af2e39a</Anchor>
+               </Node>
+               <Node>
+                <Name>patch</Name>
+                <Path>classnlohmann_1_1basic__json_a28dd7f9a1c3f47f9f016e142cd355131.html</Path>
+                <Anchor>a28dd7f9a1c3f47f9f016e142cd355131</Anchor>
                </Node>
                <Node>
                 <Name>push_back</Name>
