@@ -9776,6 +9776,10 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("-0e-:").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("-0f").parse(), std::invalid_argument);
 
+                // numbers must not begin with "+"
+                CHECK_THROWS_AS(json::parser("+1").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("+0").parse(), std::invalid_argument);
+
                 CHECK_THROWS_WITH(json::parser("01").parse(),
                                   "parse error - unexpected number literal; expected end of input");
                 CHECK_THROWS_WITH(json::parser("--1").parse(), "parse error - unexpected '-'");

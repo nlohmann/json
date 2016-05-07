@@ -8448,10 +8448,6 @@ basic_json_parser_63:
             {
                 type = value_t::number_unsigned;
                 max = static_cast<uint64_t>(std::numeric_limits<number_unsigned_t>::max());
-                if (*curptr == '+')
-                {
-                    curptr++;
-                }
             }
 
             // count the significant figures
