@@ -14,12 +14,8 @@ int main()
         {"/list/2", 2},
         {"/name", "Niels"},
         {"/nothing", nullptr},
-        {"/object/", "empty string"},
         {"/object/currency", "USD"},
         {"/object/value", 42.99},
-        {"/object/~0", "tilde"},
-        {"/object/~01", "tilde1"},
-        {"/object/~1", "slash"},
         {"/pi", 3.141}
     };
 

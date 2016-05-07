@@ -48,6 +48,8 @@ Though it's 2016 already, the support for C++11 is still a bit sparse. Currently
 - Clang 3.4 - 3.9 (and possibly later)
 - Microsoft Visual C++ 14.0 RC (and possibly later)
 
+The code is currently checked with Travis for GCC 4.9, GCC 
+
 I would be happy to learn about other compilers/versions.
 
 Please note:
@@ -62,6 +64,25 @@ Please note:
     ```
  
 - For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug.
+
+The following compilers are currently used in [continuous integration](https://travis-ci.org/nlohmann/json):
+
+| Compiler        | Operating System             | Version String |
+|-----------------|------------------------------|----------------|
+| GCC 4.9.3       | Ubuntu 14.04.3 LTS           | g++-4.9 (Ubuntu 4.9.3-8ubuntu2~14.04) 4.9.3 |
+| GCC 5.3.0       | Ubuntu 14.04.3 LTS           | g++-5 (Ubuntu 5.3.0-3ubuntu1~14.04) 5.3.0 20151204 |
+| Clang 3.6.2     | Ubuntu 14.04.3 LTS           | Ubuntu clang version 3.6.2-svn240577-1~exp1 (branches/release_36) (based on LLVM 3.6.2) |
+| Clang 3.7.1     | Ubuntu 14.04.3 LTS           | Ubuntu clang version 3.7.1-svn253571-1~exp1 (branches/release_37) (based on LLVM 3.7.1) |
+| Clang 3.8.1     | Ubuntu 14.04.3 LTS           | clang version 3.8.1-svn265380-1~exp1 (branches/release_38) |
+| Clang 3.9.0     | Ubuntu 14.04.3 LTS           | clang version 3.9.0-svn267478-1~exp1 (trunk) |
+| Clang Xcode 6.1 | Darwin Kernel Version 13.4.0 | Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn) |
+| Clang Xcode 6.2 | Darwin Kernel Version 13.4.0 | Apple LLVM version 6.0 (clang-600.0.57) (based on LLVM 3.5svn) |
+| Clang Xcode 6.3 | Darwin Kernel Version 14.3.0 | Apple LLVM version 6.1.0 (clang-602.0.49) (based on LLVM 3.6.0svn) |
+| Clang Xcode 6.4 | Darwin Kernel Version 14.3.0 | Apple LLVM version 6.1.0 (clang-602.0.53) (based on LLVM 3.6.0svn) |
+| Clang Xcode 7.1 | Darwin Kernel Version 14.5.0 | Apple LLVM version 7.0.0 (clang-700.1.76) |
+| Clang Xcode 7.2 | Darwin Kernel Version 15.0.0 | Apple LLVM version 7.0.2 (clang-700.1.81) |
+| Clang Xcode 7.3 | Darwin Kernel Version 14.5.0 | Apple LLVM version 7.3.0 (clang-703.0.29) |
+| Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25123.0 | 
 
 ## Examples
 
@@ -428,7 +449,7 @@ $ make
 $ ./json_unit "*"
 
 ===============================================================================
-All tests passed (3344416 assertions in 30 test cases)
+All tests passed (5568703 assertions in 31 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
