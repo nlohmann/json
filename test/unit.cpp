@@ -7920,6 +7920,42 @@ TEST_CASE("modifiers")
                                   "cannot use push_back() with number");
             }
         }
+
+        SECTION("with initializer_list")
+        {
+            SECTION("null")
+            {
+                json j;
+                j.push_back({"foo", "bar"});
+                CHECK(j == json::array({{"foo", "bar"}}));
+
+                json k;
+                k.push_back({1, 2, 3});
+                CHECK(k == json::array({{1, 2, 3}}));
+            }
+
+            SECTION("array")
+            {
+                json j = {1, 2, 3};
+                j.push_back({"foo", "bar"});
+                CHECK(j == json({1, 2, 3, {"foo", "bar"}}));
+
+                json k = {1, 2, 3};
+                k.push_back({1, 2, 3});
+                CHECK(k == json({1, 2, 3, {1, 2, 3}}));
+            }
+
+            SECTION("object")
+            {
+                json j = {{"key1", 1}};
+                j.push_back({"key2", "bar"});
+                CHECK(j == json({{"key1", 1}, {"key2", "bar"}}));
+
+                json k = {{"key1", 1}};
+                CHECK_THROWS_AS(k.push_back({1, 2, 3, 4}), std::domain_error);
+                CHECK_THROWS_WITH(k.push_back({1, 2, 3, 4}), "cannot use push_back() with object");
+            }
+        }
     }
 
     SECTION("operator+=")
@@ -8014,6 +8050,42 @@ TEST_CASE("modifiers")
                 CHECK_THROWS_AS(j += json::object_t::value_type({"one", 1}), std::domain_error);
                 CHECK_THROWS_WITH(j += json::object_t::value_type({"one", 1}),
                                   "cannot use push_back() with number");
+            }
+        }
+
+        SECTION("with initializer_list")
+        {
+            SECTION("null")
+            {
+                json j;
+                j += {"foo", "bar"};
+                CHECK(j == json::array({{"foo", "bar"}}));
+
+                json k;
+                k += {1, 2, 3};
+                CHECK(k == json::array({{1, 2, 3}}));
+            }
+
+            SECTION("array")
+            {
+                json j = {1, 2, 3};
+                j += {"foo", "bar"};
+                CHECK(j == json({1, 2, 3, {"foo", "bar"}}));
+
+                json k = {1, 2, 3};
+                k += {1, 2, 3};
+                CHECK(k == json({1, 2, 3, {1, 2, 3}}));
+            }
+
+            SECTION("object")
+            {
+                json j = {{"key1", 1}};
+                j += {"key2", "bar"};
+                CHECK(j == json({{"key1", 1}, {"key2", "bar"}}));
+
+                json k = {{"key1", 1}};
+                CHECK_THROWS_AS((k += {1, 2, 3, 4}), std::domain_error);
+                CHECK_THROWS_WITH((k += {1, 2, 3, 4}), "cannot use push_back() with object");
             }
         }
     }
@@ -13991,6 +14063,15 @@ TEST_CASE("regression tests")
         std::copy_n(std::make_move_iterator(source.begin()), 2, std::back_inserter(dest));
 
         CHECK(dest == expected);
+    }
+
+    SECTION("issue ##235 - ambiguous overload for 'push_back' and 'operator+='")
+    {
+        json data = {{"key", "value"}};
+        data.push_back({"key2", "value2"});
+        data += {"key3", "value3"};
+
+        CHECK(data == json({{"key", "value"}, {"key2", "value2"}, {"key3", "value3"}}));
     }
 }
 
