@@ -6152,10 +6152,7 @@ class basic_json
                         // remove '+' sign from the exponent if necessary
                         if (not m_type.bits.exp_plus)
                         {
-                            if (len > static_cast<int>(sizeof(buf)))
-                            {
-                                len = sizeof(buf);
-                            }
+                            len = std::min(len, static_cast<int>(sizeof(buf)));
                             for (int i = 0; i < len; i++)
                             {
                                 if (buf[i] == '+')
@@ -7732,10 +7729,9 @@ class basic_json
             // remember this number was parsed (for later serialization)
             result.m_type.bits.parsed = true;
 
-            // 'found_radix_point' will be set to 0xFF upon finding a radix
-            // point and later used to mask in/out the precision depending
-            // whether a radix is found i.e. 'precision &= found_radix_point'
-            uint8_t found_radix_point = 0;
+            // 'found_radix_point' will be set to true upon finding a radix
+            // point.  if it is not found, then the precision will be updated
+            bool found_radix_point = false;
             uint8_t precision = 0;
 
             // accumulate the integer conversion result (unsigned for now)
@@ -7773,7 +7769,7 @@ class basic_json
 
                         // reset precision count
                         precision = 0;
-                        found_radix_point = 0xFF;
+                        found_radix_point = true;
                         continue;
                     }
                     // assume exponent (if not then will fail parse): change to
@@ -7811,8 +7807,21 @@ class basic_json
             }
 
             // If no radix point was found then precision would now be set to
-            // the number of digits, which is wrong - clear it.
-            result.m_type.bits.precision = precision & found_radix_point;
+            // the number of digits, which is wrong - decrement it to sig figs - 1
+            if(not found_radix_point)
+            {
+                int trailing_zeros = 0;
+                for (int j = precision-1;j>=0;--j)
+                {
+                    auto c = *(m_start+j);
+                    if(c == '0')
+                        ++trailing_zeros;
+                    else if((c > '0' and c <= '9') or c == '-')
+                        break;
+                }
+                precision -= (trailing_zeros + 1);
+            }
+            result.m_type.bits.precision = precision;
 
             // save the value (if not a float)
             if (type == value_t::number_unsigned)

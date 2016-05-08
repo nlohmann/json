@@ -13951,7 +13951,9 @@ TEST_CASE("regression tests")
 
         json j2a = 2342e-2;
         //issue #230
-        //json j2b = json::parse("2342e-2");
+        json j2b = json::parse("2342e-2");
+        //diabolical version
+        json j2c = json::parse("234200e-4");
 
         json j3a = 10E3;
         json j3b = json::parse("10E3");
@@ -13975,7 +13977,8 @@ TEST_CASE("regression tests")
 
         CHECK(j2a.dump() == "23.42");
         //issue #230
-        //CHECK(j2b.dump() == "23.42");
+        CHECK(j2b.dump() == "2.342e01");
+        CHECK(j2c.dump() == "2.342e01");
 
         CHECK(j3a.dump() == "10000");
         CHECK(j3b.dump() == "1E04");
@@ -13992,6 +13995,7 @@ TEST_CASE("regression tests")
 
         CHECK(dest == expected);
     }
+
 }
 
 // special test case to check if memory is leaked if constructor throws
