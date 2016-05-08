@@ -11,12 +11,8 @@
     "name": "Niels",
     "nothing": null,
     "object": {
-        "": "empty string",
-        "/": "slash",
         "currency": "USD",
-        "value": 42.99,
-        "~": "tilde",
-        "~1": "tilde1"
+        "value": 42.99
     },
     "pi": 3.141
 }

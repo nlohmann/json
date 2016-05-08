@@ -109,6 +109,8 @@ matrix:
       env: COMPILER=clang
 
 script:
+  - uname -a
+  - $COMPILER --version
   - make CXX=$COMPILER CXXFLAGS="-lstdc++"
   - ./json_unit "*"
   - if [ `which valgrind` ]; then

@@ -3596,121 +3596,6 @@ class basic_json
     }
 
     /*!
-    @brief access specified element via JSON Pointer
-
-    Uses a JSON pointer to retrieve a reference to the respective JSON value.
-    No bound checking is performed. Similar to
-    @ref operator[](const typename object_t::key_type&), `null` values
-    are created in arrays and objects if necessary.
-
-    In particular:
-    - If the JSON pointer points to an object key that does not exist, it
-      is created an filled with a `null` value before a reference to it
-      is returned.
-    - If the JSON pointer points to an array index that does not exist, it
-      is created an filled with a `null` value before a reference to it
-      is returned. All indices between the current maximum and the given
-      index are also filled with `null`.
-    - The special value `-` is treated as a synonym for the index past the
-      end.
-
-    @param[in] ptr  a JSON pointer
-
-    @return reference to the element pointed to by @a ptr
-
-    @complexity Constant.
-
-    @throw std::out_of_range      if the JSON pointer can not be resolved
-    @throw std::domain_error      if an array index begins with '0'
-    @throw std::invalid_argument  if an array index was not a number
-
-    @liveexample{The behavior is shown in the example.,operatorjson_pointer}
-
-    @since version 2.0.0
-    */
-    reference operator[](const json_pointer& ptr)
-    {
-        return ptr.get_unchecked(this);
-    }
-
-    /*!
-    @brief access specified element via JSON Pointer
-
-    Uses a JSON pointer to retrieve a reference to the respective JSON value.
-    No bound checking is performed. The function does not change the JSON
-    value; no `null` values are created. In particular, the the special value
-    `-` yields an exception.
-
-    @param[in] ptr  JSON pointer to the desired element
-
-    @return const reference to the element pointed to by @a ptr
-
-    @complexity Constant.
-
-    @throw std::out_of_range      if the JSON pointer can not be resolved
-    @throw std::domain_error      if an array index begins with '0'
-    @throw std::invalid_argument  if an array index was not a number
-
-    @liveexample{The behavior is shown in the example.,operatorjson_pointer_const}
-
-    @since version 2.0.0
-    */
-    const_reference operator[](const json_pointer& ptr) const
-    {
-        return ptr.get_unchecked(this);
-    }
-
-    /*!
-    @brief access specified element via JSON Pointer
-
-    Returns a reference to the element at with specified JSON pointer @a ptr,
-    with bounds checking.
-
-    @param[in] ptr  JSON pointer to the desired element
-
-    @return reference to the element pointed to by @a ptr
-
-    @complexity Constant.
-
-    @throw std::out_of_range      if the JSON pointer can not be resolved
-    @throw std::domain_error      if an array index begins with '0'
-    @throw std::invalid_argument  if an array index was not a number
-
-    @liveexample{The behavior is shown in the example.,at_json_pointer}
-
-    @since version 2.0.0
-    */
-    reference at(const json_pointer& ptr)
-    {
-        return ptr.get_checked(this);
-    }
-
-    /*!
-    @brief access specified element via JSON Pointer
-
-    Returns a const reference to the element at with specified JSON pointer
-    @a ptr, with bounds checking.
-
-    @param[in] ptr  JSON pointer to the desired element
-
-    @return reference to the element pointed to by @a ptr
-
-    @complexity Constant.
-
-    @throw std::out_of_range      if the JSON pointer can not be resolved
-    @throw std::domain_error      if an array index begins with '0'
-    @throw std::invalid_argument  if an array index was not a number
-
-    @liveexample{The behavior is shown in the example.,at_json_pointer_const}
-
-    @since version 2.0.0
-    */
-    const_reference at(const json_pointer& ptr) const
-    {
-        return ptr.get_checked(this);
-    }
-
-    /*!
     @brief access specified object element with default value
 
     Returns either a copy of an object's element at the specified key @a key or
@@ -4145,8 +4030,8 @@ class basic_json
 
     @throw std::domain_error when called on a type other than JSON array;
     example: `"cannot use erase() with null"`
-    @throw std::out_of_range when `idx >= size()`; example: `"index out of
-    range"`
+    @throw std::out_of_range when `idx >= size()`; example: `"array index 17
+    is out of range"`
 
     @complexity Linear in distance between @a idx and the end of the container.
 
@@ -4167,7 +4052,7 @@ class basic_json
         {
             if (idx >= size())
             {
-                throw std::out_of_range("index out of range");
+                throw std::out_of_range("array index " + std::to_string(idx) + " is out of range");
             }
 
             assert(m_value.array != nullptr);
@@ -8565,10 +8450,6 @@ basic_json_parser_63:
             {
                 type = value_t::number_unsigned;
                 max = static_cast<uint64_t>(std::numeric_limits<number_unsigned_t>::max());
-                if (*curptr == '+')
-                {
-                    curptr++;
-                }
             }
 
             // count the significant figures
@@ -8935,6 +8816,10 @@ basic_json_parser_63:
     /*!
     @brief JSON Pointer
 
+    A JSON pointer defines a string syntax for identifying a specific value
+    within a JSON document. It can be used with functions `at` and
+    `operator[]`. Furthermore, JSON pointers are the base for JSON patches.
+
     @sa [RFC 6901](https://tools.ietf.org/html/rfc6901)
 
     @since version 2.0.0
@@ -8971,7 +8856,71 @@ basic_json_parser_63:
             : reference_tokens(split(s))
         {}
 
+        /*!
+        @brief return a string representation of the JSON pointer
+
+        @invariant For each JSON pointer `ptr`, it holds:
+        @code {.cpp}
+        ptr == json_pointer(ptr.to_string());
+        @endcode
+
+        @return a string representation of the JSON pointer
+
+        @liveexample{The example shows the result of `to_string`.,
+        json_pointer__to_string}
+
+        @since version 2.0.0
+        */
+        std::string to_string() const noexcept
+        {
+            std::string result;
+
+            for (const auto& reference_token : reference_tokens)
+            {
+                result += "/" + escape(reference_token);
+            }
+
+            return result;
+        }
+
+        /// @copydoc to_string()
+        operator std::string() const
+        {
+            return to_string();
+        }
+
       private:
+        /// remove and return last reference pointer
+        std::string pop_back()
+        {
+            if (is_root())
+            {
+                throw std::domain_error("JSON pointer has no parent");
+            }
+
+            auto last = reference_tokens.back();
+            reference_tokens.pop_back();
+            return last;
+        }
+
+        /// return whether pointer points to the root document
+        bool is_root() const
+        {
+            return reference_tokens.empty();
+        }
+
+        json_pointer top() const
+        {
+            if (is_root())
+            {
+                throw std::domain_error("JSON pointer has no parent");
+            }
+
+            json_pointer result = *this;
+            result.reference_tokens = {reference_tokens[0]};
+            return result;
+        }
+
         /*!
         @brief create and return a reference to the pointed to value
         */
@@ -9010,7 +8959,7 @@ basic_json_parser_63:
                     case value_t::array:
                     {
                         // create an entry in the array
-                        result = &result->operator[](static_cast<size_t>(std::stoi(reference_token)));
+                        result = &result->operator[](static_cast<size_type>(std::stoi(reference_token)));
                         break;
                     }
 
@@ -9073,7 +9022,7 @@ basic_json_parser_63:
                         else
                         {
                             // convert array index to number; unchecked access
-                            ptr = &ptr->operator[](static_cast<size_t>(std::stoi(reference_token)));
+                            ptr = &ptr->operator[](static_cast<size_type>(std::stoi(reference_token)));
                         }
                         break;
                     }
@@ -9118,7 +9067,7 @@ basic_json_parser_63:
                         }
 
                         // note: at performs range check
-                        ptr = &ptr->at(static_cast<size_t>(std::stoi(reference_token)));
+                        ptr = &ptr->at(static_cast<size_type>(std::stoi(reference_token)));
                         break;
                     }
 
@@ -9170,7 +9119,7 @@ basic_json_parser_63:
                         }
 
                         // use unchecked array access
-                        ptr = &ptr->operator[](static_cast<size_t>(std::stoi(reference_token)));
+                        ptr = &ptr->operator[](static_cast<size_type>(std::stoi(reference_token)));
                         break;
                     }
 
@@ -9214,7 +9163,7 @@ basic_json_parser_63:
                         }
 
                         // note: at performs range check
-                        ptr = &ptr->at(static_cast<size_t>(std::stoi(reference_token)));
+                        ptr = &ptr->at(static_cast<size_type>(std::stoi(reference_token)));
                         break;
                     }
 
@@ -9281,12 +9230,8 @@ basic_json_parser_63:
                     }
                 }
 
-                // first transform any occurrence of the sequence '~1' to '/'
-                replace_substring(reference_token, "~1", "/");
-                // then transform any occurrence of the sequence '~0' to '~'
-                replace_substring(reference_token, "~0", "~");
-
                 // finally, store the reference token
+                unescape(reference_token);
                 result.push_back(reference_token);
             }
 
@@ -9322,6 +9267,24 @@ basic_json_parser_63:
             );
         }
 
+        /// escape tilde and slash
+        static std::string escape(std::string s)
+        {
+            // escape "~"" to "~0" and "/" to "~1"
+            replace_substring(s, "~", "~0");
+            replace_substring(s, "/", "~1");
+            return s;
+        }
+
+        /// unescape tilde and slash
+        static void unescape(std::string& s)
+        {
+            // first transform any occurrence of the sequence '~1' to '/'
+            replace_substring(s, "~1", "/");
+            // then transform any occurrence of the sequence '~0' to '~'
+            replace_substring(s, "~0", "~");
+        }
+
         /*!
         @param[in] reference_string  the reference string to the current value
         @param[in] value             the value to consider
@@ -9329,7 +9292,7 @@ basic_json_parser_63:
 
         @note Empty objects or arrays are flattened to `null`.
         */
-        static void flatten(const std::string reference_string,
+        static void flatten(const std::string& reference_string,
                             const basic_json& value,
                             basic_json& result)
         {
@@ -9366,12 +9329,7 @@ basic_json_parser_63:
                         // iterate object and use keys as reference string
                         for (const auto& element : *value.m_value.object)
                         {
-                            // escape "~"" to "~0" and "/" to "~1"
-                            std::string key(element.first);
-                            replace_substring(key, "~", "~0");
-                            replace_substring(key, "/", "~1");
-
-                            flatten(reference_string + "/" + key,
+                            flatten(reference_string + "/" + escape(element.first),
                                     element.second, result);
                         }
                     }
@@ -9422,15 +9380,130 @@ basic_json_parser_63:
 
       private:
         /// the reference tokens
-        const std::vector<std::string> reference_tokens {};
+        std::vector<std::string> reference_tokens {};
     };
 
-    ////////////////////////////
-    // JSON Pointer functions //
-    ////////////////////////////
+    //////////////////////////
+    // JSON Pointer support //
+    //////////////////////////
 
     /// @name JSON Pointer functions
     /// @{
+
+    /*!
+    @brief access specified element via JSON Pointer
+
+    Uses a JSON pointer to retrieve a reference to the respective JSON value.
+    No bound checking is performed. Similar to
+    @ref operator[](const typename object_t::key_type&), `null` values
+    are created in arrays and objects if necessary.
+
+    In particular:
+    - If the JSON pointer points to an object key that does not exist, it
+      is created an filled with a `null` value before a reference to it
+      is returned.
+    - If the JSON pointer points to an array index that does not exist, it
+      is created an filled with a `null` value before a reference to it
+      is returned. All indices between the current maximum and the given
+      index are also filled with `null`.
+    - The special value `-` is treated as a synonym for the index past the
+      end.
+
+    @param[in] ptr  a JSON pointer
+
+    @return reference to the element pointed to by @a ptr
+
+    @complexity Constant.
+
+    @throw std::out_of_range      if the JSON pointer can not be resolved
+    @throw std::domain_error      if an array index begins with '0'
+    @throw std::invalid_argument  if an array index was not a number
+
+    @liveexample{The behavior is shown in the example.,operatorjson_pointer}
+
+    @since version 2.0.0
+    */
+    reference operator[](const json_pointer& ptr)
+    {
+        return ptr.get_unchecked(this);
+    }
+
+    /*!
+    @brief access specified element via JSON Pointer
+
+    Uses a JSON pointer to retrieve a reference to the respective JSON value.
+    No bound checking is performed. The function does not change the JSON
+    value; no `null` values are created. In particular, the the special value
+    `-` yields an exception.
+
+    @param[in] ptr  JSON pointer to the desired element
+
+    @return const reference to the element pointed to by @a ptr
+
+    @complexity Constant.
+
+    @throw std::out_of_range      if the JSON pointer can not be resolved
+    @throw std::domain_error      if an array index begins with '0'
+    @throw std::invalid_argument  if an array index was not a number
+
+    @liveexample{The behavior is shown in the example.,operatorjson_pointer_const}
+
+    @since version 2.0.0
+    */
+    const_reference operator[](const json_pointer& ptr) const
+    {
+        return ptr.get_unchecked(this);
+    }
+
+    /*!
+    @brief access specified element via JSON Pointer
+
+    Returns a reference to the element at with specified JSON pointer @a ptr,
+    with bounds checking.
+
+    @param[in] ptr  JSON pointer to the desired element
+
+    @return reference to the element pointed to by @a ptr
+
+    @complexity Constant.
+
+    @throw std::out_of_range      if the JSON pointer can not be resolved
+    @throw std::domain_error      if an array index begins with '0'
+    @throw std::invalid_argument  if an array index was not a number
+
+    @liveexample{The behavior is shown in the example.,at_json_pointer}
+
+    @since version 2.0.0
+    */
+    reference at(const json_pointer& ptr)
+    {
+        return ptr.get_checked(this);
+    }
+
+    /*!
+    @brief access specified element via JSON Pointer
+
+    Returns a const reference to the element at with specified JSON pointer
+    @a ptr, with bounds checking.
+
+    @param[in] ptr  JSON pointer to the desired element
+
+    @return reference to the element pointed to by @a ptr
+
+    @complexity Constant.
+
+    @throw std::out_of_range      if the JSON pointer can not be resolved
+    @throw std::domain_error      if an array index begins with '0'
+    @throw std::invalid_argument  if an array index was not a number
+
+    @liveexample{The behavior is shown in the example.,at_json_pointer_const}
+
+    @since version 2.0.0
+    */
+    const_reference at(const json_pointer& ptr) const
+    {
+        return ptr.get_checked(this);
+    }
 
     /*!
     @brief return flattened JSON value
@@ -9494,6 +9567,473 @@ basic_json_parser_63:
     }
 
     /// @}
+
+    //////////////////////////
+    // JSON Patch functions //
+    //////////////////////////
+
+    /// @name JSON Patch functions
+    /// @{
+
+    /*!
+    @brief applies a JSON patch
+
+    [JSON Patch](http://jsonpatch.com) defines a JSON document structure for
+    expressing a sequence of operations to apply to a JSON) document. With
+    this funcion, a JSON Patch is applied to the current JSON value by
+    executing all operations from the patch.
+
+    @param[in] patch  JSON patch document
+    @return patched document
+
+    @note The application of a patch is atomic: Either all operations succeed
+          and the patched document is returned or an exception is thrown. In
+          any case, the original value is not changed: the patch is applied
+          to a copy of the value.
+
+    @throw std::out_of_range if a JSON pointer inside the patch could not
+    be resolved successfully in the current JSON value; example: `"key baz
+    not found"`
+    @throw invalid_argument if the JSON patch is malformed (e.g., mandatory
+    attributes are missing); example: `"operation add must have member path"`
+
+    @complexity Linear in the size of the JSON value and the length of the
+    JSON patch. As usually only a fraction of the JSON value is affected by
+    the patch, the complexity can usually be neglected.
+
+    @liveexample{The following code shows how a JSON patch is applied to a
+    value.,patch}
+
+    @sa @ref diff -- create a JSON patch by comparing two JSON values
+
+    @sa [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
+    @sa [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901)
+
+    @since version 2.0.0
+    */
+    basic_json patch(const basic_json& patch) const
+    {
+        // make a working copy to apply the patch to
+        basic_json result = *this;
+
+        // the valid JSON Patch operations
+        enum class patch_operations {add, remove, replace, move, copy, test, invalid};
+
+        const auto get_op = [](const std::string op)
+        {
+            if (op == "add")
+            {
+                return patch_operations::add;
+            }
+            if (op == "remove")
+            {
+                return patch_operations::remove;
+            }
+            if (op == "replace")
+            {
+                return patch_operations::replace;
+            }
+            if (op == "move")
+            {
+                return patch_operations::move;
+            }
+            if (op == "copy")
+            {
+                return patch_operations::copy;
+            }
+            if (op == "test")
+            {
+                return patch_operations::test;
+            }
+
+            return patch_operations::invalid;
+        };
+
+        // wrapper for "add" operation; add value at ptr
+        const auto operation_add = [&result](json_pointer & ptr, basic_json val)
+        {
+            // adding to the root of the target document means replacing it
+            if (ptr.is_root())
+            {
+                result = val;
+            }
+            else
+            {
+                // make sure the top element of the pointer exists
+                json_pointer top_pointer = ptr.top();
+                if (top_pointer != ptr)
+                {
+                    basic_json& x = result.at(top_pointer);
+                }
+
+                // get reference to parent of JSON pointer ptr
+                const auto last_path = ptr.pop_back();
+                basic_json& parent = result[ptr];
+
+                switch (parent.m_type)
+                {
+                    case value_t::null:
+                    case value_t::object:
+                    {
+                        // use operator[] to add value
+                        parent[last_path] = val;
+                        break;
+                    }
+
+                    case value_t::array:
+                    {
+                        if (last_path == "-")
+                        {
+                            // special case: append to back
+                            parent.push_back(val);
+                        }
+                        else
+                        {
+                            const auto idx = std::stoi(last_path);
+                            if (static_cast<size_type>(idx) > parent.size())
+                            {
+                                // avoid undefined behavior
+                                throw std::out_of_range("array index " + std::to_string(idx) + " is out of range");
+                            }
+                            else
+                            {
+                                // default case: insert add offset
+                                parent.insert(parent.begin() + static_cast<difference_type>(idx), val);
+                            }
+                        }
+                        break;
+                    }
+
+                    default:
+                    {
+                        // if there exists a parent it cannot be primitive
+                        assert(false);  // LCOV_EXCL_LINE
+                    }
+                }
+            }
+        };
+
+        // wrapper for "remove" operation; remove value at ptr
+        const auto operation_remove = [&result](json_pointer & ptr)
+        {
+            // get reference to parent of JSON pointer ptr
+            const auto last_path = ptr.pop_back();
+            basic_json& parent = result.at(ptr);
+
+            // remove child
+            if (parent.is_object())
+            {
+                // perform range check
+                auto it = parent.find(last_path);
+                if (it != parent.end())
+                {
+                    parent.erase(it);
+                }
+                else
+                {
+                    throw std::out_of_range("key '" + last_path + "' not found");
+                }
+            }
+            else if (parent.is_array())
+            {
+                // note erase performs range check
+                parent.erase(static_cast<size_type>(std::stoi(last_path)));
+            }
+        };
+
+        // type check
+        if (not patch.is_array())
+        {
+            // a JSON patch must be an array of objects
+            throw std::invalid_argument("JSON patch must be an array of objects");
+        }
+
+        // iterate and apply th eoperations
+        for (const auto& val : patch)
+        {
+            // wrapper to get a value for an operation
+            const auto get_value = [&val](const std::string & op,
+                                          const std::string & member,
+                                          bool string_type) -> basic_json&
+            {
+                // find value
+                auto it = val.m_value.object->find(member);
+
+                // context-sensitive error message
+                const auto error_msg = (op == "op") ? "operation" : "operation '" + op + "'";
+
+                // check if desired value is present
+                if (it == val.m_value.object->end())
+                {
+                    throw std::invalid_argument(error_msg + " must have member '" + member + "'");
+                }
+
+                // check if result is of type string
+                if (string_type and not it->second.is_string())
+                {
+                    throw std::invalid_argument(error_msg + " must have string member '" + member + "'");
+                }
+
+                // no error: return value
+                return it->second;
+            };
+
+            // type check
+            if (not val.is_object())
+            {
+                throw std::invalid_argument("JSON patch must be an array of objects");
+            }
+
+            // collect mandatory members
+            const std::string op = get_value("op", "op", true);
+            const std::string path = get_value(op, "path", true);
+            json_pointer ptr(path);
+
+            switch (get_op(op))
+            {
+                case patch_operations::add:
+                {
+                    operation_add(ptr, get_value("add", "value", false));
+                    break;
+                }
+
+                case patch_operations::remove:
+                {
+                    operation_remove(ptr);
+                    break;
+                }
+
+                case patch_operations::replace:
+                {
+                    // the "path" location must exist - use at()
+                    result.at(ptr) = get_value("replace", "value", false);
+                    break;
+                }
+
+                case patch_operations::move:
+                {
+                    const std::string from_path = get_value("move", "from", true);
+                    json_pointer from_ptr(from_path);
+
+                    // the "from" location must exist - use at()
+                    basic_json v = result.at(from_ptr);
+
+                    // The move operation is functionally identical to a
+                    // "remove" operation on the "from" location, followed
+                    // immediately by an "add" operation at the target
+                    // location with the value that was just removed.
+                    operation_remove(from_ptr);
+                    operation_add(ptr, v);
+                    break;
+                }
+
+                case patch_operations::copy:
+                {
+                    const std::string from_path = get_value("copy", "from", true);;
+                    const json_pointer from_ptr(from_path);
+
+                    // the "from" location must exist - use at()
+                    result[ptr] = result.at(from_ptr);
+                    break;
+                }
+
+                case patch_operations::test:
+                {
+                    bool success = false;
+                    try
+                    {
+                        // check if "value" matches the one at "path"
+                        // the "path" location must exist - use at()
+                        success = (result.at(ptr) == get_value("test", "value", false));
+                    }
+                    catch (std::out_of_range&)
+                    {
+                        // ignore out of range errors: success remains false
+                    }
+
+                    // throw an exception if test fails
+                    if (not success)
+                    {
+                        throw std::domain_error("unsuccessful: " + val.dump());
+                    }
+
+                    break;
+                }
+
+                case patch_operations::invalid:
+                {
+                    // op must be "add", "remove", "replace", "move", "copy", or
+                    // "test"
+                    throw std::invalid_argument("operation value '" + op + "' is invalid");
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /*!
+    @brief creates a diff as a JSON patch
+
+    Creates a [JSON Patch](http://jsonpatch.com) so that value @a source can
+    be changed into the value @a target by calling @ref patch function.
+
+    @invariant For two JSON values @a source and @a target, the following code
+    yields always `true`:
+    @code {.cpp}
+    source.patch(diff(source, target)) == target;
+    @endcode
+
+    @note Currently, only `remove`, `add`, and `replace` operations are
+          generated.
+
+    @param[in] source  JSON value to copare from
+    @param[in] target  JSON value to copare against
+    @param[in] path    helper value to create JSON pointers
+
+    @return a JSON patch to convert the @a source to @a target
+
+    @complexity Linear in the lengths of @a source and @a target.
+
+    @liveexample{The following code shows how a JSON patch is created as a
+    diff for two JSON values.,diff}
+
+    @sa @ref patch -- apply a JSON patch
+
+    @sa [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
+
+    @since version 2.0.0
+    */
+    static basic_json diff(const basic_json& source,
+                           const basic_json& target,
+                           std::string path = "") noexcept
+    {
+        // the patch
+        basic_json result(value_t::array);
+
+        // if the values are the same, return empty patch
+        if (source == target)
+        {
+            return result;
+        }
+
+        if (source.type() != target.type())
+        {
+            // different types: replace value
+            result.push_back(
+            {
+                {"op", "replace"},
+                {"path", path},
+                {"value", target}
+            });
+        }
+        else
+        {
+            switch (source.type())
+            {
+                case value_t::array:
+                {
+                    // first pass: traverse common elements
+                    size_t i = 0;
+                    while (i < source.size() and i < target.size())
+                    {
+                        // recursive call to compare array values at index i
+                        auto temp_diff = diff(source[i], target[i], path + "/" + std::to_string(i));
+                        result.insert(result.end(), temp_diff.begin(), temp_diff.end());
+                        ++i;
+                    }
+
+                    // i now reached the end of at least one array
+                    // in a second pass, traverse the remaining elements
+
+                    // remove my remaining elements
+                    while (i < source.size())
+                    {
+                        result.push_back(object(
+                        {
+                            {"op", "remove"},
+                            {"path", path + "/" + std::to_string(i)}
+                        }));
+                        ++i;
+                    }
+
+                    // add other remaining elements
+                    while (i < target.size())
+                    {
+                        result.push_back(
+                        {
+                            {"op", "add"},
+                            {"path", path + "/" + std::to_string(i)},
+                            {"value", target[i]}
+                        });
+                        ++i;
+                    }
+
+                    break;
+                }
+
+                case value_t::object:
+                {
+                    // first pass: traverse this object's elements
+                    for (auto it = source.begin(); it != source.end(); ++it)
+                    {
+                        // escape the key name to be used in a JSON patch
+                        const auto key = json_pointer::escape(it.key());
+
+                        if (target.find(it.key()) != target.end())
+                        {
+                            // recursive call to compare object values at key it
+                            auto temp_diff = diff(it.value(), target[it.key()], path + "/" + key);
+                            result.insert(result.end(), temp_diff.begin(), temp_diff.end());
+                        }
+                        else
+                        {
+                            // found a key that is not in o -> remove it
+                            result.push_back(object(
+                            {
+                                {"op", "remove"},
+                                {"path", path + "/" + key}
+                            }));
+                        }
+                    }
+
+                    // second pass: traverse other object's elements
+                    for (auto it = target.begin(); it != target.end(); ++it)
+                    {
+                        if (source.find(it.key()) == source.end())
+                        {
+                            // found a key that is not in this -> add it
+                            const auto key = json_pointer::escape(it.key());
+                            result.push_back(
+                            {
+                                {"op", "add"},
+                                {"path", path + "/" + key},
+                                {"value", it.value()}
+                            });
+                        }
+                    }
+
+                    break;
+                }
+
+                default:
+                {
+                    // both primitive type: replace value
+                    result.push_back(
+                    {
+                        {"op", "replace"},
+                        {"path", path},
+                        {"value", target}
+                    });
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /// @}
 };
 
 
@@ -9513,9 +10053,9 @@ using json = basic_json<>;
 }
 
 
-/////////////////////////
-// nonmember functions //
-/////////////////////////
+///////////////////////
+// nonmember support //
+///////////////////////
 
 // specialization of std::swap, and std::hash
 namespace std
