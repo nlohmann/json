@@ -13993,3 +13993,34 @@ TEST_CASE("regression tests")
         CHECK(dest == expected);
     }
 }
+
+// special test case to check if memory is leaked if constructor throws
+
+template<class T>
+struct my_allocator : std::allocator<T>
+{
+    template<class... Args>
+    void construct(T*, Args&& ...)
+    {
+        throw std::bad_alloc();
+    }
+};
+
+TEST_CASE("bad_alloc")
+{
+    SECTION("bad_alloc")
+    {
+        // create JSON type using the throwing allocator
+        using my_json = nlohmann::basic_json<std::map,
+              std::vector,
+              std::string,
+              bool,
+              std::int64_t,
+              std::uint64_t,
+              double,
+              my_allocator>;
+
+        // creating an object should throw
+        CHECK_THROWS_AS(my_json j(my_json::value_t::object), std::bad_alloc);
+    }
+}
