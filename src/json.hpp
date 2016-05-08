@@ -5967,7 +5967,7 @@ class basic_json
                         {
                             return (v < 10)
                             ? ('0' + static_cast<char>(v))
-                            : ('a' + static_cast<char>((v - 10) & 0xff));
+                            : ('a' + static_cast<char>((v - 10) & 0x1f));
                         };
 
                         // print character c as \uxxxx
