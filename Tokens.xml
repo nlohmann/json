@@ -1445,6 +1445,30 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>push_back</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a9c9b4932b26a9630e1a3f25ea42a2c43.html</Path>
+    <Anchor>a9c9b4932b26a9630e1a3f25ea42a2c43</Anchor>
+    <Abstract>add an object to an object </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator+=</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_aa0033766b4d3134b9bb57d81762d75a2.html</Path>
+    <Anchor>aa0033766b4d3134b9bb57d81762d75a2</Anchor>
+    <Abstract>add an object to an object </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>insert</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>

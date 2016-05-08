@@ -1039,6 +1039,11 @@
                 <Anchor>a9486a272e034c0548305d7a12f3045e6</Anchor>
                </Node>
                <Node>
+                <Name>operator+=</Name>
+                <Path>classnlohmann_1_1basic__json_aa0033766b4d3134b9bb57d81762d75a2.html</Path>
+                <Anchor>aa0033766b4d3134b9bb57d81762d75a2</Anchor>
+               </Node>
+               <Node>
                 <Name>operator=</Name>
                 <Path>classnlohmann_1_1basic__json_a7c3182cfabc0bdd9f3a14216fe0e8154.html</Path>
                 <Anchor>a7c3182cfabc0bdd9f3a14216fe0e8154</Anchor>
@@ -1127,6 +1132,11 @@
                 <Name>push_back</Name>
                 <Path>classnlohmann_1_1basic__json_a5212588544f6d2266384c3be9bfda0c5.html</Path>
                 <Anchor>a5212588544f6d2266384c3be9bfda0c5</Anchor>
+               </Node>
+               <Node>
+                <Name>push_back</Name>
+                <Path>classnlohmann_1_1basic__json_a9c9b4932b26a9630e1a3f25ea42a2c43.html</Path>
+                <Anchor>a9c9b4932b26a9630e1a3f25ea42a2c43</Anchor>
                </Node>
                <Node>
                 <Name>rbegin</Name>
