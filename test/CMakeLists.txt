@@ -11,5 +11,11 @@ set_target_properties(json_unit PROPERTIES
     COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
 )
 
+# Install the test binary.
+install(TARGETS json_unit RUNTIME DESTINATION test/bin)
+
+# Copy the test data to the install tree.
+install(DIRECTORY data/ DESTINATION test/data)
+
 target_include_directories(json_unit PRIVATE "src")
 target_link_libraries(json_unit ${JSON_TARGET_NAME})
