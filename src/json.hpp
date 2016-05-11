@@ -757,7 +757,7 @@ class basic_json
         /// assignment
         type_data_t& operator=(value_t rhs)
         {
-            bits.type = static_cast<uint16_t>(rhs);
+            bits.type = static_cast<uint16_t>(rhs) & 15; // avoid overflow
             return *this;
         }
 
@@ -765,7 +765,7 @@ class basic_json
         type_data_t(value_t t) noexcept
         {
             *reinterpret_cast<uint16_t*>(this) = 0;
-            bits.type = static_cast<uint16_t>(t);
+            bits.type = static_cast<uint16_t>(t) & 15; // avoid overflow
         }
 
         /// default constructor
@@ -6011,9 +6011,11 @@ class basic_json
                     {
                         // convert a number 0..15 to its hex representation
                         // (0..f)
-                        auto hexify = [](const char v) -> char
+                        const auto hexify = [](const int v) -> char
                         {
-                            return (v < 10) ? ('0' + v) : ('a' + v - 10);
+                            return (v < 10)
+                            ? ('0' + static_cast<char>(v))
+                            : ('a' + static_cast<char>((v - 10) & 0x1f));
                         };
 
                         // print character c as \uxxxx
