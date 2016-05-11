@@ -4878,7 +4878,55 @@ class basic_json
     reference operator+=(const typename object_t::value_type& val)
     {
         push_back(val);
-        return operator[](val.first);
+        return *this;
+    }
+
+    /*!
+    @brief add an object to an object
+
+    This function allows to use `push_back` with an initializer list. In case
+
+    1. the current value is an object,
+    2. the initializer list @a init contains only two elements, and
+    3. the first element of @a init is a string,
+
+    @a init is converted into an object element and added using
+    @ref push_back(const typename object_t::value_type&). Otherwise, @a init
+    is converted to a JSON value and added using @ref push_back(basic_json&&).
+
+    @param init  an initializer list
+
+    @complexity Linear in the size of the initializer list @a init.
+
+    @note This function is required to resolve an ambiguous overload error,
+          because pairs like `{"key", "value"}` can be both interpreted as
+          `object_t::value_type` or `std::initializer_list<basic_json>`, see
+          https://github.com/nlohmann/json/issues/235 for more information.
+
+    @liveexample{The example shows how initializer lists are treated as
+    objects when possible.,push_back__initializer_list}
+    */
+    void push_back(std::initializer_list<basic_json> init)
+    {
+        if (is_object() and init.size() == 2 and init.begin()->is_string())
+        {
+            const string_t key = *init.begin();
+            push_back(typename object_t::value_type(key, *(init.begin() + 1)));
+        }
+        else
+        {
+            push_back(basic_json(init));
+        }
+    }
+
+    /*!
+    @brief add an object to an object
+    @copydoc push_back(std::initializer_list<basic_json>)
+    */
+    reference operator+=(std::initializer_list<basic_json> init)
+    {
+        push_back(init);
+        return *this;
     }
 
     /*!
