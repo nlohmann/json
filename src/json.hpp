@@ -9659,7 +9659,7 @@ basic_json_parser_63:
 
     @since version 2.0.0
     */
-    basic_json patch(const basic_json& patch) const
+    basic_json patch(const basic_json& json_patch) const
     {
         // make a working copy to apply the patch to
         basic_json result = *this;
@@ -9790,14 +9790,14 @@ basic_json_parser_63:
         };
 
         // type check
-        if (not patch.is_array())
+        if (not json_patch.is_array())
         {
             // a JSON patch must be an array of objects
             throw std::invalid_argument("JSON patch must be an array of objects");
         }
 
         // iterate and apply th eoperations
-        for (const auto& val : patch)
+        for (const auto& val : json_patch)
         {
             // wrapper to get a value for an operation
             const auto get_value = [&val](const std::string & op,
