@@ -22,17 +22,7 @@ target_include_directories(${JSON_TARGET_NAME} INTERFACE
 
 # create and configure the unit test target
 if (BuildTests)
-    add_executable(json_unit
-        "test/catch.hpp"
-        "test/unit.cpp"
-    )
-    set_target_properties(json_unit PROPERTIES
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED ON
-        COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
-        COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>")
-    target_include_directories(json_unit PRIVATE "test")
-    target_link_libraries(json_unit ${JSON_TARGET_NAME})
+    add_subdirectory(test)
 endif()
 
 # generate a config and config version file for the package
