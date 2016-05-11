@@ -19,7 +19,7 @@ matrix:
         - touch src/json.hpp
         - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11 -lstdc++" CXX=$COMPILER
         - ./json_unit "*"
-        - coveralls --exclude test/catch.hpp --exclude test/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
+        - coveralls --exclude test/src/catch.hpp --exclude test/src/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
       env: COMPILER=g++-4.9
 
     - os: linux

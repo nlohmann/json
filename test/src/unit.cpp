@@ -1314,7 +1314,7 @@ TEST_CASE("constructors")
 
         SECTION("std::ifstream")
         {
-            std::ifstream f("test/json_tests/pass1.json");
+            std::ifstream f("test/data/json_tests/pass1.json");
             json j(f);
         }
     }
@@ -11652,39 +11652,39 @@ TEST_CASE("compliance tests from json.org")
     {
         for (auto filename :
                 {
-                    //"test/json_tests/fail1.json",
-                    "test/json_tests/fail2.json",
-                    "test/json_tests/fail3.json",
-                    "test/json_tests/fail4.json",
-                    "test/json_tests/fail5.json",
-                    "test/json_tests/fail6.json",
-                    "test/json_tests/fail7.json",
-                    "test/json_tests/fail8.json",
-                    "test/json_tests/fail9.json",
-                    "test/json_tests/fail10.json",
-                    "test/json_tests/fail11.json",
-                    "test/json_tests/fail12.json",
-                    "test/json_tests/fail13.json",
-                    "test/json_tests/fail14.json",
-                    "test/json_tests/fail15.json",
-                    "test/json_tests/fail16.json",
-                    "test/json_tests/fail17.json",
-                    //"test/json_tests/fail18.json",
-                    "test/json_tests/fail19.json",
-                    "test/json_tests/fail20.json",
-                    "test/json_tests/fail21.json",
-                    "test/json_tests/fail22.json",
-                    "test/json_tests/fail23.json",
-                    "test/json_tests/fail24.json",
-                    "test/json_tests/fail25.json",
-                    "test/json_tests/fail26.json",
-                    "test/json_tests/fail27.json",
-                    "test/json_tests/fail28.json",
-                    "test/json_tests/fail29.json",
-                    "test/json_tests/fail30.json",
-                    "test/json_tests/fail31.json",
-                    "test/json_tests/fail32.json",
-                    "test/json_tests/fail33.json"
+                    //"test/data/json_tests/fail1.json",
+                    "test/data/json_tests/fail2.json",
+                    "test/data/json_tests/fail3.json",
+                    "test/data/json_tests/fail4.json",
+                    "test/data/json_tests/fail5.json",
+                    "test/data/json_tests/fail6.json",
+                    "test/data/json_tests/fail7.json",
+                    "test/data/json_tests/fail8.json",
+                    "test/data/json_tests/fail9.json",
+                    "test/data/json_tests/fail10.json",
+                    "test/data/json_tests/fail11.json",
+                    "test/data/json_tests/fail12.json",
+                    "test/data/json_tests/fail13.json",
+                    "test/data/json_tests/fail14.json",
+                    "test/data/json_tests/fail15.json",
+                    "test/data/json_tests/fail16.json",
+                    "test/data/json_tests/fail17.json",
+                    //"test/data/json_tests/fail18.json",
+                    "test/data/json_tests/fail19.json",
+                    "test/data/json_tests/fail20.json",
+                    "test/data/json_tests/fail21.json",
+                    "test/data/json_tests/fail22.json",
+                    "test/data/json_tests/fail23.json",
+                    "test/data/json_tests/fail24.json",
+                    "test/data/json_tests/fail25.json",
+                    "test/data/json_tests/fail26.json",
+                    "test/data/json_tests/fail27.json",
+                    "test/data/json_tests/fail28.json",
+                    "test/data/json_tests/fail29.json",
+                    "test/data/json_tests/fail30.json",
+                    "test/data/json_tests/fail31.json",
+                    "test/data/json_tests/fail32.json",
+                    "test/data/json_tests/fail33.json"
                 })
         {
             CAPTURE(filename);
@@ -11698,9 +11698,9 @@ TEST_CASE("compliance tests from json.org")
     {
         for (auto filename :
                 {
-                    "test/json_tests/pass1.json",
-                    "test/json_tests/pass2.json",
-                    "test/json_tests/pass3.json"
+                    "test/data/json_tests/pass1.json",
+                    "test/data/json_tests/pass2.json",
+                    "test/data/json_tests/pass3.json"
                 })
         {
             CAPTURE(filename);
@@ -11873,42 +11873,42 @@ TEST_CASE("compliance tests from nativejson-benchmark")
 
     SECTION("roundtrip")
     {
-        // test cases are from https://github.com/miloyip/nativejson-benchmark/tree/master/data/roundtrip
+        // test cases are from https://github.com/miloyip/nativejson-benchmark/tree/master/test/data/roundtrip
 
         for (auto filename :
                 {
-                    "test/json_roundtrip/roundtrip01.json",
-                    "test/json_roundtrip/roundtrip02.json",
-                    "test/json_roundtrip/roundtrip03.json",
-                    "test/json_roundtrip/roundtrip04.json",
-                    "test/json_roundtrip/roundtrip05.json",
-                    "test/json_roundtrip/roundtrip06.json",
-                    "test/json_roundtrip/roundtrip07.json",
-                    "test/json_roundtrip/roundtrip08.json",
-                    "test/json_roundtrip/roundtrip09.json",
-                    "test/json_roundtrip/roundtrip10.json",
-                    "test/json_roundtrip/roundtrip11.json",
-                    "test/json_roundtrip/roundtrip12.json",
-                    "test/json_roundtrip/roundtrip13.json",
-                    "test/json_roundtrip/roundtrip14.json",
-                    "test/json_roundtrip/roundtrip15.json",
-                    "test/json_roundtrip/roundtrip16.json",
-                    "test/json_roundtrip/roundtrip17.json",
-                    "test/json_roundtrip/roundtrip18.json",
-                    "test/json_roundtrip/roundtrip19.json",
-                    "test/json_roundtrip/roundtrip20.json",
-                    "test/json_roundtrip/roundtrip21.json",
-                    "test/json_roundtrip/roundtrip22.json",
-                    "test/json_roundtrip/roundtrip23.json",
-                    "test/json_roundtrip/roundtrip24.json",
-                    "test/json_roundtrip/roundtrip25.json",
-                    "test/json_roundtrip/roundtrip26.json",
-                    "test/json_roundtrip/roundtrip27.json",
-                    "test/json_roundtrip/roundtrip28.json",
-                    "test/json_roundtrip/roundtrip29.json",
-                    "test/json_roundtrip/roundtrip30.json",
-                    "test/json_roundtrip/roundtrip31.json",
-                    "test/json_roundtrip/roundtrip32.json"
+                    "test/data/json_roundtrip/roundtrip01.json",
+                    "test/data/json_roundtrip/roundtrip02.json",
+                    "test/data/json_roundtrip/roundtrip03.json",
+                    "test/data/json_roundtrip/roundtrip04.json",
+                    "test/data/json_roundtrip/roundtrip05.json",
+                    "test/data/json_roundtrip/roundtrip06.json",
+                    "test/data/json_roundtrip/roundtrip07.json",
+                    "test/data/json_roundtrip/roundtrip08.json",
+                    "test/data/json_roundtrip/roundtrip09.json",
+                    "test/data/json_roundtrip/roundtrip10.json",
+                    "test/data/json_roundtrip/roundtrip11.json",
+                    "test/data/json_roundtrip/roundtrip12.json",
+                    "test/data/json_roundtrip/roundtrip13.json",
+                    "test/data/json_roundtrip/roundtrip14.json",
+                    "test/data/json_roundtrip/roundtrip15.json",
+                    "test/data/json_roundtrip/roundtrip16.json",
+                    "test/data/json_roundtrip/roundtrip17.json",
+                    "test/data/json_roundtrip/roundtrip18.json",
+                    "test/data/json_roundtrip/roundtrip19.json",
+                    "test/data/json_roundtrip/roundtrip20.json",
+                    "test/data/json_roundtrip/roundtrip21.json",
+                    "test/data/json_roundtrip/roundtrip22.json",
+                    "test/data/json_roundtrip/roundtrip23.json",
+                    "test/data/json_roundtrip/roundtrip24.json",
+                    "test/data/json_roundtrip/roundtrip25.json",
+                    "test/data/json_roundtrip/roundtrip26.json",
+                    "test/data/json_roundtrip/roundtrip27.json",
+                    "test/data/json_roundtrip/roundtrip28.json",
+                    "test/data/json_roundtrip/roundtrip29.json",
+                    "test/data/json_roundtrip/roundtrip30.json",
+                    "test/data/json_roundtrip/roundtrip31.json",
+                    "test/data/json_roundtrip/roundtrip32.json"
                 })
         {
             CAPTURE(filename);
@@ -11928,7 +11928,7 @@ TEST_CASE("test suite from json-test-suite")
     {
         // read a file with all unicode characters stored as single-character
         // strings in a JSON array
-        std::ifstream f("test/json_testsuite/sample.json");
+        std::ifstream f("test/data/json_testsuite/sample.json");
         json j;
         CHECK_NOTHROW(j << f);
 
@@ -11943,35 +11943,35 @@ TEST_CASE("json.org examples")
 
     SECTION("1.json")
     {
-        std::ifstream f("test/json.org/1.json");
+        std::ifstream f("test/data/json.org/1.json");
         json j;
         CHECK_NOTHROW(j << f);
     }
 
     SECTION("2.json")
     {
-        std::ifstream f("test/json.org/2.json");
+        std::ifstream f("test/data/json.org/2.json");
         json j;
         CHECK_NOTHROW(j << f);
     }
 
     SECTION("3.json")
     {
-        std::ifstream f("test/json.org/3.json");
+        std::ifstream f("test/data/json.org/3.json");
         json j;
         CHECK_NOTHROW(j << f);
     }
 
     SECTION("4.json")
     {
-        std::ifstream f("test/json.org/4.json");
+        std::ifstream f("test/data/json.org/4.json");
         json j;
         CHECK_NOTHROW(j << f);
     }
 
     SECTION("5.json")
     {
-        std::ifstream f("test/json.org/5.json");
+        std::ifstream f("test/data/json.org/5.json");
         json j;
         CHECK_NOTHROW(j << f);
     }
@@ -12105,7 +12105,7 @@ TEST_CASE("Unicode", "[hide]")
     {
         // read a file with all unicode characters stored as single-character
         // strings in a JSON array
-        std::ifstream f("test/json_nlohmann_tests/all_unicode.json");
+        std::ifstream f("test/data/json_nlohmann_tests/all_unicode.json");
         json j;
         CHECK_NOTHROW(j << f);
 
@@ -12146,7 +12146,7 @@ TEST_CASE("Unicode", "[hide]")
     SECTION("ignore byte-order-mark")
     {
         // read a file with a UTF-8 BOM
-        std::ifstream f("test/json_nlohmann_tests/bom.json");
+        std::ifstream f("test/data/json_nlohmann_tests/bom.json");
         json j;
         CHECK_NOTHROW(j << f);
     }
