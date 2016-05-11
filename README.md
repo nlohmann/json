@@ -431,7 +431,8 @@ I deeply appreciate the help of the following people.
 - [Lv Zheng](https://github.com/lv-zheng) fixed a namespace issue with `int64_t` and `uint64_t`.
 - [abc100m](https://github.com/abc100m) analyzed the issues with GCC 4.8 and proposed a [partial solution](https://github.com/nlohmann/json/pull/212).
 - [zewt](https://github.com/zewt) added useful notes to the README file about Android.
-- [Róbert Márki](https://github.com/robertmrk) added a fix to use move iterators and improved the integration via CMake .
+- [Róbert Márki](https://github.com/robertmrk) added a fix to use move iterators and improved the integration via CMake.
+- [Chris Kitching](https://github.com/ChrisKitching) cleaned up the CMake files.
 
 Thanks a lot for helping out!
 
