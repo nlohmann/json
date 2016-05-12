@@ -1870,8 +1870,8 @@
       <Type>clm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a928b98a9b2e7f23d93ffba4024cbcaf5.html</Path>
-    <Anchor>a928b98a9b2e7f23d93ffba4024cbcaf5</Anchor>
+    <Path>classnlohmann_1_1basic__json_a618a5c5c9f8889032657370c8247a587.html</Path>
+    <Anchor>a618a5c5c9f8889032657370c8247a587</Anchor>
     <Abstract>creates a diff as a JSON patch </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1882,8 +1882,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a28dd7f9a1c3f47f9f016e142cd355131.html</Path>
-    <Anchor>a28dd7f9a1c3f47f9f016e142cd355131</Anchor>
+    <Path>classnlohmann_1_1basic__json_aa41e1083435cf317a253947eb1ff318d.html</Path>
+    <Anchor>aa41e1083435cf317a253947eb1ff318d</Anchor>
     <Abstract>applies a JSON patch </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
