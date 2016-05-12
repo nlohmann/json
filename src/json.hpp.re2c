@@ -271,8 +271,8 @@ class basic_json
 
     @tparam ObjectType  the container to store objects (e.g., `std::map` or
     `std::unordered_map`)
-    @tparam StringType the type of the keys or names (e.g., `std::string`). The
-    comparison function `std::less<StringType>` is used to order elements
+    @tparam StringType the type of the keys or names (e.g., `std::string`).
+    The comparison function `std::less<StringType>` is used to order elements
     inside the container.
     @tparam AllocatorType the allocator to use for objects (e.g.,
     `std::allocator`)
@@ -280,8 +280,8 @@ class basic_json
     #### Default type
 
     With the default values for @a ObjectType (`std::map`), @a StringType
-    (`std::string`), and @a AllocatorType (`std::allocator`), the default value
-    for @a object_t is:
+    (`std::string`), and @a AllocatorType (`std::allocator`), the default
+    value for @a object_t is:
 
     @code {.cpp}
     std::map<
@@ -298,16 +298,16 @@ class basic_json
     the default type, objects have the following behavior:
 
     - When all names are unique, objects will be interoperable in the sense
-      that all software implementations receiving that object will agree on the
-      name-value mappings.
+      that all software implementations receiving that object will agree on
+      the name-value mappings.
     - When the names within an object are not unique, later stored name/value
       pairs overwrite previously stored name/value pairs, leaving the used
       names unique. For instance, `{"key": 1}` and `{"key": 2, "key": 1}` will
       be treated as equal and both stored as `{"key": 1}`.
     - Internally, name/value pairs are stored in lexicographical order of the
-      names. Objects will also be serialized (see @ref dump) in this order. For
-      instance, `{"b": 1, "a": 2}` and `{"a": 2, "b": 1}` will be stored and
-      serialized as `{"a": 2, "b": 1}`.
+      names. Objects will also be serialized (see @ref dump) in this order.
+      For instance, `{"b": 1, "a": 2}` and `{"a": 2, "b": 1}` will be stored
+      and serialized as `{"a": 2, "b": 1}`.
     - When comparing objects, the order of the name/value pairs is irrelevant.
       This makes objects interoperable in the sense that they will not be
       affected by these differences. For instance, `{"b": 1, "a": 2}` and
@@ -320,23 +320,24 @@ class basic_json
 
     In this class, the object's limit of nesting is not constraint explicitly.
     However, a maximum depth of nesting may be introduced by the compiler or
-    runtime environment. A theoretical limit can be queried by calling the @ref
-    max_size function of a JSON object.
+    runtime environment. A theoretical limit can be queried by calling the
+    @ref max_size function of a JSON object.
 
     #### Storage
 
     Objects are stored as pointers in a @ref basic_json type. That is, for any
-    access to object values, a pointer of type `object_t*` must be dereferenced.
+    access to object values, a pointer of type `object_t*` must be
+    dereferenced.
 
     @sa @ref array_t -- type for an array value
 
     @since version 1.0.0
 
-    @note The order name/value pairs are added to the object is *not* preserved
-    by the library. Therefore, iterating an object may return name/value pairs
-    in a different order than they were originally stored. In fact, keys will
-    be traversed in alphabetical order as `std::map` with `std::less` is used
-    by default. Please note this behavior conforms to [RFC
+    @note The order name/value pairs are added to the object is *not*
+    preserved by the library. Therefore, iterating an object may return
+    name/value pairs in a different order than they were originally stored. In
+    fact, keys will be traversed in alphabetical order as `std::map` with
+    `std::less` is used by default. Please note this behavior conforms to [RFC
     7159](http://rfc7159.net/rfc7159), because any order implements the
     specified "unordered" nature of JSON objects.
     */
@@ -378,8 +379,8 @@ class basic_json
 
     In this class, the array's limit of nesting is not constraint explicitly.
     However, a maximum depth of nesting may be introduced by the compiler or
-    runtime environment. A theoretical limit can be queried by calling the @ref
-    max_size function of a JSON array.
+    runtime environment. A theoretical limit can be queried by calling the
+    @ref max_size function of a JSON array.
 
     #### Storage
 
@@ -399,8 +400,8 @@ class basic_json
     > A string is a sequence of zero or more Unicode characters.
 
     To store objects in C++, a type is defined by the template parameter
-    described below. Unicode values are split by the JSON class into byte-sized
-    characters during deserialization.
+    described below. Unicode values are split by the JSON class into
+    byte-sized characters during deserialization.
 
     @tparam StringType  the container to store strings (e.g., `std::string`).
     Note this container is used for keys/names in objects, see @ref object_t.
@@ -469,19 +470,19 @@ class basic_json
     @brief a type for a number (integer)
 
     [RFC 7159](http://rfc7159.net/rfc7159) describes numbers as follows:
-    > The representation of numbers is similar to that used in most programming
-    > languages. A number is represented in base 10 using decimal digits. It
-    > contains an integer component that may be prefixed with an optional minus
-    > sign, which may be followed by a fraction part and/or an exponent part.
-    > Leading zeros are not allowed. (...) Numeric values that cannot be
-    > represented in the grammar below (such as Infinity and NaN) are not
-    > permitted.
+    > The representation of numbers is similar to that used in most
+    > programming languages. A number is represented in base 10 using decimal
+    > digits. It contains an integer component that may be prefixed with an
+    > optional minus sign, which may be followed by a fraction part and/or an
+    > exponent part. Leading zeros are not allowed. (...) Numeric values that
+    > cannot be represented in the grammar below (such as Infinity and NaN)
+    > are not permitted.
 
-    This description includes both integer and floating-point numbers. However,
-    C++ allows more precise storage if it is known whether the number is a
-    signed integer, an unsigned integer or a floating-point number. Therefore,
-    three different types, @ref number_integer_t, @ref number_unsigned_t and
-    @ref number_float_t are used.
+    This description includes both integer and floating-point numbers.
+    However, C++ allows more precise storage if it is known whether the number
+    is a signed integer, an unsigned integer or a floating-point number.
+    Therefore, three different types, @ref number_integer_t, @ref
+    number_unsigned_t and @ref number_float_t are used.
 
     To store integer numbers in C++, a type is defined by the template
     parameter @a NumberIntegerType which chooses the type to use.
@@ -500,8 +501,8 @@ class basic_json
     - The restrictions about leading zeros is not enforced in C++. Instead,
       leading zeros in integer literals lead to an interpretation as octal
       number. Internally, the value will be stored as decimal number. For
-      instance, the C++ integer literal `010` will be serialized to `8`. During
-      deserialization, leading zeros yield an error.
+      instance, the C++ integer literal `010` will be serialized to `8`.
+      During deserialization, leading zeros yield an error.
     - Not-a-number (NaN) values will be serialized to `null`.
 
     #### Limits
@@ -512,9 +513,10 @@ class basic_json
     When the default type is used, the maximal integer number that can be
     stored is `9223372036854775807` (INT64_MAX) and the minimal integer number
     that can be stored is `-9223372036854775808` (INT64_MIN). Integer numbers
-    that are out of range will yield over/underflow when used in a constructor.
-    During deserialization, too large or small integer numbers will be
-    automatically be stored as @ref number_unsigned_t or @ref number_float_t.
+    that are out of range will yield over/underflow when used in a
+    constructor. During deserialization, too large or small integer numbers
+    will be automatically be stored as @ref number_unsigned_t or @ref
+    number_float_t.
 
     [RFC 7159](http://rfc7159.net/rfc7159) further states:
     > Note that when such software is used, numbers that are integers and are
@@ -540,27 +542,27 @@ class basic_json
     @brief a type for a number (unsigned)
 
     [RFC 7159](http://rfc7159.net/rfc7159) describes numbers as follows:
-    > The representation of numbers is similar to that used in most programming
-    > languages. A number is represented in base 10 using decimal digits. It
-    > contains an integer component that may be prefixed with an optional minus
-    > sign, which may be followed by a fraction part and/or an exponent part.
-    > Leading zeros are not allowed. (...) Numeric values that cannot be
-    > represented in the grammar below (such as Infinity and NaN) are not
-    > permitted.
+    > The representation of numbers is similar to that used in most
+    > programming languages. A number is represented in base 10 using decimal
+    > digits. It contains an integer component that may be prefixed with an
+    > optional minus sign, which may be followed by a fraction part and/or an
+    > exponent part. Leading zeros are not allowed. (...) Numeric values that
+    > cannot be represented in the grammar below (such as Infinity and NaN)
+    > are not permitted.
 
-    This description includes both integer and floating-point numbers. However,
-    C++ allows more precise storage if it is known whether the number is a
-    signed integer, an unsigned integer or a floating-point number. Therefore,
-    three different types, @ref number_integer_t, @ref number_unsigned_t and
-    @ref number_float_t are used.
+    This description includes both integer and floating-point numbers.
+    However, C++ allows more precise storage if it is known whether the number
+    is a signed integer, an unsigned integer or a floating-point number.
+    Therefore, three different types, @ref number_integer_t, @ref
+    number_unsigned_t and @ref number_float_t are used.
 
-    To store unsigned integer numbers in C++, a type is defined by the template
-    parameter @a NumberUnsignedType which chooses the type to use.
+    To store unsigned integer numbers in C++, a type is defined by the
+    template parameter @a NumberUnsignedType which chooses the type to use.
 
     #### Default type
 
-    With the default values for @a NumberUnsignedType (`uint64_t`), the default
-    value for @a number_unsigned_t is:
+    With the default values for @a NumberUnsignedType (`uint64_t`), the
+    default value for @a number_unsigned_t is:
 
     @code {.cpp}
     uint64_t
@@ -571,8 +573,8 @@ class basic_json
     - The restrictions about leading zeros is not enforced in C++. Instead,
       leading zeros in integer literals lead to an interpretation as octal
       number. Internally, the value will be stored as decimal number. For
-      instance, the C++ integer literal `010` will be serialized to `8`. During
-      deserialization, leading zeros yield an error.
+      instance, the C++ integer literal `010` will be serialized to `8`.
+      During deserialization, leading zeros yield an error.
     - Not-a-number (NaN) values will be serialized to `null`.
 
     #### Limits
@@ -612,19 +614,19 @@ class basic_json
     @brief a type for a number (floating-point)
 
     [RFC 7159](http://rfc7159.net/rfc7159) describes numbers as follows:
-    > The representation of numbers is similar to that used in most programming
-    > languages. A number is represented in base 10 using decimal digits. It
-    > contains an integer component that may be prefixed with an optional minus
-    > sign, which may be followed by a fraction part and/or an exponent part.
-    > Leading zeros are not allowed. (...) Numeric values that cannot be
-    > represented in the grammar below (such as Infinity and NaN) are not
-    > permitted.
+    > The representation of numbers is similar to that used in most
+    > programming languages. A number is represented in base 10 using decimal
+    > digits. It contains an integer component that may be prefixed with an
+    > optional minus sign, which may be followed by a fraction part and/or an
+    > exponent part. Leading zeros are not allowed. (...) Numeric values that
+    > cannot be represented in the grammar below (such as Infinity and NaN)
+    > are not permitted.
 
-    This description includes both integer and floating-point numbers. However,
-    C++ allows more precise storage if it is known whether the number is a
-    signed integer, an unsigned integer or a floating-point number. Therefore,
-    three different types, @ref number_integer_t, @ref number_unsigned_t and
-    @ref number_float_t are used.
+    This description includes both integer and floating-point numbers.
+    However, C++ allows more precise storage if it is known whether the number
+    is a signed integer, an unsigned integer or a floating-point number.
+    Therefore, three different types, @ref number_integer_t, @ref
+    number_unsigned_t and @ref number_float_t are used.
 
     To store floating-point numbers in C++, a type is defined by the template
     parameter @a NumberFloatType which chooses the type to use.
@@ -641,8 +643,8 @@ class basic_json
     #### Default behavior
 
     - The restrictions about leading zeros is not enforced in C++. Instead,
-      leading zeros in floating-point literals will be ignored. Internally, the
-      value will be stored as decimal number. For instance, the C++
+      leading zeros in floating-point literals will be ignored. Internally,
+      the value will be stored as decimal number. For instance, the C++
       floating-point literal `01.2` will be serialized to `1.2`. During
       deserialization, leading zeros yield an error.
     - Not-a-number (NaN) values will be serialized to `null`.
@@ -653,9 +655,9 @@ class basic_json
     > This specification allows implementations to set limits on the range and
     > precision of numbers accepted. Since software that implements IEEE
     > 754-2008 binary64 (double precision) numbers is generally available and
-    > widely used, good interoperability can be achieved by implementations that
-    > expect no more precision or range than these provide, in the sense that
-    > implementations will approximate JSON numbers within the expected
+    > widely used, good interoperability can be achieved by implementations
+    > that expect no more precision or range than these provide, in the sense
+    > that implementations will approximate JSON numbers within the expected
     > precision.
 
     This implementation does exactly follow this approach, as it uses double
@@ -938,9 +940,9 @@ class basic_json
     influenced. When passed to @ref parse(std::istream&, parser_callback_t) or
     @ref parse(const string_t&, parser_callback_t), it is called on certain
     events (passed as @ref parse_event_t via parameter @a event) with a set
-    recursion depth @a depth and context JSON value @a parsed. The return value
-    of the callback function is a boolean indicating whether the element that
-    emitted the callback shall be kept or not.
+    recursion depth @a depth and context JSON value @a parsed. The return
+    value of the callback function is a boolean indicating whether the element
+    that emitted the callback shall be kept or not.
 
     We distinguish six scenarios (determined by the event type) in which the
     callback function can be called. The following table describes the values
@@ -960,8 +962,8 @@ class basic_json
 
     - Discarded values in structured types are skipped. That is, the parser
       will behave as if the discarded value was never read.
-    - In case a value outside a structured type is skipped, it is replaced with
-      `null`. This case happens if the top-level element is skipped.
+    - In case a value outside a structured type is skipped, it is replaced
+      with `null`. This case happens if the top-level element is skipped.
 
     @param[in] depth  the depth of the recursion during parsing
 
@@ -1065,8 +1067,8 @@ class basic_json
     Create a `null` JSON value. This is the explicitly version of the `null`
     value constructor as it takes a null pointer as parameter. It allows to
     create `null` values by explicitly assigning a `nullptr` to a JSON value.
-    The passed null pointer itself is not read -- it is only used to choose the
-    right constructor.
+    The passed null pointer itself is not read -- it is only used to choose
+    the right constructor.
 
     @complexity Constant.
 
@@ -1096,8 +1098,8 @@ class basic_json
 
     @throw std::bad_alloc if allocation for object value fails
 
-    @liveexample{The following code shows the constructor with an @ref object_t
-    parameter.,basic_json__object_t}
+    @liveexample{The following code shows the constructor with an @ref
+    object_t parameter.,basic_json__object_t}
 
     @sa @ref basic_json(const CompatibleObjectType&) -- create an object value
     from a compatible STL container
@@ -1177,11 +1179,11 @@ class basic_json
     any type @a CompatibleArrayType that can be used to construct values of
     type @ref array_t.
 
-    @tparam CompatibleArrayType An object type whose `value_type` is compatible
-    to @ref array_t. Examples include `std::vector`, `std::deque`, `std::list`,
-    `std::forward_list`, `std::array`, `std::set`, `std::unordered_set`,
-    `std::multiset`, and `unordered_multiset` with a `value_type` from which a
-    @ref basic_json value can be constructed.
+    @tparam CompatibleArrayType An object type whose `value_type` is
+    compatible to @ref array_t. Examples include `std::vector`, `std::deque`,
+    `std::list`, `std::forward_list`, `std::array`, `std::set`,
+    `std::unordered_set`, `std::multiset`, and `unordered_multiset` with a
+    `value_type` from which a @ref basic_json value can be constructed.
 
     @param[in] val  a value for the array
 
@@ -1225,8 +1227,8 @@ class basic_json
 
     @throw std::bad_alloc if allocation for string value fails
 
-    @liveexample{The following code shows the constructor with an @ref string_t
-    parameter.,basic_json__string_t}
+    @liveexample{The following code shows the constructor with an @ref
+    string_t parameter.,basic_json__string_t}
 
     @sa @ref basic_json(const typename string_t::value_type*) -- create a
     string value from a character pointer
@@ -1318,9 +1320,9 @@ class basic_json
     Create an integer number JSON value with a given content.
 
     @tparam T A helper type to remove this function via SFINAE in case @ref
-    number_integer_t is the same as `int`. In this case, this constructor would
-    have the same signature as @ref basic_json(const int value). Note the
-    helper type @a T is not visible in this constructor's interface.
+    number_integer_t is the same as `int`. In this case, this constructor
+    would have the same signature as @ref basic_json(const int value). Note
+    the helper type @a T is not visible in this constructor's interface.
 
     @param[in] val  an integer to create a JSON number from
 
@@ -1355,8 +1357,8 @@ class basic_json
     @note This constructor allows to pass enums directly to a constructor. As
     C++ has no way of specifying the type of an anonymous enum explicitly, we
     can only rely on the fact that such values implicitly convert to int. As
-    int may already be the same type of number_integer_t, we may need to switch
-    off the constructor @ref basic_json(const number_integer_t).
+    int may already be the same type of number_integer_t, we may need to
+    switch off the constructor @ref basic_json(const number_integer_t).
 
     @complexity Constant.
 
@@ -1383,8 +1385,8 @@ class basic_json
     construct values of type @ref number_integer_t.
 
     @tparam CompatibleNumberIntegerType An integer type which is compatible to
-    @ref number_integer_t. Examples include the types `int`, `int32_t`, `long`,
-    and `short`.
+    @ref number_integer_t. Examples include the types `int`, `int32_t`,
+    `long`, and `short`.
 
     @param[in] val  an integer to create a JSON number from
 
@@ -1442,12 +1444,12 @@ class basic_json
     /*!
     @brief create an unsigned number (implicit)
 
-    Create an unsigned number JSON value with a given content. This constructor
-    allows any type @a CompatibleNumberUnsignedType that can be used to
-    construct values of type @ref number_unsigned_t.
+    Create an unsigned number JSON value with a given content. This
+    constructor allows any type @a CompatibleNumberUnsignedType that can be
+    used to construct values of type @ref number_unsigned_t.
 
-    @tparam CompatibleNumberUnsignedType An integer type which is compatible to
-    @ref number_unsigned_t. Examples may include the types `unsigned int`,
+    @tparam CompatibleNumberUnsignedType An integer type which is compatible
+    to @ref number_unsigned_t. Examples may include the types `unsigned int`,
     `uint32_t`, or `unsigned short`.
 
     @param[in] val  an unsigned integer to create a JSON number from
@@ -1480,8 +1482,8 @@ class basic_json
 
     @note [RFC 7159](http://www.rfc-editor.org/rfc/rfc7159.txt), section 6
     disallows NaN values:
-    > Numeric values that cannot be represented in the grammar below (such
-    > as Infinity and NaN) are not permitted.
+    > Numeric values that cannot be represented in the grammar below (such as
+    > Infinity and NaN) are not permitted.
     In case the parameter @a val is not a number, a JSON null value is
     created instead.
 
@@ -1513,15 +1515,16 @@ class basic_json
     constructor allows any type @a CompatibleNumberFloatType that can be used
     to construct values of type @ref number_float_t.
 
-    @tparam CompatibleNumberFloatType A floating-point type which is compatible
-    to @ref number_float_t. Examples may include the types `float` or `double`.
+    @tparam CompatibleNumberFloatType A floating-point type which is
+    compatible to @ref number_float_t. Examples may include the types `float`
+    or `double`.
 
     @param[in] val  a floating-point to create a JSON number from
 
     @note [RFC 7159](http://www.rfc-editor.org/rfc/rfc7159.txt), section 6
     disallows NaN values:
-    > Numeric values that cannot be represented in the grammar below (such
-    > as Infinity and NaN) are not permitted.
+    > Numeric values that cannot be represented in the grammar below (such as
+    > Infinity and NaN) are not permitted.
     In case the parameter @a val is not a number, a JSON null value is
     created instead.
 
@@ -1592,13 +1595,13 @@ class basic_json
     used by the functions @ref array(std::initializer_list<basic_json>) and
     @ref object(std::initializer_list<basic_json>).
 
-    @param[in] manual_type internal parameter; when @a type_deduction is set to
-    `false`, the created JSON value will use the provided type (only @ref
+    @param[in] manual_type internal parameter; when @a type_deduction is set
+    to `false`, the created JSON value will use the provided type (only @ref
     value_t::array and @ref value_t::object are valid); when @a type_deduction
     is set to `true`, this parameter has no effect
 
-    @throw std::domain_error if @a type_deduction is `false`, @a manual_type is
-    `value_t::object`, but @a init contains an element which is not a pair
+    @throw std::domain_error if @a type_deduction is `false`, @a manual_type
+    is `value_t::object`, but @a init contains an element which is not a pair
     whose first element is a string; example: `"cannot create object from
     initializer list"`
 
@@ -1679,8 +1682,8 @@ class basic_json
     list of values `a, b, c`, creates the JSON value `[a, b, c]`. If the
     initializer list is empty, the empty array `[]` is created.
 
-    @note This function is only needed to express two edge cases that cannot be
-    realized with the initializer list constructor (@ref
+    @note This function is only needed to express two edge cases that cannot
+    be realized with the initializer list constructor (@ref
     basic_json(std::initializer_list<basic_json>, bool, value_t)). These cases
     are:
     1. creating an array whose elements are all pairs whose first element is a
@@ -1723,8 +1726,8 @@ class basic_json
     related function @ref array(std::initializer_list<basic_json>), there are
     no cases which can only be expressed by this function. That is, any
     initializer list @a init can also be passed to the initializer list
-    constructor
-    @ref basic_json(std::initializer_list<basic_json>, bool, value_t).
+    constructor @ref basic_json(std::initializer_list<basic_json>, bool,
+    value_t).
 
     @param[in] init  initializer list to create an object from (optional)
 
@@ -1755,8 +1758,8 @@ class basic_json
     /*!
     @brief construct an array with count copies of given value
 
-    Constructs a JSON array value by creating @a cnt copies of a passed
-    value. In case @a cnt is `0`, an empty array is created. As postcondition,
+    Constructs a JSON array value by creating @a cnt copies of a passed value.
+    In case @a cnt is `0`, an empty array is created. As postcondition,
     `std::distance(begin(),end()) == cnt` holds.
 
     @param[in] cnt  the number of JSON copies of @a val to create
@@ -1784,8 +1787,8 @@ class basic_json
     - In case of primitive types (number, boolean, or string), @a first must
       be `begin()` and @a last must be `end()`. In this case, the value is
       copied. Otherwise, std::out_of_range is thrown.
-    - In case of structured types (array, object), the constructor behaves
-      as similar versions for `std::vector`.
+    - In case of structured types (array, object), the constructor behaves as
+      similar versions for `std::vector`.
     - In case of a null type, std::domain_error is thrown.
 
     @tparam InputIT an input iterator type (@ref iterator or @ref
@@ -1800,8 +1803,8 @@ class basic_json
     boolean, or string) where an out of range error can be detected easily;
     example: `"iterators out of range"`
     @throw std::bad_alloc if allocation for object, array, or string fails
-    @throw std::domain_error if called with a null value; example: `"cannot use
-    construct with iterators from null"`
+    @throw std::domain_error if called with a null value; example: `"cannot
+    use construct with iterators from null"`
 
     @complexity Linear in distance between @a first and @a last.
 
@@ -2042,8 +2045,8 @@ class basic_json
     @brief copy assignment
 
     Copy assignment operator. Copies a JSON value via the "copy and swap"
-    strategy: It is expressed in terms of the copy constructor, destructor, and
-    the swap() member function.
+    strategy: It is expressed in terms of the copy constructor, destructor,
+    and the swap() member function.
 
     @param[in] other  value to copy from
 
@@ -2143,8 +2146,8 @@ class basic_json
     parameter.
 
     @param[in] indent if indent is nonnegative, then array elements and object
-    members will be pretty-printed with that indent level. An indent level of 0
-    will only insert newlines. -1 (the default) selects the most compact
+    members will be pretty-printed with that indent level. An indent level of
+    0 will only insert newlines. -1 (the default) selects the most compact
     representation
 
     @return string containing the serialization of the JSON value
@@ -2976,8 +2979,8 @@ class basic_json
     /*!
     @brief get a reference value (implicit)
 
-    Implict reference access to the internally stored JSON value. No copies are
-    made.
+    Implict reference access to the internally stored JSON value. No copies
+    are made.
 
     @warning Writing data to the referee of the result yields an undefined
     state.
@@ -3027,14 +3030,14 @@ class basic_json
     /*!
     @brief get a value (implicit)
 
-    Implicit type conversion between the JSON value and a compatible value. The
-    call is realized by calling @ref get() const.
+    Implicit type conversion between the JSON value and a compatible value.
+    The call is realized by calling @ref get() const.
 
     @tparam ValueType non-pointer type compatible to the JSON value, for
     instance `int` for JSON integer numbers, `bool` for JSON booleans, or
-    `std::vector` types for JSON arrays. The character type of @ref string_t as
-    well as an initializer list of this type is excluded to avoid ambiguities
-    as these types implicitly convert to `std::string`.
+    `std::vector` types for JSON arrays. The character type of @ref string_t
+    as well as an initializer list of this type is excluded to avoid
+    ambiguities as these types implicitly convert to `std::string`.
 
     @return copy of the JSON value, converted to type @a ValueType
 
@@ -3123,8 +3126,8 @@ class basic_json
     /*!
     @brief access specified array element with bounds checking
 
-    Returns a const reference to the element at specified location @a idx, with
-    bounds checking.
+    Returns a const reference to the element at specified location @a idx,
+    with bounds checking.
 
     @param[in] idx  index of the element to access
 
@@ -3215,8 +3218,8 @@ class basic_json
     /*!
     @brief access specified object element with bounds checking
 
-    Returns a const reference to the element at with specified key @a key, with
-    bounds checking.
+    Returns a const reference to the element at with specified key @a key,
+    with bounds checking.
 
     @param[in] key  key of the element to access
 
@@ -3690,8 +3693,8 @@ class basic_json
 
     @complexity Constant.
 
-    @pre The JSON value must not be `null` (would throw `std::out_of_range`) or
-    an empty array or object (undefined behavior, guarded by assertions).
+    @pre The JSON value must not be `null` (would throw `std::out_of_range`)
+    or an empty array or object (undefined behavior, guarded by assertions).
     @post The JSON value remains unchanged.
 
     @throw std::out_of_range when called on `null` value
@@ -3732,8 +3735,8 @@ class basic_json
 
     @complexity Constant.
 
-    @pre The JSON value must not be `null` (would throw `std::out_of_range`) or
-    an empty array or object (undefined behavior, guarded by assertions).
+    @pre The JSON value must not be `null` (would throw `std::out_of_range`)
+    or an empty array or object (undefined behavior, guarded by assertions).
     @post The JSON value remains unchanged.
 
     @throw std::out_of_range when called on `null` value.
@@ -3772,16 +3775,16 @@ class basic_json
     will be `null`.
 
     @param[in] pos iterator to the element to remove
-    @return Iterator following the last removed element. If the iterator @a pos
-    refers to the last element, the `end()` iterator is returned.
+    @return Iterator following the last removed element. If the iterator @a
+    pos refers to the last element, the `end()` iterator is returned.
 
     @tparam InteratorType an @ref iterator or @ref const_iterator
 
     @post Invalidates iterators and references at or after the point of the
     erase, including the `end()` iterator.
 
-    @throw std::domain_error if called on a `null` value; example: `"cannot use
-    erase() with null"`
+    @throw std::domain_error if called on a `null` value; example: `"cannot
+    use erase() with null"`
     @throw std::domain_error if called on an iterator which does not belong to
     the current JSON value; example: `"iterator does not fit current value"`
     @throw std::out_of_range if called on a primitive type with invalid
@@ -3797,12 +3800,12 @@ class basic_json
     @liveexample{The example shows the result of `erase()` for different JSON
     types.,erase__IteratorType}
 
-    @sa @ref erase(InteratorType, InteratorType) -- removes the elements in the
-    given range
+    @sa @ref erase(InteratorType, InteratorType) -- removes the elements in
+    the given range
     @sa @ref erase(const typename object_t::key_type&) -- removes the element
     from an object at the given key
-    @sa @ref erase(const size_type) -- removes the element from an array at the
-    given index
+    @sa @ref erase(const size_type) -- removes the element from an array at
+    the given index
 
     @since version 1.0.0
     */
@@ -3871,9 +3874,9 @@ class basic_json
     /*!
     @brief remove elements given an iterator range
 
-    Removes the element specified by the range `[first; last)`. The iterator @a
-    first does not need to be dereferenceable if `first == last`: erasing an
-    empty range is a no-op.
+    Removes the element specified by the range `[first; last)`. The iterator
+    @a first does not need to be dereferenceable if `first == last`: erasing
+    an empty range is a no-op.
 
     If called on a primitive type other than `null`, the resulting JSON value
     will be `null`.
@@ -3888,8 +3891,8 @@ class basic_json
     @post Invalidates iterators and references at or after the point of the
     erase, including the `end()` iterator.
 
-    @throw std::domain_error if called on a `null` value; example: `"cannot use
-    erase() with null"`
+    @throw std::domain_error if called on a `null` value; example: `"cannot
+    use erase() with null"`
     @throw std::domain_error if called on iterators which does not belong to
     the current JSON value; example: `"iterators do not fit current value"`
     @throw std::out_of_range if called on a primitive type with invalid
@@ -3909,8 +3912,8 @@ class basic_json
     @sa @ref erase(InteratorType) -- removes the element at a given position
     @sa @ref erase(const typename object_t::key_type&) -- removes the element
     from an object at the given key
-    @sa @ref erase(const size_type) -- removes the element from an array at the
-    given index
+    @sa @ref erase(const size_type) -- removes the element from an array at
+    the given index
 
     @since version 1.0.0
     */
@@ -3986,8 +3989,8 @@ class basic_json
     @param[in] key value of the elements to remove
 
     @return Number of elements removed. If @a ObjectType is the default
-    `std::map` type, the return value will always be `0` (@a key was not found)
-    or `1` (@a key was found).
+    `std::map` type, the return value will always be `0` (@a key was not
+    found) or `1` (@a key was found).
 
     @post References and iterators to the erased elements are invalidated.
     Other references and iterators are not affected.
@@ -4000,10 +4003,10 @@ class basic_json
     @liveexample{The example shows the effect of `erase()`.,erase__key_type}
 
     @sa @ref erase(InteratorType) -- removes the element at a given position
-    @sa @ref erase(InteratorType, InteratorType) -- removes the elements in the
-    given range
-    @sa @ref erase(const size_type) -- removes the element from an array at the
-    given index
+    @sa @ref erase(InteratorType, InteratorType) -- removes the elements in
+    the given range
+    @sa @ref erase(const size_type) -- removes the element from an array at
+    the given index
 
     @since version 1.0.0
     */
@@ -4038,8 +4041,8 @@ class basic_json
     @liveexample{The example shows the effect of `erase()`.,erase__size_type}
 
     @sa @ref erase(InteratorType) -- removes the element at a given position
-    @sa @ref erase(InteratorType, InteratorType) -- removes the elements in the
-    given range
+    @sa @ref erase(InteratorType, InteratorType) -- removes the elements in
+    the given range
     @sa @ref erase(const typename object_t::key_type&) -- removes the element
     from an object at the given key
 
@@ -4078,7 +4081,8 @@ class basic_json
     @brief find an element in a JSON object
 
     Finds an element in a JSON object with key equivalent to @a key. If the
-    element is not found or the JSON value is not an object, end() is returned.
+    element is not found or the JSON value is not an object, end() is
+    returned.
 
     @param[in] key key value of the element to search for
 
@@ -4438,9 +4442,9 @@ class basic_json
     @brief wrapper to access iterator member functions in range-based for
 
     This function allows to access @ref iterator::key() and @ref
-    iterator::value() during range-based for loops. In these loops, a reference
-    to the JSON values is returned, so there is no access to the underlying
-    iterator.
+    iterator::value() during range-based for loops. In these loops, a
+    reference to the JSON values is returned, so there is no access to the
+    underlying iterator.
 
     @note The name of this function is not yet final and may change in the
     future.
@@ -4484,8 +4488,8 @@ class basic_json
             object      | result of function `object_t::empty()`
             array       | result of function `array_t::empty()`
 
-    @complexity Constant, as long as @ref array_t and @ref object_t satisfy the
-    Container concept; that is, their `empty()` functions have constant
+    @complexity Constant, as long as @ref array_t and @ref object_t satisfy
+    the Container concept; that is, their `empty()` functions have constant
     complexity.
 
     @requirement This function helps `basic_json` satisfying the
@@ -4547,8 +4551,9 @@ class basic_json
             object      | result of function object_t::size()
             array       | result of function array_t::size()
 
-    @complexity Constant, as long as @ref array_t and @ref object_t satisfy the
-    Container concept; that is, their size() functions have constant complexity.
+    @complexity Constant, as long as @ref array_t and @ref object_t satisfy
+    the Container concept; that is, their size() functions have constant
+    complexity.
 
     @requirement This function helps `basic_json` satisfying the
     [Container](http://en.cppreference.com/w/cpp/concept/Container)
@@ -4612,8 +4617,8 @@ class basic_json
             object      | result of function `object_t::max_size()`
             array       | result of function `array_t::max_size()`
 
-    @complexity Constant, as long as @ref array_t and @ref object_t satisfy the
-    Container concept; that is, their `max_size()` functions have constant
+    @complexity Constant, as long as @ref array_t and @ref object_t satisfy
+    the Container concept; that is, their `max_size()` functions have constant
     complexity.
 
     @requirement This function helps `basic_json` satisfying the
@@ -4835,8 +4840,8 @@ class basic_json
     @brief add an object to an object
 
     Inserts the given element @a val to the JSON object. If the function is
-    called on a JSON null value, an empty object is created before inserting @a
-    val.
+    called on a JSON null value, an empty object is created before inserting
+    @a val.
 
     @param[in] val the value to add to the JSON object
 
@@ -5111,8 +5116,8 @@ class basic_json
     @return iterator pointing to the first element inserted, or @a pos if
     `ilist` is empty
 
-    @complexity Linear in `ilist.size()` plus linear in the distance between @a
-    pos and end of the container.
+    @complexity Linear in `ilist.size()` plus linear in the distance between
+    @a pos and end of the container.
 
     @liveexample{The example shows how `insert()` is used.,insert__ilist}
 
@@ -5757,8 +5762,8 @@ class basic_json
 
     @note A UTF-8 byte order mark is silently ignored.
 
-    @liveexample{The example below demonstrates the `parse()` function with and
-    without callback function.,parse__string__parser_callback_t}
+    @liveexample{The example below demonstrates the `parse()` function with
+    and without callback function.,parse__string__parser_callback_t}
 
     @sa @ref parse(std::istream&, parser_callback_t) for a version that reads
     from an input stream
@@ -5786,11 +5791,11 @@ class basic_json
 
     @note A UTF-8 byte order mark is silently ignored.
 
-    @liveexample{The example below demonstrates the `parse()` function with and
-    without callback function.,parse__istream__parser_callback_t}
+    @liveexample{The example below demonstrates the `parse()` function with
+    and without callback function.,parse__istream__parser_callback_t}
 
-    @sa @ref parse(const string_t&, parser_callback_t) for a version that reads
-    from a string
+    @sa @ref parse(const string_t&, parser_callback_t) for a version that
+    reads from a string
 
     @since version 1.0.0
     */
@@ -5923,8 +5928,8 @@ class basic_json
     /*!
     @brief escape a string
 
-    Escape a string by replacing certain special characters by a sequence of an
-    escape character (backslash) and another character and other control
+    Escape a string by replacing certain special characters by a sequence of
+    an escape character (backslash) and another character and other control
     characters by a sequence of "\u" followed by a four-digit hex
     representation.
 
@@ -6046,8 +6051,8 @@ class basic_json
 
     This function is called by the public member function dump and organizes
     the serialization internally. The indentation level is propagated as
-    additional parameter. In case of arrays and objects, the function is called
-    recursively. Note that
+    additional parameter. In case of arrays and objects, the function is
+    called recursively. Note that
 
     - strings and object keys are escaped using `escape_string()`
     - integer numbers are converted implicitly via `operator<<`
@@ -6241,8 +6246,8 @@ class basic_json
                     {
                         // Otherwise 6, 15 or 16 digits of precision allows
                         // round-trip IEEE 754 string->float->string,
-                        // string->double->string or string->long double->string;
-                        // to be safe, we read this value from
+                        // string->double->string or string->long
+                        // double->string; to be safe, we read this value from
                         // std::numeric_limits<number_float_t>::digits10
                         std::stringstream ss;
                         ss.imbue(std::locale(std::locale(), new DecimalSeparator));  // fix locale problems
@@ -7262,8 +7267,8 @@ class basic_json
     @brief lexical analysis
 
     This class organizes the lexical analysis during JSON deserialization. The
-    core of it is a scanner generated by [re2c](http://re2c.org) that processes
-    a buffer and recognizes tokens according to RFC 7159.
+    core of it is a scanner generated by [re2c](http://re2c.org) that
+    processes a buffer and recognizes tokens according to RFC 7159.
     */
     class lexer
     {
@@ -7569,13 +7574,14 @@ class basic_json
 
         1. Escaped characters. In this case, a new character is constructed
            according to the nature of the escape. Some escapes create new
-           characters (e.g., `"\\n"` is replaced by `"\n"`), some are copied as
-           is (e.g., `"\\\\"`). Furthermore, Unicode escapes of the shape
+           characters (e.g., `"\\n"` is replaced by `"\n"`), some are copied
+           as is (e.g., `"\\\\"`). Furthermore, Unicode escapes of the shape
            `"\\uxxxx"` need special care. In this case, to_unicode takes care
            of the construction of the values.
         2. Unescaped characters are copied as is.
 
-        @return string value of current token without opening and closing quotes
+        @return string value of current token without opening and closing
+        quotes
         @throw std::out_of_range if to_unicode fails
         */
         string_t get_string() const
@@ -7686,8 +7692,8 @@ class basic_json
 
         This function (and its overloads) serves to select the most approprate
         standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to
-        @a static_cast<number_float_t*>(nullptr).
+        supplied via the first parameter.  Set this to @a
+        static_cast<number_float_t*>(nullptr).
 
         @param[in] type  the @ref number_float_t in use
 
@@ -7711,8 +7717,8 @@ class basic_json
 
         This function (and its overloads) serves to select the most approprate
         standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to
-        @a static_cast<number_float_t*>(nullptr).
+        supplied via the first parameter.  Set this to @a
+        static_cast<number_float_t*>(nullptr).
 
         @param[in] type  the @ref number_float_t in use
 
@@ -7731,8 +7737,8 @@ class basic_json
 
         This function (and its overloads) serves to select the most approprate
         standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to
-        @a static_cast<number_float_t*>(nullptr).
+        supplied via the first parameter.  Set this to @a
+        static_cast<number_float_t*>(nullptr).
 
         @param[in] type  the @ref number_float_t in use
 
@@ -7756,13 +7762,13 @@ class basic_json
         This function parses the integer component up to the radix point or
         exponent while collecting information about the 'floating point
         representation', which it stores in the result parameter. If there is
-        no radix point or exponent, and the number can fit into a
-        @ref number_integer_t or @ref number_unsigned_t then it sets the
-        result parameter accordingly.
+        no radix point or exponent, and the number can fit into a @ref
+        number_integer_t or @ref number_unsigned_t then it sets the result
+        parameter accordingly.
 
         The 'floating point representation' includes the number of significant
-        figures after the radix point, whether the number is in exponential
-        or decimal form, the capitalization of the exponent marker, and if the
+        figures after the radix point, whether the number is in exponential or
+        decimal form, the capitalization of the exponent marker, and if the
         optional '+' is present in the exponent. This information is necessary
         to perform accurate round trips of floating point numbers.
 
@@ -8725,11 +8731,11 @@ class basic_json
                     throw std::domain_error("values in object must be primitive");
                 }
 
-                // assign value to reference pointed to by JSON pointer;
-                // Note that if the JSON pointer is "" (i.e., points to the
-                // whole value), function get_and_create returns a reference
-                // to result itself. An assignment will then create a
-                // primitive value.
+                // assign value to reference pointed to by JSON pointer; Note
+                // that if the JSON pointer is "" (i.e., points to the whole
+                // value), function get_and_create returns a reference to
+                // result itself. An assignment will then create a primitive
+                // value.
                 json_pointer(element.first).get_and_create(result) = element.second;
             }
 
@@ -8752,9 +8758,9 @@ class basic_json
     @brief access specified element via JSON Pointer
 
     Uses a JSON pointer to retrieve a reference to the respective JSON value.
-    No bound checking is performed. Similar to
-    @ref operator[](const typename object_t::key_type&), `null` values
-    are created in arrays and objects if necessary.
+    No bound checking is performed. Similar to @ref operator[](const typename
+    object_t::key_type&), `null` values are created in arrays and objects if
+    necessary.
 
     In particular:
     - If the JSON pointer points to an object key that does not exist, it
@@ -8841,8 +8847,8 @@ class basic_json
     /*!
     @brief access specified element via JSON Pointer
 
-    Returns a const reference to the element at with specified JSON pointer
-    @a ptr, with bounds checking.
+    Returns a const reference to the element at with specified JSON pointer @a
+    ptr, with bounds checking.
 
     @param[in] ptr  JSON pointer to the desired element
 
@@ -8866,10 +8872,10 @@ class basic_json
     /*!
     @brief return flattened JSON value
 
-    The function creates a JSON object whose keys are JSON pointers (see
-    [RFC 6901](https://tools.ietf.org/html/rfc6901)) and whose values are all
-    primitive. The original JSON value can be restored using the
-    @ref unflatten() function.
+    The function creates a JSON object whose keys are JSON pointers (see [RFC
+    6901](https://tools.ietf.org/html/rfc6901)) and whose values are all
+    primitive. The original JSON value can be restored using the @ref
+    unflatten() function.
 
     @return an object that maps JSON pointers to primitve values
 
@@ -8941,7 +8947,7 @@ class basic_json
     this funcion, a JSON Patch is applied to the current JSON value by
     executing all operations from the patch.
 
-    @param[in] patch  JSON patch document
+    @param[in] json_patch  JSON patch document
     @return patched document
 
     @note The application of a patch is atomic: Either all operations succeed
@@ -9402,8 +9408,8 @@ class basic_json
 /*!
 @brief default JSON class
 
-This type is the default specialization of the @ref basic_json class which uses
-the standard template types.
+This type is the default specialization of the @ref basic_json class which
+uses the standard template types.
 
 @since version 1.0.0
 */
