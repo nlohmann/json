@@ -4,7 +4,7 @@
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/wuiuqYiYqRTdI3rG)
-[![Documentation Status](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
+[![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
 [![Github Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
@@ -46,7 +46,7 @@ Though it's 2016 already, the support for C++11 is still a bit sparse. Currently
 
 - GCC 4.9 - 6.0 (and possibly later)
 - Clang 3.4 - 3.9 (and possibly later)
-- Microsoft Visual C++ 14.0 RC (and possibly later)
+- Microsoft Visual C++ 2015 / 14.0 (and possibly later)
 
 The code is currently checked with Travis for GCC 4.9, GCC 
 
@@ -75,13 +75,13 @@ The following compilers are currently used in [continuous integration](https://t
 | Clang 3.7.1     | Ubuntu 14.04.3 LTS           | Ubuntu clang version 3.7.1-svn253571-1~exp1 (branches/release_37) (based on LLVM 3.7.1) |
 | Clang 3.8.1     | Ubuntu 14.04.3 LTS           | clang version 3.8.1-svn265380-1~exp1 (branches/release_38) |
 | Clang 3.9.0     | Ubuntu 14.04.3 LTS           | clang version 3.9.0-svn267478-1~exp1 (trunk) |
-| Clang Xcode 6.1 | Darwin Kernel Version 13.4.0 | Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn) |
-| Clang Xcode 6.2 | Darwin Kernel Version 13.4.0 | Apple LLVM version 6.0 (clang-600.0.57) (based on LLVM 3.5svn) |
-| Clang Xcode 6.3 | Darwin Kernel Version 14.3.0 | Apple LLVM version 6.1.0 (clang-602.0.49) (based on LLVM 3.6.0svn) |
-| Clang Xcode 6.4 | Darwin Kernel Version 14.3.0 | Apple LLVM version 6.1.0 (clang-602.0.53) (based on LLVM 3.6.0svn) |
-| Clang Xcode 7.1 | Darwin Kernel Version 14.5.0 | Apple LLVM version 7.0.0 (clang-700.1.76) |
-| Clang Xcode 7.2 | Darwin Kernel Version 15.0.0 | Apple LLVM version 7.0.2 (clang-700.1.81) |
-| Clang Xcode 7.3 | Darwin Kernel Version 14.5.0 | Apple LLVM version 7.3.0 (clang-703.0.29) |
+| Clang Xcode 6.1 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn) |
+| Clang Xcode 6.2 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.57) (based on LLVM 3.5svn) |
+| Clang Xcode 6.3 | Darwin Kernel Version 14.3.0 (OSX 10.10.3) | Apple LLVM version 6.1.0 (clang-602.0.49) (based on LLVM 3.6.0svn) |
+| Clang Xcode 6.4 | Darwin Kernel Version 14.3.0 (OSX 10.10.3) | Apple LLVM version 6.1.0 (clang-602.0.53) (based on LLVM 3.6.0svn) |
+| Clang Xcode 7.1 | Darwin Kernel Version 14.5.0 (OSX 10.10.5) | Apple LLVM version 7.0.0 (clang-700.1.76) |
+| Clang Xcode 7.2 | Darwin Kernel Version 15.0.0 (OSX 10.10.5) | Apple LLVM version 7.0.2 (clang-700.1.81) |
+| Clang Xcode 7.3 | Darwin Kernel Version 14.5.0 (OSX 10.11.1) | Apple LLVM version 7.3.0 (clang-703.0.29) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25123.0 | 
 
 ## Examples
