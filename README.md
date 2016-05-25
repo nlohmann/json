@@ -50,8 +50,6 @@ Though it's 2016 already, the support for C++11 is still a bit sparse. Currently
 - Clang 3.4 - 3.9 (and possibly later)
 - Microsoft Visual C++ 2015 / 14.0 (and possibly later)
 
-The code is currently checked with Travis for GCC 4.9, GCC 
-
 I would be happy to learn about other compilers/versions.
 
 Please note:
