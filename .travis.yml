@@ -34,6 +34,14 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-5', 'valgrind']
+        coverity_scan:
+          project:
+            name: "nlohmann/json"
+            description: "Build submitted via Travis CI"
+          notification_email: niels.lohmann@gmail.com
+          build_command_prepend: "make clean"
+          build_command: "make doctest"
+          branch_pattern: coverity_scan
       env: COMPILER=g++-5
 
 #    - os: linux
@@ -122,13 +130,3 @@ script:
   - if [ `which valgrind` ]; then
     valgrind --error-exitcode=1 --leak-check=full ./json_unit ;
     fi
-
-addons:
-  coverity_scan:
-    project:
-      name: "nlohmann/json"
-      description: "Build submitted via Travis CI"
-    notification_email: niels.lohmann@gmail.com
-    build_command_prepend: "make clean"
-    build_command: "make doctest"
-    branch_pattern: coverity_scan
