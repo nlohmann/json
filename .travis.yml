@@ -27,15 +27,6 @@ matrix:
         - ./json_unit "*"
         - coveralls --exclude test/src/catch.hpp --exclude test/src/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
       env: COMPILER=g++-4.9
-      addons:
-        coverity_scan:
-          project:
-            name: "nlohmann/json"
-            description: "Build submitted via Travis CI"
-          notification_email: niels.lohmann@gmail.com
-          build_command_prepend: "make clean"
-          build_command: "make doctest"
-          branch_pattern: coverity_scan
 
     - os: linux
       compiler: gcc
@@ -131,3 +122,13 @@ script:
   - if [ `which valgrind` ]; then
     valgrind --error-exitcode=1 --leak-check=full ./json_unit ;
     fi
+
+addons:
+  coverity_scan:
+    project:
+      name: "nlohmann/json"
+      description: "Build submitted via Travis CI"
+    notification_email: niels.lohmann@gmail.com
+    build_command_prepend: "make clean"
+    build_command: "make doctest"
+    branch_pattern: coverity_scan
