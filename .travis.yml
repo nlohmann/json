@@ -39,7 +39,7 @@ matrix:
             name: "nlohmann/json"
             description: "Build submitted via Travis CI"
           notification_email: niels.lohmann@gmail.com
-          build_command_prepend: "make clean"
+          build_command_prepend: "make clean ; sudo cp $(which g++-5) $(which g++)"
           build_command: "make doctest"
           branch_pattern: coverity_scan
       env: COMPILER=g++-5
