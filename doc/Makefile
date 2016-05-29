@@ -37,9 +37,6 @@ create_output: $(EXAMPLES:.cpp=.output)
 
 create_links: $(EXAMPLES:.cpp=.link)
 
-# only compile files
-compile_only: $(EXAMPLES:.cpp=)
-
 # check output of all stand-alone example files
 check_output: $(EXAMPLES:.cpp=.test)
 
