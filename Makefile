@@ -34,11 +34,6 @@ doctest:
 	$(MAKE) check_output -C doc
 
 
-# copmpile example files and do not check output (for coverity-scan)
-coverity:
-	$(MAKE) compile_only -Cdoc CXXFLAGS="-std=c++11" CPPFLAGS="-I../src"
-
-
 ##########################################################################
 # fuzzing
 ##########################################################################
