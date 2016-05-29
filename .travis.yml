@@ -40,7 +40,7 @@ matrix:
             description: "Build submitted via Travis CI"
           notification_email: niels.lohmann@gmail.com
           build_command_prepend: "make clean ; sudo cp $(which g++-5) $(which g++)"
-          build_command: "make doctest || true"
+          build_command: "make coverity"
           branch_pattern: coverity_scan
       env: COMPILER=g++-5
 
@@ -79,13 +79,13 @@ matrix:
           packages: ['clang-3.8', 'valgrind']
       env: COMPILER=clang++-3.8
 
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise']
-          packages: ['clang-3.9', 'valgrind']
-      env: COMPILER=clang++-3.9
+  #  - os: linux
+  #    compiler: clang
+  #    addons:
+  #      apt:
+  #        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise']
+  #        packages: ['clang-3.9', 'valgrind']
+  #    env: COMPILER=clang++-3.9
 
     - os: osx
       osx_image: beta-xcode6.1

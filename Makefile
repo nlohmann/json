@@ -10,6 +10,7 @@ all: json_unit
 # clean up
 clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM
+	$(MAKE) clean -Cdoc
 
 
 ##########################################################################
@@ -30,7 +31,12 @@ json_unit: test/src/unit.cpp src/json.hpp test/src/catch.hpp
 
 # compile example files and check output
 doctest:
-	make check_output -C doc
+	$(MAKE) check_output -C doc
+
+
+# copmpile example files and do not check output (for coverity-scan)
+coverity:
+	$(MAKE) compile_only -Cdoc CXXFLAGS="-std=c++11" CPPFLAGS="-I../src"
 
 
 ##########################################################################
