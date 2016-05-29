@@ -97,10 +97,10 @@ matrix:
       compiler: clang
       env: COMPILER=clang
 
-    - os: osx
-      osx_image: beta-xcode6.3
-      compiler: clang
-      env: COMPILER=clang
+  #  - os: osx
+  #    osx_image: beta-xcode6.3
+  #    compiler: clang
+  #    env: COMPILER=clang
 
     - os: osx
       osx_image: xcode6.4
