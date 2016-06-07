@@ -1461,13 +1461,13 @@ class basic_json
 
     @since version 2.0.0
     */
-    template < typename CompatibleNumberUnsignedType, typename
-               std::enable_if <
-                   std::is_constructible<number_unsigned_t, CompatibleNumberUnsignedType>::value and
-                   std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and
-                   !std::numeric_limits<CompatibleNumberUnsignedType>::is_signed,
-                   CompatibleNumberUnsignedType >::type
-               = 0 >
+    template <typename CompatibleNumberUnsignedType, typename
+              std::enable_if <
+                  std::is_constructible<number_unsigned_t, CompatibleNumberUnsignedType>::value and
+                  std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and
+                  not std::numeric_limits<CompatibleNumberUnsignedType>::is_signed,
+                  CompatibleNumberUnsignedType>::type
+              = 0>
     basic_json(const CompatibleNumberUnsignedType val) noexcept
         : m_type(value_t::number_unsigned),
           m_value(static_cast<number_unsigned_t>(val))
@@ -5079,6 +5079,7 @@ class basic_json
             throw std::domain_error("iterator does not fit current value");
         }
 
+        // check if range iterators belong to the same JSON object
         if (first.m_object != last.m_object)
         {
             throw std::domain_error("iterators do not fit");
@@ -7332,7 +7333,7 @@ class basic_json
 
         @return string representation of the code point
 
-        @throw std::out_of_range if code point is >0x10ffff; example: `"code
+        @throw std::out_of_range if code point is > 0x10ffff; example: `"code
         points above 0x10FFFF are invalid"`
         @throw std::invalid_argument if the low surrogate is invalid; example:
         `""missing or wrong low surrogate""`
