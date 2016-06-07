@@ -53,6 +53,8 @@ matrix:
       before_install:
        - wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz
        - sudo tar xf clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -C /usr --strip-components 1
+       - echo $PATH
+       - which $COMPILER
 
     - os: linux
       env:
