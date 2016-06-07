@@ -52,7 +52,7 @@ matrix:
         - CXXFLAGS=-lc++
       before_install:
        - wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz
-       - sudo tar xf clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -C /usr/local --strip-components 1
+       - sudo tar xf clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -C /usr --strip-components 1
 
     - os: linux
       env:
