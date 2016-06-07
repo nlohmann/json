@@ -44,6 +44,17 @@ matrix:
           branch_pattern: coverity_scan
       env: COMPILER=g++-5
 
+    # from https://github.com/travis-ci/travis-ci/issues/6120
+    - os: linux
+      before_install:
+       - LLVM_VERSION=3.7.0
+       - LLVM_ARCHIVE_PATH=$HOME/clang+llvm.tar.xz
+       - wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O $LLVM_ARCHIVE_PATH
+       - mkdir $HOME/clang+llvm
+       - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang+llvm --strip-components 1
+       - export PATH=$HOME/clang+llvm/bin:$PATH
+      env: COMPILER=clang++
+
 #    - os: linux
 #      compiler: gcc
 #      addons:
@@ -55,29 +66,29 @@ matrix:
     # Clang 3.5 is not able to compile the code,
     # see https://travis-ci.org/nlohmann/json/jobs/126720186
 
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
-          packages: ['clang-3.6', 'valgrind']
-      env: COMPILER=clang++-3.6
-
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
-          packages: ['clang-3.7', 'valgrind']
-      env: COMPILER=clang++-3.7
-
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
-          packages: ['clang-3.8', 'valgrind']
-      env: COMPILER=clang++-3.8
+#    - os: linux
+#      compiler: clang
+#      addons:
+#        apt:
+#          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+#          packages: ['clang-3.6', 'valgrind']
+#      env: COMPILER=clang++-3.6
+#
+#    - os: linux
+#      compiler: clang
+#      addons:
+#        apt:
+#          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
+#          packages: ['clang-3.7', 'valgrind']
+#      env: COMPILER=clang++-3.7
+#
+#    - os: linux
+#      compiler: clang
+#      addons:
+#        apt:
+#          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
+#          packages: ['clang-3.8', 'valgrind']
+#      env: COMPILER=clang++-3.8
 
   #  - os: linux
   #    compiler: clang
@@ -97,10 +108,10 @@ matrix:
       compiler: clang
       env: COMPILER=clang
 
-  #  - os: osx
-  #    osx_image: beta-xcode6.3
-  #    compiler: clang
-  #    env: COMPILER=clang
+    - os: osx
+      osx_image: beta-xcode6.3
+      compiler: clang
+      env: COMPILER=clang
 
     - os: osx
       osx_image: xcode6.4
