@@ -137,7 +137,7 @@ matrix:
 script:
   - uname -a
   - $COMPILER --version
-  - make CXX=$COMPILER CXXFLAGS="-lstdc++"
+  - make CXX=$COMPILER
   - ./json_unit "*"
   - if [ `which valgrind` ]; then
     valgrind --error-exitcode=1 --leak-check=full ./json_unit ;
