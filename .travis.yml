@@ -47,8 +47,8 @@ matrix:
     # from https://github.com/travis-ci/travis-ci/issues/6120
     - os: linux
       before_install:
-       - LLVM_VERSION=3.7.0
-       - LLVM_ARCHIVE_PATH=$HOME/clang+llvm.tar.xz
+       - export LLVM_VERSION=3.7.0
+       - export LLVM_ARCHIVE_PATH=$HOME/clang+llvm.tar.xz
        - wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O $LLVM_ARCHIVE_PATH
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
@@ -56,8 +56,8 @@ matrix:
 
     - os: linux
       before_install:
-       - LLVM_VERSION=3.8.0
-       - LLVM_ARCHIVE_PATH=$HOME/clang+llvm.tar.xz
+       - export LLVM_VERSION=3.8.0
+       - export LLVM_ARCHIVE_PATH=$HOME/clang+llvm.tar.xz
        - wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O $LLVM_ARCHIVE_PATH
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
