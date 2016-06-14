@@ -151,6 +151,13 @@ matrix:
        - COMPILER=clang
        - CXXFLAGS=-lstdc++
 
+    - os: osx
+      osx_image: xcode8
+      compiler: clang
+      env:
+       - COMPILER=clang
+       - CXXFLAGS=-lstdc++
+
 script:
   - uname -a
   - $COMPILER --version
