@@ -434,6 +434,7 @@ I deeply appreciate the help of the following people.
 - [zewt](https://github.com/zewt) added useful notes to the README file about Android.
 - [Róbert Márki](https://github.com/robertmrk) added a fix to use move iterators and improved the integration via CMake.
 - [Chris Kitching](https://github.com/ChrisKitching) cleaned up the CMake files.
+- [Tom Needham](https://github.com/06needhamt) fixed a subtle bug with MSVC 2015 which was also proposed by [Michael K.](https://github.com/Epidal).
 
 Thanks a lot for helping out!
 
