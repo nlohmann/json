@@ -8498,13 +8498,13 @@ basic_json_parser_63:
             if (*curptr == '-')
             {
                 type = value_t::number_integer;
-                max = static_cast<uint64_t>(std::numeric_limits<number_integer_t>::max()) + 1;
+                max = static_cast<uint64_t>((std::numeric_limits<number_integer_t>::max)()) + 1;
                 curptr++;
             }
             else
             {
                 type = value_t::number_unsigned;
-                max = static_cast<uint64_t>(std::numeric_limits<number_unsigned_t>::max());
+                max = static_cast<uint64_t>((std::numeric_limits<number_unsigned_t>::max()));
             }
 
             // count the significant figures
