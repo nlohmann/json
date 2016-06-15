@@ -41,7 +41,7 @@ using json = nlohmann::json;
 
 to the files you want to use JSON objects. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 
-:beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann_json` and you're set.
+:beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann_json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann_json --HEAD`.
 
 ## Supported compilers
 
