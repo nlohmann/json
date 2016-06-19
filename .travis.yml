@@ -31,6 +31,7 @@ matrix:
 
     - os: linux
       compiler: gcc
+      before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -43,7 +44,6 @@ matrix:
           build_command_prepend: "make clean ; sudo cp $(which g++-5) $(which g++)"
           build_command: "make"
           branch_pattern: coverity_scan
-          before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
       env: COMPILER=g++-5
 
     # from https://github.com/travis-ci/travis-ci/issues/6120
