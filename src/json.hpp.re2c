@@ -1461,13 +1461,13 @@ class basic_json
 
     @since version 2.0.0
     */
-    template < typename CompatibleNumberUnsignedType, typename
-               std::enable_if <
-                   std::is_constructible<number_unsigned_t, CompatibleNumberUnsignedType>::value and
-                   std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and
-                   !std::numeric_limits<CompatibleNumberUnsignedType>::is_signed,
-                   CompatibleNumberUnsignedType >::type
-               = 0 >
+    template <typename CompatibleNumberUnsignedType, typename
+              std::enable_if <
+                  std::is_constructible<number_unsigned_t, CompatibleNumberUnsignedType>::value and
+                  std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and
+                  not std::numeric_limits<CompatibleNumberUnsignedType>::is_signed,
+                  CompatibleNumberUnsignedType>::type
+              = 0>
     basic_json(const CompatibleNumberUnsignedType val) noexcept
         : m_type(value_t::number_unsigned),
           m_value(static_cast<number_unsigned_t>(val))
@@ -5079,6 +5079,7 @@ class basic_json
             throw std::domain_error("iterator does not fit current value");
         }
 
+        // check if range iterators belong to the same JSON object
         if (first.m_object != last.m_object)
         {
             throw std::domain_error("iterators do not fit");
@@ -7277,17 +7278,17 @@ class basic_json
         enum class token_type
         {
             uninitialized,   ///< indicating the scanner is uninitialized
-            literal_true,    ///< the "true" literal
-            literal_false,   ///< the "false" literal
-            literal_null,    ///< the "null" literal
+            literal_true,    ///< the `true` literal
+            literal_false,   ///< the `false` literal
+            literal_null,    ///< the `null` literal
             value_string,    ///< a string -- use get_string() for actual value
             value_number,    ///< a number -- use get_number() for actual value
-            begin_array,     ///< the character for array begin "["
-            begin_object,    ///< the character for object begin "{"
-            end_array,       ///< the character for array end "]"
-            end_object,      ///< the character for object end "}"
-            name_separator,  ///< the name separator ":"
-            value_separator, ///< the value separator ","
+            begin_array,     ///< the character for array begin `[`
+            begin_object,    ///< the character for object begin `{`
+            end_array,       ///< the character for array end `]`
+            end_object,      ///< the character for object end `}`
+            name_separator,  ///< the name separator `:`
+            value_separator, ///< the value separator `,`
             parse_error,     ///< indicating a parse error
             end_of_input     ///< indicating the end of the input buffer
         };
@@ -7332,7 +7333,7 @@ class basic_json
 
         @return string representation of the code point
 
-        @throw std::out_of_range if code point is >0x10ffff; example: `"code
+        @throw std::out_of_range if code point is > 0x10ffff; example: `"code
         points above 0x10FFFF are invalid"`
         @throw std::invalid_argument if the low surrogate is invalid; example:
         `""missing or wrong low surrogate""`
@@ -7807,13 +7808,13 @@ class basic_json
             if (*curptr == '-')
             {
                 type = value_t::number_integer;
-                max = static_cast<uint64_t>(std::numeric_limits<number_integer_t>::max()) + 1;
+                max = static_cast<uint64_t>((std::numeric_limits<number_integer_t>::max)()) + 1;
                 curptr++;
             }
             else
             {
                 type = value_t::number_unsigned;
-                max = static_cast<uint64_t>(std::numeric_limits<number_unsigned_t>::max());
+                max = static_cast<uint64_t>((std::numeric_limits<number_unsigned_t>::max)());
             }
 
             // count the significant figures

@@ -26,6 +26,7 @@ matrix:
         - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11 -lstdc++" CXX=$COMPILER
         - ./json_unit "*"
         - coveralls --exclude test/src/catch.hpp --exclude test/src/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
+        - bash <(curl -s https://codecov.io/bash)
       env: COMPILER=g++-4.9
 
     - os: linux
@@ -44,6 +45,21 @@ matrix:
           branch_pattern: coverity_scan
       env: COMPILER=g++-5
 
+    # from https://github.com/travis-ci/travis-ci/issues/6120
+    - os: linux
+      env:
+        - LLVM_VERSION=3.8.0
+        - LLVM_ARCHIVE_PATH=$HOME/clang+llvm.tar.xz
+        - COMPILER=clang++
+        - CPPFLAGS="-I $HOME/clang-$LLVM_VERSION/include/c++/v1"
+        - CXXFLAGS=-lc++
+        - PATH=$HOME/clang-$LLVM_VERSION/bin:$PATH
+        - LD_LIBRARY_PATH=$HOME/clang-$LLVM_VERSION/lib:$LD_LIBRARY_PATH
+      before_install:
+       - wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O $LLVM_ARCHIVE_PATH
+       - mkdir $HOME/clang-$LLVM_VERSION
+       - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
+
 #    - os: linux
 #      compiler: gcc
 #      addons:
@@ -55,29 +71,29 @@ matrix:
     # Clang 3.5 is not able to compile the code,
     # see https://travis-ci.org/nlohmann/json/jobs/126720186
 
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
-          packages: ['clang-3.6', 'valgrind']
-      env: COMPILER=clang++-3.6
-
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
-          packages: ['clang-3.7', 'valgrind']
-      env: COMPILER=clang++-3.7
-
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
-          packages: ['clang-3.8', 'valgrind']
-      env: COMPILER=clang++-3.8
+#    - os: linux
+#      compiler: clang
+#      addons:
+#        apt:
+#          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+#          packages: ['clang-3.6', 'valgrind']
+#      env: COMPILER=clang++-3.6
+#
+#    - os: linux
+#      compiler: clang
+#      addons:
+#        apt:
+#          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
+#          packages: ['clang-3.7', 'valgrind']
+#      env: COMPILER=clang++-3.7
+#
+#    - os: linux
+#      compiler: clang
+#      addons:
+#        apt:
+#          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
+#          packages: ['clang-3.8', 'valgrind']
+#      env: COMPILER=clang++-3.8
 
   #  - os: linux
   #    compiler: clang
@@ -90,42 +106,63 @@ matrix:
     - os: osx
       osx_image: beta-xcode6.1
       compiler: clang
-      env: COMPILER=clang
+      env:
+       - COMPILER=clang
+       - CXXFLAGS=-lstdc++
 
     - os: osx
       osx_image: beta-xcode6.2
       compiler: clang
-      env: COMPILER=clang
+      env:
+       - COMPILER=clang
+       - CXXFLAGS=-lstdc++
 
-  #  - os: osx
-  #    osx_image: beta-xcode6.3
-  #    compiler: clang
-  #    env: COMPILER=clang
+    - os: osx
+      osx_image: beta-xcode6.3
+      compiler: clang
+      env:
+       - COMPILER=clang
+       - CXXFLAGS=-lstdc++
 
     - os: osx
       osx_image: xcode6.4
       compiler: clang
-      env: COMPILER=clang
+      env:
+       - COMPILER=clang
+       - CXXFLAGS=-lstdc++
 
     - os: osx
       osx_image: xcode7.1
       compiler: clang
-      env: COMPILER=clang
+      env:
+       - COMPILER=clang
+       - CXXFLAGS=-lstdc++
      
     - os: osx
       osx_image: xcode7.2
       compiler: clang
-      env: COMPILER=clang
+      env:
+       - COMPILER=clang
+       - CXXFLAGS=-lstdc++
 
     - os: osx
       osx_image: xcode7.3
       compiler: clang
-      env: COMPILER=clang
+      env:
+       - COMPILER=clang
+       - CXXFLAGS=-lstdc++
+
+    - os: osx
+      osx_image: xcode8
+      compiler: clang
+      env:
+       - COMPILER=clang
+       - CXXFLAGS=-lstdc++
 
 script:
   - uname -a
   - $COMPILER --version
-  - make CXX=$COMPILER CXXFLAGS="-lstdc++"
+  - make CXX=$COMPILER
   - ./json_unit "*"
   - if [ `which valgrind` ]; then
     valgrind --error-exitcode=1 --leak-check=full ./json_unit ;
