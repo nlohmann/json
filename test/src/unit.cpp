@@ -1285,7 +1285,7 @@ TEST_CASE("constructors")
 
     SECTION("create a JSON value from an input stream")
     {
-        SECTION("sts::stringstream")
+        SECTION("std::stringstream")
         {
             std::stringstream ss;
             ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
@@ -14067,7 +14067,7 @@ TEST_CASE("regression tests")
         CHECK(dest == expected);
     }
 
-    SECTION("issue ##235 - ambiguous overload for 'push_back' and 'operator+='")
+    SECTION("issue #235 - ambiguous overload for 'push_back' and 'operator+='")
     {
         json data = {{"key", "value"}};
         data.push_back({"key2", "value2"});
