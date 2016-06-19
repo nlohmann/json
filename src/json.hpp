@@ -711,73 +711,6 @@ class basic_json
 
   private:
 
-    /*!
-    @brief a type to hold JSON type information
-
-    This bitfield type holds information about JSON types. It is internally
-    used to hold the basic JSON type enumeration, as well as additional
-    information in the case of values that have been parsed from a string
-    including whether of not it was created directly or parsed, and in the
-    case of floating point numbers the number of significant figures in the
-    original representaiton and if it was in exponential form, if a '+' was
-    included in the exponent and the capitilization of the exponent marker.
-    The sole purpose of this information is to permit accurate round trips.
-
-    @since version 2.0.0
-    */
-    union type_data_t
-    {
-        struct
-        {
-            /// the type of the value (@ref value_t)
-            uint16_t type : 4;
-            /// whether the number was parsed from a string
-            uint16_t parsed : 1;
-            /// whether parsed number contained an exponent ('e'/'E')
-            uint16_t has_exp : 1;
-            /// whether parsed number contained a plus in the exponent
-            uint16_t exp_plus : 1;
-            /// whether parsed number's exponent was capitalized ('E')
-            uint16_t exp_cap : 1;
-            /// the number of figures for a parsed number
-            uint16_t precision : 8;
-        } bits;
-        uint16_t data;
-
-        /// return the type as value_t
-        operator value_t() const
-        {
-            return static_cast<value_t>(bits.type);
-        }
-
-        /// test type for equality (ignore other fields)
-        bool operator==(const value_t& rhs) const
-        {
-            return static_cast<value_t>(bits.type) == rhs;
-        }
-
-        /// assignment
-        type_data_t& operator=(value_t rhs)
-        {
-            bits.type = static_cast<uint16_t>(rhs) & 15; // avoid overflow
-            return *this;
-        }
-
-        /// construct from value_t
-        type_data_t(value_t t) noexcept
-        {
-            *reinterpret_cast<uint16_t*>(this) = 0;
-            bits.type = static_cast<uint16_t>(t) & 15; // avoid overflow
-        }
-
-        /// default constructor
-        type_data_t() noexcept
-        {
-            data = 0;
-            bits.type = reinterpret_cast<uint16_t>(value_t::null);
-        }
-    };
-
     /// helper for exception-safe object creation
     template<typename T, typename... Args>
     static T* create(Args&& ... args)
@@ -6183,79 +6116,23 @@ class basic_json
 
             case value_t::number_float:
             {
-                // check if number was parsed from a string
-                if (m_type.bits.parsed)
+                if (m_value.number_float == 0)
                 {
-                    // check if parsed number had an exponent given
-                    if (m_type.bits.has_exp)
-                    {
-                        // buffer size: precision (2^8-1 = 255) + other ('-.e-xxx' = 7) + null (1)
-                        char buf[263];
-                        int len;
-
-                        // handle capitalization of the exponent
-                        if (m_type.bits.exp_cap)
-                        {
-                            len = snprintf(buf, sizeof(buf), "%.*E",
-                                           m_type.bits.precision, m_value.number_float) + 1;
-                        }
-                        else
-                        {
-                            len = snprintf(buf, sizeof(buf), "%.*e",
-                                           m_type.bits.precision, m_value.number_float) + 1;
-                        }
-
-                        // remove '+' sign from the exponent if necessary
-                        if (not m_type.bits.exp_plus)
-                        {
-                            if (len > static_cast<int>(sizeof(buf)))
-                            {
-                                len = sizeof(buf);
-                            }
-                            for (int i = 0; i < len; i++)
-                            {
-                                if (buf[i] == '+')
-                                {
-                                    for (; i + 1 < len; i++)
-                                    {
-                                        buf[i] = buf[i + 1];
-                                    }
-                                }
-                            }
-                        }
-
-                        o << buf;
-                    }
-                    else
-                    {
-                        // no exponent - output as a decimal
-                        std::stringstream ss;
-                        ss.imbue(std::locale(std::locale(), new DecimalSeparator));  // fix locale problems
-                        ss << std::setprecision(m_type.bits.precision)
-                           << std::fixed << m_value.number_float;
-                        o << ss.str();
-                    }
+                    // special case for zero to get "0.0"/"-0.0"
+                    o << (std::signbit(m_value.number_float) ? "-0.0" : "0.0");
                 }
                 else
                 {
-                    if (m_value.number_float == 0)
-                    {
-                        // special case for zero to get "0.0"/"-0.0"
-                        o << (std::signbit(m_value.number_float) ? "-0.0" : "0.0");
-                    }
-                    else
-                    {
-                        // Otherwise 6, 15 or 16 digits of precision allows
-                        // round-trip IEEE 754 string->float->string,
-                        // string->double->string or string->long
-                        // double->string; to be safe, we read this value from
-                        // std::numeric_limits<number_float_t>::digits10
-                        std::stringstream ss;
-                        ss.imbue(std::locale(std::locale(), new DecimalSeparator));  // fix locale problems
-                        ss << std::setprecision(std::numeric_limits<double>::digits10)
-                           << m_value.number_float;
-                        o << ss.str();
-                    }
+                    // Otherwise 6, 15 or 16 digits of precision allows
+                    // round-trip IEEE 754 string->float->string,
+                    // string->double->string or string->long
+                    // double->string; to be safe, we read this value from
+                    // std::numeric_limits<number_float_t>::digits10
+                    std::stringstream ss;
+                    ss.imbue(std::locale(std::locale(), new DecimalSeparator));  // fix locale problems
+                    ss << std::setprecision(std::numeric_limits<double>::digits10)
+                       << m_value.number_float;
+                    o << ss.str();
                 }
                 return;
             }
@@ -6280,7 +6157,7 @@ class basic_json
     //////////////////////
 
     /// the type of the current element
-    type_data_t m_type = value_t::null;
+    value_t m_type = value_t::null;
 
     /// the value of the current element
     json_value m_value = {};
@@ -8457,33 +8334,18 @@ basic_json_parser_63:
         number_integer_t or @ref number_unsigned_t then it sets the result
         parameter accordingly.
 
-        The 'floating point representation' includes the number of significant
-        figures after the radix point, whether the number is in exponential or
-        decimal form, the capitalization of the exponent marker, and if the
-        optional '+' is present in the exponent. This information is necessary
-        to perform accurate round trips of floating point numbers.
-
         If the number is a floating point number the number is then parsed
         using @a std:strtod (or @a std:strtof or @a std::strtold).
 
         @param[out] result  @ref basic_json object to receive the number, or
-          NAN if the conversion read past the current token. The latter case
-          needs to be treated by the caller function.
+        NAN if the conversion read past the current token. The latter case
+        needs to be treated by the caller function.
         */
         void get_number(basic_json& result) const
         {
             assert(m_start != nullptr);
 
             const lexer::lexer_char_t* curptr = m_start;
-
-            // remember this number was parsed (for later serialization)
-            result.m_type.bits.parsed = true;
-
-            // 'found_radix_point' will be set to 0xFF upon finding a radix
-            // point and later used to mask in/out the precision depending
-            // whether a radix is found i.e. 'precision &= found_radix_point'
-            uint8_t found_radix_point = 0;
-            uint8_t precision = 0;
 
             // accumulate the integer conversion result (unsigned for now)
             number_unsigned_t value = 0;
@@ -8517,22 +8379,11 @@ basic_json_parser_63:
                     {
                         // don't count '.' but change to float
                         type = value_t::number_float;
-
-                        // reset precision count
-                        precision = 0;
-                        found_radix_point = 0xFF;
                         continue;
                     }
                     // assume exponent (if not then will fail parse): change to
                     // float, stop counting and record exponent details
                     type = value_t::number_float;
-                    result.m_type.bits.has_exp = true;
-
-                    // exponent capitalization
-                    result.m_type.bits.exp_cap = (*curptr == 'E');
-
-                    // exponent '+' sign
-                    result.m_type.bits.exp_plus = (*(++curptr) == '+');
                     break;
                 }
 
@@ -8554,12 +8405,7 @@ basic_json_parser_63:
                         value = temp;
                     }
                 }
-                ++precision;
             }
-
-            // If no radix point was found then precision would now be set to
-            // the number of digits, which is wrong - clear it.
-            result.m_type.bits.precision = precision & found_radix_point;
 
             // save the value (if not a float)
             if (type == value_t::number_unsigned)
