@@ -7278,17 +7278,17 @@ class basic_json
         enum class token_type
         {
             uninitialized,   ///< indicating the scanner is uninitialized
-            literal_true,    ///< the "true" literal
-            literal_false,   ///< the "false" literal
-            literal_null,    ///< the "null" literal
+            literal_true,    ///< the `true` literal
+            literal_false,   ///< the `false` literal
+            literal_null,    ///< the `null` literal
             value_string,    ///< a string -- use get_string() for actual value
             value_number,    ///< a number -- use get_number() for actual value
-            begin_array,     ///< the character for array begin "["
-            begin_object,    ///< the character for object begin "{"
-            end_array,       ///< the character for array end "]"
-            end_object,      ///< the character for object end "}"
-            name_separator,  ///< the name separator ":"
-            value_separator, ///< the value separator ","
+            begin_array,     ///< the character for array begin `[`
+            begin_object,    ///< the character for object begin `{`
+            end_array,       ///< the character for array end `]`
+            end_object,      ///< the character for object end `}`
+            name_separator,  ///< the name separator `:`
+            value_separator, ///< the value separator `,`
             parse_error,     ///< indicating a parse error
             end_of_input     ///< indicating the end of the input buffer
         };
