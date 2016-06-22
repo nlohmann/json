@@ -10007,11 +10007,11 @@ basic_json_parser_63:
                     {
                         // add operations in reverse order to avoid invalid
                         // indices
-                        result.insert(result.begin() + end_index,
+                        result.insert(result.begin() + end_index, object(
                         {
                             {"op", "remove"},
                             {"path", path + "/" + std::to_string(i)}
-                        });
+                        }));
                         ++i;
                     }
 
