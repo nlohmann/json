@@ -14107,6 +14107,15 @@ TEST_CASE("regression tests")
 
         CHECK(data == json({{"key", "value"}, {"key2", "value2"}, {"key3", "value3"}}));
     }
+
+    SECTION("issue #269 - diff generates incorrect patch when removing multiple array elements")
+    {
+        json doc = R"( { "arr1": [1, 2, 3, 4] } )"_json;
+        json expected = R"( { "arr1": [1, 2] } )"_json;
+
+        // check roundtrip
+        CHECK(doc.patch(json::diff(doc, expected)) == expected);
+    }
 }
 
 // special test case to check if memory is leaked if constructor throws
