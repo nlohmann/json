@@ -31,6 +31,7 @@ matrix:
 
     - os: linux
       compiler: gcc
+      before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -44,6 +45,14 @@ matrix:
           build_command: "make"
           branch_pattern: coverity_scan
       env: COMPILER=g++-5
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-6', 'valgrind']
+      env: COMPILER=g++-6
 
     # from https://github.com/travis-ci/travis-ci/issues/6120
     - os: linux
@@ -59,14 +68,6 @@ matrix:
        - wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O $LLVM_ARCHIVE_PATH
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
-
-#    - os: linux
-#      compiler: gcc
-#      addons:
-#        apt:
-#          sources: ['ubuntu-toolchain-r-test']
-#          packages: ['g++-6', 'valgrind']
-#      env: COMPILER=g++-6
 
     # Clang 3.5 is not able to compile the code,
     # see https://travis-ci.org/nlohmann/json/jobs/126720186
