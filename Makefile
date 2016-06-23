@@ -67,7 +67,7 @@ cppcheck:
 
 # create scanner with re2c
 re2c: src/json.hpp.re2c
-	$(RE2C) --bit-vectors --nested-ifs --no-debug-info $< | $(SED) '1d' > src/json.hpp
+	$(RE2C) -W --bit-vectors --nested-ifs --no-debug-info $< | $(SED) '1d' > src/json.hpp
 
 # pretty printer
 pretty:
