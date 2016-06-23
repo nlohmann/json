@@ -15,9 +15,12 @@ All notable changes to this project will be documented in this file. This projec
 - Add support for afl-fuzz testing [\#207](https://github.com/nlohmann/json/pull/207) ([mykter](https://github.com/mykter))
 - Issue \#178 - Extending support to full uint64\_t/int64\_t range and unsigned type \(updated\) [\#193](https://github.com/nlohmann/json/pull/193) ([twelsby](https://github.com/twelsby))
 
+- json::diff generates incorrect patch when removing multiple array elements. [\#269](https://github.com/nlohmann/json/issues/269)
+- -Wconversion warning [\#259](https://github.com/nlohmann/json/issues/259)
 - Maybe a bug [\#258](https://github.com/nlohmann/json/issues/258)
 - -Wconversion warnings [\#239](https://github.com/nlohmann/json/issues/239)
 - ambiguous overload for 'push\_back' and 'operator+=' [\#235](https://github.com/nlohmann/json/issues/235)
+- Incorrect dumping of parsed numbers with exponents, but without decimal places [\#230](https://github.com/nlohmann/json/issues/230)
 - double values are serialized with commas as decimal points [\#228](https://github.com/nlohmann/json/issues/228)
 - Move semantics with std::initializer\_list [\#225](https://github.com/nlohmann/json/issues/225)
 - abort during getline in yyfill [\#223](https://github.com/nlohmann/json/issues/223)
