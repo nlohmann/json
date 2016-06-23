@@ -16,7 +16,7 @@ There are myriads of [JSON](http://json.org) libraries out there, and each may e
 
 - **Intuitive syntax**. In languages such as Python, JSON feels like a first class data type. We used all the operator magic of modern C++ to achieve the same feeling in your code. Check out the [examples below](#examples) and you know, what I mean.
 
-- **Trivial integration**. Our whole code consists of a single header file `json.hpp`. That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+- **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/src/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
 - **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/blob/master/test/src/unit.cpp) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) that there are no memory leaks.
 
@@ -27,6 +27,7 @@ Other aspects were not so important to us:
 - **Speed**. We currently implement the parser as naive [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser) with hand coded string handling. It is fast enough, but a [LALR-parser](http://en.wikipedia.org/wiki/LALR_parser) with a decent regular expression processor should be even faster (but would consist of more files which makes the integration harder).
 
 See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.github/CONTRIBUTING.md#please-dont) for more information.
+
 
 ## Integration
 
@@ -43,48 +44,6 @@ to the files you want to use JSON objects. That's it. Do not forget to set the n
 
 :beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann_json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann_json --HEAD`.
 
-## Supported compilers
-
-Though it's 2016 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
-
-- GCC 4.9 - 6.0 (and possibly later)
-- Clang 3.4 - 3.9 (and possibly later)
-- Microsoft Visual C++ 2015 / 14.0 (and possibly later)
-
-I would be happy to learn about other compilers/versions.
-
-Please note:
-
-- GCC 4.8 does not work because of two bugs ([55817](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55817) and [57824](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57824)) in the C++11 support. Note there is a [pull request](https://github.com/nlohmann/json/pull/212) to fix some of the issues.
-- Android defaults to using very old compilers and C++ libraries. To fix this, add the following to your `Application.mk`. This will switch to the LLVM C++ library, the Clang compiler, and enable C++11 and other features disabled by default.
- 
-    ```
-    APP_STL := c++_shared
-    NDK_TOOLCHAIN_VERSION := clang3.6
-    APP_CPPFLAGS += -frtti -fexceptions
-    ```
- 
-    The code compiles successfully with [Android NDK](https://developer.android.com/ndk/index.html?hl=ml), Revision 9 - 11 (and possibly later) and [CrystaX's Android NDK](https://www.crystax.net/en/android/ndk) version 10.
-
-- For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).
-
-The following compilers are currently used in [continuous integration](https://travis-ci.org/nlohmann/json):
-
-| Compiler        | Operating System             | Version String |
-|-----------------|------------------------------|----------------|
-| GCC 4.9.3       | Ubuntu 14.04.4 LTS           | g++-4.9 (Ubuntu 4.9.3-8ubuntu2~14.04) 4.9.3 |
-| GCC 5.3.0       | Ubuntu 14.04.4 LTS           | g++-5 (Ubuntu 5.3.0-3ubuntu1~14.04) 5.3.0 20151204 |
-| GCC 6.1.1       | Ubuntu 14.04.4 LTS           | g++-6 (Ubuntu 6.1.1-3ubuntu11~14.04.1) 6.1.1 20160511 |
-| Clang 3.8.0     | Ubuntu 14.04.4 LTS           | clang version 3.8.0 (tags/RELEASE_380/final) |
-| Clang Xcode 6.1 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn) |
-| Clang Xcode 6.2 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.57) (based on LLVM 3.5svn) |
-| Clang Xcode 6.3 | Darwin Kernel Version 14.3.0 (OSX 10.10.3) | Apple LLVM version 6.1.0 (clang-602.0.49) (based on LLVM 3.6.0svn) |
-| Clang Xcode 6.4 | Darwin Kernel Version 14.3.0 (OSX 10.10.3) | Apple LLVM version 6.1.0 (clang-602.0.53) (based on LLVM 3.6.0svn) |
-| Clang Xcode 7.1 | Darwin Kernel Version 14.5.0 (OSX 10.10.5) | Apple LLVM version 7.0.0 (clang-700.1.76) |
-| Clang Xcode 7.2 | Darwin Kernel Version 15.0.0 (OSX 10.10.5) | Apple LLVM version 7.0.2 (clang-700.1.81) |
-| Clang Xcode 7.3 | Darwin Kernel Version 15.0.0 (OSX 10.10.5) | Apple LLVM version 7.3.0 (clang-703.0.29) |
-| Clang Xcode 8.0 | Darwin Kernel Version 15.5.0 (OSX 10.11.5) | Apple LLVM version 8.0.0 (clang-800.0.24.1) |
-| Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25123.0 | 
 
 ## Examples
 
@@ -167,6 +126,7 @@ json empty_object_explicit = json::object();
 json array_not_object = { json::array({"currency", "USD"}), json::array({"value", 42.99}) };
 ```
 
+
 ### Serialization / Deserialization
 
 You can create an object (deserialization) by appending `_json` to a string literal:
@@ -175,7 +135,7 @@ You can create an object (deserialization) by appending `_json` to a string lite
 // create object from string literal
 json j = "{ \"happy\": true, \"pi\": 3.141 }"_json;
 
-// or even nicer (thanks http://isocpp.org/blog/2015/01/json-for-modern-cpp)
+// or even nicer with a raw string literal
 auto j2 = R"(
   {
     "happy": true,
@@ -219,6 +179,7 @@ std::cout << std::setw(4) << j << std::endl;
 These operators work for any subclasses of `std::istream` or `std::ostream`.
 
 Please note that setting the exception bit for `failbit` is inappropriate for this use case. It will result in program termination due to the `noexcept` specifier in use.
+
 
 ### STL-like access
 
@@ -287,6 +248,7 @@ int fob_present = o.count("fob"); // 0
 o.erase("foo");
 ```
 
+
 ### Conversion from STL containers
 
 Any sequence container (`std::array`, `std::vector`, `std::deque`, `std::forward_list`, `std::list`) whose values can be used to construct JSON types (e.g., integers, floating point numbers, Booleans, string types, or again STL containers described in this section) can be used to create a JSON array. The same holds for similar associative containers (`std::set`, `std::multiset`, `std::unordered_set`, `std::unordered_multiset`), but in these cases the order of the elements of the array depends how the elements are ordered in the respective STL container.
@@ -349,12 +311,51 @@ json j_ummap(c_ummap); // only one entry for key "three" is used
 // maybe {"one": true, "two": true, "three": true}
 ```
 
+### JSON Pointer and JSON Patch
+
+The library supports **JSON Pointer** ([RFC 6901](https://tools.ietf.org/html/rfc6901)) as alternative means to address structured values. On top of this, **JSON Patch** ([RFC 6902](https://tools.ietf.org/html/rfc6902)) allows to describe differences between two JSON values - effectively allowing patch and diff operations known from Unix.
+
+```cpp
+// a JSON value
+json j_original = R"({
+  "baz": ["one", "two", "three"],
+  "foo": "bar"
+})"_json;
+
+// access members with a JSON pointer (RFC 6901)
+j_original["/baz/2"_json_pointer];
+// "two"
+
+// a JSON patch (RFC 6902)
+json j_patch = R"([
+  { "op": "replace", "path": "/baz", "value": "boo" },
+  { "op": "add", "path": "/hello", "value": ["world"] },
+  { "op": "remove", "path": "/foo"}
+])"_json;
+
+// apply the patch
+json j_result = j_original.patch(j_patch);
+// {
+//    "baz": "boo",
+//    "hello": ["world"]
+// }
+
+// calculate a JSON patch from two JSON values
+json::diff(j_result, j_original);
+// [
+//   { "op":" replace", "path": "/baz", "value": ["one", "two", "three"] },
+//   { "op":"remove","path":"/hello" },
+//   { "op":"add","path":"/foo","value":"bar" }
+// ]
+```
+
+
 ### Implicit conversions
 
 The type of the JSON object is determined automatically by the expression to store. Likewise, the stored value is implicitly converted.
 
 ```cpp
-/// strings
+// strings
 std::string s1 = "Hello, world!";
 json js = s1;
 std::string s2 = js;
@@ -382,6 +383,51 @@ int vi = jn.get<int>();
 // etc.
 ```
 
+
+## Supported compilers
+
+Though it's 2016 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+
+- GCC 4.9 - 6.0 (and possibly later)
+- Clang 3.4 - 3.9 (and possibly later)
+- Microsoft Visual C++ 2015 / 14.0 (and possibly later)
+
+I would be happy to learn about other compilers/versions.
+
+Please note:
+
+- GCC 4.8 does not work because of two bugs ([55817](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55817) and [57824](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57824)) in the C++11 support. Note there is a [pull request](https://github.com/nlohmann/json/pull/212) to fix some of the issues.
+- Android defaults to using very old compilers and C++ libraries. To fix this, add the following to your `Application.mk`. This will switch to the LLVM C++ library, the Clang compiler, and enable C++11 and other features disabled by default.
+ 
+    ```
+    APP_STL := c++_shared
+    NDK_TOOLCHAIN_VERSION := clang3.6
+    APP_CPPFLAGS += -frtti -fexceptions
+    ```
+ 
+    The code compiles successfully with [Android NDK](https://developer.android.com/ndk/index.html?hl=ml), Revision 9 - 11 (and possibly later) and [CrystaX's Android NDK](https://www.crystax.net/en/android/ndk) version 10.
+
+- For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).
+
+The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json) and [AppVeyor](https://ci.appveyor.com/project/nlohmann/json):
+
+| Compiler        | Operating System             | Version String |
+|-----------------|------------------------------|----------------|
+| GCC 4.9.3       | Ubuntu 14.04.4 LTS           | g++-4.9 (Ubuntu 4.9.3-8ubuntu2~14.04) 4.9.3 |
+| GCC 5.3.0       | Ubuntu 14.04.4 LTS           | g++-5 (Ubuntu 5.3.0-3ubuntu1~14.04) 5.3.0 20151204 |
+| GCC 6.1.1       | Ubuntu 14.04.4 LTS           | g++-6 (Ubuntu 6.1.1-3ubuntu11~14.04.1) 6.1.1 20160511 |
+| Clang 3.8.0     | Ubuntu 14.04.4 LTS           | clang version 3.8.0 (tags/RELEASE_380/final) |
+| Clang Xcode 6.1 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn) |
+| Clang Xcode 6.2 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.57) (based on LLVM 3.5svn) |
+| Clang Xcode 6.3 | Darwin Kernel Version 14.3.0 (OSX 10.10.3) | Apple LLVM version 6.1.0 (clang-602.0.49) (based on LLVM 3.6.0svn) |
+| Clang Xcode 6.4 | Darwin Kernel Version 14.3.0 (OSX 10.10.3) | Apple LLVM version 6.1.0 (clang-602.0.53) (based on LLVM 3.6.0svn) |
+| Clang Xcode 7.1 | Darwin Kernel Version 14.5.0 (OSX 10.10.5) | Apple LLVM version 7.0.0 (clang-700.1.76) |
+| Clang Xcode 7.2 | Darwin Kernel Version 15.0.0 (OSX 10.10.5) | Apple LLVM version 7.0.2 (clang-700.1.81) |
+| Clang Xcode 7.3 | Darwin Kernel Version 15.0.0 (OSX 10.10.5) | Apple LLVM version 7.3.0 (clang-703.0.29) |
+| Clang Xcode 8.0 | Darwin Kernel Version 15.5.0 (OSX 10.11.5) | Apple LLVM version 8.0.0 (clang-800.0.24.1) |
+| Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25123.0 | 
+
+
 ## License
 
 <img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
@@ -390,11 +436,12 @@ The class is licensed under the [MIT License](http://opensource.org/licenses/MIT
 
 Copyright &copy; 2013-2016 [Niels Lohmann](http://nlohmann.me)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 
 ## Thanks
 
@@ -439,10 +486,12 @@ I deeply appreciate the help of the following people.
 
 Thanks a lot for helping out!
 
+
 ## Notes
 
 - The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](http://en.cppreference.com/w/cpp/error/assert).
 - As the exact type of a number is not defined in the [JSON specification](http://rfc7159.net/rfc7159), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
+
 
 ## Execute unit tests
 
@@ -453,7 +502,7 @@ $ make
 $ ./json_unit "*"
 
 ===============================================================================
-All tests passed (5568705 assertions in 31 test cases)
+All tests passed (5568715 assertions in 32 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
