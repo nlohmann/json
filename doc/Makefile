@@ -2,9 +2,6 @@ SRCDIR = ../src
 
 all: doxygen
 
-clean:
-	rm -fr me.nlohmann.json.docset html
-
 
 ##########################################################################
 # example files
@@ -42,6 +39,10 @@ create_links: $(EXAMPLES:.cpp=.link)
 
 # check output of all stand-alone example files
 check_output: $(EXAMPLES:.cpp=.test)
+
+
+clean:
+	rm -fr me.nlohmann.json.docset html $(EXAMPLES:.cpp=)
 
 
 ##########################################################################

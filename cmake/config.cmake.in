@@ -1,0 +1,6 @@
+@PACKAGE_INIT@
+
+cmake_policy(PUSH)
+cmake_policy(SET CMP0024 OLD)
+include(${CMAKE_CURRENT_LIST_DIR}/@JSON_TARGETS_FILENAME@)
+cmake_policy(POP)

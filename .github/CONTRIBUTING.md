@@ -35,7 +35,7 @@ There are currently two files which need to be edited:
    To run [`re2c`](http://re2c.org) and generate/overwrite file `src/json.hpp` with your changes in file `src/json.hpp.re2c`.
 
 
-2. [`test/unit.cpp`](https://github.com/nlohmann/json/blob/master/test/unit.cpp) - This contains the [Catch](https://github.com/philsquared/Catch) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
+2. [`test/src/unit.cpp`](https://github.com/nlohmann/json/blob/master/test/unit.cpp) - This contains the [Catch](https://github.com/philsquared/Catch) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
 
    If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled with
 
@@ -70,9 +70,6 @@ Please understand that I cannot accept pull requests changing only file `src/jso
 
 The following areas really need contribution:
 
-- Getting the code to compile without errors with the latest **Microsoft Visual Studio** version. I am not using Windows, so I cannot debug code with MSVC myself. There is a job on [AppVeyor](https://ci.appveyor.com/project/nlohmann/json) though.
-- Extending the **continuous integration** beyond Linux running some versions of GCC and Clang on [Travis](https://travis-ci.org/nlohmann/json) and Microsoft Visual Studio on [AppVeyor](https://ci.appveyor.com/project/nlohmann/json). We have found a lot of bugs just because several compilers behave in a slightly different manner.
+- Extending the **continuous integration** toward more exotic compilers such as Android NDK, Intel's Compiler, or the bleeding-edge versions of GCC or Clang.
 - Improving the efficiency of the **JSON parser**. The current parser is implemented as a naive recursive descent parser with hand coded string handling. More sophisticated approaches like LALR parsers would be really appreciated. That said, parser generators like Bison or ANTLR do not play nice with single-header files -- I really would like to keep the parser inside the `json.hpp` header, and I am not aware of approaches similar to [`re2c`](http://re2c.org) for parsing.
 - Extending and updating existing **benchmarks** to include (the most recent version of) this library. Though efficiency is not everything, speed and memory consumption are very important characteristics for C++ developers, so having proper comparisons would be interesting.
-- Check the code with [**Coverity**](https://scan.coverity.com).
-- Make the code **locale-independent**. The library currently only works for a locale where `.` is the decimal point character.

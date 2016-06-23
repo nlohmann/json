@@ -1,0 +1,3 @@
+domain_error: JSON pointer must be empty or begin with '/'
+domain_error: escape error: '~' must be followed with '0' or '1'
+domain_error: escape error: '~' must be followed with '0' or '1'

@@ -10,6 +10,7 @@ all: json_unit
 # clean up
 clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM
+	$(MAKE) clean -Cdoc
 
 
 ##########################################################################
@@ -19,8 +20,8 @@ clean:
 # additional flags
 FLAGS = -Wall -Wextra -pedantic -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overflow=5 -Wswitch -Wundef -Wno-unused -Wnon-virtual-dtor -Wreorder -Wdeprecated -Wfloat-equal
 
-# build unit tests
-json_unit: test/unit.cpp src/json.hpp test/catch.hpp
+# build unit tests (TODO: Does this want its own makefile?)
+json_unit: test/src/unit.cpp src/json.hpp test/src/catch.hpp
 	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src -I test $< $(LDFLAGS) -o $@
 
 
@@ -30,7 +31,7 @@ json_unit: test/unit.cpp src/json.hpp test/catch.hpp
 
 # compile example files and check output
 doctest:
-	make check_output -C doc
+	$(MAKE) check_output -C doc
 
 
 ##########################################################################
@@ -43,11 +44,11 @@ fuzz_testing:
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
 	$(MAKE) fuzz CXX=afl-clang++
 	mv fuzz fuzz-testing
-	find test/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
+	find test/data/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzz"
 
 # the fuzzer binary
-fuzz: test/fuzz.cpp src/json.hpp
+fuzz: test/src/fuzz.cpp src/json.hpp
 	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src $< $(LDFLAGS) -o $@
 
 
@@ -66,7 +67,7 @@ cppcheck:
 
 # create scanner with re2c
 re2c: src/json.hpp.re2c
-	$(RE2C) -b -s -i --no-generation-date $< | $(SED) '1d' > src/json.hpp
+	$(RE2C) -W --bit-vectors --nested-ifs --no-debug-info $< | $(SED) '1d' > src/json.hpp
 
 # pretty printer
 pretty:
@@ -74,8 +75,8 @@ pretty:
 	   --indent-switches --indent-preproc-block --indent-preproc-define \
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
-	   --lineend=linux --preserve-date --suffix=none \
-	   src/json.hpp src/json.hpp.re2c test/unit.cpp test/fuzz.cpp benchmarks/benchmarks.cpp doc/examples/*.cpp
+	   --lineend=linux --preserve-date --suffix=none --formatted \
+	   src/json.hpp src/json.hpp.re2c test/src/unit.cpp test/src/fuzz.cpp benchmarks/benchmarks.cpp doc/examples/*.cpp
 
 
 ##########################################################################
