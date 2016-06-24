@@ -390,7 +390,7 @@ Though it's 2016 already, the support for C++11 is still a bit sparse. Currently
 
 - GCC 4.9 - 6.0 (and possibly later)
 - Clang 3.4 - 3.9 (and possibly later)
-- Microsoft Visual C++ 2015 / 14.0, MSVC 19.0 (and possibly later)
+- Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 
 I would be happy to learn about other compilers/versions.
 
