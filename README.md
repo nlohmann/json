@@ -323,7 +323,7 @@ json j_original = R"({
 })"_json;
 
 // access members with a JSON pointer (RFC 6901)
-j_original["/baz/2"_json_pointer];
+j_original["/baz/1"_json_pointer];
 // "two"
 
 // a JSON patch (RFC 6902)
