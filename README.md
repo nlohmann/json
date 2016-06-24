@@ -1,4 +1,4 @@
-![JSON for Modern C++](https://raw.githubusercontent.com/nlohmann/json/master/doc/json.gif)
+[![JSON for Modern C++](https://raw.githubusercontent.com/nlohmann/json/master/doc/json.gif)](https://github.com/nlohmann/json/releases)
 
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
@@ -390,7 +390,7 @@ Though it's 2016 already, the support for C++11 is still a bit sparse. Currently
 
 - GCC 4.9 - 6.0 (and possibly later)
 - Clang 3.4 - 3.9 (and possibly later)
-- Microsoft Visual C++ 2015 / 14.0 (and possibly later)
+- Microsoft Visual C++ 2015 / 14.0, MSVC 19.0 (and possibly later)
 
 I would be happy to learn about other compilers/versions.
 
