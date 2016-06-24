@@ -291,7 +291,7 @@ json j_umset(c_umset); // both entries for "one" are used
 // maybe ["one", "two", "one", "four"]
 ```
 
-Likewise, any associative key-value containers (`std::map`, `std::multimap`, `std::unordered_map`, `std::unordered_multimap`) whose keys are can construct an `std::string` and whose values can be used to construct JSON types (see examples above) can be used to to create a JSON object. Note that in case of multimaps only one key is used in the JSON object and the value depends on the internal order of the STL container.
+Likewise, any associative key-value containers (`std::map`, `std::multimap`, `std::unordered_map`, `std::unordered_multimap`) whose keys can construct an `std::string` and whose values can be used to construct JSON types (see examples above) can be used to to create a JSON object. Note that in case of multimaps only one key is used in the JSON object and the value depends on the internal order of the STL container.
 
 ```cpp
 std::map<std::string, int> c_map { {"one", 1}, {"two", 2}, {"three", 3} };
