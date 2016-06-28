@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. This projec
 
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.0...HEAD)
 
+- dump\(\) performance degradation in v2 [\#272](https://github.com/nlohmann/json/issues/272)
+
 - fixed a tiny typo [\#271](https://github.com/nlohmann/json/pull/271) ([thelostt](https://github.com/thelostt))
 
 ## [v2.0.0](https://github.com/nlohmann/json/releases/tag/v2.0.0) (2016-06-23)
