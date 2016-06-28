@@ -14079,6 +14079,16 @@ TEST_CASE("regression tests")
         CHECK(j1a.dump() == "23.42");
         CHECK(j1b.dump() == "23.42");
 
+        // check if locale is properly reset
+        std::stringstream ss;
+        ss.imbue(std::locale(std::locale(), new CommaDecimalSeparator));
+        ss << 47.11;
+        CHECK(ss.str() == "47,11");
+        ss << j1a;
+        CHECK(ss.str() == "47,1123.42");
+        ss << 47.11;
+        CHECK(ss.str() == "47,1123.4247,11");
+
         CHECK(j2a.dump() == "23.42");
         //issue #230
         //CHECK(j2b.dump() == "23.42");
