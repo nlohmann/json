@@ -5658,10 +5658,13 @@ class basic_json
         // reset width to 0 for subsequent calls to this stream
         o.width(0);
         // fix locale problems
-        o.imbue(std::locale(std::locale(), new DecimalSeparator));
+        auto old_locale = o.imbue(std::locale(std::locale(), new DecimalSeparator));
 
         // do the actual serialization
         j.dump(o, pretty_print, static_cast<unsigned int>(indentation));
+
+        // reset locale
+        o.imbue(old_locale);
         return o;
     }
 
