@@ -1,4 +1,4 @@
-![JSON for Modern C++](https://raw.githubusercontent.com/nlohmann/json/master/doc/json.gif)
+[![JSON for Modern C++](https://raw.githubusercontent.com/nlohmann/json/master/doc/json.gif)](https://github.com/nlohmann/json/releases)
 
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
@@ -291,7 +291,7 @@ json j_umset(c_umset); // both entries for "one" are used
 // maybe ["one", "two", "one", "four"]
 ```
 
-Likewise, any associative key-value containers (`std::map`, `std::multimap`, `std::unordered_map`, `std::unordered_multimap`) whose keys are can construct an `std::string` and whose values can be used to construct JSON types (see examples above) can be used to to create a JSON object. Note that in case of multimaps only one key is used in the JSON object and the value depends on the internal order of the STL container.
+Likewise, any associative key-value containers (`std::map`, `std::multimap`, `std::unordered_map`, `std::unordered_multimap`) whose keys can construct an `std::string` and whose values can be used to construct JSON types (see examples above) can be used to to create a JSON object. Note that in case of multimaps only one key is used in the JSON object and the value depends on the internal order of the STL container.
 
 ```cpp
 std::map<std::string, int> c_map { {"one", 1}, {"two", 2}, {"three", 3} };
@@ -323,7 +323,7 @@ json j_original = R"({
 })"_json;
 
 // access members with a JSON pointer (RFC 6901)
-j_original["/baz/2"_json_pointer];
+j_original["/baz/1"_json_pointer];
 // "two"
 
 // a JSON patch (RFC 6902)
@@ -390,7 +390,7 @@ Though it's 2016 already, the support for C++11 is still a bit sparse. Currently
 
 - GCC 4.9 - 6.0 (and possibly later)
 - Clang 3.4 - 3.9 (and possibly later)
-- Microsoft Visual C++ 2015 / 14.0 (and possibly later)
+- Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 
 I would be happy to learn about other compilers/versions.
 
@@ -483,6 +483,8 @@ I deeply appreciate the help of the following people.
 - [Róbert Márki](https://github.com/robertmrk) added a fix to use move iterators and improved the integration via CMake.
 - [Chris Kitching](https://github.com/ChrisKitching) cleaned up the CMake files.
 - [Tom Needham](https://github.com/06needhamt) fixed a subtle bug with MSVC 2015 which was also proposed by [Michael K.](https://github.com/Epidal).
+- [Mário Feroldi](https://github.com/thelostt) fixed a small typo.
+- [duncanwerner](https://github.com/duncanwerner) found a really embarrassing performance regression in the 2.0.0 release.
 
 Thanks a lot for helping out!
 
@@ -502,7 +504,7 @@ $ make
 $ ./json_unit "*"
 
 ===============================================================================
-All tests passed (5568715 assertions in 32 test cases)
+All tests passed (5568718 assertions in 32 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

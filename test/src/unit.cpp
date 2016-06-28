@@ -10531,7 +10531,7 @@ TEST_CASE("README", "[hide]")
         })"_json;
 
         // access members with a JSON pointer (RFC 6901)
-        j_original["/baz/2"_json_pointer];
+        j_original["/baz/1"_json_pointer];
         // "two"
 
         // a JSON patch (RFC 6902)
@@ -14078,6 +14078,16 @@ TEST_CASE("regression tests")
 
         CHECK(j1a.dump() == "23.42");
         CHECK(j1b.dump() == "23.42");
+
+        // check if locale is properly reset
+        std::stringstream ss;
+        ss.imbue(std::locale(std::locale(), new CommaDecimalSeparator));
+        ss << 47.11;
+        CHECK(ss.str() == "47,11");
+        ss << j1a;
+        CHECK(ss.str() == "47,1123.42");
+        ss << 47.11;
+        CHECK(ss.str() == "47,1123.4247,11");
 
         CHECK(j2a.dump() == "23.42");
         //issue #230
