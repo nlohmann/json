@@ -14079,6 +14079,10 @@ TEST_CASE("regression tests")
         CHECK(j1a.dump() == "23.42");
         CHECK(j1b.dump() == "23.42");
 
+        std::stringstream ss;
+        ss << j1a;
+        CHECK(ss.str() == "23.42");
+
         CHECK(j2a.dump() == "23.42");
         //issue #230
         //CHECK(j2b.dump() == "23.42");

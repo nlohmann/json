@@ -2097,6 +2097,8 @@ class basic_json
     string_t dump(const int indent = -1) const
     {
         std::stringstream ss;
+        // fix locale problems
+        ss.imbue(std::locale(std::locale(), new DecimalSeparator));
 
         if (indent >= 0)
         {
@@ -5655,6 +5657,8 @@ class basic_json
 
         // reset width to 0 for subsequent calls to this stream
         o.width(0);
+        // fix locale problems
+        o.imbue(std::locale(std::locale(), new DecimalSeparator));
 
         // do the actual serialization
         j.dump(o, pretty_print, static_cast<unsigned int>(indentation));
@@ -6128,11 +6132,8 @@ class basic_json
                     // string->double->string or string->long
                     // double->string; to be safe, we read this value from
                     // std::numeric_limits<number_float_t>::digits10
-                    std::stringstream ss;
-                    ss.imbue(std::locale(std::locale(), new DecimalSeparator));  // fix locale problems
-                    ss << std::setprecision(std::numeric_limits<double>::digits10)
-                       << m_value.number_float;
-                    o << ss.str();
+                    o << std::setprecision(std::numeric_limits<double>::digits10)
+                      << m_value.number_float;
                 }
                 return;
             }
