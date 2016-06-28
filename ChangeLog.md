@@ -1,9 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased](https://github.com/nlohmann/json/tree/HEAD)
-
-[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.0...HEAD)
+## [v2.0.1](https://github.com/nlohmann/json/releases/tag/v2.0.1) (2016-06-28)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.0...v2.0.1)
 
 - dump\(\) performance degradation in v2 [\#272](https://github.com/nlohmann/json/issues/272)
 
