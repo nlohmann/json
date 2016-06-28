@@ -484,6 +484,7 @@ I deeply appreciate the help of the following people.
 - [Chris Kitching](https://github.com/ChrisKitching) cleaned up the CMake files.
 - [Tom Needham](https://github.com/06needhamt) fixed a subtle bug with MSVC 2015 which was also proposed by [Michael K.](https://github.com/Epidal).
 - [Mário Feroldi](https://github.com/thelostt) fixed a small typo.
+- [duncanwerner](https://github.com/duncanwerner) found a really embarrassing performance regression in the 2.0.0 release.
 
 Thanks a lot for helping out!
 
@@ -503,7 +504,7 @@ $ make
 $ ./json_unit "*"
 
 ===============================================================================
-All tests passed (5568715 assertions in 32 test cases)
+All tests passed (5568718 assertions in 32 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
