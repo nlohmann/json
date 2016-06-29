@@ -6606,13 +6606,13 @@ class basic_json
             {
                 case basic_json::value_t::object:
                 {
-                    ++m_it.object_iterator;
+                    std::advance(m_it.object_iterator, 1);
                     break;
                 }
 
                 case basic_json::value_t::array:
                 {
-                    ++m_it.array_iterator;
+                    std::advance(m_it.array_iterator, 1);
                     break;
                 }
 
@@ -6643,13 +6643,13 @@ class basic_json
             {
                 case basic_json::value_t::object:
                 {
-                    --m_it.object_iterator;
+                    std::advance(m_it.object_iterator, -1);
                     break;
                 }
 
                 case basic_json::value_t::array:
                 {
-                    --m_it.array_iterator;
+                    std::advance(m_it.array_iterator, -1);
                     break;
                 }
 
@@ -6761,7 +6761,7 @@ class basic_json
 
                 case basic_json::value_t::array:
                 {
-                    m_it.array_iterator += i;
+                    std::advance(m_it.array_iterator, i);
                     break;
                 }
 
@@ -6835,7 +6835,7 @@ class basic_json
 
                 case basic_json::value_t::array:
                 {
-                    return *(m_it.array_iterator + n);
+                    return *std::next(m_it.array_iterator, n);
                 }
 
                 case basic_json::value_t::null:
