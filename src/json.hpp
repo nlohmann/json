@@ -8773,8 +8773,7 @@ basic_json_parser_63:
         {
             return std::accumulate(reference_tokens.begin(),
                                    reference_tokens.end(), std::string{},
-                                   [](const std::string & a,
-                                      const std::string & b)
+                                   [](const std::string & a, const std::string & b)
             {
                 return a + "/" + escape(b);
             });
