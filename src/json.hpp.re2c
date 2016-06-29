@@ -59,8 +59,7 @@ SOFTWARE.
     #if CLANG_VERSION < 34000
         #error "unsupported Clang version - see https://github.com/nlohmann/json#supported-compilers"
     #endif
-#endif
-#if defined(__GNUC__)
+#elif defined(__GNUC__)
     #define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
     #if GCC_VERSION < 48000
         #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
