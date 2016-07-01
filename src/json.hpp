@@ -76,7 +76,13 @@ namespace
 {
 /*!
 @brief Helper to determine whether there's a key_type for T.
+
+Thus helper is used to tell associative containers apart from other containers
+such as sequence containers. For instance, `std::map` passes the test as it
+contains a `mapped_type`, whereas `std::vector` fails the test.
+
 @sa http://stackoverflow.com/a/7728728/266378
+@since version 1.0.0
 */
 template<typename T>
 struct has_mapped_type
@@ -90,11 +96,18 @@ struct has_mapped_type
 
 /*!
 @brief helper class to create locales with decimal point
+
+This struct is used a default locale during the JSON serialization. JSON
+requires the decimal point to be `.`, so this function overloads the
+`do_decimal_point()` function to return `.`. This function is called by
+float-to-string conversions to retrieve the decimal separator between integer
+and fractional parts.
+
 @sa https://github.com/nlohmann/json/issues/51#issuecomment-86869315
+@since version 2.0.0
 */
-class DecimalSeparator : public std::numpunct<char>
+struct DecimalSeparator : std::numpunct<char>
 {
-  protected:
     char do_decimal_point() const
     {
         return '.';
@@ -188,13 +201,8 @@ class basic_json
 {
   private:
     /// workaround type for MSVC
-    using basic_json_t = basic_json<ObjectType,
-          ArrayType,
-          StringType,
-          BooleanType,
-          NumberIntegerType,
-          NumberUnsignedType,
-          NumberFloatType,
+    using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
+          BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
           AllocatorType>;
 
   public:
@@ -207,6 +215,8 @@ class basic_json
     /////////////////////
 
     /// @name container types
+    /// The canonic container types to use @ref basic_json like any other STL
+    /// container.
     /// @{
 
     /// the type of elements in a basic_json container
@@ -256,6 +266,8 @@ class basic_json
     ///////////////////////////
 
     /// @name JSON value data types
+    /// The data types to store a JSON value. These types are derived from
+    /// the template arguments passed to class @ref basic_json.
     /// @{
 
     /*!
@@ -923,6 +935,8 @@ class basic_json
     //////////////////
 
     /// @name constructors and destructors
+    /// Constructors of class @ref basic_json, copy/move constructor, copy
+    /// assignment, static functions creating objects, and the destructor.
     /// @{
 
     /*!
@@ -2069,19 +2083,20 @@ class basic_json
     ///////////////////////
 
     /// @name object inspection
+    /// Functions to inspect the type of a JSON value.
     /// @{
 
     /*!
     @brief serialization
 
     Serialization function for JSON values. The function tries to mimic
-    Python's @p json.dumps() function, and currently supports its @p indent
+    Python's `json.dumps()` function, and currently supports its @a indent
     parameter.
 
-    @param[in] indent if indent is nonnegative, then array elements and object
+    @param[in] indent If indent is nonnegative, then array elements and object
     members will be pretty-printed with that indent level. An indent level of
-    0 will only insert newlines. -1 (the default) selects the most compact
-    representation
+    `0` will only insert newlines. `-1` (the default) selects the most compact
+    representation.
 
     @return string containing the serialization of the JSON value
 
@@ -2767,6 +2782,7 @@ class basic_json
   public:
 
     /// @name value access
+    /// Direct access to the stored value of a JSON value.
     /// @{
 
     /*!
@@ -2817,7 +2833,8 @@ class basic_json
     Explicit pointer access to the internally stored JSON value. No copies are
     made.
 
-    @warning The pointer becomes invalid if the underlying JSON object changes.
+    @warning The pointer becomes invalid if the underlying JSON object
+    changes.
 
     @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
     object_t, @ref string_t, @ref boolean_t, @ref number_integer_t,
@@ -2872,7 +2889,8 @@ class basic_json
 
     @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
     object_t, @ref string_t, @ref boolean_t, @ref number_integer_t,
-    @ref number_unsigned_t, or @ref number_float_t.
+    @ref number_unsigned_t, or @ref number_float_t. Enforced by a static
+    assertion.
 
     @return pointer to the internally stored JSON value if the requested
     pointer type @a PointerType fits to the JSON value; `nullptr` otherwise
@@ -2892,6 +2910,21 @@ class basic_json
                  , int>::type = 0>
     PointerType get_ptr() noexcept
     {
+        // get the type of the PointerType (remove pointer and const)
+        using pointee_t = typename std::remove_const<typename
+                          std::remove_pointer<typename
+                          std::remove_const<PointerType>::type>::type>::type;
+        // make sure the type matches the allowed types
+        static_assert(
+            std::is_same<object_t, pointee_t>::value
+            or std::is_same<array_t, pointee_t>::value
+            or std::is_same<string_t, pointee_t>::value
+            or std::is_same<boolean_t, pointee_t>::value
+            or std::is_same<number_integer_t, pointee_t>::value
+            or std::is_same<number_unsigned_t, pointee_t>::value
+            or std::is_same<number_float_t, pointee_t>::value
+            , "incompatible pointer type");
+
         // delegate the call to get_impl_ptr<>()
         return get_impl_ptr(static_cast<PointerType>(nullptr));
     }
@@ -2907,6 +2940,21 @@ class basic_json
                  , int>::type = 0>
     constexpr const PointerType get_ptr() const noexcept
     {
+        // get the type of the PointerType (remove pointer and const)
+        using pointee_t = typename std::remove_const<typename
+                          std::remove_pointer<typename
+                          std::remove_const<PointerType>::type>::type>::type;
+        // make sure the type matches the allowed types
+        static_assert(
+            std::is_same<object_t, pointee_t>::value
+            or std::is_same<array_t, pointee_t>::value
+            or std::is_same<string_t, pointee_t>::value
+            or std::is_same<boolean_t, pointee_t>::value
+            or std::is_same<number_integer_t, pointee_t>::value
+            or std::is_same<number_unsigned_t, pointee_t>::value
+            or std::is_same<number_float_t, pointee_t>::value
+            , "incompatible pointer type");
+
         // delegate the call to get_impl_ptr<>() const
         return get_impl_ptr(static_cast<const PointerType>(nullptr));
     }
@@ -2922,7 +2970,7 @@ class basic_json
 
     @tparam ReferenceType reference type; must be a reference to @ref array_t,
     @ref object_t, @ref string_t, @ref boolean_t, @ref number_integer_t, or
-    @ref number_float_t.
+    @ref number_float_t. Enforced by static assertion.
 
     @return reference to the internally stored JSON value if the requested
     reference type @a ReferenceType fits to the JSON value; throws
@@ -3012,6 +3060,7 @@ class basic_json
     ////////////////////
 
     /// @name element access
+    /// Access to the JSON value.
     /// @{
 
     /*!
@@ -8127,7 +8176,7 @@ basic_json_parser_63:
         }
 
         /// return string representation of last read token
-        string_t get_token() const
+        string_t get_token_string() const
         {
             assert(m_start != nullptr);
             return string_t(reinterpret_cast<typename string_t::const_pointer>(m_start),
@@ -8395,7 +8444,7 @@ basic_json_parser_63:
                 if (type != value_t::number_float)
                 {
                     // multiply last value by ten and add the new digit
-                    auto temp = value * 10 + *curptr - 0x30;
+                    auto temp = value * 10 + *curptr - '0';
 
                     // test for overflow
                     if (temp < value || temp > max)
@@ -8688,7 +8737,8 @@ basic_json_parser_63:
             if (t != last_token)
             {
                 std::string error_msg = "parse error - unexpected ";
-                error_msg += (last_token == lexer::token_type::parse_error ? ("'" +  m_lexer.get_token() + "'") :
+                error_msg += (last_token == lexer::token_type::parse_error ? ("'" +  m_lexer.get_token_string() +
+                              "'") :
                               lexer::token_type_name(last_token));
                 error_msg += "; expected " + lexer::token_type_name(t);
                 throw std::invalid_argument(error_msg);
@@ -8700,7 +8750,8 @@ basic_json_parser_63:
             if (t == last_token)
             {
                 std::string error_msg = "parse error - unexpected ";
-                error_msg += (last_token == lexer::token_type::parse_error ? ("'" +  m_lexer.get_token() + "'") :
+                error_msg += (last_token == lexer::token_type::parse_error ? ("'" +  m_lexer.get_token_string() +
+                              "'") :
                               lexer::token_type_name(last_token));
                 throw std::invalid_argument(error_msg);
             }
