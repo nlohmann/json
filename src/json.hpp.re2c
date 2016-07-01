@@ -5801,7 +5801,7 @@ class basic_json
     ///////////////////////////
 
     /// return the type as string
-    string_t type_name() const noexcept
+    std::string type_name() const
     {
         switch (m_type)
         {
