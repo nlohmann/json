@@ -46,6 +46,7 @@ SOFTWARE.
 #include <limits>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -1554,22 +1555,13 @@ class basic_json
                bool type_deduction = true,
                value_t manual_type = value_t::array)
     {
-        // the initializer list could describe an object
-        bool is_an_object = true;
-
         // check if each element is an array with two elements whose first
         // element is a string
-        for (const auto& element : init)
+        bool is_an_object = std::all_of(init.begin(), init.end(),
+                                        [](const basic_json & element)
         {
-            if (not element.is_array() or element.size() != 2
-                    or not element[0].is_string())
-            {
-                // we found an element that makes it impossible to use the
-                // initializer list as object
-                is_an_object = false;
-                break;
-            }
-        }
+            return element.is_array() and element.size() == 2 and element[0].is_string();
+        });
 
         // adjust type if type deduction is not wanted
         if (not type_deduction)
@@ -1595,10 +1587,10 @@ class basic_json
 
             assert(m_value.object != nullptr);
 
-            for (auto& element : init)
+            std::for_each(init.begin(), init.end(), [this](const basic_json & element)
             {
                 m_value.object->emplace(*(element[0].m_value.string), element[1]);
-            }
+            });
         }
         else
         {
@@ -3235,11 +3227,13 @@ class basic_json
         // operator[] only works for arrays
         if (is_array())
         {
-            // fill up array with null values until given idx is reached
+            // fill up array with null values if given idx is outside range
             assert(m_value.array != nullptr);
-            for (size_t i = m_value.array->size(); i <= idx; ++i)
+            if (idx >= m_value.array->size())
             {
-                m_value.array->push_back(basic_json());
+                m_value.array->insert(m_value.array->end(),
+                                      idx - m_value.array->size() + 1,
+                                      basic_json());
             }
 
             return m_value.array->operator[](idx);
@@ -5832,9 +5826,8 @@ class basic_json
     */
     static std::size_t extra_space(const string_t& s) noexcept
     {
-        std::size_t result = 0;
-
-        for (const auto& c : s)
+        return std::accumulate(s.begin(), s.end(), size_t{},
+                               [](size_t res, typename string_t::value_type c)
         {
             switch (c)
             {
@@ -5847,8 +5840,7 @@ class basic_json
                 case '\t':
                 {
                     // from c (1 byte) to \x (2 bytes)
-                    result += 1;
-                    break;
+                    return res + 1;
                 }
 
                 default:
@@ -5856,14 +5848,15 @@ class basic_json
                     if (c >= 0x00 and c <= 0x1f)
                     {
                         // from c (1 byte) to \uxxxx (6 bytes)
-                        result += 5;
+                        return res + 5;
                     }
-                    break;
+                    else
+                    {
+                        return res;
+                    }
                 }
             }
-        }
-
-        return result;
+        });
     }
 
     /*!
@@ -6612,13 +6605,13 @@ class basic_json
             {
                 case basic_json::value_t::object:
                 {
-                    ++m_it.object_iterator;
+                    std::advance(m_it.object_iterator, 1);
                     break;
                 }
 
                 case basic_json::value_t::array:
                 {
-                    ++m_it.array_iterator;
+                    std::advance(m_it.array_iterator, 1);
                     break;
                 }
 
@@ -6649,13 +6642,13 @@ class basic_json
             {
                 case basic_json::value_t::object:
                 {
-                    --m_it.object_iterator;
+                    std::advance(m_it.object_iterator, -1);
                     break;
                 }
 
                 case basic_json::value_t::array:
                 {
-                    --m_it.array_iterator;
+                    std::advance(m_it.array_iterator, -1);
                     break;
                 }
 
@@ -6767,7 +6760,7 @@ class basic_json
 
                 case basic_json::value_t::array:
                 {
-                    m_it.array_iterator += i;
+                    std::advance(m_it.array_iterator, i);
                     break;
                 }
 
@@ -6841,7 +6834,7 @@ class basic_json
 
                 case basic_json::value_t::array:
                 {
-                    return *(m_it.array_iterator + n);
+                    return *std::next(m_it.array_iterator, n);
                 }
 
                 case basic_json::value_t::null:
@@ -8087,14 +8080,12 @@ class basic_json
         */
         std::string to_string() const noexcept
         {
-            std::string result;
-
-            for (const auto& reference_token : reference_tokens)
+            return std::accumulate(reference_tokens.begin(),
+                                   reference_tokens.end(), std::string{},
+                                   [](const std::string & a, const std::string & b)
             {
-                result += "/" + escape(reference_token);
-            }
-
-            return result;
+                return a + "/" + escape(b);
+            });
         }
 
         /// @copydoc to_string()
