@@ -485,6 +485,7 @@ I deeply appreciate the help of the following people.
 - [Tom Needham](https://github.com/06needhamt) fixed a subtle bug with MSVC 2015 which was also proposed by [Michael K.](https://github.com/Epidal).
 - [Mário Feroldi](https://github.com/thelostt) fixed a small typo.
 - [duncanwerner](https://github.com/duncanwerner) found a really embarrassing performance regression in the 2.0.0 release.
+- [Damien](https://github.com/dtoma) fixed one of the last conversion warnings.
 
 Thanks a lot for helping out!
 
