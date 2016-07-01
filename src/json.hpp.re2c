@@ -6006,16 +6006,15 @@ class basic_json
                     {
                         // convert a number 0..15 to its hex representation
                         // (0..f)
-                        const auto hexify = [](const int v) -> char
+                        static const char hexify[16] =
                         {
-                            return (v < 10)
-                            ? ('0' + static_cast<char>(v))
-                            : ('a' + static_cast<char>((v - 10) & 0x1f));
+                            '0', '1', '2', '3', '4', '5', '6', '7',
+                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
                         };
 
                         // print character c as \uxxxx
                         for (const char m :
-                    { 'u', '0', '0', hexify(c >> 4), hexify(c & 0x0f)
+                    { 'u', '0', '0', hexify[c >> 4], hexify[c & 0x0f]
                         })
                         {
                             result[++pos] = m;
