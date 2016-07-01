@@ -8485,7 +8485,7 @@ basic_json_parser_63:
 
             // return parser result and replace it with null in case the
             // top-level value was discarded by the callback function
-            return result.is_discarded() ? basic_json() : result;
+            return result.is_discarded() ? basic_json() : std::move(result);
         }
 
       private:
