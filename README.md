@@ -344,8 +344,8 @@ json j_result = j_original.patch(j_patch);
 json::diff(j_result, j_original);
 // [
 //   { "op":" replace", "path": "/baz", "value": ["one", "two", "three"] },
-//   { "op":"remove","path":"/hello" },
-//   { "op":"add","path":"/foo","value":"bar" }
+//   { "op": "remove","path": "/hello" },
+//   { "op": "add", "path": "/foo", "value": "bar" }
 // ]
 ```
 
