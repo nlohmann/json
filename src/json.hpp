@@ -36,7 +36,6 @@ SOFTWARE.
 #include <ciso646>
 #include <cmath>
 #include <cstddef>
-#include <cstdio>
 #include <cstdint>
 #include <cstdlib>
 #include <functional>
