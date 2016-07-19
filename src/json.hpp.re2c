@@ -7393,76 +7393,81 @@ class basic_json
         */
         token_type scan() noexcept
         {
-            // pointer for backtracking information
-            m_marker = nullptr;
+            while (true)
+            {
+                // pointer for backtracking information
+                m_marker = nullptr;
 
-            // remember the begin of the token
-            m_start = m_cursor;
-            assert(m_start != nullptr);
+                // remember the begin of the token
+                m_start = m_cursor;
+                assert(m_start != nullptr);
 
-            /*!re2c
-                re2c:define:YYCTYPE   = lexer_char_t;
-                re2c:define:YYCURSOR  = m_cursor;
-                re2c:define:YYLIMIT   = m_limit;
-                re2c:define:YYMARKER  = m_marker;
-                re2c:define:YYFILL    = "yyfill(); // LCOV_EXCL_LINE";
-                re2c:yyfill:parameter = 0;
-                re2c:indent:string    = "    ";
-                re2c:indent:top       = 1;
-                re2c:labelprefix      = "basic_json_parser_";
+                /*!re2c
+                    re2c:define:YYCTYPE   = lexer_char_t;
+                    re2c:define:YYCURSOR  = m_cursor;
+                    re2c:define:YYLIMIT   = m_limit;
+                    re2c:define:YYMARKER  = m_marker;
+                    re2c:define:YYFILL    = "yyfill(); // LCOV_EXCL_LINE";
+                    re2c:yyfill:parameter = 0;
+                    re2c:indent:string    = "    ";
+                    re2c:indent:top       = 1;
+                    re2c:labelprefix      = "basic_json_parser_";
 
-                // ignore whitespace
-                ws = [ \t\n\r]+;
-                ws   { return scan(); }
+                    // ignore whitespace
+                    ws = [ \t\n\r]+;
+                    ws   { continue; }
 
-                // ignore byte-order-mark
-                bom = "\xEF\xBB\xBF";
-                bom   { return scan(); }
+                    // ignore byte-order-mark
+                    bom = "\xEF\xBB\xBF";
+                    bom   { continue; }
 
-                // structural characters
-                "[" { return token_type::begin_array; }
-                "]" { return token_type::end_array; }
-                "{" { return token_type::begin_object; }
-                "}" { return token_type::end_object; }
-                "," { return token_type::value_separator; }
-                ":" { return token_type::name_separator; }
+                    // structural characters
+                    "[" { last_token_type = token_type::begin_array; break; }
+                    "]" { last_token_type = token_type::end_array; break; }
+                    "{" { last_token_type = token_type::begin_object; break; }
+                    "}" { last_token_type = token_type::end_object; break; }
+                    "," { last_token_type = token_type::value_separator; break; }
+                    ":" { last_token_type = token_type::name_separator; break; }
 
-                // literal names
-                "null"  { return token_type::literal_null; }
-                "true"  { return token_type::literal_true; }
-                "false" { return token_type::literal_false; }
+                    // literal names
+                    "null"  { last_token_type = token_type::literal_null; break; }
+                    "true"  { last_token_type = token_type::literal_true; break; }
+                    "false" { last_token_type = token_type::literal_false; break; }
 
-                // number
-                decimal_point = [.];
-                digit         = [0-9];
-                digit_1_9     = [1-9];
-                e             = [eE];
-                minus         = [-];
-                plus          = [+];
-                zero          = [0];
-                exp           = e (minus|plus)? digit+;
-                frac          = decimal_point digit+;
-                int           = (zero|digit_1_9 digit*);
-                number        = minus? int frac? exp?;
-                number        { return token_type::value_number; }
+                    // number
+                    decimal_point = [.];
+                    digit         = [0-9];
+                    digit_1_9     = [1-9];
+                    e             = [eE];
+                    minus         = [-];
+                    plus          = [+];
+                    zero          = [0];
+                    exp           = e (minus|plus)? digit+;
+                    frac          = decimal_point digit+;
+                    int           = (zero|digit_1_9 digit*);
+                    number        = minus? int frac? exp?;
+                    number        { last_token_type = token_type::value_number; break; }
 
-                // string
-                quotation_mark  = ["];
-                escape          = [\\];
-                unescaped       = [^"\\\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F];
-                single_escaped  = ["\\/bfnrt];
-                unicode_escaped = [u][0-9a-fA-F]{4};
-                escaped         = escape (single_escaped | unicode_escaped);
-                char            = unescaped | escaped;
-                string          = quotation_mark char* quotation_mark;
-                string          { return token_type::value_string; }
+                    // string
+                    quotation_mark  = ["];
+                    escape          = [\\];
+                    unescaped       = [^"\\\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F];
+                    single_escaped  = ["\\/bfnrt];
+                    unicode_escaped = [u][0-9a-fA-F]{4};
+                    escaped         = escape (single_escaped | unicode_escaped);
+                    char            = unescaped | escaped;
+                    string          = quotation_mark char* quotation_mark;
+                    string          { last_token_type = token_type::value_string; break; }
 
-                // end of file
-                '\000'         { return token_type::end_of_input; }
+                    // end of file
+                    '\000'         { last_token_type = token_type::end_of_input; break; }
 
-                // anything else is an error
-                .              { return token_type::parse_error; }
-            */
+                    // anything else is an error
+                    .              { last_token_type = token_type::parse_error; break; }
+                */
+            }
+
+            return last_token_type;
         }
 
         /// append data from the stream to the internal buffer
@@ -7810,6 +7815,8 @@ class basic_json
         const lexer_char_t* m_cursor = nullptr;
         /// pointer to the end of the buffer
         const lexer_char_t* m_limit = nullptr;
+        /// the last token type
+        token_type last_token_type = token_type::end_of_input;
     };
 
     /*!
