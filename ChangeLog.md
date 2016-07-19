@@ -3,7 +3,24 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Unreleased](https://github.com/nlohmann/json/tree/HEAD)
 
-[Full Changelog](https://github.com/nlohmann/json/compare/v1.1.0...HEAD)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.1...HEAD)
+
+- Build error for std::int64 [\#282](https://github.com/nlohmann/json/issues/282)
+
+- hexify\(\) function emits conversion warning [\#270](https://github.com/nlohmann/json/issues/270)
+
+- let the makefile choose the correct sed [\#279](https://github.com/nlohmann/json/pull/279) ([murinicanor](https://github.com/murinicanor))
+- Update hexify to use array lookup instead of ternary \(\#270\) [\#275](https://github.com/nlohmann/json/pull/275) ([dtoma](https://github.com/dtoma))
+
+## [v2.0.1](https://github.com/nlohmann/json/releases/tag/v2.0.1) (2016-06-28)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.0...v2.0.1)
+
+- dump\(\) performance degradation in v2 [\#272](https://github.com/nlohmann/json/issues/272)
+
+- fixed a tiny typo [\#271](https://github.com/nlohmann/json/pull/271) ([thelostt](https://github.com/thelostt))
+
+## [v2.0.0](https://github.com/nlohmann/json/releases/tag/v2.0.0) (2016-06-23)
+[Full Changelog](https://github.com/nlohmann/json/compare/v1.1.0...v2.0.0)
 
 - concatenate objects [\#252](https://github.com/nlohmann/json/issues/252)
 - Unit test fails when doing a CMake out-of-tree build [\#241](https://github.com/nlohmann/json/issues/241)

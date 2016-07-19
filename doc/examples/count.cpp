@@ -12,7 +12,6 @@ int main()
     auto count_three = j_object.count("three");
 
     // print values
-    std::cout << std::boolalpha;
     std::cout << "number of elements with key \"two\": " << count_two << '\n';
     std::cout << "number of elements with key \"three\": " << count_three << '\n';
 }
