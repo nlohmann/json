@@ -1685,6 +1685,28 @@ TEST_CASE("object inspection")
             json j_discarded(json::value_t::discarded);
             CHECK(j_discarded.dump() == "<discarded>");
         }
+
+        SECTION("check that precision is reset after serialization")
+        {
+            // create stringstream and set precision
+            std::stringstream ss;
+            ss.precision(3);
+            ss << 3.141592653589793 << std::fixed;
+            CHECK(ss.str() == "3.14");
+
+            // reset stringstream
+            ss.str(std::string());
+
+            // use stringstream for JSON serialization
+            json j_number = 3.141592653589793;
+            ss << j_number;
+
+            // check that precision has been overridden during serialization
+            CHECK(ss.str() == "3.141592653589793");
+
+            // check that precision has been restored
+            CHECK(ss.precision() == 3);
+        }
     }
 
     SECTION("return the type of the object (explicit)")

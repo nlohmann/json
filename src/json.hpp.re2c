@@ -2120,6 +2120,12 @@ class basic_json
         // fix locale problems
         ss.imbue(std::locale(std::locale(), new DecimalSeparator));
 
+        // 6, 15 or 16 digits of precision allows round-trip IEEE 754
+        // string->float->string, string->double->string or string->long
+        // double->string; to be safe, we read this value from
+        // std::numeric_limits<number_float_t>::digits10
+        ss.precision(std::numeric_limits<double>::digits10);
+
         if (indent >= 0)
         {
             dump(ss, true, static_cast<unsigned int>(indent));
@@ -5693,6 +5699,10 @@ class basic_json
     `std::setw(4)` on @a o sets the indentation level to `4` and the
     serialization result is the same as calling `dump(4)`.
 
+    @note During serializaion, the locale and the precision of the output
+    stream @a o are changed. The original values are restored when the
+    function returns.
+
     @param[in,out] o  stream to serialize to
     @param[in] j  JSON value to serialize
 
@@ -5713,14 +5723,23 @@ class basic_json
 
         // reset width to 0 for subsequent calls to this stream
         o.width(0);
+
         // fix locale problems
-        auto old_locale = o.imbue(std::locale(std::locale(), new DecimalSeparator));
+        const auto old_locale = o.imbue(std::locale(std::locale(), new DecimalSeparator));
+        // set precision
+
+        // 6, 15 or 16 digits of precision allows round-trip IEEE 754
+        // string->float->string, string->double->string or string->long
+        // double->string; to be safe, we read this value from
+        // std::numeric_limits<number_float_t>::digits10
+        const auto old_preicison = o.precision(std::numeric_limits<double>::digits10);
 
         // do the actual serialization
         j.dump(o, pretty_print, static_cast<unsigned int>(indentation));
 
-        // reset locale
+        // reset locale and precision
         o.imbue(old_locale);
+        o.precision(old_preicison);
         return o;
     }
 
@@ -6184,13 +6203,7 @@ class basic_json
                 }
                 else
                 {
-                    // Otherwise 6, 15 or 16 digits of precision allows
-                    // round-trip IEEE 754 string->float->string,
-                    // string->double->string or string->long
-                    // double->string; to be safe, we read this value from
-                    // std::numeric_limits<number_float_t>::digits10
-                    o << std::setprecision(std::numeric_limits<double>::digits10)
-                      << m_value.number_float;
+                    o << m_value.number_float;
                 }
                 return;
             }
