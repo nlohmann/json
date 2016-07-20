@@ -10,6 +10,7 @@ all: json_unit
 # clean up
 clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM
+	rm -fr benchmarks/files/numbers/*.json
 	$(MAKE) clean -Cdoc
 
 
@@ -85,6 +86,7 @@ pretty:
 
 # benchmarks
 json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/cxxopts.hpp src/json.hpp
+	cd benchmarks/files/numbers ; python generate.py
 	$(CXX) -std=c++11 $(CXXFLAGS) -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
 	./json_benchmarks
 
