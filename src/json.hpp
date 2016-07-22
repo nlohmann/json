@@ -2806,16 +2806,23 @@ class basic_json
     type of the current JSON
     */
     template<typename ReferenceType, typename ThisType>
-    static constexpr ReferenceType get_ref_impl(ThisType& obj)
+    static ReferenceType get_ref_impl(ThisType& obj)
     {
         // helper type
         using PointerType = typename std::add_pointer<ReferenceType>::type;
 
         // delegate the call to get_ptr<>()
-        return obj.template get_ptr<PointerType>() != nullptr
-               ? *obj.template get_ptr<PointerType>()
-               : throw std::domain_error("incompatible ReferenceType for get_ref, actual type is " +
-                                         obj.type_name());
+        auto ptr = obj.template get_ptr<PointerType>();
+
+        if (ptr != nullptr)
+        {
+            return *ptr;
+        }
+        else
+        {
+            throw std::domain_error("incompatible ReferenceType for get_ref, actual type is " +
+                                    obj.type_name());
+        }
     }
 
   public:
@@ -3043,7 +3050,7 @@ class basic_json
                  std::is_reference<ReferenceType>::value
                  and std::is_const<typename std::remove_reference<ReferenceType>::type>::value
                  , int>::type = 0>
-    constexpr ReferenceType get_ref() const
+    ReferenceType get_ref() const
     {
         // delegate call to get_ref_impl
         return get_ref_impl<ReferenceType>(*this);
