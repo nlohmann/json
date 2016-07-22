@@ -7283,7 +7283,7 @@ class basic_json
         explicit lexer(const string_t& s) noexcept
             : m_stream(nullptr), m_buffer(s)
         {
-            m_content = reinterpret_cast<const lexer_char_t*>(s.c_str());
+            m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
             assert(m_content != nullptr);
             m_start = m_cursor = m_content;
             m_limit = m_content + s.size();

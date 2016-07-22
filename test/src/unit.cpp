@@ -10359,6 +10359,14 @@ TEST_CASE("parser class")
             CHECK(j_empty_array == json());
         }
     }
+
+    SECTION("copy constructor")
+    {
+        json::string_t* s = new json::string_t("[1,2,3,4]");
+        json::parser p(*s);
+        delete s;
+        CHECK(p.parse() == json({1, 2, 3, 4}));
+    }
 }
 
 TEST_CASE("README", "[hide]")
