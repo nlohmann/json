@@ -9716,6 +9716,39 @@ TEST_CASE("parser class")
                 CHECK_THROWS_WITH(json::parser("\"\b\"").parse(), "parse error - unexpected '\"'");
                 // improve code coverage
                 CHECK_THROWS_AS(json::parser("\uFF01").parse(), std::invalid_argument);
+                // unescaped control characters
+                CHECK_THROWS_AS(json::parser("\"\x00\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x01\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x02\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x03\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x04\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x05\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x06\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x07\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x08\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x09\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0a\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0b\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0c\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0d\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0e\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0f\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x10\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x11\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x12\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x13\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x14\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x15\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x16\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x17\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x18\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x19\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1a\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1b\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1c\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1d\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1e\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1f\"").parse(), std::invalid_argument);
             }
 
             SECTION("escaped")
