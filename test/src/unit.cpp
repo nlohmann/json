@@ -14331,6 +14331,19 @@ TEST_CASE("regression tests")
         // check roundtrip
         CHECK(doc.patch(json::diff(doc, expected)) == expected);
     }
+
+    SECTION("issue #283 - value() does not work with _json_pointer types")
+    {
+        json j =
+        {
+            {"object", {{"key1", 1}, {"key2", 2}}},
+        };
+
+        int at_integer = j.at("/object/key2"_json_pointer);
+        int val_integer = j.value("/object/key2"_json_pointer, 0);
+
+        CHECK(at_integer == val_integer);
+    }
 }
 
 // special test case to check if memory is leaked if constructor throws
