@@ -3633,8 +3633,8 @@ class basic_json
     /*!
     @brief access specified object element with default value
 
-    Returns either a copy of an object's element at the specified key @a key or
-    a given default value if no element with key @a key exists.
+    Returns either a copy of an object's element at the specified key @a key
+    or a given default value if no element with key @a key exists.
 
     The function is basically equivalent to executing
     @code {.cpp}
@@ -3706,11 +3706,58 @@ class basic_json
 
     /*!
     @brief overload for a default value of type const char*
-    @copydoc basic_json::value()
+    @copydoc basic_json::value(const typename object_t::key_type&, ValueType)
     */
     string_t value(const typename object_t::key_type& key, const char* default_value) const
     {
         return value(key, string_t(default_value));
+    }
+
+    /*!
+    @brief access specified object element via JSON Pointer with default value
+
+    @param[in] ptr  a JSON pointer to the element to access
+    @param[in] default_value  the value to return if @a ptr found no value
+
+    @tparam ValueType type compatible to JSON values, for instance `int` for
+    JSON integer numbers, `bool` for JSON booleans, or `std::vector` types for
+    JSON arrays. Note the type of the expected value at @a key and the default
+    value @a default_value must be compatible.
+
+    @since version 2.0.2
+    */
+    template <class ValueType, typename
+              std::enable_if<
+                  std::is_convertible<basic_json_t, ValueType>::value
+                  , int>::type = 0>
+    ValueType value(const json_pointer& ptr, ValueType default_value) const
+    {
+        // at only works for objects
+        if (is_object())
+        {
+            // if pointer resolves a value, return it or use default value
+            try
+            {
+                return ptr.get_checked(this);
+            }
+            catch (std::out_of_range&)
+            {
+                return default_value;
+            }
+        }
+        else
+        {
+            throw std::domain_error("cannot use value() with " + type_name());
+        }
+    }
+
+    /*!
+    @brief overload for a default value of type const char*
+    @copydoc basic_json::value(const json_pointer&, ValueType)
+    */
+    string_t value(const json_pointer& ptr, const char* default_value) const
+    {
+        return value(ptr, string_t(default_value));
     }
 
     /*!
