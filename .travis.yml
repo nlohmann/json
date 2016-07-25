@@ -168,3 +168,8 @@ script:
   - if [ `which valgrind` ]; then
     valgrind --error-exitcode=1 --leak-check=full ./json_unit ;
     fi
+  - if [ $os = "osx" ]; then
+    brew tap nlohmann/json ;
+    brew install nlohmann_json --HEAD ;
+    brew test nlohmann_json
+    fi
