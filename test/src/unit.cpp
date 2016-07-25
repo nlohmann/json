@@ -12299,7 +12299,7 @@ TEST_CASE("Unicode", "[hide]")
             return ss.str();
         };
 
-        // generate all UTF8 code points; in total, 1112064 code points are
+        // generate all UTF-8 code points; in total, 1112064 code points are
         // generated: 0x1FFFFF code points - 2047 invalid values between
         // 0xD800 and 0xDFFF.
         for (std::size_t cp = 0; cp <= 0x10FFFFu; ++cp)

@@ -7386,12 +7386,18 @@ class basic_json
         lexer operator=(const lexer&) = delete;
 
         /*!
-        @brief create a string from a Unicode code point
+        @brief create a string from one or two Unicode code points
+
+        There are two cases: (1) @a codepoint1 is in the Basic Multilingual
+        Plane (U+0000 through U+FFFF) and @a codepoint2 is 0, or (2)
+        @a codepoint1 and @a codepoint2 are a UTF-16 surrogate pair to
+        represent a code point above U+FFFF.
 
         @param[in] codepoint1  the code point (can be high surrogate)
         @param[in] codepoint2  the code point (can be low surrogate or 0)
 
-        @return string representation of the code point
+        @return string representation of the code point; the length of the
+        result string is between 1 and 4 characters.
 
         @throw std::out_of_range if code point is > 0x10ffff; example: `"code
         points above 0x10FFFF are invalid"`
@@ -7405,7 +7411,7 @@ class basic_json
         static string_t to_unicode(const std::size_t codepoint1,
                                    const std::size_t codepoint2 = 0)
         {
-            // calculate the codepoint from the given code points
+            // calculate the code point from the given code points
             std::size_t codepoint = codepoint1;
 
             // check if codepoint1 is a high surrogate
