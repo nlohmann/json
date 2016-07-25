@@ -12285,19 +12285,23 @@ TEST_CASE("RFC 7159 examples")
 
 TEST_CASE("Unicode", "[hide]")
 {
-    SECTION("full enumeration of Unicode codepoints")
+    SECTION("full enumeration of Unicode code points")
     {
-        // create a string from a codepoint
-        auto codepoint_to_unicode = [](std::size_t cp)
+        // create an escaped string from a code point
+        const auto codepoint_to_unicode = [](std::size_t cp)
         {
-            char* buffer = new char[10];
-            sprintf(buffer, "\\u%04lx", cp);
-            std::string result(buffer);
-            delete[] buffer;
-            return result;
+            // copd points are represented as a six-character sequence: a
+            // reverse solidus, followed by the lowercase letter u, followed
+            // by four hexadecimal digits that encode the character's code
+            // point
+            std::stringstream ss;
+            ss << "\\u" << std::setw(4) << std::setfill('0') << std::hex << cp;
+            return ss.str();
         };
 
-        // generate all codepoints
+        // generate all UTF8 code points; in total, 1112064 code points are
+        // generated: 0x1FFFFF code points - 2047 invalid values between
+        // 0xD800 and 0xDFFF.
         for (std::size_t cp = 0; cp <= 0x10FFFFu; ++cp)
         {
             // The Unicode standard permanently reserves these code point
@@ -12307,34 +12311,57 @@ TEST_CASE("Unicode", "[hide]")
             // no UTF forms, including UTF-16, can encode these code points.
             if (cp >= 0xD800u and cp <= 0xDFFFu)
             {
+                // if we would not skip these code points, we would get a
+                // "missing low surrogate" exception
                 continue;
             }
 
-            std::string res;
+            // string to store the code point as in \uxxxx format
+            std::string escaped_string;
+            // string to store the code point as unescaped character sequence
+            std::string unescaped_string;
 
             if (cp < 0x10000u)
             {
-                // codepoint can be represented with 16 bit
-                res += codepoint_to_unicode(cp);
+                // code points in the Basic Multilingual Plane can be
+                // represented with one \\uxxxx sequence
+                escaped_string = codepoint_to_unicode(cp);
+
+                // All Unicode characters may be placed within the quotation
+                // marks, except for the characters that must be escaped:
+                // quotation mark, reverse solidus, and the control characters
+                // (U+0000 through U+001F); we ignore these code points as
+                // they are checked with codepoint_to_unicode.
+                if (cp > 0x1f and cp != 0x22 and cp != 0x5c)
+                {
+                    unescaped_string = json::lexer::to_unicode(cp);
+                }
             }
             else
             {
-                // codepoint can be represented with a pair
-                res += codepoint_to_unicode(0xd800u + (((cp - 0x10000u) >> 10) & 0x3ffu));
-                res += codepoint_to_unicode(0xdc00u + ((cp - 0x10000u) & 0x3ffu));
+                // To escape an extended character that is not in the Basic
+                // Multilingual Plane, the character is represented as a
+                // 12-character sequence, encoding the UTF-16 surrogate pair
+                const auto codepoint1 = 0xd800u + (((cp - 0x10000u) >> 10) & 0x3ffu);
+                const auto codepoint2 = 0xdc00u + ((cp - 0x10000u) & 0x3ffu);
+                escaped_string = codepoint_to_unicode(codepoint1);
+                escaped_string += codepoint_to_unicode(codepoint2);
+                unescaped_string += json::lexer::to_unicode(codepoint1, codepoint2);
             }
 
-            try
-            {
-                json j1, j2;
-                CHECK_NOTHROW(j1 = json::parse("\"" + res + "\""));
-                CHECK_NOTHROW(j2 = json::parse(j1.dump()));
-                CHECK(j1 == j2);
-            }
-            catch (std::invalid_argument)
-            {
-                // we ignore parsing errors
-            }
+            // all other code points are valid and must not yield parse errors
+            CAPTURE(cp);
+            CAPTURE(escaped_string);
+            CAPTURE(unescaped_string);
+
+            json j1, j2, j3, j4;
+            CHECK_NOTHROW(j1 = json::parse("\"" + escaped_string + "\""));
+            CHECK_NOTHROW(j2 = json::parse(j1.dump()));
+            CHECK(j1 == j2);
+
+            CHECK_NOTHROW(j3 = json::parse("\"" + unescaped_string + "\""));
+            CHECK_NOTHROW(j4 = json::parse(j3.dump()));
+            CHECK(j3 == j4);
         }
     }
 
@@ -12347,6 +12374,8 @@ TEST_CASE("Unicode", "[hide]")
         CHECK_NOTHROW(j << f);
 
         // the array has 1112064 + 1 elemnts (a terminating "null" value)
+        // Note: 1112064 = 0x1FFFFF code points - 2047 invalid values between
+        // 0xD800 and 0xDFFF.
         CHECK(j.size() == 1112065);
 
         SECTION("check JSON Pointers")
