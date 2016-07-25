@@ -974,7 +974,9 @@ class basic_json
 
     @since version 1.0.0
     */
-    using parser_callback_t = std::function<bool(int depth, parse_event_t event, basic_json& parsed)>;
+    using parser_callback_t = std::function<bool(int depth,
+                              parse_event_t event,
+                              basic_json& parsed)>;
 
 
     //////////////////
@@ -3716,6 +3718,21 @@ class basic_json
     /*!
     @brief access specified object element via JSON Pointer with default value
 
+    Returns either a copy of an object's element at the specified key @a key
+    or a given default value if no element with key @a key exists.
+
+    The function is basically equivalent to executing
+    @code {.cpp}
+    try {
+        return at(ptr);
+    } catch(std::out_of_range) {
+        return default_value;
+    }
+    @endcode
+
+    @note Unlike @ref at(const json_pointer&), this function does not throw
+    if the given key @a key was not found.
+
     @param[in] ptr  a JSON pointer to the element to access
     @param[in] default_value  the value to return if @a ptr found no value
 
@@ -3723,6 +3740,19 @@ class basic_json
     JSON integer numbers, `bool` for JSON booleans, or `std::vector` types for
     JSON arrays. Note the type of the expected value at @a key and the default
     value @a default_value must be compatible.
+
+    @return copy of the element at key @a key or @a default_value if @a key
+    is not found
+
+    @throw std::domain_error if JSON is not an object; example: `"cannot use
+    value() with null"`
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be queried
+    with a default value.,basic_json__value_ptr}
+
+    @sa @ref operator[](const json_ptr&) for unchecked access by reference
 
     @since version 2.0.2
     */
