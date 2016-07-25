@@ -12300,7 +12300,7 @@ TEST_CASE("Unicode", "[hide]")
         };
 
         // generate all UTF-8 code points; in total, 1112064 code points are
-        // generated: 0x1FFFFF code points - 2047 invalid values between
+        // generated: 0x1FFFFF code points - 2048 invalid values between
         // 0xD800 and 0xDFFF.
         for (std::size_t cp = 0; cp <= 0x10FFFFu; ++cp)
         {
@@ -12374,7 +12374,7 @@ TEST_CASE("Unicode", "[hide]")
         CHECK_NOTHROW(j << f);
 
         // the array has 1112064 + 1 elemnts (a terminating "null" value)
-        // Note: 1112064 = 0x1FFFFF code points - 2047 invalid values between
+        // Note: 1112064 = 0x1FFFFF code points - 2048 invalid values between
         // 0xD800 and 0xDFFF.
         CHECK(j.size() == 1112065);
 
