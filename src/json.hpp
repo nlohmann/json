@@ -760,6 +760,7 @@ class basic_json
         };
         std::unique_ptr<T, decltype(deleter)> object(alloc.allocate(1), deleter);
         alloc.construct(object.get(), std::forward<Args>(args)...);
+        assert(object.get() != nullptr);
         return object.release();
     }
 
@@ -4597,6 +4598,10 @@ class basic_json
             object      | result of function `object_t::empty()`
             array       | result of function `array_t::empty()`
 
+    @note This function does not return whether a string stored as JSON value
+    is empty - it returns whether the JSON container itself is empty which is
+    false in the case of a string.
+
     @complexity Constant, as long as @ref array_t and @ref object_t satisfy
     the Container concept; that is, their `empty()` functions have constant
     complexity.
@@ -4626,12 +4631,14 @@ class basic_json
 
             case value_t::array:
             {
+                // delegate call to array_t::empty()
                 assert(m_value.array != nullptr);
                 return m_value.array->empty();
             }
 
             case value_t::object:
             {
+                // delegate call to object_t::empty()
                 assert(m_value.object != nullptr);
                 return m_value.object->empty();
             }
@@ -4659,6 +4666,10 @@ class basic_json
             number      | `1`
             object      | result of function object_t::size()
             array       | result of function array_t::size()
+
+    @note This function does not return the length of a string stored as JSON
+    value - it returns the number of elements in the JSON value which is 1 in
+    the case of a string.
 
     @complexity Constant, as long as @ref array_t and @ref object_t satisfy
     the Container concept; that is, their size() functions have constant
@@ -4690,12 +4701,14 @@ class basic_json
 
             case value_t::array:
             {
+                // delegate call to array_t::size()
                 assert(m_value.array != nullptr);
                 return m_value.array->size();
             }
 
             case value_t::object:
             {
+                // delegate call to object_t::size()
                 assert(m_value.object != nullptr);
                 return m_value.object->size();
             }
@@ -4750,12 +4763,14 @@ class basic_json
         {
             case value_t::array:
             {
+                // delegate call to array_t::max_size()
                 assert(m_value.array != nullptr);
                 return m_value.array->max_size();
             }
 
             case value_t::object:
             {
+                // delegate call to object_t::max_size()
                 assert(m_value.object != nullptr);
                 return m_value.object->max_size();
             }
@@ -5844,14 +5859,14 @@ class basic_json
         // string->float->string, string->double->string or string->long
         // double->string; to be safe, we read this value from
         // std::numeric_limits<number_float_t>::digits10
-        const auto old_preicison = o.precision(std::numeric_limits<double>::digits10);
+        const auto old_precision = o.precision(std::numeric_limits<double>::digits10);
 
         // do the actual serialization
         j.dump(o, pretty_print, static_cast<unsigned int>(indentation));
 
         // reset locale and precision
         o.imbue(old_locale);
-        o.precision(old_preicison);
+        o.precision(old_precision);
         return o;
     }
 
