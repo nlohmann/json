@@ -927,12 +927,13 @@ class basic_json
     @brief per-element parser callback type
 
     With a parser callback function, the result of parsing a JSON text can be
-    influenced. When passed to @ref parse(std::istream&, parser_callback_t) or
-    @ref parse(const string_t&, parser_callback_t), it is called on certain
-    events (passed as @ref parse_event_t via parameter @a event) with a set
-    recursion depth @a depth and context JSON value @a parsed. The return
-    value of the callback function is a boolean indicating whether the element
-    that emitted the callback shall be kept or not.
+    influenced. When passed to @ref parse(std::istream&, const
+    parser_callback_t) or @ref parse(const string_t&, const parser_callback_t),
+    it is called on certain events (passed as @ref parse_event_t via parameter
+    @a event) with a set recursion depth @a depth and context JSON value
+    @a parsed. The return value of the callback function is a boolean
+    indicating whether the element that emitted the callback shall be kept or
+    not.
 
     We distinguish six scenarios (determined by the event type) in which the
     callback function can be called. The following table describes the values
@@ -1913,7 +1914,7 @@ class basic_json
 
     @since version 2.0.0
     */
-    explicit basic_json(std::istream& i, parser_callback_t cb = nullptr)
+    explicit basic_json(std::istream& i, const parser_callback_t cb = nullptr)
     {
         *this = parser(i, cb).parse();
     }
@@ -5907,12 +5908,13 @@ class basic_json
     @liveexample{The example below demonstrates the `parse()` function with
     and without callback function.,parse__string__parser_callback_t}
 
-    @sa @ref parse(std::istream&, parser_callback_t) for a version that reads
-    from an input stream
+    @sa @ref parse(std::istream&, const parser_callback_t) for a version that
+    reads from an input stream
 
     @since version 1.0.0
     */
-    static basic_json parse(const string_t& s, parser_callback_t cb = nullptr)
+    static basic_json parse(const string_t& s,
+                            const parser_callback_t cb = nullptr)
     {
         return parser(s, cb).parse();
     }
@@ -5936,20 +5938,22 @@ class basic_json
     @liveexample{The example below demonstrates the `parse()` function with
     and without callback function.,parse__istream__parser_callback_t}
 
-    @sa @ref parse(const string_t&, parser_callback_t) for a version that
-    reads from a string
+    @sa @ref parse(const string_t&, const parser_callback_t) for a version
+    that reads from a string
 
     @since version 1.0.0
     */
-    static basic_json parse(std::istream& i, parser_callback_t cb = nullptr)
+    static basic_json parse(std::istream& i,
+                            const parser_callback_t cb = nullptr)
     {
         return parser(i, cb).parse();
     }
 
     /*!
-    @copydoc parse(std::istream&, parser_callback_t)
+    @copydoc parse(std::istream&, const parser_callback_t)
     */
-    static basic_json parse(std::istream&& i, parser_callback_t cb = nullptr)
+    static basic_json parse(std::istream&& i,
+                            const parser_callback_t cb = nullptr)
     {
         return parser(i, cb).parse();
     }
@@ -5972,8 +5976,8 @@ class basic_json
     @liveexample{The example below shows how a JSON value is constructed by
     reading a serialization from a stream.,operator_deserialize}
 
-    @sa parse(std::istream&, parser_callback_t) for a variant with a parser
-    callback function to filter values while parsing
+    @sa parse(std::istream&, const parser_callback_t) for a variant with a
+    parser callback function to filter values while parsing
 
     @since version 1.0.0
     */
@@ -6001,7 +6005,18 @@ class basic_json
     // convenience functions //
     ///////////////////////////
 
-    /// return the type as string
+    /*!
+    @brief return the type as string
+
+    Returns the type name as string to be used in error messages - usually to
+    indicate that a function was called on a wrong JSON type.
+
+    @return basically a string representation of a the @ref m_type member
+
+    @complexity Constant.
+
+    @since version 1.0.0
+    */
     std::string type_name() const
     {
         switch (m_type)
@@ -7487,7 +7502,7 @@ class basic_json
         }
 
         /// return name of values of type token_type (only used for errors)
-        static std::string token_type_name(token_type t)
+        static std::string token_type_name(const token_type t)
         {
             switch (t)
             {
@@ -8540,11 +8555,6 @@ basic_json_parser_63:
         the number
 
         @return the floating point number
-
-        @bug This function uses `std::strtof`, `std::strtod`, or `std::strtold`
-        which use the current C locale to determine which character is used as
-        decimal point character. This may yield to parse errors if the locale
-        does not used `.`.
         */
         long double str_to_float_t(long double* /* type */, char** endptr) const
         {
@@ -8725,7 +8735,7 @@ basic_json_parser_63:
     {
       public:
         /// constructor for strings
-        parser(const string_t& s, parser_callback_t cb = nullptr) noexcept
+        parser(const string_t& s, const parser_callback_t cb = nullptr) noexcept
             : callback(cb), m_lexer(s)
         {
             // read first token
@@ -8733,7 +8743,7 @@ basic_json_parser_63:
         }
 
         /// a parser reading from an input stream
-        parser(std::istream& _is, parser_callback_t cb = nullptr) noexcept
+        parser(std::istream& _is, const parser_callback_t cb = nullptr) noexcept
             : callback(cb), m_lexer(&_is)
         {
             // read first token
@@ -8981,7 +8991,7 @@ basic_json_parser_63:
         /// current level of recursion
         int depth = 0;
         /// callback function
-        parser_callback_t callback;
+        const parser_callback_t callback;
         /// the type of the last read token
         typename lexer::token_type last_token = lexer::token_type::uninitialized;
         /// the lexer
@@ -9420,7 +9430,7 @@ basic_json_parser_63:
 
         @param[in,out] s  the string to manipulate
         @param[in]     f  the substring to replace with @a t
-        @param[out]    t  the string to replace @a f
+        @param[in]     t  the string to replace @a f
 
         @return The string @a s where all occurrences of @a f are replaced
                 with @a t.
