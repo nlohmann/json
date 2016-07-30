@@ -8991,7 +8991,7 @@ basic_json_parser_63:
         /// current level of recursion
         int depth = 0;
         /// callback function
-        const parser_callback_t callback;
+        const parser_callback_t callback = nullptr;
         /// the type of the last read token
         typename lexer::token_type last_token = lexer::token_type::uninitialized;
         /// the lexer
