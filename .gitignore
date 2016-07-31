@@ -12,3 +12,5 @@ me.nlohmann.json.docset
 
 android
 doc/xml
+
+benchmarks/files/numbers/*.json

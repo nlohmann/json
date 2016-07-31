@@ -1,9 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased](https://github.com/nlohmann/json/tree/HEAD)
+## [v2.0.2](https://github.com/nlohmann/json/releases/tag/v2.0.2) (2016-07-30)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.1...v2.0.2)
 
-[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.1...HEAD)
+- value\(\) does not work with \_json\_pointer types [\#283](https://github.com/nlohmann/json/issues/283)
+- Easy serialization of classes [\#280](https://github.com/nlohmann/json/issues/280)
 
 - Build error for std::int64 [\#282](https://github.com/nlohmann/json/issues/282)
 

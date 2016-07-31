@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.1
+|  |  |__   |  |  | | | |  version 2.0.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -3768,123 +3768,254 @@ TEST_CASE("element access")
 
         SECTION("access specified element with default value")
         {
-            SECTION("access existing value")
+            SECTION("given a key")
             {
-                CHECK(j.value("integer", 2) == 1);
-                CHECK(j.value("integer", 1.0) == Approx(1));
-                CHECK(j.value("unsigned", 2) == 1u);
-                CHECK(j.value("unsigned", 1.0) == Approx(1u));
-                CHECK(j.value("null", json(1)) == json());
-                CHECK(j.value("boolean", false) == true);
-                CHECK(j.value("string", "bar") == "hello world");
-                CHECK(j.value("string", std::string("bar")) == "hello world");
-                CHECK(j.value("floating", 12.34) == Approx(42.23));
-                CHECK(j.value("floating", 12) == 42);
-                CHECK(j.value("object", json({{"foo", "bar"}})) == json(json::object()));
-                CHECK(j.value("array", json({10, 100})) == json({1, 2, 3}));
+                SECTION("access existing value")
+                {
+                    CHECK(j.value("integer", 2) == 1);
+                    CHECK(j.value("integer", 1.0) == Approx(1));
+                    CHECK(j.value("unsigned", 2) == 1u);
+                    CHECK(j.value("unsigned", 1.0) == Approx(1u));
+                    CHECK(j.value("null", json(1)) == json());
+                    CHECK(j.value("boolean", false) == true);
+                    CHECK(j.value("string", "bar") == "hello world");
+                    CHECK(j.value("string", std::string("bar")) == "hello world");
+                    CHECK(j.value("floating", 12.34) == Approx(42.23));
+                    CHECK(j.value("floating", 12) == 42);
+                    CHECK(j.value("object", json({{"foo", "bar"}})) == json(json::object()));
+                    CHECK(j.value("array", json({10, 100})) == json({1, 2, 3}));
 
-                CHECK(j_const.value("integer", 2) == 1);
-                CHECK(j_const.value("integer", 1.0) == Approx(1));
-                CHECK(j_const.value("unsigned", 2) == 1u);
-                CHECK(j_const.value("unsigned", 1.0) == Approx(1u));
-                CHECK(j_const.value("boolean", false) == true);
-                CHECK(j_const.value("string", "bar") == "hello world");
-                CHECK(j_const.value("string", std::string("bar")) == "hello world");
-                CHECK(j_const.value("floating", 12.34) == Approx(42.23));
-                CHECK(j_const.value("floating", 12) == 42);
-                CHECK(j_const.value("object", json({{"foo", "bar"}})) == json(json::object()));
-                CHECK(j_const.value("array", json({10, 100})) == json({1, 2, 3}));
+                    CHECK(j_const.value("integer", 2) == 1);
+                    CHECK(j_const.value("integer", 1.0) == Approx(1));
+                    CHECK(j_const.value("unsigned", 2) == 1u);
+                    CHECK(j_const.value("unsigned", 1.0) == Approx(1u));
+                    CHECK(j_const.value("boolean", false) == true);
+                    CHECK(j_const.value("string", "bar") == "hello world");
+                    CHECK(j_const.value("string", std::string("bar")) == "hello world");
+                    CHECK(j_const.value("floating", 12.34) == Approx(42.23));
+                    CHECK(j_const.value("floating", 12) == 42);
+                    CHECK(j_const.value("object", json({{"foo", "bar"}})) == json(json::object()));
+                    CHECK(j_const.value("array", json({10, 100})) == json({1, 2, 3}));
+                }
+
+                SECTION("access non-existing value")
+                {
+                    CHECK(j.value("_", 2) == 2);
+                    CHECK(j.value("_", 2u) == 2u);
+                    CHECK(j.value("_", false) == false);
+                    CHECK(j.value("_", "bar") == "bar");
+                    CHECK(j.value("_", 12.34) == Approx(12.34));
+                    CHECK(j.value("_", json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
+                    CHECK(j.value("_", json({10, 100})) == json({10, 100}));
+
+                    CHECK(j_const.value("_", 2) == 2);
+                    CHECK(j_const.value("_", 2u) == 2u);
+                    CHECK(j_const.value("_", false) == false);
+                    CHECK(j_const.value("_", "bar") == "bar");
+                    CHECK(j_const.value("_", 12.34) == Approx(12.34));
+                    CHECK(j_const.value("_", json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
+                    CHECK(j_const.value("_", json({10, 100})) == json({10, 100}));
+                }
+
+                SECTION("access on non-object type")
+                {
+                    SECTION("null")
+                    {
+                        json j_nonobject(json::value_t::null);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with null");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with null");
+                    }
+
+                    SECTION("boolean")
+                    {
+                        json j_nonobject(json::value_t::boolean);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with boolean");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with boolean");
+                    }
+
+                    SECTION("string")
+                    {
+                        json j_nonobject(json::value_t::string);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with string");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with string");
+                    }
+
+                    SECTION("array")
+                    {
+                        json j_nonobject(json::value_t::array);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with array");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with array");
+                    }
+
+                    SECTION("number (integer)")
+                    {
+                        json j_nonobject(json::value_t::number_integer);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with number");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with number");
+                    }
+
+                    SECTION("number (unsigned)")
+                    {
+                        json j_nonobject(json::value_t::number_unsigned);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with number");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with number");
+                    }
+
+                    SECTION("number (floating-point)")
+                    {
+                        json j_nonobject(json::value_t::number_float);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with number");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with number");
+                    }
+                }
             }
 
-            SECTION("access non-existing value")
+            SECTION("given a JSON pointer")
             {
-                CHECK(j.value("_", 2) == 2);
-                CHECK(j.value("_", 2u) == 2u);
-                CHECK(j.value("_", false) == false);
-                CHECK(j.value("_", "bar") == "bar");
-                CHECK(j.value("_", 12.34) == Approx(12.34));
-                CHECK(j.value("_", json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
-                CHECK(j.value("_", json({10, 100})) == json({10, 100}));
-
-                CHECK(j_const.value("_", 2) == 2);
-                CHECK(j_const.value("_", 2u) == 2u);
-                CHECK(j_const.value("_", false) == false);
-                CHECK(j_const.value("_", "bar") == "bar");
-                CHECK(j_const.value("_", 12.34) == Approx(12.34));
-                CHECK(j_const.value("_", json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
-                CHECK(j_const.value("_", json({10, 100})) == json({10, 100}));
-            }
-
-            SECTION("access on non-object type")
-            {
-                SECTION("null")
+                SECTION("access existing value")
                 {
-                    json j_nonobject(json::value_t::null);
-                    const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with null");
-                    CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with null");
+                    CHECK(j.value("/integer"_json_pointer, 2) == 1);
+                    CHECK(j.value("/integer"_json_pointer, 1.0) == Approx(1));
+                    CHECK(j.value("/unsigned"_json_pointer, 2) == 1u);
+                    CHECK(j.value("/unsigned"_json_pointer, 1.0) == Approx(1u));
+                    CHECK(j.value("/null"_json_pointer, json(1)) == json());
+                    CHECK(j.value("/boolean"_json_pointer, false) == true);
+                    CHECK(j.value("/string"_json_pointer, "bar") == "hello world");
+                    CHECK(j.value("/string"_json_pointer, std::string("bar")) == "hello world");
+                    CHECK(j.value("/floating"_json_pointer, 12.34) == Approx(42.23));
+                    CHECK(j.value("/floating"_json_pointer, 12) == 42);
+                    CHECK(j.value("/object"_json_pointer, json({{"foo", "bar"}})) == json(json::object()));
+                    CHECK(j.value("/array"_json_pointer, json({10, 100})) == json({1, 2, 3}));
+
+                    CHECK(j_const.value("/integer"_json_pointer, 2) == 1);
+                    CHECK(j_const.value("/integer"_json_pointer, 1.0) == Approx(1));
+                    CHECK(j_const.value("/unsigned"_json_pointer, 2) == 1u);
+                    CHECK(j_const.value("/unsigned"_json_pointer, 1.0) == Approx(1u));
+                    CHECK(j_const.value("/boolean"_json_pointer, false) == true);
+                    CHECK(j_const.value("/string"_json_pointer, "bar") == "hello world");
+                    CHECK(j_const.value("/string"_json_pointer, std::string("bar")) == "hello world");
+                    CHECK(j_const.value("/floating"_json_pointer, 12.34) == Approx(42.23));
+                    CHECK(j_const.value("/floating"_json_pointer, 12) == 42);
+                    CHECK(j_const.value("/object"_json_pointer, json({{"foo", "bar"}})) == json(json::object()));
+                    CHECK(j_const.value("/array"_json_pointer, json({10, 100})) == json({1, 2, 3}));
                 }
 
-                SECTION("boolean")
+                SECTION("access non-existing value")
                 {
-                    json j_nonobject(json::value_t::boolean);
-                    const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with boolean");
-                    CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with boolean");
+                    CHECK(j.value("/not/existing"_json_pointer, 2) == 2);
+                    CHECK(j.value("/not/existing"_json_pointer, 2u) == 2u);
+                    CHECK(j.value("/not/existing"_json_pointer, false) == false);
+                    CHECK(j.value("/not/existing"_json_pointer, "bar") == "bar");
+                    CHECK(j.value("/not/existing"_json_pointer, 12.34) == Approx(12.34));
+                    CHECK(j.value("/not/existing"_json_pointer, json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
+                    CHECK(j.value("/not/existing"_json_pointer, json({10, 100})) == json({10, 100}));
+
+                    CHECK(j_const.value("/not/existing"_json_pointer, 2) == 2);
+                    CHECK(j_const.value("/not/existing"_json_pointer, 2u) == 2u);
+                    CHECK(j_const.value("/not/existing"_json_pointer, false) == false);
+                    CHECK(j_const.value("/not/existing"_json_pointer, "bar") == "bar");
+                    CHECK(j_const.value("/not/existing"_json_pointer, 12.34) == Approx(12.34));
+                    CHECK(j_const.value("/not/existing"_json_pointer, json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
+                    CHECK(j_const.value("/not/existing"_json_pointer, json({10, 100})) == json({10, 100}));
                 }
 
-                SECTION("string")
+                SECTION("access on non-object type")
                 {
-                    json j_nonobject(json::value_t::string);
-                    const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with string");
-                    CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with string");
-                }
+                    SECTION("null")
+                    {
+                        json j_nonobject(json::value_t::null);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with null");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1), "cannot use value() with null");
+                    }
 
-                SECTION("array")
-                {
-                    json j_nonobject(json::value_t::array);
-                    const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with array");
-                    CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with array");
-                }
+                    SECTION("boolean")
+                    {
+                        json j_nonobject(json::value_t::boolean);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with boolean");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                          "cannot use value() with boolean");
+                    }
 
-                SECTION("number (integer)")
-                {
-                    json j_nonobject(json::value_t::number_integer);
-                    const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with number");
-                    CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with number");
-                }
+                    SECTION("string")
+                    {
+                        json j_nonobject(json::value_t::string);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with string");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                          "cannot use value() with string");
+                    }
 
-                SECTION("number (unsigned)")
-                {
-                    json j_nonobject(json::value_t::number_unsigned);
-                    const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with number");
-                    CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with number");
-                }
+                    SECTION("array")
+                    {
+                        json j_nonobject(json::value_t::array);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with array");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1), "cannot use value() with array");
+                    }
 
-                SECTION("number (floating-point)")
-                {
-                    json j_nonobject(json::value_t::number_float);
-                    const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with number");
-                    CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with number");
+                    SECTION("number (integer)")
+                    {
+                        json j_nonobject(json::value_t::number_integer);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with number");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                          "cannot use value() with number");
+                    }
+
+                    SECTION("number (unsigned)")
+                    {
+                        json j_nonobject(json::value_t::number_unsigned);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with number");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                          "cannot use value() with number");
+                    }
+
+                    SECTION("number (floating-point)")
+                    {
+                        json j_nonobject(json::value_t::number_float);
+                        const json j_nonobject_const(j_nonobject);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with number");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                          "cannot use value() with number");
+                    }
                 }
             }
         }
@@ -9716,6 +9847,39 @@ TEST_CASE("parser class")
                 CHECK_THROWS_WITH(json::parser("\"\b\"").parse(), "parse error - unexpected '\"'");
                 // improve code coverage
                 CHECK_THROWS_AS(json::parser("\uFF01").parse(), std::invalid_argument);
+                // unescaped control characters
+                CHECK_THROWS_AS(json::parser("\"\x00\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x01\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x02\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x03\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x04\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x05\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x06\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x07\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x08\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x09\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0a\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0b\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0c\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0d\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0e\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x0f\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x10\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x11\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x12\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x13\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x14\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x15\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x16\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x17\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x18\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x19\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1a\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1b\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1c\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1d\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1e\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x1f\"").parse(), std::invalid_argument);
             }
 
             SECTION("escaped")
@@ -10325,6 +10489,14 @@ TEST_CASE("parser class")
             });
             CHECK(j_empty_array == json());
         }
+    }
+
+    SECTION("copy constructor")
+    {
+        json::string_t* s = new json::string_t("[1,2,3,4]");
+        json::parser p(*s);
+        delete s;
+        CHECK(p.parse() == json({1, 2, 3, 4}));
     }
 }
 
@@ -12113,19 +12285,23 @@ TEST_CASE("RFC 7159 examples")
 
 TEST_CASE("Unicode", "[hide]")
 {
-    SECTION("full enumeration of Unicode codepoints")
+    SECTION("full enumeration of Unicode code points")
     {
-        // create a string from a codepoint
-        auto codepoint_to_unicode = [](std::size_t cp)
+        // create an escaped string from a code point
+        const auto codepoint_to_unicode = [](std::size_t cp)
         {
-            char* buffer = new char[10];
-            sprintf(buffer, "\\u%04lx", cp);
-            std::string result(buffer);
-            delete[] buffer;
-            return result;
+            // copd points are represented as a six-character sequence: a
+            // reverse solidus, followed by the lowercase letter u, followed
+            // by four hexadecimal digits that encode the character's code
+            // point
+            std::stringstream ss;
+            ss << "\\u" << std::setw(4) << std::setfill('0') << std::hex << cp;
+            return ss.str();
         };
 
-        // generate all codepoints
+        // generate all UTF-8 code points; in total, 1112064 code points are
+        // generated: 0x1FFFFF code points - 2048 invalid values between
+        // 0xD800 and 0xDFFF.
         for (std::size_t cp = 0; cp <= 0x10FFFFu; ++cp)
         {
             // The Unicode standard permanently reserves these code point
@@ -12135,34 +12311,57 @@ TEST_CASE("Unicode", "[hide]")
             // no UTF forms, including UTF-16, can encode these code points.
             if (cp >= 0xD800u and cp <= 0xDFFFu)
             {
+                // if we would not skip these code points, we would get a
+                // "missing low surrogate" exception
                 continue;
             }
 
-            std::string res;
+            // string to store the code point as in \uxxxx format
+            std::string escaped_string;
+            // string to store the code point as unescaped character sequence
+            std::string unescaped_string;
 
             if (cp < 0x10000u)
             {
-                // codepoint can be represented with 16 bit
-                res += codepoint_to_unicode(cp);
+                // code points in the Basic Multilingual Plane can be
+                // represented with one \\uxxxx sequence
+                escaped_string = codepoint_to_unicode(cp);
+
+                // All Unicode characters may be placed within the quotation
+                // marks, except for the characters that must be escaped:
+                // quotation mark, reverse solidus, and the control characters
+                // (U+0000 through U+001F); we ignore these code points as
+                // they are checked with codepoint_to_unicode.
+                if (cp > 0x1f and cp != 0x22 and cp != 0x5c)
+                {
+                    unescaped_string = json::lexer::to_unicode(cp);
+                }
             }
             else
             {
-                // codepoint can be represented with a pair
-                res += codepoint_to_unicode(0xd800u + (((cp - 0x10000u) >> 10) & 0x3ffu));
-                res += codepoint_to_unicode(0xdc00u + ((cp - 0x10000u) & 0x3ffu));
+                // To escape an extended character that is not in the Basic
+                // Multilingual Plane, the character is represented as a
+                // 12-character sequence, encoding the UTF-16 surrogate pair
+                const auto codepoint1 = 0xd800u + (((cp - 0x10000u) >> 10) & 0x3ffu);
+                const auto codepoint2 = 0xdc00u + ((cp - 0x10000u) & 0x3ffu);
+                escaped_string = codepoint_to_unicode(codepoint1);
+                escaped_string += codepoint_to_unicode(codepoint2);
+                unescaped_string += json::lexer::to_unicode(codepoint1, codepoint2);
             }
 
-            try
-            {
-                json j1, j2;
-                CHECK_NOTHROW(j1 = json::parse("\"" + res + "\""));
-                CHECK_NOTHROW(j2 = json::parse(j1.dump()));
-                CHECK(j1 == j2);
-            }
-            catch (std::invalid_argument)
-            {
-                // we ignore parsing errors
-            }
+            // all other code points are valid and must not yield parse errors
+            CAPTURE(cp);
+            CAPTURE(escaped_string);
+            CAPTURE(unescaped_string);
+
+            json j1, j2, j3, j4;
+            CHECK_NOTHROW(j1 = json::parse("\"" + escaped_string + "\""));
+            CHECK_NOTHROW(j2 = json::parse(j1.dump()));
+            CHECK(j1 == j2);
+
+            CHECK_NOTHROW(j3 = json::parse("\"" + unescaped_string + "\""));
+            CHECK_NOTHROW(j4 = json::parse(j3.dump()));
+            CHECK(j3 == j4);
         }
     }
 
@@ -12175,6 +12374,8 @@ TEST_CASE("Unicode", "[hide]")
         CHECK_NOTHROW(j << f);
 
         // the array has 1112064 + 1 elemnts (a terminating "null" value)
+        // Note: 1112064 = 0x1FFFFF code points - 2048 invalid values between
+        // 0xD800 and 0xDFFF.
         CHECK(j.size() == 1112065);
 
         SECTION("check JSON Pointers")
@@ -14158,6 +14359,19 @@ TEST_CASE("regression tests")
 
         // check roundtrip
         CHECK(doc.patch(json::diff(doc, expected)) == expected);
+    }
+
+    SECTION("issue #283 - value() does not work with _json_pointer types")
+    {
+        json j =
+        {
+            {"object", {{"key1", 1}, {"key2", 2}}},
+        };
+
+        int at_integer = j.at("/object/key2"_json_pointer);
+        int val_integer = j.value("/object/key2"_json_pointer, 0);
+
+        CHECK(at_integer == val_integer);
     }
 }
 

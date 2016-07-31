@@ -44,6 +44,36 @@ BENCHMARK("parse twitter.json", [](benchpress::context* ctx)
     }
 })
 
+BENCHMARK("parse numbers/floats.json", [](benchpress::context* ctx)
+{
+    for (size_t i = 0; i < ctx->num_iterations(); ++i)
+    {
+        std::ifstream input_file("benchmarks/files/numbers/floats.json");
+        nlohmann::json j;
+        j << input_file;
+    }
+})
+
+BENCHMARK("parse numbers/signed_ints.json", [](benchpress::context* ctx)
+{
+    for (size_t i = 0; i < ctx->num_iterations(); ++i)
+    {
+        std::ifstream input_file("benchmarks/files/numbers/signed_ints.json");
+        nlohmann::json j;
+        j << input_file;
+    }
+})
+
+BENCHMARK("parse numbers/unsigned_ints.json", [](benchpress::context* ctx)
+{
+    for (size_t i = 0; i < ctx->num_iterations(); ++i)
+    {
+        std::ifstream input_file("benchmarks/files/numbers/unsigned_ints.json");
+        nlohmann::json j;
+        j << input_file;
+    }
+})
+
 BENCHMARK("dump jeopardy.json", [](benchpress::context* ctx)
 {
     std::ifstream input_file("benchmarks/files/jeopardy/jeopardy.json");
