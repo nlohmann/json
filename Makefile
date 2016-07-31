@@ -10,6 +10,7 @@ all: json_unit
 # clean up
 clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM
+	rm -fr benchmarks/files/numbers/*.json
 	$(MAKE) clean -Cdoc
 
 
@@ -85,6 +86,7 @@ pretty:
 
 # benchmarks
 json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/cxxopts.hpp src/json.hpp
+	cd benchmarks/files/numbers ; python generate.py
 	$(CXX) -std=c++11 $(CXXFLAGS) -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
 	./json_benchmarks
 
@@ -93,7 +95,9 @@ json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/
 # changelog
 ##########################################################################
 
+NEXT_VERSION ?= "unreleased"
+
 ChangeLog.md:
-	github_changelog_generator -o ChangeLog.md --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s
+	github_changelog_generator -o ChangeLog.md --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s --future-release $(NEXT_VERSION)
 	gsed -i 's|https://github.com/nlohmann/json/releases/tag/HEAD|https://github.com/nlohmann/json/tree/HEAD|' ChangeLog.md
 	gsed -i '2i All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).' ChangeLog.md
