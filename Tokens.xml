@@ -526,8 +526,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a9857835334d38ba04959e348ca6be208.html</Path>
-    <Anchor>a9857835334d38ba04959e348ca6be208</Anchor>
+    <Path>classnlohmann_1_1basic__json_a110eb65dc3e34e1cebd28a10218c6d70.html</Path>
+    <Anchor>a110eb65dc3e34e1cebd28a10218c6d70</Anchor>
     <Abstract>construct a JSON value given an input stream </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1020,6 +1020,30 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_af071057ebab57744f5767eb369e99d42.html</Path>
     <Anchor>af071057ebab57744f5767eb369e99d42</Anchor>
+    <Abstract>overload for a default value of type const char* </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>value</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a5010579996e483e46bec5653d983914d.html</Path>
+    <Anchor>a5010579996e483e46bec5653d983914d</Anchor>
+    <Abstract>access specified object element via JSON Pointer with default value </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>value</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a24bc3d5e7fc671a406cc521fbe58e736.html</Path>
+    <Anchor>a24bc3d5e7fc671a406cc521fbe58e736</Anchor>
     <Abstract>overload for a default value of type const char* </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1738,8 +1762,8 @@
       <Type>clm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a35303ad045a06c2a79dc28ac29652e86.html</Path>
-    <Anchor>a35303ad045a06c2a79dc28ac29652e86</Anchor>
+    <Path>classnlohmann_1_1basic__json_a9a0b1acc13023170d2295eb512289080.html</Path>
+    <Anchor>a9a0b1acc13023170d2295eb512289080</Anchor>
     <Abstract>deserialize from string </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1750,8 +1774,8 @@
       <Type>clm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a13c4d2ab4e7ee2f92be785a7b12948ff.html</Path>
-    <Anchor>a13c4d2ab4e7ee2f92be785a7b12948ff</Anchor>
+    <Path>classnlohmann_1_1basic__json_a0923f9749409345a21f8cb15ee95fc0d.html</Path>
+    <Anchor>a0923f9749409345a21f8cb15ee95fc0d</Anchor>
     <Abstract>deserialize from stream </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1762,8 +1786,8 @@
       <Type>clm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ab81f2801779e6cb9d98770860af2e39a.html</Path>
-    <Anchor>ab81f2801779e6cb9d98770860af2e39a</Anchor>
+    <Path>classnlohmann_1_1basic__json_a959bc32fc72a76cd5a1bd6977926f787.html</Path>
+    <Anchor>a959bc32fc72a76cd5a1bd6977926f787</Anchor>
     <Abstract>deserialize from stream </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2017,7 +2041,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html</Path>
     <Anchor>a231b02148577b69a154b2ce2c87a5522a5763da164f8659d94a56e29df64b4bcc</Anchor>
-    <Abstract>number value (integer) </Abstract>
+    <Abstract>number value (signed integer) </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -2182,7 +2206,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html</Path>
     <Anchor>a231b02148577b69a154b2ce2c87a5522a5763da164f8659d94a56e29df64b4bcc</Anchor>
-    <Abstract>number value (integer) </Abstract>
+    <Abstract>number value (signed integer) </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -2316,7 +2340,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_1_1const__iterator_a6b950c6bc081ac1ec1540ec05ceb2603.html</Path>
     <Anchor>a6b950c6bc081ac1ec1540ec05ceb2603</Anchor>
-    <Abstract>copy constructor given a nonconst iterator </Abstract>
+    <Abstract>copy constructor given a non-const iterator </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -2927,7 +2951,7 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_1_1const__iterator_a6b950c6bc081ac1ec1540ec05ceb2603.html</Path>
     <Anchor>a6b950c6bc081ac1ec1540ec05ceb2603</Anchor>
-    <Abstract>copy constructor given a nonconst iterator </Abstract>
+    <Abstract>copy constructor given a non-const iterator </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
