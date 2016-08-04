@@ -27,6 +27,9 @@ json_unit:
 check: json_unit
 	test/json_unit "*"
 
+check-fast: json_unit
+	test/json_unit
+
 
 ##########################################################################
 # documentation tests
