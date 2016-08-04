@@ -3,6 +3,7 @@ set(JSON_UNITTEST_TARGET_NAME "json_unit")
 add_executable(${JSON_UNITTEST_TARGET_NAME}
     "src/catch.hpp"
     "src/unit.cpp"
+    "src/unit-runner.cpp"
 )
 
 set_target_properties(${JSON_UNITTEST_TARGET_NAME} PROPERTIES

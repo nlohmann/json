@@ -12,18 +12,20 @@ clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM
 	rm -fr benchmarks/files/numbers/*.json
 	$(MAKE) clean -Cdoc
+	$(MAKE) clean -Ctest
 
 
 ##########################################################################
 # unit tests
 ##########################################################################
 
-# additional flags
-FLAGS = -Wall -Wextra -pedantic -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overflow=5 -Wswitch -Wundef -Wno-unused -Wnon-virtual-dtor -Wreorder -Wdeprecated -Wfloat-equal
+# build unit tests
+json_unit:
+	@$(MAKE) -C test
 
-# build unit tests (TODO: Does this want its own makefile?)
-json_unit: test/src/unit.cpp src/json.hpp test/src/catch.hpp
-	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src -I test $< $(LDFLAGS) -o $@
+# run unit tests
+check: json_unit
+	test/json_unit "*"
 
 
 ##########################################################################

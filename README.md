@@ -501,8 +501,7 @@ Thanks a lot for helping out!
 To compile and run the tests, you need to execute
 
 ```sh
-$ make
-$ ./json_unit "*"
+$ make check
 
 ===============================================================================
 All tests passed (8905012 assertions in 32 test cases)

@@ -26,12 +26,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
 #include <array>
 #include <deque>
 #include <forward_list>
+#include <fstream>
 #include <list>
 #include <map>
 #include <set>

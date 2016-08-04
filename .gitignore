@@ -14,3 +14,5 @@ android
 doc/xml
 
 benchmarks/files/numbers/*.json
+
+*.o

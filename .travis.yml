@@ -24,7 +24,7 @@ matrix:
         - make clean
         - touch src/json.hpp
         - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11 -lstdc++" CXX=$COMPILER
-        - ./json_unit "*"
+        - test/json_unit "*"
         - coveralls --exclude test/src/catch.hpp --exclude test/src/unit.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
         - bash <(curl -s https://codecov.io/bash)
       env: COMPILER=g++-4.9
@@ -164,9 +164,9 @@ script:
   - uname -a
   - $COMPILER --version
   - make CXX=$COMPILER
-  - ./json_unit "*"
+  - test/json_unit "*"
   - if [ `which valgrind` ]; then
-    valgrind --error-exitcode=1 --leak-check=full ./json_unit ;
+    valgrind --error-exitcode=1 --leak-check=full test/json_unit ;
     fi
   - if [ `which brew` ]; then
     brew update ;
