@@ -25,7 +25,7 @@ matrix:
         - touch src/json.hpp
         - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11 -lstdc++" CXX=$COMPILER
         - test/json_unit "*"
-        - coveralls --exclude test/src/catch.hpp --exclude test/src/unit*.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
+        - coveralls --exclude test/src/catch.hpp --exclude test/src/unit-algorithms.cpp --exclude test/src/unit-allocator.cpp --exclude test/src/unit-capacity.cpp --exclude test/src/unit-class_const_iterator.cpp --exclude test/src/unit-class_iterator.cpp --exclude test/src/unit-class_lexer.cpp --exclude test/src/unit-class_parser.cpp --exclude test/src/unit-comparison.cpp --exclude test/src/unit-concepts.cpp --exclude test/src/unit-constructor1.cpp --exclude test/src/unit-constructor2.cpp --exclude test/src/unit-convenience.cpp --exclude test/src/unit-conversions.cpp --exclude test/src/unit-deserialization.cpp --exclude test/src/unit-element_access1.cpp --exclude test/src/unit-element_access2.cpp --exclude test/src/unit-inspection.cpp --exclude test/src/unit-iterator_wrapper.cpp --exclude test/src/unit-iterators1.cpp --exclude test/src/unit-iterators2.cpp --exclude test/src/unit-json_patch.cpp --exclude test/src/unit-json_pointer.cpp --exclude test/src/unit-modifiers.cpp --exclude test/src/unit-pointer_access.cpp --exclude test/src/unit-readme.cpp --exclude test/src/unit-reference_access.cpp --exclude test/src/unit-regression.cpp --exclude test/src/unit-serialization.cpp --exclude test/src/unit-testsuites.cpp --exclude test/src/unit-unicode.cpp --include src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
       env: COMPILER=g++-4.9
 
     - os: linux
