@@ -48,8 +48,8 @@ TEST_CASE("capacity")
 
             SECTION("definition of empty")
             {
-                CHECK(j.begin() != j.end());
-                CHECK(j_const.begin() != j_const.end());
+                CHECK(j.empty() == (j.begin() == j.end()));
+                CHECK(j_const.empty() == (j_const.begin() == j_const.end()));
             }
         }
 
@@ -66,8 +66,8 @@ TEST_CASE("capacity")
 
             SECTION("definition of empty")
             {
-                CHECK(j.begin() != j.end());
-                CHECK(j_const.begin() != j_const.end());
+                CHECK(j.empty() == (j.begin() == j.end()));
+                CHECK(j_const.empty() == (j_const.begin() == j_const.end()));
             }
         }
 
@@ -86,8 +86,8 @@ TEST_CASE("capacity")
 
                 SECTION("definition of empty")
                 {
-                    CHECK(j.begin() == j.end());
-                    CHECK(j_const.begin() == j_const.end());
+                    CHECK(j.empty() == (j.begin() == j.end()));
+                    CHECK(j_const.empty() == (j_const.begin() == j_const.end()));
                 }
             }
 
@@ -104,8 +104,8 @@ TEST_CASE("capacity")
 
                 SECTION("definition of empty")
                 {
-                    CHECK(j.begin() != j.end());
-                    CHECK(j_const.begin() != j_const.end());
+                    CHECK(j.empty() == (j.begin() == j.end()));
+                    CHECK(j_const.empty() == (j_const.begin() == j_const.end()));
                 }
             }
         }
@@ -125,8 +125,8 @@ TEST_CASE("capacity")
 
                 SECTION("definition of empty")
                 {
-                    CHECK(j.begin() == j.end());
-                    CHECK(j_const.begin() == j_const.end());
+                    CHECK(j.empty() == (j.begin() == j.end()));
+                    CHECK(j_const.empty() == (j_const.begin() == j_const.end()));
                 }
             }
 
@@ -143,8 +143,8 @@ TEST_CASE("capacity")
 
                 SECTION("definition of empty")
                 {
-                    CHECK(j.begin() != j.end());
-                    CHECK(j_const.begin() != j_const.end());
+                    CHECK(j.empty() == (j.begin() == j.end()));
+                    CHECK(j_const.empty() == (j_const.begin() == j_const.end()));
                 }
             }
         }
@@ -162,8 +162,8 @@ TEST_CASE("capacity")
 
             SECTION("definition of empty")
             {
-                CHECK(j.begin() != j.end());
-                CHECK(j_const.begin() != j_const.end());
+                CHECK(j.empty() == (j.begin() == j.end()));
+                CHECK(j_const.empty() == (j_const.begin() == j_const.end()));
             }
         }
 
@@ -180,8 +180,8 @@ TEST_CASE("capacity")
 
             SECTION("definition of empty")
             {
-                CHECK(j.begin() != j.end());
-                CHECK(j_const.begin() != j_const.end());
+                CHECK(j.empty() == (j.begin() == j.end()));
+                CHECK(j_const.empty() == (j_const.begin() == j_const.end()));
             }
         }
 
@@ -198,8 +198,8 @@ TEST_CASE("capacity")
 
             SECTION("definition of empty")
             {
-                CHECK(j.begin() != j.end());
-                CHECK(j_const.begin() != j_const.end());
+                CHECK(j.empty() == (j.begin() == j.end()));
+                CHECK(j_const.empty() == (j_const.begin() == j_const.end()));
             }
         }
 
@@ -216,8 +216,8 @@ TEST_CASE("capacity")
 
             SECTION("definition of empty")
             {
-                CHECK(j.begin() == j.end());
-                CHECK(j_const.begin() == j_const.end());
+                CHECK(j.empty() == (j.begin() == j.end()));
+                CHECK(j_const.empty() == (j_const.begin() == j_const.end()));
             }
         }
     }
