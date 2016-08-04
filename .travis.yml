@@ -61,7 +61,7 @@ matrix:
         - LLVM_ARCHIVE_PATH=$HOME/clang+llvm.tar.xz
         - COMPILER=clang++
         - CPPFLAGS="-I $HOME/clang-$LLVM_VERSION/include/c++/v1"
-        - CXXFLAGS=-lc++
+        - LDFLAGS=-lc++
         - PATH=$HOME/clang-$LLVM_VERSION/bin:$PATH
         - LD_LIBRARY_PATH=$HOME/clang-$LLVM_VERSION/lib:$LD_LIBRARY_PATH
       before_install:
