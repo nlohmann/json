@@ -26,6 +26,7 @@ matrix:
         - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11 -lstdc++" CXX=$COMPILER
         - test/json_unit "*"
         - coveralls --build-root test --exclude src/catch.hpp --exclude src/unit-algorithms.cpp --exclude src/unit-allocator.cpp --exclude src/unit-capacity.cpp --exclude src/unit-class_const_iterator.cpp --exclude src/unit-class_iterator.cpp --exclude src/unit-class_lexer.cpp --exclude src/unit-class_parser.cpp --exclude src/unit-comparison.cpp --exclude src/unit-concepts.cpp --exclude src/unit-constructor1.cpp --exclude src/unit-constructor2.cpp --exclude src/unit-convenience.cpp --exclude src/unit-conversions.cpp --exclude src/unit-deserialization.cpp --exclude src/unit-element_access1.cpp --exclude src/unit-element_access2.cpp --exclude src/unit-inspection.cpp --exclude src/unit-iterator_wrapper.cpp --exclude src/unit-iterators1.cpp --exclude src/unit-iterators2.cpp --exclude src/unit-json_patch.cpp --exclude src/unit-json_pointer.cpp --exclude src/unit-modifiers.cpp --exclude src/unit-pointer_access.cpp --exclude src/unit-readme.cpp --exclude src/unit-reference_access.cpp --exclude src/unit-regression.cpp --exclude src/unit-serialization.cpp --exclude src/unit-testsuites.cpp --exclude src/unit-unicode.cpp --include ../src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
+      env: COMPILER=g++-4.9  
 
     - os: linux
       compiler: gcc
