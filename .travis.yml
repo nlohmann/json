@@ -5,8 +5,8 @@
 # C++ project
 language: cpp
 
-# container-based build
-sudo: false
+dist: trusty
+sudo: required
 
 
 ################
