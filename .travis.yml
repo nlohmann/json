@@ -16,11 +16,33 @@ sudo: false
 matrix:
   include:
 
+  # OSX / Clang
+
+  - os: osx
+    osx_image: beta-xcode6.1
+
+  - os: osx
+    osx_image: beta-xcode6.2
+
+  - os: osx
+    osx_image: beta-xcode6.3
+
+  - os: osx
+    osx_image: xcode6.4
+
+  - os: osx
+    osx_image: xcode7.1
+
+  - os: osx
+    osx_image: xcode7.2
+
   - os: osx
     osx_image: xcode7.3
 
   - os: osx
     osx_image: xcode8
+
+  # Linux / GCC
 
   - os: linux
     compiler: gcc
@@ -37,6 +59,14 @@ matrix:
       apt:
         sources: ['ubuntu-toolchain-r-test']
         packages: g++-5
+
+  - os: linux
+    compiler: gcc
+    env: COMPILER=g++-6
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: g++-6
 
 
 #####################
@@ -56,6 +86,12 @@ script:
   - $CXX --version
   - make
   - test/json_unit
+  - if [ `which brew` ]; then
+    brew update ;
+    brew tap nlohmann/json ;
+    brew install nlohmann_json --HEAD ;
+    brew test nlohmann_json ;
+    fi
 
 #language: cpp
 #
