@@ -8,11 +8,6 @@ language: cpp
 # container-based build
 sudo: false
 
-addons:
-  apt:
-    sources: &sources
-      - ubuntu-toolchain-r-test
-
 
 ################
 # build matrix #
@@ -32,6 +27,7 @@ matrix:
     env: COMPILER=g++-4.9
     addons:
       apt:
+        sources: ['ubuntu-toolchain-r-test']
         packages: g++-4.9
 
   - os: linux
@@ -39,6 +35,7 @@ matrix:
     env: COMPILER=g++-5
     addons:
       apt:
+        sources: ['ubuntu-toolchain-r-test']
         packages: g++-5
 
 
