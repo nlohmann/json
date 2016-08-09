@@ -10,8 +10,6 @@ sudo: false
 
 addons:
   apt:
-    packages:
-      - g++-6
     sources: &sources
       - ubuntu-toolchain-r-test
 
@@ -30,8 +28,18 @@ matrix:
     osx_image: xcode8
 
   - os: linux
-    env: COMPILER=g++-6
     compiler: gcc
+    env: COMPILER=g++-4.9
+    addons:
+      apt:
+        packages: g++-4.9
+
+  - os: linux
+    compiler: gcc
+    env: COMPILER=g++-5
+    addons:
+      apt:
+        packages: g++-5
 
 
 #####################
@@ -47,6 +55,8 @@ install:
 ################
 
 script:
+  - uname -a
+  - $CXX --version
   - make
   - test/json_unit
 
