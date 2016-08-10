@@ -51,4 +51,4 @@ json_unit: $(OBJECTS) ../src/json.hpp src/catch.hpp
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:
-	rm -fr json_unit $(OBJECTS)
+	rm -fr json_unit $(OBJECTS) $(SOURCES:.cpp=.gcno) $(SOURCES:.cpp=.gcda)
