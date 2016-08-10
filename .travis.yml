@@ -71,18 +71,6 @@ matrix:
   # Linux / Clang
 
   - os: linux
-    env: LLVM_VERSION=3.5.0
-    compiler: clang
-
-  - os: linux
-    env: LLVM_VERSION=3.5.1
-    compiler: clang
-
-  - os: linux
-    env: LLVM_VERSION=3.5.2
-    compiler: clang
-
-  - os: linux
     env: LLVM_VERSION=3.6.0
     compiler: clang
 
@@ -116,9 +104,6 @@ matrix:
 
 cache:
   directories:
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.5.2
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.5.1
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.5.0
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.2
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.1
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.0
@@ -151,7 +136,7 @@ install:
          (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
          (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
        fi
-       export CXXFLAGS="-stdlib=libc++ -nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
+       export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
        export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
        export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
        export PATH="${LLVM_DIR}/clang/bin:${PATH}"
@@ -166,6 +151,9 @@ script:
   - $CXX --version
   - make
   - test/json_unit
+  - if [ `which valgrind` ]; then
+    valgrind --error-exitcode=1 --leak-check=full test/json_unit ;
+    fi
   - if [ `which brew` ]; then
     brew update ;
     brew tap nlohmann/json ;
