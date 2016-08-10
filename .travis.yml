@@ -39,7 +39,7 @@ matrix:
         sources: ['ubuntu-toolchain-r-test']
         packages: [g++-4.9, valgrind]
     after_success:
-      - valgrind --error-exitcode=1 --leak-check=full test/json_unit -s "*" ;
+      - valgrind --error-exitcode=1 --leak-check=full test/json_unit
 
   # Coveralls
 
