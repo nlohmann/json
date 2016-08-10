@@ -416,7 +416,13 @@ The following compilers are currently used in continuous integration at [Travis]
 | GCC 4.9.3       | Ubuntu 14.04.4 LTS           | g++-4.9 (Ubuntu 4.9.3-8ubuntu2~14.04) 4.9.3 |
 | GCC 5.3.0       | Ubuntu 14.04.4 LTS           | g++-5 (Ubuntu 5.3.0-3ubuntu1~14.04) 5.3.0 20151204 |
 | GCC 6.1.1       | Ubuntu 14.04.4 LTS           | g++-6 (Ubuntu 6.1.1-3ubuntu11~14.04.1) 6.1.1 20160511 |
+| Clang 3.6.0     | Ubuntu 14.04.4 LTS           | clang version 3.6.0 (tags/RELEASE_360/final) |
+| Clang 3.6.1     | Ubuntu 14.04.4 LTS           | clang version 3.6.1 (tags/RELEASE_361/final) |
+| Clang 3.6.2     | Ubuntu 14.04.4 LTS           | clang version 3.6.2 (tags/RELEASE_362/final) |
+| Clang 3.7.0     | Ubuntu 14.04.4 LTS           | clang version 3.7.0 (tags/RELEASE_370/final) |
+| Clang 3.7.1     | Ubuntu 14.04.4 LTS           | clang version 3.7.1 (tags/RELEASE_371/final) |
 | Clang 3.8.0     | Ubuntu 14.04.4 LTS           | clang version 3.8.0 (tags/RELEASE_380/final) |
+| Clang 3.8.1     | Ubuntu 14.04.4 LTS           | clang version 3.8.1 (tags/RELEASE_381/final) |
 | Clang Xcode 6.1 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn) |
 | Clang Xcode 6.2 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.57) (based on LLVM 3.5svn) |
 | Clang Xcode 6.3 | Darwin Kernel Version 14.3.0 (OSX 10.10.3) | Apple LLVM version 6.1.0 (clang-602.0.49) (based on LLVM 3.6.0svn) |
@@ -504,7 +510,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905012 assertions in 32 test cases)
+All tests passed (8905099 assertions in 32 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
