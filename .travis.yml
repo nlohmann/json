@@ -66,7 +66,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'rubygems']
+        packages: ['g++-4.9', 'ruby']
     before_script:
       - wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
       - tar xf lcov_1.11.orig.tar.gz
