@@ -68,14 +68,49 @@ matrix:
         sources: ['ubuntu-toolchain-r-test']
         packages: g++-6
 
+  # Linux / Clang
+
+    - os: linux
+      env: LLVM_VERSION=3.8.0
+      compiler: clang
 
 #####################
 # installation step #
 #####################
 
+cache:
+  directories:
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.0
+
+
 install:
+  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
+  - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
+
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
 
+  - |
+     if [[ "${LLVM_VERSION}" != "" ]]; then
+       LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
+       if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
+         LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
+         LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
+         LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
+         CLANG_URL="http://llvm.org/releases/${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
+         mkdir -p ${LLVM_DIR} ${LLVM_DIR}/build ${LLVM_DIR}/projects/libcxx ${LLVM_DIR}/projects/libcxxabi ${LLVM_DIR}/clang
+         travis_retry wget --quiet -O - ${LLVM_URL}      | tar --strip-components=1 -xJ -C ${LLVM_DIR}
+         travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
+         travis_retry wget --quiet -O - ${LIBCXXABI_URL} | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxxabi
+         travis_retry wget --quiet -O - ${CLANG_URL}     | tar --strip-components=1 -xJ -C ${LLVM_DIR}/clang
+         (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=clang++)
+         (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
+         (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
+       fi
+       export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
+       export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
+       export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
+       export PATH="${LLVM_DIR}/clang/bin:${PATH}"
+     fi
 
 ################
 # build script #
