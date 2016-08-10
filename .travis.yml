@@ -71,7 +71,43 @@ matrix:
   # Linux / Clang
 
   - os: linux
+    env: LLVM_VERSION=3.5.0
+    compiler: clang
+
+  - os: linux
+    env: LLVM_VERSION=3.5.1
+    compiler: clang
+
+  - os: linux
+    env: LLVM_VERSION=3.5.2
+    compiler: clang
+
+  - os: linux
+    env: LLVM_VERSION=3.6.0
+    compiler: clang
+
+  - os: linux
+    env: LLVM_VERSION=3.6.1
+    compiler: clang
+
+  - os: linux
+    env: LLVM_VERSION=3.6.2
+    compiler: clang
+
+  - os: linux
+    env: LLVM_VERSION=3.7.0
+    compiler: clang
+
+  - os: linux
+    env: LLVM_VERSION=3.7.1
+    compiler: clang
+
+  - os: linux
     env: LLVM_VERSION=3.8.0
+    compiler: clang
+
+  - os: linux
+    env: LLVM_VERSION=3.8.1
     compiler: clang
 
 #####################
@@ -80,7 +116,16 @@ matrix:
 
 cache:
   directories:
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.5.2
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.5.1
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.5.0
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.2
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.1
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.0
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.7.0
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.7.1
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.0
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.1
 
 
 install:
