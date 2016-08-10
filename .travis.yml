@@ -9,6 +9,17 @@ dist: trusty
 sudo: required
 
 
+###################
+# global settings #
+###################
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "m89SSgE+ASLO38rSKx7MTXK3n5NkP9bIx95jwY71YEiuFzib30PDJ/DifKnXxBjvy/AkCGztErQRk/8ZCvq+4HXozU2knEGnL/RUitvlwbhzfh2D4lmS3BvWBGS3N3NewoPBrRmdcvnT0xjOGXxtZaJ3P74TkB9GBnlz/HmKORA="
+
+
 ################
 # build matrix #
 ################
@@ -98,10 +109,66 @@ matrix:
     env: LLVM_VERSION=3.8.1
     compiler: clang
 
+  # Valgrind
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-4.9
+      - SPECIAL=valgrind
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: [g++-4.9, valgrind]
+    after_success:
+      - valgrind --error-exitcode=1 --leak-check=full test/json_unit * ;
+
+  # Coveralls
+
+  - os: linux
+    compiler: gcc
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-4.9', 'valgrind', 'python-pip', 'python-yaml']
+    before_script:
+      - pip install --user git+git://github.com/eddyxu/cpp-coveralls.git
+    after_success:
+      - make clean
+      - touch src/json.hpp
+      - make json_unit CXXFLAGS="-fprofile-arcs -ftest-coverage -std=c++11 -lstdc++" CXX=$COMPILER
+      - test/json_unit "*"
+      - coveralls --build-root test --exclude src/catch.hpp --exclude src/unit-algorithms.cpp --exclude src/unit-allocator.cpp --exclude src/unit-capacity.cpp --exclude src/unit-class_const_iterator.cpp --exclude src/unit-class_iterator.cpp --exclude src/unit-class_lexer.cpp --exclude src/unit-class_parser.cpp --exclude src/unit-comparison.cpp --exclude src/unit-concepts.cpp --exclude src/unit-constructor1.cpp --exclude src/unit-constructor2.cpp --exclude src/unit-convenience.cpp --exclude src/unit-conversions.cpp --exclude src/unit-deserialization.cpp --exclude src/unit-element_access1.cpp --exclude src/unit-element_access2.cpp --exclude src/unit-inspection.cpp --exclude src/unit-iterator_wrapper.cpp --exclude src/unit-iterators1.cpp --exclude src/unit-iterators2.cpp --exclude src/unit-json_patch.cpp --exclude src/unit-json_pointer.cpp --exclude src/unit-modifiers.cpp --exclude src/unit-pointer_access.cpp --exclude src/unit-readme.cpp --exclude src/unit-reference_access.cpp --exclude src/unit-regression.cpp --exclude src/unit-serialization.cpp --exclude src/unit-testsuites.cpp --exclude src/unit-unicode.cpp --include ../src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
+    env:
+      - COMPILER=g++-4.9
+      - SPECIAL=coveralls
+
+  # Coverity (only for branch coverity_scan)
+
+  - os: linux
+    compiler: gcc
+    before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-5', 'valgrind']
+      coverity_scan:
+        project:
+          name: "nlohmann/json"
+          description: "Build submitted via Travis CI"
+        notification_email: niels.lohmann@gmail.com
+        build_command_prepend: "make clean ; sudo cp $(which g++-5) $(which g++)"
+        build_command: "make"
+        branch_pattern: coverity_scan
+    env:
+      - COMPILER=g++-5
+      - SPECIAL=coverity
+
 #####################
 # installation step #
 #####################
 
+# set directories to cache
 cache:
   directories:
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.2
@@ -114,11 +181,14 @@ cache:
 
 
 install:
+  # create deps dir if not existing
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
   - mkdir -p ${DEPS_DIR}
 
+  # make sure CXX is correctly set
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
 
+  # install LLVM/clang when LLVM_VERSION is set
   - |
      if [[ "${LLVM_VERSION}" != "" ]]; then
        LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
@@ -147,13 +217,17 @@ install:
 ################
 
 script:
+  # show OS/compiler version
   - uname -a
   - $CXX --version
+
+  # compile
   - make
-  - test/json_unit
-  - if [ `which valgrind` ]; then
-    valgrind --error-exitcode=1 --leak-check=full test/json_unit ;
-    fi
+
+  # execute unit tests
+  - test/json_unit "*"
+
+  # check if homebrew works (only checks develop branch)
   - if [ `which brew` ]; then
     brew update ;
     brew tap nlohmann/json ;
