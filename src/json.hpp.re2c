@@ -1843,7 +1843,8 @@ class basic_json
     @param[in] first begin of the range to copy from (included)
     @param[in] last end of the range to copy from (excluded)
 
-    @pre Iterators @a first and @a last must be initialized.
+    @pre Iterators @a first and @a last must be initialized. **This
+         precondition is enforced with an assertion.**
 
     @throw std::domain_error if iterators are not compatible; that is, do not
     belong to the same JSON value; example: `"iterators are not compatible"`
@@ -3509,6 +3510,9 @@ class basic_json
 
     @return const reference to the element at key @a key
 
+    @pre The element with key @a key must exist. **This precondition is
+         enforced with an assertion.**
+
     @throw std::domain_error if JSON is not an object; example: `"cannot use
     operator[] with null"`
 
@@ -3666,6 +3670,9 @@ class basic_json
     @param[in] key  key of the element to access
 
     @return const reference to the element at key @a key
+
+    @pre The element with key @a key must exist. **This precondition is
+         enforced with an assertion.**
 
     @throw std::domain_error if JSON is not an object; example: `"cannot use
     operator[] with null"`
@@ -3867,7 +3874,8 @@ class basic_json
     @complexity Constant.
 
     @pre The JSON value must not be `null` (would throw `std::out_of_range`)
-    or an empty array or object (undefined behavior, guarded by assertions).
+    or an empty array or object (undefined behavior, **guarded by
+    assertions**).
     @post The JSON value remains unchanged.
 
     @throw std::out_of_range when called on `null` value
@@ -3909,7 +3917,8 @@ class basic_json
     @complexity Constant.
 
     @pre The JSON value must not be `null` (would throw `std::out_of_range`)
-    or an empty array or object (undefined behavior, guarded by assertions).
+    or an empty array or object (undefined behavior, **guarded by
+    assertions**).
     @post The JSON value remains unchanged.
 
     @throw std::out_of_range when called on `null` value.
@@ -6592,8 +6601,8 @@ class basic_json
     @note An iterator is called *initialized* when a pointer to a JSON value
           has been set (e.g., by a constructor or a copy assignment). If the
           iterator is default-constructed, it is *uninitialized* and most
-          methods are undefined. The library uses assertions to detect calls
-          on uninitialized iterators.
+          methods are undefined. **The library uses assertions to detect calls
+          on uninitialized iterators.**
 
     @requirement The class satisfies the following concept requirements:
     - [RandomAccessIterator](http://en.cppreference.com/w/cpp/concept/RandomAccessIterator):
