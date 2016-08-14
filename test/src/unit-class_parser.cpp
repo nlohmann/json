@@ -32,6 +32,8 @@ SOFTWARE.
 #include "json.hpp"
 using nlohmann::json;
 
+#include <valarray>
+
 TEST_CASE("parser class")
 {
     SECTION("parse")
@@ -743,11 +745,47 @@ TEST_CASE("parser class")
         }
     }
 
-    SECTION("copy constructor")
+    SECTION("constructing from continguous containers")
     {
-        json::string_t* s = new json::string_t("[1,2,3,4]");
-        json::parser p(*s);
-        delete s;
-        CHECK(p.parse() == json({1, 2, 3, 4}));
+        SECTION("from std::vector")
+        {
+            std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
+            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
+
+        SECTION("from std::array")
+        {
+            std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
+            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
+
+        SECTION("from array")
+        {
+            uint8_t v[] = {'t', 'r', 'u', 'e'};
+            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
+
+        SECTION("from char literal")
+        {
+            CHECK (json::parser("true").parse() == json(true));
+        }
+
+        SECTION("from std::string")
+        {
+            std::string v = {'t', 'r', 'u', 'e'};
+            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
+
+        SECTION("from std::initializer_list")
+        {
+            std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
+
+        SECTION("from std::valarray")
+        {
+            std::valarray<uint8_t> v = {'t', 'r', 'u', 'e'};
+            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
     }
 }

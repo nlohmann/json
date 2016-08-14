@@ -3960,7 +3960,7 @@ class basic_json
     @return Iterator following the last removed element. If the iterator @a
     pos refers to the last element, the `end()` iterator is returned.
 
-    @tparam InteratorType an @ref iterator or @ref const_iterator
+    @tparam IteratorType an @ref iterator or @ref const_iterator
 
     @post Invalidates iterators and references at or after the point of the
     erase, including the `end()` iterator.
@@ -3982,7 +3982,7 @@ class basic_json
     @liveexample{The example shows the result of `erase()` for different JSON
     types.,erase__IteratorType}
 
-    @sa @ref erase(InteratorType, InteratorType) -- removes the elements in
+    @sa @ref erase(IteratorType, IteratorType) -- removes the elements in
     the given range
     @sa @ref erase(const typename object_t::key_type&) -- removes the element
     from an object at the given key
@@ -3991,13 +3991,13 @@ class basic_json
 
     @since version 1.0.0
     */
-    template <class InteratorType, typename
+    template <class IteratorType, typename
               std::enable_if<
-                  std::is_same<InteratorType, typename basic_json_t::iterator>::value or
-                  std::is_same<InteratorType, typename basic_json_t::const_iterator>::value
+                  std::is_same<IteratorType, typename basic_json_t::iterator>::value or
+                  std::is_same<IteratorType, typename basic_json_t::const_iterator>::value
                   , int>::type
               = 0>
-    InteratorType erase(InteratorType pos)
+    IteratorType erase(IteratorType pos)
     {
         // make sure iterator fits the current value
         if (this != pos.m_object)
@@ -4005,7 +4005,7 @@ class basic_json
             throw std::domain_error("iterator does not fit current value");
         }
 
-        InteratorType result = end();
+        IteratorType result = end();
 
         switch (m_type)
         {
@@ -4069,7 +4069,7 @@ class basic_json
     @return Iterator following the last removed element. If the iterator @a
     second refers to the last element, the `end()` iterator is returned.
 
-    @tparam InteratorType an @ref iterator or @ref const_iterator
+    @tparam IteratorType an @ref iterator or @ref const_iterator
 
     @post Invalidates iterators and references at or after the point of the
     erase, including the `end()` iterator.
@@ -4092,7 +4092,7 @@ class basic_json
     @liveexample{The example shows the result of `erase()` for different JSON
     types.,erase__IteratorType_IteratorType}
 
-    @sa @ref erase(InteratorType) -- removes the element at a given position
+    @sa @ref erase(IteratorType) -- removes the element at a given position
     @sa @ref erase(const typename object_t::key_type&) -- removes the element
     from an object at the given key
     @sa @ref erase(const size_type) -- removes the element from an array at
@@ -4100,13 +4100,13 @@ class basic_json
 
     @since version 1.0.0
     */
-    template <class InteratorType, typename
+    template <class IteratorType, typename
               std::enable_if<
-                  std::is_same<InteratorType, typename basic_json_t::iterator>::value or
-                  std::is_same<InteratorType, typename basic_json_t::const_iterator>::value
+                  std::is_same<IteratorType, typename basic_json_t::iterator>::value or
+                  std::is_same<IteratorType, typename basic_json_t::const_iterator>::value
                   , int>::type
               = 0>
-    InteratorType erase(InteratorType first, InteratorType last)
+    IteratorType erase(IteratorType first, IteratorType last)
     {
         // make sure iterator fits the current value
         if (this != first.m_object or this != last.m_object)
@@ -4114,7 +4114,7 @@ class basic_json
             throw std::domain_error("iterators do not fit current value");
         }
 
-        InteratorType result = end();
+        IteratorType result = end();
 
         switch (m_type)
         {
@@ -4186,8 +4186,8 @@ class basic_json
 
     @liveexample{The example shows the effect of `erase()`.,erase__key_type}
 
-    @sa @ref erase(InteratorType) -- removes the element at a given position
-    @sa @ref erase(InteratorType, InteratorType) -- removes the elements in
+    @sa @ref erase(IteratorType) -- removes the element at a given position
+    @sa @ref erase(IteratorType, IteratorType) -- removes the elements in
     the given range
     @sa @ref erase(const size_type) -- removes the element from an array at
     the given index
@@ -4223,8 +4223,8 @@ class basic_json
 
     @liveexample{The example shows the effect of `erase()`.,erase__size_type}
 
-    @sa @ref erase(InteratorType) -- removes the element at a given position
-    @sa @ref erase(InteratorType, InteratorType) -- removes the elements in
+    @sa @ref erase(IteratorType) -- removes the element at a given position
+    @sa @ref erase(IteratorType, IteratorType) -- removes the elements in
     the given range
     @sa @ref erase(const typename object_t::key_type&) -- removes the element
     from an object at the given key
@@ -7504,21 +7504,29 @@ class basic_json
         /// the char type to use in the lexer
         using lexer_char_t = unsigned char;
 
-        /// constructor with a given buffer
-        explicit lexer(const string_t& s) noexcept
-            : m_stream(nullptr), m_buffer(s)
+        /// a lexer from a buffer with given length
+        lexer(const lexer_char_t* buff, const size_t len) noexcept
+            : m_stream(nullptr), m_buffer(), m_content(buff)
         {
-            m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
             assert(m_content != nullptr);
             m_start = m_cursor = m_content;
-            m_limit = m_content + s.size();
+            m_limit = m_content + len;
         }
 
-        /// constructor with a given stream
-        explicit lexer(std::istream* s) noexcept
-            : m_stream(s), m_buffer()
+        /// a lexer from a string literal
+        explicit lexer(const typename string_t::value_type* buff) noexcept
+            : m_stream(nullptr), m_buffer(),
+              m_content(reinterpret_cast<const lexer_char_t*>(buff))
         {
-            assert(m_stream != nullptr);
+            assert(m_content != nullptr);
+            m_start = m_cursor = m_content;
+            m_limit = m_content + strlen(buff);
+        }
+
+        /// a lexer from an input stream
+        explicit lexer(std::istream& s)
+            : m_stream(&s), m_buffer()
+        {
             std::getline(*m_stream, m_buffer);
             m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
             assert(m_content != nullptr);
@@ -8150,17 +8158,41 @@ class basic_json
     class parser
     {
       public:
-        /// constructor for strings
+        /// a parser reading from a string literal
+        parser(const typename string_t::value_type* buff, parser_callback_t cb = nullptr) noexcept
+            : callback(cb), m_lexer(buff)
+        {
+            // read first token
+            get_token();
+        }
+
+        /// a parser reading from a string container
         parser(const string_t& s, const parser_callback_t cb = nullptr) noexcept
-            : callback(cb), m_lexer(s)
+            : callback(cb),
+              m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(s.c_str()), s.size())
         {
             // read first token
             get_token();
         }
 
         /// a parser reading from an input stream
-        parser(std::istream& _is, const parser_callback_t cb = nullptr) noexcept
-            : callback(cb), m_lexer(&_is)
+        parser(std::istream& is, const parser_callback_t cb = nullptr) noexcept
+            : callback(cb), m_lexer(is)
+        {
+            // read first token
+            get_token();
+        }
+
+        /// a parser reading from a container with continguous storage
+        template <class IteratorType, typename
+                  std::enable_if<
+                      std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
+                      , int>::type
+                  = 0>
+        parser(IteratorType first, IteratorType last, const parser_callback_t cb = nullptr) noexcept
+            : callback(cb),
+              m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(&(*first)),
+                      static_cast<size_t>(std::distance(first, last)))
         {
             // read first token
             get_token();
