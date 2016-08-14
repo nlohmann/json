@@ -37,6 +37,7 @@ SOFTWARE.
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <initializer_list>
 #include <iomanip>
@@ -7506,7 +7507,7 @@ class basic_json
 
         /// a lexer from a buffer with given length
         lexer(const lexer_char_t* buff, const size_t len) noexcept
-            : m_stream(nullptr), m_buffer(), m_content(buff)
+            : m_content(buff)
         {
             assert(m_content != nullptr);
             m_start = m_cursor = m_content;
@@ -7515,29 +7516,19 @@ class basic_json
 
         /// a lexer from a string literal
         explicit lexer(const typename string_t::value_type* buff) noexcept
-            : m_stream(nullptr), m_buffer(),
-              m_content(reinterpret_cast<const lexer_char_t*>(buff))
-        {
-            assert(m_content != nullptr);
-            m_start = m_cursor = m_content;
-            m_limit = m_content + strlen(buff);
-        }
+            : lexer(reinterpret_cast<const lexer_char_t*>(buff), strlen(buff))
+        {}
 
         /// a lexer from an input stream
         explicit lexer(std::istream& s)
-            : m_stream(&s), m_buffer()
+            : m_stream(&s), m_line_buffer()
         {
-            std::getline(*m_stream, m_buffer);
-            m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
-            assert(m_content != nullptr);
-            m_start = m_cursor = m_content;
-            m_limit = m_content + m_buffer.size();
+            // fill buffer
+            fill_line_buffer();
         }
 
-        /// default constructor
-        lexer() = default;
-
         // switch off unwanted functions
+        lexer() = delete;
         lexer(const lexer&) = delete;
         lexer operator=(const lexer&) = delete;
 
@@ -7690,7 +7681,7 @@ class basic_json
         infinite sequence of whitespace or byte-order-marks. This contradicts
         the assumption of finite input, q.e.d.
         */
-        token_type scan() noexcept
+        token_type scan()
         {
             while (true)
             {
@@ -7742,7 +7733,7 @@ class basic_json
                     };
                     if ((m_limit - m_cursor) < 5)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yybm[0 + yych] & 32)
@@ -7876,7 +7867,7 @@ basic_json_parser_6:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yybm[0 + yych] & 32)
@@ -7946,7 +7937,7 @@ basic_json_parser_15:
                     m_marker = ++m_cursor;
                     if ((m_limit - m_cursor) < 3)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yybm[0 + yych] & 64)
@@ -8039,7 +8030,7 @@ basic_json_parser_31:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
 basic_json_parser_32:
@@ -8076,7 +8067,7 @@ basic_json_parser_36:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= 'e')
@@ -8220,7 +8211,7 @@ basic_json_parser_43:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
@@ -8256,7 +8247,7 @@ basic_json_parser_44:
                     m_marker = ++m_cursor;
                     if ((m_limit - m_cursor) < 3)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= 'D')
@@ -8297,7 +8288,7 @@ basic_json_parser_47:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= '/')
@@ -8339,7 +8330,7 @@ basic_json_parser_54:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
@@ -8393,7 +8384,7 @@ basic_json_parser_60:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
@@ -8434,7 +8425,7 @@ basic_json_parser_63:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
@@ -8472,30 +8463,57 @@ basic_json_parser_63:
             return last_token_type;
         }
 
-        /// append data from the stream to the internal buffer
-        void yyfill() noexcept
+        /*!
+        @brief append data from the stream to the line buffer
+
+        This function is called by the scan() function when the end of the
+        buffer (`m_limit`) is reached and the `m_cursor` pointer cannot be
+        incremented without leaving the limits of the line buffer. Note re2c
+        decides when to call this function.
+
+        @pre
+            p p p p p p u u u u u x . . . . . .
+            ^           ^       ^   ^
+            m_content   m_start |   m_limit
+                                m_cursor
+
+        @post
+            u u u u u x x x x x x x . . . . . .
+            ^       ^               ^
+            |       m_cursor        m_limit
+            m_start
+            m_content
+        */
+        void fill_line_buffer()
         {
+            // no stream is used or end of file is reached
             if (m_stream == nullptr or not * m_stream)
             {
                 return;
             }
 
+            // number of processed characters (p)
             const auto offset_start = m_start - m_content;
+            // offset for m_marker wrt. to m_start
             const auto offset_marker = m_marker - m_start;
+            // number of unprocessed characters (u)
             const auto offset_cursor = m_cursor - m_start;
 
-            m_buffer.erase(0, static_cast<size_t>(offset_start));
+            // delete processed characters from line buffer
+            m_line_buffer.erase(0, static_cast<size_t>(offset_start));
+            // read next line from input stream
             std::string line;
-            assert(m_stream != nullptr);
             std::getline(*m_stream, line);
-            m_buffer += "\n" + line; // add line with newline symbol
+            // add line with newline symbol to the line buffer
+            m_line_buffer += "\n" + line;
 
-            m_content = reinterpret_cast<const lexer_char_t*>(m_buffer.c_str());
+            // set pointers
+            m_content = reinterpret_cast<const lexer_char_t*>(m_line_buffer.c_str());
             assert(m_content != nullptr);
             m_start  = m_content;
             m_marker = m_start + offset_marker;
             m_cursor = m_start + offset_cursor;
-            m_limit  = m_start + m_buffer.size() - 1;
+            m_limit  = m_start + m_line_buffer.size() - 1;
         }
 
         /// return string representation of last read token
@@ -8837,8 +8855,8 @@ basic_json_parser_63:
       private:
         /// optional input stream
         std::istream* m_stream = nullptr;
-        /// the buffer
-        string_t m_buffer;
+        /// line buffer buffer for m_stream
+        string_t m_line_buffer {};
         /// the buffer pointer
         const lexer_char_t* m_content = nullptr;
         /// pointer to the beginning of the current symbol
@@ -8862,29 +8880,20 @@ basic_json_parser_63:
     {
       public:
         /// a parser reading from a string literal
-        parser(const typename string_t::value_type* buff, parser_callback_t cb = nullptr) noexcept
+        parser(const typename string_t::value_type* buff, parser_callback_t cb = nullptr)
             : callback(cb), m_lexer(buff)
-        {
-            // read first token
-            get_token();
-        }
+        {}
 
         /// a parser reading from a string container
-        parser(const string_t& s, const parser_callback_t cb = nullptr) noexcept
+        parser(const string_t& s, const parser_callback_t cb = nullptr)
             : callback(cb),
               m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(s.c_str()), s.size())
-        {
-            // read first token
-            get_token();
-        }
+        {}
 
         /// a parser reading from an input stream
-        parser(std::istream& is, const parser_callback_t cb = nullptr) noexcept
+        parser(std::istream& is, const parser_callback_t cb = nullptr)
             : callback(cb), m_lexer(is)
-        {
-            // read first token
-            get_token();
-        }
+        {}
 
         /// a parser reading from a container with continguous storage
         template <class IteratorType, typename
@@ -8892,18 +8901,18 @@ basic_json_parser_63:
                       std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
                       , int>::type
                   = 0>
-        parser(IteratorType first, IteratorType last, const parser_callback_t cb = nullptr) noexcept
+        parser(IteratorType first, IteratorType last, const parser_callback_t cb = nullptr)
             : callback(cb),
               m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(&(*first)),
                       static_cast<size_t>(std::distance(first, last)))
-        {
-            // read first token
-            get_token();
-        }
+        {}
 
         /// public parser interface
         basic_json parse()
         {
+            // read first token
+            get_token();
+
             basic_json result = parse_internal(true);
             result.assert_invariant();
 
@@ -9108,7 +9117,7 @@ basic_json_parser_63:
         }
 
         /// get next token from lexer
-        typename lexer::token_type get_token() noexcept
+        typename lexer::token_type get_token()
         {
             last_token = m_lexer.scan();
             return last_token;

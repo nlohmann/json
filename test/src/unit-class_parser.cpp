@@ -784,7 +784,7 @@ TEST_CASE("parser class")
 
         SECTION("from std::valarray")
         {
-            std::valarray<uint8_t> v = {'t', 'r', 'u', 'e'};
+            std::valarray<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
             CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
         }
     }
