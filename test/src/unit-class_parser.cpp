@@ -750,42 +750,42 @@ TEST_CASE("parser class")
         SECTION("from std::vector")
         {
             std::vector<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
-            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
         }
 
         SECTION("from std::array")
         {
             std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e', '\0'} };
-            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
         }
 
         SECTION("from array")
         {
             uint8_t v[] = {'t', 'r', 'u', 'e'};
-            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
         }
 
         SECTION("from char literal")
         {
-            CHECK (json::parser("true").parse() == json(true));
+            CHECK(json::parser("true").parse() == json(true));
         }
 
         SECTION("from std::string")
         {
             std::string v = {'t', 'r', 'u', 'e'};
-            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
         }
 
         SECTION("from std::initializer_list")
         {
             std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
-            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
         }
 
         SECTION("from std::valarray")
         {
             std::valarray<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
-            CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
         }
     }
 }

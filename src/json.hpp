@@ -8902,7 +8902,13 @@ basic_json_parser_63:
             : callback(cb),
               m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(&(*first)),
                       static_cast<size_t>(std::distance(first, last)))
-        {}
+        {
+            int i = 0;
+            assert(std::accumulate(first, last, true, [&i, &first](bool res, decltype(*first) val)
+            {
+                return res and (val == *(std::next(std::addressof(*first), i++)));
+            }));
+        }
 
         /// public parser interface
         basic_json parse()
