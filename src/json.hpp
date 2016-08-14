@@ -7514,11 +7514,6 @@ class basic_json
             m_limit = m_content + len;
         }
 
-        /// a lexer from a string literal
-        explicit lexer(const typename string_t::value_type* buff) noexcept
-            : lexer(reinterpret_cast<const lexer_char_t*>(buff), strlen(buff))
-        {}
-
         /// a lexer from an input stream
         explicit lexer(std::istream& s)
             : m_stream(&s), m_line_buffer()
@@ -8881,7 +8876,9 @@ basic_json_parser_63:
       public:
         /// a parser reading from a string literal
         parser(const typename string_t::value_type* buff, parser_callback_t cb = nullptr)
-            : callback(cb), m_lexer(buff)
+            : callback(cb),
+              m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(buff),
+                      strlen(buff))
         {}
 
         /// a parser reading from a string container
