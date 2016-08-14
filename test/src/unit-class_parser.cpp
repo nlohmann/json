@@ -755,7 +755,7 @@ TEST_CASE("parser class")
 
         SECTION("from std::array")
         {
-            std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
+            std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e', '\0'} };
             CHECK (json::parser(std::begin(v), std::end(v)).parse() == json(true));
         }
 
