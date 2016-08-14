@@ -8895,7 +8895,7 @@ basic_json_parser_63:
             : callback(cb), m_lexer(is)
         {}
 
-        /// a parser reading from a container with continguous storage
+        /// a parser reading from a container with contiguous storage
         template <class IteratorType, typename
                   std::enable_if<
                       std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value

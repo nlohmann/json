@@ -745,7 +745,7 @@ TEST_CASE("parser class")
         }
     }
 
-    SECTION("constructing from continguous containers")
+    SECTION("constructing from contiguous containers")
     {
         SECTION("from std::vector")
         {
