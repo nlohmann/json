@@ -5963,6 +5963,16 @@ class basic_json
     }
 
     /*!
+    @brief deserialize from string literal
+    @copydoc parse(const string_t&, const parser_callback_t)
+    */
+    static basic_json parse(const typename string_t::value_type* s,
+                            const parser_callback_t cb = nullptr)
+    {
+        return parser(s, cb).parse();
+    }
+
+    /*!
     @brief deserialize from stream
 
     @param[in,out] i  stream to read a serialized JSON value from
@@ -5999,6 +6009,75 @@ class basic_json
                             const parser_callback_t cb = nullptr)
     {
         return parser(i, cb).parse();
+    }
+
+    /*!
+    @brief deserialize from a container with contiguous storage
+
+    This function reads from a nonempty iterator range of a container with
+    contiguous storage of 1-byte values. Compatible container types include
+    `std::vector`, `std::string`, `std::array`, `std::valarray`, and
+    `std::initializer_list`. Furthermore, C-style arrays can be used with
+    `std::begin()`/`std::end()`. User-defined containers can be used as long
+    as they implement random-access iterators and a contiguous storage.
+
+    @pre The iterator range is contiguous. Violating this precondition yields
+    undefined behavior. **This precondition is enforced with an assertion.**
+    @pre Each element in the range has a size of 1 byte. Violating this
+    precondition yields undefined behavior. **This precondition is enforced
+    with an assertion.**
+    @pre The iterator range is nonempty. Violating this precondition yields
+    undefined behavior. **This precondition is enforced with an assertion.**
+
+    @warning There is no way to enforce the preconditions at compile-time. If
+             the function is called with noncompliant iterators, the behavior
+             is undefined and will most liekely yield segmentation violation.
+
+    @param[in] first begin of the range to parse (included)
+    @param[in] last end of the range to parse (excluded)
+    @param[in] cb a parser callback function of type @ref parser_callback_t
+    which is used to control the deserialization by filtering unwanted values
+    (optional)
+
+    @return result of the deserialization
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser. The complexity can be higher if the parser callback function
+    @a cb has a super-linear complexity.
+
+    @note A UTF-8 byte order mark is silently ignored.
+
+    @todo Example and references.
+
+    @since version 2.0.3
+    */
+    template <class IteratorType, typename
+              std::enable_if<
+                  std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
+                  , int>::type
+              = 0>
+    static basic_json parse(IteratorType first, IteratorType last,
+                            const parser_callback_t cb = nullptr)
+    {
+        // assertion to check that the iterator range is indeed contiguous,
+        // see http://stackoverflow.com/a/35008842/266378 for more discussion
+        assert(std::accumulate(first, last, std::make_pair<bool, int>(true, 0),
+                               [&first](std::pair<bool, int> res, decltype(*first) val)
+        {
+            res.first &= (val == *(std::next(std::addressof(*first), res.second++)));
+            return res;
+        }).first);
+
+        // assertion to check that each element is 1 byte long
+        assert(std::all_of(first, last, [](decltype(*first) val)
+        {
+            return sizeof(val) == 1;
+        }));
+
+        // assertion that the iterator range is not empty
+        assert(std::distance(first, last) > 0);
+
+        return parser(first, last, cb).parse();
     }
 
     /*!
@@ -8172,10 +8251,10 @@ class basic_json
     {
       public:
         /// a parser reading from a string literal
-        parser(const typename string_t::value_type* buff, parser_callback_t cb = nullptr)
+        parser(const typename string_t::value_type* buff,
+               const parser_callback_t cb = nullptr)
             : callback(cb),
-              m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(buff),
-                      strlen(buff))
+              m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(buff), strlen(buff))
         {}
 
         /// a parser reading from a string container
@@ -8199,13 +8278,7 @@ class basic_json
             : callback(cb),
               m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(&(*first)),
                       static_cast<size_t>(std::distance(first, last)))
-        {
-            int i = 0;
-            assert(std::accumulate(first, last, true, [&i, &first](bool res, decltype(*first) val)
-            {
-                return res and (val == *(std::next(std::addressof(*first), i++)));
-            }));
-        }
+        {}
 
         /// public parser interface
         basic_json parse()

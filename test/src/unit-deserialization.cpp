@@ -31,6 +31,8 @@ SOFTWARE.
 #include "json.hpp"
 using nlohmann::json;
 
+#include <valarray>
+
 TEST_CASE("deserialization")
 {
     SECTION("stream")
@@ -41,9 +43,16 @@ TEST_CASE("deserialization")
         CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
     }
 
-    SECTION("string")
+    SECTION("string literal")
     {
         auto s = "[\"foo\",1,2,3,false,{\"one\":1}]";
+        json j = json::parse(s);
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
+
+    SECTION("string_t")
+    {
+        json::string_t s = "[\"foo\",1,2,3,false,{\"one\":1}]";
         json j = json::parse(s);
         CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
     }
@@ -69,5 +78,44 @@ TEST_CASE("deserialization")
     SECTION("user-defined string literal")
     {
         CHECK("[\"foo\",1,2,3,false,{\"one\":1}]"_json == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
+
+    SECTION("contiguous containers")
+    {
+        SECTION("from std::vector")
+        {
+            std::vector<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+        }
+
+        SECTION("from std::array")
+        {
+            std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e', '\0'} };
+            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+        }
+
+        SECTION("from array")
+        {
+            uint8_t v[] = {'t', 'r', 'u', 'e'};
+            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+        }
+
+        SECTION("from std::string")
+        {
+            std::string v = {'t', 'r', 'u', 'e'};
+            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+        }
+
+        SECTION("from std::initializer_list")
+        {
+            std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+        }
+
+        SECTION("from std::valarray")
+        {
+            std::valarray<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+        }
     }
 }
