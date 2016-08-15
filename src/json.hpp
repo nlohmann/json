@@ -9484,7 +9484,7 @@ basic_json_parser_63:
         }
 
         /// split the string input to reference tokens
-        static std::vector<std::string> split(std::string reference_string)
+        static std::vector<std::string> split(const std::string& reference_string)
         {
             std::vector<std::string> result;
 
@@ -10212,7 +10212,7 @@ basic_json_parser_63:
     */
     static basic_json diff(const basic_json& source,
                            const basic_json& target,
-                           std::string path = "")
+                           const std::string& path = "")
     {
         // the patch
         basic_json result(value_t::array);
