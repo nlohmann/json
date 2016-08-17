@@ -96,7 +96,7 @@ TEST_CASE("deserialization")
 
         SECTION("from array")
         {
-            uint8_t v[] = {'t', 'r', 'u', 'e'};
+            uint8_t v[] = {'t', 'r', 'u', 'e', '\0'};
             CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
         }
 
