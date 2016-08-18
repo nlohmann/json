@@ -41,6 +41,20 @@ matrix:
     after_success:
       - valgrind --error-exitcode=1 --leak-check=full test/json_unit
 
+  # cppcheck
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-4.9
+      - SPECIAL=cppcheck
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: [g++-4.9, cppcheck]
+    after_success:
+      - make cppcheck
+
   # Coveralls (http://gronlier.fr/blog/2015/01/adding-code-coverage-to-your-c-project/)
 
   - os: linux
