@@ -64,8 +64,7 @@ fuzz: test/src/fuzz.cpp src/json.hpp
 
 # call cppcheck on the main header file
 cppcheck:
-	cppcheck --enable=all --inconclusive --std=c++11 src/json.hpp
-
+	cppcheck --enable=warning --inconclusive --force --std=c++11 src/json.hpp --error-exitcode=1
 
 ##########################################################################
 # maintainer targets
