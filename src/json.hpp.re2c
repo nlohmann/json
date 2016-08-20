@@ -5956,11 +5956,13 @@ class basic_json
 
     @since version 1.0.0
     */
+    /*
     static basic_json parse(const string_t& s,
                             const parser_callback_t cb = nullptr)
     {
         return parser(s, cb).parse();
     }
+    */
 
     /*!
     @brief deserialize from string literal
@@ -6012,10 +6014,10 @@ class basic_json
     }
 
     /*!
-    @brief deserialize from a container with contiguous storage
+    @brief deserialize from a iterator range with contiguous storage
 
-    This function reads from a nonempty iterator range of a container with
-    contiguous storage of 1-byte values. Compatible container types include
+    This function reads from an iterator range of a container with contiguous
+    storage of 1-byte values. Compatible container types include
     `std::vector`, `std::string`, `std::array`, `std::valarray`, and
     `std::initializer_list`. Furthermore, C-style arrays can be used with
     `std::begin()`/`std::end()`. User-defined containers can be used as long
@@ -6025,9 +6027,7 @@ class basic_json
     undefined behavior. **This precondition is enforced with an assertion.**
     @pre Each element in the range has a size of 1 byte. Violating this
     precondition yields undefined behavior. **This precondition is enforced
-    with an assertion.**
-    @pre The iterator range is nonempty. Violating this precondition yields
-    undefined behavior. **This precondition is enforced with an assertion.**
+    with a static assertion.**
 
     @warning There is no way to enforce the preconditions at compile-time. If
              the function is called with noncompliant iterators, the behavior
@@ -6053,7 +6053,9 @@ class basic_json
     */
     template <class IteratorType, typename
               std::enable_if<
-                  std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
+                  std::is_base_of<
+                      std::random_access_iterator_tag,
+                      typename std::iterator_traits<IteratorType>::iterator_category>::value
                   , int>::type
               = 0>
     static basic_json parse(IteratorType first, IteratorType last,
@@ -6069,15 +6071,38 @@ class basic_json
         }).first);
 
         // assertion to check that each element is 1 byte long
-        assert(std::all_of(first, last, [](decltype(*first) val)
-        {
-            return sizeof(val) == 1;
-        }));
+        static_assert(sizeof(typename std::iterator_traits<IteratorType>::value_type) == 1,
+                      "each element in the iterator range must have the size of 1 byte");
 
-        // assertion that the iterator range is not empty
-        assert(std::distance(first, last) > 0);
+        // if iterator range is empty, create a parser with an empty string
+        // to generate "unexpected EOF" error message
+        if (std::distance(first, last) <= 0)
+        {
+            return parser("").parse();
+        }
 
         return parser(first, last, cb).parse();
+    }
+
+    template<class ContiguousContainer, typename
+             std::enable_if<
+                 std::is_base_of<
+                     std::random_access_iterator_tag,
+                     typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer>()))>::iterator_category>::value
+                 , int>::type = 0>
+    static basic_json parse(const ContiguousContainer& c,
+                            const parser_callback_t cb = nullptr)
+    {
+        // delegate the call to the iterator-range parse overload
+        return parse(std::begin(c), std::end(c), cb);
+    }
+
+    template<class T, std::size_t N>
+    static basic_json parse(T (&array)[N],
+                            const parser_callback_t cb = nullptr)
+    {
+        // delegate the call to the iterator-range parse overload
+        return parse(std::begin(array), std::end(array), cb);
     }
 
     /*!

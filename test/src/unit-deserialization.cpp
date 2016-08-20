@@ -82,40 +82,82 @@ TEST_CASE("deserialization")
 
     SECTION("contiguous containers")
     {
-        SECTION("from std::vector")
+        SECTION("directly")
         {
-            std::vector<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
-            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            SECTION("from std::vector")
+            {
+                std::vector<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+                CHECK(json::parse(v) == json(true));
+            }
+
+            SECTION("from std::array")
+            {
+                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e', '\0'} };
+                CHECK(json::parse(v) == json(true));
+            }
+
+            SECTION("from array")
+            {
+                uint8_t v[] = {'t', 'r', 'u', 'e', '\0'};
+                CHECK(json::parse(v) == json(true));
+            }
+
+            SECTION("from std::string")
+            {
+                std::string v = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(v) == json(true));
+            }
+
+            SECTION("from std::initializer_list")
+            {
+                std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+                CHECK(json::parse(v) == json(true));
+            }
         }
 
-        SECTION("from std::array")
+        SECTION("via iterator range")
         {
-            std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e', '\0'} };
-            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
-        }
+            SECTION("from std::vector")
+            {
+                std::vector<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
 
-        SECTION("from array")
-        {
-            uint8_t v[] = {'t', 'r', 'u', 'e', '\0'};
-            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
-        }
+            SECTION("from std::array")
+            {
+                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e', '\0'} };
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
 
-        SECTION("from std::string")
-        {
-            std::string v = {'t', 'r', 'u', 'e'};
-            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
-        }
+            SECTION("from array")
+            {
+                uint8_t v[] = {'t', 'r', 'u', 'e', '\0'};
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
 
-        SECTION("from std::initializer_list")
-        {
-            std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
-            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
-        }
+            SECTION("from std::string")
+            {
+                std::string v = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
 
-        SECTION("from std::valarray")
-        {
-            std::valarray<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
-            CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            SECTION("from std::initializer_list")
+            {
+                std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
+
+            SECTION("from std::valarray")
+            {
+                std::valarray<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
+
+            SECTION("with empty range")
+            {
+                std::vector<uint8_t> v;
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
         }
     }
 }
