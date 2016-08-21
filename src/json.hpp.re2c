@@ -1843,7 +1843,8 @@ class basic_json
     @param[in] first begin of the range to copy from (included)
     @param[in] last end of the range to copy from (excluded)
 
-    @pre Iterators @a first and @a last must be initialized.
+    @pre Iterators @a first and @a last must be initialized. **This
+         precondition is enforced with an assertion.**
 
     @throw std::domain_error if iterators are not compatible; that is, do not
     belong to the same JSON value; example: `"iterators are not compatible"`
@@ -3509,6 +3510,9 @@ class basic_json
 
     @return const reference to the element at key @a key
 
+    @pre The element with key @a key must exist. **This precondition is
+         enforced with an assertion.**
+
     @throw std::domain_error if JSON is not an object; example: `"cannot use
     operator[] with null"`
 
@@ -3666,6 +3670,9 @@ class basic_json
     @param[in] key  key of the element to access
 
     @return const reference to the element at key @a key
+
+    @pre The element with key @a key must exist. **This precondition is
+         enforced with an assertion.**
 
     @throw std::domain_error if JSON is not an object; example: `"cannot use
     operator[] with null"`
@@ -3867,7 +3874,8 @@ class basic_json
     @complexity Constant.
 
     @pre The JSON value must not be `null` (would throw `std::out_of_range`)
-    or an empty array or object (undefined behavior, guarded by assertions).
+    or an empty array or object (undefined behavior, **guarded by
+    assertions**).
     @post The JSON value remains unchanged.
 
     @throw std::out_of_range when called on `null` value
@@ -3909,7 +3917,8 @@ class basic_json
     @complexity Constant.
 
     @pre The JSON value must not be `null` (would throw `std::out_of_range`)
-    or an empty array or object (undefined behavior, guarded by assertions).
+    or an empty array or object (undefined behavior, **guarded by
+    assertions**).
     @post The JSON value remains unchanged.
 
     @throw std::out_of_range when called on `null` value.
@@ -6592,8 +6601,8 @@ class basic_json
     @note An iterator is called *initialized* when a pointer to a JSON value
           has been set (e.g., by a constructor or a copy assignment). If the
           iterator is default-constructed, it is *uninitialized* and most
-          methods are undefined. The library uses assertions to detect calls
-          on uninitialized iterators.
+          methods are undefined. **The library uses assertions to detect calls
+          on uninitialized iterators.**
 
     @requirement The class satisfies the following concept requirements:
     - [RandomAccessIterator](http://en.cppreference.com/w/cpp/concept/RandomAccessIterator):
@@ -7689,7 +7698,7 @@ class basic_json
                     re2c:define:YYCURSOR  = m_cursor;
                     re2c:define:YYLIMIT   = m_limit;
                     re2c:define:YYMARKER  = m_marker;
-                    re2c:define:YYFILL    = "yyfill(); // LCOV_EXCL_LINE";
+                    re2c:define:YYFILL    = "yyfill()";
                     re2c:yyfill:parameter = 0;
                     re2c:indent:string    = "    ";
                     re2c:indent:top       = 1;
@@ -8180,7 +8189,8 @@ class basic_json
             {
                 case lexer::token_type::begin_object:
                 {
-                    if (keep and (not callback or (keep = callback(depth++, parse_event_t::object_start, result))))
+                    if (keep and (not callback
+                                  or ((keep = callback(depth++, parse_event_t::object_start, result)) != 0)))
                     {
                         // explicitly set result to object to cope with {}
                         result.m_type = value_t::object;
@@ -8258,7 +8268,8 @@ class basic_json
 
                 case lexer::token_type::begin_array:
                 {
-                    if (keep and (not callback or (keep = callback(depth++, parse_event_t::array_start, result))))
+                    if (keep and (not callback
+                                  or ((keep = callback(depth++, parse_event_t::array_start, result)) != 0)))
                     {
                         // explicitly set result to object to cope with []
                         result.m_type = value_t::array;
@@ -8772,7 +8783,7 @@ class basic_json
         }
 
         /// split the string input to reference tokens
-        static std::vector<std::string> split(std::string reference_string)
+        static std::vector<std::string> split(const std::string& reference_string)
         {
             std::vector<std::string> result;
 
@@ -9500,7 +9511,7 @@ class basic_json
     */
     static basic_json diff(const basic_json& source,
                            const basic_json& target,
-                           std::string path = "")
+                           const std::string& path = "")
     {
         // the patch
         basic_json result(value_t::array);

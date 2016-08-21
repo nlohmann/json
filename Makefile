@@ -12,18 +12,23 @@ clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM
 	rm -fr benchmarks/files/numbers/*.json
 	$(MAKE) clean -Cdoc
+	$(MAKE) clean -Ctest
 
 
 ##########################################################################
 # unit tests
 ##########################################################################
 
-# additional flags
-FLAGS = -Wall -Wextra -pedantic -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overflow=5 -Wswitch -Wundef -Wno-unused -Wnon-virtual-dtor -Wreorder -Wdeprecated -Wfloat-equal
+# build unit tests
+json_unit:
+	@$(MAKE) -C test
 
-# build unit tests (TODO: Does this want its own makefile?)
-json_unit: test/src/unit.cpp src/json.hpp test/src/catch.hpp
-	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src -I test $< $(LDFLAGS) -o $@
+# run unit tests
+check: json_unit
+	test/json_unit "*"
+
+check-fast: json_unit
+	test/json_unit
 
 
 ##########################################################################
@@ -59,8 +64,7 @@ fuzz: test/src/fuzz.cpp src/json.hpp
 
 # call cppcheck on the main header file
 cppcheck:
-	cppcheck --enable=all --inconclusive --std=c++11 src/json.hpp
-
+	cppcheck --enable=warning --inconclusive --force --std=c++11 src/json.hpp --error-exitcode=1
 
 ##########################################################################
 # maintainer targets
@@ -77,7 +81,8 @@ pretty:
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none --formatted \
-	   src/json.hpp src/json.hpp.re2c test/src/unit.cpp test/src/fuzz.cpp benchmarks/benchmarks.cpp doc/examples/*.cpp
+	   src/json.hpp src/json.hpp.re2c test/src/*.cpp \
+	   benchmarks/benchmarks.cpp doc/examples/*.cpp
 
 
 ##########################################################################
@@ -87,7 +92,7 @@ pretty:
 # benchmarks
 json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/cxxopts.hpp src/json.hpp
 	cd benchmarks/files/numbers ; python generate.py
-	$(CXX) -std=c++11 $(CXXFLAGS) -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
+	$(CXX) -std=c++11 $(CXXFLAGS) -DNDEBUG -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
 	./json_benchmarks
 
 

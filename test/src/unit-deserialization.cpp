@@ -26,5 +26,48 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
+
+#include "json.hpp"
+using nlohmann::json;
+
+TEST_CASE("deserialization")
+{
+    SECTION("stream")
+    {
+        std::stringstream ss;
+        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+        json j = json::parse(ss);
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
+
+    SECTION("string")
+    {
+        auto s = "[\"foo\",1,2,3,false,{\"one\":1}]";
+        json j = json::parse(s);
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
+
+    SECTION("operator<<")
+    {
+        std::stringstream ss;
+        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+        json j;
+        j << ss;
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
+
+    SECTION("operator>>")
+    {
+        std::stringstream ss;
+        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+        json j;
+        ss >> j;
+        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
+
+    SECTION("user-defined string literal")
+    {
+        CHECK("[\"foo\",1,2,3,false,{\"one\":1}]"_json == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+    }
+}

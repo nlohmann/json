@@ -1843,7 +1843,8 @@ class basic_json
     @param[in] first begin of the range to copy from (included)
     @param[in] last end of the range to copy from (excluded)
 
-    @pre Iterators @a first and @a last must be initialized.
+    @pre Iterators @a first and @a last must be initialized. **This
+         precondition is enforced with an assertion.**
 
     @throw std::domain_error if iterators are not compatible; that is, do not
     belong to the same JSON value; example: `"iterators are not compatible"`
@@ -3509,6 +3510,9 @@ class basic_json
 
     @return const reference to the element at key @a key
 
+    @pre The element with key @a key must exist. **This precondition is
+         enforced with an assertion.**
+
     @throw std::domain_error if JSON is not an object; example: `"cannot use
     operator[] with null"`
 
@@ -3666,6 +3670,9 @@ class basic_json
     @param[in] key  key of the element to access
 
     @return const reference to the element at key @a key
+
+    @pre The element with key @a key must exist. **This precondition is
+         enforced with an assertion.**
 
     @throw std::domain_error if JSON is not an object; example: `"cannot use
     operator[] with null"`
@@ -3867,7 +3874,8 @@ class basic_json
     @complexity Constant.
 
     @pre The JSON value must not be `null` (would throw `std::out_of_range`)
-    or an empty array or object (undefined behavior, guarded by assertions).
+    or an empty array or object (undefined behavior, **guarded by
+    assertions**).
     @post The JSON value remains unchanged.
 
     @throw std::out_of_range when called on `null` value
@@ -3909,7 +3917,8 @@ class basic_json
     @complexity Constant.
 
     @pre The JSON value must not be `null` (would throw `std::out_of_range`)
-    or an empty array or object (undefined behavior, guarded by assertions).
+    or an empty array or object (undefined behavior, **guarded by
+    assertions**).
     @post The JSON value remains unchanged.
 
     @throw std::out_of_range when called on `null` value.
@@ -6592,8 +6601,8 @@ class basic_json
     @note An iterator is called *initialized* when a pointer to a JSON value
           has been set (e.g., by a constructor or a copy assignment). If the
           iterator is default-constructed, it is *uninitialized* and most
-          methods are undefined. The library uses assertions to detect calls
-          on uninitialized iterators.
+          methods are undefined. **The library uses assertions to detect calls
+          on uninitialized iterators.**
 
     @requirement The class satisfies the following concept requirements:
     - [RandomAccessIterator](http://en.cppreference.com/w/cpp/concept/RandomAccessIterator):
@@ -7725,7 +7734,7 @@ class basic_json
                     };
                     if ((m_limit - m_cursor) < 5)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        yyfill();
                     }
                     yych = *m_cursor;
                     if (yybm[0 + yych] & 32)
@@ -7859,7 +7868,7 @@ basic_json_parser_6:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        yyfill();
                     }
                     yych = *m_cursor;
                     if (yybm[0 + yych] & 32)
@@ -7929,7 +7938,7 @@ basic_json_parser_15:
                     m_marker = ++m_cursor;
                     if ((m_limit - m_cursor) < 3)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        yyfill();
                     }
                     yych = *m_cursor;
                     if (yybm[0 + yych] & 64)
@@ -8022,7 +8031,7 @@ basic_json_parser_31:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        yyfill();
                     }
                     yych = *m_cursor;
 basic_json_parser_32:
@@ -8059,7 +8068,7 @@ basic_json_parser_36:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        yyfill();
                     }
                     yych = *m_cursor;
                     if (yych <= 'e')
@@ -8203,7 +8212,7 @@ basic_json_parser_43:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        yyfill();
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
@@ -8239,7 +8248,7 @@ basic_json_parser_44:
                     m_marker = ++m_cursor;
                     if ((m_limit - m_cursor) < 3)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        yyfill();
                     }
                     yych = *m_cursor;
                     if (yych <= 'D')
@@ -8280,7 +8289,7 @@ basic_json_parser_47:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        yyfill();
                     }
                     yych = *m_cursor;
                     if (yych <= '/')
@@ -8322,7 +8331,7 @@ basic_json_parser_54:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        yyfill();
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
@@ -8376,7 +8385,7 @@ basic_json_parser_60:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        yyfill();
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
@@ -8417,7 +8426,7 @@ basic_json_parser_63:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        yyfill();    // LCOV_EXCL_LINE;
+                        yyfill();
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
@@ -8883,7 +8892,8 @@ basic_json_parser_63:
             {
                 case lexer::token_type::begin_object:
                 {
-                    if (keep and (not callback or (keep = callback(depth++, parse_event_t::object_start, result))))
+                    if (keep and (not callback
+                                  or ((keep = callback(depth++, parse_event_t::object_start, result)) != 0)))
                     {
                         // explicitly set result to object to cope with {}
                         result.m_type = value_t::object;
@@ -8961,7 +8971,8 @@ basic_json_parser_63:
 
                 case lexer::token_type::begin_array:
                 {
-                    if (keep and (not callback or (keep = callback(depth++, parse_event_t::array_start, result))))
+                    if (keep and (not callback
+                                  or ((keep = callback(depth++, parse_event_t::array_start, result)) != 0)))
                     {
                         // explicitly set result to object to cope with []
                         result.m_type = value_t::array;
@@ -9475,7 +9486,7 @@ basic_json_parser_63:
         }
 
         /// split the string input to reference tokens
-        static std::vector<std::string> split(std::string reference_string)
+        static std::vector<std::string> split(const std::string& reference_string)
         {
             std::vector<std::string> result;
 
@@ -10203,7 +10214,7 @@ basic_json_parser_63:
     */
     static basic_json diff(const basic_json& source,
                            const basic_json& target,
-                           std::string path = "")
+                           const std::string& path = "")
     {
         // the patch
         basic_json result(value_t::array);
