@@ -951,7 +951,7 @@ class basic_json
 
     With a parser callback function, the result of parsing a JSON text can be
     influenced. When passed to @ref parse(std::istream&, const
-    parser_callback_t) or @ref parse(const string_t&, const parser_callback_t),
+    parser_callback_t) or @ref parse(const char*, const parser_callback_t),
     it is called on certain events (passed as @ref parse_event_t via parameter
     @a event) with a set recursion depth @a depth and context JSON value
     @a parsed. The return value of the callback function is a boolean
@@ -994,7 +994,7 @@ class basic_json
     skipped completely or replaced by an empty discarded object.
 
     @sa @ref parse(std::istream&, parser_callback_t) or
-    @ref parse(const string_t&, parser_callback_t) for examples
+    @ref parse(const char*, parser_callback_t) for examples
 
     @since version 1.0.0
     */
@@ -5933,9 +5933,9 @@ class basic_json
     /// @{
 
     /*!
-    @brief deserialize from string
+    @brief deserialize from string literal
 
-    @param[in] s  string to read a serialized JSON value from
+    @param[in] s  string literal to read a serialized JSON value from
     @param[in] cb a parser callback function of type @ref parser_callback_t
     which is used to control the deserialization by filtering unwanted values
     (optional)
@@ -5947,6 +5947,8 @@ class basic_json
     @a cb has a super-linear complexity.
 
     @note A UTF-8 byte order mark is silently ignored.
+    @note String containers like `std::string` or @ref string_t can be parsed
+          with @ref parse(const ContiguousContainer&, const parser_callback_t)
 
     @liveexample{The example below demonstrates the `parse()` function with
     and without callback function.,parse__string__parser_callback_t}
@@ -5954,24 +5956,47 @@ class basic_json
     @sa @ref parse(std::istream&, const parser_callback_t) for a version that
     reads from an input stream
 
-    @since version 1.0.0
+    @since version 1.0.0 (originally for @ref string_t)
     */
-    /*
-    static basic_json parse(const string_t& s,
+    static basic_json parse(const char* s,
                             const parser_callback_t cb = nullptr)
     {
         return parser(s, cb).parse();
     }
-    */
 
     /*!
-    @brief deserialize from string literal
-    @copydoc parse(const string_t&, const parser_callback_t)
+    @brief deserialize from an array
+
+    This function reads from an array of 1-byte values.
+
+    @pre Each element of the container has a size of 1 byte. Violating this
+    precondition yields undefined behavior. **This precondition is enforced
+    with a static assertion.**
+
+    @param[in] array  array to read from
+    @param[in] cb  a parser callback function of type @ref parser_callback_t
+    which is used to control the deserialization by filtering unwanted values
+    (optional)
+
+    @return result of the deserialization
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser. The complexity can be higher if the parser callback function
+    @a cb has a super-linear complexity.
+
+    @note A UTF-8 byte order mark is silently ignored.
+
+    @liveexample{The example below demonstrates the `parse()` function reading
+    from an array.,parse__array__parser_callback_t}
+
+    @since version 2.0.3
     */
-    static basic_json parse(const typename string_t::value_type* s,
+    template<class T, std::size_t N>
+    static basic_json parse(T (&array)[N],
                             const parser_callback_t cb = nullptr)
     {
-        return parser(s, cb).parse();
+        // delegate the call to the iterator-range parse overload
+        return parse(std::begin(array), std::end(array), cb);
     }
 
     /*!
@@ -5993,7 +6018,7 @@ class basic_json
     @liveexample{The example below demonstrates the `parse()` function with
     and without callback function.,parse__istream__parser_callback_t}
 
-    @sa @ref parse(const string_t&, const parser_callback_t) for a version
+    @sa @ref parse(const char*, const parser_callback_t) for a version
     that reads from a string
 
     @since version 1.0.0
@@ -6014,7 +6039,7 @@ class basic_json
     }
 
     /*!
-    @brief deserialize from a iterator range with contiguous storage
+    @brief deserialize from an iterator range with contiguous storage
 
     This function reads from an iterator range of a container with contiguous
     storage of 1-byte values. Compatible container types include
@@ -6029,13 +6054,14 @@ class basic_json
     precondition yields undefined behavior. **This precondition is enforced
     with a static assertion.**
 
-    @warning There is no way to enforce the preconditions at compile-time. If
-             the function is called with noncompliant iterators, the behavior
-             is undefined and will most liekely yield segmentation violation.
+    @warning There is no way to enforce all preconditions at compile-time. If
+             the function is called with noncompliant iterators and with
+             assertions switched off, the behavior is undefined and will most
+             likely yield segmentation violation.
 
-    @param[in] first begin of the range to parse (included)
-    @param[in] last end of the range to parse (excluded)
-    @param[in] cb a parser callback function of type @ref parser_callback_t
+    @param[in] first  begin of the range to parse (included)
+    @param[in] last  end of the range to parse (excluded)
+    @param[in] cb  a parser callback function of type @ref parser_callback_t
     which is used to control the deserialization by filtering unwanted values
     (optional)
 
@@ -6047,7 +6073,8 @@ class basic_json
 
     @note A UTF-8 byte order mark is silently ignored.
 
-    @todo Example and references.
+    @liveexample{The example below demonstrates the `parse()` function reading
+    from an iterator range.,parse__iteratortype__parser_callback_t}
 
     @since version 2.0.3
     */
@@ -6084,6 +6111,45 @@ class basic_json
         return parser(first, last, cb).parse();
     }
 
+    /*!
+    @brief deserialize from a container with contiguous storage
+
+    This function reads from a container with contiguous storage of 1-byte
+    values. Compatible container types include `std::vector`, `std::string`,
+    `std::array`, and `std::initializer_list`. User-defined containers can be
+    used as long as they implement random-access iterators and a contiguous
+    storage.
+
+    @pre The container storage is contiguous. Violating this precondition
+    yields undefined behavior. **This precondition is enforced with an
+    assertion.**
+    @pre Each element of the container has a size of 1 byte. Violating this
+    precondition yields undefined behavior. **This precondition is enforced
+    with a static assertion.**
+
+    @warning There is no way to enforce all preconditions at compile-time. If
+             the function is called with a noncompliant container and with
+             assertions switched off, the behavior is undefined and will most
+             likely yield segmentation violation.
+
+    @param[in] c  container to read from
+    @param[in] cb  a parser callback function of type @ref parser_callback_t
+    which is used to control the deserialization by filtering unwanted values
+    (optional)
+
+    @return result of the deserialization
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser. The complexity can be higher if the parser callback function
+    @a cb has a super-linear complexity.
+
+    @note A UTF-8 byte order mark is silently ignored.
+
+    @liveexample{The example below demonstrates the `parse()` function reading
+    from a contiguous container.,parse__contiguouscontainer__parser_callback_t}
+
+    @since version 2.0.3
+    */
     template<class ContiguousContainer, typename
              std::enable_if<
                  std::is_base_of<
@@ -6095,14 +6161,6 @@ class basic_json
     {
         // delegate the call to the iterator-range parse overload
         return parse(std::begin(c), std::end(c), cb);
-    }
-
-    template<class T, std::size_t N>
-    static basic_json parse(T (&array)[N],
-                            const parser_callback_t cb = nullptr)
-    {
-        // delegate the call to the iterator-range parse overload
-        return parse(std::begin(array), std::end(array), cb);
     }
 
     /*!
@@ -6158,7 +6216,7 @@ class basic_json
     Returns the type name as string to be used in error messages - usually to
     indicate that a function was called on a wrong JSON type.
 
-    @return basically a string representation of a the @ref m_type member
+    @return basically a string representation of a the @a m_type member
 
     @complexity Constant.
 
@@ -7626,7 +7684,7 @@ class basic_json
             fill_line_buffer();
         }
 
-        // switch off unwanted functions
+        // switch off unwanted functions (due to pointer members)
         lexer() = delete;
         lexer(const lexer&) = delete;
         lexer operator=(const lexer&) = delete;
@@ -8979,16 +9037,9 @@ basic_json_parser_63:
     {
       public:
         /// a parser reading from a string literal
-        parser(const typename string_t::value_type* buff,
-               const parser_callback_t cb = nullptr)
+        parser(const char* buff, const parser_callback_t cb = nullptr)
             : callback(cb),
               m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(buff), strlen(buff))
-        {}
-
-        /// a parser reading from a string container
-        parser(const string_t& s, const parser_callback_t cb = nullptr)
-            : callback(cb),
-              m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(s.c_str()), s.size())
         {}
 
         /// a parser reading from an input stream
@@ -8996,7 +9047,7 @@ basic_json_parser_63:
             : callback(cb), m_lexer(is)
         {}
 
-        /// a parser reading from a container with contiguous storage
+        /// a parser reading from an iterator range with contiguous storage
         template <class IteratorType, typename
                   std::enable_if<
                       std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
@@ -10560,7 +10611,7 @@ if no parse error occurred.
 */
 inline nlohmann::json operator "" _json(const char* s, std::size_t)
 {
-    return nlohmann::json::parse(reinterpret_cast<const nlohmann::json::string_t::value_type*>(s));
+    return nlohmann::json::parse(s);
 }
 
 /*!

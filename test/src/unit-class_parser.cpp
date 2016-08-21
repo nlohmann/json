@@ -477,7 +477,7 @@ TEST_CASE("parser class")
                 case ('r'):
                 case ('t'):
                 {
-                    CHECK_NOTHROW(json::parser(s).parse());
+                    CHECK_NOTHROW(json::parser(s.c_str()).parse());
                     break;
                 }
 
@@ -490,8 +490,8 @@ TEST_CASE("parser class")
                 // any other combination of backslash and character is invalid
                 default:
                 {
-                    CHECK_THROWS_AS(json::parser(s).parse(), std::invalid_argument);
-                    CHECK_THROWS_WITH(json::parser(s).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_AS(json::parser(s.c_str()).parse(), std::invalid_argument);
+                    CHECK_THROWS_WITH(json::parser(s.c_str()).parse(), "parse error - unexpected '\"'");
                     break;
                 }
             }
@@ -549,22 +549,22 @@ TEST_CASE("parser class")
 
                 if (valid(c))
                 {
-                    CHECK_NOTHROW(json::parser(s1).parse());
-                    CHECK_NOTHROW(json::parser(s2).parse());
-                    CHECK_NOTHROW(json::parser(s3).parse());
-                    CHECK_NOTHROW(json::parser(s4).parse());
+                    CHECK_NOTHROW(json::parser(s1.c_str()).parse());
+                    CHECK_NOTHROW(json::parser(s2.c_str()).parse());
+                    CHECK_NOTHROW(json::parser(s3.c_str()).parse());
+                    CHECK_NOTHROW(json::parser(s4.c_str()).parse());
                 }
                 else
                 {
-                    CHECK_THROWS_AS(json::parser(s1).parse(), std::invalid_argument);
-                    CHECK_THROWS_AS(json::parser(s2).parse(), std::invalid_argument);
-                    CHECK_THROWS_AS(json::parser(s3).parse(), std::invalid_argument);
-                    CHECK_THROWS_AS(json::parser(s4).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s1.c_str()).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s2.c_str()).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s3.c_str()).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s4.c_str()).parse(), std::invalid_argument);
 
-                    CHECK_THROWS_WITH(json::parser(s1).parse(), "parse error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s2).parse(), "parse error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s3).parse(), "parse error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s4).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s1.c_str()).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s2.c_str()).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s3.c_str()).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s4.c_str()).parse(), "parse error - unexpected '\"'");
                 }
             }
         }

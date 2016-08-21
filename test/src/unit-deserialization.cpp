@@ -113,6 +113,12 @@ TEST_CASE("deserialization")
                 std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
                 CHECK(json::parse(v) == json(true));
             }
+
+            SECTION("empty container")
+            {
+                std::vector<uint8_t> v;
+                CHECK_THROWS_AS(json::parse(v), std::invalid_argument);
+            }
         }
 
         SECTION("via iterator range")
