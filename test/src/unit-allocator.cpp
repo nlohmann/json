@@ -63,7 +63,9 @@ TEST_CASE("bad_alloc")
     }
 }
 
-bool next_allocation_fails = false;
+bool next_construct_fails = false;
+bool next_destroy_fails = false;
+bool next_deallocate_fails = false;
 
 template<class T>
 struct my_allocator : std::allocator<T>
@@ -71,13 +73,40 @@ struct my_allocator : std::allocator<T>
     template<class... Args>
     void construct(T* p, Args&& ... args)
     {
-        if (next_allocation_fails)
+        if (next_construct_fails)
         {
+            next_construct_fails = false;
             throw std::bad_alloc();
         }
         else
         {
             ::new(reinterpret_cast<void*>(p)) T(std::forward<Args>(args)...);
+        }
+    }
+
+    void deallocate(T* p, std::size_t n)
+    {
+        if (next_deallocate_fails)
+        {
+            next_deallocate_fails = false;
+            throw std::bad_alloc();
+        }
+        else
+        {
+            std::allocator<T>::deallocate(p, n);
+        }
+    }
+
+    void destroy(T* p)
+    {
+        if (next_destroy_fails)
+        {
+            next_destroy_fails = false;
+            throw std::bad_alloc();
+        }
+        else
+        {
+            p->~T();
         }
     }
 };
@@ -100,63 +129,63 @@ TEST_CASE("controlled bad_alloc")
         {
             SECTION("object")
             {
-                next_allocation_fails = false;
+                next_construct_fails = false;
                 auto t = my_json::value_t::object;
                 CHECK_NOTHROW(my_json::json_value j(t));
-                next_allocation_fails = true;
+                next_construct_fails = true;
                 CHECK_THROWS_AS(my_json::json_value j(t), std::bad_alloc);
-                next_allocation_fails = false;
+                next_construct_fails = false;
             }
             SECTION("array")
             {
-                next_allocation_fails = false;
+                next_construct_fails = false;
                 auto t = my_json::value_t::array;
                 CHECK_NOTHROW(my_json::json_value j(t));
-                next_allocation_fails = true;
+                next_construct_fails = true;
                 CHECK_THROWS_AS(my_json::json_value j(t), std::bad_alloc);
-                next_allocation_fails = false;
+                next_construct_fails = false;
             }
             SECTION("string")
             {
-                next_allocation_fails = false;
+                next_construct_fails = false;
                 auto t = my_json::value_t::string;
                 CHECK_NOTHROW(my_json::json_value j(t));
-                next_allocation_fails = true;
+                next_construct_fails = true;
                 CHECK_THROWS_AS(my_json::json_value j(t), std::bad_alloc);
-                next_allocation_fails = false;
+                next_construct_fails = false;
             }
         }
 
         SECTION("json_value(const string_t&)")
         {
-            next_allocation_fails = false;
+            next_construct_fails = false;
             my_json::string_t v("foo");
             CHECK_NOTHROW(my_json::json_value j(v));
-            next_allocation_fails = true;
+            next_construct_fails = true;
             CHECK_THROWS_AS(my_json::json_value j(v), std::bad_alloc);
-            next_allocation_fails = false;
+            next_construct_fails = false;
         }
 
         /*
                 SECTION("json_value(const object_t&)")
                 {
-                    next_allocation_fails = false;
+                    next_construct_fails = false;
                     my_json::object_t v {{"foo", "bar"}};
                     CHECK_NOTHROW(my_json::json_value j(v));
-                    next_allocation_fails = true;
+                    next_construct_fails = true;
                     CHECK_THROWS_AS(my_json::json_value j(v), std::bad_alloc);
-                    next_allocation_fails = false;
+                    next_construct_fails = false;
                 }
         */
         /*
                 SECTION("json_value(const array_t&)")
                 {
-                    next_allocation_fails = false;
+                    next_construct_fails = false;
                     my_json::array_t v = {"foo", "bar", "baz"};
                     CHECK_NOTHROW(my_json::json_value j(v));
-                    next_allocation_fails = true;
+                    next_construct_fails = true;
                     CHECK_THROWS_AS(my_json::json_value j(v), std::bad_alloc);
-                    next_allocation_fails = false;
+                    next_construct_fails = false;
                 }
         */
     }
@@ -165,41 +194,41 @@ TEST_CASE("controlled bad_alloc")
     {
         SECTION("basic_json(const CompatibleObjectType&)")
         {
-            next_allocation_fails = false;
+            next_construct_fails = false;
             std::map<std::string, std::string> v {{"foo", "bar"}};
             CHECK_NOTHROW(my_json j(v));
-            next_allocation_fails = true;
+            next_construct_fails = true;
             CHECK_THROWS_AS(my_json j(v), std::bad_alloc);
-            next_allocation_fails = false;
+            next_construct_fails = false;
         }
 
         SECTION("basic_json(const CompatibleArrayType&)")
         {
-            next_allocation_fails = false;
+            next_construct_fails = false;
             std::vector<std::string> v {"foo", "bar", "baz"};
             CHECK_NOTHROW(my_json j(v));
-            next_allocation_fails = true;
+            next_construct_fails = true;
             CHECK_THROWS_AS(my_json j(v), std::bad_alloc);
-            next_allocation_fails = false;
+            next_construct_fails = false;
         }
 
         SECTION("basic_json(const typename string_t::value_type*)")
         {
-            next_allocation_fails = false;
+            next_construct_fails = false;
             CHECK_NOTHROW(my_json v("foo"));
-            next_allocation_fails = true;
+            next_construct_fails = true;
             CHECK_THROWS_AS(my_json v("foo"), std::bad_alloc);
-            next_allocation_fails = false;
+            next_construct_fails = false;
         }
 
         SECTION("basic_json(const typename string_t::value_type*)")
         {
-            next_allocation_fails = false;
+            next_construct_fails = false;
             std::string s("foo");
             CHECK_NOTHROW(my_json v(s));
-            next_allocation_fails = true;
+            next_construct_fails = true;
             CHECK_THROWS_AS(my_json v(s), std::bad_alloc);
-            next_allocation_fails = false;
+            next_construct_fails = false;
         }
     }
 }
