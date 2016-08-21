@@ -445,6 +445,10 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("\"\\u0\"").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("\"\\u01\"").parse(), std::invalid_argument);
         CHECK_THROWS_AS(json::parser("\"\\u012\"").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\"\\u").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\"\\u0").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\"\\u01").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\"\\u012").parse(), std::invalid_argument);
         CHECK_THROWS_WITH(json::parser("\"").parse(),
                           "parse error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\\"").parse(),
@@ -456,6 +460,14 @@ TEST_CASE("parser class")
         CHECK_THROWS_WITH(json::parser("\"\\u01\"").parse(),
                           "parse error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u012\"").parse(),
+                          "parse error - unexpected '\"'");
+        CHECK_THROWS_WITH(json::parser("\"\\u").parse(),
+                          "parse error - unexpected '\"'");
+        CHECK_THROWS_WITH(json::parser("\"\\u0").parse(),
+                          "parse error - unexpected '\"'");
+        CHECK_THROWS_WITH(json::parser("\"\\u01").parse(),
+                          "parse error - unexpected '\"'");
+        CHECK_THROWS_WITH(json::parser("\"\\u012").parse(),
                           "parse error - unexpected '\"'");
 
         // invalid escapes
