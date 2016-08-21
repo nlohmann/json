@@ -7854,7 +7854,7 @@ class basic_json
                     re2c:define:YYCURSOR  = m_cursor;
                     re2c:define:YYLIMIT   = m_limit;
                     re2c:define:YYMARKER  = m_marker;
-                    re2c:define:YYFILL    = "fill_line_buffer(); // LCOV_EXCL_LINE";
+                    re2c:define:YYFILL    = "fill_line_buffer()";
                     re2c:yyfill:parameter = 0;
                     re2c:indent:string    = "    ";
                     re2c:indent:top       = 1;
