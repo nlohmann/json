@@ -237,7 +237,7 @@ install:
 ################
 
 script: |
-  if [[ "${SPECIAL}" != "" ]]; then
+  if [[ "${SPECIAL}" == "" ]]; then
     # show OS/compiler version
     uname -a
     $CXX --version
