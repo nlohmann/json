@@ -236,19 +236,18 @@ install:
 # build script #
 ################
 
-script:
-  - if [[ "${SPECIAL}" != "" ]]; then
-
+script: |
+  if [[ "${SPECIAL}" != "" ]]; then
     # show OS/compiler version
     uname -a
     $CXX --version
-
+    
     # compile
     make
-
+    
     # execute unit tests
     test/json_unit "*"
-
+    
     # check if homebrew works (only checks develop branch)
     if [ `which brew` ]; then
       brew update ;
@@ -256,7 +255,6 @@ script:
       brew install nlohmann_json --HEAD ;
       brew test nlohmann_json ;
     fi
-
   fi
 
 #language: cpp
