@@ -86,19 +86,19 @@ TEST_CASE("deserialization")
         {
             SECTION("from std::vector")
             {
-                std::vector<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+                std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
                 CHECK(json::parse(v) == json(true));
             }
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e', '\0'} };
+                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(v) == json(true));
             }
 
             SECTION("from array")
             {
-                uint8_t v[] = {'t', 'r', 'u', 'e', '\0'};
+                uint8_t v[] = {'t', 'r', 'u', 'e'};
                 CHECK(json::parse(v) == json(true));
             }
 
@@ -110,7 +110,7 @@ TEST_CASE("deserialization")
 
             SECTION("from std::initializer_list")
             {
-                std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+                std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e'};
                 CHECK(json::parse(v) == json(true));
             }
 
@@ -125,19 +125,19 @@ TEST_CASE("deserialization")
         {
             SECTION("from std::vector")
             {
-                std::vector<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+                std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
             }
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e', '\0'} };
+                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
             }
 
             SECTION("from array")
             {
-                uint8_t v[] = {'t', 'r', 'u', 'e', '\0'};
+                uint8_t v[] = {'t', 'r', 'u', 'e'};
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
             }
 
@@ -149,13 +149,13 @@ TEST_CASE("deserialization")
 
             SECTION("from std::initializer_list")
             {
-                std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+                std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e'};
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
             }
 
             SECTION("from std::valarray")
             {
-                std::valarray<uint8_t> v = {'t', 'r', 'u', 'e', '\0'};
+                std::valarray<uint8_t> v = {'t', 'r', 'u', 'e'};
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
             }
 

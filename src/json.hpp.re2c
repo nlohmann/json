@@ -7835,6 +7835,13 @@ class basic_json
         incremented without leaving the limits of the line buffer. Note re2c
         decides when to call this function.
 
+        If the lexer reads from contiguous storage, there is no trailing null
+        byte. Therefore, this function must make sure to add these padding
+        null bytes.
+
+        If the lexer reads from an input stream, this function reads the next
+        line of the input.
+
         @pre
             p p p p p p u u u u u x . . . . . .
             ^           ^       ^   ^
@@ -7850,26 +7857,38 @@ class basic_json
         */
         void fill_line_buffer()
         {
-            // no stream is used or end of file is reached
-            if (m_stream == nullptr or not * m_stream)
-            {
-                return;
-            }
-
             // number of processed characters (p)
             const auto offset_start = m_start - m_content;
             // offset for m_marker wrt. to m_start
-            const auto offset_marker = m_marker - m_start;
+            const auto offset_marker = (m_marker == nullptr) ? 0 : m_marker - m_start;
             // number of unprocessed characters (u)
             const auto offset_cursor = m_cursor - m_start;
 
-            // delete processed characters from line buffer
-            m_line_buffer.erase(0, static_cast<size_t>(offset_start));
-            // read next line from input stream
-            std::string line;
-            std::getline(*m_stream, line);
-            // add line with newline symbol to the line buffer
-            m_line_buffer += "\n" + line;
+            // no stream is used or end of file is reached
+            if (m_stream == nullptr or not * m_stream)
+            {
+                // copy unprocessed characters to line buffer
+                m_line_buffer.clear();
+                for (m_cursor = m_start; m_cursor != m_limit; ++m_cursor)
+                {
+                    m_line_buffer.append(1, static_cast<const char>(*m_cursor));
+                }
+
+                // append 5 characters (size of longest keyword "false") to
+                // make sure that there is sufficient space between m_cursor
+                // and m_limit
+                m_line_buffer.append(5, '\0');
+            }
+            else
+            {
+                // delete processed characters from line buffer
+                m_line_buffer.erase(0, static_cast<size_t>(offset_start));
+                // read next line from input stream
+                std::string line;
+                std::getline(*m_stream, line);
+                // add line with newline symbol to the line buffer
+                m_line_buffer += "\n" + line;
+            }
 
             // set pointers
             m_content = reinterpret_cast<const lexer_char_t*>(m_line_buffer.c_str());
@@ -7877,7 +7896,7 @@ class basic_json
             m_start  = m_content;
             m_marker = m_start + offset_marker;
             m_cursor = m_start + offset_cursor;
-            m_limit  = m_start + m_line_buffer.size() - 1;
+            m_limit  = m_start + m_line_buffer.size();
         }
 
         /// return string representation of last read token
