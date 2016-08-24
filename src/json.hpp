@@ -5877,6 +5877,78 @@ class basic_json
     /// @{
 
     /*!
+    @brief deserialize from an array
+
+    This function reads from an array of 1-byte values.
+
+    @pre Each element of the container has a size of 1 byte. Violating this
+    precondition yields undefined behavior. **This precondition is enforced
+    with a static assertion.**
+
+    @param[in] array  array to read from
+    @param[in] cb  a parser callback function of type @ref parser_callback_t
+    which is used to control the deserialization by filtering unwanted values
+    (optional)
+
+    @return result of the deserialization
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser. The complexity can be higher if the parser callback function
+    @a cb has a super-linear complexity.
+
+    @note A UTF-8 byte order mark is silently ignored.
+
+    @liveexample{The example below demonstrates the `parse()` function reading
+    from an array.,parse__array__parser_callback_t}
+
+    @since version 2.0.3
+    */
+    template<class T, std::size_t N>
+    static basic_json parse(T (&array)[N],
+                            const parser_callback_t cb = nullptr)
+    {
+        // delegate the call to the iterator-range parse overload
+        return parse(std::begin(array), std::end(array), cb);
+    }
+
+    /*!
+    @brief deserialize from string literal
+
+    @tparam CharT character/literal type with size of 1 byte
+    @param[in] s  string literal to read a serialized JSON value from
+    @param[in] cb a parser callback function of type @ref parser_callback_t
+    which is used to control the deserialization by filtering unwanted values
+    (optional)
+
+    @return result of the deserialization
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser. The complexity can be higher if the parser callback function
+    @a cb has a super-linear complexity.
+
+    @note A UTF-8 byte order mark is silently ignored.
+    @note String containers like `std::string` or @ref string_t can be parsed
+          with @ref parse(const ContiguousContainer&, const parser_callback_t)
+
+    @liveexample{The example below demonstrates the `parse()` function with
+    and without callback function.,parse__string__parser_callback_t}
+
+    @sa @ref parse(std::istream&, const parser_callback_t) for a version that
+    reads from an input stream
+
+    @since version 1.0.0 (originally for @ref string_t)
+    */
+    template<typename CharPT, typename std::enable_if<
+                 std::is_pointer<CharPT>::value and
+                 std::is_integral<typename std::remove_pointer<CharPT>::type>::value and
+                 sizeof(std::remove_pointer<CharPT>) == 1, int>::type = 0>
+    static basic_json parse(const CharPT s,
+                            const parser_callback_t cb = nullptr)
+    {
+        return parser(reinterpret_cast<const char*>(s), cb).parse();
+    }
+
+    /*!
     @brief deserialize from stream
 
     @param[in,out] i  stream to read a serialized JSON value from
@@ -6027,6 +6099,7 @@ class basic_json
     @since version 2.0.3
     */
     template<class ContiguousContainer, typename std::enable_if<
+                 not std::is_pointer<ContiguousContainer>::value and
                  std::is_base_of<
                      std::random_access_iterator_tag,
                      typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value
@@ -6036,41 +6109,6 @@ class basic_json
     {
         // delegate the call to the iterator-range parse overload
         return parse(std::begin(c), std::end(c), cb);
-    }
-
-    /*!
-    @brief deserialize from string literal
-
-    @tparam CharT character/literal type with size of 1 byte
-    @param[in] s  string literal to read a serialized JSON value from
-    @param[in] cb a parser callback function of type @ref parser_callback_t
-    which is used to control the deserialization by filtering unwanted values
-    (optional)
-
-    @return result of the deserialization
-
-    @complexity Linear in the length of the input. The parser is a predictive
-    LL(1) parser. The complexity can be higher if the parser callback function
-    @a cb has a super-linear complexity.
-
-    @note A UTF-8 byte order mark is silently ignored.
-    @note String containers like `std::string` or @ref string_t can be parsed
-          with @ref parse(const ContiguousContainer&, const parser_callback_t)
-
-    @liveexample{The example below demonstrates the `parse()` function with
-    and without callback function.,parse__string__parser_callback_t}
-
-    @sa @ref parse(std::istream&, const parser_callback_t) for a version that
-    reads from an input stream
-
-    @since version 1.0.0 (originally for @ref string_t)
-    */
-    template<typename CharT, typename std::enable_if<
-                 std::is_integral<CharT>::value and sizeof(CharT) == 1, int>::type = 0>
-    static basic_json parse(const CharT* s,
-                            const parser_callback_t cb = nullptr)
-    {
-        return parser(reinterpret_cast<const char*>(s), cb).parse();
     }
 
     /*!
