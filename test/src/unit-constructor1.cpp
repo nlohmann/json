@@ -709,7 +709,7 @@ TEST_CASE("constructors")
 
         SECTION("float")
         {
-            float n = 42.23;
+            float n = 42.23f;
             json j(n);
             CHECK(j.type() == json::value_t::number_float);
             CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
