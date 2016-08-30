@@ -1164,10 +1164,11 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<class CompatibleObjectType, typename std::enable_if<
-                 std::is_constructible<typename object_t::key_type, typename CompatibleObjectType::key_type>::value and
-                 std::is_constructible<basic_json, typename CompatibleObjectType::mapped_type>::value, int>::type
-             = 0>
+    template <class CompatibleObjectType, typename
+              std::enable_if<
+                  std::is_constructible<typename object_t::key_type, typename CompatibleObjectType::key_type>::value and
+                  std::is_constructible<basic_json, typename CompatibleObjectType::mapped_type>::value, int>::type
+              = 0>
     basic_json(const CompatibleObjectType& val)
         : m_type(value_t::object)
     {
@@ -1228,15 +1229,16 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<class CompatibleArrayType, typename std::enable_if<
-                 not std::is_same<CompatibleArrayType, typename basic_json_t::iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename basic_json_t::const_iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename basic_json_t::reverse_iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename basic_json_t::const_reverse_iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename array_t::iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename array_t::const_iterator>::value and
-                 std::is_constructible<basic_json, typename CompatibleArrayType::value_type>::value, int>::type
-             = 0>
+    template <class CompatibleArrayType, typename
+              std::enable_if<
+                  not std::is_same<CompatibleArrayType, typename basic_json_t::iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename basic_json_t::const_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename basic_json_t::reverse_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename basic_json_t::const_reverse_iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename array_t::iterator>::value and
+                  not std::is_same<CompatibleArrayType, typename array_t::const_iterator>::value and
+                  std::is_constructible<basic_json, typename CompatibleArrayType::value_type>::value, int>::type
+              = 0>
     basic_json(const CompatibleArrayType& val)
         : m_type(value_t::array)
     {
@@ -1322,9 +1324,10 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<class CompatibleStringType, typename std::enable_if<
-                 std::is_constructible<string_t, CompatibleStringType>::value, int>::type
-             = 0>
+    template <class CompatibleStringType, typename
+              std::enable_if<
+                  std::is_constructible<string_t, CompatibleStringType>::value, int>::type
+              = 0>
     basic_json(const CompatibleStringType& val)
         : basic_json(string_t(val))
     {
@@ -1374,7 +1377,8 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<typename T, typename std::enable_if<
+    template<typename T,
+             typename std::enable_if<
                  not (std::is_same<T, int>::value)
                  and std::is_same<T, number_integer_t>::value
                  , int>::type
@@ -1473,7 +1477,8 @@ class basic_json
 
     @since version 2.0.0
     */
-    template<typename T, typename std::enable_if<
+    template<typename T,
+             typename std::enable_if<
                  not (std::is_same<T, int>::value)
                  and std::is_same<T, number_unsigned_t>::value
                  , int>::type
@@ -1504,11 +1509,13 @@ class basic_json
 
     @since version 2.0.0
     */
-    template<typename CompatibleNumberUnsignedType, typename std::enable_if<
-                 std::is_constructible<number_unsigned_t, CompatibleNumberUnsignedType>::value and
-                 std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and
-                 not std::numeric_limits<CompatibleNumberUnsignedType>::is_signed, CompatibleNumberUnsignedType>::type
-             = 0>
+    template <typename CompatibleNumberUnsignedType, typename
+              std::enable_if <
+                  std::is_constructible<number_unsigned_t, CompatibleNumberUnsignedType>::value and
+                  std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and
+                  not std::numeric_limits<CompatibleNumberUnsignedType>::is_signed,
+                  CompatibleNumberUnsignedType>::type
+              = 0>
     basic_json(const CompatibleNumberUnsignedType val) noexcept
         : m_type(value_t::number_unsigned),
           m_value(static_cast<number_unsigned_t>(val))
@@ -1584,9 +1591,11 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<typename CompatibleNumberFloatType, typename = typename std::enable_if<
+    template<typename CompatibleNumberFloatType, typename = typename
+             std::enable_if<
                  std::is_constructible<number_float_t, CompatibleNumberFloatType>::value and
-                 std::is_floating_point<CompatibleNumberFloatType>::value>::type>
+                 std::is_floating_point<CompatibleNumberFloatType>::value>::type
+             >
     basic_json(const CompatibleNumberFloatType val) noexcept
         : basic_json(number_float_t(val))
     {
@@ -1663,8 +1672,8 @@ class basic_json
     @since version 1.0.0
     */
     basic_json(std::initializer_list<basic_json> init,
-               const bool type_deduction = true,
-               const value_t manual_type = value_t::array)
+               bool type_deduction = true,
+               value_t manual_type = value_t::array)
     {
         // check if each element is an array with two elements whose first
         // element is a string
@@ -1853,9 +1862,12 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<class InputIT, typename = typename std::enable_if<
-                 std::is_same<InputIT, typename basic_json_t::iterator>::value or
-                 std::is_same<InputIT, typename basic_json_t::const_iterator>::value>::type>
+    template <class InputIT, typename
+              std::enable_if<
+                  std::is_same<InputIT, typename basic_json_t::iterator>::value or
+                  std::is_same<InputIT, typename basic_json_t::const_iterator>::value
+                  , int>::type
+              = 0>
     basic_json(InputIT first, InputIT last)
     {
         assert(first.m_object != nullptr);
@@ -2604,10 +2616,11 @@ class basic_json
     //////////////////
 
     /// get an object (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
-                 std::is_convertible<basic_json_t, typename T::mapped_type>::value
-                 , int>::type = 0>
+    template <class T, typename
+              std::enable_if<
+                  std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
+                  std::is_convertible<basic_json_t, typename T::mapped_type>::value
+                  , int>::type = 0>
     T get_impl(T*) const
     {
         if (is_object())
@@ -2634,13 +2647,14 @@ class basic_json
     }
 
     /// get an array (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_convertible<basic_json_t, typename T::value_type>::value and
-                 not std::is_same<basic_json_t, typename T::value_type>::value and
-                 not std::is_arithmetic<T>::value and
-                 not std::is_convertible<std::string, T>::value and
-                 not has_mapped_type<T>::value
-                 , int>::type = 0>
+    template <class T, typename
+              std::enable_if<
+                  std::is_convertible<basic_json_t, typename T::value_type>::value and
+                  not std::is_same<basic_json_t, typename T::value_type>::value and
+                  not std::is_arithmetic<T>::value and
+                  not std::is_convertible<std::string, T>::value and
+                  not has_mapped_type<T>::value
+                  , int>::type = 0>
     T get_impl(T*) const
     {
         if (is_array())
@@ -2660,10 +2674,11 @@ class basic_json
     }
 
     /// get an array (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_convertible<basic_json_t, T>::value and
-                 not std::is_same<basic_json_t, T>::value
-                 , int>::type = 0>
+    template <class T, typename
+              std::enable_if<
+                  std::is_convertible<basic_json_t, T>::value and
+                  not std::is_same<basic_json_t, T>::value
+                  , int>::type = 0>
     std::vector<T> get_impl(std::vector<T>*) const
     {
         if (is_array())
@@ -2684,10 +2699,11 @@ class basic_json
     }
 
     /// get an array (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_same<basic_json, typename T::value_type>::value and
-                 not has_mapped_type<T>::value
-                 , int>::type = 0>
+    template <class T, typename
+              std::enable_if<
+                  std::is_same<basic_json, typename T::value_type>::value and
+                  not has_mapped_type<T>::value
+                  , int>::type = 0>
     T get_impl(T*) const
     {
         if (is_array())
@@ -2714,9 +2730,10 @@ class basic_json
     }
 
     /// get a string (explicit)
-    template<typename T, typename std::enable_if<
-                 std::is_convertible<string_t, T>::value
-                 , int>::type = 0>
+    template <typename T, typename
+              std::enable_if<
+                  std::is_convertible<string_t, T>::value
+                  , int>::type = 0>
     T get_impl(T*) const
     {
         if (is_string())
@@ -2730,8 +2747,10 @@ class basic_json
     }
 
     /// get a number (explicit)
-    template<typename T, typename std::enable_if<
-                 std::is_arithmetic<T>::value, int>::type = 0>
+    template<typename T, typename
+             std::enable_if<
+                 std::is_arithmetic<T>::value
+                 , int>::type = 0>
     T get_impl(T*) const
     {
         switch (m_type)
@@ -2920,8 +2939,10 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<typename ValueType, typename = typename std::enable_if<
-                 not std::is_pointer<ValueType>::value>::type>
+    template<typename ValueType, typename
+             std::enable_if<
+                 not std::is_pointer<ValueType>::value
+                 , int>::type = 0>
     ValueType get() const
     {
         return get_impl(static_cast<ValueType*>(nullptr));
@@ -2954,8 +2975,10 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<typename PointerType, typename = typename std::enable_if<
-                 std::is_pointer<PointerType>::value>::type>
+    template<typename PointerType, typename
+             std::enable_if<
+                 std::is_pointer<PointerType>::value
+                 , int>::type = 0>
     PointerType get() noexcept
     {
         // delegate the call to get_ptr
@@ -2966,8 +2989,10 @@ class basic_json
     @brief get a pointer value (explicit)
     @copydoc get()
     */
-    template<typename PointerType, typename = typename std::enable_if<
-                 std::is_pointer<PointerType>::value>::type>
+    template<typename PointerType, typename
+             std::enable_if<
+                 std::is_pointer<PointerType>::value
+                 , int>::type = 0>
     constexpr const PointerType get() const noexcept
     {
         // delegate the call to get_ptr
@@ -3000,8 +3025,10 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<typename PointerType, typename = typename std::enable_if<
-                 std::is_pointer<PointerType>::value>::type>
+    template<typename PointerType, typename
+             std::enable_if<
+                 std::is_pointer<PointerType>::value
+                 , int>::type = 0>
     PointerType get_ptr() noexcept
     {
         // get the type of the PointerType (remove pointer and const)
@@ -3027,9 +3054,11 @@ class basic_json
     @brief get a pointer value (implicit)
     @copydoc get_ptr()
     */
-    template<typename PointerType, typename = typename std::enable_if<
+    template<typename PointerType, typename
+             std::enable_if<
                  std::is_pointer<PointerType>::value
-                 and std::is_const<typename std::remove_pointer<PointerType>::type>::value>::type>
+                 and std::is_const<typename std::remove_pointer<PointerType>::type>::value
+                 , int>::type = 0>
     constexpr const PointerType get_ptr() const noexcept
     {
         // get the type of the PointerType (remove pointer and const)
@@ -3077,8 +3106,10 @@ class basic_json
 
     @since version 1.1.0
     */
-    template<typename ReferenceType, typename = typename std::enable_if<
-                 std::is_reference<ReferenceType>::value>::type>
+    template<typename ReferenceType, typename
+             std::enable_if<
+                 std::is_reference<ReferenceType>::value
+                 , int>::type = 0>
     ReferenceType get_ref()
     {
         // delegate call to get_ref_impl
@@ -3089,9 +3120,11 @@ class basic_json
     @brief get a reference value (implicit)
     @copydoc get_ref()
     */
-    template<typename ReferenceType, typename = typename std::enable_if<
+    template<typename ReferenceType, typename
+             std::enable_if<
                  std::is_reference<ReferenceType>::value
-                 and std::is_const<typename std::remove_reference<ReferenceType>::type>::value>::type>
+                 and std::is_const<typename std::remove_reference<ReferenceType>::type>::value
+                 , int>::type = 0>
     ReferenceType get_ref() const
     {
         // delegate call to get_ref_impl
@@ -3126,13 +3159,14 @@ class basic_json
 
     @since version 1.0.0
     */
-    template < typename ValueType, typename = typename std::enable_if <
+    template < typename ValueType, typename
+               std::enable_if <
                    not std::is_pointer<ValueType>::value
                    and not std::is_same<ValueType, typename string_t::value_type>::value
 #ifndef _MSC_VER  // Fix for issue #167 operator<< abiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
-                   >::type >
+                   , int >::type = 0 >
     operator ValueType() const
     {
         // delegate the call to get<>() const
@@ -3718,8 +3752,10 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<class ValueType, typename = typename std::enable_if<
-                 std::is_convertible<basic_json_t, ValueType>::value>::type>
+    template <class ValueType, typename
+              std::enable_if<
+                  std::is_convertible<basic_json_t, ValueType>::value
+                  , int>::type = 0>
     ValueType value(const typename object_t::key_type& key, ValueType default_value) const
     {
         // at only works for objects
@@ -3792,8 +3828,10 @@ class basic_json
 
     @since version 2.0.2
     */
-    template<class ValueType, typename = typename std::enable_if<
-                 std::is_convertible<basic_json_t, ValueType>::value>::type>
+    template <class ValueType, typename
+              std::enable_if<
+                  std::is_convertible<basic_json_t, ValueType>::value
+                  , int>::type = 0>
     ValueType value(const json_pointer& ptr, ValueType default_value) const
     {
         // at only works for objects
@@ -3954,9 +3992,12 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<class InteratorType, typename = typename std::enable_if<
-                 std::is_same<InteratorType, typename basic_json_t::iterator>::value or
-                 std::is_same<InteratorType, typename basic_json_t::const_iterator>::value>::type>
+    template <class InteratorType, typename
+              std::enable_if<
+                  std::is_same<InteratorType, typename basic_json_t::iterator>::value or
+                  std::is_same<InteratorType, typename basic_json_t::const_iterator>::value
+                  , int>::type
+              = 0>
     InteratorType erase(InteratorType pos)
     {
         // make sure iterator fits the current value
@@ -4060,9 +4101,12 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<class InteratorType, typename = typename std::enable_if<
-                 std::is_same<InteratorType, typename basic_json_t::iterator>::value or
-                 std::is_same<InteratorType, typename basic_json_t::const_iterator>::value>::type>
+    template <class InteratorType, typename
+              std::enable_if<
+                  std::is_same<InteratorType, typename basic_json_t::iterator>::value or
+                  std::is_same<InteratorType, typename basic_json_t::const_iterator>::value
+                  , int>::type
+              = 0>
     InteratorType erase(InteratorType first, InteratorType last)
     {
         // make sure iterator fits the current value
@@ -6223,7 +6267,7 @@ class basic_json
               const unsigned int current_indent = 0) const
     {
         // variable to hold indentation for recursive calls
-        auto new_indent = current_indent;
+        unsigned int new_indent = current_indent;
 
         switch (m_type)
         {
@@ -7517,7 +7561,7 @@ class basic_json
                                    const std::size_t codepoint2 = 0)
         {
             // calculate the code point from the given code points
-            auto codepoint = codepoint1;
+            std::size_t codepoint = codepoint1;
 
             // check if codepoint1 is a high surrogate
             if (codepoint1 >= 0xD800 and codepoint1 <= 0xDBFF)
@@ -8777,7 +8821,7 @@ class basic_json
                 auto reference_token = reference_string.substr(start, slash - start);
 
                 // check reference tokens are properly escaped
-                for (auto pos = reference_token.find_first_of("~");
+                for (size_t pos = reference_token.find_first_of("~");
                         pos != std::string::npos;
                         pos = reference_token.find_first_of("~", pos + 1))
                 {
@@ -8822,7 +8866,7 @@ class basic_json
             assert(not f.empty());
 
             for (
-                auto pos = s.find(f);         // find first occurrence of f
+                size_t pos = s.find(f);         // find first occurrence of f
                 pos != std::string::npos;       // make sure f was found
                 s.replace(pos, f.size(), t),    // replace with t
                 pos = s.find(f, pos + t.size()) // find next occurrence of f
@@ -9222,7 +9266,7 @@ class basic_json
             else
             {
                 // make sure the top element of the pointer exists
-                auto top_pointer = ptr.top();
+                json_pointer top_pointer = ptr.top();
                 if (top_pointer != ptr)
                 {
                     basic_json& x = result.at(top_pointer);
@@ -9630,7 +9674,7 @@ namespace std
 
 @since version 1.0.0
 */
-template<>
+template <>
 inline void swap(nlohmann::json& j1,
                  nlohmann::json& j2) noexcept(
                      is_nothrow_move_constructible<nlohmann::json>::value and
@@ -9641,7 +9685,7 @@ inline void swap(nlohmann::json& j1,
 }
 
 /// hash value for JSON objects
-template<>
+template <>
 struct hash<nlohmann::json>
 {
     /*!
