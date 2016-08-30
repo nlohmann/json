@@ -2212,7 +2212,8 @@ class basic_json
     {
         std::stringstream ss;
         // fix locale problems
-        ss.imbue(std::locale(std::locale(), new DecimalSeparator));
+        const static std::locale loc(std::locale(), new DecimalSeparator);
+        ss.imbue(loc);
 
         // 6, 15 or 16 digits of precision allows round-trip IEEE 754
         // string->float->string, string->double->string or string->long
