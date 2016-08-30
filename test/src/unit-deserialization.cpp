@@ -33,41 +33,87 @@ using nlohmann::json;
 
 TEST_CASE("deserialization")
 {
-    SECTION("stream")
+    SECTION("successful deserialization")
     {
-        std::stringstream ss;
-        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
-        json j = json::parse(ss);
-        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+        SECTION("stream")
+        {
+            std::stringstream ss;
+            ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+            json j = json::parse(ss);
+            CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+        }
+
+        SECTION("string")
+        {
+            json::string_t s = "[\"foo\",1,2,3,false,{\"one\":1}]";
+            json j = json::parse(s);
+            CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+        }
+
+        SECTION("operator<<")
+        {
+            std::stringstream ss;
+            ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+            json j;
+            j << ss;
+            CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+        }
+
+        SECTION("operator>>")
+        {
+            std::stringstream ss;
+            ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+            json j;
+            ss >> j;
+            CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+        }
+
+        SECTION("user-defined string literal")
+        {
+            CHECK("[\"foo\",1,2,3,false,{\"one\":1}]"_json == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+        }
     }
 
-    SECTION("string")
+    SECTION("successful deserialization")
     {
-        auto s = "[\"foo\",1,2,3,false,{\"one\":1}]";
-        json j = json::parse(s);
-        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
-    }
+        SECTION("stream")
+        {
+            std::stringstream ss;
+            ss << "[\"foo\",1,2,3,false,{\"one\":1}";
+            CHECK_THROWS_AS(json::parse(ss), std::invalid_argument);
+            CHECK_THROWS_WITH(json::parse(ss), "parse error - unexpected end of input");
+        }
 
-    SECTION("operator<<")
-    {
-        std::stringstream ss;
-        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
-        json j;
-        j << ss;
-        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
-    }
+        SECTION("string")
+        {
+            json::string_t s = "[\"foo\",1,2,3,false,{\"one\":1}";
+            CHECK_THROWS_AS(json::parse(s), std::invalid_argument);
+            CHECK_THROWS_WITH(json::parse(s), "parse error - unexpected end of input; expected ']'");
+        }
 
-    SECTION("operator>>")
-    {
-        std::stringstream ss;
-        ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
-        json j;
-        ss >> j;
-        CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
-    }
+        SECTION("operator<<")
+        {
+            std::stringstream ss;
+            ss << "[\"foo\",1,2,3,false,{\"one\":1}";
+            json j;
+            CHECK_THROWS_AS(j << ss, std::invalid_argument);
+            CHECK_THROWS_WITH(j << ss, "parse error - unexpected end of input");
+        }
 
-    SECTION("user-defined string literal")
-    {
-        CHECK("[\"foo\",1,2,3,false,{\"one\":1}]"_json == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+        SECTION("operator>>")
+        {
+            std::stringstream ss;
+            ss << "[\"foo\",1,2,3,false,{\"one\":1}";
+            json j;
+            CHECK_THROWS_AS(ss >> j, std::invalid_argument);
+            CHECK_THROWS_WITH(ss >> j, "parse error - unexpected end of input");
+        }
+
+        SECTION("user-defined string literal")
+        {
+            CHECK_THROWS_AS("[\"foo\",1,2,3,false,{\"one\":1}"_json, std::invalid_argument);
+            CHECK_THROWS_WITH("[\"foo\",1,2,3,false,{\"one\":1}"_json,
+                              "parse error - unexpected end of input; expected ']'");
+        }
     }
 }
