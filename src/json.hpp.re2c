@@ -5942,7 +5942,7 @@ class basic_json
     template<typename CharPT, typename std::enable_if<
                  std::is_pointer<CharPT>::value and
                  std::is_integral<typename std::remove_pointer<CharPT>::type>::value and
-                 sizeof(std::remove_pointer<CharPT>) == 1, int>::type = 0>
+                 sizeof(typename std::remove_pointer<CharPT>::type) == 1, int>::type = 0>
     static basic_json parse(const CharPT s,
                             const parser_callback_t cb = nullptr)
     {
