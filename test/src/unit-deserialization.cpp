@@ -148,6 +148,18 @@ TEST_CASE("deserialization")
                 CHECK(json::parse(v) == json(true));
             }
 
+            SECTION("from chars")
+            {
+                uint8_t *v = new uint8_t[5];
+                v[0] = 't';
+                v[1] = 'r';
+                v[2] = 'u';
+                v[3] = 'e';
+                v[4] = '\0';
+                CHECK(json::parse(v) == json(true));
+                delete[] v;
+            }
+
             SECTION("from std::string")
             {
                 std::string v = {'t', 'r', 'u', 'e'};
