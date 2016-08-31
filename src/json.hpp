@@ -73,6 +73,15 @@ SOFTWARE.
     #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
 
+// allow for portable deprecation warnings
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+    #define JSON_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+    #define JSON_DEPRECATED __declspec(deprecated)
+#else
+    #define JSON_DEPRECATED
+#endif
+
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann
@@ -1057,40 +1066,10 @@ class basic_json
     }
 
     /*!
-    @brief create a null object (implicitly)
+    @brief create a null object
 
-    Create a `null` JSON value. This is the implicit version of the `null`
-    value constructor as it takes no parameters.
-
-    @note The class invariant is satisfied, because it poses no requirements
-    for null values.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this constructor never throws
-    exceptions.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
-    requirements:
-    - The complexity is constant.
-    - As postcondition, it holds: `basic_json().empty() == true`.
-
-    @liveexample{The following code shows the constructor for a `null` JSON
-    value.,basic_json}
-
-    @sa @ref basic_json(std::nullptr_t) -- create a `null` value
-
-    @since version 1.0.0
-    */
-    basic_json() = default;
-
-    /*!
-    @brief create a null object (explicitly)
-
-    Create a `null` JSON value. This is the explicitly version of the `null`
-    value constructor as it takes a null pointer as parameter. It allows to
-    create `null` values by explicitly assigning a `nullptr` to a JSON value.
+    Create a `null` JSON value. It either takes a null pointer as parameter
+    (explicitly creating `null`) or no parameter (implicitly creating `null`).
     The passed null pointer itself is not read -- it is only used to choose
     the right constructor.
 
@@ -1099,15 +1078,12 @@ class basic_json
     @exceptionsafety No-throw guarantee: this constructor never throws
     exceptions.
 
-    @liveexample{The following code shows the constructor with null pointer
-    parameter.,basic_json__nullptr_t}
-
-    @sa @ref basic_json() -- default constructor (implicitly creating a `null`
-    value)
+    @liveexample{The following code shows the constructor with and without a
+    null pointer parameter.,basic_json__nullptr_t}
 
     @since version 1.0.0
     */
-    basic_json(std::nullptr_t) noexcept
+    basic_json(std::nullptr_t = nullptr) noexcept
         : basic_json(value_t::null)
     {
         assert_invariant();
@@ -1971,12 +1947,21 @@ class basic_json
 
     @note A UTF-8 byte order mark is silently ignored.
 
+    @deprecated This constructor is deprecated and will be removed in version
+      3.0.0 to unify the interface of the library. Deserialization will be
+      done by stream operators or by calling one of the `parse` functions,
+      e.g. @ref parse(std::istream&, const parser_callback_t). That is, calls
+      like `json j(i);` for an input stream @a i need to be replaced by
+      `json j = json::parse(i);`. See the example below.
+
     @liveexample{The example below demonstrates constructing a JSON value from
     a `std::stringstream` with and without callback
     function.,basic_json__istream}
 
-    @since version 2.0.0
+    @since version 2.0.0, deprecated in version 2.0.3, to be removed in
+           version 3.0.0
     */
+    JSON_DEPRECATED
     explicit basic_json(std::istream& i, const parser_callback_t cb = nullptr)
     {
         *this = parser(i, cb).parse();

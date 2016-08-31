@@ -27,7 +27,8 @@ int main()
     ss << text;
 
     // create JSON from stream
-    json j_complete(ss);
+    json j_complete(ss); // deprecated!
+    // shall be replaced by: json j_complete = json::parse(ss);
     std::cout << std::setw(4) << j_complete << "\n\n";
 
 
@@ -51,5 +52,6 @@ int main()
 
     // create JSON from stream (with callback)
     json j_filtered(ss, cb);
+    // shall be replaced by: json j_filtered = json::parse(ss, cb);
     std::cout << std::setw(4) << j_filtered << '\n';
 }
