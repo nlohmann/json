@@ -492,6 +492,8 @@ I deeply appreciate the help of the following people.
 - [Mário Feroldi](https://github.com/thelostt) fixed a small typo.
 - [duncanwerner](https://github.com/duncanwerner) found a really embarrassing performance regression in the 2.0.0 release.
 - [Damien](https://github.com/dtoma) fixed one of the last conversion warnings.
+- [Thomas Braun](https://github.com/t-b) fixed a warning in a test case.
+- [Théo DELRIEU](https://github.com/theodelrieu) patiently and constructively oversaw the long way toward [iterator-range parsing](https://github.com/nlohmann/json/issues/290).
 
 Thanks a lot for helping out!
 
@@ -510,7 +512,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905099 assertions in 32 test cases)
+All tests passed (8905154 assertions in 35 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

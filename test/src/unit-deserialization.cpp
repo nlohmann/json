@@ -31,6 +31,8 @@ SOFTWARE.
 #include "json.hpp"
 using nlohmann::json;
 
+#include <valarray>
+
 TEST_CASE("deserialization")
 {
     SECTION("successful deserialization")
@@ -43,7 +45,14 @@ TEST_CASE("deserialization")
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
         }
 
-        SECTION("string")
+        SECTION("string literal")
+        {
+            auto s = "[\"foo\",1,2,3,false,{\"one\":1}]";
+            json j = json::parse(s);
+            CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
+        }
+
+        SECTION("string_t")
         {
             json::string_t s = "[\"foo\",1,2,3,false,{\"one\":1}]";
             json j = json::parse(s);
@@ -74,7 +83,7 @@ TEST_CASE("deserialization")
         }
     }
 
-    SECTION("successful deserialization")
+    SECTION("unsuccessful deserialization")
     {
         SECTION("stream")
         {
@@ -114,6 +123,105 @@ TEST_CASE("deserialization")
             CHECK_THROWS_AS("[\"foo\",1,2,3,false,{\"one\":1}"_json, std::invalid_argument);
             CHECK_THROWS_WITH("[\"foo\",1,2,3,false,{\"one\":1}"_json,
                               "parse error - unexpected end of input; expected ']'");
+        }
+    }
+
+    SECTION("contiguous containers")
+    {
+        SECTION("directly")
+        {
+            SECTION("from std::vector")
+            {
+                std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(v) == json(true));
+            }
+
+            SECTION("from std::array")
+            {
+                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+                CHECK(json::parse(v) == json(true));
+            }
+
+            SECTION("from array")
+            {
+                uint8_t v[] = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(v) == json(true));
+            }
+
+            SECTION("from chars")
+            {
+                uint8_t *v = new uint8_t[5];
+                v[0] = 't';
+                v[1] = 'r';
+                v[2] = 'u';
+                v[3] = 'e';
+                v[4] = '\0';
+                CHECK(json::parse(v) == json(true));
+                delete[] v;
+            }
+
+            SECTION("from std::string")
+            {
+                std::string v = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(v) == json(true));
+            }
+
+            SECTION("from std::initializer_list")
+            {
+                std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(v) == json(true));
+            }
+
+            SECTION("empty container")
+            {
+                std::vector<uint8_t> v;
+                CHECK_THROWS_AS(json::parse(v), std::invalid_argument);
+            }
+        }
+
+        SECTION("via iterator range")
+        {
+            SECTION("from std::vector")
+            {
+                std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
+
+            SECTION("from std::array")
+            {
+                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
+
+            SECTION("from array")
+            {
+                uint8_t v[] = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
+
+            SECTION("from std::string")
+            {
+                std::string v = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
+
+            SECTION("from std::initializer_list")
+            {
+                std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
+
+            SECTION("from std::valarray")
+            {
+                std::valarray<uint8_t> v = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
+            }
+
+            SECTION("with empty range")
+            {
+                std::vector<uint8_t> v;
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
         }
     }
 }
