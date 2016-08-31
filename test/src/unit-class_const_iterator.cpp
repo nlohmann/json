@@ -64,6 +64,22 @@ TEST_CASE("const_iterator class")
             json::const_iterator it2(&j);
             it2 = it;
         }
+
+        SECTION("copy constructor from non-const iterator")
+        {
+            SECTION("create from uninitialized iterator")
+            {
+                const json::iterator it {};
+                json::const_iterator cit(it);
+            }
+
+            SECTION("create from initialized iterator")
+            {
+                json j;
+                const json::iterator it = j.begin();
+                json::const_iterator cit(it);
+            }
+        }
     }
 
     SECTION("initialization")
