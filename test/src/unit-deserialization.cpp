@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.2
+|  |  |__   |  |  | | | |  version 2.0.3
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -150,7 +150,7 @@ TEST_CASE("deserialization")
 
             SECTION("from chars")
             {
-                uint8_t *v = new uint8_t[5];
+                uint8_t* v = new uint8_t[5];
                 v[0] = 't';
                 v[1] = 'r';
                 v[2] = 'u';
