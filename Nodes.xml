@@ -6,6 +6,10 @@
       <Path>index.html</Path>
       <Subnodes>
        <Node>
+        <Name>Deprecated List</Name>
+        <Path>deprecated.html</Path>
+       </Node>
+       <Node>
         <Name>Namespace Members</Name>
         <Path>namespacemembers.html</Path>
         <Subnodes>
@@ -595,13 +599,8 @@
                </Node>
                <Node>
                 <Name>basic_json</Name>
-                <Path>classnlohmann_1_1basic__json_a53771a7a4f2787125e55f64448f24ce6.html</Path>
-                <Anchor>a53771a7a4f2787125e55f64448f24ce6</Anchor>
-               </Node>
-               <Node>
-                <Name>basic_json</Name>
-                <Path>classnlohmann_1_1basic__json_ade0e56c8c320d7f342e7a5697e6d6f7e.html</Path>
-                <Anchor>ade0e56c8c320d7f342e7a5697e6d6f7e</Anchor>
+                <Path>classnlohmann_1_1basic__json_aa7ad0ebda83e54c22ba8b3d954ef1293.html</Path>
+                <Anchor>aa7ad0ebda83e54c22ba8b3d954ef1293</Anchor>
                </Node>
                <Node>
                 <Name>basic_json</Name>
@@ -695,8 +694,8 @@
                </Node>
                <Node>
                 <Name>basic_json</Name>
-                <Path>classnlohmann_1_1basic__json_a110eb65dc3e34e1cebd28a10218c6d70.html</Path>
-                <Anchor>a110eb65dc3e34e1cebd28a10218c6d70</Anchor>
+                <Path>classnlohmann_1_1basic__json_a32350263eb105764844c5a85e156a255.html</Path>
+                <Anchor>a32350263eb105764844c5a85e156a255</Anchor>
                </Node>
                <Node>
                 <Name>basic_json</Name>
@@ -800,8 +799,8 @@
                </Node>
                <Node>
                 <Name>diff</Name>
-                <Path>classnlohmann_1_1basic__json_a618a5c5c9f8889032657370c8247a587.html</Path>
-                <Anchor>a618a5c5c9f8889032657370c8247a587</Anchor>
+                <Path>classnlohmann_1_1basic__json_a5ef1934868b90452a4a34695489c60cd.html</Path>
+                <Anchor>a5ef1934868b90452a4a34695489c60cd</Anchor>
                </Node>
                <Node>
                 <Name>dump</Name>
@@ -825,13 +824,13 @@
                </Node>
                <Node>
                 <Name>erase</Name>
-                <Path>classnlohmann_1_1basic__json_a45e789042a23138eba2b69f34df9fc45.html</Path>
-                <Anchor>a45e789042a23138eba2b69f34df9fc45</Anchor>
+                <Path>classnlohmann_1_1basic__json_ab9f8c9a02d6bb794ee26801a232ca4f4.html</Path>
+                <Anchor>ab9f8c9a02d6bb794ee26801a232ca4f4</Anchor>
                </Node>
                <Node>
                 <Name>erase</Name>
-                <Path>classnlohmann_1_1basic__json_a263a9ecde33a1f2ff63dcd15d5e42cb7.html</Path>
-                <Anchor>a263a9ecde33a1f2ff63dcd15d5e42cb7</Anchor>
+                <Path>classnlohmann_1_1basic__json_aa8996e3f8cd3e5113dcc3cb34bef7c0a.html</Path>
+                <Anchor>aa8996e3f8cd3e5113dcc3cb34bef7c0a</Anchor>
                </Node>
                <Node>
                 <Name>erase</Name>
@@ -1100,8 +1099,13 @@
                </Node>
                <Node>
                 <Name>parse</Name>
-                <Path>classnlohmann_1_1basic__json_a9a0b1acc13023170d2295eb512289080.html</Path>
-                <Anchor>a9a0b1acc13023170d2295eb512289080</Anchor>
+                <Path>classnlohmann_1_1basic__json_ace63ac4eb1dd7251a259d32e397461a3.html</Path>
+                <Anchor>ace63ac4eb1dd7251a259d32e397461a3</Anchor>
+               </Node>
+               <Node>
+                <Name>parse</Name>
+                <Path>classnlohmann_1_1basic__json_a90f05d55d9d0702c075cd281fd0d85ae.html</Path>
+                <Anchor>a90f05d55d9d0702c075cd281fd0d85ae</Anchor>
                </Node>
                <Node>
                 <Name>parse</Name>
@@ -1112,6 +1116,16 @@
                 <Name>parse</Name>
                 <Path>classnlohmann_1_1basic__json_a959bc32fc72a76cd5a1bd6977926f787.html</Path>
                 <Anchor>a959bc32fc72a76cd5a1bd6977926f787</Anchor>
+               </Node>
+               <Node>
+                <Name>parse</Name>
+                <Path>classnlohmann_1_1basic__json_aa8dca2e91a6301c36890f844e64f0023.html</Path>
+                <Anchor>aa8dca2e91a6301c36890f844e64f0023</Anchor>
+               </Node>
+               <Node>
+                <Name>parse</Name>
+                <Path>classnlohmann_1_1basic__json_aeffd70f622f8f2a51fd3d95af64b63a7.html</Path>
+                <Anchor>aeffd70f622f8f2a51fd3d95af64b63a7</Anchor>
                </Node>
                <Node>
                 <Name>patch</Name>

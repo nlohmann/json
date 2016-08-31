@@ -2,6 +2,13 @@
 <Tokens version="1.0">
   <Token>
     <TokenIdentifier>
+      <Name>deprecated</Name>
+      <APILanguage>unknown</APILanguage>
+    </TokenIdentifier>
+    <Path>deprecated.html</Path>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>nlohmann</Name>
       <APILanguage>c</APILanguage>
       <Type>ns</Type>
@@ -286,21 +293,9 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a53771a7a4f2787125e55f64448f24ce6.html</Path>
-    <Anchor>a53771a7a4f2787125e55f64448f24ce6</Anchor>
-    <Abstract>create a null object (implicitly) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>basic_json</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ade0e56c8c320d7f342e7a5697e6d6f7e.html</Path>
-    <Anchor>ade0e56c8c320d7f342e7a5697e6d6f7e</Anchor>
-    <Abstract>create a null object (explicitly) </Abstract>
+    <Path>classnlohmann_1_1basic__json_aa7ad0ebda83e54c22ba8b3d954ef1293.html</Path>
+    <Anchor>aa7ad0ebda83e54c22ba8b3d954ef1293</Anchor>
+    <Abstract>create a null object </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -526,8 +521,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a110eb65dc3e34e1cebd28a10218c6d70.html</Path>
-    <Anchor>a110eb65dc3e34e1cebd28a10218c6d70</Anchor>
+    <Path>classnlohmann_1_1basic__json_a32350263eb105764844c5a85e156a255.html</Path>
+    <Anchor>a32350263eb105764844c5a85e156a255</Anchor>
     <Abstract>construct a JSON value given an input stream </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1102,8 +1097,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a45e789042a23138eba2b69f34df9fc45.html</Path>
-    <Anchor>a45e789042a23138eba2b69f34df9fc45</Anchor>
+    <Path>classnlohmann_1_1basic__json_ab9f8c9a02d6bb794ee26801a232ca4f4.html</Path>
+    <Anchor>ab9f8c9a02d6bb794ee26801a232ca4f4</Anchor>
     <Abstract>remove element given an iterator </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1114,8 +1109,8 @@
       <Type>instm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a263a9ecde33a1f2ff63dcd15d5e42cb7.html</Path>
-    <Anchor>a263a9ecde33a1f2ff63dcd15d5e42cb7</Anchor>
+    <Path>classnlohmann_1_1basic__json_aa8996e3f8cd3e5113dcc3cb34bef7c0a.html</Path>
+    <Anchor>aa8996e3f8cd3e5113dcc3cb34bef7c0a</Anchor>
     <Abstract>remove elements given an iterator range </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1762,9 +1757,21 @@
       <Type>clm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a9a0b1acc13023170d2295eb512289080.html</Path>
-    <Anchor>a9a0b1acc13023170d2295eb512289080</Anchor>
-    <Abstract>deserialize from string </Abstract>
+    <Path>classnlohmann_1_1basic__json_ace63ac4eb1dd7251a259d32e397461a3.html</Path>
+    <Anchor>ace63ac4eb1dd7251a259d32e397461a3</Anchor>
+    <Abstract>deserialize from an array </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>parse</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a90f05d55d9d0702c075cd281fd0d85ae.html</Path>
+    <Anchor>a90f05d55d9d0702c075cd281fd0d85ae</Anchor>
+    <Abstract>deserialize from string literal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -1789,6 +1796,30 @@
     <Path>classnlohmann_1_1basic__json_a959bc32fc72a76cd5a1bd6977926f787.html</Path>
     <Anchor>a959bc32fc72a76cd5a1bd6977926f787</Anchor>
     <Abstract>deserialize from stream </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>parse</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_aa8dca2e91a6301c36890f844e64f0023.html</Path>
+    <Anchor>aa8dca2e91a6301c36890f844e64f0023</Anchor>
+    <Abstract>deserialize from an iterator range with contiguous storage </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>parse</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_aeffd70f622f8f2a51fd3d95af64b63a7.html</Path>
+    <Anchor>aeffd70f622f8f2a51fd3d95af64b63a7</Anchor>
+    <Abstract>deserialize from a container with contiguous storage </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -1894,8 +1925,8 @@
       <Type>clm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a618a5c5c9f8889032657370c8247a587.html</Path>
-    <Anchor>a618a5c5c9f8889032657370c8247a587</Anchor>
+    <Path>classnlohmann_1_1basic__json_a5ef1934868b90452a4a34695489c60cd.html</Path>
+    <Anchor>a5ef1934868b90452a4a34695489c60cd</Anchor>
     <Abstract>creates a diff as a JSON patch </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
