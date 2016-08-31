@@ -1,7 +1,17 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [v2.0.2](https://github.com/nlohmann/json/releases/tag/v2.0.2) (2016-07-30)
+## [v2.0.3](https://github.com/nlohmann/json/releases/tag/v2.0.3) (2016-08-31)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.2...v2.0.3)
+
+- Support for iterator-range parsing [\#290](https://github.com/nlohmann/json/issues/290)
+
+- warning C4706: assignment within conditional expression [\#295](https://github.com/nlohmann/json/issues/295)
+- Horribly inconsistent behavior between const/non-const reference in operator \[\] \(\) [\#289](https://github.com/nlohmann/json/issues/289)
+
+- unit-constructor1.cpp: Fix floating point truncation warning [\#300](https://github.com/nlohmann/json/pull/300) ([t-b](https://github.com/t-b))
+
+## [v2.0.2](https://github.com/nlohmann/json/releases/tag/v2.0.2) (2016-07-31)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.1...v2.0.2)
 
 - value\(\) does not work with \_json\_pointer types [\#283](https://github.com/nlohmann/json/issues/283)
