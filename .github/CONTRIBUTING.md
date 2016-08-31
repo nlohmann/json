@@ -6,6 +6,10 @@ This project started as a little excuse to exercise some of the cool new C++11 f
 
 To make it as easy as possible for you to contribute and for me to keep an overview, here are a few guidelines which should help us avoid all kinds of unnecessary work or disappointment. And of course, this document is subject to discussion, so please [create an issue](https://github.com/nlohmann/json/issues/new) or a pull request if you find a way to improve it!
 
+## Private reports
+
+Usually, all issues are tracked publicly on [Github](https://github.com/nlohmann/json/issues). If you want to make a private report (e.g., for a vulnerability or to attach an example that is not meant to be publisheed), please send an email to <mail@nlohmann.me>.
+
 ## Prerequisites
 
 Please [create an issue](https://github.com/nlohmann/json/issues/new), assuming one does not already exist, and describe your concern. Note you need a [GitHub account](https://github.com/signup/free) for this.
@@ -37,16 +41,10 @@ There are currently two files which need to be edited:
 
 2. [`test/src/unit.cpp`](https://github.com/nlohmann/json/blob/master/test/unit.cpp) - This contains the [Catch](https://github.com/philsquared/Catch) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
 
-   If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled with
+   If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled and executed with
 
    ```sh
-   make
-   ```
-
-   and can be executed with
-
-   ```sh
-   ./json_unit
+   make check
    ```
 
    The test cases are also executed with several different compilers on [Travis](https://travis-ci.org/nlohmann/json) once you open a pull request.
@@ -57,6 +55,7 @@ Please understand that I cannot accept pull requests changing only file `src/jso
 ## Note
 
 - If you open a pull request, the code will be automatically tested with [Valgrind](http://valgrind.org)'s Memcheck tool to detect memory leaks. Please be aware that the execution with Valgrind _may_ in rare cases yield different behavior than running the code directly. This can result in failing unit tests which run successfully without Valgrind.
+- There is a Makefile target `make pretty` which runs [Artistic Style](http://astyle.sourceforge.net) to fix indentation. If possible, run it before opening the pull request. Otherwise, we shall run it afterward.
 
 ## Please don't
 

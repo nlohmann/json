@@ -1,14 +1,14 @@
 [![JSON for Modern C++](https://raw.githubusercontent.com/nlohmann/json/master/doc/json.gif)](https://github.com/nlohmann/json/releases)
 
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
-[![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
+[![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
-[![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/p5o4znPnGHJpDVqN)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/zkFPohcXJ2TFuAyq)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
 [![Github Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
 
 ## Design goals
 
@@ -18,7 +18,7 @@ There are myriads of [JSON](http://json.org) libraries out there, and each may e
 
 - **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/src/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
-- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/blob/master/test/src/unit.cpp) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) that there are no memory leaks.
+- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/blob/master/test/src/unit.cpp) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) that there are no memory leaks. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
 
 Other aspects were not so important to us:
 
@@ -416,7 +416,13 @@ The following compilers are currently used in continuous integration at [Travis]
 | GCC 4.9.3       | Ubuntu 14.04.4 LTS           | g++-4.9 (Ubuntu 4.9.3-8ubuntu2~14.04) 4.9.3 |
 | GCC 5.3.0       | Ubuntu 14.04.4 LTS           | g++-5 (Ubuntu 5.3.0-3ubuntu1~14.04) 5.3.0 20151204 |
 | GCC 6.1.1       | Ubuntu 14.04.4 LTS           | g++-6 (Ubuntu 6.1.1-3ubuntu11~14.04.1) 6.1.1 20160511 |
+| Clang 3.6.0     | Ubuntu 14.04.4 LTS           | clang version 3.6.0 (tags/RELEASE_360/final) |
+| Clang 3.6.1     | Ubuntu 14.04.4 LTS           | clang version 3.6.1 (tags/RELEASE_361/final) |
+| Clang 3.6.2     | Ubuntu 14.04.4 LTS           | clang version 3.6.2 (tags/RELEASE_362/final) |
+| Clang 3.7.0     | Ubuntu 14.04.4 LTS           | clang version 3.7.0 (tags/RELEASE_370/final) |
+| Clang 3.7.1     | Ubuntu 14.04.4 LTS           | clang version 3.7.1 (tags/RELEASE_371/final) |
 | Clang 3.8.0     | Ubuntu 14.04.4 LTS           | clang version 3.8.0 (tags/RELEASE_380/final) |
+| Clang 3.8.1     | Ubuntu 14.04.4 LTS           | clang version 3.8.1 (tags/RELEASE_381/final) |
 | Clang Xcode 6.1 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn) |
 | Clang Xcode 6.2 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.57) (based on LLVM 3.5svn) |
 | Clang Xcode 6.3 | Darwin Kernel Version 14.3.0 (OSX 10.10.3) | Apple LLVM version 6.1.0 (clang-602.0.49) (based on LLVM 3.6.0svn) |
@@ -486,13 +492,15 @@ I deeply appreciate the help of the following people.
 - [Mário Feroldi](https://github.com/thelostt) fixed a small typo.
 - [duncanwerner](https://github.com/duncanwerner) found a really embarrassing performance regression in the 2.0.0 release.
 - [Damien](https://github.com/dtoma) fixed one of the last conversion warnings.
+- [Thomas Braun](https://github.com/t-b) fixed a warning in a test case.
+- [Théo DELRIEU](https://github.com/theodelrieu) patiently and constructively oversaw the long way toward [iterator-range parsing](https://github.com/nlohmann/json/issues/290).
 
 Thanks a lot for helping out!
 
 
 ## Notes
 
-- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](http://en.cppreference.com/w/cpp/error/assert).
+- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](http://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a2e26bd0b0168abb61f67ad5bcd5b9fa1.html#a2e26bd0b0168abb61f67ad5bcd5b9fa1) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a674de1ee73e6bf4843fc5dc1351fb726.html#a674de1ee73e6bf4843fc5dc1351fb726).
 - As the exact type of a number is not defined in the [JSON specification](http://rfc7159.net/rfc7159), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
 
 
@@ -501,11 +509,10 @@ Thanks a lot for helping out!
 To compile and run the tests, you need to execute
 
 ```sh
-$ make
-$ ./json_unit "*"
+$ make check
 
 ===============================================================================
-All tests passed (8905012 assertions in 32 test cases)
+All tests passed (8905154 assertions in 35 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
