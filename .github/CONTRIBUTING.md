@@ -41,16 +41,10 @@ There are currently two files which need to be edited:
 
 2. [`test/src/unit.cpp`](https://github.com/nlohmann/json/blob/master/test/unit.cpp) - This contains the [Catch](https://github.com/philsquared/Catch) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
 
-   If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled with
+   If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled and executed with
 
    ```sh
-   make
-   ```
-
-   and can be executed with
-
-   ```sh
-   ./json_unit
+   make check
    ```
 
    The test cases are also executed with several different compilers on [Travis](https://travis-ci.org/nlohmann/json) once you open a pull request.
