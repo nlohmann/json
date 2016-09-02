@@ -223,5 +223,21 @@ TEST_CASE("deserialization")
                 CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
             }
         }
+
+        // these cases are required for 100% line coverage
+        SECTION("error cases")
+        {
+            SECTION("case 1")
+            {
+                uint8_t v[] = {'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u'};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 2")
+            {
+                uint8_t v[] = {'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u', '1'};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+        }
     }
 }
