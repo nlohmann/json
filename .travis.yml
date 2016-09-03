@@ -213,21 +213,15 @@ install:
   # make sure CXX is correctly set
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
 
-  # install recent CMake
-  - |
-     if [[ "${LLVM_VERSION}" != "" ]]; then
-       LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
-       travis_retry wget --quiet https://cmake.org/files/v3.6/cmake-3.6.1.tar.gz
-       tar xfz cmake-3.6.1.tar.gz
-       (cd cmake-3.6.1 && ./configure --prefix=${LLVM_DIR}/cmake && make install)
-       export PATH="${LLVM_DIR}/cmake/bin:${PATH}"
-     fi
-  
   # install LLVM/clang when LLVM_VERSION is set
   - |
      if [[ "${LLVM_VERSION}" != "" ]]; then
        LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
        if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
+         travis_retry wget --quiet https://cmake.org/files/v3.6/cmake-3.6.1.tar.gz
+         tar xfz cmake-3.6.1.tar.gz
+         (cd cmake-3.6.1 && ./configure --prefix=${LLVM_DIR}/cmake && make install)
+         export PATH="${LLVM_DIR}/cmake/bin:${PATH}"
          LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
          LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
          LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
