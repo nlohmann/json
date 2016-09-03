@@ -217,8 +217,9 @@ install:
   - |
      if [[ "${LLVM_VERSION}" != "" ]]; then
        LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
-       travis_retry wget --quiet https://cmake.org/files/v3.6/cmake-3.6.1-Linux-x86_64.sh
-       sh ./cmake-3.6.1-Linux-x86_64.sh --prefix=${LLVM_DIR}/cmake
+       travis_retry wget --quiet https://cmake.org/files/v3.6/cmake-3.6.1.tar.gz
+       tar xfz cmake-3.6.1.tar.gz
+       (cd cmake-3.6.1 && ./configure --prefix=${LLVM_DIR}/cmake && make install)
        export PATH="${LLVM_DIR}/cmake/bin:${PATH}"
      fi
   
