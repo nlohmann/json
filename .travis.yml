@@ -187,6 +187,10 @@ matrix:
   - os: linux
     env: LLVM_VERSION=3.9.0
     compiler: clang
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: cmake
 
 #####################
 # installation step #
@@ -202,6 +206,7 @@ cache:
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.7.1
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.0
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.1
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.9.0
 
 
 install:
