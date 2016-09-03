@@ -187,10 +187,6 @@ matrix:
   - os: linux
     env: LLVM_VERSION=3.9.0
     compiler: clang
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: cmake
 
 #####################
 # installation step #
@@ -217,6 +213,15 @@ install:
   # make sure CXX is correctly set
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
 
+  # install recent CMake
+  - |
+     if [[ "${LLVM_VERSION}" != "" ]]; then
+       LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
+       travis_retry wget --quiet https://cmake.org/files/v3.6/cmake-3.6.1-Linux-x86_64.sh
+       ./cmake-3.6.1-Linux-x86_64.sh --prefix=${LLVM_DIR}/cmake
+       export PATH="${LLVM_DIR}/cmake/bin:${PATH}"
+     fi
+  
   # install LLVM/clang when LLVM_VERSION is set
   - |
      if [[ "${LLVM_VERSION}" != "" ]]; then
