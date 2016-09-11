@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.0.4](https://github.com/nlohmann/json/releases/tag/v2.0.4) (2016-09-11)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.3...v2.0.4)
+
+- Parsing fails without space at end of file [\#306](https://github.com/nlohmann/json/issues/306)
+
+- Unused variable warning [\#304](https://github.com/nlohmann/json/issues/304)
+
 ## [v2.0.3](https://github.com/nlohmann/json/releases/tag/v2.0.3) (2016-08-31)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.2...v2.0.3)
 
