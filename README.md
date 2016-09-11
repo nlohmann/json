@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/zkFPohcXJ2TFuAyq)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/MN72DYughLUXjVLk)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
@@ -430,7 +430,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 7.1 | Darwin Kernel Version 14.5.0 (OSX 10.10.5) | Apple LLVM version 7.0.0 (clang-700.1.76) |
 | Clang Xcode 7.2 | Darwin Kernel Version 15.0.0 (OSX 10.10.5) | Apple LLVM version 7.0.2 (clang-700.1.81) |
 | Clang Xcode 7.3 | Darwin Kernel Version 15.0.0 (OSX 10.10.5) | Apple LLVM version 7.3.0 (clang-703.0.29) |
-| Clang Xcode 8.0 | Darwin Kernel Version 15.5.0 (OSX 10.11.5) | Apple LLVM version 8.0.0 (clang-800.0.24.1) |
+| Clang Xcode 8.0 | Darwin Kernel Version 15.6.0 (OSX 10.11.6) | Apple LLVM version 8.0.0 (clang-800.0.38) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25123.0 | 
 
 
@@ -512,7 +512,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905154 assertions in 35 test cases)
+All tests passed (8905158 assertions in 35 test cases)
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

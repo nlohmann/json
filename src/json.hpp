@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 2.0.3
+|  |  |__   |  |  | | | |  version 2.0.4
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -8592,7 +8592,7 @@ basic_json_parser_63:
             const auto offset_cursor = m_cursor - m_start;
 
             // no stream is used or end of file is reached
-            if (m_stream == nullptr or not * m_stream)
+            if (m_stream == nullptr or m_stream->eof())
             {
                 // copy unprocessed characters to line buffer
                 m_line_buffer.clear();
@@ -10116,7 +10116,7 @@ basic_json_parser_63:
                 json_pointer top_pointer = ptr.top();
                 if (top_pointer != ptr)
                 {
-                    basic_json& x = result.at(top_pointer);
+                    result.at(top_pointer);
                 }
 
                 // get reference to parent of JSON pointer ptr

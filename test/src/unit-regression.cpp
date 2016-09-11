@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.3
+|  |  |__   |  |  | | | |  version 2.0.4
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -30,6 +30,8 @@ SOFTWARE.
 
 #include "json.hpp"
 using nlohmann::json;
+
+#include <fstream>
 
 TEST_CASE("regression tests")
 {
@@ -439,5 +441,29 @@ TEST_CASE("regression tests")
         int val_integer = j.value("/object/key2"_json_pointer, 0);
 
         CHECK(at_integer == val_integer);
+    }
+
+    SECTION("issue #304 - Unused variable warning")
+    {
+        // code triggered a "warning: unused variable" warning and is left
+        // here to avoid the warning in the future
+        json object;
+        json patch = json::array();
+        object = object.patch(patch);
+    }
+
+    SECTION("issue #306 - Parsing fails without space at end of file")
+    {
+        for (auto filename :
+                {
+                    "test/data/regression/broken_file.json",
+                    "test/data/regression/working_file.json"
+                })
+        {
+            CAPTURE(filename);
+            json j;
+            std::ifstream f(filename);
+            CHECK_NOTHROW(j << f);
+        }
     }
 }
