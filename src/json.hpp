@@ -10116,7 +10116,7 @@ basic_json_parser_63:
                 json_pointer top_pointer = ptr.top();
                 if (top_pointer != ptr)
                 {
-                    basic_json& x = result.at(top_pointer);
+                    result.at(top_pointer);
                 }
 
                 // get reference to parent of JSON pointer ptr

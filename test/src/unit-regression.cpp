@@ -443,6 +443,15 @@ TEST_CASE("regression tests")
         CHECK(at_integer == val_integer);
     }
 
+    SECTION("issue #304 - Unused variable warning")
+    {
+        // code triggered a "warning: unused variable" warning and is left
+        // here to avoid the warning in the future
+        json object;
+        json patch = json::array();
+        object = object.patch(patch);
+    }
+
     SECTION("issue #306 - Parsing fails without space at end of file")
     {
         for (auto filename :
