@@ -6,14 +6,12 @@
 
 #MSearchBox {
     white-space : nowrap;
-    position: absolute;
     float: none;
-    display: inline;
     margin-top: 8px;
     right: 0px;
     width: 170px;
+    height: 24px;
     z-index: 102;
-    background-color: white;
 }
 
 #MSearchBox .left
@@ -48,12 +46,13 @@
     height:19px;
     background:url('search_m.png') repeat-x;
     border:none;
-    width:111px;
+    width:115px;
     margin-left:20px;
     padding-left:4px;
     color: #909090;
     outline: none;
     font: 9pt Arial, Verdana, sans-serif;
+    -webkit-border-radius: 0px;
 }
 
 #FSearchBox #MSearchField {
@@ -64,7 +63,7 @@
     display:block;
     position:absolute;
     right:10px;
-    top:0px;
+    top:8px;
     width:20px;
     height:19px;
     background:url('search_r.png') no-repeat;
@@ -102,7 +101,7 @@
     left: 0; top: 0;
     border: 1px solid #90A5CE;
     background-color: #F9FAFC;
-    z-index: 1;
+    z-index: 10001;
     padding-top: 4px;
     padding-bottom: 4px;
     -moz-border-radius: 4px;
@@ -165,6 +164,7 @@ iframe#MSearchResults {
     left: 0; top: 0;
     border: 1px solid #000;
     background-color: #EEF1F7;
+    z-index:10000;
 }
 
 /* ----------------------------------- */

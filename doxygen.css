@@ -1,4 +1,4 @@
-/* The standard CSS for doxygen 1.8.11 */
+/* The standard CSS for doxygen 1.8.12 */
 
 body, table, div, p, dl {
 	font: 400 14px/22px Roboto,sans-serif;
@@ -173,7 +173,7 @@ pre.fragment {
 }
 
 div.fragment {
-        padding: 4px 6px;
+        padding: 0px;
         margin: 4px 8px 4px 2px;
 	background-color: #FBFCFD;
 	border: 1px solid #C4CFE5;
@@ -230,6 +230,15 @@ span.lineno a {
 
 span.lineno a:hover {
 	background-color: #C8C8C8;
+}
+
+.lineno {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 
 div.ah, span.ah {
@@ -501,6 +510,29 @@ table.memberdecls {
 
 /* Styles for detailed member documentation */
 
+.memtitle {
+	padding: 8px;
+	border-top: 1px solid #A8B8D9;
+	border-left: 1px solid #A8B8D9;
+	border-right: 1px solid #A8B8D9;
+	border-top-right-radius: 4px;
+	border-top-left-radius: 4px;
+	margin-bottom: -1px;
+	background-image: url('nav_f.png');
+	background-repeat: repeat-x;
+	background-color: #E2E8F2;
+	line-height: 1.25;
+	font-weight: 300;
+	float:left;
+}
+
+.permalink
+{
+        font-size: 65%;
+        display: inline-block;
+        vertical-align: middle;
+}
+
 .memtemplate {
 	font-size: 80%;
 	color: #4665A2;
@@ -539,7 +571,7 @@ table.memberdecls {
 }
 
 .memname {
-        font-weight: bold;
+        font-weight: 400;
         margin-left: 6px;
 }
 
@@ -555,22 +587,22 @@ table.memberdecls {
         color: #253555;
         font-weight: bold;
         text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.9);
-        background-image:url('nav_f.png');
-        background-repeat:repeat-x;
-        background-color: #E2E8F2;
+        background-color: #DFE5F1;
         /* opera specific markup */
         box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.15);
         border-top-right-radius: 4px;
-        border-top-left-radius: 4px;
         /* firefox specific markup */
         -moz-box-shadow: rgba(0, 0, 0, 0.15) 5px 5px 5px;
         -moz-border-radius-topright: 4px;
-        -moz-border-radius-topleft: 4px;
         /* webkit specific markup */
         -webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.15);
         -webkit-border-top-right-radius: 4px;
-        -webkit-border-top-left-radius: 4px;
 
+}
+
+.overload {
+        font-family: "courier new",courier,monospace;
+	font-size: 65%;
 }
 
 .memdoc, dl.reflist dd {
@@ -914,6 +946,7 @@ table.fieldtable {
         padding-bottom: 4px;
         padding-top: 5px;
         text-align:left;
+        font-weight: 400;
         -moz-border-radius-topleft: 4px;
         -moz-border-radius-topright: 4px;
         -webkit-border-top-left-radius: 4px;
