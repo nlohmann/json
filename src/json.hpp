@@ -8592,7 +8592,7 @@ basic_json_parser_63:
             const auto offset_cursor = m_cursor - m_start;
 
             // no stream is used or end of file is reached
-            if (m_stream == nullptr or not * m_stream)
+            if (m_stream == nullptr or m_stream->eof())
             {
                 // copy unprocessed characters to line buffer
                 m_line_buffer.clear();
