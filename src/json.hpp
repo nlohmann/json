@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 2.0.4
+|  |  |__   |  |  | | | |  version 2.0.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -8614,7 +8614,7 @@ basic_json_parser_63:
                 std::string line;
                 std::getline(*m_stream, line);
                 // add line with newline symbol to the line buffer
-                m_line_buffer += "\n" + line;
+                m_line_buffer += line + "\n";
             }
 
             // set pointers

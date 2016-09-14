@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.4
+|  |  |__   |  |  | | | |  version 2.0.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -458,6 +458,22 @@ TEST_CASE("regression tests")
                 {
                     "test/data/regression/broken_file.json",
                     "test/data/regression/working_file.json"
+                })
+        {
+            CAPTURE(filename);
+            json j;
+            std::ifstream f(filename);
+            CHECK_NOTHROW(j << f);
+        }
+    }
+
+    SECTION("issue #310 - make json_benchmarks no longer working in 2.0.4")
+    {
+        for (auto filename :
+                {
+                    "test/data/regression/floats.json",
+                    "test/data/regression/signed_ints.json",
+                    "test/data/regression/unsigned_ints.json"
                 })
         {
             CAPTURE(filename);
