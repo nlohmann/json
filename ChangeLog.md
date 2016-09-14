@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.0.5](https://github.com/nlohmann/json/releases/tag/v2.0.5) (2016-09-14)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.4...v2.0.5)
+
+- make json\_benchmarks no longer working in 2.0.4 [\#310](https://github.com/nlohmann/json/issues/310)
+
+- \[feature request\]: schema validator and comments [\#311](https://github.com/nlohmann/json/issues/311)
+
 ## [v2.0.4](https://github.com/nlohmann/json/releases/tag/v2.0.4) (2016-09-11)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.3...v2.0.4)
 
