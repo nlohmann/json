@@ -8614,7 +8614,7 @@ basic_json_parser_63:
                 std::string line;
                 std::getline(*m_stream, line);
                 // add line with newline symbol to the line buffer
-                m_line_buffer += "\n" + line;
+                m_line_buffer += line + "\n";
             }
 
             // set pointers

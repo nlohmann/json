@@ -466,4 +466,20 @@ TEST_CASE("regression tests")
             CHECK_NOTHROW(j << f);
         }
     }
+
+    SECTION("issue #310 - make json_benchmarks no longer working in 2.0.4")
+    {
+        for (auto filename :
+                {
+                    "test/data/regression/floats.json",
+                    "test/data/regression/signed_ints.json",
+                    "test/data/regression/unsigned_ints.json"
+                })
+        {
+            CAPTURE(filename);
+            json j;
+            std::ifstream f(filename);
+            CHECK_NOTHROW(j << f);
+        }
+    }
 }
