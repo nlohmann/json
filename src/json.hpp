@@ -10570,7 +10570,7 @@ inline nlohmann::json operator "" _json(const char* s, std::size_t)
 @brief user-defined string literal for JSON pointer
 
 This operator implements a user-defined string literal for JSON Pointers. It
-can be used by adding `"_json"` to a string literal and returns a JSON pointer
+can be used by adding `"_json_pointer"` to a string literal and returns a JSON pointer
 object if no parse error occurred.
 
 @param[in] s  a string representation of a JSON Pointer

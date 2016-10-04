@@ -494,6 +494,7 @@ I deeply appreciate the help of the following people.
 - [Damien](https://github.com/dtoma) fixed one of the last conversion warnings.
 - [Thomas Braun](https://github.com/t-b) fixed a warning in a test case.
 - [Théo DELRIEU](https://github.com/theodelrieu) patiently and constructively oversaw the long way toward [iterator-range parsing](https://github.com/nlohmann/json/issues/290).
+- [Stefan](https://github.com/5tefan) fixed a minor issue in the documentation.
 
 Thanks a lot for helping out!
 
