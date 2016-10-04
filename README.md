@@ -283,8 +283,8 @@ json j_uset(c_uset); // only one entry for "one" is used
 // maybe ["two", "three", "four", "one"]
 
 std::multiset<std::string> c_mset {"one", "two", "one", "four"};
-json j_mset(c_mset); // only one entry for "one" is used
-// maybe ["one", "two", "four"]
+json j_mset(c_mset); // both entries for "one" are used
+// maybe ["one", "two", "one", "four"]
 
 std::unordered_multiset<std::string> c_umset {"one", "two", "one", "four"};
 json j_umset(c_umset); // both entries for "one" are used
