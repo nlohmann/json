@@ -39,7 +39,7 @@ int main()
 
     // create an array from std::multiset
     std::multiset<std::string> c_mset {"one", "two", "one", "four"};
-    json j_mset(c_mset); // only one entry for "one" is used
+    json j_mset(c_mset); // both entries for "one" are used
 
     // create an array from std::unordered_multiset
     std::unordered_multiset<std::string> c_umset {"one", "two", "one", "four"};
