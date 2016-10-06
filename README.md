@@ -495,6 +495,8 @@ I deeply appreciate the help of the following people.
 - [Thomas Braun](https://github.com/t-b) fixed a warning in a test case.
 - [Théo DELRIEU](https://github.com/theodelrieu) patiently and constructively oversaw the long way toward [iterator-range parsing](https://github.com/nlohmann/json/issues/290).
 - [Stefan](https://github.com/5tefan) fixed a minor issue in the documentation.
+- [Vasil Dimov](https://github.com/vasild) fixed the documentation regarding conversions from `std::multiset`.
+- [ChristophJud](https://github.com/ChristophJud) overworked the CMake files to ease project inclusion.
 
 Thanks a lot for helping out!
 
@@ -514,6 +516,16 @@ $ make check
 
 ===============================================================================
 All tests passed (8905161 assertions in 35 test cases)
+```
+
+Alternatively, you can use [https://cmake.org](CMake) and run
+
+```sh
+mkdir build
+cd build
+cmake ..
+make
+ctest
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
