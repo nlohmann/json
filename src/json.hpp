@@ -9436,6 +9436,12 @@ basic_json_parser_63:
         /*!
         @brief return a reference to the pointed to value
 
+        @note This version does not throw if a value is not present, but tries
+        to create nested values instead. For instance, calling this function
+        with pointer `"/this/that"` on a null value is equivalent to calling
+        `operator[]("this").operator[]("that")` on that value, effectively
+        changing the null value to an object.
+
         @param[in] ptr  a JSON value
 
         @return reference to the JSON value pointed to by the JSON pointer
@@ -9450,6 +9456,12 @@ basic_json_parser_63:
         {
             for (const auto& reference_token : reference_tokens)
             {
+                // error condition (cf. RFC 6901, Sect. 4)
+                if (reference_token.size() > 1 and reference_token[0] == '0')
+                {
+                    throw std::domain_error("array index must not begin with '0'");
+                }
+
                 switch (ptr->m_type)
                 {
                     case value_t::object:
@@ -9461,12 +9473,6 @@ basic_json_parser_63:
 
                     case value_t::array:
                     {
-                        // error condition (cf. RFC 6901, Sect. 4)
-                        if (reference_token.size() > 1 and reference_token[0] == '0')
-                        {
-                            throw std::domain_error("array index must not begin with '0'");
-                        }
-
                         if (reference_token == "-")
                         {
                             // explicityly treat "-" as index beyond the end
@@ -9476,6 +9482,37 @@ basic_json_parser_63:
                         {
                             // convert array index to number; unchecked access
                             ptr = &ptr->operator[](static_cast<size_type>(std::stoi(reference_token)));
+                        }
+                        break;
+                    }
+
+                    // null values are converted to arrays or objects
+                    case value_t::null:
+                    {
+                        // check if reference token is a number
+                        const bool nums = std::all_of(reference_token.begin(),
+                                                      reference_token.end(),
+                                                      [](const char x)
+                        {
+                            return std::isdigit(x);
+                        });
+
+                        if (nums)
+                        {
+                            // if reference token consists solely of numbers
+                            // use it as array index -> create array
+                            ptr = &ptr->operator[](static_cast<size_type>(std::stoi(reference_token)));
+                        }
+                        else if (reference_token == "-")
+                        {
+                            // explicityly treat "-" as index beyond the end
+                            // which is 0 for an empty array -> create array
+                            ptr = &ptr->operator[](0);
+                        }
+                        else
+                        {
+                            // treat reference token as key -> create object
+                            ptr = &ptr->operator[](reference_token);
                         }
                         break;
                     }

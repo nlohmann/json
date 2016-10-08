@@ -482,4 +482,11 @@ TEST_CASE("regression tests")
             CHECK_NOTHROW(j << f);
         }
     }
+
+    SECTION("issue #323 - add nested object capabilities to pointers")
+    {
+        json j;
+        j["/this/that"_json_pointer] = 27;
+        CHECK(j == json({{"this", {{"that", 27}}}}));
+    }
 }
