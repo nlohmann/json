@@ -238,6 +238,18 @@ TEST_CASE("deserialization")
                 uint8_t v[] = {'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u', '1'};
                 CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
             }
+
+            SECTION("case 3")
+            {
+                uint8_t v[] = {'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u', '1', '1', '1', '1', '1', '1', '1', '1'};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 4")
+            {
+                uint8_t v[] = {'\"', 'a', 'a', 'a', 'a', 'a', 'a', 'u', '1', '1', '1', '1', '1', '1', '1', '1', '\\'};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
         }
     }
 }
