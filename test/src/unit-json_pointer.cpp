@@ -109,8 +109,13 @@ TEST_CASE("JSON pointers")
             CHECK(j[json::json_pointer("/m~0n")] == j["m~n"]);
 
             // unescaped access
-            CHECK_THROWS_AS(j[json::json_pointer("/a/b")], std::out_of_range);
-            CHECK_THROWS_WITH(j[json::json_pointer("/a/b")], "unresolved reference token 'b'");
+            // access to nonexisting values yield object creation
+            CHECK_NOTHROW(j[json::json_pointer("/a/b")] = 42);
+            CHECK(j["a"]["b"] == json(42));
+            CHECK_NOTHROW(j[json::json_pointer("/a/c/1")] = 42);
+            CHECK(j["a"]["c"] == json({nullptr, 42}));
+            CHECK_NOTHROW(j[json::json_pointer("/a/d/-")] = 42);
+            CHECK(j["a"]["d"] == json::array({42}));
             // "/a/b" works for JSON {"a": {"b": 42}}
             CHECK(json({{"a", {{"b", 42}}}})[json::json_pointer("/a/b")] == json(42));
 

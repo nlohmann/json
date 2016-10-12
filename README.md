@@ -515,17 +515,17 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905161 assertions in 35 test cases)
+All tests passed (8905166 assertions in 35 test cases)
 ```
 
 Alternatively, you can use [https://cmake.org](CMake) and run
 
 ```sh
-mkdir build
-cd build
-cmake ..
-make
-ctest
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+$ ctest
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

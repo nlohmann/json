@@ -32,6 +32,7 @@ SOFTWARE.
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cctype>
 #include <ciso646>
 #include <cmath>
 #include <cstddef>
@@ -9436,6 +9437,12 @@ basic_json_parser_63:
         /*!
         @brief return a reference to the pointed to value
 
+        @note This version does not throw if a value is not present, but tries
+        to create nested values instead. For instance, calling this function
+        with pointer `"/this/that"` on a null value is equivalent to calling
+        `operator[]("this").operator[]("that")` on that value, effectively
+        changing the null value to an object.
+
         @param[in] ptr  a JSON value
 
         @return reference to the JSON value pointed to by the JSON pointer
@@ -9450,6 +9457,29 @@ basic_json_parser_63:
         {
             for (const auto& reference_token : reference_tokens)
             {
+                // convert null values to arrays or objects before continuing
+                if (ptr->m_type == value_t::null)
+                {
+                    // check if reference token is a number
+                    const bool nums = std::all_of(reference_token.begin(),
+                                                  reference_token.end(),
+                                                  [](const char x)
+                    {
+                        return std::isdigit(x);
+                    });
+
+                    // change value to array for numbers or "-" or to object
+                    // otherwise
+                    if (nums or reference_token == "-")
+                    {
+                        *ptr = value_t::array;
+                    }
+                    else
+                    {
+                        *ptr = value_t::object;
+                    }
+                }
+
                 switch (ptr->m_type)
                 {
                     case value_t::object:
@@ -9461,6 +9491,7 @@ basic_json_parser_63:
 
                     case value_t::array:
                     {
+
                         // error condition (cf. RFC 6901, Sect. 4)
                         if (reference_token.size() > 1 and reference_token[0] == '0')
                         {
