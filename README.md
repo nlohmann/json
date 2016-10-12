@@ -497,6 +497,7 @@ I deeply appreciate the help of the following people.
 - [Stefan](https://github.com/5tefan) fixed a minor issue in the documentation.
 - [Vasil Dimov](https://github.com/vasild) fixed the documentation regarding conversions from `std::multiset`.
 - [ChristophJud](https://github.com/ChristophJud) overworked the CMake files to ease project inclusion.
+- [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable.
 
 Thanks a lot for helping out!
 
@@ -515,7 +516,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905166 assertions in 35 test cases)
+All tests passed (8905168 assertions in 35 test cases)
 ```
 
 Alternatively, you can use [https://cmake.org](CMake) and run

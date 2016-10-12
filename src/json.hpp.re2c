@@ -107,7 +107,7 @@ such as sequence containers. For instance, `std::map` passes the test as it
 contains a `mapped_type`, whereas `std::vector` fails the test.
 
 @sa http://stackoverflow.com/a/7728728/266378
-@since version 1.0.0
+@since version 1.0.0, overworked in version 2.0.6
 */
 template<typename T>
 struct has_mapped_type
