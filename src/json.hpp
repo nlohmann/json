@@ -113,10 +113,13 @@ template<typename T>
 struct has_mapped_type
 {
   private:
-    template<typename C> static char test(typename C::mapped_type*);
-    template<typename C> static char (&test(...))[2];
+    template <typename U, typename = typename U::mapped_type>
+    static int detect(U&&);
+
+    static void detect(...);
   public:
-    static constexpr bool value = sizeof(test<T>(0)) == 1;
+    static constexpr bool value =
+        std::is_integral<decltype(detect(std::declval<T>()))>::value;
 };
 
 /*!
