@@ -489,4 +489,10 @@ TEST_CASE("regression tests")
         j["/this/that"_json_pointer] = 27;
         CHECK(j == json({{"this", {{"that", 27}}}}));
     }
+
+    SECTION("issue #329 - serialized value not always can be parsed")
+    {
+        json j = json::parse("22e2222");
+        CHECK(j == json());
+    }
 }

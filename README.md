@@ -516,7 +516,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905168 assertions in 35 test cases)
+All tests passed (8905169 assertions in 35 test cases)
 ```
 
 Alternatively, you can use [https://cmake.org](CMake) and run
