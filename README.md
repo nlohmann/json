@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/r3wa3rI5yxgQQcrm)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/3BIhBw91FUVuHE1D)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
@@ -283,8 +283,8 @@ json j_uset(c_uset); // only one entry for "one" is used
 // maybe ["two", "three", "four", "one"]
 
 std::multiset<std::string> c_mset {"one", "two", "one", "four"};
-json j_mset(c_mset); // only one entry for "one" is used
-// maybe ["one", "two", "four"]
+json j_mset(c_mset); // both entries for "one" are used
+// maybe ["one", "two", "one", "four"]
 
 std::unordered_multiset<std::string> c_umset {"one", "two", "one", "four"};
 json j_umset(c_umset); // both entries for "one" are used
@@ -494,6 +494,10 @@ I deeply appreciate the help of the following people.
 - [Damien](https://github.com/dtoma) fixed one of the last conversion warnings.
 - [Thomas Braun](https://github.com/t-b) fixed a warning in a test case.
 - [Théo DELRIEU](https://github.com/theodelrieu) patiently and constructively oversaw the long way toward [iterator-range parsing](https://github.com/nlohmann/json/issues/290).
+- [Stefan](https://github.com/5tefan) fixed a minor issue in the documentation.
+- [Vasil Dimov](https://github.com/vasild) fixed the documentation regarding conversions from `std::multiset`.
+- [ChristophJud](https://github.com/ChristophJud) overworked the CMake files to ease project inclusion.
+- [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable.
 
 Thanks a lot for helping out!
 
@@ -512,7 +516,17 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905161 assertions in 35 test cases)
+All tests passed (8905168 assertions in 35 test cases)
+```
+
+Alternatively, you can use [https://cmake.org](CMake) and run
+
+```sh
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+$ ctest
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

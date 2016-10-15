@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (fuzz test support)
-|  |  |__   |  |  | | | |  version 2.0.5
+|  |  |__   |  |  | | | |  version 2.0.6
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Run "make fuzz_testing" and follow the instructions.

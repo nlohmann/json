@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 2.0.5
+|  |  |__   |  |  | | | |  version 2.0.6
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -32,6 +32,7 @@ SOFTWARE.
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cctype>
 #include <ciso646>
 #include <cmath>
 #include <cstddef>
@@ -106,16 +107,19 @@ such as sequence containers. For instance, `std::map` passes the test as it
 contains a `mapped_type`, whereas `std::vector` fails the test.
 
 @sa http://stackoverflow.com/a/7728728/266378
-@since version 1.0.0
+@since version 1.0.0, overworked in version 2.0.6
 */
 template<typename T>
 struct has_mapped_type
 {
   private:
-    template<typename C> static char test(typename C::mapped_type*);
-    template<typename C> static char (&test(...))[2];
+    template <typename U, typename = typename U::mapped_type>
+    static int detect(U&&);
+
+    static void detect(...);
   public:
-    static constexpr bool value = sizeof(test<T>(0)) == 1;
+    static constexpr bool value =
+        std::is_integral<decltype(detect(std::declval<T>()))>::value;
 };
 
 /*!
@@ -9436,6 +9440,12 @@ basic_json_parser_63:
         /*!
         @brief return a reference to the pointed to value
 
+        @note This version does not throw if a value is not present, but tries
+        to create nested values instead. For instance, calling this function
+        with pointer `"/this/that"` on a null value is equivalent to calling
+        `operator[]("this").operator[]("that")` on that value, effectively
+        changing the null value to an object.
+
         @param[in] ptr  a JSON value
 
         @return reference to the JSON value pointed to by the JSON pointer
@@ -9450,6 +9460,29 @@ basic_json_parser_63:
         {
             for (const auto& reference_token : reference_tokens)
             {
+                // convert null values to arrays or objects before continuing
+                if (ptr->m_type == value_t::null)
+                {
+                    // check if reference token is a number
+                    const bool nums = std::all_of(reference_token.begin(),
+                                                  reference_token.end(),
+                                                  [](const char x)
+                    {
+                        return std::isdigit(x);
+                    });
+
+                    // change value to array for numbers or "-" or to object
+                    // otherwise
+                    if (nums or reference_token == "-")
+                    {
+                        *ptr = value_t::array;
+                    }
+                    else
+                    {
+                        *ptr = value_t::object;
+                    }
+                }
+
                 switch (ptr->m_type)
                 {
                     case value_t::object:
@@ -10570,7 +10603,7 @@ inline nlohmann::json operator "" _json(const char* s, std::size_t)
 @brief user-defined string literal for JSON pointer
 
 This operator implements a user-defined string literal for JSON Pointers. It
-can be used by adding `"_json"` to a string literal and returns a JSON pointer
+can be used by adding `"_json_pointer"` to a string literal and returns a JSON pointer
 object if no parse error occurred.
 
 @param[in] s  a string representation of a JSON Pointer
