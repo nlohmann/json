@@ -1,12 +1,23 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.0.6](https://github.com/nlohmann/json/releases/tag/v2.0.6) (2016-10-15)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.5...v2.0.6)
+
+- Add nested object capability to pointers [\#323](https://github.com/nlohmann/json/issues/323)
+- make has\_mapped\_type struct friendly [\#324](https://github.com/nlohmann/json/pull/324) ([vpetrigo](https://github.com/vpetrigo))
+
+- Fix usage examples' comments for std::multiset [\#322](https://github.com/nlohmann/json/issues/322)
+- json\_unit runs forever when executed in build directory [\#319](https://github.com/nlohmann/json/issues/319)
+
+- Fix usage examples' comments for std::multiset [\#321](https://github.com/nlohmann/json/pull/321) ([vasild](https://github.com/vasild))
+- Include dir relocation [\#318](https://github.com/nlohmann/json/pull/318) ([ChristophJud](https://github.com/ChristophJud))
+- trivial documentation fix [\#313](https://github.com/nlohmann/json/pull/313) ([5tefan](https://github.com/5tefan))
+
 ## [v2.0.5](https://github.com/nlohmann/json/releases/tag/v2.0.5) (2016-09-14)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.4...v2.0.5)
 
 - make json\_benchmarks no longer working in 2.0.4 [\#310](https://github.com/nlohmann/json/issues/310)
-
-- \[feature request\]: schema validator and comments [\#311](https://github.com/nlohmann/json/issues/311)
 
 ## [v2.0.4](https://github.com/nlohmann/json/releases/tag/v2.0.4) (2016-09-11)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.3...v2.0.4)

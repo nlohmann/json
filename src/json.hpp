@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 2.0.5
+|  |  |__   |  |  | | | |  version 2.0.6
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -9494,7 +9494,6 @@ basic_json_parser_63:
 
                     case value_t::array:
                     {
-
                         // error condition (cf. RFC 6901, Sect. 4)
                         if (reference_token.size() > 1 and reference_token[0] == '0')
                         {
