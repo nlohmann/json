@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.5
+|  |  |__   |  |  | | | |  version 2.0.6
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -486,7 +486,7 @@ TEST_CASE("regression tests")
     SECTION("issue #323 - add nested object capabilities to pointers")
     {
         json j;
-        j["/this/that"_json_pointer] = 27;
-        CHECK(j == json({{"this", {{"that", 27}}}}));
+        j["/this/that/2"_json_pointer] = 27;
+        CHECK(j == json({{"this", {{"that", {nullptr, nullptr, 27}}}}}));
     }
 }
