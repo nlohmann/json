@@ -2186,6 +2186,9 @@ class basic_json
     `0` will only insert newlines. `-1` (the default) selects the most compact
     representation.
 
+    @param[in] unix_eol If set to true, it will use unix end of line "\n"
+    or if set to false, it will use windows end of line "\r\n".
+
     @return string containing the serialization of the JSON value
 
     @complexity Linear.
@@ -2197,7 +2200,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    string_t dump(const int indent = -1) const
+    string_t dump(const int indent = -1, const bool unix_eol = true) const
     {
         std::stringstream ss;
         // fix locale problems
@@ -2212,11 +2215,11 @@ class basic_json
 
         if (indent >= 0)
         {
-            dump(ss, true, static_cast<unsigned int>(indent));
+            dump(ss, true, static_cast<unsigned int>(indent), unix_eol);
         }
         else
         {
-            dump(ss, false, 0);
+            dump(ss, false, 0, unix_eol);
         }
 
         return ss.str();
@@ -6359,15 +6362,18 @@ class basic_json
     @param[out] o              stream to write to
     @param[in] pretty_print    whether the output shall be pretty-printed
     @param[in] indent_step     the indent level
+    @param[in] unix_eol        whether to use unix end of line or windows end of line
     @param[in] current_indent  the current indent level (only used internally)
     */
     void dump(std::ostream& o,
               const bool pretty_print,
               const unsigned int indent_step,
+              const bool unix_eol,
               const unsigned int current_indent = 0) const
     {
         // variable to hold indentation for recursive calls
         unsigned int new_indent = current_indent;
+        const char* eol = (unix_eol ? "\n" : "\r\n");
 
         switch (m_type)
         {
@@ -6385,26 +6391,26 @@ class basic_json
                 if (pretty_print)
                 {
                     new_indent += indent_step;
-                    o << "\n";
+                    o << eol;
                 }
 
                 for (auto i = m_value.object->cbegin(); i != m_value.object->cend(); ++i)
                 {
                     if (i != m_value.object->cbegin())
                     {
-                        o << (pretty_print ? ",\n" : ",");
+                        o << "," << (pretty_print ? eol : "");
                     }
                     o << string_t(new_indent, ' ') << "\""
                       << escape_string(i->first) << "\":"
                       << (pretty_print ? " " : "");
-                    i->second.dump(o, pretty_print, indent_step, new_indent);
+                    i->second.dump(o, pretty_print, indent_step, unix_eol, new_indent);
                 }
 
                 // decrease indentation
                 if (pretty_print)
                 {
                     new_indent -= indent_step;
-                    o << "\n";
+                    o << eol;
                 }
 
                 o << string_t(new_indent, ' ') + "}";
@@ -6425,24 +6431,24 @@ class basic_json
                 if (pretty_print)
                 {
                     new_indent += indent_step;
-                    o << "\n";
+                    o << eol;
                 }
 
                 for (auto i = m_value.array->cbegin(); i != m_value.array->cend(); ++i)
                 {
                     if (i != m_value.array->cbegin())
                     {
-                        o << (pretty_print ? ",\n" : ",");
+                        o << "," << (pretty_print ? eol : "");
                     }
                     o << string_t(new_indent, ' ');
-                    i->dump(o, pretty_print, indent_step, new_indent);
+                    i->dump(o, pretty_print, indent_step, unix_eol, new_indent);
                 }
 
                 // decrease indentation
                 if (pretty_print)
                 {
                     new_indent -= indent_step;
-                    o << "\n";
+                    o << eol;
                 }
 
                 o << string_t(new_indent, ' ') << "]";

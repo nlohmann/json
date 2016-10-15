@@ -213,6 +213,12 @@ TEST_CASE("object inspection")
                   "{\n    \"array\": [\n        1,\n        2,\n        3,\n        4\n    ],\n    \"boolean\": false,\n    \"null\": null,\n    \"number\": 42,\n    \"object\": {},\n    \"string\": \"Hello world\"\n}");
         }
 
+        SECTION("indent=0, windows EOL")
+        {
+            CHECK(j.dump(0, false) ==
+                  "{\r\n\"array\": [\r\n1,\r\n2,\r\n3,\r\n4\r\n],\r\n\"boolean\": false,\r\n\"null\": null,\r\n\"number\": 42,\r\n\"object\": {},\r\n\"string\": \"Hello world\"\r\n}");
+        }
+
         SECTION("dump and floating-point numbers")
         {
             auto s = json(42.23).dump();
