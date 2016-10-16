@@ -8817,14 +8817,11 @@ basic_json_parser_63:
 
         @param[in] st  the string we will parse
 
-        @param[in,out] endptr recieves a pointer to the first character after
-        the number
-
         @return the floating point number
         */
         template <typename T, typename = typename std::enable_if<
             std::is_floating_point<T>::value>::type>
-        T strtox(const char *st, char **endptr) const
+        T strtox(const char *st) const
         {
             constexpr std::array<long double, 9> powerof10 {
                 {1.e1L, 1.e2L, 1.e4L, 1.e8L, 1.e16L, 1.e32L, 1.e64L, 1.e128L, 1.e256L}
@@ -8867,9 +8864,6 @@ basic_json_parser_63:
             }
 
             // read in explicit exponent and calculate real exponent.
-            // if exponent is bogus (i.e. "1.234empty" or "1.234e+mpty") restore
-            // bogus exponent back onto returned string (endptr).
-
             if (*fst == 'e' or *fst == 'E')
             {
                 cp = *++fst;
@@ -8951,11 +8945,6 @@ skip_loop:
                         }
                     }
                 }
-            }
-
-            if (endptr != nullptr)
-            {
-                *endptr = const_cast<char *>(fst);
             }
 
             return result;
@@ -9060,7 +9049,7 @@ skip_loop:
             else
             {
                 // parse with strtod
-                result.m_value.number_float = strtox<number_float_t>(reinterpret_cast<typename string_t::const_pointer>(m_start), nullptr);
+                result.m_value.number_float = strtox<number_float_t>(reinterpret_cast<typename string_t::const_pointer>(m_start));
             }
 
             // save the type
