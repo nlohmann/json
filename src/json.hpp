@@ -8832,7 +8832,6 @@ basic_json_parser_63:
 
             T result = 0;
             const char *fst = st;
-            bool successful_parse = false;
             char cp = *fst;
             int exp = 0; // exponent
             {
@@ -8841,7 +8840,6 @@ basic_json_parser_63:
                 if (cp == '-' or cp == '+')
                 {
                     ++fst;
-                    successful_parse = true;
                 }
 
                 // read in fractional part of number, until an 'e' is reached.
@@ -8849,7 +8847,6 @@ basic_json_parser_63:
                 while (nl_isdigit(cp = *fst))
                 {
                      result = result * 10 + (cp - '0');
-                     successful_parse = true;
                      ++fst;
                 }
 
@@ -8858,7 +8855,6 @@ basic_json_parser_63:
                      while (nl_isdigit(cp = *++fst))
                      {
                          result = result * 10 + (cp - '0');
-                         successful_parse = true;
                          --exp;
                      }
                 }
@@ -8874,7 +8870,7 @@ basic_json_parser_63:
             // if exponent is bogus (i.e. "1.234empty" or "1.234e+mpty") restore
             // bogus exponent back onto returned string (endptr).
 
-            if (successful_parse and (*fst == 'e' or *fst == 'E'))
+            if (*fst == 'e' or *fst == 'E')
             {
                 cp = *++fst;
                 bool negative_exp = cp == '-'; // read in exponent sign (+/-)
@@ -8959,7 +8955,7 @@ skip_loop:
 
             if (endptr != nullptr)
             {
-                *endptr = const_cast<char *>(successful_parse ? fst : st);
+                *endptr = const_cast<char *>(fst);
             }
 
             return result;
