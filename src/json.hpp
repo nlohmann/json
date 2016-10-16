@@ -8800,18 +8800,6 @@ basic_json_parser_63:
             return result;
         }
 
-        // non locale aware isspace
-        bool nl_isspace(const char c) const
-        {
-            return
-                c == 0x20 or
-                c == 0x09 or
-                c == 0x0a or
-                c == 0x0b or
-                c == 0x0c or
-                c == 0x0d;
-        }
-
         // non locale aware isdigit
         // Microsoft in 1252 codepage and others may classify additional single-byte characters as digits using std::isdigit
         bool nl_isdigit(const char c) const
@@ -8845,12 +8833,6 @@ basic_json_parser_63:
             T result = 0;
             const char *fst = st;
             bool successful_parse = false;
-
-            while (nl_isspace(*fst))
-            {
-                ++fst;
-            }
-
             char cp = *fst;
             int exp = 0; // exponent
             {
