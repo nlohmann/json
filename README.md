@@ -498,6 +498,7 @@ I deeply appreciate the help of the following people.
 - [Vasil Dimov](https://github.com/vasild) fixed the documentation regarding conversions from `std::multiset`.
 - [ChristophJud](https://github.com/ChristophJud) overworked the CMake files to ease project inclusion.
 - [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable.
+- [Denis Andrejew](https://github.com/seeekr) fixed a grammar issue in the README file.
 
 Thanks a lot for helping out!
 
