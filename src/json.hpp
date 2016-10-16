@@ -8815,41 +8815,40 @@ basic_json_parser_63:
 
         @tparam T  a is_floating_point type
 
-        @param[in] st  the string we will parse
+        @param[in] str  the string we will parse
 
         @return the floating point number
         */
         template <typename T, typename = typename std::enable_if<
             std::is_floating_point<T>::value>::type>
-        T strtox(const char *st) const
+        T strtox(const char *str) const
         {
             constexpr std::array<long double, 9> powerof10 {
                 {1.e1L, 1.e2L, 1.e4L, 1.e8L, 1.e16L, 1.e32L, 1.e64L, 1.e128L, 1.e256L}
             };
 
             T result = 0;
-            const char *fst = st;
-            char cp = *fst;
+            char cp = *str;
             int exp = 0; // exponent
             {
                 const bool negative_sign = cp == '-';
 
                 if (cp == '-' or cp == '+')
                 {
-                    ++fst;
+                    ++str;
                 }
 
                 // read in fractional part of number, until an 'e' is reached.
                 // count digits after decimal point.
-                while (nl_isdigit(cp = *fst))
+                while (nl_isdigit(cp = *str))
                 {
                      result = result * 10 + (cp - '0');
-                     ++fst;
+                     ++str;
                 }
 
                 if (cp == '.')
                 {
-                     while (nl_isdigit(cp = *++fst))
+                     while (nl_isdigit(cp = *++str))
                      {
                          result = result * 10 + (cp - '0');
                          --exp;
@@ -8864,15 +8863,15 @@ basic_json_parser_63:
             }
 
             // read in explicit exponent and calculate real exponent.
-            if (*fst == 'e' or *fst == 'E')
+            if (*str == 'e' or *str == 'E')
             {
-                cp = *++fst;
+                cp = *++str;
                 bool negative_exp = cp == '-'; // read in exponent sign (+/-)
 
                 bool plus_or_minus = false;
                 if (cp == '-' or cp == '+')
                 {
-                     cp = *++fst;
+                     cp = *++str;
                      plus_or_minus = true;
                 }
 
@@ -8881,10 +8880,10 @@ basic_json_parser_63:
                 {
                      if (plus_or_minus)
                      {
-                         *--fst;
+                         *--str;
                      }
 
-                     *--fst;
+                     *--str;
                      goto skip_loop;
                 }
 
@@ -8903,7 +8902,7 @@ basic_json_parser_63:
                         break;
                     }
 
-                    cp = *++fst;
+                    cp = *++str;
                 }
 skip_loop:
                 exp += negative_exp ? -count : count;

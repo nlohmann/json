@@ -8112,7 +8112,7 @@ class basic_json
 
         @tparam T  a is_floating_point type
 
-        @param[in] st  the string we will parse
+        @param[in] str  the string we will parse
 
         @return the floating point number
         */
@@ -8125,28 +8125,27 @@ class basic_json
             };
 
             T result = 0;
-            const char *fst = st;
-            char cp = *fst;
+            char cp = *str;
             int exp = 0; // exponent
             {
                 const bool negative_sign = cp == '-';
 
                 if (cp == '-' or cp == '+')
                 {
-                    ++fst;
+                    ++str;
                 }
 
                 // read in fractional part of number, until an 'e' is reached.
                 // count digits after decimal point.
-                while (nl_isdigit(cp = *fst))
+                while (nl_isdigit(cp = *str))
                 {
                      result = result * 10 + (cp - '0');
-                     ++fst;
+                     ++str;
                 }
 
                 if (cp == '.')
                 {
-                     while (nl_isdigit(cp = *++fst))
+                     while (nl_isdigit(cp = *++str))
                      {
                          result = result * 10 + (cp - '0');
                          --exp;
@@ -8161,15 +8160,15 @@ class basic_json
             }
 
             // read in explicit exponent and calculate real exponent.
-            if (*fst == 'e' or *fst == 'E')
+            if (*str == 'e' or *str == 'E')
             {
-                cp = *++fst;
+                cp = *++str;
                 bool negative_exp = cp == '-'; // read in exponent sign (+/-)
 
                 bool plus_or_minus = false;
                 if (cp == '-' or cp == '+')
                 {
-                     cp = *++fst;
+                     cp = *++str;
                      plus_or_minus = true;
                 }
 
@@ -8178,10 +8177,10 @@ class basic_json
                 {
                      if (plus_or_minus)
                      {
-                         *--fst;
+                         *--str;
                      }
 
-                     *--fst;
+                     *--str;
                      goto skip_loop;
                 }
 
@@ -8200,7 +8199,7 @@ class basic_json
                         break;
                     }
 
-                    cp = *++fst;
+                    cp = *++str;
                 }
 skip_loop:
                 exp += negative_exp ? -count : count;
