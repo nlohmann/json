@@ -8097,64 +8097,187 @@ class basic_json
             return result;
         }
 
+        // non locale aware isspace
+        bool nl_isspace(const char c) const
+        {
+            return
+                c == 0x20 or
+                c == 0x09 or
+                c == 0x0a or
+                c == 0x0b or
+                c == 0x0c or
+                c == 0x0d;
+        }
+
+        // non locale aware isdigit
+        // Microsoft in 1252 codepage and others may classify additional single-byte characters as digits using std::isdigit
+        bool nl_isdigit(const char c) const
+        {
+            return c >= '0' and c <= '9';
+        }
+
         /*!
-        @brief parse floating point number
+        @brief parse string to floating point number
 
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
+        This function is a reimplementation of the strtold family without
+        regard to locale
 
-        @param[in] type  the @ref number_float_t in use
+        @tparam T  a is_floating_point type
+
+        @param[in] st  the string we will parse
 
         @param[in,out] endptr recieves a pointer to the first character after
         the number
 
         @return the floating point number
         */
-        long double str_to_float_t(long double* /* type */, char** endptr) const
+        template <typename T, typename = typename std::enable_if<
+            std::is_floating_point<T>::value>::type>
+        T strtox(const char *st, char **endptr) const
         {
-            return std::strtold(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
-        }
+            constexpr std::array<long double, 9> powerof10 {
+                {1.e1L, 1.e2L, 1.e4L, 1.e8L, 1.e16L, 1.e32L, 1.e64L, 1.e128L, 1.e256L}
+            };
 
-        /*!
-        @brief parse floating point number
+            T result = 0;
+            const char *fst = st;
+            bool successful_parse = false;
 
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
+            while (nl_isspace(*fst))
+            {
+                ++fst;
+            }
 
-        @param[in] type  the @ref number_float_t in use
+            char cp = *fst;
+            int exp = 0; // exponent
+            {
+                const bool negative_sign = cp == '-';
 
-        @param[in,out] endptr  recieves a pointer to the first character after
-        the number
+                if (cp == '-' or cp == '+')
+                {
+                    ++fst;
+                    successful_parse = true;
+                }
 
-        @return the floating point number
-        */
-        double str_to_float_t(double* /* type */, char** endptr) const
-        {
-            return std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
-        }
+                // read in fractional part of number, until an 'e' is reached.
+                // count digits after decimal point.
+                while (nl_isdigit(cp = *fst))
+                {
+                     result = result * 10 + (cp - '0');
+                     successful_parse = true;
+                     ++fst;
+                }
 
-        /*!
-        @brief parse floating point number
+                if (cp == '.')
+                {
+                     while (nl_isdigit(cp = *++fst))
+                     {
+                         result = result * 10 + (cp - '0');
+                         successful_parse = true;
+                         --exp;
+                     }
+                }
 
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
+                // if negative number, reverse sign
+                if (negative_sign)
+                {
+                    result = -result;
+                }
+            }
 
-        @param[in] type  the @ref number_float_t in use
+            // read in explicit exponent and calculate real exponent.
+            // if exponent is bogus (i.e. "1.234empty" or "1.234e+mpty") restore
+            // bogus exponent back onto returned string (endptr).
 
-        @param[in,out] endptr  recieves a pointer to the first character after
-        the number
+            if (successful_parse and (*fst == 'e' or *fst == 'E'))
+            {
+                cp = *++fst;
+                bool negative_exp = cp == '-'; // read in exponent sign (+/-)
 
-        @return the floating point number
-        */
-        float str_to_float_t(float* /* type */, char** endptr) const
-        {
-            return std::strtof(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
+                bool plus_or_minus = false;
+                if (cp == '-' or cp == '+')
+                {
+                     cp = *++fst;
+                     plus_or_minus = true;
+                }
+
+                int count = 0; // exponent calculation
+                if (! nl_isdigit(cp))
+                {
+                     if (plus_or_minus)
+                     {
+                         *--fst;
+                     }
+
+                     *--fst;
+                     goto skip_loop;
+                }
+
+                while (nl_isdigit(cp))
+                {
+                    constexpr int imax = std::numeric_limits<int>::max();
+
+                    if ((imax - std::abs(exp) - (cp - '0')) / 10 > count)
+                    {
+                         count *= 10;
+                         count += cp - '0';
+                    }
+                    else
+                    {
+                        count = imax - exp;
+                        break;
+                    }
+
+                    cp = *++fst;
+                }
+skip_loop:
+                exp += negative_exp ? -count : count;
+            }
+
+            // adjust number by powers of ten specified by format and exponent.
+            if (result != 0.0)
+            {
+                if (exp > std::numeric_limits<T>::max_exponent10)
+                {
+                    errno = ERANGE;
+                    constexpr T inf = std::numeric_limits<T>::infinity();
+                    result = (result < 0) ? -inf : inf;
+                }
+                else if (exp < std::numeric_limits<T>::min_exponent10)
+                {
+                    errno = ERANGE;
+                    result = 0.0;
+                }
+                else if (exp < 0)
+                {
+                    exp = -exp;
+
+                    for (std::size_t count = 0; exp; count++, exp >>= 1)
+                    {
+                        if (exp & 1)
+                        {
+                            result /= powerof10[count];
+                        }
+                    }
+                }
+                else
+                {
+                    for (std::size_t count = 0; exp; count++, exp >>= 1)
+                    {
+                        if (exp & 1)
+                        {
+                            result *= powerof10[count];
+                        }
+                    }
+                }
+            }
+
+            if (endptr != nullptr)
+            {
+                *endptr = const_cast<char *>(successful_parse ? fst : st);
+            }
+
+            return result;
         }
 
         /*!
@@ -8256,7 +8379,7 @@ class basic_json
             else
             {
                 // parse with strtod
-                result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), NULL);
+                result.m_value.number_float = strtox<number_float_t>(reinterpret_cast<typename string_t::const_pointer>(m_start), nullptr);
             }
 
             // save the type
