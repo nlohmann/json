@@ -106,12 +106,14 @@ SOFTWARE.
 */
 namespace nlohmann
 {
-
+template <typename T, typename = void>
+struct json_traits;
 
 /*!
 @brief unnamed namespace with internal helper functions
 @since version 1.0.0
 */
+// TODO transform this anon ns to detail?
 namespace
 {
 /*!
@@ -137,7 +139,47 @@ struct has_mapped_type
         std::is_integral<decltype(detect(std::declval<T>()))>::value;
 };
 
-} // namespace
+// taken from http://stackoverflow.com/questions/10711952/how-to-detect-existence-of-a-class-using-sfinae
+template <typename T>
+struct has_destructor
+{
+  template <typename U>
+  static std::true_type detect(decltype(std::declval<U>().~U())*);
+
+  template <typename>
+  static std::false_type detect(...);
+
+  static constexpr bool value = decltype(detect<T>(0))::value;
+};
+
+template<typename T>
+struct has_json_traits
+{
+  static constexpr bool value = has_destructor<json_traits<T>>::value;
+};
+
+template <> struct has_json_traits<void> : std::false_type {};
+
+/*!
+@brief helper class to create locales with decimal point
+
+This struct is used a default locale during the JSON serialization. JSON
+requires the decimal point to be `.`, so this function overloads the
+`do_decimal_point()` function to return `.`. This function is called by
+float-to-string conversions to retrieve the decimal separator between integer
+and fractional parts.
+
+@sa https://github.com/nlohmann/json/issues/51#issuecomment-86869315
+@since version 2.0.0
+*/
+struct DecimalSeparator : std::numpunct<char>
+{
+    char do_decimal_point() const
+    {
+        return '.';
+    }
+};
+
 
 /*!
 @brief a class to store JSON values
@@ -1295,6 +1337,15 @@ class basic_json
         assert_invariant();
     }
 
+    template <
+        typename T,
+        typename =
+            typename std::enable_if<has_json_traits<typename std::remove_cv<
+                typename std::remove_reference<T>::type>::type>::value>::type>
+    explicit basic_json(T &&val)
+        : basic_json(json_traits<typename std::remove_cv<
+                         typename std::remove_reference<T>::type>::type>::
+                         to_json(std::forward<T>(val))) {}
     /*!
     @brief create a string (explicit)
 
@@ -1311,15 +1362,14 @@ class basic_json
 
     @sa @ref basic_json(const typename string_t::value_type*) -- create a
     string value from a character pointer
-    @sa @ref basic_json(const CompatibleStringType&) -- create a string value
+    @sa @ref basic_json(const CompatibleStringType&) -- create a string
+    value
     from a compatible string container
 
     @since version 1.0.0
     */
-    basic_json(const string_t& val)
-        : m_type(value_t::string), m_value(val)
-    {
-        assert_invariant();
+    basic_json(const string_t &val) : m_type(value_t::string), m_value(val) {
+      assert_invariant();
     }
 
     /*!
@@ -2655,16 +2705,30 @@ class basic_json
     // value access //
     //////////////////
 
+    template <
+        typename T,
+        typename =
+            typename std::enable_if<has_json_traits<typename std::remove_cv<
+                typename std::remove_reference<T>::type>::type>::value>::type>
+    auto get_impl(T *) const -> decltype(
+        json_traits<typename std::remove_cv<typename std::remove_reference<
+            T>::type>::type>::from_json(std::declval<basic_json>())) {
+      return json_traits<typename std::remove_cv<
+          typename std::remove_reference<T>::type>::type>::from_json(*this);
+    }
+
     /// get an object (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
-                 std::is_convertible<basic_json_t, typename T::mapped_type>::value, int>::type = 0>
-    T get_impl(T* /*unused*/) const
-    {
-        if (is_object())
-        {
-            return T(m_value.object->begin(), m_value.object->end());
-        }
+    template <class T,
+              typename std::enable_if<
+                  std::is_convertible<typename object_t::key_type,
+                                      typename T::key_type>::value and
+                      std::is_convertible<basic_json_t,
+                                          typename T::mapped_type>::value,
+                  int>::type = 0>
+    T get_impl(T *) const {
+      if (is_object()) {
+        return T(m_value.object->begin(), m_value.object->end());
+      } else {
 
         JSON_THROW(std::domain_error("type must be object, but is " + type_name()));
     }
