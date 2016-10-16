@@ -8211,13 +8211,11 @@ skip_loop:
             {
                 if (exp > std::numeric_limits<T>::max_exponent10)
                 {
-                    errno = ERANGE;
                     constexpr T inf = std::numeric_limits<T>::infinity();
                     result = (result < 0) ? -inf : inf;
                 }
                 else if (exp < std::numeric_limits<T>::min_exponent10)
                 {
-                    errno = ERANGE;
                     result = 0.0;
                 }
                 else if (exp < 0)
