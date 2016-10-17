@@ -98,8 +98,8 @@ struct json_traits;
 @brief unnamed namespace with internal helper functions
 @since version 1.0.0
 */
-// TODO transform this anon ns to detail?
-namespace
+
+namespace detail
 {
 /*!
 @brief Helper to determine whether there's a key_type for T.
@@ -142,8 +142,6 @@ struct has_json_traits
 {
   static constexpr bool value = has_destructor<json_traits<T>>::value;
 };
-
-template <> struct has_json_traits<void> : std::false_type {};
 
 /*!
 @brief helper class to create locales with decimal point
@@ -1251,7 +1249,7 @@ class basic_json
     template <
         typename T,
         typename =
-            typename std::enable_if<has_json_traits<typename std::remove_cv<
+            typename std::enable_if<detail::has_json_traits<typename std::remove_cv<
                 typename std::remove_reference<T>::type>::type>::value>::type>
     explicit basic_json(T &&val)
         : basic_json(json_traits<typename std::remove_cv<
@@ -2617,7 +2615,7 @@ class basic_json
     template <
         typename T,
         typename =
-            typename std::enable_if<has_json_traits<typename std::remove_cv<
+            typename std::enable_if<detail::has_json_traits<typename std::remove_cv<
                 typename std::remove_reference<T>::type>::type>::value>::type>
     auto get_impl(T *) const -> decltype(
         json_traits<typename std::remove_cv<typename std::remove_reference<
@@ -2661,7 +2659,7 @@ class basic_json
                  not std::is_same<basic_json_t, typename T::value_type>::value and
                  not std::is_arithmetic<T>::value and
                  not std::is_convertible<std::string, T>::value and
-                 not has_mapped_type<T>::value, int>::type = 0>
+                 not detail::has_mapped_type<T>::value, int>::type = 0>
     T get_impl(T*) const
     {
         if (is_array())
@@ -2706,7 +2704,7 @@ class basic_json
     /// get an array (explicit)
     template<class T, typename std::enable_if<
                  std::is_same<basic_json, typename T::value_type>::value and
-                 not has_mapped_type<T>::value, int>::type = 0>
+                 not detail::has_mapped_type<T>::value, int>::type = 0>
     T get_impl(T*) const
     {
         if (is_array())
