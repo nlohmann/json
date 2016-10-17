@@ -106,6 +106,14 @@ SOFTWARE.
 */
 namespace nlohmann
 {
+// TODO add real documentation before PR
+
+// Traits structure declaration, users can specialize it for their own types
+// 
+// constructing a json object from a user-defined type will call the
+// 'json to_json(T)' function
+//
+// whereas calling json::get<T> will call 'T from_json(json const&)'
 template <typename T, typename = void>
 struct json_traits;
 
@@ -113,8 +121,8 @@ struct json_traits;
 @brief unnamed namespace with internal helper functions
 @since version 1.0.0
 */
-// TODO transform this anon ns to detail?
-namespace
+
+namespace detail
 {
 /*!
 @brief Helper to determine whether there's a key_type for T.
@@ -140,6 +148,7 @@ struct has_mapped_type
 };
 
 // taken from http://stackoverflow.com/questions/10711952/how-to-detect-existence-of-a-class-using-sfinae
+// used to determine if json_traits is defined for a given type T
 template <typename T>
 struct has_destructor
 {
@@ -158,7 +167,23 @@ struct has_json_traits
   static constexpr bool value = has_destructor<json_traits<T>>::value;
 };
 
-template <> struct has_json_traits<void> : std::false_type {};
+struct to_json_fn
+{
+  template <typename T>
+  constexpr auto operator()(T&& val) const -> decltype(to_json(std::forward<T>(val)))
+  {
+    return to_json(std::forward<T>(val));
+  }
+};
+
+struct from_json_fn
+{
+  template <typename Json, typename T>
+  constexpr auto operator()(Json const& from, T& to) const -> decltype(from_json(from, to))
+  {
+    return from_json(from, to);
+  }
+};
 
 /*!
 @brief helper class to create locales with decimal point
@@ -180,6 +205,23 @@ struct DecimalSeparator : std::numpunct<char>
     }
 };
 
+
+// taken from ranges-v3
+// TODO add doc
+template <typename T>
+struct __static_const
+{
+  static constexpr T value{};
+};
+
+template <typename T>
+constexpr T __static_const<T>::value;
+
+inline namespace
+{
+  constexpr auto const& to_json = __static_const<detail::to_json_fn>::value;
+  constexpr auto const& from_json = __static_const<detail::from_json_fn>::value;
+}
 
 /*!
 @brief a class to store JSON values
@@ -1337,10 +1379,24 @@ class basic_json
         assert_invariant();
     }
 
+    // constructor chosen if json_traits is specialized for type T
+    // note: constructor is marked explicit to avoid the following issue:
+    //
+    // struct not_equality_comparable{};
+    // 
+    // not_equality_comparable{} == not_equality_comparable{};
+    // 
+    // this will construct implicitely 2 json objects and call operator== on them
+    // which can cause nasty bugs on the user's in json-unrelated code
+    // 
+    // the trade-off is expressivety in initializer-lists
+    // auto j = json{{"a", json(not_equality_comparable{})}};
+    // 
+    // we can remove this constraint though, since lots of ctor are not explicit already
     template <
         typename T,
         typename =
-            typename std::enable_if<has_json_traits<typename std::remove_cv<
+            typename std::enable_if<detail::has_json_traits<typename std::remove_cv<
                 typename std::remove_reference<T>::type>::type>::value>::type>
     explicit basic_json(T &&val)
         : basic_json(json_traits<typename std::remove_cv<
@@ -2705,16 +2761,37 @@ class basic_json
     // value access //
     //////////////////
 
+    // get_impl overload chosen if json_traits struct is specialized for type T
+    // simply returns json_traits<T>::from_json(*this);
+    // TODO add alias templates (enable_if_t etc)
     template <
         typename T,
-        typename =
-            typename std::enable_if<has_json_traits<typename std::remove_cv<
+        typename = typename std::enable_if<
+            detail::has_json_traits<typename std::remove_cv<
                 typename std::remove_reference<T>::type>::type>::value>::type>
     auto get_impl(T *) const -> decltype(
         json_traits<typename std::remove_cv<typename std::remove_reference<
             T>::type>::type>::from_json(std::declval<basic_json>())) {
       return json_traits<typename std::remove_cv<
           typename std::remove_reference<T>::type>::type>::from_json(*this);
+    }
+
+    // this one is quite atrocious
+    // this overload is chosen ONLY if json_traits struct is not specialized, and if the expression nlohmann::from_json(*this, T&) is valid
+    // I chose to prefer the json_traits specialization if it exists, since it's a more advanced use.
+    // But we can of course change this behaviour
+    template <typename T>
+    auto get_impl(T *) const -> typename std::enable_if<
+        not detail::has_json_traits<typename std::remove_cv<T>::type>::value,
+        typename std::remove_cv<typename std::remove_reference<
+            decltype(::nlohmann::from_json(std::declval<basic_json>(),
+                                           std::declval<T &>()),
+                     std::declval<T>())>::type>::type>::type
+    {
+      typename std::remove_cv<typename std::remove_reference<T>::type>::type
+          ret;
+      ::nlohmann::from_json(*this, ret);
+      return ret;
     }
 
     /// get an object (explicit)
@@ -2750,7 +2827,7 @@ class basic_json
                  not std::is_same<basic_json_t, typename T::value_type>::value and
                  not std::is_arithmetic<T>::value and
                  not std::is_convertible<std::string, T>::value and
-                 not has_mapped_type<T>::value, int>::type = 0>
+                 not detail::has_mapped_type<T>::value, int>::type = 0>
     T get_impl(T* /*unused*/) const
     {
         if (is_array())
@@ -2791,7 +2868,7 @@ class basic_json
     /// get an array (explicit)
     template<class T, typename std::enable_if<
                  std::is_same<basic_json, typename T::value_type>::value and
-                 not has_mapped_type<T>::value, int>::type = 0>
+                 not detail::has_mapped_type<T>::value, int>::type = 0>
     T get_impl(T* /*unused*/) const
     {
         if (is_array())

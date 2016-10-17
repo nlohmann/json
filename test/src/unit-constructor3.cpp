@@ -42,21 +42,11 @@ struct pod_type {
   short c;
 };
 
-inline bool operator==(pod_type const& lhs, pod_type const& rhs) noexcept
-{
-  return std::tie(lhs.a, lhs.b, lhs.c) == std::tie(rhs.a, rhs.b, rhs.c);
-}
-
 struct bit_more_complex_type {
   pod_type a;
   pod_type b;
   std::string c;
 };
-
-inline bool operator==(bit_more_complex_type const &lhs,
-                       bit_more_complex_type const &rhs) noexcept {
-  return std::tie(lhs.a, lhs.b, lhs.c) == std::tie(rhs.a, rhs.b, rhs.c);
-}
 
 // best optional implementation ever
 template <typename T>
@@ -68,10 +58,96 @@ public:
   explicit operator bool() const noexcept { return _val != nullptr; }
 
   T const &operator*() const { return *_val; }
+  optional_type& operator=(T const& t)
+  {
+    _val = std::make_shared<T>(t);
+    return *this;
+  }
 
 private:
   std::shared_ptr<T> _val;
 };
+
+struct no_json_traits_type
+{
+  int a;
+};
+
+// free to/from_json functions
+
+json to_json(empty_type)
+{
+  return json::object();
+}
+
+json to_json(pod_type const& p)
+{
+  return {{"a", p.a}, {"b", p.b}, {"c", p.c}};
+}
+
+json to_json(bit_more_complex_type const& p)
+{
+  using nlohmann::to_json;
+  return json{{"a", to_json(p.a)}, {"b", to_json(p.b)}, {"c", p.c}};
+}
+
+template <typename T>
+json to_json(optional_type<T> const& opt)
+{
+  using nlohmann::to_json;
+  if (!opt)
+    return nullptr;
+  return to_json(*opt);
+}
+
+json to_json(no_json_traits_type const& p)
+{
+  json ret;
+  ret["a"] = p.a;
+  return ret;
+}
+
+void from_json(json const&j, empty_type& t)
+{
+  assert(j.empty());
+  t = empty_type{};
+}
+
+void from_json(json const&j, pod_type& t)
+{
+  t = {j["a"].get<int>(), j["b"].get<char>(), j["c"].get<short>()};
+}
+
+void from_json(json const&j, bit_more_complex_type& t)
+{
+   // relying on json_traits struct here..
+   t = {j["a"].get<udt::pod_type>(), j["b"].get<udt::pod_type>(),
+        j["c"].get<std::string>()};
+}
+
+void from_json(json const& j, no_json_traits_type& t)
+{
+  t.a = j["a"].get<int>();
+}
+
+template <typename T>
+void from_json(json const& j, optional_type<T>& t)
+{
+  if (j.is_null())
+    t = optional_type<T>{};
+  else
+    t = j.get<T>();
+}
+
+inline bool operator==(pod_type const& lhs, pod_type const& rhs) noexcept
+{
+  return std::tie(lhs.a, lhs.b, lhs.c) == std::tie(rhs.a, rhs.b, rhs.c);
+}
+
+inline bool operator==(bit_more_complex_type const &lhs,
+                       bit_more_complex_type const &rhs) noexcept {
+  return std::tie(lhs.a, lhs.b, lhs.c) == std::tie(rhs.a, rhs.b, rhs.c);
+}
 
 template <typename T>
 inline bool operator==(optional_type<T> const& lhs, optional_type<T> const& rhs)
@@ -81,6 +157,11 @@ inline bool operator==(optional_type<T> const& lhs, optional_type<T> const& rhs)
   if (!lhs || !rhs)
     return false;
   return *lhs == *rhs;
+}
+
+inline bool operator==(no_json_traits_type const& lhs, no_json_traits_type const& rhs)
+{
+  return lhs.a == rhs.a;
 }
 }
 
@@ -163,7 +244,7 @@ TEST_CASE("constructors for user-defined types", "[udt]")
 {
   SECTION("empty type")
   {
-    udt::empty_type const e;
+    udt::empty_type const e{};
     auto const j = json{e};
     auto k = json::object();
     CHECK(j == k);
@@ -298,5 +379,120 @@ TEST_CASE("get<> for user-defined types", "[udt]")
       REQUIRE(v);
       CHECK(*v == expected);
     }
+  }
+}
+
+TEST_CASE("to_json free function", "[udt]")
+{
+  SECTION("pod_type")
+  {
+    auto const e = udt::pod_type{42, 42, 42};
+    auto const expected = json{{"a", 42}, {"b", 42}, {"c", 42}};
+
+    auto const j = nlohmann::to_json(e);
+    CHECK(j == expected);
+  }
+
+  SECTION("bit_more_complex_type")
+  {
+    auto const e =
+        udt::bit_more_complex_type{{42, 42, 42}, {41, 41, 41}, "forty"};
+    auto const expected = json{{"a", {{"a", 42}, {"b", 42}, {"c", 42}}},
+                        {"b", {{"a", 41}, {"b", 41}, {"c", 41}}},
+                        {"c", "forty"}};
+    auto const j = nlohmann::to_json(e);
+    CHECK(j == expected);
+  }
+
+  SECTION("optional_type")
+  {
+    SECTION("from null")
+    {
+      udt::optional_type<udt::pod_type> o;
+
+      json expected;
+      auto const j = nlohmann::to_json(o);
+      CHECK(expected == j);
+    }
+
+    SECTION("from value")
+    {
+      udt::optional_type<udt::pod_type> o{{42, 42, 42}};
+
+      auto const expected = json{{"a", 42}, {"b", 42}, {"c", 42}};
+      auto const j = nlohmann::to_json(o);
+      CHECK(expected == j);
+    }
+  }
+
+  SECTION("no json_traits specialization")
+  {
+    udt::no_json_traits_type t{42};
+
+    json expected;
+    expected["a"] = 42;
+    auto const j = nlohmann::to_json(t);
+    CHECK(j == expected);
+  }
+}
+
+TEST_CASE("from_json free function", "[udt]")
+{
+  SECTION("pod_type")
+  {
+    auto const expected = udt::pod_type{42, 42, 42};
+    auto const j = json{{"a", 42}, {"b", 42}, {"c", 42}};
+
+    udt::pod_type p;
+    nlohmann::from_json(j, p);
+    CHECK(p == expected);
+  }
+
+  SECTION("bit_more_complex_type")
+  {
+    auto const expected =
+        udt::bit_more_complex_type{{42, 42, 42}, {41, 41, 41}, "forty"};
+    auto const j = json{{"a", {{"a", 42}, {"b", 42}, {"c", 42}}},
+                        {"b", {{"a", 41}, {"b", 41}, {"c", 41}}},
+                        {"c", "forty"}};
+    udt::bit_more_complex_type p;
+    nlohmann::from_json(j, p);
+    CHECK(p == expected);
+  }
+
+  SECTION("optional_type")
+  {
+    SECTION("from null")
+    {
+      udt::optional_type<udt::pod_type> expected;
+      json j;
+      udt::optional_type<udt::pod_type> o;
+
+      nlohmann::from_json(j, o);
+      CHECK(expected == o);
+    }
+
+    SECTION("from value")
+    {
+      udt::optional_type<udt::pod_type> expected{{42, 42, 42}};
+      auto const j = json{{"a", 42}, {"b", 42}, {"c", 42}};
+      udt::optional_type<udt::pod_type> o;
+
+      nlohmann::from_json(j, o);
+      CHECK(expected == o);
+    }
+  }
+
+  SECTION("no json_traits specialization")
+  {
+    udt::no_json_traits_type expected{42};
+    udt::no_json_traits_type res;
+    json j;
+    j["a"] = 42;
+    nlohmann::from_json(j, res);
+    CHECK(res == expected);
+
+    res = j.get<udt::no_json_traits_type>();
+    CHECK(res == expected);
   }
 }
