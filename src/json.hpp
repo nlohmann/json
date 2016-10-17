@@ -143,6 +143,24 @@ struct has_json_traits
   static constexpr bool value = has_destructor<json_traits<T>>::value;
 };
 
+struct to_json_fn
+{
+  template <typename T>
+  constexpr auto operator()(T&& val) const -> decltype(to_json(std::forward<T>(val)))
+  {
+    return to_json(std::forward<T>(val));
+  }
+};
+
+struct from_json_fn
+{
+  template <typename T>
+  constexpr auto operator()(T&& val) const -> decltype(from_json(std::forward<T>(val)))
+  {
+    return from_json(std::forward<T>(val));
+  }
+};
+
 /*!
 @brief helper class to create locales with decimal point
 
@@ -163,6 +181,22 @@ struct DecimalSeparator : std::numpunct<char>
     }
 };
 
+}
+
+// taken from ranges-v3
+template <typename T>
+struct __static_const
+{
+  static constexpr T value{};
+};
+
+template <typename T>
+constexpr T __static_const<T>::value;
+
+inline namespace
+{
+  constexpr auto const& to_json = __static_const<detail::to_json_fn>::value;
+  constexpr auto const& from_json = __static_const<detail::from_json_fn>::value;
 }
 
 /*!

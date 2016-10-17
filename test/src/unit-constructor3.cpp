@@ -42,21 +42,11 @@ struct pod_type {
   short c;
 };
 
-inline bool operator==(pod_type const& lhs, pod_type const& rhs) noexcept
-{
-  return std::tie(lhs.a, lhs.b, lhs.c) == std::tie(rhs.a, rhs.b, rhs.c);
-}
-
 struct bit_more_complex_type {
   pod_type a;
   pod_type b;
   std::string c;
 };
-
-inline bool operator==(bit_more_complex_type const &lhs,
-                       bit_more_complex_type const &rhs) noexcept {
-  return std::tie(lhs.a, lhs.b, lhs.c) == std::tie(rhs.a, rhs.b, rhs.c);
-}
 
 // best optional implementation ever
 template <typename T>
@@ -72,6 +62,43 @@ public:
 private:
   std::shared_ptr<T> _val;
 };
+
+// free to/from_json functions
+
+json to_json(empty_type)
+{
+  return json::object();
+}
+
+json to_json(pod_type const& p)
+{
+  return {{"a", p.a}, {"b", p.b}, {"c", p.c}};
+}
+
+json to_json(bit_more_complex_type const& p)
+{
+  using nlohmann::to_json;
+  return json{{"a", to_json(p.a)}, {"b", to_json(p.b)}, {"c", p.c}};
+}
+
+template <typename T>
+json to_json(optional_type<T> const& opt)
+{
+  using nlohmann::to_json;
+  if (!opt)
+    return nullptr;
+  return to_json(*opt);
+}
+
+inline bool operator==(pod_type const& lhs, pod_type const& rhs) noexcept
+{
+  return std::tie(lhs.a, lhs.b, lhs.c) == std::tie(rhs.a, rhs.b, rhs.c);
+}
+
+inline bool operator==(bit_more_complex_type const &lhs,
+                       bit_more_complex_type const &rhs) noexcept {
+  return std::tie(lhs.a, lhs.b, lhs.c) == std::tie(rhs.a, rhs.b, rhs.c);
+}
 
 template <typename T>
 inline bool operator==(optional_type<T> const& lhs, optional_type<T> const& rhs)
@@ -163,7 +190,7 @@ TEST_CASE("constructors for user-defined types", "[udt]")
 {
   SECTION("empty type")
   {
-    udt::empty_type const e;
+    udt::empty_type const e{};
     auto const j = json{e};
     auto k = json::object();
     CHECK(j == k);
@@ -297,6 +324,41 @@ TEST_CASE("get<> for user-defined types", "[udt]")
       auto expected = udt::pod_type{42,42,42};
       REQUIRE(v);
       CHECK(*v == expected);
+    }
+  }
+}
+
+TEST_CASE("to_json free function", "[udt]")
+{
+  SECTION("pod_type")
+  {
+    auto const e = udt::pod_type{42, 42, 42};
+    auto const expected = json{{"a", 42}, {"b", 42}, {"c", 42}};
+
+    auto const j = nlohmann::to_json(e);
+    CHECK(j == expected);
+  }
+
+  SECTION("bit_more_complex_type")
+  {
+    auto const e =
+        udt::bit_more_complex_type{{42, 42, 42}, {41, 41, 41}, "forty"};
+    auto const expected = json{{"a", {{"a", 42}, {"b", 42}, {"c", 42}}},
+                        {"b", {{"a", 41}, {"b", 41}, {"c", 41}}},
+                        {"c", "forty"}};
+    auto const j = nlohmann::to_json(e);
+    CHECK(j == expected);
+  }
+
+  SECTION("optional_type")
+  {
+    SECTION("from null")
+    {
+      udt::optional_type<udt::pod_type> o;
+
+      json expected;
+      auto const j = nlohmann::to_json(o);
+      CHECK(expected == j);
     }
   }
 }
