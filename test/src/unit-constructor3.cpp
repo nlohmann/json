@@ -84,17 +84,13 @@ inline bool operator==(optional_type<T> const& lhs, optional_type<T> const& rhs)
 }
 }
 
-template <typename T>
-struct type_helper
-{
-  using type = T;
-};
-
 namespace nlohmann
 {
 template <>
-struct json_traits<udt::empty_type> : type_helper<udt::empty_type>
+struct json_traits<udt::empty_type>
 {
+  using type = udt::empty_type;
+
   static json to_json(type)
   {
     return json::object();
@@ -108,8 +104,10 @@ struct json_traits<udt::empty_type> : type_helper<udt::empty_type>
 };
 
 template <>
-struct json_traits<udt::pod_type> : type_helper<udt::pod_type>
-{
+struct json_traits<udt::pod_type>
+{  
+  using type = udt::pod_type;
+
   static json to_json(type const& t)
   {
     return {{"a", t.a}, {"b", t.b}, {"c", t.c}};
@@ -124,8 +122,9 @@ struct json_traits<udt::pod_type> : type_helper<udt::pod_type>
 
 template <>
 struct json_traits<udt::bit_more_complex_type>
-    : type_helper<udt::bit_more_complex_type>
 {
+  using type = udt::bit_more_complex_type;
+
   static json to_json(type const& t)
   {
     return json{{"a", json{t.a}}, {"b", json{t.b}}, {"c", t.c}};
@@ -139,8 +138,11 @@ struct json_traits<udt::bit_more_complex_type>
 };
 
 template <typename T>
-struct json_traits<udt::optional_type<T>> : type_helper<udt::optional_type<T>> {
-  static json to_json(type const&t)
+struct json_traits<udt::optional_type<T>>
+{
+  using type = udt::optional_type<T>;
+
+  static json to_json(type const& t)
   {
     if (t)
       return json(*t);
