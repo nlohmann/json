@@ -58,6 +58,11 @@ public:
   explicit operator bool() const noexcept { return _val != nullptr; }
 
   T const &operator*() const { return *_val; }
+  optional_type& operator=(T const& t)
+  {
+    _val = std::make_shared<T>(t);
+    return *this;
+  }
 
 private:
   std::shared_ptr<T> _val;
@@ -79,6 +84,33 @@ json to_json(bit_more_complex_type const& p)
 {
   using nlohmann::to_json;
   return json{{"a", to_json(p.a)}, {"b", to_json(p.b)}, {"c", p.c}};
+}
+
+void from_json(json const&j, empty_type& t)
+{
+  assert(j.empty());
+  t = empty_type{};
+}
+
+void from_json(json const&j, pod_type& t)
+{
+  t = {j["a"].get<int>(), j["b"].get<char>(), j["c"].get<short>()};
+}
+
+void from_json(json const&j, bit_more_complex_type& t)
+{
+   // relying on json_traits struct here..
+   t = {j["a"].get<udt::pod_type>(), j["b"].get<udt::pod_type>(),
+        j["c"].get<std::string>()};
+}
+
+template <typename T>
+void from_json(json const& j, optional_type<T>& t)
+{
+  if (j.is_null())
+    t = optional_type<T>{};
+  else
+    t = j.get<T>();
 }
 
 template <typename T>
@@ -360,5 +392,64 @@ TEST_CASE("to_json free function", "[udt]")
       auto const j = nlohmann::to_json(o);
       CHECK(expected == j);
     }
+
+    SECTION("from value")
+    {
+      udt::optional_type<udt::pod_type> o{{42, 42, 42}};
+
+      auto const expected = json{{"a", 42}, {"b", 42}, {"c", 42}};
+      auto const j = nlohmann::to_json(o);
+      CHECK(expected == j);
+    }
+  }
+}
+
+TEST_CASE("from_json free function", "[udt]")
+{
+  SECTION("pod_type")
+  {
+    auto const expected = udt::pod_type{42, 42, 42};
+    auto const j = json{{"a", 42}, {"b", 42}, {"c", 42}};
+
+    // i really dislike this output parameter
+    udt::pod_type p;
+    nlohmann::from_json(j, p);
+    CHECK(p == expected);
+  }
+
+  SECTION("bit_more_complex_type")
+  {
+    auto const expected =
+        udt::bit_more_complex_type{{42, 42, 42}, {41, 41, 41}, "forty"};
+    auto const j = json{{"a", {{"a", 42}, {"b", 42}, {"c", 42}}},
+                        {"b", {{"a", 41}, {"b", 41}, {"c", 41}}},
+                        {"c", "forty"}};
+    udt::bit_more_complex_type p;
+    nlohmann::from_json(j, p);
+    CHECK(p == expected);
+  }
+
+  SECTION("optional_type")
+  {
+    SECTION("from null")
+    {
+      udt::optional_type<udt::pod_type> expected;
+      json j;
+      udt::optional_type<udt::pod_type> o;
+
+      nlohmann::from_json(j, o);
+      CHECK(expected == o);
+    }
+
+    SECTION("from value")
+    {
+      udt::optional_type<udt::pod_type> expected{{42, 42, 42}};
+      auto const j = json{{"a", 42}, {"b", 42}, {"c", 42}};
+      udt::optional_type<udt::pod_type> o;
+
+      nlohmann::from_json(j, o);
+      CHECK(expected == o);
+    }
+
   }
 }
