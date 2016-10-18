@@ -154,10 +154,10 @@ struct to_json_fn
 
 struct from_json_fn
 {
-  template <typename T>
-  constexpr auto operator()(T&& val) const -> decltype(from_json(std::forward<T>(val)))
+  template <typename Json, typename T>
+  constexpr auto operator()(Json const& from, T& to) const -> decltype(from_json(from, to))
   {
-    return from_json(std::forward<T>(val));
+    return from_json(from, to);
   }
 };
 
