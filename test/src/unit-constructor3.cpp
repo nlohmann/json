@@ -68,6 +68,11 @@ private:
   std::shared_ptr<T> _val;
 };
 
+struct no_json_traits_type
+{
+  int a;
+};
+
 // free to/from_json functions
 
 json to_json(empty_type)
@@ -84,6 +89,22 @@ json to_json(bit_more_complex_type const& p)
 {
   using nlohmann::to_json;
   return json{{"a", to_json(p.a)}, {"b", to_json(p.b)}, {"c", p.c}};
+}
+
+template <typename T>
+json to_json(optional_type<T> const& opt)
+{
+  using nlohmann::to_json;
+  if (!opt)
+    return nullptr;
+  return to_json(*opt);
+}
+
+json to_json(no_json_traits_type const& p)
+{
+  json ret;
+  ret["a"] = p.a;
+  return ret;
 }
 
 void from_json(json const&j, empty_type& t)
@@ -104,6 +125,11 @@ void from_json(json const&j, bit_more_complex_type& t)
         j["c"].get<std::string>()};
 }
 
+void from_json(json const& j, no_json_traits_type& t)
+{
+  t.a = j["a"].get<int>();
+}
+
 template <typename T>
 void from_json(json const& j, optional_type<T>& t)
 {
@@ -111,15 +137,6 @@ void from_json(json const& j, optional_type<T>& t)
     t = optional_type<T>{};
   else
     t = j.get<T>();
-}
-
-template <typename T>
-json to_json(optional_type<T> const& opt)
-{
-  using nlohmann::to_json;
-  if (!opt)
-    return nullptr;
-  return to_json(*opt);
 }
 
 inline bool operator==(pod_type const& lhs, pod_type const& rhs) noexcept
@@ -140,6 +157,11 @@ inline bool operator==(optional_type<T> const& lhs, optional_type<T> const& rhs)
   if (!lhs || !rhs)
     return false;
   return *lhs == *rhs;
+}
+
+inline bool operator==(no_json_traits_type const& lhs, no_json_traits_type const& rhs)
+{
+  return lhs.a == rhs.a;
 }
 }
 
@@ -402,6 +424,16 @@ TEST_CASE("to_json free function", "[udt]")
       CHECK(expected == j);
     }
   }
+
+  SECTION("no json_traits specialization")
+  {
+    udt::no_json_traits_type t{42};
+
+    json expected;
+    expected["a"] = 42;
+    auto const j = nlohmann::to_json(t);
+    CHECK(j == expected);
+  }
 }
 
 TEST_CASE("from_json free function", "[udt]")
@@ -411,7 +443,6 @@ TEST_CASE("from_json free function", "[udt]")
     auto const expected = udt::pod_type{42, 42, 42};
     auto const j = json{{"a", 42}, {"b", 42}, {"c", 42}};
 
-    // i really dislike this output parameter
     udt::pod_type p;
     nlohmann::from_json(j, p);
     CHECK(p == expected);
@@ -450,6 +481,18 @@ TEST_CASE("from_json free function", "[udt]")
       nlohmann::from_json(j, o);
       CHECK(expected == o);
     }
+  }
 
+  SECTION("no json_traits specialization")
+  {
+    udt::no_json_traits_type expected{42};
+    udt::no_json_traits_type res;
+    json j;
+    j["a"] = 42;
+    nlohmann::from_json(j, res);
+    CHECK(res == expected);
+
+    res = j.get<udt::no_json_traits_type>();
+    CHECK(res == expected);
   }
 }
