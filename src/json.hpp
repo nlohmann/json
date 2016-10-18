@@ -117,6 +117,17 @@ namespace nlohmann
 template <typename T, typename = void>
 struct json_traits;
 
+// alias templates to reduce boilerplate
+template <bool B, typename T = void>
+using enable_if_t = typename std::enable_if<B, T>::type;
+
+template <typename T>
+using remove_cv_t = typename std::remove_cv<T>::type;
+
+template <typename T>
+using remove_reference_t = typename std::remove_reference<T>::type;
+
+// TODO update this doc
 /*!
 @brief unnamed namespace with internal helper functions
 @since version 1.0.0
@@ -1393,15 +1404,11 @@ class basic_json
     // auto j = json{{"a", json(not_equality_comparable{})}};
     // 
     // we can remove this constraint though, since lots of ctor are not explicit already
-    template <
-        typename T,
-        typename =
-            typename std::enable_if<detail::has_json_traits<typename std::remove_cv<
-                typename std::remove_reference<T>::type>::type>::value>::type>
+    template <typename T, typename = enable_if_t<detail::has_json_traits<
+                              remove_cv_t<remove_reference_t<T>>>::value>>
     explicit basic_json(T &&val)
-        : basic_json(json_traits<typename std::remove_cv<
-                         typename std::remove_reference<T>::type>::type>::
-                         to_json(std::forward<T>(val))) {}
+        : basic_json(json_traits<remove_cv_t<remove_reference_t<T>>>::to_json(
+              std::forward<T>(val))) {}
     /*!
     @brief create a string (explicit)
 
@@ -1418,14 +1425,15 @@ class basic_json
 
     @sa @ref basic_json(const typename string_t::value_type*) -- create a
     string value from a character pointer
-    @sa @ref basic_json(const CompatibleStringType&) -- create a string
-    value
+    @sa @ref basic_json(const CompatibleStringType&) -- create a string value
     from a compatible string container
 
     @since version 1.0.0
     */
-    basic_json(const string_t &val) : m_type(value_t::string), m_value(val) {
-      assert_invariant();
+    basic_json(const string_t& val)
+        : m_type(value_t::string), m_value(val)
+    {
+        assert_invariant();
     }
 
     /*!
@@ -2763,17 +2771,12 @@ class basic_json
 
     // get_impl overload chosen if json_traits struct is specialized for type T
     // simply returns json_traits<T>::from_json(*this);
-    // TODO add alias templates (enable_if_t etc)
-    template <
-        typename T,
-        typename = typename std::enable_if<
-            detail::has_json_traits<typename std::remove_cv<
-                typename std::remove_reference<T>::type>::type>::value>::type>
-    auto get_impl(T *) const -> decltype(
-        json_traits<typename std::remove_cv<typename std::remove_reference<
-            T>::type>::type>::from_json(std::declval<basic_json>())) {
-      return json_traits<typename std::remove_cv<
-          typename std::remove_reference<T>::type>::type>::from_json(*this);
+    template <typename T, typename = enable_if_t<detail::has_json_traits<
+                              remove_cv_t<remove_reference_t<T>>>::value>>
+    auto get_impl(T *) const
+        -> decltype(json_traits<remove_cv_t<remove_reference_t<T>>>::from_json(
+            std::declval<basic_json>())) {
+      return json_traits<remove_cv_t<remove_reference_t<T>>>::from_json(*this);
     }
 
     // this one is quite atrocious
@@ -2781,31 +2784,34 @@ class basic_json
     // I chose to prefer the json_traits specialization if it exists, since it's a more advanced use.
     // But we can of course change this behaviour
     template <typename T>
-    auto get_impl(T *) const -> typename std::enable_if<
-        not detail::has_json_traits<typename std::remove_cv<T>::type>::value,
-        typename std::remove_cv<typename std::remove_reference<
-            decltype(::nlohmann::from_json(std::declval<basic_json>(),
-                                           std::declval<T &>()),
-                     std::declval<T>())>::type>::type>::type
+    auto get_impl(T *) const
+        -> enable_if_t<not detail::has_json_traits<remove_cv_t<T>>::value,
+                       remove_cv_t<remove_reference_t<decltype(
+                           ::nlohmann::from_json(std::declval<basic_json>(),
+                                                 std::declval<T &>()),
+                           std::declval<T>())>>>
     {
-      typename std::remove_cv<typename std::remove_reference<T>::type>::type
-          ret;
+      remove_cv_t<T> ret;
+      // I guess this output parameter is the only way to get ADL
+      // Even if users can use the get<T> method to have a more 'functional' behaviour
+      // i.e. having a return type, could there be a way to have the same behaviour with from_json?
+      // e.g. auto t = nlohmann::from_json<T>(json{});
+      // this seems to require variable templates though... (at least it did when I tried to implement it)
       ::nlohmann::from_json(*this, ret);
       return ret;
     }
 
-    /// get an object (explicit)
-    template <class T,
-              typename std::enable_if<
-                  std::is_convertible<typename object_t::key_type,
-                                      typename T::key_type>::value and
-                      std::is_convertible<basic_json_t,
-                                          typename T::mapped_type>::value,
-                  int>::type = 0>
-    T get_impl(T *) const {
-      if (is_object()) {
-        return T(m_value.object->begin(), m_value.object->end());
-      } else {
+    template<class T, typename std::enable_if<
+                 std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
+                 std::is_convertible<basic_json_t, typename T::mapped_type>::value, int>::type = 0>
+    T get_impl(T*) const
+    {
+        if (is_object())
+        {
+            return T(m_value.object->begin(), m_value.object->end());
+        }
+        else
+        {
 
         JSON_THROW(std::domain_error("type must be object, but is " + type_name()));
     }
