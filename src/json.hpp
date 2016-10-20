@@ -127,6 +127,9 @@ using remove_cv_t = typename std::remove_cv<T>::type;
 template <typename T>
 using remove_reference_t = typename std::remove_reference<T>::type;
 
+template <typename T>
+using uncvref_t = remove_cv_t<remove_reference_t<T>>;
+
 // TODO update this doc
 /*!
 @brief unnamed namespace with internal helper functions
@@ -1404,11 +1407,12 @@ class basic_json
     // auto j = json{{"a", json(not_equality_comparable{})}};
     // 
     // we can remove this constraint though, since lots of ctor are not explicit already
-    template <typename T, typename = enable_if_t<detail::has_json_traits<
-                              remove_cv_t<remove_reference_t<T>>>::value>>
+    template <typename T, typename = enable_if_t<
+                              detail::has_json_traits<uncvref_t<T>>::value>>
     explicit basic_json(T &&val)
-        : basic_json(json_traits<remove_cv_t<remove_reference_t<T>>>::to_json(
-              std::forward<T>(val))) {}
+        : basic_json(json_traits<uncvref_t<T>>::to_json(std::forward<T>(val)))
+    {
+    }
     /*!
     @brief create a string (explicit)
 
@@ -2771,12 +2775,12 @@ class basic_json
 
     // get_impl overload chosen if json_traits struct is specialized for type T
     // simply returns json_traits<T>::from_json(*this);
-    template <typename T, typename = enable_if_t<detail::has_json_traits<
-                              remove_cv_t<remove_reference_t<T>>>::value>>
-    auto get_impl(T *) const
-        -> decltype(json_traits<remove_cv_t<remove_reference_t<T>>>::from_json(
-            std::declval<basic_json>())) {
-      return json_traits<remove_cv_t<remove_reference_t<T>>>::from_json(*this);
+    template <typename T, typename = enable_if_t<
+                              detail::has_json_traits<uncvref_t<T>>::value>>
+    auto get_impl(T *) const -> decltype(
+        json_traits<uncvref_t<T>>::from_json(std::declval<basic_json>()))
+    {
+      return json_traits<uncvref_t<T>>::from_json(*this);
     }
 
     // this one is quite atrocious
@@ -2784,12 +2788,11 @@ class basic_json
     // I chose to prefer the json_traits specialization if it exists, since it's a more advanced use.
     // But we can of course change this behaviour
     template <typename T>
-    auto get_impl(T *) const
-        -> enable_if_t<not detail::has_json_traits<remove_cv_t<T>>::value,
-                       remove_cv_t<remove_reference_t<decltype(
-                           ::nlohmann::from_json(std::declval<basic_json>(),
+    auto get_impl(T *) const -> enable_if_t<
+        not detail::has_json_traits<remove_cv_t<T>>::value,
+        uncvref_t<decltype(::nlohmann::from_json(std::declval<basic_json>(),
                                                  std::declval<T &>()),
-                           std::declval<T>())>>>
+                           std::declval<T>())>>
     {
       remove_cv_t<T> ret;
       // I guess this output parameter is the only way to get ADL
