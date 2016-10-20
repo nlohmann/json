@@ -161,26 +161,6 @@ struct has_mapped_type
         std::is_integral<decltype(detect(std::declval<T>()))>::value;
 };
 
-// taken from http://stackoverflow.com/questions/10711952/how-to-detect-existence-of-a-class-using-sfinae
-// used to determine if json_traits is defined for a given type T
-template <typename T>
-struct has_destructor
-{
-  template <typename U>
-  static std::true_type detect(decltype(std::declval<U>().~U())*);
-
-  template <typename>
-  static std::false_type detect(...);
-
-  static constexpr bool value = decltype(detect<T>(0))::value;
-};
-
-template<typename T>
-struct has_json_traits
-{
-  static constexpr bool value = has_destructor<json_traits<T>>::value;
-};
-
 struct to_json_fn
 {
   template <typename T>
@@ -1407,8 +1387,7 @@ class basic_json
     // auto j = json{{"a", json(not_equality_comparable{})}};
     // 
     // we can remove this constraint though, since lots of ctor are not explicit already
-    template <typename T, typename = enable_if_t<
-                              detail::has_json_traits<uncvref_t<T>>::value>>
+    template <typename T, typename = decltype(json_traits<uncvref_t<T>>::to_json(std::declval<uncvref_t<T>>()))>
     explicit basic_json(T &&val)
         : basic_json(json_traits<uncvref_t<T>>::to_json(std::forward<T>(val)))
     {
@@ -2775,24 +2754,19 @@ class basic_json
 
     // get_impl overload chosen if json_traits struct is specialized for type T
     // simply returns json_traits<T>::from_json(*this);
-    template <typename T, typename = enable_if_t<
-                              detail::has_json_traits<uncvref_t<T>>::value>>
-    auto get_impl(T *) const -> decltype(
-        json_traits<uncvref_t<T>>::from_json(std::declval<basic_json>()))
+    // dual argument to avoid conflicting with get_impl overloads taking a pointer
+    template <typename T>
+    auto get_impl(int, int) const -> decltype(json_traits<uncvref_t<T>>::from_json(*this))
     {
       return json_traits<uncvref_t<T>>::from_json(*this);
     }
 
-    // this one is quite atrocious
     // this overload is chosen ONLY if json_traits struct is not specialized, and if the expression nlohmann::from_json(*this, T&) is valid
     // I chose to prefer the json_traits specialization if it exists, since it's a more advanced use.
     // But we can of course change this behaviour
     template <typename T>
-    auto get_impl(T *) const -> enable_if_t<
-        not detail::has_json_traits<remove_cv_t<T>>::value,
-        uncvref_t<decltype(::nlohmann::from_json(std::declval<basic_json>(),
-                                                 std::declval<T &>()),
-                           std::declval<T>())>>
+    auto get_impl(long, long) const -> uncvref_t<decltype(::nlohmann::from_json(*this, std::declval<T &>()),
+                                                    std::declval<T>())>
     {
       remove_cv_t<T> ret;
       // I guess this output parameter is the only way to get ADL
@@ -3108,11 +3082,16 @@ class basic_json
     */
     template<typename ValueType, typename std::enable_if<
                  not std::is_pointer<ValueType>::value, int>::type = 0>
-    ValueType get() const
+    auto get() const -> decltype(get_impl(static_cast<ValueType*>(nullptr)))
     {
         return get_impl(static_cast<ValueType*>(nullptr));
     }
 
+    template <typename ValueType>
+    auto get() const -> decltype(get_impl<ValueType>(0, 0))
+    {
+        return get_impl<ValueType>(0, 0);
+    }
     /*!
     @brief get a pointer value (explicit)
 
