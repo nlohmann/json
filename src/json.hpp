@@ -220,18 +220,18 @@ struct DecimalSeparator : std::numpunct<char>
 // taken from ranges-v3
 // TODO add doc
 template <typename T>
-struct __static_const
+struct _static_const
 {
   static constexpr T value{};
 };
 
 template <typename T>
-constexpr T __static_const<T>::value;
+constexpr T _static_const<T>::value;
 
 inline namespace
 {
-  constexpr auto const& to_json = __static_const<detail::to_json_fn>::value;
-  constexpr auto const& from_json = __static_const<detail::from_json_fn>::value;
+  constexpr auto const& to_json = _static_const<detail::to_json_fn>::value;
+  constexpr auto const& from_json = _static_const<detail::from_json_fn>::value;
 }
 
 /*!
