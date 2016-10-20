@@ -1336,14 +1336,15 @@ class basic_json
 
     @sa @ref basic_json(const typename string_t::value_type*) -- create a
     string value from a character pointer
-    @sa @ref basic_json(const CompatibleStringType&) -- create a string
-    value
+    @sa @ref basic_json(const CompatibleStringType&) -- create a string value
     from a compatible string container
 
     @since version 1.0.0
     */
-    basic_json(const string_t &val) : m_type(value_t::string), m_value(val) {
-      assert_invariant();
+    basic_json(const string_t& val)
+        : m_type(value_t::string), m_value(val)
+    {
+        assert_invariant();
     }
 
     /*!
@@ -2709,20 +2710,19 @@ class basic_json
       return ret;
     }
 
-    /// get an object (explicit)
-    template <class T,
-              typename std::enable_if<
-                  std::is_convertible<typename object_t::key_type,
-                                      typename T::key_type>::value and
-                      std::is_convertible<basic_json_t,
-                                          typename T::mapped_type>::value,
-                  int>::type = 0>
-    T get_impl(T *) const {
-      if (is_object()) {
-        return T(m_value.object->begin(), m_value.object->end());
-      } else {
-        throw std::domain_error("type must be object, but is " + type_name());
-      }
+    template<class T, typename std::enable_if<
+                 std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
+                 std::is_convertible<basic_json_t, typename T::mapped_type>::value, int>::type = 0>
+    T get_impl(T*) const
+    {
+        if (is_object())
+        {
+            return T(m_value.object->begin(), m_value.object->end());
+        }
+        else
+        {
+            throw std::domain_error("type must be object, but is " + type_name());
+        }
     }
 
     /// get an object (explicit)
