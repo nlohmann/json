@@ -8802,7 +8802,7 @@ basic_json_parser_63:
 
         // non locale aware isdigit
         // Microsoft in 1252 codepage and others may classify additional single-byte characters as digits using std::isdigit
-        bool nl_isdigit(const char c) const
+        constexpr bool nl_isdigit(const char c) const
         {
             return c >= '0' and c <= '9';
         }
