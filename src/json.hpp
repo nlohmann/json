@@ -161,22 +161,70 @@ struct has_mapped_type
         std::is_integral<decltype(detect(std::declval<T>()))>::value;
 };
 
+void to_json();
+void from_json();
+
 struct to_json_fn
 {
-  template <typename T>
-  constexpr auto operator()(T&& val) const -> decltype(to_json(std::forward<T>(val)))
-  {
-    return to_json(std::forward<T>(val));
-  }
+  private:
+    // fallback overload
+    template <typename T>
+    static constexpr auto
+    impl(T &&val, long) noexcept(noexcept(to_json(std::forward<T>(val))))
+        -> decltype(to_json(std::forward<T>(val)))
+    {
+      return to_json(std::forward<T>(val));
+    }
+
+    // preferred overload
+    template <typename T>
+    static constexpr auto impl(T &&val, int) noexcept(
+        noexcept(json_traits<uncvref_t<T>>::to_json(std::forward<T>(val))))
+        -> decltype(json_traits<uncvref_t<T>>::to_json(std::forward<T>(val)))
+    {
+      return json_traits<uncvref_t<T>>::to_json(std::forward<T>(val));
+    }
+
+  public:
+    template <typename T>
+    constexpr auto operator()(T &&val) const
+        noexcept(noexcept(to_json_fn::impl(std::forward<T>(val), 0)))
+            -> decltype(to_json_fn::impl(std::forward<T>(val), 0))
+    {
+      // decltype(0) -> int, so the compiler will try to take the 'preferred overload'
+      // if there is no specialization, the 'fallback overload' will be taken by converting 0 to long
+      return to_json_fn::impl(std::forward<T>(val), 0);
+    }
 };
 
 struct from_json_fn
 {
-  template <typename Json, typename T>
-  constexpr auto operator()(Json const& from, T& to) const -> decltype(from_json(from, to))
-  {
-    return from_json(from, to);
-  }
+  private:
+    template <typename T, typename Json>
+    static constexpr auto impl(Json const &j, T &val,
+                               long) noexcept(noexcept(from_json(j, val)))
+        -> decltype(from_json(j, val))
+    {
+      return from_json(j, val);
+    }
+
+    template <typename T, typename Json>
+    static constexpr auto
+    impl(Json const &j, T &val,
+         int) noexcept(noexcept(json_traits<T>::from_json(j, val)))
+        -> decltype(json_traits<T>::from_json(j, val))
+    {
+      return json_traits<T>::from_json(j, val);
+    }
+
+  public:
+    template <typename T, typename Json>
+    constexpr auto operator()(Json const &j, T &val) const
+        noexcept(noexcept(from_json_fn::impl(j, val, 0)))
+            -> decltype(from_json_fn::impl(j, val, 0))
+    {
+      return from_json_fn::impl(j, val, 0);
+    }
 };
 
 /*!
@@ -1373,7 +1421,13 @@ class basic_json
         assert_invariant();
     }
 
-    // constructor chosen if json_traits is specialized for type T
+    // constructor chosen for user-defined types that either have:
+    // - a to_json free function in their type's namespace
+    // - a json_traits specialization for their type
+    //
+    // If there is both a free function and a specialization, the latter will be chosen,
+    // since it is a more advanced use
+    //
     // note: constructor is marked explicit to avoid the following issue:
     //
     // struct not_equality_comparable{};
@@ -1383,15 +1437,15 @@ class basic_json
     // this will construct implicitely 2 json objects and call operator== on them
     // which can cause nasty bugs on the user's in json-unrelated code
     // 
-    // the trade-off is expressivety in initializer-lists
+    // the trade-off is expressiveness in initializer-lists
     // auto j = json{{"a", json(not_equality_comparable{})}};
     // 
     // we can remove this constraint though, since lots of ctor are not explicit already
-    template <typename T, typename = decltype(json_traits<uncvref_t<T>>::to_json(std::declval<uncvref_t<T>>()))>
+    template <typename T, typename = decltype(::nlohmann::to_json(
+                              std::declval<uncvref_t<T>>()))>
     explicit basic_json(T &&val)
-        : basic_json(json_traits<uncvref_t<T>>::to_json(std::forward<T>(val)))
-    {
-    }
+        : basic_json(::nlohmann::to_json(std::forward<T>(val))) {}
+
     /*!
     @brief create a string (explicit)
 
@@ -2752,32 +2806,6 @@ class basic_json
     // value access //
     //////////////////
 
-    // get_impl overload chosen if json_traits struct is specialized for type T
-    // simply returns json_traits<T>::from_json(*this);
-    // dual argument to avoid conflicting with get_impl overloads taking a pointer
-    template <typename T>
-    auto get_impl(int, int) const -> decltype(json_traits<uncvref_t<T>>::from_json(*this))
-    {
-      return json_traits<uncvref_t<T>>::from_json(*this);
-    }
-
-    // this overload is chosen ONLY if json_traits struct is not specialized, and if the expression nlohmann::from_json(*this, T&) is valid
-    // I chose to prefer the json_traits specialization if it exists, since it's a more advanced use.
-    // But we can of course change this behaviour
-    template <typename T>
-    auto get_impl(long, long) const -> uncvref_t<decltype(::nlohmann::from_json(*this, std::declval<T &>()),
-                                                    std::declval<T>())>
-    {
-      remove_cv_t<T> ret;
-      // I guess this output parameter is the only way to get ADL
-      // Even if users can use the get<T> method to have a more 'functional' behaviour
-      // i.e. having a return type, could there be a way to have the same behaviour with from_json?
-      // e.g. auto t = nlohmann::from_json<T>(json{});
-      // this seems to require variable templates though... (at least it did when I tried to implement it)
-      ::nlohmann::from_json(*this, ret);
-      return ret;
-    }
-
     template<class T, typename std::enable_if<
                  std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
                  std::is_convertible<basic_json_t, typename T::mapped_type>::value, int>::type = 0>
@@ -3082,16 +3110,24 @@ class basic_json
     */
     template<typename ValueType, typename std::enable_if<
                  not std::is_pointer<ValueType>::value, int>::type = 0>
-    auto get() const -> decltype(get_impl(static_cast<ValueType*>(nullptr)))
+    auto get() const -> decltype(this->get_impl(static_cast<ValueType*>(nullptr)))
     {
         return get_impl(static_cast<ValueType*>(nullptr));
     }
 
     template <typename ValueType>
-    auto get() const -> decltype(get_impl<ValueType>(0, 0))
+    auto get() const -> remove_reference_t<
+        decltype(::nlohmann::from_json(*this, std::declval<ValueType &>()),
+                 std::declval<ValueType>())>
     {
-        return get_impl<ValueType>(0, 0);
+      static_assert(std::is_default_constructible<ValueType>::value,
+                    "ValueType must be default-constructible when user-defined "
+                    "from_json method is used");
+      ValueType ret;
+      ::nlohmann::from_json(*this, ret);
+      return ret;
     }
+
     /*!
     @brief get a pointer value (explicit)
 
