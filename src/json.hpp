@@ -8849,7 +8849,7 @@ basic_json_parser_63:
                 // if negative number, reverse sign
                 if (negative_sign)
                 {
-                    result = -result;
+                    result *= -1;
                 }
             }
 
@@ -8915,7 +8915,7 @@ skip_loop:
             }
             else if (exp < 0)
             {
-                exp = -exp;
+                exp *= -1;
 
                 for (std::size_t count = 0; exp; ++count, exp >>= 1)
                 {
