@@ -8810,24 +8810,15 @@ basic_json_parser_63:
         /*!
         @brief parse string to floating point number
 
-        This function is a reimplementation of the strtold family without
-        regard to locale
-
-        @tparam T  a is_floating_point type
+        This function is a partial reimplementation of the strtold in order to meet needs of JSON number
 
         @param[in] str  the string we will parse
 
         @return the floating point number
         */
-        template <typename T, typename = typename std::enable_if<
-            std::is_floating_point<T>::value>::type>
-        T strtox(const char *str) const
+        long double strtojnum(const char *str) const
         {
-            constexpr std::array<long double, 9> powerof10 {
-                {1.e1L, 1.e2L, 1.e4L, 1.e8L, 1.e16L, 1.e32L, 1.e64L, 1.e128L, 1.e256L}
-            };
-
-            T result = 0;
+            long double result = 0;
             char cp = *str;
             int exp = 0; // exponent
             {
@@ -8909,22 +8900,26 @@ skip_loop:
             }
 
             // adjust number by powers of ten specified by format and exponent.
-            if (result != 0.0)
+            if (result != 0.0L)
             {
-                if (exp > std::numeric_limits<T>::max_exponent10)
+                constexpr std::array<long double, 9> powerof10 = {
+                    {1.e1L, 1.e2L, 1.e4L, 1.e8L, 1.e16L, 1.e32L, 1.e64L, 1.e128L, 1.e256L}
+                };
+
+                if (exp > std::numeric_limits<long double>::max_exponent10)
                 {
-                    constexpr T inf = std::numeric_limits<T>::infinity();
+                    constexpr long double inf = std::numeric_limits<long double>::infinity();
                     result = (result < 0) ? -inf : inf;
                 }
-                else if (exp < std::numeric_limits<T>::min_exponent10)
+                else if (exp < std::numeric_limits<long double>::min_exponent10)
                 {
-                    result = 0.0;
+                    result = 0.0L;
                 }
                 else if (exp < 0)
                 {
                     exp = -exp;
 
-                    for (std::size_t count = 0; exp; count++, exp >>= 1)
+                    for (std::size_t count = 0; exp; ++count, exp >>= 1)
                     {
                         if (exp & 1)
                         {
@@ -8934,7 +8929,7 @@ skip_loop:
                 }
                 else
                 {
-                    for (std::size_t count = 0; exp; count++, exp >>= 1)
+                    for (std::size_t count = 0; exp; ++count, exp >>= 1)
                     {
                         if (exp & 1)
                         {
@@ -9045,8 +9040,8 @@ skip_loop:
             }
             else
             {
-                // parse with strtod
-                result.m_value.number_float = strtox<number_float_t>(reinterpret_cast<typename string_t::const_pointer>(m_start));
+                // convert string by json number format to floating point
+                result.m_value.number_float = strtojnum(reinterpret_cast<typename string_t::const_pointer>(m_start));
             }
 
             // save the type
