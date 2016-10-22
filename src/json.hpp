@@ -146,6 +146,9 @@ struct has_mapped_type
         std::is_integral<decltype(detect(std::declval<T>()))>::value;
 };
 
+void to_json();
+void from_json();
+
 struct to_json_fn
 {
   private:
