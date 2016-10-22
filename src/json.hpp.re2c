@@ -9887,13 +9887,14 @@ can be used by adding `"_json"` to a string literal and returns a JSON object
 if no parse error occurred.
 
 @param[in] s  a string representation of a JSON object
+@param[in] n  the length of string @a s
 @return a JSON object
 
 @since version 1.0.0
 */
-inline nlohmann::json operator "" _json(const char* s, std::size_t)
+inline nlohmann::json operator "" _json(const char* s, std::size_t n)
 {
-    return nlohmann::json::parse(s);
+    return nlohmann::json::parse(s, s + n);
 }
 
 /*!
@@ -9904,13 +9905,14 @@ can be used by adding `"_json_pointer"` to a string literal and returns a JSON p
 object if no parse error occurred.
 
 @param[in] s  a string representation of a JSON Pointer
+@param[in] n  the length of string @a s
 @return a JSON pointer object
 
 @since version 2.0.0
 */
-inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t)
+inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
 {
-    return nlohmann::json::json_pointer(s);
+    return nlohmann::json::json_pointer(std::string(s, n));
 }
 
 // restore GCC/clang diagnostic settings
