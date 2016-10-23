@@ -8866,7 +8866,7 @@ basic_json_parser_63:
                 }
 
                 int count = 0; // exponent calculation
-                if (! nl_isdigit(cp))
+                if (not nl_isdigit(cp))
                 {
                      if (plus_or_minus)
                      {

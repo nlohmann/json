@@ -8154,6 +8154,7 @@ class basic_json
             if (*str == 'e' or *str == 'E')
             {
                 cp = *++str;
+
                 const bool negative_exp = cp == '-'; // read in exponent sign (+/-)
                 const bool plus_or_minus = (cp == '-' or cp == '+');
                 if (plus_or_minus)
@@ -8162,7 +8163,7 @@ class basic_json
                 }
 
                 int count = 0; // exponent calculation
-                if (! nl_isdigit(cp))
+                if (not nl_isdigit(cp))
                 {
                      if (plus_or_minus)
                      {
