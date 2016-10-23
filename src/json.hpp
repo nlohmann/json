@@ -8903,19 +8903,24 @@ skip_loop:
                 {1.e1L, 1.e2L, 1.e4L, 1.e8L, 1.e16L, 1.e32L, 1.e64L, 1.e128L, 1.e256L}
             };
 
+            // round to INF if our exponent is larger than representable number
             if (exp > std::numeric_limits<long double>::max_exponent10)
             {
                 constexpr long double inf = std::numeric_limits<long double>::infinity();
                 result = (result < 0) ? -inf : inf;
             }
+            // round to zero if our exponent is smaller than representable number
             else if (exp < std::numeric_limits<long double>::min_exponent10)
             {
                 result = 0.0L;
             }
+            // iteratively divide result for negative exp
             else if (exp < 0)
             {
+                // make exp positive for loop below
                 exp *= -1;
 
+                // check enabled exp bits on lookup powerof10 lookup table
                 for (std::size_t count = 0; exp; ++count, exp >>= 1)
                 {
                     if (exp & 1)
@@ -8924,8 +8929,10 @@ skip_loop:
                     }
                 }
             }
+            // iteratively multiply result for positive exp
             else
             {
+                // check enabled exp bits on lookup powerof10 lookup table
                 for (std::size_t count = 0; exp; ++count, exp >>= 1)
                 {
                     if (exp & 1)
