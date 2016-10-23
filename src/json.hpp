@@ -3028,7 +3028,7 @@ class basic_json
     */
     template<typename ValueType, typename std::enable_if<
                  not std::is_pointer<ValueType>::value, int>::type = 0>
-    auto get() const -> decltype(get_impl(static_cast<ValueType*>(nullptr)))
+    auto get() const -> decltype(this->get_impl(static_cast<ValueType*>(nullptr)))
     {
         return get_impl(static_cast<ValueType*>(nullptr));
     }
