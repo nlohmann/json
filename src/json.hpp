@@ -8857,13 +8857,12 @@ basic_json_parser_63:
             if (*str == 'e' or *str == 'E')
             {
                 cp = *++str;
-                bool negative_exp = cp == '-'; // read in exponent sign (+/-)
 
-                bool plus_or_minus = false;
-                if (cp == '-' or cp == '+')
+                const bool negative_exp = cp == '-'; // read in exponent sign (+/-)
+                const bool plus_or_minus = (cp == '-' or cp == '+');
+                if (plus_or_minus)
                 {
                      cp = *++str;
-                     plus_or_minus = true;
                 }
 
                 int count = 0; // exponent calculation
