@@ -8800,64 +8800,149 @@ basic_json_parser_63:
             return result;
         }
 
-        /*!
-        @brief parse floating point number
-
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
-
-        @param[in] type  the @ref number_float_t in use
-
-        @param[in,out] endptr recieves a pointer to the first character after
-        the number
-
-        @return the floating point number
-        */
-        long double str_to_float_t(long double* /* type */, char** endptr) const
+        // non locale aware isdigit
+        // Microsoft in 1252 codepage and others may classify additional single-byte characters as digits using std::isdigit
+        constexpr bool nl_isdigit(const char c) const
         {
-            return std::strtold(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
+            return c >= '0' and c <= '9';
         }
 
         /*!
-        @brief parse floating point number
+        @brief parse string to floating point number
 
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
+        This function is a partial reimplementation of the strtold in order to meet needs of JSON number
 
-        @param[in] type  the @ref number_float_t in use
-
-        @param[in,out] endptr  recieves a pointer to the first character after
-        the number
+        @param[in] str  the string we will parse
 
         @return the floating point number
         */
-        double str_to_float_t(double* /* type */, char** endptr) const
+        long double strtojnum(const char *str) const
         {
-            return std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
-        }
+            long double result = 0;
+            char cp = *str;
+            int exp = 0; // exponent
+            {
+                const bool negative_sign = cp == '-';
 
-        /*!
-        @brief parse floating point number
+                if (cp == '-' or cp == '+')
+                {
+                    ++str;
+                }
 
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
+                // read in fractional part of number, until an 'e' is reached.
+                // count digits after decimal point.
+                while (nl_isdigit(cp = *str))
+                {
+                     result = result * 10 + (cp - '0');
+                     ++str;
+                }
 
-        @param[in] type  the @ref number_float_t in use
+                if (cp == '.')
+                {
+                     while (nl_isdigit(cp = *++str))
+                     {
+                         result = result * 10 + (cp - '0');
+                         --exp;
+                     }
+                }
 
-        @param[in,out] endptr  recieves a pointer to the first character after
-        the number
+                // if negative number, reverse sign
+                if (negative_sign)
+                {
+                    result *= -1;
+                }
+            }
 
-        @return the floating point number
-        */
-        float str_to_float_t(float* /* type */, char** endptr) const
-        {
-            return std::strtof(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
+            // read in explicit exponent and calculate real exponent.
+            if (*str == 'e' or *str == 'E')
+            {
+                cp = *++str;
+
+                const bool negative_exp = cp == '-'; // read in exponent sign (+/-)
+                const bool plus_or_minus = (cp == '-' or cp == '+');
+                if (plus_or_minus)
+                {
+                     cp = *++str;
+                }
+
+                int count = 0; // exponent calculation
+                if (not nl_isdigit(cp))
+                {
+                     if (plus_or_minus)
+                     {
+                         *--str;
+                     }
+
+                     *--str;
+                     goto skip_loop;
+                }
+
+                while (nl_isdigit(cp))
+                {
+                    constexpr int imax = std::numeric_limits<int>::max();
+
+                    if ((imax - std::abs(exp) - (cp - '0')) / 10 > count)
+                    {
+                         count *= 10;
+                         count += cp - '0';
+                    }
+                    else
+                    {
+                        count = imax - exp;
+                        break;
+                    }
+
+                    cp = *++str;
+                }
+skip_loop:
+                exp += negative_exp ? -count : count;
+            }
+
+            // adjust number by powers of ten specified by format and exponent.
+            constexpr std::array<long double, 9> powerof10 = {
+                {1.e1L, 1.e2L, 1.e4L, 1.e8L, 1.e16L, 1.e32L, 1.e64L, 1.e128L, 1.e256L}
+            };
+
+            // round to INF if our exponent is larger than representable number
+            if (exp > std::numeric_limits<long double>::max_exponent10)
+            {
+                constexpr long double inf = std::numeric_limits<long double>::infinity();
+                result = (result < 0) ? -inf : inf;
+            }
+            // round to zero if our exponent is smaller than representable number
+            else if (exp < std::numeric_limits<long double>::min_exponent10)
+            {
+                result = 0.0L;
+            }
+            // iteratively divide result for negative exp
+            else if (exp < 0)
+            {
+                // make exp positive for loop below
+                exp *= -1;
+
+                // check enabled exp bits on lookup powerof10 lookup table
+                for (std::size_t count = 0; exp; ++count, exp >>= 1)
+                {
+                    if (exp & 1)
+                    {
+                        result /= powerof10[count];
+                    }
+                }
+            }
+            // iteratively multiply result for positive exp
+            else
+            {
+                // check enabled exp bits on lookup powerof10 lookup table
+                for (std::size_t count = 0; exp; ++count, exp >>= 1)
+                {
+                    if (exp & 1)
+                    {
+                        result *= powerof10[count];
+                    }
+                }
+            }
+
+            return result;
         }
 
         /*!
@@ -8958,8 +9043,8 @@ basic_json_parser_63:
             }
             else
             {
-                // parse with strtod
-                result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), NULL);
+                // convert string by json number format to floating point
+                result.m_value.number_float = strtojnum(reinterpret_cast<typename string_t::const_pointer>(m_start));
             }
 
             // save the type
