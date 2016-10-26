@@ -520,7 +520,7 @@ $ make check
 All tests passed (8905168 assertions in 35 test cases)
 ```
 
-Alternatively, you can use [https://cmake.org](CMake) and run
+Alternatively, you can use [CMake](https://cmake.org) and run
 
 ```sh
 $ mkdir build
