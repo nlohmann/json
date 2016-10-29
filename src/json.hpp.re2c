@@ -7848,7 +7848,7 @@ class basic_json
                     "\000"         { last_token_type = token_type::end_of_input; break; }
 
                     // anything else is an error
-                    .              { last_token_type = token_type::parse_error; break; }
+                    *              { last_token_type = token_type::parse_error; break; }
                 */
             }
 

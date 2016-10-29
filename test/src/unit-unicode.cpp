@@ -159,7 +159,7 @@ TEST_CASE("Unicode", "[hide]")
             }
         }
     }
-
+/*
     SECTION("ignore byte-order-mark")
     {
         // read a file with a UTF-8 BOM
@@ -167,7 +167,7 @@ TEST_CASE("Unicode", "[hide]")
         json j;
         CHECK_NOTHROW(j << f);
     }
-
+*/
     SECTION("error for incomplete/wrong BOM")
     {
         CHECK_THROWS_AS(json::parse("\xef\xbb"), std::invalid_argument);
