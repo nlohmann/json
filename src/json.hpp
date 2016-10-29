@@ -8598,11 +8598,15 @@ basic_json_parser_63:
             // no stream is used or end of file is reached
             if (m_stream == nullptr or m_stream->eof())
             {
-                // copy unprocessed characters to line buffer
-                m_line_buffer.clear();
-                for (m_cursor = m_start; m_cursor != m_limit; ++m_cursor)
+                // skip this part if we are already using the line buffer
+                if (m_start != reinterpret_cast<const lexer_char_t*>(m_line_buffer.data()))
                 {
-                    m_line_buffer.append(1, static_cast<const char>(*m_cursor));
+                    // copy unprocessed characters to line buffer
+                    m_line_buffer.clear();
+                    for (m_cursor = m_start; m_cursor != m_limit; ++m_cursor)
+                    {
+                        m_line_buffer.append(1, static_cast<const char>(*m_cursor));
+                    }
                 }
 
                 // append 5 characters (size of longest keyword "false") to

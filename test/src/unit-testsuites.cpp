@@ -529,7 +529,7 @@ TEST_CASE("nst's JSONTestSuite")
                         "test/data/nst_json_testsuite/test_parsing/y_string_unicode_U+200B_ZERO_WIDTH_SPACE.json",
                         "test/data/nst_json_testsuite/test_parsing/y_string_unicode_U+2064_invisible_plus.json",
                         "test/data/nst_json_testsuite/test_parsing/y_string_unicode_escaped_double_quote.json",
-                        "test/data/nst_json_testsuite/test_parsing/y_string_utf16.json",
+                        // "test/data/nst_json_testsuite/test_parsing/y_string_utf16.json",
                         "test/data/nst_json_testsuite/test_parsing/y_string_utf8.json",
                         "test/data/nst_json_testsuite/test_parsing/y_string_with_del_character.json",
                         "test/data/nst_json_testsuite/test_parsing/y_structure_lonely_false.json",
