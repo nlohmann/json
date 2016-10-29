@@ -7620,6 +7620,14 @@ class basic_json
         {
             // fill buffer
             fill_line_buffer();
+
+            // skip UTF-8 byte-order mark
+            if (m_line_buffer.size() >= 3 and m_line_buffer.substr(0, 3) == "\xEF\xBB\xBF")
+            {
+                m_line_buffer[0] = ' ';
+                m_line_buffer[1] = ' ';
+                m_line_buffer[2] = ' ';
+            }
         }
 
         // switch off unwanted functions (due to pointer members)
@@ -7801,10 +7809,6 @@ class basic_json
                     // ignore whitespace
                     ws = [ \t\n\r]+;
                     ws   { continue; }
-
-                    // ignore byte-order-mark
-                    bom = "\xEF\xBB\xBF";
-                    bom   { continue; }
 
                     // structural characters
                     "[" { last_token_type = token_type::begin_array; break; }
