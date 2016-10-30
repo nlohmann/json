@@ -507,6 +507,11 @@ Thanks a lot for helping out!
 
 - The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](http://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a2e26bd0b0168abb61f67ad5bcd5b9fa1.html#a2e26bd0b0168abb61f67ad5bcd5b9fa1) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a674de1ee73e6bf4843fc5dc1351fb726.html#a674de1ee73e6bf4843fc5dc1351fb726).
 - As the exact type of a number is not defined in the [JSON specification](http://rfc7159.net/rfc7159), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
+- The library supports **Unicode input** as follows:
+  - Only **UTF-8** encoded input is supported which is the default encoding for JSON according to [RFC 7159](http://rfc7159.net/rfc7159#rfc.section.8.1).
+  - Other encodings such as Latin-1, UTF-16, or UTF-32 are not supported and will yield parse errors.
+  - [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1) will not be replaced by the library.
+  - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
 
 
 ## Execute unit tests
@@ -517,7 +522,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905168 assertions in 35 test cases)
+All tests passed (8905479 assertions in 36 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run
