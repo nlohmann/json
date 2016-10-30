@@ -280,6 +280,42 @@ TEST_CASE("deserialization")
                 uint8_t v[] = {'\"', 0x7F, 0xEF, 0xC0};
                 CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
             }
+
+            SECTION("case 10")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xED, 0x7F};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 11")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xF0, 0x8F};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 12")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xF0, 0xC0};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 13")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xF3, 0x7F};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 14")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xF3, 0xC0};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 15")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xF4, 0x7F};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
         }
     }
 }
