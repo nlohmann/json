@@ -760,5 +760,41 @@ TEST_CASE("nst's JSONTestSuite")
                 CHECK_THROWS_AS(j << f, std::invalid_argument);
             }
         }
+
+        SECTION("i")
+        {
+            for (auto filename :
+                    {
+                        "test/data/nst_json_testsuite/test_parsing/i_number_neg_int_huge_exp.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_number_pos_double_huge_exp.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_object_key_lone_2nd_surrogate.json",
+                        //"test/data/nst_json_testsuite/test_parsing/i_string_1st_surrogate_but_2nd_missing.json",
+                        //"test/data/nst_json_testsuite/test_parsing/i_string_1st_valid_surrogate_2nd_invalid.json",
+                        //"test/data/nst_json_testsuite/test_parsing/i_string_UTF-16_invalid_lonely_surrogate.json",
+                        //"test/data/nst_json_testsuite/test_parsing/i_string_UTF-16_invalid_surrogate.json",
+                        //"test/data/nst_json_testsuite/test_parsing/i_string_UTF-8_invalid_sequence.json",
+                        //"test/data/nst_json_testsuite/test_parsing/i_string_incomplete_surrogate_and_escape_valid.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_incomplete_surrogate_pair.json",
+                        //"test/data/nst_json_testsuite/test_parsing/i_string_incomplete_surrogates_escape_valid.json",
+                        //"test/data/nst_json_testsuite/test_parsing/i_string_inverted_surrogates_U+1D11E.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_lone_second_surrogate.json",
+                        //"test/data/nst_json_testsuite/test_parsing/i_string_not_in_unicode_range.json",
+                        //"test/data/nst_json_testsuite/test_parsing/i_string_truncated-utf-8.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_unicode_U+10FFFE_nonchar.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_unicode_U+1FFFE_nonchar.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_unicode_U+FDD0_nonchar.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_unicode_U+FFFE_nonchar.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_structure_500_nested_arrays.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_structure_UTF-8_BOM_empty_object.json"
+                    }
+                )
+            {
+                CAPTURE(filename);
+                std::ifstream f(filename);
+                json j;
+                CHECK_NOTHROW(j << f);
+            }
+        }
+
     }
 }
