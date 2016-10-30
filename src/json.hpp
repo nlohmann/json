@@ -8934,6 +8934,11 @@ basic_json_parser_66:
                                 // skip the next 10 characters (xxxx\uyyyy)
                                 i += 10;
                             }
+                            else if (codepoint >= 0xDC00 and codepoint <= 0xDFFF)
+                            {
+                                // we found a lone low surrogate
+                                throw std::invalid_argument("missing high surrogate");
+                            }
                             else
                             {
                                 // add unicode character(s)

@@ -703,8 +703,8 @@ TEST_CASE("nst's JSONTestSuite")
                         "test/data/nst_json_testsuite/test_parsing/n_string_unicode_CapitalU.json",
                         "test/data/nst_json_testsuite/test_parsing/n_string_with_trailing_garbage.json",
                         //!"test/data/nst_json_testsuite/test_parsing/n_structure_100000_opening_arrays.json",
-                        "test/data/nst_json_testsuite/test_parsing/n_structure_<.>.json",
-                        "test/data/nst_json_testsuite/test_parsing/n_structure_<null>.json",
+                        "test/data/nst_json_testsuite/test_parsing/n_structure_3C.3E.json",
+                        "test/data/nst_json_testsuite/test_parsing/n_structure_3Cnull3E.json",
                         "test/data/nst_json_testsuite/test_parsing/n_structure_U+2060_word_joined.json",
                         "test/data/nst_json_testsuite/test_parsing/n_structure_UTF8_BOM_no_data.json",
                         "test/data/nst_json_testsuite/test_parsing/n_structure_array_trailing_garbage.json",
@@ -761,31 +761,22 @@ TEST_CASE("nst's JSONTestSuite")
             }
         }
 
-        SECTION("i")
+        SECTION("i -> y")
         {
             for (auto filename :
                     {
+                        // we currently do not limit exponents
                         "test/data/nst_json_testsuite/test_parsing/i_number_neg_int_huge_exp.json",
                         "test/data/nst_json_testsuite/test_parsing/i_number_pos_double_huge_exp.json",
-                        "test/data/nst_json_testsuite/test_parsing/i_object_key_lone_2nd_surrogate.json",
-                        //"test/data/nst_json_testsuite/test_parsing/i_string_1st_surrogate_but_2nd_missing.json",
-                        //"test/data/nst_json_testsuite/test_parsing/i_string_1st_valid_surrogate_2nd_invalid.json",
-                        //"test/data/nst_json_testsuite/test_parsing/i_string_UTF-16_invalid_lonely_surrogate.json",
-                        //"test/data/nst_json_testsuite/test_parsing/i_string_UTF-16_invalid_surrogate.json",
-                        //"test/data/nst_json_testsuite/test_parsing/i_string_UTF-8_invalid_sequence.json",
-                        //"test/data/nst_json_testsuite/test_parsing/i_string_incomplete_surrogate_and_escape_valid.json",
-                        "test/data/nst_json_testsuite/test_parsing/i_string_incomplete_surrogate_pair.json",
-                        //"test/data/nst_json_testsuite/test_parsing/i_string_incomplete_surrogates_escape_valid.json",
-                        //"test/data/nst_json_testsuite/test_parsing/i_string_inverted_surrogates_U+1D11E.json",
-                        "test/data/nst_json_testsuite/test_parsing/i_string_lone_second_surrogate.json",
-                        //"test/data/nst_json_testsuite/test_parsing/i_string_not_in_unicode_range.json",
-                        //"test/data/nst_json_testsuite/test_parsing/i_string_truncated-utf-8.json",
+                        // we do not pose a limit on nesting
+                        "test/data/nst_json_testsuite/test_parsing/i_structure_500_nested_arrays.json",
+                        // we silently ignore BOMs
+                        "test/data/nst_json_testsuite/test_parsing/i_structure_UTF-8_BOM_empty_object.json",
+                        // we accept and forward non-characters
                         "test/data/nst_json_testsuite/test_parsing/i_string_unicode_U+10FFFE_nonchar.json",
                         "test/data/nst_json_testsuite/test_parsing/i_string_unicode_U+1FFFE_nonchar.json",
                         "test/data/nst_json_testsuite/test_parsing/i_string_unicode_U+FDD0_nonchar.json",
-                        "test/data/nst_json_testsuite/test_parsing/i_string_unicode_U+FFFE_nonchar.json",
-                        "test/data/nst_json_testsuite/test_parsing/i_structure_500_nested_arrays.json",
-                        "test/data/nst_json_testsuite/test_parsing/i_structure_UTF-8_BOM_empty_object.json"
+                        "test/data/nst_json_testsuite/test_parsing/i_string_unicode_U+FFFE_nonchar.json"
                     }
                 )
             {
@@ -796,5 +787,31 @@ TEST_CASE("nst's JSONTestSuite")
             }
         }
 
+        SECTION("i -> n")
+        {
+            for (auto filename :
+                    {
+                        "test/data/nst_json_testsuite/test_parsing/i_object_key_lone_2nd_surrogate.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_1st_surrogate_but_2nd_missing.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_1st_valid_surrogate_2nd_invalid.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_UTF-16_invalid_lonely_surrogate.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_UTF-16_invalid_surrogate.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_UTF-8_invalid_sequence.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_incomplete_surrogate_and_escape_valid.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_incomplete_surrogate_pair.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_incomplete_surrogates_escape_valid.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_inverted_surrogates_U+1D11E.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_lone_second_surrogate.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_not_in_unicode_range.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_string_truncated-utf-8.json"
+                    }
+                )
+            {
+                CAPTURE(filename);
+                std::ifstream f(filename);
+                json j;
+                CHECK_THROWS_AS(j << f, std::invalid_argument);
+            }
+        }
     }
 }
