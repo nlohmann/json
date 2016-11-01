@@ -7836,7 +7836,7 @@ class basic_json
                     };
                     if ((m_limit - m_cursor) < 5)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yybm[0 + yych] & 32)
@@ -7966,7 +7966,7 @@ basic_json_parser_6:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yybm[0 + yych] & 32)
@@ -8048,7 +8048,7 @@ basic_json_parser_15:
                     m_marker = ++m_cursor;
                     if ((m_limit - m_cursor) < 3)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yybm[0 + yych] & 64)
@@ -8133,7 +8133,7 @@ basic_json_parser_30:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
 basic_json_parser_31:
@@ -8214,7 +8214,7 @@ basic_json_parser_35:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= 'e')
@@ -8293,7 +8293,7 @@ basic_json_parser_36:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= 0x7F)
@@ -8309,7 +8309,7 @@ basic_json_parser_37:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= 0x9F)
@@ -8325,7 +8325,7 @@ basic_json_parser_38:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= 0x7F)
@@ -8341,7 +8341,7 @@ basic_json_parser_39:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= 0x7F)
@@ -8357,7 +8357,7 @@ basic_json_parser_40:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= 0x8F)
@@ -8373,7 +8373,7 @@ basic_json_parser_41:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= 0x7F)
@@ -8389,7 +8389,7 @@ basic_json_parser_42:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= 0x7F)
@@ -8463,7 +8463,7 @@ basic_json_parser_48:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
@@ -8499,7 +8499,7 @@ basic_json_parser_49:
                     m_marker = ++m_cursor;
                     if ((m_limit - m_cursor) < 3)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= 'D')
@@ -8540,7 +8540,7 @@ basic_json_parser_52:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= '/')
@@ -8577,7 +8577,7 @@ basic_json_parser_57:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
@@ -8631,7 +8631,7 @@ basic_json_parser_63:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
@@ -8672,7 +8672,7 @@ basic_json_parser_66:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
-                        fill_line_buffer();
+                        fill_line_buffer();    // LCOV_EXCL_LINE;
                     }
                     yych = *m_cursor;
                     if (yych <= '@')
