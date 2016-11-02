@@ -87,10 +87,11 @@ TEST_CASE("deserialization")
     {
         SECTION("stream")
         {
-            std::stringstream ss;
-            ss << "[\"foo\",1,2,3,false,{\"one\":1}";
-            CHECK_THROWS_AS(json::parse(ss), std::invalid_argument);
-            CHECK_THROWS_WITH(json::parse(ss), "parse error - unexpected end of input");
+            std::stringstream ss1, ss2;
+            ss1 << "[\"foo\",1,2,3,false,{\"one\":1}";
+            ss2 << "[\"foo\",1,2,3,false,{\"one\":1}";
+            CHECK_THROWS_AS(json::parse(ss1), std::invalid_argument);
+            CHECK_THROWS_WITH(json::parse(ss2), "parse error - unexpected end of input; expected ']'");
         }
 
         SECTION("string")
@@ -102,20 +103,22 @@ TEST_CASE("deserialization")
 
         SECTION("operator<<")
         {
-            std::stringstream ss;
-            ss << "[\"foo\",1,2,3,false,{\"one\":1}";
+            std::stringstream ss1, ss2;
+            ss1 << "[\"foo\",1,2,3,false,{\"one\":1}";
+            ss2 << "[\"foo\",1,2,3,false,{\"one\":1}";
             json j;
-            CHECK_THROWS_AS(j << ss, std::invalid_argument);
-            CHECK_THROWS_WITH(j << ss, "parse error - unexpected end of input");
+            CHECK_THROWS_AS(j << ss1, std::invalid_argument);
+            CHECK_THROWS_WITH(j << ss2, "parse error - unexpected end of input; expected ']'");
         }
 
         SECTION("operator>>")
         {
-            std::stringstream ss;
-            ss << "[\"foo\",1,2,3,false,{\"one\":1}";
+            std::stringstream ss1, ss2;
+            ss1 << "[\"foo\",1,2,3,false,{\"one\":1}";
+            ss2 << "[\"foo\",1,2,3,false,{\"one\":1}";
             json j;
-            CHECK_THROWS_AS(ss >> j, std::invalid_argument);
-            CHECK_THROWS_WITH(ss >> j, "parse error - unexpected end of input");
+            CHECK_THROWS_AS(ss1 >> j, std::invalid_argument);
+            CHECK_THROWS_WITH(ss2 >> j, "parse error - unexpected end of input; expected ']'");
         }
 
         SECTION("user-defined string literal")

@@ -7796,15 +7796,15 @@ class basic_json
                 assert(m_start != nullptr);
 
                 /*!re2c
-                    re2c:define:YYCTYPE   = lexer_char_t;
-                    re2c:define:YYCURSOR  = m_cursor;
-                    re2c:define:YYLIMIT   = m_limit;
-                    re2c:define:YYMARKER  = m_marker;
-                    re2c:define:YYFILL    = "fill_line_buffer(); // LCOV_EXCL_LINE";
-                    re2c:yyfill:parameter = 0;
-                    re2c:indent:string    = "    ";
-                    re2c:indent:top       = 1;
-                    re2c:labelprefix      = "basic_json_parser_";
+                    re2c:define:YYCTYPE      = lexer_char_t;
+                    re2c:define:YYCURSOR     = m_cursor;
+                    re2c:define:YYLIMIT      = m_limit;
+                    re2c:define:YYMARKER     = m_marker;
+                    re2c:define:YYFILL       = "fill_line_buffer(@@); // LCOV_EXCL_LINE";
+                    re2c:define:YYFILL:naked = 1;
+                    re2c:indent:string       = "    ";
+                    re2c:indent:top          = 1;
+                    re2c:labelprefix         = "basic_json_parser_";
 
                     // ignore whitespace
                     ws = [ \t\n\r]+;
@@ -7849,7 +7849,7 @@ class basic_json
                     string          { last_token_type = token_type::value_string; break; }
 
                     // end of file
-                    "\000"         { last_token_type = token_type::end_of_input; break; }
+                    "\x00"         { last_token_type = token_type::end_of_input; break; }
 
                     // anything else is an error
                     *              { last_token_type = token_type::parse_error; break; }
@@ -7887,7 +7887,7 @@ class basic_json
             m_start
             m_content
         */
-        void fill_line_buffer()
+        void fill_line_buffer(size_t n = 0)
         {
             // number of processed characters (p)
             const auto offset_start = m_start - m_content;
@@ -7910,10 +7910,10 @@ class basic_json
                     }
                 }
 
-                // append 5 characters (size of longest keyword "false") to
-                // make sure that there is sufficient space between m_cursor
-                // and m_limit
-                m_line_buffer.append(5, '\0');
+                // append n characters to make sure that there is sufficient
+                // space between m_cursor and m_limit
+                m_line_buffer.append(1, '\x00');
+                m_line_buffer.append(n - 1, '\x01');
             }
             else
             {
@@ -7921,7 +7921,7 @@ class basic_json
                 m_line_buffer.erase(0, static_cast<size_t>(offset_start));
                 // read next line from input stream
                 std::string line;
-                std::getline(*m_stream, line);
+                std::getline(*m_stream, line, '\n');
                 // add line with newline symbol to the line buffer
                 m_line_buffer += line + "\n";
             }
