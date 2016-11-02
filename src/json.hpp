@@ -29,32 +29,31 @@ SOFTWARE.
 #ifndef NLOHMANN_JSON_HPP
 #define NLOHMANN_JSON_HPP
 
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <cctype>
-#include <ciso646>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <functional>
-#include <initializer_list>
-#include <iomanip>
-#include <iostream>
-#include <iterator>
-#include <limits>
-#include <locale>
-#include <map>
-#include <memory>
-#include <numeric>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <type_traits>
-#include <utility>
-#include <vector>
+#include <algorithm> // all_of, for_each, transform
+#include <array> // array
+#include <cassert> // assert
+#include <cctype> // isdigit
+#include <ciso646> // and, not, or
+#include <cmath> // isfinite, signbit
+#include <cstddef> // nullptr_t, ptrdiff_t, size_t
+#include <cstdint> // int64_t, uint64_t
+#include <cstdlib> // strtod, strtof, strtold, strtoul
+#include <functional> // function, hash, less
+#include <initializer_list> // initializer_list
+#include <iomanip> // setw
+#include <iostream> // istream, ostream
+#include <iterator> // advance, begin, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
+#include <limits> // numeric_limits
+#include <locale> // locale, numpunct
+#include <map> // map
+#include <memory> // addressof, allocator, allocator_traits, unique_ptr
+#include <numeric> // accumulate
+#include <sstream> // stringstream
+#include <stdexcept> // domain_error, invalid_argument, out_of_range
+#include <string> // getline, stoi, string, to_string
+#include <type_traits> // add_pointer, enable_if, is_arithmetic, is_base_of, is_const, is_constructible, is_convertible, is_floating_point, is_integral, is_nothrow_move_assignable, std::is_nothrow_move_constructible, std::is_pointer, std::is_reference, std::is_same, remove_const, remove_pointer, remove_reference
+#include <utility> // declval, forward, make_pair, move, pair, swap
+#include <vector> // vector
 
 // exclude unsupported compilers
 #if defined(__clang__)
