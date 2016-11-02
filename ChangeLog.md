@@ -1,6 +1,15 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.0.7](https://github.com/nlohmann/json/releases/tag/v2.0.7) (2016-11-02)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.6...v2.0.7)
+
+- ""-operators ignore the length parameter [\#340](https://github.com/nlohmann/json/issues/340)
+
+- Check "Parsing JSON is a Minefield" [\#344](https://github.com/nlohmann/json/issues/344)
+
+- fix minor grammar/style issue in README.md [\#336](https://github.com/nlohmann/json/pull/336) ([seeekr](https://github.com/seeekr))
+
 ## [v2.0.6](https://github.com/nlohmann/json/releases/tag/v2.0.6) (2016-10-15)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.5...v2.0.6)
 
@@ -143,7 +152,6 @@ All notable changes to this project will be documented in this file. This projec
 - prevent json.hpp from emitting compiler warnings [\#154](https://github.com/nlohmann/json/issues/154)
 - json::parse\(string\) does not check utf8 bom [\#152](https://github.com/nlohmann/json/issues/152)
 - unsigned 64bit values output as signed [\#151](https://github.com/nlohmann/json/issues/151)
-- Wish feature: json5 [\#150](https://github.com/nlohmann/json/issues/150)
 - overload of at\(\) with default value [\#133](https://github.com/nlohmann/json/issues/133)
 - Memory leak in face of exceptions [\#118](https://github.com/nlohmann/json/issues/118)
 - Find and Count for arrays [\#117](https://github.com/nlohmann/json/issues/117)

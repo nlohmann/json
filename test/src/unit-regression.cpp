@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.6
+|  |  |__   |  |  | | | |  version 2.0.7
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -488,5 +488,11 @@ TEST_CASE("regression tests")
         json j;
         j["/this/that/2"_json_pointer] = 27;
         CHECK(j == json({{"this", {{"that", {nullptr, nullptr, 27}}}}}));
+    }
+
+    SECTION("issue #329 - serialized value not always can be parsed")
+    {
+        json j = json::parse("22e2222");
+        CHECK(j == json());
     }
 }
