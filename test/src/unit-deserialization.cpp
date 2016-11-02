@@ -87,10 +87,11 @@ TEST_CASE("deserialization")
     {
         SECTION("stream")
         {
-            std::stringstream ss;
-            ss << "[\"foo\",1,2,3,false,{\"one\":1}";
-            CHECK_THROWS_AS(json::parse(ss), std::invalid_argument);
-            CHECK_THROWS_WITH(json::parse(ss), "parse error - unexpected end of input");
+            std::stringstream ss1, ss2;
+            ss1 << "[\"foo\",1,2,3,false,{\"one\":1}";
+            ss2 << "[\"foo\",1,2,3,false,{\"one\":1}";
+            CHECK_THROWS_AS(json::parse(ss1), std::invalid_argument);
+            CHECK_THROWS_WITH(json::parse(ss2), "parse error - unexpected end of input; expected ']'");
         }
 
         SECTION("string")
@@ -102,20 +103,22 @@ TEST_CASE("deserialization")
 
         SECTION("operator<<")
         {
-            std::stringstream ss;
-            ss << "[\"foo\",1,2,3,false,{\"one\":1}";
+            std::stringstream ss1, ss2;
+            ss1 << "[\"foo\",1,2,3,false,{\"one\":1}";
+            ss2 << "[\"foo\",1,2,3,false,{\"one\":1}";
             json j;
-            CHECK_THROWS_AS(j << ss, std::invalid_argument);
-            CHECK_THROWS_WITH(j << ss, "parse error - unexpected end of input");
+            CHECK_THROWS_AS(j << ss1, std::invalid_argument);
+            CHECK_THROWS_WITH(j << ss2, "parse error - unexpected end of input; expected ']'");
         }
 
         SECTION("operator>>")
         {
-            std::stringstream ss;
-            ss << "[\"foo\",1,2,3,false,{\"one\":1}";
+            std::stringstream ss1, ss2;
+            ss1 << "[\"foo\",1,2,3,false,{\"one\":1}";
+            ss2 << "[\"foo\",1,2,3,false,{\"one\":1}";
             json j;
-            CHECK_THROWS_AS(ss >> j, std::invalid_argument);
-            CHECK_THROWS_WITH(ss >> j, "parse error - unexpected end of input");
+            CHECK_THROWS_AS(ss1 >> j, std::invalid_argument);
+            CHECK_THROWS_WITH(ss2 >> j, "parse error - unexpected end of input; expected ']'");
         }
 
         SECTION("user-defined string literal")
@@ -248,6 +251,72 @@ TEST_CASE("deserialization")
             SECTION("case 4")
             {
                 uint8_t v[] = {'\"', 'a', 'a', 'a', 'a', 'a', 'a', 'u', '1', '1', '1', '1', '1', '1', '1', '1', '\\'};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 5")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xC1};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 6")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xDF, 0x7F};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 7")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xDF, 0xC0};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 8")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xE0, 0x9F};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 9")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xEF, 0xC0};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 10")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xED, 0x7F};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 11")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xF0, 0x8F};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 12")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xF0, 0xC0};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 13")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xF3, 0x7F};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 14")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xF3, 0xC0};
+                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
+            }
+
+            SECTION("case 15")
+            {
+                uint8_t v[] = {'\"', 0x7F, 0xF4, 0x7F};
                 CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), std::invalid_argument);
             }
         }
