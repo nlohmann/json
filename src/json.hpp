@@ -9121,6 +9121,13 @@ basic_json_parser_66:
             {
                 // parse with strtod
                 result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), NULL);
+
+                // replace infinity and NAN by null
+                if (not std::isfinite(result.m_value.number_float))
+                {
+                    type = value_t::null;
+                    result.m_value = basic_json::json_value();
+                }
             }
 
             // save the type
