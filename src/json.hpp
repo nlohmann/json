@@ -38,6 +38,7 @@ SOFTWARE.
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <cstdint> // int64_t, uint64_t
 #include <cstdlib> // strtod, strtof, strtold, strtoul
+#include <cstring> // strlen
 #include <functional> // function, hash, less
 #include <initializer_list> // initializer_list
 #include <iomanip> // setw
@@ -9163,7 +9164,7 @@ basic_json_parser_66:
         /// a parser reading from a string literal
         parser(const char* buff, const parser_callback_t cb = nullptr)
             : callback(cb),
-              m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(buff), strlen(buff))
+              m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(buff), std::strlen(buff))
         {}
 
         /// a parser reading from an input stream
