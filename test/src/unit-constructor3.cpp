@@ -35,9 +35,6 @@ using nlohmann::json;
 
 namespace udt
 {
-// only used by counter_type
-auto nb_free_function_calls = 0;
-
 struct empty_type {};
 struct pod_type {
   int a;
@@ -49,10 +46,6 @@ struct bit_more_complex_type {
   pod_type a;
   pod_type b;
   std::string c;
-};
-
-struct counter_type
-{
 };
 
 // best optional implementation ever
@@ -73,11 +66,6 @@ public:
 
 private:
   std::shared_ptr<T> _val;
-};
-
-struct no_json_traits_type
-{
-  int a;
 };
 
 // free to/from_json functions
@@ -107,17 +95,6 @@ json to_json(optional_type<T> const& opt)
   return json(*opt);
 }
 
-json to_json(no_json_traits_type const& p)
-{
-  return {{"a", p.a}};
-}
-
-json to_json(counter_type)
-{
-  ++nb_free_function_calls;
-  return json::object();
-}
-
 void from_json(json const&j, empty_type& t)
 {
   assert(j.empty());
@@ -136,11 +113,6 @@ void from_json(json const&j, bit_more_complex_type& t)
         j["c"].get<std::string>()};
 }
 
-void from_json(json const& j, no_json_traits_type& t)
-{
-  t.a = j["a"].get<int>();
-}
-
 template <typename T>
 void from_json(json const& j, optional_type<T>& t)
 {
@@ -148,11 +120,6 @@ void from_json(json const& j, optional_type<T>& t)
     t = optional_type<T>{};
   else
     t = j.get<T>();
-}
-
-void from_json(json const&, counter_type&)
-{
-  ++nb_free_function_calls;
 }
 
 inline bool operator==(pod_type const& lhs, pod_type const& rhs) noexcept
@@ -174,106 +141,7 @@ inline bool operator==(optional_type<T> const& lhs, optional_type<T> const& rhs)
     return false;
   return *lhs == *rhs;
 }
-
-inline bool operator==(no_json_traits_type const& lhs, no_json_traits_type const& rhs)
-{
-  return lhs.a == rhs.a;
 }
-}
-
-namespace nlohmann
-{
-template <>
-struct json_traits<udt::empty_type>
-{
-  using type = udt::empty_type;
-
-  static json to_json(type)
-  {
-    return json::object();
-  }
-
-  static type from_json(json const& j)
-  {
-    assert(j.is_object() and j.empty());
-    return {};
-  }
-};
-
-template <>
-struct json_traits<udt::pod_type>
-{  
-  using type = udt::pod_type;
-
-  static json to_json(type const& t)
-  {
-    return {{"a", t.a}, {"b", t.b}, {"c", t.c}};
-  }
-
-  static type from_json(json const& j)
-  {
-    assert(j.is_object());
-    return {j["a"].get<int>(), j["b"].get<char>(), j["c"].get<short>()};
-  }
-};
-
-template <>
-struct json_traits<udt::bit_more_complex_type>
-{
-  using type = udt::bit_more_complex_type;
-
-  static json to_json(type const& t)
-  {
-    return json{{"a", json{t.a}}, {"b", json{t.b}}, {"c", t.c}};
-  }
-
-  static type from_json(json const& j)
-  {
-    return {j["a"].get<udt::pod_type>(), j["b"].get<udt::pod_type>(),
-            j["c"].get<std::string>()};
-  }
-};
-
-template <typename T>
-struct json_traits<udt::optional_type<T>>
-{
-  using type = udt::optional_type<T>;
-
-  static json to_json(type const& t)
-  {
-    if (t)
-      return json(*t);
-    return {};
-  }
-
-  static type from_json(json const& j)
-  {
-    if (j.is_null())
-      return {};
-    return type{j.get<T>()};
-  }
-};
-
-template <>
-struct json_traits<udt::counter_type>
-{
-  using type = udt::counter_type;
-  static int nb_calls;
-
-  static json to_json(type)
-  {
-    ++nb_calls;
-    return json::object();
-  }
-
-  static void from_json(json const&, type&)
-  {
-    ++nb_calls;
-  }
-};
-int json_traits<udt::counter_type>::nb_calls{0};
-}
-
 
 TEST_CASE("constructors for user-defined types", "[udt]")
 {
@@ -415,24 +283,6 @@ TEST_CASE("get<> for user-defined types", "[udt]")
       CHECK(*v == expected);
     }
   }
-
-  SECTION("no json_traits specialization, use of ADL")
-  {
-    udt::no_json_traits_type val{42};
-    auto const expected = json{{"a", 42}};
-    auto const j = json(val);
-    CHECK(j == expected);
-  }
-
-  SECTION("counter_type")
-  {
-    // check that the traits specialization is chosen
-    auto const j = json{udt::counter_type{}};
-    CHECK(nlohmann::json_traits<udt::counter_type>::nb_calls == 1);
-    auto const elem = j.get<udt::counter_type>();
-    CHECK(nlohmann::json_traits<udt::counter_type>::nb_calls == 2);
-    CHECK(udt::nb_free_function_calls == 0);
-  }
 }
 
 TEST_CASE("to_json free function", "[udt]")
@@ -476,16 +326,6 @@ TEST_CASE("to_json free function", "[udt]")
       auto const j = nlohmann::to_json(o);
       CHECK(expected == j);
     }
-  }
-
-  SECTION("no json_traits specialization")
-  {
-    udt::no_json_traits_type t{42};
-
-    json expected;
-    expected["a"] = 42;
-    auto const j = nlohmann::to_json(t);
-    CHECK(j == expected);
   }
 }
 
@@ -534,17 +374,5 @@ TEST_CASE("from_json free function", "[udt]")
       nlohmann::from_json(j, o);
       CHECK(expected == o);
     }
-  }
-
-  SECTION("no json_traits specialization")
-  {
-    udt::no_json_traits_type expected{42};
-    udt::no_json_traits_type res;
-    auto const j = json{{"a", 42}};
-    nlohmann::from_json(j, res);
-    CHECK(res == expected);
-
-    res = j.get<udt::no_json_traits_type>();
-    CHECK(res == expected);
   }
 }
