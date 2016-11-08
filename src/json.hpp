@@ -214,8 +214,9 @@ inline namespace
   constexpr auto const& from_json = _static_const<detail::from_json_fn>::value;
 }
 
-// default JSONSerializer template argument
+// default JSONSerializer template argument, doesn't care about template argument
 // will use ADL for serialization
+template <typename = void, typename = void>
 struct adl_serializer
 {
   template <typename T, typename Json, typename = enable_if_t<std::is_default_constructible<uncvref_t<T>>::value>>
@@ -328,7 +329,7 @@ template <
     class NumberUnsignedType = std::uint64_t,
     class NumberFloatType = double,
     template<typename U> class AllocatorType = std::allocator,
-    class JSONSerializer = adl_serializer
+    template<typename T, typename SFINAE = void> class JSONSerializer = adl_serializer
     >
 class basic_json
 {
@@ -1398,9 +1399,9 @@ class basic_json
     }
 
     // constructor chosen when JSONSerializer::to_json exists for type T
-    template <typename T, typename = decltype(JSONSerializer::to_json(std::declval<uncvref_t<T>>()))>
+    template <typename T, typename = decltype(JSONSerializer<uncvref_t<T>>::to_json(std::declval<uncvref_t<T>>()))>
     explicit basic_json(T &&val)
-        : basic_json(JSONSerializer::to_json(std::forward<T>(val))) {}
+        : basic_json(JSONSerializer<uncvref_t<T>>::to_json(std::forward<T>(val))) {}
 
     /*!
     @brief create a string (explicit)
@@ -3072,10 +3073,10 @@ class basic_json
     }
 
     template <typename ValueType, typename = enable_if_t<std::is_default_constructible<uncvref_t<ValueType>>::value, float>>
-    auto get() const -> remove_reference_t<decltype(JSONSerializer::from_json(*this, std::declval<ValueType&>()), std::declval<ValueType>())>
+    auto get() const -> remove_reference_t<decltype(JSONSerializer<uncvref_t<ValueType>>::from_json(*this, std::declval<ValueType&>()), std::declval<ValueType>())>
     {
       uncvref_t<ValueType> ret;
-      JSONSerializer::from_json(*this, ret);
+      JSONSerializer<uncvref_t<ValueType>>::from_json(*this, ret);
       return ret;
     }
 
