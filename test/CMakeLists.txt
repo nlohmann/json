@@ -14,7 +14,6 @@ add_executable(${JSON_UNITTEST_TARGET_NAME}
     "src/unit-concepts.cpp"
     "src/unit-constructor1.cpp"
     "src/unit-constructor2.cpp"
-    "src/unit-constructor3.cpp"
     "src/unit-convenience.cpp"
     "src/unit-conversions.cpp"
     "src/unit-deserialization.cpp"
@@ -33,6 +32,7 @@ add_executable(${JSON_UNITTEST_TARGET_NAME}
     "src/unit-regression.cpp"
     "src/unit-serialization.cpp"
     "src/unit-testsuites.cpp"
+    "src/unit-udt.cpp"
     "src/unit-unicode.cpp"
 )
 
