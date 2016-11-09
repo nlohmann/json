@@ -155,22 +155,21 @@ void from_json();
 
 struct to_json_fn
 {
-    template <typename T>
+    template <typename Json, typename T>
     constexpr auto
-    operator()(T &&val) const noexcept(noexcept(to_json(std::forward<T>(val))))
-        -> decltype(to_json(std::forward<T>(val)))
+    operator()(Json&& j, T &&val) const noexcept(noexcept(to_json(std::forward<Json>(j), std::forward<T>(val))))
+        -> decltype(to_json(std::forward<Json>(j), std::forward<T>(val)), void())
     {
-      return to_json(std::forward<T>(val));
+      return to_json(std::forward<Json>(j), std::forward<T>(val));
     }
-
 };
 
 struct from_json_fn
 {
-    template <typename T, typename Json>
+    template <typename Json, typename T>
     constexpr auto operator()(Json &&j, T &val) const
                                noexcept(noexcept(from_json(std::forward<Json>(j), val)))
-        -> decltype(from_json(std::forward<Json>(j), val))
+        -> decltype(from_json(std::forward<Json>(j), val), void())
     {
       return from_json(std::forward<Json>(j), val);
     }
@@ -219,27 +218,18 @@ inline namespace
 template <typename = void, typename = void>
 struct adl_serializer
 {
-  template <typename T, typename Json, typename = enable_if_t<std::is_default_constructible<uncvref_t<T>>::value>>
-  static auto from_json(Json&& j) -> uncvref_t<decltype(::nlohmann::from_json(std::forward<Json>(j), std::declval<T&>()), std::declval<T>())>
-  {
-    uncvref_t<T> ret;
-    ::nlohmann::from_json(std::forward<Json>(j), ret);
-    return ret;
-  }
-
-  template <typename T, typename Json>
-  static auto from_json(Json&& j, T& val) -> decltype(::nlohmann::from_json(std::forward<Json>(j), val))
+  template <typename Json, typename T>
+  static auto from_json(Json&& j, T& val) -> decltype(::nlohmann::from_json(std::forward<Json>(j), val), void())
   {
     ::nlohmann::from_json(std::forward<Json>(j), val);
   }
 
-  template <typename T>
-  static auto to_json(T&& val) -> decltype(::nlohmann::to_json(std::forward<T>(val)))
+  template <typename Json, typename T>
+  static auto to_json(Json& j, T&& val) -> decltype(::nlohmann::to_json(j, std::forward<T>(val)), void())
   {
-    return ::nlohmann::to_json(std::forward<T>(val));
+    ::nlohmann::to_json(j, std::forward<T>(val));
   }
 };
-
 
 /*!
 @brief a class to store JSON values
@@ -1399,9 +1389,11 @@ class basic_json
     }
 
     // constructor chosen when JSONSerializer::to_json exists for type T
-    template <typename T, typename = decltype(JSONSerializer<uncvref_t<T>>::to_json(std::declval<uncvref_t<T>>()))>
+    template <typename T, typename = decltype(JSONSerializer<uncvref_t<T>>::to_json(std::declval<basic_json&>(), std::declval<uncvref_t<T>>()))>
     explicit basic_json(T &&val)
-        : basic_json(JSONSerializer<uncvref_t<T>>::to_json(std::forward<T>(val))) {}
+    {
+      JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
+    }
 
     /*!
     @brief create a string (explicit)
@@ -3072,11 +3064,14 @@ class basic_json
         return get_impl(static_cast<ValueType*>(nullptr));
     }
 
-    template <typename ValueType, typename = enable_if_t<std::is_default_constructible<uncvref_t<ValueType>>::value, float>>
-    auto get() const -> remove_reference_t<decltype(JSONSerializer<uncvref_t<ValueType>>::from_json(*this, std::declval<ValueType&>()), std::declval<ValueType>())>
+    template <typename ValueType, typename = decltype(JSONSerializer<uncvref_t<ValueType>>::from_json(std::declval<basic_json>(), std::declval<ValueType&>()))>
+    auto get() const -> uncvref_t<ValueType>
     {
-      uncvref_t<ValueType> ret;
-      JSONSerializer<uncvref_t<ValueType>>::from_json(*this, ret);
+      using type = uncvref_t<ValueType>;
+      static_assert(std::is_default_constructible<type>::value && std::is_copy_constructible<type>::value,
+                    "user-defined types must be DefaultConstructible and CopyConstructible when used with get");
+      type ret;
+      JSONSerializer<type>::from_json(*this, ret);
       return ret;
     }
 

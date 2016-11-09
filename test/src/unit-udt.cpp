@@ -70,32 +70,31 @@ private:
 
 // free to/from_json functions
 
-json to_json(empty_type)
+void to_json(json& j, empty_type)
 {
-  return json::object();
+  j = json::object();
 }
 
-json to_json(pod_type const& p)
+void to_json(json& j, pod_type const& p)
 {
-  return {{"a", p.a}, {"b", p.b}, {"c", p.c}};
+  j = json{{"a", p.a}, {"b", p.b}, {"c", p.c}};
 }
 
-json to_json(bit_more_complex_type const& p)
+void to_json(json& j, bit_more_complex_type const& p)
 {
-  using nlohmann::to_json;
-  return json{{"a", to_json(p.a)}, {"b", to_json(p.b)}, {"c", p.c}};
+  j = json{{"a", json(p.a)}, {"b", json(p.b)}, {"c", p.c}};
 }
 
 template <typename T>
-json to_json(optional_type<T> const& opt)
+void to_json(json& j, optional_type<T> const& opt)
 {
-  using nlohmann::to_json;
   if (!opt)
-    return nullptr;
-  return json(*opt);
+    j = nullptr;
+  else
+    j = json(*opt);
 }
 
-void from_json(json const&j, empty_type& t)
+void from_json(json const& j, empty_type& t)
 {
   assert(j.empty());
   t = empty_type{};
@@ -292,7 +291,8 @@ TEST_CASE("to_json free function", "[udt]")
     auto const e = udt::pod_type{42, 42, 42};
     auto const expected = json{{"a", 42}, {"b", 42}, {"c", 42}};
 
-    auto const j = nlohmann::to_json(e);
+    json j;
+    nlohmann::to_json(j, e);
     CHECK(j == expected);
   }
 
@@ -303,7 +303,8 @@ TEST_CASE("to_json free function", "[udt]")
     auto const expected = json{{"a", {{"a", 42}, {"b", 42}, {"c", 42}}},
                         {"b", {{"a", 41}, {"b", 41}, {"c", 41}}},
                         {"c", "forty"}};
-    auto const j = nlohmann::to_json(e);
+    json j;
+    nlohmann::to_json(j, e);
     CHECK(j == expected);
   }
 
@@ -314,7 +315,8 @@ TEST_CASE("to_json free function", "[udt]")
       udt::optional_type<udt::pod_type> o;
 
       json expected;
-      auto const j = nlohmann::to_json(o);
+      json j;
+      nlohmann::to_json(j, o);
       CHECK(expected == j);
     }
 
@@ -323,7 +325,8 @@ TEST_CASE("to_json free function", "[udt]")
       udt::optional_type<udt::pod_type> o{{42, 42, 42}};
 
       auto const expected = json{{"a", 42}, {"b", 42}, {"c", 42}};
-      auto const j = nlohmann::to_json(o);
+      json j;
+      nlohmann::to_json(j, o);
       CHECK(expected == j);
     }
   }
