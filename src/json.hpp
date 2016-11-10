@@ -145,7 +145,7 @@ struct to_json_fn
     operator()(Json&& j, T &&val) const noexcept(noexcept(to_json(std::forward<Json>(j), std::forward<T>(val))))
         -> decltype(to_json(std::forward<Json>(j), std::forward<T>(val)), void())
     {
-      to_json(std::forward<Json>(j), std::forward<T>(val));
+      return to_json(std::forward<Json>(j), std::forward<T>(val));
     }
 };
 
@@ -156,7 +156,7 @@ struct from_json_fn
                                noexcept(noexcept(from_json(std::forward<Json>(j), val)))
         -> decltype(from_json(std::forward<Json>(j), val), void())
     {
-      from_json(std::forward<Json>(j), val);
+      return from_json(std::forward<Json>(j), val);
     }
 };
 
