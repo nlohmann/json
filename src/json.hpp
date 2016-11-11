@@ -6142,6 +6142,499 @@ class basic_json
 
     /// @}
 
+    /////////////////////////
+    // MessagePack support //
+    /////////////////////////
+
+    /// @name MessagePack support
+    /// @{
+
+  private:
+    static void to_msgpack_internal(const basic_json& j, std::vector<uint8_t>& v)
+    {
+        switch (j.type())
+        {
+            case value_t::null:
+            {
+                // nil
+                v.push_back(0xc0);
+                break;
+            }
+
+            case value_t::boolean:
+            {
+                // true and false
+                v.push_back(j.m_value.boolean ? 0xc3 : 0xc2);
+                break;
+            }
+
+            case value_t::number_integer:
+            {
+                if (j.m_value.number_integer >= -32 and j.m_value.number_integer < 128)
+                {
+                    // negative fixnum and positive fixnum
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_integer));
+                }
+                else if (j.m_value.number_integer >= INT8_MIN and j.m_value.number_integer <= INT8_MAX)
+                {
+                    // int 8
+                    v.push_back(0xd0);
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_integer));
+                }
+                else if (j.m_value.number_integer >= INT16_MIN and j.m_value.number_integer <= INT16_MAX)
+                {
+                    // int 16
+                    v.push_back(0xd1);
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                }
+                else if (j.m_value.number_integer >= INT32_MIN and j.m_value.number_integer <= INT32_MAX)
+                {
+                    // int 32
+                    v.push_back(0xd2);
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                }
+                else if (j.m_value.number_integer >= INT64_MIN and j.m_value.number_integer <= INT64_MAX)
+                {
+                    // int 64
+                    v.push_back(0xd3);
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 070) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 060) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 050) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 040) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                }
+                break;
+            }
+
+            case value_t::number_unsigned:
+            {
+                if (j.m_value.number_unsigned < 128)
+                {
+                    // positive fixnum
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned));
+                }
+                else if (j.m_value.number_unsigned <= UINT8_MAX)
+                {
+                    // uint 8
+                    v.push_back(0xcc);
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned));
+                }
+                else if (j.m_value.number_unsigned <= UINT16_MAX)
+                {
+                    // uint 16
+                    v.push_back(0xcd);
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                }
+                else if (j.m_value.number_unsigned <= UINT32_MAX)
+                {
+                    // uint 32
+                    v.push_back(0xce);
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                }
+                else if (j.m_value.number_unsigned <= UINT64_MAX)
+                {
+                    // uint 64
+                    v.push_back(0xcf);
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 070) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 060) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 050) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 040) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                }
+                break;
+            }
+
+            case value_t::number_float:
+            {
+                // float 64
+                v.push_back(0xcb);
+                const uint8_t* helper = reinterpret_cast<const uint8_t*>(&(j.m_value.number_float));
+                for (size_t i = 0; i < 8; ++i)
+                {
+                    v.push_back(helper[7 - i]);
+                }
+                break;
+            }
+
+            case value_t::string:
+            {
+                const auto N = j.m_value.string->size();
+                if (N <= 31)
+                {
+                    // fixstr
+                    v.push_back(static_cast<uint8_t>(0xa0 | N));
+                }
+                else if (N <= 255)
+                {
+                    // str 8
+                    v.push_back(0xd9);
+                    v.push_back(static_cast<uint8_t>(N));
+                }
+                else if (N <= 65535)
+                {
+                    // str 16
+                    v.push_back(0xda);
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+                else if (N <= 4294967295)
+                {
+                    // str 32
+                    v.push_back(0xdb);
+                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+
+                // append string
+                std::copy(j.m_value.string->begin(), j.m_value.string->end(),
+                          std::back_inserter(v));
+                break;
+            }
+
+            case value_t::array:
+            {
+                const auto N = j.m_value.array->size();
+                if (N <= 15)
+                {
+                    // fixarray
+                    v.push_back(static_cast<uint8_t>(0x90 | N));
+                }
+                else if (N <= 0xffff)
+                {
+                    // array 16
+                    v.push_back(0xdc);
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+                else if (N <= 0xffffffff)
+                {
+                    // array 32
+                    v.push_back(0xdd);
+                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+
+                // append each element
+                for (const auto& el : *j.m_value.array)
+                {
+                    to_msgpack_internal(el, v);
+                }
+                break;
+            }
+
+            case value_t::object:
+            {
+                const auto N = j.m_value.object->size();
+                if (N <= 15)
+                {
+                    // fixmap
+                    v.push_back(static_cast<uint8_t>(0x80 | (N & 0xf)));
+                }
+                else if (N <= 65535)
+                {
+                    // map 16
+                    v.push_back(0xde);
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+                else if (N <= 4294967295)
+                {
+                    // map 32
+                    v.push_back(0xdf);
+                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+
+                // append each element
+                for (const auto& el : *j.m_value.object)
+                {
+                    to_msgpack_internal(el.first, v);
+                    to_msgpack_internal(el.second, v);
+                }
+                break;
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+    }
+
+    /*!
+    @param[in] v  MessagePack serialization
+    @param[in] idx  byte index to start reading from @a v
+    */
+    static basic_json from_msgpack_internal(const std::vector<uint8_t>& v, size_t& idx)
+    {
+        // store and increment index
+        const size_t current_idx = idx++;
+
+        if (v[current_idx] <= 0x7f) // positive fixint
+        {
+            return v[current_idx];
+        }
+        else if (v[current_idx] <= 0x8f) // fixmap
+        {
+            basic_json result = value_t::object;
+            const size_t len = v[current_idx] & 0x0f;
+            for (size_t i = 0; i < len; ++i)
+            {
+                std::string key = from_msgpack_internal(v, idx);
+                result[key] = from_msgpack_internal(v, idx);
+            }
+            return result;
+        }
+        else if (v[current_idx] <= 0x9f) // fixarray
+        {
+            basic_json result = value_t::array;
+            const size_t len = v[current_idx] & 0x0f;
+            for (size_t i = 0; i < len; ++i)
+            {
+                result.push_back(from_msgpack_internal(v, idx));
+            }
+            return result;
+        }
+        else if (v[current_idx] <= 0xbf) // fixstr
+        {
+            const size_t len = v[current_idx] & 0x1f;
+            const size_t offset = current_idx + 1;
+            idx += len; // skip content bytes
+            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+        }
+        else if (v[current_idx] == 0xc0) // nil
+        {
+            return value_t::null;
+        }
+        else if (v[current_idx] == 0xc1) // never used
+        {
+            throw std::invalid_argument("value 0x31 must not be used@ " + std::to_string(current_idx));
+        }
+        else if (v[current_idx] == 0xc2) // false
+        {
+            return false;
+        }
+        else if (v[current_idx] == 0xc3) // true
+        {
+            return true;
+        }
+        else if (v[current_idx] >= 0xc4 and v[current_idx] <= 0xc9) // bin/ext
+        {
+            throw std::invalid_argument("bin/ext are not supported @ " + std::to_string(current_idx));
+        }
+        else if (v[current_idx] == 0xca) // float 32
+        {
+            // copy bytes in reverse order into the double variable
+            float res;
+            for (size_t byte = 0; byte < sizeof(float); ++byte)
+            {
+                reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v[current_idx + 1 + byte];
+            }
+            idx += sizeof(float); // skip content bytes
+            return res;
+        }
+        else if (v[current_idx] == 0xcb) // float 64
+        {
+            // copy bytes in reverse order into the double variable
+            double res;
+            for (size_t byte = 0; byte < sizeof(double); ++byte)
+            {
+                reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v[current_idx + 1 + byte];
+            }
+            idx += sizeof(double); // skip content bytes
+            return res;
+        }
+        else if (v[current_idx] == 0xcc) // uint 8
+        {
+            idx += 1; // skip content byte
+            return v[current_idx + 1];
+        }
+        else if (v[current_idx] == 0xcd) // uint 16
+        {
+            idx += 2; // skip 2 content bytes
+            return static_cast<uint16_t>((static_cast<uint16_t>(v[current_idx + 1]) << 010) +
+                                         static_cast<uint16_t>(v[current_idx + 2]));
+        }
+        else if (v[current_idx] == 0xce) // uint 32
+        {
+            idx += 4; // skip 4 content bytes
+            return static_cast<uint32_t>((static_cast<uint32_t>(v[current_idx + 1]) << 030) +
+                                         (static_cast<uint32_t>(v[current_idx + 2]) << 020) +
+                                         (static_cast<uint32_t>(v[current_idx + 3]) << 010) +
+                                         static_cast<uint32_t>(v[current_idx + 4]));
+        }
+        else if (v[current_idx] == 0xcf) // uint 64
+        {
+            idx += 8; // skip 8 content bytes
+            return static_cast<uint64_t>((static_cast<uint64_t>(v[current_idx + 1]) << 070) +
+                                         (static_cast<uint64_t>(v[current_idx + 2]) << 060) +
+                                         (static_cast<uint64_t>(v[current_idx + 3]) << 050) +
+                                         (static_cast<uint64_t>(v[current_idx + 4]) << 040) +
+                                         (static_cast<uint64_t>(v[current_idx + 5]) << 030) +
+                                         (static_cast<uint64_t>(v[current_idx + 6]) << 020) +
+                                         (static_cast<uint64_t>(v[current_idx + 7]) << 010) +
+                                         static_cast<uint64_t>(v[current_idx + 8]));
+        }
+        else if (v[current_idx] == 0xd0) // int 8
+        {
+            idx += 1; // skip content byte
+            return static_cast<int8_t>(v[current_idx + 1]);
+        }
+        else if (v[current_idx] == 0xd1) // int 16
+        {
+            idx += 2; // skip 2 content bytes
+            return static_cast<int16_t>((static_cast<int16_t>(v[current_idx + 1]) << 010) +
+                                        static_cast<int16_t>(v[current_idx + 2]));
+        }
+        else if (v[current_idx] == 0xd2) // int 32
+        {
+            idx += 4; // skip 4 content bytes
+            return static_cast<int32_t>((static_cast<int32_t>(v[current_idx + 1]) << 030) +
+                                        (static_cast<int32_t>(v[current_idx + 2]) << 020) +
+                                        (static_cast<int32_t>(v[current_idx + 3]) << 010) +
+                                        static_cast<int32_t>(v[current_idx + 4]));
+        }
+        else if (v[current_idx] == 0xd3) // int 64
+        {
+            idx += 8; // skip 8 content bytes
+            return static_cast<int64_t>((static_cast<int64_t>(v[current_idx + 1]) << 070) +
+                                        (static_cast<int64_t>(v[current_idx + 2]) << 060) +
+                                        (static_cast<int64_t>(v[current_idx + 3]) << 050) +
+                                        (static_cast<int64_t>(v[current_idx + 4]) << 040) +
+                                        (static_cast<int64_t>(v[current_idx + 5]) << 030) +
+                                        (static_cast<int64_t>(v[current_idx + 6]) << 020) +
+                                        (static_cast<int64_t>(v[current_idx + 7]) << 010) +
+                                        static_cast<int64_t>(v[current_idx + 8]));
+        }
+        else if (v[current_idx] >= 0xd4 and v[current_idx] <= 0xd8) // fixext
+        {
+            throw std::invalid_argument("bin/ext are not supported @ " + std::to_string(current_idx));
+        }
+        else if (v[current_idx] == 0xd9) // str 8
+        {
+            const size_t len = v[current_idx + 1];
+            const size_t offset = current_idx + 2;
+            idx += len + 1; // skip size byte + content bytes
+            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+        }
+        else if (v[current_idx] == 0xda) // str 16
+        {
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) + v[current_idx + 2]);
+            const size_t offset = current_idx + 3;
+            idx += len + 2; // skip 2 size bytes + content bytes
+            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+        }
+        else if (v[current_idx] == 0xdb) // str 32
+        {
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
+                                                   (v[current_idx + 2] << 020) +
+                                                   (v[current_idx + 3] << 010) +
+                                                   v[current_idx + 4]);
+            const size_t offset = current_idx + 5;
+            idx += len + 4; // skip 4 size bytes + content bytes
+            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+        }
+        else if (v[current_idx] == 0xdc) // array 16
+        {
+            basic_json result = value_t::array;
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) +
+                                                   v[current_idx + 2]);
+            idx += 2; // skip 2 size bytes
+            for (size_t i = 0; i < len; ++i)
+            {
+                result.push_back(from_msgpack_internal(v, idx));
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0xdd) // array 32
+        {
+            basic_json result = value_t::array;
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
+                                                   (v[current_idx + 2] << 020) +
+                                                   (v[current_idx + 3] << 010) +
+                                                   v[current_idx + 4]);
+            idx += 4; // skip 4 size bytes
+            for (size_t i = 0; i < len; ++i)
+            {
+                result.push_back(from_msgpack_internal(v, idx));
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0xde) // map 16
+        {
+            basic_json result = value_t::object;
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) +
+                                                   v[current_idx + 2]);
+            idx += 2; // skip 2 size bytes
+            for (size_t i = 0; i < len; ++i)
+            {
+                std::string key = from_msgpack_internal(v, idx);
+                result[key] = from_msgpack_internal(v, idx);
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0xdf) // map 32
+        {
+            basic_json result = value_t::object;
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
+                                                   (v[current_idx + 2] << 020) +
+                                                   (v[current_idx + 3] << 010) +
+                                                   v[current_idx + 4]);
+            idx += 4; // skip 4 size bytes
+            for (size_t i = 0; i < len; ++i)
+            {
+                std::string key = from_msgpack_internal(v, idx);
+                result[key] = from_msgpack_internal(v, idx);
+            }
+            return result;
+        }
+        else if (v[current_idx] >= 0xe0) // negative fixint
+        {
+            return static_cast<int8_t>(v[current_idx]);
+        }
+
+        throw std::invalid_argument("error parsing a msgpack @ " + std::to_string(current_idx));
+    }
+
+  public:
+    /*!
+    @param[in] j  JSON value to serialize
+    @retuen MessagePack serialization as char vector
+    */
+    static std::vector<uint8_t> to_msgpack(const basic_json& j)
+    {
+        std::vector<uint8_t> result;
+        to_msgpack_internal(j, result);
+        return result;
+    }
+
+    static basic_json from_msgpack(const std::vector<uint8_t>& v)
+    {
+        size_t i = 0;
+        return from_msgpack_internal(v, i);
+    }
+
+    /// @}
 
   private:
     ///////////////////////////
