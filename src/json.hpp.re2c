@@ -5054,6 +5054,90 @@ class basic_json
     }
 
     /*!
+    @brief add an object to an array
+
+    Creates a JSON value from the passed parameters @a args to the end of the
+    JSON value. If the function is called on a JSON null value, an empty array
+    is created before appending the value created from @a args.
+
+    @param[in] args arguments to forward to a constructor of @ref basic_json
+    @tparam Args compatible types to create a @ref basic_json object
+
+    @throw std::domain_error when called on a type other than JSON array or
+    null; example: `"cannot use emplace_back() with number"`
+
+    @complexity Amortized constant.
+
+    @liveexample{The example shows how `push_back()` can be used to add
+    elements to a JSON array. Note how the `null` value was silently converted
+    to a JSON array.,emplace_back}
+
+    @since version 2.0.8
+    */
+    template<class... Args>
+    void emplace_back(Args&& ... args)
+    {
+        // emplace_back only works for null objects or arrays
+        if (not(is_null() or is_array()))
+        {
+            throw std::domain_error("cannot use emplace_back() with " + type_name());
+        }
+
+        // transform null object into an array
+        if (is_null())
+        {
+            m_type = value_t::array;
+            m_value = value_t::array;
+            assert_invariant();
+        }
+
+        // add element to array (perfect forwarding)
+        m_value.array->emplace_back(std::forward<Args>(args)...);
+    }
+
+    /*!
+    @brief add an object to an object
+
+    Creates a JSON value from the passed parameters @a args to the JSON
+    object. If the function is called on a JSON null value, an empty object
+    is created before appending the value created from @a args.
+
+    @param[in] args arguments to forward to a constructor of @ref basic_json
+    @tparam Args compatible types to create a @ref basic_json object
+
+    @throw std::domain_error when called on a type other than JSON object or
+    null; example: `"cannot use emplace() with number"`
+
+    @complexity Logarithmic in the size of the container, O(log(`size()`)).
+
+    @liveexample{The example shows how `emplace()` can be used to add elements
+    to a JSON object. Note how the `null` value was silently converted to a
+    JSON object.,emplace}
+
+    @since version 2.0.8
+    */
+    template<class... Args>
+    void emplace(Args&& ... args)
+    {
+        // emplace only works for null objects or arrays
+        if (not(is_null() or is_object()))
+        {
+            throw std::domain_error("cannot use emplace() with " + type_name());
+        }
+
+        // transform null object into an object
+        if (is_null())
+        {
+            m_type = value_t::object;
+            m_value = value_t::object;
+            assert_invariant();
+        }
+
+        // add element to array (perfect forwarding)
+        m_value.object->emplace(std::forward<Args>(args)...);
+    }
+
+    /*!
     @brief inserts element
 
     Inserts element @a val before iterator @a pos.

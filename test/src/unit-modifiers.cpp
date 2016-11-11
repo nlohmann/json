@@ -258,6 +258,74 @@ TEST_CASE("modifiers")
         }
     }
 
+    SECTION("emplace_back()")
+    {
+        SECTION("to array")
+        {
+            SECTION("null")
+            {
+                json j;
+                j.emplace_back(1);
+                j.emplace_back(2);
+                CHECK(j.type() == json::value_t::array);
+                CHECK(j == json({1, 2}));
+            }
+
+            SECTION("array")
+            {
+                json j = {1, 2, 3};
+                j.emplace_back("Hello");
+                CHECK(j.type() == json::value_t::array);
+                CHECK(j == json({1, 2, 3, "Hello"}));
+            }
+
+            SECTION("multiple values")
+            {
+                json j;
+                j.emplace_back(3, "foo");
+                CHECK(j.type() == json::value_t::array);
+                CHECK(j == json({{"foo", "foo", "foo"}}));
+            }
+        }
+
+        SECTION("other type")
+        {
+            json j = 1;
+            CHECK_THROWS_AS(j.emplace_back("Hello"), std::domain_error);
+            CHECK_THROWS_WITH(j.emplace_back("Hello"), "cannot use emplace_back() with number");
+        }
+    }
+
+    SECTION("emplace()")
+    {
+        SECTION("to object")
+        {
+            SECTION("null")
+            {
+                json j;
+                j.emplace("foo", "bar");
+                j.emplace("baz", "bam");
+                CHECK(j.type() == json::value_t::object);
+                CHECK(j == json({{"baz", "bam"}, {"foo", "bar"}}));
+            }
+
+            SECTION("object")
+            {
+                json j = {{"foo", "bar"}};
+                j.emplace("baz", "bam");
+                CHECK(j.type() == json::value_t::object);
+                CHECK(j == json({{"baz", "bam"}, {"foo", "bar"}}));
+            }
+        }
+
+        SECTION("other type")
+        {
+            json j = 1;
+            CHECK_THROWS_AS(j.emplace("foo", "bar"), std::domain_error);
+            CHECK_THROWS_WITH(j.emplace("foo", "bar"), "cannot use emplace() with number");
+        }
+    }
+
     SECTION("operator+=")
     {
         SECTION("to array")
