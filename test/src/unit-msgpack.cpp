@@ -610,7 +610,10 @@ TEST_CASE("MessagePack")
             }
         }
     }
+}
 
+TEST_CASE("MessagePack roundtrips", "[hide]")
+{
     SECTION("input from msgpack-python")
     {
         for (std::string filename :
