@@ -379,3 +379,59 @@ TEST_CASE("from_json free function", "[udt]")
     }
   }
 }
+
+// custom serializer, uses adl by default
+template <typename T, typename = void>
+struct my_serializer;
+
+template<>
+struct my_serializer<udt::pod_type>
+{
+  template <typename Json>
+  static void from_json(Json const& j, udt::pod_type& val)
+  {
+    nlohmann::from_json(j, val);
+  }
+
+  template <typename Json>
+  static void to_json(Json& j, udt::pod_type const& val)
+  {
+    nlohmann::to_json(j, val);
+  }
+};
+
+using my_json = nlohmann::basic_json<std::map, std::vector, std::string, bool,
+                                     std::int64_t, std::uint64_t, double,
+                                     std::allocator, my_serializer>;
+
+namespace udt
+{
+  void to_json(my_json& j, pod_type const& val)
+  {
+    j = my_json{{"a", val.a}, {"b", val.b}, {"c", val.c}};
+  }
+
+  void from_json(my_json const& j, pod_type& val)
+  {
+    val = {j["a"].get<int>(), j["b"].get<char>(), j["c"].get<short>()};
+  }
+}
+
+TEST_CASE("custom serializer")
+{
+
+
+  SECTION("default use works like default serializer")
+  {
+    udt::pod_type pod{1, 2, 3};
+    auto const j = my_json{pod};
+
+    auto const j2 = json{pod};
+    CHECK(j.dump() == j2.dump());
+
+    auto const pod2 = j.get<udt::pod_type>();
+    auto const pod3 = j2.get<udt::pod_type>();
+    CHECK(pod2 == pod3);
+    CHECK(pod2 == pod);
+  }
+}
