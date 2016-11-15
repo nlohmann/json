@@ -150,6 +150,38 @@ struct has_mapped_type
         std::is_integral<decltype(detect(std::declval<T>()))>::value;
 };
 
+template <template <typename, typename> class JSONSerializer, typename Json,
+          typename T>
+struct has_from_json
+{
+private:
+  template <typename U, typename = decltype(uncvref_t<U>::from_json(
+                            std::declval<Json>(), std::declval<T &>()))>
+  static int detect(U &&);
+
+  static void detect(...);
+
+public:
+  static constexpr bool value = std::is_integral<decltype(
+      detect(std::declval<JSONSerializer<T, void>>()))>::value;
+};
+
+template <template <typename, typename> class JSONSerializer, typename Json,
+          typename T>
+struct has_to_json
+{
+private:
+  template <typename U, typename = decltype(uncvref_t<U>::to_json(
+                            std::declval<Json &>(), std::declval<T>()))>
+  static int detect(U &&);
+
+  static void detect(...);
+
+public:
+  static constexpr bool value = std::is_integral<decltype(
+      detect(std::declval<JSONSerializer<T, void>>()))>::value;
+};
+
 void to_json();
 void from_json();
 
@@ -1389,7 +1421,8 @@ class basic_json
     }
 
     // constructor chosen when JSONSerializer::to_json exists for type T
-    template <typename T, typename = decltype(JSONSerializer<uncvref_t<T>>::to_json(std::declval<basic_json&>(), std::declval<uncvref_t<T>>()))>
+    template <typename T, typename = typename std::enable_if<detail::has_to_json<
+                              JSONSerializer, basic_json, uncvref_t<T>>::value>::type>
     explicit basic_json(T &&val)
     {
       JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
@@ -3057,19 +3090,26 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<typename ValueType, typename std::enable_if<
-                 not std::is_pointer<ValueType>::value, int>::type = 0>
-    auto get() const -> decltype(this->get_impl(static_cast<ValueType*>(nullptr)))
-    {
-        return get_impl(static_cast<ValueType*>(nullptr));
+    template <typename ValueType,
+              typename std::enable_if<
+                  not std::is_pointer<ValueType>::value and
+                      not detail::has_from_json<JSONSerializer, basic_json,
+                                                uncvref_t<ValueType>>::value,
+                  int>::type = 0>
+    auto get() const
+        -> decltype(this->get_impl(static_cast<ValueType *>(nullptr))) {
+      return get_impl(static_cast<ValueType *>(nullptr));
     }
 
-    template <typename ValueType, typename = decltype(JSONSerializer<uncvref_t<ValueType>>::from_json(std::declval<basic_json>(), std::declval<ValueType&>()))>
-    auto get() const -> uncvref_t<ValueType>
-    {
+    template <typename ValueType,
+              typename = enable_if_t<detail::has_from_json<
+                  JSONSerializer, basic_json, uncvref_t<ValueType>>::value>>
+    auto get() const -> uncvref_t<ValueType> {
       using type = uncvref_t<ValueType>;
-      static_assert(std::is_default_constructible<type>::value && std::is_copy_constructible<type>::value,
-                    "user-defined types must be DefaultConstructible and CopyConstructible when used with get");
+      static_assert(std::is_default_constructible<type>::value &&
+                        std::is_copy_constructible<type>::value,
+                    "user-defined types must be DefaultConstructible and "
+                    "CopyConstructible when used with get");
       type ret;
       JSONSerializer<type>::from_json(*this, ret);
       return ret;
