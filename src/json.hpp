@@ -150,6 +150,9 @@ struct has_mapped_type
         std::is_integral<decltype(detect(std::declval<T>()))>::value;
 };
 
+template <template <typename...> class T>
+struct wrapper{};
+
 template<typename T>
 struct has_key_type
 {
@@ -176,6 +179,19 @@ struct has_value_type
         std::is_integral<decltype(detect(std::declval<T>()))>::value;
 };
 
+template<typename T>
+struct has_iterator
+{
+  private:
+    template <typename U, typename = typename U::iterator>
+    static int detect(U&&);
+
+    static void detect(...);
+  public:
+    static constexpr bool value =
+        std::is_integral<decltype(detect(std::declval<T>()))>::value;
+};
+
 template <bool B, class RealType, class CompatibleObjectType>
 struct is_compatible_object_type_impl : std::false_type{};
 
@@ -187,7 +203,7 @@ struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
                  std::is_constructible<typename RealType::mapped_type, typename CompatibleObjectType::mapped_type>::value;
 };
 
-template<class RealType, class CompatibleObjectType, typename = enable_if_t<has_mapped_type<CompatibleObjectType>::value and has_key_type<CompatibleObjectType>::value>>
+template<class RealType, class CompatibleObjectType>
 struct is_compatible_object_type
 {
   static auto constexpr value = is_compatible_object_type_impl<has_mapped_type<CompatibleObjectType>::value and has_key_type<CompatibleObjectType>::value, RealType, CompatibleObjectType>::value;
@@ -213,24 +229,41 @@ struct is_compatible_array_type_impl<true, BasicJson, CompatibleArrayType>
 template <class BasicJson, class CompatibleArrayType>
 struct is_compatible_array_type
 {
-  static auto constexpr value = is_compatible_array_type_impl<has_value_type<CompatibleArrayType>::value, BasicJson, CompatibleArrayType>::value;
+  static auto constexpr value = is_compatible_array_type_impl<not is_compatible_object_type<typename BasicJson::object_t, CompatibleArrayType>::value and has_value_type<CompatibleArrayType>::value and has_iterator<CompatibleArrayType>::value, BasicJson, CompatibleArrayType>::value;
+};
+
+template <bool, typename, typename>
+struct is_compatible_integer_type_impl : std::false_type{};
+
+template <typename RealIntegerType, typename CompatibleNumberIntegerType>
+struct is_compatible_integer_type_impl<true, RealIntegerType, CompatibleNumberIntegerType>
+{
+ static constexpr auto value = std::is_constructible<RealIntegerType, CompatibleNumberIntegerType>::value and
+                 std::numeric_limits<CompatibleNumberIntegerType>::is_integer and
+                 std::numeric_limits<CompatibleNumberIntegerType>::is_signed;
 };
 
 template <typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type
 {
-  static constexpr auto value = 
-                 std::is_constructible<RealIntegerType, CompatibleNumberIntegerType>::value and
-                 std::numeric_limits<CompatibleNumberIntegerType>::is_integer and
-                 std::numeric_limits<CompatibleNumberIntegerType>::is_signed;
+  static constexpr auto value = is_compatible_integer_type_impl<std::is_arithmetic<CompatibleNumberIntegerType>::value, RealIntegerType, CompatibleNumberIntegerType>::value;
 };
 
-template <typename RealInteger, typename CompatibleNumberUnsignedType>
-struct is_compatible_unsigned_integer_type
+template <bool, typename, typename>
+struct is_compatible_unsigned_integer_type_impl : std::false_type{};
+
+template <typename RealUnsignedType, typename CompatibleNumberUnsignedType>
+struct is_compatible_unsigned_integer_type_impl<true, RealUnsignedType, CompatibleNumberUnsignedType>
 {
- static constexpr auto value = std::is_constructible<RealInteger, CompatibleNumberUnsignedType>::value and
+ static constexpr auto value = std::is_constructible<RealUnsignedType, CompatibleNumberUnsignedType>::value and
                  std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and
                  not std::numeric_limits<CompatibleNumberUnsignedType>::is_signed;
+};
+
+template <typename RealUnsignedType, typename CompatibleNumberUnsignedType>
+struct is_compatible_unsigned_integer_type
+{
+  static constexpr auto value = is_compatible_unsigned_integer_type_impl<std::is_arithmetic<CompatibleNumberUnsignedType>::value, RealUnsignedType, CompatibleNumberUnsignedType>::value;
 };
 
 template <typename RealFloat, typename CompatibleFloat>
@@ -341,13 +374,13 @@ template <typename = void, typename = void>
 struct adl_serializer
 {
   template <typename Json, typename T>
-  static auto from_json(Json&& j, T& val) -> decltype(::nlohmann::from_json(std::forward<Json>(j), val), void())
+  static void from_json(Json&& j, T& val)
   {
     ::nlohmann::from_json(std::forward<Json>(j), val);
   }
 
   template <typename Json, typename T>
-  static auto to_json(Json& j, T&& val) -> decltype(::nlohmann::to_json(j, std::forward<T>(val)), void())
+  static void to_json(Json& j, T&& val)
   {
     ::nlohmann::to_json(j, std::forward<T>(val));
   }
@@ -450,11 +483,6 @@ class basic_json
     using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
           BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
           AllocatorType>;
-
-    template <template <typename...> class T>
-    struct wrapper{};
-
-    using supported_tpl_types = std::tuple<wrapper<ObjectType>, wrapper<ArrayType>, wrapper<AllocatorType>, wrapper<JSONSerializer>>;
 
   public:
     // forward declarations
@@ -1507,8 +1535,15 @@ class basic_json
     }
 
     // constructor chosen when JSONSerializer::to_json exists for type T
-    template <typename T, typename = typename std::enable_if<detail::has_to_json<
-                              JSONSerializer, basic_json, uncvref_t<T>>::value>::type>
+    template <typename T, enable_if_t<detail::has_to_json<
+                              JSONSerializer, basic_json, uncvref_t<T>>::value and not (detail::is_compatible_object_type<object_t, uncvref_t<T>>::value or
+                                                                                        detail::is_compatible_array_type<basic_json_t, uncvref_t<T>>::value or
+                                                                                        detail::is_compatible_float_type<number_float_t, uncvref_t<T>>::value or
+                                                                                        detail::is_compatible_integer_type<number_integer_t, uncvref_t<T>>::value or
+                                                                                        detail::is_compatible_unsigned_integer_type<number_unsigned_t, uncvref_t<T>>::value or
+                                                                                        std::is_constructible<string_t, uncvref_t<T>>::value or
+                                                                                        std::is_base_of<std::istream, uncvref_t<T>>::value or
+                                                                                        std::is_same<boolean_t, uncvref_t<T>>::value), int> = 0>
     explicit basic_json(T &&val)
     {
       JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
@@ -3167,21 +3202,27 @@ class basic_json
     @since version 1.0.0
     */
     template <typename ValueType,
-              typename std::enable_if<
-                  not std::is_pointer<ValueType>::value and
-                      not detail::has_from_json<JSONSerializer, basic_json,
-                                                uncvref_t<ValueType>>::value,
-                  int>::type = 0>
+              enable_if_t<
+                  not std::is_pointer<ValueType>::value,
+                  int> = 0>
     auto get() const
         -> decltype(this->get_impl(static_cast<ValueType *>(nullptr))) {
       return get_impl(static_cast<ValueType *>(nullptr));
     }
 
-    template <typename ValueType,
-              typename = enable_if_t<detail::has_from_json<
-                  JSONSerializer, basic_json, uncvref_t<ValueType>>::value>>
-    auto get() const -> uncvref_t<ValueType> {
-      using type = uncvref_t<ValueType>;
+    template <typename T,
+              enable_if_t<detail::has_from_json<
+                  JSONSerializer, basic_json, uncvref_t<T>>::value 
+                              and not (detail::is_compatible_object_type<object_t, uncvref_t<T>>::value or
+                                                                                        detail::is_compatible_array_type<basic_json_t, uncvref_t<T>>::value or
+                                                                                        detail::is_compatible_float_type<number_float_t, uncvref_t<T>>::value or
+                                                                                        detail::is_compatible_integer_type<number_integer_t, uncvref_t<T>>::value or
+                                                                                        detail::is_compatible_unsigned_integer_type<number_unsigned_t, uncvref_t<T>>::value or
+                                                                                        std::is_constructible<string_t, uncvref_t<T>>::value or
+                                                                                        std::is_same<boolean_t, uncvref_t<T>>::value), int> = 0>
+    auto get() const -> uncvref_t<T>
+    {
+      using type = uncvref_t<T>;
       static_assert(std::is_default_constructible<type>::value &&
                         std::is_copy_constructible<type>::value,
                     "user-defined types must be DefaultConstructible and "

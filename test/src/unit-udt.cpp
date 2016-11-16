@@ -397,7 +397,7 @@ struct my_serializer
   }
 };
 
-/*using my_json = nlohmann::basic_json<std::map, std::vector, std::string, bool,
+using my_json = nlohmann::basic_json<std::map, std::vector, std::string, bool,
                                      std::int64_t, std::uint64_t, double,
                                      std::allocator, my_serializer>;
 
@@ -430,4 +430,3 @@ TEST_CASE("custom serializer")
     CHECK(pod2 == pod);
   }
 }
-*/
