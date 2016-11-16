@@ -612,6 +612,31 @@ TEST_CASE("MessagePack")
     }
 }
 
+
+// use this testcase outside [hide] to run it with Valgrind
+TEST_CASE("single MessagePack roundtrip")
+{
+    SECTION("sample.json")
+    {
+        std::string filename = "test/data/json_testsuite/sample.json";
+
+        // parse JSON file
+        std::ifstream f_json(filename);
+        json j1 = json::parse(f_json);
+
+        // parse MessagePack file
+        std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
+        std::vector<uint8_t> packed((std::istreambuf_iterator<char>(f_msgpack)),
+                                    std::istreambuf_iterator<char>());
+        json j2;
+        CHECK_NOTHROW(j2 = json::from_msgpack(packed));
+
+        // compare parsed JSON values
+        CHECK(j1 == j2);
+    }
+}
+
+
 TEST_CASE("MessagePack roundtrips", "[hide]")
 {
     SECTION("input from msgpack-python")
@@ -656,7 +681,7 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
                     "test/data/json_roundtrip/roundtrip30.json",
                     "test/data/json_roundtrip/roundtrip31.json",
                     "test/data/json_roundtrip/roundtrip32.json",
-//                    "test/data/json_testsuite/sample.json",
+                    "test/data/json_testsuite/sample.json", // kills AppVeyor
                     "test/data/json_tests/pass1.json",
                     "test/data/json_tests/pass2.json",
                     "test/data/json_tests/pass3.json",
