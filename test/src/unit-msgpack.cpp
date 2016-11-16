@@ -439,7 +439,7 @@ TEST_CASE("MessagePack")
                     // create expected byte vector
                     std::vector<uint8_t> expected;
                     expected.push_back(0xd9);
-                    expected.push_back(N);
+                    expected.push_back(static_cast<uint8_t>(N));
                     for (size_t i = 0; i < N; ++i)
                     {
                         expected.push_back('x');
@@ -656,7 +656,7 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
                     "test/data/json_roundtrip/roundtrip30.json",
                     "test/data/json_roundtrip/roundtrip31.json",
                     "test/data/json_roundtrip/roundtrip32.json",
-                    "test/data/json_testsuite/sample.json",
+//                    "test/data/json_testsuite/sample.json",
                     "test/data/json_tests/pass1.json",
                     "test/data/json_tests/pass2.json",
                     "test/data/json_tests/pass3.json",
