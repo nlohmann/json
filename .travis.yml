@@ -179,9 +179,9 @@ matrix:
     env: LLVM_VERSION=3.7.1
     compiler: clang
 
-  - os: linux
-    env: LLVM_VERSION=3.8.0
-    compiler: clang
+  #- os: linux
+  #  env: LLVM_VERSION=3.8.0
+  #  compiler: clang
 
   - os: linux
     env: LLVM_VERSION=3.8.1
