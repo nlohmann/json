@@ -140,6 +140,7 @@ template <class B1> struct conjunction<B1> : B1 {};
 template <class B1, class... Bn>
 struct conjunction<B1, Bn...>
     : conditional_t<bool(B1::value), conjunction<Bn...>, B1> {};
+
 template <class B> struct negation : std::integral_constant<bool, !B::value> {};
 template <class...> struct disjunction : std::false_type {};
 template <class B1> struct disjunction<B1> : B1 {};
@@ -149,68 +150,31 @@ struct disjunction<B1, Bn...>
 
 /*!
 @brief Helper to determine whether there's a key_type for T.
-
 Thus helper is used to tell associative containers apart from other containers
 such as sequence containers. For instance, `std::map` passes the test as it
 contains a `mapped_type`, whereas `std::vector` fails the test.
-
 @sa http://stackoverflow.com/a/7728728/266378
 @since version 1.0.0, overworked in version 2.0.6
 */
-template<typename T>
-struct has_mapped_type
-{
-  private:
-    template <typename U, typename = typename U::mapped_type>
-    static int detect(U&&);
+#define NLOHMANN_JSON_HAS_HELPER(type)                                         \
+  template <typename T> struct has_##type {                                    \
+  private:                                                                     \
+    template <typename U, typename = typename U::type>                         \
+    static int detect(U &&);                                                   \
+                                                                               \
+    static void detect(...);                                                   \
+                                                                               \
+  public:                                                                      \
+    static constexpr bool value =                                              \
+        std::is_integral<decltype(detect(std::declval<T>()))>::value;          \
+  };
 
-    static void detect(...);
-  public:
-    static constexpr bool value =
-        std::is_integral<decltype(detect(std::declval<T>()))>::value;
-};
+NLOHMANN_JSON_HAS_HELPER(mapped_type)
+NLOHMANN_JSON_HAS_HELPER(key_type)
+NLOHMANN_JSON_HAS_HELPER(value_type)
+NLOHMANN_JSON_HAS_HELPER(iterator)
 
-template <template <typename...> class T>
-struct wrapper{};
-
-template<typename T>
-struct has_key_type
-{
-  private:
-    template <typename U, typename = typename U::key_type>
-    static int detect(U&&);
-
-    static void detect(...);
-  public:
-    static constexpr bool value =
-        std::is_integral<decltype(detect(std::declval<T>()))>::value;
-};
-
-template<typename T>
-struct has_value_type
-{
-  private:
-    template <typename U, typename = typename U::value_type>
-    static int detect(U&&);
-
-    static void detect(...);
-  public:
-    static constexpr bool value =
-        std::is_integral<decltype(detect(std::declval<T>()))>::value;
-};
-
-template<typename T>
-struct has_iterator
-{
-  private:
-    template <typename U, typename = typename U::iterator>
-    static int detect(U&&);
-
-    static void detect(...);
-  public:
-    static constexpr bool value =
-        std::is_integral<decltype(detect(std::declval<T>()))>::value;
-};
+#undef NLOHMANN_JSON_HAS_HELPER
 
 template <bool B, class RealType, class CompatibleObjectType>
 struct is_compatible_object_type_impl : std::false_type{};
