@@ -119,6 +119,9 @@ using remove_reference_t = typename std::remove_reference<T>::type;
 template <typename T>
 using uncvref_t = remove_cv_t<remove_reference_t<T>>;
 
+template <bool If, typename Then, typename Else>
+using conditional_t = typename std::conditional<If, Then, Else>::type;
+
 // TODO update this doc
 /*!
 @brief unnamed namespace with internal helper functions
@@ -127,6 +130,23 @@ using uncvref_t = remove_cv_t<remove_reference_t<T>>;
 
 namespace detail
 {
+// implementation of 3 C++17 constructs: conjunction, disjunction, negation.
+// This is needed to avoid evaluating all the traits, MSVC cannot compile due
+// to std::is_constructible<basic_json_t, void> being instantiated
+// (void -> back_insert_iterator::value_type)
+// this could slow down compilation, since this implementation is taken from the example in cppreference...
+template <class...> struct conjunction : std::true_type {};
+template <class B1> struct conjunction<B1> : B1 {};
+template <class B1, class... Bn>
+struct conjunction<B1, Bn...>
+    : conditional_t<bool(B1::value), conjunction<Bn...>, B1> {};
+template <class B> struct negation : std::integral_constant<bool, !B::value> {};
+template <class...> struct disjunction : std::false_type {};
+template <class B1> struct disjunction<B1> : B1 {};
+template <class B1, class... Bn>
+struct disjunction<B1, Bn...>
+    : conditional_t<bool(B1::value), B1, disjunction<Bn...>> {};
+
 /*!
 @brief Helper to determine whether there's a key_type for T.
 
@@ -206,7 +226,12 @@ struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
 template<class RealType, class CompatibleObjectType>
 struct is_compatible_object_type
 {
-  static auto constexpr value = is_compatible_object_type_impl<has_mapped_type<CompatibleObjectType>::value and has_key_type<CompatibleObjectType>::value, RealType, CompatibleObjectType>::value;
+  static auto constexpr value = is_compatible_object_type_impl<
+                                conjunction<negation<std::is_same<void, CompatibleObjectType>>,
+                                            has_mapped_type<CompatibleObjectType>,
+                                            has_key_type<CompatibleObjectType>>::value,
+                                RealType, CompatibleObjectType>::value;
+
 };
 
 template <bool B, class BasicJson, class CompatibleArrayType>
@@ -216,20 +241,25 @@ template <class BasicJson, class CompatibleArrayType>
 struct is_compatible_array_type_impl<true, BasicJson, CompatibleArrayType>
 {
   static constexpr auto value =
-                 not std::is_same<CompatibleArrayType, typename BasicJson::iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename BasicJson::const_iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename BasicJson::reverse_iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename BasicJson::const_reverse_iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename BasicJson::array_t::iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename BasicJson::array_t::const_iterator>::value and
-                 std::is_constructible<BasicJson, typename CompatibleArrayType::value_type>::value;
+  conjunction<
+  negation<disjunction<
+                 std::is_same<CompatibleArrayType, typename BasicJson::iterator>,
+                 std::is_same<CompatibleArrayType, typename BasicJson::const_iterator>,
+                 std::is_same<CompatibleArrayType, typename BasicJson::reverse_iterator>,
+                 std::is_same<CompatibleArrayType, typename BasicJson::const_reverse_iterator>,
+                 std::is_same<CompatibleArrayType, typename BasicJson::array_t::iterator>,
+                 std::is_same<CompatibleArrayType, typename BasicJson::array_t::const_iterator>>>,
+                 std::is_constructible<BasicJson, typename CompatibleArrayType::value_type>>::value;
 
 };
 
 template <class BasicJson, class CompatibleArrayType>
 struct is_compatible_array_type
 {
-  static auto constexpr value = is_compatible_array_type_impl<not is_compatible_object_type<typename BasicJson::object_t, CompatibleArrayType>::value and has_value_type<CompatibleArrayType>::value and has_iterator<CompatibleArrayType>::value, BasicJson, CompatibleArrayType>::value;
+  static auto constexpr value = is_compatible_array_type_impl<
+  conjunction<negation<is_compatible_object_type<typename BasicJson::object_t, CompatibleArrayType>>,
+              has_value_type<CompatibleArrayType>,
+              has_iterator<CompatibleArrayType>>::value, BasicJson, CompatibleArrayType>::value;
 };
 
 template <bool, typename, typename>
