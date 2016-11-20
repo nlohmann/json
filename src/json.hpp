@@ -91,13 +91,37 @@ SOFTWARE.
 */
 namespace nlohmann
 {
+// TODO add real documentation before PR
 
+// Traits structure declaration, users can specialize it for their own types
+// 
+// constructing a json object from a user-defined type will call the
+// 'json to_json(T)' function
+//
+// whereas calling json::get<T> will call 'T from_json(json const&)'
+template <typename T, typename = void>
+struct json_traits;
 
+// alias templates to reduce boilerplate
+template <bool B, typename T = void>
+using enable_if_t = typename std::enable_if<B, T>::type;
+
+template <typename T>
+using remove_cv_t = typename std::remove_cv<T>::type;
+
+template <typename T>
+using remove_reference_t = typename std::remove_reference<T>::type;
+
+template <typename T>
+using uncvref_t = remove_cv_t<remove_reference_t<T>>;
+
+// TODO update this doc
 /*!
 @brief unnamed namespace with internal helper functions
 @since version 1.0.0
 */
-namespace
+
+namespace detail
 {
 /*!
 @brief Helper to determine whether there's a key_type for T.
@@ -122,6 +146,72 @@ struct has_mapped_type
         std::is_integral<decltype(detect(std::declval<T>()))>::value;
 };
 
+void to_json();
+void from_json();
+
+struct to_json_fn
+{
+  private:
+    // fallback overload
+    template <typename T>
+    static constexpr auto
+    impl(T &&val, long) noexcept(noexcept(to_json(std::forward<T>(val))))
+        -> decltype(to_json(std::forward<T>(val)))
+    {
+      return to_json(std::forward<T>(val));
+    }
+
+    // preferred overload
+    template <typename T>
+    static constexpr auto impl(T &&val, int) noexcept(
+        noexcept(json_traits<uncvref_t<T>>::to_json(std::forward<T>(val))))
+        -> decltype(json_traits<uncvref_t<T>>::to_json(std::forward<T>(val)))
+    {
+      return json_traits<uncvref_t<T>>::to_json(std::forward<T>(val));
+    }
+
+  public:
+    template <typename T>
+    constexpr auto operator()(T &&val) const
+        noexcept(noexcept(to_json_fn::impl(std::forward<T>(val), 0)))
+            -> decltype(to_json_fn::impl(std::forward<T>(val), 0))
+    {
+      // decltype(0) -> int, so the compiler will try to take the 'preferred overload'
+      // if there is no specialization, the 'fallback overload' will be taken by converting 0 to long
+      return to_json_fn::impl(std::forward<T>(val), 0);
+    }
+};
+
+struct from_json_fn
+{
+  private:
+    template <typename T, typename Json>
+    static constexpr auto impl(Json const &j, T &val,
+                               long) noexcept(noexcept(from_json(j, val)))
+        -> decltype(from_json(j, val))
+    {
+      return from_json(j, val);
+    }
+
+    template <typename T, typename Json>
+    static constexpr auto
+    impl(Json const &j, T &val,
+         int) noexcept(noexcept(json_traits<T>::from_json(j, val)))
+        -> decltype(json_traits<T>::from_json(j, val))
+    {
+      return json_traits<T>::from_json(j, val);
+    }
+
+  public:
+    template <typename T, typename Json>
+    constexpr auto operator()(Json const &j, T &val) const
+        noexcept(noexcept(from_json_fn::impl(j, val, 0)))
+            -> decltype(from_json_fn::impl(j, val, 0))
+    {
+      return from_json_fn::impl(j, val, 0);
+    }
+};
+
 /*!
 @brief helper class to create locales with decimal point
 
@@ -142,6 +232,23 @@ struct DecimalSeparator : std::numpunct<char>
     }
 };
 
+}
+
+// taken from ranges-v3
+// TODO add doc
+template <typename T>
+struct _static_const
+{
+  static constexpr T value{};
+};
+
+template <typename T>
+constexpr T _static_const<T>::value;
+
+inline namespace
+{
+  constexpr auto const& to_json = _static_const<detail::to_json_fn>::value;
+  constexpr auto const& from_json = _static_const<detail::from_json_fn>::value;
 }
 
 /*!
@@ -1225,6 +1332,31 @@ class basic_json
         assert_invariant();
     }
 
+    // constructor chosen for user-defined types that either have:
+    // - a to_json free function in their type's namespace
+    // - a json_traits specialization for their type
+    //
+    // If there is both a free function and a specialization, the latter will be chosen,
+    // since it is a more advanced use
+    //
+    // note: constructor is marked explicit to avoid the following issue:
+    //
+    // struct not_equality_comparable{};
+    // 
+    // not_equality_comparable{} == not_equality_comparable{};
+    // 
+    // this will construct implicitely 2 json objects and call operator== on them
+    // which can cause nasty bugs on the user's in json-unrelated code
+    // 
+    // the trade-off is expressiveness in initializer-lists
+    // auto j = json{{"a", json(not_equality_comparable{})}};
+    // 
+    // we can remove this constraint though, since lots of ctor are not explicit already
+    template <typename T, typename = decltype(::nlohmann::to_json(
+                              std::declval<uncvref_t<T>>()))>
+    explicit basic_json(T &&val)
+        : basic_json(::nlohmann::to_json(std::forward<T>(val))) {}
+
     /*!
     @brief create a string (explicit)
 
@@ -2201,7 +2333,7 @@ class basic_json
     {
         std::stringstream ss;
         // fix locale problems
-        const static std::locale loc(std::locale(), new DecimalSeparator);
+        const static std::locale loc(std::locale(), new detail::DecimalSeparator);
         ss.imbue(loc);
 
         // 6, 15 or 16 digits of precision allows round-trip IEEE 754
@@ -2584,7 +2716,6 @@ class basic_json
     // value access //
     //////////////////
 
-    /// get an object (explicit)
     template<class T, typename std::enable_if<
                  std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
                  std::is_convertible<basic_json_t, typename T::mapped_type>::value, int>::type = 0>
@@ -2619,7 +2750,7 @@ class basic_json
                  not std::is_same<basic_json_t, typename T::value_type>::value and
                  not std::is_arithmetic<T>::value and
                  not std::is_convertible<std::string, T>::value and
-                 not has_mapped_type<T>::value, int>::type = 0>
+                 not detail::has_mapped_type<T>::value, int>::type = 0>
     T get_impl(T*) const
     {
         if (is_array())
@@ -2664,7 +2795,7 @@ class basic_json
     /// get an array (explicit)
     template<class T, typename std::enable_if<
                  std::is_same<basic_json, typename T::value_type>::value and
-                 not has_mapped_type<T>::value, int>::type = 0>
+                 not detail::has_mapped_type<T>::value, int>::type = 0>
     T get_impl(T*) const
     {
         if (is_array())
@@ -2898,9 +3029,22 @@ class basic_json
     */
     template<typename ValueType, typename std::enable_if<
                  not std::is_pointer<ValueType>::value, int>::type = 0>
-    ValueType get() const
+    auto get() const -> decltype(this->get_impl(static_cast<ValueType*>(nullptr)))
     {
         return get_impl(static_cast<ValueType*>(nullptr));
+    }
+
+    template <typename ValueType>
+    auto get() const -> remove_reference_t<
+        decltype(::nlohmann::from_json(*this, std::declval<ValueType &>()),
+                 std::declval<ValueType>())>
+    {
+      static_assert(std::is_default_constructible<ValueType>::value,
+                    "ValueType must be default-constructible when user-defined "
+                    "from_json method is used");
+      ValueType ret;
+      ::nlohmann::from_json(*this, ret);
+      return ret;
     }
 
     /*!
@@ -5829,7 +5973,7 @@ class basic_json
         o.width(0);
 
         // fix locale problems
-        const auto old_locale = o.imbue(std::locale(std::locale(), new DecimalSeparator));
+        const auto old_locale = o.imbue(std::locale(std::locale(), new detail::DecimalSeparator));
         // set precision
 
         // 6, 15 or 16 digits of precision allows round-trip IEEE 754
