@@ -512,7 +512,7 @@ class basic_json
     /// workaround type for MSVC
     using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
           BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
-          AllocatorType>;
+          AllocatorType, JSONSerializer>;
 
   public:
     // forward declarations
@@ -1565,15 +1565,19 @@ class basic_json
     }
 
     // constructor chosen when JSONSerializer::to_json exists for type T
-    template <typename T, enable_if_t<detail::has_to_json<
-                              JSONSerializer, basic_json, uncvref_t<T>>::value and not (detail::is_compatible_object_type<object_t, uncvref_t<T>>::value or
-                                                                                        detail::is_compatible_array_type<basic_json_t, uncvref_t<T>>::value or
-                                                                                        detail::is_compatible_float_type<number_float_t, uncvref_t<T>>::value or
-                                                                                        detail::is_compatible_integer_type<number_integer_t, uncvref_t<T>>::value or
-                                                                                        detail::is_compatible_unsigned_integer_type<number_unsigned_t, uncvref_t<T>>::value or
-                                                                                        std::is_constructible<string_t, uncvref_t<T>>::value or
-                                                                                        std::is_base_of<std::istream, uncvref_t<T>>::value or
-                                                                                        std::is_same<boolean_t, uncvref_t<T>>::value), int> = 0>
+    template <typename T, enable_if_t<detail::conjunction<detail::negation<std::is_same<uncvref_t<T>, basic_json_t>>,
+detail::negation<detail::disjunction<
+                                     detail::is_compatible_array_type<basic_json_t, uncvref_t<T>>,
+                                     detail::is_compatible_object_type<object_t, uncvref_t<T>>,
+                                     detail::is_compatible_float_type<number_float_t, uncvref_t<T>>,
+                                     detail::is_compatible_integer_type<number_integer_t, uncvref_t<T>>,
+                                     detail::is_compatible_unsigned_integer_type<number_unsigned_t, uncvref_t<T>>,
+                                     std::is_constructible<string_t, uncvref_t<T>>,
+                                     std::is_base_of<std::istream, uncvref_t<T>>,
+                                     std::is_same<boolean_t, uncvref_t<T>>>>,
+                                                          detail::has_to_json<
+                              JSONSerializer, basic_json, uncvref_t<T>>
+>::value, int> = 0>
     explicit basic_json(T &&val)
     {
       JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
