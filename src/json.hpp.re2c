@@ -45,7 +45,7 @@ SOFTWARE.
 #include <iostream> // istream, ostream
 #include <iterator> // advance, begin, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
 #include <limits> // numeric_limits
-#include <locale> // locale, numpunct
+#include <locale> // locale
 #include <map> // map
 #include <memory> // addressof, allocator, allocator_traits, unique_ptr
 #include <numeric> // accumulate
