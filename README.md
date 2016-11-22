@@ -499,6 +499,8 @@ I deeply appreciate the help of the following people.
 - [ChristophJud](https://github.com/ChristophJud) overworked the CMake files to ease project inclusion.
 - [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable.
 - [Denis Andrejew](https://github.com/seeekr) fixed a grammar issue in the README file.
+- [Pierre-Antoine Lacaze](https://github.com/palacaze) found a subtle bug in the `dump()` function.
+- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling.
 
 Thanks a lot for helping out!
 
