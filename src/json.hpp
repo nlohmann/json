@@ -205,25 +205,28 @@ template <class BasicJson, class CompatibleArrayType>
 struct is_compatible_array_type_impl<true, BasicJson, CompatibleArrayType>
 {
   static constexpr auto value =
-  conjunction<
-  negation<disjunction<
-                 std::is_same<CompatibleArrayType, typename BasicJson::iterator>,
-                 std::is_same<CompatibleArrayType, typename BasicJson::const_iterator>,
-                 std::is_same<CompatibleArrayType, typename BasicJson::reverse_iterator>,
-                 std::is_same<CompatibleArrayType, typename BasicJson::const_reverse_iterator>,
-                 std::is_same<CompatibleArrayType, typename BasicJson::array_t::iterator>,
-                 std::is_same<CompatibleArrayType, typename BasicJson::array_t::const_iterator>>>,
-                 std::is_constructible<BasicJson, typename CompatibleArrayType::value_type>>::value;
+ not std::is_same<CompatibleArrayType, typename BasicJson::iterator>::value and 
+      not std::is_same<CompatibleArrayType, typename BasicJson::const_iterator>::value and
+     not std::is_same<CompatibleArrayType, typename BasicJson::reverse_iterator>::value and
+      not std::is_same<CompatibleArrayType, typename BasicJson::const_reverse_iterator>::value and
+      not std::is_same<CompatibleArrayType, typename BasicJson::array_t::iterator>::value and
+not       std::is_same<CompatibleArrayType, typename BasicJson::array_t::const_iterator>::value;
 
 };
 
 template <class BasicJson, class CompatibleArrayType>
 struct is_compatible_array_type
 {
-  static auto constexpr value = is_compatible_array_type_impl<
-  conjunction<negation<is_compatible_object_type<typename BasicJson::object_t, CompatibleArrayType>>,
-              has_value_type<CompatibleArrayType>,
-              has_iterator<CompatibleArrayType>>::value, BasicJson, CompatibleArrayType>::value;
+  static auto constexpr value = disjunction<std::is_same<BasicJson, CompatibleArrayType>,
+                                            is_compatible_array_type_impl<
+                                                    conjunction<negation<
+                      // MSVC has troubles on that one
+                                                    std::is_same<void, CompatibleArrayType>>,
+                                                    negation<is_compatible_object_type<
+                                                              typename BasicJson::object_t, CompatibleArrayType>>,
+                                                    has_value_type<CompatibleArrayType>,
+                                                    has_iterator<CompatibleArrayType>>::value,
+                                                    BasicJson, CompatibleArrayType>>::value;
 };
 
 template <bool, typename, typename>
@@ -270,14 +273,16 @@ struct is_compatible_float_type
 template <typename T, typename BasicJson>
 struct is_compatible_basic_json_type
 {
-  static auto constexpr value =  disjunction<
-                                     is_compatible_array_type<BasicJson, T>,
-                                     is_compatible_object_type<typename BasicJson::object_t, T>,
-                                     is_compatible_float_type<typename BasicJson::number_float_t, T>,
-                                     is_compatible_integer_type<typename BasicJson::number_integer_t, T>,
-                                     is_compatible_unsigned_integer_type<typename BasicJson::number_unsigned_t, T>,
-                                     std::is_constructible<typename BasicJson::string_t, T>,
-                                     std::is_same<typename BasicJson::boolean_t, T>>::value;
+  static auto constexpr value =  
+    
+                                     std::is_same<T, BasicJson>::value or
+                                     std::is_constructible<typename BasicJson::string_t, T>::value or
+                                     std::is_same<typename BasicJson::boolean_t, T>::value or
+                                     is_compatible_array_type<BasicJson, T>::value or
+                                     is_compatible_object_type<typename BasicJson::object_t, T>::value or
+                                     is_compatible_float_type<typename BasicJson::number_float_t, T>::value or
+                                     is_compatible_integer_type<typename BasicJson::number_integer_t, T>::value or
+                                     is_compatible_unsigned_integer_type<typename BasicJson::number_unsigned_t, T>::value;
 };
 
 template <template <typename, typename> class JSONSerializer, typename Json,
@@ -1531,14 +1536,20 @@ class basic_json
 
     @since version 1.0.0
     */
-    template<class CompatibleArrayType, enable_if_t<detail::is_compatible_array_type<basic_json_t, CompatibleArrayType>::value, int> = 0>
-    basic_json(const CompatibleArrayType& val)
-        : m_type(value_t::array)
-    {
-        using std::begin;
-        using std::end;
-        m_value.array = create<array_t>(begin(val), end(val));
-        assert_invariant();
+    template <
+        class CompatibleArrayType,
+        enable_if_t<
+            detail::disjunction<
+                // MSVC..
+                std::is_same<uncvref_t<CompatibleArrayType>, basic_json_t>,
+                detail::is_compatible_array_type<basic_json_t,
+                                                 CompatibleArrayType>>::value,
+            int> = 0>
+    basic_json(const CompatibleArrayType &val) : m_type(value_t::array) {
+      using std::begin;
+      using std::end;
+      m_value.array = create<array_t>(begin(val), end(val));
+      assert_invariant();
     }
 
 
