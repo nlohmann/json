@@ -8733,10 +8733,7 @@ basic_json_parser_66:
                 if (m_start != reinterpret_cast<const lexer_char_t*>(m_line_buffer.data()))
                 {
                     // copy unprocessed characters to line buffer
-                    m_line_buffer.clear();
-                    m_line_buffer.append(
-                        reinterpret_cast<const typename string_t::value_type*>(m_start),
-                        static_cast<size_t>(m_limit - m_start));
+                    m_line_buffer.assign(m_start, m_limit);
                     m_cursor = m_limit;
                 }
 
@@ -8842,18 +8839,16 @@ basic_json_parser_66:
             // iterate the result between the quotes
             for (const lexer_char_t* i = m_start + 1; i < m_cursor - 1; ++i)
             {
-                // number of non-escaped characters
-                const size_t n = static_cast<size_t>(std::find(i, m_cursor - 1, '\\') - i);
-
-                if (n != 0)
+                // find next escape character
+                auto e = std::find(i, m_cursor - 1, '\\');
+                if (e != i)
                 {
-                    result.append(reinterpret_cast<const typename string_t::value_type*>(i), n);
-                    i += n - 1; // -1 because will ++i
+                    result.append(i, e);
+                    i = e - 1; // -1 because of ++i
                 }
                 else
                 {
                     // processing escaped character
-
                     // read next character
                     ++i;
 
