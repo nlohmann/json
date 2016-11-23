@@ -183,19 +183,20 @@ template <class RealType, class CompatibleObjectType>
 struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
 {
   static constexpr auto value =
-                 std::is_constructible<typename RealType::key_type, typename CompatibleObjectType::key_type>::value and
-                 std::is_constructible<typename RealType::mapped_type, typename CompatibleObjectType::mapped_type>::value;
+      std::is_constructible<typename RealType::key_type,
+                            typename CompatibleObjectType::key_type>::value and
+      std::is_constructible<typename RealType::mapped_type,
+                            typename CompatibleObjectType::mapped_type>::value;
 };
 
 template<class RealType, class CompatibleObjectType>
 struct is_compatible_object_type
 {
   static auto constexpr value = is_compatible_object_type_impl<
-                                conjunction<negation<std::is_same<void, CompatibleObjectType>>,
-                                            has_mapped_type<CompatibleObjectType>,
-                                            has_key_type<CompatibleObjectType>>::value,
-                                RealType, CompatibleObjectType>::value;
-
+      conjunction<negation<std::is_same<void, CompatibleObjectType>>,
+                  has_mapped_type<CompatibleObjectType>,
+                  has_key_type<CompatibleObjectType>>::value,
+      RealType, CompatibleObjectType>::value;
 };
 
 template <bool B, class BasicJson, class CompatibleArrayType>
@@ -205,28 +206,34 @@ template <class BasicJson, class CompatibleArrayType>
 struct is_compatible_array_type_impl<true, BasicJson, CompatibleArrayType>
 {
   static constexpr auto value =
- not std::is_same<CompatibleArrayType, typename BasicJson::iterator>::value and 
-      not std::is_same<CompatibleArrayType, typename BasicJson::const_iterator>::value and
-     not std::is_same<CompatibleArrayType, typename BasicJson::reverse_iterator>::value and
-      not std::is_same<CompatibleArrayType, typename BasicJson::const_reverse_iterator>::value and
-      not std::is_same<CompatibleArrayType, typename BasicJson::array_t::iterator>::value and
-not       std::is_same<CompatibleArrayType, typename BasicJson::array_t::const_iterator>::value;
-
+      not std::is_same<CompatibleArrayType,
+                       typename BasicJson::iterator>::value and
+      not std::is_same<CompatibleArrayType,
+                       typename BasicJson::const_iterator>::value and
+      not std::is_same<CompatibleArrayType,
+                       typename BasicJson::reverse_iterator>::value and
+      not std::is_same<CompatibleArrayType,
+                       typename BasicJson::const_reverse_iterator>::value and
+      not std::is_same<CompatibleArrayType,
+                       typename BasicJson::array_t::iterator>::value and
+      not std::is_same<CompatibleArrayType,
+                       typename BasicJson::array_t::const_iterator>::value;
 };
 
 template <class BasicJson, class CompatibleArrayType>
 struct is_compatible_array_type
 {
-  static auto constexpr value = disjunction<std::is_same<BasicJson, CompatibleArrayType>,
-                                            is_compatible_array_type_impl<
-                                                    conjunction<negation<
-                      // MSVC has troubles on that one
-                                                    std::is_same<void, CompatibleArrayType>>,
-                                                    negation<is_compatible_object_type<
-                                                              typename BasicJson::object_t, CompatibleArrayType>>,
-                                                    has_value_type<CompatibleArrayType>,
-                                                    has_iterator<CompatibleArrayType>>::value,
-                                                    BasicJson, CompatibleArrayType>>::value;
+  static auto constexpr value = disjunction<
+      std::is_same<BasicJson, CompatibleArrayType>,
+      is_compatible_array_type_impl<
+          conjunction<negation<
+                          // MSVC has troubles without this
+                          std::is_same<void, CompatibleArrayType>>,
+                      negation<is_compatible_object_type<
+                          typename BasicJson::object_t, CompatibleArrayType>>,
+                      has_value_type<CompatibleArrayType>,
+                      has_iterator<CompatibleArrayType>>::value,
+          BasicJson, CompatibleArrayType>>::value;
 };
 
 template <bool, typename, typename>
@@ -235,15 +242,19 @@ struct is_compatible_integer_type_impl : std::false_type{};
 template <typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type_impl<true, RealIntegerType, CompatibleNumberIntegerType>
 {
- static constexpr auto value = std::is_constructible<RealIntegerType, CompatibleNumberIntegerType>::value and
-                 std::numeric_limits<CompatibleNumberIntegerType>::is_integer and
-                 std::numeric_limits<CompatibleNumberIntegerType>::is_signed;
+  static constexpr auto value =
+      std::is_constructible<RealIntegerType,
+                            CompatibleNumberIntegerType>::value and
+      std::numeric_limits<CompatibleNumberIntegerType>::is_integer and
+      std::numeric_limits<CompatibleNumberIntegerType>::is_signed;
 };
 
 template <typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type
 {
-  static constexpr auto value = is_compatible_integer_type_impl<std::is_arithmetic<CompatibleNumberIntegerType>::value, RealIntegerType, CompatibleNumberIntegerType>::value;
+  static constexpr auto value = is_compatible_integer_type_impl<
+      std::is_arithmetic<CompatibleNumberIntegerType>::value, RealIntegerType,
+      CompatibleNumberIntegerType>::value;
 };
 
 template <bool, typename, typename>
@@ -252,37 +263,43 @@ struct is_compatible_unsigned_integer_type_impl : std::false_type{};
 template <typename RealUnsignedType, typename CompatibleNumberUnsignedType>
 struct is_compatible_unsigned_integer_type_impl<true, RealUnsignedType, CompatibleNumberUnsignedType>
 {
- static constexpr auto value = std::is_constructible<RealUnsignedType, CompatibleNumberUnsignedType>::value and
-                 std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and
-                 not std::numeric_limits<CompatibleNumberUnsignedType>::is_signed;
+  static constexpr auto value =
+      std::is_constructible<RealUnsignedType,
+                            CompatibleNumberUnsignedType>::value and
+      std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and
+      not std::numeric_limits<CompatibleNumberUnsignedType>::is_signed;
 };
 
 template <typename RealUnsignedType, typename CompatibleNumberUnsignedType>
 struct is_compatible_unsigned_integer_type
 {
-  static constexpr auto value = is_compatible_unsigned_integer_type_impl<std::is_arithmetic<CompatibleNumberUnsignedType>::value, RealUnsignedType, CompatibleNumberUnsignedType>::value;
+  static constexpr auto value = is_compatible_unsigned_integer_type_impl<
+      std::is_arithmetic<CompatibleNumberUnsignedType>::value, RealUnsignedType,
+      CompatibleNumberUnsignedType>::value;
 };
 
 template <typename RealFloat, typename CompatibleFloat>
 struct is_compatible_float_type
 {
-  static constexpr auto value = std::is_constructible<RealFloat, CompatibleFloat>::value and
-                                std::is_floating_point<CompatibleFloat>::value;
+  static constexpr auto value =
+      std::is_constructible<RealFloat, CompatibleFloat>::value and
+      std::is_floating_point<CompatibleFloat>::value;
 };
 
 template <typename T, typename BasicJson>
 struct is_compatible_basic_json_type
 {
-  static auto constexpr value =  
-    
-                                     std::is_same<T, BasicJson>::value or
-                                     std::is_constructible<typename BasicJson::string_t, T>::value or
-                                     std::is_same<typename BasicJson::boolean_t, T>::value or
-                                     is_compatible_array_type<BasicJson, T>::value or
-                                     is_compatible_object_type<typename BasicJson::object_t, T>::value or
-                                     is_compatible_float_type<typename BasicJson::number_float_t, T>::value or
-                                     is_compatible_integer_type<typename BasicJson::number_integer_t, T>::value or
-                                     is_compatible_unsigned_integer_type<typename BasicJson::number_unsigned_t, T>::value;
+  static auto constexpr value =
+      std::is_same<T, BasicJson>::value or
+      std::is_constructible<typename BasicJson::string_t, T>::value or
+      std::is_same<typename BasicJson::boolean_t, T>::value or
+      is_compatible_array_type<BasicJson, T>::value or
+      is_compatible_object_type<typename BasicJson::object_t, T>::value or
+      is_compatible_float_type<typename BasicJson::number_float_t, T>::value or
+      is_compatible_integer_type<typename BasicJson::number_integer_t,
+                                 T>::value or
+      is_compatible_unsigned_integer_type<typename BasicJson::number_unsigned_t,
+                                          T>::value;
 };
 
 template <template <typename, typename> class JSONSerializer, typename Json,
@@ -322,23 +339,24 @@ void from_json();
 
 struct to_json_fn
 {
-    template <typename Json, typename T>
-    constexpr auto
-    operator()(Json&& j, T &&val) const noexcept(noexcept(to_json(std::forward<Json>(j), std::forward<T>(val))))
-        -> decltype(to_json(std::forward<Json>(j), std::forward<T>(val)), void())
-    {
-      return to_json(std::forward<Json>(j), std::forward<T>(val));
-    }
+  template <typename Json, typename T>
+  constexpr auto operator()(Json &&j, T &&val) const
+      noexcept(noexcept(to_json(std::forward<Json>(j), std::forward<T>(val))))
+          -> decltype(to_json(std::forward<Json>(j), std::forward<T>(val)),
+                      void())
+  {
+    return to_json(std::forward<Json>(j), std::forward<T>(val));
+  }
 };
 
 struct from_json_fn
 {
-    template <typename Json, typename T>
-    constexpr auto operator()(Json &&j, T &val) const
-                               noexcept(noexcept(from_json(std::forward<Json>(j), val)))
-        -> decltype(from_json(std::forward<Json>(j), val), void())
-    {
-      return from_json(std::forward<Json>(j), val);
+  template <typename Json, typename T>
+  constexpr auto operator()(Json &&j, T &val) const
+      noexcept(noexcept(from_json(std::forward<Json>(j), val)))
+          -> decltype(from_json(std::forward<Json>(j), val), void())
+  {
+    return from_json(std::forward<Json>(j), val);
     }
 };
 
@@ -1555,10 +1573,17 @@ class basic_json
 
     // constructor chosen when JSONSerializer::to_json exists for type T
     // first check avoids being chosen instead of move/copy constructor
-    template <typename T, enable_if_t<detail::conjunction<detail::negation<std::is_same<uncvref_t<T>, basic_json_t>>,
-detail::negation<std::is_base_of<std::istream, uncvref_t<T>>>,
-detail::negation<detail::is_compatible_basic_json_type<uncvref_t<T>, basic_json_t>>, detail::has_to_json<
-                              JSONSerializer, basic_json, uncvref_t<T>>>::value, int> = 0>
+    template <
+        typename T,
+        enable_if_t<
+            detail::conjunction<
+                detail::negation<std::is_same<uncvref_t<T>, basic_json_t>>,
+                detail::negation<std::is_base_of<std::istream, uncvref_t<T>>>,
+                detail::negation<detail::is_compatible_basic_json_type<
+                    uncvref_t<T>, basic_json_t>>,
+                detail::has_to_json<JSONSerializer, basic_json,
+                                    uncvref_t<T>>>::value,
+            int> = 0>
     explicit basic_json(T &&val)
     {
       JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
@@ -1757,7 +1782,11 @@ detail::negation<detail::is_compatible_basic_json_type<uncvref_t<T>, basic_json_
 
     @since version 1.0.0
     */
-    template<typename CompatibleNumberIntegerType, enable_if_t<detail::is_compatible_integer_type<number_integer_t, CompatibleNumberIntegerType>::value, int> = 0>
+    template <
+        typename CompatibleNumberIntegerType,
+        enable_if_t<detail::is_compatible_integer_type<
+                        number_integer_t, CompatibleNumberIntegerType>::value,
+                    int> = 0>
     basic_json(const CompatibleNumberIntegerType val) noexcept
         : m_type(value_t::number_integer),
           m_value(static_cast<number_integer_t>(val))
@@ -1811,7 +1840,11 @@ detail::negation<detail::is_compatible_basic_json_type<uncvref_t<T>, basic_json_
 
     @since version 2.0.0
     */
-    template<typename CompatibleNumberUnsignedType, enable_if_t<detail::is_compatible_unsigned_integer_type<number_unsigned_t, CompatibleNumberUnsignedType>::value, int> = 0>
+    template <
+        typename CompatibleNumberUnsignedType,
+        enable_if_t<detail::is_compatible_unsigned_integer_type<
+                        number_unsigned_t, CompatibleNumberUnsignedType>::value,
+                    int> = 0>
     basic_json(const CompatibleNumberUnsignedType val) noexcept
         : m_type(value_t::number_unsigned),
           m_value(static_cast<number_unsigned_t>(val))
@@ -1887,7 +1920,10 @@ detail::negation<detail::is_compatible_basic_json_type<uncvref_t<T>, basic_json_
 
     @since version 1.0.0
     */
-    template<typename CompatibleNumberFloatType, enable_if_t<detail::is_compatible_float_type<number_float_t, CompatibleNumberFloatType>::value, int> = 0>
+    template <typename CompatibleNumberFloatType,
+              enable_if_t<detail::is_compatible_float_type<
+                              number_float_t, CompatibleNumberFloatType>::value,
+                          int> = 0>
     basic_json(const CompatibleNumberFloatType val) noexcept
         : basic_json(number_float_t(val))
     {
@@ -2941,13 +2977,17 @@ detail::negation<detail::is_compatible_basic_json_type<uncvref_t<T>, basic_json_
     }
 
     /// get an array (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_convertible<basic_json_t, typename T::value_type>::value and
-                 not std::is_same<basic_json_t, typename T::value_type>::value and
-                 not std::is_arithmetic<T>::value and
-                 not std::is_convertible<std::string, T>::value and
-                 not detail::has_mapped_type<T>::value, int>::type = 0>
-    T get_impl(T* /*unused*/) const
+    template <
+        class T,
+        typename std::enable_if<
+            std::is_convertible<basic_json_t, typename T::value_type>::value and
+                not std::is_same<basic_json_t,
+                                 typename T::value_type>::value and
+                not std::is_arithmetic<T>::value and
+                not std::is_convertible<std::string, T>::value and
+                not detail::has_mapped_type<T>::value,
+            int>::type = 0>
+    T get_impl(T *) const
     {
         if (is_array())
         {
@@ -3225,9 +3265,14 @@ detail::negation<detail::is_compatible_basic_json_type<uncvref_t<T>, basic_json_
       return get_impl(static_cast<ValueType *>(nullptr));
     }
 
-    template <typename T,
-              enable_if_t<detail::conjunction<detail::negation<detail::is_compatible_basic_json_type<uncvref_t<T>, basic_json_t>>,
-                                              detail::has_from_json<JSONSerializer, basic_json_t, uncvref_t<T>>>::value, int> = 0>
+    template <
+        typename T,
+        enable_if_t<detail::conjunction<
+                        detail::negation<detail::is_compatible_basic_json_type<
+                            uncvref_t<T>, basic_json_t>>,
+                        detail::has_from_json<JSONSerializer, basic_json_t,
+                                              uncvref_t<T>>>::value,
+                    int> = 0>
     auto get() const -> uncvref_t<T>
     {
       using type = uncvref_t<T>;
