@@ -495,4 +495,10 @@ TEST_CASE("regression tests")
         json j = json::parse("22e2222");
         CHECK(j == json());
     }
+
+    SECTION("issue #366 - json::parse on failed stream gets stuck")
+    {
+        std::ifstream f("file_not_found.json");
+        CHECK_THROWS_AS(json::parse(f), std::invalid_argument);
+    }
 }

@@ -7597,6 +7597,12 @@ class basic_json
         explicit lexer(std::istream& s)
             : m_stream(&s), m_line_buffer()
         {
+            // immediately abort if stream is erroneous
+            if (s.fail())
+            {
+                throw std::invalid_argument("stream error: " +  std::string(strerror(errno)));
+            }
+
             // fill buffer
             fill_line_buffer();
 
