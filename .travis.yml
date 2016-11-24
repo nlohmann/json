@@ -84,22 +84,22 @@ matrix:
   # Coverity (only for branch coverity_scan)
 
   - os: linux
-    compiler: gcc
+    compiler: clang
     before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-5', 'valgrind']
+        packages: ['valgrind']
       coverity_scan:
         project:
           name: "nlohmann/json"
           description: "Build submitted via Travis CI"
         notification_email: niels.lohmann@gmail.com
-        build_command_prepend: "make clean ; sudo cp $(which g++-5) $(which g++)"
+        build_command_prepend: "make clean"
         build_command: "make"
         branch_pattern: coverity_scan
     env:
-      - COMPILER=g++-5
+      - LLVM_VERSION=3.6.0
       - SPECIAL=coverity
 
   # OSX / Clang
