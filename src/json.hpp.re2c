@@ -7892,7 +7892,10 @@ class basic_json
                 // append n characters to make sure that there is sufficient
                 // space between m_cursor and m_limit
                 m_line_buffer.append(1, '\x00');
-                m_line_buffer.append(n - 1, '\x01');
+                if (n > 0)
+                {
+                    m_line_buffer.append(n - 1, '\x01');
+                }
             }
             else
             {
