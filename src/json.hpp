@@ -8736,6 +8736,7 @@ basic_json_parser_66:
                     m_line_buffer.clear();
                     for (m_cursor = m_start; m_cursor != m_limit; ++m_cursor)
                     {
+                        assert(m_cursor != nullptr);
                         m_line_buffer.append(1, static_cast<const char>(*m_cursor));
                     }
                 }
