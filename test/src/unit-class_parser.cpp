@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.2
+|  |  |__   |  |  | | | |  version 2.0.7
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -31,6 +31,8 @@ SOFTWARE.
 #define private public
 #include "json.hpp"
 using nlohmann::json;
+
+#include <valarray>
 
 TEST_CASE("parser class")
 {
@@ -487,7 +489,7 @@ TEST_CASE("parser class")
                 case ('r'):
                 case ('t'):
                 {
-                    CHECK_NOTHROW(json::parser(s).parse());
+                    CHECK_NOTHROW(json::parser(s.c_str()).parse());
                     break;
                 }
 
@@ -500,8 +502,8 @@ TEST_CASE("parser class")
                 // any other combination of backslash and character is invalid
                 default:
                 {
-                    CHECK_THROWS_AS(json::parser(s).parse(), std::invalid_argument);
-                    CHECK_THROWS_WITH(json::parser(s).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_AS(json::parser(s.c_str()).parse(), std::invalid_argument);
+                    CHECK_THROWS_WITH(json::parser(s.c_str()).parse(), "parse error - unexpected '\"'");
                     break;
                 }
             }
@@ -559,22 +561,22 @@ TEST_CASE("parser class")
 
                 if (valid(c))
                 {
-                    CHECK_NOTHROW(json::parser(s1).parse());
-                    CHECK_NOTHROW(json::parser(s2).parse());
-                    CHECK_NOTHROW(json::parser(s3).parse());
-                    CHECK_NOTHROW(json::parser(s4).parse());
+                    CHECK_NOTHROW(json::parser(s1.c_str()).parse());
+                    CHECK_NOTHROW(json::parser(s2.c_str()).parse());
+                    CHECK_NOTHROW(json::parser(s3.c_str()).parse());
+                    CHECK_NOTHROW(json::parser(s4.c_str()).parse());
                 }
                 else
                 {
-                    CHECK_THROWS_AS(json::parser(s1).parse(), std::invalid_argument);
-                    CHECK_THROWS_AS(json::parser(s2).parse(), std::invalid_argument);
-                    CHECK_THROWS_AS(json::parser(s3).parse(), std::invalid_argument);
-                    CHECK_THROWS_AS(json::parser(s4).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s1.c_str()).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s2.c_str()).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s3.c_str()).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s4.c_str()).parse(), std::invalid_argument);
 
-                    CHECK_THROWS_WITH(json::parser(s1).parse(), "parse error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s2).parse(), "parse error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s3).parse(), "parse error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s4).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s1.c_str()).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s2.c_str()).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s3.c_str()).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s4.c_str()).parse(), "parse error - unexpected '\"'");
                 }
             }
         }
@@ -755,11 +757,47 @@ TEST_CASE("parser class")
         }
     }
 
-    SECTION("copy constructor")
+    SECTION("constructing from contiguous containers")
     {
-        json::string_t* s = new json::string_t("[1,2,3,4]");
-        json::parser p(*s);
-        delete s;
-        CHECK(p.parse() == json({1, 2, 3, 4}));
+        SECTION("from std::vector")
+        {
+            std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
+
+        SECTION("from std::array")
+        {
+            std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
+
+        SECTION("from array")
+        {
+            uint8_t v[] = {'t', 'r', 'u', 'e'};
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
+
+        SECTION("from char literal")
+        {
+            CHECK(json::parser("true").parse() == json(true));
+        }
+
+        SECTION("from std::string")
+        {
+            std::string v = {'t', 'r', 'u', 'e'};
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
+
+        SECTION("from std::initializer_list")
+        {
+            std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e'};
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
+
+        SECTION("from std::valarray")
+        {
+            std::valarray<uint8_t> v = {'t', 'r', 'u', 'e'};
+            CHECK(json::parser(std::begin(v), std::end(v)).parse() == json(true));
+        }
     }
 }

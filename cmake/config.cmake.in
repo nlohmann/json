@@ -1,4 +1,5 @@
 @PACKAGE_INIT@
+set_and_check(JSON_INCLUDE_DIR "@PACKAGE_JSON_INCLUDE_DESTINATION@")
 
 cmake_policy(PUSH)
 cmake_policy(SET CMP0024 OLD)

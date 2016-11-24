@@ -1,7 +1,51 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [v2.0.2](https://github.com/nlohmann/json/releases/tag/v2.0.2) (2016-07-30)
+## [v2.0.7](https://github.com/nlohmann/json/releases/tag/v2.0.7) (2016-11-02)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.6...v2.0.7)
+
+- ""-operators ignore the length parameter [\#340](https://github.com/nlohmann/json/issues/340)
+
+- Check "Parsing JSON is a Minefield" [\#344](https://github.com/nlohmann/json/issues/344)
+
+- fix minor grammar/style issue in README.md [\#336](https://github.com/nlohmann/json/pull/336) ([seeekr](https://github.com/seeekr))
+
+## [v2.0.6](https://github.com/nlohmann/json/releases/tag/v2.0.6) (2016-10-15)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.5...v2.0.6)
+
+- Add nested object capability to pointers [\#323](https://github.com/nlohmann/json/issues/323)
+- make has\_mapped\_type struct friendly [\#324](https://github.com/nlohmann/json/pull/324) ([vpetrigo](https://github.com/vpetrigo))
+
+- Fix usage examples' comments for std::multiset [\#322](https://github.com/nlohmann/json/issues/322)
+- json\_unit runs forever when executed in build directory [\#319](https://github.com/nlohmann/json/issues/319)
+
+- Fix usage examples' comments for std::multiset [\#321](https://github.com/nlohmann/json/pull/321) ([vasild](https://github.com/vasild))
+- Include dir relocation [\#318](https://github.com/nlohmann/json/pull/318) ([ChristophJud](https://github.com/ChristophJud))
+- trivial documentation fix [\#313](https://github.com/nlohmann/json/pull/313) ([5tefan](https://github.com/5tefan))
+
+## [v2.0.5](https://github.com/nlohmann/json/releases/tag/v2.0.5) (2016-09-14)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.4...v2.0.5)
+
+- make json\_benchmarks no longer working in 2.0.4 [\#310](https://github.com/nlohmann/json/issues/310)
+
+## [v2.0.4](https://github.com/nlohmann/json/releases/tag/v2.0.4) (2016-09-11)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.3...v2.0.4)
+
+- Parsing fails without space at end of file [\#306](https://github.com/nlohmann/json/issues/306)
+
+- Unused variable warning [\#304](https://github.com/nlohmann/json/issues/304)
+
+## [v2.0.3](https://github.com/nlohmann/json/releases/tag/v2.0.3) (2016-08-31)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.2...v2.0.3)
+
+- Support for iterator-range parsing [\#290](https://github.com/nlohmann/json/issues/290)
+
+- warning C4706: assignment within conditional expression [\#295](https://github.com/nlohmann/json/issues/295)
+- Horribly inconsistent behavior between const/non-const reference in operator \[\] \(\) [\#289](https://github.com/nlohmann/json/issues/289)
+
+- unit-constructor1.cpp: Fix floating point truncation warning [\#300](https://github.com/nlohmann/json/pull/300) ([t-b](https://github.com/t-b))
+
+## [v2.0.2](https://github.com/nlohmann/json/releases/tag/v2.0.2) (2016-07-31)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.1...v2.0.2)
 
 - value\(\) does not work with \_json\_pointer types [\#283](https://github.com/nlohmann/json/issues/283)
@@ -108,7 +152,6 @@ All notable changes to this project will be documented in this file. This projec
 - prevent json.hpp from emitting compiler warnings [\#154](https://github.com/nlohmann/json/issues/154)
 - json::parse\(string\) does not check utf8 bom [\#152](https://github.com/nlohmann/json/issues/152)
 - unsigned 64bit values output as signed [\#151](https://github.com/nlohmann/json/issues/151)
-- Wish feature: json5 [\#150](https://github.com/nlohmann/json/issues/150)
 - overload of at\(\) with default value [\#133](https://github.com/nlohmann/json/issues/133)
 - Memory leak in face of exceptions [\#118](https://github.com/nlohmann/json/issues/118)
 - Find and Count for arrays [\#117](https://github.com/nlohmann/json/issues/117)

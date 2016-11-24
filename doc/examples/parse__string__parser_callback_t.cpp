@@ -5,7 +5,7 @@ using json = nlohmann::json;
 int main()
 {
     // a JSON text
-    std::string text = R"(
+    auto text = R"(
     {
         "Image": {
             "Width":  800,

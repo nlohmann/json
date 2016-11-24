@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.2
+|  |  |__   |  |  | | | |  version 2.0.7
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -63,6 +63,22 @@ TEST_CASE("const_iterator class")
             json::const_iterator it(&j);
             json::const_iterator it2(&j);
             it2 = it;
+        }
+
+        SECTION("copy constructor from non-const iterator")
+        {
+            SECTION("create from uninitialized iterator")
+            {
+                const json::iterator it {};
+                json::const_iterator cit(it);
+            }
+
+            SECTION("create from initialized iterator")
+            {
+                json j;
+                const json::iterator it = j.begin();
+                json::const_iterator cit(it);
+            }
         }
     }
 

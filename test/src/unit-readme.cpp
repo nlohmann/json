@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.2
+|  |  |__   |  |  | | | |  version 2.0.7
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -208,8 +208,8 @@ TEST_CASE("README", "[hide]")
             // maybe ["two", "three", "four", "one"]
 
             std::multiset<std::string> c_mset {"one", "two", "one", "four"};
-            json j_mset(c_mset); // only one entry for "one" is used
-            // maybe ["one", "two", "four"]
+            json j_mset(c_mset); // both entries for "one" are used
+            // maybe ["one", "two", "one", "four"]
 
             std::unordered_multiset<std::string> c_umset {"one", "two", "one", "four"};
             json j_umset(c_umset); // both entries for "one" are used

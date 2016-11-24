@@ -66,13 +66,16 @@ fuzz: test/src/fuzz.cpp src/json.hpp
 cppcheck:
 	cppcheck --enable=warning --inconclusive --force --std=c++11 src/json.hpp --error-exitcode=1
 
+clang_sanitize: clean
+	CXX=clang++ CXXFLAGS="-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer" $(MAKE)
+
 ##########################################################################
 # maintainer targets
 ##########################################################################
 
 # create scanner with re2c
 re2c: src/json.hpp.re2c
-	$(RE2C) -W --bit-vectors --nested-ifs --no-debug-info $< | $(SED) '1d' > src/json.hpp
+	$(RE2C) -W --utf-8 --encoding-policy fail --bit-vectors --nested-ifs --no-debug-info $< | $(SED) '1d' > src/json.hpp
 
 # pretty printer
 pretty:
@@ -92,7 +95,7 @@ pretty:
 # benchmarks
 json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/cxxopts.hpp src/json.hpp
 	cd benchmarks/files/numbers ; python generate.py
-	$(CXX) -std=c++11 $(CXXFLAGS) -DNDEBUG -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
+	$(CXX) -std=c++11 -pthread $(CXXFLAGS) -DNDEBUG -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
 	./json_benchmarks
 
 

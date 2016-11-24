@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 # define the project
-project(nlohmann_json VERSION 2.0.2 LANGUAGES CXX)
+project(nlohmann_json VERSION 2.0.7 LANGUAGES CXX)
 
 enable_testing()
 
@@ -31,7 +31,8 @@ endif()
 include(CMakePackageConfigHelpers)
 configure_package_config_file("cmake/config.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${JSON_CONFIG_FILENAME}"
-    INSTALL_DESTINATION ${JSON_CONFIG_DESTINATION})
+    INSTALL_DESTINATION ${JSON_CONFIG_DESTINATION}
+    PATH_VARS JSON_INCLUDE_DESTINATION)
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${JSON_CONFIGVERSION_FILENAME}"
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion)
