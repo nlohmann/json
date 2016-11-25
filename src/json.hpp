@@ -8742,6 +8742,7 @@ basic_json_parser_66:
                     m_line_buffer.clear();
                     for (m_cursor = m_start; m_cursor != m_limit; ++m_cursor)
                     {
+                        assert(m_cursor != nullptr);
                         m_line_buffer.append(1, static_cast<const char>(*m_cursor));
                     }
                 }
@@ -8749,7 +8750,10 @@ basic_json_parser_66:
                 // append n characters to make sure that there is sufficient
                 // space between m_cursor and m_limit
                 m_line_buffer.append(1, '\x00');
-                m_line_buffer.append(n - 1, '\x01');
+                if (n > 0)
+                {
+                    m_line_buffer.append(n - 1, '\x01');
+                }
             }
             else
             {
