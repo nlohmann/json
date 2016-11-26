@@ -397,6 +397,29 @@ struct my_serializer
   }
 };
 
+// partial specialization on optional_type
+template <typename T>
+struct my_serializer<udt::optional_type<T>>
+{
+  template <typename Json>
+  static void from_json(Json const& j, udt::optional_type<T>& opt)
+  {
+    if (j.is_null())
+      opt = nullptr;
+    else
+      opt = j.get<T>();
+  }
+
+  template <typename Json>
+  static void to_json(Json& j, udt::optional_type<T> const& opt)
+  {
+    if (opt)
+      j = *opt;
+    else
+      j = nullptr;
+  }
+};
+
 using my_json = nlohmann::basic_json<std::map, std::vector, std::string, bool,
                                      std::int64_t, std::uint64_t, double,
                                      std::allocator, my_serializer>;
@@ -414,7 +437,7 @@ namespace udt
   }
 }
 
-TEST_CASE("custom serializer")
+TEST_CASE("custom serializer", "[udt]")
 {
   SECTION("default use works like default serializer")
   {
@@ -428,5 +451,18 @@ TEST_CASE("custom serializer")
     auto const pod3 = j2.get<udt::pod_type>();
     CHECK(pod2 == pod3);
     CHECK(pod2 == pod);
+  }
+
+  SECTION("serializer specialization")
+  {
+    udt::optional_type<int> opt;
+
+    json j{opt};
+    CHECK(j.is_null());
+
+    opt = 42;
+    j = json{opt};
+    CHECK(j.get<udt::optional_type<int>>() == opt);
+    CHECK(42 == j.get<int>());
   }
 }

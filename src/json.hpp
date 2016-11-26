@@ -289,6 +289,8 @@ struct is_compatible_basic_json_type
                                  T>::value;
 };
 
+
+// This trait checks if JSONSerializer<T>::from_json exists
 template <template <typename, typename> class JSONSerializer, typename Json,
           typename T>
 struct has_from_json
@@ -305,6 +307,7 @@ public:
       detect(std::declval<JSONSerializer<T, void>>()))>::value;
 };
 
+// This trait checks if JSONSerializer<T>::to_json exists
 template <template <typename, typename> class JSONSerializer, typename Json,
           typename T>
 struct has_to_json
@@ -322,7 +325,7 @@ public:
 };
 
 // those declarations are needed to workaround a MSVC bug related to ADL
-// (idea taken from MSVC-Ranges implementation
+// (taken from MSVC-Ranges implementation)
 void to_json();
 void from_json();
 
