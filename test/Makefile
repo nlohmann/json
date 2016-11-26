@@ -10,6 +10,7 @@ SOURCES = src/unit.cpp \
           src/unit-algorithms.cpp \
           src/unit-allocator.cpp \
           src/unit-capacity.cpp \
+          src/unit-cbor.cpp \
           src/unit-class_const_iterator.cpp \
           src/unit-class_iterator.cpp \
           src/unit-class_lexer.cpp \
