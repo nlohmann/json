@@ -495,4 +495,25 @@ TEST_CASE("regression tests")
         json j = json::parse("22e2222");
         CHECK(j == json());
     }
+
+    SECTION("issue #366 - json::parse on failed stream gets stuck")
+    {
+        std::ifstream f("file_not_found.json");
+        CHECK_THROWS_AS(json::parse(f), std::invalid_argument);
+    }
+
+    SECTION("issue #367 - calling stream at EOF")
+    {
+        std::stringstream ss;
+        json j;
+        ss << "123";
+        CHECK_NOTHROW(j << ss);
+
+        // see https://github.com/nlohmann/json/issues/367#issuecomment-262841893:
+        // ss is not at EOF; this yielded an error before the fix
+        // (threw basic_string::append). No, it should just throw
+        // a parse error because of the EOF.
+        CHECK_THROWS_AS(j << ss, std::invalid_argument);
+        CHECK_THROWS_WITH(j << ss, "parse error - unexpected end of input");
+    }
 }
