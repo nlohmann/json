@@ -7868,8 +7868,22 @@ class basic_json
         */
         void fill_line_buffer(size_t n = 0)
         {
+            // if line buffer is used, m_content points to its data
+            assert(m_line_buffer.empty()
+                   or m_content == reinterpret_cast<const lexer_char_t*>(m_line_buffer.data()));
+
+            // if line buffer is used, m_limit is set past the end of its data
+            assert(m_line_buffer.empty()
+                   or m_limit == m_content + m_line_buffer.size());
+
+            // pointer relationships
+            assert(m_content <= m_start);
+            assert(m_start <= m_cursor);
+            assert(m_cursor <= m_limit);
+            assert(m_marker == nullptr or m_marker  <= m_limit);
+
             // number of processed characters (p)
-            const auto offset_start = m_start - m_content;
+            const size_t num_processed_chars = static_cast<size_t>(m_start - m_content);
             // offset for m_marker wrt. to m_start
             const auto offset_marker = (m_marker == nullptr) ? 0 : m_marker - m_start;
             // number of unprocessed characters (u)
@@ -7878,23 +7892,23 @@ class basic_json
             // no stream is used or end of file is reached
             if (m_stream == nullptr or m_stream->eof())
             {
-                // skip this part if we are already using the line buffer
-                if (m_start != reinterpret_cast<const lexer_char_t*>(m_line_buffer.data()))
-                {
-                    // copy unprocessed characters to line buffer
-                    m_line_buffer.assign(m_start, m_limit);
-                    m_cursor = m_limit;
-                }
+                // m_start may or may not be pointing into m_line_buffer at
+                // this point. We trust the standand library to do the right
+                // thing. See http://stackoverflow.com/q/28142011/266378
+                m_line_buffer.assign(m_start, m_limit);
 
                 // append n characters to make sure that there is sufficient
                 // space between m_cursor and m_limit
                 m_line_buffer.append(1, '\x00');
-                m_line_buffer.append(n - 1, '\x01');
+                if (n > 0)
+                {
+                    m_line_buffer.append(n - 1, '\x01');
+                }
             }
             else
             {
                 // delete processed characters from line buffer
-                m_line_buffer.erase(0, static_cast<size_t>(offset_start));
+                m_line_buffer.erase(0, num_processed_chars);
                 // read next line from input stream
                 m_line_buffer_tmp.clear();
                 std::getline(*m_stream, m_line_buffer_tmp, '\n');
@@ -7905,7 +7919,7 @@ class basic_json
             }
 
             // set pointers
-            m_content = reinterpret_cast<const lexer_char_t*>(m_line_buffer.c_str());
+            m_content = reinterpret_cast<const lexer_char_t*>(m_line_buffer.data());
             assert(m_content != nullptr);
             m_start  = m_content;
             m_marker = m_start + offset_marker;
@@ -7992,7 +8006,11 @@ class basic_json
                 auto e = std::find(i, m_cursor - 1, '\\');
                 if (e != i)
                 {
-                    result.append(i, e);
+                    // see https://github.com/nlohmann/json/issues/365#issuecomment-262874705
+                    for (auto k = i; k < e; k++)
+                    {
+                        result.push_back(static_cast<typename string_t::value_type>(*k));
+                    }
                     i = e - 1; // -1 because of ++i
                 }
                 else
