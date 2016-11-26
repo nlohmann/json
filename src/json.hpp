@@ -6121,11 +6121,11 @@ class basic_json
 
     /// @}
 
-    /////////////////////////
-    // MessagePack support //
-    /////////////////////////
+    //////////////////////////////////////////
+    // binary serialization/deserialization //
+    //////////////////////////////////////////
 
-    /// @name MessagePack support
+    /// @name binary serialization/deserialization support
     /// @{
 
   private:
@@ -6349,6 +6349,334 @@ class basic_json
                 {
                     to_msgpack_internal(el.first, v);
                     to_msgpack_internal(el.second, v);
+                }
+                break;
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+    }
+
+    static void to_cbor_internal(const basic_json& j, std::vector<uint8_t>& v)
+    {
+        switch (j.type())
+        {
+            case value_t::null:
+            {
+                v.push_back(0xf6);
+                break;
+            }
+
+            case value_t::boolean:
+            {
+                v.push_back(j.m_value.boolean ? 0xf5 : 0xf4);
+                break;
+            }
+
+            case value_t::number_integer:
+            {
+                if (j.m_value.number_integer >= 0)
+                {
+                    // CBOR does not differentiate between positive signed
+                    // integers and unsigned integers. Therefore, we used the
+                    // code from the value_t::number_unsigned case here.
+                    if (j.m_value.number_integer < 0x17)
+                    {
+                        v.push_back(static_cast<uint8_t>(j.m_value.number_integer));
+                    }
+                    else if (j.m_value.number_integer <= UINT8_MAX)
+                    {
+                        v.push_back(0x18);
+                        // one-byte uint8_t
+                        v.push_back(static_cast<uint8_t>(j.m_value.number_integer));
+                    }
+                    else if (j.m_value.number_integer <= UINT16_MAX)
+                    {
+                        v.push_back(0x19);
+                        // two-byte uint16_t
+                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
+                        v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                    }
+                    else if (j.m_value.number_integer <= UINT32_MAX)
+                    {
+                        v.push_back(0x1a);
+                        // four-byte uint32_t
+                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 030) & 0xff));
+                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 020) & 0xff));
+                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
+                        v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                    }
+                    else if (j.m_value.number_integer <= UINT64_MAX)
+                    {
+                        v.push_back(0xcf);
+                        // eight-byte uint64_t
+                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 070) & 0xff));
+                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 060) & 0xff));
+                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 050) & 0xff));
+                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 040) & 0xff));
+                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 030) & 0xff));
+                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 020) & 0xff));
+                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
+                        v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                    }
+                }
+                else
+                {
+                    // The conversions below encode the sign in the first byte,
+                    // and the value is converted to a positive number.
+                    const auto positive_number = -1 - j.m_value.number_integer;
+                    if (j.m_value.number_integer <= -1 and j.m_value.number_integer >= -24)
+                    {
+                        v.push_back(static_cast<uint8_t>(0x20 + positive_number));
+                    }
+                    else if (positive_number <= UINT8_MAX)
+                    {
+                        // int 8
+                        v.push_back(0x38);
+                        v.push_back(static_cast<uint8_t>(positive_number));
+                    }
+                    else if (positive_number <= UINT16_MAX)
+                    {
+                        // int 16
+                        v.push_back(0x39);
+                        v.push_back(static_cast<uint8_t>((positive_number >> 010) & 0xff));
+                        v.push_back(static_cast<uint8_t>(positive_number & 0xff));
+                    }
+                    else if (positive_number <= UINT32_MAX)
+                    {
+                        // int 32
+                        v.push_back(0x3a);
+                        v.push_back(static_cast<uint8_t>((positive_number >> 030) & 0xff));
+                        v.push_back(static_cast<uint8_t>((positive_number >> 020) & 0xff));
+                        v.push_back(static_cast<uint8_t>((positive_number >> 010) & 0xff));
+                        v.push_back(static_cast<uint8_t>(positive_number & 0xff));
+                    }
+                    else if (positive_number <= UINT64_MAX)
+                    {
+                        // int 64
+                        v.push_back(0x3b);
+                        v.push_back(static_cast<uint8_t>((positive_number >> 070) & 0xff));
+                        v.push_back(static_cast<uint8_t>((positive_number >> 060) & 0xff));
+                        v.push_back(static_cast<uint8_t>((positive_number >> 050) & 0xff));
+                        v.push_back(static_cast<uint8_t>((positive_number >> 040) & 0xff));
+                        v.push_back(static_cast<uint8_t>((positive_number >> 030) & 0xff));
+                        v.push_back(static_cast<uint8_t>((positive_number >> 020) & 0xff));
+                        v.push_back(static_cast<uint8_t>((positive_number >> 010) & 0xff));
+                        v.push_back(static_cast<uint8_t>(positive_number & 0xff));
+                    }
+                    break;
+                }
+            }
+
+            case value_t::number_unsigned:
+            {
+                if (j.m_value.number_unsigned < 0x17)
+                {
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned));
+                }
+                else if (j.m_value.number_unsigned <= 0xff)
+                {
+                    v.push_back(0x18);
+                    // one-byte uint8_t
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned));
+                }
+                else if (j.m_value.number_unsigned <= 0xffff)
+                {
+                    v.push_back(0x19);
+                    // two-byte uint16_t
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                }
+                else if (j.m_value.number_unsigned <= 0xffffffff)
+                {
+                    v.push_back(0x1a);
+                    // four-byte uint32_t
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                }
+                else if (j.m_value.number_unsigned <= 0xffffffffffffffff)
+                {
+                    v.push_back(0xcf);
+                    // eight-byte uint64_t
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 070) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 060) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 050) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 040) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                }
+                break;
+            }
+
+            case value_t::number_float:
+            {
+                // Double-Precision Float
+                v.push_back(0xfb);
+                const uint8_t* helper = reinterpret_cast<const uint8_t*>(&(j.m_value.number_float));
+                for (size_t i = 0; i < 8; ++i)
+                {
+                    v.push_back(helper[7 - i]);
+                }
+                break;
+            }
+
+            case value_t::string:
+            {
+                const auto N = j.m_value.string->size();
+                if (N <= 0x17)
+                {
+                    v.push_back(0x60 + N);
+                }
+                else if (N <= 0xff)
+                {
+                    v.push_back(0x78);
+                    // one-byte uint8_t for N
+                    v.push_back(static_cast<uint8_t>(N));
+                }
+                else if (N <= 0xffff)
+                {
+                    v.push_back(0x79);
+                    // two-byte uint16_t for N
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+                else if (N <= 0xffffffff)
+                {
+                    v.push_back(0x7a);
+                    // four-byte uint32_t for N
+                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+                else if (N <= 0xffffffffffffffff)
+                {
+                    v.push_back(0x7b);
+                    // eight-byte uint64_t for N
+                    v.push_back(static_cast<uint8_t>((N >> 070) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 060) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 050) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 040) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+
+                // append string
+                std::copy(j.m_value.string->begin(), j.m_value.string->end(),
+                          std::back_inserter(v));
+                break;
+            }
+
+            case value_t::array:
+            {
+                const auto N = j.m_value.array->size();
+                if (N <= 0x17)
+                {
+                    // 1 byte for array + size
+                    v.push_back(0x80 + N);
+                }
+                else if (N <= 0xff)
+                {
+                    v.push_back(0x98);
+                    // one-byte uint8_t for N
+                    v.push_back(static_cast<uint8_t>(N));
+                }
+                else if (N <= 0xffff)
+                {
+                    v.push_back(0x99);
+                    // two-byte uint16_t for N
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+                else if (N <= 0xffffffff)
+                {
+                    v.push_back(0x9a);
+                    // four-byte uint32_t for N
+                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+                else if (N <= 0xffffffffffffffff)
+                {
+                    v.push_back(0x9b);
+                    // eight-byte uint64_t for N
+                    v.push_back(static_cast<uint8_t>((N >> 070) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 060) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 050) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 040) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+
+                // append each element
+                for (const auto& el : *j.m_value.array)
+                {
+                    to_cbor_internal(el, v);
+                }
+                break;
+            }
+
+            case value_t::object:
+            {
+                const auto N = j.m_value.object->size();
+                if (N <= 0x17)
+                {
+                    // 1 byte for array + size
+                    v.push_back(0xa0 + N);
+                }
+                else if (N <= 0xff)
+                {
+                    v.push_back(0xb8);
+                    // one-byte uint8_t for N
+                    v.push_back(static_cast<uint8_t>(N));
+                }
+                else if (N <= 0xffff)
+                {
+                    v.push_back(0xb9);
+                    // two-byte uint16_t for N
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+                else if (N <= 0xffffffff)
+                {
+                    v.push_back(0xba);
+                    // four-byte uint32_t for N
+                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+                else if (N <= 0xffffffffffffffff)
+                {
+                    v.push_back(0xbb);
+                    // eight-byte uint64_t for N
+                    v.push_back(static_cast<uint8_t>((N >> 070) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 060) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 050) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 040) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
+                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
+                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                }
+
+                // append each element
+                for (const auto& el : *j.m_value.object)
+                {
+                    to_cbor_internal(el.first, v);
+                    to_cbor_internal(el.second, v);
                 }
                 break;
             }
@@ -6595,6 +6923,323 @@ class basic_json
         throw std::invalid_argument("error parsing a msgpack @ " + std::to_string(current_idx));
     }
 
+    static basic_json from_cbor_internal(const std::vector<uint8_t>& v, size_t& idx)
+    {
+        // store and increment index
+        const size_t current_idx = idx++;
+
+        if (v[current_idx] <= 0x17) // Integer 0x00..0x17
+        {
+            return v[current_idx];
+        }
+        else if (v[current_idx] == 0x18) // Unsigned integer uint8_t
+        {
+            idx += 1; // skip content byte
+            return v[current_idx + 1];
+        }
+        else if (v[current_idx] == 0x19) // Unsigned integer uint16_t
+        {
+            idx += 2; // skip 2 content bytes
+            return static_cast<uint16_t>((static_cast<uint16_t>(v[current_idx + 1]) << 010) +
+                                         static_cast<uint16_t>(v[current_idx + 2]));
+        }
+        else if (v[current_idx] == 0x1a) // Unsigned integer uint32_t
+        {
+            idx += 4; // skip 4 content bytes
+            return static_cast<uint32_t>((static_cast<uint32_t>(v[current_idx + 1]) << 030) +
+                                         (static_cast<uint32_t>(v[current_idx + 2]) << 020) +
+                                         (static_cast<uint32_t>(v[current_idx + 3]) << 010) +
+                                         static_cast<uint32_t>(v[current_idx + 4]));
+        }
+        else if (v[current_idx] == 0x1b) // Unsigned integer uint64_t
+        {
+            idx += 8; // skip 8 content bytes
+            return static_cast<uint64_t>((static_cast<uint64_t>(v[current_idx + 1]) << 070) +
+                                         (static_cast<uint64_t>(v[current_idx + 2]) << 060) +
+                                         (static_cast<uint64_t>(v[current_idx + 3]) << 050) +
+                                         (static_cast<uint64_t>(v[current_idx + 4]) << 040) +
+                                         (static_cast<uint64_t>(v[current_idx + 5]) << 030) +
+                                         (static_cast<uint64_t>(v[current_idx + 6]) << 020) +
+                                         (static_cast<uint64_t>(v[current_idx + 7]) << 010) +
+                                         static_cast<uint64_t>(v[current_idx + 8]));
+        }
+        else if (v[current_idx] >= 0x20 and v[current_idx] <= 0x37) // Negative integer
+        {
+            return static_cast<int8_t>(0x20 - 1 - v[current_idx]);
+        }
+        else if (v[current_idx] == 0x38) // Negative integer
+        {
+            idx += 1; // skip content byte
+            return static_cast<int16_t>(-1 - v[current_idx + 1]);
+        }
+        else if (v[current_idx] == 0x39) // Negative integer
+        {
+            idx += 2; // skip 2 content bytes
+            return -1 - static_cast<int16_t>((static_cast<int16_t>(v[current_idx + 1]) << 010) +
+                                             static_cast<int16_t>(v[current_idx + 2]));
+        }
+        else if (v[current_idx] == 0x3a) // Negative integer
+        {
+            idx += 4; // skip 4 content bytes
+            return -1 - static_cast<int32_t>((static_cast<int32_t>(v[current_idx + 1]) << 030) +
+                                             (static_cast<int32_t>(v[current_idx + 2]) << 020) +
+                                             (static_cast<int32_t>(v[current_idx + 3]) << 010) +
+                                             static_cast<int32_t>(v[current_idx + 4]));
+        }
+        else if (v[current_idx] == 0x3b) // Negative integer
+        {
+            idx += 8; // skip 8 content bytes
+            return -1 - static_cast<int64_t>((static_cast<int64_t>(v[current_idx + 1]) << 070) +
+                                             (static_cast<int64_t>(v[current_idx + 2]) << 060) +
+                                             (static_cast<int64_t>(v[current_idx + 3]) << 050) +
+                                             (static_cast<int64_t>(v[current_idx + 4]) << 040) +
+                                             (static_cast<int64_t>(v[current_idx + 5]) << 030) +
+                                             (static_cast<int64_t>(v[current_idx + 6]) << 020) +
+                                             (static_cast<int64_t>(v[current_idx + 7]) << 010) +
+                                             static_cast<int64_t>(v[current_idx + 8]));
+        }
+        else if (v[current_idx] >= 0x60 and v[current_idx] <= 0x77) // UTF-8 string
+        {
+            const size_t len = v[current_idx] - 0x60;
+            const size_t offset = current_idx + 1;
+            idx += len; // skip content bytes
+            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+        }
+        else if (v[current_idx] == 0x78) // UTF-8 string
+        {
+            const size_t len = v[current_idx + 1];
+            const size_t offset = current_idx + 2;
+            idx += len + 1; // skip size byte + content bytes
+            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+        }
+        else if (v[current_idx] == 0x79) // UTF-8 string
+        {
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) + v[current_idx + 2]);
+            const size_t offset = current_idx + 3;
+            idx += len + 2; // skip 2 size bytes + content bytes
+            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+        }
+        else if (v[current_idx] == 0x7a) // UTF-8 string
+        {
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
+                                                   (v[current_idx + 2] << 020) +
+                                                   (v[current_idx + 3] << 010) +
+                                                   v[current_idx + 4]);
+            const size_t offset = current_idx + 5;
+            idx += len + 4; // skip 4 size bytes + content bytes
+            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+        }
+        else if (v[current_idx] == 0x7b) // UTF-8 string
+        {
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 070) +
+                                                   (v[current_idx + 2] << 060) +
+                                                   (v[current_idx + 3] << 050) +
+                                                   (v[current_idx + 4] << 040) +
+                                                   (v[current_idx + 5] << 030) +
+                                                   (v[current_idx + 6] << 020) +
+                                                   (v[current_idx + 7] << 010) +
+                                                   v[current_idx + 8]);
+            const size_t offset = current_idx + 5;
+            idx += len + 4; // skip 4 size bytes + content bytes
+            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+        }
+        else if (v[current_idx] >= 0x80 and v[current_idx] <= 0x97) // array
+        {
+            basic_json result = value_t::array;
+            const size_t len = v[current_idx] - 0x80;
+            for (size_t i = 0; i < len; ++i)
+            {
+                result.push_back(from_cbor_internal(v, idx));
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0x98) // array
+        {
+            basic_json result = value_t::array;
+            const size_t len = static_cast<size_t>(v[current_idx + 1]);
+            idx += 1; // skip 1 size byte
+            for (size_t i = 0; i < len; ++i)
+            {
+                result.push_back(from_cbor_internal(v, idx));
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0x99) // array
+        {
+            basic_json result = value_t::array;
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) +
+                                                   v[current_idx + 2]);
+            idx += 2; // skip 4 size bytes
+            for (size_t i = 0; i < len; ++i)
+            {
+                result.push_back(from_cbor_internal(v, idx));
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0x9a) // array
+        {
+            basic_json result = value_t::array;
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
+                                                   (v[current_idx + 2] << 020) +
+                                                   (v[current_idx + 3] << 010) +
+                                                   v[current_idx + 4]);
+            idx += 4; // skip 4 size bytes
+            for (size_t i = 0; i < len; ++i)
+            {
+                result.push_back(from_cbor_internal(v, idx));
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0x9b) // array
+        {
+            basic_json result = value_t::array;
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 070) +
+                                                   (v[current_idx + 2] << 060) +
+                                                   (v[current_idx + 3] << 050) +
+                                                   (v[current_idx + 4] << 040) +
+                                                   (v[current_idx + 5] << 030) +
+                                                   (v[current_idx + 6] << 020) +
+                                                   (v[current_idx + 7] << 010) +
+                                                   v[current_idx + 8]);
+            idx += 8; // skip 8 size bytes
+            for (size_t i = 0; i < len; ++i)
+            {
+                result.push_back(from_cbor_internal(v, idx));
+            }
+            return result;
+        }
+        else if (v[current_idx] >= 0xa0 and v[current_idx] <= 0xb7) // map
+        {
+            basic_json result = value_t::object;
+            const size_t len = v[current_idx] - 0xa0;
+            for (size_t i = 0; i < len; ++i)
+            {
+                std::string key = from_cbor_internal(v, idx);
+                result[key] = from_cbor_internal(v, idx);
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0xb8) // map
+        {
+            basic_json result = value_t::object;
+            const size_t len = static_cast<size_t>(v[current_idx + 1]);
+            idx += 1; // skip 1 size byte
+            for (size_t i = 0; i < len; ++i)
+            {
+                std::string key = from_cbor_internal(v, idx);
+                result[key] = from_cbor_internal(v, idx);
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0xb9) // map
+        {
+            basic_json result = value_t::object;
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) +
+                                                   v[current_idx + 2]);
+            idx += 2; // skip 2 size bytes
+            for (size_t i = 0; i < len; ++i)
+            {
+                std::string key = from_cbor_internal(v, idx);
+                result[key] = from_cbor_internal(v, idx);
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0xba) // map
+        {
+            basic_json result = value_t::object;
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
+                                                   (v[current_idx + 2] << 020) +
+                                                   (v[current_idx + 3] << 010) +
+                                                   v[current_idx + 4]);
+            idx += 4; // skip 4 size bytes
+            for (size_t i = 0; i < len; ++i)
+            {
+                std::string key = from_cbor_internal(v, idx);
+                result[key] = from_cbor_internal(v, idx);
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0xbb) // map
+        {
+            basic_json result = value_t::object;
+            const size_t len = static_cast<size_t>((v[current_idx + 1] << 070) +
+                                                   (v[current_idx + 2] << 060) +
+                                                   (v[current_idx + 3] << 050) +
+                                                   (v[current_idx + 4] << 040) +
+                                                   (v[current_idx + 5] << 030) +
+                                                   (v[current_idx + 6] << 020) +
+                                                   (v[current_idx + 7] << 010) +
+                                                   v[current_idx + 8]);
+            idx += 8; // skip 8 size bytes
+            for (size_t i = 0; i < len; ++i)
+            {
+                std::string key = from_cbor_internal(v, idx);
+                result[key] = from_cbor_internal(v, idx);
+            }
+            return result;
+        }
+        else if (v[current_idx] == 0xf4) // false
+        {
+            return false;
+        }
+        else if (v[current_idx] == 0xf5) // true
+        {
+            return true;
+        }
+        else if (v[current_idx] == 0xf6) // null
+        {
+            return value_t::null;
+        }
+        else if (v[current_idx] == 0xfa) // Single-Precision Float
+        {
+            // copy bytes in reverse order into the float variable
+            float res;
+            for (size_t byte = 0; byte < sizeof(float); ++byte)
+            {
+                reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v[current_idx + 1 + byte];
+            }
+            idx += sizeof(float); // skip content bytes
+            return res;
+        }
+        else if (v[current_idx] == 0xfb) // Double-Precision Float
+        {
+            // copy bytes in reverse order into the double variable
+            double res;
+            for (size_t byte = 0; byte < sizeof(double); ++byte)
+            {
+                reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v[current_idx + 1 + byte];
+            }
+            idx += sizeof(double); // skip content bytes
+            return res;
+        }
+
+        // 40..57 byte string
+        // 58 byte string
+        // 59 byte string
+        // 5a byte string
+        // 5b byte string
+        // 5f byte string
+        // 7f UTF-8 string with break
+        // 9f array with break
+        // bf map with break
+        // c0 Text-based date/time
+        // c1 Epoch-based date/time
+        // c2 Positive bignum
+        // c3 Positive bignum
+        // c4 Decimal Fraction
+        // c5 Bigfloat
+        // c6..d4 tagged item
+        // d5..d7 Expected Conversion
+        // d8..db more tagged items
+        // e0..f3 simple value
+        // f7 undefined
+        // f8 simple value
+        // f9 half-precision float
+        // ff break stop code
+
+        throw std::invalid_argument("error parsing a CBOR @ " + std::to_string(current_idx) + ": " + std::to_string(v[current_idx]));
+    }
+
   public:
     /*!
     @param[in] j  JSON value to serialize
@@ -6611,6 +7256,23 @@ class basic_json
     {
         size_t i = 0;
         return from_msgpack_internal(v, i);
+    }
+
+    /*!
+    @param[in] j  JSON value to serialize
+    @retuen CBOR serialization as char vector
+    */
+    static std::vector<uint8_t> to_cbor(const basic_json& j)
+    {
+        std::vector<uint8_t> result;
+        to_cbor_internal(j, result);
+        return result;
+    }
+
+    static basic_json from_cbor(const std::vector<uint8_t>& v)
+    {
+        size_t i = 0;
+        return from_cbor_internal(v, i);
     }
 
     /// @}
