@@ -6166,6 +6166,48 @@ class basic_json
         }
     }
 
+    template<typename T>
+    static T get_from_vector(const std::vector<uint8_t>& vec, size_t bytes, size_t current_idx)
+    {
+        assert(bytes == 1 or bytes == 2 or bytes == 4 or bytes == 8);
+
+        switch (bytes)
+        {
+            case 1:
+            {
+                return static_cast<T>(vec[current_idx + 1]);
+            }
+
+            case 2:
+            {
+                return static_cast<T>((static_cast<T>(vec[current_idx + 1]) << 010) +
+                                      static_cast<T>(vec[current_idx + 2]));
+            }
+
+            case 4:
+            {
+                return static_cast<T>((static_cast<T>(vec[current_idx + 1]) << 030) +
+                                      (static_cast<T>(vec[current_idx + 2]) << 020) +
+                                      (static_cast<T>(vec[current_idx + 3]) << 010) +
+                                      static_cast<T>(vec[current_idx + 4]));
+            }
+
+            case 8:
+            {
+                return static_cast<T>((static_cast<T>(vec[current_idx + 1]) << 070) +
+                                      (static_cast<T>(vec[current_idx + 2]) << 060) +
+                                      (static_cast<T>(vec[current_idx + 3]) << 050) +
+                                      (static_cast<T>(vec[current_idx + 4]) << 040) +
+                                      (static_cast<T>(vec[current_idx + 5]) << 030) +
+                                      (static_cast<T>(vec[current_idx + 6]) << 020) +
+                                      (static_cast<T>(vec[current_idx + 7]) << 010) +
+                                      static_cast<T>(vec[current_idx + 8]));
+            }
+        }
+
+        assert(false);
+    }
+
     static void to_msgpack_internal(const basic_json& j, std::vector<uint8_t>& v)
     {
         switch (j.type())
@@ -6711,64 +6753,42 @@ class basic_json
         else if (v[current_idx] == 0xcc) // uint 8
         {
             idx += 1; // skip content byte
-            return v[current_idx + 1];
+            return get_from_vector<uint8_t>(v, 1, current_idx);
         }
         else if (v[current_idx] == 0xcd) // uint 16
         {
             idx += 2; // skip 2 content bytes
-            return static_cast<uint16_t>((static_cast<uint16_t>(v[current_idx + 1]) << 010) +
-                                         static_cast<uint16_t>(v[current_idx + 2]));
+            return get_from_vector<uint16_t>(v, 2, current_idx);
         }
         else if (v[current_idx] == 0xce) // uint 32
         {
             idx += 4; // skip 4 content bytes
-            return static_cast<uint32_t>((static_cast<uint32_t>(v[current_idx + 1]) << 030) +
-                                         (static_cast<uint32_t>(v[current_idx + 2]) << 020) +
-                                         (static_cast<uint32_t>(v[current_idx + 3]) << 010) +
-                                         static_cast<uint32_t>(v[current_idx + 4]));
+            return get_from_vector<uint32_t>(v, 4, current_idx);
         }
         else if (v[current_idx] == 0xcf) // uint 64
         {
             idx += 8; // skip 8 content bytes
-            return static_cast<uint64_t>((static_cast<uint64_t>(v[current_idx + 1]) << 070) +
-                                         (static_cast<uint64_t>(v[current_idx + 2]) << 060) +
-                                         (static_cast<uint64_t>(v[current_idx + 3]) << 050) +
-                                         (static_cast<uint64_t>(v[current_idx + 4]) << 040) +
-                                         (static_cast<uint64_t>(v[current_idx + 5]) << 030) +
-                                         (static_cast<uint64_t>(v[current_idx + 6]) << 020) +
-                                         (static_cast<uint64_t>(v[current_idx + 7]) << 010) +
-                                         static_cast<uint64_t>(v[current_idx + 8]));
+            return get_from_vector<uint64_t>(v, 8, current_idx);
         }
         else if (v[current_idx] == 0xd0) // int 8
         {
             idx += 1; // skip content byte
-            return static_cast<int8_t>(v[current_idx + 1]);
+            return get_from_vector<int8_t>(v, 1, current_idx);
         }
         else if (v[current_idx] == 0xd1) // int 16
         {
             idx += 2; // skip 2 content bytes
-            return static_cast<int16_t>((static_cast<int16_t>(v[current_idx + 1]) << 010) +
-                                        static_cast<int16_t>(v[current_idx + 2]));
+            return get_from_vector<int16_t>(v, 2, current_idx);
         }
         else if (v[current_idx] == 0xd2) // int 32
         {
             idx += 4; // skip 4 content bytes
-            return static_cast<int32_t>((static_cast<int32_t>(v[current_idx + 1]) << 030) +
-                                        (static_cast<int32_t>(v[current_idx + 2]) << 020) +
-                                        (static_cast<int32_t>(v[current_idx + 3]) << 010) +
-                                        static_cast<int32_t>(v[current_idx + 4]));
+            return get_from_vector<int32_t>(v, 4, current_idx);
         }
         else if (v[current_idx] == 0xd3) // int 64
         {
             idx += 8; // skip 8 content bytes
-            return static_cast<int64_t>((static_cast<int64_t>(v[current_idx + 1]) << 070) +
-                                        (static_cast<int64_t>(v[current_idx + 2]) << 060) +
-                                        (static_cast<int64_t>(v[current_idx + 3]) << 050) +
-                                        (static_cast<int64_t>(v[current_idx + 4]) << 040) +
-                                        (static_cast<int64_t>(v[current_idx + 5]) << 030) +
-                                        (static_cast<int64_t>(v[current_idx + 6]) << 020) +
-                                        (static_cast<int64_t>(v[current_idx + 7]) << 010) +
-                                        static_cast<int64_t>(v[current_idx + 8]));
+            return get_from_vector<int64_t>(v, 8, current_idx);
         }
         else if (v[current_idx] >= 0xd4 and v[current_idx] <= 0xd8) // fixext
         {
@@ -6776,24 +6796,21 @@ class basic_json
         }
         else if (v[current_idx] == 0xd9) // str 8
         {
-            const size_t len = v[current_idx + 1];
+            const size_t len = get_from_vector<size_t>(v, 1, current_idx);
             const size_t offset = current_idx + 2;
             idx += len + 1; // skip size byte + content bytes
             return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
         }
         else if (v[current_idx] == 0xda) // str 16
         {
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) + v[current_idx + 2]);
+            const size_t len = get_from_vector<size_t>(v, 2, current_idx);
             const size_t offset = current_idx + 3;
             idx += len + 2; // skip 2 size bytes + content bytes
             return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
         }
         else if (v[current_idx] == 0xdb) // str 32
         {
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
-                                                   (v[current_idx + 2] << 020) +
-                                                   (v[current_idx + 3] << 010) +
-                                                   v[current_idx + 4]);
+            const size_t len = get_from_vector<size_t>(v, 4, current_idx);
             const size_t offset = current_idx + 5;
             idx += len + 4; // skip 4 size bytes + content bytes
             return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
@@ -6801,8 +6818,7 @@ class basic_json
         else if (v[current_idx] == 0xdc) // array 16
         {
             basic_json result = value_t::array;
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) +
-                                                   v[current_idx + 2]);
+            const size_t len = get_from_vector<size_t>(v, 2, current_idx);
             idx += 2; // skip 2 size bytes
             for (size_t i = 0; i < len; ++i)
             {
@@ -6813,10 +6829,7 @@ class basic_json
         else if (v[current_idx] == 0xdd) // array 32
         {
             basic_json result = value_t::array;
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
-                                                   (v[current_idx + 2] << 020) +
-                                                   (v[current_idx + 3] << 010) +
-                                                   v[current_idx + 4]);
+            const size_t len = get_from_vector<size_t>(v, 4, current_idx);
             idx += 4; // skip 4 size bytes
             for (size_t i = 0; i < len; ++i)
             {
@@ -6827,8 +6840,7 @@ class basic_json
         else if (v[current_idx] == 0xde) // map 16
         {
             basic_json result = value_t::object;
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) +
-                                                   v[current_idx + 2]);
+            const size_t len = get_from_vector<size_t>(v, 2, current_idx);
             idx += 2; // skip 2 size bytes
             for (size_t i = 0; i < len; ++i)
             {
@@ -6840,10 +6852,7 @@ class basic_json
         else if (v[current_idx] == 0xdf) // map 32
         {
             basic_json result = value_t::object;
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
-                                                   (v[current_idx + 2] << 020) +
-                                                   (v[current_idx + 3] << 010) +
-                                                   v[current_idx + 4]);
+            const size_t len = get_from_vector<size_t>(v, 4, current_idx);
             idx += 4; // skip 4 size bytes
             for (size_t i = 0; i < len; ++i)
             {
@@ -6872,33 +6881,22 @@ class basic_json
         else if (v[current_idx] == 0x18) // Unsigned integer uint8_t
         {
             idx += 1; // skip content byte
-            return v[current_idx + 1];
+            return get_from_vector<uint8_t>(v, 1, current_idx);
         }
         else if (v[current_idx] == 0x19) // Unsigned integer uint16_t
         {
             idx += 2; // skip 2 content bytes
-            return static_cast<uint16_t>((static_cast<uint16_t>(v[current_idx + 1]) << 010) +
-                                         static_cast<uint16_t>(v[current_idx + 2]));
+            return get_from_vector<uint16_t>(v, 2, current_idx);
         }
         else if (v[current_idx] == 0x1a) // Unsigned integer uint32_t
         {
             idx += 4; // skip 4 content bytes
-            return static_cast<uint32_t>((static_cast<uint32_t>(v[current_idx + 1]) << 030) +
-                                         (static_cast<uint32_t>(v[current_idx + 2]) << 020) +
-                                         (static_cast<uint32_t>(v[current_idx + 3]) << 010) +
-                                         static_cast<uint32_t>(v[current_idx + 4]));
+            return get_from_vector<uint32_t>(v, 4, current_idx);
         }
         else if (v[current_idx] == 0x1b) // Unsigned integer uint64_t
         {
             idx += 8; // skip 8 content bytes
-            return static_cast<uint64_t>((static_cast<uint64_t>(v[current_idx + 1]) << 070) +
-                                         (static_cast<uint64_t>(v[current_idx + 2]) << 060) +
-                                         (static_cast<uint64_t>(v[current_idx + 3]) << 050) +
-                                         (static_cast<uint64_t>(v[current_idx + 4]) << 040) +
-                                         (static_cast<uint64_t>(v[current_idx + 5]) << 030) +
-                                         (static_cast<uint64_t>(v[current_idx + 6]) << 020) +
-                                         (static_cast<uint64_t>(v[current_idx + 7]) << 010) +
-                                         static_cast<uint64_t>(v[current_idx + 8]));
+            return get_from_vector<uint64_t>(v, 8, current_idx);
         }
         else if (v[current_idx] >= 0x20 and v[current_idx] <= 0x37) // Negative integer
         {
@@ -6907,33 +6905,23 @@ class basic_json
         else if (v[current_idx] == 0x38) // Negative integer
         {
             idx += 1; // skip content byte
-            return static_cast<int16_t>(-1 - v[current_idx + 1]);
+            // must be int64_t !
+            return -1 - get_from_vector<int16_t>(v, 1, current_idx);
         }
         else if (v[current_idx] == 0x39) // Negative integer
         {
             idx += 2; // skip 2 content bytes
-            return -1 - static_cast<int16_t>((static_cast<int16_t>(v[current_idx + 1]) << 010) +
-                                             static_cast<int16_t>(v[current_idx + 2]));
+            return -1 - get_from_vector<int16_t>(v, 2, current_idx);
         }
         else if (v[current_idx] == 0x3a) // Negative integer
         {
             idx += 4; // skip 4 content bytes
-            return -1 - static_cast<int32_t>((static_cast<int32_t>(v[current_idx + 1]) << 030) +
-                                             (static_cast<int32_t>(v[current_idx + 2]) << 020) +
-                                             (static_cast<int32_t>(v[current_idx + 3]) << 010) +
-                                             static_cast<int32_t>(v[current_idx + 4]));
+            return -1 - get_from_vector<int32_t>(v, 4, current_idx);
         }
         else if (v[current_idx] == 0x3b) // Negative integer
         {
             idx += 8; // skip 8 content bytes
-            return -1 - static_cast<int64_t>((static_cast<int64_t>(v[current_idx + 1]) << 070) +
-                                             (static_cast<int64_t>(v[current_idx + 2]) << 060) +
-                                             (static_cast<int64_t>(v[current_idx + 3]) << 050) +
-                                             (static_cast<int64_t>(v[current_idx + 4]) << 040) +
-                                             (static_cast<int64_t>(v[current_idx + 5]) << 030) +
-                                             (static_cast<int64_t>(v[current_idx + 6]) << 020) +
-                                             (static_cast<int64_t>(v[current_idx + 7]) << 010) +
-                                             static_cast<int64_t>(v[current_idx + 8]));
+            return -1 - get_from_vector<int64_t>(v, 8, current_idx);
         }
         else if (v[current_idx] >= 0x60 and v[current_idx] <= 0x77) // UTF-8 string
         {
@@ -6944,40 +6932,30 @@ class basic_json
         }
         else if (v[current_idx] == 0x78) // UTF-8 string
         {
-            const size_t len = v[current_idx + 1];
+            const size_t len = get_from_vector<size_t>(v, 1, current_idx);
             const size_t offset = current_idx + 2;
             idx += len + 1; // skip size byte + content bytes
             return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
         }
         else if (v[current_idx] == 0x79) // UTF-8 string
         {
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) + v[current_idx + 2]);
+            const size_t len = get_from_vector<size_t>(v, 2, current_idx);
             const size_t offset = current_idx + 3;
             idx += len + 2; // skip 2 size bytes + content bytes
             return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
         }
         else if (v[current_idx] == 0x7a) // UTF-8 string
         {
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
-                                                   (v[current_idx + 2] << 020) +
-                                                   (v[current_idx + 3] << 010) +
-                                                   v[current_idx + 4]);
+            const size_t len = get_from_vector<size_t>(v, 4, current_idx);
             const size_t offset = current_idx + 5;
             idx += len + 4; // skip 4 size bytes + content bytes
             return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
         }
         else if (v[current_idx] == 0x7b) // UTF-8 string
         {
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 070) +
-                                                   (v[current_idx + 2] << 060) +
-                                                   (v[current_idx + 3] << 050) +
-                                                   (v[current_idx + 4] << 040) +
-                                                   (v[current_idx + 5] << 030) +
-                                                   (v[current_idx + 6] << 020) +
-                                                   (v[current_idx + 7] << 010) +
-                                                   v[current_idx + 8]);
-            const size_t offset = current_idx + 5;
-            idx += len + 4; // skip 4 size bytes + content bytes
+            const size_t len = get_from_vector<size_t>(v, 8, current_idx);
+            const size_t offset = current_idx + 9;
+            idx += len + 8; // skip 8 size bytes + content bytes
             return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
         }
         else if (v[current_idx] >= 0x80 and v[current_idx] <= 0x97) // array
@@ -6993,7 +6971,7 @@ class basic_json
         else if (v[current_idx] == 0x98) // array
         {
             basic_json result = value_t::array;
-            const size_t len = static_cast<size_t>(v[current_idx + 1]);
+            const size_t len = get_from_vector<size_t>(v, 1, current_idx);
             idx += 1; // skip 1 size byte
             for (size_t i = 0; i < len; ++i)
             {
@@ -7004,8 +6982,7 @@ class basic_json
         else if (v[current_idx] == 0x99) // array
         {
             basic_json result = value_t::array;
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) +
-                                                   v[current_idx + 2]);
+            const size_t len = get_from_vector<size_t>(v, 2, current_idx);
             idx += 2; // skip 4 size bytes
             for (size_t i = 0; i < len; ++i)
             {
@@ -7016,10 +6993,7 @@ class basic_json
         else if (v[current_idx] == 0x9a) // array
         {
             basic_json result = value_t::array;
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
-                                                   (v[current_idx + 2] << 020) +
-                                                   (v[current_idx + 3] << 010) +
-                                                   v[current_idx + 4]);
+            const size_t len = get_from_vector<size_t>(v, 4, current_idx);
             idx += 4; // skip 4 size bytes
             for (size_t i = 0; i < len; ++i)
             {
@@ -7030,14 +7004,7 @@ class basic_json
         else if (v[current_idx] == 0x9b) // array
         {
             basic_json result = value_t::array;
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 070) +
-                                                   (v[current_idx + 2] << 060) +
-                                                   (v[current_idx + 3] << 050) +
-                                                   (v[current_idx + 4] << 040) +
-                                                   (v[current_idx + 5] << 030) +
-                                                   (v[current_idx + 6] << 020) +
-                                                   (v[current_idx + 7] << 010) +
-                                                   v[current_idx + 8]);
+            const size_t len = get_from_vector<size_t>(v, 8, current_idx);
             idx += 8; // skip 8 size bytes
             for (size_t i = 0; i < len; ++i)
             {
@@ -7059,7 +7026,7 @@ class basic_json
         else if (v[current_idx] == 0xb8) // map
         {
             basic_json result = value_t::object;
-            const size_t len = static_cast<size_t>(v[current_idx + 1]);
+            const size_t len = get_from_vector<size_t>(v, 1, current_idx);
             idx += 1; // skip 1 size byte
             for (size_t i = 0; i < len; ++i)
             {
@@ -7071,8 +7038,7 @@ class basic_json
         else if (v[current_idx] == 0xb9) // map
         {
             basic_json result = value_t::object;
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 010) +
-                                                   v[current_idx + 2]);
+            const size_t len = get_from_vector<size_t>(v, 2, current_idx);
             idx += 2; // skip 2 size bytes
             for (size_t i = 0; i < len; ++i)
             {
@@ -7084,10 +7050,7 @@ class basic_json
         else if (v[current_idx] == 0xba) // map
         {
             basic_json result = value_t::object;
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 030) +
-                                                   (v[current_idx + 2] << 020) +
-                                                   (v[current_idx + 3] << 010) +
-                                                   v[current_idx + 4]);
+            const size_t len = get_from_vector<size_t>(v, 4, current_idx);
             idx += 4; // skip 4 size bytes
             for (size_t i = 0; i < len; ++i)
             {
@@ -7099,14 +7062,7 @@ class basic_json
         else if (v[current_idx] == 0xbb) // map
         {
             basic_json result = value_t::object;
-            const size_t len = static_cast<size_t>((v[current_idx + 1] << 070) +
-                                                   (v[current_idx + 2] << 060) +
-                                                   (v[current_idx + 3] << 050) +
-                                                   (v[current_idx + 4] << 040) +
-                                                   (v[current_idx + 5] << 030) +
-                                                   (v[current_idx + 6] << 020) +
-                                                   (v[current_idx + 7] << 010) +
-                                                   v[current_idx + 8]);
+            const size_t len = get_from_vector<size_t>(v, 8, current_idx);
             idx += 8; // skip 8 size bytes
             for (size_t i = 0; i < len; ++i)
             {

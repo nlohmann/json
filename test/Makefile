@@ -77,4 +77,4 @@ test-%: src/unit-%.cpp ../src/json.hpp src/catch.hpp
 TEST_PATTERN = "*"
 TEST_PREFIX = ""
 check: $(TESTCASES)
-	@cd .. ; for testcase in $(TESTCASES); do echo "Executing $$testcase..."; $(TEST_PREFIX)test/$$testcase $(TEST_PATTERN) -r compact; done
+	@cd .. ; for testcase in $(TESTCASES); do echo "Executing $$testcase..."; $(TEST_PREFIX)test/$$testcase $(TEST_PATTERN); done
