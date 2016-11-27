@@ -42,7 +42,20 @@ SOURCES = src/unit.cpp \
 
 OBJECTS = $(SOURCES:.cpp=.o)
 
-all: json_unit
+TESTCASES = $(patsubst src/unit-%.cpp,test-%,$(wildcard src/unit-*.cpp))
+
+##############################################################################
+# main rules
+##############################################################################
+
+all: $(TESTCASES)
+
+clean:
+	rm -fr json_unit $(OBJECTS) $(SOURCES:.cpp=.gcno) $(SOURCES:.cpp=.gcda) $(TESTCASES)
+
+##############################################################################
+# single test file
+##############################################################################
 
 json_unit: $(OBJECTS) ../src/json.hpp src/catch.hpp
 	@echo "[CXXLD] $@"
@@ -52,5 +65,16 @@ json_unit: $(OBJECTS) ../src/json.hpp src/catch.hpp
 	@echo "[CXX]   $@"
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
-clean:
-	rm -fr json_unit $(OBJECTS) $(SOURCES:.cpp=.gcno) $(SOURCES:.cpp=.gcda)
+
+##############################################################################
+# individual test cases
+##############################################################################
+
+test-%: src/unit-%.cpp
+	@echo "[CXXLD] $@"
+	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -DCATCH_CONFIG_MAIN $< -o $@
+
+TEST_PATTERN = "*"
+TEST_PREFIX = ""
+check: $(TESTCASES)
+	@cd .. ; for testcase in $(TESTCASES); do echo "Executing $$testcase..."; $(TEST_PREFIX)test/$$testcase $(TEST_PATTERN) -r compact; done
