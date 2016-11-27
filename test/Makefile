@@ -70,7 +70,7 @@ json_unit: $(OBJECTS) ../src/json.hpp src/catch.hpp
 # individual test cases
 ##############################################################################
 
-test-%: src/unit-%.cpp
+test-%: src/unit-%.cpp ../src/json.hpp src/catch.hpp
 	@echo "[CXXLD] $@"
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -DCATCH_CONFIG_MAIN $< -o $@
 
