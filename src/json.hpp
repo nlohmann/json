@@ -6129,6 +6129,43 @@ class basic_json
     /// @{
 
   private:
+    template<typename T>
+    static void add_to_vector(std::vector<uint8_t>& vec, size_t bytes, const T number)
+    {
+        assert(bytes == 1 or bytes == 2 or bytes == 4 or bytes == 8);
+
+        switch (bytes)
+        {
+            case 8:
+            {
+                vec.push_back(static_cast<uint8_t>((number >> 070) & 0xff));
+                vec.push_back(static_cast<uint8_t>((number >> 060) & 0xff));
+                vec.push_back(static_cast<uint8_t>((number >> 050) & 0xff));
+                vec.push_back(static_cast<uint8_t>((number >> 040) & 0xff));
+                // intentional fall-through
+            }
+
+            case 4:
+            {
+                vec.push_back(static_cast<uint8_t>((number >> 030) & 0xff));
+                vec.push_back(static_cast<uint8_t>((number >> 020) & 0xff));
+                // intentional fall-through
+            }
+
+            case 2:
+            {
+                vec.push_back(static_cast<uint8_t>((number >> 010) & 0xff));
+                // intentional fall-through
+            }
+
+            case 1:
+            {
+                vec.push_back(static_cast<uint8_t>(number & 0xff));
+                break;
+            }
+        }
+    }
+
     static void to_msgpack_internal(const basic_json& j, std::vector<uint8_t>& v)
     {
         switch (j.type())
@@ -6152,42 +6189,31 @@ class basic_json
                 if (j.m_value.number_integer >= -32 and j.m_value.number_integer < 128)
                 {
                     // negative fixnum and positive fixnum
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_integer));
+                    add_to_vector(v, 1, j.m_value.number_integer);
                 }
                 else if (j.m_value.number_integer >= INT8_MIN and j.m_value.number_integer <= INT8_MAX)
                 {
                     // int 8
                     v.push_back(0xd0);
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_integer));
+                    add_to_vector(v, 1, j.m_value.number_integer);
                 }
                 else if (j.m_value.number_integer >= INT16_MIN and j.m_value.number_integer <= INT16_MAX)
                 {
                     // int 16
                     v.push_back(0xd1);
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                    add_to_vector(v, 2, j.m_value.number_integer);
                 }
                 else if (j.m_value.number_integer >= INT32_MIN and j.m_value.number_integer <= INT32_MAX)
                 {
                     // int 32
                     v.push_back(0xd2);
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                    add_to_vector(v, 4, j.m_value.number_integer);
                 }
                 else if (j.m_value.number_integer >= INT64_MIN and j.m_value.number_integer <= INT64_MAX)
                 {
                     // int 64
                     v.push_back(0xd3);
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 070) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 060) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 050) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 040) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                    add_to_vector(v, 8, j.m_value.number_integer);
                 }
                 break;
             }
@@ -6197,42 +6223,31 @@ class basic_json
                 if (j.m_value.number_unsigned < 128)
                 {
                     // positive fixnum
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned));
+                    add_to_vector(v, 1, j.m_value.number_unsigned);
                 }
                 else if (j.m_value.number_unsigned <= UINT8_MAX)
                 {
                     // uint 8
                     v.push_back(0xcc);
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned));
+                    add_to_vector(v, 1, j.m_value.number_unsigned);
                 }
                 else if (j.m_value.number_unsigned <= UINT16_MAX)
                 {
                     // uint 16
                     v.push_back(0xcd);
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                    add_to_vector(v, 2, j.m_value.number_unsigned);
                 }
                 else if (j.m_value.number_unsigned <= UINT32_MAX)
                 {
                     // uint 32
                     v.push_back(0xce);
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                    add_to_vector(v, 4, j.m_value.number_unsigned);
                 }
                 else if (j.m_value.number_unsigned <= UINT64_MAX)
                 {
                     // uint 64
                     v.push_back(0xcf);
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 070) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 060) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 050) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 040) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                    add_to_vector(v, 8, j.m_value.number_unsigned);
                 }
                 break;
             }
@@ -6261,23 +6276,19 @@ class basic_json
                 {
                     // str 8
                     v.push_back(0xd9);
-                    v.push_back(static_cast<uint8_t>(N));
+                    add_to_vector(v, 1, N);
                 }
                 else if (N <= 65535)
                 {
                     // str 16
                     v.push_back(0xda);
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 2, N);
                 }
                 else if (N <= 4294967295)
                 {
                     // str 32
                     v.push_back(0xdb);
-                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 4, N);
                 }
 
                 // append string
@@ -6298,17 +6309,13 @@ class basic_json
                 {
                     // array 16
                     v.push_back(0xdc);
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 2, N);
                 }
                 else if (N <= 0xffffffff)
                 {
                     // array 32
                     v.push_back(0xdd);
-                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 4, N);
                 }
 
                 // append each element
@@ -6331,17 +6338,13 @@ class basic_json
                 {
                     // map 16
                     v.push_back(0xde);
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 2, N);
                 }
                 else if (N <= 4294967295)
                 {
                     // map 32
                     v.push_back(0xdf);
-                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 4, N);
                 }
 
                 // append each element
@@ -6385,42 +6388,31 @@ class basic_json
                     // code from the value_t::number_unsigned case here.
                     if (j.m_value.number_integer < 0x17)
                     {
-                        v.push_back(static_cast<uint8_t>(j.m_value.number_integer));
+                        add_to_vector(v, 1, j.m_value.number_integer);
                     }
                     else if (j.m_value.number_integer <= UINT8_MAX)
                     {
                         v.push_back(0x18);
                         // one-byte uint8_t
-                        v.push_back(static_cast<uint8_t>(j.m_value.number_integer));
+                        add_to_vector(v, 1, j.m_value.number_integer);
                     }
                     else if (j.m_value.number_integer <= UINT16_MAX)
                     {
                         v.push_back(0x19);
                         // two-byte uint16_t
-                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
-                        v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                        add_to_vector(v, 2, j.m_value.number_integer);
                     }
                     else if (j.m_value.number_integer <= UINT32_MAX)
                     {
                         v.push_back(0x1a);
                         // four-byte uint32_t
-                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 030) & 0xff));
-                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 020) & 0xff));
-                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
-                        v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                        add_to_vector(v, 4, j.m_value.number_integer);
                     }
                     else if (j.m_value.number_integer <= UINT64_MAX)
                     {
                         v.push_back(0xcf);
                         // eight-byte uint64_t
-                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 070) & 0xff));
-                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 060) & 0xff));
-                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 050) & 0xff));
-                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 040) & 0xff));
-                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 030) & 0xff));
-                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 020) & 0xff));
-                        v.push_back(static_cast<uint8_t>((j.m_value.number_integer >> 010) & 0xff));
-                        v.push_back(static_cast<uint8_t>(j.m_value.number_integer & 0xff));
+                        add_to_vector(v, 8, j.m_value.number_integer);
                     }
                 }
                 else
@@ -6436,36 +6428,25 @@ class basic_json
                     {
                         // int 8
                         v.push_back(0x38);
-                        v.push_back(static_cast<uint8_t>(positive_number));
+                        add_to_vector(v, 1, positive_number);
                     }
                     else if (positive_number <= UINT16_MAX)
                     {
                         // int 16
                         v.push_back(0x39);
-                        v.push_back(static_cast<uint8_t>((positive_number >> 010) & 0xff));
-                        v.push_back(static_cast<uint8_t>(positive_number & 0xff));
+                        add_to_vector(v, 2, positive_number);
                     }
                     else if (positive_number <= UINT32_MAX)
                     {
                         // int 32
                         v.push_back(0x3a);
-                        v.push_back(static_cast<uint8_t>((positive_number >> 030) & 0xff));
-                        v.push_back(static_cast<uint8_t>((positive_number >> 020) & 0xff));
-                        v.push_back(static_cast<uint8_t>((positive_number >> 010) & 0xff));
-                        v.push_back(static_cast<uint8_t>(positive_number & 0xff));
+                        add_to_vector(v, 4, positive_number);
                     }
                     else if (positive_number <= UINT64_MAX)
                     {
                         // int 64
                         v.push_back(0x3b);
-                        v.push_back(static_cast<uint8_t>((positive_number >> 070) & 0xff));
-                        v.push_back(static_cast<uint8_t>((positive_number >> 060) & 0xff));
-                        v.push_back(static_cast<uint8_t>((positive_number >> 050) & 0xff));
-                        v.push_back(static_cast<uint8_t>((positive_number >> 040) & 0xff));
-                        v.push_back(static_cast<uint8_t>((positive_number >> 030) & 0xff));
-                        v.push_back(static_cast<uint8_t>((positive_number >> 020) & 0xff));
-                        v.push_back(static_cast<uint8_t>((positive_number >> 010) & 0xff));
-                        v.push_back(static_cast<uint8_t>(positive_number & 0xff));
+                        add_to_vector(v, 8, positive_number);
                     }
                     break;
                 }
@@ -6481,36 +6462,25 @@ class basic_json
                 {
                     v.push_back(0x18);
                     // one-byte uint8_t
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned));
+                    add_to_vector(v, 1, j.m_value.number_unsigned);
                 }
                 else if (j.m_value.number_unsigned <= 0xffff)
                 {
                     v.push_back(0x19);
                     // two-byte uint16_t
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                    add_to_vector(v, 2, j.m_value.number_unsigned);
                 }
                 else if (j.m_value.number_unsigned <= 0xffffffff)
                 {
                     v.push_back(0x1a);
                     // four-byte uint32_t
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                    add_to_vector(v, 4, j.m_value.number_unsigned);
                 }
                 else if (j.m_value.number_unsigned <= 0xffffffffffffffff)
                 {
                     v.push_back(0xcf);
                     // eight-byte uint64_t
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 070) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 060) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 050) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 040) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((j.m_value.number_unsigned >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned & 0xff));
+                    add_to_vector(v, 8, j.m_value.number_unsigned);
                 }
                 break;
             }
@@ -6538,36 +6508,25 @@ class basic_json
                 {
                     v.push_back(0x78);
                     // one-byte uint8_t for N
-                    v.push_back(static_cast<uint8_t>(N));
+                    add_to_vector(v, 1, N);
                 }
                 else if (N <= 0xffff)
                 {
                     v.push_back(0x79);
                     // two-byte uint16_t for N
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 2, N);
                 }
                 else if (N <= 0xffffffff)
                 {
                     v.push_back(0x7a);
                     // four-byte uint32_t for N
-                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 4, N);
                 }
                 else if (N <= 0xffffffffffffffff)
                 {
                     v.push_back(0x7b);
                     // eight-byte uint64_t for N
-                    v.push_back(static_cast<uint8_t>((N >> 070) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 060) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 050) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 040) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 8, N);
                 }
 
                 // append string
@@ -6588,36 +6547,25 @@ class basic_json
                 {
                     v.push_back(0x98);
                     // one-byte uint8_t for N
-                    v.push_back(static_cast<uint8_t>(N));
+                    add_to_vector(v, 1, N);
                 }
                 else if (N <= 0xffff)
                 {
                     v.push_back(0x99);
                     // two-byte uint16_t for N
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 2, N);
                 }
                 else if (N <= 0xffffffff)
                 {
                     v.push_back(0x9a);
                     // four-byte uint32_t for N
-                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 4, N);
                 }
                 else if (N <= 0xffffffffffffffff)
                 {
                     v.push_back(0x9b);
                     // eight-byte uint64_t for N
-                    v.push_back(static_cast<uint8_t>((N >> 070) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 060) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 050) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 040) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 8, N);
                 }
 
                 // append each element
@@ -6633,43 +6581,32 @@ class basic_json
                 const auto N = j.m_value.object->size();
                 if (N <= 0x17)
                 {
-                    // 1 byte for array + size
+                    // 1 byte for object + size
                     v.push_back(0xa0 + N);
                 }
                 else if (N <= 0xff)
                 {
                     v.push_back(0xb8);
                     // one-byte uint8_t for N
-                    v.push_back(static_cast<uint8_t>(N));
+                    add_to_vector(v, 1, N);
                 }
                 else if (N <= 0xffff)
                 {
                     v.push_back(0xb9);
                     // two-byte uint16_t for N
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 2, N);
                 }
                 else if (N <= 0xffffffff)
                 {
                     v.push_back(0xba);
                     // four-byte uint32_t for N
-                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 4, N);
                 }
                 else if (N <= 0xffffffffffffffff)
                 {
                     v.push_back(0xbb);
                     // eight-byte uint64_t for N
-                    v.push_back(static_cast<uint8_t>((N >> 070) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 060) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 050) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 040) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 030) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 020) & 0xff));
-                    v.push_back(static_cast<uint8_t>((N >> 010) & 0xff));
-                    v.push_back(static_cast<uint8_t>(N & 0xff));
+                    add_to_vector(v, 8, N);
                 }
 
                 // append each element
