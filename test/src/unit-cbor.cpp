@@ -77,67 +77,21 @@ TEST_CASE("CBOR")
         {
             SECTION("signed")
             {
-                SECTION("-24..-1")
+                SECTION("-9263 (int 16)")
                 {
-                    for (auto i = -24; i <= -1; ++i)
-                    {
-                        CAPTURE(i);
+                    json j = -9263;
+                    std::vector<uint8_t> expected = {0x39, 0x24, 0x2e};
 
-                        // create JSON value with integer number
-                        json j = i;
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
 
-                        // check type
-                        CHECK(j.is_number_integer());
+                    int16_t restored = -1 - ((result[1] << 8) + result[2]);
+                    CHECK(restored == -9263);
 
-                        // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(0x20 - 1 - static_cast<uint8_t>(i));
-
-                        // compare result + size
-                        const auto result = json::to_cbor(j);
-                        CHECK(result == expected);
-                        CHECK(result.size() == 1);
-
-                        // check individual bytes
-                        CHECK(static_cast<int8_t>(0x20 - 1 - result[0]) == i);
-
-                        // roundtrip
-                        CHECK(json::from_cbor(result) == j);
-                    }
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
                 }
-
-                /*
-                SECTION("0..127 (positive fixnum)")
-                {
-                    for (size_t i = 0; i <= 255; ++i)
-                    {
-                        CAPTURE(i);
-
-                        // create JSON value with integer number
-                        json j = -1;
-                        j.get_ref<json::number_integer_t&>() = static_cast<json::number_integer_t>(i);
-
-                        // check type
-                        CHECK(j.is_number_integer());
-
-                        // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>(i));
-
-                        // compare result + size
-                        const auto result = json::to_msgpack(j);
-                        CHECK(result == expected);
-                        CHECK(result.size() == 1);
-
-                        // check individual bytes
-                        CHECK(result[0] == i);
-
-                        // roundtrip
-                        CHECK(json::from_msgpack(result) == j);
-                    }
-                }
-                */
-
+                
                 SECTION("-256..-24")
                 {
                     for (auto i = -256; i < -24; ++i)
@@ -169,19 +123,95 @@ TEST_CASE("CBOR")
                     }
                 }
 
-                SECTION("-9263 (int 16)")
+                SECTION("-24..-1")
                 {
-                    json j = -9263;
-                    std::vector<uint8_t> expected = {0x39, 0x24, 0x2e};
+                    for (auto i = -24; i <= -1; ++i)
+                    {
+                        CAPTURE(i);
 
-                    const auto result = json::to_cbor(j);
-                    CHECK(result == expected);
+                        // create JSON value with integer number
+                        json j = i;
 
-                    int16_t restored = -1 - ((result[1] << 8) + result[2]);
-                    CHECK(restored == -9263);
+                        // check type
+                        CHECK(j.is_number_integer());
 
-                    // roundtrip
-                    CHECK(json::from_cbor(result) == j);
+                        // create expected byte vector
+                        std::vector<uint8_t> expected;
+                        expected.push_back(0x20 - 1 - static_cast<uint8_t>(i));
+
+                        // compare result + size
+                        const auto result = json::to_cbor(j);
+                        CHECK(result == expected);
+                        CHECK(result.size() == 1);
+
+                        // check individual bytes
+                        CHECK(static_cast<int8_t>(0x20 - 1 - result[0]) == i);
+
+                        // roundtrip
+                        CHECK(json::from_cbor(result) == j);
+                    }
+                }
+
+                SECTION("0..22")
+                {
+                    for (size_t i = 0; i <= 22; ++i)
+                    {
+                        CAPTURE(i);
+
+                        // create JSON value with integer number
+                        json j = -1;
+                        j.get_ref<json::number_integer_t&>() = static_cast<json::number_integer_t>(i);
+
+                        // check type
+                        CHECK(j.is_number_integer());
+
+                        // create expected byte vector
+                        std::vector<uint8_t> expected;
+                        expected.push_back(static_cast<uint8_t>(i));
+
+                        // compare result + size
+                        const auto result = json::to_cbor(j);
+                        CHECK(result == expected);
+                        CHECK(result.size() == 1);
+
+                        // check individual bytes
+                        CHECK(result[0] == i);
+
+                        // roundtrip
+                        CHECK(json::from_cbor(result) == j);
+                    }
+                }
+
+                SECTION("23..255")
+                {
+                    for (size_t i = 23; i <= 255; ++i)
+                    {
+                        CAPTURE(i);
+
+                        // create JSON value with integer number
+                        json j = -1;
+                        j.get_ref<json::number_integer_t&>() = static_cast<json::number_integer_t>(i);
+
+                        // check type
+                        CHECK(j.is_number_integer());
+
+                        // create expected byte vector
+                        std::vector<uint8_t> expected;
+                        expected.push_back(static_cast<uint8_t>(0x18));
+                        expected.push_back(static_cast<uint8_t>(i));
+
+                        // compare result + size
+                        const auto result = json::to_cbor(j);
+                        CHECK(result == expected);
+                        CHECK(result.size() == 2);
+
+                        // check individual bytes
+                        CHECK(result[0] == 0x18);
+                        CHECK(result[1] == i);
+
+                        // roundtrip
+                        CHECK(json::from_cbor(result) == j);
+                    }
                 }
 
                 /*

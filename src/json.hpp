@@ -6490,8 +6490,8 @@ class basic_json
                         v.push_back(0x3b);
                         add_to_vector(v, 8, positive_number);
                     }
-                    break;
                 }
+                break;
             }
 
             case value_t::number_unsigned:
