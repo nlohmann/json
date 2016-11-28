@@ -45,7 +45,7 @@ SOFTWARE.
 #include <iostream> // istream, ostream
 #include <iterator> // advance, begin, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
 #include <limits> // numeric_limits
-#include <locale> // locale, numpunct
+#include <locale> // locale
 #include <map> // map
 #include <memory> // addressof, allocator, allocator_traits, unique_ptr
 #include <numeric> // accumulate
@@ -120,26 +120,6 @@ struct has_mapped_type
   public:
     static constexpr bool value =
         std::is_integral<decltype(detect(std::declval<T>()))>::value;
-};
-
-/*!
-@brief helper class to create locales with decimal point
-
-This struct is used a default locale during the JSON serialization. JSON
-requires the decimal point to be `.`, so this function overloads the
-`do_decimal_point()` function to return `.`. This function is called by
-float-to-string conversions to retrieve the decimal separator between integer
-and fractional parts.
-
-@sa https://github.com/nlohmann/json/issues/51#issuecomment-86869315
-@since version 2.0.0
-*/
-struct DecimalSeparator : std::numpunct<char>
-{
-    char do_decimal_point() const
-    {
-        return '.';
-    }
 };
 
 }
@@ -2201,8 +2181,7 @@ class basic_json
     {
         std::stringstream ss;
         // fix locale problems
-        const static std::locale loc(std::locale(), new DecimalSeparator);
-        ss.imbue(loc);
+        ss.imbue(std::locale::classic());
 
         // 6, 15 or 16 digits of precision allows round-trip IEEE 754
         // string->float->string, string->double->string or string->long
@@ -5913,7 +5892,7 @@ class basic_json
         o.width(0);
 
         // fix locale problems
-        const auto old_locale = o.imbue(std::locale(std::locale(), new DecimalSeparator));
+        const auto old_locale = o.imbue(std::locale::classic());
         // set precision
 
         // 6, 15 or 16 digits of precision allows round-trip IEEE 754
@@ -7702,6 +7681,12 @@ class basic_json
         explicit lexer(std::istream& s)
             : m_stream(&s), m_line_buffer()
         {
+            // immediately abort if stream is erroneous
+            if (s.fail())
+            {
+                throw std::invalid_argument("stream error: " +  std::string(strerror(errno)));
+            }
+
             // fill buffer
             fill_line_buffer();
 
@@ -7990,6 +7975,7 @@ class basic_json
                     m_line_buffer.clear();
                     for (m_cursor = m_start; m_cursor != m_limit; ++m_cursor)
                     {
+                        assert(m_cursor != nullptr);
                         m_line_buffer.append(1, static_cast<const char>(*m_cursor));
                     }
                 }
@@ -7997,7 +7983,10 @@ class basic_json
                 // append n characters to make sure that there is sufficient
                 // space between m_cursor and m_limit
                 m_line_buffer.append(1, '\x00');
-                m_line_buffer.append(n - 1, '\x01');
+                if (n > 0)
+                {
+                    m_line_buffer.append(n - 1, '\x01');
+                }
             }
             else
             {
