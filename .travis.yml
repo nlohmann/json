@@ -106,31 +106,19 @@ matrix:
   # OSX / Clang
 
   - os: osx
-    osx_image: beta-xcode6.1
-
-  - os: osx
-    osx_image: beta-xcode6.2
-
-  - os: osx
-    osx_image: beta-xcode6.3
-
-  - os: osx
     osx_image: xcode6.4
-
-  - os: osx
-    osx_image: xcode7.1
-
-  - os: osx
-    osx_image: xcode7.2
 
   - os: osx
     osx_image: xcode7.3
 
-  #- os: osx
-  #  osx_image: xcode8
+  - os: osx
+    osx_image: xcode8
 
   - os: osx
     osx_image: xcode8.1
+
+  - os: osx
+    osx_image: xcode8.2
 
   # Linux / GCC
 
