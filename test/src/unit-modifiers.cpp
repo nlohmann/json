@@ -302,18 +302,47 @@ TEST_CASE("modifiers")
         {
             SECTION("null")
             {
+                // start with a null value
                 json j;
-                j.emplace("foo", "bar");
-                j.emplace("baz", "bam");
+
+                // add a new key
+                auto res1 = j.emplace("foo", "bar");
+                CHECK(res1.second == true);
+                CHECK(*res1.first == "bar");
+
+                // the null value is changed to an object
                 CHECK(j.type() == json::value_t::object);
+
+                // add a new key
+                auto res2 = j.emplace("baz", "bam");
+                CHECK(res2.second == true);
+                CHECK(*res2.first == "bam");
+
+                // we try to insert at given key - no change
+                auto res3 = j.emplace("baz", "bad");
+                CHECK(res3.second == false);
+                CHECK(*res3.first == "bam");
+
+                // the final object
                 CHECK(j == json({{"baz", "bam"}, {"foo", "bar"}}));
             }
 
             SECTION("object")
             {
+                // start with an object
                 json j = {{"foo", "bar"}};
-                j.emplace("baz", "bam");
-                CHECK(j.type() == json::value_t::object);
+
+                // add a new key
+                auto res1 = j.emplace("baz", "bam");
+                CHECK(res1.second == true);
+                CHECK(*res1.first == "bam");
+
+                // add an existing key
+                auto res2 = j.emplace("foo", "bad");
+                CHECK(res2.second == false);
+                CHECK(*res2.first == "bar");
+
+                // check final object
                 CHECK(j == json({{"baz", "bam"}, {"foo", "bar"}}));
             }
         }

@@ -5075,14 +5075,19 @@ class basic_json
     }
 
     /*!
-    @brief add an object to an object
+    @brief add an object to an object if key does not exist
 
-    Creates a JSON value from the passed parameters @a args to the JSON
-    object. If the function is called on a JSON null value, an empty object
-    is created before appending the value created from @a args.
+    Inserts a new element into a JSON object constructed in-place with the given
+    @a args if there is no element with the key in the container. If the
+    function is called on a JSON null value, an empty object is created before
+    appending the value created from @a args.
 
     @param[in] args arguments to forward to a constructor of @ref basic_json
     @tparam Args compatible types to create a @ref basic_json object
+
+    @return a pair consisting of an iterator to the inserted element, or the
+            already-existing element if no insertion happened, and a bool
+            denoting whether the insertion took place.
 
     @throw std::domain_error when called on a type other than JSON object or
     null; example: `"cannot use emplace() with number"`
@@ -5091,12 +5096,13 @@ class basic_json
 
     @liveexample{The example shows how `emplace()` can be used to add elements
     to a JSON object. Note how the `null` value was silently converted to a
-    JSON object.,emplace}
+    JSON object. Further note how no value is added if there was already one
+    value stored with the same key.,emplace}
 
     @since version 2.0.8
     */
     template<class... Args>
-    void emplace(Args&& ... args)
+    std::pair<iterator, bool> emplace(Args&& ... args)
     {
         // emplace only works for null objects or arrays
         if (not(is_null() or is_object()))
@@ -5113,7 +5119,13 @@ class basic_json
         }
 
         // add element to array (perfect forwarding)
-        m_value.object->emplace(std::forward<Args>(args)...);
+        auto res = m_value.object->emplace(std::forward<Args>(args)...);
+        // create result iterator and set iterator to the result of emplace
+        auto it = begin();
+        it.m_it.object_iterator = res.first;
+
+        // return pair of iterator and boolean
+        return {it, res.second};
     }
 
     /*!
