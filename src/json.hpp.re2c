@@ -6204,8 +6204,6 @@ class basic_json
                                       static_cast<T>(vec[current_idx + 8]));
             }
         }
-
-        assert(false);
     }
 
     static void to_msgpack_internal(const basic_json& j, std::vector<uint8_t>& v)
@@ -6452,7 +6450,7 @@ class basic_json
                     }
                     else if (j.m_value.number_integer <= UINT64_MAX)
                     {
-                        v.push_back(0xcf);
+                        v.push_back(0x1b);
                         // eight-byte uint64_t
                         add_to_vector(v, 8, j.m_value.number_integer);
                     }
@@ -6520,7 +6518,7 @@ class basic_json
                 }
                 else if (j.m_value.number_unsigned <= 0xffffffffffffffff)
                 {
-                    v.push_back(0xcf);
+                    v.push_back(0x1b);
                     // eight-byte uint64_t
                     add_to_vector(v, 8, j.m_value.number_unsigned);
                 }
