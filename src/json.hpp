@@ -290,14 +290,32 @@ struct is_compatible_basic_json_type
 };
 
 
-// This trait checks if JSONSerializer<T>::from_json exists
+// This trait checks if JSONSerializer<T>::from_json(json const&, udt&) exists
 template <template <typename, typename> class JSONSerializer, typename Json,
           typename T>
 struct has_from_json
 {
 private:
-  template <typename U, typename = decltype(uncvref_t<U>::from_json(
-                            std::declval<Json>(), std::declval<T &>()))>
+  // also check the return type of from_json
+  template <typename U, typename = enable_if_t<std::is_same<void, decltype(uncvref_t<U>::from_json(
+                            std::declval<Json>(), std::declval<T &>()))>::value>>
+  static int detect(U &&);
+
+  static void detect(...);
+
+public:
+  static constexpr bool value = std::is_integral<decltype(
+      detect(std::declval<JSONSerializer<T, void>>()))>::value;
+};
+
+// This trait checks if JSONSerializer<T>::from_json(json const&) exists
+// this overload is used for non-default-constructible user-defined-types
+template <template <typename, typename> class JSONSerializer, typename Json,
+          typename T>
+struct has_non_default_from_json
+{
+private:
+  template <typename U, typename = enable_if_t<std::is_same<T, decltype(uncvref_t<U>::from_json(std::declval<Json>()))>::value>>
   static int detect(U &&);
 
   static void detect(...);
@@ -326,8 +344,8 @@ public:
 
 // those declarations are needed to workaround a MSVC bug related to ADL
 // (taken from MSVC-Ranges implementation)
-void to_json();
-void from_json();
+//void to_json();
+//void from_json();
 
 struct to_json_fn
 {
@@ -2467,57 +2485,63 @@ class basic_json
         return *this;
     }
 
-    /*!
-    @brief destructor
-
-    Destroys the JSON value and frees all allocated memory.
-
-    @complexity Linear.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
-    requirements:
-    - The complexity is linear.
-    - All stored elements are destroyed and all memory is freed.
-
-    @since version 1.0.0
-    */
-    ~basic_json()
+    // this overload is needed, since constructor for udt is explicit
+    template <typename T, enable_if_t<not detail::is_compatible_basic_json_type<
+                                          uncvref_t<T>, basic_json_t>::value and
+                                      detail::has_to_json<JSONSerializer, basic_json_t, uncvref_t<T>>::value>>
+    reference &operator=(T &&val) noexcept(std::is_nothrow_constructible<basic_json_t, uncvref_t<T>>::value and
+                                           std::is_nothrow_move_assignable<uncvref_t<T>>::value)
     {
-        assert_invariant();
+      static_assert(sizeof(T) == 0 , "");
+      // I'm not sure this a is good practice...
+      return *this = basic_json_t{std::forward<T>(val)};
+    }
 
-        switch (m_type)
-        {
-            case value_t::object:
-            {
-                AllocatorType<object_t> alloc;
-                alloc.destroy(m_value.object);
-                alloc.deallocate(m_value.object, 1);
-                break;
-            }
+        /*!
+        @brief destructor
 
-            case value_t::array:
-            {
-                AllocatorType<array_t> alloc;
-                alloc.destroy(m_value.array);
-                alloc.deallocate(m_value.array, 1);
-                break;
-            }
+        Destroys the JSON value and frees all allocated memory.
 
-            case value_t::string:
-            {
-                AllocatorType<string_t> alloc;
-                alloc.destroy(m_value.string);
-                alloc.deallocate(m_value.string, 1);
-                break;
-            }
+        @complexity Linear.
 
-            default:
-            {
-                // all other types need no specific destructor
-                break;
-            }
-        }
+        @requirement This function helps `basic_json` satisfying the
+        [Container](http://en.cppreference.com/w/cpp/concept/Container)
+        requirements:
+        - The complexity is linear.
+        - All stored elements are destroyed and all memory is freed.
+
+        @since version 1.0.0
+        */
+        ~basic_json() {
+      assert_invariant();
+
+      switch (m_type) {
+      case value_t::object: {
+        AllocatorType<object_t> alloc;
+        alloc.destroy(m_value.object);
+        alloc.deallocate(m_value.object, 1);
+        break;
+      }
+
+      case value_t::array: {
+        AllocatorType<array_t> alloc;
+        alloc.destroy(m_value.array);
+        alloc.deallocate(m_value.array, 1);
+        break;
+      }
+
+      case value_t::string: {
+        AllocatorType<string_t> alloc;
+        alloc.destroy(m_value.string);
+        alloc.deallocate(m_value.string, 1);
+        break;
+      }
+
+      default: {
+        // all other types need no specific destructor
+        break;
+      }
+      }
     }
 
     /// @}
@@ -3271,6 +3295,19 @@ class basic_json
       type ret;
       JSONSerializer<type>::from_json(*this, ret);
       return ret;
+    }
+
+    // This overload is chosen for non-default constructible user-defined-types
+    template <
+        typename T,
+        enable_if_t<not detail::is_compatible_basic_json_type<
+                        T, basic_json_t>::value and
+                        detail::has_non_default_from_json<JSONSerializer, basic_json_t,
+                                              T>::value,
+                    short> = 0>
+    T get() const
+    {
+      return JSONSerializer<T>::from_json(*this);
     }
 
     /*!
