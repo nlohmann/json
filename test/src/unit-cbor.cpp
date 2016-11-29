@@ -77,6 +77,41 @@ TEST_CASE("CBOR")
         {
             SECTION("signed")
             {
+                SECTION("-65535..-257")
+                {
+                    for (int16_t i = -65535; i <= -257; ++i)
+                    {
+                        CAPTURE(i);
+                        
+                        // create JSON value with integer number
+                        json j = i;
+                        
+                        // check type
+                        CHECK(j.is_number_integer());
+                        
+                        // create expected byte vector
+                        std::vector<uint8_t> expected;
+                        expected.push_back(static_cast<uint8_t>(0x39));
+                        uint16_t positive = -1 - i;
+                        expected.push_back(static_cast<uint8_t>((positive >> 8) & 0xff));
+                        expected.push_back(static_cast<uint8_t>(positive & 0xff));
+                        
+                        // compare result + size
+                        const auto result = json::to_cbor(j);
+                        CHECK(result == expected);
+                        CHECK(result.size() == 3);
+                        
+                        // check individual bytes
+                        CHECK(result[0] == 0x39);
+                        uint16_t restored = static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]);
+                        CHECK(restored == positive);
+                        CHECK(-1-restored == i);
+                        
+                        // roundtrip
+                        CHECK(json::from_cbor(result) == j);
+                    }
+                }
+                
                 SECTION("-9263 (int 16)")
                 {
                     json j = -9263;
@@ -209,6 +244,82 @@ TEST_CASE("CBOR")
                         CHECK(result[0] == 0x18);
                         CHECK(result[1] == i);
 
+                        // roundtrip
+                        CHECK(json::from_cbor(result) == j);
+                    }
+                }
+
+                SECTION("256..65535")
+                {
+                    for (size_t i = 256; i <= 65535; ++i)
+                    {
+                        CAPTURE(i);
+                        
+                        // create JSON value with integer number
+                        json j = -1;
+                        j.get_ref<json::number_integer_t&>() = static_cast<json::number_integer_t>(i);
+                        
+                        // check type
+                        CHECK(j.is_number_integer());
+                        
+                        // create expected byte vector
+                        std::vector<uint8_t> expected;
+                        expected.push_back(static_cast<uint8_t>(0x19));
+                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
+                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+                        
+                        // compare result + size
+                        const auto result = json::to_cbor(j);
+                        CHECK(result == expected);
+                        CHECK(result.size() == 3);
+                        
+                        // check individual bytes
+                        CHECK(result[0] == 0x19);
+                        uint16_t restored = static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]);
+                        CHECK(restored == i);
+                        
+                        // roundtrip
+                        CHECK(json::from_cbor(result) == j);
+                    }
+                }
+
+                SECTION("65536..4294967295")
+                {
+                    for (uint32_t i :
+                         {
+                             65536u, 77777u, 1048576u
+                         })
+                    {
+                        CAPTURE(i);
+                        
+                        // create JSON value with integer number
+                        json j = -1;
+                        j.get_ref<json::number_integer_t&>() = static_cast<json::number_integer_t>(i);
+                        
+                        // check type
+                        CHECK(j.is_number_integer());
+                        
+                        // create expected byte vector
+                        std::vector<uint8_t> expected;
+                        expected.push_back(0x1a);
+                        expected.push_back(static_cast<uint8_t>((i >> 24) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 16) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
+                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+                        
+                        // compare result + size
+                        const auto result = json::to_cbor(j);
+                        CHECK(result == expected);
+                        CHECK(result.size() == 5);
+                        
+                        // check individual bytes
+                        CHECK(result[0] == 0x1a);
+                        uint32_t restored = static_cast<uint32_t>((static_cast<uint32_t>(result[1]) << 030) +
+                                                                  (static_cast<uint32_t>(result[2]) << 020) +
+                                                                  (static_cast<uint32_t>(result[3]) << 010) +
+                                                                  static_cast<uint32_t>(result[4]));
+                        CHECK(restored == i);
+                        
                         // roundtrip
                         CHECK(json::from_cbor(result) == j);
                     }
