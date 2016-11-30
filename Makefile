@@ -10,19 +10,25 @@ all: json_unit
 # clean up
 clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM
+	rm -fr benchmarks/files/numbers/*.json
 	$(MAKE) clean -Cdoc
+	$(MAKE) clean -Ctest
 
 
 ##########################################################################
 # unit tests
 ##########################################################################
 
-# additional flags
-FLAGS = -Wall -Wextra -pedantic -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overflow=5 -Wswitch -Wundef -Wno-unused -Wnon-virtual-dtor -Wreorder -Wdeprecated -Wfloat-equal
+# build unit tests
+json_unit:
+	@$(MAKE) -C test
 
-# build unit tests (TODO: Does this want its own makefile?)
-json_unit: test/src/unit.cpp src/json.hpp test/src/catch.hpp
-	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src -I test $< $(LDFLAGS) -o $@
+# run unit tests
+check: json_unit
+	test/json_unit "*"
+
+check-fast: json_unit
+	test/json_unit
 
 
 ##########################################################################
@@ -58,8 +64,10 @@ fuzz: test/src/fuzz.cpp src/json.hpp
 
 # call cppcheck on the main header file
 cppcheck:
-	cppcheck --enable=all --inconclusive --std=c++11 src/json.hpp
+	cppcheck --enable=warning --inconclusive --force --std=c++11 src/json.hpp --error-exitcode=1
 
+clang_sanitize: clean
+	CXX=clang++ CXXFLAGS="-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer" $(MAKE)
 
 ##########################################################################
 # maintainer targets
@@ -67,7 +75,7 @@ cppcheck:
 
 # create scanner with re2c
 re2c: src/json.hpp.re2c
-	$(RE2C) -W --bit-vectors --nested-ifs --no-debug-info $< | $(SED) '1d' > src/json.hpp
+	$(RE2C) -W --utf-8 --encoding-policy fail --bit-vectors --nested-ifs --no-debug-info $< | $(SED) '1d' > src/json.hpp
 
 # pretty printer
 pretty:
@@ -76,7 +84,8 @@ pretty:
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none --formatted \
-	   src/json.hpp src/json.hpp.re2c test/src/unit.cpp test/src/fuzz.cpp benchmarks/benchmarks.cpp doc/examples/*.cpp
+	   src/json.hpp src/json.hpp.re2c test/src/*.cpp \
+	   benchmarks/benchmarks.cpp doc/examples/*.cpp
 
 
 ##########################################################################
@@ -85,7 +94,8 @@ pretty:
 
 # benchmarks
 json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/cxxopts.hpp src/json.hpp
-	$(CXX) -std=c++11 $(CXXFLAGS) -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
+	cd benchmarks/files/numbers ; python generate.py
+	$(CXX) -std=c++11 -pthread $(CXXFLAGS) -DNDEBUG -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
 	./json_benchmarks
 
 
@@ -93,7 +103,9 @@ json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/
 # changelog
 ##########################################################################
 
+NEXT_VERSION ?= "unreleased"
+
 ChangeLog.md:
-	github_changelog_generator -o ChangeLog.md --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s
+	github_changelog_generator -o ChangeLog.md --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s --future-release $(NEXT_VERSION)
 	gsed -i 's|https://github.com/nlohmann/json/releases/tag/HEAD|https://github.com/nlohmann/json/tree/HEAD|' ChangeLog.md
 	gsed -i '2i All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).' ChangeLog.md
