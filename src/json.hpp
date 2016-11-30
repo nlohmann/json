@@ -257,6 +257,30 @@ struct is_compatible_integer_type_impl<true, RealIntegerType, CompatibleNumberIn
       RealLimits::is_signed == CompatibleLimits::is_signed;
 };
 
+// quickfix, just trying to make things compile before refactoring
+template <bool B, typename RealIntegerType, typename CompatibleEnumType>
+struct is_compatible_enum_type_impl : std::false_type{};
+
+template <typename RealIntegerType, typename CompatibleEnumType>
+struct is_compatible_enum_type_impl<true, RealIntegerType, CompatibleEnumType>
+{
+  using RealLimits = std::numeric_limits<RealIntegerType>;
+  using CompatibleLimits = std::numeric_limits<typename std::underlying_type<CompatibleEnumType>::type>;
+
+  static constexpr auto value =
+      CompatibleLimits::is_integer and
+      RealLimits::is_signed == CompatibleLimits::is_signed;
+};
+
+template <typename RealIntegerType, typename CompatibleEnumType>
+struct is_compatible_enum_type
+{
+  static constexpr auto value = is_compatible_enum_type_impl<
+// quickfix for all enums
+      std::is_enum<CompatibleEnumType>::value, RealIntegerType,
+      CompatibleEnumType>::value;
+};
+
 template <typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type
 {
@@ -281,6 +305,7 @@ struct is_compatible_basic_json_type
       std::is_constructible<typename BasicJson::string_t, T>::value or
       std::is_same<typename BasicJson::boolean_t, T>::value or
       is_compatible_array_type<BasicJson, T>::value or
+      is_compatible_enum_type<T, typename BasicJson::number_integer_t>::value or
       is_compatible_object_type<typename BasicJson::object_t, T>::value or
       is_compatible_float_type<typename BasicJson::number_float_t, T>::value or
       is_compatible_integer_type<typename BasicJson::number_integer_t,
@@ -289,6 +314,16 @@ struct is_compatible_basic_json_type
                                  T>::value;
 };
 
+template <typename T, typename BasicJson, typename PrimitiveIterator>
+struct is_basic_json_nested_class
+{
+  static auto constexpr value = std::is_same<T, typename BasicJson::iterator>::value or
+                                std::is_same<T, typename BasicJson::const_iterator>::value or
+                                std::is_same<T, typename BasicJson::reverse_iterator>::value or
+                                std::is_same<T, typename BasicJson::const_reverse_iterator>::value or
+                                std::is_same<T, PrimitiveIterator>::value or
+                                std::is_same<T, typename BasicJson::json_pointer>::value;
+};
 
 // This trait checks if JSONSerializer<T>::from_json(json const&, udt&) exists
 template <template <typename, typename> class JSONSerializer, typename Json,
@@ -344,8 +379,8 @@ public:
 
 // those declarations are needed to workaround a MSVC bug related to ADL
 // (taken from MSVC-Ranges implementation)
-//void to_json();
-//void from_json();
+void to_json();
+void from_json();
 
 struct to_json_fn
 {
@@ -524,6 +559,7 @@ class basic_json
     using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
           BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
           AllocatorType, JSONSerializer>;
+    class primitive_iterator_t;
 
   public:
     // forward declarations
@@ -1589,10 +1625,15 @@ class basic_json
         enable_if_t<not std::is_base_of<std::istream, uncvref_t<T>>::value and
                         not detail::is_compatible_basic_json_type<
                             uncvref_t<T>, basic_json_t>::value and
+                        not detail::is_basic_json_nested_class<uncvref_t<T>, basic_json_t, primitive_iterator_t>::value and
+                        not std::is_same<uncvref_t<T>, typename basic_json_t::array_t::iterator>::value and
+// quickfix
+not std::is_enum<uncvref_t<T>>::value and
+                        not std::is_same<uncvref_t<T>, typename basic_json_t::object_t::iterator>::value and
                         detail::has_to_json<JSONSerializer, basic_json,
                                             uncvref_t<T>>::value,
                     int> = 0>
-    explicit basic_json(T &&val)
+    basic_json(T &&val)
     {
       JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
     }
@@ -1793,7 +1834,8 @@ class basic_json
     template <
         typename CompatibleNumberIntegerType,
         enable_if_t<detail::is_compatible_integer_type<
-                        number_integer_t, CompatibleNumberIntegerType>::value,
+                        number_integer_t, CompatibleNumberIntegerType>::value or
+detail::is_compatible_enum_type<number_integer_t, CompatibleNumberIntegerType>::value,
                     int> = 0>
     basic_json(const CompatibleNumberIntegerType val) noexcept
         : m_type(value_t::number_integer),
@@ -8502,6 +8544,11 @@ class basic_json
     class primitive_iterator_t
     {
       public:
+
+        difference_type get_value() const noexcept
+        {
+          return m_it;
+        }
         /// set iterator to a defined beginning
         void set_begin() noexcept
         {
@@ -8526,16 +8573,85 @@ class basic_json
             return (m_it == end_value);
         }
 
-        /// return reference to the value to change and compare
-        operator difference_type& () noexcept
+        friend constexpr bool operator==(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
         {
-            return m_it;
+          return lhs.m_it == rhs.m_it;
         }
 
-        /// return value to compare
-        constexpr operator difference_type () const noexcept
+        friend constexpr bool operator!=(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
         {
-            return m_it;
+          return !(lhs == rhs);
+        }
+
+        friend constexpr bool operator<(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+        {
+          return lhs.m_it < rhs.m_it;
+        }
+
+        friend constexpr bool operator<=(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+        {
+          return lhs.m_it <= rhs.m_it;
+        }
+
+        friend constexpr bool operator>(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+        {
+          return lhs.m_it > rhs.m_it;
+        }
+
+        friend constexpr bool operator>=(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+        {
+          return lhs.m_it >= rhs.m_it;
+        }
+
+        friend constexpr bool operator+(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+        {
+          return lhs.m_it + rhs.m_it;
+        }
+
+        friend constexpr bool operator-(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+        {
+          return lhs.m_it - rhs.m_it;
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, primitive_iterator_t it)
+        {
+          return os << it.m_it;
+        }
+
+        primitive_iterator_t& operator++()
+        {
+          ++m_it;
+          return *this;
+        }
+
+        primitive_iterator_t& operator++(int)
+        {
+          m_it++;
+          return *this;
+        }
+
+        primitive_iterator_t& operator--()
+        {
+          --m_it;
+          return *this;
+        }
+
+        primitive_iterator_t& operator--(int)
+        {
+          m_it--;
+          return *this;
+        }
+
+        primitive_iterator_t& operator+=(difference_type n)
+        {
+          m_it += n;
+          return *this;
+        }
+
+        primitive_iterator_t& operator-=(difference_type n)
+        {
+          m_it -= n;
+          return *this;
         }
 
       private:
@@ -9240,7 +9356,7 @@ class basic_json
 
                 default:
                 {
-                    if (m_it.primitive_iterator == -n)
+                    if (m_it.primitive_iterator.get_value() == -n)
                     {
                         return *m_object;
                     }
