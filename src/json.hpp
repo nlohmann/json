@@ -8821,8 +8821,22 @@ basic_json_parser_66:
         */
         void fill_line_buffer(size_t n = 0)
         {
+            // if line buffer is used, m_content points to its data
+            assert(m_line_buffer.empty()
+                   or m_content == reinterpret_cast<const lexer_char_t*>(m_line_buffer.data()));
+
+            // if line buffer is used, m_limit is set past the end of its data
+            assert(m_line_buffer.empty()
+                   or m_limit == m_content + m_line_buffer.size());
+
+            // pointer relationships
+            assert(m_content <= m_start);
+            assert(m_start <= m_cursor);
+            assert(m_cursor <= m_limit);
+            assert(m_marker == nullptr or m_marker  <= m_limit);
+
             // number of processed characters (p)
-            const auto offset_start = m_start - m_content;
+            const size_t num_processed_chars = static_cast<size_t>(m_start - m_content);
             // offset for m_marker wrt. to m_start
             const auto offset_marker = (m_marker == nullptr) ? 0 : m_marker - m_start;
             // number of unprocessed characters (u)
@@ -8831,17 +8845,10 @@ basic_json_parser_66:
             // no stream is used or end of file is reached
             if (m_stream == nullptr or m_stream->eof())
             {
-                // skip this part if we are already using the line buffer
-                if (m_start != reinterpret_cast<const lexer_char_t*>(m_line_buffer.data()))
-                {
-                    // copy unprocessed characters to line buffer
-                    m_line_buffer.clear();
-                    for (m_cursor = m_start; m_cursor != m_limit; ++m_cursor)
-                    {
-                        assert(m_cursor != nullptr);
-                        m_line_buffer.append(1, static_cast<const char>(*m_cursor));
-                    }
-                }
+                // m_start may or may not be pointing into m_line_buffer at
+                // this point. We trust the standand library to do the right
+                // thing. See http://stackoverflow.com/q/28142011/266378
+                m_line_buffer.assign(m_start, m_limit);
 
                 // append n characters to make sure that there is sufficient
                 // space between m_cursor and m_limit
@@ -8854,16 +8861,18 @@ basic_json_parser_66:
             else
             {
                 // delete processed characters from line buffer
-                m_line_buffer.erase(0, static_cast<size_t>(offset_start));
+                m_line_buffer.erase(0, num_processed_chars);
                 // read next line from input stream
-                std::string line;
-                std::getline(*m_stream, line, '\n');
+                m_line_buffer_tmp.clear();
+                std::getline(*m_stream, m_line_buffer_tmp, '\n');
+
                 // add line with newline symbol to the line buffer
-                m_line_buffer += line + "\n";
+                m_line_buffer += m_line_buffer_tmp;
+                m_line_buffer.push_back('\n');
             }
 
             // set pointers
-            m_content = reinterpret_cast<const lexer_char_t*>(m_line_buffer.c_str());
+            m_content = reinterpret_cast<const lexer_char_t*>(m_line_buffer.data());
             assert(m_content != nullptr);
             m_start  = m_content;
             m_marker = m_start + offset_marker;
@@ -8946,9 +8955,20 @@ basic_json_parser_66:
             // iterate the result between the quotes
             for (const lexer_char_t* i = m_start + 1; i < m_cursor - 1; ++i)
             {
-                // process escaped characters
-                if (*i == '\\')
+                // find next escape character
+                auto e = std::find(i, m_cursor - 1, '\\');
+                if (e != i)
                 {
+                    // see https://github.com/nlohmann/json/issues/365#issuecomment-262874705
+                    for (auto k = i; k < e; k++)
+                    {
+                        result.push_back(static_cast<typename string_t::value_type>(*k));
+                    }
+                    i = e - 1; // -1 because of ++i
+                }
+                else
+                {
+                    // processing escaped character
                     // read next character
                     ++i;
 
@@ -9034,12 +9054,6 @@ basic_json_parser_66:
                             break;
                         }
                     }
-                }
-                else
-                {
-                    // all other characters are just copied to the end of the
-                    // string
-                    result.append(1, static_cast<typename string_t::value_type>(*i));
                 }
             }
 
@@ -9224,6 +9238,8 @@ basic_json_parser_66:
         std::istream* m_stream = nullptr;
         /// line buffer buffer for m_stream
         string_t m_line_buffer {};
+        /// used for filling m_line_buffer
+        string_t m_line_buffer_tmp {};
         /// the buffer pointer
         const lexer_char_t* m_content = nullptr;
         /// pointer to the beginning of the current symbol
