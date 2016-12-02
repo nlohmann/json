@@ -1488,6 +1488,30 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>emplace_back</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_af8a435033327d9237da414afc1cce513.html</Path>
+    <Anchor>af8a435033327d9237da414afc1cce513</Anchor>
+    <Abstract>add an object to an array </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>emplace</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a602f275f0359ab181221384989810604.html</Path>
+    <Anchor>a602f275f0359ab181221384989810604</Anchor>
+    <Abstract>add an object to an object if key does not exist </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>insert</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>

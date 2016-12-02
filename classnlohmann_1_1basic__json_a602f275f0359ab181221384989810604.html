@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.12"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>JSON for Modern C++: nlohmann::basic_json::operator[]</title>
+<title>JSON for Modern C++: nlohmann::basic_json::emplace</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -118,7 +118,7 @@ $(function() {
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a5ef1934868b90452a4a34695489c60cd.html#a5ef1934868b90452a4a34695489c60cd">diff</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_aec316934a555dd1acdd3600e5d4a4cdf.html#aec316934a555dd1acdd3600e5d4a4cdf">difference_type</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_afd4b7d7bcadc62da7c582fa36ba6805f.html#afd4b7d7bcadc62da7c582fa36ba6805f">dump</a></td></tr>
-          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a602f275f0359ab181221384989810604.html#a602f275f0359ab181221384989810604">emplace</a></td></tr>
+          <tr><td class="navtab"><a class="qindexHL" href="classnlohmann_1_1basic__json_a602f275f0359ab181221384989810604.html#a602f275f0359ab181221384989810604">emplace</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_af8a435033327d9237da414afc1cce513.html#af8a435033327d9237da414afc1cce513">emplace_back</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ae3fe0423252e171973cdd5786d036e30.html#ae3fe0423252e171973cdd5786d036e30">empty</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a12ccf14d39ddae52f6c7e126105a230b.html#a12ccf14d39ddae52f6c7e126105a230b">end</a></td></tr>
@@ -193,7 +193,7 @@ $(function() {
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a6eb50ec247cc53bdd46fb13e38e0de04.html#a6eb50ec247cc53bdd46fb13e38e0de04">operator[]</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a140b8251f82e99ad279dcad5c977e26b.html#a140b8251f82e99ad279dcad5c977e26b">operator[]</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ad797fbde8b35ce96549d4bee5d42b234.html#ad797fbde8b35ce96549d4bee5d42b234">operator[]</a></td></tr>
-          <tr><td class="navtab"><a class="qindexHL" href="classnlohmann_1_1basic__json_ac7c006e2345a76859c4802db7d130e0e.html#ac7c006e2345a76859c4802db7d130e0e">operator[]</a></td></tr>
+          <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_ac7c006e2345a76859c4802db7d130e0e.html#ac7c006e2345a76859c4802db7d130e0e">operator[]</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a95d9c6a59674193aa55798968d1a9de6.html#a95d9c6a59674193aa55798968d1a9de6">operator[]</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a7605b20debcc12fc44bd9f2075122a87.html#a7605b20debcc12fc44bd9f2075122a87">operator[]</a></td></tr>
           <tr><td class="navtab"><a class="qindex" href="classnlohmann_1_1basic__json_a1eb1a32bfce21629e64a510d945e01c5.html#a1eb1a32bfce21629e64a510d945e01c5">operator[]</a></td></tr>
@@ -237,24 +237,24 @@ $(function() {
       </div>
    </td>
    <td valign="top" class="mempage">
-<a id="ac7c006e2345a76859c4802db7d130e0e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac7c006e2345a76859c4802db7d130e0e">&sect;&nbsp;</a></span>operator[]() <span class="overload">[7/10]</span></h2>
+<a id="a602f275f0359ab181221384989810604"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a602f275f0359ab181221384989810604">&sect;&nbsp;</a></span>emplace()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;template&lt; typename U, typename V, typename... Args &gt; class ObjectType = std::map, template&lt; typename U, typename... Args &gt; class ArrayType = std::vector, class StringType  = std::string, class BooleanType  = bool, class NumberIntegerType  = std::int64_t, class NumberUnsignedType  = std::uint64_t, class NumberFloatType  = double, template&lt; typename U &gt; class AllocatorType = std::allocator&gt; </div>
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;class... Args&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classnlohmann_1_1basic__json_a3ec8e17be8732fe436e9d6733f52b7a3.html#a3ec8e17be8732fe436e9d6733f52b7a3">reference</a> <a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::operator[] </td>
+          <td class="memname">std::pair&lt;<a class="el" href="classnlohmann_1_1basic__json_1_1iterator.html">iterator</a>, bool&gt; <a class="el" href="classnlohmann_1_1basic__json.html">nlohmann::basic_json</a>::emplace </td>
           <td>(</td>
-          <td class="paramtype">T *&#160;</td>
-          <td class="paramname"><em>key</em></td><td>)</td>
+          <td class="paramtype">Args &amp;&amp;...&#160;</td>
+          <td class="paramname"><em>args</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -264,49 +264,38 @@ template&lt;typename T &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns a reference to the element at with specified key <em>key</em>.</p>
-<dl class="section note"><dt>Note</dt><dd>If <em>key</em> is not found in the object, then it is silently added to the object and filled with a <code>null</code> value to make <code>key</code> a valid reference. In case the value was <code>null</code> before, it is converted to an object.</dd></dl>
+<p>Inserts a new element into a JSON object constructed in-place with the given <em>args</em> if there is no element with the key in the container. If the function is called on a JSON null value, an empty object is created before appending the value created from <em>args</em>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">key</td><td>key of the element to access</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">args</td><td>arguments to forward to a constructor of <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>reference to the element at key <em>key</em> </dd></dl>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Args</td><td>compatible types to create a <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> object</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a pair consisting of an iterator to the inserted element, or the already-existing element if no insertion happened, and a bool denoting whether the insertion took place.</dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">std::domain_error</td><td>if JSON is not an object or null; example: <code>"cannot use operator[] with string"</code></td></tr>
+    <tr><td class="paramname">std::domain_error</td><td>when called on a type other than JSON object or null; example: <code>"cannot use emplace() with number"</code></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section user"><dt>Complexity</dt><dd>Logarithmic in the size of the container.</dd></dl>
-<dl class="section user"><dt>Example</dt><dd>The example below shows how object elements can be read and written using the <code>[]</code> operator. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="keyword">using</span> <a class="code" href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">json</a> = <a class="code" href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">nlohmann::json</a>;</div><div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;</div><div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div><div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div><div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create a JSON object</span></div><div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">json</a> <span class="keywordtype">object</span> =</div><div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;    {</div><div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;        {<span class="stringliteral">&quot;one&quot;</span>, 1}, {<span class="stringliteral">&quot;two&quot;</span>, 2}, {<span class="stringliteral">&quot;three&quot;</span>, 2.9}</div><div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    };</div><div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div><div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="comment">// output element with key &quot;two&quot;</span></div><div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    std::cout &lt;&lt; <span class="keywordtype">object</span>[<span class="stringliteral">&quot;two&quot;</span>] &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div><div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;</div><div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    <span class="comment">// change element with key &quot;three&quot;</span></div><div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    <span class="keywordtype">object</span>[<span class="stringliteral">&quot;three&quot;</span>] = 3;</div><div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;</div><div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    <span class="comment">// output changed array</span></div><div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;    std::cout &lt;&lt; std::setw(4) &lt;&lt; <span class="keywordtype">object</span> &lt;&lt; <span class="stringliteral">&quot;\n\n&quot;</span>;</div><div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;</div><div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    <span class="comment">// mention nonexisting key</span></div><div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    <span class="keywordtype">object</span>[<span class="stringliteral">&quot;four&quot;</span>];</div><div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;</div><div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    <span class="comment">// write to nonexisting key</span></div><div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;    <span class="keywordtype">object</span>[<span class="stringliteral">&quot;five&quot;</span>][<span class="stringliteral">&quot;really&quot;</span>][<span class="stringliteral">&quot;nested&quot;</span>] = <span class="keyword">true</span>;</div><div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div><div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;    <span class="comment">// output changed object</span></div><div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    std::cout &lt;&lt; std::setw(4) &lt;&lt; <span class="keywordtype">object</span> &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div><div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;}</div><div class="ttc" id="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474_html_a2bfd99e845a2e5cd90aeaf1b1431f474"><div class="ttname"><a href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">nlohmann::json</a></div><div class="ttdeci">basic_json&lt;&gt; json</div><div class="ttdoc">default JSON class </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l10814">json.hpp:10814</a></div></div>
-</div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/ujLOsxCRQE3T8cYO"><b>online</b></a>): <pre class="fragment">2
+<dl class="section user"><dt>Complexity</dt><dd>Logarithmic in the size of the container, O(log(<code>size()</code>)).</dd></dl>
+<dl class="section user"><dt>Example</dt><dd>The example shows how <code>emplace()</code> can be used to add elements to a JSON object. Note how the <code>null</code> value was silently converted to a JSON object. Further note how no value is added if there was already one value stored with the same key. <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#include &lt;json.hpp&gt;</span></div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="keyword">using</span> <a class="code" href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">json</a> = <a class="code" href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">nlohmann::json</a>;</div><div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;</div><div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="keywordtype">int</span> main()</div><div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;{</div><div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="comment">// create JSON values</span></div><div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <a class="code" href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">json</a> <span class="keywordtype">object</span> = {{<span class="stringliteral">&quot;one&quot;</span>, 1}, {<span class="stringliteral">&quot;two&quot;</span>, 2}};</div><div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;    <a class="code" href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">json</a> null;</div><div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;</div><div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <span class="comment">// print values</span></div><div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    std::cout &lt;&lt; <span class="keywordtype">object</span> &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div><div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    std::cout &lt;&lt; null &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div><div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;</div><div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    <span class="comment">// add values</span></div><div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    <span class="keyword">auto</span> res1 = <span class="keywordtype">object</span>.emplace(<span class="stringliteral">&quot;three&quot;</span>, 3);</div><div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    null.emplace(<span class="stringliteral">&quot;A&quot;</span>, <span class="stringliteral">&quot;a&quot;</span>);</div><div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    null.emplace(<span class="stringliteral">&quot;B&quot;</span>, <span class="stringliteral">&quot;b&quot;</span>);</div><div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;</div><div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;    <span class="comment">// the following call will not add an object, because there is already</span></div><div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;    <span class="comment">// a value stored at key &quot;B&quot;</span></div><div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    <span class="keyword">auto</span> res2 = null.emplace(<span class="stringliteral">&quot;B&quot;</span>, <span class="stringliteral">&quot;c&quot;</span>);</div><div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;</div><div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;    <span class="comment">// print values</span></div><div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    std::cout &lt;&lt; <span class="keywordtype">object</span> &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div><div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;    std::cout &lt;&lt; *res1.first &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; std::boolalpha &lt;&lt; res1.second &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div><div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div><div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;    std::cout &lt;&lt; null &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div><div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    std::cout &lt;&lt; *res2.first &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; std::boolalpha &lt;&lt; res2.second &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div><div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;}</div><div class="ttc" id="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474_html_a2bfd99e845a2e5cd90aeaf1b1431f474"><div class="ttname"><a href="namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474">nlohmann::json</a></div><div class="ttdeci">basic_json&lt;&gt; json</div><div class="ttdoc">default JSON class </div><div class="ttdef"><b>Definition:</b> <a href="json_8hpp_source.html#l10814">json.hpp:10814</a></div></div>
+</div><!-- fragment --> Output (play with this example <a target="_blank" href="http://melpon.org/wandbox/permlink/B6ILaoysGMliouEO"><b>online</b></a>): <pre class="fragment">{"one":1,"two":2}
+null
+{"one":1,"three":3,"two":2}
+3 true
+{"A":"a","B":"b"}
+"b" false
+</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/emplace.cpp -o emplace </pre></dd></dl>
+<dl class="section since"><dt>Since</dt><dd>version 2.0.8 </dd></dl>
 
-{
-    "one": 1,
-    "three": 3,
-    "two": 2
-}
-
-{
-    "five": {
-        "really": {
-            "nested": true
-        }
-    },
-    "four": null,
-    "one": 1,
-    "three": 3,
-    "two": 2
-}
-</pre> The example code above can be translated with<pre class="fragment">g++ -std=c++11 -Isrc doc/examples/operatorarray__key_type.cpp -o operatorarray__key_type </pre></dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classnlohmann_1_1basic__json_a7ed92d56cb313b243c1917696ffdf074.html#a7ed92d56cb313b243c1917696ffdf074">at(const typename object_t::key_type&amp;)</a> for access by reference with range checking </dd>
-<dd>
-<a class="el" href="classnlohmann_1_1basic__json_a407e73a037e6e3067ef7aa2c25a79f39.html#a407e73a037e6e3067ef7aa2c25a79f39">value()</a> for access by value with a default value</dd></dl>
-<dl class="section since"><dt>Since</dt><dd>version 1.1.0 </dd></dl>
-
-<p>Definition at line <a class="el" href="json_8hpp_source.html#l03562">3562</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p>Definition at line <a class="el" href="json_8hpp_source.html#l05105">5105</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 
 </div>
 </div>

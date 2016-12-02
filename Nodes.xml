@@ -808,6 +808,16 @@
                 <Anchor>afd4b7d7bcadc62da7c582fa36ba6805f</Anchor>
                </Node>
                <Node>
+                <Name>emplace</Name>
+                <Path>classnlohmann_1_1basic__json_a602f275f0359ab181221384989810604.html</Path>
+                <Anchor>a602f275f0359ab181221384989810604</Anchor>
+               </Node>
+               <Node>
+                <Name>emplace_back</Name>
+                <Path>classnlohmann_1_1basic__json_af8a435033327d9237da414afc1cce513.html</Path>
+                <Anchor>af8a435033327d9237da414afc1cce513</Anchor>
+               </Node>
+               <Node>
                 <Name>empty</Name>
                 <Path>classnlohmann_1_1basic__json_ae3fe0423252e171973cdd5786d036e30.html</Path>
                 <Anchor>ae3fe0423252e171973cdd5786d036e30</Anchor>
