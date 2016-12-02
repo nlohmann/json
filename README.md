@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
+[![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/fsf5FqYe6GoX68W6)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
@@ -24,7 +25,7 @@ Other aspects were not so important to us:
 
 - **Memory efficiency**. Each JSON object has an overhead of one pointer (the maximal size of a union) and one enumeration element (1 byte). The default generalization uses the following C++ data types: `std::string` for strings, `int64_t`, `uint64_t` or `double` for numbers, `std::map` for objects, `std::vector` for arrays, and `bool` for Booleans. However, you can template the generalized class `basic_json` to your needs.
 
-- **Speed**. We currently implement the parser as naive [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser) with hand coded string handling. It is fast enough, but a [LALR-parser](http://en.wikipedia.org/wiki/LALR_parser) may be even faster (but would consist of more files which makes the integration harder).
+- **Speed**. There are certainly [faster JSON libraries](https://github.com/miloyip/nativejson-benchmark#parsing-time) out there. However, if your goal is to speed up your development by adding JSON support with a single header, then this library is the way to go. If you know how to use a `std::vector` or `std::map`, you are already set.
 
 See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.github/CONTRIBUTING.md#please-dont) for more information.
 
@@ -129,6 +130,8 @@ json array_not_object = { json::array({"currency", "USD"}), json::array({"value"
 
 ### Serialization / Deserialization
 
+#### To/from strings
+
 You can create an object (deserialization) by appending `_json` to a string literal:
 
 ```cpp
@@ -162,6 +165,8 @@ std::cout << j.dump(4) << std::endl;
 // }
 ```
 
+#### To/from streams (e.g. files, string streams)
+
 You can also use streams to serialize and deserialize:
 
 ```cpp
@@ -176,9 +181,36 @@ std::cout << j;
 std::cout << std::setw(4) << j << std::endl;
 ```
 
-These operators work for any subclasses of `std::istream` or `std::ostream`.
+These operators work for any subclasses of `std::istream` or `std::ostream`. Here is the same example with files:
+
+```cpp
+// read a JSON file
+std::ifstream i("file.json");
+json j;
+i >> j;
+
+// write prettified JSON to another file
+std::ofstream o("pretty.json");
+o << std::setw(4) << j << std::endl;
+```
 
 Please note that setting the exception bit for `failbit` is inappropriate for this use case. It will result in program termination due to the `noexcept` specifier in use.
+
+#### Read from iterator range
+
+You can also read JSON from an iterator range; that is, from any container accessible by iterators whose content is stored as contiguous byte sequence, for instance a `std::vector<uint8_t>`:
+
+```cpp
+std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
+json j = json::parse(v.begin(), v.end());
+```
+
+You may leave the iterators for the range [begin, end):
+
+```cpp
+std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
+json j = json::parse(v);
+```
 
 
 ### STL-like access
@@ -191,6 +223,9 @@ json j;
 j.push_back("foo");
 j.push_back(1);
 j.push_back(true);
+
+// also use emplace_back
+j.emplace_back(1.78);
 
 // iterate the array
 for (json::iterator it = j.begin(); it != j.end(); ++it) {
@@ -229,6 +264,9 @@ json o;
 o["foo"] = 23;
 o["bar"] = false;
 o["baz"] = 3.141;
+
+// also use emplace
+o.emplace("weather", "sunny");
 
 // special iterator member functions for objects
 for (json::iterator it = o.begin(); it != o.end(); ++it) {
@@ -423,14 +461,11 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang 3.7.1     | Ubuntu 14.04.4 LTS           | clang version 3.7.1 (tags/RELEASE_371/final) |
 | Clang 3.8.0     | Ubuntu 14.04.4 LTS           | clang version 3.8.0 (tags/RELEASE_380/final) |
 | Clang 3.8.1     | Ubuntu 14.04.4 LTS           | clang version 3.8.1 (tags/RELEASE_381/final) |
-| Clang Xcode 6.1 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn) |
-| Clang Xcode 6.2 | Darwin Kernel Version 13.4.0 (OSX 10.9.5) | Apple LLVM version 6.0 (clang-600.0.57) (based on LLVM 3.5svn) |
-| Clang Xcode 6.3 | Darwin Kernel Version 14.3.0 (OSX 10.10.3) | Apple LLVM version 6.1.0 (clang-602.0.49) (based on LLVM 3.6.0svn) |
 | Clang Xcode 6.4 | Darwin Kernel Version 14.3.0 (OSX 10.10.3) | Apple LLVM version 6.1.0 (clang-602.0.53) (based on LLVM 3.6.0svn) |
-| Clang Xcode 7.1 | Darwin Kernel Version 14.5.0 (OSX 10.10.5) | Apple LLVM version 7.0.0 (clang-700.1.76) |
-| Clang Xcode 7.2 | Darwin Kernel Version 15.0.0 (OSX 10.10.5) | Apple LLVM version 7.0.2 (clang-700.1.81) |
 | Clang Xcode 7.3 | Darwin Kernel Version 15.0.0 (OSX 10.10.5) | Apple LLVM version 7.3.0 (clang-703.0.29) |
+| Clang Xcode 8.0 | Darwin Kernel Version 15.6.0 | Apple LLVM version 8.0.0 (clang-800.0.38) |
 | Clang Xcode 8.1 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
+| Clang Xcode 8.2 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25123.0 | 
 
 
@@ -500,7 +535,8 @@ I deeply appreciate the help of the following people.
 - [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable.
 - [Denis Andrejew](https://github.com/seeekr) fixed a grammar issue in the README file.
 - [Pierre-Antoine Lacaze](https://github.com/palacaze) found a subtle bug in the `dump()` function.
-- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling.
+- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser and improved the benchmarking code.
+- [cgzones](https://github.com/cgzones) had an idea how to fix the Coverity scan.
 
 Thanks a lot for helping out!
 
@@ -524,7 +560,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905491 assertions in 36 test cases)
+All tests passed (8905518 assertions in 36 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run

@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 2.0.7
+|  |  |__   |  |  | | | |  version 2.0.8
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -5033,6 +5033,102 @@ class basic_json
     }
 
     /*!
+    @brief add an object to an array
+
+    Creates a JSON value from the passed parameters @a args to the end of the
+    JSON value. If the function is called on a JSON null value, an empty array
+    is created before appending the value created from @a args.
+
+    @param[in] args arguments to forward to a constructor of @ref basic_json
+    @tparam Args compatible types to create a @ref basic_json object
+
+    @throw std::domain_error when called on a type other than JSON array or
+    null; example: `"cannot use emplace_back() with number"`
+
+    @complexity Amortized constant.
+
+    @liveexample{The example shows how `push_back()` can be used to add
+    elements to a JSON array. Note how the `null` value was silently converted
+    to a JSON array.,emplace_back}
+
+    @since version 2.0.8
+    */
+    template<class... Args>
+    void emplace_back(Args&& ... args)
+    {
+        // emplace_back only works for null objects or arrays
+        if (not(is_null() or is_array()))
+        {
+            throw std::domain_error("cannot use emplace_back() with " + type_name());
+        }
+
+        // transform null object into an array
+        if (is_null())
+        {
+            m_type = value_t::array;
+            m_value = value_t::array;
+            assert_invariant();
+        }
+
+        // add element to array (perfect forwarding)
+        m_value.array->emplace_back(std::forward<Args>(args)...);
+    }
+
+    /*!
+    @brief add an object to an object if key does not exist
+
+    Inserts a new element into a JSON object constructed in-place with the given
+    @a args if there is no element with the key in the container. If the
+    function is called on a JSON null value, an empty object is created before
+    appending the value created from @a args.
+
+    @param[in] args arguments to forward to a constructor of @ref basic_json
+    @tparam Args compatible types to create a @ref basic_json object
+
+    @return a pair consisting of an iterator to the inserted element, or the
+            already-existing element if no insertion happened, and a bool
+            denoting whether the insertion took place.
+
+    @throw std::domain_error when called on a type other than JSON object or
+    null; example: `"cannot use emplace() with number"`
+
+    @complexity Logarithmic in the size of the container, O(log(`size()`)).
+
+    @liveexample{The example shows how `emplace()` can be used to add elements
+    to a JSON object. Note how the `null` value was silently converted to a
+    JSON object. Further note how no value is added if there was already one
+    value stored with the same key.,emplace}
+
+    @since version 2.0.8
+    */
+    template<class... Args>
+    std::pair<iterator, bool> emplace(Args&& ... args)
+    {
+        // emplace only works for null objects or arrays
+        if (not(is_null() or is_object()))
+        {
+            throw std::domain_error("cannot use emplace() with " + type_name());
+        }
+
+        // transform null object into an object
+        if (is_null())
+        {
+            m_type = value_t::object;
+            m_value = value_t::object;
+            assert_invariant();
+        }
+
+        // add element to array (perfect forwarding)
+        auto res = m_value.object->emplace(std::forward<Args>(args)...);
+        // create result iterator and set iterator to the result of emplace
+        auto it = begin();
+        it.m_it.object_iterator = res.first;
+
+        // return pair of iterator and boolean
+        return {it, res.second};
+    }
+
+    /*!
     @brief inserts element
 
     Inserts element @a val before iterator @a pos.
@@ -7597,6 +7693,12 @@ class basic_json
         explicit lexer(std::istream& s)
             : m_stream(&s), m_line_buffer()
         {
+            // immediately abort if stream is erroneous
+            if (s.fail())
+            {
+                throw std::invalid_argument("stream error: " +  std::string(strerror(errno)));
+            }
+
             // fill buffer
             fill_line_buffer();
 
@@ -8719,8 +8821,22 @@ basic_json_parser_66:
         */
         void fill_line_buffer(size_t n = 0)
         {
+            // if line buffer is used, m_content points to its data
+            assert(m_line_buffer.empty()
+                   or m_content == reinterpret_cast<const lexer_char_t*>(m_line_buffer.data()));
+
+            // if line buffer is used, m_limit is set past the end of its data
+            assert(m_line_buffer.empty()
+                   or m_limit == m_content + m_line_buffer.size());
+
+            // pointer relationships
+            assert(m_content <= m_start);
+            assert(m_start <= m_cursor);
+            assert(m_cursor <= m_limit);
+            assert(m_marker == nullptr or m_marker  <= m_limit);
+
             // number of processed characters (p)
-            const auto offset_start = m_start - m_content;
+            const size_t num_processed_chars = static_cast<size_t>(m_start - m_content);
             // offset for m_marker wrt. to m_start
             const auto offset_marker = (m_marker == nullptr) ? 0 : m_marker - m_start;
             // number of unprocessed characters (u)
@@ -8729,35 +8845,34 @@ basic_json_parser_66:
             // no stream is used or end of file is reached
             if (m_stream == nullptr or m_stream->eof())
             {
-                // skip this part if we are already using the line buffer
-                if (m_start != reinterpret_cast<const lexer_char_t*>(m_line_buffer.data()))
-                {
-                    // copy unprocessed characters to line buffer
-                    m_line_buffer.clear();
-                    for (m_cursor = m_start; m_cursor != m_limit; ++m_cursor)
-                    {
-                        m_line_buffer.append(1, static_cast<const char>(*m_cursor));
-                    }
-                }
+                // m_start may or may not be pointing into m_line_buffer at
+                // this point. We trust the standand library to do the right
+                // thing. See http://stackoverflow.com/q/28142011/266378
+                m_line_buffer.assign(m_start, m_limit);
 
                 // append n characters to make sure that there is sufficient
                 // space between m_cursor and m_limit
                 m_line_buffer.append(1, '\x00');
-                m_line_buffer.append(n - 1, '\x01');
+                if (n > 0)
+                {
+                    m_line_buffer.append(n - 1, '\x01');
+                }
             }
             else
             {
                 // delete processed characters from line buffer
-                m_line_buffer.erase(0, static_cast<size_t>(offset_start));
+                m_line_buffer.erase(0, num_processed_chars);
                 // read next line from input stream
-                std::string line;
-                std::getline(*m_stream, line, '\n');
+                m_line_buffer_tmp.clear();
+                std::getline(*m_stream, m_line_buffer_tmp, '\n');
+
                 // add line with newline symbol to the line buffer
-                m_line_buffer += line + "\n";
+                m_line_buffer += m_line_buffer_tmp;
+                m_line_buffer.push_back('\n');
             }
 
             // set pointers
-            m_content = reinterpret_cast<const lexer_char_t*>(m_line_buffer.c_str());
+            m_content = reinterpret_cast<const lexer_char_t*>(m_line_buffer.data());
             assert(m_content != nullptr);
             m_start  = m_content;
             m_marker = m_start + offset_marker;
@@ -8840,9 +8955,20 @@ basic_json_parser_66:
             // iterate the result between the quotes
             for (const lexer_char_t* i = m_start + 1; i < m_cursor - 1; ++i)
             {
-                // process escaped characters
-                if (*i == '\\')
+                // find next escape character
+                auto e = std::find(i, m_cursor - 1, '\\');
+                if (e != i)
                 {
+                    // see https://github.com/nlohmann/json/issues/365#issuecomment-262874705
+                    for (auto k = i; k < e; k++)
+                    {
+                        result.push_back(static_cast<typename string_t::value_type>(*k));
+                    }
+                    i = e - 1; // -1 because of ++i
+                }
+                else
+                {
+                    // processing escaped character
                     // read next character
                     ++i;
 
@@ -8928,12 +9054,6 @@ basic_json_parser_66:
                             break;
                         }
                     }
-                }
-                else
-                {
-                    // all other characters are just copied to the end of the
-                    // string
-                    result.append(1, static_cast<typename string_t::value_type>(*i));
                 }
             }
 
@@ -9118,6 +9238,8 @@ basic_json_parser_66:
         std::istream* m_stream = nullptr;
         /// line buffer buffer for m_stream
         string_t m_line_buffer {};
+        /// used for filling m_line_buffer
+        string_t m_line_buffer_tmp {};
         /// the buffer pointer
         const lexer_char_t* m_content = nullptr;
         /// pointer to the beginning of the current symbol

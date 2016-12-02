@@ -197,7 +197,7 @@ The container functions known from STL have been extended to support the differe
     <td class="ok_green">@link nlohmann::basic_json::max_size `max_size` @endlink (returns `0`)</td>
   </tr>
   <tr>
-    <td rowspan="5">modifiers</td>
+    <td rowspan="6">modifiers</td>
     <td>`clear`</td>
     <td class="ok_green">@link nlohmann::basic_json::clear `clear` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::clear `clear` @endlink</td>
@@ -234,6 +234,15 @@ The container functions known from STL have been extended to support the differe
     <td class="ok_green">@link nlohmann::basic_json::push_back(const typename object_t::value_type & val) `push_back` @endlink (creates object)<br>@link nlohmann::basic_json::push_back(const nlohmann::basic_json &) `push_back` @endlink (creates array)</td>
   </tr>
   <tr>
+    <td>`emplace` / `emplace_back`</td>
+    <td class="ok_green">@link nlohmann::basic_json::emplace() `emplace` @endlink</td>
+    <td class="ok_green">@link nlohmann::basic_json::emplace_back() `emplace_back` @endlink</td>
+    <td class="nok_throws">throws `std::domain_error`</td>
+    <td class="nok_throws">throws `std::domain_error`</td>
+    <td class="nok_throws">throws `std::domain_error`</td>
+    <td class="ok_green">@link nlohmann::basic_json::emplace() `emplace` @endlink (creates object)<br>@link nlohmann::basic_json::emplace_back() `emplace_back` @endlink (creates array)</td>
+  </tr>
+  <tr>
     <td>`swap`</td>
     <td class="ok_green">@link nlohmann::basic_json::swap `swap` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::swap `swap` @endlink</td>
@@ -268,4 +277,4 @@ The container functions known from STL have been extended to support the differe
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 2.0.7
+@version 2.0.8

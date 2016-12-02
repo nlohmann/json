@@ -58,7 +58,7 @@ static void bench(benchpress::context& ctx,
 
             for (size_t i = 0; i < ctx.num_iterations(); ++i)
             {
-				// clear flags and rewind
+                // clear flags and rewind
                 istr.clear();
                 istr.seekg(0);
                 json j;
