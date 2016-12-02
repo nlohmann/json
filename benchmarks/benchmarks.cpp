@@ -1,107 +1,118 @@
 #define BENCHPRESS_CONFIG_MAIN
 
 #include <fstream>
+#include <sstream>
 #include <benchpress.hpp>
 #include <json.hpp>
+#include <pthread.h>
+#include <thread>
 
-BENCHMARK("parse jeopardy.json", [](benchpress::context* ctx)
+using json = nlohmann::json;
+
+struct StartUp
 {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i)
+    StartUp()
     {
-        std::ifstream input_file("benchmarks/files/jeopardy/jeopardy.json");
-        nlohmann::json j;
-        j << input_file;
+#ifndef __llvm__
+        // pin thread to a single CPU
+        cpu_set_t cpuset;
+        pthread_t thread;
+        thread = pthread_self();
+        CPU_ZERO(&cpuset);
+        CPU_SET(std::thread::hardware_concurrency() - 1, &cpuset);
+        pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
+#endif
     }
-})
+};
+StartUp startup;
 
-BENCHMARK("parse canada.json", [](benchpress::context* ctx)
+enum class EMode { input, output_no_indent, output_with_indent };
+
+static void bench(benchpress::context& ctx,
+                  const std::string& in_path,
+                  const EMode mode)
 {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i)
+    // using string streams for benchmarking to factor-out cold-cache disk
+    // access.
+    std::stringstream istr;
     {
-        std::ifstream input_file("benchmarks/files/nativejson-benchmark/canada.json");
-        nlohmann::json j;
-        j << input_file;
-    }
-})
+        // read file into string stream
+        std::ifstream input_file(in_path);
+        istr << input_file.rdbuf();
+        input_file.close();
 
-BENCHMARK("parse citm_catalog.json", [](benchpress::context* ctx)
-{
-    for (size_t i = 0; i < ctx->num_iterations(); ++i)
-    {
-        std::ifstream input_file("benchmarks/files/nativejson-benchmark/citm_catalog.json");
-        nlohmann::json j;
-        j << input_file;
-    }
-})
-
-BENCHMARK("parse twitter.json", [](benchpress::context* ctx)
-{
-    for (size_t i = 0; i < ctx->num_iterations(); ++i)
-    {
-        std::ifstream input_file("benchmarks/files/nativejson-benchmark/twitter.json");
-        nlohmann::json j;
-        j << input_file;
-    }
-})
-
-BENCHMARK("parse numbers/floats.json", [](benchpress::context* ctx)
-{
-    for (size_t i = 0; i < ctx->num_iterations(); ++i)
-    {
-        std::ifstream input_file("benchmarks/files/numbers/floats.json");
-        nlohmann::json j;
-        j << input_file;
-    }
-})
-
-BENCHMARK("parse numbers/signed_ints.json", [](benchpress::context* ctx)
-{
-    for (size_t i = 0; i < ctx->num_iterations(); ++i)
-    {
-        std::ifstream input_file("benchmarks/files/numbers/signed_ints.json");
-        nlohmann::json j;
-        j << input_file;
-    }
-})
-
-BENCHMARK("parse numbers/unsigned_ints.json", [](benchpress::context* ctx)
-{
-    for (size_t i = 0; i < ctx->num_iterations(); ++i)
-    {
-        std::ifstream input_file("benchmarks/files/numbers/unsigned_ints.json");
-        nlohmann::json j;
-        j << input_file;
-    }
-})
-
-BENCHMARK("dump jeopardy.json", [](benchpress::context* ctx)
-{
-    std::ifstream input_file("benchmarks/files/jeopardy/jeopardy.json");
-    nlohmann::json j;
-    j << input_file;
-    std::ofstream output_file("jeopardy.dump.json");
-
-    ctx->reset_timer();
-    for (size_t i = 0; i < ctx->num_iterations(); ++i)
-    {
-        output_file << j;
+        // read the stream once
+        json j;
+        j << istr;
+        // clear flags and rewind
+        istr.clear();
+        istr.seekg(0);
     }
 
-    std::remove("jeopardy.dump.json");
-})
-
-BENCHMARK("dump jeopardy.json with indent", [](benchpress::context* ctx)
-{
-    std::ifstream input_file("benchmarks/files/jeopardy/jeopardy.json");
-    nlohmann::json j;
-    j << input_file;
-    std::ofstream output_file("jeopardy.dump.json");
-
-    ctx->reset_timer();
-    for (size_t i = 0; i < ctx->num_iterations(); ++i)
+    switch (mode)
     {
-        output_file << std::setw(4) << j;
-    }
+        // benchmarking input
+        case EMode::input:
+        {
+            ctx.reset_timer();
 
-    std::remove("jeopardy.dump.json");
-})
+            for (size_t i = 0; i < ctx.num_iterations(); ++i)
+            {
+                // clear flags and rewind
+                istr.clear();
+                istr.seekg(0);
+                json j;
+                j << istr;
+            }
+
+            break;
+        }
+
+        // benchmarking output
+        case EMode::output_no_indent:
+        case EMode::output_with_indent:
+        {
+            // create JSON value from input
+            json j;
+            j << istr;
+            std::stringstream ostr;
+
+            ctx.reset_timer();
+            for (size_t i = 0; i < ctx.num_iterations(); ++i)
+            {
+                if (mode == EMode::output_no_indent)
+                {
+                    ostr << j;
+                }
+                else
+                {
+                    ostr << std::setw(4) << j;
+                }
+
+                // reset data
+                ostr.str(std::string());
+            }
+
+            break;
+        }
+    }
+}
+
+#define BENCHMARK_I(mode, title, in_path)           \
+    BENCHMARK((title), [](benchpress::context* ctx) \
+    {                                               \
+        bench(*ctx, (in_path), (mode));             \
+    })
+
+BENCHMARK_I(EMode::input, "parse jeopardy.json",              "benchmarks/files/jeopardy/jeopardy.json");
+BENCHMARK_I(EMode::input, "parse canada.json",                "benchmarks/files/nativejson-benchmark/canada.json");
+BENCHMARK_I(EMode::input, "parse citm_catalog.json",          "benchmarks/files/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_I(EMode::input, "parse twitter.json",               "benchmarks/files/nativejson-benchmark/twitter.json");
+BENCHMARK_I(EMode::input, "parse numbers/floats.json",        "benchmarks/files/numbers/floats.json");
+BENCHMARK_I(EMode::input, "parse numbers/signed_ints.json",   "benchmarks/files/numbers/signed_ints.json");
+BENCHMARK_I(EMode::input, "parse numbers/unsigned_ints.json", "benchmarks/files/numbers/unsigned_ints.json");
+
+BENCHMARK_I(EMode::output_no_indent,   "dump jeopardy.json",             "benchmarks/files/jeopardy/jeopardy.json");
+BENCHMARK_I(EMode::output_with_indent, "dump jeopardy.json with indent", "benchmarks/files/jeopardy/jeopardy.json");
+BENCHMARK_I(EMode::output_no_indent,   "dump numbers/floats.json",       "benchmarks/files/numbers/floats.json");
+BENCHMARK_I(EMode::output_no_indent,   "dump numbers/signed_ints.json",  "benchmarks/files/numbers/signed_ints.json");

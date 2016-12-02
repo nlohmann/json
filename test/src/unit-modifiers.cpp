@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.7
+|  |  |__   |  |  | | | |  version 2.0.8
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -255,6 +255,103 @@ TEST_CASE("modifiers")
                 CHECK_THROWS_AS(k.push_back({1, 2, 3, 4}), std::domain_error);
                 CHECK_THROWS_WITH(k.push_back({1, 2, 3, 4}), "cannot use push_back() with object");
             }
+        }
+    }
+
+    SECTION("emplace_back()")
+    {
+        SECTION("to array")
+        {
+            SECTION("null")
+            {
+                json j;
+                j.emplace_back(1);
+                j.emplace_back(2);
+                CHECK(j.type() == json::value_t::array);
+                CHECK(j == json({1, 2}));
+            }
+
+            SECTION("array")
+            {
+                json j = {1, 2, 3};
+                j.emplace_back("Hello");
+                CHECK(j.type() == json::value_t::array);
+                CHECK(j == json({1, 2, 3, "Hello"}));
+            }
+
+            SECTION("multiple values")
+            {
+                json j;
+                j.emplace_back(3, "foo");
+                CHECK(j.type() == json::value_t::array);
+                CHECK(j == json({{"foo", "foo", "foo"}}));
+            }
+        }
+
+        SECTION("other type")
+        {
+            json j = 1;
+            CHECK_THROWS_AS(j.emplace_back("Hello"), std::domain_error);
+            CHECK_THROWS_WITH(j.emplace_back("Hello"), "cannot use emplace_back() with number");
+        }
+    }
+
+    SECTION("emplace()")
+    {
+        SECTION("to object")
+        {
+            SECTION("null")
+            {
+                // start with a null value
+                json j;
+
+                // add a new key
+                auto res1 = j.emplace("foo", "bar");
+                CHECK(res1.second == true);
+                CHECK(*res1.first == "bar");
+
+                // the null value is changed to an object
+                CHECK(j.type() == json::value_t::object);
+
+                // add a new key
+                auto res2 = j.emplace("baz", "bam");
+                CHECK(res2.second == true);
+                CHECK(*res2.first == "bam");
+
+                // we try to insert at given key - no change
+                auto res3 = j.emplace("baz", "bad");
+                CHECK(res3.second == false);
+                CHECK(*res3.first == "bam");
+
+                // the final object
+                CHECK(j == json({{"baz", "bam"}, {"foo", "bar"}}));
+            }
+
+            SECTION("object")
+            {
+                // start with an object
+                json j = {{"foo", "bar"}};
+
+                // add a new key
+                auto res1 = j.emplace("baz", "bam");
+                CHECK(res1.second == true);
+                CHECK(*res1.first == "bam");
+
+                // add an existing key
+                auto res2 = j.emplace("foo", "bad");
+                CHECK(res2.second == false);
+                CHECK(*res2.first == "bar");
+
+                // check final object
+                CHECK(j == json({{"baz", "bam"}, {"foo", "bar"}}));
+            }
+        }
+
+        SECTION("other type")
+        {
+            json j = 1;
+            CHECK_THROWS_AS(j.emplace("foo", "bar"), std::domain_error);
+            CHECK_THROWS_WITH(j.emplace("foo", "bar"), "cannot use emplace() with number");
         }
     }
 
