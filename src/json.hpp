@@ -9060,65 +9060,225 @@ basic_json_parser_66:
             return result;
         }
 
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
         /*!
-        @brief parse floating point number
+        @brief parse string into a built-in arithmetic type as if
+               the current locale is POSIX.
 
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
+               e.g. const auto x = static_cast<float>("123.4");
 
-        @param[in] type  the @ref number_float_t in use
-
-        @param[in,out] endptr recieves a pointer to the first character after
-        the number
-
-        @return the floating point number
+               throw if can't parse the entire string as a number,
+               or if the destination type is integral and the value
+               is outside of the type's range.
         */
-        long double str_to_float_t(long double* /* type */, char** endptr) const
+        struct strtonum
         {
-            return std::strtold(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
-        }
+        public:
+            strtonum(const char* start, const char* end) 
+                : m_start(start), m_end(end)
+            {}
 
-        /*!
-        @brief parse floating point number
+            template<typename T,
+                     typename = typename std::enable_if<
+                         std::is_arithmetic<T>::value>::type >
+            operator T() const
+            {
+                T val{0};
 
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
+                if(parse(val, std::is_integral<T>())) {
+                    return val;
+                }
 
-        @param[in] type  the @ref number_float_t in use
+                throw std::invalid_argument(
+                        std::string()
+                      + "Can't parse '" 
+                      + std::string(m_start, m_end)
+                      + "' as type "
+                      + typeid(T).name());
+            }
 
-        @param[in,out] endptr  recieves a pointer to the first character after
-        the number
+            /// return true iff token matches ^[+-]\d+$
+            bool is_integral() const
+            {
+                const char* p = m_start;
 
-        @return the floating point number
-        */
-        double str_to_float_t(double* /* type */, char** endptr) const
-        {
-            return std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
-        }
+                if(!p) {
+                    return false;
+                }
 
-        /*!
-        @brief parse floating point number
+                if(*p == '-' or *p == '+') {
+                    ++p;
+                }
 
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
+                if(p == m_end) {
+                    return false;
+                }
 
-        @param[in] type  the @ref number_float_t in use
+                while(p < m_end and *p >= '0' and *p <= '9') {
+                    ++p;
+                }
 
-        @param[in,out] endptr  recieves a pointer to the first character after
-        the number
+                return p == m_end;
+            }
 
-        @return the floating point number
-        */
-        float str_to_float_t(float* /* type */, char** endptr) const
-        {
-            return std::strtof(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
-        }
+        private:
+            const char* const m_start = nullptr;
+            const char* const m_end  = nullptr;
+
+            static void strtof(float& f,
+                               const char* str,
+                               char** endptr)
+            {
+                f = std::strtof(str, endptr);
+            }
+
+            static void strtof(double& f,
+                               const char* str,
+                               char** endptr)
+            {
+                f = std::strtod(str, endptr);
+            }
+
+            static void strtof(long double& f,
+                               const char* str,
+                               char** endptr)
+            {
+                f = std::strtold(str, endptr);
+            }
+
+            template<typename T>
+            bool parse(T& value, /*is_integral=*/std::false_type) const
+            {
+                const char* data = m_start;
+                const size_t len = static_cast<size_t>(m_end - m_start);
+
+                const char decimal_point_char =
+                    std::use_facet< std::numpunct<char> >(
+                        std::locale()).decimal_point();
+
+                // replace decimal separator with locale-specific
+                // version, if necessary; data will be repointed
+                // to either buf or tempstr containing the fixed
+                // string.
+                std::string tempstr;
+                std::array<char, 64> buf;
+                do {
+                    if(decimal_point_char == '.') {
+                        break; // don't need to convert
+                    }
+
+                    const size_t ds_pos = static_cast<size_t>(
+                        std::find(m_start, m_end, '.') - m_start );
+
+                    if(ds_pos == len) {
+                        break; // no decimal separator
+                    }
+
+                    // copy the data into the local buffer or
+                    // tempstr, if buffer is too small;
+                    // replace decimal separator, and update
+                    // data to point to the modified bytes
+                    if(len + 1 < buf.size()) {
+                        std::copy(m_start, m_end, buf.data());
+                        buf[len] = 0;
+                        buf[ds_pos] = decimal_point_char;
+                        data = buf.data();
+                    } else {
+                        tempstr.assign(m_start, m_end);
+                        tempstr[ds_pos] = decimal_point_char;
+                        data = tempstr.c_str();
+                    }
+                } while(0);
+
+                char* endptr = nullptr;
+                value = 0;
+                strtof(value, data, &endptr);
+
+
+
+                // note that reading past the end is OK, the data may be,
+                // for example, "123.", where the parsed token only contains "123",
+                // but strtod will read the dot as well.
+                const bool ok = endptr >= data + len
+                                and len > 0;
+
+                if(ok and value == 0.0 and *data == '-') {
+                    // some implementations forget to negate the zero
+                    value = -0.0;
+                }
+
+                if(!ok) {
+                    std::cerr << "data:" <<  data 
+                              << " token:" << std::string(m_start, len) 
+                              << " value:" << value 
+                              << " len:"   << len 
+                              << " parsed_len:" << (endptr - data) << std::endl;
+                }
+
+                return ok;
+            }
+
+            template<typename T>
+            bool parse(T& value, /*is_integral=*/std::true_type) const
+            {
+                const char*       beg = m_start;
+                const char* const end = m_end;
+
+                if(beg == end) {
+                    return false;
+                }
+
+                const bool is_negative = (*beg == '-');
+
+                // json numbers can't start with '+' but
+                // this code is not json-specific
+                if(is_negative or *beg == '+') {
+                    ++beg; // skip the leading sign
+                }
+
+                bool valid = beg < end       // must have some digits;
+                         and ( T(-1) < 0     // type must be signed
+                           or !is_negative); // if value is negative
+                value = 0;
+
+                while(beg < end and valid) {
+                    const uint8_t c = static_cast<uint8_t>(*beg - '0');
+                    const T upd_value = value * 10 + c;
+                    valid &= value <= std::numeric_limits<T>::max() / 10
+                             and value <= upd_value // did not overflow
+                             and c < 10;            // char was digit
+                    value = upd_value;
+                    ++beg;
+                }
+
+                if(is_negative) {
+                    value = 0 - value;
+                }
+
+                if(!valid) {
+                    std::cerr << " token:" << std::string(m_start, m_end) 
+                              << std::endl;
+                }
+
+                return valid;
+            }
+        };
 
         /*!
         @brief return number value for number tokens
@@ -9126,111 +9286,57 @@ basic_json_parser_66:
         This function translates the last token into the most appropriate
         number type (either integer, unsigned integer or floating point),
         which is passed back to the caller via the result parameter.
+    
+        integral numbers that don't fit into the the range of the respective
+        type are parsed as number_float_t
 
-        This function parses the integer component up to the radix point or
-        exponent while collecting information about the 'floating point
-        representation', which it stores in the result parameter. If there is
-        no radix point or exponent, and the number can fit into a @ref
-        number_integer_t or @ref number_unsigned_t then it sets the result
-        parameter accordingly.
+        floating-point values do not satisfy std::isfinite predicate
+        are converted to value_t::null
+        
+        throws if the entire string [m_start .. m_cursor) cannot be 
+        interpreted as a number
 
-        If the number is a floating point number the number is then parsed
-        using @a std:strtod (or @a std:strtof or @a std::strtold).
-
-        @param[out] result  @ref basic_json object to receive the number, or
-        NAN if the conversion read past the current token. The latter case
-        needs to be treated by the caller function.
+        @param[out] result  @ref basic_json object to receive the number.
         */
         void get_number(basic_json& result) const
         {
             assert(m_start != nullptr);
+            assert(m_start < m_cursor);
+        
+            strtonum num(reinterpret_cast<const char*>(m_start), 
+                         reinterpret_cast<const char*>(m_cursor));
 
-            const lexer::lexer_char_t* curptr = m_start;
+            const bool is_negative = *m_start == '-';
 
-            // accumulate the integer conversion result (unsigned for now)
-            number_unsigned_t value = 0;
-
-            // maximum absolute value of the relevant integer type
-            number_unsigned_t max;
-
-            // temporarily store the type to avoid unecessary bitfield access
-            value_t type;
-
-            // look for sign
-            if (*curptr == '-')
-            {
-                type = value_t::number_integer;
-                max = static_cast<uint64_t>((std::numeric_limits<number_integer_t>::max)()) + 1;
-                curptr++;
-            }
-            else
-            {
-                type = value_t::number_unsigned;
-                max = static_cast<uint64_t>((std::numeric_limits<number_unsigned_t>::max)());
-            }
-
-            // count the significant figures
-            for (; curptr < m_cursor; curptr++)
-            {
-                // quickly skip tests if a digit
-                if (*curptr < '0' || *curptr > '9')
+            try {
+                if(not num.is_integral()) {
+                    ;
+                } 
+                else if(is_negative) 
                 {
-                    if (*curptr == '.')
-                    {
-                        // don't count '.' but change to float
-                        type = value_t::number_float;
-                        continue;
-                    }
-                    // assume exponent (if not then will fail parse): change to
-                    // float, stop counting and record exponent details
-                    type = value_t::number_float;
-                    break;
-                }
-
-                // skip if definitely not an integer
-                if (type != value_t::number_float)
+                    result.m_type  = value_t::number_integer;
+                    result.m_value = static_cast<number_integer_t>(num);
+                    return;
+                } 
+                else 
                 {
-                    // multiply last value by ten and add the new digit
-                    auto temp = value * 10 + *curptr - '0';
-
-                    // test for overflow
-                    if (temp < value || temp > max)
-                    {
-                        // overflow
-                        type = value_t::number_float;
-                    }
-                    else
-                    {
-                        // no overflow - save it
-                        value = temp;
-                    }
+                    result.m_type  = value_t::number_unsigned;
+                    result.m_value = static_cast<number_unsigned_t>(num);
+                    return;
                 }
+            } catch (std::invalid_argument&) {
+                ; // overflow - will parse as double
             }
 
-            // save the value (if not a float)
-            if (type == value_t::number_unsigned)
-            {
-                result.m_value.number_unsigned = value;
-            }
-            else if (type == value_t::number_integer)
-            {
-                result.m_value.number_integer = -static_cast<number_integer_t>(value);
-            }
-            else
-            {
-                // parse with strtod
-                result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), NULL);
+            result.m_type  = value_t::number_float;
+            result.m_value = static_cast<number_float_t>(num);
 
-                // replace infinity and NAN by null
-                if (not std::isfinite(result.m_value.number_float))
-                {
-                    type = value_t::null;
-                    result.m_value = basic_json::json_value();
-                }
+            // replace infinity and NAN by null
+            if (not std::isfinite(result.m_value.number_float))
+            {
+                result.m_type  = value_t::null;
+                result.m_value = basic_json::json_value();
             }
-
-            // save the type
-            result.m_type = type;
         }
 
       private:

@@ -375,7 +375,7 @@ TEST_CASE("regression tests")
         };
 
         // change locale to mess with decimal points
-        std::locale::global(std::locale(std::locale(), new CommaDecimalSeparator));
+        auto orig_locale = std::locale::global(std::locale(std::locale(), new CommaDecimalSeparator));
 
         CHECK(j1a.dump() == "23.42");
         CHECK(j1b.dump() == "23.42");
@@ -399,6 +399,8 @@ TEST_CASE("regression tests")
         CHECK(j3c.dump() == "10000");
         //CHECK(j3b.dump() == "1E04"); // roundtrip error
         //CHECK(j3c.dump() == "1e04"); // roundtrip error
+
+        std::locale::global(orig_locale);
     }
 
     SECTION("issue #233 - Can't use basic_json::iterator as a base iterator for std::move_iterator")
