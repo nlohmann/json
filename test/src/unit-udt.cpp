@@ -85,7 +85,7 @@ namespace udt
   void to_json(nlohmann::json& j, person const& p)
   {
     using nlohmann::json;
-    j = json{{"age", json{p.m_age}}, {"name", json{p.m_name}}};
+    j = json{{"age", p.m_age}, {"name", p.m_name}};
   }
 
   void to_json(nlohmann::json& j, address const& a)
@@ -96,13 +96,13 @@ namespace udt
   void to_json(nlohmann::json& j, contact const& c)
   {
     using nlohmann::json;
-    j = json{{"person", json{c.m_person}}, {"address", json{c.m_address}}};
+    j = json{{"person", c.m_person}, {"address", c.m_address}};
   }
 
   void to_json(nlohmann::json& j, contact_book const& cb)
   {
     using nlohmann::json;
-    j = json{{"name", json{cb.m_book_name}}, {"contacts", cb.m_contacts}};
+    j = json{{"name", cb.m_book_name}, {"contacts", cb.m_contacts}};
   }
 
   // operators
@@ -190,15 +190,15 @@ TEST_CASE("basic usage", "[udt]")
 
   SECTION("conversion to json via free-functions")
   {
-    CHECK(json{a} == json(23));
-    CHECK(json{n} == json("theo"));
-    CHECK(json{sfinae_addict} == R"({"name":"theo", "age":23})"_json);
-    CHECK(json("Paris") == json{addr});
-    CHECK(json{cpp_programmer} ==
+    CHECK(json(a) == json(23));
+    CHECK(json(n) == json("theo"));
+    CHECK(json(sfinae_addict) == R"({"name":"theo", "age":23})"_json);
+    CHECK(json("Paris") == json(addr));
+    CHECK(json(cpp_programmer) ==
           R"({"person" : {"age":23, "name":"theo"}, "address":"Paris"})"_json);
 
     CHECK(
-        json{book} ==
+        json(book) ==
         R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo"}, "address":"Paris"}, {"person" : {"age":23, "name":"theo"}, "address":"Paris"}]})"_json);
   }
 
