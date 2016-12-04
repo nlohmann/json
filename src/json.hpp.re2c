@@ -8222,6 +8222,8 @@ class basic_json
 
                note: in floating-point case strtod may parse 
                past the token's end - this is not an error.
+
+               any leading blanks are not handled.
         */
         struct strtonum
         {
@@ -8381,6 +8383,45 @@ class basic_json
                 return ok;
             }
 
+
+#if 1 // parsing with strto[u]ll - easier to understand but slightly slower
+
+            signed long long parse_integral(
+                    char** endptr, 
+                    /*is_signed*/std::true_type) const
+            {
+                return std::strtoll(m_start, endptr, 10);
+            }
+
+            unsigned long long parse_integral(
+                    char** endptr, 
+                    /*is_signed*/std::false_type) const
+            {
+                return std::strtoull(m_start, endptr, 10);
+            }
+
+            template<typename T>
+            bool parse(T& value, /*is_integral=*/std::true_type) const
+            {
+                char* endptr = nullptr;
+                errno        = 0; // these are thread-local
+                const auto x = parse_integral(&endptr, std::is_signed<T>());
+
+                static_assert(std::is_signed<T>() // called right overload?
+                           == std::is_signed<decltype(x)>(), "");
+
+                value = static_cast<T>(x);
+
+                return x == static_cast<decltype(x)>(value) // x fits into destination T
+                   and (x != 0 or is_integral())            // strto[u]ll did nto fail
+                   and errno == 0                           // strto[u]ll did not overflow
+                   and m_start < m_end                      // token was not empty
+                   and endptr == m_end                      // parsed entire token exactly
+                   and (x < 0) == (*m_start == '-');        // input was sign-compatible
+            }
+
+#else // parsing integral types manually
+
             template<typename T>
             bool parse(T& value, /*is_integral=*/std::true_type) const
             {
@@ -8389,7 +8430,7 @@ class basic_json
 
                 if (beg == end) 
                 {
-                    return false;
+                    return false; // empty token
                 }
 
                 const bool is_negative = (*beg == '-');
@@ -8410,7 +8451,7 @@ class basic_json
 
                 bool valid = beg < end       // must have some digits;
                          and ( T(-1) < 0     // type must be signed
-                           or !is_negative); // if value is negative
+                           or !is_negative); // ...if value is negative
 
                 while (beg < end and valid) 
                 {
@@ -8437,6 +8478,7 @@ class basic_json
                 // into positives is for edge cases, e.g. -2^63
                 return valid && (is_negative == (value < 0));
             }
+#endif
         };
 
         /*!
