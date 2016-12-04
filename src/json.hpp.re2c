@@ -6520,8 +6520,9 @@ class basic_json
             const bool value_is_int_like =
                 std::find_if(m_buf.begin(), data_end,
                              [](const char c) 
-                             {   return (c >= '0' and c <= '9') 
-                                     or c == '-'; })
+                             {   return c == '.' 
+                                     or c == 'e' 
+                                     or c == 'E'; })
                 == data_end;
             
             assert(data_end + 2 < m_buf.end());

@@ -394,9 +394,9 @@ TEST_CASE("regression tests")
         //issue #230
         //CHECK(j2b.dump() == "23.42");
 
-        CHECK(j3a.dump() == "10000");
-        CHECK(j3b.dump() == "10000");
-        CHECK(j3c.dump() == "10000");
+        CHECK(j3a.dump() == "10000.0");
+        CHECK(j3b.dump() == "10000.0");
+        CHECK(j3c.dump() == "10000.0");
         //CHECK(j3b.dump() == "1E04"); // roundtrip error
         //CHECK(j3c.dump() == "1e04"); // roundtrip error
     }
