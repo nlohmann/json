@@ -2180,14 +2180,6 @@ class basic_json
     string_t dump(const int indent = -1) const
     {
         std::stringstream ss;
-        // fix locale problems
-        ss.imbue(std::locale::classic());
-
-        // 6, 15 or 16 digits of precision allows round-trip IEEE 754
-        // string->float->string, string->double->string or string->long
-        // double->string; to be safe, we read this value from
-        // std::numeric_limits<number_float_t>::digits10
-        ss.precision(std::numeric_limits<double>::digits10);
 
         if (indent >= 0)
         {
@@ -5878,10 +5870,6 @@ class basic_json
     `std::setw(4)` on @a o sets the indentation level to `4` and the
     serialization result is the same as calling `dump(4)`.
 
-    @note During serializaion, the locale and the precision of the output
-    stream @a o are changed. The original values are restored when the
-    function returns.
-
     @param[in,out] o  stream to serialize to
     @param[in] j  JSON value to serialize
 
@@ -5903,22 +5891,9 @@ class basic_json
         // reset width to 0 for subsequent calls to this stream
         o.width(0);
 
-        // fix locale problems
-        const auto old_locale = o.imbue(std::locale::classic());
-        // set precision
-
-        // 6, 15 or 16 digits of precision allows round-trip IEEE 754
-        // string->float->string, string->double->string or string->long
-        // double->string; to be safe, we read this value from
-        // std::numeric_limits<number_float_t>::digits10
-        const auto old_precision = o.precision(std::numeric_limits<double>::digits10);
-
         // do the actual serialization
         j.dump(o, pretty_print, static_cast<unsigned int>(indentation));
 
-        // reset locale and precision
-        o.imbue(old_locale);
-        o.precision(old_precision);
         return o;
     }
 
@@ -6419,6 +6394,146 @@ class basic_json
         return result;
     }
 
+
+    /*!
+    @brief locale-independent serialization for built-in arithmetic types
+    */
+    struct numtostr
+    {
+    public:
+        template<typename T>
+        numtostr(T value) 
+        {
+            x_write(value, std::is_integral<T>());
+        }
+
+        operator const char*() const
+        {
+            return m_buf.data();
+        }
+
+        const char* c_str() const
+        {
+            return m_buf.data();
+        }
+
+    private:
+        static constexpr size_t s_capacity = 30;
+        std::array<char, s_capacity + 2> m_buf{};
+
+        template<typename T>
+        void x_write(T x, std::true_type)
+        {
+            const bool is_neg = x < 0;
+            size_t i = 0;
+
+            while(x and i < s_capacity) 
+            {
+                m_buf[i++] = '0' + abs(x % 10);
+                x /= 10;
+            }
+
+            if(i == s_capacity)
+            {
+                std::runtime_error(
+                        "Number is unexpectedly long: " 
+                        + std::to_string(x));
+            }
+
+            if(i == 0) 
+            {
+                m_buf[i++] = '0';
+            }
+
+            if(is_neg) 
+            {
+                m_buf[i++] = '-';
+            }
+
+            std::reverse(m_buf.begin(), m_buf.begin() + i);
+        }
+
+        template<typename T>
+        void x_write(T x, std::false_type)
+        {
+            if (x == 0)
+            {
+                std::strcpy(m_buf.data(), 
+                            std::signbit(x) ? "-0.0" : "0.0");
+                return;
+            }
+
+            static constexpr auto d = 
+                    std::numeric_limits<number_float_t>::digits10+1;
+
+            // I'm not sure why we need that +1 above, if at all,
+            // but without it there's a unit-test that fails
+            // that asserts precision of the output
+
+            static_assert(d == 6 or d == 15 or d == 16 or d == 17, "");
+            static constexpr auto fmt = d == 6  ? "%.6g"
+                                      : d == 15 ? "%.15g"
+                                      : d == 16 ? "%.16g"
+                                      : d == 17 ? "%.17g"
+                                      :           "%.18g";
+
+            snprintf(m_buf.data(), m_buf.size(), fmt, x);
+
+            const std::locale loc;
+
+            // erase thousands separator
+            {
+                const char sep =
+                    std::use_facet< std::numpunct<char> >(
+                        loc).thousands_sep(); 
+
+                auto end = std::remove(m_buf.begin(), 
+                                       m_buf.end(), 
+                                       sep);
+
+                std::fill(end, m_buf.end(), '\0');
+            }
+
+            // convert decimal point to '.'
+            {
+                const char decimal_point =
+                    std::use_facet< std::numpunct<char> >(
+                        loc).decimal_point(); 
+
+                for(auto& c : m_buf) 
+                {
+                    if(decimal_point == '.') {
+                        break;
+                    }
+
+                    if(c == decimal_point) 
+                    {
+                        c = '.';
+                        break;
+                    }
+                }
+            }
+
+            // determine if need to apperd ".0"
+            auto data_end = m_buf.begin() + strlen(m_buf.data());
+
+            const bool value_is_int_like =
+                std::find_if(m_buf.begin(), data_end,
+                             [](const char c) 
+                             {   return (c >= '0' and c <= '9') 
+                                     or c == '-'; })
+                == data_end;
+            
+            assert(data_end + 2 < m_buf.end());
+            if(value_is_int_like) 
+            {
+                strcat(m_buf.data(), ".0");
+            }
+        }
+    };
+
+
+
     /*!
     @brief internal implementation of the serialization function
 
@@ -6538,27 +6653,19 @@ class basic_json
 
             case value_t::number_integer:
             {
-                o << m_value.number_integer;
+                o << numtostr(m_value.number_integer).c_str();
                 return;
             }
 
             case value_t::number_unsigned:
             {
-                o << m_value.number_unsigned;
+                o << numtostr(m_value.number_unsigned).c_str();
                 return;
             }
 
             case value_t::number_float:
             {
-                if (m_value.number_float == 0)
-                {
-                    // special case for zero to get "0.0"/"-0.0"
-                    o << (std::signbit(m_value.number_float) ? "-0.0" : "0.0");
-                }
-                else
-                {
-                    o << m_value.number_float;
-                }
+                o << numtostr(m_value.number_float).c_str();
                 return;
             }
 
