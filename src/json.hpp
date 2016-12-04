@@ -9060,22 +9060,6 @@ basic_json_parser_66:
             return result;
         }
 
-       
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
  
         /*!
         @brief parse string into a built-in arithmetic type as if
@@ -9086,6 +9070,9 @@ basic_json_parser_66:
                throw if can't parse the entire string as a number,
                or if the destination type is integral and the value
                is outside of the type's range.
+
+               note: in floating-point case strtod may parse 
+               past the token's end - this is not an error.
         */
         struct strtonum
         {
@@ -9101,7 +9088,8 @@ basic_json_parser_66:
             {
                 T val{0};
 
-                if(parse(val, std::is_integral<T>())) {
+                if (parse(val, std::is_integral<T>())) 
+                {
                     return val;
                 }
 
@@ -9113,24 +9101,35 @@ basic_json_parser_66:
                       + typeid(T).name());
             }
 
-            /// return true iff token matches ^[+-]\d+$
+            // return true iff token matches ^[+-]\d+$
+            //
+            // this is a helper to determine whether to
+            // parse the token into floating-point or
+            // integral type. We wouldn't need it if
+            // we had separate token types for interal
+            // and floating-point cases.
             bool is_integral() const
             {
                 const char* p = m_start;
 
-                if(!p) {
+                if (!p) 
+                {
                     return false;
                 }
 
-                if(*p == '-' or *p == '+') {
+                if (*p == '-' or *p == '+') 
+                {
                     ++p;
                 }
 
-                if(p == m_end) {
+                if (p == m_end) 
+                {
                     return false;
                 }
 
-                while(p < m_end and *p >= '0' and *p <= '9') {
+                while (p < m_end and *p >= '0' 
+                                 and *p <= '9') 
+                {
                     ++p;
                 }
 
@@ -9140,6 +9139,9 @@ basic_json_parser_66:
         private:
             const char* const m_start = nullptr;
             const char* const m_end  = nullptr;
+
+            // overloaded wrappers for strtod/strtof/strtold
+            // that will be called from parse<floating_point_t>
 
             static void strtof(float& f,
                                const char* str,
@@ -9173,20 +9175,22 @@ basic_json_parser_66:
                         std::locale()).decimal_point();
 
                 // replace decimal separator with locale-specific
-                // version, if necessary; data will be repointed
+                // version, when necessary; data will be repointed
                 // to either buf or tempstr containing the fixed
                 // string.
                 std::string tempstr;
                 std::array<char, 64> buf;
                 do {
-                    if(decimal_point_char == '.') {
+                    if (decimal_point_char == '.') 
+                    {
                         break; // don't need to convert
                     }
 
                     const size_t ds_pos = static_cast<size_t>(
                         std::find(m_start, m_end, '.') - m_start );
 
-                    if(ds_pos == len) {
+                    if (ds_pos == len) 
+                    {
                         break; // no decimal separator
                     }
 
@@ -9194,31 +9198,33 @@ basic_json_parser_66:
                     // tempstr, if buffer is too small;
                     // replace decimal separator, and update
                     // data to point to the modified bytes
-                    if(len + 1 < buf.size()) {
+                    if (len + 1 < buf.size()) 
+                    {
                         std::copy(m_start, m_end, buf.data());
                         buf[len] = 0;
                         buf[ds_pos] = decimal_point_char;
                         data = buf.data();
-                    } else {
+                    }
+                    else 
+                    {
                         tempstr.assign(m_start, m_end);
                         tempstr[ds_pos] = decimal_point_char;
                         data = tempstr.c_str();
                     }
-                } while(0);
+                } while (0);
 
                 char* endptr = nullptr;
                 value = 0;
                 strtof(value, data, &endptr);
 
-
-
                 // note that reading past the end is OK, the data may be,
-                // for example, "123.", where the parsed token only contains "123",
-                // but strtod will read the dot as well.
+                // for example, "123.", where the parsed token only 
+                // contains "123", but strtod will read the dot as well.
                 const bool ok = endptr >= data + len
                                 and len > 0;
 
-                if(ok and value == 0.0 and *data == '-') {
+                if (ok and value == 0.0 and *data == '-') 
+                {
                     // some implementations forget to negate the zero
                     value = -0.0;
                 }
@@ -9232,15 +9238,17 @@ basic_json_parser_66:
                 const char*       beg = m_start;
                 const char* const end = m_end;
 
-                if(beg == end) {
+                if (beg == end) 
+                {
                     return false;
                 }
 
                 const bool is_negative = (*beg == '-');
 
                 // json numbers can't start with '+' but
-                // this code is not json-specific
-                if(is_negative or *beg == '+') {
+                // this code is not strictly json-specific
+                if (is_negative or *beg == '+') 
+                {
                     ++beg; // skip the leading sign
                 }
 
@@ -9255,7 +9263,8 @@ basic_json_parser_66:
                          and ( T(-1) < 0     // type must be signed
                            or !is_negative); // if value is negative
 
-                while(beg < end and valid) {
+                while (beg < end and valid) 
+                {
                     const uint8_t c = static_cast<uint8_t>(*beg - '0');
                     const unsigned_T upd_x = x * 10 + c;
 
@@ -9310,10 +9319,11 @@ basic_json_parser_66:
             const bool is_negative = *m_start == '-';
 
             try {
-                if(not num.is_integral()) {
+                if (not num.is_integral()) 
+                {
                     ;
                 } 
-                else if(is_negative) 
+                else if (is_negative) 
                 {
                     result.m_type  = value_t::number_integer;
                     result.m_value = static_cast<number_integer_t>(num);
@@ -9325,7 +9335,9 @@ basic_json_parser_66:
                     result.m_value = static_cast<number_unsigned_t>(num);
                     return;
                 }
-            } catch (std::invalid_argument&) {
+            }
+            catch (std::invalid_argument&) 
+            {
                 ; // overflow - will parse as double
             }
 
