@@ -9223,14 +9223,6 @@ basic_json_parser_66:
                     value = -0.0;
                 }
 
-                if(!ok) {
-                    std::cerr << "data:" <<  data 
-                              << " token:" << std::string(m_start, len) 
-                              << " value:" << value 
-                              << " len:"   << len 
-                              << " parsed_len:" << (endptr - data) << std::endl;
-                }
-
                 return ok;
             }
 
@@ -9252,31 +9244,40 @@ basic_json_parser_66:
                     ++beg; // skip the leading sign
                 }
 
+                // using unsigned accumulator x because the signed
+                // type can't hold absolute value of largest
+                // negative value of this type, so overflow detection 
+                // becomes problematic.
+                using unsigned_T = typename std::make_unsigned<T>::type;
+                unsigned_T x = 0;
+
                 bool valid = beg < end       // must have some digits;
                          and ( T(-1) < 0     // type must be signed
                            or !is_negative); // if value is negative
-                value = 0;
 
                 while(beg < end and valid) {
                     const uint8_t c = static_cast<uint8_t>(*beg - '0');
-                    const T upd_value = value * 10 + c;
-                    valid &= value <= std::numeric_limits<T>::max() / 10
-                             and value <= upd_value // did not overflow
-                             and c < 10;            // char was digit
-                    value = upd_value;
+                    const unsigned_T upd_x = x * 10 + c;
+
+                    using lim_T = std::numeric_limits<T>;
+                    constexpr unsigned_T thr1 = lim_T::max() / 10;
+                    valid &=     c <  10     // char was digit
+                             and x <= thr1   // multiplication did not overflow
+                             and x <= upd_x; // addition did not overflow.
+
+                    // note that x <= upd_x alone can't detect overflow since
+                    // we're not just adding a value of decltype(x) but
+                    // also multiplying by 10
+
+                    x = upd_x;
                     ++beg;
                 }
 
-                if(is_negative) {
-                    value = 0 - value;
-                }
+                value = static_cast<T>(is_negative ? 0 - x : x);
 
-                if(!valid) {
-                    std::cerr << " token:" << std::string(m_start, m_end) 
-                              << std::endl;
-                }
-
-                return valid;
+                // the final check to make sure the value did not roll over
+                // into positives is for edge cases, e.g. -2^63
+                return valid && (is_negative == (value < 0));
             }
         };
 
