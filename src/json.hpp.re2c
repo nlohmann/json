@@ -6419,11 +6419,14 @@ class basic_json
 
     private:
         static constexpr size_t s_capacity = 30;
-        std::array<char, s_capacity + 2> m_buf{};
+        std::array<char, s_capacity + 2> m_buf{}; // +2 for leading '-'
+                                                  // and trailing '\0'
 
         template<typename T>
         void x_write(T x, std::true_type)
         {
+            static_assert(std::numeric_limits<T>::digits10 <= s_capacity, "");
+
             const bool is_neg = x < 0;
             size_t i = 0;
 
@@ -6433,12 +6436,7 @@ class basic_json
                 x /= 10;
             }
 
-            if(i == s_capacity)
-            {
-                std::runtime_error(
-                        "Number is unexpectedly long: " 
-                        + std::to_string(x));
-            }
+            assert(i < s_capacity);
 
             if(i == 0) 
             {
@@ -6478,34 +6476,49 @@ class basic_json
 
             snprintf(m_buf.data(), m_buf.size(), fmt, x);
 
+#if 0
+            // C locales and C++ locales are similar but
+            // different.
+            //
+            // If working with C++ streams we'd've used 
+            // these, but for C formatting functions we
+            // have to use C locales (setlocale / localeconv), 
+            // rather than C++ locales (std::locale installed
+            // by std::locale::global()).
             const std::locale loc;
 
-            // erase thousands separator
-            {
-                const char sep =
-                    std::use_facet< std::numpunct<char> >(
-                        loc).thousands_sep(); 
+            const char thousands_sep =
+                std::use_facet< std::numpunct<char> >(
+                    loc).thousands_sep(); 
 
+            const char decimal_point =
+                std::use_facet< std::numpunct<char> >(
+                    loc).decimal_point(); 
+#else
+            const auto loc = localeconv();
+            assert(loc != nullptr);
+            const char thousands_sep = !loc->thousands_sep ? '\0'
+                                      : loc->thousands_sep[0];
+
+            const char decimal_point = !loc->decimal_point ? '\0'
+                                      : loc->decimal_point[0];
+#endif
+
+            // erase thousands separator
+            if (thousands_sep) {
                 auto end = std::remove(m_buf.begin(), 
                                        m_buf.end(), 
-                                       sep);
+                                       thousands_sep);
 
                 std::fill(end, m_buf.end(), '\0');
             }
 
             // convert decimal point to '.'
+            if (decimal_point and decimal_point != '.') 
             {
-                const char decimal_point =
-                    std::use_facet< std::numpunct<char> >(
-                        loc).decimal_point(); 
-
-                for(auto& c : m_buf) 
+                for (auto& c : m_buf) 
                 {
-                    if(decimal_point == '.') {
-                        break;
-                    }
-
-                    if(c == decimal_point) 
+                    if (c == decimal_point)
                     {
                         c = '.';
                         break;
