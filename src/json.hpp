@@ -6464,18 +6464,17 @@ class basic_json
             }
 
             static constexpr auto d = 
-                    std::numeric_limits<number_float_t>::digits10+1;
+                    std::numeric_limits<number_float_t>::digits10;
+            static_assert(d == 6 or d == 15 or d == 16 or d == 17, "");
 
-            // I'm not sure why we need that +1 above, if at all,
+            static constexpr auto fmt = d == 6  ? "%.7g"
+                                      : d == 15 ? "%.16g"
+                                      : d == 16 ? "%.17g"
+                                      : d == 17 ? "%.18g"
+                                      :           "%.19g";
+            // I'm not sure why we need to +1 the precision,
             // but without it there's a unit-test that fails
             // that asserts precision of the output
-
-            static_assert(d == 6 or d == 15 or d == 16 or d == 17, "");
-            static constexpr auto fmt = d == 6  ? "%.6g"
-                                      : d == 15 ? "%.15g"
-                                      : d == 16 ? "%.16g"
-                                      : d == 17 ? "%.17g"
-                                      :           "%.18g";
 
             snprintf(m_buf.data(), m_buf.size(), fmt, x);
 
