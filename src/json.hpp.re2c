@@ -6429,7 +6429,7 @@ class basic_json
 
             while(x and i < s_capacity) 
             {
-                m_buf[i++] = '0' + abs(x % 10);
+                m_buf[i++] = static_cast<char>('0' + std::labs(x % 10));
                 x /= 10;
             }
 
