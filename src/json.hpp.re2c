@@ -8257,7 +8257,7 @@ class basic_json
             // this is a helper to determine whether to
             // parse the token into floating-point or
             // integral type. We wouldn't need it if
-            // we had separate token types for interal
+            // we had separate token types for integral
             // and floating-point cases.
             bool is_integral() const
             {
@@ -8321,9 +8321,19 @@ class basic_json
                 const char* data = m_start;
                 const size_t len = static_cast<size_t>(m_end - m_start);
 
+#if 0
                 const char decimal_point_char =
                     std::use_facet< std::numpunct<char> >(
                         std::locale()).decimal_point();
+#else
+                // Since dealing with strtod family of functions,
+                // need to use the C locales instead of C++
+                const auto loc = localeconv();
+                assert(loc != nullptr);
+                const char decimal_point_char = 
+                    !loc->decimal_point ? '.'
+                   : loc->decimal_point[0];
+#endif
 
                 // replace decimal separator with locale-specific
                 // version, when necessary; data will be repointed
