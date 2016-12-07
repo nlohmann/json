@@ -629,6 +629,21 @@ TEST_CASE("CBOR")
                     CHECK(json::from_cbor(result) == j);
                 }
             }
+
+            SECTION("half-precision float (edge cases)")
+            {
+                SECTION("infinity")
+                {
+                    json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
+                    CHECK(j == nullptr);
+                }
+
+                SECTION("NaN")
+                {
+                    json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x01}));
+                    CHECK(j == nullptr);
+                }
+            }
         }
 
         SECTION("string")
