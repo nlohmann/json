@@ -403,6 +403,44 @@ TEST_CASE("regression tests")
         std::locale::global(orig_locale);
     }
 
+    SECTION("issue #379 - locale-independent str-to-num")
+    {
+        const std::string orig_locale_name(setlocale(LC_ALL, NULL));
+        
+        setlocale(LC_NUMERIC, "de_DE");
+        std::array<char, 64> buf;
+
+        {
+            // verify that snprintf now uses commas as decimal-separator
+            std::snprintf(buf.data(), buf.size(), "%.2f", 3.14);
+            assert(std::strcmp(buf.data(), "3,14") == 0);
+
+            // verify that strtod now uses commas as decimal-separator
+            const double d1 = std::strtod(buf.data(), nullptr);
+            assert(d1 == 3.14);
+
+            // verify that strtod does not understand dots as decimal separator
+            const double d2 = std::strtod("3.14", nullptr);
+            assert(d2 == 3);
+        }
+
+        const json j1 = json::parse("3.14");
+
+        // verify that parsed correctly despite using strtod internally
+        CHECK(j1.get<double>() == 3.14);
+
+        // verify that dumped correctly despite using snprintf internally
+        CHECK(j1.dump() == "3.14");
+
+        // check a different code path
+        const json j2 = json::parse("1.000000000000000000000000000000000000000000000000000000000000000000000000");
+        CHECK(j2.get<double>() == 1.0);
+
+        // restore original locale
+        setlocale(LC_ALL, orig_locale_name.c_str());
+    }
+
+
     SECTION("issue #233 - Can't use basic_json::iterator as a base iterator for std::move_iterator")
     {
         json source = {"a", "b", "c"};
