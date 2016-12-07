@@ -6514,7 +6514,7 @@ class basic_json
                     // CBOR does not differentiate between positive signed
                     // integers and unsigned integers. Therefore, we used the
                     // code from the value_t::number_unsigned case here.
-                    if (j.m_value.number_integer < 0x17)
+                    if (j.m_value.number_integer <= 0x17)
                     {
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
@@ -6582,7 +6582,7 @@ class basic_json
 
             case value_t::number_unsigned:
             {
-                if (j.m_value.number_unsigned < 0x17)
+                if (j.m_value.number_unsigned <= 0x17)
                 {
                     v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned));
                 }
