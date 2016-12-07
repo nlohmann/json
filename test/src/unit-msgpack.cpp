@@ -214,6 +214,47 @@ TEST_CASE("MessagePack")
                         CHECK(json::from_msgpack(result) == j);
                     }
                 }
+
+                SECTION("-32769..-2147483648")
+                {
+                    for (int32_t i :
+                            {
+                                -32769l, -65536l, -77777l, -1048576l, -2147483648l
+                            })
+                    {
+                        CAPTURE(i);
+
+                        // create JSON value with integer number
+                        json j = i;
+
+                        // check type
+                        CHECK(j.is_number_integer());
+
+                        // create expected byte vector
+                        std::vector<uint8_t> expected;
+                        expected.push_back(0xd2);
+                        expected.push_back(static_cast<uint8_t>((i >> 24) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 16) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
+                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+
+                        // compare result + size
+                        const auto result = json::to_msgpack(j);
+                        CHECK(result == expected);
+                        CHECK(result.size() == 5);
+
+                        // check individual bytes
+                        CHECK(result[0] == 0xd2);
+                        uint32_t restored = static_cast<uint32_t>((static_cast<uint32_t>(result[1]) << 030) +
+                                            (static_cast<uint32_t>(result[2]) << 020) +
+                                            (static_cast<uint32_t>(result[3]) << 010) +
+                                            static_cast<uint32_t>(result[4]));
+                        CHECK(restored == i);
+
+                        // roundtrip
+                        CHECK(json::from_msgpack(result) == j);
+                    }
+                }
             }
 
             SECTION("unsigned")
@@ -316,7 +357,7 @@ TEST_CASE("MessagePack")
                 {
                     for (uint32_t i :
                             {
-                                65536u, 77777u, 1048576u
+                                65536u, 77777u, 1048576u, 4294967295u
                             })
                     {
                         CAPTURE(i);
@@ -346,6 +387,55 @@ TEST_CASE("MessagePack")
                                             (static_cast<uint32_t>(result[2]) << 020) +
                                             (static_cast<uint32_t>(result[3]) << 010) +
                                             static_cast<uint32_t>(result[4]));
+                        CHECK(restored == i);
+
+                        // roundtrip
+                        CHECK(json::from_msgpack(result) == j);
+                    }
+                }
+
+                SECTION("4294967296..18446744073709551615 (uint 64)")
+                {
+                    for (uint64_t i :
+                            {
+                                4294967296lu, 18446744073709551615lu
+                            })
+                    {
+                        CAPTURE(i);
+
+                        // create JSON value with unsigned integer number
+                        json j = i;
+
+                        // check type
+                        CHECK(j.is_number_unsigned());
+
+                        // create expected byte vector
+                        std::vector<uint8_t> expected;
+                        expected.push_back(0xcf);
+                        expected.push_back(static_cast<uint8_t>((i >> 070) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 060) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 050) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 040) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 030) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 020) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 010) & 0xff));
+                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+
+                        // compare result + size
+                        const auto result = json::to_msgpack(j);
+                        CHECK(result == expected);
+                        CHECK(result.size() == 9);
+
+                        // check individual bytes
+                        CHECK(result[0] == 0xcf);
+                        uint64_t restored = static_cast<uint64_t>((static_cast<uint64_t>(result[1]) << 070) +
+                                            (static_cast<uint64_t>(result[2]) << 060) +
+                                            (static_cast<uint64_t>(result[3]) << 050) +
+                                            (static_cast<uint64_t>(result[4]) << 040) +
+                                            (static_cast<uint64_t>(result[5]) << 030) +
+                                            (static_cast<uint64_t>(result[6]) << 020) +
+                                            (static_cast<uint64_t>(result[7]) << 010) +
+                                            static_cast<uint64_t>(result[8]));
                         CHECK(restored == i);
 
                         // roundtrip
