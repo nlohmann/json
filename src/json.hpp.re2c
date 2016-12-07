@@ -8326,48 +8326,43 @@ class basic_json
                 std::array<char, 64> buf;
                 const size_t len = static_cast<size_t>(m_end - m_start);
 
-                const char* const data = [this, &tempstr, &buf, len]() -> const char*
+                // Since dealing with strtod family of functions,
+                // we're getting the decimal point char from the
+                // C locale facilities instead of C++'s numpunct
+                // facet of the current std::locale;
+                const auto loc = localeconv();
+                assert(loc != nullptr);
+                const char decimal_point_char = !loc->decimal_point ? '.'
+                                               : loc->decimal_point[0];
+ 
+                const char *data = m_start;
+ 
+                if (decimal_point_char != '.')
                 {
-                    // Since dealing with strtod family of functions,
-                    // we're getting the decimal point char from the
-                    // C locale facilities instead of C++'s numpunct
-                    // facet of the current std::locale;
-                    const auto loc = localeconv();
-                    assert(loc != nullptr);
-                    const char decimal_point_char = !loc->decimal_point ? '.'
-                                                   : loc->decimal_point[0];
-
-                    if (decimal_point_char == '.') 
-                    {
-                        return m_start; // don't need to convert
-                    }
-
                     const size_t ds_pos = static_cast<size_t>(
                         std::find(m_start, m_end, '.') - m_start );
-
-                    if (ds_pos == len) 
+ 
+                    if (ds_pos != len)
                     {
-                        return m_start; // no decimal separator
+                        // copy the data into the local buffer or
+                        // tempstr, if buffer is too small;
+                        // replace decimal separator, and update
+                        // data to point to the modified bytes
+                        if (len + 1 < buf.size())
+                        {
+                            std::copy(m_start, m_end, buf.data());
+                            buf[len] = 0;
+                            buf[ds_pos] = decimal_point_char;
+                            data = buf.data();
+                        }
+                        else
+                        {
+                            tempstr.assign(m_start, m_end);
+                            tempstr[ds_pos] = decimal_point_char;
+                            data = tempstr.c_str();
+                        }
                     }
-
-                    // copy the data into the local buffer or
-                    // tempstr, if buffer is too small;
-                    // replace decimal separator, and update
-                    // data to point to the modified bytes
-                    if (len + 1 < buf.size()) 
-                    {
-                        std::copy(m_start, m_end, buf.data());
-                        buf[len] = 0;
-                        buf[ds_pos] = decimal_point_char;
-                        return buf.data();
-                    }
-                    else 
-                    {
-                        tempstr.assign(m_start, m_end);
-                        tempstr[ds_pos] = decimal_point_char;
-                        return tempstr.c_str();
-                    }
-                }();
+                }
 
                 char* endptr = nullptr;
                 value = 0;
