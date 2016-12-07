@@ -225,10 +225,13 @@ TEST_CASE("MessagePack")
 
                 SECTION("-32769..-2147483648")
                 {
-                    for (auto i : std::vector<int32_t>(
-                {
-                    -32769, -65536, -77777, -1048576, -2147483648
-                }))
+                    std::vector<int32_t> numbers;
+                    numbers.push_back(-32769);
+                    numbers.push_back(-65536);
+                    numbers.push_back(-77777);
+                    numbers.push_back(-1048576);
+                    numbers.push_back(-2147483648);
+                    for (auto i : numbers)
                     {
                         CAPTURE(i);
 
