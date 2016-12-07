@@ -37,6 +37,14 @@ TEST_CASE("CBOR")
 {
     SECTION("individual values")
     {
+        SECTION("discarded")
+        {
+            // discarded values are not serialized
+            json j = json::value_t::discarded;
+            const auto result = json::to_cbor(j);
+            CHECK(result.empty());
+        }
+
         SECTION("null")
         {
             json j = nullptr;
@@ -413,9 +421,9 @@ TEST_CASE("CBOR")
 
             SECTION("unsigned")
             {
-                SECTION("0..127 (positive fixnum)")
+                SECTION("0..23 (Integer)")
                 {
-                    for (size_t i = 0; i <= 127; ++i)
+                    for (size_t i = 0; i <= 23; ++i)
                     {
                         CAPTURE(i);
 
@@ -430,7 +438,7 @@ TEST_CASE("CBOR")
                         expected.push_back(static_cast<uint8_t>(i));
 
                         // compare result + size
-                        const auto result = json::to_msgpack(j);
+                        const auto result = json::to_cbor(j);
                         CHECK(result == expected);
                         CHECK(result.size() == 1);
 
@@ -438,13 +446,13 @@ TEST_CASE("CBOR")
                         CHECK(result[0] == i);
 
                         // roundtrip
-                        CHECK(json::from_msgpack(result) == j);
+                        CHECK(json::from_cbor(result) == j);
                     }
                 }
 
-                SECTION("128..255 (uint 8)")
+                SECTION("24..255 (one-byte uint8_t)")
                 {
-                    for (size_t i = 128; i <= 255; ++i)
+                    for (size_t i = 24; i <= 255; ++i)
                     {
                         CAPTURE(i);
 
@@ -456,25 +464,25 @@ TEST_CASE("CBOR")
 
                         // create expected byte vector
                         std::vector<uint8_t> expected;
-                        expected.push_back(0xcc);
+                        expected.push_back(0x18);
                         expected.push_back(static_cast<uint8_t>(i));
 
                         // compare result + size
-                        const auto result = json::to_msgpack(j);
+                        const auto result = json::to_cbor(j);
                         CHECK(result == expected);
                         CHECK(result.size() == 2);
 
                         // check individual bytes
-                        CHECK(result[0] == 0xcc);
+                        CHECK(result[0] == 0x18);
                         uint8_t restored = static_cast<uint8_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
-                        CHECK(json::from_msgpack(result) == j);
+                        CHECK(json::from_cbor(result) == j);
                     }
                 }
 
-                SECTION("256..65535 (uint 16)")
+                SECTION("256..65535 (two-byte uint16_t)")
                 {
                     for (size_t i = 256; i <= 65535; ++i)
                     {
@@ -488,26 +496,26 @@ TEST_CASE("CBOR")
 
                         // create expected byte vector
                         std::vector<uint8_t> expected;
-                        expected.push_back(0xcd);
+                        expected.push_back(0x19);
                         expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
                         expected.push_back(static_cast<uint8_t>(i & 0xff));
 
                         // compare result + size
-                        const auto result = json::to_msgpack(j);
+                        const auto result = json::to_cbor(j);
                         CHECK(result == expected);
                         CHECK(result.size() == 3);
 
                         // check individual bytes
-                        CHECK(result[0] == 0xcd);
+                        CHECK(result[0] == 0x19);
                         uint16_t restored = static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]);
                         CHECK(restored == i);
 
                         // roundtrip
-                        CHECK(json::from_msgpack(result) == j);
+                        CHECK(json::from_cbor(result) == j);
                     }
                 }
 
-                SECTION("65536..4294967295 (uint 32)")
+                SECTION("65536..4294967295 (four-byte uint32_t)")
                 {
                     for (uint32_t i :
                             {
@@ -524,19 +532,19 @@ TEST_CASE("CBOR")
 
                         // create expected byte vector
                         std::vector<uint8_t> expected;
-                        expected.push_back(0xce);
+                        expected.push_back(0x1a);
                         expected.push_back(static_cast<uint8_t>((i >> 24) & 0xff));
                         expected.push_back(static_cast<uint8_t>((i >> 16) & 0xff));
                         expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
                         expected.push_back(static_cast<uint8_t>(i & 0xff));
 
                         // compare result + size
-                        const auto result = json::to_msgpack(j);
+                        const auto result = json::to_cbor(j);
                         CHECK(result == expected);
                         CHECK(result.size() == 5);
 
                         // check individual bytes
-                        CHECK(result[0] == 0xce);
+                        CHECK(result[0] == 0x1a);
                         uint32_t restored = static_cast<uint32_t>((static_cast<uint32_t>(result[1]) << 030) +
                                             (static_cast<uint32_t>(result[2]) << 020) +
                                             (static_cast<uint32_t>(result[3]) << 010) +
@@ -544,11 +552,11 @@ TEST_CASE("CBOR")
                         CHECK(restored == i);
 
                         // roundtrip
-                        CHECK(json::from_msgpack(result) == j);
+                        CHECK(json::from_cbor(result) == j);
                     }
                 }
 
-                SECTION("4294967296..4611686018427387903")
+                SECTION("4294967296..4611686018427387903 (eight-byte uint64_t)")
                 {
                     for (uint64_t i :
                             {
@@ -801,6 +809,58 @@ TEST_CASE("CBOR")
                 // roundtrip
                 CHECK(json::from_cbor(result) == j);
             }
+
+            SECTION("array with uint16_t elements")
+            {
+                json j(257, nullptr);
+                std::vector<uint8_t> expected(j.size() + 3, 0xf6); // all null
+                expected[0] = 0x99; // array 16 bit
+                expected[1] = 0x01; // size (0x0101), byte 0
+                expected[2] = 0x01; // size (0x0101), byte 1
+                const auto result = json::to_cbor(j);
+                CHECK(result == expected);
+
+                // roundtrip
+                CHECK(json::from_cbor(result) == j);
+            }
+
+            SECTION("array with uint32_t elements")
+            {
+                json j(65793, nullptr);
+                std::vector<uint8_t> expected(j.size() + 5, 0xf6); // all null
+                expected[0] = 0x9a; // array 32 bit
+                expected[1] = 0x00; // size (0x00010101), byte 0
+                expected[2] = 0x01; // size (0x00010101), byte 1
+                expected[3] = 0x01; // size (0x00010101), byte 2
+                expected[4] = 0x01; // size (0x00010101), byte 3
+                const auto result = json::to_cbor(j);
+                CHECK(result == expected);
+
+                // roundtrip
+                CHECK(json::from_cbor(result) == j);
+            }
+
+            /*
+            SECTION("array with uint64_t elements")
+            {
+                json j(4294967296, nullptr);
+                std::vector<uint8_t> expected(j.size() + 9, 0xf6); // all null
+                expected[0] = 0x9b; // array 64 bit
+                expected[1] = 0x00; // size (0x0000000100000000), byte 0
+                expected[2] = 0x00; // size (0x0000000100000000), byte 1
+                expected[3] = 0x00; // size (0x0000000100000000), byte 2
+                expected[4] = 0x01; // size (0x0000000100000000), byte 3
+                expected[5] = 0x00; // size (0x0000000100000000), byte 4
+                expected[6] = 0x00; // size (0x0000000100000000), byte 5
+                expected[7] = 0x00; // size (0x0000000100000000), byte 6
+                expected[8] = 0x00; // size (0x0000000100000000), byte 7
+                const auto result = json::to_cbor(j);
+                CHECK(result == expected);
+
+                // roundtrip
+                CHECK(json::from_cbor(result) == j);
+            }
+            */
         }
 
         SECTION("object")
@@ -836,6 +896,90 @@ TEST_CASE("CBOR")
                 };
                 const auto result = json::to_cbor(j);
                 CHECK(result == expected);
+
+                // roundtrip
+                CHECK(json::from_cbor(result) == j);
+            }
+
+            SECTION("object with uint8_t elements")
+            {
+                json j;
+                for (auto i = 0; i < 255; ++i)
+                {
+                    // format i to a fixed width of 5
+                    // each entry will need 7 bytes: 6 for string, 1 for null
+                    std::stringstream ss;
+                    ss << std::setw(5) << std::setfill('0') << i;
+                    j.emplace(ss.str(), nullptr);
+                }
+
+                const auto result = json::to_cbor(j);
+
+                // Checking against an expected vector byte by byte is
+                // difficult, because no assumption on the order of key/value
+                // pairs are made. We therefore only check the prefix (type and
+                // size and the overall size. The rest is then handled in the
+                // roundtrip check.
+                CHECK(result.size() == 1787); // 1 type, 1 size, 255*7 content
+                CHECK(result[0] == 0xb8); // map 8 bit
+                CHECK(result[1] == 0xff); // size byte (0xff)
+                // roundtrip
+                CHECK(json::from_cbor(result) == j);
+            }
+
+            SECTION("object with uint16_t elements")
+            {
+                json j;
+                for (auto i = 0; i < 256; ++i)
+                {
+                    // format i to a fixed width of 5
+                    // each entry will need 7 bytes: 6 for string, 1 for null
+                    std::stringstream ss;
+                    ss << std::setw(5) << std::setfill('0') << i;
+                    j.emplace(ss.str(), nullptr);
+                }
+
+                const auto result = json::to_cbor(j);
+
+                // Checking against an expected vector byte by byte is
+                // difficult, because no assumption on the order of key/value
+                // pairs are made. We therefore only check the prefix (type and
+                // size and the overall size. The rest is then handled in the
+                // roundtrip check.
+                CHECK(result.size() == 1795); // 1 type, 2 size, 256*7 content
+                CHECK(result[0] == 0xb9); // map 16 bit
+                CHECK(result[1] == 0x01); // byte 0 of size (0x0100)
+                CHECK(result[2] == 0x00); // byte 1 of size (0x0100)
+
+                // roundtrip
+                CHECK(json::from_cbor(result) == j);
+            }
+
+            SECTION("object with uint32_t elements")
+            {
+                json j;
+                for (auto i = 0; i < 65536; ++i)
+                {
+                    // format i to a fixed width of 5
+                    // each entry will need 7 bytes: 6 for string, 1 for null
+                    std::stringstream ss;
+                    ss << std::setw(5) << std::setfill('0') << i;
+                    j.emplace(ss.str(), nullptr);
+                }
+
+                const auto result = json::to_cbor(j);
+
+                // Checking against an expected vector byte by byte is
+                // difficult, because no assumption on the order of key/value
+                // pairs are made. We therefore only check the prefix (type and
+                // size and the overall size. The rest is then handled in the
+                // roundtrip check.
+                CHECK(result.size() == 458757); // 1 type, 4 size, 65536*7 content
+                CHECK(result[0] == 0xba); // map 32 bit
+                CHECK(result[1] == 0x00); // byte 0 of size (0x00010000)
+                CHECK(result[2] == 0x01); // byte 1 of size (0x00010000)
+                CHECK(result[3] == 0x00); // byte 2 of size (0x00010000)
+                CHECK(result[4] == 0x00); // byte 3 of size (0x00010000)
 
                 // roundtrip
                 CHECK(json::from_cbor(result) == j);
