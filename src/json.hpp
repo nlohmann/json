@@ -34,7 +34,7 @@ SOFTWARE.
 #include <cassert> // assert
 #include <cctype> // isdigit
 #include <ciso646> // and, not, or
-#include <cmath> // isfinite, signbit
+#include <cmath> // isfinite, ldexp, signbit
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <cstdint> // int64_t, uint64_t
 #include <cstdlib> // strtod, strtof, strtold, strtoul
@@ -7168,6 +7168,29 @@ class basic_json
         else if (v[current_idx] == 0xf6) // null
         {
             return value_t::null;
+        }
+        else if (v[current_idx] == 0xf9) // Half-Precision Float
+        {
+            idx += 2; // skip two content bytes
+
+            // code from RFC 7049, Appendix D
+            const int half = (v[current_idx + 1] << 8) + v[current_idx + 2];
+            const int exp = (half >> 10) & 0x1f;
+            const int mant = half & 0x3ff;
+            double val;
+            if (exp == 0)
+            {
+                val = std::ldexp(mant, -24);
+            }
+            else if (exp != 31)
+            {
+                val = std::ldexp(mant + 1024, exp - 25);
+            }
+            else
+            {
+                val = mant == 0 ? INFINITY : NAN;
+            }
+            return half & 0x8000 ? -val : val;
         }
         else if (v[current_idx] == 0xfa) // Single-Precision Float
         {
