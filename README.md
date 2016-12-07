@@ -25,7 +25,7 @@ Other aspects were not so important to us:
 
 - **Memory efficiency**. Each JSON object has an overhead of one pointer (the maximal size of a union) and one enumeration element (1 byte). The default generalization uses the following C++ data types: `std::string` for strings, `int64_t`, `uint64_t` or `double` for numbers, `std::map` for objects, `std::vector` for arrays, and `bool` for Booleans. However, you can template the generalized class `basic_json` to your needs.
 
-- **Speed**. We currently implement the parser as naive [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser) with hand coded string handling. It is fast enough, but a [LALR-parser](http://en.wikipedia.org/wiki/LALR_parser) may be even faster (but would consist of more files which makes the integration harder).
+- **Speed**. There are certainly [faster JSON libraries](https://github.com/miloyip/nativejson-benchmark#parsing-time) out there. However, if your goal is to speed up your development by adding JSON support with a single header, then this library is the way to go. If you know how to use a `std::vector` or `std::map`, you are already set.
 
 See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.github/CONTRIBUTING.md#please-dont) for more information.
 
@@ -130,6 +130,8 @@ json array_not_object = { json::array({"currency", "USD"}), json::array({"value"
 
 ### Serialization / Deserialization
 
+#### To/from strings
+
 You can create an object (deserialization) by appending `_json` to a string literal:
 
 ```cpp
@@ -163,6 +165,8 @@ std::cout << j.dump(4) << std::endl;
 // }
 ```
 
+#### To/from streams (e.g. files, string streams)
+
 You can also use streams to serialize and deserialize:
 
 ```cpp
@@ -177,9 +181,36 @@ std::cout << j;
 std::cout << std::setw(4) << j << std::endl;
 ```
 
-These operators work for any subclasses of `std::istream` or `std::ostream`.
+These operators work for any subclasses of `std::istream` or `std::ostream`. Here is the same example with files:
+
+```cpp
+// read a JSON file
+std::ifstream i("file.json");
+json j;
+i >> j;
+
+// write prettified JSON to another file
+std::ofstream o("pretty.json");
+o << std::setw(4) << j << std::endl;
+```
 
 Please note that setting the exception bit for `failbit` is inappropriate for this use case. It will result in program termination due to the `noexcept` specifier in use.
+
+#### Read from iterator range
+
+You can also read JSON from an iterator range; that is, from any container accessible by iterators whose content is stored as contiguous byte sequence, for instance a `std::vector<uint8_t>`:
+
+```cpp
+std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
+json j = json::parse(v.begin(), v.end());
+```
+
+You may leave the iterators for the range [begin, end):
+
+```cpp
+std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
+json j = json::parse(v);
+```
 
 
 ### STL-like access
@@ -192,6 +223,9 @@ json j;
 j.push_back("foo");
 j.push_back(1);
 j.push_back(true);
+
+// also use emplace_back
+j.emplace_back(1.78);
 
 // iterate the array
 for (json::iterator it = j.begin(); it != j.end(); ++it) {
@@ -230,6 +264,9 @@ json o;
 o["foo"] = 23;
 o["bar"] = false;
 o["baz"] = 3.141;
+
+// also use emplace
+o.emplace("weather", "sunny");
 
 // special iterator member functions for objects
 for (json::iterator it = o.begin(); it != o.end(); ++it) {
@@ -498,7 +535,7 @@ I deeply appreciate the help of the following people.
 - [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable.
 - [Denis Andrejew](https://github.com/seeekr) fixed a grammar issue in the README file.
 - [Pierre-Antoine Lacaze](https://github.com/palacaze) found a subtle bug in the `dump()` function.
-- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling.
+- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser and improved the benchmarking code.
 - [cgzones](https://github.com/cgzones) had an idea how to fix the Coverity scan.
 
 Thanks a lot for helping out!
@@ -523,7 +560,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905491 assertions in 36 test cases)
+All tests passed (8905518 assertions in 36 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run
