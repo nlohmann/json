@@ -225,10 +225,10 @@ TEST_CASE("MessagePack")
 
                 SECTION("-32769..-2147483648")
                 {
-                    for (int32_t i :
-                            {
-                                -32769l, -65536l, -77777l, -1048576l, -2147483648l
-                            })
+                    for (int32_t i : std::vector<int32_t>(
+                {
+                    -32769l, -65536l, -77777l, -1048576l, -2147483648l
+                }))
                     {
                         CAPTURE(i);
 
@@ -254,9 +254,9 @@ TEST_CASE("MessagePack")
                         // check individual bytes
                         CHECK(result[0] == 0xd2);
                         uint32_t restored = static_cast<uint32_t>((static_cast<uint32_t>(result[1]) << 030) +
-                                            (static_cast<uint32_t>(result[2]) << 020) +
-                                            (static_cast<uint32_t>(result[3]) << 010) +
-                                            static_cast<uint32_t>(result[4]));
+                        (static_cast<uint32_t>(result[2]) << 020) +
+                        (static_cast<uint32_t>(result[3]) << 010) +
+                        static_cast<uint32_t>(result[4]));
                         CHECK(restored == i);
 
                         // roundtrip
