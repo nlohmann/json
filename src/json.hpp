@@ -265,27 +265,6 @@ struct is_compatible_integer_type
       CompatibleNumberIntegerType>::value;
 };
 
-// quickfix, just trying to make things compile before refactoring
-template <bool B, typename RealIntegerType, typename CompatibleEnumType>
-struct is_compatible_enum_type_impl : std::false_type {};
-
-template <typename RealIntegerType, typename CompatibleEnumType>
-struct is_compatible_enum_type_impl<true, RealIntegerType, CompatibleEnumType>
-{
-  using Underlying = typename std::underlying_type<CompatibleEnumType>::type;
-  static constexpr auto value =
-      is_compatible_integer_type<RealIntegerType, Underlying>::value;
-};
-
-template <typename RealIntegerType, typename CompatibleEnumType>
-struct is_compatible_enum_type
-{
-  static constexpr auto value =
-      is_compatible_enum_type_impl<std::is_enum<CompatibleEnumType>::value,
-                                   RealIntegerType,
-                                   CompatibleEnumType>::value;
-};
-
 template <typename RealFloat, typename CompatibleFloat>
 struct is_compatible_float_type
 {
@@ -302,8 +281,6 @@ struct is_compatible_basic_json_type
       std::is_constructible<typename BasicJson::string_t, T>::value or
       std::is_same<typename BasicJson::boolean_t, T>::value or
       is_compatible_array_type<BasicJson, T>::value or
-      is_compatible_enum_type<T, typename BasicJson::number_integer_t>::value or
-      is_compatible_enum_type<T, typename BasicJson::number_unsigned_t>::value or
       is_compatible_object_type<typename BasicJson::object_t, T>::value or
       is_compatible_float_type<typename BasicJson::number_float_t, T>::value or
       is_compatible_integer_type<typename BasicJson::number_integer_t,
@@ -1624,9 +1601,8 @@ class basic_json
                         not detail::is_compatible_basic_json_type<
                             uncvref_t<T>, basic_json_t>::value and
                         not detail::is_basic_json_nested_class<uncvref_t<T>, basic_json_t, primitive_iterator_t>::value and
+                        not std::is_enum<uncvref_t<T>>::value and
                         not std::is_same<uncvref_t<T>, typename basic_json_t::array_t::iterator>::value and
-                        not detail::is_compatible_enum_type<number_integer_t, uncvref_t<T>>::value and
-                        not detail::is_compatible_enum_type<number_unsigned_t, uncvref_t<T>>::value and
                         not std::is_same<uncvref_t<T>, typename basic_json_t::object_t::iterator>::value and
                         detail::has_to_json<JSONSerializer, basic_json,
                                             uncvref_t<T>>::value,
@@ -1797,7 +1773,10 @@ class basic_json
 
     @since version 1.0.0
     */
-    basic_json(const int val) noexcept
+
+    // Quickfix, accept every enum type, without looking if a to_json method is provided...
+    template <typename T, enable_if_t<std::is_enum<T>::value, int> = 0>
+    basic_json(T val) noexcept
         : m_type(value_t::number_integer),
           m_value(static_cast<number_integer_t>(val))
     {
@@ -1829,13 +1808,11 @@ class basic_json
 
     @since version 1.0.0
     */
-    template <typename CompatibleNumberIntegerType,
-              enable_if_t<
-                  detail::is_compatible_integer_type<
-                      number_integer_t, CompatibleNumberIntegerType>::value or
-                      detail::is_compatible_enum_type<
-                          number_integer_t, CompatibleNumberIntegerType>::value,
-                  int> = 0>
+    template <
+        typename CompatibleNumberIntegerType,
+        enable_if_t<detail::is_compatible_integer_type<
+                        number_integer_t, CompatibleNumberIntegerType>::value,
+                    int> = 0>
     basic_json(const CompatibleNumberIntegerType val) noexcept
         : m_type(value_t::number_integer),
           m_value(static_cast<number_integer_t>(val)) {
@@ -1890,12 +1867,9 @@ class basic_json
     */
     template <
         typename CompatibleNumberUnsignedType,
-        enable_if_t<
-            detail::is_compatible_integer_type<
-                number_unsigned_t, CompatibleNumberUnsignedType>::value or
-                detail::is_compatible_enum_type<
-                    number_integer_t, CompatibleNumberUnsignedType>::value,
-            int> = 0>
+        enable_if_t<detail::is_compatible_integer_type<
+                        number_unsigned_t, CompatibleNumberUnsignedType>::value,
+                    int> = 0>
     basic_json(const CompatibleNumberUnsignedType val) noexcept
         : m_type(value_t::number_unsigned),
           m_value(static_cast<number_unsigned_t>(val)) {
