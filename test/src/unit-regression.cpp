@@ -405,9 +405,14 @@ TEST_CASE("regression tests")
 
     SECTION("issue #379 - locale-independent str-to-num")
     {
-        const std::string orig_locale_name(setlocale(LC_ALL, NULL));
+        // If I save the locale here and restore it in the end
+        // of this block, then setLocale(LC_NUMERIC, "de_DE") 
+        // does not actually make snprintf use "," as decimal separator
+        // on some compilers. I have no idea...
+        //
+        //const std::string orig_locale_name(setlocale(LC_ALL, NULL));
         
-        setlocale(LC_NUMERIC, "fr_Fr.UTF-8");
+        setlocale(LC_NUMERIC, "de_DE");
         std::array<char, 64> buf;
 
         {
@@ -437,7 +442,7 @@ TEST_CASE("regression tests")
         CHECK(j2.get<double>() == 1.0);
 
         // restore original locale
-        setlocale(LC_ALL, orig_locale_name.c_str());
+        // setlocale(LC_ALL, orig_locale_name.c_str());
     }
 
 
