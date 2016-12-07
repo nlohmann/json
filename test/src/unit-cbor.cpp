@@ -92,7 +92,7 @@ TEST_CASE("CBOR")
                         // create expected byte vector
                         std::vector<uint8_t> expected;
                         expected.push_back(static_cast<uint8_t>(0x39));
-                        uint16_t positive = -1 - i;
+                        uint16_t positive = static_cast<uint16_t>(-1 - i);
                         expected.push_back(static_cast<uint8_t>((positive >> 8) & 0xff));
                         expected.push_back(static_cast<uint8_t>(positive & 0xff));
 

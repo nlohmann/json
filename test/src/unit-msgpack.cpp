@@ -225,9 +225,9 @@ TEST_CASE("MessagePack")
 
                 SECTION("-32769..-2147483648")
                 {
-                    for (int32_t i : std::vector<int32_t>(
+                    for (auto i : std::vector<int32_t>(
                 {
-                    -32769l, -65536l, -77777l, -1048576l, -2147483648l
+                    -32769, -65536, -77777, -1048576, -2147483648
                 }))
                     {
                         CAPTURE(i);
