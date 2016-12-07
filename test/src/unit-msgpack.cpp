@@ -270,8 +270,8 @@ TEST_CASE("MessagePack")
                 SECTION("-9223372036854775808..-2147483649 (int 64)")
                 {
                     std::vector<int64_t> numbers;
-                    numbers.push_back(-9223372036854775807-1);
-                    numbers.push_back(-2147483649);
+                    numbers.push_back(INT64_MIN);
+                    numbers.push_back(-2147483649ll);
                     for (auto i : numbers)
                     {
                         CAPTURE(i);
