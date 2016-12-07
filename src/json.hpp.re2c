@@ -8318,33 +8318,28 @@ class basic_json
             template<typename T>
             bool parse(T& value, /*is_integral=*/std::false_type) const
             {
-                const char* data = m_start;
-                const size_t len = static_cast<size_t>(m_end - m_start);
-
-#if 0
-                const char decimal_point_char =
-                    std::use_facet< std::numpunct<char> >(
-                        std::locale()).decimal_point();
-#else
-                // Since dealing with strtod family of functions,
-                // need to use the C locales instead of C++
-                const auto loc = localeconv();
-                assert(loc != nullptr);
-                const char decimal_point_char = 
-                    !loc->decimal_point ? '.'
-                   : loc->decimal_point[0];
-#endif
-
                 // replace decimal separator with locale-specific
-                // version, when necessary; data will be repointed
-                // to either buf or tempstr containing the fixed
-                // string.
+                // version, when necessary; data will point to
+                // either the original string, or buf, or tempstr
+                // containing the fixed string.
                 std::string tempstr;
                 std::array<char, 64> buf;
-                do {
+                const size_t len = static_cast<size_t>(m_end - m_start);
+
+                const char* const data = [this, &tempstr, &buf, len]() -> const char*
+                {
+                    // Since dealing with strtod family of functions,
+                    // we're getting the decimal point char from the
+                    // C locale facilities instead of C++'s numpunct
+                    // facet of the current std::locale;
+                    const auto loc = localeconv();
+                    assert(loc != nullptr);
+                    const char decimal_point_char = !loc->decimal_point ? '.'
+                                                   : loc->decimal_point[0];
+
                     if (decimal_point_char == '.') 
                     {
-                        break; // don't need to convert
+                        return m_start; // don't need to convert
                     }
 
                     const size_t ds_pos = static_cast<size_t>(
@@ -8352,7 +8347,7 @@ class basic_json
 
                     if (ds_pos == len) 
                     {
-                        break; // no decimal separator
+                        return m_start; // no decimal separator
                     }
 
                     // copy the data into the local buffer or
@@ -8364,18 +8359,19 @@ class basic_json
                         std::copy(m_start, m_end, buf.data());
                         buf[len] = 0;
                         buf[ds_pos] = decimal_point_char;
-                        data = buf.data();
+                        return buf.data();
                     }
                     else 
                     {
                         tempstr.assign(m_start, m_end);
                         tempstr[ds_pos] = decimal_point_char;
-                        data = tempstr.c_str();
+                        return tempstr.c_str();
                     }
-                } while (0);
+                }();
 
                 char* endptr = nullptr;
                 value = 0;
+                // this calls appropriate overload depending on T
                 strtof(value, data, &endptr);
 
                 // note that reading past the end is OK, the data may be,
