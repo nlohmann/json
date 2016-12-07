@@ -37,6 +37,14 @@ TEST_CASE("MessagePack")
 {
     SECTION("individual values")
     {
+        SECTION("discarded")
+        {
+            // discarded values are not serialized
+            json j = json::value_t::discarded;
+            const auto result = json::to_msgpack(j);
+            CHECK(result.empty());
+        }
+
         SECTION("null")
         {
             json j = nullptr;
@@ -249,6 +257,55 @@ TEST_CASE("MessagePack")
                                             (static_cast<uint32_t>(result[2]) << 020) +
                                             (static_cast<uint32_t>(result[3]) << 010) +
                                             static_cast<uint32_t>(result[4]));
+                        CHECK(restored == i);
+
+                        // roundtrip
+                        CHECK(json::from_msgpack(result) == j);
+                    }
+                }
+
+                SECTION("-9223372036854775808..-2147483649 (int 64)")
+                {
+                    for (int64_t i :
+                            {
+                                -9223372036854775807 - 1, -2147483649
+                            })
+                    {
+                        CAPTURE(i);
+
+                        // create JSON value with unsigned integer number
+                        json j = i;
+
+                        // check type
+                        CHECK(j.is_number_integer());
+
+                        // create expected byte vector
+                        std::vector<uint8_t> expected;
+                        expected.push_back(0xd3);
+                        expected.push_back(static_cast<uint8_t>((i >> 070) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 060) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 050) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 040) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 030) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 020) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 010) & 0xff));
+                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+
+                        // compare result + size
+                        const auto result = json::to_msgpack(j);
+                        CHECK(result == expected);
+                        CHECK(result.size() == 9);
+
+                        // check individual bytes
+                        CHECK(result[0] == 0xd3);
+                        int64_t restored = static_cast<int64_t>((static_cast<int64_t>(result[1]) << 070) +
+                                                                (static_cast<int64_t>(result[2]) << 060) +
+                                                                (static_cast<int64_t>(result[3]) << 050) +
+                                                                (static_cast<int64_t>(result[4]) << 040) +
+                                                                (static_cast<int64_t>(result[5]) << 030) +
+                                                                (static_cast<int64_t>(result[6]) << 020) +
+                                                                (static_cast<int64_t>(result[7]) << 010) +
+                                                                static_cast<int64_t>(result[8]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -659,6 +716,43 @@ TEST_CASE("MessagePack")
                 // roundtrip
                 CHECK(json::from_msgpack(result) == j);
             }
+
+            SECTION("array 16")
+            {
+                json j(16, nullptr);
+                std::vector<uint8_t> expected(j.size() + 3, 0xc0); // all null
+                expected[0] = 0xdc; // array 16
+                expected[1] = 0x00; // size (0x0010), byte 0
+                expected[2] = 0x10; // size (0x0010), byte 1
+                const auto result = json::to_msgpack(j);
+                CHECK(result == expected);
+
+                // roundtrip
+                CHECK(json::from_msgpack(result) == j);
+            }
+
+            SECTION("array 32")
+            {
+                json j(65536, nullptr);
+                std::vector<uint8_t> expected(j.size() + 5, 0xc0); // all null
+                expected[0] = 0xdd; // array 32
+                expected[1] = 0x00; // size (0x00100000), byte 0
+                expected[2] = 0x01; // size (0x00100000), byte 1
+                expected[3] = 0x00; // size (0x00100000), byte 2
+                expected[4] = 0x00; // size (0x00100000), byte 3
+                const auto result = json::to_msgpack(j);
+                //CHECK(result == expected);
+
+                CHECK(result.size() == expected.size());
+                for (size_t i = 0; i < expected.size(); ++i)
+                {
+                    CAPTURE(i);
+                    CHECK(result[i] == expected[i]);
+                }
+
+                // roundtrip
+                CHECK(json::from_msgpack(result) == j);
+            }
         }
 
         SECTION("object")
@@ -694,6 +788,59 @@ TEST_CASE("MessagePack")
                 };
                 const auto result = json::to_msgpack(j);
                 CHECK(result == expected);
+
+                // roundtrip
+                CHECK(json::from_msgpack(result) == j);
+            }
+
+            SECTION("map 16")
+            {
+                json j = R"({"00": null, "01": null, "02": null, "03": null,
+                             "04": null, "05": null, "06": null, "07": null,
+                             "08": null, "09": null, "10": null, "11": null,
+                             "12": null, "13": null, "14": null, "15": null})"_json;
+
+                const auto result = json::to_msgpack(j);
+
+                // Checking against an expected vector byte by byte is
+                // difficult, because no assumption on the order of key/value
+                // pairs are made. We therefore only check the prefix (type and
+                // size and the overall size. The rest is then handled in the
+                // roundtrip check.
+                CHECK(result.size() == 67); // 1 type, 2 size, 16*4 content
+                CHECK(result[0] == 0xde); // map 16
+                CHECK(result[1] == 0x00); // byte 0 of size (0x0010)
+                CHECK(result[2] == 0x10); // byte 1 of size (0x0010)
+
+                // roundtrip
+                CHECK(json::from_msgpack(result) == j);
+            }
+
+            SECTION("map 32")
+            {
+                json j;
+                for (auto i = 0; i < 65536; ++i)
+                {
+                    // format i to a fixed width of 5
+                    // each entry will need 7 bytes: 6 for fixstr, 1 for null
+                    std::stringstream ss;
+                    ss << std::setw(5) << std::setfill('0') << i;
+                    j.emplace(ss.str(), nullptr);
+                }
+
+                const auto result = json::to_msgpack(j);
+
+                // Checking against an expected vector byte by byte is
+                // difficult, because no assumption on the order of key/value
+                // pairs are made. We therefore only check the prefix (type and
+                // size and the overall size. The rest is then handled in the
+                // roundtrip check.
+                CHECK(result.size() == 458757); // 1 type, 4 size, 65536*7 content
+                CHECK(result[0] == 0xdf); // map 32
+                CHECK(result[1] == 0x00); // byte 0 of size (0x00010000)
+                CHECK(result[2] == 0x01); // byte 1 of size (0x00010000)
+                CHECK(result[3] == 0x00); // byte 2 of size (0x00010000)
+                CHECK(result[4] == 0x00); // byte 3 of size (0x00010000)
 
                 // roundtrip
                 CHECK(json::from_msgpack(result) == j);
