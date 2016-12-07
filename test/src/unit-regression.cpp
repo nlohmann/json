@@ -407,21 +407,21 @@ TEST_CASE("regression tests")
     {
         const std::string orig_locale_name(setlocale(LC_ALL, NULL));
         
-        setlocale(LC_NUMERIC, "de_DE");
+        setlocale(LC_NUMERIC, "fr_Fr.UTF-8");
         std::array<char, 64> buf;
 
         {
             // verify that snprintf now uses commas as decimal-separator
             std::snprintf(buf.data(), buf.size(), "%.2f", 3.14);
-            assert(std::strcmp(buf.data(), "3,14") == 0);
+            CHECK(std::strcmp(buf.data(), "3,14") == 0);
 
             // verify that strtod now uses commas as decimal-separator
             const double d1 = std::strtod(buf.data(), nullptr);
-            assert(d1 == 3.14);
+            CHECK(d1 == 3.14);
 
             // verify that strtod does not understand dots as decimal separator
             const double d2 = std::strtod("3.14", nullptr);
-            assert(d2 == 3);
+            CHECK(d2 == 3);
         }
 
         const json j1 = json::parse("3.14");
