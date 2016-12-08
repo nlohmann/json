@@ -401,6 +401,41 @@ TEST_CASE("regression tests")
         //CHECK(j3c.dump() == "1e04"); // roundtrip error
     }
 
+    SECTION("issue #378 - locale-independent num-to-str")
+    {
+        setlocale(LC_NUMERIC, "");
+
+        auto loc = localeconv();
+        auto orig_decimal_point = loc->decimal_point;
+        auto orig_thousands_sep = loc->thousands_sep;
+        char comma[] = ",";
+        char thsep[] = "'";
+
+        loc->decimal_point = comma;
+        loc->thousands_sep = thsep;
+
+        // verify that snprintf uses special decimal and grouping characters
+        {
+            std::array<char, 64> buf;
+            std::snprintf(buf.data(), buf.size(), "%.2f", 12345.67);
+            CHECK(strcmp(buf.data(), "12345,67") == 0);
+
+            buf.fill(0);
+            std::snprintf(buf.data(), buf.size(), "%'d", 1234567);
+            CHECK(strcmp(buf.data(), "1'234'567") == 0);
+        }
+
+        // verify that dumped correctly with '.' and no grouping
+        const json j1 = 12345.67;
+        CHECK(j1.dump() == "12345.67");
+
+        const json j2 = 1234567;
+        CHECK(j2.dump() == "1234567");
+
+        loc->decimal_point = orig_decimal_point;
+        loc->thousands_sep = orig_thousands_sep;
+    }
+
     SECTION("issue #233 - Can't use basic_json::iterator as a base iterator for std::move_iterator")
     {
         json source = {"a", "b", "c"};
