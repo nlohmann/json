@@ -406,22 +406,27 @@ TEST_CASE("regression tests")
     SECTION("issue #379 - locale-independent str-to-num")
     {
         // If I save the locale here and restore it in the end
-        // of this block, then setLocale(LC_NUMERIC, "de_DE") 
+        // of this block, then setLocale(LC_NUMERIC, "de_DE")
         // does not actually make snprintf use "," as decimal separator
         // on some compilers. I have no idea...
-        //
         //const std::string orig_locale_name(setlocale(LC_ALL, NULL));
-        
-        setlocale(LC_NUMERIC, "de_DE");
+
+
+        // Still, just setting some comma-using locale does not
+        // make snprintf output commas on all platforms, so instead
+        // will change dot to comma in the current locale below
+        //setlocale(LC_NUMERIC, "de_DE");
+
+        auto loc = localeconv();
+        auto orig_decimal_point = loc->decimal_point;
+        char comma[] = ",";
+        loc->decimal_point = comma;
+
         std::array<char, 64> buf;
 
         {
-            // verify that snprintf now uses commas as decimal-separator
-            std::snprintf(buf.data(), buf.size(), "%.2f", 3.14);
-            CHECK(std::strcmp(buf.data(), "3,14") == 0);
-
             // verify that strtod now uses commas as decimal-separator
-            const double d1 = std::strtod(buf.data(), nullptr);
+            const double d1 = std::strtod("3,14", nullptr);
             CHECK(d1 == 3.14);
 
             // verify that strtod does not understand dots as decimal separator
@@ -429,18 +434,15 @@ TEST_CASE("regression tests")
             CHECK(d2 == 3);
         }
 
-        const json j1 = json::parse("3.14");
-
         // verify that parsed correctly despite using strtod internally
+        const json j1 = json::parse("3.14");
         CHECK(j1.get<double>() == 3.14);
-
-        // verify that dumped correctly despite using snprintf internally
-        CHECK(j1.dump() == "3.14");
 
         // check a different code path
         const json j2 = json::parse("1.000000000000000000000000000000000000000000000000000000000000000000000000");
         CHECK(j2.get<double>() == 1.0);
 
+        loc->decimal_point = orig_decimal_point;
         // restore original locale
         // setlocale(LC_ALL, orig_locale_name.c_str());
     }
