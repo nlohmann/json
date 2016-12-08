@@ -8228,9 +8228,41 @@ class basic_json
         struct strtonum
         {
         public:
-            strtonum(const char* start, const char* end) 
+            template<typename T>
+            struct maybe
+            {
+                T x;
+                bool valid;
+
+                maybe(const T& xx)
+                    : x(xx), valid(true)
+                {}
+
+                maybe() : x(), valid(false)
+                {}
+
+                operator bool() const
+                {
+                    return valid;
+                }
+
+                const T& operator*() const
+                {
+                    return x;
+                }
+            };
+
+            strtonum(const char* start, const char* end)
                 : m_start(start), m_end(end)
             {}
+
+            template<typename T,
+                     typename = typename std::enable_if<
+                         std::is_arithmetic<T>::value>::type >
+            bool to(T& val) const
+            {
+                return parse(val, std::is_integral<T>());
+            }
 
             template<typename T,
                      typename = typename std::enable_if<
@@ -8510,31 +8542,39 @@ class basic_json
 
             const bool is_negative = *m_start == '-';
 
-            try {
-                if (not num.is_integral()) 
-                {
-                    ;
-                } 
-                else if (is_negative) 
-                {
+            result.m_type = value_t::discarded;
+
+            if (not num.is_integral())
+            {
+                ; // will parse as float below
+            }
+            else if (is_negative)
+            {
+                number_integer_t val{0};
+                if(num.to(val)) {
                     result.m_type  = value_t::number_integer;
-                    result.m_value = static_cast<number_integer_t>(num);
-                    return;
-                } 
-                else 
-                {
-                    result.m_type  = value_t::number_unsigned;
-                    result.m_value = static_cast<number_unsigned_t>(num);
-                    return;
+                    result.m_value = val;
                 }
             }
-            catch (std::invalid_argument&) 
+            else
             {
-                ; // overflow - will parse as double
+                number_unsigned_t val{0};
+                if(num.to(val)) {
+                    result.m_type  = value_t::number_unsigned;
+                    result.m_value = val;
+                }
+            }
+
+            number_float_t val{0};
+            if (result.m_type != value_t::discarded
+                or !num.to(val))
+            {
+                return; // already have a value from above
+                        // or couldn't parse as float_t
             }
 
             result.m_type  = value_t::number_float;
-            result.m_value = static_cast<number_float_t>(num);
+            result.m_value = val;
 
             // replace infinity and NAN by null
             if (not std::isfinite(result.m_value.number_float))
