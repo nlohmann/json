@@ -6262,36 +6262,35 @@ class basic_json
         }
     }
 
-    template<typename T, typename std::enable_if<sizeof(T) == 1, int>::type = 0>
-    static constexpr T get_from_vector(const std::vector<uint8_t>& vec, const size_t current_idx)
+    /*
+    Precondition:
+
+    vec:   |   |   | a | b | c | d |   |   |        T: |   |   |   |   |
+                 ^                   ^                   ^                ^
+           current_index            idx                 ptr               sizeof(T)
+
+
+    Postcondition:
+
+    vec:   |   |   | a | b | c | d |   |   |        T: | d | c | b | a |
+                 ^   ^                                               ^
+                 |  idx                                             ptr
+           current_index
+
+
+    Code from <http://stackoverflow.com/a/41031865/266378>
+    */
+    template<typename T>
+    static T get_from_vector(const std::vector<uint8_t>& vec, const size_t current_index)
     {
-        return static_cast<T>(vec[current_idx + 1]);
-    }
-    template<typename T, typename std::enable_if<sizeof(T) == 2, int>::type = 0>
-    static constexpr T get_from_vector(const std::vector<uint8_t>& vec, const size_t current_idx)
-    {
-        return static_cast<T>((static_cast<T>(vec[current_idx + 1]) << 010) +
-                              static_cast<T>(vec[current_idx + 2]));
-    }
-    template<typename T, typename std::enable_if<sizeof(T) == 4, int>::type = 0>
-    static constexpr T get_from_vector(const std::vector<uint8_t>& vec, const size_t current_idx)
-    {
-        return static_cast<T>((static_cast<T>(vec[current_idx + 1]) << 030) +
-                              (static_cast<T>(vec[current_idx + 2]) << 020) +
-                              (static_cast<T>(vec[current_idx + 3]) << 010) +
-                              static_cast<T>(vec[current_idx + 4]));
-    }
-    template<typename T, typename std::enable_if<sizeof(T) == 8, int>::type = 0>
-    static constexpr T get_from_vector(const std::vector<uint8_t>& vec, const size_t current_idx)
-    {
-        return static_cast<T>((static_cast<T>(vec[current_idx + 1]) << 070) +
-                              (static_cast<T>(vec[current_idx + 2]) << 060) +
-                              (static_cast<T>(vec[current_idx + 3]) << 050) +
-                              (static_cast<T>(vec[current_idx + 4]) << 040) +
-                              (static_cast<T>(vec[current_idx + 5]) << 030) +
-                              (static_cast<T>(vec[current_idx + 6]) << 020) +
-                              (static_cast<T>(vec[current_idx + 7]) << 010) +
-                              static_cast<T>(vec[current_idx + 8]));
+        T result;
+        uint8_t* ptr = reinterpret_cast<uint8_t*>(&result);
+        size_t idx = current_index + 1 + sizeof(T);
+        while (idx > current_index)
+        {
+            *ptr++ = vec[--idx];
+        }
+        return result;
     }
 
     static void to_msgpack_internal(const basic_json& j, std::vector<uint8_t>& v)
@@ -7173,7 +7172,13 @@ class basic_json
         {
             idx += 2; // skip two content bytes
 
-            // code from RFC 7049, Appendix D
+            // code from RFC 7049, Appendix D, Figure 3:
+            // As half-precision floating-point numbers were only added to IEEE
+            // 754 in 2008, today's programming platforms often still only have
+            // limited support for them. It is very easy to include at least
+            // decoding support for them even without such support. An example
+            // of a small decoder for half-precision floating-point numbers in
+            // the C language is shown in Figure 3.
             const int half = (v[current_idx + 1] << 8) + v[current_idx + 2];
             const int exp = (half >> 10) & 0x1f;
             const int mant = half & 0x3ff;
