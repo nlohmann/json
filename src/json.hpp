@@ -9065,12 +9065,6 @@ basic_json_parser_66:
         @brief parse string into a built-in arithmetic type as if
                the current locale is POSIX.
 
-               e.g. const auto x = static_cast<float>("123.4");
-
-               throw if can't parse the entire string as a number,
-               or if the destination type is integral and the value
-               is outside of the type's range.
-
                note: in floating-point case strtod may parse 
                past the token's end - this is not an error.
 
@@ -9079,34 +9073,15 @@ basic_json_parser_66:
         struct strtonum
         {
         public:
-            template<typename T>
-            struct maybe
-            {
-                T x;
-                bool valid;
-
-                maybe(const T& xx)
-                    : x(xx), valid(true)
-                {}
-
-                maybe() : x(), valid(false)
-                {}
-
-                operator bool() const
-                {
-                    return valid;
-                }
-
-                const T& operator*() const
-                {
-                    return x;
-                }
-            };
-
             strtonum(const char* start, const char* end)
                 : m_start(start), m_end(end)
             {}
 
+            /// return true iff parsed successfully as 
+            /// number of type T.
+            ///
+            /// @val shall contain parsed value, or 
+            /// undefined value if could not parse.
             template<typename T,
                      typename = typename std::enable_if<
                          std::is_arithmetic<T>::value>::type >
@@ -9115,33 +9090,13 @@ basic_json_parser_66:
                 return parse(val, std::is_integral<T>());
             }
 
-            template<typename T,
-                     typename = typename std::enable_if<
-                         std::is_arithmetic<T>::value>::type >
-            operator T() const
-            {
-                T val{0};
-
-                if (parse(val, std::is_integral<T>())) 
-                {
-                    return val;
-                }
-
-                throw std::invalid_argument(
-                        std::string()
-                      + "Can't parse '" 
-                      + std::string(m_start, m_end)
-                      + "' as type "
-                      + typeid(T).name());
-            }
-
-            // return true iff token matches ^[+-]\d+$
-            //
-            // this is a helper to determine whether to
-            // parse the token into floating-point or
-            // integral type. We wouldn't need it if
-            // we had separate token types for integral
-            // and floating-point cases.
+            /// return true iff token matches ^[+-]\d+$
+            ///
+            /// this is a helper to determine whether to
+            /// parse the token into floating-point or
+            /// integral type. We wouldn't need it if
+            /// we had separate token types for integral
+            /// and floating-point cases.
             bool is_integral() const
             {
                 const char* p = m_start;
