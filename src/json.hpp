@@ -6419,9 +6419,8 @@ class basic_json
 
     private:
         static constexpr size_t s_capacity = 30;
-        std::array<char, s_capacity + 2> m_buf{}; // +2 for leading '-'
-                                                  // and trailing '\0'
-
+        std::array<char, s_capacity + 2> m_buf{{}}; // +2 for leading '-'
+                                                    // and trailing '\0'
         template<typename T>
         void x_write(T x, std::true_type)
         {
@@ -6432,7 +6431,8 @@ class basic_json
 
             while(x and i < s_capacity) 
             {
-                m_buf[i++] = static_cast<char>('0' + std::labs(x % 10));
+                const auto digit = std::labs(static_cast<long>(x % 10));
+                m_buf[i++] = static_cast<char>('0' + digit);
                 x /= 10;
             }
 
