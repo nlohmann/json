@@ -1109,6 +1109,58 @@ TEST_CASE("CBOR")
             }
         }
     }
+
+    SECTION("additonal deserialization")
+    {
+        SECTION("0x7b (string)")
+        {
+            std::vector<uint8_t> given = {0x7b, 0x00, 0x00, 0x00, 0x00,
+                                          0x00, 0x00, 0x00, 0x01, 0x61
+                                         };
+            json j = json::from_cbor(given);
+            CHECK(j == "a");
+        }
+
+        SECTION("0x9b (array)")
+        {
+            std::vector<uint8_t> given = {0x9b, 0x00, 0x00, 0x00, 0x00,
+                                          0x00, 0x00, 0x00, 0x01, 0xf4
+                                         };
+            json j = json::from_cbor(given);
+            CHECK(j == json::parse("[false]"));
+        }
+
+        SECTION("0xbb (map)")
+        {
+            std::vector<uint8_t> given = {0xbb, 0x00, 0x00, 0x00, 0x00,
+                                          0x00, 0x00, 0x00, 0x01, 0x60, 0xf4
+                                         };
+            json j = json::from_cbor(given);
+            CHECK(j == json::parse("{\"\": false}"));
+        }
+    }
+
+    SECTION("errors")
+    {
+        SECTION("too short byte vector")
+        {
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x18})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x19})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x19, 0x00})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1a})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1a, 0x00})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1a, 0x00, 0x00})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1a, 0x00, 0x00, 0x00})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1b})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})), std::out_of_range);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})), std::out_of_range);
+        }
+    }
 }
 
 // use this testcase outside [hide] to run it with Valgrind

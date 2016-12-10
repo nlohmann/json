@@ -850,6 +850,13 @@ TEST_CASE("MessagePack")
             }
         }
     }
+
+    SECTION("from double")
+    {
+        auto given = std::vector<uint8_t>({0x19, 0x41, 0xc8, 0x00, 0x00});
+        json j = json::from_msgpack(given);
+        CHECK(j == json(25.0));
+    }
 }
 
 
