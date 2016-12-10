@@ -7085,25 +7085,25 @@ class basic_json
             {
                 idx += 1; // skip content byte
                 // must be uint8_t !
-                return -1 - get_from_vector<uint8_t>(v, current_idx);
+                return static_cast<number_integer_t>(-1) - get_from_vector<uint8_t>(v, current_idx);
             }
 
             case 0x39: // Negative integer -1-n (two-byte uint16_t follows)
             {
                 idx += 2; // skip 2 content bytes
-                return -1 - get_from_vector<int16_t>(v, current_idx);
+                return static_cast<number_integer_t>(-1) - get_from_vector<uint16_t>(v, current_idx);
             }
 
             case 0x3a: // Negative integer -1-n (four-byte uint32_t follows)
             {
                 idx += 4; // skip 4 content bytes
-                return -1 - get_from_vector<int32_t>(v, current_idx);
+                return static_cast<number_integer_t>(-1) - get_from_vector<uint32_t>(v, current_idx);
             }
 
             case 0x3b: // Negative integer -1-n (eight-byte uint64_t follows)
             {
                 idx += 8; // skip 8 content bytes
-                return -1 - get_from_vector<int64_t>(v, current_idx);
+                return static_cast<number_integer_t>(-1) - get_from_vector<uint64_t>(v, current_idx);
             }
 
             // UTF-8 string (0x00..0x17 bytes follow)
