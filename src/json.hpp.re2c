@@ -6262,13 +6262,28 @@ class basic_json
         }
     }
 
-    /*
+    /*!
+    @brief take sufficient bytes from a vector to fill an integer variable
+
+    In the context of binary serialization formats, we need to read several
+    bytes from a byte vector and combine them to multi-byte integral data
+    types.
+
+    @param[in] vec  byte vector to read from
+    @param[in] current_index  the psition in the vector after which to read
+
+    @return the next sizeof(T) bytes from @a vec, in reverse order as T
+
+    @tparam T the integral return type
+
+    @throw std::out_of_range if there are less than sizeof(T)+1 bytes in the
+           vector @a vec to read
+
     Precondition:
 
     vec:   |   |   | a | b | c | d |   |   |        T: |   |   |   |   |
                  ^                   ^                   ^                ^
-           current_index            idx                 ptr               sizeof(T)
-
+           current_index            idx                 ptr        sizeof(T)
 
     Postcondition:
 
@@ -6277,12 +6292,16 @@ class basic_json
                  |  idx                                             ptr
            current_index
 
-
-    Code from <http://stackoverflow.com/a/41031865/266378>
+    @sa Code from <http://stackoverflow.com/a/41031865/266378>.
     */
     template<typename T>
     static T get_from_vector(const std::vector<uint8_t>& vec, const size_t current_index)
     {
+        if (current_index + sizeof(T) + 1 > vec.size())
+        {
+            throw std::out_of_range("cannot read " + std::to_string(sizeof(T)) + " bytes from vector");
+        }
+
         T result;
         uint8_t* ptr = reinterpret_cast<uint8_t*>(&result);
         size_t idx = current_index + 1 + sizeof(T);
@@ -6959,327 +6978,485 @@ class basic_json
         // store and increment index
         const size_t current_idx = idx++;
 
-        if (v[current_idx] <= 0x17) // Integer 0x00..0x17
+        switch (v[current_idx])
         {
-            return v[current_idx];
-        }
-        else if (v[current_idx] == 0x18) // Unsigned integer uint8_t
-        {
-            idx += 1; // skip content byte
-            return get_from_vector<uint8_t>(v, current_idx);
-        }
-        else if (v[current_idx] == 0x19) // Unsigned integer uint16_t
-        {
-            idx += 2; // skip 2 content bytes
-            return get_from_vector<uint16_t>(v, current_idx);
-        }
-        else if (v[current_idx] == 0x1a) // Unsigned integer uint32_t
-        {
-            idx += 4; // skip 4 content bytes
-            return get_from_vector<uint32_t>(v, current_idx);
-        }
-        else if (v[current_idx] == 0x1b) // Unsigned integer uint64_t
-        {
-            idx += 8; // skip 8 content bytes
-            return get_from_vector<uint64_t>(v, current_idx);
-        }
-        else if (v[current_idx] >= 0x20 and v[current_idx] <= 0x37) // Negative integer
-        {
-            return static_cast<int8_t>(0x20 - 1 - v[current_idx]);
-        }
-        else if (v[current_idx] == 0x38) // Negative integer
-        {
-            idx += 1; // skip content byte
-            // must be uint8_t !
-            return -1 - get_from_vector<uint8_t>(v, current_idx);
-        }
-        else if (v[current_idx] == 0x39) // Negative integer
-        {
-            idx += 2; // skip 2 content bytes
-            return -1 - get_from_vector<int16_t>(v, current_idx);
-        }
-        else if (v[current_idx] == 0x3a) // Negative integer
-        {
-            idx += 4; // skip 4 content bytes
-            return -1 - get_from_vector<int32_t>(v, current_idx);
-        }
-        else if (v[current_idx] == 0x3b) // Negative integer
-        {
-            idx += 8; // skip 8 content bytes
-            return -1 - get_from_vector<int64_t>(v, current_idx);
-        }
-        else if (v[current_idx] >= 0x60 and v[current_idx] <= 0x77) // UTF-8 string
-        {
-            const size_t len = v[current_idx] - 0x60;
-            const size_t offset = current_idx + 1;
-            idx += len; // skip content bytes
-            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-        }
-        else if (v[current_idx] == 0x78) // UTF-8 string
-        {
-            const auto len = get_from_vector<uint8_t>(v, current_idx);
-            const size_t offset = current_idx + 2;
-            idx += len + 1; // skip size byte + content bytes
-            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-        }
-        else if (v[current_idx] == 0x79) // UTF-8 string
-        {
-            const auto len = get_from_vector<uint16_t>(v, current_idx);
-            const size_t offset = current_idx + 3;
-            idx += len + 2; // skip 2 size bytes + content bytes
-            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-        }
-        else if (v[current_idx] == 0x7a) // UTF-8 string
-        {
-            const auto len = get_from_vector<uint32_t>(v, current_idx);
-            const size_t offset = current_idx + 5;
-            idx += len + 4; // skip 4 size bytes + content bytes
-            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-        }
-        else if (v[current_idx] == 0x7b) // UTF-8 string
-        {
-            const auto len = get_from_vector<uint64_t>(v, current_idx);
-            const size_t offset = current_idx + 9;
-            idx += len + 8; // skip 8 size bytes + content bytes
-            return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-        }
-        else if (v[current_idx] == 0x7f) // UTF-8 string (indefinite length)
-        {
-            std::string result;
-            while (v[idx] != 0xff)
+            // integer
+            case 0x00:
+            case 0x01:
+            case 0x02:
+            case 0x03:
+            case 0x04:
+            case 0x05:
+            case 0x06:
+            case 0x07:
+            case 0x08:
+            case 0x09:
+            case 0x0a:
+            case 0x0b:
+            case 0x0c:
+            case 0x0d:
+            case 0x0e:
+            case 0x0f:
+            case 0x10:
+            case 0x11:
+            case 0x12:
+            case 0x13:
+            case 0x14:
+            case 0x15:
+            case 0x16:
+            case 0x17:
             {
-                string_t s = from_cbor_internal(v, idx);
-                result += s;
+                return v[current_idx];
             }
-            // skip break byte (0xFF)
-            idx += 1;
-            return result;
-        }
-        else if (v[current_idx] >= 0x80 and v[current_idx] <= 0x97) // array
-        {
-            basic_json result = value_t::array;
-            const size_t len = v[current_idx] - 0x80;
-            for (size_t i = 0; i < len; ++i)
-            {
-                result.push_back(from_cbor_internal(v, idx));
-            }
-            return result;
-        }
-        else if (v[current_idx] == 0x98) // array
-        {
-            basic_json result = value_t::array;
-            const auto len = get_from_vector<uint8_t>(v, current_idx);
-            idx += 1; // skip 1 size byte
-            for (size_t i = 0; i < len; ++i)
-            {
-                result.push_back(from_cbor_internal(v, idx));
-            }
-            return result;
-        }
-        else if (v[current_idx] == 0x99) // array
-        {
-            basic_json result = value_t::array;
-            const auto len = get_from_vector<uint16_t>(v, current_idx);
-            idx += 2; // skip 4 size bytes
-            for (size_t i = 0; i < len; ++i)
-            {
-                result.push_back(from_cbor_internal(v, idx));
-            }
-            return result;
-        }
-        else if (v[current_idx] == 0x9a) // array
-        {
-            basic_json result = value_t::array;
-            const auto len = get_from_vector<uint32_t>(v, current_idx);
-            idx += 4; // skip 4 size bytes
-            for (size_t i = 0; i < len; ++i)
-            {
-                result.push_back(from_cbor_internal(v, idx));
-            }
-            return result;
-        }
-        else if (v[current_idx] == 0x9b) // array
-        {
-            basic_json result = value_t::array;
-            const auto len = get_from_vector<uint64_t>(v, current_idx);
-            idx += 8; // skip 8 size bytes
-            for (size_t i = 0; i < len; ++i)
-            {
-                result.push_back(from_cbor_internal(v, idx));
-            }
-            return result;
-        }
-        else if (v[current_idx] == 0x9f) // array (indefinite length)
-        {
-            basic_json result = value_t::array;
-            while (v[idx] != 0xff)
-            {
-                result.push_back(from_cbor_internal(v, idx));
-            }
-            // skip break byte (0xFF)
-            idx += 1;
-            return result;
-        }
-        else if (v[current_idx] >= 0xa0 and v[current_idx] <= 0xb7) // map
-        {
-            basic_json result = value_t::object;
-            const size_t len = v[current_idx] - 0xa0;
-            for (size_t i = 0; i < len; ++i)
-            {
-                std::string key = from_cbor_internal(v, idx);
-                result[key] = from_cbor_internal(v, idx);
-            }
-            return result;
-        }
-        else if (v[current_idx] == 0xb8) // map
-        {
-            basic_json result = value_t::object;
-            const auto len = get_from_vector<uint8_t>(v, current_idx);
-            idx += 1; // skip 1 size byte
-            for (size_t i = 0; i < len; ++i)
-            {
-                std::string key = from_cbor_internal(v, idx);
-                result[key] = from_cbor_internal(v, idx);
-            }
-            return result;
-        }
-        else if (v[current_idx] == 0xb9) // map
-        {
-            basic_json result = value_t::object;
-            const auto len = get_from_vector<uint16_t>(v, current_idx);
-            idx += 2; // skip 2 size bytes
-            for (size_t i = 0; i < len; ++i)
-            {
-                std::string key = from_cbor_internal(v, idx);
-                result[key] = from_cbor_internal(v, idx);
-            }
-            return result;
-        }
-        else if (v[current_idx] == 0xba) // map
-        {
-            basic_json result = value_t::object;
-            const auto len = get_from_vector<uint32_t>(v, current_idx);
-            idx += 4; // skip 4 size bytes
-            for (size_t i = 0; i < len; ++i)
-            {
-                std::string key = from_cbor_internal(v, idx);
-                result[key] = from_cbor_internal(v, idx);
-            }
-            return result;
-        }
-        else if (v[current_idx] == 0xbb) // map
-        {
-            basic_json result = value_t::object;
-            const auto len = get_from_vector<uint64_t>(v, current_idx);
-            idx += 8; // skip 8 size bytes
-            for (size_t i = 0; i < len; ++i)
-            {
-                std::string key = from_cbor_internal(v, idx);
-                result[key] = from_cbor_internal(v, idx);
-            }
-            return result;
-        }
-        else if (v[current_idx] == 0xbf) // map (indefinite length)
-        {
-            basic_json result = value_t::object;
-            while (v[idx] != 0xff)
-            {
-                std::string key = from_cbor_internal(v, idx);
-                result[key] = from_cbor_internal(v, idx);
-            }
-            // skip break byte (0xFF)
-            idx += 1;
-            return result;
-        }
-        else if (v[current_idx] == 0xf4) // false
-        {
-            return false;
-        }
-        else if (v[current_idx] == 0xf5) // true
-        {
-            return true;
-        }
-        else if (v[current_idx] == 0xf6) // null
-        {
-            return value_t::null;
-        }
-        else if (v[current_idx] == 0xf9) // Half-Precision Float
-        {
-            idx += 2; // skip two content bytes
 
-            // code from RFC 7049, Appendix D, Figure 3:
-            // As half-precision floating-point numbers were only added to IEEE
-            // 754 in 2008, today's programming platforms often still only have
-            // limited support for them. It is very easy to include at least
-            // decoding support for them even without such support. An example
-            // of a small decoder for half-precision floating-point numbers in
-            // the C language is shown in Figure 3.
-            const int half = (v[current_idx + 1] << 8) + v[current_idx + 2];
-            const int exp = (half >> 10) & 0x1f;
-            const int mant = half & 0x3ff;
-            double val;
-            if (exp == 0)
+            case 0x18: // Unsigned integer uint8_t
             {
-                val = std::ldexp(mant, -24);
+                idx += 1; // skip content byte
+                return get_from_vector<uint8_t>(v, current_idx);
             }
-            else if (exp != 31)
-            {
-                val = std::ldexp(mant + 1024, exp - 25);
-            }
-            else
-            {
-                val = mant == 0 ? INFINITY : NAN;
-            }
-            return half & 0x8000 ? -val : val;
-        }
-        else if (v[current_idx] == 0xfa) // Single-Precision Float
-        {
-            // copy bytes in reverse order into the float variable
-            float res;
-            for (size_t byte = 0; byte < sizeof(float); ++byte)
-            {
-                reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v[current_idx + 1 + byte];
-            }
-            idx += sizeof(float); // skip content bytes
-            return res;
-        }
-        else if (v[current_idx] == 0xfb) // Double-Precision Float
-        {
-            // copy bytes in reverse order into the double variable
-            double res;
-            for (size_t byte = 0; byte < sizeof(double); ++byte)
-            {
-                reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v[current_idx + 1 + byte];
-            }
-            idx += sizeof(double); // skip content bytes
-            return res;
-        }
 
-        // 40..57 byte string
-        // 58 byte string
-        // 59 byte string
-        // 5a byte string
-        // 5b byte string
-        // 5f byte string
-        // 7f UTF-8 string with break
-        // 9f array with break
-        // bf map with break
-        // c0 Text-based date/time
-        // c1 Epoch-based date/time
-        // c2 Positive bignum
-        // c3 Positive bignum
-        // c4 Decimal Fraction
-        // c5 Bigfloat
-        // c6..d4 tagged item
-        // d5..d7 Expected Conversion
-        // d8..db more tagged items
-        // e0..f3 simple value
-        // f7 undefined
-        // f8 simple value
-        // f9 half-precision float
-        // ff break stop code
+            case 0x19: // Unsigned integer uint16_t
+            {
+                idx += 2; // skip 2 content bytes
+                return get_from_vector<uint16_t>(v, current_idx);
+            }
 
-        throw std::invalid_argument("error parsing a CBOR @ " + std::to_string(current_idx) + ": " + std::to_string(v[current_idx]));
+            case 0x1a: // Unsigned integer uint32_t
+            {
+                idx += 4; // skip 4 content bytes
+                return get_from_vector<uint32_t>(v, current_idx);
+            }
+
+            case 0x1b: // Unsigned integer uint64_t
+            {
+                idx += 8; // skip 8 content bytes
+                return get_from_vector<uint64_t>(v, current_idx);
+            }
+
+            // Negative integer
+            case 0x20:
+            case 0x21:
+            case 0x22:
+            case 0x23:
+            case 0x24:
+            case 0x25:
+            case 0x26:
+            case 0x27:
+            case 0x28:
+            case 0x29:
+            case 0x2a:
+            case 0x2b:
+            case 0x2c:
+            case 0x2d:
+            case 0x2e:
+            case 0x2f:
+            case 0x30:
+            case 0x31:
+            case 0x32:
+            case 0x33:
+            case 0x34:
+            case 0x35:
+            case 0x36:
+            case 0x37:
+            {
+                return static_cast<int8_t>(0x20 - 1 - v[current_idx]);
+            }
+
+            case 0x38: // Negative integer
+            {
+                idx += 1; // skip content byte
+                // must be uint8_t !
+                return -1 - get_from_vector<uint8_t>(v, current_idx);
+            }
+
+            case 0x39: // Negative integer
+            {
+                idx += 2; // skip 2 content bytes
+                return -1 - get_from_vector<int16_t>(v, current_idx);
+            }
+
+            case 0x3a: // Negative integer
+            {
+                idx += 4; // skip 4 content bytes
+                return -1 - get_from_vector<int32_t>(v, current_idx);
+            }
+
+            case 0x3b: // Negative integer
+            {
+                idx += 8; // skip 8 content bytes
+                return -1 - get_from_vector<int64_t>(v, current_idx);
+            }
+
+            // UTF-8 string
+            case 0x60:
+            case 0x61:
+            case 0x62:
+            case 0x63:
+            case 0x64:
+            case 0x65:
+            case 0x66:
+            case 0x67:
+            case 0x68:
+            case 0x69:
+            case 0x6a:
+            case 0x6b:
+            case 0x6c:
+            case 0x6d:
+            case 0x6e:
+            case 0x6f:
+            case 0x70:
+            case 0x71:
+            case 0x72:
+            case 0x73:
+            case 0x74:
+            case 0x75:
+            case 0x76:
+            case 0x77:
+            {
+                const size_t len = v[current_idx] - 0x60;
+                const size_t offset = current_idx + 1;
+                idx += len; // skip content bytes
+                return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+            }
+
+            case 0x78: // UTF-8 string
+            {
+                const auto len = get_from_vector<uint8_t>(v, current_idx);
+                const size_t offset = current_idx + 2;
+                idx += len + 1; // skip size byte + content bytes
+                return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+            }
+
+            case 0x79: // UTF-8 string
+            {
+                const auto len = get_from_vector<uint16_t>(v, current_idx);
+                const size_t offset = current_idx + 3;
+                idx += len + 2; // skip 2 size bytes + content bytes
+                return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+            }
+
+            case 0x7a: // UTF-8 string
+            {
+                const auto len = get_from_vector<uint32_t>(v, current_idx);
+                const size_t offset = current_idx + 5;
+                idx += len + 4; // skip 4 size bytes + content bytes
+                return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+            }
+
+            case 0x7b: // UTF-8 string
+            {
+                const auto len = get_from_vector<uint64_t>(v, current_idx);
+                const size_t offset = current_idx + 9;
+                idx += len + 8; // skip 8 size bytes + content bytes
+                return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
+            }
+
+            case 0x7f: // UTF-8 string (indefinite length)
+            {
+                std::string result;
+                while (v[idx] != 0xff)
+                {
+                    string_t s = from_cbor_internal(v, idx);
+                    result += s;
+                }
+                // skip break byte (0xFF)
+                idx += 1;
+                return result;
+            }
+
+            // array
+            case 0x80:
+            case 0x81:
+            case 0x82:
+            case 0x83:
+            case 0x84:
+            case 0x85:
+            case 0x86:
+            case 0x87:
+            case 0x88:
+            case 0x89:
+            case 0x8a:
+            case 0x8b:
+            case 0x8c:
+            case 0x8d:
+            case 0x8e:
+            case 0x8f:
+            case 0x90:
+            case 0x91:
+            case 0x92:
+            case 0x93:
+            case 0x94:
+            case 0x95:
+            case 0x96:
+            case 0x97:
+            {
+                basic_json result = value_t::array;
+                const size_t len = v[current_idx] - 0x80;
+                for (size_t i = 0; i < len; ++i)
+                {
+                    result.push_back(from_cbor_internal(v, idx));
+                }
+                return result;
+            }
+
+            case 0x98: // array
+            {
+                basic_json result = value_t::array;
+                const auto len = get_from_vector<uint8_t>(v, current_idx);
+                idx += 1; // skip 1 size byte
+                for (size_t i = 0; i < len; ++i)
+                {
+                    result.push_back(from_cbor_internal(v, idx));
+                }
+                return result;
+            }
+
+            case 0x99: // array
+            {
+                basic_json result = value_t::array;
+                const auto len = get_from_vector<uint16_t>(v, current_idx);
+                idx += 2; // skip 4 size bytes
+                for (size_t i = 0; i < len; ++i)
+                {
+                    result.push_back(from_cbor_internal(v, idx));
+                }
+                return result;
+            }
+
+            case 0x9a: // array
+            {
+                basic_json result = value_t::array;
+                const auto len = get_from_vector<uint32_t>(v, current_idx);
+                idx += 4; // skip 4 size bytes
+                for (size_t i = 0; i < len; ++i)
+                {
+                    result.push_back(from_cbor_internal(v, idx));
+                }
+                return result;
+            }
+
+            case 0x9b: // array
+            {
+                basic_json result = value_t::array;
+                const auto len = get_from_vector<uint64_t>(v, current_idx);
+                idx += 8; // skip 8 size bytes
+                for (size_t i = 0; i < len; ++i)
+                {
+                    result.push_back(from_cbor_internal(v, idx));
+                }
+                return result;
+            }
+
+            case 0x9f: // array (indefinite length)
+            {
+                basic_json result = value_t::array;
+                while (v[idx] != 0xff)
+                {
+                    result.push_back(from_cbor_internal(v, idx));
+                }
+                // skip break byte (0xFF)
+                idx += 1;
+                return result;
+            }
+
+            // map
+            case 0xa0:
+            case 0xa1:
+            case 0xa2:
+            case 0xa3:
+            case 0xa4:
+            case 0xa5:
+            case 0xa6:
+            case 0xa7:
+            case 0xa8:
+            case 0xa9:
+            case 0xaa:
+            case 0xab:
+            case 0xac:
+            case 0xad:
+            case 0xae:
+            case 0xaf:
+            case 0xb0:
+            case 0xb1:
+            case 0xb2:
+            case 0xb3:
+            case 0xb4:
+            case 0xb5:
+            case 0xb6:
+            case 0xb7:
+            {
+                basic_json result = value_t::object;
+                const size_t len = v[current_idx] - 0xa0;
+                for (size_t i = 0; i < len; ++i)
+                {
+                    std::string key = from_cbor_internal(v, idx);
+                    result[key] = from_cbor_internal(v, idx);
+                }
+                return result;
+            }
+
+            case 0xb8: // map
+            {
+                basic_json result = value_t::object;
+                const auto len = get_from_vector<uint8_t>(v, current_idx);
+                idx += 1; // skip 1 size byte
+                for (size_t i = 0; i < len; ++i)
+                {
+                    std::string key = from_cbor_internal(v, idx);
+                    result[key] = from_cbor_internal(v, idx);
+                }
+                return result;
+            }
+
+            case 0xb9: // map
+            {
+                basic_json result = value_t::object;
+                const auto len = get_from_vector<uint16_t>(v, current_idx);
+                idx += 2; // skip 2 size bytes
+                for (size_t i = 0; i < len; ++i)
+                {
+                    std::string key = from_cbor_internal(v, idx);
+                    result[key] = from_cbor_internal(v, idx);
+                }
+                return result;
+            }
+
+            case 0xba: // map
+            {
+                basic_json result = value_t::object;
+                const auto len = get_from_vector<uint32_t>(v, current_idx);
+                idx += 4; // skip 4 size bytes
+                for (size_t i = 0; i < len; ++i)
+                {
+                    std::string key = from_cbor_internal(v, idx);
+                    result[key] = from_cbor_internal(v, idx);
+                }
+                return result;
+            }
+
+            case 0xbb: // map
+            {
+                basic_json result = value_t::object;
+                const auto len = get_from_vector<uint64_t>(v, current_idx);
+                idx += 8; // skip 8 size bytes
+                for (size_t i = 0; i < len; ++i)
+                {
+                    std::string key = from_cbor_internal(v, idx);
+                    result[key] = from_cbor_internal(v, idx);
+                }
+                return result;
+            }
+
+            case 0xbf: // map (indefinite length)
+            {
+                basic_json result = value_t::object;
+                while (v[idx] != 0xff)
+                {
+                    std::string key = from_cbor_internal(v, idx);
+                    result[key] = from_cbor_internal(v, idx);
+                }
+                // skip break byte (0xFF)
+                idx += 1;
+                return result;
+            }
+
+            case 0xf4: // false
+            {
+                return false;
+            }
+
+            case 0xf5: // true
+            {
+                return true;
+            }
+
+            case 0xf6: // null
+            {
+                return value_t::null;
+            }
+
+            case 0xf9: // Half-Precision Float
+            {
+                idx += 2; // skip two content bytes
+
+                // code from RFC 7049, Appendix D, Figure 3:
+                // As half-precision floating-point numbers were only added to IEEE
+                // 754 in 2008, today's programming platforms often still only have
+                // limited support for them. It is very easy to include at least
+                // decoding support for them even without such support. An example
+                // of a small decoder for half-precision floating-point numbers in
+                // the C language is shown in Figure 3.
+                const int half = (v[current_idx + 1] << 8) + v[current_idx + 2];
+                const int exp = (half >> 10) & 0x1f;
+                const int mant = half & 0x3ff;
+                double val;
+                if (exp == 0)
+                {
+                    val = std::ldexp(mant, -24);
+                }
+                else if (exp != 31)
+                {
+                    val = std::ldexp(mant + 1024, exp - 25);
+                }
+                else
+                {
+                    val = mant == 0 ? INFINITY : NAN;
+                }
+                return half & 0x8000 ? -val : val;
+            }
+
+            case 0xfa: // Single-Precision Float
+            {
+                // copy bytes in reverse order into the float variable
+                float res;
+                for (size_t byte = 0; byte < sizeof(float); ++byte)
+                {
+                    reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v[current_idx + 1 + byte];
+                }
+                idx += sizeof(float); // skip content bytes
+                return res;
+            }
+
+            case 0xfb: // Double-Precision Float
+            {
+                // copy bytes in reverse order into the double variable
+                double res;
+                for (size_t byte = 0; byte < sizeof(double); ++byte)
+                {
+                    reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v[current_idx + 1 + byte];
+                }
+                idx += sizeof(double); // skip content bytes
+                return res;
+            }
+
+            // 40..57 byte string
+            // 58 byte string
+            // 59 byte string
+            // 5a byte string
+            // 5b byte string
+            // 5f byte string
+            // 7f UTF-8 string with break
+            // 9f array with break
+            // bf map with break
+            // c0 Text-based date/time
+            // c1 Epoch-based date/time
+            // c2 Positive bignum
+            // c3 Positive bignum
+            // c4 Decimal Fraction
+            // c5 Bigfloat
+            // c6..d4 tagged item
+            // d5..d7 Expected Conversion
+            // d8..db more tagged items
+            // e0..f3 simple value
+            // f7 undefined
+            // f8 simple value
+            // f9 half-precision float
+            // ff break stop code
+            default:
+            {
+                throw std::invalid_argument("error parsing a CBOR @ " + std::to_string(current_idx) + ": " + std::to_string(v[current_idx]));
+            }
+        }
     }
 
   public:
