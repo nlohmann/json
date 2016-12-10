@@ -851,11 +851,11 @@ TEST_CASE("MessagePack")
         }
     }
 
-    SECTION("from double")
+    SECTION("from float32")
     {
-        auto given = std::vector<uint8_t>({0x19, 0x41, 0xc8, 0x00, 0x00});
+        auto given = std::vector<uint8_t>({0xca, 0x41, 0xc8, 0x00, 0x01});
         json j = json::from_msgpack(given);
-        CHECK(j == json(25.0));
+        CHECK(j.get<double>() == Approx(25.0000019073486));
     }
 }
 
