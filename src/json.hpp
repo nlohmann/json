@@ -7043,6 +7043,18 @@ class basic_json
             idx += len + 8; // skip 8 size bytes + content bytes
             return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
         }
+        else if (v[current_idx] == 0x7f) // UTF-8 string (indefinite length)
+        {
+            std::string result;
+            while (v[idx] != 0xff)
+            {
+                string_t s = from_cbor_internal(v, idx);
+                result += s;
+            }
+            // skip break byte (0xFF)
+            idx += 1;
+            return result;
+        }
         else if (v[current_idx] >= 0x80 and v[current_idx] <= 0x97) // array
         {
             basic_json result = value_t::array;
@@ -7095,6 +7107,17 @@ class basic_json
             {
                 result.push_back(from_cbor_internal(v, idx));
             }
+            return result;
+        }
+        else if (v[current_idx] == 0x9f) // array (indefinite length)
+        {
+            basic_json result = value_t::array;
+            while (v[idx] != 0xff)
+            {
+                result.push_back(from_cbor_internal(v, idx));
+            }
+            // skip break byte (0xFF)
+            idx += 1;
             return result;
         }
         else if (v[current_idx] >= 0xa0 and v[current_idx] <= 0xb7) // map
@@ -7154,6 +7177,18 @@ class basic_json
                 std::string key = from_cbor_internal(v, idx);
                 result[key] = from_cbor_internal(v, idx);
             }
+            return result;
+        }
+        else if (v[current_idx] == 0xbf) // map (indefinite length)
+        {
+            basic_json result = value_t::object;
+            while (v[idx] != 0xff)
+            {
+                std::string key = from_cbor_internal(v, idx);
+                result[key] = from_cbor_internal(v, idx);
+            }
+            // skip break byte (0xFF)
+            idx += 1;
             return result;
         }
         else if (v[current_idx] == 0xf4) // false
