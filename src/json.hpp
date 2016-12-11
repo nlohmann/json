@@ -73,6 +73,7 @@ SOFTWARE.
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wfloat-equal"
+    #pragma GCC diagnostic ignored "-Wdocumentation"
 #endif
 
 // allow for portable deprecation warnings
@@ -944,7 +945,7 @@ class basic_json
 
     With a parser callback function, the result of parsing a JSON text can be
     influenced. When passed to @ref parse(std::istream&, const
-    parser_callback_t) or @ref parse(const char*, const parser_callback_t),
+    parser_callback_t) or @ref parse(const CharT, const parser_callback_t),
     it is called on certain events (passed as @ref parse_event_t via parameter
     @a event) with a set recursion depth @a depth and context JSON value
     @a parsed. The return value of the callback function is a boolean
@@ -987,7 +988,7 @@ class basic_json
     skipped completely or replaced by an empty discarded object.
 
     @sa @ref parse(std::istream&, parser_callback_t) or
-    @ref parse(const char*, parser_callback_t) for examples
+    @ref parse(const CharT, const parser_callback_t) for examples
 
     @since version 1.0.0
     */
@@ -6003,11 +6004,11 @@ class basic_json
 
     @since version 1.0.0 (originally for @ref string_t)
     */
-    template<typename CharPT, typename std::enable_if<
-                 std::is_pointer<CharPT>::value and
-                 std::is_integral<typename std::remove_pointer<CharPT>::type>::value and
-                 sizeof(typename std::remove_pointer<CharPT>::type) == 1, int>::type = 0>
-    static basic_json parse(const CharPT s,
+    template<typename CharT, typename std::enable_if<
+                 std::is_pointer<CharT>::value and
+                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
+                 sizeof(typename std::remove_pointer<CharT>::type) == 1, int>::type = 0>
+    static basic_json parse(const CharT s,
                             const parser_callback_t cb = nullptr)
     {
         return parser(reinterpret_cast<const char*>(s), cb).parse();
@@ -6032,7 +6033,7 @@ class basic_json
     @liveexample{The example below demonstrates the `parse()` function with
     and without callback function.,parse__istream__parser_callback_t}
 
-    @sa @ref parse(const char*, const parser_callback_t) for a version
+    @sa @ref parse(const CharT, const parser_callback_t) for a version
     that reads from a string
 
     @since version 1.0.0
@@ -10494,8 +10495,6 @@ basic_json_parser_66:
         supplied via the first parameter.  Set this to @a
         static_cast<number_float_t*>(nullptr).
 
-        @param[in] type  the @ref number_float_t in use
-
         @param[in,out] endptr recieves a pointer to the first character after
         the number
 
@@ -10514,8 +10513,6 @@ basic_json_parser_66:
         supplied via the first parameter.  Set this to @a
         static_cast<number_float_t*>(nullptr).
 
-        @param[in] type  the @ref number_float_t in use
-
         @param[in,out] endptr  recieves a pointer to the first character after
         the number
 
@@ -10533,8 +10530,6 @@ basic_json_parser_66:
         standard floating point number parsing function based on the type
         supplied via the first parameter.  Set this to @a
         static_cast<number_float_t*>(nullptr).
-
-        @param[in] type  the @ref number_float_t in use
 
         @param[in,out] endptr  recieves a pointer to the first character after
         the number
@@ -11423,12 +11418,10 @@ basic_json_parser_66:
         /*!
         @brief replace all occurrences of a substring by another string
 
-        @param[in,out] s  the string to manipulate
+        @param[in,out] s  the string to manipulate; changed so that all
+                          occurrences of @a f are replaced with @a t
         @param[in]     f  the substring to replace with @a t
         @param[in]     t  the string to replace @a f
-
-        @return The string @a s where all occurrences of @a f are replaced
-                with @a t.
 
         @pre The search string @a f must not be empty.
 

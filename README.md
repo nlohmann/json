@@ -537,6 +537,7 @@ I deeply appreciate the help of the following people.
 - [Pierre-Antoine Lacaze](https://github.com/palacaze) found a subtle bug in the `dump()` function.
 - [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser and improved the benchmarking code.
 - [cgzones](https://github.com/cgzones) had an idea how to fix the Coverity scan.
+- [Jared Grubb](https://github.com/jaredgrubb) silenced a nasty documentation warning.
 
 Thanks a lot for helping out!
 
