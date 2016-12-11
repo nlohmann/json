@@ -10,6 +10,7 @@ SOURCES = src/unit.cpp \
           src/unit-algorithms.cpp \
           src/unit-allocator.cpp \
           src/unit-capacity.cpp \
+          src/unit-cbor.cpp \
           src/unit-class_const_iterator.cpp \
           src/unit-class_iterator.cpp \
           src/unit-class_lexer.cpp \
@@ -30,6 +31,7 @@ SOURCES = src/unit.cpp \
           src/unit-json_patch.cpp \
           src/unit-json_pointer.cpp \
           src/unit-modifiers.cpp \
+          src/unit-msgpack.cpp \
           src/unit-pointer_access.cpp \
           src/unit-readme.cpp \
           src/unit-reference_access.cpp \
@@ -40,7 +42,20 @@ SOURCES = src/unit.cpp \
 
 OBJECTS = $(SOURCES:.cpp=.o)
 
-all: json_unit
+TESTCASES = $(patsubst src/unit-%.cpp,test-%,$(wildcard src/unit-*.cpp))
+
+##############################################################################
+# main rules
+##############################################################################
+
+all: $(TESTCASES)
+
+clean:
+	rm -fr json_unit $(OBJECTS) $(SOURCES:.cpp=.gcno) $(SOURCES:.cpp=.gcda) $(TESTCASES)
+
+##############################################################################
+# single test file
+##############################################################################
 
 json_unit: $(OBJECTS) ../src/json.hpp src/catch.hpp
 	@echo "[CXXLD] $@"
@@ -50,5 +65,16 @@ json_unit: $(OBJECTS) ../src/json.hpp src/catch.hpp
 	@echo "[CXX]   $@"
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
-clean:
-	rm -fr json_unit $(OBJECTS) $(SOURCES:.cpp=.gcno) $(SOURCES:.cpp=.gcda)
+
+##############################################################################
+# individual test cases
+##############################################################################
+
+test-%: src/unit-%.cpp ../src/json.hpp src/catch.hpp
+	@echo "[CXXLD] $@"
+	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -DCATCH_CONFIG_MAIN $< -o $@
+
+TEST_PATTERN = "*"
+TEST_PREFIX = ""
+check: $(TESTCASES)
+	@cd .. ; for testcase in $(TESTCASES); do echo "Executing $$testcase..."; $(TEST_PREFIX)test/$$testcase $(TEST_PATTERN) || exit 1; done
