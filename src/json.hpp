@@ -6312,6 +6312,16 @@ class basic_json
         return result;
     }
 
+    /*!
+    @brief create a MessagePack serialization of a given JSON value
+
+    This is a straightforward implementation of the MessagePack specification.
+
+    @param[in] j  JSON value to serialize
+    @param[in,out] v  byte vector to write the serialization to
+
+    @sa https://github.com/msgpack/msgpack/blob/master/spec.md
+    */
     static void to_msgpack_internal(const basic_json& j, std::vector<uint8_t>& v)
     {
         switch (j.type())
@@ -6332,34 +6342,72 @@ class basic_json
 
             case value_t::number_integer:
             {
-                if (j.m_value.number_integer >= -32 and j.m_value.number_integer < 128)
+                if (j.m_value.number_integer >= 0)
                 {
-                    // negative fixnum and positive fixnum
-                    add_to_vector(v, 1, j.m_value.number_integer);
+                    // MessagePack does not differentiate between positive
+                    // signed integers and unsigned integers. Therefore, we used
+                    // the code from the value_t::number_unsigned case here.
+                    if (j.m_value.number_unsigned < 128)
+                    {
+                        // positive fixnum
+                        add_to_vector(v, 1, j.m_value.number_unsigned);
+                    }
+                    else if (j.m_value.number_unsigned <= UINT8_MAX)
+                    {
+                        // uint 8
+                        v.push_back(0xcc);
+                        add_to_vector(v, 1, j.m_value.number_unsigned);
+                    }
+                    else if (j.m_value.number_unsigned <= UINT16_MAX)
+                    {
+                        // uint 16
+                        v.push_back(0xcd);
+                        add_to_vector(v, 2, j.m_value.number_unsigned);
+                    }
+                    else if (j.m_value.number_unsigned <= UINT32_MAX)
+                    {
+                        // uint 32
+                        v.push_back(0xce);
+                        add_to_vector(v, 4, j.m_value.number_unsigned);
+                    }
+                    else if (j.m_value.number_unsigned <= UINT64_MAX)
+                    {
+                        // uint 64
+                        v.push_back(0xcf);
+                        add_to_vector(v, 8, j.m_value.number_unsigned);
+                    }
                 }
-                else if (j.m_value.number_integer >= INT8_MIN and j.m_value.number_integer <= INT8_MAX)
+                else
                 {
-                    // int 8
-                    v.push_back(0xd0);
-                    add_to_vector(v, 1, j.m_value.number_integer);
-                }
-                else if (j.m_value.number_integer >= INT16_MIN and j.m_value.number_integer <= INT16_MAX)
-                {
-                    // int 16
-                    v.push_back(0xd1);
-                    add_to_vector(v, 2, j.m_value.number_integer);
-                }
-                else if (j.m_value.number_integer >= INT32_MIN and j.m_value.number_integer <= INT32_MAX)
-                {
-                    // int 32
-                    v.push_back(0xd2);
-                    add_to_vector(v, 4, j.m_value.number_integer);
-                }
-                else if (j.m_value.number_integer >= INT64_MIN and j.m_value.number_integer <= INT64_MAX)
-                {
-                    // int 64
-                    v.push_back(0xd3);
-                    add_to_vector(v, 8, j.m_value.number_integer);
+                    if (j.m_value.number_integer >= -32)
+                    {
+                        // negative fixnum
+                        add_to_vector(v, 1, j.m_value.number_integer);
+                    }
+                    else if (j.m_value.number_integer >= INT8_MIN and j.m_value.number_integer <= INT8_MAX)
+                    {
+                        // int 8
+                        v.push_back(0xd0);
+                        add_to_vector(v, 1, j.m_value.number_integer);
+                    }
+                    else if (j.m_value.number_integer >= INT16_MIN and j.m_value.number_integer <= INT16_MAX)
+                    {
+                        // int 16
+                        v.push_back(0xd1);
+                        add_to_vector(v, 2, j.m_value.number_integer);
+                    }
+                    else if (j.m_value.number_integer >= INT32_MIN and j.m_value.number_integer <= INT32_MAX)
+                    {
+                        // int 32
+                        v.push_back(0xd2);
+                        add_to_vector(v, 4, j.m_value.number_integer);
+                    }
+                    else if (j.m_value.number_integer >= INT64_MIN and j.m_value.number_integer <= INT64_MAX)
+                    {
+                        // int 64
+                        v.push_back(0xd3);
+                        add_to_vector(v, 8, j.m_value.number_integer);
+                    }
                 }
                 break;
             }
@@ -6509,6 +6557,16 @@ class basic_json
         }
     }
 
+    /*!
+    @brief create a CBOR serialization of a given JSON value
+
+    This is a straightforward implementation of the CBOR specification.
+
+    @param[in] j  JSON value to serialize
+    @param[in,out] v  byte vector to write the serialization to
+
+    @sa https://tools.ietf.org/html/rfc7049
+    */
     static void to_cbor_internal(const basic_json& j, std::vector<uint8_t>& v)
     {
         switch (j.type())
@@ -6566,7 +6624,7 @@ class basic_json
                     // The conversions below encode the sign in the first byte,
                     // and the value is converted to a positive number.
                     const auto positive_number = -1 - j.m_value.number_integer;
-                    if (j.m_value.number_integer <= -1 and j.m_value.number_integer >= -24)
+                    if (j.m_value.number_integer >= -24)
                     {
                         v.push_back(static_cast<uint8_t>(0x20 + positive_number));
                     }
@@ -6648,32 +6706,30 @@ class basic_json
                 const auto N = j.m_value.string->size();
                 if (N <= 0x17)
                 {
-                    v.push_back(0x60 + N);
+                    v.push_back(0x60 + N);  // 1 byte for string + size
                 }
                 else if (N <= 0xff)
                 {
-                    v.push_back(0x78);
-                    // one-byte uint8_t for N
+                    v.push_back(0x78);  // one-byte uint8_t for N
                     add_to_vector(v, 1, N);
                 }
                 else if (N <= 0xffff)
                 {
-                    v.push_back(0x79);
-                    // two-byte uint16_t for N
+                    v.push_back(0x79);  // two-byte uint16_t for N
                     add_to_vector(v, 2, N);
                 }
                 else if (N <= 0xffffffff)
                 {
-                    v.push_back(0x7a);
-                    // four-byte uint32_t for N
+                    v.push_back(0x7a); // four-byte uint32_t for N
                     add_to_vector(v, 4, N);
                 }
+                // LCOV_EXCL_START
                 else if (N <= 0xffffffffffffffff)
                 {
-                    v.push_back(0x7b);
-                    // eight-byte uint64_t for N
+                    v.push_back(0x7b);  // eight-byte uint64_t for N
                     add_to_vector(v, 8, N);
                 }
+                // LCOV_EXCL_STOP
 
                 // append string
                 std::copy(j.m_value.string->begin(), j.m_value.string->end(),
@@ -6686,33 +6742,30 @@ class basic_json
                 const auto N = j.m_value.array->size();
                 if (N <= 0x17)
                 {
-                    // 1 byte for array + size
-                    v.push_back(0x80 + N);
+                    v.push_back(0x80 + N);  // 1 byte for array + size
                 }
                 else if (N <= 0xff)
                 {
-                    v.push_back(0x98);
-                    // one-byte uint8_t for N
+                    v.push_back(0x98);  // one-byte uint8_t for N
                     add_to_vector(v, 1, N);
                 }
                 else if (N <= 0xffff)
                 {
-                    v.push_back(0x99);
-                    // two-byte uint16_t for N
+                    v.push_back(0x99);  // two-byte uint16_t for N
                     add_to_vector(v, 2, N);
                 }
                 else if (N <= 0xffffffff)
                 {
-                    v.push_back(0x9a);
-                    // four-byte uint32_t for N
+                    v.push_back(0x9a);  // four-byte uint32_t for N
                     add_to_vector(v, 4, N);
                 }
+                // LCOV_EXCL_START
                 else if (N <= 0xffffffffffffffff)
                 {
-                    v.push_back(0x9b);
-                    // eight-byte uint64_t for N
+                    v.push_back(0x9b);  // eight-byte uint64_t for N
                     add_to_vector(v, 8, N);
                 }
+                // LCOV_EXCL_STOP
 
                 // append each element
                 for (const auto& el : *j.m_value.array)
@@ -6727,33 +6780,30 @@ class basic_json
                 const auto N = j.m_value.object->size();
                 if (N <= 0x17)
                 {
-                    // 1 byte for object + size
-                    v.push_back(0xa0 + N);
+                    v.push_back(0xa0 + N);  // 1 byte for object + size
                 }
                 else if (N <= 0xff)
                 {
                     v.push_back(0xb8);
-                    // one-byte uint8_t for N
-                    add_to_vector(v, 1, N);
+                    add_to_vector(v, 1, N);  // one-byte uint8_t for N
                 }
                 else if (N <= 0xffff)
                 {
                     v.push_back(0xb9);
-                    // two-byte uint16_t for N
-                    add_to_vector(v, 2, N);
+                    add_to_vector(v, 2, N);  // two-byte uint16_t for N
                 }
                 else if (N <= 0xffffffff)
                 {
                     v.push_back(0xba);
-                    // four-byte uint32_t for N
-                    add_to_vector(v, 4, N);
+                    add_to_vector(v, 4, N);  // four-byte uint32_t for N
                 }
+                // LCOV_EXCL_START
                 else if (N <= 0xffffffffffffffff)
                 {
                     v.push_back(0xbb);
-                    // eight-byte uint64_t for N
-                    add_to_vector(v, 8, N);
+                    add_to_vector(v, 8, N);  // eight-byte uint64_t for N
                 }
+                // LCOV_EXCL_STOP
 
                 // append each element
                 for (const auto& el : *j.m_value.object)
@@ -6772,8 +6822,18 @@ class basic_json
     }
 
     /*!
+    @brief create a JSON value from a given MessagePack vector
+
     @param[in] v  MessagePack serialization
     @param[in] idx  byte index to start reading from @a v
+
+    @return deserialized JSON value
+
+    @throw std::invalid_argument if unsupported features from MessagePack were
+    used in the given vector @a v or if the input is not valid MessagePack
+    @throw std::out_of_range if the given vector ends prematurely
+
+    @sa https://github.com/msgpack/msgpack/blob/master/spec.md
     */
     static basic_json from_msgpack_internal(const std::vector<uint8_t>& v, size_t& idx)
     {
@@ -6992,6 +7052,20 @@ class basic_json
         }
     }
 
+    /*!
+    @brief create a JSON value from a given CBOR vector
+
+    @param[in] v  CBOR serialization
+    @param[in] idx  byte index to start reading from @a v
+
+    @return deserialized JSON value
+
+    @throw std::invalid_argument if unsupported features from CBOR were used in
+    the given vector @a v or if the input is not valid CBOR
+    @throw std::out_of_range if the given vector ends prematurely
+
+    @sa https://tools.ietf.org/html/rfc7049
+    */
     static basic_json from_cbor_internal(const std::vector<uint8_t>& v, size_t& idx)
     {
         // store and increment index
@@ -7457,8 +7531,24 @@ class basic_json
 
   public:
     /*!
+    @brief create a MessagePack serialization of a given JSON value
+
+    Serializes a given JSON value @a j to a byte vector using the MessagePack
+    serialization format. MessagePack is a binary serialization format which
+    aims to be more compact than JSON itself, yet more efficient to parse.
+
     @param[in] j  JSON value to serialize
-    @retuen MessagePack serialization as char vector
+    @return MessagePack serialization as byte vector
+
+    @complexity Linear in the size of the JSON value @a j.
+
+    @liveexample{The example shows the serialization of a JSON value to a byte
+    vector in MessagePack format.,to_msgpack}
+
+    @sa http://msgpack.org
+    @sa @ref from_msgpack(const std::vector<uint8_t>&) for the analogous
+        deserialization
+    @sa @ref to_cbor(const basic_json& for the related CBOR format
     */
     static std::vector<uint8_t> to_msgpack(const basic_json& j)
     {
@@ -7467,6 +7557,28 @@ class basic_json
         return result;
     }
 
+    /*!
+    @brief create a JSON value from a byte vector in MessagePack format
+
+    Deserializes a given byte vector @a v to a JSON value using the MessagePack
+    serialization format.
+
+    @param[in] v  a byte vector in MessagePack format
+    @return deserialized JSON value
+
+    @throw std::invalid_argument if unsupported features from MessagePack were
+    used in the given vector @a v or if the input is not valid MessagePack
+    @throw std::out_of_range if the given vector ends prematurely
+
+    @complexity Linear in the size of the byte vector @a v.
+
+    @liveexample{The example shows the deserialization of a byte vector in
+    MessagePack format to a JSON value.,from_msgpack}
+
+    @sa http://msgpack.org
+    @sa @ref to_msgpack(const basic_json&) for the analogous serialization
+    @sa @ref from_cbor(const std::vector<uint8_t>&) for the related CBOR format
+    */
     static basic_json from_msgpack(const std::vector<uint8_t>& v)
     {
         size_t i = 0;
@@ -7474,8 +7586,25 @@ class basic_json
     }
 
     /*!
+    @brief create a MessagePack serialization of a given JSON value
+
+    Serializes a given JSON value @a j to a byte vector using the CBOR (Concise
+    Binary Object Representation) serialization format. CBOR is a binary
+    serialization format which aims to be more compact than JSON itself, yet
+    more efficient to parse.
+
     @param[in] j  JSON value to serialize
-    @retuen CBOR serialization as char vector
+    @return MessagePack serialization as byte vector
+
+    @complexity Linear in the size of the JSON value @a j.
+
+    @liveexample{The example shows the serialization of a JSON value to a byte
+    vector in CBOR format.,to_cbor}
+
+    @sa http://cbor.io
+    @sa @ref from_cbor(const std::vector<uint8_t>&) for the analogous
+        deserialization
+    @sa @ref to_msgpack(const basic_json& for the related MessagePack format
     */
     static std::vector<uint8_t> to_cbor(const basic_json& j)
     {
@@ -7484,6 +7613,29 @@ class basic_json
         return result;
     }
 
+    /*!
+    @brief create a JSON value from a byte vector in CBOR format
+
+    Deserializes a given byte vector @a v to a JSON value using the CBOR
+    (Concise Binary Object Representation) serialization format.
+
+    @param[in] v  a byte vector in CBOR format
+    @return deserialized JSON value
+
+    @throw std::invalid_argument if unsupported features from CBOR were used in
+    the given vector @a v or if the input is not valid MessagePack
+    @throw std::out_of_range if the given vector ends prematurely
+
+    @complexity Linear in the size of the byte vector @a v.
+
+    @liveexample{The example shows the deserialization of a byte vector in CBOR
+    format to a JSON value.,from_cbor}
+
+    @sa http://cbor.io
+    @sa @ref to_cbor(const basic_json&) for the analogous serialization
+    @sa @ref from_msgpack(const std::vector<uint8_t>&) for the related
+        MessagePack format
+    */
     static basic_json from_cbor(const std::vector<uint8_t>& v)
     {
         size_t i = 0;
