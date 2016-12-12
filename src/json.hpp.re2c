@@ -9793,7 +9793,22 @@ class basic_json
             }
             else if (type == value_t::number_integer)
             {
-                result.m_value.number_integer = -static_cast<number_integer_t>(value);
+                // invariant: if we parsed a '-', the absolute value is between
+                // 0 (we allow -0) and max == -INT64_MIN
+                assert(value >= 0);
+                assert(value <= max);
+
+                if (value == max)
+                {
+                    // we cannot simply negate value (== max == -INT64_MIN),
+                    // see https://github.com/nlohmann/json/issues/389
+                    result.m_value.number_integer = INT64_MIN;
+                }
+                else
+                {
+                    // all other values can be negated safely
+                    result.m_value.number_integer = -static_cast<number_integer_t>(value);
+                }
             }
             else
             {
