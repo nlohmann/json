@@ -138,7 +138,7 @@ TEST_CASE("CBOR")
                                             (static_cast<uint64_t>(result[7]) << 010) +
                                             static_cast<uint64_t>(result[8]));
                         CHECK(restored == positive);
-                        CHECK(-1 - restored == i);
+                        CHECK(-1 - static_cast<int64_t>(restored) == i);
 
                         // roundtrip
                         CHECK(json::from_cbor(result) == j);

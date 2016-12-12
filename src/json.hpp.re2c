@@ -6621,7 +6621,7 @@ class basic_json
                         // four-byte uint32_t
                         add_to_vector(v, 4, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer <= UINT64_MAX)
+                    else
                     {
                         v.push_back(0x1b);
                         // eight-byte uint64_t
@@ -6655,7 +6655,7 @@ class basic_json
                         v.push_back(0x3a);
                         add_to_vector(v, 4, positive_number);
                     }
-                    else if (positive_number <= UINT64_MAX)
+                    else
                     {
                         // int 64
                         v.push_back(0x3b);
@@ -7186,7 +7186,7 @@ class basic_json
             case 0x3b: // Negative integer -1-n (eight-byte uint64_t follows)
             {
                 idx += 8; // skip 8 content bytes
-                return static_cast<number_integer_t>(-1) - get_from_vector<uint64_t>(v, current_idx);
+                return static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(get_from_vector<uint64_t>(v, current_idx));
             }
 
             // UTF-8 string (0x00..0x17 bytes follow)
