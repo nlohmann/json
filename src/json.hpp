@@ -6271,7 +6271,7 @@ class basic_json
     types.
 
     @param[in] vec  byte vector to read from
-    @param[in] current_index  the psition in the vector after which to read
+    @param[in] current_index  the position in the vector after which to read
 
     @return the next sizeof(T) bytes from @a vec, in reverse order as T
 
@@ -6280,20 +6280,24 @@ class basic_json
     @throw std::out_of_range if there are less than sizeof(T)+1 bytes in the
            vector @a vec to read
 
+    In the for loop, the bytes from the vector are copied in reverse order into
+    the return value. In the figures below, let sizeof(T)=4 and `i` be the loop
+    variable.
+
     Precondition:
 
-    vec:   |   |   | a | b | c | d |   |   |        T: |   |   |   |   |
-                 ^                   ^                   ^                ^
-           current_index            idx                 ptr        sizeof(T)
+    vec:   |   |   | a | b | c | d |      T: |   |   |   |   |
+                 ^               ^             ^                ^
+           current_index         i            ptr        sizeof(T)
 
     Postcondition:
 
-    vec:   |   |   | a | b | c | d |   |   |        T: | d | c | b | a |
-                 ^   ^                                               ^
-                 |  idx                                             ptr
+    vec:   |   |   | a | b | c | d |      T: | d | c | b | a |
+                 ^   ^                                     ^
+                 |   i                                    ptr
            current_index
 
-    @sa Code from <http://stackoverflow.com/a/41031865/266378>.
+    @sa Code adapted from <http://stackoverflow.com/a/41031865/266378>.
     */
     template<typename T>
     static T get_from_vector(const std::vector<uint8_t>& vec, const size_t current_index)
@@ -6305,10 +6309,9 @@ class basic_json
 
         T result;
         uint8_t* ptr = reinterpret_cast<uint8_t*>(&result);
-        size_t idx = current_index + 1 + sizeof(T);
-        while (idx > current_index)
+        for (size_t i = 0; i < sizeof(T); ++i)
         {
-            *ptr++ = vec[--idx];
+            *ptr++ = vec[current_index + sizeof(T) - i];
         }
         return result;
     }
