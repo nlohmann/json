@@ -10619,19 +10619,19 @@ basic_json_parser_66:
                 // skip if definitely not an integer
                 if (type != value_t::number_float)
                 {
-                    // multiply last value by ten and add the new digit
-                    auto temp = value * 10 + *curptr - '0';
+                    auto digit = static_cast<number_unsigned_t>(*curptr - '0');
 
-                    // test for overflow
-                    if (temp < value || temp > max)
+                    // overflow if value * 10 + digit > max, move terms around
+                    // to avoid overflow in intermediate values
+                    if (value > (max - digit) / 10)
                     {
                         // overflow
                         type = value_t::number_float;
                     }
                     else
                     {
-                        // no overflow - save it
-                        value = temp;
+                        // no overflow
+                        value = value * 10 + digit;
                     }
                 }
             }
