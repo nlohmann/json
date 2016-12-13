@@ -49,7 +49,7 @@ matrix:
       - SPECIAL=sanitizer
     compiler: clang
     before_script:
-      - CXXFLAGS="-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer" make
+      - make clang_sanitize
 
   # cppcheck
 
