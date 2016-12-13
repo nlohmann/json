@@ -405,12 +405,15 @@ TEST_CASE("regression tests")
     {
         setlocale(LC_NUMERIC, "de_DE.UTF-8");
 
-        // verify that snprintf uses special decimal and grouping characters
+        // Verify that snprintf uses special decimal and grouping characters.
+        // Disabled, because can't trigger locale-specific behavior in AppVeyor
+#if 0
         {
             std::array<char, 64> buf;
             std::snprintf(buf.data(), buf.size(), "%.2f", 12345.67);
             CHECK(strcmp(buf.data(), "12345,67") == 0);
         }
+#endif
 
         // verify that dumped correctly with '.' and no grouping
         const json j1 = 12345.67;
