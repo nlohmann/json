@@ -43,13 +43,13 @@ matrix:
 
   # cLang sanitizer
 
-  - os: linux
-    env:
-      - LLVM_VERSION=3.8.1
-      - SPECIAL=sanitizer
-    compiler: clang
-    before_script:
-      - make clang_sanitize
+  #- os: linux
+  #  env:
+  #    - LLVM_VERSION=3.8.1
+  #    - SPECIAL=sanitizer
+  #  compiler: clang
+  #  before_script:
+  #    - make clang_sanitize
 
   # cppcheck
 
