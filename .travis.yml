@@ -41,16 +41,15 @@ matrix:
     after_success:
       - make check TEST_PREFIX="valgrind --error-exitcode=1 --leak-check=full " TEST_PATTERN=""
 
-  # CLang sanitizers
+  # cLang sanitizer
 
   - os: linux
     env:
       - LLVM_VERSION=3.8.1
-      - SPECIAL=sanitizers
+      - SPECIAL=sanitizer
     compiler: clang
-    after_success:
-      - make clean
-      - CXXFLAGS="-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer" make check
+    before_script:
+      - CXXFLAGS="-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer" make
 
   # cppcheck
 
