@@ -44,7 +44,9 @@ matrix:
   # CLang sanitizers
 
   - os: linux
-    env: LLVM_VERSION=3.9.0
+    env:
+      - LLVM_VERSION=3.8.1
+      - SPECIAL=sanitizers
     compiler: clang
     after_success:
       - make clean
@@ -199,7 +201,6 @@ cache:
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.7.1
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.0
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.1
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.9.0
 
 
 install:
