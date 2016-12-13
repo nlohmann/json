@@ -542,4 +542,21 @@ TEST_CASE("regression tests")
         CHECK_THROWS_AS(j << ss, std::invalid_argument);
         CHECK_THROWS_WITH(j << ss, "parse error - unexpected end of input");
     }
+
+    SECTION("issue #389 - Integer-overflow (OSS-Fuzz issue 267)")
+    {
+        // original test case
+        json j1 = json::parse("-9223372036854775808");
+        CHECK(j1.is_number_integer());
+        CHECK(j1.get<json::number_integer_t>() == INT64_MIN);
+
+        // edge case (+1; still an integer)
+        json j2 = json::parse("-9223372036854775807");
+        CHECK(j2.is_number_integer());
+        CHECK(j2.get<json::number_integer_t>() == INT64_MIN + 1);
+
+        // edge case (-1; overflow -> floats)
+        json j3 = json::parse("-9223372036854775809");
+        CHECK(j3.is_number_float());
+    }
 }

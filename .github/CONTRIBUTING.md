@@ -36,7 +36,7 @@ There are currently two files which need to be edited:
    make re2c
    ```
 
-   To run [`re2c`](http://re2c.org) and generate/overwrite file `src/json.hpp` with your changes in file `src/json.hpp.re2c`.
+   To run [`re2c`](http://re2c.org) and generate/overwrite file `src/json.hpp` with your changes in file `src/json.hpp.re2c`. We currently use re2c version 0.16. Please also use this version, because other re2c versions tend to create code that differs a lot from which makes diffs unusable.
 
 
 2. [`test/src/unit.cpp`](https://github.com/nlohmann/json/blob/master/test/unit.cpp) - This contains the [Catch](https://github.com/philsquared/Catch) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
@@ -59,10 +59,13 @@ Please understand that I cannot accept pull requests changing only file `src/jso
 
 ## Please don't
 
-- Only make changes to file `src/json.hpp` -- please read the paragraph above and understand why `src/json.hpp.re2c` exists.
+- Please do not only make changes to file `src/json.hpp` -- please read the paragraph above and understand why `src/json.hpp.re2c` exists.
 - The C++11 support varies between different **compilers** and versions. Please note the [list of supported compilers](https://github.com/nlohmann/json/blob/master/README.md#supported-compilers). Some compilers like GCC 4.8 (and earlier), Clang 3.3 (and earlier), or Microsoft Visual Studio 13.0 and earlier are known not to work due to missing or incomplete C++11 support. Please refrain from proposing changes that work around these compiler's limitations with `#ifdef`s or other means.
 - Specifically, I am aware of compilation problems with **Microsoft Visual Studio** (there even is an [issue label](https://github.com/nlohmann/json/issues?utf8=✓&q=label%3A%22visual+studio%22+) for these kind of bugs). I understand that even in 2016, complete C++11 support isn't there yet. But please also understand that I do not want to drop features or uglify the code just to make Microsoft's sub-standard compiler happy. The past has shown that there are ways to express the functionality such that the code compiles with the most recent MSVC - unfortunately, this is not the main objective of the project.
 - Please refrain from proposing changes that would **break [JSON](http://json.org) conformance**. If you propose a conformant extension of JSON to be supported by the library, please motivate this extension.
+  - We shall not extend the library to **support comments**. There is quite some [controversy](https://www.reddit.com/r/programming/comments/4v6chu/why_json_doesnt_support_comments_douglas_crockford/) around this topic, and there were quite some [issues](https://github.com/nlohmann/json/issues/376) on this. We believe that JSON is fine without comments.
+  - We do not preserve the **insertion order of object elements**. The [JSON standard](https://tools.ietf.org/html/rfc7159.html) defines objects as "an unordered collection of zero or more name/value pairs". To this end, this library does not preserve insertion order of name/value pairs. (In fact, keys will be traversed in alphabetical order as `std::map` with `std::less` is used by default.) Note this behavior conforms to the standard, and we shall not it to any other order.
+
 - Please do not open pull requests that address **multiple issues**.
 
 ## Wanted

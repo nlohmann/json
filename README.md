@@ -11,6 +11,22 @@
 [![Github Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
 
+- [Design goals](#design-goals)
+- [Integration](#integration)
+- [Examples](#examples)
+  - [JSON as first-class data type](#json-as-first-class-data-type)
+  - [Serialization / Deserialization](#serialization--deserialization)
+  - [STL-like access](#stl-like-access)
+  - [Conversion from STL containers](#conversion-from-stl-containers)
+  - [JSON Pointer and JSON Patch](#json-pointer-and-json-patch)
+  - [Implicit conversions](#implicit-conversions)
+  - [Binary formats (CBOR and MessagePack)](#binary-formats-cbor-and-messagepack)
+- [Supported compilers](#supported-compilers)
+- [License](#license)
+- [Thanks](#thanks)
+- [Notes](#notes)
+- [Execute unit tests](#execute-unit-tests)
+
 ## Design goals
 
 There are myriads of [JSON](http://json.org) libraries out there, and each may even have its reason to exist. Our class had these design goals:
@@ -47,6 +63,10 @@ to the files you want to use JSON objects. That's it. Do not forget to set the n
 
 
 ## Examples
+
+Beside the examples below, you may want to check the [documentation](https://nlohmann.github.io/json/) where each function contains a separate code example (e.g., check out [`emplace()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a602f275f0359ab181221384989810604.html#a602f275f0359ab181221384989810604)). All [example files](https://github.com/nlohmann/json/tree/develop/doc/examples) can be compiled and executed on their own (e.g., file [emplace.cpp](https://github.com/nlohmann/json/blob/develop/doc/examples/emplace.cpp)).
+
+### JSON as first-class data type
 
 Here are some examples to give you an idea how to use the class.
 
@@ -421,6 +441,31 @@ int vi = jn.get<int>();
 // etc.
 ```
 
+### Binary formats (CBOR and MessagePack)
+
+Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [CBOR](http://cbor.io) (Concise Binary Object Representation) and [MessagePack](http://msgpack.org) to efficiently encode JSON values to byte vectors and to decode such vectors.
+
+```cpp
+// create a JSON value
+json j = R"({"compact": true, "schema": 0})"_json;
+
+// serialize to CBOR
+std::vector<uint8_t> v_cbor = json::to_cbor(j);
+
+// 0xa2, 0x67, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74, 0xf5, 0x66, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x00
+
+// roundtrip
+json j_from_cbor = json::from_cbor(v_cbor);
+
+// serialize to MessagePack
+std::vector<uint8_t> v_msgpack = json::to_msgpack(j);
+
+// 0x82, 0xa7, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74, 0xc3, 0xa6, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x00
+
+// roundtrip
+json j_from_msgpack = json::from_msgpack(v_msgpack);
+```
+
 
 ## Supported compilers
 
@@ -537,6 +582,7 @@ I deeply appreciate the help of the following people.
 - [Pierre-Antoine Lacaze](https://github.com/palacaze) found a subtle bug in the `dump()` function.
 - [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser and improved the benchmarking code.
 - [cgzones](https://github.com/cgzones) had an idea how to fix the Coverity scan.
+- [Jared Grubb](https://github.com/jaredgrubb) silenced a nasty documentation warning.
 
 Thanks a lot for helping out!
 
@@ -560,7 +606,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905518 assertions in 36 test cases)
+All tests passed (11201886 assertions in 43 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run
