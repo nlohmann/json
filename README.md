@@ -583,6 +583,7 @@ I deeply appreciate the help of the following people.
 - [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser and improved the benchmarking code.
 - [cgzones](https://github.com/cgzones) had an idea how to fix the Coverity scan.
 - [Jared Grubb](https://github.com/jaredgrubb) silenced a nasty documentation warning.
+- [Yixin Zhang](https://github.com/qwename) fixed an integer overflow check.
 
 Thanks a lot for helping out!
 

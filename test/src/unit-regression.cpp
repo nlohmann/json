@@ -533,4 +533,11 @@ TEST_CASE("regression tests")
         json j3 = json::parse("-9223372036854775809");
         CHECK(j3.is_number_float());
     }
+
+    SECTION("issue #380 - bug in overflow detection when parsing integers")
+    {
+        json j = json::parse("166020696663385964490");
+        CHECK(j.is_number_float());
+        CHECK(j.dump() == "1.66020696663386e+20");
+    }
 }
