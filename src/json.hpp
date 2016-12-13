@@ -9103,7 +9103,7 @@ basic_json_parser_66:
 
                 if (!p) 
                 {
-                    return false;
+                    return false; // LCOV_EXCL_LINE
                 }
 
                 if (*p == '-' or *p == '+') 
@@ -9113,7 +9113,7 @@ basic_json_parser_66:
 
                 if (p == m_end) 
                 {
-                    return false;
+                    return false; // LCOV_EXCL_LINE
                 }
 
                 while (p < m_end and *p >= '0' 
@@ -9252,11 +9252,11 @@ basic_json_parser_66:
                 value = static_cast<T>(x);
 
                 return x == static_cast<decltype(x)>(value) // x fits into destination T
+                   and (x < 0) == (value < 0)               // preserved sign
                    and (x != 0 or is_integral())            // strto[u]ll did nto fail
                    and errno == 0                           // strto[u]ll did not overflow
                    and m_start < m_end                      // token was not empty
-                   and endptr == m_end                      // parsed entire token exactly
-                   and (x < 0) == (*m_start == '-');        // input was sign-compatible
+                   and endptr == m_end;                      // parsed entire token exactly
             }
 
 #else // parsing integral types manually
