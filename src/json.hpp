@@ -122,6 +122,17 @@ using uncvref_t = remove_cv_t<remove_reference_t<T>>;
 template <bool If, typename Then, typename Else>
 using conditional_t = typename std::conditional<If, Then, Else>::type;
 
+// Taken from http://stackoverflow.com/questions/26936640/how-to-implement-is-enum-class-type-trait
+template <typename T>
+using is_scoped_enum =
+    std::integral_constant<bool, not std::is_convertible<T, int>::value and
+                                     std::is_enum<T>::value>;
+
+template <typename T>
+using is_unscoped_enum =
+    std::integral_constant<bool, std::is_convertible<T, int>::value and
+                                     std::is_enum<T>::value>;
+
 // TODO update this doc
 /*!
 @brief unnamed namespace with internal helper functions
@@ -130,6 +141,10 @@ using conditional_t = typename std::conditional<If, Then, Else>::type;
 
 namespace detail
 {
+// Very useful construct against boilerplate (more boilerplate needed than in C++17: http://en.cppreference.com/w/cpp/types/void_t)
+template <typename...> struct make_void { using type = void; };
+template <typename... Ts> using void_t = typename make_void<Ts...>::type;
+
 // Implementation of 3 C++17 constructs: conjunction, disjunction, negation.
 // This is needed to avoid evaluating all the traits in a condition
 //
@@ -277,6 +292,7 @@ template <typename T, typename BasicJson>
 struct is_compatible_basic_json_type
 {
   static auto constexpr value =
+      is_unscoped_enum<T>::value or
       std::is_same<T, BasicJson>::value or
       std::is_constructible<typename BasicJson::string_t, T>::value or
       std::is_same<typename BasicJson::boolean_t, T>::value or
@@ -1601,7 +1617,6 @@ class basic_json
                         not detail::is_compatible_basic_json_type<
                             uncvref_t<T>, basic_json_t>::value and
                         not detail::is_basic_json_nested_class<uncvref_t<T>, basic_json_t, primitive_iterator_t>::value and
-                        not std::is_enum<uncvref_t<T>>::value and
                         not std::is_same<uncvref_t<T>, typename basic_json_t::array_t::iterator>::value and
                         not std::is_same<uncvref_t<T>, typename basic_json_t::object_t::iterator>::value and
                         detail::has_to_json<JSONSerializer, basic_json,
@@ -1774,8 +1789,8 @@ class basic_json
     @since version 1.0.0
     */
 
-    // Quickfix, accept every enum type, without looking if a to_json method is provided...
-    template <typename T, enable_if_t<std::is_enum<T>::value, int> = 0>
+    // Constructor for unscoped enums (not enum classes)
+    template <typename T, enable_if_t<is_unscoped_enum<T>::value, int> = 0>
     basic_json(T val) noexcept
         : m_type(value_t::number_integer),
           m_value(static_cast<number_integer_t>(val))
