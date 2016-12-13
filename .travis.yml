@@ -41,6 +41,15 @@ matrix:
     after_success:
       - make check TEST_PREFIX="valgrind --error-exitcode=1 --leak-check=full " TEST_PATTERN=""
 
+  # CLang sanitizers
+
+  - os: linux
+    env: LLVM_VERSION=3.9.0
+    compiler: clang
+    after_success:
+      - make clean
+      - CXXFLAGS="-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer" make check
+
   # cppcheck
 
   - os: linux
@@ -190,6 +199,7 @@ cache:
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.7.1
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.0
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.1
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.9.0
 
 
 install:
