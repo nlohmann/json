@@ -35,6 +35,13 @@ SOFTWARE.
 
 namespace udt
 {
+  enum class country
+  {
+    china,
+    france,
+    russia
+  };
+
   struct age
   {
     int m_val;
@@ -54,6 +61,7 @@ namespace udt
   {
     age m_age;
     name m_name;
+    country m_country;
   };
 
   struct contact
@@ -69,7 +77,7 @@ namespace udt
   };
 }
 
-// to_json methods for default basic_json
+// to_json methods
 namespace udt
 {
   void to_json(nlohmann::json& j, age a)
@@ -82,10 +90,26 @@ namespace udt
     j = n.m_val;
   }
 
+  void to_json(nlohmann::json& j, country c)
+  {
+    switch (c)
+    {
+    case country::china:
+      j = u8"中华人民共和国";
+      return;
+    case country::france:
+      j = "France";
+      return;
+    case country::russia:
+      j = u8"Российская Федерация";
+      return;
+    }
+  }
+
   void to_json(nlohmann::json& j, person const& p)
   {
     using nlohmann::json;
-    j = json{{"age", p.m_age}, {"name", p.m_name}};
+    j = json{{"age", p.m_age}, {"name", p.m_name}, {"country", p.m_country}};
   }
 
   void to_json(nlohmann::json& j, address const& a)
@@ -139,7 +163,7 @@ namespace udt
   }
 }
 
-// from_json methods for default basic_json
+// from_json methods
 namespace udt
 {
   void from_json(nlohmann::json const& j, age &a)
@@ -152,10 +176,24 @@ namespace udt
     n.m_val = j.get<std::string>();
   }
 
+  void from_json(nlohmann::json const &j, country &c)
+  {
+    const auto str = j.get<std::string>();
+    static const std::map<std::string, country> m = {
+        {u8"中华人民共和国", country::china},
+        {"France", country::france},
+        {"Российская Федерация", country::russia}};
+
+    const auto it = m.find(str);
+    // TODO test exceptions
+    c = it->second;
+  }
+
   void from_json(nlohmann::json const& j, person &p)
   {
     p.m_age = j["age"].get<age>();
     p.m_name = j["name"].get<name>();
+    p.m_country = j["country"].get<country>();
   }
 
   void from_json(nlohmann::json const &j, address &a)
@@ -183,29 +221,33 @@ TEST_CASE("basic usage", "[udt]")
   // a bit narcissic maybe :) ?
   const udt::age a{23};
   const udt::name n{"theo"};
-  const udt::person sfinae_addict{a, n};
+  const udt::country c{udt::country::france};
+  const udt::person sfinae_addict{a, n, c};
+  const udt::person senior_programmer{{42}, {u8"王芳"}, udt::country::china};
   const udt::address addr{"Paris"};
   const udt::contact cpp_programmer{sfinae_addict, addr};
-  const udt::contact_book book{{"C++"}, {cpp_programmer, cpp_programmer}};
+  const udt::contact_book book{{"C++"}, {cpp_programmer, {senior_programmer, addr}}};
 
   SECTION("conversion to json via free-functions")
   {
     CHECK(json(a) == json(23));
     CHECK(json(n) == json("theo"));
-    CHECK(json(sfinae_addict) == R"({"name":"theo", "age":23})"_json);
+    CHECK(json(c) == json("France"));
+    CHECK(json(sfinae_addict) == R"({"name":"theo", "age":23, "country":"France"})"_json);
     CHECK(json("Paris") == json(addr));
     CHECK(json(cpp_programmer) ==
-          R"({"person" : {"age":23, "name":"theo"}, "address":"Paris"})"_json);
+          R"({"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"})"_json);
 
     CHECK(
         json(book) ==
-        R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo"}, "address":"Paris"}, {"person" : {"age":23, "name":"theo"}, "address":"Paris"}]})"_json);
+        R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"}, {"person" : {"age":42, "country":"中华人民共和国", "name":"王芳"}, "address":"Paris"}]})"_json);
+
   }
 
   SECTION("conversion from json via free-functions")
   {
     const auto big_json =
-        R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo"}, "address":"Paris"}, {"person" : {"age":23, "name":"theo"}, "address":"Paris"}]})"_json;
+        R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"}, {"person" : {"age":42, "country":"中华人民共和国", "name":"王芳"}, "address":"Paris"}]})"_json;
     const auto parsed_book = big_json.get<udt::contact_book>();
     const auto book_name = big_json["name"].get<udt::name>();
     const auto contacts = big_json["contacts"].get<std::vector<udt::contact>>();
@@ -214,10 +256,12 @@ TEST_CASE("basic usage", "[udt]")
     const auto person = contact_json["person"].get<udt::person>();
     const auto address = contact_json["address"].get<udt::address>();
     const auto age = contact_json["person"]["age"].get<udt::age>();
+    const auto country = contact_json["person"]["country"].get<udt::country>();
     const auto name = contact_json["person"]["name"].get<udt::name>();
 
     CHECK(age == a);
     CHECK(name == n);
+    CHECK(country == c);
     CHECK(address == addr);
     CHECK(person == sfinae_addict);
     CHECK(contact == cpp_programmer);
