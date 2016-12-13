@@ -226,3 +226,130 @@ TEST_CASE("basic usage", "[udt]")
     CHECK(book == parsed_book);
   }
 }
+
+namespace udt
+{
+template <typename T>
+class optional_type
+{
+public:
+  optional_type() = default;
+  optional_type(T t) { _impl = std::make_shared<T>(std::move(t)); }
+  optional_type(std::nullptr_t) { _impl = nullptr; }
+
+  optional_type &operator=(std::nullptr_t)
+  {
+    _impl = nullptr;
+    return *this;
+  }
+
+  optional_type& operator=(T t)
+  {
+    _impl = std::make_shared<T>(std::move(t));
+    return *this;
+  }
+
+  explicit operator bool() const noexcept { return _impl != nullptr; }
+  T const &operator*() const noexcept { return *_impl; }
+  T &operator*() noexcept { return *_impl; }
+
+private:
+  std::shared_ptr<T> _impl;
+};
+
+struct legacy_type
+{
+  std::string number;
+};
+}
+
+namespace nlohmann
+{
+template <typename T>
+struct adl_serializer<udt::optional_type<T>>
+{
+  static void to_json(json& j, udt::optional_type<T> const& opt)
+  {
+    if (opt)
+      j = *opt;
+    else
+      j = nullptr;
+  }
+
+  static void from_json(json const &j, udt::optional_type<T> &opt)
+  {
+    if (j.is_null())
+      opt = nullptr;
+    else
+      opt = j.get<T>();
+  }
+};
+
+template <>
+struct adl_serializer<udt::legacy_type>
+{
+  static void to_json(json& j, udt::legacy_type const& l)
+  {
+    j = std::stoi(l.number);
+  }
+
+  static void from_json(json const& j, udt::legacy_type& l)
+  {
+    l.number = std::to_string(j.get<int>());
+  }
+};
+}
+
+TEST_CASE("adl_serializer specialization", "[udt]")
+{
+  using nlohmann::json;
+
+  SECTION("partial specialization")
+  {
+    SECTION("to_json")
+    {
+      udt::optional_type<udt::person> optPerson;
+
+      json j = optPerson;
+      CHECK(j.is_null());
+
+      optPerson = udt::person{{42}, {"John Doe"}};
+      j = optPerson;
+      CHECK_FALSE(j.is_null());
+
+      CHECK(j.get<udt::person>() == *optPerson);
+    }
+
+    SECTION("from_json")
+    {
+      auto person = udt::person{{42}, {"John Doe"}};
+      json j = person;
+
+      auto optPerson = j.get<udt::optional_type<udt::person>>();
+      REQUIRE(optPerson);
+      CHECK(*optPerson == person);
+
+      j = nullptr;
+      optPerson = j.get<udt::optional_type<udt::person>>();
+      CHECK(!optPerson);
+    }
+  }
+
+  SECTION("total specialization")
+  {
+    SECTION("to_json")
+    {
+      udt::legacy_type lt{"4242"};
+
+      json j = lt;
+      CHECK(j.get<int>() == 4242);
+    }
+
+    SECTION("from_json")
+    {
+      json j = 4242;
+      auto lt = j.get<udt::legacy_type>();
+      CHECK(lt.number == "4242");
+    }
+  }
+}
