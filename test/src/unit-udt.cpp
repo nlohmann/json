@@ -33,6 +33,8 @@ SOFTWARE.
 
 #include "json.hpp"
 
+using nlohmann::json;
+
 namespace udt
 {
   enum class country
@@ -80,17 +82,21 @@ namespace udt
 // to_json methods
 namespace udt
 {
-  void to_json(nlohmann::json& j, age a)
+  // templates because of the custom_json tests (see below)
+  template <typename Json>
+  void to_json(Json& j, age a)
   {
     j = a.m_val;
   }
 
-  void to_json(nlohmann::json& j, name const& n)
+  template <typename Json>
+  void to_json(Json& j, name const& n)
   {
     j = n.m_val;
   }
 
-  void to_json(nlohmann::json& j, country c)
+  template <typename Json>
+  void to_json(Json& j, country c)
   {
     switch (c)
     {
@@ -106,10 +112,10 @@ namespace udt
     }
   }
 
-  void to_json(nlohmann::json& j, person const& p)
+  template <typename Json>
+  void to_json(Json& j, person const& p)
   {
-    using nlohmann::json;
-    j = json{{"age", p.m_age}, {"name", p.m_name}, {"country", p.m_country}};
+    j = Json{{"age", p.m_age}, {"name", p.m_name}, {"country", p.m_country}};
   }
 
   void to_json(nlohmann::json& j, address const& a)
@@ -119,13 +125,11 @@ namespace udt
 
   void to_json(nlohmann::json& j, contact const& c)
   {
-    using nlohmann::json;
     j = json{{"person", c.m_person}, {"address", c.m_address}};
   }
 
   void to_json(nlohmann::json& j, contact_book const& cb)
   {
-    using nlohmann::json;
     j = json{{"name", cb.m_book_name}, {"contacts", cb.m_contacts}};
   }
 
@@ -166,17 +170,20 @@ namespace udt
 // from_json methods
 namespace udt
 {
-  void from_json(nlohmann::json const& j, age &a)
+  template <typename Json>
+  void from_json(Json const& j, age &a)
   {
     a.m_val = j.get<int>();
   }
 
-  void from_json(nlohmann::json const& j, name &n)
+  template <typename Json>
+  void from_json(Json const& j, name &n)
   {
     n.m_val = j.get<std::string>();
   }
 
-  void from_json(nlohmann::json const &j, country &c)
+  template <typename Json>
+  void from_json(Json const &j, country &c)
   {
     const auto str = j.get<std::string>();
     static const std::map<std::string, country> m = {
@@ -189,7 +196,8 @@ namespace udt
     c = it->second;
   }
 
-  void from_json(nlohmann::json const& j, person &p)
+  template <typename Json>
+  void from_json(Json const& j, person &p)
   {
     p.m_age = j["age"].get<age>();
     p.m_name = j["name"].get<name>();
@@ -216,7 +224,6 @@ namespace udt
 
 TEST_CASE("basic usage", "[udt]")
 {
-  using nlohmann::json;
 
   // a bit narcissic maybe :) ?
   const udt::age a{23};
@@ -273,34 +280,6 @@ TEST_CASE("basic usage", "[udt]")
 
 namespace udt
 {
-template <typename T>
-class optional_type
-{
-public:
-  optional_type() = default;
-  optional_type(T t) { _impl = std::make_shared<T>(std::move(t)); }
-  optional_type(std::nullptr_t) { _impl = nullptr; }
-
-  optional_type &operator=(std::nullptr_t)
-  {
-    _impl = nullptr;
-    return *this;
-  }
-
-  optional_type& operator=(T t)
-  {
-    _impl = std::make_shared<T>(std::move(t));
-    return *this;
-  }
-
-  explicit operator bool() const noexcept { return _impl != nullptr; }
-  T const &operator*() const noexcept { return *_impl; }
-  T &operator*() noexcept { return *_impl; }
-
-private:
-  std::shared_ptr<T> _impl;
-};
-
 struct legacy_type
 {
   std::string number;
@@ -310,9 +289,9 @@ struct legacy_type
 namespace nlohmann
 {
 template <typename T>
-struct adl_serializer<udt::optional_type<T>>
+struct adl_serializer<std::shared_ptr<T>>
 {
-  static void to_json(json& j, udt::optional_type<T> const& opt)
+  static void to_json(json& j, std::shared_ptr<T> const& opt)
   {
     if (opt)
       j = *opt;
@@ -320,12 +299,12 @@ struct adl_serializer<udt::optional_type<T>>
       j = nullptr;
   }
 
-  static void from_json(json const &j, udt::optional_type<T> &opt)
+  static void from_json(json const &j, std::shared_ptr<T> &opt)
   {
     if (j.is_null())
       opt = nullptr;
     else
-      opt = j.get<T>();
+      opt.reset(new T(j.get<T>()));
   }
 };
 
@@ -346,18 +325,17 @@ struct adl_serializer<udt::legacy_type>
 
 TEST_CASE("adl_serializer specialization", "[udt]")
 {
-  using nlohmann::json;
 
   SECTION("partial specialization")
   {
     SECTION("to_json")
     {
-      udt::optional_type<udt::person> optPerson;
+      std::shared_ptr<udt::person> optPerson;
 
       json j = optPerson;
       CHECK(j.is_null());
 
-      optPerson = udt::person{{42}, {"John Doe"}};
+      optPerson.reset(new udt::person{{42}, {"John Doe"}});
       j = optPerson;
       CHECK_FALSE(j.is_null());
 
@@ -369,12 +347,12 @@ TEST_CASE("adl_serializer specialization", "[udt]")
       auto person = udt::person{{42}, {"John Doe"}};
       json j = person;
 
-      auto optPerson = j.get<udt::optional_type<udt::person>>();
+      auto optPerson = j.get<std::shared_ptr<udt::person>>();
       REQUIRE(optPerson);
       CHECK(*optPerson == person);
 
       j = nullptr;
-      optPerson = j.get<udt::optional_type<udt::person>>();
+      optPerson = j.get<std::shared_ptr<udt::person>>();
       CHECK(!optPerson);
     }
   }
@@ -396,4 +374,175 @@ TEST_CASE("adl_serializer specialization", "[udt]")
       CHECK(lt.number == "4242");
     }
   }
+}
+
+namespace nlohmann
+{
+// this might work in the future, not in the scope of this PR though
+// we have to make this very clear in the doc
+template <typename T>
+struct adl_serializer<std::vector<T>>
+{
+  static void to_json(json& j, std::vector<T> const& opt)
+  {
+  }
+
+  static void from_json(json const &j, std::vector<T> &opt)
+  {
+  }
+};
+}
+
+TEST_CASE("current supported types are preferred over specializations", "[udt]")
+{
+
+  json j = std::vector<int>{1, 2, 3};
+  auto f = j.get<std::vector<int>>();
+  CHECK((f == std::vector<int>{1, 2, 3}));
+}
+
+namespace nlohmann
+{
+template <typename T>
+struct adl_serializer<std::unique_ptr<T>>
+{
+  static void to_json(json& j, std::unique_ptr<T> const& opt)
+  {
+    if (opt)
+      j = *opt;
+    else
+      j = nullptr;
+  }
+
+  // this is the overload needed for non-copyable types,
+  // should we add a priority tag in the implementation to prefer this overload if it exists?
+  static std::unique_ptr<T> from_json(json const &j)
+  {
+    if (j.is_null())
+      return nullptr;
+    else
+      return std::unique_ptr<T>(new T(j.get<T>()));
+  }
+};
+}
+
+TEST_CASE("Non-copyable types", "[udt]")
+{
+  SECTION("to_json")
+  {
+    std::unique_ptr<udt::person> optPerson;
+
+    json j = optPerson;
+    CHECK(j.is_null());
+
+    optPerson.reset(new udt::person{{42}, {"John Doe"}});
+    j = optPerson;
+    CHECK_FALSE(j.is_null());
+
+    CHECK(j.get<udt::person>() == *optPerson);
+  }
+
+  SECTION("from_json")
+  {
+    auto person = udt::person{{42}, {"John Doe"}};
+    json j = person;
+
+    auto optPerson = j.get<std::unique_ptr<udt::person>>();
+    REQUIRE(optPerson);
+    CHECK(*optPerson == person);
+
+    j = nullptr;
+    optPerson = j.get<std::unique_ptr<udt::person>>();
+    CHECK(!optPerson);
+  }
+}
+
+// custom serializer
+// advanced usage (I did not have a real use case in mind)
+template <typename T, typename = typename std::enable_if<std::is_pod<T>::value>::type>
+struct pod_serializer
+{
+  // I could forward-declare this struct, and add a basic_json alias
+  template <typename Json>
+  static void from_json(Json const& j , T& t)
+  {
+    auto value = j.template get<std::uint64_t>();
+    auto bytes = static_cast<char*>(static_cast<void*>(&value));
+    std::memcpy(&t, bytes, sizeof(value));
+  }
+
+  template <typename Json>
+  static void to_json(Json& j, T const& t)
+  {
+    auto bytes = static_cast<char const*>(static_cast<void const*>(&t));
+    std::uint64_t value = bytes[0];
+    for (auto i = 1; i < 8; ++i)
+      value |= bytes[i] << 8 * i;
+
+    j = value;
+  }
+};
+
+namespace udt
+{
+struct small_pod
+{
+  int begin;
+  char middle;
+  short end;
+};
+
+bool operator==(small_pod lhs, small_pod rhs)
+{
+  return std::tie(lhs.begin, lhs.middle, lhs.end) ==
+         std::tie(lhs.begin, lhs.middle, lhs.end);
+}
+}
+
+TEST_CASE("custom serializer for pods", "[udt]")
+{
+  using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, double, std::allocator, pod_serializer>;
+
+  auto p = udt::small_pod{42, '/', 42};
+  custom_json j = p;
+
+  auto p2 = j.get<udt::small_pod>();
+
+  CHECK(p == p2);
+}
+
+template <typename T, typename>
+struct another_adl_serializer;
+
+  using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, double, std::allocator, another_adl_serializer>;
+
+template <typename T, typename>
+struct another_adl_serializer
+{
+  static void from_json(custom_json const& j , T& t)
+  {
+    using nlohmann::from_json;
+    from_json(j, t);
+  }
+
+  static void to_json(custom_json& j , T const& t)
+  {
+    using nlohmann::to_json;
+    to_json(j, t);
+  }
+};
+
+TEST_CASE("custom serializer that does adl by default", "[udt]")
+{
+  using json = nlohmann::json;
+
+  auto me = udt::person{23, "theo", udt::country::france};
+
+  json j = me;
+  custom_json cj = me;
+
+  CHECK(j.dump() == cj.dump());
+
+  CHECK(me == j.get<udt::person>());
+  CHECK(me == cj.get<udt::person>());
 }
