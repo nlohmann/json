@@ -584,6 +584,7 @@ I deeply appreciate the help of the following people.
 - [cgzones](https://github.com/cgzones) had an idea how to fix the Coverity scan.
 - [Jared Grubb](https://github.com/jaredgrubb) silenced a nasty documentation warning.
 - [Yixin Zhang](https://github.com/qwename) fixed an integer overflow check.
+- [Bosswestfalen](https://github.com/Bosswestfalen) merged two iterator classes into a smaller one.
 
 Thanks a lot for helping out!
 

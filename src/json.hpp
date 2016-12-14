@@ -228,6 +228,7 @@ class basic_json
 
   public:
     // forward declarations
+    template<typename U> class iter_impl;
     template<typename Base> class json_reverse_iterator;
     class json_pointer;
 
@@ -261,8 +262,6 @@ class basic_json
     /// the type of an element const pointer
     using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer;
 
-    // forward declaration for iterators
-    template <typename U> class iter_impl;
     /// an iterator for a basic_json container
     using iterator = iter_impl<basic_json>;
     /// a const iterator for a basic_json container
@@ -8208,8 +8207,8 @@ class basic_json
     /*!
     @brief a template for a random access iterator for the @ref basic_json class
 
-    This class implements a both iterators (iterator and const_iterator) 
-    for the @ref basic_json class.
+    This class implements a both iterators (iterator and const_iterator) for the
+    @ref basic_json class.
 
     @note An iterator is called *initialized* when a pointer to a JSON value
           has been set (e.g., by a constructor or a copy assignment). If the
@@ -8222,9 +8221,9 @@ class basic_json
       The iterator that can be moved to point (forward and backward) to any
       element in constant time.
 
-    @since version 1.0.0
+    @since version 1.0.0, simplified in version 2.0.9
     */
-    template <typename U>
+    template<typename U>
     class iter_impl : public std::iterator<std::random_access_iterator_tag, U>
     {
         /// allow basic_json to access private members
@@ -8242,12 +8241,12 @@ class basic_json
         using difference_type = typename basic_json::difference_type;
         /// defines a pointer to the type iterated over (value_type)
         using pointer = typename std::conditional<std::is_const<U>::value,
-                                                  typename basic_json::const_pointer,
-                                                  typename basic_json::pointer>::type;
+              typename basic_json::const_pointer,
+              typename basic_json::pointer>::type;
         /// defines a reference to the type iterated over (value_type)
         using reference = typename std::conditional<std::is_const<U>::value,
-                                                    typename basic_json::const_reference,
-                                                    typename basic_json::reference>::type;
+              typename basic_json::const_reference,
+              typename basic_json::reference>::type;
         /// the category of the iterator
         using iterator_category = std::bidirectional_iterator_tag;
 
@@ -8288,19 +8287,19 @@ class basic_json
         }
 
         /*
-        Use operator const_iterator instead of 
-        const_iterator(const iterator& other) noexcept
-        to avoid two class definitions for iterator and const_iterator.
+        Use operator `const_iterator` instead of `const_iterator(const iterator&
+        other) noexcept` to avoid two class definitions for @ref iterator and
+        @ref const_iterator.
 
-        This function is only called if this class is an iterator.
-        If this class is a const_iterator this function is not called.
+        This function is only called if this class is an @ref iterator. If this
+        class is a @ref const_iterator this function is not called.
         */
         operator const_iterator() const
-         {
-             const_iterator ret;
+        {
+            const_iterator ret;
 
             if (m_object)
-             {
+            {
                 ret.m_object = m_object;
                 ret.m_it = m_it;
             }
