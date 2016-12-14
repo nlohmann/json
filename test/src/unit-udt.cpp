@@ -240,14 +240,14 @@ TEST_CASE("basic usage", "[udt]")
 
     CHECK(
         json(book) ==
-        R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"}, {"person" : {"age":42, "country":"中华人民共和国", "name":"王芳"}, "address":"Paris"}]})"_json);
+        u8R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"}, {"person" : {"age":42, "country":"中华人民共和国", "name":"王芳"}, "address":"Paris"}]})"_json);
 
   }
 
   SECTION("conversion from json via free-functions")
   {
     const auto big_json =
-        R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"}, {"person" : {"age":42, "country":"中华人民共和国", "name":"王芳"}, "address":"Paris"}]})"_json;
+        u8R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"}, {"person" : {"age":42, "country":"中华人民共和国", "name":"王芳"}, "address":"Paris"}]})"_json;
     const auto parsed_book = big_json.get<udt::contact_book>();
     const auto book_name = big_json["name"].get<udt::name>();
     const auto contacts = big_json["contacts"].get<std::vector<udt::contact>>();
