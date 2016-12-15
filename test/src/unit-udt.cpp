@@ -27,6 +27,7 @@ SOFTWARE.
 */
 
 #include <array>
+#include <map>
 #include <string>
 #include <memory>
 #include "catch.hpp"
@@ -173,19 +174,19 @@ namespace udt
   template <typename Json>
   void from_json(Json const& j, age &a)
   {
-    a.m_val = j.get<int>();
+    a.m_val = j.template get<int>();
   }
 
   template <typename Json>
   void from_json(Json const& j, name &n)
   {
-    n.m_val = j.get<std::string>();
+    n.m_val = j.template get<std::string>();
   }
 
   template <typename Json>
   void from_json(Json const &j, country &c)
   {
-    const auto str = j.get<std::string>();
+    const auto str = j.template get<std::string>();
     static const std::map<std::string, country> m = {
         {u8"中华人民共和国", country::china},
         {"France", country::france},
@@ -199,9 +200,9 @@ namespace udt
   template <typename Json>
   void from_json(Json const& j, person &p)
   {
-    p.m_age = j["age"].get<age>();
-    p.m_name = j["name"].get<name>();
-    p.m_country = j["country"].get<country>();
+    p.m_age = j["age"].template get<age>();
+    p.m_name = j["name"].template get<name>();
+    p.m_country = j["country"].template get<country>();
   }
 
   void from_json(nlohmann::json const &j, address &a)
@@ -325,7 +326,6 @@ struct adl_serializer<udt::legacy_type>
 
 TEST_CASE("adl_serializer specialization", "[udt]")
 {
-
   SECTION("partial specialization")
   {
     SECTION("to_json")
