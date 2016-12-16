@@ -6982,7 +6982,7 @@ class basic_json
 
                 case 0xd9: // str 8
                 {
-                    const auto len = get_from_vector<uint8_t>(v, current_idx);
+                    const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
                     const size_t offset = current_idx + 2;
                     idx += len + 1; // skip size byte + content bytes
                     return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
@@ -6990,7 +6990,7 @@ class basic_json
 
                 case 0xda: // str 16
                 {
-                    const auto len = get_from_vector<uint16_t>(v, current_idx);
+                    const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
                     const size_t offset = current_idx + 3;
                     idx += len + 2; // skip 2 size bytes + content bytes
                     return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
@@ -6998,7 +6998,7 @@ class basic_json
 
                 case 0xdb: // str 32
                 {
-                    const auto len = get_from_vector<uint32_t>(v, current_idx);
+                    const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
                     const size_t offset = current_idx + 5;
                     idx += len + 4; // skip 4 size bytes + content bytes
                     return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
@@ -7007,7 +7007,7 @@ class basic_json
                 case 0xdc: // array 16
                 {
                     basic_json result = value_t::array;
-                    const auto len = get_from_vector<uint16_t>(v, current_idx);
+                    const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
                     idx += 2; // skip 2 size bytes
                     for (size_t i = 0; i < len; ++i)
                     {
@@ -7019,7 +7019,7 @@ class basic_json
                 case 0xdd: // array 32
                 {
                     basic_json result = value_t::array;
-                    const auto len = get_from_vector<uint32_t>(v, current_idx);
+                    const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
                     idx += 4; // skip 4 size bytes
                     for (size_t i = 0; i < len; ++i)
                     {
@@ -7031,7 +7031,7 @@ class basic_json
                 case 0xde: // map 16
                 {
                     basic_json result = value_t::object;
-                    const auto len = get_from_vector<uint16_t>(v, current_idx);
+                    const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
                     idx += 2; // skip 2 size bytes
                     for (size_t i = 0; i < len; ++i)
                     {
@@ -7044,7 +7044,7 @@ class basic_json
                 case 0xdf: // map 32
                 {
                     basic_json result = value_t::object;
-                    const auto len = get_from_vector<uint32_t>(v, current_idx);
+                    const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
                     idx += 4; // skip 4 size bytes
                     for (size_t i = 0; i < len; ++i)
                     {
@@ -7056,7 +7056,7 @@ class basic_json
 
                 default:
                 {
-                    throw std::invalid_argument("error parsing a msgpack @ " + std::to_string(current_idx));
+                    throw std::invalid_argument("error parsing a msgpack @ " + std::to_string(current_idx) + ": " + std::to_string(static_cast<int>(v[current_idx])));
                 }
             }
         }
@@ -7216,7 +7216,7 @@ class basic_json
             case 0x76:
             case 0x77:
             {
-                const size_t len = v[current_idx] - 0x60;
+                const auto len = static_cast<size_t>(v[current_idx] - 0x60);
                 const size_t offset = current_idx + 1;
                 idx += len; // skip content bytes
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
@@ -7224,7 +7224,7 @@ class basic_json
 
             case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
             {
-                const auto len = get_from_vector<uint8_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
                 const size_t offset = current_idx + 2;
                 idx += len + 1; // skip size byte + content bytes
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
@@ -7232,7 +7232,7 @@ class basic_json
 
             case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
             {
-                const auto len = get_from_vector<uint16_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
                 const size_t offset = current_idx + 3;
                 idx += len + 2; // skip 2 size bytes + content bytes
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
@@ -7240,7 +7240,7 @@ class basic_json
 
             case 0x7a: // UTF-8 string (four-byte uint32_t for n follow)
             {
-                const auto len = get_from_vector<uint32_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
                 const size_t offset = current_idx + 5;
                 idx += len + 4; // skip 4 size bytes + content bytes
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
@@ -7248,7 +7248,7 @@ class basic_json
 
             case 0x7b: // UTF-8 string (eight-byte uint64_t for n follow)
             {
-                const auto len = get_from_vector<uint64_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint64_t>(v, current_idx));
                 const size_t offset = current_idx + 9;
                 idx += len + 8; // skip 8 size bytes + content bytes
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
@@ -7294,7 +7294,7 @@ class basic_json
             case 0x97:
             {
                 basic_json result = value_t::array;
-                const size_t len = v[current_idx] - 0x80;
+                const auto len = static_cast<size_t>(v[current_idx] - 0x80);
                 for (size_t i = 0; i < len; ++i)
                 {
                     result.push_back(from_cbor_internal(v, idx));
@@ -7305,7 +7305,7 @@ class basic_json
             case 0x98: // array (one-byte uint8_t for n follows)
             {
                 basic_json result = value_t::array;
-                const auto len = get_from_vector<uint8_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
                 idx += 1; // skip 1 size byte
                 for (size_t i = 0; i < len; ++i)
                 {
@@ -7317,7 +7317,7 @@ class basic_json
             case 0x99: // array (two-byte uint16_t for n follow)
             {
                 basic_json result = value_t::array;
-                const auto len = get_from_vector<uint16_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
                 idx += 2; // skip 4 size bytes
                 for (size_t i = 0; i < len; ++i)
                 {
@@ -7329,7 +7329,7 @@ class basic_json
             case 0x9a: // array (four-byte uint32_t for n follow)
             {
                 basic_json result = value_t::array;
-                const auto len = get_from_vector<uint32_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
                 idx += 4; // skip 4 size bytes
                 for (size_t i = 0; i < len; ++i)
                 {
@@ -7341,7 +7341,7 @@ class basic_json
             case 0x9b: // array (eight-byte uint64_t for n follow)
             {
                 basic_json result = value_t::array;
-                const auto len = get_from_vector<uint64_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint64_t>(v, current_idx));
                 idx += 8; // skip 8 size bytes
                 for (size_t i = 0; i < len; ++i)
                 {
@@ -7389,7 +7389,7 @@ class basic_json
             case 0xb7:
             {
                 basic_json result = value_t::object;
-                const size_t len = v[current_idx] - 0xa0;
+                const auto len = static_cast<size_t>(v[current_idx] - 0xa0);
                 for (size_t i = 0; i < len; ++i)
                 {
                     std::string key = from_cbor_internal(v, idx);
@@ -7401,7 +7401,7 @@ class basic_json
             case 0xb8: // map (one-byte uint8_t for n follows)
             {
                 basic_json result = value_t::object;
-                const auto len = get_from_vector<uint8_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
                 idx += 1; // skip 1 size byte
                 for (size_t i = 0; i < len; ++i)
                 {
@@ -7414,7 +7414,7 @@ class basic_json
             case 0xb9: // map (two-byte uint16_t for n follow)
             {
                 basic_json result = value_t::object;
-                const auto len = get_from_vector<uint16_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
                 idx += 2; // skip 2 size bytes
                 for (size_t i = 0; i < len; ++i)
                 {
@@ -7427,7 +7427,7 @@ class basic_json
             case 0xba: // map (four-byte uint32_t for n follow)
             {
                 basic_json result = value_t::object;
-                const auto len = get_from_vector<uint32_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
                 idx += 4; // skip 4 size bytes
                 for (size_t i = 0; i < len; ++i)
                 {
@@ -7440,7 +7440,7 @@ class basic_json
             case 0xbb: // map (eight-byte uint64_t for n follow)
             {
                 basic_json result = value_t::object;
-                const auto len = get_from_vector<uint64_t>(v, current_idx);
+                const auto len = static_cast<size_t>(get_from_vector<uint64_t>(v, current_idx));
                 idx += 8; // skip 8 size bytes
                 for (size_t i = 0; i < len; ++i)
                 {
@@ -7534,7 +7534,7 @@ class basic_json
 
             default: // anything else (0xFF is handled inside the other types)
             {
-                throw std::invalid_argument("error parsing a CBOR @ " + std::to_string(current_idx) + ": " + std::to_string(v[current_idx]));
+                throw std::invalid_argument("error parsing a CBOR @ " + std::to_string(current_idx) + ": " + std::to_string(static_cast<int>(v[current_idx])));
             }
         }
     }
@@ -9666,7 +9666,7 @@ class basic_json
                 {
                     // we cannot simply negate value (== max == -INT64_MIN),
                     // see https://github.com/nlohmann/json/issues/389
-                    result.m_value.number_integer = INT64_MIN;
+                    result.m_value.number_integer = static_cast<number_integer_t>(INT64_MIN);
                 }
                 else
                 {
