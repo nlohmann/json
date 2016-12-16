@@ -608,7 +608,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (11201886 assertions in 43 test cases)
+All tests passed (11201893 assertions in 43 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run
