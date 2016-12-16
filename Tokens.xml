@@ -153,6 +153,28 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>iterator</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ae3c77a8f03096da2a32a3de0c317d445.html</Path>
+    <Anchor>ae3c77a8f03096da2a32a3de0c317d445</Anchor>
+    <Abstract>an iterator for a basic_json container </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>const_iterator</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a2b53a089e945e75deaac6782aa942a77.html</Path>
+    <Anchor>a2b53a089e945e75deaac6782aa942a77</Anchor>
+    <Abstract>a const iterator for a basic_json container </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>reverse_iterator</Name>
       <APILanguage>cpp</APILanguage>
       <Type>tdef</Type>
@@ -1793,8 +1815,8 @@
       <Type>clm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a90f05d55d9d0702c075cd281fd0d85ae.html</Path>
-    <Anchor>a90f05d55d9d0702c075cd281fd0d85ae</Anchor>
+    <Path>classnlohmann_1_1basic__json_a628a37ce21fc6e6e2009dca2609d62c2.html</Path>
+    <Anchor>a628a37ce21fc6e6e2009dca2609d62c2</Anchor>
     <Abstract>deserialize from string literal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1868,6 +1890,54 @@
     <Path>classnlohmann_1_1basic__json_aaf363408931d76472ded14017e59c9e8.html</Path>
     <Anchor>aaf363408931d76472ded14017e59c9e8</Anchor>
     <Abstract>deserialize from stream </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>to_msgpack</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a3ac608b8f63761a73b4fc0d2312d77b5.html</Path>
+    <Anchor>a3ac608b8f63761a73b4fc0d2312d77b5</Anchor>
+    <Abstract>create a MessagePack serialization of a given JSON value </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>from_msgpack</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a2efa0d7ddd2bb73d382ad08f153838c3.html</Path>
+    <Anchor>a2efa0d7ddd2bb73d382ad08f153838c3</Anchor>
+    <Abstract>create a JSON value from a byte vector in MessagePack format </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>to_cbor</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a98b7780376d6b23fb04bd3cb29594b4b.html</Path>
+    <Anchor>a98b7780376d6b23fb04bd3cb29594b4b</Anchor>
+    <Abstract>create a MessagePack serialization of a given JSON value </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>from_cbor</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a832e482e6248823977628fefa3d780d1.html</Path>
+    <Anchor>a832e482e6248823977628fefa3d780d1</Anchor>
+    <Abstract>create a JSON value from a byte vector in CBOR format </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -2298,13 +2368,13 @@
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>nlohmann::basic_json::const_iterator</Name>
+      <Name>nlohmann::basic_json::iter_impl</Name>
       <APILanguage>c</APILanguage>
-      <Type>cl</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Type>tmplt</Type>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator.html</Path>
-    <Abstract>a const random access iterator for the basic_json class </Abstract>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl.html</Path>
+    <Abstract>a template for a random access iterator for the basic_json class </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -2312,10 +2382,10 @@
       <Name>difference_type</Name>
       <APILanguage>cpp</APILanguage>
       <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a49d7c3e9ef3280df03052cce988b792f.html</Path>
-    <Anchor>a49d7c3e9ef3280df03052cce988b792f</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a088519ca37ae2be2c1f1bbc4868dc878.html</Path>
+    <Anchor>a088519ca37ae2be2c1f1bbc4868dc878</Anchor>
     <Abstract>a type to represent differences between iterators </Abstract>
   </Token>
   <Token>
@@ -2323,10 +2393,10 @@
       <Name>iterator_category</Name>
       <APILanguage>cpp</APILanguage>
       <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a821560d64f50525162097f19b1392e7f.html</Path>
-    <Anchor>a821560d64f50525162097f19b1392e7f</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a2b448f31a42182d78fe88abb425cfaf1.html</Path>
+    <Anchor>a2b448f31a42182d78fe88abb425cfaf1</Anchor>
     <Abstract>the category of the iterator </Abstract>
   </Token>
   <Token>
@@ -2334,10 +2404,10 @@
       <Name>pointer</Name>
       <APILanguage>cpp</APILanguage>
       <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a1da96fc3054d547e7706d3a2f073f389.html</Path>
-    <Anchor>a1da96fc3054d547e7706d3a2f073f389</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a3b56ff21ecdde2dc147288ee64cff0fd.html</Path>
+    <Anchor>a3b56ff21ecdde2dc147288ee64cff0fd</Anchor>
     <Abstract>defines a pointer to the type iterated over (value_type) </Abstract>
   </Token>
   <Token>
@@ -2345,10 +2415,10 @@
       <Name>reference</Name>
       <APILanguage>cpp</APILanguage>
       <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_aefd248cac6493eed1e6ff53ba6a63eb2.html</Path>
-    <Anchor>aefd248cac6493eed1e6ff53ba6a63eb2</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a0e391c9035a242461d131b2dc0314256.html</Path>
+    <Anchor>a0e391c9035a242461d131b2dc0314256</Anchor>
     <Abstract>defines a reference to the type iterated over (value_type) </Abstract>
   </Token>
   <Token>
@@ -2356,57 +2426,45 @@
       <Name>value_type</Name>
       <APILanguage>cpp</APILanguage>
       <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a9ea0497199b1e96ce9cadd1f202ec343.html</Path>
-    <Anchor>a9ea0497199b1e96ce9cadd1f202ec343</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a550cf393181e733bf76758a27e50422c.html</Path>
+    <Anchor>a550cf393181e733bf76758a27e50422c</Anchor>
     <Abstract>the type of the values when the iterator is dereferenced </Abstract>
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>const_iterator</Name>
+      <Name>iter_impl</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_ac6fdaff67857f82a623e5cc253917639.html</Path>
-    <Anchor>ac6fdaff67857f82a623e5cc253917639</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a8dd1bf065c07107545ada528d1f3fa8e.html</Path>
+    <Anchor>a8dd1bf065c07107545ada528d1f3fa8e</Anchor>
     <Abstract>default constructor </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>const_iterator</Name>
+      <Name>iter_impl</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a23de834b11bd895209aa65c100ab9ceb.html</Path>
-    <Anchor>a23de834b11bd895209aa65c100ab9ceb</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_aafb84966b32a794cf29027213ba1f0a3.html</Path>
+    <Anchor>aafb84966b32a794cf29027213ba1f0a3</Anchor>
     <Abstract>constructor for a given JSON instance </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>const_iterator</Name>
+      <Name>iter_impl</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a6b950c6bc081ac1ec1540ec05ceb2603.html</Path>
-    <Anchor>a6b950c6bc081ac1ec1540ec05ceb2603</Anchor>
-    <Abstract>copy constructor given a non-const iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>const_iterator</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a18c35a6735d3da96b4fc026421c05dd8.html</Path>
-    <Anchor>a18c35a6735d3da96b4fc026421c05dd8</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a798792571cbbfc0e12025265b55498d2.html</Path>
+    <Anchor>a798792571cbbfc0e12025265b55498d2</Anchor>
     <Abstract>copy constructor </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2415,11 +2473,22 @@
       <Name>key</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a0e717ab658d27f646a3c8602cac91d83.html</Path>
-    <Anchor>a0e717ab658d27f646a3c8602cac91d83</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_acf4377d436692ae80b7fd3ba4f7fc9f3.html</Path>
+    <Anchor>acf4377d436692ae80b7fd3ba4f7fc9f3</Anchor>
     <Abstract>return the key of an object iterator </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator const_iterator</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a1171e5b7dbce4bb6b3ef15f0c45c1f62.html</Path>
+    <Anchor>a1171e5b7dbce4bb6b3ef15f0c45c1f62</Anchor>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -2427,10 +2496,10 @@
       <Name>operator!=</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a2defc155f17e8325747d2f884bb60eab.html</Path>
-    <Anchor>a2defc155f17e8325747d2f884bb60eab</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a1fe3495a5179de1ae6fff8a8d0acaacc.html</Path>
+    <Anchor>a1fe3495a5179de1ae6fff8a8d0acaacc</Anchor>
     <Abstract>comparison: not equal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2439,10 +2508,10 @@
       <Name>operator*</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_acfc918b6350449111ca58af5eb3da999.html</Path>
-    <Anchor>acfc918b6350449111ca58af5eb3da999</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_ab50d53b89e0009bf87dbb425a237415e.html</Path>
+    <Anchor>ab50d53b89e0009bf87dbb425a237415e</Anchor>
     <Abstract>return a reference to the value pointed to by the iterator </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2451,10 +2520,10 @@
       <Name>operator+</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a7a80257f2303210b0a5d056fc0b30b40.html</Path>
-    <Anchor>a7a80257f2303210b0a5d056fc0b30b40</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a79fc61904fd502bd2808c2dfb2c9d532.html</Path>
+    <Anchor>a79fc61904fd502bd2808c2dfb2c9d532</Anchor>
     <Abstract>add to iterator </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2463,10 +2532,10 @@
       <Name>operator++</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a8dbaec5bf8ccba3225520356629061cb.html</Path>
-    <Anchor>a8dbaec5bf8ccba3225520356629061cb</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_ad26f18c771e02fd06468718d354330e9.html</Path>
+    <Anchor>ad26f18c771e02fd06468718d354330e9</Anchor>
     <Abstract>post-increment (it++) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2475,10 +2544,10 @@
       <Name>operator++</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a8fbb15efd97599209a7def77af8e748e.html</Path>
-    <Anchor>a8fbb15efd97599209a7def77af8e748e</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a009c10355de23cffc4d07fe23eecdae3.html</Path>
+    <Anchor>a009c10355de23cffc4d07fe23eecdae3</Anchor>
     <Abstract>pre-increment (++it) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2487,10 +2556,10 @@
       <Name>operator+=</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a0d5820d1dda9dea3bbeb029cacf68522.html</Path>
-    <Anchor>a0d5820d1dda9dea3bbeb029cacf68522</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a3c33bcab07e7022bb93e2a91277a3402.html</Path>
+    <Anchor>a3c33bcab07e7022bb93e2a91277a3402</Anchor>
     <Abstract>add to iterator </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2499,10 +2568,10 @@
       <Name>operator-</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_abc4552ba2fe39e7901a83dd6d4dec151.html</Path>
-    <Anchor>abc4552ba2fe39e7901a83dd6d4dec151</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a2e63d6497a2412467ebd0aff63018c2f.html</Path>
+    <Anchor>a2e63d6497a2412467ebd0aff63018c2f</Anchor>
     <Abstract>subtract from iterator </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2511,10 +2580,10 @@
       <Name>operator-</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_af3ef241a9e26398ea0cf45026287c2ed.html</Path>
-    <Anchor>af3ef241a9e26398ea0cf45026287c2ed</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a98ab6b0531454135f61a55dd11fb01f9.html</Path>
+    <Anchor>a98ab6b0531454135f61a55dd11fb01f9</Anchor>
     <Abstract>return difference </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2523,10 +2592,10 @@
       <Name>operator--</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a6cab1c2ed7e2a014980e2a5717f43a64.html</Path>
-    <Anchor>a6cab1c2ed7e2a014980e2a5717f43a64</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a331271c9b79627e6fd8ed3f4e0d9fe94.html</Path>
+    <Anchor>a331271c9b79627e6fd8ed3f4e0d9fe94</Anchor>
     <Abstract>post-decrement (it–) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2535,10 +2604,10 @@
       <Name>operator--</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_adeb2ff3fdf3cc301b72db109934c9199.html</Path>
-    <Anchor>adeb2ff3fdf3cc301b72db109934c9199</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a102fee51ae32056c2df59397d13d82b6.html</Path>
+    <Anchor>a102fee51ae32056c2df59397d13d82b6</Anchor>
     <Abstract>pre-decrement (–it) </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2547,10 +2616,10 @@
       <Name>operator-=</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_aefac8f3e390ac917f021761f4a8f8e71.html</Path>
-    <Anchor>aefac8f3e390ac917f021761f4a8f8e71</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_aa54abe1de54f9f7c8a05e8df0575b4de.html</Path>
+    <Anchor>aa54abe1de54f9f7c8a05e8df0575b4de</Anchor>
     <Abstract>subtract from iterator </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2559,10 +2628,10 @@
       <Name>operator-&gt;</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_abae808b09a822cc3da4cef0efb89115d.html</Path>
-    <Anchor>abae808b09a822cc3da4cef0efb89115d</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_aca15cea5c95625567ab540c82470b4cd.html</Path>
+    <Anchor>aca15cea5c95625567ab540c82470b4cd</Anchor>
     <Abstract>dereference the iterator </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2571,10 +2640,10 @@
       <Name>operator&lt;</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_ae0f996eef6a970b2e654c4f6d33d6f9a.html</Path>
-    <Anchor>ae0f996eef6a970b2e654c4f6d33d6f9a</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a1da297e6e6cf40f3dec9f462fdb39496.html</Path>
+    <Anchor>a1da297e6e6cf40f3dec9f462fdb39496</Anchor>
     <Abstract>comparison: smaller </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2583,10 +2652,10 @@
       <Name>operator&lt;=</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_ab31ede5b25ad5e8a3bb06f6eadb50923.html</Path>
-    <Anchor>ab31ede5b25ad5e8a3bb06f6eadb50923</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_afc2ee1f574879d8d9c194292137c0795.html</Path>
+    <Anchor>afc2ee1f574879d8d9c194292137c0795</Anchor>
     <Abstract>comparison: less than or equal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2595,10 +2664,10 @@
       <Name>operator=</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a2b6561a7b39b9aa3a220aa3b6e2d9589.html</Path>
-    <Anchor>a2b6561a7b39b9aa3a220aa3b6e2d9589</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_aef9d54ac34eb81c4fdd260c0e01f3d25.html</Path>
+    <Anchor>aef9d54ac34eb81c4fdd260c0e01f3d25</Anchor>
     <Abstract>copy assignment </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2607,10 +2676,10 @@
       <Name>operator==</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_acf1fcb73ff770117446670cefc927dd2.html</Path>
-    <Anchor>acf1fcb73ff770117446670cefc927dd2</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_aa88db70cdd90557959f44ae5399d9fd0.html</Path>
+    <Anchor>aa88db70cdd90557959f44ae5399d9fd0</Anchor>
     <Abstract>comparison: equal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2619,10 +2688,10 @@
       <Name>operator&gt;</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a3a7ed729e72bc7c1d0b75ed8cc2bd830.html</Path>
-    <Anchor>a3a7ed729e72bc7c1d0b75ed8cc2bd830</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a9a83de73939cdbf2bd68c2cfd3ae1087.html</Path>
+    <Anchor>a9a83de73939cdbf2bd68c2cfd3ae1087</Anchor>
     <Abstract>comparison: greater than </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2631,10 +2700,10 @@
       <Name>operator&gt;=</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a1ed92c14d88b802345bd15417a417a5d.html</Path>
-    <Anchor>a1ed92c14d88b802345bd15417a417a5d</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a9213b6315bc10e06976553a16a362191.html</Path>
+    <Anchor>a9213b6315bc10e06976553a16a362191</Anchor>
     <Abstract>comparison: greater than or equal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2643,10 +2712,10 @@
       <Name>operator[]</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a70caca372e345c9c700ab849c3d9463b.html</Path>
-    <Anchor>a70caca372e345c9c700ab849c3d9463b</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_a10421cc92f7da334ecd440d0789b4add.html</Path>
+    <Anchor>a10421cc92f7da334ecd440d0789b4add</Anchor>
     <Abstract>access to successor </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2655,10 +2724,10 @@
       <Name>value</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a0f42e99f14ac0a46456cf96fb384f290.html</Path>
-    <Anchor>a0f42e99f14ac0a46456cf96fb384f290</Anchor>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_ab2f4203d0fa4c3d30a0b9272031c653c.html</Path>
+    <Anchor>ab2f4203d0fa4c3d30a0b9272031c653c</Anchor>
     <Abstract>return the value of an iterator </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2667,611 +2736,11 @@
       <Name>basic_json</Name>
       <APILanguage>cpp</APILanguage>
       <Type>ffunc</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
+      <Scope>nlohmann::basic_json::iter_impl</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_ada3100cdb8700566051828f1355fa745.html</Path>
+    <Path>classnlohmann_1_1basic__json_1_1iter__impl_ada3100cdb8700566051828f1355fa745.html</Path>
     <Anchor>ada3100cdb8700566051828f1355fa745</Anchor>
     <Abstract>allow basic_json to access private members </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>nlohmann::basic_json::iterator</Name>
-      <APILanguage>c</APILanguage>
-      <Type>cl</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator.html</Path>
-    <Abstract>a mutable random access iterator for the basic_json class </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>base_iterator</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_ac48754e4dc48d65d95294bd170dcd857.html</Path>
-    <Anchor>ac48754e4dc48d65d95294bd170dcd857</Anchor>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>pointer</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a3aae1df93a78b201d98e178c1c7d02a7.html</Path>
-    <Anchor>a3aae1df93a78b201d98e178c1c7d02a7</Anchor>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>reference</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a97aff5d71246774267a81066460dd1cf.html</Path>
-    <Anchor>a97aff5d71246774267a81066460dd1cf</Anchor>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>difference_type</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a49d7c3e9ef3280df03052cce988b792f.html</Path>
-    <Anchor>a49d7c3e9ef3280df03052cce988b792f</Anchor>
-    <Abstract>a type to represent differences between iterators </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>iterator_category</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a821560d64f50525162097f19b1392e7f.html</Path>
-    <Anchor>a821560d64f50525162097f19b1392e7f</Anchor>
-    <Abstract>the category of the iterator </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>pointer</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a1da96fc3054d547e7706d3a2f073f389.html</Path>
-    <Anchor>a1da96fc3054d547e7706d3a2f073f389</Anchor>
-    <Abstract>defines a pointer to the type iterated over (value_type) </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>reference</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_aefd248cac6493eed1e6ff53ba6a63eb2.html</Path>
-    <Anchor>aefd248cac6493eed1e6ff53ba6a63eb2</Anchor>
-    <Abstract>defines a reference to the type iterated over (value_type) </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>value_type</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>tdef</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a9ea0497199b1e96ce9cadd1f202ec343.html</Path>
-    <Anchor>a9ea0497199b1e96ce9cadd1f202ec343</Anchor>
-    <Abstract>the type of the values when the iterator is dereferenced </Abstract>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>iterator</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a47fb2dbbbfaf65c0ccfa99aeaed920a1.html</Path>
-    <Anchor>a47fb2dbbbfaf65c0ccfa99aeaed920a1</Anchor>
-    <Abstract>default constructor </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>iterator</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a085fe0d8cf459b5b1ae7b518b933ae7d.html</Path>
-    <Anchor>a085fe0d8cf459b5b1ae7b518b933ae7d</Anchor>
-    <Abstract>constructor for a given JSON instance </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>iterator</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a1de0975e812c83e74d118b3e1063f335.html</Path>
-    <Anchor>a1de0975e812c83e74d118b3e1063f335</Anchor>
-    <Abstract>copy constructor </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator*</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a1af28ba60302eb48edf4fdbc88e75903.html</Path>
-    <Anchor>a1af28ba60302eb48edf4fdbc88e75903</Anchor>
-    <Abstract>return a reference to the value pointed to by the iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator+</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a56952f8d5702541f0d88e6a764d2ae36.html</Path>
-    <Anchor>a56952f8d5702541f0d88e6a764d2ae36</Anchor>
-    <Abstract>add to iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator++</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a2943e49b3d88e6ee5793c5923ab2ede9.html</Path>
-    <Anchor>a2943e49b3d88e6ee5793c5923ab2ede9</Anchor>
-    <Abstract>post-increment (it++) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator++</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a050b7fa21051ea57e5b0cc03668b5d4a.html</Path>
-    <Anchor>a050b7fa21051ea57e5b0cc03668b5d4a</Anchor>
-    <Abstract>pre-increment (++it) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator+=</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_ae0c848dbc0af1cde15771d45d775b27c.html</Path>
-    <Anchor>ae0c848dbc0af1cde15771d45d775b27c</Anchor>
-    <Abstract>add to iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator-</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a790f550ff168095c83c2e459c575916c.html</Path>
-    <Anchor>a790f550ff168095c83c2e459c575916c</Anchor>
-    <Abstract>subtract from iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator-</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a381124603cecc478e8746dcf4e11728c.html</Path>
-    <Anchor>a381124603cecc478e8746dcf4e11728c</Anchor>
-    <Abstract>return difference </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator--</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_ab4f238aa5fcf452b1884b748b0395b1f.html</Path>
-    <Anchor>ab4f238aa5fcf452b1884b748b0395b1f</Anchor>
-    <Abstract>post-decrement (it–) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator--</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_ab3679dc63b3a59edb98b1c2b96d8683c.html</Path>
-    <Anchor>ab3679dc63b3a59edb98b1c2b96d8683c</Anchor>
-    <Abstract>pre-decrement (–it) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator-=</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_afe86d48d3e4e5ebdaaec162b3cf0e95c.html</Path>
-    <Anchor>afe86d48d3e4e5ebdaaec162b3cf0e95c</Anchor>
-    <Abstract>subtract from iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator-&gt;</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a12c7f8236ffa08a5dd27cbd9888b74be.html</Path>
-    <Anchor>a12c7f8236ffa08a5dd27cbd9888b74be</Anchor>
-    <Abstract>dereference the iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator=</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a51b0ed345317cfd1b2386f481d774477.html</Path>
-    <Anchor>a51b0ed345317cfd1b2386f481d774477</Anchor>
-    <Abstract>copy assignment </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator[]</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_a72ce0abec8c72610925d83a9b309f3e4.html</Path>
-    <Anchor>a72ce0abec8c72610925d83a9b309f3e4</Anchor>
-    <Abstract>access to successor </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1iterator_ac688806417f3b4e17c4eb1b661b522f1.html</Path>
-    <Anchor>ac688806417f3b4e17c4eb1b661b522f1</Anchor>
-    <Abstract>return the value of an iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>const_iterator</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_ac6fdaff67857f82a623e5cc253917639.html</Path>
-    <Anchor>ac6fdaff67857f82a623e5cc253917639</Anchor>
-    <Abstract>default constructor </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>const_iterator</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a23de834b11bd895209aa65c100ab9ceb.html</Path>
-    <Anchor>a23de834b11bd895209aa65c100ab9ceb</Anchor>
-    <Abstract>constructor for a given JSON instance </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>const_iterator</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a6b950c6bc081ac1ec1540ec05ceb2603.html</Path>
-    <Anchor>a6b950c6bc081ac1ec1540ec05ceb2603</Anchor>
-    <Abstract>copy constructor given a non-const iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>const_iterator</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a18c35a6735d3da96b4fc026421c05dd8.html</Path>
-    <Anchor>a18c35a6735d3da96b4fc026421c05dd8</Anchor>
-    <Abstract>copy constructor </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>key</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a0e717ab658d27f646a3c8602cac91d83.html</Path>
-    <Anchor>a0e717ab658d27f646a3c8602cac91d83</Anchor>
-    <Abstract>return the key of an object iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator!=</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a2defc155f17e8325747d2f884bb60eab.html</Path>
-    <Anchor>a2defc155f17e8325747d2f884bb60eab</Anchor>
-    <Abstract>comparison: not equal </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator*</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_acfc918b6350449111ca58af5eb3da999.html</Path>
-    <Anchor>acfc918b6350449111ca58af5eb3da999</Anchor>
-    <Abstract>return a reference to the value pointed to by the iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator+</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a7a80257f2303210b0a5d056fc0b30b40.html</Path>
-    <Anchor>a7a80257f2303210b0a5d056fc0b30b40</Anchor>
-    <Abstract>add to iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator++</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a8dbaec5bf8ccba3225520356629061cb.html</Path>
-    <Anchor>a8dbaec5bf8ccba3225520356629061cb</Anchor>
-    <Abstract>post-increment (it++) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator++</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a8fbb15efd97599209a7def77af8e748e.html</Path>
-    <Anchor>a8fbb15efd97599209a7def77af8e748e</Anchor>
-    <Abstract>pre-increment (++it) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator+=</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a0d5820d1dda9dea3bbeb029cacf68522.html</Path>
-    <Anchor>a0d5820d1dda9dea3bbeb029cacf68522</Anchor>
-    <Abstract>add to iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator-</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_abc4552ba2fe39e7901a83dd6d4dec151.html</Path>
-    <Anchor>abc4552ba2fe39e7901a83dd6d4dec151</Anchor>
-    <Abstract>subtract from iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator-</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_af3ef241a9e26398ea0cf45026287c2ed.html</Path>
-    <Anchor>af3ef241a9e26398ea0cf45026287c2ed</Anchor>
-    <Abstract>return difference </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator--</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a6cab1c2ed7e2a014980e2a5717f43a64.html</Path>
-    <Anchor>a6cab1c2ed7e2a014980e2a5717f43a64</Anchor>
-    <Abstract>post-decrement (it–) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator--</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_adeb2ff3fdf3cc301b72db109934c9199.html</Path>
-    <Anchor>adeb2ff3fdf3cc301b72db109934c9199</Anchor>
-    <Abstract>pre-decrement (–it) </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator-=</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_aefac8f3e390ac917f021761f4a8f8e71.html</Path>
-    <Anchor>aefac8f3e390ac917f021761f4a8f8e71</Anchor>
-    <Abstract>subtract from iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator-&gt;</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_abae808b09a822cc3da4cef0efb89115d.html</Path>
-    <Anchor>abae808b09a822cc3da4cef0efb89115d</Anchor>
-    <Abstract>dereference the iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator&lt;</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_ae0f996eef6a970b2e654c4f6d33d6f9a.html</Path>
-    <Anchor>ae0f996eef6a970b2e654c4f6d33d6f9a</Anchor>
-    <Abstract>comparison: smaller </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator&lt;=</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_ab31ede5b25ad5e8a3bb06f6eadb50923.html</Path>
-    <Anchor>ab31ede5b25ad5e8a3bb06f6eadb50923</Anchor>
-    <Abstract>comparison: less than or equal </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator=</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a2b6561a7b39b9aa3a220aa3b6e2d9589.html</Path>
-    <Anchor>a2b6561a7b39b9aa3a220aa3b6e2d9589</Anchor>
-    <Abstract>copy assignment </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator==</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_acf1fcb73ff770117446670cefc927dd2.html</Path>
-    <Anchor>acf1fcb73ff770117446670cefc927dd2</Anchor>
-    <Abstract>comparison: equal </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator&gt;</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a3a7ed729e72bc7c1d0b75ed8cc2bd830.html</Path>
-    <Anchor>a3a7ed729e72bc7c1d0b75ed8cc2bd830</Anchor>
-    <Abstract>comparison: greater than </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator&gt;=</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a1ed92c14d88b802345bd15417a417a5d.html</Path>
-    <Anchor>a1ed92c14d88b802345bd15417a417a5d</Anchor>
-    <Abstract>comparison: greater than or equal </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>operator[]</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a70caca372e345c9c700ab849c3d9463b.html</Path>
-    <Anchor>a70caca372e345c9c700ab849c3d9463b</Anchor>
-    <Abstract>access to successor </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>value</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json::const_iterator</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_1_1const__iterator_a0f42e99f14ac0a46456cf96fb384f290.html</Path>
-    <Anchor>a0f42e99f14ac0a46456cf96fb384f290</Anchor>
-    <Abstract>return the value of an iterator </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
     <TokenIdentifier>
