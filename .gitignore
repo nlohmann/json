@@ -18,3 +18,5 @@ benchmarks/files/numbers/*.json
 .idea
 cmake-build-debug
 
+
+test/test-*
