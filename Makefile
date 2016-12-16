@@ -5,7 +5,8 @@ RE2C = re2c
 SED = sed
 
 # main target
-all: json_unit
+all:
+	$(MAKE) -C test
 
 # clean up
 clean:
@@ -21,14 +22,14 @@ clean:
 
 # build unit tests
 json_unit:
-	@$(MAKE) -C test
+	@$(MAKE) json_unit -C test
 
 # run unit tests
-check: json_unit
-	test/json_unit "*"
+check:
+	$(MAKE) check -C test
 
-check-fast: json_unit
-	test/json_unit
+check-fast:
+	$(MAKE) check -C test TEST_PATTERN=""
 
 
 ##########################################################################
@@ -68,6 +69,7 @@ cppcheck:
 
 clang_sanitize: clean
 	CXX=clang++ CXXFLAGS="-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer" $(MAKE)
+
 
 ##########################################################################
 # maintainer targets

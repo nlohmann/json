@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.8
+|  |  |__   |  |  | | | |  version 2.0.9
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -515,5 +515,29 @@ TEST_CASE("regression tests")
         // a parse error because of the EOF.
         CHECK_THROWS_AS(j << ss, std::invalid_argument);
         CHECK_THROWS_WITH(j << ss, "parse error - unexpected end of input");
+    }
+
+    SECTION("issue #389 - Integer-overflow (OSS-Fuzz issue 267)")
+    {
+        // original test case
+        json j1 = json::parse("-9223372036854775808");
+        CHECK(j1.is_number_integer());
+        CHECK(j1.get<json::number_integer_t>() == INT64_MIN);
+
+        // edge case (+1; still an integer)
+        json j2 = json::parse("-9223372036854775807");
+        CHECK(j2.is_number_integer());
+        CHECK(j2.get<json::number_integer_t>() == INT64_MIN + 1);
+
+        // edge case (-1; overflow -> floats)
+        json j3 = json::parse("-9223372036854775809");
+        CHECK(j3.is_number_float());
+    }
+
+    SECTION("issue #380 - bug in overflow detection when parsing integers")
+    {
+        json j = json::parse("166020696663385964490");
+        CHECK(j.is_number_float());
+        CHECK(j.dump() == "1.66020696663386e+20");
     }
 }
