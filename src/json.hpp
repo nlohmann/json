@@ -141,7 +141,8 @@ using is_unscoped_enum =
 
 namespace detail
 {
-// Very useful construct against boilerplate (more boilerplate needed than in C++17: http://en.cppreference.com/w/cpp/types/void_t)
+// very useful construct against boilerplate (more boilerplate needed than in
+// C++17: http://en.cppreference.com/w/cpp/types/void_t)
 template <typename...> struct make_void
 {
     using type = void;
@@ -174,29 +175,29 @@ struct disjunction<B1, Bn...>
 
 /*!
 @brief Helper to determine whether there's a key_type for T.
-Thus helper is used to tell associative containers apart from other containers
+
+This helper is used to tell associative containers apart from other containers
 such as sequence containers. For instance, `std::map` passes the test as it
 contains a `mapped_type`, whereas `std::vector` fails the test.
+
 @sa http://stackoverflow.com/a/7728728/266378
 @since version 1.0.0, overworked in version 2.0.6
 */
-#define NLOHMANN_JSON_HAS_HELPER(type)                                         \
-    template <typename T> struct has_##type {                                    \
-    private:                                                                     \
-        template <typename U, typename = typename U::type>                         \
-        static int detect(U &&);                                                   \
-        \
-        static void detect(...);                                                   \
-        \
-    public:                                                                      \
-        static constexpr bool value =                                              \
-                std::is_integral<decltype(detect(std::declval<T>()))>::value;          \
+#define NLOHMANN_JSON_HAS_HELPER(type)                                        \
+    template <typename T> struct has_##type {                                 \
+    private:                                                                  \
+        template <typename U, typename = typename U::type>                    \
+        static int detect(U &&);                                              \
+        static void detect(...);                                              \
+    public:                                                                   \
+        static constexpr bool value =                                         \
+                std::is_integral<decltype(detect(std::declval<T>()))>::value; \
     };
 
-NLOHMANN_JSON_HAS_HELPER(mapped_type)
-NLOHMANN_JSON_HAS_HELPER(key_type)
-NLOHMANN_JSON_HAS_HELPER(value_type)
-NLOHMANN_JSON_HAS_HELPER(iterator)
+NLOHMANN_JSON_HAS_HELPER(mapped_type);
+NLOHMANN_JSON_HAS_HELPER(key_type);
+NLOHMANN_JSON_HAS_HELPER(value_type);
+NLOHMANN_JSON_HAS_HELPER(iterator);
 
 #undef NLOHMANN_JSON_HAS_HELPER
 
@@ -216,8 +217,8 @@ struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
 template<class RealType, class CompatibleObjectType>
 struct is_compatible_object_type
 {
-    // As noted ahead, we need to stop evaluating traits if CompatibleObjectType = void
-    // hence the conjunction
+    // As noted ahead, we need to stop evaluating traits if
+    // `CompatibleObjectType = void`, hence the conjunction
     static auto constexpr value = is_compatible_object_type_impl <
                                   conjunction<negation<std::is_same<void, CompatibleObjectType>>,
                                   has_mapped_type<CompatibleObjectType>,
@@ -249,8 +250,8 @@ struct is_compatible_array_type_impl<true, BasicJson, CompatibleArrayType>
 template <class BasicJson, class CompatibleArrayType>
 struct is_compatible_array_type
 {
-    // the check for CompatibleArrayType = void is done in is_compatible_object_type
-    // but we need the conjunction here as well
+    // the check for CompatibleArrayType = void is done in
+    // `is_compatible_object_type`, but we need the conjunction here as well
     static auto constexpr value = is_compatible_array_type_impl <
                                   conjunction<negation<is_compatible_object_type<
                                   typename BasicJson::object_t, CompatibleArrayType>>,
@@ -302,8 +303,7 @@ struct is_compatible_basic_json_type
         is_compatible_array_type<BasicJson, T>::value or
         is_compatible_object_type<typename BasicJson::object_t, T>::value or
         is_compatible_float_type<typename BasicJson::number_float_t, T>::value or
-        is_compatible_integer_type<typename BasicJson::number_integer_t,
-        T>::value or
+        is_compatible_integer_type<typename BasicJson::number_integer_t, T>::value or
         is_compatible_integer_type<typename BasicJson::number_unsigned_t,
         T>::value;
 };
@@ -320,8 +320,7 @@ struct is_basic_json_nested_class
 };
 
 // This trait checks if JSONSerializer<T>::from_json(json const&, udt&) exists
-template <template <typename, typename> class JSONSerializer, typename Json,
-          typename T>
+template <template <typename, typename> class JSONSerializer, typename Json, typename T>
 struct has_from_json
 {
   private:
@@ -329,7 +328,6 @@ struct has_from_json
     template <typename U, typename = enable_if_t<std::is_same<void, decltype(uncvref_t<U>::from_json(
                   std::declval<Json>(), std::declval<T&>()))>::value>>
     static int detect(U&&);
-
     static void detect(...);
 
   public:
@@ -346,7 +344,6 @@ struct has_non_default_from_json
   private:
     template <typename U, typename = enable_if_t<std::is_same<T, decltype(uncvref_t<U>::from_json(std::declval<Json>()))>::value>>
     static int detect(U&&);
-
     static void detect(...);
 
   public:
@@ -363,7 +360,6 @@ struct has_to_json
     template <typename U, typename = decltype(uncvref_t<U>::to_json(
                   std::declval<Json&>(), std::declval<T>()))>
     static int detect(U&&);
-
     static void detect(...);
 
   public:
@@ -1598,8 +1594,7 @@ class basic_json
     @since version 1.0.0
     */
     template <class CompatibleArrayType,
-              enable_if_t<detail::is_compatible_array_type<
-                              basic_json_t, CompatibleArrayType>::value,
+              enable_if_t<detail::is_compatible_array_type<basic_json_t, CompatibleArrayType>::value,
                           int> = 0>
     basic_json(const CompatibleArrayType& val) : m_type(value_t::array)
     {
@@ -1620,7 +1615,6 @@ class basic_json
                     not detail::is_basic_json_nested_class<uncvref_t<T>, basic_json_t, primitive_iterator_t>::value and
                     not std::is_same<uncvref_t<T>, typename basic_json_t::array_t::iterator>::value and
                     not std::is_same<uncvref_t<T>, typename basic_json_t::object_t::iterator>::value and
-
                     detail::conjunction<detail::negation<detail::is_compatible_basic_json_type<
                                             uncvref_t<T>, basic_json_t>>,
                                         detail::has_to_json<JSONSerializer, basic_json,
