@@ -98,9 +98,6 @@ matrix:
     compiler: clang
     before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
     addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['valgrind']
       coverity_scan:
         project:
           name: "nlohmann/json"
