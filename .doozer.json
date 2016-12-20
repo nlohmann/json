@@ -1,0 +1,9 @@
+{
+  "targets": {
+    "xenial-amd64": {
+      "buildenv": "xenial-amd64",
+      "builddeps": ["build-essential"],
+      "buildcmd": ["make check"]
+    }
+  }
+}
