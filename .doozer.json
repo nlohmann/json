@@ -4,6 +4,16 @@
       "buildenv": "xenial-amd64",
       "builddeps": ["build-essential", "cmake"],
       "buildcmd": ["mkdir cm", "cd cm", "cmake ..", "cmake --build .", "ctest"]
+    },
+    "xenial-i386": {
+      "buildenv": "xenial-i386",
+      "builddeps": ["build-essential", "cmake"],
+      "buildcmd": ["mkdir cm", "cd cm", "cmake ..", "cmake --build .", "ctest"]
+    },
+    "osx": {
+      "buildenv": "osx",
+      "builddeps": ["build-essential", "cmake"],
+      "buildcmd": ["mkdir cm", "cd cm", "cmake ..", "cmake --build .", "ctest"]
     }
   }
 }
