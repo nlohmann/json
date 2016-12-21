@@ -2,8 +2,8 @@
   "targets": {
     "jessie-i386": {
       "buildenv": "jessie-i386",
-      "builddeps": ["build-essential", "cmake"],
-      "buildcmd": ["mkdir cm", "cd cm", "cmake ..", "cmake --build .", "ctest --output-on-failure"]
+      "builddeps": ["build-essential", "cmake", "clang"],
+      "buildcmd": ["mkdir cm", "cd cm", "CXX=clang++ cmake ..", "cmake --build .", "ctest --output-on-failure"]
     },
     "precise-i386": {
       "buildenv": "precise-i386",
@@ -17,13 +17,13 @@
     },
     "trusty-i386": {
       "buildenv": "trusty-i386",
-      "builddeps": ["build-essential", "cmake"],
-      "buildcmd": ["make check"]
+      "builddeps": ["build-essential", "cmake", "clang"],
+      "buildcmd": ["make check CXX=clang++"]
     },
     "trusty-amd64": {
       "buildenv": "trusty-amd64",
-      "builddeps": ["build-essential", "cmake"],
-      "buildcmd": ["make check"]
+      "builddeps": ["build-essential", "cmake", "clang"],
+      "buildcmd": ["make check CXX=clang++"]
     },
     "xenial-i386": {
       "buildenv": "xenial-i386",
