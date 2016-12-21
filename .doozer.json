@@ -47,8 +47,8 @@
     },
     "osx": {
       "buildenv": "osx",
-      "builddeps": ["build-essential", "cmake"],
-      "buildcmd": ["mkdir cm", "cd cm", "cmake ..", "cmake --build .", "ctest --output-on-failure"]
+      "builddeps": ["build-essential"],
+      "buildcmd": ["make check"]
     }
   }
 }
