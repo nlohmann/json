@@ -18,12 +18,12 @@
     "trusty-i386": {
       "buildenv": "trusty-i386",
       "builddeps": ["build-essential", "cmake"],
-      "buildcmd": ["mkdir cm", "cd cm", "cmake ..", "cmake --build .", "ctest --output-on-failure"]
+      "buildcmd": ["make check"]
     },
     "trusty-amd64": {
       "buildenv": "trusty-amd64",
       "builddeps": ["build-essential", "cmake"],
-      "buildcmd": ["mkdir cm", "cd cm", "cmake ..", "cmake --build .", "ctest --output-on-failure"]
+      "buildcmd": ["make check"]
     },
     "xenial-i386": {
       "buildenv": "xenial-i386",
