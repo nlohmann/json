@@ -37,7 +37,7 @@
     },
     "fedora24-x86_64": {
       "buildenv": "fedora24-x86_64",
-      "builddeps": ["cmake"],
+      "builddeps": ["cmake", "make"],
       "buildcmd": ["mkdir cm", "cd cm", "cmake ..", "cmake --build .", "ctest --output-on-failure"]
     },
     "centos7-x86_64": {
