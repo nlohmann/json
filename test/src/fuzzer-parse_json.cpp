@@ -18,19 +18,25 @@
 
 using json = nlohmann::json;
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
-  try {
-    std::stringstream s;
-    s << json::parse(data, data + size);
-    try {
-      auto j = json::parse(s.str());
-      std::stringstream s2;
-      s2 << j;
-      assert(s.str() == s2.str());
-      assert(j == json::parse(s.str()));
-    } catch (const std::invalid_argument&) { 
-      assert(0);
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
+{
+    try
+    {
+        std::stringstream s;
+        s << json::parse(data, data + size);
+        try
+        {
+            auto j = json::parse(s.str());
+            std::stringstream s2;
+            s2 << j;
+            assert(s.str() == s2.str());
+            assert(j == json::parse(s.str()));
+        }
+        catch (const std::invalid_argument&)
+        {
+            assert(0);
+        }
     }
-  } catch (const std::invalid_argument&) { }
-  return 0;
+    catch (const std::invalid_argument&) { }
+    return 0;
 }

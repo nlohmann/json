@@ -20,4 +20,4 @@ cmake-build-debug
 
 
 test/test-*
-test/fuzz_test/Fuzzer/.svn
+.svn
