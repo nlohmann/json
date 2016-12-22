@@ -49,14 +49,10 @@ doctest:
 fuzz_testing:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) fuzz CXX=afl-clang++
-	mv fuzz fuzz-testing
+	$(MAKE) parse_afl_fuzzer -C test CXX=afl-clang++
+	mv test/fuzzer parse_afl_fuzzer
 	find test/data/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
-	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzz"
-
-# the fuzzer binary
-fuzz: test/src/fuzz.cpp src/json.hpp
-	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src $< $(LDFLAGS) -o $@
+	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 
 ##########################################################################

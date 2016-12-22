@@ -78,3 +78,11 @@ TEST_PATTERN = "*"
 TEST_PREFIX = ""
 check: $(TESTCASES)
 	@cd .. ; for testcase in $(TESTCASES); do echo "Executing $$testcase..."; $(TEST_PREFIX)test/$$testcase $(TEST_PATTERN) || exit 1; done
+
+
+##############################################################################
+# fuzzer
+##############################################################################
+
+parse_afl_fuzzer:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) src/fuzzer-driver_afl.cpp src/fuzzer-parse_json.cpp -o $@

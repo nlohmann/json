@@ -1,16 +1,23 @@
-// Copyright 2016 Google Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+    __ _____ _____ _____
+ __|  |   __|     |   | |  JSON for Modern C++ (fuzz test support)
+|  |  |__   |  |  | | | |  version 2.0.9
+|_____|_____|_____|_|___|  https://github.com/nlohmann/json
+
+This file implements a parser test suitable for fuzz testing. Given a byte
+array data, it performs the following steps:
+
+- j1 = parse(data)
+- s1 = serialize(j1)
+- j2 = parse(s1)
+- s2 = serialize(j2)
+- assert(s1 == s2)
+
+The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
+drivers.
+
+Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+*/
 
 #include <iostream>
 #include <sstream>
@@ -18,25 +25,41 @@
 
 using json = nlohmann::json;
 
+// see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     try
     {
-        std::stringstream s;
-        s << json::parse(data, data + size);
+        // step 1: parse input
+        json j1 = json::parse(data, data + size);
+
         try
         {
-            auto j = json::parse(s.str());
-            std::stringstream s2;
-            s2 << j;
-            assert(s.str() == s2.str());
-            assert(j == json::parse(s.str()));
+            // step 2: round trip
+
+            // first serialization
+            std::string s1 = j1.dump();
+
+            // parse serialization
+            json j2 = json::parse(s1);
+
+            // second serialization
+            std::string s2 = j2.dump();
+
+            // serializations must match
+            assert(s1 == s2);
         }
         catch (const std::invalid_argument&)
         {
-            assert(0);
+            // parsing a JSON serialization must not fail
+            assert(false);
         }
     }
-    catch (const std::invalid_argument&) { }
+    catch (const std::invalid_argument&)
+    {
+        // parse errors are ok, because input may be random bytes
+    }
+
+    // return 0 - non-zero return values are reserved for future use
     return 0;
 }
