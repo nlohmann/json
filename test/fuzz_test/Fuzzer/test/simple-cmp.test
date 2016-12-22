@@ -1,0 +1,2 @@
+CHECK: BINGO
+RUN: not LLVMFuzzer-SimpleCmpTest -seed=1 -runs=100000000 2>&1 | FileCheck %s

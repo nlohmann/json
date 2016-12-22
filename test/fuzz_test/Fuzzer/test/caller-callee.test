@@ -1,0 +1,2 @@
+CHECK: BINGO
+RUN: not LLVMFuzzer-CallerCalleeTest          -use_value_profile=1 -cross_over=0 -max_len=6 -seed=1 -runs=10000000 2>&1 | FileCheck %s
