@@ -10,7 +10,7 @@ all:
 
 # clean up
 clean:
-	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM
+	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM
 	rm -fr benchmarks/files/numbers/*.json
 	$(MAKE) clean -Cdoc
 	$(MAKE) clean -Ctest
