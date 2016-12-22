@@ -86,3 +86,6 @@ check: $(TESTCASES)
 
 parse_afl_fuzzer:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) src/fuzzer-driver_afl.cpp src/fuzzer-parse_json.cpp -o $@
+
+parse_cbor_fuzzer:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) src/fuzzer-driver_afl.cpp src/fuzzer-parse_cbor.cpp -o $@
