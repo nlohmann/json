@@ -89,3 +89,6 @@ parse_afl_fuzzer:
 
 parse_cbor_fuzzer:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) src/fuzzer-driver_afl.cpp src/fuzzer-parse_cbor.cpp -o $@
+
+parse_msgpack_fuzzer:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) src/fuzzer-driver_afl.cpp src/fuzzer-parse_msgpack.cpp -o $@

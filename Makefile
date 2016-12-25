@@ -62,6 +62,14 @@ fuzz_testing_cbor:
 	find test/data -size -5k -name *.cbor | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
+fuzz_testing_msgpack:
+	rm -fr fuzz-testing
+	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
+	$(MAKE) parse_msgpack_fuzzer -C test CXX=afl-clang++
+	mv test/parse_msgpack_fuzzer fuzz-testing/fuzzer
+	find test/data -size -5k -name *.msgpack | xargs -I{} cp "{}" fuzz-testing/testcases
+	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
+
 
 ##########################################################################
 # static analyzer
