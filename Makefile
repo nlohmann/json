@@ -92,8 +92,9 @@ fuzzing-stop:
 cppcheck:
 	cppcheck --enable=warning --inconclusive --force --std=c++11 src/json.hpp --error-exitcode=1
 
+# run clang sanitize (we are overrding the CXXFLAGS provided by travis in order to use gcc's libstdc++)
 clang_sanitize: clean
-	CXX=clang++ CXXFLAGS="-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer" $(MAKE)
+	CXX=clang++ CXXFLAGS="-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer" $(MAKE) check -C test
 
 
 ##########################################################################
