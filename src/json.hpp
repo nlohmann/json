@@ -3793,7 +3793,7 @@ class basic_json
     container `c`, the expression `c.front()` is equivalent to `*c.begin()`.
 
     @return In case of a structured type (array or object), a reference to the
-    first element is returned. In cast of number, string, or boolean values, a
+    first element is returned. In case of number, string, or boolean values, a
     reference to the value is returned.
 
     @complexity Constant.
@@ -3836,7 +3836,7 @@ class basic_json
     @endcode
 
     @return In case of a structured type (array or object), a reference to the
-    last element is returned. In cast of number, string, or boolean values, a
+    last element is returned. In case of number, string, or boolean values, a
     reference to the value is returned.
 
     @complexity Constant.
@@ -4187,10 +4187,14 @@ class basic_json
     element is not found or the JSON value is not an object, end() is
     returned.
 
+    @note This method always returns @ref end() when executed on a JSON type
+          that is not an object.
+
     @param[in] key key value of the element to search for
 
     @return Iterator to an element with key equivalent to @a key. If no such
-    element is found, past-the-end (see end()) iterator is returned.
+    element is found or the JSON value is not an object, past-the-end (see
+    @ref end()) iterator is returned.
 
     @complexity Logarithmic in the size of the JSON object.
 
@@ -4232,6 +4236,9 @@ class basic_json
     Returns the number of elements with key @a key. If ObjectType is the
     default `std::map` type, the return value will always be `0` (@a key was
     not found) or `1` (@a key was found).
+
+    @note This method always returns `0` when executed on a JSON type that is
+          not an object.
 
     @param[in] key key value of the element to count
 
@@ -4791,9 +4798,6 @@ class basic_json
     number      | `0`
     object      | `{}`
     array       | `[]`
-
-    @note Floating-point numbers are set to `0.0` which will be serialized to
-    `0`. The vale type remains @ref number_float_t.
 
     @complexity Linear in the size of the JSON value.
 
