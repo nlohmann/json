@@ -1197,27 +1197,27 @@ TEST_CASE("CBOR regressions")
         */
         for (std::string filename :
                 {
-                    "test/data/cbor_regression/id:000000,sig:06,src:000223+000677,op:splice,rep:2",
-                    "test/data/cbor_regression/id:000000,sig:06,src:000787,op:havoc,rep:8",
-                    "test/data/cbor_regression/id:000000,sig:06,src:000833,op:havoc,rep:32",
-                    "test/data/cbor_regression/id:000000,sig:06,src:000838,op:havoc,rep:64",
-                    "test/data/cbor_regression/id:000000,sig:06,src:000846+001064,op:splice,rep:16",
-                    "test/data/cbor_regression/id:000000,sig:06,src:000848,op:flip1,pos:0",
-                    "test/data/cbor_regression/id:000000,sig:06,src:001435,op:havoc,rep:32",
-                    "test/data/cbor_regression/id:000000,sig:06,src:001436,op:havoc,rep:4v",
-                    "test/data/cbor_regression/id:000001,sig:06,src:000864+000903,op:splice,rep:2",
-                    "test/data/cbor_regression/id:000001,sig:06,src:001310+001138,op:splice,rep:32",
-                    "test/data/cbor_regression/id:000001,sig:06,src:001330+000569,op:splice,rep:64",
-                    "test/data/cbor_regression/id:000001,sig:06,src:001413,op:havoc,rep:32",
-                    "test/data/cbor_regression/id:000001,sig:06,src:001447,op:havoc,rep:4",
-                    "test/data/cbor_regression/id:000001,sig:06,src:001465+000325,op:splice,rep:4",
-                    "test/data/cbor_regression/id:000002,sig:06,src:000539,op:havoc,rep:8",
-                    "test/data/cbor_regression/id:000002,sig:06,src:001301,op:havoc,rep:16",
-                    "test/data/cbor_regression/id:000002,sig:06,src:001317+000850,op:splice,rep:8",
-                    "test/data/cbor_regression/id:000002,sig:06,src:001382,op:havoc,rep:128",
-                    "test/data/cbor_regression/id:000002,sig:06,src:001413+001036,op:splice,rep:4",
-                    "test/data/cbor_regression/id:000003,sig:06,src:000846+000155,op:splice,rep:16",
-                    "test/data/cbor_regression/id:000004,sig:06,src:001445,op:havoc,rep:128"
+                    "test/data/cbor_regression/test01",
+                    "test/data/cbor_regression/test02",
+                    "test/data/cbor_regression/test03",
+                    "test/data/cbor_regression/test04",
+                    "test/data/cbor_regression/test05",
+                    "test/data/cbor_regression/test06",
+                    "test/data/cbor_regression/test07",
+                    "test/data/cbor_regression/test08",
+                    "test/data/cbor_regression/test09",
+                    "test/data/cbor_regression/test10",
+                    "test/data/cbor_regression/test11",
+                    "test/data/cbor_regression/test12",
+                    "test/data/cbor_regression/test13",
+                    "test/data/cbor_regression/test14",
+                    "test/data/cbor_regression/test15",
+                    "test/data/cbor_regression/test16",
+                    "test/data/cbor_regression/test17",
+                    "test/data/cbor_regression/test18",
+                    "test/data/cbor_regression/test19",
+                    "test/data/cbor_regression/test20",
+                    "test/data/cbor_regression/test21"
                 })
         {
             CAPTURE(filename);
