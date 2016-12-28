@@ -1,0 +1,8 @@
+RUN: LLVMFuzzer-SimpleTest -print_pcs=1 -seed=1 2>&1 | FileCheck %s --check-prefix=PCS
+PCS-NOT: NEW_PC
+PCS:INITED
+PCS:NEW_PC: {{0x[a-f0-9]+}}
+PCS:NEW_PC: {{0x[a-f0-9]+}}
+PCS:NEW
+PCS:BINGO
+
