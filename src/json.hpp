@@ -6835,6 +6835,44 @@ class basic_json
         }
     }
 
+
+    /*
+    @brief checks if given lengths do not exceed the size of a given vector
+
+    To secure the access to the byte vector during CBOR/MessagePack
+    deserialization, bytes are copied from the vector into buffers. This
+    function checks if the number of bytes to copy (@a len) does not exceed the
+    size @s size of the vector. Additionally, an @a offset is given from where
+    to start reading the bytes.
+
+    This function checks whether reading the bytes is safe; that is, offset is a
+    valid index in the vector, offset+len
+
+    @param[in] size    size of the byte vector
+    @param[in] len     number of bytes to read
+    @param[in] offset  offset where to start reading
+
+    vec:  x x x x x X X X X X
+          ^         ^         ^
+          0         offset    len
+
+    @throws out_of_range if `len > v.size()`
+    */
+    static void check_length(const size_t size, const size_t len, const size_t offset)
+    {
+        // simple case: requested length is greater than the vector's length
+        if (len > size or offset > size)
+        {
+            throw std::out_of_range("len out of range");
+        }
+
+        // second case: adding offset would result in overflow
+        if ((size > (std::numeric_limits<size_t>::max() - offset)))
+        {
+            throw std::out_of_range("len+offset out of range");
+        }
+    }
+
     /*!
     @brief create a JSON value from a given MessagePack vector
 
@@ -6886,6 +6924,7 @@ class basic_json
                 const size_t len = v[current_idx] & 0x1f;
                 const size_t offset = current_idx + 1;
                 idx += len; // skip content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
         }
@@ -6989,6 +7028,7 @@ class basic_json
                     const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
                     const size_t offset = current_idx + 2;
                     idx += len + 1; // skip size byte + content bytes
+                    check_length(v.size(), len, offset);
                     return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
                 }
 
@@ -6997,6 +7037,7 @@ class basic_json
                     const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
                     const size_t offset = current_idx + 3;
                     idx += len + 2; // skip 2 size bytes + content bytes
+                    check_length(v.size(), len, offset);
                     return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
                 }
 
@@ -7005,6 +7046,7 @@ class basic_json
                     const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
                     const size_t offset = current_idx + 5;
                     idx += len + 4; // skip 4 size bytes + content bytes
+                    check_length(v.size(), len, offset);
                     return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
                 }
 
@@ -7223,6 +7265,7 @@ class basic_json
                 const auto len = static_cast<size_t>(v[current_idx] - 0x60);
                 const size_t offset = current_idx + 1;
                 idx += len; // skip content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
 
@@ -7231,6 +7274,7 @@ class basic_json
                 const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
                 const size_t offset = current_idx + 2;
                 idx += len + 1; // skip size byte + content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
 
@@ -7239,6 +7283,7 @@ class basic_json
                 const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
                 const size_t offset = current_idx + 3;
                 idx += len + 2; // skip 2 size bytes + content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
 
@@ -7247,6 +7292,7 @@ class basic_json
                 const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
                 const size_t offset = current_idx + 5;
                 idx += len + 4; // skip 4 size bytes + content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
 
@@ -7255,6 +7301,7 @@ class basic_json
                 const auto len = static_cast<size_t>(get_from_vector<uint64_t>(v, current_idx));
                 const size_t offset = current_idx + 9;
                 idx += len + 8; // skip 8 size bytes + content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
 
@@ -7595,6 +7642,11 @@ class basic_json
     */
     static basic_json from_msgpack(const std::vector<uint8_t>& v)
     {
+        if (v.empty())
+        {
+            throw std::invalid_argument("empty vector");
+        }
+
         size_t i = 0;
         return from_msgpack_internal(v, i);
     }
@@ -7652,6 +7704,11 @@ class basic_json
     */
     static basic_json from_cbor(const std::vector<uint8_t>& v)
     {
+        if (v.empty())
+        {
+            throw std::invalid_argument("empty vector");
+        }
+
         size_t i = 0;
         return from_cbor_internal(v, i);
     }
