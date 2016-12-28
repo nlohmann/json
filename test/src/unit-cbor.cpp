@@ -1186,6 +1186,84 @@ TEST_CASE("single CBOR roundtrip")
     }
 }
 
+TEST_CASE("CBOR regressions")
+{
+    SECTION("fuzz test results")
+    {
+        /*
+        The following test cases were found during a two-day session with
+        AFL-Fuzz. As a result, empty byte vectors and excessive lengths are
+        detected.
+        */
+        for (std::string filename :
+                {
+                    "test/data/cbor_regression/id:000000,sig:06,src:000223+000677,op:splice,rep:2",
+                    "test/data/cbor_regression/id:000000,sig:06,src:000787,op:havoc,rep:8",
+                    "test/data/cbor_regression/id:000000,sig:06,src:000833,op:havoc,rep:32",
+                    "test/data/cbor_regression/id:000000,sig:06,src:000838,op:havoc,rep:64",
+                    "test/data/cbor_regression/id:000000,sig:06,src:000846+001064,op:splice,rep:16",
+                    "test/data/cbor_regression/id:000000,sig:06,src:000848,op:flip1,pos:0",
+                    "test/data/cbor_regression/id:000000,sig:06,src:001435,op:havoc,rep:32",
+                    "test/data/cbor_regression/id:000000,sig:06,src:001436,op:havoc,rep:4v",
+                    "test/data/cbor_regression/id:000001,sig:06,src:000864+000903,op:splice,rep:2",
+                    "test/data/cbor_regression/id:000001,sig:06,src:001310+001138,op:splice,rep:32",
+                    "test/data/cbor_regression/id:000001,sig:06,src:001330+000569,op:splice,rep:64",
+                    "test/data/cbor_regression/id:000001,sig:06,src:001413,op:havoc,rep:32",
+                    "test/data/cbor_regression/id:000001,sig:06,src:001447,op:havoc,rep:4",
+                    "test/data/cbor_regression/id:000001,sig:06,src:001465+000325,op:splice,rep:4",
+                    "test/data/cbor_regression/id:000002,sig:06,src:000539,op:havoc,rep:8",
+                    "test/data/cbor_regression/id:000002,sig:06,src:001301,op:havoc,rep:16",
+                    "test/data/cbor_regression/id:000002,sig:06,src:001317+000850,op:splice,rep:8",
+                    "test/data/cbor_regression/id:000002,sig:06,src:001382,op:havoc,rep:128",
+                    "test/data/cbor_regression/id:000002,sig:06,src:001413+001036,op:splice,rep:4",
+                    "test/data/cbor_regression/id:000003,sig:06,src:000846+000155,op:splice,rep:16",
+                    "test/data/cbor_regression/id:000004,sig:06,src:001445,op:havoc,rep:128"
+                })
+        {
+            CAPTURE(filename);
+
+            try
+            {
+                // parse CBOR file
+                std::ifstream f_cbor(filename, std::ios::binary);
+                std::vector<uint8_t> vec1(
+                    (std::istreambuf_iterator<char>(f_cbor)),
+                    std::istreambuf_iterator<char>());
+                json j1 = json::from_cbor(vec1);
+
+                try
+                {
+                    // step 2: round trip
+                    std::vector<uint8_t> vec2 = json::to_cbor(j1);
+
+                    // parse serialization
+                    json j2 = json::from_cbor(vec2);
+
+                    // deserializations must match
+                    CHECK(j1 == j2);
+                }
+                catch (const std::invalid_argument&)
+                {
+                    // parsing a CBOR serialization must not fail
+                    CHECK(false);
+                }
+            }
+            catch (const std::invalid_argument&)
+            {
+                // parse errors are ok, because input may be random bytes
+            }
+            catch (const std::out_of_range&)
+            {
+                // parse errors are ok, because input may be random bytes
+            }
+            catch (const std::domain_error&)
+            {
+                // parse errors are ok, because input may be random bytes
+            }
+        }
+    }
+}
+
 TEST_CASE("CBOR roundtrips", "[hide]")
 {
     SECTION("input from flynn")
