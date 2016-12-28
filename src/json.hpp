@@ -9077,7 +9077,7 @@ class basic_json
             // immediately abort if stream is erroneous
             if (s.fail())
             {
-                throw std::invalid_argument("stream error: " +  std::string(strerror(errno)));
+                throw std::invalid_argument("stream error");
             }
 
             // fill buffer
