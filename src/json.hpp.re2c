@@ -6981,6 +6981,7 @@ class basic_json
                 case 0xca: // float 32
                 {
                     // copy bytes in reverse order into the double variable
+                    check_length(v.size(), sizeof(float), 1);
                     float res;
                     for (size_t byte = 0; byte < sizeof(float); ++byte)
                     {
@@ -6993,6 +6994,7 @@ class basic_json
                 case 0xcb: // float 64
                 {
                     // copy bytes in reverse order into the double variable
+                    check_length(v.size(), sizeof(double), 1);
                     double res;
                     for (size_t byte = 0; byte < sizeof(double); ++byte)
                     {
@@ -7558,6 +7560,7 @@ class basic_json
 
             case 0xf9: // Half-Precision Float (two-byte IEEE 754)
             {
+                check_length(v.size(), 2, 1);
                 idx += 2; // skip two content bytes
 
                 // code from RFC 7049, Appendix D, Figure 3:
@@ -7589,6 +7592,7 @@ class basic_json
             case 0xfa: // Single-Precision Float (four-byte IEEE 754)
             {
                 // copy bytes in reverse order into the float variable
+                check_length(v.size(), sizeof(float), 1);
                 float res;
                 for (size_t byte = 0; byte < sizeof(float); ++byte)
                 {
@@ -7600,6 +7604,7 @@ class basic_json
 
             case 0xfb: // Double-Precision Float (eight-byte IEEE 754)
             {
+                check_length(v.size(), sizeof(double), 1);
                 // copy bytes in reverse order into the double variable
                 double res;
                 for (size_t byte = 0; byte < sizeof(double); ++byte)

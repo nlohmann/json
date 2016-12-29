@@ -547,4 +547,27 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec {0x65, 0xf5, 0x0a, 0x48, 0x21};
         CHECK_THROWS_AS(json::from_cbor(vec), std::out_of_range);
     }
+
+    SECTION("issue #407 - Heap-buffer-overflow (OSS-Fuzz issue 343)")
+    {
+        // original test case: incomplete float64
+        std::vector<uint8_t> vec1 {0xcb, 0x8f, 0x0a};
+        CHECK_THROWS_AS(json::from_msgpack(vec1), std::out_of_range);
+
+        // related test case: incomplete float32
+        std::vector<uint8_t> vec2 {0xca, 0x8f, 0x0a};
+        CHECK_THROWS_AS(json::from_msgpack(vec2), std::out_of_range);
+
+        // related test case: incomplete Half-Precision Float (CBOR)
+        std::vector<uint8_t> vec3 {0xf9, 0x8f};
+        CHECK_THROWS_AS(json::from_cbor(vec3), std::out_of_range);
+
+        // related test case: incomplete Single-Precision Float (CBOR)
+        std::vector<uint8_t> vec4 {0xfa, 0x8f, 0x0a};
+        CHECK_THROWS_AS(json::from_cbor(vec4), std::out_of_range);
+
+        // related test case: incomplete Double-Precision Float (CBOR)
+        std::vector<uint8_t> vec5 {0xfb, 0x8f, 0x0a};
+        CHECK_THROWS_AS(json::from_cbor(vec5), std::out_of_range);
+    }
 }
