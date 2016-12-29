@@ -540,4 +540,11 @@ TEST_CASE("regression tests")
         CHECK(j.is_number_float());
         CHECK(j.dump() == "1.66020696663386e+20");
     }
+
+    SECTION("issue #405 - Heap-buffer-overflow (OSS-Fuzz issue 342)")
+    {
+        // original test case
+        std::vector<uint8_t> vec {0x65, 0xf5, 0x0a, 0x48, 0x21};
+        CHECK_THROWS_AS(json::from_cbor(vec), std::out_of_range);
+    }
 }

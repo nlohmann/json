@@ -6871,6 +6871,12 @@ class basic_json
         {
             throw std::out_of_range("len+offset out of range");
         }
+
+        // last case: reading past the end of the vector
+        if (len + offset > size)
+        {
+            throw std::out_of_range("len+offset out of range");
+        }
     }
 
     /*!
