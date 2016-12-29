@@ -6880,27 +6880,6 @@ class basic_json
     }
 
     /*!
-    @brief checks if a given length does not exceed the size of a given vector
-
-    To secure the access to the byte vector during CBOR/MessagePack
-    deserialization, bytes are copied from the vector into buffers. This
-    function checks if the number of bytes to copy (@a len) does not exceed the
-    size of the given vector @a vec.
-
-    @param[in] vec  byte vector
-    @param[in] len  length
-
-    @throws out_of_range if `len > v.size()`
-    */
-    static void check_length(const std::vector<uint8_t>& vec, const size_t& len)
-    {
-        if (len > vec.size())
-        {
-            throw std::out_of_range("len out of range");
-        }
-    }
-
-    /*!
     @brief create a JSON value from a given MessagePack vector
 
     @param[in] v  MessagePack serialization
@@ -6916,6 +6895,9 @@ class basic_json
     */
     static basic_json from_msgpack_internal(const std::vector<uint8_t>& v, size_t& idx)
     {
+        // make sure reading 1 byte is safe
+        check_length(v.size(), 1, idx);
+
         // store and increment index
         const size_t current_idx = idx++;
 
@@ -7153,6 +7135,9 @@ class basic_json
     */
     static basic_json from_cbor_internal(const std::vector<uint8_t>& v, size_t& idx)
     {
+        // make sure reading 1 byte is safe
+        check_length(v.size(), 1, idx);
+
         // store and increment index
         const size_t current_idx = idx++;
 
@@ -7674,11 +7659,6 @@ class basic_json
     */
     static basic_json from_msgpack(const std::vector<uint8_t>& v)
     {
-        if (v.empty())
-        {
-            throw std::invalid_argument("empty vector");
-        }
-
         size_t i = 0;
         return from_msgpack_internal(v, i);
     }
@@ -7736,11 +7716,6 @@ class basic_json
     */
     static basic_json from_cbor(const std::vector<uint8_t>& v)
     {
-        if (v.empty())
-        {
-            throw std::invalid_argument("empty vector");
-        }
-
         size_t i = 0;
         return from_cbor_internal(v, i);
     }
