@@ -20,3 +20,6 @@ cmake-build-debug
 
 
 test/test-*
+.svn
+
+test/thirdparty/Fuzzer/libFuzzer.a
