@@ -282,6 +282,64 @@ class basic_json
         return allocator_type();
     }
 
+    /*!
+    @brief returns version information on the library
+    */
+    static basic_json version()
+    {
+        basic_json result;
+
+        result["copyright"] = "(C) 2013-2016 Niels Lohmann";
+        result["name"] = "JSON for Modern C++";
+        result["url"] = "https://github.com/nlohmann/json";
+        result["version"] =
+        {
+            {"string", "2.0.10"},
+            {"major", 2},
+            {"minor", 0},
+            {"patch", 10},
+        };
+
+#ifdef _WIN32
+        result["platform"] = "win32";
+#elif defined __linux__
+        result["platform"] = "linux";
+#elif defined __APPLE__
+        result["platform"] = "apple";
+#elif defined __unix__
+        result["platform"] = "unix";
+#else
+        result["platform"] = "unknown";
+#endif
+
+#if defined(__clang__)
+        result["compiler"] = {{"family", "clang"}, {"version", CLANG_VERSION}};
+#elif defined(__ICC) || defined(__INTEL_COMPILER)
+        result["compiler"] = {{"family", "icc"}, {"version", __INTEL_COMPILER}};
+#elif defined(__GNUC__) || defined(__GNUG__)
+        result["compiler"] = {{"family", "gcc"}, {"version", GCC_VERSION}};
+#elif defined(__HP_cc) || defined(__HP_aCC)
+        result["compiler"] = "hp"
+#elif defined(__IBMCPP__)
+        result["compiler"] = {{"family", "ilecpp"}, {"version", __IBMCPP__}};
+#elif defined(_MSC_VER)
+        result["compiler"] = {{"family", "msvc"}, {"version", _MSC_VER}};
+#elif defined(__PGI)
+        result["compiler"] = {{"family", "pgcpp"}, {"version", __PGI}};
+#elif defined(__SUNPRO_CC)
+        result["compiler"] = {{"family", "sunpro"}, {"version", __SUNPRO_CC}};
+#else
+        result["compiler"] = {{"family", "unknown"}, {"version", "unknown"}};
+#endif
+
+#ifdef __cplusplus
+        result["compiler"]["c++"] = std::to_string(__cplusplus);
+#else
+        result["compiler"]["c++"] = "unknown";
+#endif
+        return result;
+    }
+
 
     ///////////////////////////
     // JSON value data types //
@@ -882,7 +940,8 @@ class basic_json
                 {
                     if (t == value_t::null)
                     {
-                        throw std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21");
+                        // echo "JSON for Modern C++" | sha1sum
+                        throw std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21 2.0.10");
                     }
                     break;
                 }

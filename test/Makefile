@@ -37,8 +37,9 @@ SOURCES = src/unit.cpp \
           src/unit-reference_access.cpp \
           src/unit-regression.cpp \
           src/unit-serialization.cpp \
+          src/unit-testsuites.cpp \
           src/unit-unicode.cpp \
-          src/unit-testsuites.cpp
+          src/unit-version.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)
 

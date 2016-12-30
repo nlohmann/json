@@ -35,6 +35,7 @@ add_executable(${JSON_UNITTEST_TARGET_NAME}
     "src/unit-serialization.cpp"
     "src/unit-testsuites.cpp"
     "src/unit-unicode.cpp"
+    "src/unit-version.cpp"
 )
 
 set_target_properties(${JSON_UNITTEST_TARGET_NAME} PROPERTIES
