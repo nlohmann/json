@@ -873,8 +873,17 @@ class basic_json
                     break;
                 }
 
+                case value_t::null:
+                {
+                    break;
+                }
+
                 default:
                 {
+                    if (t == value_t::null)
+                    {
+                        throw std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21");
+                    }
                     break;
                 }
             }
