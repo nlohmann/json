@@ -7135,13 +7135,10 @@ class basic_json
     */
     static basic_json from_cbor_internal(const std::vector<uint8_t>& v, size_t& idx)
     {
-        // make sure reading 1 byte is safe
-        check_length(v.size(), 1, idx);
-
         // store and increment index
         const size_t current_idx = idx++;
 
-        switch (v[current_idx])
+        switch (v.at(current_idx))
         {
             // Integer 0x00..0x17 (0..23)
             case 0x00:
@@ -7322,7 +7319,7 @@ class basic_json
             case 0x7f: // UTF-8 string (indefinite length)
             {
                 std::string result;
-                while (v[idx] != 0xff)
+                while (v.at(idx) != 0xff)
                 {
                     string_t s = from_cbor_internal(v, idx);
                     result += s;
@@ -7418,7 +7415,7 @@ class basic_json
             case 0x9f: // array (indefinite length)
             {
                 basic_json result = value_t::array;
-                while (v[idx] != 0xff)
+                while (v.at(idx) != 0xff)
                 {
                     result.push_back(from_cbor_internal(v, idx));
                 }
@@ -7518,7 +7515,7 @@ class basic_json
             case 0xbf: // map (indefinite length)
             {
                 basic_json result = value_t::object;
-                while (v[idx] != 0xff)
+                while (v.at(idx) != 0xff)
                 {
                     std::string key = from_cbor_internal(v, idx);
                     result[key] = from_cbor_internal(v, idx);
