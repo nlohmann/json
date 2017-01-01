@@ -84,6 +84,8 @@ check: $(TESTCASES)
 # fuzzer
 ##############################################################################
 
+fuzzers: parse_afl_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer
+
 parse_afl_fuzzer:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) src/fuzzer-driver_afl.cpp src/fuzzer-parse_json.cpp -o $@
 
