@@ -1,0 +1,19 @@
+CHECK: COVERAGE:
+CHECK-DAG: COVERED: {{.*}}in LLVMFuzzerTestOneInput {{.*}}NullDerefTest.cpp:13
+CHECK-DAG: COVERED: {{.*}}in LLVMFuzzerTestOneInput {{.*}}NullDerefTest.cpp:14
+CHECK-DAG: COVERED: {{.*}}in LLVMFuzzerTestOneInput {{.*}}NullDerefTest.cpp:16
+CHECK-DAG: COVERED: {{.*}}in LLVMFuzzerTestOneInput {{.*}}NullDerefTest.cpp:19
+CHECK: COVERED_DIRS: {{.*}}lib/Fuzzer/test
+RUN: not LLVMFuzzer-NullDerefTest -print_coverage=1 2>&1 | FileCheck %s
+
+RUN: LLVMFuzzer-DSOTest -print_coverage=1 -runs=0 2>&1 | FileCheck %s --check-prefix=DSO
+DSO: COVERAGE:
+DSO-DAG: COVERED:{{.*}}DSO1{{.*}}DSO1.cpp
+DSO-DAG: COVERED:{{.*}}DSO2{{.*}}DSO2.cpp
+DSO-DAG: COVERED:{{.*}}LLVMFuzzerTestOneInput{{.*}}DSOTestMain
+DSO-DAG: UNCOVERED_LINE:{{.*}}DSO1{{.*}}DSO1.cpp
+DSO-DAG: UNCOVERED_LINE:{{.*}}DSO2{{.*}}DSO2.cpp
+DSO-DAG: UNCOVERED_FUNC: in Uncovered1
+DSO-DAG: UNCOVERED_FUNC: in Uncovered2
+DSO-DAG: UNCOVERED_LINE: in LLVMFuzzerTestOneInput
+DSO-DAG: UNCOVERED_FILE:{{.*}}DSOTestExtra.cpp

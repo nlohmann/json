@@ -1,0 +1,10 @@
+RUN: rm -rf %t/CustomCrossover
+RUN: mkdir -p %t/CustomCrossover
+RUN: echo "0123456789" > %t/CustomCrossover/digits
+RUN: echo "abcdefghij" > %t/CustomCrossover/chars
+RUN: not LLVMFuzzer-CustomCrossOverTest -seed=1 -use_memcmp=0 -runs=100000 %t/CustomCrossover 2>&1 | FileCheck %s --check-prefix=LLVMFuzzerCustomCrossover
+RUN: rm -rf %t/CustomCrossover
+
+LLVMFuzzerCustomCrossover: In LLVMFuzzerCustomCrossover
+LLVMFuzzerCustomCrossover: BINGO
+

@@ -1,11 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.9
+|  |  |__   |  |  | | | |  version 2.0.10
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2013-2016 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2017 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "catch.hpp"
 
+#define private public
 #include "json.hpp"
 using nlohmann::json;
 
@@ -1183,6 +1184,90 @@ TEST_CASE("single CBOR roundtrip")
 
         // compare parsed JSON values
         CHECK(j1 == j2);
+    }
+}
+
+TEST_CASE("CBOR regressions")
+{
+    SECTION("fuzz test results")
+    {
+        /*
+        The following test cases were found during a two-day session with
+        AFL-Fuzz. As a result, empty byte vectors and excessive lengths are
+        detected.
+        */
+        for (std::string filename :
+                {
+                    "test/data/cbor_regression/test01",
+                    "test/data/cbor_regression/test02",
+                    "test/data/cbor_regression/test03",
+                    "test/data/cbor_regression/test04",
+                    "test/data/cbor_regression/test05",
+                    "test/data/cbor_regression/test06",
+                    "test/data/cbor_regression/test07",
+                    "test/data/cbor_regression/test08",
+                    "test/data/cbor_regression/test09",
+                    "test/data/cbor_regression/test10",
+                    "test/data/cbor_regression/test11",
+                    "test/data/cbor_regression/test12",
+                    "test/data/cbor_regression/test13",
+                    "test/data/cbor_regression/test14",
+                    "test/data/cbor_regression/test15",
+                    "test/data/cbor_regression/test16",
+                    "test/data/cbor_regression/test17",
+                    "test/data/cbor_regression/test18",
+                    "test/data/cbor_regression/test19",
+                    "test/data/cbor_regression/test20",
+                    "test/data/cbor_regression/test21"
+                })
+        {
+            CAPTURE(filename);
+
+            try
+            {
+                // parse CBOR file
+                std::ifstream f_cbor(filename, std::ios::binary);
+                std::vector<uint8_t> vec1(
+                    (std::istreambuf_iterator<char>(f_cbor)),
+                    std::istreambuf_iterator<char>());
+                json j1 = json::from_cbor(vec1);
+
+                try
+                {
+                    // step 2: round trip
+                    std::vector<uint8_t> vec2 = json::to_cbor(j1);
+
+                    // parse serialization
+                    json j2 = json::from_cbor(vec2);
+
+                    // deserializations must match
+                    CHECK(j1 == j2);
+                }
+                catch (const std::invalid_argument&)
+                {
+                    // parsing a CBOR serialization must not fail
+                    CHECK(false);
+                }
+            }
+            catch (const std::invalid_argument&)
+            {
+                // parse errors are ok, because input may be random bytes
+            }
+            catch (const std::out_of_range&)
+            {
+                // parse errors are ok, because input may be random bytes
+            }
+            catch (const std::domain_error&)
+            {
+                // parse errors are ok, because input may be random bytes
+            }
+        }
+    }
+
+    SECTION("improve code coverage")
+    {
+        // exotic edge case
+        CHECK_THROWS_AS(json::check_length(0xffffffffffffffff, 0xfffffffffffffff0, 0xff), std::out_of_range);
     }
 }
 
