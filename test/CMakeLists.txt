@@ -1,7 +1,7 @@
 # The unit test executable.
 set(JSON_UNITTEST_TARGET_NAME "json_unit")
 add_executable(${JSON_UNITTEST_TARGET_NAME}
-    "src/catch.hpp"
+    "thirdparty/catch/catch.hpp"
     "src/unit.cpp"
     "src/unit-algorithms.cpp"
     "src/unit-allocator.cpp"
@@ -44,7 +44,7 @@ set_target_properties(${JSON_UNITTEST_TARGET_NAME} PROPERTIES
     COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
 )
 
-target_include_directories(${JSON_UNITTEST_TARGET_NAME} PRIVATE "src")
+target_include_directories(${JSON_UNITTEST_TARGET_NAME} PRIVATE "src" "thirdparty/catch")
 target_link_libraries(${JSON_UNITTEST_TARGET_NAME} ${JSON_TARGET_NAME})
 
 add_test(NAME "${JSON_UNITTEST_TARGET_NAME}_default"

@@ -1,0 +1,24 @@
+{
+  "targets": {
+    "xenial-i386": {
+      "buildenv": "xenial-i386",
+      "builddeps": ["build-essential", "cmake"],
+      "buildcmd": ["mkdir cm", "cd cm", "cmake ..", "cmake --build .", "ctest --output-on-failure"]
+    },
+    "xenial-amd64": {
+      "buildenv": "xenial-amd64",
+      "builddeps": ["build-essential", "cmake"],
+      "buildcmd": ["mkdir cm", "cd cm", "cmake ..", "cmake --build .", "ctest --output-on-failure"]
+    },
+    "fedora24-x86_64": {
+      "buildenv": "fedora24-x86_64",
+      "builddeps": ["cmake", "make", "clang"],
+      "buildcmd": ["mkdir cm", "cd cm", "CXX=clang++ cmake ..", "cmake --build .", "ctest --output-on-failure"]
+    },
+    "osx": {
+      "buildenv": "osx",
+      "builddeps": ["build-essential"],
+      "buildcmd": ["make check"]
+    }
+  }
+}

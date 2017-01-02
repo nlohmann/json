@@ -1,11 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 2.0.9
+|  |  |__   |  |  | | | |  version 2.0.10
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2013-2016 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2017 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -873,8 +873,17 @@ class basic_json
                     break;
                 }
 
+                case value_t::null:
+                {
+                    break;
+                }
+
                 default:
                 {
+                    if (t == value_t::null)
+                    {
+                        throw std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21 2.0.10"); // LCOV_EXCL_LINE
+                    }
                     break;
                 }
             }
@@ -3793,7 +3802,7 @@ class basic_json
     container `c`, the expression `c.front()` is equivalent to `*c.begin()`.
 
     @return In case of a structured type (array or object), a reference to the
-    first element is returned. In cast of number, string, or boolean values, a
+    first element is returned. In case of number, string, or boolean values, a
     reference to the value is returned.
 
     @complexity Constant.
@@ -3836,7 +3845,7 @@ class basic_json
     @endcode
 
     @return In case of a structured type (array or object), a reference to the
-    last element is returned. In cast of number, string, or boolean values, a
+    last element is returned. In case of number, string, or boolean values, a
     reference to the value is returned.
 
     @complexity Constant.
@@ -4187,10 +4196,14 @@ class basic_json
     element is not found or the JSON value is not an object, end() is
     returned.
 
+    @note This method always returns @ref end() when executed on a JSON type
+          that is not an object.
+
     @param[in] key key value of the element to search for
 
     @return Iterator to an element with key equivalent to @a key. If no such
-    element is found, past-the-end (see end()) iterator is returned.
+    element is found or the JSON value is not an object, past-the-end (see
+    @ref end()) iterator is returned.
 
     @complexity Logarithmic in the size of the JSON object.
 
@@ -4232,6 +4245,9 @@ class basic_json
     Returns the number of elements with key @a key. If ObjectType is the
     default `std::map` type, the return value will always be `0` (@a key was
     not found) or `1` (@a key was found).
+
+    @note This method always returns `0` when executed on a JSON type that is
+          not an object.
 
     @param[in] key key value of the element to count
 
@@ -4791,9 +4807,6 @@ class basic_json
     number      | `0`
     object      | `{}`
     array       | `[]`
-
-    @note Floating-point numbers are set to `0.0` which will be serialized to
-    `0`. The vale type remains @ref number_float_t.
 
     @complexity Linear in the size of the JSON value.
 
@@ -6831,6 +6844,50 @@ class basic_json
         }
     }
 
+
+    /*
+    @brief checks if given lengths do not exceed the size of a given vector
+
+    To secure the access to the byte vector during CBOR/MessagePack
+    deserialization, bytes are copied from the vector into buffers. This
+    function checks if the number of bytes to copy (@a len) does not exceed the
+    size @s size of the vector. Additionally, an @a offset is given from where
+    to start reading the bytes.
+
+    This function checks whether reading the bytes is safe; that is, offset is a
+    valid index in the vector, offset+len
+
+    @param[in] size    size of the byte vector
+    @param[in] len     number of bytes to read
+    @param[in] offset  offset where to start reading
+
+    vec:  x x x x x X X X X X
+          ^         ^         ^
+          0         offset    len
+
+    @throws out_of_range if `len > v.size()`
+    */
+    static void check_length(const size_t size, const size_t len, const size_t offset)
+    {
+        // simple case: requested length is greater than the vector's length
+        if (len > size or offset > size)
+        {
+            throw std::out_of_range("len out of range");
+        }
+
+        // second case: adding offset would result in overflow
+        if ((size > (std::numeric_limits<size_t>::max() - offset)))
+        {
+            throw std::out_of_range("len+offset out of range");
+        }
+
+        // last case: reading past the end of the vector
+        if (len + offset > size)
+        {
+            throw std::out_of_range("len+offset out of range");
+        }
+    }
+
     /*!
     @brief create a JSON value from a given MessagePack vector
 
@@ -6847,6 +6904,9 @@ class basic_json
     */
     static basic_json from_msgpack_internal(const std::vector<uint8_t>& v, size_t& idx)
     {
+        // make sure reading 1 byte is safe
+        check_length(v.size(), 1, idx);
+
         // store and increment index
         const size_t current_idx = idx++;
 
@@ -6882,6 +6942,7 @@ class basic_json
                 const size_t len = v[current_idx] & 0x1f;
                 const size_t offset = current_idx + 1;
                 idx += len; // skip content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
         }
@@ -6911,6 +6972,7 @@ class basic_json
                 case 0xca: // float 32
                 {
                     // copy bytes in reverse order into the double variable
+                    check_length(v.size(), sizeof(float), 1);
                     float res;
                     for (size_t byte = 0; byte < sizeof(float); ++byte)
                     {
@@ -6923,6 +6985,7 @@ class basic_json
                 case 0xcb: // float 64
                 {
                     // copy bytes in reverse order into the double variable
+                    check_length(v.size(), sizeof(double), 1);
                     double res;
                     for (size_t byte = 0; byte < sizeof(double); ++byte)
                     {
@@ -6985,6 +7048,7 @@ class basic_json
                     const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
                     const size_t offset = current_idx + 2;
                     idx += len + 1; // skip size byte + content bytes
+                    check_length(v.size(), len, offset);
                     return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
                 }
 
@@ -6993,6 +7057,7 @@ class basic_json
                     const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
                     const size_t offset = current_idx + 3;
                     idx += len + 2; // skip 2 size bytes + content bytes
+                    check_length(v.size(), len, offset);
                     return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
                 }
 
@@ -7001,6 +7066,7 @@ class basic_json
                     const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
                     const size_t offset = current_idx + 5;
                     idx += len + 4; // skip 4 size bytes + content bytes
+                    check_length(v.size(), len, offset);
                     return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
                 }
 
@@ -7081,7 +7147,7 @@ class basic_json
         // store and increment index
         const size_t current_idx = idx++;
 
-        switch (v[current_idx])
+        switch (v.at(current_idx))
         {
             // Integer 0x00..0x17 (0..23)
             case 0x00:
@@ -7219,6 +7285,7 @@ class basic_json
                 const auto len = static_cast<size_t>(v[current_idx] - 0x60);
                 const size_t offset = current_idx + 1;
                 idx += len; // skip content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
 
@@ -7227,6 +7294,7 @@ class basic_json
                 const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
                 const size_t offset = current_idx + 2;
                 idx += len + 1; // skip size byte + content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
 
@@ -7235,6 +7303,7 @@ class basic_json
                 const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
                 const size_t offset = current_idx + 3;
                 idx += len + 2; // skip 2 size bytes + content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
 
@@ -7243,6 +7312,7 @@ class basic_json
                 const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
                 const size_t offset = current_idx + 5;
                 idx += len + 4; // skip 4 size bytes + content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
 
@@ -7251,13 +7321,14 @@ class basic_json
                 const auto len = static_cast<size_t>(get_from_vector<uint64_t>(v, current_idx));
                 const size_t offset = current_idx + 9;
                 idx += len + 8; // skip 8 size bytes + content bytes
+                check_length(v.size(), len, offset);
                 return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
             }
 
             case 0x7f: // UTF-8 string (indefinite length)
             {
                 std::string result;
-                while (v[idx] != 0xff)
+                while (v.at(idx) != 0xff)
                 {
                     string_t s = from_cbor_internal(v, idx);
                     result += s;
@@ -7353,7 +7424,7 @@ class basic_json
             case 0x9f: // array (indefinite length)
             {
                 basic_json result = value_t::array;
-                while (v[idx] != 0xff)
+                while (v.at(idx) != 0xff)
                 {
                     result.push_back(from_cbor_internal(v, idx));
                 }
@@ -7453,7 +7524,7 @@ class basic_json
             case 0xbf: // map (indefinite length)
             {
                 basic_json result = value_t::object;
-                while (v[idx] != 0xff)
+                while (v.at(idx) != 0xff)
                 {
                     std::string key = from_cbor_internal(v, idx);
                     result[key] = from_cbor_internal(v, idx);
@@ -7480,6 +7551,7 @@ class basic_json
 
             case 0xf9: // Half-Precision Float (two-byte IEEE 754)
             {
+                check_length(v.size(), 2, 1);
                 idx += 2; // skip two content bytes
 
                 // code from RFC 7049, Appendix D, Figure 3:
@@ -7511,6 +7583,7 @@ class basic_json
             case 0xfa: // Single-Precision Float (four-byte IEEE 754)
             {
                 // copy bytes in reverse order into the float variable
+                check_length(v.size(), sizeof(float), 1);
                 float res;
                 for (size_t byte = 0; byte < sizeof(float); ++byte)
                 {
@@ -7522,6 +7595,7 @@ class basic_json
 
             case 0xfb: // Double-Precision Float (eight-byte IEEE 754)
             {
+                check_length(v.size(), sizeof(double), 1);
                 // copy bytes in reverse order into the double variable
                 double res;
                 for (size_t byte = 0; byte < sizeof(double); ++byte)
@@ -8995,7 +9069,7 @@ class basic_json
             // immediately abort if stream is erroneous
             if (s.fail())
             {
-                throw std::invalid_argument("stream error: " +  std::string(strerror(errno)));
+                throw std::invalid_argument("stream error");
             }
 
             // fill buffer
