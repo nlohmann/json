@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 2.0.9
+|  |  |__   |  |  | | | |  version 2.0.10
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -882,7 +882,7 @@ class basic_json
                 {
                     if (t == value_t::null)
                     {
-                        throw std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21"); // LCOV_EXCL_LINE
+                        throw std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21 2.0.10"); // LCOV_EXCL_LINE
                     }
                     break;
                 }

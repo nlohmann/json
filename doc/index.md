@@ -277,4 +277,4 @@ The container functions known from STL have been extended to support the differe
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 2.0.9
+@version 2.0.10
