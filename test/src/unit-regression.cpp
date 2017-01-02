@@ -663,4 +663,22 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec3 {0xbf, 0x61, 0x61, 0x01};
         CHECK_THROWS_AS(json::from_cbor(vec3), std::out_of_range);
     }
+
+    SECTION("issue #414 - compare with literal 0)")
+    {
+        #define CHECK_TYPE(v) \
+            CHECK((json(v) == v));\
+            CHECK((v == json(v)));\
+            CHECK_FALSE((json(v) != v));\
+            CHECK_FALSE((v != json(v)));
+
+        CHECK_TYPE(nullptr);
+        CHECK_TYPE(0);
+        CHECK_TYPE(0u);
+        CHECK_TYPE(0L);
+        CHECK_TYPE(0.0);
+        CHECK_TYPE("");
+
+        #undef CHECK_TYPE
+    }
 }
