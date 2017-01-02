@@ -34,6 +34,7 @@ add_executable(${JSON_UNITTEST_TARGET_NAME}
     "src/unit-regression.cpp"
     "src/unit-serialization.cpp"
     "src/unit-testsuites.cpp"
+    "src/unit-udt.cpp"
     "src/unit-unicode.cpp"
 )
 
