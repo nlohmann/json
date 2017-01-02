@@ -2,9 +2,10 @@
 
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
+[![Build status](https://doozer.io/badge/nlohmann/json/buildstatus/develop)](https://doozer.io/user/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/8soFCqS532vOyZcK)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/IoZNMHqubixQx2dN)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
@@ -585,6 +586,7 @@ I deeply appreciate the help of the following people.
 - [Jared Grubb](https://github.com/jaredgrubb) silenced a nasty documentation warning.
 - [Yixin Zhang](https://github.com/qwename) fixed an integer overflow check.
 - [Bosswestfalen](https://github.com/Bosswestfalen) merged two iterator classes into a smaller one.
+- [Daniel599](https://github.com/Daniel599) helped to get Travis execute the tests with Clang's sanitizers.
 
 Thanks a lot for helping out!
 
@@ -608,7 +610,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (11201893 assertions in 43 test cases)
+All tests passed (11202040 assertions in 44 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run

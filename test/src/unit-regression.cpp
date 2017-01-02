@@ -1,11 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.9
+|  |  |__   |  |  | | | |  version 2.0.10
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2013-2016 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2017 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -609,5 +609,58 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec2;
         CHECK_THROWS_AS(json::from_cbor(vec2), std::out_of_range);
         CHECK_THROWS_AS(json::from_msgpack(vec2), std::out_of_range);
+    }
+
+    SECTION("issue #411 - Heap-buffer-overflow (OSS-Fuzz issue 366)")
+    {
+        // original test case: empty UTF-8 string (indefinite length)
+        std::vector<uint8_t> vec1 {0x7f};
+        CHECK_THROWS_AS(json::from_cbor(vec1), std::out_of_range);
+
+        // related test case: empty array (indefinite length)
+        std::vector<uint8_t> vec2 {0x9f};
+        CHECK_THROWS_AS(json::from_cbor(vec2), std::out_of_range);
+
+        // related test case: empty map (indefinite length)
+        std::vector<uint8_t> vec3 {0xbf};
+        CHECK_THROWS_AS(json::from_cbor(vec3), std::out_of_range);
+    }
+
+    SECTION("issue #412 - Heap-buffer-overflow (OSS-Fuzz issue 367)")
+    {
+        // original test case
+        std::vector<uint8_t> vec
+        {
+            0xab, 0x98, 0x98, 0x98, 0x98, 0x98, 0x98, 0x98,
+            0x98, 0x98, 0x98, 0x98, 0x98, 0x00, 0x00, 0x00,
+            0x60, 0xab, 0x98, 0x98, 0x98, 0x98, 0x98, 0x98,
+            0x98, 0x98, 0x98, 0x98, 0x98, 0x00, 0x00, 0x00,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0xa0, 0x9f,
+            0x9f, 0x97, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
+            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60
+        };
+        CHECK_THROWS_AS(json::from_cbor(vec), std::out_of_range);
+
+        // related test case: nonempty UTF-8 string (indefinite length)
+        std::vector<uint8_t> vec1 {0x7f, 0x61, 0x61};
+        CHECK_THROWS_AS(json::from_cbor(vec1), std::out_of_range);
+
+        // related test case: nonempty array (indefinite length)
+        std::vector<uint8_t> vec2 {0x9f, 0x01};
+        CHECK_THROWS_AS(json::from_cbor(vec2), std::out_of_range);
+
+        // related test case: nonempty map (indefinite length)
+        std::vector<uint8_t> vec3 {0xbf, 0x61, 0x61, 0x01};
+        CHECK_THROWS_AS(json::from_cbor(vec3), std::out_of_range);
     }
 }

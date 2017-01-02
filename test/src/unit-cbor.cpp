@@ -1,11 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.9
+|  |  |__   |  |  | | | |  version 2.0.10
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2013-2016 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2017 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "catch.hpp"
 
+#define private public
 #include "json.hpp"
 using nlohmann::json;
 
@@ -1261,6 +1262,12 @@ TEST_CASE("CBOR regressions")
                 // parse errors are ok, because input may be random bytes
             }
         }
+    }
+
+    SECTION("improve code coverage")
+    {
+        // exotic edge case
+        CHECK_THROWS_AS(json::check_length(0xffffffffffffffff, 0xfffffffffffffff0, 0xff), std::out_of_range);
     }
 }
 
