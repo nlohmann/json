@@ -1,6 +1,26 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.0.10](https://github.com/nlohmann/json/releases/tag/v2.0.10) (2017-01-02)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.9...v2.0.10)
+
+- Heap-buffer-overflow \(OSS-Fuzz issue 367\) [\#412](https://github.com/nlohmann/json/issues/412)
+- Heap-buffer-overflow \(OSS-Fuzz issue 366\) [\#411](https://github.com/nlohmann/json/issues/411)
+- Use-of-uninitialized-value \(OSS-Fuzz issue 347\) [\#409](https://github.com/nlohmann/json/issues/409)
+- Heap-buffer-overflow \(OSS-Fuzz issue 344\) [\#408](https://github.com/nlohmann/json/issues/408)
+- Heap-buffer-overflow \(OSS-Fuzz issue 343\) [\#407](https://github.com/nlohmann/json/issues/407)
+- Heap-buffer-overflow \(OSS-Fuzz issue 342\) [\#405](https://github.com/nlohmann/json/issues/405)
+- strerror throwing error in compiler VS2015 [\#403](https://github.com/nlohmann/json/issues/403)
+- json::parse of std::string being underlined by Visual Studio [\#402](https://github.com/nlohmann/json/issues/402)
+- Explicitly getting string without .dump\(\)  [\#401](https://github.com/nlohmann/json/issues/401)
+- Possible to speed up json::parse? [\#398](https://github.com/nlohmann/json/issues/398)
+- the alphabetic order in the code influence console\_output. [\#396](https://github.com/nlohmann/json/issues/396)
+- Execute tests with clang sanitizers [\#394](https://github.com/nlohmann/json/issues/394)
+- Check if library can be used with ETL [\#361](https://github.com/nlohmann/json/issues/361)
+
+- Feature/clang sanitize [\#410](https://github.com/nlohmann/json/pull/410) ([Daniel599](https://github.com/Daniel599))
+- Add Doozer build badge [\#400](https://github.com/nlohmann/json/pull/400) ([andoma](https://github.com/andoma))
+
 ## [v2.0.9](https://github.com/nlohmann/json/releases/tag/v2.0.9) (2016-12-16)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.8...v2.0.9)
 
