@@ -51,7 +51,7 @@ TESTCASES = $(patsubst src/unit-%.cpp,test-%,$(wildcard src/unit-*.cpp))
 all: $(TESTCASES)
 
 clean:
-	rm -fr json_unit $(OBJECTS) $(SOURCES:.cpp=.gcno) $(SOURCES:.cpp=.gcda) $(TESTCASES)
+	rm -fr json_unit $(OBJECTS) $(SOURCES:.cpp=.gcno) $(SOURCES:.cpp=.gcda) $(TESTCASES) parse_afl_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer
 
 ##############################################################################
 # single test file
@@ -84,13 +84,14 @@ check: $(TESTCASES)
 # fuzzer
 ##############################################################################
 
+FUZZER_ENGINE = src/fuzzer-driver_afl.cpp
 fuzzers: parse_afl_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer
 
 parse_afl_fuzzer:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) src/fuzzer-driver_afl.cpp src/fuzzer-parse_json.cpp -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_json.cpp -o $@
 
 parse_cbor_fuzzer:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) src/fuzzer-driver_afl.cpp src/fuzzer-parse_cbor.cpp -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_cbor.cpp -o $@
 
 parse_msgpack_fuzzer:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) src/fuzzer-driver_afl.cpp src/fuzzer-parse_msgpack.cpp -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_msgpack.cpp -o $@
