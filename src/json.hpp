@@ -153,7 +153,8 @@ default)
 @requirement The class satisfies the following concept requirements:
 - Basic
  - [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible):
-   JSON values can be default constructed. The result will be a JSON null value.
+   JSON values can be default constructed. The result will be a JSON null
+   value.
  - [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible):
    A JSON value can be constructed from an rvalue argument.
  - [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible):
@@ -168,8 +169,8 @@ default)
  - [StandardLayoutType](http://en.cppreference.com/w/cpp/concept/StandardLayoutType):
    JSON values have
    [standard layout](http://en.cppreference.com/w/cpp/language/data_members#Standard_layout):
-   All non-static data members are private and standard layout types, the class
-   has no virtual functions or (virtual) base classes.
+   All non-static data members are private and standard layout types, the
+   class has no virtual functions or (virtual) base classes.
 - Library-wide
  - [EqualityComparable](http://en.cppreference.com/w/cpp/concept/EqualityComparable):
    JSON values can be compared with `==`, see @ref
@@ -1894,13 +1895,15 @@ class basic_json
 
             case value_t::object:
             {
-                m_value.object = create<object_t>(first.m_it.object_iterator, last.m_it.object_iterator);
+                m_value.object = create<object_t>(first.m_it.object_iterator,
+                                                  last.m_it.object_iterator);
                 break;
             }
 
             case value_t::array:
             {
-                m_value.array = create<array_t>(first.m_it.array_iterator, last.m_it.array_iterator);
+                m_value.array = create<array_t>(first.m_it.array_iterator,
+                                                last.m_it.array_iterator);
                 break;
             }
 
@@ -3084,7 +3087,7 @@ class basic_json
     template < typename ValueType, typename std::enable_if <
                    not std::is_pointer<ValueType>::value and
                    not std::is_same<ValueType, typename string_t::value_type>::value
-#ifndef _MSC_VER  // Fix for issue #167 operator<< abiguity under VS2015
+#ifndef _MSC_VER  // fix for issue #167 operator<< abiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
                    , int >::type = 0 >
@@ -3750,10 +3753,8 @@ class basic_json
                 return default_value;
             }
         }
-        else
-        {
-            throw std::domain_error("cannot use value() with " + type_name());
-        }
+
+        throw std::domain_error("cannot use value() with " + type_name());
     }
 
     /*!
@@ -5065,8 +5066,8 @@ class basic_json
     /*!
     @brief add an object to an object if key does not exist
 
-    Inserts a new element into a JSON object constructed in-place with the given
-    @a args if there is no element with the key in the container. If the
+    Inserts a new element into a JSON object constructed in-place with the
+    given @a args if there is no element with the key in the container. If the
     function is called on a JSON null value, an empty object is created before
     appending the value created from @a args.
 
@@ -5131,8 +5132,8 @@ class basic_json
     @throw std::domain_error if @a pos is not an iterator of *this; example:
     `"iterator does not fit current value"`
 
-    @complexity Constant plus linear in the distance between pos and end of the
-    container.
+    @complexity Constant plus linear in the distance between pos and end of
+    the container.
 
     @liveexample{The example shows how `insert()` is used.,insert}
 
@@ -5358,8 +5359,8 @@ class basic_json
 
     @param[in,out] other array to exchange the contents with
 
-    @throw std::domain_error when JSON value is not an array; example: `"cannot
-    use swap() with string"`
+    @throw std::domain_error when JSON value is not an array; example:
+    `"cannot use swap() with string"`
 
     @complexity Constant.
 
@@ -6332,8 +6333,9 @@ class basic_json
                 if (j.m_value.number_integer >= 0)
                 {
                     // MessagePack does not differentiate between positive
-                    // signed integers and unsigned integers. Therefore, we used
-                    // the code from the value_t::number_unsigned case here.
+                    // signed integers and unsigned integers. Therefore, we
+                    // used the code from the value_t::number_unsigned case
+                    // here.
                     if (j.m_value.number_unsigned < 128)
                     {
                         // positive fixnum
@@ -6608,8 +6610,8 @@ class basic_json
                 }
                 else
                 {
-                    // The conversions below encode the sign in the first byte,
-                    // and the value is converted to a positive number.
+                    // The conversions below encode the sign in the first
+                    // byte, and the value is converted to a positive number.
                     const auto positive_number = -1 - j.m_value.number_integer;
                     if (j.m_value.number_integer >= -24)
                     {
@@ -6814,12 +6816,12 @@ class basic_json
 
     To secure the access to the byte vector during CBOR/MessagePack
     deserialization, bytes are copied from the vector into buffers. This
-    function checks if the number of bytes to copy (@a len) does not exceed the
-    size @s size of the vector. Additionally, an @a offset is given from where
-    to start reading the bytes.
+    function checks if the number of bytes to copy (@a len) does not exceed
+    the size @s size of the vector. Additionally, an @a offset is given from
+    where to start reading the bytes.
 
-    This function checks whether reading the bytes is safe; that is, offset is a
-    valid index in the vector, offset+len
+    This function checks whether reading the bytes is safe; that is, offset is
+    a valid index in the vector, offset+len
 
     @param[in] size    size of the byte vector
     @param[in] len     number of bytes to read
