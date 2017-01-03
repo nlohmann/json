@@ -6938,11 +6938,10 @@ class basic_json
                 case 0xca: // float 32
                 {
                     // copy bytes in reverse order into the double variable
-                    check_length(v.size(), sizeof(float), 1);
                     float res;
                     for (size_t byte = 0; byte < sizeof(float); ++byte)
                     {
-                        reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v[current_idx + 1 + byte];
+                        reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v.at(current_idx + 1 + byte);
                     }
                     idx += sizeof(float); // skip content bytes
                     return res;
@@ -6951,11 +6950,10 @@ class basic_json
                 case 0xcb: // float 64
                 {
                     // copy bytes in reverse order into the double variable
-                    check_length(v.size(), sizeof(double), 1);
                     double res;
                     for (size_t byte = 0; byte < sizeof(double); ++byte)
                     {
-                        reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v[current_idx + 1 + byte];
+                        reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v.at(current_idx + 1 + byte);
                     }
                     idx += sizeof(double); // skip content bytes
                     return res;
@@ -7549,11 +7547,10 @@ class basic_json
             case 0xfa: // Single-Precision Float (four-byte IEEE 754)
             {
                 // copy bytes in reverse order into the float variable
-                check_length(v.size(), sizeof(float), 1);
                 float res;
                 for (size_t byte = 0; byte < sizeof(float); ++byte)
                 {
-                    reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v[current_idx + 1 + byte];
+                    reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v.at(current_idx + 1 + byte);
                 }
                 idx += sizeof(float); // skip content bytes
                 return res;
@@ -7561,12 +7558,11 @@ class basic_json
 
             case 0xfb: // Double-Precision Float (eight-byte IEEE 754)
             {
-                check_length(v.size(), sizeof(double), 1);
                 // copy bytes in reverse order into the double variable
                 double res;
                 for (size_t byte = 0; byte < sizeof(double); ++byte)
                 {
-                    reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v[current_idx + 1 + byte];
+                    reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v.at(current_idx + 1 + byte);
                 }
                 idx += sizeof(double); // skip content bytes
                 return res;
