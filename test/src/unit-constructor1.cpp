@@ -912,7 +912,7 @@ TEST_CASE("constructors")
 
             SECTION("array")
             {
-                json j { {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false} , 13 };
+                json j { {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false}, 13 };
                 CHECK(j.type() == json::value_t::array);
             }
         }

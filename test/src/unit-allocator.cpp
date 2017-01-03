@@ -80,7 +80,7 @@ struct my_allocator : std::allocator<T>
         }
         else
         {
-            ::new(reinterpret_cast<void*>(p)) T(std::forward<Args>(args)...);
+            ::new (reinterpret_cast<void*>(p)) T(std::forward<Args>(args)...);
         }
     }
 
