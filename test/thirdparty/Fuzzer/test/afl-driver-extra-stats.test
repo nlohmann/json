@@ -1,0 +1,28 @@
+; Test that not specifying an extra stats file isn't broken.
+RUN: unset AFL_DRIVER_EXTRA_STATS_FILENAME
+RUN: AFLDriverTest
+
+; Test that specifying an invalid extra stats file causes a crash.
+RUN: ASAN_OPTIONS= AFL_DRIVER_EXTRA_STATS_FILENAME=%T not --crash AFLDriverTest
+
+; Test that specifying a corrupted stats file causes a crash.
+echo "peak_rss_mb :0" > %t
+ASAN_OPTIONS= AFL_DRIVER_EXTRA_STATS_FILENAME=%t not --crash AFLDriverTest
+
+; Test that specifying a valid nonexistent stats file works.
+RUN: rm -f %t
+RUN: AFL_DRIVER_EXTRA_STATS_FILENAME=%t AFLDriverTest
+RUN: [[ $(grep "peak_rss_mb\|slowest_unit_time_sec" %t | wc -l) -eq 2 ]]
+
+; Test that specifying a valid preexisting stats file works.
+RUN: printf "peak_rss_mb : 0\nslowest_unit_time_sec: 0\n" > %t
+RUN: AFL_DRIVER_EXTRA_STATS_FILENAME=%t AFLDriverTest
+; Check that both lines were printed.
+RUN: [[ $(grep "peak_rss_mb\|slowest_unit_time_sec" %t | wc -l) -eq 2 ]]
+
+; Test that peak_rss_mb and slowest_unit_time_in_secs are only updated when necessary.
+; Check that both lines have 9999 since there's no way we have exceeded that
+; amount of time or virtual memory.
+RUN: printf "peak_rss_mb : 9999\nslowest_unit_time_sec: 9999\n" > %t
+RUN: AFL_DRIVER_EXTRA_STATS_FILENAME=%t AFLDriverTest
+RUN: [[ $(grep "9999" %t | wc -l) -eq 2 ]]

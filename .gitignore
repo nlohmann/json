@@ -18,3 +18,14 @@ benchmarks/files/numbers/*.json
 .idea
 cmake-build-debug
 
+
+test/test-*
+.svn
+
+test/thirdparty/Fuzzer/libFuzzer.a
+
+test/parse_afl_fuzzer
+
+test/parse_cbor_fuzzer
+
+test/parse_msgpack_fuzzer

@@ -1,0 +1,10 @@
+; Test that not specifying a stderr file isn't broken.
+RUN: unset AFL_DRIVER_STDERR_DUPLICATE_FILENAME
+RUN: AFLDriverTest
+
+; Test that specifying an invalid file causes a crash.
+RUN: ASAN_OPTIONS= AFL_DRIVER_STDERR_DUPLICATE_FILENAME="%T" not --crash AFLDriverTest
+
+; Test that a file is created when specified as the duplicate stderr.
+RUN: AFL_DRIVER_STDERR_DUPLICATE_FILENAME=%t AFLDriverTest
+RUN: stat %t

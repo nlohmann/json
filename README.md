@@ -2,14 +2,31 @@
 
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
+[![Build status](https://doozer.io/badge/nlohmann/json/buildstatus/develop)](https://doozer.io/user/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/fsf5FqYe6GoX68W6)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/IoZNMHqubixQx2dN)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
 [![Github Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
+
+- [Design goals](#design-goals)
+- [Integration](#integration)
+- [Examples](#examples)
+  - [JSON as first-class data type](#json-as-first-class-data-type)
+  - [Serialization / Deserialization](#serialization--deserialization)
+  - [STL-like access](#stl-like-access)
+  - [Conversion from STL containers](#conversion-from-stl-containers)
+  - [JSON Pointer and JSON Patch](#json-pointer-and-json-patch)
+  - [Implicit conversions](#implicit-conversions)
+  - [Binary formats (CBOR and MessagePack)](#binary-formats-cbor-and-messagepack)
+- [Supported compilers](#supported-compilers)
+- [License](#license)
+- [Thanks](#thanks)
+- [Notes](#notes)
+- [Execute unit tests](#execute-unit-tests)
 
 ## Design goals
 
@@ -47,6 +64,10 @@ to the files you want to use JSON objects. That's it. Do not forget to set the n
 
 
 ## Examples
+
+Beside the examples below, you may want to check the [documentation](https://nlohmann.github.io/json/) where each function contains a separate code example (e.g., check out [`emplace()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a602f275f0359ab181221384989810604.html#a602f275f0359ab181221384989810604)). All [example files](https://github.com/nlohmann/json/tree/develop/doc/examples) can be compiled and executed on their own (e.g., file [emplace.cpp](https://github.com/nlohmann/json/blob/develop/doc/examples/emplace.cpp)).
+
+### JSON as first-class data type
 
 Here are some examples to give you an idea how to use the class.
 
@@ -421,6 +442,31 @@ int vi = jn.get<int>();
 // etc.
 ```
 
+### Binary formats (CBOR and MessagePack)
+
+Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [CBOR](http://cbor.io) (Concise Binary Object Representation) and [MessagePack](http://msgpack.org) to efficiently encode JSON values to byte vectors and to decode such vectors.
+
+```cpp
+// create a JSON value
+json j = R"({"compact": true, "schema": 0})"_json;
+
+// serialize to CBOR
+std::vector<uint8_t> v_cbor = json::to_cbor(j);
+
+// 0xa2, 0x67, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74, 0xf5, 0x66, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x00
+
+// roundtrip
+json j_from_cbor = json::from_cbor(v_cbor);
+
+// serialize to MessagePack
+std::vector<uint8_t> v_msgpack = json::to_msgpack(j);
+
+// 0x82, 0xa7, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74, 0xc3, 0xa6, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x00
+
+// roundtrip
+json j_from_msgpack = json::from_msgpack(v_msgpack);
+```
+
 
 ## Supported compilers
 
@@ -537,6 +583,10 @@ I deeply appreciate the help of the following people.
 - [Pierre-Antoine Lacaze](https://github.com/palacaze) found a subtle bug in the `dump()` function.
 - [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser and improved the benchmarking code.
 - [cgzones](https://github.com/cgzones) had an idea how to fix the Coverity scan.
+- [Jared Grubb](https://github.com/jaredgrubb) silenced a nasty documentation warning.
+- [Yixin Zhang](https://github.com/qwename) fixed an integer overflow check.
+- [Bosswestfalen](https://github.com/Bosswestfalen) merged two iterator classes into a smaller one.
+- [Daniel599](https://github.com/Daniel599) helped to get Travis execute the tests with Clang's sanitizers.
 
 Thanks a lot for helping out!
 
@@ -550,6 +600,7 @@ Thanks a lot for helping out!
   - Other encodings such as Latin-1, UTF-16, or UTF-32 are not supported and will yield parse errors.
   - [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1) will not be replaced by the library.
   - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
+  - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
 
 
 ## Execute unit tests
@@ -560,7 +611,7 @@ To compile and run the tests, you need to execute
 $ make check
 
 ===============================================================================
-All tests passed (8905518 assertions in 36 test cases)
+All tests passed (11202040 assertions in 44 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run

@@ -5,11 +5,12 @@ RE2C = re2c
 SED = sed
 
 # main target
-all: json_unit
+all:
+	$(MAKE) -C test
 
 # clean up
 clean:
-	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM
+	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM
 	rm -fr benchmarks/files/numbers/*.json
 	$(MAKE) clean -Cdoc
 	$(MAKE) clean -Ctest
@@ -21,14 +22,14 @@ clean:
 
 # build unit tests
 json_unit:
-	@$(MAKE) -C test
+	@$(MAKE) json_unit -C test
 
 # run unit tests
-check: json_unit
-	test/json_unit "*"
+check:
+	$(MAKE) check -C test
 
-check-fast: json_unit
-	test/json_unit
+check-fast:
+	$(MAKE) check -C test TEST_PATTERN=""
 
 
 ##########################################################################
@@ -48,15 +49,40 @@ doctest:
 fuzz_testing:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) fuzz CXX=afl-clang++
-	mv fuzz fuzz-testing
+	$(MAKE) parse_afl_fuzzer -C test CXX=afl-clang++
+	mv test/parse_afl_fuzzer fuzz-testing/fuzzer
 	find test/data/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
-	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzz"
+	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
-# the fuzzer binary
-fuzz: test/src/fuzz.cpp src/json.hpp
-	$(CXX) -std=c++11 $(CXXFLAGS) $(FLAGS) $(CPPFLAGS) -I src $< $(LDFLAGS) -o $@
+fuzz_testing_cbor:
+	rm -fr fuzz-testing
+	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
+	$(MAKE) parse_cbor_fuzzer -C test CXX=afl-clang++
+	mv test/parse_cbor_fuzzer fuzz-testing/fuzzer
+	find test/data -size -5k -name *.cbor | xargs -I{} cp "{}" fuzz-testing/testcases
+	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
+fuzz_testing_msgpack:
+	rm -fr fuzz-testing
+	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
+	$(MAKE) parse_msgpack_fuzzer -C test CXX=afl-clang++
+	mv test/parse_msgpack_fuzzer fuzz-testing/fuzzer
+	find test/data -size -5k -name *.msgpack | xargs -I{} cp "{}" fuzz-testing/testcases
+	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
+
+fuzzing-start:
+	afl-fuzz -S fuzzer1 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
+	afl-fuzz -S fuzzer2 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
+	afl-fuzz -S fuzzer3 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
+	afl-fuzz -S fuzzer4 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
+	afl-fuzz -S fuzzer5 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
+	afl-fuzz -S fuzzer6 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
+	afl-fuzz -S fuzzer7 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
+	afl-fuzz -M fuzzer0 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer
+
+fuzzing-stop:
+	-killall fuzzer
+	-killall afl-fuzz
 
 ##########################################################################
 # static analyzer
@@ -66,8 +92,10 @@ fuzz: test/src/fuzz.cpp src/json.hpp
 cppcheck:
 	cppcheck --enable=warning --inconclusive --force --std=c++11 src/json.hpp --error-exitcode=1
 
+# run clang sanitize (we are overrding the CXXFLAGS provided by travis in order to use gcc's libstdc++)
 clang_sanitize: clean
 	CXX=clang++ CXXFLAGS="-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer" $(MAKE)
+
 
 ##########################################################################
 # maintainer targets

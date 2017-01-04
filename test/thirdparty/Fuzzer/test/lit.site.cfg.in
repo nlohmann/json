@@ -1,0 +1,4 @@
+config.test_exec_root = "@CMAKE_CURRENT_BINARY_DIR@"
+config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
+config.has_lsan = True if @HAS_LSAN@ == 1 else False
+lit_config.load_config(config, "@CMAKE_CURRENT_SOURCE_DIR@/lit.cfg")

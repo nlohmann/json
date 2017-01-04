@@ -5,7 +5,7 @@
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "JSON for Modern C++"
-PROJECT_NUMBER         = 2.0.8
+PROJECT_NUMBER         = 2.0.10
 PROJECT_BRIEF          = 
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = .

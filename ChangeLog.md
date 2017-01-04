@@ -1,6 +1,49 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.0.10](https://github.com/nlohmann/json/releases/tag/v2.0.10) (2017-01-02)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.9...v2.0.10)
+
+- Heap-buffer-overflow \(OSS-Fuzz issue 367\) [\#412](https://github.com/nlohmann/json/issues/412)
+- Heap-buffer-overflow \(OSS-Fuzz issue 366\) [\#411](https://github.com/nlohmann/json/issues/411)
+- Use-of-uninitialized-value \(OSS-Fuzz issue 347\) [\#409](https://github.com/nlohmann/json/issues/409)
+- Heap-buffer-overflow \(OSS-Fuzz issue 344\) [\#408](https://github.com/nlohmann/json/issues/408)
+- Heap-buffer-overflow \(OSS-Fuzz issue 343\) [\#407](https://github.com/nlohmann/json/issues/407)
+- Heap-buffer-overflow \(OSS-Fuzz issue 342\) [\#405](https://github.com/nlohmann/json/issues/405)
+- strerror throwing error in compiler VS2015 [\#403](https://github.com/nlohmann/json/issues/403)
+- json::parse of std::string being underlined by Visual Studio [\#402](https://github.com/nlohmann/json/issues/402)
+- Explicitly getting string without .dump\(\)  [\#401](https://github.com/nlohmann/json/issues/401)
+- Possible to speed up json::parse? [\#398](https://github.com/nlohmann/json/issues/398)
+- the alphabetic order in the code influence console\_output. [\#396](https://github.com/nlohmann/json/issues/396)
+- Execute tests with clang sanitizers [\#394](https://github.com/nlohmann/json/issues/394)
+- Check if library can be used with ETL [\#361](https://github.com/nlohmann/json/issues/361)
+
+- Feature/clang sanitize [\#410](https://github.com/nlohmann/json/pull/410) ([Daniel599](https://github.com/Daniel599))
+- Add Doozer build badge [\#400](https://github.com/nlohmann/json/pull/400) ([andoma](https://github.com/andoma))
+
+## [v2.0.9](https://github.com/nlohmann/json/releases/tag/v2.0.9) (2016-12-16)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.8...v2.0.9)
+
+- \#pragma GCC diagnostic ignored "-Wdocumentation" [\#393](https://github.com/nlohmann/json/issues/393)
+- How to parse this json file and write separate sub object as json files? [\#392](https://github.com/nlohmann/json/issues/392)
+- Integer-overflow \(OSS-Fuzz issue 267\) [\#389](https://github.com/nlohmann/json/issues/389)
+- Implement indefinite-length types from RFC 7049 [\#387](https://github.com/nlohmann/json/issues/387)
+- template parameter "T" is not used in declaring the parameter types of function template [\#386](https://github.com/nlohmann/json/issues/386)
+- Serializing json instances containing already serialized string values without escaping [\#385](https://github.com/nlohmann/json/issues/385)
+- Add test cases from RFC 7049 [\#384](https://github.com/nlohmann/json/issues/384)
+- Add a table of contents to the README file [\#383](https://github.com/nlohmann/json/issues/383)
+- Update FAQ section in the guidelines for contributing [\#382](https://github.com/nlohmann/json/issues/382)
+- Allow for forward declaring nlohmann::json [\#381](https://github.com/nlohmann/json/issues/381)
+- Bug in overflow detection when parsing integers [\#380](https://github.com/nlohmann/json/issues/380)
+- A unique name to mention the library? [\#377](https://github.com/nlohmann/json/issues/377)
+- Support for comments. [\#376](https://github.com/nlohmann/json/issues/376)
+- Non-unique keys in objects. [\#375](https://github.com/nlohmann/json/issues/375)
+- Request: binary serialization/deserialization [\#358](https://github.com/nlohmann/json/issues/358)
+
+- Replace class iterator and const\_iterator by using a single template class to reduce code. [\#395](https://github.com/nlohmann/json/pull/395) ([Bosswestfalen](https://github.com/Bosswestfalen))
+- Clang: quiet a warning [\#391](https://github.com/nlohmann/json/pull/391) ([jaredgrubb](https://github.com/jaredgrubb))
+- Fix issue \#380: Signed integer overflow check [\#390](https://github.com/nlohmann/json/pull/390) ([qwename](https://github.com/qwename))
+
 ## [v2.0.8](https://github.com/nlohmann/json/releases/tag/v2.0.8) (2016-12-02)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.7...v2.0.8)
 
@@ -8,7 +51,6 @@ All notable changes to this project will be documented in this file. This projec
 - Compiler warnings? [\#372](https://github.com/nlohmann/json/issues/372)
 - docs: how to release a json object in memory? [\#371](https://github.com/nlohmann/json/issues/371)
 - crash in dump [\#370](https://github.com/nlohmann/json/issues/370)
-- Conversion operators not considered [\#369](https://github.com/nlohmann/json/issues/369)
 - Coverity issue \(FORWARD\_NULL\) in lexer\(std::istream& s\) [\#368](https://github.com/nlohmann/json/issues/368)
 - json::parse on failed stream gets stuck [\#366](https://github.com/nlohmann/json/issues/366)
 - Performance improvements [\#365](https://github.com/nlohmann/json/issues/365)
