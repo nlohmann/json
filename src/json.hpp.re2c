@@ -450,6 +450,12 @@ class basic_json
     std::string
     @endcode
 
+    #### Encoding
+
+    Strings are stored in UTF-8 encoding. Therefore, functions like
+    `std::string::size()` or `std::string::length()` return the number of
+    bytes in the string rather than the number of characters or glyphs.
+
     #### String comparison
 
     [RFC 7159](http://rfc7159.net/rfc7159) states:

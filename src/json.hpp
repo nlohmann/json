@@ -450,6 +450,12 @@ class basic_json
     std::string
     @endcode
 
+    #### Encoding
+
+    Strings are stored in UTF-8 encoding. Therefore, functions like
+    `std::string::size()` or `std::string::length()` return the number of
+    bytes in the string rather than the number of characters or glyphs.
+
     #### String comparison
 
     [RFC 7159](http://rfc7159.net/rfc7159) states:
@@ -7515,7 +7521,6 @@ class basic_json
 
             case 0xf9: // Half-Precision Float (two-byte IEEE 754)
             {
-                check_length(v.size(), 2, 1);
                 idx += 2; // skip two content bytes
 
                 // code from RFC 7049, Appendix D, Figure 3:
@@ -7525,7 +7530,7 @@ class basic_json
                 // include at least decoding support for them even without such
                 // support. An example of a small decoder for half-precision
                 // floating-point numbers in the C language is shown in Fig. 3.
-                const int half = (v[current_idx + 1] << 8) + v[current_idx + 2];
+                const int half = (v.at(current_idx + 1) << 8) + v.at(current_idx + 2);
                 const int exp = (half >> 10) & 0x1f;
                 const int mant = half & 0x3ff;
                 double val;
