@@ -600,6 +600,7 @@ Thanks a lot for helping out!
   - Other encodings such as Latin-1, UTF-16, or UTF-32 are not supported and will yield parse errors.
   - [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1) will not be replaced by the library.
   - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
+  - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
 
 
 ## Execute unit tests
