@@ -272,9 +272,9 @@ The container functions known from STL have been extended to support the differe
   </tr>
 </table>
 
-@copyright Copyright &copy; 2013-2016 Niels Lohmann. The code is licensed under the [MIT License](http://opensource.org/licenses/MIT).
+@copyright Copyright &copy; 2013-2017 Niels Lohmann. The code is licensed under the [MIT License](http://opensource.org/licenses/MIT).
 
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 2.0.8
+@version 2.0.10

@@ -1,0 +1,5 @@
+RUN: ASAN_OPTIONS=handle_segv=0 not LLVMFuzzer-NullDerefTest 2>&1 | FileCheck %s --check-prefix=LIBFUZZER_OWN_SEGV_HANDLER
+LIBFUZZER_OWN_SEGV_HANDLER: == ERROR: libFuzzer: deadly signal
+LIBFUZZER_OWN_SEGV_HANDLER: SUMMARY: libFuzzer: deadly signal
+LIBFUZZER_OWN_SEGV_HANDLER: Test unit written to ./crash-
+

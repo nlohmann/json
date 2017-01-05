@@ -1,0 +1,4 @@
+RUN: not LLVMFuzzer-CustomMutatorTest 2>&1 | FileCheck %s --check-prefix=LLVMFuzzerCustomMutator
+LLVMFuzzerCustomMutator: In LLVMFuzzerCustomMutator
+LLVMFuzzerCustomMutator: BINGO
+

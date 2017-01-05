@@ -57,6 +57,7 @@ doxygen: create_output create_links
 	$(SED) -i 's@&lt;&#160;ObjectType,&#160;ArrayType,&#160;StringType,&#160;BooleanType,&#160;NumberIntegerType,&#160;NumberFloatType,&#160;AllocatorType&#160;&gt;@@g' html/*.html
 	$(SED) -i 's@&lt; ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType &gt;@@g' html/*.html
 	$(SED) -i 's@< ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType >@@g' html/*.html
+	$(SED) -i 's@&lt;&#160;ObjectType,&#160;ArrayType,&#160;StringType,&#160;BooleanType,&#160;NumberIntegerType,&#160;NumberUnsignedType,&#160;NumberFloatType,&#160;AllocatorType&#160;&gt;@@g' html/*.html
 
 upload: clean doxygen check_output
 	cd html ; ../scripts/git-update-ghpages nlohmann/json
