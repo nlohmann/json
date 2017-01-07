@@ -229,6 +229,25 @@ struct external_constructor<value_t::string>
     j.assert_invariant();
   }
 };
+
+template <>
+struct external_constructor<value_t::number_float>
+{
+  template <typename Json>
+  static void construct(Json &j, typename Json::number_float_t val) noexcept
+  {
+    // replace infinity and NAN by null
+    if (not std::isfinite(val))
+      j = Json{};
+    else
+    {
+      j.m_type = value_t::number_float;
+      j.m_value = val;
+    }
+    j.assert_invariant();
+  }
+};
+
 // very useful construct against boilerplate (more boilerplate needed than in
 // C++17: http://en.cppreference.com/w/cpp/types/void_t)
 template <typename...> struct make_void
@@ -392,7 +411,6 @@ struct is_compatible_basic_json_type
         std::is_same<T, BasicJson>::value or
         is_compatible_array_type<BasicJson, T>::value or
         is_compatible_object_type<typename BasicJson::object_t, T>::value or
-        is_compatible_float_type<typename BasicJson::number_float_t, T>::value or
         is_compatible_integer_type<typename BasicJson::number_integer_t, T>::value or
         is_compatible_integer_type<typename BasicJson::number_unsigned_t,
         T>::value;
@@ -457,12 +475,31 @@ struct has_to_json
                                       detect(std::declval<JSONSerializer<T, void>>()))>::value;
 };
 
+template <typename Json, typename >
+
 // those declarations are needed to workaround a MSVC bug related to ADL
 // (taken from MSVC-Ranges implementation)
 void to_json();
 void from_json();
 
 // overloads for basic_json template parameters
+
+template <typename Json, typename ArithmeticType,
+          enable_if_t<std::is_arithmetic<ArithmeticType>::value and
+                          not std::is_same<ArithmeticType,
+                                           typename Json::boolean_t>::value,
+                      int> = 0>
+void get_arithmetic_value(Json const &j, ArithmeticType &val)
+{
+  if (j.is_number_integer())
+    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_integer_t*>();
+  else if (j.is_number_unsigned())
+    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_unsigned_t*>();
+  else if (j.is_number_float())
+    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_float_t*>();
+  else
+    throw std::domain_error("type must be number, but is " + type_name(j));
+}
 
 template <typename Json>
 void to_json(Json &j, typename Json::boolean_t b) noexcept
@@ -479,6 +516,16 @@ void to_json(Json &j, const CompatibleString &s)
   external_constructor<value_t::string>::construct(j, s);
 }
 
+template <
+    typename Json, typename CompatibleNumberFloatType,
+    enable_if_t<is_compatible_float_type<typename Json::number_float_t,
+                                         CompatibleNumberFloatType>::value,
+                int> = 0>
+void to_json(Json &j, CompatibleNumberFloatType val) noexcept
+{
+  external_constructor<value_t::number_float>::construct(j, val);
+}
+
 template <typename Json>
 void from_json(Json const& j, typename Json::boolean_t& b)
 {
@@ -493,6 +540,42 @@ void from_json(Json const& j, typename Json::string_t& s)
   if (!j.is_string())
     throw std::domain_error("type must be string, but is " + type_name(j));
   s = *const_cast<Json&>(j).template get_ptr<typename Json::string_t*>();
+}
+
+template <typename Json>
+void from_json(Json const& j, typename Json::number_float_t& val)
+{
+  get_arithmetic_value(j, val);
+}
+
+// overload for arithmetic types, not chosen for basic_json template arguments (BooleanType, etc..)
+//
+// note: Is it really necessary to provide explicit overloads for boolean_t etc..
+// in case of a custom BooleanType which is not an arithmetic type?
+template <
+    typename Json, typename ArithmeticType,
+    enable_if_t<
+        std::is_arithmetic<ArithmeticType>::value and
+            not std::is_same<ArithmeticType,
+                             typename Json::number_unsigned_t>::value and
+            not std::is_same<ArithmeticType,
+                             typename Json::number_integer_t>::value and
+            not std::is_same<ArithmeticType,
+                             typename Json::number_float_t>::value and
+            not std::is_same<ArithmeticType, typename Json::boolean_t>::value,
+        int> = 0>
+void from_json(Json const &j, ArithmeticType &val)
+{
+  if (j.is_number_integer())
+    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_integer_t*>();
+  else if (j.is_number_unsigned())
+    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_unsigned_t*>();
+  else if (j.is_number_float())
+    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_float_t*>();
+  else if (j.is_boolean())
+    val = *const_cast<Json&>(j).template get_ptr<typename Json::boolean_t*>();
+  else
+    throw std::domain_error("type must be number, but is " + type_name(j));
 }
 
 struct to_json_fn
@@ -1868,84 +1951,6 @@ class basic_json
     basic_json(const CompatibleNumberUnsignedType val) noexcept
         : m_type(value_t::number_unsigned),
           m_value(static_cast<number_unsigned_t>(val))
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create a floating-point number (explicit)
-
-    Create a floating-point number JSON value with a given content.
-
-    @param[in] val  a floating-point value to create a JSON number from
-
-    @note [RFC 7159](http://www.rfc-editor.org/rfc/rfc7159.txt), section 6
-    disallows NaN values:
-    > Numeric values that cannot be represented in the grammar below (such as
-    > Infinity and NaN) are not permitted.
-    In case the parameter @a val is not a number, a JSON null value is created
-    instead.
-
-    @complexity Constant.
-
-    @liveexample{The following example creates several floating-point
-    values.,basic_json__number_float_t}
-
-    @sa @ref basic_json(const CompatibleNumberFloatType) -- create a number
-    value (floating-point) from a compatible number type
-
-    @since version 1.0.0
-    */
-    basic_json(const number_float_t val) noexcept
-        : m_type(value_t::number_float), m_value(val)
-    {
-        // replace infinity and NAN by null
-        if (not std::isfinite(val))
-        {
-            m_type = value_t::null;
-            m_value = json_value();
-        }
-
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an floating-point number (implicit)
-
-    Create an floating-point number JSON value with a given content. This
-    constructor allows any type @a CompatibleNumberFloatType that can be used
-    to construct values of type @ref number_float_t.
-
-    @tparam CompatibleNumberFloatType A floating-point type which is
-    compatible to @ref number_float_t. Examples may include the types `float`
-    or `double`.
-
-    @param[in] val  a floating-point to create a JSON number from
-
-    @note [RFC 7159](http://www.rfc-editor.org/rfc/rfc7159.txt), section 6
-    disallows NaN values:
-    > Numeric values that cannot be represented in the grammar below (such as
-    > Infinity and NaN) are not permitted.
-    In case the parameter @a val is not a number, a JSON null value is
-    created instead.
-
-    @complexity Constant.
-
-    @liveexample{The example below shows the construction of several
-    floating-point number values from compatible
-    types.,basic_json__CompatibleNumberFloatType}
-
-    @sa @ref basic_json(const number_float_t) -- create a number value
-    (floating-point)
-
-    @since version 1.0.0
-    */
-    template <typename CompatibleNumberFloatType,
-              enable_if_t<detail::is_compatible_float_type<
-                              number_float_t, CompatibleNumberFloatType>::value,
-                          int> = 0>
-    basic_json(const CompatibleNumberFloatType val) noexcept
-        : basic_json(number_float_t(val))
     {
         assert_invariant();
     }
