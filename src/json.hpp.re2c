@@ -202,6 +202,21 @@ template <typename Json> std::string type_name(Json const &j)
   }
 }
 
+// This is an experiment. I need this to move constructors out of basic_json.
+// I'm sure there is a better way, but this might need a big basic_json refactoring
+template <value_t> struct external_constructor;
+
+template <>
+struct external_constructor<value_t::boolean>
+{
+  template <typename Json>
+  static void construct(Json &j, typename Json::boolean_t b) noexcept
+  {
+    j.m_type = value_t::boolean;
+    j.m_value = b;
+    j.assert_invariant();
+  }
+};
 // very useful construct against boilerplate (more boilerplate needed than in
 // C++17: http://en.cppreference.com/w/cpp/types/void_t)
 template <typename...> struct make_void
@@ -340,9 +355,11 @@ struct is_compatible_integer_type_impl<true, RealIntegerType, CompatibleNumberIn
 template <typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type
 {
-    static constexpr auto value = is_compatible_integer_type_impl <
-                                  std::is_arithmetic<CompatibleNumberIntegerType>::value, RealIntegerType,
-                                  CompatibleNumberIntegerType >::value;
+  static constexpr auto
+      value = is_compatible_integer_type_impl <
+                  std::is_arithmetic<CompatibleNumberIntegerType>::value and
+              not std::is_same<bool, CompatibleNumberIntegerType>::value,
+      RealIntegerType, CompatibleNumberIntegerType > ::value;
 };
 
 template <typename RealFloat, typename CompatibleFloat>
@@ -360,7 +377,6 @@ struct is_compatible_basic_json_type
         is_unscoped_enum<T>::value or
         std::is_same<T, BasicJson>::value or
         std::is_constructible<typename BasicJson::string_t, T>::value or
-        std::is_same<typename BasicJson::boolean_t, T>::value or
         is_compatible_array_type<BasicJson, T>::value or
         is_compatible_object_type<typename BasicJson::object_t, T>::value or
         is_compatible_float_type<typename BasicJson::number_float_t, T>::value or
@@ -432,6 +448,22 @@ struct has_to_json
 // (taken from MSVC-Ranges implementation)
 void to_json();
 void from_json();
+
+// overloads for basic_json template parameters
+
+template <typename Json>
+void to_json(Json &j, typename Json::boolean_t b) noexcept
+{
+  external_constructor<value_t::boolean>::construct(j, b);
+}
+
+template <typename Json>
+void from_json(Json const& j, typename Json::boolean_t& b)
+{
+  if (!j.is_boolean())
+    throw std::domain_error("type must be boolean, but is " + type_name(j));
+  b = *const_cast<Json&>(j).template get_ptr<typename Json::boolean_t*>();
+}
 
 struct to_json_fn
 {
@@ -607,6 +639,7 @@ template <
 class basic_json
 {
   private:
+    template <::nlohmann::value_t> friend struct detail::external_constructor;
     template <typename Json> friend std::string detail::type_name(Json const &);
     /// workaround type for MSVC
     using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
@@ -1728,26 +1761,6 @@ class basic_json
                  std::is_constructible<string_t, CompatibleStringType>::value, int>::type = 0>
     basic_json(const CompatibleStringType& val)
         : basic_json(string_t(val))
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create a boolean (explicit)
-
-    Creates a JSON boolean type from a given value.
-
-    @param[in] val  a boolean value to store
-
-    @complexity Constant.
-
-    @liveexample{The example below demonstrates boolean
-    values.,basic_json__boolean_t}
-
-    @since version 1.0.0
-    */
-    basic_json(boolean_t val) noexcept
-        : m_type(value_t::boolean), m_value(val)
     {
         assert_invariant();
     }
@@ -3328,11 +3341,13 @@ class basic_json
     @since version 1.0.0
     */
     template <typename ValueType,
-              enable_if_t<not std::is_pointer<ValueType>::value, int> = 0>
+              enable_if_t<not std::is_pointer<ValueType>::value and
+                              detail::is_compatible_basic_json_type<
+                                  uncvref_t<ValueType>, basic_json_t>::value,
+                          int> = 0>
     auto get() const
-    -> decltype(this->get_impl(static_cast<ValueType*>(nullptr)))
-    {
-        return get_impl(static_cast<ValueType*>(nullptr));
+        -> decltype(this->get_impl(static_cast<ValueType *>(nullptr))) {
+      return get_impl(static_cast<ValueType *>(nullptr));
     }
 
     template <
