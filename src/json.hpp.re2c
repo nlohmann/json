@@ -181,6 +181,27 @@ using is_unscoped_enum =
 
 namespace detail
 {
+template <typename Json> std::string type_name(Json const &j)
+{
+  switch (j.m_type)
+  {
+  case value_t::null:
+    return "null";
+  case value_t::object:
+    return "object";
+  case value_t::array:
+    return "array";
+  case value_t::string:
+    return "string";
+  case value_t::boolean:
+    return "boolean";
+  case value_t::discarded:
+    return "discarded";
+  default:
+    return "number";
+  }
+}
+
 // very useful construct against boilerplate (more boilerplate needed than in
 // C++17: http://en.cppreference.com/w/cpp/types/void_t)
 template <typename...> struct make_void
@@ -586,6 +607,7 @@ template <
 class basic_json
 {
   private:
+    template <typename Json> friend std::string detail::type_name(Json const &);
     /// workaround type for MSVC
     using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
           BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
@@ -8127,26 +8149,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    std::string type_name() const
-    {
-        switch (m_type)
-        {
-            case value_t::null:
-                return "null";
-            case value_t::object:
-                return "object";
-            case value_t::array:
-                return "array";
-            case value_t::string:
-                return "string";
-            case value_t::boolean:
-                return "boolean";
-            case value_t::discarded:
-                return "discarded";
-            default:
-                return "number";
-        }
-    }
+    std::string type_name() const { return detail::type_name(*this); }
 
   private:
     /*!
