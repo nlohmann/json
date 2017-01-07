@@ -217,6 +217,18 @@ struct external_constructor<value_t::boolean>
     j.assert_invariant();
   }
 };
+
+template <>
+struct external_constructor<value_t::string>
+{
+  template <typename Json>
+  static void construct(Json &j, const typename Json::string_t& s)
+  {
+    j.m_type = value_t::string;
+    j.m_value = s;
+    j.assert_invariant();
+  }
+};
 // very useful construct against boilerplate (more boilerplate needed than in
 // C++17: http://en.cppreference.com/w/cpp/types/void_t)
 template <typename...> struct make_void
@@ -328,12 +340,14 @@ struct is_compatible_array_type
 {
     // the check for CompatibleArrayType = void is done in
     // `is_compatible_object_type`, but we need the conjunction here as well
-    static auto constexpr value = is_compatible_array_type_impl <
-                                  conjunction<negation<is_compatible_object_type<
-                                  typename BasicJson::object_t, CompatibleArrayType>>,
-                                  has_value_type<CompatibleArrayType>,
-                                  has_iterator<CompatibleArrayType>>::value,
-                                  BasicJson, CompatibleArrayType >::value;
+    static auto constexpr value = is_compatible_array_type_impl<
+        conjunction<negation<is_compatible_object_type<
+                        typename BasicJson::object_t, CompatibleArrayType>>,
+                    negation<std::is_constructible<typename BasicJson::string_t,
+                                                   CompatibleArrayType>>,
+                    has_value_type<CompatibleArrayType>,
+                    has_iterator<CompatibleArrayType>>::value,
+        BasicJson, CompatibleArrayType>::value;
 };
 
 template <bool, typename, typename>
@@ -376,7 +390,6 @@ struct is_compatible_basic_json_type
     static auto constexpr value =
         is_unscoped_enum<T>::value or
         std::is_same<T, BasicJson>::value or
-        std::is_constructible<typename BasicJson::string_t, T>::value or
         is_compatible_array_type<BasicJson, T>::value or
         is_compatible_object_type<typename BasicJson::object_t, T>::value or
         is_compatible_float_type<typename BasicJson::number_float_t, T>::value or
@@ -457,12 +470,29 @@ void to_json(Json &j, typename Json::boolean_t b) noexcept
   external_constructor<value_t::boolean>::construct(j, b);
 }
 
+template <typename Json, typename CompatibleString,
+          enable_if_t<std::is_constructible<typename Json::string_t,
+                                            CompatibleString>::value,
+                      int> = 0>
+void to_json(Json &j, const CompatibleString &s)
+{
+  external_constructor<value_t::string>::construct(j, s);
+}
+
 template <typename Json>
 void from_json(Json const& j, typename Json::boolean_t& b)
 {
   if (!j.is_boolean())
     throw std::domain_error("type must be boolean, but is " + type_name(j));
   b = *const_cast<Json&>(j).template get_ptr<typename Json::boolean_t*>();
+}
+
+template <typename Json>
+void from_json(Json const& j, typename Json::string_t& s)
+{
+  if (!j.is_string())
+    throw std::domain_error("type must be string, but is " + type_name(j));
+  s = *const_cast<Json&>(j).template get_ptr<typename Json::string_t*>();
 }
 
 struct to_json_fn
@@ -1679,90 +1709,6 @@ class basic_json
                     basic_json(T && val)
     {
         JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
-    }
-
-    /*!
-    @brief create a string (explicit)
-
-    Create an string JSON value with a given content.
-
-    @param[in] val  a value for the string
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for string value fails
-
-    @liveexample{The following code shows the constructor with an @ref
-    string_t parameter.,basic_json__string_t}
-
-    @sa @ref basic_json(const typename string_t::value_type*) -- create a
-    string value from a character pointer
-    @sa @ref basic_json(const CompatibleStringType&) -- create a string value
-    from a compatible string container
-
-    @since version 1.0.0
-    */
-    basic_json(const string_t& val)
-        : m_type(value_t::string), m_value(val)
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create a string (explicit)
-
-    Create a string JSON value with a given content.
-
-    @param[in] val  a literal value for the string
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for string value fails
-
-    @liveexample{The following code shows the constructor with string literal
-    parameter.,basic_json__string_t_value_type}
-
-    @sa @ref basic_json(const string_t&) -- create a string value
-    @sa @ref basic_json(const CompatibleStringType&) -- create a string value
-    from a compatible string container
-
-    @since version 1.0.0
-    */
-    basic_json(const typename string_t::value_type* val)
-        : basic_json(string_t(val))
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create a string (implicit)
-
-    Create a string JSON value with a given content.
-
-    @param[in] val  a value for the string
-
-    @tparam CompatibleStringType an string type which is compatible to @ref
-    string_t, for instance `std::string`.
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for string value fails
-
-    @liveexample{The following code shows the construction of a string value
-    from a compatible type.,basic_json__CompatibleStringType}
-
-    @sa @ref basic_json(const string_t&) -- create a string value
-    @sa @ref basic_json(const typename string_t::value_type*) -- create a
-    string value from a character pointer
-
-    @since version 1.0.0
-    */
-    template<class CompatibleStringType, typename std::enable_if<
-                 std::is_constructible<string_t, CompatibleStringType>::value, int>::type = 0>
-    basic_json(const CompatibleStringType& val)
-        : basic_json(string_t(val))
-    {
-        assert_invariant();
     }
 
     /*!
@@ -11131,9 +11077,21 @@ class basic_json
     }
 
     private:
+    friend bool operator==(json_pointer const &lhs,
+                           json_pointer const &rhs) noexcept
+    {
+      return lhs.reference_tokens == rhs.reference_tokens;
+    }
+
+    friend bool operator!=(json_pointer const &lhs,
+                           json_pointer const &rhs) noexcept
+    {
+      return !(lhs == rhs);
+    }
+
     /// the reference tokens
     std::vector<std::string> reference_tokens {};
-               };
+    };
 
     //////////////////////////
     // JSON Pointer support //
