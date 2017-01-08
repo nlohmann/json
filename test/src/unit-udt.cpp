@@ -483,13 +483,20 @@ TEST_CASE("Non-copyable types", "[udt]")
 template <typename T, typename = typename std::enable_if<std::is_pod<T>::value>::type>
 struct pod_serializer
 {
-    // I could forward-declare this struct, and add a basic_json alias
     template <typename Json>
     static void from_json(Json const& j , T& t)
     {
-        auto value = j.template get<std::uint64_t>();
-        auto bytes = static_cast<char*>(static_cast<void*>(&value));
-        std::memcpy(&t, bytes, sizeof(value));
+      std::uint64_t value;
+      // Why cannot we simply use: j.get<std::uint64_t>() ?
+      // Well, with the current experiment, the get method looks for a from_json function, which we are currently defining!
+      // This would end up in a stack overflow. Calling nlohmann::from_json is a workaround.
+      // I shall find a good way to avoid this once all constructors are converted to free methods
+      //
+      // In short, constructing a json by constructor calls to_json
+      // calling get calls from_json, for now, we cannot do this in custom serializers
+      nlohmann::from_json(j, value);
+      auto bytes = static_cast<char *>(static_cast<void *>(&value));
+      std::memcpy(&t, bytes, sizeof(value));
     }
 
     template <typename Json>
@@ -501,8 +508,8 @@ struct pod_serializer
         {
             value |= bytes[i] << 8 * i;
         }
-
-        j = value;
+        // same thing here
+        nlohmann::to_json(j, value);
     }
 };
 
