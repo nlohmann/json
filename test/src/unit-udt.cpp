@@ -391,27 +391,27 @@ TEST_CASE("adl_serializer specialization", "[udt]")
 
 namespace nlohmann
 {
-  // TODO provide a real example, since this works now :)
-// template <typename T>
-// struct adl_serializer<std::vector<T>>
-// {
-//     static void to_json(json& j, std::vector<T> const& opt)
-//     {
-//       
-//     }
-//
-//     static void from_json(json const& j, std::vector<T>& opt)
-//     {
-//     }
-// };
+template <>
+struct adl_serializer<std::vector<float>>
+{
+    static void to_json(json& j, std::vector<float> const&)
+    {
+      j = "hijacked!";
+    }
+
+    static void from_json(json const&, std::vector<float>& opt)
+    {
+      opt = {42.0, 42.0, 42.0};
+    }
+};
 }
 
-TEST_CASE("current supported types are preferred over specializations", "[udt]")
+TEST_CASE("even supported types can be specialized", "[udt]")
 {
-
-    json j = std::vector<int> {1, 2, 3};
-    auto f = j.get<std::vector<int>>();
-    CHECK((f == std::vector<int> {1, 2, 3}));
+    json j = std::vector<float> {1.0, 2.0, 3.0};
+    CHECK(j.dump() == R"("hijacked!")");
+    auto f = j.get<std::vector<float>>();
+    CHECK((f == std::vector<float>{42.0, 42.0, 42.0}));
 }
 
 namespace nlohmann
@@ -432,7 +432,6 @@ struct adl_serializer<std::unique_ptr<T>>
     }
 
     // this is the overload needed for non-copyable types,
-    // should we add a priority tag in the implementation to prefer this overload if it exists?
     static std::unique_ptr<T> from_json(json const& j)
     {
         if (j.is_null())
@@ -456,7 +455,7 @@ TEST_CASE("Non-copyable types", "[udt]")
         json j = optPerson;
         CHECK(j.is_null());
 
-        optPerson.reset(new udt::person{{42}, {"John Doe"}});
+        optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia});
         j = optPerson;
         CHECK_FALSE(j.is_null());
 
@@ -465,7 +464,7 @@ TEST_CASE("Non-copyable types", "[udt]")
 
     SECTION("from_json")
     {
-        auto person = udt::person{{42}, {"John Doe"}};
+        auto person = udt::person{{42}, {"John Doe"}, udt::country::russia};
         json j = person;
 
         auto optPerson = j.get<std::unique_ptr<udt::person>>();
@@ -478,39 +477,70 @@ TEST_CASE("Non-copyable types", "[udt]")
     }
 }
 
-// custom serializer
-// advanced usage (I did not have a real use case in mind)
-template <typename T, typename = typename std::enable_if<std::is_pod<T>::value>::type>
+// custom serializer - advanced usage
+// pack structs that are pod-types (but not scalar types)
+// relies on adl for any other type
+template <typename T, typename = void>
 struct pod_serializer
 {
-    template <typename Json>
-    static void from_json(Json const& j , T& t)
-    {
-      std::uint64_t value;
-      // Why cannot we simply use: j.get<std::uint64_t>() ?
-      // Well, with the current experiment, the get method looks for a from_json function, which we are currently defining!
-      // This would end up in a stack overflow. Calling nlohmann::from_json is a workaround.
-      // I shall find a good way to avoid this once all constructors are converted to free methods
-      //
-      // In short, constructing a json by constructor calls to_json
-      // calling get calls from_json, for now, we cannot do this in custom serializers
-      nlohmann::from_json(j, value);
-      auto bytes = static_cast<char *>(static_cast<void *>(&value));
-      std::memcpy(&t, bytes, sizeof(value));
-    }
+  // use adl for non-pods, or scalar types
+  template <
+      typename Json, typename U = T,
+      typename std::enable_if<
+          not(std::is_pod<U>::value and std::is_class<U>::value), int>::type = 0>
+  static void from_json(Json const &j, U &t)
+  {
+    using nlohmann::from_json;
+    from_json(j, t);
+  }
 
-    template <typename Json>
-    static void to_json(Json& j, T const& t)
-    {
-        auto bytes = static_cast<char const*>(static_cast<void const*>(&t));
-        std::uint64_t value = bytes[0];
-        for (auto i = 1; i < 8; ++i)
-        {
-            value |= bytes[i] << 8 * i;
-        }
-        // same thing here
-        nlohmann::to_json(j, value);
-    }
+  // special behaviour for pods
+  template <typename Json, typename U = T,
+            typename std::enable_if<
+                std::is_pod<U>::value and std::is_class<U>::value, int>::type = 0>
+  static void from_json(Json const &j, U &t)
+  {
+    std::uint64_t value;
+    // TODO The following block is no longer relevant in this serializer, make another one that shows the issue
+    // the problem arises only when one from_json method is defined without any constraint
+    //
+    // Why cannot we simply use: j.get<std::uint64_t>() ?
+    // Well, with the current experiment, the get method looks for a from_json
+    // function, which we are currently defining!
+    // This would end up in a stack overflow. Calling nlohmann::from_json is a
+    // workaround (is it?).
+    // I shall find a good way to avoid this once all constructors are converted
+    // to free methods
+    //
+    // In short, constructing a json by constructor calls to_json
+    // calling get calls from_json, for now, we cannot do this in custom
+    // serializers
+    nlohmann::from_json(j, value);
+    auto bytes = static_cast<char *>(static_cast<void *>(&value));
+    std::memcpy(&t, bytes, sizeof(value));
+  }
+
+  template <
+      typename Json, typename U = T,
+      typename std::enable_if<
+          not(std::is_pod<U>::value and std::is_class<U>::value), int>::type = 0>
+  static void to_json(Json &j, T const &t)
+  {
+    using nlohmann::to_json;
+    to_json(j, t);
+  }
+
+  template <typename Json, typename U = T,
+            typename std::enable_if<
+                std::is_pod<U>::value and std::is_class<U>::value, int>::type = 0>
+  static void to_json(Json &j, T const &t) noexcept
+  {
+    auto bytes = static_cast<unsigned char const *>(static_cast<void const *>(&t));
+    std::uint64_t value = bytes[0];
+    for (auto i = 1; i < 8; ++i)
+      value |= std::uint64_t{bytes[i]} << 8 * i;
+    nlohmann::to_json(j, value);
+  }
 };
 
 namespace udt
@@ -522,23 +552,58 @@ struct small_pod
     short end;
 };
 
-bool operator==(small_pod lhs, small_pod rhs)
+struct non_pod
+{
+  std::string s;
+};
+
+template <typename Json>
+void to_json(Json& j, non_pod const& np)
+{
+  j = np.s;
+}
+
+template <typename Json>
+void from_json(Json const& j, non_pod& np)
+{
+  np.s = j.template get<std::string>();
+}
+
+bool operator==(small_pod lhs, small_pod rhs) noexcept
 {
     return std::tie(lhs.begin, lhs.middle, lhs.end) ==
-           std::tie(lhs.begin, lhs.middle, lhs.end);
+           std::tie(rhs.begin, rhs.middle, rhs.end);
+}
+
+bool operator==(non_pod const &lhs, non_pod const &rhs) noexcept
+{
+  return lhs.s == rhs.s;
+}
+
+std::ostream& operator<<(std::ostream& os, small_pod l)
+{
+  return os << "begin: " << l.begin << ", middle: " << l.middle << ", end: " << l.end;
 }
 }
 
 TEST_CASE("custom serializer for pods", "[udt]")
 {
-    using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, double, std::allocator, pod_serializer>;
+  using custom_json =
+      nlohmann::basic_json<std::map, std::vector, std::string, bool,
+                           std::int64_t, std::uint64_t, double, std::allocator,
+                           pod_serializer>;
 
-    auto p = udt::small_pod{42, '/', 42};
-    custom_json j = p;
+  auto p = udt::small_pod{42, '/', 42};
+  custom_json j = p;
 
-    auto p2 = j.get<udt::small_pod>();
+  auto p2 = j.get<udt::small_pod>();
 
-    CHECK(p == p2);
+  CHECK(p == p2);
+
+  auto np = udt::non_pod{{"non-pod"}};
+  custom_json j2 = np;
+  auto np2 = j2.get<udt::non_pod>();
+  CHECK(np == np2);
 }
 
 template <typename T, typename>
