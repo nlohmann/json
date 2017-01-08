@@ -35,6 +35,7 @@ TEST_CASE("version information")
 {
     SECTION("version()")
     {
-        CHECK(json::version()["name"] == "JSON for Modern C++");
+        CHECK(json::meta()["name"] == "JSON for Modern C++");
+        CHECK(json::meta()["compiler"] == "JSON for Modern C++");
     }
 }

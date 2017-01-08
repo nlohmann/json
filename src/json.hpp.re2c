@@ -284,11 +284,11 @@ class basic_json
     /*!
     @brief returns version information on the library
     */
-    static basic_json version()
+    static basic_json meta()
     {
         basic_json result;
 
-        result["copyright"] = "(C) 2013-2016 Niels Lohmann";
+        result["copyright"] = "(C) 2013-2017 Niels Lohmann";
         result["name"] = "JSON for Modern C++";
         result["url"] = "https://github.com/nlohmann/json";
         result["version"] =
@@ -312,11 +312,11 @@ class basic_json
 #endif
 
 #if defined(__clang__)
-        result["compiler"] = {{"family", "clang"}, {"version", CLANG_VERSION}};
+        result["compiler"] = {{"family", "clang"}, {"version", __clang_version__}};
 #elif defined(__ICC) || defined(__INTEL_COMPILER)
         result["compiler"] = {{"family", "icc"}, {"version", __INTEL_COMPILER}};
 #elif defined(__GNUC__) || defined(__GNUG__)
-        result["compiler"] = {{"family", "gcc"}, {"version", GCC_VERSION}};
+        result["compiler"] = {{"family", "gcc"}, {"version", std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__)}};
 #elif defined(__HP_cc) || defined(__HP_aCC)
         result["compiler"] = "hp"
 #elif defined(__IBMCPP__)
