@@ -461,14 +461,6 @@ struct is_compatible_integer_type
       RealIntegerType, CompatibleNumberIntegerType > ::value;
 };
 
-template <typename RealFloat, typename CompatibleFloat>
-struct is_compatible_float_type
-{
-    static constexpr auto value =
-        std::is_constructible<RealFloat, CompatibleFloat>::value and
-        std::is_floating_point<CompatibleFloat>::value;
-};
-
 template <typename BasicJson, typename T>
 struct is_basic_json_nested_type
 {
@@ -568,12 +560,9 @@ void to_json(Json &j, const CompatibleString &s)
   external_constructor<value_t::string>::construct(j, s);
 }
 
-template <
-    typename Json, typename CompatibleNumberFloatType,
-    enable_if_t<is_compatible_float_type<typename Json::number_float_t,
-                                         CompatibleNumberFloatType>::value,
-                int> = 0>
-void to_json(Json &j, CompatibleNumberFloatType val) noexcept
+template <typename Json, typename FloatType,
+          enable_if_t<std::is_floating_point<FloatType>::value, int> = 0>
+void to_json(Json &j, FloatType val) noexcept
 {
   external_constructor<value_t::number_float>::construct(j, val);
 }
