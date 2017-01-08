@@ -2909,148 +2909,6 @@ class basic_json
     /// @}
 
   private:
-    //////////////////
-    // value access //
-    //////////////////
-
-    template<class T, typename std::enable_if<
-                 std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
-                 std::is_convertible<basic_json_t, typename T::mapped_type>::value, int>::type = 0>
-    T get_impl(T* /*unused*/) const
-    {
-        if (is_object())
-        {
-            return T(m_value.object->begin(), m_value.object->end());
-        }
-
-        JSON_THROW(std::domain_error("type must be object, but is " + type_name()));
-    }
-
-    /// get an object (explicit)
-    object_t get_impl(object_t* /*unused*/) const
-    {
-        if (is_object())
-        {
-            return *(m_value.object);
-        }
-
-        JSON_THROW(std::domain_error("type must be object, but is " + type_name()));
-    }
-
-    /// get an array (explicit)
-    template <
-        class T,
-        typename std::enable_if <
-            std::is_convertible<basic_json_t, typename T::value_type>::value and
-            not std::is_same<basic_json_t,
-                             typename T::value_type>::value and
-            not std::is_arithmetic<T>::value and
-            not std::is_convertible<std::string, T>::value and
-            not detail::has_mapped_type<T>::value,
-            int >::type = 0 >
-    {
-        if (is_array())
-        {
-            T to_vector;
-            std::transform(m_value.array->begin(), m_value.array->end(),
-                           std::inserter(to_vector, to_vector.end()), [](basic_json i)
-            {
-                return i.get<typename T::value_type>();
-            });
-            return to_vector;
-        }
-
-        JSON_THROW(std::domain_error("type must be array, but is " + type_name()));
-    }
-
-    /// get an array (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_convertible<basic_json_t, T>::value and
-                 not std::is_same<basic_json_t, T>::value, int>::type = 0>
-    std::vector<T> get_impl(std::vector<T>* /*unused*/) const
-    {
-        if (is_array())
-        {
-            std::vector<T> to_vector;
-            to_vector.reserve(m_value.array->size());
-            std::transform(m_value.array->begin(), m_value.array->end(),
-                           std::inserter(to_vector, to_vector.end()), [](basic_json i)
-            {
-                return i.get<T>();
-            });
-            return to_vector;
-        }
-
-        JSON_THROW(std::domain_error("type must be array, but is " + type_name()));
-    }
-
-    /// get an array (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_same<basic_json, typename T::value_type>::value and
-                 not detail::has_mapped_type<T>::value, int>::type = 0>
-    T get_impl(T* /*unused*/) const
-    {
-        if (is_array())
-        {
-            return T(m_value.array->begin(), m_value.array->end());
-        }
-
-        JSON_THROW(std::domain_error("type must be array, but is " + type_name()));
-    }
-
-    /// get an array (explicit)
-    array_t get_impl(array_t* /*unused*/) const
-    {
-        if (is_array())
-        {
-            return *(m_value.array);
-        }
-
-        JSON_THROW(std::domain_error("type must be array, but is " + type_name()));
-    }
-
-    /// get a string (explicit)
-    template<typename T, typename std::enable_if<
-                 std::is_convertible<string_t, T>::value, int>::type = 0>
-    T get_impl(T* /*unused*/) const
-    {
-        if (is_string())
-        {
-            return *m_value.string;
-        }
-
-        JSON_THROW(std::domain_error("type must be string, but is " + type_name()));
-    }
-
-    /// get a number (explicit)
-    template<typename T, typename std::enable_if<
-                 std::is_arithmetic<T>::value, int>::type = 0>
-    T get_impl(T* /*unused*/) const
-    {
-        switch (m_type)
-        {
-            case value_t::number_integer:
-            {
-                return static_cast<T>(m_value.number_integer);
-            }
-
-            case value_t::number_unsigned:
-            {
-                return static_cast<T>(m_value.number_unsigned);
-            }
-
-            case value_t::number_float:
-            {
-                return static_cast<T>(m_value.number_float);
-            }
-
-            default:
-            {
-                JSON_THROW(std::domain_error("type must be number, but is " + type_name()));
-            }
-        }
-    }
-
     /// get a boolean (explicit)
     boolean_t get_impl(boolean_t* /*unused*/) const
     {
@@ -3178,54 +3036,6 @@ class basic_json
     }
 
   public:
-
-    /// @name value access
-    /// Direct access to the stored value of a JSON value.
-    /// @{
-
-    /*!
-    @brief get a value (explicit)
-
-    Explicit type conversion between the JSON value and a compatible value.
-
-    @tparam ValueType non-pointer type compatible to the JSON value, for
-    instance `int` for JSON integer numbers, `bool` for JSON booleans, or
-    `std::vector` types for JSON arrays
-
-    @return copy of the JSON value, converted to type @a ValueType
-
-    @throw std::domain_error in case passed type @a ValueType is incompatible
-    to JSON; example: `"type must be object, but is null"`
-
-    @complexity Linear in the size of the JSON value.
-
-    @liveexample{The example below shows several conversions from JSON values
-    to other types. There a few things to note: (1) Floating-point numbers can
-    be converted to integers\, (2) A JSON array can be converted to a standard
-    `std::vector<short>`\, (3) A JSON object can be converted to C++
-    associative containers such as `std::unordered_map<std::string\,
-    json>`.,get__ValueType_const}
-
-    @internal
-    The idea of using a casted null pointer to choose the correct
-    implementation is from <http://stackoverflow.com/a/8315197/266378>.
-    @endinternal
-
-    @sa @ref operator ValueType() const for implicit conversion
-    @sa @ref get() for pointer-member access
-
-    @since version 1.0.0
-    */
-    template <typename ValueType,
-              enable_if_t<not std::is_pointer<ValueType>::value and
-                              detail::is_compatible_basic_json_type<
-                                  uncvref_t<ValueType>, basic_json_t>::value,
-                          int> = 0>
-    auto get() const
-        -> decltype(this->get_impl(static_cast<ValueType *>(nullptr))) {
-      return get_impl(static_cast<ValueType *>(nullptr));
-    }
-
     // if T is basic_json, simply returns *this
     template <typename T,
               enable_if_t<std::is_same<T, basic_json_t>::value, int> = 0>
@@ -3234,16 +3044,22 @@ class basic_json
       return *this;
     }
 
+    // This overload is chosen when:
+    // - T is not basic_json_t
+    // - JSONSerializer<T>::from_json(basic_json const&, T&) exists
+    // - and JSONSerializer<T>::from_json(basic_json const&) does not exist
+    //
+    // the latter is preferred if both are present (since it does not require a default construction of T)
     template <
         typename T,
-        enable_if_t<detail::conjunction<
-                        detail::negation<detail::is_compatible_basic_json_type<
-                            uncvref_t<T>, basic_json_t>>,
+        enable_if_t<not std::is_same<basic_json_t, uncvref_t<T>>::value and
                         detail::has_from_json<JSONSerializer, basic_json_t,
-                                              uncvref_t<T>>>::value and
-                        not std::is_same<basic_json_t, uncvref_t<T>>::value,
+                                              uncvref_t<T>>::value and
+                        not detail::has_non_default_from_json<
+                            JSONSerializer, basic_json_t, uncvref_t<T>>::value,
                     int> = 0>
-    // do we really want the uncvref ? if a user call get<int &>, shouldn't we static assert ?
+    // do we really want the uncvref ? if a user call get<int &>, shouldn't we
+    // static assert ?
     auto get() const -> uncvref_t<T>
     {
       using type = uncvref_t<T>;
@@ -3256,19 +3072,22 @@ class basic_json
       return ret;
     }
 
-    // This overload is chosen for non-default constructible user-defined-types
+    // This overload is chosen when:
+    // - T is not basic_json_t
+    // - and JSONSerializer<T>::from_json(basic_json const&) does not exist
+    // TODO add constexpr, noexcept(...)
     template <
         typename T,
-        enable_if_t<detail::conjunction<detail::negation<detail::is_compatible_basic_json_type<
-                                            uncvref_t<T>, basic_json_t>>,
-                                        detail::has_non_default_from_json<JSONSerializer, basic_json_t,
-                                                uncvref_t<T>>>::value,
-                                                short> = 0 >
-                    T get() const
+        enable_if_t<not std::is_same<basic_json_t, uncvref_t<T>>::value and
+                        detail::has_non_default_from_json<
+                            JSONSerializer, basic_json_t, uncvref_t<T>>::value,
+                    int> = 0>
+    uncvref_t<T> get() const
     {
-        return JSONSerializer<T>::from_json(*this);
+      return JSONSerializer<T>::from_json(*this);
     }
 
+    // TODO what to do with those...
     /*!
     @brief get a pointer value (explicit)
 
