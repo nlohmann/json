@@ -398,40 +398,30 @@ struct is_compatible_object_type
         typename BasicJson::object_t, CompatibleObjectType>::value;
 };
 
-template <bool B, class BasicJson, class CompatibleArrayType>
-struct is_compatible_array_type_impl : std::false_type {};
-
-template <class BasicJson, class CompatibleArrayType>
-struct is_compatible_array_type_impl<true, BasicJson, CompatibleArrayType>
+template <typename BasicJson, typename T>
+struct is_basic_json_nested_type
 {
-    static constexpr auto value =
-        not std::is_same<CompatibleArrayType,
-        typename BasicJson::iterator>::value and
-        not std::is_same<CompatibleArrayType,
-        typename BasicJson::const_iterator>::value and
-        not std::is_same<CompatibleArrayType,
-        typename BasicJson::reverse_iterator>::value and
-        not std::is_same<CompatibleArrayType,
-        typename BasicJson::const_reverse_iterator>::value and
-        not std::is_same<CompatibleArrayType,
-        typename BasicJson::array_t::iterator>::value and
-        not std::is_same<CompatibleArrayType,
-        typename BasicJson::array_t::const_iterator>::value;
+    static auto constexpr value = std::is_same<T, typename BasicJson::iterator>::value or
+                                  std::is_same<T, typename BasicJson::const_iterator>::value or
+                                  std::is_same<T, typename BasicJson::reverse_iterator>::value or
+                                  std::is_same<T, typename BasicJson::const_reverse_iterator>::value or
+                                  std::is_same<T, typename BasicJson::json_pointer>::value;
 };
 
 template <class BasicJson, class CompatibleArrayType>
 struct is_compatible_array_type
 {
-    // the check for CompatibleArrayType = void is done in
-    // `is_compatible_object_type`, but we need the conjunction here as well
-    static auto constexpr value = is_compatible_array_type_impl<
-        conjunction<negation<is_compatible_object_type<
+  // TODO concept Container?
+  // this might not make VS happy
+    static auto constexpr value = 
+        conjunction<negation<std::is_same<void, CompatibleArrayType>>,
+                    negation<is_compatible_object_type<
                         BasicJson, CompatibleArrayType>>,
                     negation<std::is_constructible<typename BasicJson::string_t,
                                                    CompatibleArrayType>>,
+                    negation<is_basic_json_nested_type<BasicJson, CompatibleArrayType>>,
                     has_value_type<CompatibleArrayType>,
-                    has_iterator<CompatibleArrayType>>::value,
-        BasicJson, CompatibleArrayType>::value;
+                    has_iterator<CompatibleArrayType>>::value;
 };
 
 template <bool, typename, typename>
@@ -459,16 +449,6 @@ struct is_compatible_integer_type
                   std::is_integral<CompatibleNumberIntegerType>::value and
               not std::is_same<bool, CompatibleNumberIntegerType>::value,
       RealIntegerType, CompatibleNumberIntegerType > ::value;
-};
-
-template <typename BasicJson, typename T>
-struct is_basic_json_nested_type
-{
-    static auto constexpr value = std::is_same<T, typename BasicJson::iterator>::value or
-                                  std::is_same<T, typename BasicJson::const_iterator>::value or
-                                  std::is_same<T, typename BasicJson::reverse_iterator>::value or
-                                  std::is_same<T, typename BasicJson::const_reverse_iterator>::value or
-                                  std::is_same<T, typename BasicJson::json_pointer>::value;
 };
 
 // This trait checks if JSONSerializer<T>::from_json(json const&, udt&) exists
@@ -518,8 +498,6 @@ struct has_to_json
     static constexpr bool value = std::is_integral<decltype(
                                       detect(std::declval<JSONSerializer<T, void>>()))>::value;
 };
-
-template <typename Json, typename >
 
 // those declarations are needed to workaround a MSVC bug related to ADL
 // (taken from MSVC-Ranges implementation)
@@ -737,12 +715,9 @@ template <
     typename Json, typename ArithmeticType,
     enable_if_t<
         std::is_arithmetic<ArithmeticType>::value and
-            not std::is_same<ArithmeticType,
-                             typename Json::number_unsigned_t>::value and
-            not std::is_same<ArithmeticType,
-                             typename Json::number_integer_t>::value and
-            not std::is_same<ArithmeticType,
-                             typename Json::number_float_t>::value and
+            not std::is_same<ArithmeticType, typename Json::number_unsigned_t>::value and
+            not std::is_same<ArithmeticType, typename Json::number_integer_t>::value and
+            not std::is_same<ArithmeticType, typename Json::number_float_t>::value and
             not std::is_same<ArithmeticType, typename Json::boolean_t>::value,
         int> = 0>
 void from_json(Json const &j, ArithmeticType &val)
