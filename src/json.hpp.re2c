@@ -432,7 +432,6 @@ template <typename T, typename BasicJson>
 struct is_compatible_basic_json_type
 {
     static auto constexpr value =
-        is_unscoped_enum<T>::value or
         std::is_same<T, BasicJson>::value or
         is_compatible_array_type<BasicJson, T>::value or
         is_compatible_object_type<typename BasicJson::object_t, T>::value;
@@ -569,6 +568,13 @@ void to_json(Json &j, CompatibleNumberIntegerType val) noexcept
   external_constructor<value_t::number_integer>::construct(j, val);
 }
 
+template <typename Json, typename UnscopedEnumType,
+          enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
+void to_json(Json &j, UnscopedEnumType e)
+{
+  external_constructor<value_t::number_integer>::construct(j, e);
+}
+
 template <typename Json>
 void from_json(Json const& j, typename Json::boolean_t& b)
 {
@@ -601,6 +607,15 @@ template <typename Json>
 void from_json(Json const& j, typename Json::number_integer_t& val)
 {
   get_arithmetic_value(j, val);
+}
+
+template <typename Json, typename UnscopedEnumType,
+          enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
+void from_json(Json const &j, UnscopedEnumType& e)
+{
+  typename std::underlying_type<UnscopedEnumType>::type val = e;
+  get_arithmetic_value(j, val);
+  e = static_cast<UnscopedEnumType>(val);
 }
 
 // overload for arithmetic types, not chosen for basic_json template arguments (BooleanType, etc..)
@@ -1847,15 +1862,6 @@ class basic_json
                     basic_json(T && val)
     {
         JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
-    }
-
-    // Constructor for unscoped enums (not enum classes)
-    template <typename T, enable_if_t<is_unscoped_enum<T>::value, int> = 0>
-    basic_json(T val) noexcept
-        : m_type(value_t::number_integer),
-          m_value(static_cast<number_integer_t>(val))
-    {
-        assert_invariant();
     }
 
     /*!
