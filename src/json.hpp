@@ -436,7 +436,7 @@ struct is_compatible_integer_type
 };
 
 // This trait checks if JSONSerializer<T>::from_json(json const&, udt&) exists
-template <template <typename, typename> class JSONSerializer, typename Json, typename T>
+template <typename Json, typename T>
 struct has_from_json
 {
   private:
@@ -448,39 +448,40 @@ struct has_from_json
 
   public:
     static constexpr bool value = std::is_integral<decltype(
-                                      detect(std::declval<JSONSerializer<T, void>>()))>::value;
+                                      detect(std::declval<typename Json::template json_serializer<T, void>>()))>::value;
 };
 
 // This trait checks if JSONSerializer<T>::from_json(json const&) exists
 // this overload is used for non-default-constructible user-defined-types
-template <template <typename, typename> class JSONSerializer, typename Json,
-          typename T>
+template <typename Json, typename T>
 struct has_non_default_from_json
 {
-  private:
-    template <typename U, typename = enable_if_t<std::is_same<T, decltype(uncvref_t<U>::from_json(std::declval<Json>()))>::value>>
-    static int detect(U&&);
-    static void detect(...);
+private:
+  template <
+      typename U,
+      typename = enable_if_t<std::is_same<
+          T, decltype(uncvref_t<U>::from_json(std::declval<Json>()))>::value>>
+  static int detect(U &&);
+  static void detect(...);
 
-  public:
-    static constexpr bool value = std::is_integral<decltype(
-                                      detect(std::declval<JSONSerializer<T, void>>()))>::value;
+public:
+  static constexpr bool value = std::is_integral<decltype(detect(
+      std::declval<typename Json::template json_serializer<T, void>>()))>::value;
 };
 
-// This trait checks if JSONSerializer<T>::to_json exists
-template <template <typename, typename> class JSONSerializer, typename Json,
-          typename T>
+// This trait checks if Json::json_serializer<T>::to_json exists
+template <typename Json, typename T>
 struct has_to_json
 {
-  private:
-    template <typename U, typename = decltype(uncvref_t<U>::to_json(
-                  std::declval<Json&>(), std::declval<T>()))>
-    static int detect(U&&);
-    static void detect(...);
+private:
+  template <typename U, typename = decltype(uncvref_t<U>::to_json(
+                            std::declval<Json &>(), std::declval<T>()))>
+  static int detect(U &&);
+  static void detect(...);
 
-  public:
-    static constexpr bool value = std::is_integral<decltype(
-                                      detect(std::declval<JSONSerializer<T, void>>()))>::value;
+public:
+  static constexpr bool value = std::is_integral<decltype(detect(
+      std::declval<typename Json::template json_serializer<T, void>>()))>::value;
 };
 
 // overloads for basic_json template parameters
@@ -900,6 +901,8 @@ class basic_json
     template<typename U> class iter_impl;
     template<typename Base> class json_reverse_iterator;
     class json_pointer;
+    template <typename T, typename SFINAE>
+    using json_serializer = JSONSerializer<T, SFINAE>;
 
     /////////////////////
     // container types //
@@ -1790,7 +1793,7 @@ class basic_json
                   not std::is_base_of<std::istream, U>::value and
                   not std::is_same<U, basic_json_t>::value and
                   not detail::is_basic_json_nested_type<basic_json_t,U>::value and
-                      detail::has_to_json<JSONSerializer, basic_json, U>::value,
+                      detail::has_to_json<basic_json, U>::value,
                   int> = 0>
     basic_json(T &&val)
     {
@@ -2957,10 +2960,9 @@ class basic_json
     template <
         typename T,
         enable_if_t<not std::is_same<basic_json_t, uncvref_t<T>>::value and
-                        detail::has_from_json<JSONSerializer, basic_json_t,
-                                              uncvref_t<T>>::value and
+                        detail::has_from_json<basic_json_t, uncvref_t<T>>::value and
                         not detail::has_non_default_from_json<
-                            JSONSerializer, basic_json_t, uncvref_t<T>>::value,
+                            basic_json_t, uncvref_t<T>>::value,
                     int> = 0>
     // do we really want the uncvref ? if a user call get<int &>, shouldn't we
     // static assert ?
@@ -2983,8 +2985,8 @@ class basic_json
     template <
         typename T,
         enable_if_t<not std::is_same<basic_json_t, uncvref_t<T>>::value and
-                        detail::has_non_default_from_json<
-                            JSONSerializer, basic_json_t, uncvref_t<T>>::value,
+                        detail::has_non_default_from_json<basic_json_t,
+                                                          uncvref_t<T>>::value,
                     int> = 0>
     uncvref_t<T> get() const
     {
