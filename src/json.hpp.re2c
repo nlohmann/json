@@ -326,15 +326,7 @@ struct external_constructor<value_t::object>
   }
 };
 
-// very useful construct against boilerplate (more boilerplate needed than in
-// C++17: http://en.cppreference.com/w/cpp/types/void_t)
-template <typename...> struct make_void
-{
-    using type = void;
-};
-template <typename... Ts> using void_t = typename make_void<Ts...>::type;
-
-// Implementation of 3 C++17 constructs: conjunction, disjunction, negation.
+// Implementation of 2 C++17 constructs: conjunction, negation.
 // This is needed to avoid evaluating all the traits in a condition
 //
 // For example: not std::is_same<void, T>::value and has_value_type<T>::value
@@ -352,11 +344,6 @@ struct conjunction<B1, Bn...>
 : conditional_t<bool(B1::value), conjunction<Bn...>, B1> {};
 
 template <class B> struct negation : std::integral_constant < bool, !B::value > {};
-template <class...> struct disjunction : std::false_type {};
-template <class B1> struct disjunction<B1> : B1 {};
-template <class B1, class... Bn>
-struct disjunction<B1, Bn...>
-: conditional_t<bool(B1::value), B1, disjunction<Bn...>> {};
 
 /*!
 @brief Helper to determine whether there's a key_type for T.
@@ -399,16 +386,16 @@ struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
         typename CompatibleObjectType::mapped_type>::value;
 };
 
-template<class RealType, class CompatibleObjectType>
+template<class BasicJson, class CompatibleObjectType>
 struct is_compatible_object_type
 {
     // As noted ahead, we need to stop evaluating traits if
     // `CompatibleObjectType = void`, hence the conjunction
-    static auto constexpr value = is_compatible_object_type_impl <
-                                  conjunction<negation<std::is_same<void, CompatibleObjectType>>,
-                                  has_mapped_type<CompatibleObjectType>,
-                                  has_key_type<CompatibleObjectType>>::value,
-                                  RealType, CompatibleObjectType >::value;
+    static auto constexpr value = is_compatible_object_type_impl<
+        conjunction<negation<std::is_same<void, CompatibleObjectType>>,
+                    has_mapped_type<CompatibleObjectType>,
+                    has_key_type<CompatibleObjectType>>::value,
+        typename BasicJson::object_t, CompatibleObjectType>::value;
 };
 
 template <bool B, class BasicJson, class CompatibleArrayType>
@@ -439,7 +426,7 @@ struct is_compatible_array_type
     // `is_compatible_object_type`, but we need the conjunction here as well
     static auto constexpr value = is_compatible_array_type_impl<
         conjunction<negation<is_compatible_object_type<
-                        typename BasicJson::object_t, CompatibleArrayType>>,
+                        BasicJson, CompatibleArrayType>>,
                     negation<std::is_constructible<typename BasicJson::string_t,
                                                    CompatibleArrayType>>,
                     has_value_type<CompatibleArrayType>,
@@ -480,12 +467,6 @@ struct is_compatible_float_type
     static constexpr auto value =
         std::is_constructible<RealFloat, CompatibleFloat>::value and
         std::is_floating_point<CompatibleFloat>::value;
-};
-
-template <typename T, typename BasicJson>
-struct is_compatible_basic_json_type
-{
-  static auto constexpr value = false;
 };
 
 template <typename T, typename BasicJson, typename PrimitiveIterator>
@@ -639,7 +620,7 @@ void to_json(Json &j, CompatibleArrayType const &arr)
 
 template <
     typename Json, typename CompatibleObjectType,
-    enable_if_t<is_compatible_object_type<typename Json::object_t, CompatibleObjectType>::value,
+    enable_if_t<is_compatible_object_type<Json, CompatibleObjectType>::value,
                 int> = 0>
 void to_json(Json &j, CompatibleObjectType const &arr)
 {
@@ -745,7 +726,7 @@ void from_json(Json const &j, CompatibleArrayType &arr)
 
 template <
     typename Json, typename CompatibleObjectType,
-    enable_if_t<is_compatible_object_type<typename Json::object_t, CompatibleObjectType>::value,
+    enable_if_t<is_compatible_object_type<Json, CompatibleObjectType>::value,
                 int> = 0>
 void from_json(Json const &j, CompatibleObjectType &obj)
 {
@@ -1863,7 +1844,6 @@ class basic_json
     // constructor chosen when:
     // - JSONSerializer::to_json exists for type T
     // - T is not a istream, nor convertible to basic_json (float, vectors, etc)
-    // is_compatible_basic_json_type == not is_user_defined_type
     template <
         typename T,
         enable_if_t<not std::is_base_of<std::istream, uncvref_t<T>>::value and
@@ -1871,10 +1851,8 @@ class basic_json
                     not std::is_same<uncvref_t<T>, basic_json_t>::value and
                     not std::is_same<uncvref_t<T>, typename basic_json_t::array_t::iterator>::value and
                     not std::is_same<uncvref_t<T>, typename basic_json_t::object_t::iterator>::value and
-                    detail::conjunction<detail::negation<detail::is_compatible_basic_json_type<
-                                            uncvref_t<T>, basic_json_t>>,
                                         detail::has_to_json<JSONSerializer, basic_json,
-                                                uncvref_t<T>>>::value,
+                                                uncvref_t<T>>::value,
                                                 int> = 0 >
                     basic_json(T && val)
     {
@@ -2426,18 +2404,6 @@ class basic_json
 
         assert_invariant();
         return *this;
-    }
-
-    // this overload is needed, since constructor for udt is explicit
-    template <typename T, enable_if_t<not detail::is_compatible_basic_json_type<
-                                          uncvref_t<T>, basic_json_t>::value and
-                                      detail::has_to_json<JSONSerializer, basic_json_t, uncvref_t<T>>::value>>
-    reference& operator=(T&& val) noexcept(std::is_nothrow_constructible<basic_json_t, uncvref_t<T>>::value and
-                                           std::is_nothrow_move_assignable<uncvref_t<T>>::value)
-    {
-        static_assert(sizeof(T) == 0 , "");
-        // I'm not sure this a is good practice...
-        return *this = basic_json_t{std::forward<T>(val)};
     }
 
     /*!
