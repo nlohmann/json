@@ -1789,15 +1789,16 @@ class basic_json
     // - JSONSerializer::to_json exists for type T
     // - T is not a istream, nor convertible to basic_json (float, vectors, etc)
     template <typename T, typename U = uncvref_t<T>,
-              enable_if_t<
-                  not std::is_base_of<std::istream, U>::value and
-                  not std::is_same<U, basic_json_t>::value and
-                  not detail::is_basic_json_nested_type<basic_json_t,U>::value and
-                      detail::has_to_json<basic_json, U>::value,
-                  int> = 0>
-    basic_json(T &&val)
+              enable_if_t<not std::is_base_of<std::istream, U>::value and
+                              not std::is_same<U, basic_json_t>::value and
+                              not detail::is_basic_json_nested_type<
+                                  basic_json_t, U>::value and
+                              detail::has_to_json<basic_json, U>::value,
+                          int> = 0>
+    basic_json(T &&val) noexcept(noexcept(JSONSerializer<U>::to_json(
+        std::declval<basic_json_t &>(), std::forward<T>(val))))
     {
-      JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
+      JSONSerializer<U>::to_json(*this, std::forward<T>(val));
     }
 
     /*!
@@ -2959,14 +2960,18 @@ class basic_json
     // the latter is preferred if both are present (since it does not require a default construction of T)
     template <
         typename T,
-        enable_if_t<not std::is_same<basic_json_t, uncvref_t<T>>::value and
-                        detail::has_from_json<basic_json_t, uncvref_t<T>>::value and
-                        not detail::has_non_default_from_json<
-                            basic_json_t, uncvref_t<T>>::value,
-                    int> = 0>
+        enable_if_t<
+            not std::is_same<basic_json_t, uncvref_t<T>>::value and
+                detail::has_from_json<basic_json_t, uncvref_t<T>>::value and
+                not detail::has_non_default_from_json<basic_json_t,
+                                                      uncvref_t<T>>::value,
+            int> = 0>
     // do we really want the uncvref ? if a user call get<int &>, shouldn't we
+    // i know there is a special behaviour for boolean_t* and such
     // static assert ?
-    auto get() const -> uncvref_t<T>
+    auto get() const noexcept(noexcept(JSONSerializer<uncvref_t<T>>::from_json(
+        std::declval<basic_json_t const &>(), std::declval<uncvref_t<T> &>())))
+        -> uncvref_t<T>
     {
       using type = uncvref_t<T>;
       static_assert(std::is_default_constructible<type>::value &&
@@ -2981,14 +2986,13 @@ class basic_json
     // This overload is chosen when:
     // - T is not basic_json_t
     // - and JSONSerializer<T>::from_json(basic_json const&) does not exist
-    // TODO add constexpr, noexcept(...)
     template <
         typename T,
         enable_if_t<not std::is_same<basic_json_t, uncvref_t<T>>::value and
                         detail::has_non_default_from_json<basic_json_t,
                                                           uncvref_t<T>>::value,
                     int> = 0>
-    uncvref_t<T> get() const
+    constexpr uncvref_t<T> get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<basic_json_t const&>())))
     {
       return JSONSerializer<T>::from_json(*this);
     }
