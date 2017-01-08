@@ -391,19 +391,19 @@ TEST_CASE("adl_serializer specialization", "[udt]")
 
 namespace nlohmann
 {
-// this might work in the future, not in the scope of this PR though
-// we have to make this very clear in the doc
-template <typename T>
-struct adl_serializer<std::vector<T>>
-{
-    static void to_json(json& j, std::vector<T> const& opt)
-    {
-    }
-
-    static void from_json(json const& j, std::vector<T>& opt)
-    {
-    }
-};
+  // TODO provide a real example, since this works now :)
+// template <typename T>
+// struct adl_serializer<std::vector<T>>
+// {
+//     static void to_json(json& j, std::vector<T> const& opt)
+//     {
+//       
+//     }
+//
+//     static void from_json(json const& j, std::vector<T>& opt)
+//     {
+//     }
+// };
 }
 
 TEST_CASE("current supported types are preferred over specializations", "[udt]")

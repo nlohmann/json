@@ -39,6 +39,7 @@ SOFTWARE.
 #include <cstdint> // int64_t, uint64_t
 #include <cstdlib> // strtod, strtof, strtold, strtoul
 #include <cstring> // strlen
+#include <forward_list> // forward_list
 #include <functional> // function, hash, less
 #include <initializer_list> // initializer_list
 #include <iomanip> // setw
@@ -272,6 +273,32 @@ struct external_constructor<value_t::number_integer>
   }
 };
 
+template <>
+struct external_constructor<value_t::array>
+{
+  template <typename Json>
+  static void construct(Json &j, const typename Json::array_t& arr)
+  {
+    j.m_type = value_t::array;
+    j.m_value = arr;
+    j.assert_invariant();
+  }
+
+  template <typename Json, typename CompatibleArrayType,
+            enable_if_t<not std::is_same<CompatibleArrayType,
+                                         typename Json::array_t>::value,
+                        int> = 0>
+  static void construct(Json &j, const CompatibleArrayType &arr)
+  {
+    using std::begin;
+    using std::end;
+    j.m_type = value_t::array;
+    j.m_value.array =
+        j.template create<typename Json::array_t>(begin(arr), end(arr));
+    j.assert_invariant();
+  }
+};
+
 // very useful construct against boilerplate (more boilerplate needed than in
 // C++17: http://en.cppreference.com/w/cpp/types/void_t)
 template <typename...> struct make_void
@@ -432,8 +459,6 @@ template <typename T, typename BasicJson>
 struct is_compatible_basic_json_type
 {
     static auto constexpr value =
-        std::is_same<T, BasicJson>::value or
-        is_compatible_array_type<BasicJson, T>::value or
         is_compatible_object_type<typename BasicJson::object_t, T>::value;
 };
 
@@ -575,6 +600,17 @@ void to_json(Json &j, UnscopedEnumType e)
   external_constructor<value_t::number_integer>::construct(j, e);
 }
 
+template <
+    typename Json, typename CompatibleArrayType,
+    enable_if_t<
+        is_compatible_array_type<Json, CompatibleArrayType>::value or
+            std::is_same<typename Json::array_t, CompatibleArrayType>::value,
+        int> = 0>
+void to_json(Json &j, CompatibleArrayType const &arr)
+{
+  external_constructor<value_t::array>::construct(j, arr);
+}
+
 template <typename Json>
 void from_json(Json const& j, typename Json::boolean_t& b)
 {
@@ -616,6 +652,59 @@ void from_json(Json const &j, UnscopedEnumType& e)
   typename std::underlying_type<UnscopedEnumType>::type val = e;
   get_arithmetic_value(j, val);
   e = static_cast<UnscopedEnumType>(val);
+}
+
+template <typename Json>
+void from_json(Json const &j, typename Json::array_t &arr)
+{
+  if (!j.is_array())
+    throw std::domain_error("type must be array, but is " + type_name(j));
+  arr = *const_cast<Json&>(j).template get_ptr<typename Json::array_t*>();
+}
+
+// forward_list doesn't have an insert method, TODO find a way to avoid including forward_list
+template <typename Json, typename T, typename Allocator>
+void from_json(Json const&j, std::forward_list<T, Allocator>& l)
+{
+  // do not perform the check when user wants to retrieve jsons
+  // (except when it's null.. ?)
+  if (j.is_null())
+      throw std::domain_error("type must be array, but is " + type_name(j));
+  if (not std::is_same<T, Json>::value)
+  {
+    if (!j.is_array())
+      throw std::domain_error("type must be array, but is " + type_name(j));
+  }
+  for (auto it = j.rbegin(), end = j.rend(); it != end; ++it)
+    l.push_front(it->template get<T>());
+}
+
+template <
+    typename Json, typename CompatibleArrayType,
+    enable_if_t<is_compatible_array_type<Json, CompatibleArrayType>::value and
+                    not std::is_same<typename Json::array_t,
+                                     CompatibleArrayType>::value,
+                int> = 0>
+void from_json(Json const &j, CompatibleArrayType &arr)
+{
+  if (j.is_null())
+      throw std::domain_error("type must be array, but is " + type_name(j));
+  // when T == Json, do not check if value_t is correct
+  if (not std::is_same<typename CompatibleArrayType::value_type, Json>::value)
+  {
+    if (!j.is_array())
+      throw std::domain_error("type must be array, but is " + type_name(j));
+  }
+
+  using std::begin;
+  using std::end;
+  std::transform(
+      j.begin(), j.end(), std::inserter(arr, end(arr)), [](Json const &i)
+      {
+        // get<Json>() returns *this, this won't call a from_json method when
+        // value_type is Json
+        return i.template get<typename CompatibleArrayType::value_type>();
+      });
 }
 
 // overload for arithmetic types, not chosen for basic_json template arguments (BooleanType, etc..)
@@ -1781,69 +1870,6 @@ class basic_json
         assert_invariant();
     }
 
-    /*!
-    @brief create an array (explicit)
-
-    Create an array JSON value with a given content.
-
-    @param[in] val  a value for the array
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for array value fails
-
-    @liveexample{The following code shows the constructor with an @ref array_t
-    parameter.,basic_json__array_t}
-
-    @sa @ref basic_json(const CompatibleArrayType&) -- create an array value
-    from a compatible STL containers
-
-    @since version 1.0.0
-    */
-    basic_json(const array_t& val)
-        : m_type(value_t::array), m_value(val)
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an array (implicit)
-
-    Create an array JSON value with a given content. This constructor allows
-    any type @a CompatibleArrayType that can be used to construct values of
-    type @ref array_t.
-
-    @tparam CompatibleArrayType An object type whose `value_type` is
-    compatible to @ref array_t. Examples include `std::vector`, `std::deque`,
-    `std::list`, `std::forward_list`, `std::array`, `std::set`,
-    `std::unordered_set`, `std::multiset`, and `unordered_multiset` with a
-    `value_type` from which a @ref basic_json value can be constructed.
-
-    @param[in] val  a value for the array
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for array value fails
-
-    @liveexample{The following code shows the constructor with several
-    compatible array type parameters.,basic_json__CompatibleArrayType}
-
-    @sa @ref basic_json(const array_t&) -- create an array value
-
-    @since version 1.0.0
-    */
-    template <class CompatibleArrayType,
-              enable_if_t<detail::is_compatible_array_type<basic_json_t, CompatibleArrayType>::value,
-                          int> = 0>
-    basic_json(const CompatibleArrayType& val) : m_type(value_t::array)
-    {
-        using std::begin;
-        using std::end;
-        m_value.array = create<array_t>(begin(val), end(val));
-        assert_invariant();
-    }
-
-
     // constructor chosen when:
     // - JSONSerializer::to_json exists for type T
     // - T is not a istream, nor convertible to basic_json (float, vectors, etc)
@@ -1852,6 +1878,7 @@ class basic_json
         typename T,
         enable_if_t<not std::is_base_of<std::istream, uncvref_t<T>>::value and
                     not detail::is_basic_json_nested_class<uncvref_t<T>, basic_json_t, primitive_iterator_t>::value and
+                    not std::is_same<uncvref_t<T>, basic_json_t>::value and
                     not std::is_same<uncvref_t<T>, typename basic_json_t::array_t::iterator>::value and
                     not std::is_same<uncvref_t<T>, typename basic_json_t::object_t::iterator>::value and
                     detail::conjunction<detail::negation<detail::is_compatible_basic_json_type<
@@ -3209,23 +3236,34 @@ class basic_json
       return get_impl(static_cast<ValueType *>(nullptr));
     }
 
+    // if T is basic_json, simply returns *this
+    template <typename T,
+              enable_if_t<std::is_same<T, basic_json_t>::value, int> = 0>
+    basic_json get() const
+    {
+      return *this;
+    }
+
     template <
         typename T,
-        enable_if_t<detail::conjunction<detail::negation<detail::is_compatible_basic_json_type<
-                                            uncvref_t<T>, basic_json_t>>,
-                                        detail::has_from_json<JSONSerializer, basic_json_t,
-                                                uncvref_t<T>>>::value,
-                                                int> = 0 >
-                    auto get() const -> uncvref_t<T>
+        enable_if_t<detail::conjunction<
+                        detail::negation<detail::is_compatible_basic_json_type<
+                            uncvref_t<T>, basic_json_t>>,
+                        detail::has_from_json<JSONSerializer, basic_json_t,
+                                              uncvref_t<T>>>::value and
+                        not std::is_same<basic_json_t, uncvref_t<T>>::value,
+                    int> = 0>
+    // do we really want the uncvref ? if a user call get<int &>, shouldn't we static assert ?
+    auto get() const -> uncvref_t<T>
     {
-        using type = uncvref_t<T>;
-        static_assert(std::is_default_constructible<type>::value&&
-        std::is_copy_constructible<type>::value,
-        "user-defined types must be DefaultConstructible and "
-        "CopyConstructible when used with get");
-        type ret;
-        JSONSerializer<type>::from_json(*this, ret);
-        return ret;
+      using type = uncvref_t<T>;
+      static_assert(std::is_default_constructible<type>::value &&
+                        std::is_copy_constructible<type>::value,
+                    "user-defined types must be DefaultConstructible and "
+                    "CopyConstructible when used with get");
+      type ret;
+      JSONSerializer<type>::from_json(*this, ret);
+      return ret;
     }
 
     // This overload is chosen for non-default constructible user-defined-types

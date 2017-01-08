@@ -1004,6 +1004,8 @@ TEST_CASE("value conversion")
                 CHECK_THROWS_AS((json().get<std::vector<json>>()), std::logic_error);
                 CHECK_THROWS_AS((json().get<std::list<json>>()), std::logic_error);
 
+                // does type really must be an array? or it rather must not be null?
+                // that's what I thought when other test like this one broke
                 CHECK_THROWS_WITH((json().get<std::list<int>>()), "type must be array, but is null");
                 CHECK_THROWS_WITH((json().get<std::vector<int>>()), "type must be array, but is null");
                 CHECK_THROWS_WITH((json().get<std::vector<json>>()), "type must be array, but is null");
