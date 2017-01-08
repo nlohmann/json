@@ -152,23 +152,9 @@ template <bool B, typename T = void>
 using enable_if_t = typename std::enable_if<B, T>::type;
 
 template <typename T>
-using remove_cv_t = typename std::remove_cv<T>::type;
-
-template <typename T>
-using remove_reference_t = typename std::remove_reference<T>::type;
-
-template <typename T>
-using uncvref_t = remove_cv_t<remove_reference_t<T>>;
-
-template <bool If, typename Then, typename Else>
-using conditional_t = typename std::conditional<If, Then, Else>::type;
+using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
 
 // Taken from http://stackoverflow.com/questions/26936640/how-to-implement-is-enum-class-type-trait
-template <typename T>
-using is_scoped_enum =
-    std::integral_constant<bool, not std::is_convertible<T, int>::value and
-    std::is_enum<T>::value>;
-
 template <typename T>
 using is_unscoped_enum =
     std::integral_constant<bool, std::is_convertible<T, int>::value and
@@ -341,7 +327,7 @@ template <class...> struct conjunction : std::true_type {};
 template <class B1> struct conjunction<B1> : B1 {};
 template <class B1, class... Bn>
 struct conjunction<B1, Bn...>
-: conditional_t<bool(B1::value), conjunction<Bn...>, B1> {};
+: std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
 
 template <class B> struct negation : std::integral_constant < bool, !B::value > {};
 
@@ -389,8 +375,6 @@ struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
 template<class BasicJson, class CompatibleObjectType>
 struct is_compatible_object_type
 {
-    // As noted ahead, we need to stop evaluating traits if
-    // `CompatibleObjectType = void`, hence the conjunction
     static auto constexpr value = is_compatible_object_type_impl<
         conjunction<negation<std::is_same<void, CompatibleObjectType>>,
                     has_mapped_type<CompatibleObjectType>,
@@ -499,11 +483,6 @@ struct has_to_json
                                       detect(std::declval<JSONSerializer<T, void>>()))>::value;
 };
 
-// those declarations are needed to workaround a MSVC bug related to ADL
-// (taken from MSVC-Ranges implementation)
-void to_json();
-void from_json();
-
 // overloads for basic_json template parameters
 
 template <typename Json, typename ArithmeticType,
@@ -568,7 +547,7 @@ void to_json(Json &j, CompatibleNumberIntegerType val) noexcept
 
 template <typename Json, typename UnscopedEnumType,
           enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
-void to_json(Json &j, UnscopedEnumType e)
+void to_json(Json &j, UnscopedEnumType e) noexcept
 {
   external_constructor<value_t::number_integer>::construct(j, e);
 }
@@ -736,7 +715,6 @@ void from_json(Json const &j, ArithmeticType &val)
 
 struct to_json_fn
 {
-    // is it really useful to mark those as constexpr?
     template <typename Json, typename T>
     constexpr auto operator()(Json&& j, T&& val) const
     noexcept(noexcept(to_json(std::forward<Json>(j), std::forward<T>(val))))
