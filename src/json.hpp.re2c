@@ -469,14 +469,13 @@ struct is_compatible_float_type
         std::is_floating_point<CompatibleFloat>::value;
 };
 
-template <typename T, typename BasicJson, typename PrimitiveIterator>
-struct is_basic_json_nested_class
+template <typename BasicJson, typename T>
+struct is_basic_json_nested_type
 {
     static auto constexpr value = std::is_same<T, typename BasicJson::iterator>::value or
                                   std::is_same<T, typename BasicJson::const_iterator>::value or
                                   std::is_same<T, typename BasicJson::reverse_iterator>::value or
                                   std::is_same<T, typename BasicJson::const_reverse_iterator>::value or
-                                  std::is_same<T, PrimitiveIterator>::value or
                                   std::is_same<T, typename BasicJson::json_pointer>::value;
 };
 
@@ -1844,19 +1843,16 @@ class basic_json
     // constructor chosen when:
     // - JSONSerializer::to_json exists for type T
     // - T is not a istream, nor convertible to basic_json (float, vectors, etc)
-    template <
-        typename T,
-        enable_if_t<not std::is_base_of<std::istream, uncvref_t<T>>::value and
-                    not detail::is_basic_json_nested_class<uncvref_t<T>, basic_json_t, primitive_iterator_t>::value and
-                    not std::is_same<uncvref_t<T>, basic_json_t>::value and
-                    not std::is_same<uncvref_t<T>, typename basic_json_t::array_t::iterator>::value and
-                    not std::is_same<uncvref_t<T>, typename basic_json_t::object_t::iterator>::value and
-                                        detail::has_to_json<JSONSerializer, basic_json,
-                                                uncvref_t<T>>::value,
-                                                int> = 0 >
-                    basic_json(T && val)
+    template <typename T, typename U = uncvref_t<T>,
+              enable_if_t<
+                  not std::is_base_of<std::istream, U>::value and
+                  not std::is_same<U, basic_json_t>::value and
+                  not detail::is_basic_json_nested_type<basic_json_t,U>::value and
+                      detail::has_to_json<JSONSerializer, basic_json, U>::value,
+                  int> = 0>
+    basic_json(T &&val)
     {
-        JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
+      JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
     }
 
     /*!
