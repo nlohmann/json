@@ -299,6 +299,33 @@ struct external_constructor<value_t::array>
   }
 };
 
+template <>
+struct external_constructor<value_t::object>
+{
+  template <typename Json>
+  static void construct(Json &j, const typename Json::object_t& obj)
+  {
+    j.m_type = value_t::object;
+    j.m_value = obj;
+    j.assert_invariant();
+  }
+
+  template <typename Json, typename CompatibleObjectType,
+            enable_if_t<not std::is_same<CompatibleObjectType,
+                                         typename Json::object_t>::value,
+                        int> = 0>
+  static void construct(Json &j, const CompatibleObjectType &obj)
+  {
+    using std::begin;
+    using std::end;
+
+    j.m_type = value_t::object;
+    j.m_value.object =
+        j.template create<typename Json::object_t>(begin(obj), end(obj));
+    j.assert_invariant();
+  }
+};
+
 // very useful construct against boilerplate (more boilerplate needed than in
 // C++17: http://en.cppreference.com/w/cpp/types/void_t)
 template <typename...> struct make_void
@@ -458,8 +485,7 @@ struct is_compatible_float_type
 template <typename T, typename BasicJson>
 struct is_compatible_basic_json_type
 {
-    static auto constexpr value =
-        is_compatible_object_type<typename BasicJson::object_t, T>::value;
+  static auto constexpr value = false;
 };
 
 template <typename T, typename BasicJson, typename PrimitiveIterator>
@@ -611,6 +637,15 @@ void to_json(Json &j, CompatibleArrayType const &arr)
   external_constructor<value_t::array>::construct(j, arr);
 }
 
+template <
+    typename Json, typename CompatibleObjectType,
+    enable_if_t<is_compatible_object_type<typename Json::object_t, CompatibleObjectType>::value,
+                int> = 0>
+void to_json(Json &j, CompatibleObjectType const &arr)
+{
+  external_constructor<value_t::object>::construct(j, arr);
+}
+
 template <typename Json>
 void from_json(Json const& j, typename Json::boolean_t& b)
 {
@@ -705,6 +740,24 @@ void from_json(Json const &j, CompatibleArrayType &arr)
         // value_type is Json
         return i.template get<typename CompatibleArrayType::value_type>();
       });
+}
+
+
+template <
+    typename Json, typename CompatibleObjectType,
+    enable_if_t<is_compatible_object_type<typename Json::object_t, CompatibleObjectType>::value,
+                int> = 0>
+void from_json(Json const &j, CompatibleObjectType &obj)
+{
+  if (!j.is_object())
+    throw std::domain_error("type must be object, but is " + type_name(j));
+
+  auto inner_object = const_cast<Json&>(j).template get_ptr<typename Json::object_t*>();
+  using std::begin;
+  using std::end;
+  // we could avoid the assignment, but this might require a for loop, which
+  // might be less efficient than the container constructor for some containers (would it?)
+  obj = CompatibleObjectType(begin(*inner_object), end(*inner_object));
 }
 
 // overload for arithmetic types, not chosen for basic_json template arguments (BooleanType, etc..)
@@ -1803,69 +1856,6 @@ class basic_json
     basic_json(std::nullptr_t = nullptr) noexcept
         : basic_json(value_t::null)
     {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an object (explicit)
-
-    Create an object JSON value with a given content.
-
-    @param[in] val  a value for the object
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for object value fails
-
-    @liveexample{The following code shows the constructor with an @ref
-    object_t parameter.,basic_json__object_t}
-
-    @sa @ref basic_json(const CompatibleObjectType&) -- create an object value
-    from a compatible STL container
-
-    @since version 1.0.0
-    */
-    basic_json(const object_t& val)
-        : m_type(value_t::object), m_value(val)
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an object (implicit)
-
-    Create an object JSON value with a given content. This constructor allows
-    any type @a CompatibleObjectType that can be used to construct values of
-    type @ref object_t.
-
-    @tparam CompatibleObjectType An object type whose `key_type` and
-    `value_type` is compatible to @ref object_t. Examples include `std::map`,
-    `std::unordered_map`, `std::multimap`, and `std::unordered_multimap` with
-    a `key_type` of `std::string`, and a `value_type` from which a @ref
-    basic_json value can be constructed.
-
-    @param[in] val  a value for the object
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for object value fails
-
-    @liveexample{The following code shows the constructor with several
-    compatible object type parameters.,basic_json__CompatibleObjectType}
-
-    @sa @ref basic_json(const object_t&) -- create an object value
-
-    @since version 1.0.0
-    */
-    template <class CompatibleObjectType,
-              enable_if_t<detail::is_compatible_object_type<
-                              object_t, CompatibleObjectType>::value,
-                          int> = 0>
-    basic_json(const CompatibleObjectType& val) : m_type(value_t::object)
-    {
-        using std::begin;
-        using std::end;
-        m_value.object = create<object_t>(begin(val), end(val));
         assert_invariant();
     }
 
