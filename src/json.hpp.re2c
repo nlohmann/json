@@ -260,6 +260,18 @@ struct external_constructor<value_t::number_unsigned>
   }
 };
 
+template <>
+struct external_constructor<value_t::number_integer>
+{
+  template <typename Json>
+  static void construct(Json &j, typename Json::number_integer_t val) noexcept
+  {
+    j.m_type = value_t::number_integer;
+    j.m_value = val;
+    j.assert_invariant();
+  }
+};
+
 // very useful construct against boilerplate (more boilerplate needed than in
 // C++17: http://en.cppreference.com/w/cpp/types/void_t)
 template <typename...> struct make_void
@@ -387,6 +399,7 @@ struct is_compatible_integer_type_impl : std::false_type {};
 template <typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type_impl<true, RealIntegerType, CompatibleNumberIntegerType>
 {
+  // is there an assert somewhere on overflows?
     using RealLimits = std::numeric_limits<RealIntegerType>;
     using CompatibleLimits = std::numeric_limits<CompatibleNumberIntegerType>;
 
@@ -402,7 +415,7 @@ struct is_compatible_integer_type
 {
   static constexpr auto
       value = is_compatible_integer_type_impl <
-                  std::is_arithmetic<CompatibleNumberIntegerType>::value and
+                  std::is_integral<CompatibleNumberIntegerType>::value and
               not std::is_same<bool, CompatibleNumberIntegerType>::value,
       RealIntegerType, CompatibleNumberIntegerType > ::value;
 };
@@ -422,8 +435,7 @@ struct is_compatible_basic_json_type
         is_unscoped_enum<T>::value or
         std::is_same<T, BasicJson>::value or
         is_compatible_array_type<BasicJson, T>::value or
-        is_compatible_object_type<typename BasicJson::object_t, T>::value or
-        is_compatible_integer_type<typename BasicJson::number_integer_t, T>::value;
+        is_compatible_object_type<typename BasicJson::object_t, T>::value;
 };
 
 template <typename T, typename BasicJson, typename PrimitiveIterator>
@@ -547,6 +559,16 @@ void to_json(Json &j, CompatibleNumberUnsignedType val) noexcept
   external_constructor<value_t::number_unsigned>::construct(j, val);
 }
 
+template <
+    typename Json, typename CompatibleNumberIntegerType,
+   enable_if_t<is_compatible_integer_type<typename Json::number_integer_t,
+                                         CompatibleNumberIntegerType>::value,
+                int> = 0>
+void to_json(Json &j, CompatibleNumberIntegerType val) noexcept
+{
+  external_constructor<value_t::number_integer>::construct(j, val);
+}
+
 template <typename Json>
 void from_json(Json const& j, typename Json::boolean_t& b)
 {
@@ -571,6 +593,12 @@ void from_json(Json const& j, typename Json::number_float_t& val)
 
 template <typename Json>
 void from_json(Json const& j, typename Json::number_unsigned_t& val)
+{
+  get_arithmetic_value(j, val);
+}
+
+template <typename Json>
+void from_json(Json const& j, typename Json::number_integer_t& val)
 {
   get_arithmetic_value(j, val);
 }
@@ -1821,104 +1849,9 @@ class basic_json
         JSONSerializer<uncvref_t<T>>::to_json(*this, std::forward<T>(val));
     }
 
-    /*!
-    @brief create an integer number (explicit)
-
-    Create an integer number JSON value with a given content.
-
-    @tparam T A helper type to remove this function via SFINAE in case @ref
-    number_integer_t is the same as `int`. In this case, this constructor
-    would have the same signature as @ref basic_json(const int value). Note
-    the helper type @a T is not visible in this constructor's interface.
-
-    @param[in] val  an integer to create a JSON number from
-
-    @complexity Constant.
-
-    @liveexample{The example below shows the construction of an integer
-    number value.,basic_json__number_integer_t}
-
-    @sa @ref basic_json(const int) -- create a number value (integer)
-    @sa @ref basic_json(const CompatibleNumberIntegerType) -- create a number
-    value (integer) from a compatible number type
-
-    @since version 1.0.0
-    */
-    template<typename T, typename std::enable_if<
-                 not (std::is_same<T, int>::value) and
-                 std::is_same<T, number_integer_t>::value, int>::type = 0>
-    basic_json(const number_integer_t val) noexcept
-        : m_type(value_t::number_integer), m_value(val)
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an integer number from an enum type (explicit)
-
-    Create an integer number JSON value with a given content.
-
-    @param[in] val  an integer to create a JSON number from
-
-    @note This constructor allows to pass enums directly to a constructor. As
-    C++ has no way of specifying the type of an anonymous enum explicitly, we
-    can only rely on the fact that such values implicitly convert to int. As
-    int may already be the same type of number_integer_t, we may need to
-    switch off the constructor @ref basic_json(const number_integer_t).
-
-    @complexity Constant.
-
-    @liveexample{The example below shows the construction of an integer
-    number value from an anonymous enum.,basic_json__const_int}
-
-    @sa @ref basic_json(const number_integer_t) -- create a number value
-    (integer)
-    @sa @ref basic_json(const CompatibleNumberIntegerType) -- create a number
-    value (integer) from a compatible number type
-
-    @since version 1.0.0
-    */
-
     // Constructor for unscoped enums (not enum classes)
     template <typename T, enable_if_t<is_unscoped_enum<T>::value, int> = 0>
     basic_json(T val) noexcept
-        : m_type(value_t::number_integer),
-          m_value(static_cast<number_integer_t>(val))
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an integer number (implicit)
-
-    Create an integer number JSON value with a given content. This constructor
-    allows any type @a CompatibleNumberIntegerType that can be used to
-    construct values of type @ref number_integer_t.
-
-    @tparam CompatibleNumberIntegerType An integer type which is compatible to
-    @ref number_integer_t. Examples include the types `int`, `int32_t`,
-    `long`, and `short`.
-
-    @param[in] val  an integer to create a JSON number from
-
-    @complexity Constant.
-
-    @liveexample{The example below shows the construction of several integer
-    number values from compatible
-    types.,basic_json__CompatibleIntegerNumberType}
-
-    @sa @ref basic_json(const number_integer_t) -- create a number value
-    (integer)
-    @sa @ref basic_json(const int) -- create a number value (integer)
-
-    @since version 1.0.0
-    */
-    template <
-        typename CompatibleNumberIntegerType,
-        enable_if_t<detail::is_compatible_integer_type<
-                        number_integer_t, CompatibleNumberIntegerType>::value,
-                    int> = 0 >
-    basic_json(const CompatibleNumberIntegerType val) noexcept
         : m_type(value_t::number_integer),
           m_value(static_cast<number_integer_t>(val))
     {
