@@ -494,11 +494,11 @@ template <typename Json, typename ArithmeticType,
 void get_arithmetic_value(Json const &j, ArithmeticType &val)
 {
   if (j.is_number_integer())
-    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_integer_t*>();
+    val = *j.template get_ptr<const typename Json::number_integer_t*>();
   else if (j.is_number_unsigned())
-    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_unsigned_t*>();
+    val = *j.template get_ptr<const typename Json::number_unsigned_t*>();
   else if (j.is_number_float())
-    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_float_t*>();
+    val = *j.template get_ptr<const typename Json::number_float_t*>();
   else
     throw std::domain_error("type must be number, but is " + type_name(j));
 }
@@ -578,7 +578,7 @@ void from_json(Json const& j, typename Json::boolean_t& b)
 {
   if (!j.is_boolean())
     throw std::domain_error("type must be boolean, but is " + type_name(j));
-  b = *const_cast<Json&>(j).template get_ptr<typename Json::boolean_t*>();
+  b = *j.template get_ptr<const typename Json::boolean_t*>();
 }
 
 template <typename Json>
@@ -586,7 +586,7 @@ void from_json(Json const& j, typename Json::string_t& s)
 {
   if (!j.is_string())
     throw std::domain_error("type must be string, but is " + type_name(j));
-  s = *const_cast<Json&>(j).template get_ptr<typename Json::string_t*>();
+  s = *j.template get_ptr<const typename Json::string_t*>();
 }
 
 template <typename Json>
@@ -621,7 +621,7 @@ void from_json(Json const &j, typename Json::array_t &arr)
 {
   if (!j.is_array())
     throw std::domain_error("type must be array, but is " + type_name(j));
-  arr = *const_cast<Json&>(j).template get_ptr<typename Json::array_t*>();
+  arr = *j.template get_ptr<const typename Json::array_t*>();
 }
 
 // forward_list doesn't have an insert method, TODO find a way to avoid including forward_list
@@ -679,7 +679,7 @@ void from_json(Json const &j, CompatibleObjectType &obj)
   if (!j.is_object())
     throw std::domain_error("type must be object, but is " + type_name(j));
 
-  auto inner_object = const_cast<Json&>(j).template get_ptr<typename Json::object_t*>();
+  auto inner_object = j.template get_ptr<const typename Json::object_t*>();
   using std::begin;
   using std::end;
   // we could avoid the assignment, but this might require a for loop, which
@@ -703,13 +703,13 @@ template <
 void from_json(Json const &j, ArithmeticType &val)
 {
   if (j.is_number_integer())
-    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_integer_t*>();
+    val = *j.template get_ptr<const typename Json::number_integer_t*>();
   else if (j.is_number_unsigned())
-    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_unsigned_t*>();
+    val = *j.template get_ptr<const typename Json::number_unsigned_t*>();
   else if (j.is_number_float())
-    val = *const_cast<Json&>(j).template get_ptr<typename Json::number_float_t*>();
+    val = *j.template get_ptr<const typename Json::number_float_t*>();
   else if (j.is_boolean())
-    val = *const_cast<Json&>(j).template get_ptr<typename Json::boolean_t*>();
+    val = *j.template get_ptr<const typename Json::boolean_t*>();
   else
     throw std::domain_error("type must be number, but is " + type_name(j));
 }
