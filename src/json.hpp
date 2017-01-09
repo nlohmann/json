@@ -493,10 +493,11 @@ template <typename Json, typename ArithmeticType,
                       int> = 0>
 void get_arithmetic_value(Json const &j, ArithmeticType &val)
 {
-  if (j.is_number_integer())
-    val = *j.template get_ptr<const typename Json::number_integer_t*>();
-  else if (j.is_number_unsigned())
+  // unsigned must be checked first, since is_number_integer() == true for unsigned
+  if (j.is_number_unsigned())
     val = *j.template get_ptr<const typename Json::number_unsigned_t*>();
+  else if (j.is_number_integer())
+    val = *j.template get_ptr<const typename Json::number_integer_t*>();
   else if (j.is_number_float())
     val = *j.template get_ptr<const typename Json::number_float_t*>();
   else
@@ -702,10 +703,10 @@ template <
         int> = 0>
 void from_json(Json const &j, ArithmeticType &val)
 {
-  if (j.is_number_integer())
-    val = *j.template get_ptr<const typename Json::number_integer_t*>();
-  else if (j.is_number_unsigned())
+  if (j.is_number_unsigned())
     val = *j.template get_ptr<const typename Json::number_unsigned_t*>();
+  else if (j.is_number_integer())
+    val = *j.template get_ptr<const typename Json::number_integer_t*>();
   else if (j.is_number_float())
     val = *j.template get_ptr<const typename Json::number_float_t*>();
   else if (j.is_boolean())
