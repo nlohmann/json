@@ -715,27 +715,81 @@ void from_json(Json const &j, ArithmeticType &val)
     throw std::domain_error("type must be number, but is " + type_name(j));
 }
 
+template <typename Json, typename T>
+constexpr auto has_adl_from_json(int) -> decltype(from_json(std::declval<Json const&>(), std::declval<T&>()), true)
+{
+  return true;
+}
+
+template <typename, typename>
+constexpr bool has_adl_from_json(long)
+{
+  return false;
+}
+
+template <typename Json, typename T>
+constexpr auto has_adl_to_json(int) -> decltype(to_json(std::declval<Json&>(), std::declval<T const&>()), true)
+{
+  return true;
+}
+
+template <typename, typename>
+constexpr bool has_adl_to_json(long)
+{
+  return false;
+}
+
 struct to_json_fn
 {
-    template <typename Json, typename T>
-    constexpr auto operator()(Json&& j, T&& val) const
+  private:
+    template <typename Json, typename T, enable_if_t<has_adl_to_json<Json, T>(0), int> = 0>
+    auto operator()(Json&& j, T&& val) const
     noexcept(noexcept(to_json(std::forward<Json>(j), std::forward<T>(val))))
     -> decltype(to_json(std::forward<Json>(j), std::forward<T>(val)),
                 void())
     {
         return to_json(std::forward<Json>(j), std::forward<T>(val));
     }
+
+    template <typename Json, typename T, enable_if_t<not has_adl_to_json<Json, T>(0), int> = 0>
+    void operator()(Json&&, T&&) const noexcept
+    {
+        static_assert(has_adl_to_json<Json, T>(0), "to_json method in T's namespace can not be called");
+    }
+
+public:
+  template <typename Json, typename T>
+  void operator()(Json &j, T &&val) const
+      noexcept(noexcept(std::declval<to_json_fn>().call(0, j, std::forward<T>(val))))
+  {
+      return call(0, j, std::forward<T>(val));
+  }
 };
 
 struct from_json_fn
 {
-    template <typename Json, typename T>
-    constexpr auto operator()(Json&& j, T& val) const
+  private:
+    template <typename Json, typename T, enable_if_t<has_adl_from_json<Json, T>(0), int> = 0>
+    auto operator()(Json&& j, T& val) const
     noexcept(noexcept(from_json(std::forward<Json>(j), val)))
     -> decltype(from_json(std::forward<Json>(j), val), void())
     {
         return from_json(std::forward<Json>(j), val);
     }
+    
+    template <typename Json, typename T, enable_if_t<not has_adl_from_json<Json, T>(0), int> = 0>
+    void operator()(Json&&, T&) const noexcept
+    {
+        static_assert(has_adl_from_json<Json, T>(0), "from_json method in T's namespace can not be called");
+    }
+
+public:
+  template <typename Json, typename T>
+  void operator()(Json const &j, T &val) const
+      noexcept(noexcept(std::declval<from_json_fn>().call(0, j, val)))
+  {
+      return call(0, j, val);
+  }
 };
 
 /*!
@@ -757,7 +811,6 @@ struct DecimalSeparator : std::numpunct<char>
         return '.';
     }
 };
-
 }
 
 // taken from ranges-v3
