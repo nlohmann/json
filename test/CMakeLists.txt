@@ -26,6 +26,7 @@ add_executable(${JSON_UNITTEST_TARGET_NAME}
     "src/unit-iterators2.cpp"
     "src/unit-json_patch.cpp"
     "src/unit-json_pointer.cpp"
+    "src/unit-meta.cpp"
     "src/unit-modifiers.cpp"
     "src/unit-msgpack.cpp"
     "src/unit-pointer_access.cpp"
