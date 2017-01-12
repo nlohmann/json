@@ -495,11 +495,11 @@ void get_arithmetic_value(Json const &j, ArithmeticType &val)
 {
   // unsigned must be checked first, since is_number_integer() == true for unsigned
   if (j.is_number_unsigned())
-    val = *j.template get_ptr<const typename Json::number_unsigned_t*>();
+    val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_unsigned_t*>());
   else if (j.is_number_integer())
-    val = *j.template get_ptr<const typename Json::number_integer_t*>();
+    val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_integer_t*>());
   else if (j.is_number_float())
-    val = *j.template get_ptr<const typename Json::number_float_t*>();
+    val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_float_t*>());
   else
     throw std::domain_error("type must be number, but is " + type_name(j));
 }
@@ -523,7 +523,7 @@ template <typename Json, typename FloatType,
           enable_if_t<std::is_floating_point<FloatType>::value, int> = 0>
 void to_json(Json &j, FloatType val) noexcept
 {
-  external_constructor<value_t::number_float>::construct(j, val);
+  external_constructor<value_t::number_float>::construct(j, static_cast<typename Json::number_float_t>(val));
 }
 
 
@@ -534,7 +534,7 @@ template <
                 int> = 0>
 void to_json(Json &j, CompatibleNumberUnsignedType val) noexcept
 {
-  external_constructor<value_t::number_unsigned>::construct(j, val);
+  external_constructor<value_t::number_unsigned>::construct(j, static_cast<typename Json::number_unsigned_t>(val));
 }
 
 template <
@@ -544,7 +544,7 @@ template <
                 int> = 0>
 void to_json(Json &j, CompatibleNumberIntegerType val) noexcept
 {
-  external_constructor<value_t::number_integer>::construct(j, val);
+  external_constructor<value_t::number_integer>::construct(j, static_cast<typename Json::number_integer_t>(val));
 }
 
 template <typename Json, typename UnscopedEnumType,
@@ -704,57 +704,32 @@ template <
 void from_json(Json const &j, ArithmeticType &val)
 {
   if (j.is_number_unsigned())
-    val = *j.template get_ptr<const typename Json::number_unsigned_t*>();
+    val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_unsigned_t*>());
   else if (j.is_number_integer())
-    val = *j.template get_ptr<const typename Json::number_integer_t*>();
+    val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_integer_t*>());
   else if (j.is_number_float())
-    val = *j.template get_ptr<const typename Json::number_float_t*>();
+    val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_float_t*>());
   else if (j.is_boolean())
-    val = *j.template get_ptr<const typename Json::boolean_t*>();
+    val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::boolean_t*>());
   else
     throw std::domain_error("type must be number, but is " + type_name(j));
 }
 
-template <typename Json, typename T>
-constexpr auto has_adl_from_json(int) -> decltype(from_json(std::declval<Json const&>(), std::declval<T&>()), true)
-{
-  return true;
-}
-
-template <typename, typename>
-constexpr bool has_adl_from_json(long)
-{
-  return false;
-}
-
-template <typename Json, typename T>
-constexpr auto has_adl_to_json(int) -> decltype(to_json(std::declval<Json&>(), std::declval<T const&>()), true)
-{
-  return true;
-}
-
-template <typename, typename>
-constexpr bool has_adl_to_json(long)
-{
-  return false;
-}
-
 struct to_json_fn
 {
-  private:
-    template <typename Json, typename T, enable_if_t<has_adl_to_json<Json, T>(0), int> = 0>
-    auto operator()(Json&& j, T&& val) const
-    noexcept(noexcept(to_json(std::forward<Json>(j), std::forward<T>(val))))
-    -> decltype(to_json(std::forward<Json>(j), std::forward<T>(val)),
+    template <typename Json, typename T>
+    auto call(int, Json& j, T&& val) const
+    noexcept(noexcept(to_json(j, std::forward<T>(val))))
+    -> decltype(to_json(j, std::forward<T>(val)),
                 void())
     {
-        return to_json(std::forward<Json>(j), std::forward<T>(val));
+        return to_json(j, std::forward<T>(val));
     }
 
-    template <typename Json, typename T, enable_if_t<not has_adl_to_json<Json, T>(0), int> = 0>
-    void operator()(Json&&, T&&) const noexcept
+    template <typename Json, typename T>
+    void call(long, Json&, T&&) const noexcept
     {
-        static_assert(has_adl_to_json<Json, T>(0), "to_json method in T's namespace can not be called");
+        static_assert(sizeof(Json) == 0, "to_json method in T's namespace can not be called");
     }
 
 public:
@@ -768,20 +743,20 @@ public:
 
 struct from_json_fn
 {
-  private:
-    template <typename Json, typename T, enable_if_t<has_adl_from_json<Json, T>(0), int> = 0>
-    auto operator()(Json&& j, T& val) const
-    noexcept(noexcept(from_json(std::forward<Json>(j), val)))
-    -> decltype(from_json(std::forward<Json>(j), val), void())
-    {
-        return from_json(std::forward<Json>(j), val);
-    }
-    
-    template <typename Json, typename T, enable_if_t<not has_adl_from_json<Json, T>(0), int> = 0>
-    void operator()(Json&&, T&) const noexcept
-    {
-        static_assert(has_adl_from_json<Json, T>(0), "from_json method in T's namespace can not be called");
-    }
+private:
+  template <typename Json, typename T>
+  auto call(int, Json const &j, T &val) const
+      noexcept(noexcept(from_json(j, val)))
+          -> decltype(from_json(j, val), void())
+  {
+    return from_json(j, val);
+  }
+
+  template <typename Json, typename T>
+  void call(long, Json const&, T&) const noexcept
+  {
+      static_assert(sizeof(Json) == 0, "from_json method in T's namespace can not be called");
+  }
 
 public:
   template <typename Json, typename T>
