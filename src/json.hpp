@@ -642,6 +642,41 @@ void from_json(Json const&j, std::forward_list<T, Allocator>& l)
     l.push_front(it->template get<T>());
 }
 
+
+template <typename Json, typename CompatibleArrayType>
+void from_json_array_impl(Json const &j, CompatibleArrayType &arr, long)
+{
+  using std::begin;
+  using std::end;
+
+  std::transform(
+      j.begin(), j.end(), std::inserter(arr, end(arr)), [](Json const &i)
+      {
+        // get<Json>() returns *this, this won't call a from_json method when
+        // value_type is Json
+        return i.template get<typename CompatibleArrayType::value_type>();
+      });
+}
+
+template <typename Json, typename CompatibleArrayType>
+auto from_json_array_impl(Json const &j, CompatibleArrayType &arr, int)
+    -> decltype(
+        arr.reserve(std::declval<typename CompatibleArrayType::size_type>()),
+        void())
+{
+  using std::begin;
+  using std::end;
+
+  arr.reserve(j.size());
+  std::transform(
+      j.begin(), j.end(), std::inserter(arr, end(arr)), [](Json const &i)
+      {
+        // get<Json>() returns *this, this won't call a from_json method when
+        // value_type is Json
+        return i.template get<typename CompatibleArrayType::value_type>();
+      });
+}
+
 template <
     typename Json, typename CompatibleArrayType,
     enable_if_t<is_compatible_array_type<Json, CompatibleArrayType>::value and
@@ -658,16 +693,7 @@ void from_json(Json const &j, CompatibleArrayType &arr)
     if (!j.is_array())
       throw std::domain_error("type must be array, but is " + type_name(j));
   }
-
-  using std::begin;
-  using std::end;
-  std::transform(
-      j.begin(), j.end(), std::inserter(arr, end(arr)), [](Json const &i)
-      {
-        // get<Json>() returns *this, this won't call a from_json method when
-        // value_type is Json
-        return i.template get<typename CompatibleArrayType::value_type>();
-      });
+  from_json_array_impl(j, arr, 0);
 }
 
 
