@@ -843,9 +843,10 @@ struct adl_serializer
     }
 
     template <typename Json, typename T>
-    static void to_json(Json& j, T&& val)
+    static void to_json(Json &j, T &&val) noexcept(
+        noexcept(::nlohmann::to_json(j, std::forward<T>(val))))
     {
-        ::nlohmann::to_json(j, std::forward<T>(val));
+      ::nlohmann::to_json(j, std::forward<T>(val));
     }
 };
 
