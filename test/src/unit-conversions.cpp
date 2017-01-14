@@ -160,12 +160,28 @@ TEST_CASE("value conversion")
         {
             std::forward_list<json> a = j.get<std::forward_list<json>>();
             CHECK(json(a) == j);
+
+            CHECK_THROWS_AS(json(json::value_t::null).get<std::forward_list<json>>(), std::logic_error);
+            CHECK_THROWS_WITH(json(json::value_t::null).get<std::forward_list<json>>(),
+                              "type must be array, but is null");
         }
 
         SECTION("std::vector<json>")
         {
             std::vector<json> a = j.get<std::vector<json>>();
             CHECK(json(a) == j);
+
+            CHECK_THROWS_AS(json(json::value_t::null).get<std::vector<json>>(), std::logic_error);
+            CHECK_THROWS_WITH(json(json::value_t::null).get<std::vector<json>>(),
+                              "type must be array, but is null");
+
+            SECTION("reserve is called on containers that supports it")
+            {
+              // making the call to from_json throw in order to check capacity 
+              std::vector<float> v;
+              CHECK_THROWS_AS(nlohmann::from_json(j, v), std::logic_error);
+              CHECK(v.capacity() == j.size());
+            }
         }
 
         SECTION("std::deque<json>")
@@ -184,6 +200,8 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::number_unsigned).get<json::array_t>(), std::logic_error);
             CHECK_THROWS_AS(json(json::value_t::number_float).get<json::array_t>(), std::logic_error);
 
+            CHECK_THROWS_WITH(json(json::value_t::object).get<std::vector<int>>(),
+                              "type must be array, but is object");
             CHECK_THROWS_WITH(json(json::value_t::null).get<json::array_t>(),
                               "type must be array, but is null");
             CHECK_THROWS_WITH(json(json::value_t::object).get<json::array_t>(),
