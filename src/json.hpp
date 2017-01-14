@@ -189,6 +189,11 @@ template <typename Json> std::string type_name(Json const &j)
   }
 }
 
+// dispatch utility (taken from ranges-v3)
+template <unsigned N> struct priority_tag : priority_tag<N - 1> {};
+
+template <> struct priority_tag<0> {};
+
 // This is an experiment. I need this to move constructors out of basic_json.
 // I'm sure there is a better way, but this might need a big basic_json refactoring
 template <value_t> struct external_constructor;
@@ -642,9 +647,8 @@ void from_json(Json const&j, std::forward_list<T, Allocator>& l)
     l.push_front(it->template get<T>());
 }
 
-
 template <typename Json, typename CompatibleArrayType>
-void from_json_array_impl(Json const &j, CompatibleArrayType &arr, long)
+void from_json_array_impl(Json const &j, CompatibleArrayType &arr, priority_tag<0>)
 {
   using std::begin;
   using std::end;
@@ -659,7 +663,7 @@ void from_json_array_impl(Json const &j, CompatibleArrayType &arr, long)
 }
 
 template <typename Json, typename CompatibleArrayType>
-auto from_json_array_impl(Json const &j, CompatibleArrayType &arr, int)
+auto from_json_array_impl(Json const &j, CompatibleArrayType &arr, priority_tag<1>)
     -> decltype(
         arr.reserve(std::declval<typename CompatibleArrayType::size_type>()),
         void())
@@ -693,7 +697,7 @@ void from_json(Json const &j, CompatibleArrayType &arr)
     if (!j.is_array())
       throw std::domain_error("type must be array, but is " + type_name(j));
   }
-  from_json_array_impl(j, arr, 0);
+  from_json_array_impl(j, arr, priority_tag<1>{});
 }
 
 
@@ -744,7 +748,7 @@ void from_json(Json const &j, ArithmeticType &val)
 struct to_json_fn
 {
     template <typename Json, typename T>
-    auto call(int, Json& j, T&& val) const
+    auto call(Json& j, T&& val, priority_tag<1>) const
     noexcept(noexcept(to_json(j, std::forward<T>(val))))
     -> decltype(to_json(j, std::forward<T>(val)),
                 void())
@@ -753,7 +757,7 @@ struct to_json_fn
     }
 
     template <typename Json, typename T>
-    void call(long, Json&, T&&) const noexcept
+    void call(Json&, T&&, priority_tag<0>) const noexcept
     {
         static_assert(sizeof(Json) == 0, "to_json method in T's namespace can not be called");
     }
@@ -761,9 +765,9 @@ struct to_json_fn
 public:
   template <typename Json, typename T>
   void operator()(Json &j, T &&val) const
-      noexcept(noexcept(std::declval<to_json_fn>().call(0, j, std::forward<T>(val))))
+      noexcept(noexcept(std::declval<to_json_fn>().call(j, std::forward<T>(val), priority_tag<1>{})))
   {
-      return call(0, j, std::forward<T>(val));
+      return call(j, std::forward<T>(val), priority_tag<1>{});
   }
 };
 
@@ -771,7 +775,7 @@ struct from_json_fn
 {
 private:
   template <typename Json, typename T>
-  auto call(int, Json const &j, T &val) const
+  auto call(Json const &j, T &val, priority_tag<1>) const
       noexcept(noexcept(from_json(j, val)))
           -> decltype(from_json(j, val), void())
   {
@@ -779,7 +783,7 @@ private:
   }
 
   template <typename Json, typename T>
-  void call(long, Json const&, T&) const noexcept
+  void call(Json const&, T&, priority_tag<0>) const noexcept
   {
       static_assert(sizeof(Json) == 0, "from_json method in T's namespace can not be called");
   }
@@ -787,9 +791,9 @@ private:
 public:
   template <typename Json, typename T>
   void operator()(Json const &j, T &val) const
-      noexcept(noexcept(std::declval<from_json_fn>().call(0, j, val)))
+      noexcept(noexcept(std::declval<from_json_fn>().call(j, val, priority_tag<1>{})))
   {
-      return call(0, j, val);
+      return call(j, val, priority_tag<1>{});
   }
 };
 
