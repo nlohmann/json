@@ -394,14 +394,21 @@ namespace nlohmann
 template <>
 struct adl_serializer<std::vector<float>>
 {
-    static void to_json(json& j, std::vector<float> const&)
+  using type = std::vector<float>;
+    static void to_json(json& j, type const&)
     {
       j = "hijacked!";
     }
 
-    static void from_json(json const&, std::vector<float>& opt)
+    static void from_json(json const&, type& opt)
     {
       opt = {42.0, 42.0, 42.0};
+    }
+
+    // preferred version
+    static type from_json(json const&)
+    {
+      return {4.0, 5.0, 6.0};
     }
 };
 }
@@ -411,7 +418,8 @@ TEST_CASE("even supported types can be specialized", "[udt]")
     json j = std::vector<float> {1.0, 2.0, 3.0};
     CHECK(j.dump() == R"("hijacked!")");
     auto f = j.get<std::vector<float>>();
-    CHECK((f == std::vector<float>{42.0, 42.0, 42.0}));
+    // the single argument from_json method is preferred
+    CHECK((f == std::vector<float>{4.0, 5.0, 6.0}));
 }
 
 namespace nlohmann
