@@ -3027,16 +3027,16 @@ class basic_json
                                                       uncvref_t<T>>::value,
             int> = 0>
     // do we really want the uncvref ? if a user call get<int &>, shouldn't we
-    // i know there is a special behaviour for boolean_t* and such
     // static assert ?
+    // i know there is a special behaviour for boolean_t* and such
     auto get() const noexcept(noexcept(JSONSerializer<uncvref_t<T>>::from_json(
         std::declval<basic_json_t const &>(), std::declval<uncvref_t<T> &>())))
         -> uncvref_t<T>
     {
       using type = uncvref_t<T>;
-      static_assert(std::is_default_constructible<type>::value &&
+      static_assert(std::is_default_constructible<type>::value and
                         std::is_copy_constructible<type>::value,
-                    "user-defined types must be DefaultConstructible and "
+                    "Types must be DefaultConstructible and "
                     "CopyConstructible when used with get");
       type ret;
       JSONSerializer<type>::from_json(*this, ret);
@@ -3052,12 +3052,11 @@ class basic_json
                         detail::has_non_default_from_json<basic_json_t,
                                                           uncvref_t<T>>::value,
                     int> = 0>
-    constexpr uncvref_t<T> get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<basic_json_t const&>())))
+    uncvref_t<T> get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<basic_json_t const&>())))
     {
       return JSONSerializer<T>::from_json(*this);
     }
 
-    // TODO what to do with those...
     /*!
     @brief get a pointer value (explicit)
 
