@@ -797,6 +797,16 @@ public:
   }
 };
 
+// taken from ranges-v3
+template <typename T>
+struct static_const
+{
+    static constexpr T value{};
+};
+
+template <typename T>
+constexpr T static_const<T>::value;
+
 /*!
 @brief helper class to create locales with decimal point
 
@@ -818,21 +828,10 @@ struct DecimalSeparator : std::numpunct<char>
 };
 }
 
-// taken from ranges-v3
-// TODO add doc
-template <typename T>
-struct static_const
-{
-    static constexpr T value{};
-};
-
-template <typename T>
-constexpr T static_const<T>::value;
-
 inline namespace
 {
-constexpr const auto & to_json = static_const<detail::to_json_fn>::value;
-constexpr const auto & from_json = static_const<detail::from_json_fn>::value;
+constexpr const auto & to_json = detail::static_const<detail::to_json_fn>::value;
+constexpr const auto & from_json = detail::static_const<detail::from_json_fn>::value;
 }
 
 // default JSONSerializer template argument, doesn't care about template argument
