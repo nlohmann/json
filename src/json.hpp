@@ -116,20 +116,20 @@ namespace nlohmann
 @brief the JSON type enumeration
 
 This enumeration collects the different JSON types. It is internally used
-to distinguish the stored values, and the functions @ref is_null(), @ref
-is_object(), @ref is_array(), @ref is_string(), @ref is_boolean(), @ref
-is_number() (with @ref is_number_integer(), @ref is_number_unsigned(), and
-@ref is_number_float()), @ref is_discarded(), @ref is_primitive(), and
-@ref is_structured() rely on it.
+to distinguish the stored values, and the functions @ref basic_json::is_null(), @ref
+basic_json::is_object(), @ref basic_json::is_array(), @ref basic_json::is_string(), @ref basic_json::is_boolean(), @ref
+basic_json::is_number() (with @ref basic_json::is_number_integer(), @ref basic_json::is_number_unsigned(), and
+@ref basic_json::is_number_float()), @ref basic_json::is_discarded(), @ref basic_json::is_primitive(), and
+@ref basic_json::is_structured() rely on it.
 
 @note There are three enumeration entries (number_integer,
 number_unsigned, and number_float), because the library distinguishes
-these three types for numbers: @ref number_unsigned_t is used for unsigned
-integers, @ref number_integer_t is used for signed integers, and @ref
-number_float_t is used for floating-point numbers or to approximate
+these three types for numbers: @ref basic_json::number_unsigned_t is used for unsigned
+integers, @ref basic_json::number_integer_t is used for signed integers, and @ref
+basic_json::number_float_t is used for floating-point numbers or to approximate
 integers which do not fit in the limits of their respective type.
 
-@sa @ref basic_json(const value_t value_type) -- create a JSON value with
+@sa @ref basic_json::basic_json(const value_t value_type) -- create a JSON value with
 the default value for a given type
 
 @since version 1.0.0
@@ -1800,18 +1800,6 @@ class basic_json
     @liveexample{The following code shows the constructor for different @ref
     value_t values,basic_json__value_t}
 
-    @sa @ref basic_json(std::nullptr_t) -- create a `null` value
-    @sa @ref basic_json(boolean_t value) -- create a boolean value
-    @sa @ref basic_json(const string_t&) -- create a string value
-    @sa @ref basic_json(const object_t&) -- create a object value
-    @sa @ref basic_json(const array_t&) -- create a array value
-    @sa @ref basic_json(const number_float_t) -- create a number
-    (floating-point) value
-    @sa @ref basic_json(const number_integer_t) -- create a number (integer)
-    value
-    @sa @ref basic_json(const number_unsigned_t) -- create a number (unsigned)
-    value
-
     @since version 1.0.0
     */
     basic_json(const value_t value_type)
@@ -1844,9 +1832,21 @@ class basic_json
         assert_invariant();
     }
 
-    // constructor chosen when:
-    // - JSONSerializer::to_json exists for type T
-    // - T is not a istream, nor convertible to basic_json (float, vectors, etc)
+    /*!
+    @brief forwards the parameter to json_serializer<U>::to_json method (U = uncvref_t<T>)
+
+    this constructor is chosen if:
+    - T is not derived from std::istream
+    - T is not @ref basic_json (to avoid hijacking copy/move constructors)
+    - T is not a @ref basic_json nested type (@ref json_pointer, @ref iterator, etc ...)
+    - @ref json_serializer<U> has a to_json(basic_json_t&, T&&) method
+
+    @param[in] val the value to be forwarded
+
+    @throw what json_serializer<U>::to_json throws
+
+    @since version 2.1.0
+    */
     template <typename T, typename U = uncvref_t<T>,
               enable_if_t<not std::is_base_of<std::istream, U>::value and
                               not std::is_same<U, basic_json_t>::value and
@@ -3003,7 +3003,19 @@ class basic_json
     }
 
   public:
-    // if T is basic_json, simply returns *this
+    /*!
+    @brief get special-case overload
+
+    This overloads avoids a lot of template boilerplate, it can be seen as the identity method
+
+    @tparam T type; T == @ref basic_json
+
+    @return a copy of *this
+
+    @complexity Constant.
+
+    @since version 2.1.0
+    */
     template <typename T,
               enable_if_t<std::is_same<T, basic_json_t>::value, int> = 0>
     basic_json get() const
@@ -3011,12 +3023,21 @@ class basic_json
       return *this;
     }
 
-    // This overload is chosen when:
-    // - T is not basic_json_t
-    // - JSONSerializer<T>::from_json(basic_json const&, T&) exists
-    // - and JSONSerializer<T>::from_json(basic_json const&) does not exist
-    //
-    // the latter is preferred if both are present (since it does not require a default construction of T)
+    /*!
+    @brief get overload for CopyConstructible and DefaultConstructible types
+    construct a default U value, and call @ref json_serializer<U> from_json method with it
+
+    This overloads is chosen if:
+    - U is not @ref basic_json
+    - @ref json_serializer<U> has a from_json method of the form: void from_json(const @ref basic_json&, U&)
+    - @ref json_serializer<U> does not have a from_json method of the form: U from_json(const @ref basic_json&);
+
+    @return a value of type U 
+
+    @throw what json_serializer<U> from_json method throws
+
+    @since version 2.1.0
+    */
     template <
         typename T,
                  typename U = uncvref_t<T>,
@@ -3042,9 +3063,21 @@ class basic_json
       return ret;
     }
 
-    // This overload is chosen when:
-    // - T is not basic_json_t
-    // - and JSONSerializer<T>::from_json(basic_json const&) does not exist
+    /*!
+    @brief get overload for types than cannot be default constructed or copy constructed
+
+    If @ref json_serializer<U> has both overloads of from_json, this one is chosen
+
+    This overloads is chosen if:
+    - U is not @ref basic_json
+    - @ref json_serializer<U> has a from_json method of the form: U from_json(const @ref basic_json&);
+
+    @return a value of type U 
+
+    @throw what json_serializer<U> from_json method throws
+
+    @since version 2.1.0
+    */
     template <
         typename T,
         enable_if_t<not std::is_same<basic_json_t, uncvref_t<T>>::value and
