@@ -3019,26 +3019,26 @@ class basic_json
     // the latter is preferred if both are present (since it does not require a default construction of T)
     template <
         typename T,
+                 typename U = uncvref_t<T>,
         enable_if_t<
-            not std::is_same<basic_json_t, uncvref_t<T>>::value and
-                detail::has_from_json<basic_json_t, uncvref_t<T>>::value and
+            not std::is_same<basic_json_t, U>::value and
+                detail::has_from_json<basic_json_t, U>::value and
                 not detail::has_non_default_from_json<basic_json_t,
-                                                      uncvref_t<T>>::value,
+                                                      U>::value,
             int> = 0>
     // do we really want the uncvref ? if a user call get<int &>, shouldn't we
     // static assert ?
     // i know there is a special behaviour for boolean_t* and such
-    auto get() const noexcept(noexcept(JSONSerializer<uncvref_t<T>>::from_json(
-        std::declval<const basic_json_t &>(), std::declval<uncvref_t<T> &>())))
-        -> uncvref_t<T>
+    auto get() const noexcept(noexcept(JSONSerializer<U>::from_json(
+        std::declval<const basic_json_t &>(), std::declval<U &>())))
+        -> U
     {
-      using type = uncvref_t<T>;
-      static_assert(std::is_default_constructible<type>::value and
-                        std::is_copy_constructible<type>::value,
+      static_assert(std::is_default_constructible<U>::value and
+                        std::is_copy_constructible<U>::value,
                     "Types must be DefaultConstructible and "
                     "CopyConstructible when used with get");
-      type ret;
-      JSONSerializer<type>::from_json(*this, ret);
+      U ret;
+      JSONSerializer<U>::from_json(*this, ret);
       return ret;
     }
 
