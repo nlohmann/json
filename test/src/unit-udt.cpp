@@ -91,7 +91,7 @@ void to_json(Json& j, age a)
 }
 
 template <typename Json>
-void to_json(Json& j, name const& n)
+void to_json(Json& j, const name& n)
 {
     j = n.m_val;
 }
@@ -114,22 +114,22 @@ void to_json(Json& j, country c)
 }
 
 template <typename Json>
-void to_json(Json& j, person const& p)
+void to_json(Json& j, const person & p)
 {
     j = Json{{"age", p.m_age}, {"name", p.m_name}, {"country", p.m_country}};
 }
 
-void to_json(nlohmann::json& j, address const& a)
+void to_json(nlohmann::json& j, const address & a)
 {
     j = a.m_val;
 }
 
-void to_json(nlohmann::json& j, contact const& c)
+void to_json(nlohmann::json& j, const contact & c)
 {
     j = json{{"person", c.m_person}, {"address", c.m_address}};
 }
 
-void to_json(nlohmann::json& j, contact_book const& cb)
+void to_json(nlohmann::json& j, const contact_book & cb)
 {
     j = json{{"name", cb.m_book_name}, {"contacts", cb.m_contacts}};
 }
@@ -140,28 +140,28 @@ bool operator==(age lhs, age rhs)
     return lhs.m_val == rhs.m_val;
 }
 
-bool operator==(address const& lhs, address const& rhs)
+bool operator==(const address & lhs, const address & rhs)
 {
     return lhs.m_val == rhs.m_val;
 }
 
-bool operator==(name const& lhs, name const& rhs)
+bool operator==(const name & lhs, const name & rhs)
 {
     return lhs.m_val == rhs.m_val;
 }
 
-bool operator==(person const& lhs, person const& rhs)
+bool operator==(const person & lhs, const person & rhs)
 {
     return std::tie(lhs.m_name, lhs.m_age) == std::tie(rhs.m_name, rhs.m_age);
 }
 
-bool operator==(contact const& lhs, contact const& rhs)
+bool operator==(const contact & lhs, const contact & rhs)
 {
     return std::tie(lhs.m_person, lhs.m_address) ==
            std::tie(rhs.m_person, rhs.m_address);
 }
 
-bool operator==(contact_book const& lhs, contact_book const& rhs)
+bool operator==(const contact_book & lhs, const contact_book & rhs)
 {
     return std::tie(lhs.m_book_name, lhs.m_contacts) ==
            std::tie(rhs.m_book_name, rhs.m_contacts);
@@ -172,19 +172,19 @@ bool operator==(contact_book const& lhs, contact_book const& rhs)
 namespace udt
 {
 template <typename Json>
-void from_json(Json const& j, age& a)
+void from_json(const Json & j, age& a)
 {
     a.m_val = j.template get<int>();
 }
 
 template <typename Json>
-void from_json(Json const& j, name& n)
+void from_json(const Json & j, name& n)
 {
     n.m_val = j.template get<std::string>();
 }
 
 template <typename Json>
-void from_json(Json const& j, country& c)
+void from_json(const Json & j, country& c)
 {
     const auto str = j.template get<std::string>();
     static const std::map<std::string, country> m =
@@ -200,25 +200,25 @@ void from_json(Json const& j, country& c)
 }
 
 template <typename Json>
-void from_json(Json const& j, person& p)
+void from_json(const Json & j, person& p)
 {
     p.m_age = j["age"].template get<age>();
     p.m_name = j["name"].template get<name>();
     p.m_country = j["country"].template get<country>();
 }
 
-void from_json(nlohmann::json const& j, address& a)
+void from_json(const nlohmann::json & j, address& a)
 {
     a.m_val = j.get<std::string>();
 }
 
-void from_json(nlohmann::json const& j, contact& c)
+void from_json(const nlohmann::json & j, contact& c)
 {
     c.m_person = j["person"].get<person>();
     c.m_address = j["address"].get<address>();
 }
 
-void from_json(nlohmann::json const& j, contact_book& cb)
+void from_json(const nlohmann::json & j, contact_book& cb)
 {
     cb.m_book_name = j["name"].get<name>();
     cb.m_contacts = j["contacts"].get<std::vector<contact>>();
@@ -297,7 +297,7 @@ namespace nlohmann
 template <typename T>
 struct adl_serializer<std::shared_ptr<T>>
 {
-    static void to_json(json& j, std::shared_ptr<T> const& opt)
+    static void to_json(json& j, const std::shared_ptr<T> & opt)
     {
         if (opt)
         {
@@ -309,7 +309,7 @@ struct adl_serializer<std::shared_ptr<T>>
         }
     }
 
-    static void from_json(json const& j, std::shared_ptr<T>& opt)
+    static void from_json(const json & j, std::shared_ptr<T>& opt)
     {
         if (j.is_null())
         {
@@ -325,12 +325,12 @@ struct adl_serializer<std::shared_ptr<T>>
 template <>
 struct adl_serializer<udt::legacy_type>
 {
-    static void to_json(json& j, udt::legacy_type const& l)
+    static void to_json(json& j, const udt::legacy_type & l)
     {
         j = std::stoi(l.number);
     }
 
-    static void from_json(json const& j, udt::legacy_type& l)
+    static void from_json(const json & j, udt::legacy_type& l)
     {
         l.number = std::to_string(j.get<int>());
     }
@@ -395,18 +395,18 @@ template <>
 struct adl_serializer<std::vector<float>>
 {
   using type = std::vector<float>;
-    static void to_json(json& j, type const&)
+    static void to_json(json& j, const type &)
     {
       j = "hijacked!";
     }
 
-    static void from_json(json const&, type& opt)
+    static void from_json(const json &, type& opt)
     {
       opt = {42.0, 42.0, 42.0};
     }
 
     // preferred version
-    static type from_json(json const&)
+    static type from_json(const json &)
     {
       return {4.0, 5.0, 6.0};
     }
@@ -427,7 +427,7 @@ namespace nlohmann
 template <typename T>
 struct adl_serializer<std::unique_ptr<T>>
 {
-    static void to_json(json& j, std::unique_ptr<T> const& opt)
+    static void to_json(json& j, const std::unique_ptr<T> & opt)
     {
         if (opt)
         {
@@ -440,7 +440,7 @@ struct adl_serializer<std::unique_ptr<T>>
     }
 
     // this is the overload needed for non-copyable types,
-    static std::unique_ptr<T> from_json(json const& j)
+    static std::unique_ptr<T> from_json(const json & j)
     {
         if (j.is_null())
         {
@@ -496,7 +496,7 @@ struct pod_serializer
       typename Json, typename U = T,
       typename std::enable_if<
           not(std::is_pod<U>::value and std::is_class<U>::value), int>::type = 0>
-  static void from_json(Json const &j, U &t)
+  static void from_json(const Json &j, U &t)
   {
     using nlohmann::from_json;
     from_json(j, t);
@@ -506,7 +506,7 @@ struct pod_serializer
   template <typename Json, typename U = T,
             typename std::enable_if<
                 std::is_pod<U>::value and std::is_class<U>::value, int>::type = 0>
-  static void from_json(Json const &j, U &t)
+  static void from_json(const  Json &j, U &t)
   {
     std::uint64_t value;
     // TODO The following block is no longer relevant in this serializer, make another one that shows the issue
@@ -532,7 +532,7 @@ struct pod_serializer
       typename Json, typename U = T,
       typename std::enable_if<
           not(std::is_pod<U>::value and std::is_class<U>::value), int>::type = 0>
-  static void to_json(Json &j, T const &t)
+  static void to_json(Json &j, const  T &t)
   {
     using nlohmann::to_json;
     to_json(j, t);
@@ -541,9 +541,9 @@ struct pod_serializer
   template <typename Json, typename U = T,
             typename std::enable_if<
                 std::is_pod<U>::value and std::is_class<U>::value, int>::type = 0>
-  static void to_json(Json &j, T const &t) noexcept
+  static void to_json(Json &j, const  T &t) noexcept
   {
-    auto bytes = static_cast<unsigned char const *>(static_cast<void const *>(&t));
+    auto bytes = static_cast< const unsigned char*>(static_cast<const void *>(&t));
     std::uint64_t value = bytes[0];
     for (auto i = 1; i < 8; ++i)
       value |= std::uint64_t{bytes[i]} << 8 * i;
@@ -566,13 +566,13 @@ struct non_pod
 };
 
 template <typename Json>
-void to_json(Json& j, non_pod const& np)
+void to_json(Json& j, const non_pod & np)
 {
   j = np.s;
 }
 
 template <typename Json>
-void from_json(Json const& j, non_pod& np)
+void from_json(const Json & j, non_pod& np)
 {
   np.s = j.template get<std::string>();
 }
@@ -583,7 +583,7 @@ bool operator==(small_pod lhs, small_pod rhs) noexcept
            std::tie(rhs.begin, rhs.middle, rhs.end);
 }
 
-bool operator==(non_pod const &lhs, non_pod const &rhs) noexcept
+bool operator==(const  non_pod &lhs, const  non_pod &rhs) noexcept
 {
   return lhs.s == rhs.s;
 }
@@ -622,13 +622,13 @@ using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, boo
 template <typename T, typename>
 struct another_adl_serializer
 {
-    static void from_json(custom_json const& j , T& t)
+    static void from_json(const custom_json & j , T& t)
     {
         using nlohmann::from_json;
         from_json(j, t);
     }
 
-    static void to_json(custom_json& j , T const& t)
+    static void to_json(custom_json& j , const T & t)
     {
         using nlohmann::to_json;
         to_json(j, t);

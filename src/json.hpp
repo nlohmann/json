@@ -168,7 +168,7 @@ using is_unscoped_enum =
 
 namespace detail
 {
-template <typename Json> std::string type_name(Json const &j)
+template <typename Json> std::string type_name(const  Json &j)
 {
   switch (j.m_type)
   {
@@ -496,7 +496,7 @@ template <typename Json, typename ArithmeticType,
                           not std::is_same<ArithmeticType,
                                            typename Json::boolean_t>::value,
                       int> = 0>
-void get_arithmetic_value(Json const &j, ArithmeticType &val)
+void get_arithmetic_value(const  Json &j, ArithmeticType &val)
 {
   // unsigned must be checked first, since is_number_integer() == true for unsigned
   if (j.is_number_unsigned())
@@ -565,7 +565,7 @@ template <
         is_compatible_array_type<Json, CompatibleArrayType>::value or
             std::is_same<typename Json::array_t, CompatibleArrayType>::value,
         int> = 0>
-void to_json(Json &j, CompatibleArrayType const &arr)
+void to_json(Json &j, const  CompatibleArrayType &arr)
 {
   external_constructor<value_t::array>::construct(j, arr);
 }
@@ -574,13 +574,13 @@ template <
     typename Json, typename CompatibleObjectType,
     enable_if_t<is_compatible_object_type<Json, CompatibleObjectType>::value,
                 int> = 0>
-void to_json(Json &j, CompatibleObjectType const &arr)
+void to_json(Json &j, const  CompatibleObjectType &arr)
 {
   external_constructor<value_t::object>::construct(j, arr);
 }
 
 template <typename Json>
-void from_json(Json const& j, typename Json::boolean_t& b)
+void from_json(const Json & j, typename Json::boolean_t& b)
 {
   if (!j.is_boolean())
     throw std::domain_error("type must be boolean, but is " + type_name(j));
@@ -588,7 +588,7 @@ void from_json(Json const& j, typename Json::boolean_t& b)
 }
 
 template <typename Json>
-void from_json(Json const& j, typename Json::string_t& s)
+void from_json(const Json & j, typename Json::string_t& s)
 {
   if (!j.is_string())
     throw std::domain_error("type must be string, but is " + type_name(j));
@@ -596,26 +596,26 @@ void from_json(Json const& j, typename Json::string_t& s)
 }
 
 template <typename Json>
-void from_json(Json const& j, typename Json::number_float_t& val)
+void from_json(const Json & j, typename Json::number_float_t& val)
 {
   get_arithmetic_value(j, val);
 }
 
 template <typename Json>
-void from_json(Json const& j, typename Json::number_unsigned_t& val)
+void from_json(const Json & j, typename Json::number_unsigned_t& val)
 {
   get_arithmetic_value(j, val);
 }
 
 template <typename Json>
-void from_json(Json const& j, typename Json::number_integer_t& val)
+void from_json(const Json & j, typename Json::number_integer_t& val)
 {
   get_arithmetic_value(j, val);
 }
 
 template <typename Json, typename UnscopedEnumType,
           enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
-void from_json(Json const &j, UnscopedEnumType& e)
+void from_json(const  Json &j, UnscopedEnumType& e)
 {
   typename std::underlying_type<UnscopedEnumType>::type val = e;
   get_arithmetic_value(j, val);
@@ -623,7 +623,7 @@ void from_json(Json const &j, UnscopedEnumType& e)
 }
 
 template <typename Json>
-void from_json(Json const &j, typename Json::array_t &arr)
+void from_json(const  Json &j, typename Json::array_t &arr)
 {
   if (!j.is_array())
     throw std::domain_error("type must be array, but is " + type_name(j));
@@ -632,7 +632,7 @@ void from_json(Json const &j, typename Json::array_t &arr)
 
 // forward_list doesn't have an insert method, TODO find a way to avoid including forward_list
 template <typename Json, typename T, typename Allocator>
-void from_json(Json const&j, std::forward_list<T, Allocator>& l)
+void from_json(const Json &j, std::forward_list<T, Allocator>& l)
 {
   // do not perform the check when user wants to retrieve jsons
   // (except when it's null.. ?)
@@ -648,13 +648,13 @@ void from_json(Json const&j, std::forward_list<T, Allocator>& l)
 }
 
 template <typename Json, typename CompatibleArrayType>
-void from_json_array_impl(Json const &j, CompatibleArrayType &arr, priority_tag<0>)
+void from_json_array_impl(const  Json &j, CompatibleArrayType &arr, priority_tag<0>)
 {
   using std::begin;
   using std::end;
 
   std::transform(
-      j.begin(), j.end(), std::inserter(arr, end(arr)), [](Json const &i)
+      j.begin(), j.end(), std::inserter(arr, end(arr)), [](const  Json &i)
       {
         // get<Json>() returns *this, this won't call a from_json method when
         // value_type is Json
@@ -663,7 +663,7 @@ void from_json_array_impl(Json const &j, CompatibleArrayType &arr, priority_tag<
 }
 
 template <typename Json, typename CompatibleArrayType>
-auto from_json_array_impl(Json const &j, CompatibleArrayType &arr, priority_tag<1>)
+auto from_json_array_impl(const  Json &j, CompatibleArrayType &arr, priority_tag<1>)
     -> decltype(
         arr.reserve(std::declval<typename CompatibleArrayType::size_type>()),
         void())
@@ -673,7 +673,7 @@ auto from_json_array_impl(Json const &j, CompatibleArrayType &arr, priority_tag<
 
   arr.reserve(j.size());
   std::transform(
-      j.begin(), j.end(), std::inserter(arr, end(arr)), [](Json const &i)
+      j.begin(), j.end(), std::inserter(arr, end(arr)), [](const  Json &i)
       {
         // get<Json>() returns *this, this won't call a from_json method when
         // value_type is Json
@@ -687,7 +687,7 @@ template <
                     not std::is_same<typename Json::array_t,
                                      CompatibleArrayType>::value,
                 int> = 0>
-void from_json(Json const &j, CompatibleArrayType &arr)
+void from_json(const  Json &j, CompatibleArrayType &arr)
 {
   if (j.is_null())
       throw std::domain_error("type must be array, but is " + type_name(j));
@@ -705,7 +705,7 @@ template <
     typename Json, typename CompatibleObjectType,
     enable_if_t<is_compatible_object_type<Json, CompatibleObjectType>::value,
                 int> = 0>
-void from_json(Json const &j, CompatibleObjectType &obj)
+void from_json(const  Json &j, CompatibleObjectType &obj)
 {
   if (!j.is_object())
     throw std::domain_error("type must be object, but is " + type_name(j));
@@ -731,7 +731,7 @@ template <
             not std::is_same<ArithmeticType, typename Json::number_float_t>::value and
             not std::is_same<ArithmeticType, typename Json::boolean_t>::value,
         int> = 0>
-void from_json(Json const &j, ArithmeticType &val)
+void from_json(const  Json &j, ArithmeticType &val)
 {
   if (j.is_number_unsigned())
     val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_unsigned_t*>());
@@ -775,7 +775,7 @@ struct from_json_fn
 {
 private:
   template <typename Json, typename T>
-  auto call(Json const &j, T &val, priority_tag<1>) const
+  auto call(const  Json &j, T &val, priority_tag<1>) const
       noexcept(noexcept(from_json(j, val)))
           -> decltype(from_json(j, val), void())
   {
@@ -783,14 +783,14 @@ private:
   }
 
   template <typename Json, typename T>
-  void call(Json const&, T&, priority_tag<0>) const noexcept
+  void call(const Json &, T&, priority_tag<0>) const noexcept
   {
       static_assert(sizeof(Json) == 0, "from_json method in T's namespace can not be called");
   }
 
 public:
   template <typename Json, typename T>
-  void operator()(Json const &j, T &val) const
+  void operator()(const  Json &j, T &val) const
       noexcept(noexcept(std::declval<from_json_fn>().call(j, val, priority_tag<1>{})))
   {
       return call(j, val, priority_tag<1>{});
@@ -831,8 +831,8 @@ constexpr T static_const<T>::value;
 
 inline namespace
 {
-constexpr auto const& to_json = static_const<detail::to_json_fn>::value;
-constexpr auto const& from_json = static_const<detail::from_json_fn>::value;
+constexpr const auto & to_json = static_const<detail::to_json_fn>::value;
+constexpr const auto & from_json = static_const<detail::from_json_fn>::value;
 }
 
 // default JSONSerializer template argument, doesn't care about template argument
@@ -948,7 +948,7 @@ class basic_json
 {
   private:
     template <::nlohmann::value_t> friend struct detail::external_constructor;
-    template <typename Json> friend std::string detail::type_name(Json const &);
+    template <typename Json> friend std::string detail::type_name(const  Json &);
     /// workaround type for MSVC
     using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
           BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
@@ -3030,7 +3030,7 @@ class basic_json
     // static assert ?
     // i know there is a special behaviour for boolean_t* and such
     auto get() const noexcept(noexcept(JSONSerializer<uncvref_t<T>>::from_json(
-        std::declval<basic_json_t const &>(), std::declval<uncvref_t<T> &>())))
+        std::declval<const basic_json_t &>(), std::declval<uncvref_t<T> &>())))
         -> uncvref_t<T>
     {
       using type = uncvref_t<T>;
@@ -3052,7 +3052,7 @@ class basic_json
                         detail::has_non_default_from_json<basic_json_t,
                                                           uncvref_t<T>>::value,
                     int> = 0>
-    uncvref_t<T> get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<basic_json_t const&>())))
+    uncvref_t<T> get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<const basic_json_t &>())))
     {
       return JSONSerializer<T>::from_json(*this);
     }
