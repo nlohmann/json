@@ -75,7 +75,7 @@ test-%: src/unit-%.cpp ../src/json.hpp thirdparty/catch/catch.hpp
 	@echo "[CXXLD] $@"
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -DCATCH_CONFIG_MAIN $< -o $@
 
-TEST_PATTERN = "*"
+TEST_PATTERN ?= "*"
 TEST_PREFIX = ""
 check: $(TESTCASES)
 	@cd .. ; for testcase in $(TESTCASES); do echo "Executing $$testcase..."; $(TEST_PREFIX)test/$$testcase $(TEST_PATTERN) || exit 1; done
