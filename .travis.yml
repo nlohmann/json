@@ -78,7 +78,7 @@ matrix:
     env:
       - COMPILER=g++-4.9
       - SPECIAL=no_exceptions
-      - TEST_PATTERN=-e "*"
+      - TEST_PATTERN=-e \"*\"
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
