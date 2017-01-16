@@ -21,6 +21,7 @@
   - [Conversion from STL containers](#conversion-from-stl-containers)
   - [JSON Pointer and JSON Patch](#json-pointer-and-json-patch)
   - [Implicit conversions](#implicit-conversions)
+  - [Conversions to arbitrary types](#arbitrary-types-conversions)
   - [Binary formats (CBOR and MessagePack)](#binary-formats-cbor-and-messagepack)
 - [Supported compilers](#supported-compilers)
 - [License](#license)
@@ -440,6 +441,218 @@ bool vb = jb.get<bool>();
 int vi = jn.get<int>();
 
 // etc.
+```
+### Arbitrary types conversions
+
+Every type can be serialized in JSON, not just STL-containers and scalar types.
+Usually, you would do something along those lines:
+
+```cpp
+namespace ns {
+struct person { std::string name; std::string address; int age; };
+}
+// convert to JSON
+json j;
+ns::person p = createSomeone();
+j["name"] = p.name;
+j["address"] = p.address;
+j["age"] = p.age;
+
+// ...
+
+// convert from JSON
+ns::person p {j["name"].get<std::string>(), j["address"].get<std::string>(), j["age"].get<int>()};
+```
+
+It works, but that's quite a lot of boilerplate.. Hopefully, there's a better way:
+
+```cpp
+ns::person p = createPerson();
+json j = p;
+
+auto p2 = j.get<ns::person>();
+assert(p == p2);
+```
+
+#### Basic usage
+
+To make this work with one of your types, you only need to provide two methods:
+
+```cpp
+using nlohmann::json;
+
+namespace ns {
+void to_json(json& j, person const& p)
+{
+  j = json{{"name", p.name}, {"address", p.address}, {"age", p.age}};
+}
+
+void from_json(json const& j, person& p)
+{
+  p.name = j["name"].get<std::string>();
+  p.address = j["address"].get<std::string>();
+  p.age = j["age"].get<int>();
+}
+} // namespace ns
+```
+
+That's all. When calling the json constructor with your type, your custom `to_json` method will be automatically called.
+Likewise, when calling `get<your_type>()`, the `from_json` method will be called.
+
+Some important things:
+
+* Those methods **MUST** be in your type's namespace, or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
+* When using `get<your_type>()`, `your_type` **MUST** be DefaultConstructible and CopyConstructible (There is a way to bypass those requirements described later)
+
+#### How do I convert third-party types?
+
+This requires a bit more advanced technique.
+But first, let's see how this conversion mechanism works:
+
+The library uses **JSON Serializers** to convert types to json.
+The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](http://en.cppreference.com/w/cpp/language/adl))
+
+It is implemented like this (simplified):
+
+```cpp
+template <typename T>
+struct adl_serializer
+{
+  static void to_json(json& j, const T& value)
+  {
+    // calls the "to_json" method in T's namespace
+  }
+  
+  static void from_json(const json& j, T& value)
+  {
+    // same thing, but with the "from_json" method
+  }
+};
+```
+
+This serializer works fine when you have control over the type's namespace.
+However, what about `boost::optional`, or `std::filesystem::path` (C++17)?
+
+Hijacking the `boost` namespace is pretty bad, and it's illegal to add something other than template specializations to `std`...
+
+To solve this, you need to add a specialization of `adl_serializer` to the `nlohmann` namespace, here's an example:
+
+```cpp
+// partial specialization (full specialization works too)
+namespace nlohmann {
+template <typename T>
+struct adl_serializer<boost::optional<T>>
+{
+  static void to_json(json& j, const boost::optional<T>& opt)
+  {
+    if (opt == boost::none)
+      j = nullptr;
+    else
+      j = *opt; // this will call adl_serializer<T>::to_json, which will find the free function to_json in T's namespace!
+  }
+  
+  static void from_json(const json& j, boost::optional<T>& opt)
+  {
+    if (!j.is_null())
+      opt = j.get<T>(); // same as above, but with adl_serializer<T>::from_json
+  }
+};
+}
+```
+
+#### How can I use `get()` for non-default constructible/non-copyable types?
+
+There is a way, if your type is **MoveConstructible**.
+You will need to specialize the `adl_serializer` as well, but with a special `from_json` overload:
+
+```cpp
+struct move_only_type {
+  move_only_type() = delete;
+  move_only_type(int ii): i(ii) {}
+  move_only_type(const move_only_type&) = delete;
+  move_only_type(move_only_type&&) = default;
+  :
+  int i;
+};
+
+namespace nlohmann {
+template <>
+struct adl_serializer<move_only_type>
+{
+  // note: the return type is no longer 'void', and the method only takes one argument
+  static move_only_type from_json(const json& j)
+  {
+    return {j.get<int>()};
+  }
+  
+  // Here's the catch! You must provide a to_json method!
+  // Otherwise you will not be able to convert move_only_type to json,
+  // since you fully specialized adl_serializer on that type
+  static void to_json(json& j, move_only_type t)
+  {
+    j = t.i;
+  }
+};
+}
+```
+
+#### Can I write my own serializer? (Advanced use)
+
+Yes. You might want to take a look at `unit-udt.cpp` in the test suite, to see a few examples.
+
+If you write your own serializer, you'll need to do a few things:
+
+* use a different `basic_json` alias than nlohmann::json (the last template parameter of basic_json is the JSONSerializer)
+* use your `basic_json` alias (or a template parameter) in all your `to_json`/`from_json` methods
+* use `nlohmann::to_json` and `nlohmann::from_json` when you need ADL
+
+Here is an example, without simplifications, that only accepts types with a size <= 32, and uses ADL.
+
+```cpp
+// You should use void as a second template argument if you don't need compile-time checks on T
+template <typename T, typename SFINAE = typename std::enable_if<sizeof(T) <= 32>::type>
+struct less_than_32_serializer // if someone tries to use a type bigger than 32, the compiler will complain
+{
+  template <typename Json>
+  static void to_json(Json& j, T value)
+  {
+    // we want to use ADL, and call the correct to_json overload
+    using nlohmann::to_json; // this method is called by adl_serializer, this is where the magic happens
+    to_json(j, value);
+  }
+  
+  template <typename Json>
+  static void from_json(const Json& j, T& value)
+  {
+    // same thing here
+    using nlohmann::from_json;
+    from_json(j, value);
+  }
+};
+```
+
+Be **very** careful when reimplementing your serializer, you can stack overflow if you don't pay attention:
+
+```cpp
+template <typename T, void>
+struct bad_serializer
+{
+  template <typename Json>
+  static void to_json(Json& j, const T& value)
+  {
+    // this calls Json::json_serializer<T>::to_json(j, value);
+    // if Json::json_serializer == bad_serializer ... oops!
+    j = value;
+  }
+  
+  template <typename Json>
+  static void to_json(const Json& j, T& value)
+  {
+    // this calls Json::json_serializer<T>::from_json(j, value);
+    // if Json::json_serializer == bad_serializer ... oops!
+    value = j.template get<T>(); // oops!
+  }
+};
 ```
 
 ### Binary formats (CBOR and MessagePack)
