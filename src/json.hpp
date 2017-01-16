@@ -840,7 +840,7 @@ template <typename = void, typename = void>
 struct adl_serializer
 {
     template <typename Json, typename T>
-    static void from_json(Json&& j, T& val)
+    static void from_json(Json&& j, T& val) noexcept(noexcept(::nlohmann::from_json(std::forward<Json>(j), val)))
     {
         ::nlohmann::from_json(std::forward<Json>(j), val);
     }
