@@ -89,14 +89,14 @@ SOFTWARE.
 #endif
 
 // allow to disable exceptions
-#if defined(JSON_NOEXCEPTION) || defined(__EXCEPTIONS)
-    #define JSON_THROW(exception) std::abort()
-    #define JSON_TRY if(true)
-    #define JSON_CATCH(exception) if(false)
-#else
+#if not defined(JSON_NOEXCEPTION) || defined(__EXCEPTIONS)
     #define JSON_THROW(exception) throw exception
     #define JSON_TRY try
     #define JSON_CATCH(exception) catch(exception)
+#else
+    #define JSON_THROW(exception) std::abort()
+    #define JSON_TRY if(true)
+    #define JSON_CATCH(exception) if(false)
 #endif
 
 /*!

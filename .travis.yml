@@ -78,13 +78,13 @@ matrix:
     env:
       - COMPILER=g++-4.9
       - SPECIAL=no_exceptions
-      - TEST_PATTERN="-e \"*\""
+      - TEST_PATTERN=-e "*"
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
         packages: [g++-4.9, cppcheck]
     before_script:
-      - make FLAGS="-fno-exceptions"
+      - CPPFLAGS="-DJSON_NOEXCEPTION" make
 
   # Coveralls (http://gronlier.fr/blog/2015/01/adding-code-coverage-to-your-c-project/)
 
