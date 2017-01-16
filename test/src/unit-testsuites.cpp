@@ -815,3 +815,14 @@ TEST_CASE("nst's JSONTestSuite")
         }
     }
 }
+
+TEST_CASE("Big List of Naughty Strings")
+{
+    // test from https://github.com/minimaxir/big-list-of-naughty-strings
+    SECTION("blns.json")
+    {
+        std::ifstream f("test/data/big-list-of-naughty-strings/blns.json");
+        json j;
+        CHECK_NOTHROW(j << f);
+    }
+}
