@@ -11,8 +11,8 @@ enum test
 struct pod {};
 struct pod_bis {};
 
-void to_json(json &, pod) noexcept;
-void to_json(json &, pod_bis);
+void to_json(json&, pod) noexcept;
+void to_json(json&, pod_bis);
 void from_json(const json&, pod) noexcept;
 void from_json(const json&, pod_bis);
 static json j;

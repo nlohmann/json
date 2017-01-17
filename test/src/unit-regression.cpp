@@ -63,7 +63,7 @@ TEST_CASE("regression tests")
 
     SECTION("pull request #71 - handle enum type")
     {
-        enum { t = 0 , u = 1};
+        enum { t = 0, u = 1};
         json j = json::array();
         j.push_back(t);
 

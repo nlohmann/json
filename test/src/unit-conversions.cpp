@@ -177,10 +177,10 @@ TEST_CASE("value conversion")
 
             SECTION("reserve is called on containers that supports it")
             {
-              // making the call to from_json throw in order to check capacity 
-              std::vector<float> v;
-              CHECK_THROWS_AS(nlohmann::from_json(j, v), std::logic_error);
-              CHECK(v.capacity() == j.size());
+                // making the call to from_json throw in order to check capacity
+                std::vector<float> v;
+                CHECK_THROWS_AS(nlohmann::from_json(j, v), std::logic_error);
+                CHECK(v.capacity() == j.size());
             }
         }
 
