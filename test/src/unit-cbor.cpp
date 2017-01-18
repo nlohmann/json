@@ -1187,7 +1187,7 @@ TEST_CASE("single CBOR roundtrip")
     }
 }
 
-TEST_CASE("CBOR regressions")
+TEST_CASE("CBOR regressions", "[!throws]")
 {
     SECTION("fuzz test results")
     {
