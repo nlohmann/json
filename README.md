@@ -263,6 +263,9 @@ const std::string tmp = j[0];
 j[1] = 42;
 bool foo = j.at(2);
 
+// comparison
+j == "[\"foo\", 1, true]"_json;  // true
+
 // other stuff
 j.size();     // 3 entries
 j.empty();    // false
@@ -276,9 +279,6 @@ j.is_number();
 j.is_object();
 j.is_array();
 j.is_string();
-
-// comparison
-j == "[\"foo\", 1, true]"_json;  // true
 
 // create an object
 json o;
