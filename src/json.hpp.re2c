@@ -513,7 +513,7 @@ void get_arithmetic_value(const  Json& j, ArithmeticType& val)
     }
     else
     {
-        throw std::domain_error("type must be number, but is " + type_name(j));
+        JSON_THROW(std::domain_error("type must be number, but is " + type_name(j)));
     }
 }
 
@@ -592,7 +592,7 @@ void from_json(const Json& j, typename Json::boolean_t& b)
 {
     if (!j.is_boolean())
     {
-        throw std::domain_error("type must be boolean, but is " + type_name(j));
+        JSON_THROW(std::domain_error("type must be boolean, but is " + type_name(j)));
     }
     b = *j.template get_ptr<const typename Json::boolean_t*>();
 }
@@ -602,7 +602,7 @@ void from_json(const Json& j, typename Json::string_t& s)
 {
     if (!j.is_string())
     {
-        throw std::domain_error("type must be string, but is " + type_name(j));
+        JSON_THROW(std::domain_error("type must be string, but is " + type_name(j)));
     }
     s = *j.template get_ptr<const typename Json::string_t*>();
 }
@@ -639,7 +639,7 @@ void from_json(const  Json& j, typename Json::array_t& arr)
 {
     if (!j.is_array())
     {
-        throw std::domain_error("type must be array, but is " + type_name(j));
+        JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
     }
     arr = *j.template get_ptr<const typename Json::array_t*>();
 }
@@ -652,13 +652,13 @@ void from_json(const Json& j, std::forward_list<T, Allocator>& l)
     // (except when it's null.. ?)
     if (j.is_null())
     {
-        throw std::domain_error("type must be array, but is " + type_name(j));
+        JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
     }
     if (not std::is_same<T, Json>::value)
     {
         if (!j.is_array())
         {
-            throw std::domain_error("type must be array, but is " + type_name(j));
+            JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
         }
     }
     for (auto it = j.rbegin(), end = j.rend(); it != end; ++it)
@@ -711,14 +711,14 @@ void from_json(const  Json& j, CompatibleArrayType& arr)
 {
     if (j.is_null())
     {
-        throw std::domain_error("type must be array, but is " + type_name(j));
+        JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
     }
     // when T == Json, do not check if value_t is correct
     if (not std::is_same<typename CompatibleArrayType::value_type, Json>::value)
     {
         if (!j.is_array())
         {
-            throw std::domain_error("type must be array, but is " + type_name(j));
+            JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
         }
     }
     from_json_array_impl(j, arr, priority_tag<1> {});
@@ -733,7 +733,7 @@ void from_json(const  Json& j, CompatibleObjectType& obj)
 {
     if (!j.is_object())
     {
-        throw std::domain_error("type must be object, but is " + type_name(j));
+        JSON_THROW(std::domain_error("type must be object, but is " + type_name(j)));
     }
 
     auto inner_object = j.template get_ptr<const typename Json::object_t*>();
@@ -777,7 +777,7 @@ void from_json(const  Json& j, ArithmeticType& val)
     }
     else
     {
-        throw std::domain_error("type must be number, but is " + type_name(j));
+        JSON_THROW(std::domain_error("type must be number, but is " + type_name(j)));
     }
 }
 
