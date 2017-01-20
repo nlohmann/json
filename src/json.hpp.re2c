@@ -377,27 +377,27 @@ struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
         typename CompatibleObjectType::mapped_type>::value;
 };
 
-template<class BasicJson, class CompatibleObjectType>
+template<class Json, class CompatibleObjectType>
 struct is_compatible_object_type
 {
     static auto constexpr value = is_compatible_object_type_impl <
                                   conjunction<negation<std::is_same<void, CompatibleObjectType>>,
                                   has_mapped_type<CompatibleObjectType>,
                                   has_key_type<CompatibleObjectType>>::value,
-                                  typename BasicJson::object_t, CompatibleObjectType >::value;
+                                  typename Json::object_t, CompatibleObjectType >::value;
 };
 
-template <typename BasicJson, typename T>
+template <typename Json, typename T>
 struct is_basic_json_nested_type
 {
-    static auto constexpr value = std::is_same<T, typename BasicJson::iterator>::value or
-                                  std::is_same<T, typename BasicJson::const_iterator>::value or
-                                  std::is_same<T, typename BasicJson::reverse_iterator>::value or
-                                  std::is_same<T, typename BasicJson::const_reverse_iterator>::value or
-                                  std::is_same<T, typename BasicJson::json_pointer>::value;
+    static auto constexpr value = std::is_same<T, typename Json::iterator>::value or
+                                  std::is_same<T, typename Json::const_iterator>::value or
+                                  std::is_same<T, typename Json::reverse_iterator>::value or
+                                  std::is_same<T, typename Json::const_reverse_iterator>::value or
+                                  std::is_same<T, typename Json::json_pointer>::value;
 };
 
-template <class BasicJson, class CompatibleArrayType>
+template <class Json, class CompatibleArrayType>
 struct is_compatible_array_type
 {
     // TODO concept Container?
@@ -405,10 +405,10 @@ struct is_compatible_array_type
     static auto constexpr value =
         conjunction<negation<std::is_same<void, CompatibleArrayType>>,
         negation<is_compatible_object_type<
-        BasicJson, CompatibleArrayType>>,
-        negation<std::is_constructible<typename BasicJson::string_t,
+        Json, CompatibleArrayType>>,
+        negation<std::is_constructible<typename Json::string_t,
         CompatibleArrayType>>,
-        negation<is_basic_json_nested_type<BasicJson, CompatibleArrayType>>,
+        negation<is_basic_json_nested_type<Json, CompatibleArrayType>>,
         has_value_type<CompatibleArrayType>,
         has_iterator<CompatibleArrayType>>::value;
 };
