@@ -498,22 +498,23 @@ template <typename Json, typename ArithmeticType,
                       int> = 0>
 void get_arithmetic_value(const  Json& j, ArithmeticType& val)
 {
-    // unsigned must be checked first, since is_number_integer() == true for unsigned
-    if (j.is_number_unsigned())
+    switch (static_cast<value_t>(j))
     {
-        val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_unsigned_t*>());
-    }
-    else if (j.is_number_integer())
-    {
-        val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_integer_t*>());
-    }
-    else if (j.is_number_float())
-    {
-        val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_float_t*>());
-    }
-    else
-    {
-        JSON_THROW(std::domain_error("type must be number, but is " + type_name(j)));
+        case value_t::number_unsigned:
+            val = static_cast<ArithmeticType>(
+                      *j.template get_ptr<const typename Json::number_unsigned_t*>());
+            break;
+        case value_t::number_integer:
+            val = static_cast<ArithmeticType>(
+                      *j.template get_ptr<const typename Json::number_integer_t*>());
+            break;
+        case value_t::number_float:
+            val = static_cast<ArithmeticType>(
+                      *j.template get_ptr<const typename Json::number_float_t*>());
+            break;
+        default:
+            JSON_THROW(
+                std::domain_error("type must be number, but is " + type_name(j)));
     }
 }
 
@@ -752,32 +753,37 @@ template <
     typename Json, typename ArithmeticType,
     enable_if_t <
         std::is_arithmetic<ArithmeticType>::value and
-        not std::is_same<ArithmeticType, typename Json::number_unsigned_t>::value and
-        not std::is_same<ArithmeticType, typename Json::number_integer_t>::value and
-        not std::is_same<ArithmeticType, typename Json::number_float_t>::value and
+        not std::is_same<ArithmeticType,
+                         typename Json::number_unsigned_t>::value and
+        not std::is_same<ArithmeticType,
+                         typename Json::number_integer_t>::value and
+        not std::is_same<ArithmeticType,
+                         typename Json::number_float_t>::value and
         not std::is_same<ArithmeticType, typename Json::boolean_t>::value,
         int > = 0 >
-void from_json(const  Json& j, ArithmeticType& val)
+void from_json(const Json& j, ArithmeticType& val)
 {
-    if (j.is_number_unsigned())
+    switch (static_cast<value_t>(j))
     {
-        val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_unsigned_t*>());
-    }
-    else if (j.is_number_integer())
-    {
-        val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_integer_t*>());
-    }
-    else if (j.is_number_float())
-    {
-        val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::number_float_t*>());
-    }
-    else if (j.is_boolean())
-    {
-        val = static_cast<ArithmeticType>(*j.template get_ptr<const typename Json::boolean_t*>());
-    }
-    else
-    {
-        JSON_THROW(std::domain_error("type must be number, but is " + type_name(j)));
+        case value_t::number_unsigned:
+            val = static_cast<ArithmeticType>(
+                      *j.template get_ptr<const typename Json::number_unsigned_t*>());
+            break;
+        case value_t::number_integer:
+            val = static_cast<ArithmeticType>(
+                      *j.template get_ptr<const typename Json::number_integer_t*>());
+            break;
+        case value_t::number_float:
+            val = static_cast<ArithmeticType>(
+                      *j.template get_ptr<const typename Json::number_float_t*>());
+            break;
+        case value_t::boolean:
+            val = static_cast<ArithmeticType>(
+                      *j.template get_ptr<const typename Json::boolean_t*>());
+            break;
+        default:
+            JSON_THROW(
+                std::domain_error("type must be number, but is " + type_name(j)));
     }
 }
 
