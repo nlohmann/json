@@ -870,7 +870,7 @@ struct DecimalSeparator : std::numpunct<char>
 };
 }
 
-inline namespace
+namespace
 {
 constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::value;
