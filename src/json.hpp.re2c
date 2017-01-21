@@ -7767,7 +7767,6 @@ class basic_json
 
     /// @}
 
-  private:
     ///////////////////////////
     // convenience functions //
     ///////////////////////////
@@ -7781,6 +7780,9 @@ class basic_json
     @return basically a string representation of a the @a m_type member
 
     @complexity Constant.
+
+    @liveexample{The following code exemplifies `type_name()` for all JSON
+    types.,typename}
 
     @since version 1.0.0
     */
@@ -7805,6 +7807,7 @@ class basic_json
         }
     }
 
+  private:
     /*!
     @brief calculates the extra space to escape a JSON string
 
