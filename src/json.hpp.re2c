@@ -187,27 +187,6 @@ struct conjunction<B1, Bn...>
 
 template <class B> struct negation : std::integral_constant < bool, !B::value > {};
 
-template <typename BasicJsonType> std::string type_name(const  BasicJsonType& j)
-{
-    switch (j.m_type)
-    {
-        case value_t::null:
-            return "null";
-        case value_t::object:
-            return "object";
-        case value_t::array:
-            return "array";
-        case value_t::string:
-            return "string";
-        case value_t::boolean:
-            return "boolean";
-        case value_t::discarded:
-            return "discarded";
-        default:
-            return "number";
-    }
-}
-
 // dispatch utility (taken from ranges-v3)
 template <unsigned N> struct priority_tag : priority_tag < N - 1 > {};
 
@@ -514,7 +493,7 @@ void get_arithmetic_value(const  BasicJsonType& j, ArithmeticType& val)
             break;
         default:
             JSON_THROW(
-                std::domain_error("type must be number, but is " + type_name(j)));
+                std::domain_error("type must be number, but is " + j.type_name()));
     }
 }
 
@@ -593,7 +572,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
 {
     if (!j.is_boolean())
     {
-        JSON_THROW(std::domain_error("type must be boolean, but is " + type_name(j)));
+        JSON_THROW(std::domain_error("type must be boolean, but is " + j.type_name()));
     }
     b = *j.template get_ptr<const typename BasicJsonType::boolean_t*>();
 }
@@ -603,7 +582,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
 {
     if (!j.is_string())
     {
-        JSON_THROW(std::domain_error("type must be string, but is " + type_name(j)));
+        JSON_THROW(std::domain_error("type must be string, but is " + j.type_name()));
     }
     s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
 }
@@ -640,7 +619,7 @@ void from_json(const  BasicJsonType& j, typename BasicJsonType::array_t& arr)
 {
     if (!j.is_array())
     {
-        JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
+        JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
     }
     arr = *j.template get_ptr<const typename BasicJsonType::array_t*>();
 }
@@ -653,13 +632,13 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
     // (except when it's null.. ?)
     if (j.is_null())
     {
-        JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
+        JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
     }
     if (not std::is_same<T, BasicJsonType>::value)
     {
         if (!j.is_array())
         {
-            JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
+            JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
         }
     }
     for (auto it = j.rbegin(), end = j.rend(); it != end; ++it)
@@ -712,14 +691,14 @@ void from_json(const  BasicJsonType& j, CompatibleArrayType& arr)
 {
     if (j.is_null())
     {
-        JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
+        JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
     }
     // when T == BasicJsonType, do not check if value_t is correct
     if (not std::is_same<typename CompatibleArrayType::value_type, BasicJsonType>::value)
     {
         if (!j.is_array())
         {
-            JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
+            JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
         }
     }
     from_json_array_impl(j, arr, priority_tag<1> {});
@@ -734,7 +713,7 @@ void from_json(const  BasicJsonType& j, CompatibleObjectType& obj)
 {
     if (!j.is_object())
     {
-        JSON_THROW(std::domain_error("type must be object, but is " + type_name(j)));
+        JSON_THROW(std::domain_error("type must be object, but is " + j.type_name()));
     }
 
     auto inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
@@ -783,7 +762,7 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
             break;
         default:
             JSON_THROW(
-                std::domain_error("type must be number, but is " + type_name(j)));
+                std::domain_error("type must be number, but is " + j.type_name()));
     }
 }
 
@@ -989,7 +968,6 @@ class basic_json
 {
   private:
     template <::nlohmann::value_t> friend struct detail::external_constructor;
-    template <typename BasicJsonType> friend std::string detail::type_name(const  BasicJsonType&);
     /// workaround type for MSVC
     using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
           BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
@@ -7914,7 +7892,26 @@ class basic_json
     */
     std::string type_name() const
     {
-        return detail::type_name(*this);
+        {
+            switch (m_type)
+            {
+                case value_t::null:
+                    return "null";
+                case value_t::object:
+                    return "object";
+                case value_t::array:
+                    return "array";
+                case value_t::string:
+                    return "string";
+                case value_t::boolean:
+                    return "boolean";
+                case value_t::discarded:
+                    return "discarded";
+                default:
+                    return "number";
+            }
+        }
+
     }
 
   private:
