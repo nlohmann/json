@@ -994,7 +994,6 @@ class basic_json
     using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
           BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
           AllocatorType, JSONSerializer>;
-    class primitive_iterator_t;
 
   public:
     using value_t = ::nlohmann::value_t;
