@@ -3073,8 +3073,11 @@ class basic_json
 
     @since version 2.1.0
     */
-    template <typename T,
-              detail::enable_if_t<std::is_same<T, basic_json_t>::value, int> = 0>
+    template <
+        typename T,
+        detail::enable_if_t<std::is_same<typename std::remove_const<T>::type,
+                                         basic_json_t>::value,
+                            int> = 0 >
     basic_json get() const
     {
         return *this;
@@ -3104,16 +3107,15 @@ class basic_json
             not detail::has_non_default_from_json<basic_json_t,
                     U>::value,
             int > = 0 >
-    // do we really want the uncvref ? if a user call get<int &>, shouldn't we
-    // static assert ?
-    // i know there is a special behaviour for boolean_t* and such
     U get() const noexcept(noexcept(JSONSerializer<U>::from_json(
                                         std::declval<const basic_json_t&>(), std::declval<U&>())))
     {
-        static_assert(std::is_default_constructible<U>::value and
-                      std::is_copy_constructible<U>::value,
-                      "Types must be DefaultConstructible and "
-                      "CopyConstructible when used with get");
+        // we cannot static_assert on T being non-const, because there is support
+        // for get<const basic_json_t>(), which is why we still need the uncvref
+        static_assert(not std::is_reference<T>::value, "get cannot be used with reference types, you might want to use get_ref");
+        static_assert(not std::is_pointer<T>::value, "get cannot be used with pointer types, you might want to use get_ptr");
+        static_assert(std::is_default_constructible<U>::value,
+                      "Types must be DefaultConstructible when used with get");
         U ret;
         JSONSerializer<U>::from_json(*this, ret);
         return ret;
@@ -3143,6 +3145,8 @@ class basic_json
                             int> = 0 >
     U get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<const basic_json_t&>())))
     {
+        static_assert(not std::is_reference<T>::value, "get cannot be used with reference types, you might want to use get_ref");
+        static_assert(not std::is_pointer<T>::value, "get cannot be used with pointer types, you might want to use get_ptr");
         return JSONSerializer<T>::from_json(*this);
     }
 
