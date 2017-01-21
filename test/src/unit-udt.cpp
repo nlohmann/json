@@ -84,20 +84,20 @@ struct contact_book
 namespace udt
 {
 // templates because of the custom_json tests (see below)
-template <typename Json>
-void to_json(Json& j, age a)
+template <typename BasicJsonType>
+void to_json(BasicJsonType& j, age a)
 {
     j = a.m_val;
 }
 
-template <typename Json>
-void to_json(Json& j, const name& n)
+template <typename BasicJsonType>
+void to_json(BasicJsonType& j, const name& n)
 {
     j = n.m_val;
 }
 
-template <typename Json>
-void to_json(Json& j, country c)
+template <typename BasicJsonType>
+void to_json(BasicJsonType& j, country c)
 {
     switch (c)
     {
@@ -113,10 +113,10 @@ void to_json(Json& j, country c)
     }
 }
 
-template <typename Json>
-void to_json(Json& j, const person& p)
+template <typename BasicJsonType>
+void to_json(BasicJsonType& j, const person& p)
 {
-    j = Json{{"age", p.m_age}, {"name", p.m_name}, {"country", p.m_country}};
+    j = BasicJsonType{{"age", p.m_age}, {"name", p.m_name}, {"country", p.m_country}};
 }
 
 void to_json(nlohmann::json& j, const address& a)
@@ -171,20 +171,20 @@ bool operator==(const contact_book& lhs, const contact_book& rhs)
 // from_json methods
 namespace udt
 {
-template <typename Json>
-void from_json(const Json& j, age& a)
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, age& a)
 {
     a.m_val = j.template get<int>();
 }
 
-template <typename Json>
-void from_json(const Json& j, name& n)
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, name& n)
 {
     n.m_val = j.template get<std::string>();
 }
 
-template <typename Json>
-void from_json(const Json& j, country& c)
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, country& c)
 {
     const auto str = j.template get<std::string>();
     static const std::map<std::string, country> m =
@@ -199,8 +199,8 @@ void from_json(const Json& j, country& c)
     c = it->second;
 }
 
-template <typename Json>
-void from_json(const Json& j, person& p)
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, person& p)
 {
     p.m_age = j["age"].template get<age>();
     p.m_name = j["name"].template get<name>();
@@ -493,20 +493,20 @@ struct pod_serializer
 {
     // use adl for non-pods, or scalar types
     template <
-        typename Json, typename U = T,
+        typename BasicJsonType, typename U = T,
         typename std::enable_if <
             not(std::is_pod<U>::value and std::is_class<U>::value), int >::type = 0 >
-    static void from_json(const Json& j, U& t)
+    static void from_json(const BasicJsonType& j, U& t)
     {
         using nlohmann::from_json;
         from_json(j, t);
     }
 
     // special behaviour for pods
-    template <typename Json, typename U = T,
+    template <typename BasicJsonType, typename U = T,
               typename std::enable_if<
                   std::is_pod<U>::value and std::is_class<U>::value, int>::type = 0>
-    static void from_json(const  Json& j, U& t)
+    static void from_json(const  BasicJsonType& j, U& t)
     {
         std::uint64_t value;
         // TODO The following block is no longer relevant in this serializer, make another one that shows the issue
@@ -529,19 +529,19 @@ struct pod_serializer
     }
 
     template <
-        typename Json, typename U = T,
+        typename BasicJsonType, typename U = T,
         typename std::enable_if <
             not(std::is_pod<U>::value and std::is_class<U>::value), int >::type = 0 >
-    static void to_json(Json& j, const  T& t)
+    static void to_json(BasicJsonType& j, const  T& t)
     {
         using nlohmann::to_json;
         to_json(j, t);
     }
 
-    template <typename Json, typename U = T,
+    template <typename BasicJsonType, typename U = T,
               typename std::enable_if<
                   std::is_pod<U>::value and std::is_class<U>::value, int>::type = 0>
-    static void to_json(Json& j, const  T& t) noexcept
+    static void to_json(BasicJsonType& j, const  T& t) noexcept
     {
         auto bytes = static_cast< const unsigned char*>(static_cast<const void*>(&t));
         std::uint64_t value = bytes[0];
@@ -565,14 +565,14 @@ struct non_pod
     std::string s;
 };
 
-template <typename Json>
-void to_json(Json& j, const non_pod& np)
+template <typename BasicJsonType>
+void to_json(BasicJsonType& j, const non_pod& np)
 {
     j = np.s;
 }
 
-template <typename Json>
-void from_json(const Json& j, non_pod& np)
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, non_pod& np)
 {
     np.s = j.template get<std::string>();
 }

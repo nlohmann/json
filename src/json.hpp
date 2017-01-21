@@ -187,7 +187,7 @@ struct conjunction<B1, Bn...>
 
 template <class B> struct negation : std::integral_constant < bool, !B::value > {};
 
-template <typename Json> std::string type_name(const  Json& j)
+template <typename BasicJsonType> std::string type_name(const  BasicJsonType& j)
 {
     switch (j.m_type)
     {
@@ -220,8 +220,8 @@ template <value_t> struct external_constructor;
 template <>
 struct external_constructor<value_t::boolean>
 {
-    template <typename Json>
-    static void construct(Json& j, typename Json::boolean_t b) noexcept
+    template <typename BasicJsonType>
+    static void construct(BasicJsonType& j, typename BasicJsonType::boolean_t b) noexcept
     {
         j.m_type = value_t::boolean;
         j.m_value = b;
@@ -232,8 +232,8 @@ struct external_constructor<value_t::boolean>
 template <>
 struct external_constructor<value_t::string>
 {
-    template <typename Json>
-    static void construct(Json& j, const typename Json::string_t& s)
+    template <typename BasicJsonType>
+    static void construct(BasicJsonType& j, const typename BasicJsonType::string_t& s)
     {
         j.m_type = value_t::string;
         j.m_value = s;
@@ -244,12 +244,12 @@ struct external_constructor<value_t::string>
 template <>
 struct external_constructor<value_t::number_float>
 {
-    template <typename Json>
-    static void construct(Json& j, typename Json::number_float_t val) noexcept
+    template <typename BasicJsonType>
+    static void construct(BasicJsonType& j, typename BasicJsonType::number_float_t val) noexcept
     {
         // replace infinity and NAN by null
         if (not std::isfinite(val))
-            j = Json{};
+            j = BasicJsonType{};
         else
         {
             j.m_type = value_t::number_float;
@@ -262,8 +262,8 @@ struct external_constructor<value_t::number_float>
 template <>
 struct external_constructor<value_t::number_unsigned>
 {
-    template <typename Json>
-    static void construct(Json& j, typename Json::number_unsigned_t val) noexcept
+    template <typename BasicJsonType>
+    static void construct(BasicJsonType& j, typename BasicJsonType::number_unsigned_t val) noexcept
     {
         j.m_type = value_t::number_unsigned;
         j.m_value = val;
@@ -274,8 +274,8 @@ struct external_constructor<value_t::number_unsigned>
 template <>
 struct external_constructor<value_t::number_integer>
 {
-    template <typename Json>
-    static void construct(Json& j, typename Json::number_integer_t val) noexcept
+    template <typename BasicJsonType>
+    static void construct(BasicJsonType& j, typename BasicJsonType::number_integer_t val) noexcept
     {
         j.m_type = value_t::number_integer;
         j.m_value = val;
@@ -286,25 +286,25 @@ struct external_constructor<value_t::number_integer>
 template <>
 struct external_constructor<value_t::array>
 {
-    template <typename Json>
-    static void construct(Json& j, const typename Json::array_t& arr)
+    template <typename BasicJsonType>
+    static void construct(BasicJsonType& j, const typename BasicJsonType::array_t& arr)
     {
         j.m_type = value_t::array;
         j.m_value = arr;
         j.assert_invariant();
     }
 
-    template <typename Json, typename CompatibleArrayType,
+    template <typename BasicJsonType, typename CompatibleArrayType,
               enable_if_t<not std::is_same<CompatibleArrayType,
-                                           typename Json::array_t>::value,
+                                           typename BasicJsonType::array_t>::value,
                           int> = 0>
-    static void construct(Json& j, const CompatibleArrayType& arr)
+    static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
     {
         using std::begin;
         using std::end;
         j.m_type = value_t::array;
         j.m_value.array =
-            j.template create<typename Json::array_t>(begin(arr), end(arr));
+            j.template create<typename BasicJsonType::array_t>(begin(arr), end(arr));
         j.assert_invariant();
     }
 };
@@ -312,26 +312,26 @@ struct external_constructor<value_t::array>
 template <>
 struct external_constructor<value_t::object>
 {
-    template <typename Json>
-    static void construct(Json& j, const typename Json::object_t& obj)
+    template <typename BasicJsonType>
+    static void construct(BasicJsonType& j, const typename BasicJsonType::object_t& obj)
     {
         j.m_type = value_t::object;
         j.m_value = obj;
         j.assert_invariant();
     }
 
-    template <typename Json, typename CompatibleObjectType,
+    template <typename BasicJsonType, typename CompatibleObjectType,
               enable_if_t<not std::is_same<CompatibleObjectType,
-                                           typename Json::object_t>::value,
+                                           typename BasicJsonType::object_t>::value,
                           int> = 0>
-    static void construct(Json& j, const CompatibleObjectType& obj)
+    static void construct(BasicJsonType& j, const CompatibleObjectType& obj)
     {
         using std::begin;
         using std::end;
 
         j.m_type = value_t::object;
         j.m_value.object =
-            j.template create<typename Json::object_t>(begin(obj), end(obj));
+            j.template create<typename BasicJsonType::object_t>(begin(obj), end(obj));
         j.assert_invariant();
     }
 };
@@ -377,27 +377,27 @@ struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
         typename CompatibleObjectType::mapped_type>::value;
 };
 
-template<class Json, class CompatibleObjectType>
+template<class BasicJsonType, class CompatibleObjectType>
 struct is_compatible_object_type
 {
     static auto constexpr value = is_compatible_object_type_impl <
                                   conjunction<negation<std::is_same<void, CompatibleObjectType>>,
                                   has_mapped_type<CompatibleObjectType>,
                                   has_key_type<CompatibleObjectType>>::value,
-                                  typename Json::object_t, CompatibleObjectType >::value;
+                                  typename BasicJsonType::object_t, CompatibleObjectType >::value;
 };
 
-template <typename Json, typename T>
+template <typename BasicJsonType, typename T>
 struct is_basic_json_nested_type
 {
-    static auto constexpr value = std::is_same<T, typename Json::iterator>::value or
-                                  std::is_same<T, typename Json::const_iterator>::value or
-                                  std::is_same<T, typename Json::reverse_iterator>::value or
-                                  std::is_same<T, typename Json::const_reverse_iterator>::value or
-                                  std::is_same<T, typename Json::json_pointer>::value;
+    static auto constexpr value = std::is_same<T, typename BasicJsonType::iterator>::value or
+                                  std::is_same<T, typename BasicJsonType::const_iterator>::value or
+                                  std::is_same<T, typename BasicJsonType::reverse_iterator>::value or
+                                  std::is_same<T, typename BasicJsonType::const_reverse_iterator>::value or
+                                  std::is_same<T, typename BasicJsonType::json_pointer>::value;
 };
 
-template <class Json, class CompatibleArrayType>
+template <class BasicJsonType, class CompatibleArrayType>
 struct is_compatible_array_type
 {
     // TODO concept Container?
@@ -405,10 +405,10 @@ struct is_compatible_array_type
     static auto constexpr value =
         conjunction<negation<std::is_same<void, CompatibleArrayType>>,
         negation<is_compatible_object_type<
-        Json, CompatibleArrayType>>,
-        negation<std::is_constructible<typename Json::string_t,
+        BasicJsonType, CompatibleArrayType>>,
+        negation<std::is_constructible<typename BasicJsonType::string_t,
         CompatibleArrayType>>,
-        negation<is_basic_json_nested_type<Json, CompatibleArrayType>>,
+        negation<is_basic_json_nested_type<BasicJsonType, CompatibleArrayType>>,
         has_value_type<CompatibleArrayType>,
         has_iterator<CompatibleArrayType>>::value;
 };
@@ -441,76 +441,76 @@ struct is_compatible_integer_type
 };
 
 // This trait checks if JSONSerializer<T>::from_json(json const&, udt&) exists
-template <typename Json, typename T>
+template <typename BasicJsonType, typename T>
 struct has_from_json
 {
   private:
     // also check the return type of from_json
     template <typename U, typename = enable_if_t<std::is_same<void, decltype(uncvref_t<U>::from_json(
-                  std::declval<Json>(), std::declval<T&>()))>::value>>
+                  std::declval<BasicJsonType>(), std::declval<T&>()))>::value>>
     static int detect(U&&);
     static void detect(...);
 
   public:
     static constexpr bool value = std::is_integral<decltype(
-                                      detect(std::declval<typename Json::template json_serializer<T, void>>()))>::value;
+                                      detect(std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
 };
 
 // This trait checks if JSONSerializer<T>::from_json(json const&) exists
 // this overload is used for non-default-constructible user-defined-types
-template <typename Json, typename T>
+template <typename BasicJsonType, typename T>
 struct has_non_default_from_json
 {
   private:
     template <
         typename U,
         typename = enable_if_t<std::is_same<
-                                   T, decltype(uncvref_t<U>::from_json(std::declval<Json>()))>::value >>
+                                   T, decltype(uncvref_t<U>::from_json(std::declval<BasicJsonType>()))>::value >>
     static int detect(U&&);
     static void detect(...);
 
   public:
     static constexpr bool value = std::is_integral<decltype(detect(
-                                      std::declval<typename Json::template json_serializer<T, void>>()))>::value;
+                                      std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
 };
 
-// This trait checks if Json::json_serializer<T>::to_json exists
-template <typename Json, typename T>
+// This trait checks if BasicJsonType::json_serializer<T>::to_json exists
+template <typename BasicJsonType, typename T>
 struct has_to_json
 {
   private:
     template <typename U, typename = decltype(uncvref_t<U>::to_json(
-                  std::declval<Json&>(), std::declval<T>()))>
+                  std::declval<BasicJsonType&>(), std::declval<T>()))>
     static int detect(U&&);
     static void detect(...);
 
   public:
     static constexpr bool value = std::is_integral<decltype(detect(
-                                      std::declval<typename Json::template json_serializer<T, void>>()))>::value;
+                                      std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
 };
 
 // overloads for basic_json template parameters
 
-template <typename Json, typename ArithmeticType,
+template <typename BasicJsonType, typename ArithmeticType,
           enable_if_t<std::is_arithmetic<ArithmeticType>::value and
                       not std::is_same<ArithmeticType,
-                                       typename Json::boolean_t>::value,
+                                       typename BasicJsonType::boolean_t>::value,
                       int> = 0>
-void get_arithmetic_value(const  Json& j, ArithmeticType& val)
+void get_arithmetic_value(const  BasicJsonType& j, ArithmeticType& val)
 {
     switch (static_cast<value_t>(j))
     {
         case value_t::number_unsigned:
             val = static_cast<ArithmeticType>(
-                      *j.template get_ptr<const typename Json::number_unsigned_t*>());
+                      *j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>());
             break;
         case value_t::number_integer:
             val = static_cast<ArithmeticType>(
-                      *j.template get_ptr<const typename Json::number_integer_t*>());
+                      *j.template get_ptr<const typename BasicJsonType::number_integer_t*>());
             break;
         case value_t::number_float:
             val = static_cast<ArithmeticType>(
-                      *j.template get_ptr<const typename Json::number_float_t*>());
+                      *j.template get_ptr<const typename BasicJsonType::number_float_t*>());
             break;
         default:
             JSON_THROW(
@@ -518,136 +518,136 @@ void get_arithmetic_value(const  Json& j, ArithmeticType& val)
     }
 }
 
-template <typename Json>
-void to_json(Json& j, typename Json::boolean_t b) noexcept
+template <typename BasicJsonType>
+void to_json(BasicJsonType& j, typename BasicJsonType::boolean_t b) noexcept
 {
     external_constructor<value_t::boolean>::construct(j, b);
 }
 
-template <typename Json, typename CompatibleString,
-          enable_if_t<std::is_constructible<typename Json::string_t,
+template <typename BasicJsonType, typename CompatibleString,
+          enable_if_t<std::is_constructible<typename BasicJsonType::string_t,
                       CompatibleString>::value,
                       int> = 0>
-void to_json(Json& j, const CompatibleString& s)
+void to_json(BasicJsonType& j, const CompatibleString& s)
 {
     external_constructor<value_t::string>::construct(j, s);
 }
 
-template <typename Json, typename FloatType,
+template <typename BasicJsonType, typename FloatType,
           enable_if_t<std::is_floating_point<FloatType>::value, int> = 0>
-void to_json(Json& j, FloatType val) noexcept
+void to_json(BasicJsonType& j, FloatType val) noexcept
 {
-    external_constructor<value_t::number_float>::construct(j, static_cast<typename Json::number_float_t>(val));
+    external_constructor<value_t::number_float>::construct(j, static_cast<typename BasicJsonType::number_float_t>(val));
 }
 
 
 template <
-    typename Json, typename CompatibleNumberUnsignedType,
-    enable_if_t<is_compatible_integer_type<typename Json::number_unsigned_t,
+    typename BasicJsonType, typename CompatibleNumberUnsignedType,
+    enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_unsigned_t,
                 CompatibleNumberUnsignedType>::value,
                 int> = 0 >
-void to_json(Json& j, CompatibleNumberUnsignedType val) noexcept
+void to_json(BasicJsonType& j, CompatibleNumberUnsignedType val) noexcept
 {
-    external_constructor<value_t::number_unsigned>::construct(j, static_cast<typename Json::number_unsigned_t>(val));
+    external_constructor<value_t::number_unsigned>::construct(j, static_cast<typename BasicJsonType::number_unsigned_t>(val));
 }
 
 template <
-    typename Json, typename CompatibleNumberIntegerType,
-    enable_if_t<is_compatible_integer_type<typename Json::number_integer_t,
+    typename BasicJsonType, typename CompatibleNumberIntegerType,
+    enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_integer_t,
                 CompatibleNumberIntegerType>::value,
                 int> = 0 >
-void to_json(Json& j, CompatibleNumberIntegerType val) noexcept
+void to_json(BasicJsonType& j, CompatibleNumberIntegerType val) noexcept
 {
-    external_constructor<value_t::number_integer>::construct(j, static_cast<typename Json::number_integer_t>(val));
+    external_constructor<value_t::number_integer>::construct(j, static_cast<typename BasicJsonType::number_integer_t>(val));
 }
 
-template <typename Json, typename UnscopedEnumType,
+template <typename BasicJsonType, typename UnscopedEnumType,
           enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
-void to_json(Json& j, UnscopedEnumType e) noexcept
+void to_json(BasicJsonType& j, UnscopedEnumType e) noexcept
 {
     external_constructor<value_t::number_integer>::construct(j, e);
 }
 
 template <
-    typename Json, typename CompatibleArrayType,
+    typename BasicJsonType, typename CompatibleArrayType,
     enable_if_t <
-        is_compatible_array_type<Json, CompatibleArrayType>::value or
-        std::is_same<typename Json::array_t, CompatibleArrayType>::value,
+        is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value or
+        std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value,
         int > = 0 >
-void to_json(Json& j, const  CompatibleArrayType& arr)
+void to_json(BasicJsonType& j, const  CompatibleArrayType& arr)
 {
     external_constructor<value_t::array>::construct(j, arr);
 }
 
 template <
-    typename Json, typename CompatibleObjectType,
-    enable_if_t<is_compatible_object_type<Json, CompatibleObjectType>::value,
+    typename BasicJsonType, typename CompatibleObjectType,
+    enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value,
                 int> = 0 >
-void to_json(Json& j, const  CompatibleObjectType& arr)
+void to_json(BasicJsonType& j, const  CompatibleObjectType& arr)
 {
     external_constructor<value_t::object>::construct(j, arr);
 }
 
-template <typename Json>
-void from_json(const Json& j, typename Json::boolean_t& b)
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
 {
     if (!j.is_boolean())
     {
         JSON_THROW(std::domain_error("type must be boolean, but is " + type_name(j)));
     }
-    b = *j.template get_ptr<const typename Json::boolean_t*>();
+    b = *j.template get_ptr<const typename BasicJsonType::boolean_t*>();
 }
 
-template <typename Json>
-void from_json(const Json& j, typename Json::string_t& s)
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
 {
     if (!j.is_string())
     {
         JSON_THROW(std::domain_error("type must be string, but is " + type_name(j)));
     }
-    s = *j.template get_ptr<const typename Json::string_t*>();
+    s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
 }
 
-template <typename Json>
-void from_json(const Json& j, typename Json::number_float_t& val)
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::number_float_t& val)
 {
     get_arithmetic_value(j, val);
 }
 
-template <typename Json>
-void from_json(const Json& j, typename Json::number_unsigned_t& val)
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::number_unsigned_t& val)
 {
     get_arithmetic_value(j, val);
 }
 
-template <typename Json>
-void from_json(const Json& j, typename Json::number_integer_t& val)
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::number_integer_t& val)
 {
     get_arithmetic_value(j, val);
 }
 
-template <typename Json, typename UnscopedEnumType,
+template <typename BasicJsonType, typename UnscopedEnumType,
           enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
-void from_json(const  Json& j, UnscopedEnumType& e)
+void from_json(const  BasicJsonType& j, UnscopedEnumType& e)
 {
     typename std::underlying_type<UnscopedEnumType>::type val = e;
     get_arithmetic_value(j, val);
     e = static_cast<UnscopedEnumType>(val);
 }
 
-template <typename Json>
-void from_json(const  Json& j, typename Json::array_t& arr)
+template <typename BasicJsonType>
+void from_json(const  BasicJsonType& j, typename BasicJsonType::array_t& arr)
 {
     if (!j.is_array())
     {
         JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
     }
-    arr = *j.template get_ptr<const typename Json::array_t*>();
+    arr = *j.template get_ptr<const typename BasicJsonType::array_t*>();
 }
 
 // forward_list doesn't have an insert method, TODO find a way to avoid including forward_list
-template <typename Json, typename T, typename Allocator>
-void from_json(const Json& j, std::forward_list<T, Allocator>& l)
+template <typename BasicJsonType, typename T, typename Allocator>
+void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 {
     // do not perform the check when user wants to retrieve jsons
     // (except when it's null.. ?)
@@ -655,7 +655,7 @@ void from_json(const Json& j, std::forward_list<T, Allocator>& l)
     {
         JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
     }
-    if (not std::is_same<T, Json>::value)
+    if (not std::is_same<T, BasicJsonType>::value)
     {
         if (!j.is_array())
         {
@@ -668,23 +668,23 @@ void from_json(const Json& j, std::forward_list<T, Allocator>& l)
     }
 }
 
-template <typename Json, typename CompatibleArrayType>
-void from_json_array_impl(const  Json& j, CompatibleArrayType& arr, priority_tag<0>)
+template <typename BasicJsonType, typename CompatibleArrayType>
+void from_json_array_impl(const  BasicJsonType& j, CompatibleArrayType& arr, priority_tag<0>)
 {
     using std::begin;
     using std::end;
 
     std::transform(
-        j.begin(), j.end(), std::inserter(arr, end(arr)), [](const  Json & i)
+        j.begin(), j.end(), std::inserter(arr, end(arr)), [](const  BasicJsonType & i)
     {
-        // get<Json>() returns *this, this won't call a from_json method when
-        // value_type is Json
+        // get<BasicJsonType>() returns *this, this won't call a from_json method when
+        // value_type is BasicJsonType
         return i.template get<typename CompatibleArrayType::value_type>();
     });
 }
 
-template <typename Json, typename CompatibleArrayType>
-auto from_json_array_impl(const  Json& j, CompatibleArrayType& arr, priority_tag<1>)
+template <typename BasicJsonType, typename CompatibleArrayType>
+auto from_json_array_impl(const  BasicJsonType& j, CompatibleArrayType& arr, priority_tag<1>)
 -> decltype(
     arr.reserve(std::declval<typename CompatibleArrayType::size_type>()),
     void())
@@ -694,28 +694,28 @@ auto from_json_array_impl(const  Json& j, CompatibleArrayType& arr, priority_tag
 
     arr.reserve(j.size());
     std::transform(
-        j.begin(), j.end(), std::inserter(arr, end(arr)), [](const  Json & i)
+        j.begin(), j.end(), std::inserter(arr, end(arr)), [](const  BasicJsonType & i)
     {
-        // get<Json>() returns *this, this won't call a from_json method when
-        // value_type is Json
+        // get<BasicJsonType>() returns *this, this won't call a from_json method when
+        // value_type is BasicJsonType
         return i.template get<typename CompatibleArrayType::value_type>();
     });
 }
 
 template <
-    typename Json, typename CompatibleArrayType,
-    enable_if_t<is_compatible_array_type<Json, CompatibleArrayType>::value and
-                not std::is_same<typename Json::array_t,
+    typename BasicJsonType, typename CompatibleArrayType,
+    enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
+                not std::is_same<typename BasicJsonType::array_t,
                                  CompatibleArrayType>::value,
                 int> = 0 >
-void from_json(const  Json& j, CompatibleArrayType& arr)
+void from_json(const  BasicJsonType& j, CompatibleArrayType& arr)
 {
     if (j.is_null())
     {
         JSON_THROW(std::domain_error("type must be array, but is " + type_name(j)));
     }
-    // when T == Json, do not check if value_t is correct
-    if (not std::is_same<typename CompatibleArrayType::value_type, Json>::value)
+    // when T == BasicJsonType, do not check if value_t is correct
+    if (not std::is_same<typename CompatibleArrayType::value_type, BasicJsonType>::value)
     {
         if (!j.is_array())
         {
@@ -727,17 +727,17 @@ void from_json(const  Json& j, CompatibleArrayType& arr)
 
 
 template <
-    typename Json, typename CompatibleObjectType,
-    enable_if_t<is_compatible_object_type<Json, CompatibleObjectType>::value,
+    typename BasicJsonType, typename CompatibleObjectType,
+    enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value,
                 int> = 0 >
-void from_json(const  Json& j, CompatibleObjectType& obj)
+void from_json(const  BasicJsonType& j, CompatibleObjectType& obj)
 {
     if (!j.is_object())
     {
         JSON_THROW(std::domain_error("type must be object, but is " + type_name(j)));
     }
 
-    auto inner_object = j.template get_ptr<const typename Json::object_t*>();
+    auto inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
     using std::begin;
     using std::end;
     // we could avoid the assignment, but this might require a for loop, which
@@ -750,36 +750,36 @@ void from_json(const  Json& j, CompatibleObjectType& obj)
 // note: Is it really necessary to provide explicit overloads for boolean_t etc..
 // in case of a custom BooleanType which is not an arithmetic type?
 template <
-    typename Json, typename ArithmeticType,
+    typename BasicJsonType, typename ArithmeticType,
     enable_if_t <
         std::is_arithmetic<ArithmeticType>::value and
         not std::is_same<ArithmeticType,
-                         typename Json::number_unsigned_t>::value and
+                         typename BasicJsonType::number_unsigned_t>::value and
         not std::is_same<ArithmeticType,
-                         typename Json::number_integer_t>::value and
+                         typename BasicJsonType::number_integer_t>::value and
         not std::is_same<ArithmeticType,
-                         typename Json::number_float_t>::value and
-        not std::is_same<ArithmeticType, typename Json::boolean_t>::value,
+                         typename BasicJsonType::number_float_t>::value and
+        not std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
         int > = 0 >
-void from_json(const Json& j, ArithmeticType& val)
+void from_json(const BasicJsonType& j, ArithmeticType& val)
 {
     switch (static_cast<value_t>(j))
     {
         case value_t::number_unsigned:
             val = static_cast<ArithmeticType>(
-                      *j.template get_ptr<const typename Json::number_unsigned_t*>());
+                      *j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>());
             break;
         case value_t::number_integer:
             val = static_cast<ArithmeticType>(
-                      *j.template get_ptr<const typename Json::number_integer_t*>());
+                      *j.template get_ptr<const typename BasicJsonType::number_integer_t*>());
             break;
         case value_t::number_float:
             val = static_cast<ArithmeticType>(
-                      *j.template get_ptr<const typename Json::number_float_t*>());
+                      *j.template get_ptr<const typename BasicJsonType::number_float_t*>());
             break;
         case value_t::boolean:
             val = static_cast<ArithmeticType>(
-                      *j.template get_ptr<const typename Json::boolean_t*>());
+                      *j.template get_ptr<const typename BasicJsonType::boolean_t*>());
             break;
         default:
             JSON_THROW(
@@ -789,8 +789,8 @@ void from_json(const Json& j, ArithmeticType& val)
 
 struct to_json_fn
 {
-    template <typename Json, typename T>
-    auto call(Json& j, T&& val, priority_tag<1>) const
+    template <typename BasicJsonType, typename T>
+    auto call(BasicJsonType& j, T&& val, priority_tag<1>) const
     noexcept(noexcept(to_json(j, std::forward<T>(val))))
     -> decltype(to_json(j, std::forward<T>(val)),
                 void())
@@ -798,15 +798,15 @@ struct to_json_fn
         return to_json(j, std::forward<T>(val));
     }
 
-    template <typename Json, typename T>
-    void call(Json&, T&&, priority_tag<0>) const noexcept
+    template <typename BasicJsonType, typename T>
+    void call(BasicJsonType&, T&&, priority_tag<0>) const noexcept
     {
-        static_assert(sizeof(Json) == 0, "to_json method in T's namespace can not be called");
+        static_assert(sizeof(BasicJsonType) == 0, "to_json method in T's namespace can not be called");
     }
 
   public:
-    template <typename Json, typename T>
-    void operator()(Json& j, T&& val) const
+    template <typename BasicJsonType, typename T>
+    void operator()(BasicJsonType& j, T&& val) const
     noexcept(noexcept(std::declval<to_json_fn>().call(j, std::forward<T>(val), priority_tag<1> {})))
     {
         return call(j, std::forward<T>(val), priority_tag<1> {});
@@ -816,23 +816,23 @@ struct to_json_fn
 struct from_json_fn
 {
   private:
-    template <typename Json, typename T>
-    auto call(const  Json& j, T& val, priority_tag<1>) const
+    template <typename BasicJsonType, typename T>
+    auto call(const  BasicJsonType& j, T& val, priority_tag<1>) const
     noexcept(noexcept(from_json(j, val)))
     -> decltype(from_json(j, val), void())
     {
         return from_json(j, val);
     }
 
-    template <typename Json, typename T>
-    void call(const Json&, T&, priority_tag<0>) const noexcept
+    template <typename BasicJsonType, typename T>
+    void call(const BasicJsonType&, T&, priority_tag<0>) const noexcept
     {
-        static_assert(sizeof(Json) == 0, "from_json method in T's namespace can not be called");
+        static_assert(sizeof(BasicJsonType) == 0, "from_json method in T's namespace can not be called");
     }
 
   public:
-    template <typename Json, typename T>
-    void operator()(const  Json& j, T& val) const
+    template <typename BasicJsonType, typename T>
+    void operator()(const  BasicJsonType& j, T& val) const
     noexcept(noexcept(std::declval<from_json_fn>().call(j, val, priority_tag<1> {})))
     {
         return call(j, val, priority_tag<1> {});
@@ -881,14 +881,14 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 template <typename = void, typename = void>
 struct adl_serializer
 {
-    template <typename Json, typename T>
-    static void from_json(Json&& j, T& val) noexcept(noexcept(::nlohmann::from_json(std::forward<Json>(j), val)))
+    template <typename BasicJsonType, typename T>
+    static void from_json(BasicJsonType&& j, T& val) noexcept(noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
     {
-        ::nlohmann::from_json(std::forward<Json>(j), val);
+        ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
     }
 
-    template <typename Json, typename T>
-    static void to_json(Json& j, T&& val) noexcept(
+    template <typename BasicJsonType, typename T>
+    static void to_json(BasicJsonType& j, T&& val) noexcept(
         noexcept(::nlohmann::to_json(j, std::forward<T>(val))))
     {
         ::nlohmann::to_json(j, std::forward<T>(val));
@@ -989,7 +989,7 @@ class basic_json
 {
   private:
     template <::nlohmann::value_t> friend struct detail::external_constructor;
-    template <typename Json> friend std::string detail::type_name(const  Json&);
+    template <typename BasicJsonType> friend std::string detail::type_name(const  BasicJsonType&);
     /// workaround type for MSVC
     using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
           BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
@@ -9468,437 +9468,915 @@ class basic_json
                 m_start = m_cursor;
                 assert(m_start != nullptr);
 
-                
-    {
-        lexer_char_t yych;
-        unsigned int yyaccept = 0;
-        static const unsigned char yybm[] = {
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,  32,  32,   0,   0,  32,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-            160, 128,   0, 128, 128, 128, 128, 128, 
-            128, 128, 128, 128, 128, 128, 128, 128, 
-            192, 192, 192, 192, 192, 192, 192, 192, 
-            192, 192, 128, 128, 128, 128, 128, 128, 
-            128, 128, 128, 128, 128, 128, 128, 128, 
-            128, 128, 128, 128, 128, 128, 128, 128, 
-            128, 128, 128, 128, 128, 128, 128, 128, 
-            128, 128, 128, 128,   0, 128, 128, 128, 
-            128, 128, 128, 128, 128, 128, 128, 128, 
-            128, 128, 128, 128, 128, 128, 128, 128, 
-            128, 128, 128, 128, 128, 128, 128, 128, 
-            128, 128, 128, 128, 128, 128, 128, 128, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-              0,   0,   0,   0,   0,   0,   0,   0, 
-        };
-        if ((m_limit - m_cursor) < 5) fill_line_buffer(5); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yybm[0+yych] & 32) {
-            goto basic_json_parser_6;
-        }
-        if (yych <= '[') {
-            if (yych <= '-') {
-                if (yych <= '"') {
-                    if (yych <= 0x00) goto basic_json_parser_2;
-                    if (yych <= '!') goto basic_json_parser_4;
-                    goto basic_json_parser_9;
-                } else {
-                    if (yych <= '+') goto basic_json_parser_4;
-                    if (yych <= ',') goto basic_json_parser_10;
-                    goto basic_json_parser_12;
-                }
-            } else {
-                if (yych <= '9') {
-                    if (yych <= '/') goto basic_json_parser_4;
-                    if (yych <= '0') goto basic_json_parser_13;
-                    goto basic_json_parser_15;
-                } else {
-                    if (yych <= ':') goto basic_json_parser_17;
-                    if (yych <= 'Z') goto basic_json_parser_4;
-                    goto basic_json_parser_19;
-                }
-            }
-        } else {
-            if (yych <= 'n') {
-                if (yych <= 'e') {
-                    if (yych == ']') goto basic_json_parser_21;
-                    goto basic_json_parser_4;
-                } else {
-                    if (yych <= 'f') goto basic_json_parser_23;
-                    if (yych <= 'm') goto basic_json_parser_4;
-                    goto basic_json_parser_24;
-                }
-            } else {
-                if (yych <= 'z') {
-                    if (yych == 't') goto basic_json_parser_25;
-                    goto basic_json_parser_4;
-                } else {
-                    if (yych <= '{') goto basic_json_parser_26;
-                    if (yych == '}') goto basic_json_parser_28;
-                    goto basic_json_parser_4;
-                }
-            }
-        }
+
+                {
+                    lexer_char_t yych;
+                    unsigned int yyaccept = 0;
+                    static const unsigned char yybm[] =
+                    {
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,  32,  32,   0,   0,  32,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        160, 128,   0, 128, 128, 128, 128, 128,
+                        128, 128, 128, 128, 128, 128, 128, 128,
+                        192, 192, 192, 192, 192, 192, 192, 192,
+                        192, 192, 128, 128, 128, 128, 128, 128,
+                        128, 128, 128, 128, 128, 128, 128, 128,
+                        128, 128, 128, 128, 128, 128, 128, 128,
+                        128, 128, 128, 128, 128, 128, 128, 128,
+                        128, 128, 128, 128,   0, 128, 128, 128,
+                        128, 128, 128, 128, 128, 128, 128, 128,
+                        128, 128, 128, 128, 128, 128, 128, 128,
+                        128, 128, 128, 128, 128, 128, 128, 128,
+                        128, 128, 128, 128, 128, 128, 128, 128,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                    };
+                    if ((m_limit - m_cursor) < 5)
+                    {
+                        fill_line_buffer(5);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yybm[0 + yych] & 32)
+                    {
+                        goto basic_json_parser_6;
+                    }
+                    if (yych <= '[')
+                    {
+                        if (yych <= '-')
+                        {
+                            if (yych <= '"')
+                            {
+                                if (yych <= 0x00)
+                                {
+                                    goto basic_json_parser_2;
+                                }
+                                if (yych <= '!')
+                                {
+                                    goto basic_json_parser_4;
+                                }
+                                goto basic_json_parser_9;
+                            }
+                            else
+                            {
+                                if (yych <= '+')
+                                {
+                                    goto basic_json_parser_4;
+                                }
+                                if (yych <= ',')
+                                {
+                                    goto basic_json_parser_10;
+                                }
+                                goto basic_json_parser_12;
+                            }
+                        }
+                        else
+                        {
+                            if (yych <= '9')
+                            {
+                                if (yych <= '/')
+                                {
+                                    goto basic_json_parser_4;
+                                }
+                                if (yych <= '0')
+                                {
+                                    goto basic_json_parser_13;
+                                }
+                                goto basic_json_parser_15;
+                            }
+                            else
+                            {
+                                if (yych <= ':')
+                                {
+                                    goto basic_json_parser_17;
+                                }
+                                if (yych <= 'Z')
+                                {
+                                    goto basic_json_parser_4;
+                                }
+                                goto basic_json_parser_19;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (yych <= 'n')
+                        {
+                            if (yych <= 'e')
+                            {
+                                if (yych == ']')
+                                {
+                                    goto basic_json_parser_21;
+                                }
+                                goto basic_json_parser_4;
+                            }
+                            else
+                            {
+                                if (yych <= 'f')
+                                {
+                                    goto basic_json_parser_23;
+                                }
+                                if (yych <= 'm')
+                                {
+                                    goto basic_json_parser_4;
+                                }
+                                goto basic_json_parser_24;
+                            }
+                        }
+                        else
+                        {
+                            if (yych <= 'z')
+                            {
+                                if (yych == 't')
+                                {
+                                    goto basic_json_parser_25;
+                                }
+                                goto basic_json_parser_4;
+                            }
+                            else
+                            {
+                                if (yych <= '{')
+                                {
+                                    goto basic_json_parser_26;
+                                }
+                                if (yych == '}')
+                                {
+                                    goto basic_json_parser_28;
+                                }
+                                goto basic_json_parser_4;
+                            }
+                        }
+                    }
 basic_json_parser_2:
-        ++m_cursor;
-        { last_token_type = token_type::end_of_input; break; }
+                    ++m_cursor;
+                    {
+                        last_token_type = token_type::end_of_input;
+                        break;
+                    }
 basic_json_parser_4:
-        ++m_cursor;
+                    ++m_cursor;
 basic_json_parser_5:
-        { last_token_type = token_type::parse_error; break; }
+                    {
+                        last_token_type = token_type::parse_error;
+                        break;
+                    }
 basic_json_parser_6:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yybm[0+yych] & 32) {
-            goto basic_json_parser_6;
-        }
-        { continue; }
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yybm[0 + yych] & 32)
+                    {
+                        goto basic_json_parser_6;
+                    }
+                    {
+                        continue;
+                    }
 basic_json_parser_9:
-        yyaccept = 0;
-        yych = *(m_marker = ++m_cursor);
-        if (yych <= 0x1F) goto basic_json_parser_5;
-        if (yych <= 0x7F) goto basic_json_parser_31;
-        if (yych <= 0xC1) goto basic_json_parser_5;
-        if (yych <= 0xF4) goto basic_json_parser_31;
-        goto basic_json_parser_5;
+                    yyaccept = 0;
+                    yych = *(m_marker = ++m_cursor);
+                    if (yych <= 0x1F)
+                    {
+                        goto basic_json_parser_5;
+                    }
+                    if (yych <= 0x7F)
+                    {
+                        goto basic_json_parser_31;
+                    }
+                    if (yych <= 0xC1)
+                    {
+                        goto basic_json_parser_5;
+                    }
+                    if (yych <= 0xF4)
+                    {
+                        goto basic_json_parser_31;
+                    }
+                    goto basic_json_parser_5;
 basic_json_parser_10:
-        ++m_cursor;
-        { last_token_type = token_type::value_separator; break; }
+                    ++m_cursor;
+                    {
+                        last_token_type = token_type::value_separator;
+                        break;
+                    }
 basic_json_parser_12:
-        yych = *++m_cursor;
-        if (yych <= '/') goto basic_json_parser_5;
-        if (yych <= '0') goto basic_json_parser_13;
-        if (yych <= '9') goto basic_json_parser_15;
-        goto basic_json_parser_5;
+                    yych = *++m_cursor;
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_5;
+                    }
+                    if (yych <= '0')
+                    {
+                        goto basic_json_parser_13;
+                    }
+                    if (yych <= '9')
+                    {
+                        goto basic_json_parser_15;
+                    }
+                    goto basic_json_parser_5;
 basic_json_parser_13:
-        yyaccept = 1;
-        yych = *(m_marker = ++m_cursor);
-        if (yych <= 'D') {
-            if (yych == '.') goto basic_json_parser_43;
-        } else {
-            if (yych <= 'E') goto basic_json_parser_44;
-            if (yych == 'e') goto basic_json_parser_44;
-        }
+                    yyaccept = 1;
+                    yych = *(m_marker = ++m_cursor);
+                    if (yych <= 'D')
+                    {
+                        if (yych == '.')
+                        {
+                            goto basic_json_parser_43;
+                        }
+                    }
+                    else
+                    {
+                        if (yych <= 'E')
+                        {
+                            goto basic_json_parser_44;
+                        }
+                        if (yych == 'e')
+                        {
+                            goto basic_json_parser_44;
+                        }
+                    }
 basic_json_parser_14:
-        { last_token_type = token_type::value_number; break; }
+                    {
+                        last_token_type = token_type::value_number;
+                        break;
+                    }
 basic_json_parser_15:
-        yyaccept = 1;
-        m_marker = ++m_cursor;
-        if ((m_limit - m_cursor) < 3) fill_line_buffer(3); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yybm[0+yych] & 64) {
-            goto basic_json_parser_15;
-        }
-        if (yych <= 'D') {
-            if (yych == '.') goto basic_json_parser_43;
-            goto basic_json_parser_14;
-        } else {
-            if (yych <= 'E') goto basic_json_parser_44;
-            if (yych == 'e') goto basic_json_parser_44;
-            goto basic_json_parser_14;
-        }
+                    yyaccept = 1;
+                    m_marker = ++m_cursor;
+                    if ((m_limit - m_cursor) < 3)
+                    {
+                        fill_line_buffer(3);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yybm[0 + yych] & 64)
+                    {
+                        goto basic_json_parser_15;
+                    }
+                    if (yych <= 'D')
+                    {
+                        if (yych == '.')
+                        {
+                            goto basic_json_parser_43;
+                        }
+                        goto basic_json_parser_14;
+                    }
+                    else
+                    {
+                        if (yych <= 'E')
+                        {
+                            goto basic_json_parser_44;
+                        }
+                        if (yych == 'e')
+                        {
+                            goto basic_json_parser_44;
+                        }
+                        goto basic_json_parser_14;
+                    }
 basic_json_parser_17:
-        ++m_cursor;
-        { last_token_type = token_type::name_separator; break; }
+                    ++m_cursor;
+                    {
+                        last_token_type = token_type::name_separator;
+                        break;
+                    }
 basic_json_parser_19:
-        ++m_cursor;
-        { last_token_type = token_type::begin_array; break; }
+                    ++m_cursor;
+                    {
+                        last_token_type = token_type::begin_array;
+                        break;
+                    }
 basic_json_parser_21:
-        ++m_cursor;
-        { last_token_type = token_type::end_array; break; }
+                    ++m_cursor;
+                    {
+                        last_token_type = token_type::end_array;
+                        break;
+                    }
 basic_json_parser_23:
-        yyaccept = 0;
-        yych = *(m_marker = ++m_cursor);
-        if (yych == 'a') goto basic_json_parser_45;
-        goto basic_json_parser_5;
+                    yyaccept = 0;
+                    yych = *(m_marker = ++m_cursor);
+                    if (yych == 'a')
+                    {
+                        goto basic_json_parser_45;
+                    }
+                    goto basic_json_parser_5;
 basic_json_parser_24:
-        yyaccept = 0;
-        yych = *(m_marker = ++m_cursor);
-        if (yych == 'u') goto basic_json_parser_46;
-        goto basic_json_parser_5;
+                    yyaccept = 0;
+                    yych = *(m_marker = ++m_cursor);
+                    if (yych == 'u')
+                    {
+                        goto basic_json_parser_46;
+                    }
+                    goto basic_json_parser_5;
 basic_json_parser_25:
-        yyaccept = 0;
-        yych = *(m_marker = ++m_cursor);
-        if (yych == 'r') goto basic_json_parser_47;
-        goto basic_json_parser_5;
+                    yyaccept = 0;
+                    yych = *(m_marker = ++m_cursor);
+                    if (yych == 'r')
+                    {
+                        goto basic_json_parser_47;
+                    }
+                    goto basic_json_parser_5;
 basic_json_parser_26:
-        ++m_cursor;
-        { last_token_type = token_type::begin_object; break; }
+                    ++m_cursor;
+                    {
+                        last_token_type = token_type::begin_object;
+                        break;
+                    }
 basic_json_parser_28:
-        ++m_cursor;
-        { last_token_type = token_type::end_object; break; }
+                    ++m_cursor;
+                    {
+                        last_token_type = token_type::end_object;
+                        break;
+                    }
 basic_json_parser_30:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
 basic_json_parser_31:
-        if (yybm[0+yych] & 128) {
-            goto basic_json_parser_30;
-        }
-        if (yych <= 0xE0) {
-            if (yych <= '\\') {
-                if (yych <= 0x1F) goto basic_json_parser_32;
-                if (yych <= '"') goto basic_json_parser_33;
-                goto basic_json_parser_35;
-            } else {
-                if (yych <= 0xC1) goto basic_json_parser_32;
-                if (yych <= 0xDF) goto basic_json_parser_36;
-                goto basic_json_parser_37;
-            }
-        } else {
-            if (yych <= 0xEF) {
-                if (yych == 0xED) goto basic_json_parser_39;
-                goto basic_json_parser_38;
-            } else {
-                if (yych <= 0xF0) goto basic_json_parser_40;
-                if (yych <= 0xF3) goto basic_json_parser_41;
-                if (yych <= 0xF4) goto basic_json_parser_42;
-            }
-        }
+                    if (yybm[0 + yych] & 128)
+                    {
+                        goto basic_json_parser_30;
+                    }
+                    if (yych <= 0xE0)
+                    {
+                        if (yych <= '\\')
+                        {
+                            if (yych <= 0x1F)
+                            {
+                                goto basic_json_parser_32;
+                            }
+                            if (yych <= '"')
+                            {
+                                goto basic_json_parser_33;
+                            }
+                            goto basic_json_parser_35;
+                        }
+                        else
+                        {
+                            if (yych <= 0xC1)
+                            {
+                                goto basic_json_parser_32;
+                            }
+                            if (yych <= 0xDF)
+                            {
+                                goto basic_json_parser_36;
+                            }
+                            goto basic_json_parser_37;
+                        }
+                    }
+                    else
+                    {
+                        if (yych <= 0xEF)
+                        {
+                            if (yych == 0xED)
+                            {
+                                goto basic_json_parser_39;
+                            }
+                            goto basic_json_parser_38;
+                        }
+                        else
+                        {
+                            if (yych <= 0xF0)
+                            {
+                                goto basic_json_parser_40;
+                            }
+                            if (yych <= 0xF3)
+                            {
+                                goto basic_json_parser_41;
+                            }
+                            if (yych <= 0xF4)
+                            {
+                                goto basic_json_parser_42;
+                            }
+                        }
+                    }
 basic_json_parser_32:
-        m_cursor = m_marker;
-        if (yyaccept == 0) {
-            goto basic_json_parser_5;
-        } else {
-            goto basic_json_parser_14;
-        }
+                    m_cursor = m_marker;
+                    if (yyaccept == 0)
+                    {
+                        goto basic_json_parser_5;
+                    }
+                    else
+                    {
+                        goto basic_json_parser_14;
+                    }
 basic_json_parser_33:
-        ++m_cursor;
-        { last_token_type = token_type::value_string; break; }
+                    ++m_cursor;
+                    {
+                        last_token_type = token_type::value_string;
+                        break;
+                    }
 basic_json_parser_35:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= 'e') {
-            if (yych <= '/') {
-                if (yych == '"') goto basic_json_parser_30;
-                if (yych <= '.') goto basic_json_parser_32;
-                goto basic_json_parser_30;
-            } else {
-                if (yych <= '\\') {
-                    if (yych <= '[') goto basic_json_parser_32;
-                    goto basic_json_parser_30;
-                } else {
-                    if (yych == 'b') goto basic_json_parser_30;
-                    goto basic_json_parser_32;
-                }
-            }
-        } else {
-            if (yych <= 'q') {
-                if (yych <= 'f') goto basic_json_parser_30;
-                if (yych == 'n') goto basic_json_parser_30;
-                goto basic_json_parser_32;
-            } else {
-                if (yych <= 's') {
-                    if (yych <= 'r') goto basic_json_parser_30;
-                    goto basic_json_parser_32;
-                } else {
-                    if (yych <= 't') goto basic_json_parser_30;
-                    if (yych <= 'u') goto basic_json_parser_48;
-                    goto basic_json_parser_32;
-                }
-            }
-        }
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= 'e')
+                    {
+                        if (yych <= '/')
+                        {
+                            if (yych == '"')
+                            {
+                                goto basic_json_parser_30;
+                            }
+                            if (yych <= '.')
+                            {
+                                goto basic_json_parser_32;
+                            }
+                            goto basic_json_parser_30;
+                        }
+                        else
+                        {
+                            if (yych <= '\\')
+                            {
+                                if (yych <= '[')
+                                {
+                                    goto basic_json_parser_32;
+                                }
+                                goto basic_json_parser_30;
+                            }
+                            else
+                            {
+                                if (yych == 'b')
+                                {
+                                    goto basic_json_parser_30;
+                                }
+                                goto basic_json_parser_32;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (yych <= 'q')
+                        {
+                            if (yych <= 'f')
+                            {
+                                goto basic_json_parser_30;
+                            }
+                            if (yych == 'n')
+                            {
+                                goto basic_json_parser_30;
+                            }
+                            goto basic_json_parser_32;
+                        }
+                        else
+                        {
+                            if (yych <= 's')
+                            {
+                                if (yych <= 'r')
+                                {
+                                    goto basic_json_parser_30;
+                                }
+                                goto basic_json_parser_32;
+                            }
+                            else
+                            {
+                                if (yych <= 't')
+                                {
+                                    goto basic_json_parser_30;
+                                }
+                                if (yych <= 'u')
+                                {
+                                    goto basic_json_parser_48;
+                                }
+                                goto basic_json_parser_32;
+                            }
+                        }
+                    }
 basic_json_parser_36:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= 0x7F) goto basic_json_parser_32;
-        if (yych <= 0xBF) goto basic_json_parser_30;
-        goto basic_json_parser_32;
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= 0x7F)
+                    {
+                        goto basic_json_parser_32;
+                    }
+                    if (yych <= 0xBF)
+                    {
+                        goto basic_json_parser_30;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_37:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= 0x9F) goto basic_json_parser_32;
-        if (yych <= 0xBF) goto basic_json_parser_36;
-        goto basic_json_parser_32;
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= 0x9F)
+                    {
+                        goto basic_json_parser_32;
+                    }
+                    if (yych <= 0xBF)
+                    {
+                        goto basic_json_parser_36;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_38:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= 0x7F) goto basic_json_parser_32;
-        if (yych <= 0xBF) goto basic_json_parser_36;
-        goto basic_json_parser_32;
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= 0x7F)
+                    {
+                        goto basic_json_parser_32;
+                    }
+                    if (yych <= 0xBF)
+                    {
+                        goto basic_json_parser_36;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_39:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= 0x7F) goto basic_json_parser_32;
-        if (yych <= 0x9F) goto basic_json_parser_36;
-        goto basic_json_parser_32;
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= 0x7F)
+                    {
+                        goto basic_json_parser_32;
+                    }
+                    if (yych <= 0x9F)
+                    {
+                        goto basic_json_parser_36;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_40:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= 0x8F) goto basic_json_parser_32;
-        if (yych <= 0xBF) goto basic_json_parser_38;
-        goto basic_json_parser_32;
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= 0x8F)
+                    {
+                        goto basic_json_parser_32;
+                    }
+                    if (yych <= 0xBF)
+                    {
+                        goto basic_json_parser_38;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_41:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= 0x7F) goto basic_json_parser_32;
-        if (yych <= 0xBF) goto basic_json_parser_38;
-        goto basic_json_parser_32;
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= 0x7F)
+                    {
+                        goto basic_json_parser_32;
+                    }
+                    if (yych <= 0xBF)
+                    {
+                        goto basic_json_parser_38;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_42:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= 0x7F) goto basic_json_parser_32;
-        if (yych <= 0x8F) goto basic_json_parser_38;
-        goto basic_json_parser_32;
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= 0x7F)
+                    {
+                        goto basic_json_parser_32;
+                    }
+                    if (yych <= 0x8F)
+                    {
+                        goto basic_json_parser_38;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_43:
-        yych = *++m_cursor;
-        if (yych <= '/') goto basic_json_parser_32;
-        if (yych <= '9') goto basic_json_parser_49;
-        goto basic_json_parser_32;
+                    yych = *++m_cursor;
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_32;
+                    }
+                    if (yych <= '9')
+                    {
+                        goto basic_json_parser_49;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_44:
-        yych = *++m_cursor;
-        if (yych <= ',') {
-            if (yych == '+') goto basic_json_parser_51;
-            goto basic_json_parser_32;
-        } else {
-            if (yych <= '-') goto basic_json_parser_51;
-            if (yych <= '/') goto basic_json_parser_32;
-            if (yych <= '9') goto basic_json_parser_52;
-            goto basic_json_parser_32;
-        }
+                    yych = *++m_cursor;
+                    if (yych <= ',')
+                    {
+                        if (yych == '+')
+                        {
+                            goto basic_json_parser_51;
+                        }
+                        goto basic_json_parser_32;
+                    }
+                    else
+                    {
+                        if (yych <= '-')
+                        {
+                            goto basic_json_parser_51;
+                        }
+                        if (yych <= '/')
+                        {
+                            goto basic_json_parser_32;
+                        }
+                        if (yych <= '9')
+                        {
+                            goto basic_json_parser_52;
+                        }
+                        goto basic_json_parser_32;
+                    }
 basic_json_parser_45:
-        yych = *++m_cursor;
-        if (yych == 'l') goto basic_json_parser_54;
-        goto basic_json_parser_32;
+                    yych = *++m_cursor;
+                    if (yych == 'l')
+                    {
+                        goto basic_json_parser_54;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_46:
-        yych = *++m_cursor;
-        if (yych == 'l') goto basic_json_parser_55;
-        goto basic_json_parser_32;
+                    yych = *++m_cursor;
+                    if (yych == 'l')
+                    {
+                        goto basic_json_parser_55;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_47:
-        yych = *++m_cursor;
-        if (yych == 'u') goto basic_json_parser_56;
-        goto basic_json_parser_32;
+                    yych = *++m_cursor;
+                    if (yych == 'u')
+                    {
+                        goto basic_json_parser_56;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_48:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= '@') {
-            if (yych <= '/') goto basic_json_parser_32;
-            if (yych <= '9') goto basic_json_parser_57;
-            goto basic_json_parser_32;
-        } else {
-            if (yych <= 'F') goto basic_json_parser_57;
-            if (yych <= '`') goto basic_json_parser_32;
-            if (yych <= 'f') goto basic_json_parser_57;
-            goto basic_json_parser_32;
-        }
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= '@')
+                    {
+                        if (yych <= '/')
+                        {
+                            goto basic_json_parser_32;
+                        }
+                        if (yych <= '9')
+                        {
+                            goto basic_json_parser_57;
+                        }
+                        goto basic_json_parser_32;
+                    }
+                    else
+                    {
+                        if (yych <= 'F')
+                        {
+                            goto basic_json_parser_57;
+                        }
+                        if (yych <= '`')
+                        {
+                            goto basic_json_parser_32;
+                        }
+                        if (yych <= 'f')
+                        {
+                            goto basic_json_parser_57;
+                        }
+                        goto basic_json_parser_32;
+                    }
 basic_json_parser_49:
-        yyaccept = 1;
-        m_marker = ++m_cursor;
-        if ((m_limit - m_cursor) < 3) fill_line_buffer(3); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= 'D') {
-            if (yych <= '/') goto basic_json_parser_14;
-            if (yych <= '9') goto basic_json_parser_49;
-            goto basic_json_parser_14;
-        } else {
-            if (yych <= 'E') goto basic_json_parser_44;
-            if (yych == 'e') goto basic_json_parser_44;
-            goto basic_json_parser_14;
-        }
+                    yyaccept = 1;
+                    m_marker = ++m_cursor;
+                    if ((m_limit - m_cursor) < 3)
+                    {
+                        fill_line_buffer(3);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= 'D')
+                    {
+                        if (yych <= '/')
+                        {
+                            goto basic_json_parser_14;
+                        }
+                        if (yych <= '9')
+                        {
+                            goto basic_json_parser_49;
+                        }
+                        goto basic_json_parser_14;
+                    }
+                    else
+                    {
+                        if (yych <= 'E')
+                        {
+                            goto basic_json_parser_44;
+                        }
+                        if (yych == 'e')
+                        {
+                            goto basic_json_parser_44;
+                        }
+                        goto basic_json_parser_14;
+                    }
 basic_json_parser_51:
-        yych = *++m_cursor;
-        if (yych <= '/') goto basic_json_parser_32;
-        if (yych >= ':') goto basic_json_parser_32;
+                    yych = *++m_cursor;
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_32;
+                    }
+                    if (yych >= ':')
+                    {
+                        goto basic_json_parser_32;
+                    }
 basic_json_parser_52:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= '/') goto basic_json_parser_14;
-        if (yych <= '9') goto basic_json_parser_52;
-        goto basic_json_parser_14;
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_14;
+                    }
+                    if (yych <= '9')
+                    {
+                        goto basic_json_parser_52;
+                    }
+                    goto basic_json_parser_14;
 basic_json_parser_54:
-        yych = *++m_cursor;
-        if (yych == 's') goto basic_json_parser_58;
-        goto basic_json_parser_32;
+                    yych = *++m_cursor;
+                    if (yych == 's')
+                    {
+                        goto basic_json_parser_58;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_55:
-        yych = *++m_cursor;
-        if (yych == 'l') goto basic_json_parser_59;
-        goto basic_json_parser_32;
+                    yych = *++m_cursor;
+                    if (yych == 'l')
+                    {
+                        goto basic_json_parser_59;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_56:
-        yych = *++m_cursor;
-        if (yych == 'e') goto basic_json_parser_61;
-        goto basic_json_parser_32;
+                    yych = *++m_cursor;
+                    if (yych == 'e')
+                    {
+                        goto basic_json_parser_61;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_57:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= '@') {
-            if (yych <= '/') goto basic_json_parser_32;
-            if (yych <= '9') goto basic_json_parser_63;
-            goto basic_json_parser_32;
-        } else {
-            if (yych <= 'F') goto basic_json_parser_63;
-            if (yych <= '`') goto basic_json_parser_32;
-            if (yych <= 'f') goto basic_json_parser_63;
-            goto basic_json_parser_32;
-        }
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= '@')
+                    {
+                        if (yych <= '/')
+                        {
+                            goto basic_json_parser_32;
+                        }
+                        if (yych <= '9')
+                        {
+                            goto basic_json_parser_63;
+                        }
+                        goto basic_json_parser_32;
+                    }
+                    else
+                    {
+                        if (yych <= 'F')
+                        {
+                            goto basic_json_parser_63;
+                        }
+                        if (yych <= '`')
+                        {
+                            goto basic_json_parser_32;
+                        }
+                        if (yych <= 'f')
+                        {
+                            goto basic_json_parser_63;
+                        }
+                        goto basic_json_parser_32;
+                    }
 basic_json_parser_58:
-        yych = *++m_cursor;
-        if (yych == 'e') goto basic_json_parser_64;
-        goto basic_json_parser_32;
+                    yych = *++m_cursor;
+                    if (yych == 'e')
+                    {
+                        goto basic_json_parser_64;
+                    }
+                    goto basic_json_parser_32;
 basic_json_parser_59:
-        ++m_cursor;
-        { last_token_type = token_type::literal_null; break; }
+                    ++m_cursor;
+                    {
+                        last_token_type = token_type::literal_null;
+                        break;
+                    }
 basic_json_parser_61:
-        ++m_cursor;
-        { last_token_type = token_type::literal_true; break; }
+                    ++m_cursor;
+                    {
+                        last_token_type = token_type::literal_true;
+                        break;
+                    }
 basic_json_parser_63:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= '@') {
-            if (yych <= '/') goto basic_json_parser_32;
-            if (yych <= '9') goto basic_json_parser_66;
-            goto basic_json_parser_32;
-        } else {
-            if (yych <= 'F') goto basic_json_parser_66;
-            if (yych <= '`') goto basic_json_parser_32;
-            if (yych <= 'f') goto basic_json_parser_66;
-            goto basic_json_parser_32;
-        }
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= '@')
+                    {
+                        if (yych <= '/')
+                        {
+                            goto basic_json_parser_32;
+                        }
+                        if (yych <= '9')
+                        {
+                            goto basic_json_parser_66;
+                        }
+                        goto basic_json_parser_32;
+                    }
+                    else
+                    {
+                        if (yych <= 'F')
+                        {
+                            goto basic_json_parser_66;
+                        }
+                        if (yych <= '`')
+                        {
+                            goto basic_json_parser_32;
+                        }
+                        if (yych <= 'f')
+                        {
+                            goto basic_json_parser_66;
+                        }
+                        goto basic_json_parser_32;
+                    }
 basic_json_parser_64:
-        ++m_cursor;
-        { last_token_type = token_type::literal_false; break; }
+                    ++m_cursor;
+                    {
+                        last_token_type = token_type::literal_false;
+                        break;
+                    }
 basic_json_parser_66:
-        ++m_cursor;
-        if (m_limit <= m_cursor) fill_line_buffer(1); // LCOV_EXCL_LINE
-        yych = *m_cursor;
-        if (yych <= '@') {
-            if (yych <= '/') goto basic_json_parser_32;
-            if (yych <= '9') goto basic_json_parser_30;
-            goto basic_json_parser_32;
-        } else {
-            if (yych <= 'F') goto basic_json_parser_30;
-            if (yych <= '`') goto basic_json_parser_32;
-            if (yych <= 'f') goto basic_json_parser_30;
-            goto basic_json_parser_32;
-        }
-    }
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= '@')
+                    {
+                        if (yych <= '/')
+                        {
+                            goto basic_json_parser_32;
+                        }
+                        if (yych <= '9')
+                        {
+                            goto basic_json_parser_30;
+                        }
+                        goto basic_json_parser_32;
+                    }
+                    else
+                    {
+                        if (yych <= 'F')
+                        {
+                            goto basic_json_parser_30;
+                        }
+                        if (yych <= '`')
+                        {
+                            goto basic_json_parser_32;
+                        }
+                        if (yych <= 'f')
+                        {
+                            goto basic_json_parser_30;
+                        }
+                        goto basic_json_parser_32;
+                    }
+                }
 
             }
 
