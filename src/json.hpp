@@ -3107,14 +3107,13 @@ class basic_json
     // do we really want the uncvref ? if a user call get<int &>, shouldn't we
     // static assert ?
     // i know there is a special behaviour for boolean_t* and such
-    auto get() const noexcept(noexcept(JSONSerializer<U>::from_json(
-                                           std::declval<const basic_json_t&>(), std::declval<U&>())))
-    -> U
+    U get() const noexcept(noexcept(JSONSerializer<U>::from_json(
+                                        std::declval<const basic_json_t&>(), std::declval<U&>())))
     {
         static_assert(std::is_default_constructible<U>::value and
-        std::is_copy_constructible<U>::value,
-        "Types must be DefaultConstructible and "
-        "CopyConstructible when used with get");
+                      std::is_copy_constructible<U>::value,
+                      "Types must be DefaultConstructible and "
+                      "CopyConstructible when used with get");
         U ret;
         JSONSerializer<U>::from_json(*this, ret);
         return ret;
@@ -3137,11 +3136,12 @@ class basic_json
     */
     template <
         typename T,
-        detail::enable_if_t<not std::is_same<basic_json_t, detail::uncvref_t<T>>::value and
+        typename U = detail::uncvref_t<T>,
+        detail::enable_if_t<not std::is_same<basic_json_t, U>::value and
                             detail::has_non_default_from_json<basic_json_t,
-                                    detail::uncvref_t<T>>::value,
+                                    U>::value,
                             int> = 0 >
-    detail::uncvref_t<T> get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<const basic_json_t&>())))
+    U get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<const basic_json_t&>())))
     {
         return JSONSerializer<T>::from_json(*this);
     }
