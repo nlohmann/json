@@ -107,7 +107,14 @@ SOFTWARE.
 */
 namespace nlohmann
 {
+// TODO update this doc
+/*!
+@brief unnamed namespace with internal helper functions
+@since version 1.0.0
+*/
 
+namespace detail
+{
 ///////////////////////////
 // JSON type enumeration //
 ///////////////////////////
@@ -147,6 +154,45 @@ enum class value_t : uint8_t
     discarded        ///< discarded by the the parser callback function
 };
 
+//////////////////////////////////////////
+// lexicographical comparison operators //
+//////////////////////////////////////////
+
+/// @name lexicographical comparison operators
+/// @{
+/*!
+@brief comparison operator for JSON types
+
+Returns an ordering that is similar to Python:
+- order: null < boolean < number < object < array < string
+- furthermore, each type is not smaller than itself
+
+@since version 1.0.0
+*/
+inline bool operator<(const value_t lhs, const value_t rhs) noexcept
+{
+    static constexpr std::array<uint8_t, 8> order = {{
+            0, // null
+            3, // object
+            4, // array
+            5, // string
+            1, // boolean
+            2, // integer
+            2, // unsigned
+            2, // float
+        }
+    };
+
+    // discarded values are not comparable
+    if (lhs == value_t::discarded or rhs == value_t::discarded)
+    {
+        return false;
+    }
+
+    return order[static_cast<std::size_t>(lhs)] <
+           order[static_cast<std::size_t>(rhs)];
+}
+
 // alias templates to reduce boilerplate
 template <bool B, typename T = void>
 using enable_if_t = typename std::enable_if<B, T>::type;
@@ -160,14 +206,6 @@ using is_unscoped_enum =
     std::integral_constant<bool, std::is_convertible<T, int>::value and
     std::is_enum<T>::value>;
 
-// TODO update this doc
-/*!
-@brief unnamed namespace with internal helper functions
-@since version 1.0.0
-*/
-
-namespace detail
-{
 // Implementation of 2 C++17 constructs: conjunction, negation.
 // This is needed to avoid evaluating all the traits in a condition
 //
@@ -967,14 +1005,14 @@ template <
 class basic_json
 {
   private:
-    template <::nlohmann::value_t> friend struct detail::external_constructor;
+    template <detail::value_t> friend struct detail::external_constructor;
     /// workaround type for MSVC
     using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
           BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
           AllocatorType, JSONSerializer>;
 
   public:
-    using value_t = ::nlohmann::value_t;
+    using value_t = detail::value_t;
     // forward declarations
     template<typename U> class iter_impl;
     template<typename Base> class json_reverse_iterator;
@@ -1866,13 +1904,13 @@ class basic_json
 
     @since version 2.1.0
     */
-    template <typename T, typename U = uncvref_t<T>,
-              enable_if_t<not std::is_base_of<std::istream, U>::value and
-                          not std::is_same<U, basic_json_t>::value and
-                          not detail::is_basic_json_nested_type<
-                              basic_json_t, U>::value and
-                          detail::has_to_json<basic_json, U>::value,
-                          int> = 0>
+    template <typename T, typename U = detail::uncvref_t<T>,
+              detail::enable_if_t<not std::is_base_of<std::istream, U>::value and
+                                  not std::is_same<U, basic_json_t>::value and
+                                  not detail::is_basic_json_nested_type<
+                                      basic_json_t, U>::value and
+                                  detail::has_to_json<basic_json, U>::value,
+                                  int> = 0>
     basic_json(T && val) noexcept(noexcept(JSONSerializer<U>::to_json(
             std::declval<basic_json_t&>(), std::forward<T>(val))))
     {
@@ -3036,7 +3074,7 @@ class basic_json
     @since version 2.1.0
     */
     template <typename T,
-              enable_if_t<std::is_same<T, basic_json_t>::value, int> = 0>
+              detail::enable_if_t<std::is_same<T, basic_json_t>::value, int> = 0>
     basic_json get() const
     {
         return *this;
@@ -3059,8 +3097,8 @@ class basic_json
     */
     template <
         typename T,
-        typename U = uncvref_t<T>,
-        enable_if_t <
+        typename U = detail::uncvref_t<T>,
+        detail::enable_if_t <
             not std::is_same<basic_json_t, U>::value and
             detail::has_from_json<basic_json_t, U>::value and
             not detail::has_non_default_from_json<basic_json_t,
@@ -3099,11 +3137,11 @@ class basic_json
     */
     template <
         typename T,
-        enable_if_t<not std::is_same<basic_json_t, uncvref_t<T>>::value and
-                    detail::has_non_default_from_json<basic_json_t,
-                            uncvref_t<T>>::value,
-                    int> = 0 >
-    uncvref_t<T> get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<const basic_json_t&>())))
+        detail::enable_if_t<not std::is_same<basic_json_t, detail::uncvref_t<T>>::value and
+                            detail::has_non_default_from_json<basic_json_t,
+                                    detail::uncvref_t<T>>::value,
+                            int> = 0 >
+    detail::uncvref_t<T> get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<const basic_json_t&>())))
     {
         return JSONSerializer<T>::from_json(*this);
     }
@@ -11550,45 +11588,6 @@ class basic_json
 
     /// @}
 };
-
-//////////////////////////////////////////
-// lexicographical comparison operators //
-//////////////////////////////////////////
-
-/// @name lexicographical comparison operators
-/// @{
-/*!
-@brief comparison operator for JSON types
-
-Returns an ordering that is similar to Python:
-- order: null < boolean < number < object < array < string
-- furthermore, each type is not smaller than itself
-
-@since version 1.0.0
-*/
-inline bool operator<(const value_t lhs, const value_t rhs) noexcept
-{
-    static constexpr std::array<uint8_t, 8> order = {{
-            0, // null
-            3, // object
-            4, // array
-            5, // string
-            1, // boolean
-            2, // integer
-            2, // unsigned
-            2, // float
-        }
-    };
-
-    // discarded values are not comparable
-    if (lhs == value_t::discarded or rhs == value_t::discarded)
-    {
-        return false;
-    }
-
-    return order[static_cast<std::size_t>(lhs)] <
-           order[static_cast<std::size_t>(rhs)];
-}
 
 /////////////
 // presets //
