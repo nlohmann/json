@@ -175,6 +175,7 @@ TEST_CASE("value conversion")
             CHECK_THROWS_WITH(json(json::value_t::null).get<std::vector<json>>(),
                               "type must be array, but is null");
 
+#if not defined(JSON_NOEXCEPTION)
             SECTION("reserve is called on containers that supports it")
             {
                 // making the call to from_json throw in order to check capacity
@@ -182,6 +183,7 @@ TEST_CASE("value conversion")
                 CHECK_THROWS_AS(nlohmann::from_json(j, v), std::logic_error);
                 CHECK(v.capacity() == j.size());
             }
+#endif
         }
 
         SECTION("std::deque<json>")
