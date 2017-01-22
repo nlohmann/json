@@ -372,7 +372,7 @@ contains a `mapped_type`, whereas `std::vector` fails the test.
     public:                                                                   \
         static constexpr bool value =                                         \
                 std::is_integral<decltype(detect(std::declval<T>()))>::value; \
-    };
+    }
 
 NLOHMANN_JSON_HAS_HELPER(mapped_type);
 NLOHMANN_JSON_HAS_HELPER(key_type);
@@ -3113,7 +3113,6 @@ class basic_json
         // we cannot static_assert on T being non-const, because there is support
         // for get<const basic_json_t>(), which is why we still need the uncvref
         static_assert(not std::is_reference<T>::value, "get cannot be used with reference types, you might want to use get_ref");
-        static_assert(not std::is_pointer<T>::value, "get cannot be used with pointer types, you might want to use get_ptr");
         static_assert(std::is_default_constructible<U>::value,
                       "Types must be DefaultConstructible when used with get");
         U ret;
@@ -3146,7 +3145,6 @@ class basic_json
     U get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<const basic_json_t&>())))
     {
         static_assert(not std::is_reference<T>::value, "get cannot be used with reference types, you might want to use get_ref");
-        static_assert(not std::is_pointer<T>::value, "get cannot be used with pointer types, you might want to use get_ptr");
         return JSONSerializer<T>::from_json(*this);
     }
 

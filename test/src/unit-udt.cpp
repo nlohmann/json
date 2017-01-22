@@ -348,7 +348,7 @@ TEST_CASE("adl_serializer specialization", "[udt]")
             json j = optPerson;
             CHECK(j.is_null());
 
-            optPerson.reset(new udt::person{{42}, {"John Doe"}});
+            optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia});
             j = optPerson;
             CHECK_FALSE(j.is_null());
 
@@ -357,7 +357,7 @@ TEST_CASE("adl_serializer specialization", "[udt]")
 
         SECTION("from_json")
         {
-            auto person = udt::person{{42}, {"John Doe"}};
+            auto person = udt::person{{42}, {"John Doe"}, udt::country::russia};
             json j = person;
 
             auto optPerson = j.get<std::shared_ptr<udt::person>>();
