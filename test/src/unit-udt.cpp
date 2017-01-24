@@ -263,52 +263,52 @@ TEST_CASE("basic usage", "[udt]")
             u8R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"}, {"person" : {"age":42, "country":"中华人民共和国", "name":"王芳"}, "address":"Paris"}]})"_json;
         SECTION("via explicit calls to get")
         {
-          const auto parsed_book = big_json.get<udt::contact_book>();
-          const auto book_name = big_json["name"].get<udt::name>();
-          const auto contacts =
-              big_json["contacts"].get<std::vector<udt::contact>>();
-          const auto contact_json = big_json["contacts"].at(0);
-          const auto contact = contact_json.get<udt::contact>();
-          const auto person = contact_json["person"].get<udt::person>();
-          const auto address = contact_json["address"].get<udt::address>();
-          const auto age = contact_json["person"]["age"].get<udt::age>();
-          const auto country =
-              contact_json["person"]["country"].get<udt::country>();
-          const auto name = contact_json["person"]["name"].get<udt::name>();
+            const auto parsed_book = big_json.get<udt::contact_book>();
+            const auto book_name = big_json["name"].get<udt::name>();
+            const auto contacts =
+                big_json["contacts"].get<std::vector<udt::contact>>();
+            const auto contact_json = big_json["contacts"].at(0);
+            const auto contact = contact_json.get<udt::contact>();
+            const auto person = contact_json["person"].get<udt::person>();
+            const auto address = contact_json["address"].get<udt::address>();
+            const auto age = contact_json["person"]["age"].get<udt::age>();
+            const auto country =
+                contact_json["person"]["country"].get<udt::country>();
+            const auto name = contact_json["person"]["name"].get<udt::name>();
 
-          CHECK(age == a);
-          CHECK(name == n);
-          CHECK(country == c);
-          CHECK(address == addr);
-          CHECK(person == sfinae_addict);
-          CHECK(contact == cpp_programmer);
-          CHECK(contacts == book.m_contacts);
-          CHECK(book_name == udt::name{"C++"});
-          CHECK(book == parsed_book);
+            CHECK(age == a);
+            CHECK(name == n);
+            CHECK(country == c);
+            CHECK(address == addr);
+            CHECK(person == sfinae_addict);
+            CHECK(contact == cpp_programmer);
+            CHECK(contacts == book.m_contacts);
+            CHECK(book_name == udt::name{"C++"});
+            CHECK(book == parsed_book);
         }
 
         SECTION("implicit conversions")
         {
-          const udt::contact_book parsed_book = big_json;
-          const udt::name book_name = big_json["name"];
-          const std::vector<udt::contact> contacts = big_json["contacts"];
-          const auto contact_json = big_json["contacts"].at(0);
-          const udt::contact contact = contact_json;
-          const udt::person person = contact_json["person"];
-          const udt::address address = contact_json["address"];
-          const udt::age age = contact_json["person"]["age"];
-          const udt::country country = contact_json["person"]["country"];
-          const udt::name name = contact_json["person"]["name"];
+            const udt::contact_book parsed_book = big_json;
+            const udt::name book_name = big_json["name"];
+            const std::vector<udt::contact> contacts = big_json["contacts"];
+            const auto contact_json = big_json["contacts"].at(0);
+            const udt::contact contact = contact_json;
+            const udt::person person = contact_json["person"];
+            const udt::address address = contact_json["address"];
+            const udt::age age = contact_json["person"]["age"];
+            const udt::country country = contact_json["person"]["country"];
+            const udt::name name = contact_json["person"]["name"];
 
-          CHECK(age == a);
-          CHECK(name == n);
-          CHECK(country == c);
-          CHECK(address == addr);
-          CHECK(person == sfinae_addict);
-          CHECK(contact == cpp_programmer);
-          CHECK(contacts == book.m_contacts);
-          CHECK(book_name == udt::name{"C++"});
-          CHECK(book == parsed_book);
+            CHECK(age == a);
+            CHECK(name == n);
+            CHECK(country == c);
+            CHECK(address == addr);
+            CHECK(person == sfinae_addict);
+            CHECK(contact == cpp_programmer);
+            CHECK(contacts == book.m_contacts);
+            CHECK(book_name == udt::name{"C++"});
+            CHECK(book == parsed_book);
         }
     }
 }
