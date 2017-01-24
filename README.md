@@ -21,7 +21,7 @@
   - [Conversion from STL containers](#conversion-from-stl-containers)
   - [JSON Pointer and JSON Patch](#json-pointer-and-json-patch)
   - [Implicit conversions](#implicit-conversions)
-  - [Conversions to arbitrary types](#arbitrary-types-conversions)
+  - [Conversions to/from arbitrary types](#arbitrary-types-conversions)
   - [Binary formats (CBOR and MessagePack)](#binary-formats-cbor-and-messagepack)
 - [Supported compilers](#supported-compilers)
 - [License](#license)
@@ -835,10 +835,11 @@ Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I
 To compile and run the tests, you need to execute
 
 ```sh
-$ make check
+$ make json_unit -Ctest
+$ ./test/json_unit "*""
 
 ===============================================================================
-All tests passed (11202040 assertions in 44 test cases)
+All tests passed (11202052 assertions in 47 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run
