@@ -457,9 +457,10 @@ namespace ns {
     };
 }
 
+ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+
 // convert to JSON: copy each value into the JSON object
 json j;
-ns::person p = createSomeone();
 j["name"] = p.name;
 j["address"] = p.address;
 j["age"] = p.age;
@@ -477,12 +478,19 @@ ns::person p {
 It works, but that's quite a lot of boilerplate... Hopefully, there's a better way:
 
 ```cpp
-// person -> json
-ns::person p = createPerson();
+// create a person
+ns::person p {"Ned Flanders", "744 Evergreen Terrace", 60};
+
+// conversion: person -> json
 json j = p;
 
-// json -> person
-auto p2 = j.get<ns::person>();
+std::cout << j << std::endl;
+// {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
+
+// conversion: json -> person
+ns::person p2 = j;
+
+// that's it
 assert(p == p2);
 ```
 
