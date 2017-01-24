@@ -668,7 +668,7 @@ TEST_CASE("custom serializer that does adl by default", "[udt]")
 {
     using json = nlohmann::json;
 
-    auto me = udt::person{23, "theo", udt::country::france};
+    auto me = udt::person{{23}, {"theo"}, udt::country::france};
 
     json j = me;
     custom_json cj = me;
