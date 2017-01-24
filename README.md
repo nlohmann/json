@@ -442,15 +442,20 @@ int vi = jn.get<int>();
 
 // etc.
 ```
+
 ### Arbitrary types conversions
 
-Every type can be serialized in JSON, not just STL-containers and scalar types.
-Usually, you would do something along those lines:
+Every type can be serialized in JSON, not just STL-containers and scalar types. Usually, you would do something along those lines:
 
 ```cpp
 namespace ns {
-struct person { std::string name; std::string address; int age; };
+    struct person {
+        std::string name;
+        std::string address;
+        int age;
+    };
 }
+
 // convert to JSON
 json j;
 ns::person p = createSomeone();
@@ -461,10 +466,14 @@ j["age"] = p.age;
 // ...
 
 // convert from JSON
-ns::person p {j["name"].get<std::string>(), j["address"].get<std::string>(), j["age"].get<int>()};
+ns::person p {
+    j["name"].get<std::string>(),
+    j["address"].get<std::string>(),
+    j["age"].get<int>()
+};
 ```
 
-It works, but that's quite a lot of boilerplate.. Hopefully, there's a better way:
+It works, but that's quite a lot of boilerplate... Hopefully, there's a better way:
 
 ```cpp
 ns::person p = createPerson();
@@ -482,27 +491,25 @@ To make this work with one of your types, you only need to provide two methods:
 using nlohmann::json;
 
 namespace ns {
-void to_json(json& j, person const& p)
-{
-  j = json{{"name", p.name}, {"address", p.address}, {"age", p.age}};
-}
+    void to_json(json& j, person const& p) {
+        j = json{{"name", p.name}, {"address", p.address}, {"age", p.age}};
+    }
 
-void from_json(json const& j, person& p)
-{
-  p.name = j["name"].get<std::string>();
-  p.address = j["address"].get<std::string>();
-  p.age = j["age"].get<int>();
-}
+    void from_json(json const& j, person& p) {
+        p.name = j["name"].get<std::string>();
+        p.address = j["address"].get<std::string>();
+        p.age = j["age"].get<int>();
+    }
 } // namespace ns
 ```
 
-That's all. When calling the json constructor with your type, your custom `to_json` method will be automatically called.
+That's all! When calling the `json` constructor with your type, your custom `to_json` method will be automatically called.
 Likewise, when calling `get<your_type>()`, the `from_json` method will be called.
 
 Some important things:
 
 * Those methods **MUST** be in your type's namespace, or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
-* When using `get<your_type>()`, `your_type` **MUST** be DefaultConstructible and CopyConstructible (There is a way to bypass those requirements described later)
+* When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible) and [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible). (There is a way to bypass those requirements described later.)
 
 #### How do I convert third-party types?
 
@@ -510,124 +517,117 @@ This requires a bit more advanced technique.
 But first, let's see how this conversion mechanism works:
 
 The library uses **JSON Serializers** to convert types to json.
-The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](http://en.cppreference.com/w/cpp/language/adl))
+The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](http://en.cppreference.com/w/cpp/language/adl)).
 
 It is implemented like this (simplified):
 
 ```cpp
 template <typename T>
-struct adl_serializer
-{
-  static void to_json(json& j, const T& value)
-  {
-    // calls the "to_json" method in T's namespace
-  }
-  
-  static void from_json(const json& j, T& value)
-  {
-    // same thing, but with the "from_json" method
-  }
+struct adl_serializer {
+    static void to_json(json& j, const T& value) {
+        // calls the "to_json" method in T's namespace
+    }
+
+    static void from_json(const json& j, T& value) {
+        // same thing, but with the "from_json" method
+    }
 };
 ```
 
-This serializer works fine when you have control over the type's namespace.
-However, what about `boost::optional`, or `std::filesystem::path` (C++17)?
-
-Hijacking the `boost` namespace is pretty bad, and it's illegal to add something other than template specializations to `std`...
+This serializer works fine when you have control over the type's namespace. However, what about `boost::optional`, or `std::filesystem::path` (C++17)? Hijacking the `boost` namespace is pretty bad, and it's illegal to add something other than template specializations to `std`...
 
 To solve this, you need to add a specialization of `adl_serializer` to the `nlohmann` namespace, here's an example:
 
 ```cpp
 // partial specialization (full specialization works too)
 namespace nlohmann {
-template <typename T>
-struct adl_serializer<boost::optional<T>>
-{
-  static void to_json(json& j, const boost::optional<T>& opt)
-  {
-    if (opt == boost::none)
-      j = nullptr;
-    else
-      j = *opt; // this will call adl_serializer<T>::to_json, which will find the free function to_json in T's namespace!
-  }
-  
-  static void from_json(const json& j, boost::optional<T>& opt)
-  {
-    if (!j.is_null())
-      opt = j.get<T>(); // same as above, but with adl_serializer<T>::from_json
-  }
-};
+    template <typename T>
+    struct adl_serializer<boost::optional<T>> {
+        static void to_json(json& j, const boost::optional<T>& opt) {
+            if (opt == boost::none) {
+                j = nullptr;
+            } else {
+              j = *opt; // this will call adl_serializer<T>::to_json
+                        // which will find the free function to_json
+                        // in T's namespace!
+            }
+        }
+
+        static void from_json(const json& j, boost::optional<T>& opt) {
+            if (!j.is_null()) {
+                opt = j.get<T>(); // same as above, but with 
+                                  // adl_serializer<T>::from_json
+            }
+        }
+    };
 }
 ```
 
 #### How can I use `get()` for non-default constructible/non-copyable types?
 
-There is a way, if your type is **MoveConstructible**.
-You will need to specialize the `adl_serializer` as well, but with a special `from_json` overload:
+There is a way, if your type is [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible). You will need to specialize the `adl_serializer` as well, but with a special `from_json` overload:
 
 ```cpp
 struct move_only_type {
-  move_only_type() = delete;
-  move_only_type(int ii): i(ii) {}
-  move_only_type(const move_only_type&) = delete;
-  move_only_type(move_only_type&&) = default;
-  :
-  int i;
+    move_only_type() = delete;
+    move_only_type(int ii): i(ii) {}
+    move_only_type(const move_only_type&) = delete;
+    move_only_type(move_only_type&&) = default;
+    
+    private:
+        int i;
 };
 
 namespace nlohmann {
-template <>
-struct adl_serializer<move_only_type>
-{
-  // note: the return type is no longer 'void', and the method only takes one argument
-  static move_only_type from_json(const json& j)
-  {
-    return {j.get<int>()};
-  }
-  
-  // Here's the catch! You must provide a to_json method!
-  // Otherwise you will not be able to convert move_only_type to json,
-  // since you fully specialized adl_serializer on that type
-  static void to_json(json& j, move_only_type t)
-  {
-    j = t.i;
-  }
-};
+    template <>
+    struct adl_serializer<move_only_type> {
+        // note: the return type is no longer 'void',
+        // and the method only takes one argument
+        static move_only_type from_json(const json& j) {
+            return {j.get<int>()};
+        }
+        
+        // Here's the catch! You must provide a to_json method!
+        // Otherwise you will not be able to convert move_only_type to json,
+        // since you fully specialized adl_serializer on that type
+        static void to_json(json& j, move_only_type t) {
+            j = t.i;
+        }
+    };
 }
 ```
 
 #### Can I write my own serializer? (Advanced use)
 
-Yes. You might want to take a look at `unit-udt.cpp` in the test suite, to see a few examples.
+Yes. You might want to take a look at `[unit-udt.cpp](https://github.com/nlohmann/json/blob/develop/test/src/unit-udt.cpp)` in the test suite, to see a few examples.
 
 If you write your own serializer, you'll need to do a few things:
 
-* use a different `basic_json` alias than nlohmann::json (the last template parameter of basic_json is the JSONSerializer)
+* use a different `basic_json` alias than `nlohmann::json` (the last template parameter of `basic_json` is the `JSONSerializer`)
 * use your `basic_json` alias (or a template parameter) in all your `to_json`/`from_json` methods
 * use `nlohmann::to_json` and `nlohmann::from_json` when you need ADL
 
 Here is an example, without simplifications, that only accepts types with a size <= 32, and uses ADL.
 
 ```cpp
-// You should use void as a second template argument if you don't need compile-time checks on T
-template <typename T, typename SFINAE = typename std::enable_if<sizeof(T) <= 32>::type>
-struct less_than_32_serializer // if someone tries to use a type bigger than 32, the compiler will complain
-{
-  template <typename Json>
-  static void to_json(Json& j, T value)
-  {
-    // we want to use ADL, and call the correct to_json overload
-    using nlohmann::to_json; // this method is called by adl_serializer, this is where the magic happens
-    to_json(j, value);
-  }
-  
-  template <typename Json>
-  static void from_json(const Json& j, T& value)
-  {
-    // same thing here
-    using nlohmann::from_json;
-    from_json(j, value);
-  }
+// You should use void as a second template argument
+// if you don't need compile-time checks on T
+template<typename T, typename SFINAE = typename std::enable_if<sizeof(T) <= 32>::type>
+struct less_than_32_serializer {
+    template <typename BasicJsonType>
+    static void to_json(BasicJsonType& j, T value) {
+        // we want to use ADL, and call the correct to_json overload
+        using nlohmann::to_json; // this method is called by adl_serializer,
+                                 // this is where the magic happens
+        to_json(j, value);
+    }
+    
+    template <typename BasicJsonType>
+    static void from_json(const BasicJsonType& j, T& value) {
+        // same thing here
+        using nlohmann::from_json;
+        from_json(j, value);
+    }
 };
 ```
 
@@ -637,21 +637,19 @@ Be **very** careful when reimplementing your serializer, you can stack overflow 
 template <typename T, void>
 struct bad_serializer
 {
-  template <typename Json>
-  static void to_json(Json& j, const T& value)
-  {
-    // this calls Json::json_serializer<T>::to_json(j, value);
-    // if Json::json_serializer == bad_serializer ... oops!
-    j = value;
-  }
-  
-  template <typename Json>
-  static void to_json(const Json& j, T& value)
-  {
-    // this calls Json::json_serializer<T>::from_json(j, value);
-    // if Json::json_serializer == bad_serializer ... oops!
-    value = j.template get<T>(); // oops!
-  }
+    template <typename BasicJsonType>
+    static void to_json(BasicJsonType& j, const T& value) {
+      // this calls BasicJsonType::json_serializer<T>::to_json(j, value);
+      // if BasicJsonType::json_serializer == bad_serializer ... oops!
+      j = value;
+    }
+    
+    template <typename BasicJsonType>
+    static void to_json(const BasicJsonType& j, T& value) {
+      // this calls BasicJsonType::json_serializer<T>::from_json(j, value);
+      // if BasicJsonType::json_serializer == bad_serializer ... oops!
+      value = j.template get<T>(); // oops!
+    }
 };
 ```
 
@@ -759,7 +757,7 @@ I deeply appreciate the help of the following people.
 - [Eric Cornelius](https://github.com/EricMCornelius) pointed out a bug in the handling with NaN and infinity values. He also improved the performance of the string escaping.
 - [易思龙](https://github.com/likebeta) implemented a conversion from anonymous enums.
 - [kepkin](https://github.com/kepkin) patiently pushed forward the support for Microsoft Visual studio.
-- [gregmarr](https://github.com/gregmarr) simplified the implementation of reverse iterators and helped with numerous hints and improvements.
+- [gregmarr](https://github.com/gregmarr) simplified the implementation of reverse iterators and helped with numerous hints and improvements. In particular, he pushed forward the implementation of user-defined types.
 - [Caio Luppi](https://github.com/caiovlp) fixed a bug in the Unicode handling.
 - [dariomt](https://github.com/dariomt) fixed some typos in the examples.
 - [Daniel Frey](https://github.com/d-frey) cleaned up some pointers and implemented exception-safe memory allocation.
@@ -787,7 +785,7 @@ I deeply appreciate the help of the following people.
 - [duncanwerner](https://github.com/duncanwerner) found a really embarrassing performance regression in the 2.0.0 release.
 - [Damien](https://github.com/dtoma) fixed one of the last conversion warnings.
 - [Thomas Braun](https://github.com/t-b) fixed a warning in a test case.
-- [Théo DELRIEU](https://github.com/theodelrieu) patiently and constructively oversaw the long way toward [iterator-range parsing](https://github.com/nlohmann/json/issues/290).
+- [Théo DELRIEU](https://github.com/theodelrieu) patiently and constructively oversaw the long way toward [iterator-range parsing](https://github.com/nlohmann/json/issues/290). He also implemented the magic behind the serialization/deserialization of user-defined types.
 - [Stefan](https://github.com/5tefan) fixed a minor issue in the documentation.
 - [Vasil Dimov](https://github.com/vasild) fixed the documentation regarding conversions from `std::multiset`.
 - [ChristophJud](https://github.com/ChristophJud) overworked the CMake files to ease project inclusion.
@@ -801,6 +799,9 @@ I deeply appreciate the help of the following people.
 - [Bosswestfalen](https://github.com/Bosswestfalen) merged two iterator classes into a smaller one.
 - [Daniel599](https://github.com/Daniel599) helped to get Travis execute the tests with Clang's sanitizers.
 - [Jonathan Lee](https://github.com/vjon) fixed an example in the README file.
+- [gnzlbg](https://github.com/gnzlbg) supported the implementation of user-defined types.
+- [Alexej Harm](https://github.com/qis) helped to get the user-defined types working with Visual Studio.
+- [Jared Grubb](https://github.com/jaredgrubb) supported the implementation of user-defined types.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
