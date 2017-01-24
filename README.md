@@ -449,6 +449,7 @@ Every type can be serialized in JSON, not just STL-containers and scalar types. 
 
 ```cpp
 namespace ns {
+    // a simple struct to model a person
     struct person {
         std::string name;
         std::string address;
@@ -456,7 +457,7 @@ namespace ns {
     };
 }
 
-// convert to JSON
+// convert to JSON: copy each value into the JSON object
 json j;
 ns::person p = createSomeone();
 j["name"] = p.name;
@@ -465,7 +466,7 @@ j["age"] = p.age;
 
 // ...
 
-// convert from JSON
+// convert from JSON: copy each value from the JSON object
 ns::person p {
     j["name"].get<std::string>(),
     j["address"].get<std::string>(),
@@ -476,9 +477,11 @@ ns::person p {
 It works, but that's quite a lot of boilerplate... Hopefully, there's a better way:
 
 ```cpp
+// person -> json
 ns::person p = createPerson();
 json j = p;
 
+// json -> person
 auto p2 = j.get<ns::person>();
 assert(p == p2);
 ```
@@ -547,9 +550,8 @@ namespace nlohmann {
             if (opt == boost::none) {
                 j = nullptr;
             } else {
-              j = *opt; // this will call adl_serializer<T>::to_json
-                        // which will find the free function to_json
-                        // in T's namespace!
+              j = *opt; // this will call adl_serializer<T>::to_json which will
+                        // find the free function to_json in T's namespace!
             }
         }
 
@@ -581,15 +583,15 @@ struct move_only_type {
 namespace nlohmann {
     template <>
     struct adl_serializer<move_only_type> {
-        // note: the return type is no longer 'void',
-        // and the method only takes one argument
+        // note: the return type is no longer 'void', and the method only takes
+        // one argument
         static move_only_type from_json(const json& j) {
             return {j.get<int>()};
         }
         
-        // Here's the catch! You must provide a to_json method!
-        // Otherwise you will not be able to convert move_only_type to json,
-        // since you fully specialized adl_serializer on that type
+        // Here's the catch! You must provide a to_json method! Otherwise you
+        // will not be able to convert move_only_type to json, since you fully
+        // specialized adl_serializer on that type
         static void to_json(json& j, move_only_type t) {
             j = t.i;
         }
@@ -599,7 +601,7 @@ namespace nlohmann {
 
 #### Can I write my own serializer? (Advanced use)
 
-Yes. You might want to take a look at `[unit-udt.cpp](https://github.com/nlohmann/json/blob/develop/test/src/unit-udt.cpp)` in the test suite, to see a few examples.
+Yes. You might want to take a look at [`unit-udt.cpp`](https://github.com/nlohmann/json/blob/develop/test/src/unit-udt.cpp) in the test suite, to see a few examples.
 
 If you write your own serializer, you'll need to do a few things:
 
