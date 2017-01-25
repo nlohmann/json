@@ -1907,31 +1907,70 @@ class basic_json
     }
 
     /*!
-    @brief forwards the parameter to json_serializer<U>::to_json method (U = uncvref_t<T>)
+    @brief create a JSON value
 
-    this constructor is chosen if:
-    - T is not derived from std::istream
-    - T is not @ref basic_json (to avoid hijacking copy/move constructors)
-    - T is not a @ref basic_json nested type (@ref json_pointer, @ref iterator, etc ...)
-    - @ref json_serializer<U> has a to_json(basic_json_t&, T&&) method
+    This is a "catch all" constructor for all compatible JSON types; that is,
+    types for which a `to_json()` method exsits. The constructor forwards the
+    parameter @a val to that method (to `json_serializer<U>::to_json` method
+    with `U = uncvref_t<CompatibleType>`, to be exact).
+
+    Template type @a CompatibleType includes, but is not limited to, the
+    following types:
+    - **arrays**: @ref array_t and all kinds of compatible containers such as
+      `std::vector`, `std::deque`, `std::list`, `std::forward_list`,
+      `std::array`, `std::set`, `std::unordered_set`, `std::multiset`, and
+      `unordered_multiset` with a `value_type` from which a @ref basic_json
+      value can be constructed.
+    - **objects**: @ref object_t and all kinds of compatible associative
+      containers such as `std::map`, `std::unordered_map`, `std::multimap`,
+      and `std::unordered_multimap` with a `key_type` compatible to
+      @ref string_t and a `value_type` from which a @ref basic_json value can
+      be constructed.
+    - **strings**: @ref string_t, string literals, and all compatible string
+      containers can be used.
+    - **numbers**: @ref number_integer_t, @ref number_unsigned_t,
+      @ref number_float_t, and all convertible number types such as `int`,
+      `size_t`, `int64_t`, `float` or `double` can be used.
+    - **boolean**: @ref boolean_t / `bool` can be used.
+
+    See the examples below.
+
+    @tparam CompatibleType a type such that:
+    - @a CompatibleType is not derived from `std::istream`,
+    - @a CompatibleType is not @ref basic_json (to avoid hijacking copy/move
+         constructors),
+    - @a CompatibleType is not a @ref basic_json nested type (e.g.,
+         @ref json_pointer, @ref iterator, etc ...)
+    - @ref @ref json_serializer<U> has a
+         `to_json(basic_json_t&, CompatibleType&&)` method
+
+    @tparam U = `uncvref_t<CompatibleType>`
 
     @param[in] val the value to be forwarded
 
-    @throw what json_serializer<U>::to_json throws
+    @complexity Usually linear in the size of the passed @a val, also
+                depending on the implementation of the called `to_json()`
+                method.
+
+    @throw what `json_serializer<U>::to_json()` throws
+
+    @liveexample{The following code shows the constructor with several
+    compatible types.,basic_json__CompatibleType}
 
     @since version 2.1.0
     */
-    template<typename T, typename U = detail::uncvref_t<T>,
+    template<typename CompatibleType, typename U = detail::uncvref_t<CompatibleType>,
              detail::enable_if_t<not std::is_base_of<std::istream, U>::value and
                                  not std::is_same<U, basic_json_t>::value and
                                  not detail::is_basic_json_nested_type<
                                      basic_json_t, U>::value and
                                  detail::has_to_json<basic_json, U>::value,
                                  int> = 0>
-    basic_json(T && val) noexcept(noexcept(JSONSerializer<U>::to_json(
-            std::declval<basic_json_t&>(), std::forward<T>(val))))
+    basic_json(CompatibleType && val) noexcept(noexcept(JSONSerializer<U>::to_json(
+                std::declval<basic_json_t&>(), std::forward<CompatibleType>(val))))
     {
-        JSONSerializer<U>::to_json(*this, std::forward<T>(val));
+        JSONSerializer<U>::to_json(*this, std::forward<CompatibleType>(val));
+        assert_invariant();
     }
 
     /*!
@@ -7950,7 +7989,7 @@ class basic_json
     @complexity Constant.
 
     @liveexample{The following code exemplifies `type_name()` for all JSON
-    types.,typename}
+    types.,type_name}
 
     @since version 1.0.0
     */
@@ -7975,7 +8014,6 @@ class basic_json
                     return "number";
             }
         }
-
     }
 
   private:
