@@ -239,9 +239,6 @@ template<> struct priority_tag<0> {};
 // constructors //
 //////////////////
 
-// This is an experiment. I need this to move constructors out of basic_json.
-// I'm sure there is a better way, but this might need a big basic_json
-// refactoring
 template<value_t> struct external_constructor;
 
 template<>

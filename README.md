@@ -475,7 +475,7 @@ ns::person p {
 };
 ```
 
-It works, but that's quite a lot of boilerplate... Hopefully, there's a better way:
+It works, but that's quite a lot of boilerplate... Fortunately, there's a better way:
 
 ```cpp
 // create a person
@@ -496,17 +496,17 @@ assert(p == p2);
 
 #### Basic usage
 
-To make this work with one of your types, you only need to provide two methods:
+To make this work with one of your types, you only need to provide two functions:
 
 ```cpp
 using nlohmann::json;
 
 namespace ns {
-    void to_json(json& j, person const& p) {
+    void to_json(json& j, const person& p) {
         j = json{{"name", p.name}, {"address", p.address}, {"age", p.age}};
     }
 
-    void from_json(json const& j, person& p) {
+    void from_json(const json& j, person& p) {
         p.name = j["name"].get<std::string>();
         p.address = j["address"].get<std::string>();
         p.age = j["age"].get<int>();
@@ -519,13 +519,12 @@ Likewise, when calling `get<your_type>()`, the `from_json` method will be called
 
 Some important things:
 
-* Those methods **MUST** be in your type's namespace, or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
-* When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible) and [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible). (There is a way to bypass those requirements described later.)
+* Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
+* When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible). (There is a way to bypass those requirements described later.)
 
 #### How do I convert third-party types?
 
-This requires a bit more advanced technique.
-But first, let's see how this conversion mechanism works:
+This requires a bit more advanced technique. But first, let's see how this conversion mechanism works:
 
 The library uses **JSON Serializers** to convert types to json.
 The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](http://en.cppreference.com/w/cpp/language/adl)).
