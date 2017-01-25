@@ -204,14 +204,14 @@ using enable_if_t = typename std::enable_if<B, T>::type;
 template<typename T>
 using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
 
-// Taken from http://stackoverflow.com/questions/26936640/how-to-implement-is-enum-class-type-trait
+// taken from http://stackoverflow.com/a/26936864/266378
 template<typename T>
 using is_unscoped_enum =
     std::integral_constant<bool, std::is_convertible<T, int>::value and
     std::is_enum<T>::value>;
 
 /*
-Implementation of 2 C++17 constructs: conjunction, negation. This is needed
+Implementation of two C++17 constructs: conjunction, negation. This is needed
 to avoid evaluating all the traits in a condition
 
 For example: not std::is_same<void, T>::value and has_value_type<T>::value
@@ -393,6 +393,7 @@ NLOHMANN_JSON_HAS_HELPER(iterator);
 
 #undef NLOHMANN_JSON_HAS_HELPER
 
+
 template<bool B, class RealType, class CompatibleObjectType>
 struct is_compatible_object_type_impl : std::false_type {};
 
@@ -468,7 +469,7 @@ struct is_compatible_integer_type
 };
 
 
-// This trait checks if JSONSerializer<T>::from_json(json const&, udt&) exists
+// trait checking if JSONSerializer<T>::from_json(json const&, udt&) exists
 template<typename BasicJsonType, typename T>
 struct has_from_json
 {
@@ -530,8 +531,7 @@ void to_json(BasicJsonType& j, typename BasicJsonType::boolean_t b) noexcept
 
 template<typename BasicJsonType, typename CompatibleString,
          enable_if_t<std::is_constructible<typename BasicJsonType::string_t,
-                     CompatibleString>::value,
-                     int> = 0>
+                     CompatibleString>::value, int> = 0>
 void to_json(BasicJsonType& j, const CompatibleString& s)
 {
     external_constructor<value_t::string>::construct(j, s);
@@ -547,8 +547,7 @@ void to_json(BasicJsonType& j, FloatType val) noexcept
 template <
     typename BasicJsonType, typename CompatibleNumberUnsignedType,
     enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_unsigned_t,
-                CompatibleNumberUnsignedType>::value,
-                int> = 0 >
+                CompatibleNumberUnsignedType>::value, int> = 0 >
 void to_json(BasicJsonType& j, CompatibleNumberUnsignedType val) noexcept
 {
     external_constructor<value_t::number_unsigned>::construct(j, static_cast<typename BasicJsonType::number_unsigned_t>(val));
@@ -557,8 +556,7 @@ void to_json(BasicJsonType& j, CompatibleNumberUnsignedType val) noexcept
 template <
     typename BasicJsonType, typename CompatibleNumberIntegerType,
     enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_integer_t,
-                CompatibleNumberIntegerType>::value,
-                int> = 0 >
+                CompatibleNumberIntegerType>::value, int> = 0 >
 void to_json(BasicJsonType& j, CompatibleNumberIntegerType val) noexcept
 {
     external_constructor<value_t::number_integer>::construct(j, static_cast<typename BasicJsonType::number_integer_t>(val));
@@ -690,7 +688,6 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::array_t& arr)
 }
 
 // forward_list doesn't have an insert method
-// TODO find a way to avoid including forward_list
 template<typename BasicJsonType, typename T, typename Allocator>
 void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 {
@@ -781,14 +778,15 @@ void from_json(const BasicJsonType& j, CompatibleObjectType& obj)
     using std::begin;
     using std::end;
     // we could avoid the assignment, but this might require a for loop, which
-    // might be less efficient than the container constructor for some containers (would it?)
+    // might be less efficient than the container constructor for some
+    // containers (would it?)
     obj = CompatibleObjectType(begin(*inner_object), end(*inner_object));
 }
 
-// overload for arithmetic types, not chosen for basic_json template arguments (BooleanType, etc..)
-//
-// note: Is it really necessary to provide explicit overloads for boolean_t etc..
-// in case of a custom BooleanType which is not an arithmetic type?
+// overload for arithmetic types, not chosen for basic_json template arguments
+// (BooleanType, etc..); note: Is it really necessary to provide explicit
+// overloads for boolean_t etc. in case of a custom BooleanType which is not
+// an arithmetic type?
 template<typename BasicJsonType, typename ArithmeticType,
          enable_if_t <
              std::is_arithmetic<ArithmeticType>::value and
@@ -802,19 +800,29 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
     switch (static_cast<value_t>(j))
     {
         case value_t::number_unsigned:
+        {
             val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>());
             break;
+        }
         case value_t::number_integer:
+        {
             val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_integer_t*>());
             break;
+        }
         case value_t::number_float:
+        {
             val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_float_t*>());
             break;
+        }
         case value_t::boolean:
+        {
             val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::boolean_t*>());
             break;
+        }
         default:
+        {
             JSON_THROW(std::domain_error("type must be number, but is " + j.type_name()));
+        }
     }
 }
 
@@ -3160,8 +3168,7 @@ class basic_json
         detail::enable_if_t <
             not std::is_same<basic_json_t, U>::value and
             detail::has_from_json<basic_json_t, U>::value and
-            not detail::has_non_default_from_json<basic_json_t,
-                    U>::value,
+            not detail::has_non_default_from_json<basic_json_t, U>::value,
             int > = 0 >
     U get() const noexcept(noexcept(JSONSerializer<U>::from_json(
                                         std::declval<const basic_json_t&>(), std::declval<U&>())))
@@ -3196,8 +3203,7 @@ class basic_json
         typename U = detail::uncvref_t<T>,
         detail::enable_if_t<not std::is_same<basic_json_t, U>::value and
                             detail::has_non_default_from_json<basic_json_t,
-                                    U>::value,
-                            int> = 0 >
+                                    U>::value, int> = 0 >
     U get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<const basic_json_t&>())))
     {
         static_assert(not std::is_reference<T>::value, "get cannot be used with reference types, you might want to use get_ref");
