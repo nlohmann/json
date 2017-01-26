@@ -956,6 +956,8 @@ default; will be used in @ref number_integer_t)
 default; will be used in @ref number_float_t)
 @tparam AllocatorType type of the allocator to use (`std::allocator` by
 default)
+@tparam JSONSerializer the serializer to resolve internal calls to `to_json()`
+and `from_json()`
 
 @requirement The class satisfies the following concept requirements:
 - Basic
@@ -2997,6 +2999,10 @@ class basic_json
     /// @}
 
   private:
+    //////////////////
+    // value access //
+    //////////////////
+
     /// get a boolean (explicit)
     boolean_t get_impl(boolean_t* /*unused*/) const
     {
@@ -3124,12 +3130,17 @@ class basic_json
     }
 
   public:
+    /// @name value access
+    /// Direct access to the stored value of a JSON value.
+    /// @{
+
     /*!
     @brief get special-case overload
 
-    This overloads avoids a lot of template boilerplate, it can be seen as the identity method
+    This overloads avoids a lot of template boilerplate, it can be seen as the
+    identity method
 
-    @tparam T type; T == @ref basic_json
+    @tparam BasicJsonType == @ref basic_json
 
     @return a copy of *this
 
@@ -3138,8 +3149,8 @@ class basic_json
     @since version 2.1.0
     */
     template <
-        typename T,
-        detail::enable_if_t<std::is_same<typename std::remove_const<T>::type,
+        typename BasicJsonType,
+        detail::enable_if_t<std::is_same<typename std::remove_const<BasicJsonType>::type,
                                          basic_json_t>::value,
                             int> = 0 >
     basic_json get() const
@@ -3148,66 +3159,111 @@ class basic_json
     }
 
     /*!
-    @brief get overload for CopyConstructible and DefaultConstructible types
-    construct a default U value, and call @ref json_serializer<U> from_json method with it
+    @brief get a value (explicit)
+
+    Explicit type conversion between the JSON value and a compatible value
+    which is [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible)
+    and [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible).
+    The value is converted by calling the @ref json_serializer<ValueType>
+    `from_json()` method.
+
+    The function is equivalent to executing
+    @code {.cpp}
+    ValueType ret;
+    JSONSerializer<ValueType>::from_json(*this, ret);
+    return ret;
+    @endcode
 
     This overloads is chosen if:
-    - U is not @ref basic_json
-    - @ref json_serializer<U> has a from_json method of the form: void from_json(const @ref basic_json&, U&)
-    - @ref json_serializer<U> does not have a from_json method of the form: U from_json(const @ref basic_json&);
+    - @a ValueType is not @ref basic_json,
+    - @ref json_serializer<ValueType> has a `from_json()` method of the form
+      `void from_json(const @ref basic_json&, ValueType&)`, and
+    - @ref json_serializer<ValueType> does not have a `from_json()` method of
+      the form `ValueType from_json(const @ref basic_json&)`
 
-    @return a value of type U
+    @tparam ValueTypeCV the provided value type
+    @tparam ValueType the returned value type
 
-    @throw what json_serializer<U> from_json method throws
+    @return copy of the JSON value, converted to @a ValueType
+
+    @throw what @ref json_serializer<ValueType> `from_json()` method throws
+
+    @liveexample{The example below shows several conversions from JSON values
+    to other types. There a few things to note: (1) Floating-point numbers can
+    be converted to integers\, (2) A JSON array can be converted to a standard
+    `std::vector<short>`\, (3) A JSON object can be converted to C++
+    associative containers such as `std::unordered_map<std::string\,
+    json>`.,get__ValueType_const}
 
     @since version 2.1.0
     */
     template <
-        typename T,
-        typename U = detail::uncvref_t<T>,
+        typename ValueTypeCV,
+        typename ValueType = detail::uncvref_t<ValueTypeCV>,
         detail::enable_if_t <
-            not std::is_same<basic_json_t, U>::value and
-            detail::has_from_json<basic_json_t, U>::value and
-            not detail::has_non_default_from_json<basic_json_t, U>::value,
+            not std::is_same<basic_json_t, ValueType>::value and
+            detail::has_from_json<basic_json_t, ValueType>::value and
+            not detail::has_non_default_from_json<basic_json_t, ValueType>::value,
             int > = 0 >
-    U get() const noexcept(noexcept(JSONSerializer<U>::from_json(
-                                        std::declval<const basic_json_t&>(), std::declval<U&>())))
+    ValueType get() const noexcept(noexcept(
+                                       JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
     {
-        // we cannot static_assert on T being non-const, because there is support
-        // for get<const basic_json_t>(), which is why we still need the uncvref
-        static_assert(not std::is_reference<T>::value, "get cannot be used with reference types, you might want to use get_ref");
-        static_assert(std::is_default_constructible<U>::value,
-                      "Types must be DefaultConstructible when used with get");
-        U ret;
-        JSONSerializer<U>::from_json(*this, ret);
+        // we cannot static_assert on ValueTypeCV being non-const, because
+        // there is support for get<const basic_json_t>(), which is why we
+        // still need the uncvref
+        static_assert(not std::is_reference<ValueTypeCV>::value,
+                      "get() cannot be used with reference types, you might want to use get_ref()");
+        static_assert(std::is_default_constructible<ValueType>::value,
+                      "types must be DefaultConstructible when used with get()");
+
+        ValueType ret;
+        JSONSerializer<ValueType>::from_json(*this, ret);
         return ret;
     }
 
     /*!
-    @brief get overload for types than cannot be default constructed or copy constructed
+    @brief get a value (explicit); special case
 
-    If @ref json_serializer<U> has both overloads of from_json, this one is chosen
+    Explicit type conversion between the JSON value and a compatible value
+    which is **not** [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible)
+    and **not** [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible).
+    The value is converted by calling the @ref json_serializer<ValueType>
+    `from_json()` method.
+
+    The function is equivalent to executing
+    @code {.cpp}
+    return JSONSerializer<ValueTypeCV>::from_json(*this);
+    @endcode
 
     This overloads is chosen if:
-    - U is not @ref basic_json
-    - @ref json_serializer<U> has a from_json method of the form: U from_json(const @ref basic_json&);
+    - @a ValueType is not @ref basic_json and
+    - @ref json_serializer<ValueType> has a `from_json()` method of the form
+      `ValueType from_json(const @ref basic_json&)`
 
-    @return a value of type U
+    @note If @ref json_serializer<ValueType> has both overloads of
+    `from_json()`, this one is chosen.
 
-    @throw what json_serializer<U> from_json method throws
+    @tparam ValueTypeCV the provided value type
+    @tparam ValueType the returned value type
+
+    @return copy of the JSON value, converted to @a ValueType
+
+    @throw what @ref json_serializer<ValueType> `from_json()` method throws
 
     @since version 2.1.0
     */
     template <
-        typename T,
-        typename U = detail::uncvref_t<T>,
-        detail::enable_if_t<not std::is_same<basic_json_t, U>::value and
+        typename ValueTypeCV,
+        typename ValueType = detail::uncvref_t<ValueTypeCV>,
+        detail::enable_if_t<not std::is_same<basic_json_t, ValueType>::value and
                             detail::has_non_default_from_json<basic_json_t,
-                                    U>::value, int> = 0 >
-    U get() const noexcept(noexcept(JSONSerializer<T>::from_json(std::declval<const basic_json_t&>())))
+                                    ValueType>::value, int> = 0 >
+    ValueType get() const noexcept(noexcept(
+                                       JSONSerializer<ValueTypeCV>::from_json(std::declval<const basic_json_t&>())))
     {
-        static_assert(not std::is_reference<T>::value, "get cannot be used with reference types, you might want to use get_ref");
-        return JSONSerializer<T>::from_json(*this);
+        static_assert(not std::is_reference<ValueTypeCV>::value,
+                      "get() cannot be used with reference types, you might want to use get_ref()");
+        return JSONSerializer<ValueTypeCV>::from_json(*this);
     }
 
     /*!
