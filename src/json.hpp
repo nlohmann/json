@@ -633,7 +633,7 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
 template<typename BasicJsonType>
 void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
 {
-    if (!j.is_boolean())
+    if (not j.is_boolean())
     {
         JSON_THROW(std::domain_error("type must be boolean, but is " + j.type_name()));
     }
@@ -643,7 +643,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
 template<typename BasicJsonType>
 void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
 {
-    if (!j.is_string())
+    if (not j.is_string())
     {
         JSON_THROW(std::domain_error("type must be string, but is " + j.type_name()));
     }
@@ -680,7 +680,7 @@ void from_json(const BasicJsonType& j, UnscopedEnumType& e)
 template<typename BasicJsonType>
 void from_json(const BasicJsonType& j, typename BasicJsonType::array_t& arr)
 {
-    if (!j.is_array())
+    if (not j.is_array())
     {
         JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
     }
@@ -699,7 +699,7 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
     }
     if (not std::is_same<T, BasicJsonType>::value)
     {
-        if (!j.is_array())
+        if (not j.is_array())
         {
             JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
         }
@@ -757,7 +757,7 @@ void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
     // when T == BasicJsonType, do not check if value_t is correct
     if (not std::is_same<typename CompatibleArrayType::value_type, BasicJsonType>::value)
     {
-        if (!j.is_array())
+        if (not j.is_array())
         {
             JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
         }
@@ -769,7 +769,7 @@ template<typename BasicJsonType, typename CompatibleObjectType,
          enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value, int> = 0>
 void from_json(const BasicJsonType& j, CompatibleObjectType& obj)
 {
-    if (!j.is_object())
+    if (not j.is_object())
     {
         JSON_THROW(std::domain_error("type must be object, but is " + j.type_name()));
     }
@@ -828,6 +828,7 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
 
 struct to_json_fn
 {
+  private:
     template<typename BasicJsonType, typename T>
     auto call(BasicJsonType& j, T&& val, priority_tag<1>) const noexcept(noexcept(to_json(j, std::forward<T>(val))))
     -> decltype(to_json(j, std::forward<T>(val)), void())
@@ -887,52 +888,57 @@ struct static_const
 
 template<typename T>
 constexpr T static_const<T>::value;
-
-
-/*!
-@brief helper class to create locales with decimal point
-
-This struct is used a default locale during the JSON serialization. JSON
-requires the decimal point to be `.`, so this function overloads the
-`do_decimal_point()` function to return `.`. This function is called by
-float-to-string conversions to retrieve the decimal separator between integer
-and fractional parts.
-
-@sa https://github.com/nlohmann/json/issues/51#issuecomment-86869315
-@since version 2.0.0
-*/
-struct DecimalSeparator : std::numpunct<char>
-{
-    char do_decimal_point() const
-    {
-        return '.';
-    }
-};
 } // namespace detail
 
 
+/// namespace to hold default `to_json` / `from_json` functions
 namespace
 {
 constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::value;
 }
 
-// default JSONSerializer template argument, doesn't care about template argument
-// will use ADL for serialization
+
+/*!
+@brief default JSONSerializer template argument
+
+This serializer ignores the template arguments and uses ADL
+([argument-dependent lookup](http://en.cppreference.com/w/cpp/language/adl))
+for serialization.
+*/
 template<typename = void, typename = void>
 struct adl_serializer
 {
-    template<typename BasicJsonType, typename T>
-    static void from_json(BasicJsonType&& j, T& val) noexcept(noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
+    /*!
+    @brief convert a JSON value to any value type
+
+    This function is usually called by the `get()` function of the
+    @ref basic_json class (either explicit or via conversion operators).
+
+    @param[in] j         JSON value to read from
+    @param[in, out] val  value to write to
+    */
+    template<typename BasicJsonType, typename ValueType>
+    static void from_json(BasicJsonType&& j, ValueType& val) noexcept(
+        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
     {
         ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
     }
 
-    template<typename BasicJsonType, typename T>
-    static void to_json(BasicJsonType& j, T&& val) noexcept(
-        noexcept(::nlohmann::to_json(j, std::forward<T>(val))))
+    /*!
+    @brief convert any value type to a JSON value
+
+    This function is usually called by the constructors of the @ref basic_json
+    class.
+
+    @param[in, out] j  JSON value to write to
+    @param[in] val     value to read from
+    */
+    template<typename BasicJsonType, typename ValueType>
+    static void to_json(BasicJsonType& j, ValueType&& val) noexcept(
+        noexcept(::nlohmann::to_json(j, std::forward<ValueType>(val))))
     {
-        ::nlohmann::to_json(j, std::forward<T>(val));
+        ::nlohmann::to_json(j, std::forward<ValueType>(val));
     }
 };
 
@@ -957,7 +963,7 @@ default; will be used in @ref number_float_t)
 @tparam AllocatorType type of the allocator to use (`std::allocator` by
 default)
 @tparam JSONSerializer the serializer to resolve internal calls to `to_json()`
-and `from_json()`
+and `from_json()` (@ref adl_serializer by default)
 
 @requirement The class satisfies the following concept requirements:
 - Basic
