@@ -520,7 +520,7 @@ Likewise, when calling `get<your_type>()`, the `from_json` method will be called
 Some important things:
 
 * Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
-* When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible). (There is a way to bypass those requirements described later.)
+* When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible). (There is a way to bypass this requirement described later.)
 
 #### How do I convert third-party types?
 
@@ -583,8 +583,7 @@ struct move_only_type {
     move_only_type(const move_only_type&) = delete;
     move_only_type(move_only_type&&) = default;
     
-    private:
-        int i;
+    int i;
 };
 
 namespace nlohmann {
