@@ -810,6 +810,7 @@ I deeply appreciate the help of the following people.
 - [gnzlbg](https://github.com/gnzlbg) supported the implementation of user-defined types.
 - [Alexej Harm](https://github.com/qis) helped to get the user-defined types working with Visual Studio.
 - [Jared Grubb](https://github.com/jaredgrubb) supported the implementation of user-defined types.
+- [EnricoBilla](https://github.com/EnricoBilla) noted a typo in an example.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
