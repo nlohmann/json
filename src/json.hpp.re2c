@@ -39,6 +39,7 @@ SOFTWARE.
 #include <cstdint> // int64_t, uint64_t
 #include <cstdlib> // strtod, strtof, strtold, strtoul
 #include <cstring> // strlen
+#include <forward_list> // forward_list
 #include <functional> // function, hash, less
 #include <initializer_list> // initializer_list
 #include <iomanip> // setw
@@ -107,37 +108,840 @@ SOFTWARE.
 namespace nlohmann
 {
 
-
 /*!
 @brief unnamed namespace with internal helper functions
+
+This namespace collects some functions that could not be defined inside the
+@ref basic_json class.
+
+@since version 2.1.0
+*/
+namespace detail
+{
+///////////////////////////
+// JSON type enumeration //
+///////////////////////////
+
+/*!
+@brief the JSON type enumeration
+
+This enumeration collects the different JSON types. It is internally used to
+distinguish the stored values, and the functions @ref basic_json::is_null(),
+@ref basic_json::is_object(), @ref basic_json::is_array(),
+@ref basic_json::is_string(), @ref basic_json::is_boolean(),
+@ref basic_json::is_number() (with @ref basic_json::is_number_integer(),
+@ref basic_json::is_number_unsigned(), and @ref basic_json::is_number_float()),
+@ref basic_json::is_discarded(), @ref basic_json::is_primitive(), and
+@ref basic_json::is_structured() rely on it.
+
+@note There are three enumeration entries (number_integer, number_unsigned, and
+number_float), because the library distinguishes these three types for numbers:
+@ref basic_json::number_unsigned_t is used for unsigned integers,
+@ref basic_json::number_integer_t is used for signed integers, and
+@ref basic_json::number_float_t is used for floating-point numbers or to
+approximate integers which do not fit in the limits of their respective type.
+
+@sa @ref basic_json::basic_json(const value_t value_type) -- create a JSON
+value with the default value for a given type
+
 @since version 1.0.0
 */
-namespace
+enum class value_t : uint8_t
 {
+    null,            ///< null value
+    object,          ///< object (unordered set of name/value pairs)
+    array,           ///< array (ordered collection of values)
+    string,          ///< string value
+    boolean,         ///< boolean value
+    number_integer,  ///< number value (signed integer)
+    number_unsigned, ///< number value (unsigned integer)
+    number_float,    ///< number value (floating-point)
+    discarded        ///< discarded by the the parser callback function
+};
+
+/*!
+@brief comparison operator for JSON types
+
+Returns an ordering that is similar to Python:
+- order: null < boolean < number < object < array < string
+- furthermore, each type is not smaller than itself
+
+@since version 1.0.0
+*/
+inline bool operator<(const value_t lhs, const value_t rhs) noexcept
+{
+    static constexpr std::array<uint8_t, 8> order = {{
+            0, // null
+            3, // object
+            4, // array
+            5, // string
+            1, // boolean
+            2, // integer
+            2, // unsigned
+            2, // float
+        }
+    };
+
+    // discarded values are not comparable
+    if (lhs == value_t::discarded or rhs == value_t::discarded)
+    {
+        return false;
+    }
+
+    return order[static_cast<std::size_t>(lhs)] <
+           order[static_cast<std::size_t>(rhs)];
+}
+
+
+/////////////
+// helpers //
+/////////////
+
+// alias templates to reduce boilerplate
+template<bool B, typename T = void>
+using enable_if_t = typename std::enable_if<B, T>::type;
+
+template<typename T>
+using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+
+// taken from http://stackoverflow.com/a/26936864/266378
+template<typename T>
+using is_unscoped_enum =
+    std::integral_constant<bool, std::is_convertible<T, int>::value and
+    std::is_enum<T>::value>;
+
+/*
+Implementation of two C++17 constructs: conjunction, negation. This is needed
+to avoid evaluating all the traits in a condition
+
+For example: not std::is_same<void, T>::value and has_value_type<T>::value
+will not compile when T = void (on MSVC at least). Whereas
+conjunction<negation<std::is_same<void, T>>, has_value_type<T>>::value will
+stop evaluating if negation<...>::value == false
+
+Please note that those constructs must be used with caution, since symbols can
+become very long quickly (which can slow down compilation and cause MSVC
+internal compiler errors). Only use it when you have to (see example ahead).
+*/
+template<class...> struct conjunction : std::true_type {};
+template<class B1> struct conjunction<B1> : B1 {};
+template<class B1, class... Bn>
+struct conjunction<B1, Bn...> : std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
+
+template<class B> struct negation : std::integral_constant < bool, !B::value > {};
+
+// dispatch utility (taken from ranges-v3)
+template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
+template<> struct priority_tag<0> {};
+
+
+//////////////////
+// constructors //
+//////////////////
+
+template<value_t> struct external_constructor;
+
+template<>
+struct external_constructor<value_t::boolean>
+{
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, typename BasicJsonType::boolean_t b) noexcept
+    {
+        j.m_type = value_t::boolean;
+        j.m_value = b;
+        j.assert_invariant();
+    }
+};
+
+template<>
+struct external_constructor<value_t::string>
+{
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, const typename BasicJsonType::string_t& s)
+    {
+        j.m_type = value_t::string;
+        j.m_value = s;
+        j.assert_invariant();
+    }
+};
+
+template<>
+struct external_constructor<value_t::number_float>
+{
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, typename BasicJsonType::number_float_t val) noexcept
+    {
+        // replace infinity and NAN by null
+        if (not std::isfinite(val))
+        {
+            j = BasicJsonType{};
+        }
+        else
+        {
+            j.m_type = value_t::number_float;
+            j.m_value = val;
+        }
+        j.assert_invariant();
+    }
+};
+
+template<>
+struct external_constructor<value_t::number_unsigned>
+{
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, typename BasicJsonType::number_unsigned_t val) noexcept
+    {
+        j.m_type = value_t::number_unsigned;
+        j.m_value = val;
+        j.assert_invariant();
+    }
+};
+
+template<>
+struct external_constructor<value_t::number_integer>
+{
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, typename BasicJsonType::number_integer_t val) noexcept
+    {
+        j.m_type = value_t::number_integer;
+        j.m_value = val;
+        j.assert_invariant();
+    }
+};
+
+template<>
+struct external_constructor<value_t::array>
+{
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, const typename BasicJsonType::array_t& arr)
+    {
+        j.m_type = value_t::array;
+        j.m_value = arr;
+        j.assert_invariant();
+    }
+
+    template<typename BasicJsonType, typename CompatibleArrayType,
+             enable_if_t<not std::is_same<CompatibleArrayType,
+                                          typename BasicJsonType::array_t>::value,
+                         int> = 0>
+    static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
+    {
+        using std::begin;
+        using std::end;
+        j.m_type = value_t::array;
+        j.m_value.array = j.template create<typename BasicJsonType::array_t>(begin(arr), end(arr));
+        j.assert_invariant();
+    }
+};
+
+template<>
+struct external_constructor<value_t::object>
+{
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, const typename BasicJsonType::object_t& obj)
+    {
+        j.m_type = value_t::object;
+        j.m_value = obj;
+        j.assert_invariant();
+    }
+
+    template<typename BasicJsonType, typename CompatibleObjectType,
+             enable_if_t<not std::is_same<CompatibleObjectType,
+                                          typename BasicJsonType::object_t>::value,
+                         int> = 0>
+    static void construct(BasicJsonType& j, const CompatibleObjectType& obj)
+    {
+        using std::begin;
+        using std::end;
+
+        j.m_type = value_t::object;
+        j.m_value.object = j.template create<typename BasicJsonType::object_t>(begin(obj), end(obj));
+        j.assert_invariant();
+    }
+};
+
+
+////////////////////////
+// has_/is_ functions //
+////////////////////////
+
 /*!
 @brief Helper to determine whether there's a key_type for T.
 
-Thus helper is used to tell associative containers apart from other containers
+This helper is used to tell associative containers apart from other containers
 such as sequence containers. For instance, `std::map` passes the test as it
 contains a `mapped_type`, whereas `std::vector` fails the test.
 
 @sa http://stackoverflow.com/a/7728728/266378
 @since version 1.0.0, overworked in version 2.0.6
 */
-template<typename T>
-struct has_mapped_type
-{
-  private:
-    template <typename U, typename = typename U::mapped_type>
-    static int detect(U&&);
+#define NLOHMANN_JSON_HAS_HELPER(type)                                        \
+    template<typename T> struct has_##type {                                  \
+    private:                                                                  \
+        template<typename U, typename = typename U::type>                     \
+        static int detect(U &&);                                              \
+        static void detect(...);                                              \
+    public:                                                                   \
+        static constexpr bool value =                                         \
+                std::is_integral<decltype(detect(std::declval<T>()))>::value; \
+    }
 
-    static void detect(...);
-  public:
-    static constexpr bool value =
-        std::is_integral<decltype(detect(std::declval<T>()))>::value;
+NLOHMANN_JSON_HAS_HELPER(mapped_type);
+NLOHMANN_JSON_HAS_HELPER(key_type);
+NLOHMANN_JSON_HAS_HELPER(value_type);
+NLOHMANN_JSON_HAS_HELPER(iterator);
+
+#undef NLOHMANN_JSON_HAS_HELPER
+
+
+template<bool B, class RealType, class CompatibleObjectType>
+struct is_compatible_object_type_impl : std::false_type {};
+
+template<class RealType, class CompatibleObjectType>
+struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
+{
+    static constexpr auto value =
+        std::is_constructible<typename RealType::key_type,
+        typename CompatibleObjectType::key_type>::value and
+        std::is_constructible<typename RealType::mapped_type,
+        typename CompatibleObjectType::mapped_type>::value;
 };
 
-} // namespace
+template<class BasicJsonType, class CompatibleObjectType>
+struct is_compatible_object_type
+{
+    static auto constexpr value = is_compatible_object_type_impl <
+                                  conjunction<negation<std::is_same<void, CompatibleObjectType>>,
+                                  has_mapped_type<CompatibleObjectType>,
+                                  has_key_type<CompatibleObjectType>>::value,
+                                  typename BasicJsonType::object_t, CompatibleObjectType >::value;
+};
+
+template<typename BasicJsonType, typename T>
+struct is_basic_json_nested_type
+{
+    static auto constexpr value = std::is_same<T, typename BasicJsonType::iterator>::value or
+                                  std::is_same<T, typename BasicJsonType::const_iterator>::value or
+                                  std::is_same<T, typename BasicJsonType::reverse_iterator>::value or
+                                  std::is_same<T, typename BasicJsonType::const_reverse_iterator>::value or
+                                  std::is_same<T, typename BasicJsonType::json_pointer>::value;
+};
+
+template<class BasicJsonType, class CompatibleArrayType>
+struct is_compatible_array_type
+{
+    static auto constexpr value =
+        conjunction<negation<std::is_same<void, CompatibleArrayType>>,
+        negation<is_compatible_object_type<
+        BasicJsonType, CompatibleArrayType>>,
+        negation<std::is_constructible<typename BasicJsonType::string_t,
+        CompatibleArrayType>>,
+        negation<is_basic_json_nested_type<BasicJsonType, CompatibleArrayType>>,
+        has_value_type<CompatibleArrayType>,
+        has_iterator<CompatibleArrayType>>::value;
+};
+
+template<bool, typename, typename>
+struct is_compatible_integer_type_impl : std::false_type {};
+
+template<typename RealIntegerType, typename CompatibleNumberIntegerType>
+struct is_compatible_integer_type_impl<true, RealIntegerType, CompatibleNumberIntegerType>
+{
+    // is there an assert somewhere on overflows?
+    using RealLimits = std::numeric_limits<RealIntegerType>;
+    using CompatibleLimits = std::numeric_limits<CompatibleNumberIntegerType>;
+
+    static constexpr auto value =
+        std::is_constructible<RealIntegerType,
+        CompatibleNumberIntegerType>::value and
+        CompatibleLimits::is_integer and
+        RealLimits::is_signed == CompatibleLimits::is_signed;
+};
+
+template<typename RealIntegerType, typename CompatibleNumberIntegerType>
+struct is_compatible_integer_type
+{
+    static constexpr auto value =
+        is_compatible_integer_type_impl <
+        std::is_integral<CompatibleNumberIntegerType>::value and
+        not std::is_same<bool, CompatibleNumberIntegerType>::value,
+        RealIntegerType, CompatibleNumberIntegerType > ::value;
+};
+
+
+// trait checking if JSONSerializer<T>::from_json(json const&, udt&) exists
+template<typename BasicJsonType, typename T>
+struct has_from_json
+{
+  private:
+    // also check the return type of from_json
+    template<typename U, typename = enable_if_t<std::is_same<void, decltype(uncvref_t<U>::from_json(
+                 std::declval<BasicJsonType>(), std::declval<T&>()))>::value>>
+    static int detect(U&&);
+    static void detect(...);
+
+  public:
+    static constexpr bool value = std::is_integral<decltype(
+                                      detect(std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
+};
+
+// This trait checks if JSONSerializer<T>::from_json(json const&) exists
+// this overload is used for non-default-constructible user-defined-types
+template<typename BasicJsonType, typename T>
+struct has_non_default_from_json
+{
+  private:
+    template <
+        typename U,
+        typename = enable_if_t<std::is_same<
+                                   T, decltype(uncvref_t<U>::from_json(std::declval<BasicJsonType>()))>::value >>
+    static int detect(U&&);
+    static void detect(...);
+
+  public:
+    static constexpr bool value = std::is_integral<decltype(detect(
+                                      std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
+};
+
+// This trait checks if BasicJsonType::json_serializer<T>::to_json exists
+template<typename BasicJsonType, typename T>
+struct has_to_json
+{
+  private:
+    template<typename U, typename = decltype(uncvref_t<U>::to_json(
+                 std::declval<BasicJsonType&>(), std::declval<T>()))>
+    static int detect(U&&);
+    static void detect(...);
+
+  public:
+    static constexpr bool value = std::is_integral<decltype(detect(
+                                      std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
+};
+
+
+/////////////
+// to_json //
+/////////////
+
+template<typename BasicJsonType>
+void to_json(BasicJsonType& j, typename BasicJsonType::boolean_t b) noexcept
+{
+    external_constructor<value_t::boolean>::construct(j, b);
+}
+
+template<typename BasicJsonType, typename CompatibleString,
+         enable_if_t<std::is_constructible<typename BasicJsonType::string_t,
+                     CompatibleString>::value, int> = 0>
+void to_json(BasicJsonType& j, const CompatibleString& s)
+{
+    external_constructor<value_t::string>::construct(j, s);
+}
+
+template<typename BasicJsonType, typename FloatType,
+         enable_if_t<std::is_floating_point<FloatType>::value, int> = 0>
+void to_json(BasicJsonType& j, FloatType val) noexcept
+{
+    external_constructor<value_t::number_float>::construct(j, static_cast<typename BasicJsonType::number_float_t>(val));
+}
+
+template <
+    typename BasicJsonType, typename CompatibleNumberUnsignedType,
+    enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_unsigned_t,
+                CompatibleNumberUnsignedType>::value, int> = 0 >
+void to_json(BasicJsonType& j, CompatibleNumberUnsignedType val) noexcept
+{
+    external_constructor<value_t::number_unsigned>::construct(j, static_cast<typename BasicJsonType::number_unsigned_t>(val));
+}
+
+template <
+    typename BasicJsonType, typename CompatibleNumberIntegerType,
+    enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_integer_t,
+                CompatibleNumberIntegerType>::value, int> = 0 >
+void to_json(BasicJsonType& j, CompatibleNumberIntegerType val) noexcept
+{
+    external_constructor<value_t::number_integer>::construct(j, static_cast<typename BasicJsonType::number_integer_t>(val));
+}
+
+template<typename BasicJsonType, typename UnscopedEnumType,
+         enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
+void to_json(BasicJsonType& j, UnscopedEnumType e) noexcept
+{
+    external_constructor<value_t::number_integer>::construct(j, e);
+}
+
+template <
+    typename BasicJsonType, typename CompatibleArrayType,
+    enable_if_t <
+        is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value or
+        std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value,
+        int > = 0 >
+void to_json(BasicJsonType& j, const  CompatibleArrayType& arr)
+{
+    external_constructor<value_t::array>::construct(j, arr);
+}
+
+template <
+    typename BasicJsonType, typename CompatibleObjectType,
+    enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value,
+                int> = 0 >
+void to_json(BasicJsonType& j, const  CompatibleObjectType& arr)
+{
+    external_constructor<value_t::object>::construct(j, arr);
+}
+
+
+///////////////
+// from_json //
+///////////////
+
+// overloads for basic_json template parameters
+template<typename BasicJsonType, typename ArithmeticType,
+         enable_if_t<std::is_arithmetic<ArithmeticType>::value and
+                     not std::is_same<ArithmeticType,
+                                      typename BasicJsonType::boolean_t>::value,
+                     int> = 0>
+void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
+{
+    switch (static_cast<value_t>(j))
+    {
+        case value_t::number_unsigned:
+        {
+            val = static_cast<ArithmeticType>(
+                      *j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>());
+            break;
+        }
+        case value_t::number_integer:
+        {
+            val = static_cast<ArithmeticType>(
+                      *j.template get_ptr<const typename BasicJsonType::number_integer_t*>());
+            break;
+        }
+        case value_t::number_float:
+        {
+            val = static_cast<ArithmeticType>(
+                      *j.template get_ptr<const typename BasicJsonType::number_float_t*>());
+            break;
+        }
+        default:
+        {
+            JSON_THROW(
+                std::domain_error("type must be number, but is " + j.type_name()));
+        }
+    }
+}
+
+template<typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
+{
+    if (not j.is_boolean())
+    {
+        JSON_THROW(std::domain_error("type must be boolean, but is " + j.type_name()));
+    }
+    b = *j.template get_ptr<const typename BasicJsonType::boolean_t*>();
+}
+
+template<typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
+{
+    if (not j.is_string())
+    {
+        JSON_THROW(std::domain_error("type must be string, but is " + j.type_name()));
+    }
+    s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
+}
+
+template<typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::number_float_t& val)
+{
+    get_arithmetic_value(j, val);
+}
+
+template<typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::number_unsigned_t& val)
+{
+    get_arithmetic_value(j, val);
+}
+
+template<typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::number_integer_t& val)
+{
+    get_arithmetic_value(j, val);
+}
+
+template<typename BasicJsonType, typename UnscopedEnumType,
+         enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
+void from_json(const BasicJsonType& j, UnscopedEnumType& e)
+{
+    typename std::underlying_type<UnscopedEnumType>::type val = e;
+    get_arithmetic_value(j, val);
+    e = static_cast<UnscopedEnumType>(val);
+}
+
+template<typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::array_t& arr)
+{
+    if (not j.is_array())
+    {
+        JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
+    }
+    arr = *j.template get_ptr<const typename BasicJsonType::array_t*>();
+}
+
+// forward_list doesn't have an insert method
+template<typename BasicJsonType, typename T, typename Allocator>
+void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
+{
+    // do not perform the check when user wants to retrieve jsons
+    // (except when it's null.. ?)
+    if (j.is_null())
+    {
+        JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
+    }
+    if (not std::is_same<T, BasicJsonType>::value)
+    {
+        if (not j.is_array())
+        {
+            JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
+        }
+    }
+    for (auto it = j.rbegin(), end = j.rend(); it != end; ++it)
+    {
+        l.push_front(it->template get<T>());
+    }
+}
+
+template<typename BasicJsonType, typename CompatibleArrayType>
+void from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, priority_tag<0>)
+{
+    using std::begin;
+    using std::end;
+
+    std::transform(j.begin(), j.end(),
+                   std::inserter(arr, end(arr)), [](const BasicJsonType & i)
+    {
+        // get<BasicJsonType>() returns *this, this won't call a from_json
+        // method when value_type is BasicJsonType
+        return i.template get<typename CompatibleArrayType::value_type>();
+    });
+}
+
+template<typename BasicJsonType, typename CompatibleArrayType>
+auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, priority_tag<1>)
+-> decltype(
+    arr.reserve(std::declval<typename CompatibleArrayType::size_type>()),
+    void())
+{
+    using std::begin;
+    using std::end;
+
+    arr.reserve(j.size());
+    std::transform(
+        j.begin(), j.end(), std::inserter(arr, end(arr)), [](const BasicJsonType & i)
+    {
+        // get<BasicJsonType>() returns *this, this won't call a from_json
+        // method when value_type is BasicJsonType
+        return i.template get<typename CompatibleArrayType::value_type>();
+    });
+}
+
+template<typename BasicJsonType, typename CompatibleArrayType,
+         enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
+                     not std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value, int> = 0>
+void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
+{
+    if (j.is_null())
+    {
+        JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
+    }
+
+    // when T == BasicJsonType, do not check if value_t is correct
+    if (not std::is_same<typename CompatibleArrayType::value_type, BasicJsonType>::value)
+    {
+        if (not j.is_array())
+        {
+            JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
+        }
+    }
+    from_json_array_impl(j, arr, priority_tag<1> {});
+}
+
+template<typename BasicJsonType, typename CompatibleObjectType,
+         enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value, int> = 0>
+void from_json(const BasicJsonType& j, CompatibleObjectType& obj)
+{
+    if (not j.is_object())
+    {
+        JSON_THROW(std::domain_error("type must be object, but is " + j.type_name()));
+    }
+
+    auto inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
+    using std::begin;
+    using std::end;
+    // we could avoid the assignment, but this might require a for loop, which
+    // might be less efficient than the container constructor for some
+    // containers (would it?)
+    obj = CompatibleObjectType(begin(*inner_object), end(*inner_object));
+}
+
+// overload for arithmetic types, not chosen for basic_json template arguments
+// (BooleanType, etc..); note: Is it really necessary to provide explicit
+// overloads for boolean_t etc. in case of a custom BooleanType which is not
+// an arithmetic type?
+template<typename BasicJsonType, typename ArithmeticType,
+         enable_if_t <
+             std::is_arithmetic<ArithmeticType>::value and
+             not std::is_same<ArithmeticType, typename BasicJsonType::number_unsigned_t>::value and
+             not std::is_same<ArithmeticType, typename BasicJsonType::number_integer_t>::value and
+             not std::is_same<ArithmeticType, typename BasicJsonType::number_float_t>::value and
+             not std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
+             int> = 0>
+void from_json(const BasicJsonType& j, ArithmeticType& val)
+{
+    switch (static_cast<value_t>(j))
+    {
+        case value_t::number_unsigned:
+        {
+            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>());
+            break;
+        }
+        case value_t::number_integer:
+        {
+            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_integer_t*>());
+            break;
+        }
+        case value_t::number_float:
+        {
+            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_float_t*>());
+            break;
+        }
+        case value_t::boolean:
+        {
+            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::boolean_t*>());
+            break;
+        }
+        default:
+        {
+            JSON_THROW(std::domain_error("type must be number, but is " + j.type_name()));
+        }
+    }
+}
+
+struct to_json_fn
+{
+  private:
+    template<typename BasicJsonType, typename T>
+    auto call(BasicJsonType& j, T&& val, priority_tag<1>) const noexcept(noexcept(to_json(j, std::forward<T>(val))))
+    -> decltype(to_json(j, std::forward<T>(val)), void())
+    {
+        return to_json(j, std::forward<T>(val));
+    }
+
+    template<typename BasicJsonType, typename T>
+    void call(BasicJsonType&, T&&, priority_tag<0>) const noexcept
+    {
+        static_assert(sizeof(BasicJsonType) == 0,
+                      "could not find to_json() method in T's namespace");
+    }
+
+  public:
+    template<typename BasicJsonType, typename T>
+    void operator()(BasicJsonType& j, T&& val) const
+    noexcept(noexcept(std::declval<to_json_fn>().call(j, std::forward<T>(val), priority_tag<1> {})))
+    {
+        return call(j, std::forward<T>(val), priority_tag<1> {});
+    }
+};
+
+struct from_json_fn
+{
+  private:
+    template<typename BasicJsonType, typename T>
+    auto call(const BasicJsonType& j, T& val, priority_tag<1>) const
+    noexcept(noexcept(from_json(j, val)))
+    -> decltype(from_json(j, val), void())
+    {
+        return from_json(j, val);
+    }
+
+    template<typename BasicJsonType, typename T>
+    void call(const BasicJsonType&, T&, priority_tag<0>) const noexcept
+    {
+        static_assert(sizeof(BasicJsonType) == 0,
+                      "could not find from_json() method in T's namespace");
+    }
+
+  public:
+    template<typename BasicJsonType, typename T>
+    void operator()(const BasicJsonType& j, T& val) const
+    noexcept(noexcept(std::declval<from_json_fn>().call(j, val, priority_tag<1> {})))
+    {
+        return call(j, val, priority_tag<1> {});
+    }
+};
+
+// taken from ranges-v3
+template<typename T>
+struct static_const
+{
+    static constexpr T value{};
+};
+
+template<typename T>
+constexpr T static_const<T>::value;
+} // namespace detail
+
+
+/// namespace to hold default `to_json` / `from_json` functions
+namespace
+{
+constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
+constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::value;
+}
+
+
+/*!
+@brief default JSONSerializer template argument
+
+This serializer ignores the template arguments and uses ADL
+([argument-dependent lookup](http://en.cppreference.com/w/cpp/language/adl))
+for serialization.
+*/
+template<typename = void, typename = void>
+struct adl_serializer
+{
+    /*!
+    @brief convert a JSON value to any value type
+
+    This function is usually called by the `get()` function of the
+    @ref basic_json class (either explicit or via conversion operators).
+
+    @param[in] j         JSON value to read from
+    @param[in, out] val  value to write to
+    */
+    template<typename BasicJsonType, typename ValueType>
+    static void from_json(BasicJsonType&& j, ValueType& val) noexcept(
+        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
+    {
+        ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
+    }
+
+    /*!
+    @brief convert any value type to a JSON value
+
+    This function is usually called by the constructors of the @ref basic_json
+    class.
+
+    @param[in, out] j  JSON value to write to
+    @param[in] val     value to read from
+    */
+    template<typename BasicJsonType, typename ValueType>
+    static void to_json(BasicJsonType& j, ValueType&& val) noexcept(
+        noexcept(::nlohmann::to_json(j, std::forward<ValueType>(val))))
+    {
+        ::nlohmann::to_json(j, std::forward<ValueType>(val));
+    }
+};
+
 
 /*!
 @brief a class to store JSON values
@@ -158,6 +962,8 @@ default; will be used in @ref number_integer_t)
 default; will be used in @ref number_float_t)
 @tparam AllocatorType type of the allocator to use (`std::allocator` by
 default)
+@tparam JSONSerializer the serializer to resolve internal calls to `to_json()`
+and `from_json()` (@ref adl_serializer by default)
 
 @requirement The class satisfies the following concept requirements:
 - Basic
@@ -226,21 +1032,26 @@ template <
     class NumberIntegerType = std::int64_t,
     class NumberUnsignedType = std::uint64_t,
     class NumberFloatType = double,
-    template<typename U> class AllocatorType = std::allocator
+    template<typename U> class AllocatorType = std::allocator,
+    template<typename T, typename SFINAE = void> class JSONSerializer = adl_serializer
     >
 class basic_json
 {
   private:
+    template<detail::value_t> friend struct detail::external_constructor;
     /// workaround type for MSVC
     using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
           BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
-          AllocatorType>;
+          AllocatorType, JSONSerializer>;
 
   public:
+    using value_t = detail::value_t;
     // forward declarations
     template<typename U> class iter_impl;
     template<typename Base> class json_reverse_iterator;
     class json_pointer;
+    template<typename T, typename SFINAE>
+    using json_serializer = JSONSerializer<T, SFINAE>;
 
     /////////////////////
     // container types //
@@ -787,47 +1598,6 @@ class basic_json
 
     /// @}
 
-
-    ///////////////////////////
-    // JSON type enumeration //
-    ///////////////////////////
-
-    /*!
-    @brief the JSON type enumeration
-
-    This enumeration collects the different JSON types. It is internally used
-    to distinguish the stored values, and the functions @ref is_null(), @ref
-    is_object(), @ref is_array(), @ref is_string(), @ref is_boolean(), @ref
-    is_number() (with @ref is_number_integer(), @ref is_number_unsigned(), and
-    @ref is_number_float()), @ref is_discarded(), @ref is_primitive(), and
-    @ref is_structured() rely on it.
-
-    @note There are three enumeration entries (number_integer,
-    number_unsigned, and number_float), because the library distinguishes
-    these three types for numbers: @ref number_unsigned_t is used for unsigned
-    integers, @ref number_integer_t is used for signed integers, and @ref
-    number_float_t is used for floating-point numbers or to approximate
-    integers which do not fit in the limits of their respective type.
-
-    @sa @ref basic_json(const value_t value_type) -- create a JSON value with
-    the default value for a given type
-
-    @since version 1.0.0
-    */
-    enum class value_t : uint8_t
-    {
-        null,            ///< null value
-        object,          ///< object (unordered set of name/value pairs)
-        array,           ///< array (ordered collection of values)
-        string,          ///< string value
-        boolean,         ///< boolean value
-        number_integer,  ///< number value (signed integer)
-        number_unsigned, ///< number value (unsigned integer)
-        number_float,    ///< number value (floating-point)
-        discarded        ///< discarded by the the parser callback function
-    };
-
-
   private:
 
     /// helper for exception-safe object creation
@@ -1120,18 +1890,6 @@ class basic_json
     @liveexample{The following code shows the constructor for different @ref
     value_t values,basic_json__value_t}
 
-    @sa @ref basic_json(std::nullptr_t) -- create a `null` value
-    @sa @ref basic_json(boolean_t value) -- create a boolean value
-    @sa @ref basic_json(const string_t&) -- create a string value
-    @sa @ref basic_json(const object_t&) -- create a object value
-    @sa @ref basic_json(const array_t&) -- create a array value
-    @sa @ref basic_json(const number_float_t) -- create a number
-    (floating-point) value
-    @sa @ref basic_json(const number_integer_t) -- create a number (integer)
-    value
-    @sa @ref basic_json(const number_unsigned_t) -- create a number (unsigned)
-    value
-
     @since version 1.0.0
     */
     basic_json(const value_t value_type)
@@ -1165,473 +1923,69 @@ class basic_json
     }
 
     /*!
-    @brief create an object (explicit)
+    @brief create a JSON value
 
-    Create an object JSON value with a given content.
+    This is a "catch all" constructor for all compatible JSON types; that is,
+    types for which a `to_json()` method exsits. The constructor forwards the
+    parameter @a val to that method (to `json_serializer<U>::to_json` method
+    with `U = uncvref_t<CompatibleType>`, to be exact).
 
-    @param[in] val  a value for the object
+    Template type @a CompatibleType includes, but is not limited to, the
+    following types:
+    - **arrays**: @ref array_t and all kinds of compatible containers such as
+      `std::vector`, `std::deque`, `std::list`, `std::forward_list`,
+      `std::array`, `std::set`, `std::unordered_set`, `std::multiset`, and
+      `unordered_multiset` with a `value_type` from which a @ref basic_json
+      value can be constructed.
+    - **objects**: @ref object_t and all kinds of compatible associative
+      containers such as `std::map`, `std::unordered_map`, `std::multimap`,
+      and `std::unordered_multimap` with a `key_type` compatible to
+      @ref string_t and a `value_type` from which a @ref basic_json value can
+      be constructed.
+    - **strings**: @ref string_t, string literals, and all compatible string
+      containers can be used.
+    - **numbers**: @ref number_integer_t, @ref number_unsigned_t,
+      @ref number_float_t, and all convertible number types such as `int`,
+      `size_t`, `int64_t`, `float` or `double` can be used.
+    - **boolean**: @ref boolean_t / `bool` can be used.
 
-    @complexity Linear in the size of the passed @a val.
+    See the examples below.
 
-    @throw std::bad_alloc if allocation for object value fails
+    @tparam CompatibleType a type such that:
+    - @a CompatibleType is not derived from `std::istream`,
+    - @a CompatibleType is not @ref basic_json (to avoid hijacking copy/move
+         constructors),
+    - @a CompatibleType is not a @ref basic_json nested type (e.g.,
+         @ref json_pointer, @ref iterator, etc ...)
+    - @ref @ref json_serializer<U> has a
+         `to_json(basic_json_t&, CompatibleType&&)` method
 
-    @liveexample{The following code shows the constructor with an @ref
-    object_t parameter.,basic_json__object_t}
+    @tparam U = `uncvref_t<CompatibleType>`
 
-    @sa @ref basic_json(const CompatibleObjectType&) -- create an object value
-    from a compatible STL container
+    @param[in] val the value to be forwarded
 
-    @since version 1.0.0
-    */
-    basic_json(const object_t& val)
-        : m_type(value_t::object), m_value(val)
-    {
-        assert_invariant();
-    }
+    @complexity Usually linear in the size of the passed @a val, also
+                depending on the implementation of the called `to_json()`
+                method.
 
-    /*!
-    @brief create an object (implicit)
-
-    Create an object JSON value with a given content. This constructor allows
-    any type @a CompatibleObjectType that can be used to construct values of
-    type @ref object_t.
-
-    @tparam CompatibleObjectType An object type whose `key_type` and
-    `value_type` is compatible to @ref object_t. Examples include `std::map`,
-    `std::unordered_map`, `std::multimap`, and `std::unordered_multimap` with
-    a `key_type` of `std::string`, and a `value_type` from which a @ref
-    basic_json value can be constructed.
-
-    @param[in] val  a value for the object
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for object value fails
-
-    @liveexample{The following code shows the constructor with several
-    compatible object type parameters.,basic_json__CompatibleObjectType}
-
-    @sa @ref basic_json(const object_t&) -- create an object value
-
-    @since version 1.0.0
-    */
-    template<class CompatibleObjectType, typename std::enable_if<
-                 std::is_constructible<typename object_t::key_type, typename CompatibleObjectType::key_type>::value and
-                 std::is_constructible<basic_json, typename CompatibleObjectType::mapped_type>::value, int>::type = 0>
-    basic_json(const CompatibleObjectType& val)
-        : m_type(value_t::object)
-    {
-        using std::begin;
-        using std::end;
-        m_value.object = create<object_t>(begin(val), end(val));
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an array (explicit)
-
-    Create an array JSON value with a given content.
-
-    @param[in] val  a value for the array
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for array value fails
-
-    @liveexample{The following code shows the constructor with an @ref array_t
-    parameter.,basic_json__array_t}
-
-    @sa @ref basic_json(const CompatibleArrayType&) -- create an array value
-    from a compatible STL containers
-
-    @since version 1.0.0
-    */
-    basic_json(const array_t& val)
-        : m_type(value_t::array), m_value(val)
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an array (implicit)
-
-    Create an array JSON value with a given content. This constructor allows
-    any type @a CompatibleArrayType that can be used to construct values of
-    type @ref array_t.
-
-    @tparam CompatibleArrayType An object type whose `value_type` is
-    compatible to @ref array_t. Examples include `std::vector`, `std::deque`,
-    `std::list`, `std::forward_list`, `std::array`, `std::set`,
-    `std::unordered_set`, `std::multiset`, and `unordered_multiset` with a
-    `value_type` from which a @ref basic_json value can be constructed.
-
-    @param[in] val  a value for the array
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for array value fails
+    @throw what `json_serializer<U>::to_json()` throws
 
     @liveexample{The following code shows the constructor with several
-    compatible array type parameters.,basic_json__CompatibleArrayType}
+    compatible types.,basic_json__CompatibleType}
 
-    @sa @ref basic_json(const array_t&) -- create an array value
-
-    @since version 1.0.0
+    @since version 2.1.0
     */
-    template<class CompatibleArrayType, typename std::enable_if<
-                 not std::is_same<CompatibleArrayType, typename basic_json_t::iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename basic_json_t::const_iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename basic_json_t::reverse_iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename basic_json_t::const_reverse_iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename array_t::iterator>::value and
-                 not std::is_same<CompatibleArrayType, typename array_t::const_iterator>::value and
-                 std::is_constructible<basic_json, typename CompatibleArrayType::value_type>::value, int>::type = 0>
-    basic_json(const CompatibleArrayType& val)
-        : m_type(value_t::array)
+    template<typename CompatibleType, typename U = detail::uncvref_t<CompatibleType>,
+             detail::enable_if_t<not std::is_base_of<std::istream, U>::value and
+                                 not std::is_same<U, basic_json_t>::value and
+                                 not detail::is_basic_json_nested_type<
+                                     basic_json_t, U>::value and
+                                 detail::has_to_json<basic_json, U>::value,
+                                 int> = 0>
+    basic_json(CompatibleType && val) noexcept(noexcept(JSONSerializer<U>::to_json(
+                std::declval<basic_json_t&>(), std::forward<CompatibleType>(val))))
     {
-        using std::begin;
-        using std::end;
-        m_value.array = create<array_t>(begin(val), end(val));
-        assert_invariant();
-    }
-
-    /*!
-    @brief create a string (explicit)
-
-    Create an string JSON value with a given content.
-
-    @param[in] val  a value for the string
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for string value fails
-
-    @liveexample{The following code shows the constructor with an @ref
-    string_t parameter.,basic_json__string_t}
-
-    @sa @ref basic_json(const typename string_t::value_type*) -- create a
-    string value from a character pointer
-    @sa @ref basic_json(const CompatibleStringType&) -- create a string value
-    from a compatible string container
-
-    @since version 1.0.0
-    */
-    basic_json(const string_t& val)
-        : m_type(value_t::string), m_value(val)
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create a string (explicit)
-
-    Create a string JSON value with a given content.
-
-    @param[in] val  a literal value for the string
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for string value fails
-
-    @liveexample{The following code shows the constructor with string literal
-    parameter.,basic_json__string_t_value_type}
-
-    @sa @ref basic_json(const string_t&) -- create a string value
-    @sa @ref basic_json(const CompatibleStringType&) -- create a string value
-    from a compatible string container
-
-    @since version 1.0.0
-    */
-    basic_json(const typename string_t::value_type* val)
-        : basic_json(string_t(val))
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create a string (implicit)
-
-    Create a string JSON value with a given content.
-
-    @param[in] val  a value for the string
-
-    @tparam CompatibleStringType an string type which is compatible to @ref
-    string_t, for instance `std::string`.
-
-    @complexity Linear in the size of the passed @a val.
-
-    @throw std::bad_alloc if allocation for string value fails
-
-    @liveexample{The following code shows the construction of a string value
-    from a compatible type.,basic_json__CompatibleStringType}
-
-    @sa @ref basic_json(const string_t&) -- create a string value
-    @sa @ref basic_json(const typename string_t::value_type*) -- create a
-    string value from a character pointer
-
-    @since version 1.0.0
-    */
-    template<class CompatibleStringType, typename std::enable_if<
-                 std::is_constructible<string_t, CompatibleStringType>::value, int>::type = 0>
-    basic_json(const CompatibleStringType& val)
-        : basic_json(string_t(val))
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create a boolean (explicit)
-
-    Creates a JSON boolean type from a given value.
-
-    @param[in] val  a boolean value to store
-
-    @complexity Constant.
-
-    @liveexample{The example below demonstrates boolean
-    values.,basic_json__boolean_t}
-
-    @since version 1.0.0
-    */
-    basic_json(boolean_t val) noexcept
-        : m_type(value_t::boolean), m_value(val)
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an integer number (explicit)
-
-    Create an integer number JSON value with a given content.
-
-    @tparam T A helper type to remove this function via SFINAE in case @ref
-    number_integer_t is the same as `int`. In this case, this constructor
-    would have the same signature as @ref basic_json(const int value). Note
-    the helper type @a T is not visible in this constructor's interface.
-
-    @param[in] val  an integer to create a JSON number from
-
-    @complexity Constant.
-
-    @liveexample{The example below shows the construction of an integer
-    number value.,basic_json__number_integer_t}
-
-    @sa @ref basic_json(const int) -- create a number value (integer)
-    @sa @ref basic_json(const CompatibleNumberIntegerType) -- create a number
-    value (integer) from a compatible number type
-
-    @since version 1.0.0
-    */
-    template<typename T, typename std::enable_if<
-                 not (std::is_same<T, int>::value) and
-                 std::is_same<T, number_integer_t>::value, int>::type = 0>
-    basic_json(const number_integer_t val) noexcept
-        : m_type(value_t::number_integer), m_value(val)
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an integer number from an enum type (explicit)
-
-    Create an integer number JSON value with a given content.
-
-    @param[in] val  an integer to create a JSON number from
-
-    @note This constructor allows to pass enums directly to a constructor. As
-    C++ has no way of specifying the type of an anonymous enum explicitly, we
-    can only rely on the fact that such values implicitly convert to int. As
-    int may already be the same type of number_integer_t, we may need to
-    switch off the constructor @ref basic_json(const number_integer_t).
-
-    @complexity Constant.
-
-    @liveexample{The example below shows the construction of an integer
-    number value from an anonymous enum.,basic_json__const_int}
-
-    @sa @ref basic_json(const number_integer_t) -- create a number value
-    (integer)
-    @sa @ref basic_json(const CompatibleNumberIntegerType) -- create a number
-    value (integer) from a compatible number type
-
-    @since version 1.0.0
-    */
-    basic_json(const int val) noexcept
-        : m_type(value_t::number_integer),
-          m_value(static_cast<number_integer_t>(val))
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an integer number (implicit)
-
-    Create an integer number JSON value with a given content. This constructor
-    allows any type @a CompatibleNumberIntegerType that can be used to
-    construct values of type @ref number_integer_t.
-
-    @tparam CompatibleNumberIntegerType An integer type which is compatible to
-    @ref number_integer_t. Examples include the types `int`, `int32_t`,
-    `long`, and `short`.
-
-    @param[in] val  an integer to create a JSON number from
-
-    @complexity Constant.
-
-    @liveexample{The example below shows the construction of several integer
-    number values from compatible
-    types.,basic_json__CompatibleIntegerNumberType}
-
-    @sa @ref basic_json(const number_integer_t) -- create a number value
-    (integer)
-    @sa @ref basic_json(const int) -- create a number value (integer)
-
-    @since version 1.0.0
-    */
-    template<typename CompatibleNumberIntegerType, typename std::enable_if<
-                 std::is_constructible<number_integer_t, CompatibleNumberIntegerType>::value and
-                 std::numeric_limits<CompatibleNumberIntegerType>::is_integer and
-                 std::numeric_limits<CompatibleNumberIntegerType>::is_signed,
-                 CompatibleNumberIntegerType>::type = 0>
-    basic_json(const CompatibleNumberIntegerType val) noexcept
-        : m_type(value_t::number_integer),
-          m_value(static_cast<number_integer_t>(val))
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an unsigned integer number (explicit)
-
-    Create an unsigned integer number JSON value with a given content.
-
-    @tparam T  helper type to compare number_unsigned_t and unsigned int (not
-    visible in) the interface.
-
-    @param[in] val  an integer to create a JSON number from
-
-    @complexity Constant.
-
-    @sa @ref basic_json(const CompatibleNumberUnsignedType) -- create a number
-    value (unsigned integer) from a compatible number type
-
-    @since version 2.0.0
-    */
-    template<typename T, typename std::enable_if<
-                 not (std::is_same<T, int>::value) and
-                 std::is_same<T, number_unsigned_t>::value, int>::type = 0>
-    basic_json(const number_unsigned_t val) noexcept
-        : m_type(value_t::number_unsigned), m_value(val)
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an unsigned number (implicit)
-
-    Create an unsigned number JSON value with a given content. This
-    constructor allows any type @a CompatibleNumberUnsignedType that can be
-    used to construct values of type @ref number_unsigned_t.
-
-    @tparam CompatibleNumberUnsignedType An integer type which is compatible
-    to @ref number_unsigned_t. Examples may include the types `unsigned int`,
-    `uint32_t`, or `unsigned short`.
-
-    @param[in] val  an unsigned integer to create a JSON number from
-
-    @complexity Constant.
-
-    @sa @ref basic_json(const number_unsigned_t) -- create a number value
-    (unsigned)
-
-    @since version 2.0.0
-    */
-    template<typename CompatibleNumberUnsignedType, typename std::enable_if <
-                 std::is_constructible<number_unsigned_t, CompatibleNumberUnsignedType>::value and
-                 std::numeric_limits<CompatibleNumberUnsignedType>::is_integer and
-                 not std::numeric_limits<CompatibleNumberUnsignedType>::is_signed,
-                 CompatibleNumberUnsignedType>::type = 0>
-    basic_json(const CompatibleNumberUnsignedType val) noexcept
-        : m_type(value_t::number_unsigned),
-          m_value(static_cast<number_unsigned_t>(val))
-    {
-        assert_invariant();
-    }
-
-    /*!
-    @brief create a floating-point number (explicit)
-
-    Create a floating-point number JSON value with a given content.
-
-    @param[in] val  a floating-point value to create a JSON number from
-
-    @note [RFC 7159](http://www.rfc-editor.org/rfc/rfc7159.txt), section 6
-    disallows NaN values:
-    > Numeric values that cannot be represented in the grammar below (such as
-    > Infinity and NaN) are not permitted.
-    In case the parameter @a val is not a number, a JSON null value is created
-    instead.
-
-    @complexity Constant.
-
-    @liveexample{The following example creates several floating-point
-    values.,basic_json__number_float_t}
-
-    @sa @ref basic_json(const CompatibleNumberFloatType) -- create a number
-    value (floating-point) from a compatible number type
-
-    @since version 1.0.0
-    */
-    basic_json(const number_float_t val) noexcept
-        : m_type(value_t::number_float), m_value(val)
-    {
-        // replace infinity and NAN by null
-        if (not std::isfinite(val))
-        {
-            m_type = value_t::null;
-            m_value = json_value();
-        }
-
-        assert_invariant();
-    }
-
-    /*!
-    @brief create an floating-point number (implicit)
-
-    Create an floating-point number JSON value with a given content. This
-    constructor allows any type @a CompatibleNumberFloatType that can be used
-    to construct values of type @ref number_float_t.
-
-    @tparam CompatibleNumberFloatType A floating-point type which is
-    compatible to @ref number_float_t. Examples may include the types `float`
-    or `double`.
-
-    @param[in] val  a floating-point to create a JSON number from
-
-    @note [RFC 7159](http://www.rfc-editor.org/rfc/rfc7159.txt), section 6
-    disallows NaN values:
-    > Numeric values that cannot be represented in the grammar below (such as
-    > Infinity and NaN) are not permitted.
-    In case the parameter @a val is not a number, a JSON null value is
-    created instead.
-
-    @complexity Constant.
-
-    @liveexample{The example below shows the construction of several
-    floating-point number values from compatible
-    types.,basic_json__CompatibleNumberFloatType}
-
-    @sa @ref basic_json(const number_float_t) -- create a number value
-    (floating-point)
-
-    @since version 1.0.0
-    */
-    template<typename CompatibleNumberFloatType, typename = typename std::enable_if<
-                 std::is_constructible<number_float_t, CompatibleNumberFloatType>::value and
-                 std::is_floating_point<CompatibleNumberFloatType>::value>::type>
-    basic_json(const CompatibleNumberFloatType val) noexcept
-        : basic_json(number_float_t(val))
-    {
+        JSONSerializer<U>::to_json(*this, std::forward<CompatibleType>(val));
         assert_invariant();
     }
 
@@ -2655,142 +3009,6 @@ class basic_json
     // value access //
     //////////////////
 
-    /// get an object (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_convertible<typename object_t::key_type, typename T::key_type>::value and
-                 std::is_convertible<basic_json_t, typename T::mapped_type>::value, int>::type = 0>
-    T get_impl(T* /*unused*/) const
-    {
-        if (is_object())
-        {
-            return T(m_value.object->begin(), m_value.object->end());
-        }
-
-        JSON_THROW(std::domain_error("type must be object, but is " + type_name()));
-    }
-
-    /// get an object (explicit)
-    object_t get_impl(object_t* /*unused*/) const
-    {
-        if (is_object())
-        {
-            return *(m_value.object);
-        }
-
-        JSON_THROW(std::domain_error("type must be object, but is " + type_name()));
-    }
-
-    /// get an array (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_convertible<basic_json_t, typename T::value_type>::value and
-                 not std::is_same<basic_json_t, typename T::value_type>::value and
-                 not std::is_arithmetic<T>::value and
-                 not std::is_convertible<std::string, T>::value and
-                 not has_mapped_type<T>::value, int>::type = 0>
-    T get_impl(T* /*unused*/) const
-    {
-        if (is_array())
-        {
-            T to_vector;
-            std::transform(m_value.array->begin(), m_value.array->end(),
-                           std::inserter(to_vector, to_vector.end()), [](basic_json i)
-            {
-                return i.get<typename T::value_type>();
-            });
-            return to_vector;
-        }
-
-        JSON_THROW(std::domain_error("type must be array, but is " + type_name()));
-    }
-
-    /// get an array (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_convertible<basic_json_t, T>::value and
-                 not std::is_same<basic_json_t, T>::value, int>::type = 0>
-    std::vector<T> get_impl(std::vector<T>* /*unused*/) const
-    {
-        if (is_array())
-        {
-            std::vector<T> to_vector;
-            to_vector.reserve(m_value.array->size());
-            std::transform(m_value.array->begin(), m_value.array->end(),
-                           std::inserter(to_vector, to_vector.end()), [](basic_json i)
-            {
-                return i.get<T>();
-            });
-            return to_vector;
-        }
-
-        JSON_THROW(std::domain_error("type must be array, but is " + type_name()));
-    }
-
-    /// get an array (explicit)
-    template<class T, typename std::enable_if<
-                 std::is_same<basic_json, typename T::value_type>::value and
-                 not has_mapped_type<T>::value, int>::type = 0>
-    T get_impl(T* /*unused*/) const
-    {
-        if (is_array())
-        {
-            return T(m_value.array->begin(), m_value.array->end());
-        }
-
-        JSON_THROW(std::domain_error("type must be array, but is " + type_name()));
-    }
-
-    /// get an array (explicit)
-    array_t get_impl(array_t* /*unused*/) const
-    {
-        if (is_array())
-        {
-            return *(m_value.array);
-        }
-
-        JSON_THROW(std::domain_error("type must be array, but is " + type_name()));
-    }
-
-    /// get a string (explicit)
-    template<typename T, typename std::enable_if<
-                 std::is_convertible<string_t, T>::value, int>::type = 0>
-    T get_impl(T* /*unused*/) const
-    {
-        if (is_string())
-        {
-            return *m_value.string;
-        }
-
-        JSON_THROW(std::domain_error("type must be string, but is " + type_name()));
-    }
-
-    /// get a number (explicit)
-    template<typename T, typename std::enable_if<
-                 std::is_arithmetic<T>::value, int>::type = 0>
-    T get_impl(T* /*unused*/) const
-    {
-        switch (m_type)
-        {
-            case value_t::number_integer:
-            {
-                return static_cast<T>(m_value.number_integer);
-            }
-
-            case value_t::number_unsigned:
-            {
-                return static_cast<T>(m_value.number_unsigned);
-            }
-
-            case value_t::number_float:
-            {
-                return static_cast<T>(m_value.number_float);
-            }
-
-            default:
-            {
-                JSON_THROW(std::domain_error("type must be number, but is " + type_name()));
-            }
-        }
-    }
-
     /// get a boolean (explicit)
     boolean_t get_impl(boolean_t* /*unused*/) const
     {
@@ -2918,26 +3136,63 @@ class basic_json
     }
 
   public:
-
     /// @name value access
     /// Direct access to the stored value of a JSON value.
     /// @{
 
     /*!
+    @brief get special-case overload
+
+    This overloads avoids a lot of template boilerplate, it can be seen as the
+    identity method
+
+    @tparam BasicJsonType == @ref basic_json
+
+    @return a copy of *this
+
+    @complexity Constant.
+
+    @since version 2.1.0
+    */
+    template <
+        typename BasicJsonType,
+        detail::enable_if_t<std::is_same<typename std::remove_const<BasicJsonType>::type,
+                                         basic_json_t>::value,
+                            int> = 0 >
+    basic_json get() const
+    {
+        return *this;
+    }
+
+    /*!
     @brief get a value (explicit)
 
-    Explicit type conversion between the JSON value and a compatible value.
+    Explicit type conversion between the JSON value and a compatible value
+    which is [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible)
+    and [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible).
+    The value is converted by calling the @ref json_serializer<ValueType>
+    `from_json()` method.
 
-    @tparam ValueType non-pointer type compatible to the JSON value, for
-    instance `int` for JSON integer numbers, `bool` for JSON booleans, or
-    `std::vector` types for JSON arrays
+    The function is equivalent to executing
+    @code {.cpp}
+    ValueType ret;
+    JSONSerializer<ValueType>::from_json(*this, ret);
+    return ret;
+    @endcode
 
-    @return copy of the JSON value, converted to type @a ValueType
+    This overloads is chosen if:
+    - @a ValueType is not @ref basic_json,
+    - @ref json_serializer<ValueType> has a `from_json()` method of the form
+      `void from_json(const @ref basic_json&, ValueType&)`, and
+    - @ref json_serializer<ValueType> does not have a `from_json()` method of
+      the form `ValueType from_json(const @ref basic_json&)`
 
-    @throw std::domain_error in case passed type @a ValueType is incompatible
-    to JSON; example: `"type must be object, but is null"`
+    @tparam ValueTypeCV the provided value type
+    @tparam ValueType the returned value type
 
-    @complexity Linear in the size of the JSON value.
+    @return copy of the JSON value, converted to @a ValueType
+
+    @throw what @ref json_serializer<ValueType> `from_json()` method throws
 
     @liveexample{The example below shows several conversions from JSON values
     to other types. There a few things to note: (1) Floating-point numbers can
@@ -2946,21 +3201,75 @@ class basic_json
     associative containers such as `std::unordered_map<std::string\,
     json>`.,get__ValueType_const}
 
-    @internal
-    The idea of using a casted null pointer to choose the correct
-    implementation is from <http://stackoverflow.com/a/8315197/266378>.
-    @endinternal
-
-    @sa @ref operator ValueType() const for implicit conversion
-    @sa @ref get() for pointer-member access
-
-    @since version 1.0.0
+    @since version 2.1.0
     */
-    template<typename ValueType, typename std::enable_if<
-                 not std::is_pointer<ValueType>::value, int>::type = 0>
-    ValueType get() const
+    template <
+        typename ValueTypeCV,
+        typename ValueType = detail::uncvref_t<ValueTypeCV>,
+        detail::enable_if_t <
+            not std::is_same<basic_json_t, ValueType>::value and
+            detail::has_from_json<basic_json_t, ValueType>::value and
+            not detail::has_non_default_from_json<basic_json_t, ValueType>::value,
+            int > = 0 >
+    ValueType get() const noexcept(noexcept(
+                                       JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
     {
-        return get_impl(static_cast<ValueType*>(nullptr));
+        // we cannot static_assert on ValueTypeCV being non-const, because
+        // there is support for get<const basic_json_t>(), which is why we
+        // still need the uncvref
+        static_assert(not std::is_reference<ValueTypeCV>::value,
+                      "get() cannot be used with reference types, you might want to use get_ref()");
+        static_assert(std::is_default_constructible<ValueType>::value,
+                      "types must be DefaultConstructible when used with get()");
+
+        ValueType ret;
+        JSONSerializer<ValueType>::from_json(*this, ret);
+        return ret;
+    }
+
+    /*!
+    @brief get a value (explicit); special case
+
+    Explicit type conversion between the JSON value and a compatible value
+    which is **not** [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible)
+    and **not** [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible).
+    The value is converted by calling the @ref json_serializer<ValueType>
+    `from_json()` method.
+
+    The function is equivalent to executing
+    @code {.cpp}
+    return JSONSerializer<ValueTypeCV>::from_json(*this);
+    @endcode
+
+    This overloads is chosen if:
+    - @a ValueType is not @ref basic_json and
+    - @ref json_serializer<ValueType> has a `from_json()` method of the form
+      `ValueType from_json(const @ref basic_json&)`
+
+    @note If @ref json_serializer<ValueType> has both overloads of
+    `from_json()`, this one is chosen.
+
+    @tparam ValueTypeCV the provided value type
+    @tparam ValueType the returned value type
+
+    @return copy of the JSON value, converted to @a ValueType
+
+    @throw what @ref json_serializer<ValueType> `from_json()` method throws
+
+    @since version 2.1.0
+    */
+    template <
+        typename ValueTypeCV,
+        typename ValueType = detail::uncvref_t<ValueTypeCV>,
+        detail::enable_if_t<not std::is_same<basic_json_t, ValueType>::value and
+                            detail::has_non_default_from_json<basic_json_t,
+                                    ValueType>::value, int> = 0 >
+    ValueType get() const noexcept(noexcept(
+                                       JSONSerializer<ValueTypeCV>::from_json(std::declval<const basic_json_t&>())))
+    {
+        static_assert(not std::is_reference<ValueTypeCV>::value,
+                      "get() cannot be used with reference types, you might want to use get_ref()");
+        return JSONSerializer<ValueTypeCV>::from_json(*this);
     }
 
     /*!
@@ -5528,7 +5837,7 @@ class basic_json
 
     /// @}
 
-
+  public:
     //////////////////////////////////////////
     // lexicographical comparison operators //
     //////////////////////////////////////////
@@ -5536,40 +5845,6 @@ class basic_json
     /// @name lexicographical comparison operators
     /// @{
 
-  private:
-    /*!
-    @brief comparison operator for JSON types
-
-    Returns an ordering that is similar to Python:
-    - order: null < boolean < number < object < array < string
-    - furthermore, each type is not smaller than itself
-
-    @since version 1.0.0
-    */
-    friend bool operator<(const value_t lhs, const value_t rhs) noexcept
-    {
-        static constexpr std::array<uint8_t, 8> order = {{
-                0, // null
-                3, // object
-                4, // array
-                5, // string
-                1, // boolean
-                2, // integer
-                2, // unsigned
-                2, // float
-            }
-        };
-
-        // discarded values are not comparable
-        if (lhs == value_t::discarded or rhs == value_t::discarded)
-        {
-            return false;
-        }
-
-        return order[static_cast<std::size_t>(lhs)] < order[static_cast<std::size_t>(rhs)];
-    }
-
-  public:
     /*!
     @brief comparison: equal
 
@@ -7782,28 +8057,30 @@ class basic_json
     @complexity Constant.
 
     @liveexample{The following code exemplifies `type_name()` for all JSON
-    types.,typename}
+    types.,type_name}
 
     @since version 1.0.0
     */
     std::string type_name() const
     {
-        switch (m_type)
         {
-            case value_t::null:
-                return "null";
-            case value_t::object:
-                return "object";
-            case value_t::array:
-                return "array";
-            case value_t::string:
-                return "string";
-            case value_t::boolean:
-                return "boolean";
-            case value_t::discarded:
-                return "discarded";
-            default:
-                return "number";
+            switch (m_type)
+            {
+                case value_t::null:
+                    return "null";
+                case value_t::object:
+                    return "object";
+                case value_t::array:
+                    return "array";
+                case value_t::string:
+                    return "string";
+                case value_t::boolean:
+                    return "boolean";
+                case value_t::discarded:
+                    return "discarded";
+                default:
+                    return "number";
+            }
         }
     }
 
@@ -8155,6 +8432,11 @@ class basic_json
     class primitive_iterator_t
     {
       public:
+
+        difference_type get_value() const noexcept
+        {
+            return m_it;
+        }
         /// set iterator to a defined beginning
         void set_begin() noexcept
         {
@@ -8179,16 +8461,87 @@ class basic_json
             return (m_it == end_value);
         }
 
-        /// return reference to the value to change and compare
-        operator difference_type& () noexcept
+        friend constexpr bool operator==(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
         {
-            return m_it;
+            return lhs.m_it == rhs.m_it;
         }
 
-        /// return value to compare
-        constexpr operator difference_type () const noexcept
+        friend constexpr bool operator!=(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
         {
-            return m_it;
+            return !(lhs == rhs);
+        }
+
+        friend constexpr bool operator<(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+        {
+            return lhs.m_it < rhs.m_it;
+        }
+
+        friend constexpr bool operator<=(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+        {
+            return lhs.m_it <= rhs.m_it;
+        }
+
+        friend constexpr bool operator>(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+        {
+            return lhs.m_it > rhs.m_it;
+        }
+
+        friend constexpr bool operator>=(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+        {
+            return lhs.m_it >= rhs.m_it;
+        }
+
+        primitive_iterator_t operator+(difference_type i)
+        {
+            auto result = *this;
+            result += i;
+            return result;
+        }
+
+        friend constexpr difference_type operator-(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+        {
+            return lhs.m_it - rhs.m_it;
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, primitive_iterator_t it)
+        {
+            return os << it.m_it;
+        }
+
+        primitive_iterator_t& operator++()
+        {
+            ++m_it;
+            return *this;
+        }
+
+        primitive_iterator_t& operator++(int)
+        {
+            m_it++;
+            return *this;
+        }
+
+        primitive_iterator_t& operator--()
+        {
+            --m_it;
+            return *this;
+        }
+
+        primitive_iterator_t& operator--(int)
+        {
+            m_it--;
+            return *this;
+        }
+
+        primitive_iterator_t& operator+=(difference_type n)
+        {
+            m_it += n;
+            return *this;
+        }
+
+        primitive_iterator_t& operator-=(difference_type n)
+        {
+            m_it -= n;
+            return *this;
         }
 
       private:
@@ -8893,7 +9246,7 @@ class basic_json
 
                 default:
                 {
-                    if (m_it.primitive_iterator == -n)
+                    if (m_it.primitive_iterator.get_value() == -n)
                     {
                         return *m_object;
                     }
@@ -9722,7 +10075,7 @@ class basic_json
             for (; curptr < m_cursor; curptr++)
             {
                 // quickly skip tests if a digit
-                if (*curptr < '0' || *curptr > '9')
+                if (*curptr < '0' or* curptr > '9')
                 {
                     if (*curptr == '.')
                     {
@@ -10696,6 +11049,18 @@ class basic_json
         }
 
       private:
+        friend bool operator==(json_pointer const& lhs,
+                               json_pointer const& rhs) noexcept
+        {
+            return lhs.reference_tokens == rhs.reference_tokens;
+        }
+
+        friend bool operator!=(json_pointer const& lhs,
+                               json_pointer const& rhs) noexcept
+        {
+            return !(lhs == rhs);
+        }
+
         /// the reference tokens
         std::vector<std::string> reference_tokens {};
     };
@@ -11355,7 +11720,6 @@ class basic_json
 
     /// @}
 };
-
 
 /////////////
 // presets //
