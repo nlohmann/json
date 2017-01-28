@@ -1117,8 +1117,8 @@ class basic_json
         {
             {"string", "2.1.0"},
             {"major", 2},
-            {"minor", 0},
-            {"patch", 10},
+            {"minor", 1},
+            {"patch", 0},
         };
 
 #ifdef _WIN32
