@@ -8,7 +8,7 @@
      <key>CFBundleIdentifier</key>
      <string>me.nlohmann.json</string>
      <key>CFBundleVersion</key>
-     <string>2.0.10</string>
+     <string>2.1.0</string>
      <key>DocSetFeedName</key>
      <string>Doxygen generated docs</string>
      <key>DocSetPublisherIdentifier</key>

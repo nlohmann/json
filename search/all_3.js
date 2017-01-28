@@ -1,8 +1,8 @@
 var searchData=
 [
   ['deprecated_20list',['Deprecated List',['../deprecated.html',1,'']]],
-  ['diff',['diff',['../classnlohmann_1_1basic__json_a5ef1934868b90452a4a34695489c60cd.html#a5ef1934868b90452a4a34695489c60cd',1,'nlohmann::basic_json']]],
-  ['difference_5ftype',['difference_type',['../classnlohmann_1_1basic__json_aec316934a555dd1acdd3600e5d4a4cdf.html#aec316934a555dd1acdd3600e5d4a4cdf',1,'nlohmann::basic_json::difference_type()'],['../classnlohmann_1_1basic__json_1_1iter__impl_a088519ca37ae2be2c1f1bbc4868dc878.html#a088519ca37ae2be2c1f1bbc4868dc878',1,'nlohmann::basic_json::iter_impl::difference_type()']]],
-  ['discarded',['discarded',['../classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522a94708897ec9db8647dfe695714c98e46',1,'nlohmann::basic_json']]],
-  ['dump',['dump',['../classnlohmann_1_1basic__json_afd4b7d7bcadc62da7c582fa36ba6805f.html#afd4b7d7bcadc62da7c582fa36ba6805f',1,'nlohmann::basic_json']]]
+  ['diff',['diff',['../classnlohmann_1_1basic__json_a543bd5f7490de54c875b2c0912dc9a49.html#a543bd5f7490de54c875b2c0912dc9a49',1,'nlohmann::basic_json']]],
+  ['difference_5ftype',['difference_type',['../classnlohmann_1_1basic__json_afe7c1303357e19cea9527af4e9a31d8f.html#afe7c1303357e19cea9527af4e9a31d8f',1,'nlohmann::basic_json::difference_type()'],['../classnlohmann_1_1basic__json_1_1iter__impl_aa3d908ee643e5938d32e5f6d261d7715.html#aa3d908ee643e5938d32e5f6d261d7715',1,'nlohmann::basic_json::iter_impl::difference_type()']]],
+  ['dump',['dump',['../classnlohmann_1_1basic__json_a5319dc1bb9dfe19ce7ff559aaded3422.html#a5319dc1bb9dfe19ce7ff559aaded3422',1,'nlohmann::basic_json']]],
+  ['external_5fconstructor',['external_constructor',['../classnlohmann_1_1basic__json_a6275ed57bae6866cdf5db5370a7ad47c.html#a6275ed57bae6866cdf5db5370a7ad47c',1,'nlohmann::basic_json']]]
 ];

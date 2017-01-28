@@ -89,9 +89,13 @@ function show()
 function init(evt) 
 {
   svgDoc = evt.target.ownerDocument;
-  if (top.window && top.window.registerShow) // register show function in html doc for dynamic sections
-  {
-    top.window.registerShow(sectionId,show);
+  try {
+    if (top.window && top.window.registerShow) { // register show function in html doc for dynamic sections
+      top.window.registerShow(sectionId,show);
+    }
+  } catch(e) {
+    // ugh, we are not allowed to talk to the parent; can happen with Chrome when viewing pages
+    // locally, since they treat every local page as having a different origin
   }
   show();
 

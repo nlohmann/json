@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['boolean',['boolean',['../classnlohmann_1_1basic__json_a231b02148577b69a154b2ce2c87a5522.html#a231b02148577b69a154b2ce2c87a5522a84e2c64f38f78ba3ea5c905ab5a2da27',1,'nlohmann::basic_json']]]
+  ['key',['key',['../classnlohmann_1_1basic__json_aea1c863b719b4ca5b77188c171bbfafe.html#aea1c863b719b4ca5b77188c171bbfafea3c6e0b8a9c15224a8228b9a98ca1531d',1,'nlohmann::basic_json']]]
 ];
