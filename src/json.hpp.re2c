@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 2.0.10
+|  |  |__   |  |  | | | |  version 2.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -1105,6 +1105,26 @@ class basic_json
 
     /*!
     @brief returns version information on the library
+
+    This function returns a JSON object with infiormation about the library,
+    including the version number and information on the platform and compiler.
+
+    @return JSON object holding version information
+    key         | description
+    ----------- | ---------------
+    `compiler`  | Information on the used compiler. It is an object with the following keys: `c++` (the used C++ standard), `family` (the compiler family; possible values are `clang`, `icc`, `gcc`, `ilecpp`, `msvc`, `pgcpp`, `sunpro`, and `unknown`), and `version` (the compiler version).
+    `copyright` | The copyright line for the library as string.
+    `name`      | The name of the library as string.
+    `platform`  | The used platform as string. Possible values are `win32`, `linux`, `apple`, `unix`, and `unknown`.
+    `url`       | The URL of the project as string.
+    `version`   | The version of the library. It is an object with the following keys: `major`, `minor`, and `patch` as defined by [Semantic Versioning](http://semver.org), and `string` (the version string).
+
+    @liveexample{The following code shows an example output of the `meta()`
+    function.,meta}
+
+    @complexity Constant.
+
+    @since 2.1.0
     */
     static basic_json meta()
     {
@@ -1115,10 +1135,10 @@ class basic_json
         result["url"] = "https://github.com/nlohmann/json";
         result["version"] =
         {
-            {"string", "2.0.10"},
+            {"string", "2.1.0"},
             {"major", 2},
-            {"minor", 0},
-            {"patch", 10},
+            {"minor", 1},
+            {"patch", 0},
         };
 
 #ifdef _WIN32
@@ -1726,7 +1746,7 @@ class basic_json
                 {
                     if (t == value_t::null)
                     {
-                        JSON_THROW(std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21 2.0.10")); // LCOV_EXCL_LINE
+                        JSON_THROW(std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21 2.1.0")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -8059,7 +8079,7 @@ class basic_json
     @liveexample{The following code exemplifies `type_name()` for all JSON
     types.,type_name}
 
-    @since version 1.0.0
+    @since version 1.0.0, public since 2.1.0
     */
     std::string type_name() const
     {
