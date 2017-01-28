@@ -5,7 +5,7 @@
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2013-2017 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2016 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -31,46 +31,10 @@ SOFTWARE.
 #include "json.hpp"
 using nlohmann::json;
 
-TEST_CASE("serialization")
+TEST_CASE("version information")
 {
-    SECTION("operator<<")
+    SECTION("version()")
     {
-        SECTION("no given width")
-        {
-            std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
-            ss << j;
-            CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
-        }
-
-        SECTION("given width")
-        {
-            std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
-            ss << std::setw(4) << j;
-            CHECK(ss.str() ==
-                  "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
-        }
-    }
-
-    SECTION("operator>>")
-    {
-        SECTION("no given width")
-        {
-            std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
-            j >> ss;
-            CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
-        }
-
-        SECTION("given width")
-        {
-            std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
-            ss.width(4);
-            j >> ss;
-            CHECK(ss.str() ==
-                  "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
-        }
+        CHECK(json::meta()["name"] == "JSON for Modern C++");
     }
 }

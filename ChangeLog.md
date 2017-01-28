@@ -1,6 +1,43 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.1.0](https://github.com/nlohmann/json/releases/tag/v2.1.0) (2017-01-28)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.10...v2.1.0)
+
+- Parsing multiple JSON objects from a string or stream [\#438](https://github.com/nlohmann/json/issues/438)
+- Use-of-uninitialized-value \(OSS-Fuzz issue 477\) [\#437](https://github.com/nlohmann/json/issues/437)
+- add `reserve` function for array to reserve memory before adding json values into it [\#436](https://github.com/nlohmann/json/issues/436)
+- Typo in examples page [\#434](https://github.com/nlohmann/json/issues/434)
+- avoid malformed json [\#433](https://github.com/nlohmann/json/issues/433)
+- How to add json objects to a map? [\#432](https://github.com/nlohmann/json/issues/432)
+- create json instance from raw json \(unsigned char\*\) [\#431](https://github.com/nlohmann/json/issues/431)
+- Getting std::invalid\_argument: stream error when following example [\#429](https://github.com/nlohmann/json/issues/429)
+- Forward declare-only header? [\#427](https://github.com/nlohmann/json/issues/427)
+- Implicit conversion from array to object [\#425](https://github.com/nlohmann/json/issues/425)
+- Automatic ordered JSON [\#424](https://github.com/nlohmann/json/issues/424)
+- error C4996: 'strerror' when reading file [\#422](https://github.com/nlohmann/json/issues/422)
+- Get an error - JSON pointer must be empty or begin with '/' [\#421](https://github.com/nlohmann/json/issues/421)
+- size parameter for parse\(\) [\#419](https://github.com/nlohmann/json/issues/419)
+- json.hpp forcibly defines GCC\_VERSION [\#417](https://github.com/nlohmann/json/issues/417)
+- Use-of-uninitialized-value \(OSS-Fuzz issue 377\) [\#416](https://github.com/nlohmann/json/issues/416)
+- Single char converted to ASCII code instead of string [\#413](https://github.com/nlohmann/json/issues/413)
+- How to know if a string  was parsed as utf-8? [\#406](https://github.com/nlohmann/json/issues/406)
+- Overloaded += to add objects to an array makes no sense? [\#404](https://github.com/nlohmann/json/issues/404)
+- Finding a value in an array [\#399](https://github.com/nlohmann/json/issues/399)
+- add release information in static function [\#397](https://github.com/nlohmann/json/issues/397)
+- Optimize memory usage of json objects in combination with binary serialization [\#373](https://github.com/nlohmann/json/issues/373)
+- Conversion operators not considered [\#369](https://github.com/nlohmann/json/issues/369)
+- Append ".0" to serialized floating\_point values that are digits-only. [\#362](https://github.com/nlohmann/json/issues/362)
+- Add a customization point for user-defined types [\#328](https://github.com/nlohmann/json/issues/328)
+- Conformance report for reference [\#307](https://github.com/nlohmann/json/issues/307)
+- Document the best way to serialize/deserialize user defined types to json [\#298](https://github.com/nlohmann/json/issues/298)
+- Add StringView template typename to basic\_json [\#297](https://github.com/nlohmann/json/issues/297)
+- \[Improvement\] Add option to remove exceptions [\#296](https://github.com/nlohmann/json/issues/296)
+- Performance in miloyip/nativejson-benchmark [\#202](https://github.com/nlohmann/json/issues/202)
+
+- conversion from/to user-defined types [\#435](https://github.com/nlohmann/json/pull/435) ([nlohmann](https://github.com/nlohmann))
+- Fix documentation error [\#430](https://github.com/nlohmann/json/pull/430) ([vjon](https://github.com/vjon))
+
 ## [v2.0.10](https://github.com/nlohmann/json/releases/tag/v2.0.10) (2017-01-02)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.9...v2.0.10)
 

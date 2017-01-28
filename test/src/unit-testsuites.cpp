@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.10
+|  |  |__   |  |  | | | |  version 2.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -813,5 +813,16 @@ TEST_CASE("nst's JSONTestSuite")
                 CHECK_THROWS_AS(j << f, std::invalid_argument);
             }
         }
+    }
+}
+
+TEST_CASE("Big List of Naughty Strings")
+{
+    // test from https://github.com/minimaxir/big-list-of-naughty-strings
+    SECTION("blns.json")
+    {
+        std::ifstream f("test/data/big-list-of-naughty-strings/blns.json");
+        json j;
+        CHECK_NOTHROW(j << f);
     }
 }

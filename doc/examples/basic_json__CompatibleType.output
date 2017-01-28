@@ -1,0 +1,38 @@
+{"one":1,"two":2}
+{"one":1,"three":3,"two":2}
+{"one":1.2,"three":3.4,"two":2.3}
+{"one":true,"three":false,"two":true}
+{"one":true,"three":false,"two":true}
+
+["one","two",3,4.5,false]
+[1,2,3,4]
+[1.2,2.3,3.4,5.6]
+[true,true,false,true]
+[12345678909876,23456789098765,34567890987654,45678909876543]
+[1,2,3,4]
+["four","one","three","two"]
+["four","three","two","one"]
+["four","one","one","two"]
+["four","two","one","one"]
+
+"The quick brown fox jumps over the lazy dog."
+"The quick brown fox jumps over the lazy dog."
+"The quick brown fox jumps over the lazy dog."
+
+-42
+17
+17
+42
+-23
+1024
+-17
+8
+3.14159265358979
+null
+null
+42.2299995422363
+null
+23.42
+
+true
+false

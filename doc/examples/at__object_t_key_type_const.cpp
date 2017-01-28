@@ -8,7 +8,7 @@ int main()
     json object =
     {
         {"the good", "il buono"},
-        {"the bad", "il cativo"},
+        {"the bad", "il cattivo"},
         {"the ugly", "il brutto"}
     };
 
