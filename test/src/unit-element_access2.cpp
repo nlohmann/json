@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.10
+|  |  |__   |  |  | | | |  version 2.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -296,25 +296,6 @@ TEST_CASE("element access 2")
                     CHECK(j_const.value("/floating"_json_pointer, 12) == 42);
                     CHECK(j_const.value("/object"_json_pointer, json({{"foo", "bar"}})) == json(json::object()));
                     CHECK(j_const.value("/array"_json_pointer, json({10, 100})) == json({1, 2, 3}));
-                }
-
-                SECTION("access non-existing value")
-                {
-                    CHECK(j.value("/not/existing"_json_pointer, 2) == 2);
-                    CHECK(j.value("/not/existing"_json_pointer, 2u) == 2u);
-                    CHECK(j.value("/not/existing"_json_pointer, false) == false);
-                    CHECK(j.value("/not/existing"_json_pointer, "bar") == "bar");
-                    CHECK(j.value("/not/existing"_json_pointer, 12.34) == Approx(12.34));
-                    CHECK(j.value("/not/existing"_json_pointer, json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
-                    CHECK(j.value("/not/existing"_json_pointer, json({10, 100})) == json({10, 100}));
-
-                    CHECK(j_const.value("/not/existing"_json_pointer, 2) == 2);
-                    CHECK(j_const.value("/not/existing"_json_pointer, 2u) == 2u);
-                    CHECK(j_const.value("/not/existing"_json_pointer, false) == false);
-                    CHECK(j_const.value("/not/existing"_json_pointer, "bar") == "bar");
-                    CHECK(j_const.value("/not/existing"_json_pointer, 12.34) == Approx(12.34));
-                    CHECK(j_const.value("/not/existing"_json_pointer, json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
-                    CHECK(j_const.value("/not/existing"_json_pointer, json({10, 100})) == json({10, 100}));
                 }
 
                 SECTION("access on non-object type")
@@ -952,6 +933,40 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(j_nonobject);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("element access 2 (throwing tests)", "[!throws]")
+{
+    SECTION("object")
+    {
+        json j = {{"integer", 1}, {"unsigned", 1u}, {"floating", 42.23}, {"null", nullptr}, {"string", "hello world"}, {"boolean", true}, {"object", json::object()}, {"array", {1, 2, 3}}};
+        const json j_const = j;
+
+        SECTION("access specified element with default value")
+        {
+            SECTION("given a JSON pointer")
+            {
+                SECTION("access non-existing value")
+                {
+                    CHECK(j.value("/not/existing"_json_pointer, 2) == 2);
+                    CHECK(j.value("/not/existing"_json_pointer, 2u) == 2u);
+                    CHECK(j.value("/not/existing"_json_pointer, false) == false);
+                    CHECK(j.value("/not/existing"_json_pointer, "bar") == "bar");
+                    CHECK(j.value("/not/existing"_json_pointer, 12.34) == Approx(12.34));
+                    CHECK(j.value("/not/existing"_json_pointer, json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
+                    CHECK(j.value("/not/existing"_json_pointer, json({10, 100})) == json({10, 100}));
+
+                    CHECK(j_const.value("/not/existing"_json_pointer, 2) == 2);
+                    CHECK(j_const.value("/not/existing"_json_pointer, 2u) == 2u);
+                    CHECK(j_const.value("/not/existing"_json_pointer, false) == false);
+                    CHECK(j_const.value("/not/existing"_json_pointer, "bar") == "bar");
+                    CHECK(j_const.value("/not/existing"_json_pointer, 12.34) == Approx(12.34));
+                    CHECK(j_const.value("/not/existing"_json_pointer, json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
+                    CHECK(j_const.value("/not/existing"_json_pointer, json({10, 100})) == json({10, 100}));
                 }
             }
         }

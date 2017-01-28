@@ -27,50 +27,33 @@ SOFTWARE.
 */
 
 #include "catch.hpp"
-
 #include "json.hpp"
+
 using nlohmann::json;
 
-TEST_CASE("serialization")
+enum test
 {
-    SECTION("operator<<")
-    {
-        SECTION("no given width")
-        {
-            std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
-            ss << j;
-            CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
-        }
+};
 
-        SECTION("given width")
-        {
-            std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
-            ss << std::setw(4) << j;
-            CHECK(ss.str() ==
-                  "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
-        }
-    }
+struct pod {};
+struct pod_bis {};
 
-    SECTION("operator>>")
-    {
-        SECTION("no given width")
-        {
-            std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
-            j >> ss;
-            CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
-        }
+void to_json(json&, pod) noexcept;
+void to_json(json&, pod_bis);
+void from_json(const json&, pod) noexcept;
+void from_json(const json&, pod_bis);
+static json j;
 
-        SECTION("given width")
-        {
-            std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
-            ss.width(4);
-            j >> ss;
-            CHECK(ss.str() ==
-                  "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
-        }
-    }
-}
+static_assert(noexcept(json{}), "");
+static_assert(noexcept(nlohmann::to_json(j, 2)), "");
+static_assert(noexcept(nlohmann::to_json(j, 2.5)), "");
+static_assert(noexcept(nlohmann::to_json(j, true)), "");
+static_assert(noexcept(nlohmann::to_json(j, test{})), "");
+static_assert(noexcept(nlohmann::to_json(j, pod{})), "");
+static_assert(not noexcept(nlohmann::to_json(j, pod_bis{})), "");
+static_assert(noexcept(json(2)), "");
+static_assert(noexcept(json(test{})), "");
+static_assert(noexcept(json(pod{})), "");
+static_assert(noexcept(j.get<pod>()), "");
+static_assert(not noexcept(j.get<pod_bis>()), "");
+static_assert(noexcept(json(pod{})), "");

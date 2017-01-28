@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.10
+|  |  |__   |  |  | | | |  version 2.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -80,7 +80,7 @@ struct my_allocator : std::allocator<T>
         }
         else
         {
-            ::new(reinterpret_cast<void*>(p)) T(std::forward<Args>(args)...);
+            ::new (reinterpret_cast<void*>(p)) T(std::forward<Args>(args)...);
         }
     }
 
