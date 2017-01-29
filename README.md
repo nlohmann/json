@@ -563,7 +563,9 @@ namespace nlohmann {
         }
 
         static void from_json(const json& j, boost::optional<T>& opt) {
-            if (!j.is_null()) {
+            if (j.is_null()) {
+                opt = boost::none;
+            } else {
                 opt = j.get<T>(); // same as above, but with 
                                   // adl_serializer<T>::from_json
             }
