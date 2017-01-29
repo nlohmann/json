@@ -3036,10 +3036,8 @@ class basic_json
         {
             return m_value.boolean;
         }
-        else
-        {
-            JSON_THROW(std::domain_error("type must be boolean, but is " + type_name()));
-        }
+
+        JSON_THROW(std::domain_error("type must be boolean, but is " + type_name()));
     }
 
     /// get a pointer to the value (object)
