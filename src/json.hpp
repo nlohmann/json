@@ -6083,7 +6083,8 @@ class basic_json
             {
                 case value_t::array:
                 {
-                    return *lhs.m_value.array < *rhs.m_value.array;
+                    //return *lhs.m_value.array < *rhs.m_value.array; // g++ version < 7
+                    return (*lhs.m_value.array) < (*rhs.m_value.array); /// g++ 7
                 }
                 case value_t::object:
                 {
