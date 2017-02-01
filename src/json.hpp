@@ -3036,10 +3036,8 @@ class basic_json
         {
             return m_value.boolean;
         }
-        else
-        {
-            JSON_THROW(std::domain_error("type must be boolean, but is " + type_name()));
-        }
+
+        JSON_THROW(std::domain_error("type must be boolean, but is " + type_name()));
     }
 
     /// get a pointer to the value (object)
@@ -8534,10 +8532,11 @@ class basic_json
             return *this;
         }
 
-        primitive_iterator_t& operator++(int)
+        primitive_iterator_t operator++(int)
         {
+            auto result = *this;
             m_it++;
-            return *this;
+            return result;
         }
 
         primitive_iterator_t& operator--()
@@ -8546,10 +8545,11 @@ class basic_json
             return *this;
         }
 
-        primitive_iterator_t& operator--(int)
+        primitive_iterator_t operator--(int)
         {
+            auto result = *this;
             m_it--;
-            return *this;
+            return result;
         }
 
         primitive_iterator_t& operator+=(difference_type n)
