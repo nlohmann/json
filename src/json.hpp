@@ -8532,10 +8532,11 @@ class basic_json
             return *this;
         }
 
-        primitive_iterator_t& operator++(int)
+        primitive_iterator_t operator++(int)
         {
+            auto result = *this;
             m_it++;
-            return *this;
+            return result;
         }
 
         primitive_iterator_t& operator--()
@@ -8544,10 +8545,11 @@ class basic_json
             return *this;
         }
 
-        primitive_iterator_t& operator--(int)
+        primitive_iterator_t operator--(int)
         {
+            auto result = *this;
             m_it--;
-            return *this;
+            return result;
         }
 
         primitive_iterator_t& operator+=(difference_type n)
