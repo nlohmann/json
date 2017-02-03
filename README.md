@@ -818,6 +818,9 @@ I deeply appreciate the help of the following people.
 - [Alexej Harm](https://github.com/qis) helped to get the user-defined types working with Visual Studio.
 - [Jared Grubb](https://github.com/jaredgrubb) supported the implementation of user-defined types.
 - [EnricoBilla](https://github.com/EnricoBilla) noted a typo in an example.
+- [Martin Hořeňovský](https://github.com/horenmar) found a way for a 2x speedup for the compilation time of the test suite.
+- [ukhegg](https://github.com/ukhegg) found proposed an improvement for the examples section.
+
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
