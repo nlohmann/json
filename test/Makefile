@@ -71,9 +71,9 @@ json_unit: $(OBJECTS) ../src/json.hpp thirdparty/catch/catch.hpp
 # individual test cases
 ##############################################################################
 
-test-%: src/unit-%.cpp ../src/json.hpp thirdparty/catch/catch.hpp
+test-%: src/unit.o src/unit-%.o ../src/json.hpp thirdparty/catch/catch.hpp
 	@echo "[CXXLD] $@"
-	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -DCATCH_CONFIG_MAIN $< -o $@
+	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $< -o $@
 
 TEST_PATTERN ?= "*"
 TEST_PREFIX = ""
