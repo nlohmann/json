@@ -166,8 +166,14 @@ auto j2 = R"(
     "pi": 3.141
   }
 )"_json;
+```
 
-// or explicitly
+Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string `"{ "happy": true, "pi": 3.141 }"` rather than parsing the acutal object.
+
+The above example can also be expressed explicitly using `json::parse()`:
+
+```cpp
+// parse explicitly
 auto j3 = json::parse("{ \"happy\": true, \"pi\": 3.141 }");
 ```
 
