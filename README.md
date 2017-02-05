@@ -168,7 +168,7 @@ auto j2 = R"(
 )"_json;
 ```
 
-Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string `"{ "happy": true, "pi": 3.141 }"` rather than parsing the acutal object.
+Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string `"{ "happy": true, "pi": 3.141 }"` rather than parsing the actual object.
 
 The above example can also be expressed explicitly using `json::parse()`:
 
@@ -820,6 +820,7 @@ I deeply appreciate the help of the following people.
 - [EnricoBilla](https://github.com/EnricoBilla) noted a typo in an example.
 - [Martin Hořeňovský](https://github.com/horenmar) found a way for a 2x speedup for the compilation time of the test suite.
 - [ukhegg](https://github.com/ukhegg) found proposed an improvement for the examples section.
+- [rswanson-ihi](https://github.com/rswanson-ihi) noted a type in the README.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
