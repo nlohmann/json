@@ -25,6 +25,7 @@
 - [Supported compilers](#supported-compilers)
 - [License](#license)
 - [Thanks](#thanks)
+- [Projects using JSON for Modern C++](#projects-using-json-for-modern-c)
 - [Notes](#notes)
 - [Execute unit tests](#execute-unit-tests)
 
@@ -824,6 +825,11 @@ I deeply appreciate the help of the following people.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
+
+
+## Projects using JSON for Modern C++
+
+The library is currently used in Apple macOS Sierra and iOS 10. I am not sure what they are using the library for, but I am happy that it runs on so many devices.
 
 
 ## Notes
