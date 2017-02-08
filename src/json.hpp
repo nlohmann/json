@@ -12689,9 +12689,9 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #endif
 
 // clean up
-#undef JSON_THROW
-#undef JSON_TRY
 #undef JSON_CATCH
 #undef JSON_DEPRECATED
+#undef JSON_THROW
+#undef JSON_TRY
 
 #endif
