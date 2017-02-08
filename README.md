@@ -831,6 +831,10 @@ Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I
 
 The library is currently used in Apple macOS Sierra and iOS 10. I am not sure what they are using the library for, but I am happy that it runs on so many devices.
 
+<img src="https://raw.githubusercontent.com/nlohmann/json/develop/doc/usages/macos.png" alt="macOS Sierra">
+
+<img src="https://raw.githubusercontent.com/nlohmann/json/develop/doc/usages/ios.png" alt="iOS 10" width="375" height="667">
+
 
 ## Notes
 
