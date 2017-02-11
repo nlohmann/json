@@ -65,25 +65,37 @@ TEST_CASE("lexer class")
         SECTION("numbers")
         {
             CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("0"),
-                               1).scan() == json::lexer::token_type::value_number));
+                               1).scan() == json::lexer::token_type::value_unsigned_integer));
             CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("1"),
-                               1).scan() == json::lexer::token_type::value_number));
+                               1).scan() == json::lexer::token_type::value_unsigned_integer));
             CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("2"),
-                               1).scan() == json::lexer::token_type::value_number));
+                               1).scan() == json::lexer::token_type::value_unsigned_integer));
             CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("3"),
-                               1).scan() == json::lexer::token_type::value_number));
+                               1).scan() == json::lexer::token_type::value_unsigned_integer));
             CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("4"),
-                               1).scan() == json::lexer::token_type::value_number));
+                               1).scan() == json::lexer::token_type::value_unsigned_integer));
             CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("5"),
-                               1).scan() == json::lexer::token_type::value_number));
+                               1).scan() == json::lexer::token_type::value_unsigned_integer));
             CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("6"),
-                               1).scan() == json::lexer::token_type::value_number));
+                               1).scan() == json::lexer::token_type::value_unsigned_integer));
             CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("7"),
-                               1).scan() == json::lexer::token_type::value_number));
+                               1).scan() == json::lexer::token_type::value_unsigned_integer));
             CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("8"),
-                               1).scan() == json::lexer::token_type::value_number));
+                               1).scan() == json::lexer::token_type::value_unsigned_integer));
             CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("9"),
-                               1).scan() == json::lexer::token_type::value_number));
+                               1).scan() == json::lexer::token_type::value_unsigned_integer));
+
+            CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("-0"),
+                               2).scan() == json::lexer::token_type::value_signed_integer));
+            CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("-1"),
+                               2).scan() == json::lexer::token_type::value_signed_integer));
+
+            CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("1.1"),
+                               3).scan() == json::lexer::token_type::value_float));
+            CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("-1.1"),
+                               4).scan() == json::lexer::token_type::value_float));
+            CHECK((json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>("1E10"),
+                               4).scan() == json::lexer::token_type::value_float));
         }
 
         SECTION("whitespace")
@@ -109,7 +121,9 @@ TEST_CASE("lexer class")
         CHECK((json::lexer::token_type_name(json::lexer::token_type::literal_false) == "false literal"));
         CHECK((json::lexer::token_type_name(json::lexer::token_type::literal_null) == "null literal"));
         CHECK((json::lexer::token_type_name(json::lexer::token_type::value_string) == "string literal"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::value_number) == "number literal"));
+        CHECK((json::lexer::token_type_name(json::lexer::token_type::value_unsigned_integer) == "number literal"));
+        CHECK((json::lexer::token_type_name(json::lexer::token_type::value_signed_integer) == "number literal"));
+        CHECK((json::lexer::token_type_name(json::lexer::token_type::value_float) == "number literal"));
         CHECK((json::lexer::token_type_name(json::lexer::token_type::begin_array) == "'['"));
         CHECK((json::lexer::token_type_name(json::lexer::token_type::begin_object) == "'{'"));
         CHECK((json::lexer::token_type_name(json::lexer::token_type::end_array) == "']'"));

@@ -9444,7 +9444,9 @@ class basic_json
             literal_false,   ///< the `false` literal
             literal_null,    ///< the `null` literal
             value_string,    ///< a string -- use get_string() for actual value
-            value_number,    ///< a number -- use get_number() for actual value
+            value_unsigned_integer, ///< an unsigned integer -- use get_number() for actual value
+            value_signed_integer,   ///< a signed integer -- use get_number() for actual value
+            value_float,     ///< an floating point number -- use get_number() for actual value
             begin_array,     ///< the character for array begin `[`
             begin_object,    ///< the character for object begin `{`
             end_array,       ///< the character for array end `]`
@@ -9596,7 +9598,9 @@ class basic_json
                     return "null literal";
                 case token_type::value_string:
                     return "string literal";
-                case token_type::value_number:
+                case lexer::token_type::value_unsigned_integer:
+                case lexer::token_type::value_signed_integer:
+                case lexer::token_type::value_float:
                     return "number literal";
                 case token_type::begin_array:
                     return "'['";
@@ -9684,18 +9688,22 @@ class basic_json
                     "false" { last_token_type = token_type::literal_false; break; }
 
                     // number
-                    decimal_point = ".";
-                    digit         = [0-9];
-                    digit_1_9     = [1-9];
-                    e             = "e" | "E";
-                    minus         = "-";
-                    plus          = "+";
-                    zero          = "0";
-                    exp           = e (minus | plus)? digit+;
-                    frac          = decimal_point digit+;
-                    int           = (zero | digit_1_9 digit*);
-                    number        = minus? int frac? exp?;
-                    number        { last_token_type = token_type::value_number; break; }
+                    decimal_point   = ".";
+                    digit           = [0-9];
+                    digit_1_9       = [1-9];
+                    e               = "e" | "E";
+                    minus           = "-";
+                    plus            = "+";
+                    zero            = "0";
+                    exp             = e (minus | plus)? digit+;
+                    frac            = decimal_point digit+;
+                    int             = (zero | digit_1_9 digit*);
+                    number_unsigned = int;
+                    number_unsigned { last_token_type = token_type::value_unsigned_integer; break; }
+                    number_signed   = minus int;
+                    number_signed   { last_token_type = token_type::value_signed_integer; break; }
+                    number_float    = minus? int frac? exp?;
+                    number_float    { last_token_type = token_type::value_float; break; }
 
                     // string
                     quotation_mark  = "\"";
@@ -10017,42 +10025,6 @@ class basic_json
                 return parse(val, std::is_integral<T>());
             }
 
-            /*!
-            This is a helper to determine whether to parse the token into
-            floating-point or integral type.
-
-            @note We wouldn't need it if we had separate token types for
-            integral and floating-point cases.
-
-            @return true iff token matches `^[+-]\d+$`
-            */
-            bool is_integral() const
-            {
-                const char* p = m_start;
-
-                if (p == nullptr)
-                {
-                    return false; // LCOV_EXCL_LINE
-                }
-
-                if ((*p == '-') or (*p == '+'))
-                {
-                    ++p;
-                }
-
-                if (p == m_end)
-                {
-                    return false; // LCOV_EXCL_LINE
-                }
-
-                while ((p < m_end) and (*p >= '0') and (*p <= '9'))
-                {
-                    ++p;
-                }
-
-                return (p == m_end);
-            }
-
           private:
             const char* const m_start = nullptr;
             const char* const m_end = nullptr;
@@ -10161,7 +10133,7 @@ class basic_json
 
                 return (x == static_cast<decltype(x)>(value)) // x fits into destination T
                        and (x < 0) == (value < 0)             // preserved sign
-                       and ((x != 0) or is_integral())        // strto[u]ll did nto fail
+                       //and ((x != 0) or is_integral())        // strto[u]ll did nto fail
                        and (errno == 0)                       // strto[u]ll did not overflow
                        and (m_start < m_end)                  // token was not empty
                        and (endptr == m_end);                 // parsed entire token exactly
@@ -10185,46 +10157,56 @@ class basic_json
         interpreted as a number
 
         @param[out] result  @ref basic_json object to receive the number.
+        @param[in]  token   the type of the number token
         */
-        void get_number(basic_json& result) const
+        void get_number(basic_json& result, const token_type token) const
         {
             assert(m_start != nullptr);
             assert(m_start < m_cursor);
+            assert((token == token_type::value_unsigned_integer) or
+                   (token == token_type::value_signed_integer) or
+                   (token == token_type::value_float));
 
             strtonum num(reinterpret_cast<const char*>(m_start),
                          reinterpret_cast<const char*>(m_cursor));
 
-            const bool is_negative = (*m_start == '-');
-
-            result.m_type = value_t::discarded;
-
-            if (not num.is_integral())
+            switch (token)
             {
-                // will parse as float below
-            }
-            else if (is_negative)
-            {
-                number_integer_t val{0};
-                if (num.to(val))
+                case lexer::token_type::value_unsigned_integer:
                 {
-                    result.m_type = value_t::number_integer;
-                    result.m_value = val;
+                    number_unsigned_t val{0};
+                    if (num.to(val))
+                    {
+                        result.m_type = value_t::number_unsigned;
+                        result.m_value = val;
+                        return;
+                    }
+                    break;
                 }
-            }
-            else
-            {
-                number_unsigned_t val{0};
-                if (num.to(val))
+
+                case lexer::token_type::value_signed_integer:
                 {
-                    result.m_type  = value_t::number_unsigned;
-                    result.m_value = val;
+                    number_integer_t val{0};
+                    if (num.to(val))
+                    {
+                        result.m_type = value_t::number_integer;
+                        result.m_value = val;
+                        return;
+                    }
+                    break;
+                }
+
+                default:
+                {
+                    break;
                 }
             }
 
             number_float_t val{0};
-            if (result.m_type != value_t::discarded or (not num.to(val)))
+            if (not num.to(val))
             {
-                // already have a value from above or couldn't parse as float_t
+                // couldn't parse as float_t
+                result.m_type = value_t::discarded;
                 return;
             }
 
@@ -10480,9 +10462,11 @@ class basic_json
                     break;
                 }
 
-                case lexer::token_type::value_number:
+                case lexer::token_type::value_unsigned_integer:
+                case lexer::token_type::value_signed_integer:
+                case lexer::token_type::value_float:
                 {
-                    m_lexer.get_number(result);
+                    m_lexer.get_number(result, last_token);
                     get_token();
                     break;
                 }
