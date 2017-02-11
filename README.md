@@ -4,6 +4,7 @@
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f3732b3327e34358a0e9d1fe9f661f08)](https://www.codacy.com/app/nlohmann/json?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/4NEU6ZZMoM9lpIex)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
@@ -25,6 +26,7 @@
 - [Supported compilers](#supported-compilers)
 - [License](#license)
 - [Thanks](#thanks)
+- [Projects using JSON for Modern C++](#projects-using-json-for-modern-c)
 - [Notes](#notes)
 - [Execute unit tests](#execute-unit-tests)
 
@@ -168,7 +170,7 @@ auto j2 = R"(
 )"_json;
 ```
 
-Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string `"{ "happy": true, "pi": 3.141 }"` rather than parsing the acutal object.
+Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string `"{ "happy": true, "pi": 3.141 }"` rather than parsing the actual object.
 
 The above example can also be expressed explicitly using `json::parse()`:
 
@@ -820,9 +822,15 @@ I deeply appreciate the help of the following people.
 - [EnricoBilla](https://github.com/EnricoBilla) noted a typo in an example.
 - [Martin Hořeňovský](https://github.com/horenmar) found a way for a 2x speedup for the compilation time of the test suite.
 - [ukhegg](https://github.com/ukhegg) found proposed an improvement for the examples section.
+- [rswanson-ihi](https://github.com/rswanson-ihi) noted a type in the README.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
+
+
+## Projects using JSON for Modern C++
+
+The library is currently used in Apple macOS Sierra and iOS 10. I am not sure what they are using the library for, but I am happy that it runs on so many devices.
 
 
 ## Notes

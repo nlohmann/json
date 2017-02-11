@@ -1106,7 +1106,7 @@ class basic_json
     /*!
     @brief returns version information on the library
 
-    This function returns a JSON object with infiormation about the library,
+    This function returns a JSON object with information about the library,
     including the version number and information on the platform and compiler.
 
     @return JSON object holding version information
@@ -3417,7 +3417,7 @@ class basic_json
     /*!
     @brief get a reference value (implicit)
 
-    Implict reference access to the internally stored JSON value. No copies
+    Implicit reference access to the internally stored JSON value. No copies
     are made.
 
     @warning Writing data to the referee of the result yields an undefined
@@ -3492,7 +3492,7 @@ class basic_json
     template < typename ValueType, typename std::enable_if <
                    not std::is_pointer<ValueType>::value and
                    not std::is_same<ValueType, typename string_t::value_type>::value
-#ifndef _MSC_VER  // fix for issue #167 operator<< abiguity under VS2015
+#ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
                    , int >::type = 0 >
@@ -4285,7 +4285,7 @@ class basic_json
 
     @complexity The complexity depends on the type:
     - objects: amortized constant
-    - arrays: linear in distance between pos and the end of the container
+    - arrays: linear in distance between @a pos and the end of the container
     - strings: linear in the length of the string
     - other types: constant
 
@@ -5537,7 +5537,7 @@ class basic_json
     @throw std::domain_error if @a pos is not an iterator of *this; example:
     `"iterator does not fit current value"`
 
-    @complexity Constant plus linear in the distance between pos and end of
+    @complexity Constant plus linear in the distance between @a pos and end of
     the container.
 
     @liveexample{The example shows how `insert()` is used.,insert}
@@ -6234,7 +6234,7 @@ class basic_json
     `std::setw(4)` on @a o sets the indentation level to `4` and the
     serialization result is the same as calling `dump(4)`.
 
-    @note During serializaion, the locale and the precision of the output
+    @note During serialization, the locale and the precision of the output
     stream @a o are changed. The original values are restored when the
     function returns.
 
@@ -10624,7 +10624,7 @@ basic_json_parser_66:
             if (m_stream == nullptr or m_stream->eof())
             {
                 // m_start may or may not be pointing into m_line_buffer at
-                // this point. We trust the standand library to do the right
+                // this point. We trust the standard library to do the right
                 // thing. See http://stackoverflow.com/q/28142011/266378
                 m_line_buffer.assign(m_start, m_limit);
 
@@ -10712,7 +10712,7 @@ basic_json_parser_66:
         m_start + 1 + x < m_cursor - 1 must hold to loop indefinitely. This
         can be rephrased to m_cursor - m_start - 2 > x. With the
         precondition, we x <= 0, meaning that the loop condition holds
-        indefinitly if i is always decreased. However, observe that the value
+        indefinitely if i is always decreased. However, observe that the value
         of i is strictly increasing with each iteration, as it is incremented
         by 1 in the iteration expression and never decremented inside the loop
         body. Hence, the loop condition will eventually be false which
@@ -11645,7 +11645,7 @@ basic_json_parser_66:
 
                         if (reference_token == "-")
                         {
-                            // explicityly treat "-" as index beyond the end
+                            // explicitly treat "-" as index beyond the end
                             ptr = &ptr->operator[](ptr->m_value.array->size());
                         }
                         else
@@ -12152,7 +12152,7 @@ basic_json_parser_66:
     primitive. The original JSON value can be restored using the @ref
     unflatten() function.
 
-    @return an object that maps JSON pointers to primitve values
+    @return an object that maps JSON pointers to primitive values
 
     @note Empty objects and arrays are flattened to `null` and will not be
           reconstructed correctly by the @ref unflatten() function.
@@ -12219,7 +12219,7 @@ basic_json_parser_66:
 
     [JSON Patch](http://jsonpatch.com) defines a JSON document structure for
     expressing a sequence of operations to apply to a JSON) document. With
-    this funcion, a JSON Patch is applied to the current JSON value by
+    this function, a JSON Patch is applied to the current JSON value by
     executing all operations from the patch.
 
     @param[in] json_patch  JSON patch document
@@ -12387,7 +12387,7 @@ basic_json_parser_66:
             JSON_THROW(std::invalid_argument("JSON patch must be an array of objects"));
         }
 
-        // iterate and apply th eoperations
+        // iterate and apply the operations
         for (const auto& val : json_patch)
         {
             // wrapper to get a value for an operation
@@ -12526,8 +12526,8 @@ basic_json_parser_66:
     @note Currently, only `remove`, `add`, and `replace` operations are
           generated.
 
-    @param[in] source  JSON value to copare from
-    @param[in] target  JSON value to copare against
+    @param[in] source  JSON value to compare from
+    @param[in] target  JSON value to compare against
     @param[in] path    helper value to create JSON pointers
 
     @return a JSON patch to convert the @a source to @a target
@@ -12776,9 +12776,9 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #endif
 
 // clean up
-#undef JSON_THROW
-#undef JSON_TRY
 #undef JSON_CATCH
 #undef JSON_DEPRECATED
+#undef JSON_THROW
+#undef JSON_TRY
 
 #endif
