@@ -101,6 +101,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_WITH(json::parser("\"\b\"").parse(), "parse error - unexpected '\"'");
                 // improve code coverage
                 CHECK_THROWS_AS(json::parser("\uFF01").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("[-4:1,]").parse(), std::invalid_argument);
                 // unescaped control characters
                 CHECK_THROWS_AS(json::parser("\"\x00\"").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("\"\x01\"").parse(), std::invalid_argument);
