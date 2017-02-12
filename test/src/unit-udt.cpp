@@ -26,15 +26,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <array>
-#include <map>
-#include <string>
-#include <memory>
 #include "catch.hpp"
 
 #include "json.hpp"
 
 using nlohmann::json;
+
+#include <array>
+#include <map>
+#include <string>
+#include <memory>
 
 namespace udt
 {
