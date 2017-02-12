@@ -9444,8 +9444,8 @@ class basic_json
             literal_false,   ///< the `false` literal
             literal_null,    ///< the `null` literal
             value_string,    ///< a string -- use get_string() for actual value
-            value_unsigned_integer, ///< an unsigned integer -- use get_number() for actual value
-            value_signed_integer,   ///< a signed integer -- use get_number() for actual value
+            value_unsigned,  ///< an unsigned integer -- use get_number() for actual value
+            value_integer,   ///< a signed integer -- use get_number() for actual value
             value_float,     ///< an floating point number -- use get_number() for actual value
             begin_array,     ///< the character for array begin `[`
             begin_object,    ///< the character for object begin `{`
@@ -9598,8 +9598,8 @@ class basic_json
                     return "null literal";
                 case token_type::value_string:
                     return "string literal";
-                case lexer::token_type::value_unsigned_integer:
-                case lexer::token_type::value_signed_integer:
+                case lexer::token_type::value_unsigned:
+                case lexer::token_type::value_integer:
                 case lexer::token_type::value_float:
                     return "number literal";
                 case token_type::begin_array:
@@ -9903,7 +9903,7 @@ basic_json_parser_13:
                     }
 basic_json_parser_14:
                     {
-                        last_token_type = token_type::value_unsigned_integer;
+                        last_token_type = token_type::value_unsigned;
                         break;
                     }
 basic_json_parser_15:
@@ -10301,7 +10301,7 @@ basic_json_parser_43:
                     }
 basic_json_parser_44:
                     {
-                        last_token_type = token_type::value_signed_integer;
+                        last_token_type = token_type::value_integer;
                         break;
                     }
 basic_json_parser_45:
@@ -11091,19 +11091,19 @@ basic_json_parser_71:
         {
             assert(m_start != nullptr);
             assert(m_start < m_cursor);
-            assert((token == token_type::value_unsigned_integer) or
-                   (token == token_type::value_signed_integer) or
+            assert((token == token_type::value_unsigned) or
+                   (token == token_type::value_integer) or
                    (token == token_type::value_float));
 
-            strtonum num(reinterpret_cast<const char*>(m_start),
-                         reinterpret_cast<const char*>(m_cursor));
+            strtonum num_converter(reinterpret_cast<const char*>(m_start),
+                                   reinterpret_cast<const char*>(m_cursor));
 
             switch (token)
             {
-                case lexer::token_type::value_unsigned_integer:
+                case lexer::token_type::value_unsigned:
                 {
-                    number_unsigned_t val{0};
-                    if (num.to(val))
+                    number_unsigned_t val;
+                    if (num_converter.to(val))
                     {
                         result.m_type = value_t::number_unsigned;
                         result.m_value = val;
@@ -11112,10 +11112,10 @@ basic_json_parser_71:
                     break;
                 }
 
-                case lexer::token_type::value_signed_integer:
+                case lexer::token_type::value_integer:
                 {
-                    number_integer_t val{0};
-                    if (num.to(val))
+                    number_integer_t val;
+                    if (num_converter.to(val))
                     {
                         result.m_type = value_t::number_integer;
                         result.m_value = val;
@@ -11130,8 +11130,10 @@ basic_json_parser_71:
                 }
             }
 
-            number_float_t val{0};
-            if (not num.to(val))
+            // parse float (either explicitly or because a previous conversion
+            // failed)
+            number_float_t val;
+            if (not num_converter.to(val))
             {
                 // couldn't parse as float_t
                 result.m_type = value_t::discarded;
@@ -11390,8 +11392,8 @@ basic_json_parser_71:
                     break;
                 }
 
-                case lexer::token_type::value_unsigned_integer:
-                case lexer::token_type::value_signed_integer:
+                case lexer::token_type::value_unsigned:
+                case lexer::token_type::value_integer:
                 case lexer::token_type::value_float:
                 {
                     m_lexer.get_number(result, last_token);

@@ -417,7 +417,7 @@ TEST_CASE("regression tests")
 
         // disabled, because locale-specific beharivor is not
         // triggered in AppVeyor for some reason
-#if 0
+#ifndef _MSC_VER
         {
             // verify that strtod now uses commas as decimal-separator
             CHECK(std::strtod("3,14", nullptr) == 3.14);
