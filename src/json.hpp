@@ -10957,6 +10957,8 @@ basic_json_parser_71:
             const char* const m_start = nullptr;
             const char* const m_end = nullptr;
 
+            // floating-point conversion
+
             // overloaded wrappers for strtod/strtof/strtold
             // that will be called from parse<floating_point_t>
             static void strtof(float& f, const char* str, char** endptr)
@@ -10983,6 +10985,9 @@ basic_json_parser_71:
                 std::string tempstr;
                 std::array<char, 64> buf;
                 const size_t len = static_cast<size_t>(m_end - m_start);
+
+                // lexer will reject empty numbers
+                assert(len > 0);
 
                 // since dealing with strtod family of functions, we're
                 // getting the decimal point char from the C locale facilities
@@ -11023,10 +11028,9 @@ basic_json_parser_71:
                 // this calls appropriate overload depending on T
                 strtof(value, data, &endptr);
 
-                // note that reading past the end is OK, the data may be, for
-                // example, "123.", where the parsed token only contains
-                // "123", but strtod will read the dot as well.
-                const bool ok = (endptr >= (data + len)) and (len > 0);
+                // parsing was successful iff strtof parsed exactly the number
+                // of characters determined by the lexer (len)
+                const bool ok = (endptr == (data + len));
 
                 if (ok and (value == 0.0) and (*data == '-'))
                 {
@@ -11036,6 +11040,8 @@ basic_json_parser_71:
 
                 return ok;
             }
+
+            // integral conversion
 
             signed long long parse_integral(char** endptr, /*is_signed*/std::true_type) const
             {
@@ -11087,7 +11093,7 @@ basic_json_parser_71:
         @param[out] result  @ref basic_json object to receive the number.
         @param[in]  token   the type of the number token
         */
-        void get_number(basic_json& result, const token_type token) const
+        bool get_number(basic_json& result, const token_type token) const
         {
             assert(m_start != nullptr);
             assert(m_start < m_cursor);
@@ -11105,9 +11111,10 @@ basic_json_parser_71:
                     number_unsigned_t val;
                     if (num_converter.to(val))
                     {
+                        // parsing successful
                         result.m_type = value_t::number_unsigned;
                         result.m_value = val;
-                        return;
+                        return true;
                     }
                     break;
                 }
@@ -11117,9 +11124,10 @@ basic_json_parser_71:
                     number_integer_t val;
                     if (num_converter.to(val))
                     {
+                        // parsing successful
                         result.m_type = value_t::number_integer;
                         result.m_value = val;
-                        return;
+                        return true;
                     }
                     break;
                 }
@@ -11133,22 +11141,24 @@ basic_json_parser_71:
             // parse float (either explicitly or because a previous conversion
             // failed)
             number_float_t val;
-            if (not num_converter.to(val))
+            if (num_converter.to(val))
             {
-                // couldn't parse as float_t
-                result.m_type = value_t::discarded;
-                return;
+                // parsing successful
+                result.m_type = value_t::number_float;
+                result.m_value = val;
+
+                // replace infinity and NAN by null
+                if (not std::isfinite(result.m_value.number_float))
+                {
+                    result.m_type  = value_t::null;
+                    result.m_value = basic_json::json_value();
+                }
+
+                return true;
             }
 
-            result.m_type = value_t::number_float;
-            result.m_value = val;
-
-            // replace infinity and NAN by null
-            if (not std::isfinite(result.m_value.number_float))
-            {
-                result.m_type  = value_t::null;
-                result.m_value = basic_json::json_value();
-            }
+            // couldn't parse number in any format
+            return false;
         }
 
       private:
@@ -11396,8 +11406,16 @@ basic_json_parser_71:
                 case lexer::token_type::value_integer:
                 case lexer::token_type::value_float:
                 {
-                    m_lexer.get_number(result, last_token);
+                    const bool ok = m_lexer.get_number(result, last_token);
                     get_token();
+
+                    // if number conversion was unsuccessful, then is is
+                    // because the number was directly followed by an
+                    // unexpected character (e.g. "01" where "1" is unexpected)
+                    if (not ok)
+                    {
+                        unexpect(last_token);
+                    }
                     break;
                 }
 
