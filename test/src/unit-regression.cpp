@@ -383,7 +383,7 @@ TEST_CASE("regression tests")
         };
 
         // change locale to mess with decimal points
-        std::locale::global(std::locale(std::locale(), new CommaDecimalSeparator));
+        auto orig_locale = std::locale::global(std::locale(std::locale(), new CommaDecimalSeparator));
 
         CHECK(j1a.dump() == "23.42");
         CHECK(j1b.dump() == "23.42");
@@ -407,7 +407,33 @@ TEST_CASE("regression tests")
         CHECK(j3c.dump() == "10000");
         //CHECK(j3b.dump() == "1E04"); // roundtrip error
         //CHECK(j3c.dump() == "1e04"); // roundtrip error
+
+        std::locale::global(orig_locale);
     }
+
+    SECTION("issue #379 - locale-independent str-to-num")
+    {
+        setlocale(LC_NUMERIC, "de_DE.UTF-8");
+
+        // disabled, because locale-specific beharivor is not
+        // triggered in AppVeyor for some reason
+#ifndef _MSC_VER
+        {
+            // verify that strtod now uses commas as decimal-separator
+            CHECK(std::strtod("3,14", nullptr) == 3.14);
+
+            // verify that strtod does not understand dots as decimal separator
+            CHECK(std::strtod("3.14", nullptr) == 3);
+        }
+#endif
+
+        // verify that parsed correctly despite using strtod internally
+        CHECK(json::parse("3.14").get<double>() == 3.14);
+
+        // check a different code path
+        CHECK(json::parse("1.000000000000000000000000000000000000000000000000000000000000000000000000").get<double>() == 1.0);
+    }
+
 
     SECTION("issue #233 - Can't use basic_json::iterator as a base iterator for std::move_iterator")
     {

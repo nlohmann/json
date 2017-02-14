@@ -101,6 +101,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_WITH(json::parser("\"\b\"").parse(), "parse error - unexpected '\"'");
                 // improve code coverage
                 CHECK_THROWS_AS(json::parser("\uFF01").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("[-4:1,]").parse(), std::invalid_argument);
                 // unescaped control characters
                 CHECK_THROWS_AS(json::parser("\"\x00\"").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("\"\x01\"").parse(), std::invalid_argument);
@@ -269,6 +270,11 @@ TEST_CASE("parser class")
                 }
             }
 
+            SECTION("overflow")
+            {
+                CHECK(json::parser("1.18973e+4932").parse() == json());
+            }
+
             SECTION("invalid numbers")
             {
                 CHECK_THROWS_AS(json::parser("01").parse(), std::invalid_argument);
@@ -293,7 +299,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("+0").parse(), std::invalid_argument);
 
                 CHECK_THROWS_WITH(json::parser("01").parse(),
-                                  "parse error - unexpected number literal; expected end of input");
+                                  "parse error - unexpected number literal");
                 CHECK_THROWS_WITH(json::parser("--1").parse(), "parse error - unexpected '-'");
                 CHECK_THROWS_WITH(json::parser("1.").parse(),
                                   "parse error - unexpected '.'; expected end of input");
