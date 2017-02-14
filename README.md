@@ -809,7 +809,7 @@ I deeply appreciate the help of the following people.
 - [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable.
 - [Denis Andrejew](https://github.com/seeekr) fixed a grammar issue in the README file.
 - [Pierre-Antoine Lacaze](https://github.com/palacaze) found a subtle bug in the `dump()` function.
-- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser and improved the benchmarking code.
+- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser, improved the benchmarking code, and realized locale-independent number parsing.
 - [cgzones](https://github.com/cgzones) had an idea how to fix the Coverity scan.
 - [Jared Grubb](https://github.com/jaredgrubb) silenced a nasty documentation warning.
 - [Yixin Zhang](https://github.com/qwename) fixed an integer overflow check.
@@ -823,6 +823,7 @@ I deeply appreciate the help of the following people.
 - [Martin Hořeňovský](https://github.com/horenmar) found a way for a 2x speedup for the compilation time of the test suite.
 - [ukhegg](https://github.com/ukhegg) found proposed an improvement for the examples section.
 - [rswanson-ihi](https://github.com/rswanson-ihi) noted a type in the README.
+- 
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
@@ -856,7 +857,7 @@ $ make json_unit -Ctest
 $ ./test/json_unit "*""
 
 ===============================================================================
-All tests passed (11202549 assertions in 47 test cases)
+All tests passed (11202562 assertions in 47 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run
