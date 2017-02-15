@@ -3149,8 +3149,8 @@ class basic_json
             return *ptr;
         }
 
-        throw std::domain_error("incompatible ReferenceType for get_ref, actual type is " +
-                                obj.type_name());
+        JSON_THROW(std::domain_error("incompatible ReferenceType for get_ref, actual type is " +
+                                     obj.type_name()));
     }
 
   public:
@@ -6712,25 +6712,25 @@ class basic_json
                         // positive fixnum
                         add_to_vector(v, 1, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= UINT8_MAX)
+                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint8_t>::max())
                     {
                         // uint 8
                         v.push_back(0xcc);
                         add_to_vector(v, 1, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= UINT16_MAX)
+                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint16_t>::max())
                     {
                         // uint 16
                         v.push_back(0xcd);
                         add_to_vector(v, 2, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= UINT32_MAX)
+                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint32_t>::max())
                     {
                         // uint 32
                         v.push_back(0xce);
                         add_to_vector(v, 4, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= UINT64_MAX)
+                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint64_t>::max())
                     {
                         // uint 64
                         v.push_back(0xcf);
@@ -6744,25 +6744,25 @@ class basic_json
                         // negative fixnum
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= INT8_MIN and j.m_value.number_integer <= INT8_MAX)
+                    else if (j.m_value.number_integer >= std::numeric_limits<int8_t>::min() and j.m_value.number_integer <= std::numeric_limits<int8_t>::max())
                     {
                         // int 8
                         v.push_back(0xd0);
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= INT16_MIN and j.m_value.number_integer <= INT16_MAX)
+                    else if (j.m_value.number_integer >= std::numeric_limits<int16_t>::min() and j.m_value.number_integer <= std::numeric_limits<int16_t>::max())
                     {
                         // int 16
                         v.push_back(0xd1);
                         add_to_vector(v, 2, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= INT32_MIN and j.m_value.number_integer <= INT32_MAX)
+                    else if (j.m_value.number_integer >= std::numeric_limits<int32_t>::min() and j.m_value.number_integer <= std::numeric_limits<int32_t>::max())
                     {
                         // int 32
                         v.push_back(0xd2);
                         add_to_vector(v, 4, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= INT64_MIN and j.m_value.number_integer <= INT64_MAX)
+                    else if (j.m_value.number_integer >= std::numeric_limits<int64_t>::min() and j.m_value.number_integer <= std::numeric_limits<int64_t>::max())
                     {
                         // int 64
                         v.push_back(0xd3);
@@ -6779,25 +6779,25 @@ class basic_json
                     // positive fixnum
                     add_to_vector(v, 1, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= UINT8_MAX)
+                else if (j.m_value.number_unsigned <= std::numeric_limits<uint8_t>::max())
                 {
                     // uint 8
                     v.push_back(0xcc);
                     add_to_vector(v, 1, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= UINT16_MAX)
+                else if (j.m_value.number_unsigned <= std::numeric_limits<uint16_t>::max())
                 {
                     // uint 16
                     v.push_back(0xcd);
                     add_to_vector(v, 2, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= UINT32_MAX)
+                else if (j.m_value.number_unsigned <= std::numeric_limits<uint32_t>::max())
                 {
                     // uint 32
                     v.push_back(0xce);
                     add_to_vector(v, 4, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= UINT64_MAX)
+                else if (j.m_value.number_unsigned <= std::numeric_limits<uint64_t>::max())
                 {
                     // uint 64
                     v.push_back(0xcf);
@@ -6954,19 +6954,19 @@ class basic_json
                     {
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer <= UINT8_MAX)
+                    else if (j.m_value.number_integer <= std::numeric_limits<uint8_t>::max())
                     {
                         v.push_back(0x18);
                         // one-byte uint8_t
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer <= UINT16_MAX)
+                    else if (j.m_value.number_integer <= std::numeric_limits<uint16_t>::max())
                     {
                         v.push_back(0x19);
                         // two-byte uint16_t
                         add_to_vector(v, 2, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer <= UINT32_MAX)
+                    else if (j.m_value.number_integer <= std::numeric_limits<uint32_t>::max())
                     {
                         v.push_back(0x1a);
                         // four-byte uint32_t
@@ -6988,19 +6988,19 @@ class basic_json
                     {
                         v.push_back(static_cast<uint8_t>(0x20 + positive_number));
                     }
-                    else if (positive_number <= UINT8_MAX)
+                    else if (positive_number <= std::numeric_limits<uint8_t>::max())
                     {
                         // int 8
                         v.push_back(0x38);
                         add_to_vector(v, 1, positive_number);
                     }
-                    else if (positive_number <= UINT16_MAX)
+                    else if (positive_number <= std::numeric_limits<uint16_t>::max())
                     {
                         // int 16
                         v.push_back(0x39);
                         add_to_vector(v, 2, positive_number);
                     }
-                    else if (positive_number <= UINT32_MAX)
+                    else if (positive_number <= std::numeric_limits<uint32_t>::max())
                     {
                         // int 32
                         v.push_back(0x3a);
@@ -11788,9 +11788,9 @@ basic_json_parser_74:
                         if (reference_token == "-")
                         {
                             // "-" always fails the range check
-                            throw std::out_of_range("array index '-' (" +
-                                                    std::to_string(ptr->m_value.array->size()) +
-                                                    ") is out of range");
+                            JSON_THROW(std::out_of_range("array index '-' (" +
+                                                         std::to_string(ptr->m_value.array->size()) +
+                                                         ") is out of range"));
                         }
 
                         // error condition (cf. RFC 6901, Sect. 4)
@@ -11840,9 +11840,9 @@ basic_json_parser_74:
                         if (reference_token == "-")
                         {
                             // "-" cannot be used for const access
-                            throw std::out_of_range("array index '-' (" +
-                                                    std::to_string(ptr->m_value.array->size()) +
-                                                    ") is out of range");
+                            JSON_THROW(std::out_of_range("array index '-' (" +
+                                                         std::to_string(ptr->m_value.array->size()) +
+                                                         ") is out of range"));
                         }
 
                         // error condition (cf. RFC 6901, Sect. 4)
@@ -11884,9 +11884,9 @@ basic_json_parser_74:
                         if (reference_token == "-")
                         {
                             // "-" always fails the range check
-                            throw std::out_of_range("array index '-' (" +
-                                                    std::to_string(ptr->m_value.array->size()) +
-                                                    ") is out of range");
+                            JSON_THROW(std::out_of_range("array index '-' (" +
+                                                         std::to_string(ptr->m_value.array->size()) +
+                                                         ") is out of range"));
                         }
 
                         // error condition (cf. RFC 6901, Sect. 4)
