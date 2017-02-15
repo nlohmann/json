@@ -9698,6 +9698,8 @@ class basic_json
                     exp             = e (minus | plus)? digit+;
                     frac            = decimal_point digit+;
                     int             = (zero | digit_1_9 digit*);
+                    invalid_int     = minus? "0" digit+;
+                    invalid_int     { last_token_type = token_type::parse_error; break; }
                     number_unsigned = int;
                     number_unsigned { last_token_type = token_type::value_unsigned; break; }
                     number_integer  = minus int;

@@ -299,7 +299,9 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("+0").parse(), std::invalid_argument);
 
                 CHECK_THROWS_WITH(json::parser("01").parse(),
-                                  "parse error - unexpected number literal");
+                                  "parse error - unexpected '01'");
+                CHECK_THROWS_WITH(json::parser("-01").parse(),
+                                  "parse error - unexpected '-01'");
                 CHECK_THROWS_WITH(json::parser("--1").parse(), "parse error - unexpected '-'");
                 CHECK_THROWS_WITH(json::parser("1.").parse(),
                                   "parse error - unexpected '.'; expected end of input");

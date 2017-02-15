@@ -724,4 +724,16 @@ TEST_CASE("regression tests")
         };
         CHECK_THROWS_AS(json::from_cbor(vec2), std::out_of_range);
     }
+
+    SECTION("issue #452 - Heap-buffer-overflow (OSS-Fuzz issue 585)")
+    {
+        std::vector<uint8_t> vec = {'-', '0', '1', '2', '2', '7', '4'};
+        CHECK_THROWS_AS(json::parse(vec), std::invalid_argument);
+    }
+
+    //SECTION("issue #454 - doubles are printed as integers")
+    //{
+    //    json j = R"({"bool_value":true,"double_value":2.0,"int_value":10,"level1":{"list_value":[3,"hi",false],"tmp":5.0},"string_value":"hello"})"_json;
+    //    CHECK(j["double_value"].is_number_integer());
+    //}
 }
