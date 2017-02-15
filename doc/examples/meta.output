@@ -1,0 +1,17 @@
+{
+    "compiler": {
+        "c++": "201103",
+        "family": "clang",
+        "version": "8.0.0 (clang-800.0.42.1)"
+    },
+    "copyright": "(C) 2013-2017 Niels Lohmann",
+    "name": "JSON for Modern C++",
+    "platform": "apple",
+    "url": "https://github.com/nlohmann/json",
+    "version": {
+        "major": 2,
+        "minor": 1,
+        "patch": 0,
+        "string": "2.1.0"
+    }
+}

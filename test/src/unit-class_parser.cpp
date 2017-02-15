@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.10
+|  |  |__   |  |  | | | |  version 2.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -101,6 +101,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_WITH(json::parser("\"\b\"").parse(), "parse error - unexpected '\"'");
                 // improve code coverage
                 CHECK_THROWS_AS(json::parser("\uFF01").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("[-4:1,]").parse(), std::invalid_argument);
                 // unescaped control characters
                 CHECK_THROWS_AS(json::parser("\"\x00\"").parse(), std::invalid_argument);
                 CHECK_THROWS_AS(json::parser("\"\x01\"").parse(), std::invalid_argument);
@@ -269,6 +270,11 @@ TEST_CASE("parser class")
                 }
             }
 
+            SECTION("overflow")
+            {
+                CHECK(json::parser("1.18973e+4932").parse() == json());
+            }
+
             SECTION("invalid numbers")
             {
                 CHECK_THROWS_AS(json::parser("01").parse(), std::invalid_argument);
@@ -293,7 +299,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("+0").parse(), std::invalid_argument);
 
                 CHECK_THROWS_WITH(json::parser("01").parse(),
-                                  "parse error - unexpected number literal; expected end of input");
+                                  "parse error - unexpected number literal");
                 CHECK_THROWS_WITH(json::parser("--1").parse(), "parse error - unexpected '-'");
                 CHECK_THROWS_WITH(json::parser("1.").parse(),
                                   "parse error - unexpected '.'; expected end of input");
@@ -594,6 +600,32 @@ TEST_CASE("parser class")
                           "missing or wrong low surrogate");
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\uFFFF\""),
                           "missing or wrong low surrogate");
+    }
+
+    SECTION("tests found by mutate++")
+    {
+        // test case to make sure no comma preceeds the first key
+        CHECK_THROWS_AS(json::parser("{,\"key\": false}").parse(), std::invalid_argument);
+        // test case to make sure an object is properly closed
+        CHECK_THROWS_AS(json::parser("[{\"key\": false true]").parse(), std::invalid_argument);
+
+        // test case to make sure the callback is properly evaluated after reading a key
+        {
+            json::parser_callback_t cb = [](int depth, json::parse_event_t event, json & parsed)
+            {
+                if (event == json::parse_event_t::key)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            };
+
+            json x = json::parse("{\"key\": false}", cb);
+            CHECK(x == json::object());
+        }
     }
 
     SECTION("callback function")

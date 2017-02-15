@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.10
+|  |  |__   |  |  | | | |  version 2.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -812,6 +812,60 @@ TEST_CASE("nst's JSONTestSuite")
                 json j;
                 CHECK_THROWS_AS(j << f, std::invalid_argument);
             }
+        }
+    }
+}
+
+// from http://stackoverflow.com/a/25829178/266378
+std::string trim(const std::string& str)
+{
+    size_t first = str.find_first_not_of(' ');
+    if (std::string::npos == first)
+    {
+        return str;
+    }
+    size_t last = str.find_last_not_of(' ');
+    return str.substr(first, (last - first + 1));
+}
+
+TEST_CASE("Big List of Naughty Strings")
+{
+    // test from https://github.com/minimaxir/big-list-of-naughty-strings
+    SECTION("parsing blns.json")
+    {
+        std::ifstream f("test/data/big-list-of-naughty-strings/blns.json");
+        json j;
+        CHECK_NOTHROW(j << f);
+    }
+
+    // check if parsed strings roundtrip
+    // https://www.reddit.com/r/cpp/comments/5qpbie/json_form_modern_c_version_210/dd12mpq/
+    SECTION("roundtripping")
+    {
+        std::ifstream f("test/data/big-list-of-naughty-strings/blns.json");
+
+        while (not f.eof())
+        {
+            // read line
+            std::string line;
+            getline(f, line);
+
+            // trim whitespace
+            line = trim(line);
+
+            // remove trailing comma
+            line = line.substr(0, line.find_last_of(","));
+
+            // discard lines without at least two characters (quotes)
+            if (line.size() < 2)
+            {
+                continue;
+            }
+
+            // check roundtrip
+            CAPTURE(line);
+            json j = json::parse(line);
+            CHECK(j.dump() == line);
         }
     }
 }

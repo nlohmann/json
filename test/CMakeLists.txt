@@ -26,14 +26,17 @@ add_executable(${JSON_UNITTEST_TARGET_NAME}
     "src/unit-iterators2.cpp"
     "src/unit-json_patch.cpp"
     "src/unit-json_pointer.cpp"
+    "src/unit-meta.cpp"
     "src/unit-modifiers.cpp"
     "src/unit-msgpack.cpp"
+    "src/unit-noexcept.cpp"
     "src/unit-pointer_access.cpp"
     "src/unit-readme.cpp"
     "src/unit-reference_access.cpp"
     "src/unit-regression.cpp"
     "src/unit-serialization.cpp"
     "src/unit-testsuites.cpp"
+    "src/unit-udt.cpp"
     "src/unit-unicode.cpp"
 )
 

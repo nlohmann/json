@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.0.10
+|  |  |__   |  |  | | | |  version 2.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -63,9 +63,17 @@ TEST_CASE("regression tests")
 
     SECTION("pull request #71 - handle enum type")
     {
-        enum { t = 0 };
+        enum { t = 0, u = 1};
         json j = json::array();
         j.push_back(t);
+
+        // maybe this is not the place to test this?
+        json j2 = u;
+
+        auto anon_enum_value = j2.get<decltype(u)>();
+        CHECK(u == anon_enum_value);
+
+        static_assert(std::is_same<decltype(anon_enum_value), decltype(u)>::value, "");
 
         j.push_back(json::object(
         {
@@ -375,7 +383,7 @@ TEST_CASE("regression tests")
         };
 
         // change locale to mess with decimal points
-        std::locale::global(std::locale(std::locale(), new CommaDecimalSeparator));
+        auto orig_locale = std::locale::global(std::locale(std::locale(), new CommaDecimalSeparator));
 
         CHECK(j1a.dump() == "23.42");
         CHECK(j1b.dump() == "23.42");
@@ -399,7 +407,33 @@ TEST_CASE("regression tests")
         CHECK(j3c.dump() == "10000");
         //CHECK(j3b.dump() == "1E04"); // roundtrip error
         //CHECK(j3c.dump() == "1e04"); // roundtrip error
+
+        std::locale::global(orig_locale);
     }
+
+    SECTION("issue #379 - locale-independent str-to-num")
+    {
+        setlocale(LC_NUMERIC, "de_DE.UTF-8");
+
+        // disabled, because locale-specific beharivor is not
+        // triggered in AppVeyor for some reason
+#ifndef _MSC_VER
+        {
+            // verify that strtod now uses commas as decimal-separator
+            CHECK(std::strtod("3,14", nullptr) == 3.14);
+
+            // verify that strtod does not understand dots as decimal separator
+            CHECK(std::strtod("3.14", nullptr) == 3);
+        }
+#endif
+
+        // verify that parsed correctly despite using strtod internally
+        CHECK(json::parse("3.14").get<double>() == 3.14);
+
+        // check a different code path
+        CHECK(json::parse("1.000000000000000000000000000000000000000000000000000000000000000000000000").get<double>() == 1.0);
+    }
+
 
     SECTION("issue #233 - Can't use basic_json::iterator as a base iterator for std::move_iterator")
     {
@@ -680,5 +714,32 @@ TEST_CASE("regression tests")
         CHECK_TYPE("");
 
         #undef CHECK_TYPE
+    }
+
+    SECTION("issue #416 - Use-of-uninitialized-value (OSS-Fuzz issue 377)")
+    {
+        // original test case
+        std::vector<uint8_t> vec1
+        {
+            0x94, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa,
+            0x3a, 0x96, 0x96, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4,
+            0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0x71,
+            0xb4, 0xb4, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0x3a,
+            0x96, 0x96, 0xb4, 0xb4, 0xfa, 0x94, 0x94, 0x61,
+            0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0xfa
+        };
+        CHECK_THROWS_AS(json::from_cbor(vec1), std::out_of_range);
+
+        // related test case: double-precision
+        std::vector<uint8_t> vec2
+        {
+            0x94, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa,
+            0x3a, 0x96, 0x96, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4,
+            0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0x71,
+            0xb4, 0xb4, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0x3a,
+            0x96, 0x96, 0xb4, 0xb4, 0xfa, 0x94, 0x94, 0x61,
+            0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0xfb
+        };
+        CHECK_THROWS_AS(json::from_cbor(vec2), std::out_of_range);
     }
 }
