@@ -11446,16 +11446,8 @@ basic_json_parser_74:
                 case lexer::token_type::value_integer:
                 case lexer::token_type::value_float:
                 {
-                    const bool ok = m_lexer.get_number(result, last_token);
+                    m_lexer.get_number(result, last_token);
                     get_token();
-
-                    // if number conversion was unsuccessful, then is is
-                    // because the number was directly followed by an
-                    // unexpected character (e.g. "01" where "1" is unexpected)
-                    if (not ok)
-                    {
-                        unexpect(last_token);
-                    }
                     break;
                 }
 
