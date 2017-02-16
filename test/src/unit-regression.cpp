@@ -402,13 +402,33 @@ TEST_CASE("regression tests")
         //issue #230
         //CHECK(j2b.dump() == "23.42");
 
-        CHECK(j3a.dump() == "10000");
-        CHECK(j3b.dump() == "10000");
-        CHECK(j3c.dump() == "10000");
+        CHECK(j3a.dump() == "10000.0");
+        CHECK(j3b.dump() == "10000.0");
+        CHECK(j3c.dump() == "10000.0");
         //CHECK(j3b.dump() == "1E04"); // roundtrip error
         //CHECK(j3c.dump() == "1e04"); // roundtrip error
 
         std::locale::global(orig_locale);
+    }
+
+    SECTION("issue #378 - locale-independent num-to-str")
+    {
+        setlocale(LC_NUMERIC, "de_DE.UTF-8");
+
+        // Verify that snprintf uses special decimal and grouping characters.
+        // Disabled, because can't trigger locale-specific behavior in AppVeyor
+#ifndef _MSC_VER
+        {
+            std::array<char, 64> buf;
+            std::snprintf(buf.data(), buf.size(), "%.2f", 12345.67);
+            CHECK(strcmp(buf.data(), "12345,67") == 0);
+        }
+#endif
+
+        // verify that dumped correctly with '.' and no grouping
+        const json j1 = 12345.67;
+        CHECK(json(12345.67).dump() == "12345.67");
+        setlocale(LC_NUMERIC, "C");
     }
 
     SECTION("issue #379 - locale-independent str-to-num")
@@ -433,7 +453,6 @@ TEST_CASE("regression tests")
         // check a different code path
         CHECK(json::parse("1.000000000000000000000000000000000000000000000000000000000000000000000000").get<double>() == 1.0);
     }
-
 
     SECTION("issue #233 - Can't use basic_json::iterator as a base iterator for std::move_iterator")
     {
@@ -749,9 +768,9 @@ TEST_CASE("regression tests")
         CHECK_THROWS_AS(json::parse(vec), std::invalid_argument);
     }
 
-    //SECTION("issue #454 - doubles are printed as integers")
-    //{
-    //    json j = R"({"bool_value":true,"double_value":2.0,"int_value":10,"level1":{"list_value":[3,"hi",false],"tmp":5.0},"string_value":"hello"})"_json;
-    //    CHECK(j["double_value"].is_number_integer());
-    //}
+    SECTION("issue #454 - doubles are printed as integers")
+    {
+        json j = R"({"bool_value":true,"double_value":2.0,"int_value":10,"level1":{"list_value":[3,"hi",false],"tmp":5.0},"string_value":"hello"})"_json;
+        CHECK(j["double_value"].is_number_float());
+    }
 }
