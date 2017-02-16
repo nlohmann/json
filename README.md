@@ -823,7 +823,7 @@ I deeply appreciate the help of the following people.
 - [Martin Hořeňovský](https://github.com/horenmar) found a way for a 2x speedup for the compilation time of the test suite.
 - [ukhegg](https://github.com/ukhegg) found proposed an improvement for the examples section.
 - [rswanson-ihi](https://github.com/rswanson-ihi) noted a type in the README.
-- 
+- [Mihai Stan](https://github.com/stanmihai4) fixed a bug in the comparison with `nullptr`s.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
@@ -857,7 +857,7 @@ $ make json_unit -Ctest
 $ ./test/json_unit "*""
 
 ===============================================================================
-All tests passed (11202562 assertions in 47 test cases)
+All tests passed (11202588 assertions in 47 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run

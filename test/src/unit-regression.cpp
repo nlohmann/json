@@ -698,6 +698,24 @@ TEST_CASE("regression tests")
         CHECK_THROWS_AS(json::from_cbor(vec3), std::out_of_range);
     }
 
+    SECTION("issue #414 - compare with literal 0)")
+    {
+#define CHECK_TYPE(v) \
+    CHECK((json(v) == v));\
+    CHECK((v == json(v)));\
+    CHECK_FALSE((json(v) != v));\
+    CHECK_FALSE((v != json(v)));
+
+        CHECK_TYPE(nullptr);
+        CHECK_TYPE(0);
+        CHECK_TYPE(0u);
+        CHECK_TYPE(0L);
+        CHECK_TYPE(0.0);
+        CHECK_TYPE("");
+
+#undef CHECK_TYPE
+    }
+
     SECTION("issue #416 - Use-of-uninitialized-value (OSS-Fuzz issue 377)")
     {
         // original test case

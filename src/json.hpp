@@ -5963,34 +5963,24 @@ class basic_json
 
     /*!
     @brief comparison: equal
-
-    The functions compares the given JSON value against a null pointer. As the
-    null pointer can be used to initialize a JSON value to null, a comparison
-    of JSON value @a v with a null pointer should be equivalent to call
-    `v.is_null()`.
-
-    @param[in] v  JSON value to consider
-    @return whether @a v is null
-
-    @complexity Constant.
-
-    @liveexample{The example compares several JSON types to the null pointer.
-    ,operator__equal__nullptr_t}
-
-    @since version 1.0.0
+    @copydoc operator==(const_reference, const_reference)
     */
-    friend bool operator==(const_reference v, std::nullptr_t) noexcept
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator==(const_reference lhs, const ScalarType rhs) noexcept
     {
-        return v.is_null();
+        return (lhs == basic_json(rhs));
     }
 
     /*!
     @brief comparison: equal
-    @copydoc operator==(const_reference, std::nullptr_t)
+    @copydoc operator==(const_reference, const_reference)
     */
-    friend bool operator==(std::nullptr_t, const_reference v) noexcept
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator==(const ScalarType lhs, const_reference rhs) noexcept
     {
-        return v.is_null();
+        return (basic_json(lhs) == rhs);
     }
 
     /*!
@@ -6016,34 +6006,24 @@ class basic_json
 
     /*!
     @brief comparison: not equal
-
-    The functions compares the given JSON value against a null pointer. As the
-    null pointer can be used to initialize a JSON value to null, a comparison
-    of JSON value @a v with a null pointer should be equivalent to call
-    `not v.is_null()`.
-
-    @param[in] v  JSON value to consider
-    @return whether @a v is not null
-
-    @complexity Constant.
-
-    @liveexample{The example compares several JSON types to the null pointer.
-    ,operator__notequal__nullptr_t}
-
-    @since version 1.0.0
+    @copydoc operator!=(const_reference, const_reference)
     */
-    friend bool operator!=(const_reference v, std::nullptr_t) noexcept
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator!=(const_reference lhs, const ScalarType rhs) noexcept
     {
-        return not v.is_null();
+        return (lhs != basic_json(rhs));
     }
 
     /*!
     @brief comparison: not equal
-    @copydoc operator!=(const_reference, std::nullptr_t)
+    @copydoc operator!=(const_reference, const_reference)
     */
-    friend bool operator!=(std::nullptr_t, const_reference v) noexcept
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator!=(const ScalarType lhs, const_reference rhs) noexcept
     {
-        return not v.is_null();
+        return (basic_json(lhs) != rhs);
     }
 
     /*!
