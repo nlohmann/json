@@ -613,7 +613,7 @@ TEST_CASE("parser class")
 
         // test case to make sure the callback is properly evaluated after reading a key
         {
-            json::parser_callback_t cb = [](int depth, json::parse_event_t event, json & parsed)
+            json::parser_callback_t cb = [](int, json::parse_event_t event, json&)
             {
                 if (event == json::parse_event_t::key)
                 {

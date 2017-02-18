@@ -8226,15 +8226,10 @@ class basic_json
     struct numtostr
     {
       public:
-        template<typename T>
-        numtostr(T value)
+        template<typename NumberType>
+        numtostr(NumberType value)
         {
-            x_write(value, std::is_integral<T>());
-        }
-
-        operator const char* () const
-        {
-            return m_buf.data();
+            x_write(value, std::is_integral<NumberType>());
         }
 
         const char* c_str() const
@@ -8244,17 +8239,24 @@ class basic_json
 
       private:
         static constexpr size_t s_capacity = 30;
-        std::array < char, s_capacity + 2 > m_buf{{}}; // +2 for leading '-'
-        // and trailing '\0'
-        template<typename T>
-        void x_write(T x, std::true_type)
+        /// added capacity for leading '-' and trailing '\0'
+        std::array < char, s_capacity + 2 > m_buf{{}};
+
+        template<typename NumberType>
+        void x_write(NumberType x, /*is_integral=*/std::true_type)
         {
-            static_assert(std::numeric_limits<T>::digits10 <= s_capacity, "");
+            if (x == 0)
+            {
+                m_buf[0] = '0';
+                return;
+            }
+
+            static_assert(std::numeric_limits<NumberType>::digits10 <= s_capacity, "");
 
             const bool is_neg = x < 0;
             size_t i = 0;
 
-            while (x and i < s_capacity)
+            while (x != 0 and i < s_capacity)
             {
                 const auto digit = std::labs(static_cast<long>(x % 10));
                 m_buf[i++] = static_cast<char>('0' + digit);
@@ -8262,11 +8264,6 @@ class basic_json
             }
 
             assert(i < s_capacity);
-
-            if (i == 0)
-            {
-                m_buf[i++] = '0';
-            }
 
             if (is_neg)
             {
@@ -8276,18 +8273,16 @@ class basic_json
             std::reverse(m_buf.begin(), m_buf.begin() + i);
         }
 
-        template<typename T>
-        void x_write(T x, std::false_type)
+        template<typename NumberType>
+        void x_write(NumberType x, /*is_integral=*/std::false_type)
         {
             if (x == 0)
             {
-                std::strcpy(m_buf.data(),
-                            std::signbit(x) ? "-0.0" : "0.0");
+                std::strcpy(m_buf.data(), std::signbit(x) ? "-0.0" : "0.0");
                 return;
             }
 
-            static constexpr auto d =
-                std::numeric_limits<number_float_t>::digits10;
+            static constexpr auto d = std::numeric_limits<NumberType>::digits10;
             static_assert(d == 6 or d == 15 or d == 16 or d == 17, "");
 
             static constexpr auto fmt = d == 6  ? "%.7g"
@@ -8330,17 +8325,14 @@ class basic_json
 #endif
 
             // erase thousands separator
-            if (thousands_sep)
+            if (thousands_sep != '\0')
             {
-                auto end = std::remove(m_buf.begin(),
-                                       m_buf.end(),
-                                       thousands_sep);
-
+                const auto end = std::remove(m_buf.begin(), m_buf.end(), thousands_sep);
                 std::fill(end, m_buf.end(), '\0');
             }
 
             // convert decimal point to '.'
-            if (decimal_point and decimal_point != '.')
+            if (decimal_point != '\0' and decimal_point != '.')
             {
                 for (auto& c : m_buf)
                 {
@@ -8352,27 +8344,22 @@ class basic_json
                 }
             }
 
-            // determine if need to apperd ".0"
-            auto data_end = m_buf.begin() + strlen(m_buf.data());
+            // determine if need to append ".0"
+            const auto data_end = m_buf.begin() + strlen(m_buf.data());
 
             const bool value_is_int_like =
-                std::find_if(m_buf.begin(), data_end,
-                             [](const char c)
+                std::none_of(m_buf.begin(), data_end, [](const char c)
             {
-                return c == '.'
-                       or c == 'e'
-                       or c == 'E';
-            })
-            == data_end;
-
+                return (c == '.' or c == 'e' or c == 'E');
+            });
             assert(data_end + 2 < m_buf.end());
+
             if (value_is_int_like)
             {
                 strcat(m_buf.data(), ".0");
             }
         }
     };
-
 
 
     /*!
