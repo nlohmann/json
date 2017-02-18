@@ -8251,7 +8251,8 @@ class basic_json
                 return;
             }
 
-            static_assert(std::numeric_limits<NumberType>::digits10 <= s_capacity, "");
+            static_assert(std::numeric_limits<NumberType>::digits10 <= s_capacity,
+                          "unexpected NumberType");
 
             const bool is_neg = x < 0;
             size_t i = 0;
@@ -8283,7 +8284,8 @@ class basic_json
             }
 
             static constexpr auto d = std::numeric_limits<NumberType>::digits10;
-            static_assert(d == 6 or d == 15 or d == 16 or d == 17, "");
+            static_assert(d == 6 or d == 15 or d == 16 or d == 17,
+                          "unexpected NumberType");
 
             static constexpr auto fmt = d == 6  ? "%.7g"
                                         : d == 15 ? "%.16g"
