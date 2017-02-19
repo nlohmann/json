@@ -8298,25 +8298,7 @@ class basic_json
 
             snprintf(m_buf.data(), m_buf.size(), fmt, x);
 
-#if 0
-            // C locales and C++ locales are similar but
-            // different.
-            //
-            // If working with C++ streams we'd've used
-            // these, but for C formatting functions we
-            // have to use C locales (setlocale / localeconv),
-            // rather than C++ locales (std::locale installed
-            // by std::locale::global()).
-            const std::locale loc;
-
-            const char thousands_sep =
-                std::use_facet< std::numpunct<char>>(
-                    loc).thousands_sep();
-
-            const char decimal_point =
-                std::use_facet< std::numpunct<char>>(
-                    loc).decimal_point();
-#else
+            // read information from locale
             const auto loc = localeconv();
             assert(loc != nullptr);
             const char thousands_sep = !loc->thousands_sep ? '\0'
@@ -8324,7 +8306,6 @@ class basic_json
 
             const char decimal_point = !loc->decimal_point ? '\0'
                                        : loc->decimal_point[0];
-#endif
 
             // erase thousands separator
             if (thousands_sep != '\0')

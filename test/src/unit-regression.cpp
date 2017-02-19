@@ -361,8 +361,8 @@ TEST_CASE("regression tests")
 
     SECTION("issue #228 - double values are serialized with commas as decimal points")
     {
-        json j1a = 23.42;
-        json j1b = json::parse("23.42");
+        json j1a = 2312.42;
+        json j1b = json::parse("2312.42");
 
         json j2a = 2342e-2;
         //issue #230
@@ -380,23 +380,33 @@ TEST_CASE("regression tests")
             {
                 return ',';
             }
+
+            char do_thousands_sep() const
+            {
+                return '.';
+            }
+            
+            std::string do_grouping() const
+            {
+                return "\03";
+            }
         };
 
         // change locale to mess with decimal points
         auto orig_locale = std::locale::global(std::locale(std::locale(), new CommaDecimalSeparator));
 
-        CHECK(j1a.dump() == "23.42");
-        CHECK(j1b.dump() == "23.42");
+        CHECK(j1a.dump() == "2312.42");
+        CHECK(j1b.dump() == "2312.42");
 
         // check if locale is properly reset
         std::stringstream ss;
         ss.imbue(std::locale(std::locale(), new CommaDecimalSeparator));
-        ss << 47.11;
-        CHECK(ss.str() == "47,11");
+        ss << 4712.11;
+        CHECK(ss.str() == "4.712,11");
         ss << j1a;
-        CHECK(ss.str() == "47,1123.42");
+        CHECK(ss.str() == "4.712,112312.42");
         ss << 47.11;
-        CHECK(ss.str() == "47,1123.4247,11");
+        CHECK(ss.str() == "4.712,112312.4247,11");
 
         CHECK(j2a.dump() == "23.42");
         //issue #230
