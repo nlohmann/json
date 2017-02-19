@@ -6545,10 +6545,10 @@ class basic_json
         {
             case 8:
             {
-                vec.push_back(static_cast<uint8_t>((number >> 070) & 0xff));
-                vec.push_back(static_cast<uint8_t>((number >> 060) & 0xff));
-                vec.push_back(static_cast<uint8_t>((number >> 050) & 0xff));
-                vec.push_back(static_cast<uint8_t>((number >> 040) & 0xff));
+                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 070) & 0xff));
+                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 060) & 0xff));
+                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 050) & 0xff));
+                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 040) & 0xff));
                 // intentional fall-through
             }
 
@@ -7021,7 +7021,7 @@ class basic_json
                 const auto N = j.m_value.string->size();
                 if (N <= 0x17)
                 {
-                    v.push_back(0x60 + N);  // 1 byte for string + size
+                    v.push_back(0x60 + static_cast<uint8_t>(N));  // 1 byte for string + size
                 }
                 else if (N <= 0xff)
                 {
@@ -7057,7 +7057,7 @@ class basic_json
                 const auto N = j.m_value.array->size();
                 if (N <= 0x17)
                 {
-                    v.push_back(0x80 + N);  // 1 byte for array + size
+                    v.push_back(0x80 + static_cast<uint8_t>(N));  // 1 byte for array + size
                 }
                 else if (N <= 0xff)
                 {
@@ -7095,7 +7095,7 @@ class basic_json
                 const auto N = j.m_value.object->size();
                 if (N <= 0x17)
                 {
-                    v.push_back(0xa0 + N);  // 1 byte for object + size
+                    v.push_back(0xa0 + static_cast<uint8_t>(N));  // 1 byte for object + size
                 }
                 else if (N <= 0xff)
                 {
