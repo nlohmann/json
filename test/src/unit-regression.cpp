@@ -385,7 +385,7 @@ TEST_CASE("regression tests")
             {
                 return '.';
             }
-            
+
             std::string do_grouping() const
             {
                 return "\03";

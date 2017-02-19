@@ -7917,9 +7917,11 @@ class basic_json
     vector in MessagePack format.,to_msgpack}
 
     @sa http://msgpack.org
-    @sa @ref from_msgpack(const std::vector<uint8_t>&) for the analogous
-        deserialization
+    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
+        analogous deserialization
     @sa @ref to_cbor(const basic_json& for the related CBOR format
+
+    @since version 2.0.9
     */
     static std::vector<uint8_t> to_msgpack(const basic_json& j)
     {
@@ -7935,6 +7937,7 @@ class basic_json
     serialization format.
 
     @param[in] v  a byte vector in MessagePack format
+    @param[in] start_index the index to start reading from @a v (0 by default)
     @return deserialized JSON value
 
     @throw std::invalid_argument if unsupported features from MessagePack were
@@ -7948,11 +7951,15 @@ class basic_json
 
     @sa http://msgpack.org
     @sa @ref to_msgpack(const basic_json&) for the analogous serialization
-    @sa @ref from_cbor(const std::vector<uint8_t>&) for the related CBOR format
+    @sa @ref from_cbor(const std::vector<uint8_t>&, const size_t) for the
+        related CBOR format
+
+    @since version 2.0.9, parameter @a start_index since 2.0.11
     */
-    static basic_json from_msgpack(const std::vector<uint8_t>& v)
+    static basic_json from_msgpack(const std::vector<uint8_t>& v,
+                                   const size_t start_index = 0)
     {
-        size_t i = 0;
+        size_t i = start_index;
         return from_msgpack_internal(v, i);
     }
 
@@ -7973,9 +7980,11 @@ class basic_json
     vector in CBOR format.,to_cbor}
 
     @sa http://cbor.io
-    @sa @ref from_cbor(const std::vector<uint8_t>&) for the analogous
-        deserialization
+    @sa @ref from_cbor(const std::vector<uint8_t>&, const size_t) for the
+        analogous deserialization
     @sa @ref to_msgpack(const basic_json& for the related MessagePack format
+
+    @since version 2.0.9
     */
     static std::vector<uint8_t> to_cbor(const basic_json& j)
     {
@@ -7991,6 +8000,7 @@ class basic_json
     (Concise Binary Object Representation) serialization format.
 
     @param[in] v  a byte vector in CBOR format
+    @param[in] start_index the index to start reading from @a v (0 by default)
     @return deserialized JSON value
 
     @throw std::invalid_argument if unsupported features from CBOR were used in
@@ -8004,12 +8014,15 @@ class basic_json
 
     @sa http://cbor.io
     @sa @ref to_cbor(const basic_json&) for the analogous serialization
-    @sa @ref from_msgpack(const std::vector<uint8_t>&) for the related
-        MessagePack format
+    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
+        related MessagePack format
+
+    @since version 2.0.9, parameter @a start_index since 2.0.11
     */
-    static basic_json from_cbor(const std::vector<uint8_t>& v)
+    static basic_json from_cbor(const std::vector<uint8_t>& v,
+                                const size_t start_index = 0)
     {
-        size_t i = 0;
+        size_t i = start_index;
         return from_cbor_internal(v, i);
     }
 

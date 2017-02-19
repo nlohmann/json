@@ -1039,6 +1039,10 @@ TEST_CASE("single MessagePack roundtrip")
 
         // compare parsed JSON values
         CHECK(j1 == j2);
+
+        // check with different start index
+        packed.insert(packed.begin(), 5, 0xff);
+        CHECK(j1 == json::from_msgpack(packed, 5));
     }
 }
 
