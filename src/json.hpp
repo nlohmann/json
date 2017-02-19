@@ -523,8 +523,10 @@ struct has_to_json
 // to_json //
 /////////////
 
-template<typename BasicJsonType>
-void to_json(BasicJsonType& j, typename BasicJsonType::boolean_t b) noexcept
+template<typename BasicJsonType, typename T, enable_if_t<
+             std::is_same<typename std::decay<T>::type,
+                          typename BasicJsonType::boolean_t>::value, int> = 0>
+void to_json(BasicJsonType& j, T b) noexcept
 {
     external_constructor<value_t::boolean>::construct(j, b);
 }
