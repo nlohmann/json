@@ -38,7 +38,7 @@ SOFTWARE.
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <cstdint> // int64_t, uint64_t
 #include <cstdlib> // abort, strtod, strtof, strtold, strtoul, strtoll, strtoull
-#include <cstring> // strcpy, strlen
+#include <cstring> // strlen
 #include <forward_list> // forward_list
 #include <functional> // function, hash, less
 #include <initializer_list> // initializer_list
@@ -8259,6 +8259,7 @@ class basic_json
         template<typename NumberType>
         void x_write(NumberType x, /*is_integral=*/std::true_type)
         {
+            // special case for "0"
             if (x == 0)
             {
                 m_buf[0] = '0';
@@ -8291,9 +8292,17 @@ class basic_json
         template<typename NumberType>
         void x_write(NumberType x, /*is_integral=*/std::false_type)
         {
+            // special case for 0.0 and -0.0
             if (x == 0)
             {
-                std::strcpy(m_buf.data(), std::signbit(x) ? "-0.0" : "0.0");
+                size_t i = 0;
+                if (std::signbit(x))
+                {
+                    m_buf[i++] = '-';
+                }
+                m_buf[i++] = '0';
+                m_buf[i++] = '.';
+                m_buf[i] = '0';
                 return;
             }
 
@@ -8342,18 +8351,35 @@ class basic_json
             }
 
             // determine if need to append ".0"
-            const auto data_end = m_buf.begin() + strlen(m_buf.data());
-
-            const bool value_is_int_like =
-                std::none_of(m_buf.begin(), data_end, [](const char c)
+            size_t i = 0;
+            bool value_is_int_like = true;
+            for (i = 0; i < m_buf.size(); ++i)
             {
-                return (c == '.' or c == 'e' or c == 'E');
-            });
-            assert(data_end + 2 < m_buf.end());
+                // break when end of number is reached
+                if (m_buf[i] == '\0')
+                {
+                    break;
+                }
+
+                // check if we find non-int character
+                value_is_int_like = value_is_int_like and m_buf[i] != '.' and
+                                    m_buf[i] != 'e' and m_buf[i] != 'E';
+            }
 
             if (value_is_int_like)
             {
-                strcat(m_buf.data(), ".0");
+                // there must be 2 bytes left for ".0"
+                assert((i + 2) < m_buf.size());
+                // we write to the end of the number
+                assert(m_buf[i] == '\0');
+                assert(m_buf[i - 1] != '\0');
+
+                // add ".0"
+                m_buf[i] = '.';
+                m_buf[i + 1] = '0';
+
+                // the resulting string is properly terminated
+                assert(m_buf[i + 2] == '\0');
             }
         }
     };
@@ -11136,7 +11162,7 @@ basic_json_parser_74:
                         // update data to point to the modified bytes
                         if ((len + 1) < buf.size())
                         {
-                            std::copy(m_start, m_end, buf.data());
+                            std::copy(m_start, m_end, buf.begin());
                             buf[len] = 0;
                             buf[ds_pos] = decimal_point_char;
                             data = buf.data();
