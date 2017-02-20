@@ -8310,16 +8310,7 @@ class basic_json
             static_assert(d == 6 or d == 15 or d == 16 or d == 17,
                           "unexpected NumberType");
 
-            static constexpr auto fmt = d == 6  ? "%.7g"
-                                        : d == 15 ? "%.16g"
-                                        : d == 16 ? "%.17g"
-                                        : d == 17 ? "%.18g"
-                                        :           "%.19g";
-            // I'm not sure why we need to +1 the precision,
-            // but without it there's a unit-test that fails
-            // that asserts precision of the output
-
-            snprintf(m_buf.data(), m_buf.size(), fmt, x);
+            snprintf(m_buf.data(), m_buf.size(), "%.*g", d, x);
 
             // read information from locale
             const auto loc = localeconv();

@@ -783,4 +783,13 @@ TEST_CASE("regression tests")
         json j = R"({"bool_value":true,"double_value":2.0,"int_value":10,"level1":{"list_value":[3,"hi",false],"tmp":5.0},"string_value":"hello"})"_json;
         CHECK(j["double_value"].is_number_float());
     }
+
+    SECTION("issue #465 - roundtrip error while parsing 1000000000000000010E5")
+    {
+        json j1 = json::parse("1000000000000000010E5");
+        std::string s1 = j1.dump();
+        json j2 = json::parse(s1);
+        std::string s2 = j2.dump();
+        CHECK(s1 == s2);
+    }
 }
