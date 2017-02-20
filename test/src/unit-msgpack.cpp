@@ -389,7 +389,7 @@ TEST_CASE("MessagePack")
                     numbers.push_back(-65536);
                     numbers.push_back(-77777);
                     numbers.push_back(-1048576);
-                    numbers.push_back(-2147483648);
+                    numbers.push_back(-2147483648ll);
                     for (auto i : numbers)
                     {
                         CAPTURE(i);

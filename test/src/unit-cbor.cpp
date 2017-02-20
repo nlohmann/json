@@ -1271,7 +1271,7 @@ TEST_CASE("CBOR regressions", "[!throws]")
     SECTION("improve code coverage")
     {
         // exotic edge case
-        CHECK_THROWS_AS(json::check_length(0xffffffffffffffff, 0xfffffffffffffff0, 0xff), std::out_of_range);
+        CHECK_THROWS_AS(json::check_length(0xffffffffffffffffull, 0xfffffffffffffff0ull, 0xff), std::out_of_range);
     }
 }
 
