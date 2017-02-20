@@ -809,7 +809,7 @@ I deeply appreciate the help of the following people.
 - [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable.
 - [Denis Andrejew](https://github.com/seeekr) fixed a grammar issue in the README file.
 - [Pierre-Antoine Lacaze](https://github.com/palacaze) found a subtle bug in the `dump()` function.
-- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser, improved the benchmarking code, and realized locale-independent number parsing.
+- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser, improved the benchmarking code, and realized locale-independent number parsing and printing.
 - [cgzones](https://github.com/cgzones) had an idea how to fix the Coverity scan.
 - [Jared Grubb](https://github.com/jaredgrubb) silenced a nasty documentation warning.
 - [Yixin Zhang](https://github.com/qwename) fixed an integer overflow check.

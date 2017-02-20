@@ -29,22 +29,22 @@ SOFTWARE.
 #ifndef NLOHMANN_JSON_HPP
 #define NLOHMANN_JSON_HPP
 
-#include <algorithm> // all_of, for_each, transform
+#include <algorithm> // all_of, copy, fill, find, for_each, none_of, remove, reverse, transform
 #include <array> // array
 #include <cassert> // assert
 #include <cctype> // isdigit
 #include <ciso646> // and, not, or
-#include <cmath> // isfinite, ldexp, signbit
+#include <cmath> // isfinite, labs, ldexp, signbit
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <cstdint> // int64_t, uint64_t
-#include <cstdlib> // strtod, strtof, strtold, strtoul
-#include <cstring> // strlen
+#include <cstdlib> // abort, strtod, strtof, strtold, strtoul, strtoll, strtoull
+#include <cstring> // strcpy, strlen
 #include <forward_list> // forward_list
 #include <functional> // function, hash, less
 #include <initializer_list> // initializer_list
 #include <iomanip> // setw
 #include <iostream> // istream, ostream
-#include <iterator> // advance, begin, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
+#include <iterator> // advance, begin, back_inserter, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
 #include <limits> // numeric_limits
 #include <locale> // locale
 #include <map> // map
@@ -53,7 +53,7 @@ SOFTWARE.
 #include <sstream> // stringstream
 #include <stdexcept> // domain_error, invalid_argument, out_of_range
 #include <string> // getline, stoi, string, to_string
-#include <type_traits> // add_pointer, enable_if, is_arithmetic, is_base_of, is_const, is_constructible, is_convertible, is_floating_point, is_integral, is_nothrow_move_assignable, std::is_nothrow_move_constructible, std::is_pointer, std::is_reference, std::is_same, remove_const, remove_pointer, remove_reference
+#include <type_traits> // add_pointer, conditional, decay, enable_if, false_type, integral_constant, is_arithmetic, is_base_of, is_const, is_constructible, is_convertible, is_default_constructible, is_enum, is_floating_point, is_integral, is_nothrow_move_assignable, is_nothrow_move_constructible, is_pointer, is_reference, is_same, is_scalar, is_signed, remove_const, remove_cv, remove_pointer, remove_reference, true_type, underlying_type
 #include <utility> // declval, forward, make_pair, move, pair, swap
 #include <vector> // vector
 
