@@ -3487,6 +3487,7 @@ class basic_json
                    not std::is_same<ValueType, typename string_t::value_type>::value
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
+                   and not std::is_same<ValueType, typename std::string_view>::value
 #endif
                    , int >::type = 0 >
     operator ValueType() const
