@@ -8252,9 +8252,8 @@ class basic_json
         }
 
       private:
-        static constexpr size_t s_capacity = 30;
-        /// added capacity for leading '-' and trailing '\0'
-        std::array < char, s_capacity + 2 > m_buf{{}};
+        /// a (hopefully) large enough character buffer
+        std::array < char, 64 > m_buf{{}};
 
         template<typename NumberType>
         void x_write(NumberType x, /*is_integral=*/std::true_type)
@@ -8266,23 +8265,24 @@ class basic_json
                 return;
             }
 
-            static_assert(std::numeric_limits<NumberType>::digits10 <= s_capacity,
-                          "unexpected NumberType");
-
-            const bool is_neg = x < 0;
+            const bool is_negative = x < 0;
             size_t i = 0;
 
-            while (x != 0 and i < s_capacity)
+            // spare 1 byte for '\0'
+            while (x != 0 and i < m_buf.size() - 1)
             {
                 const auto digit = std::labs(static_cast<long>(x % 10));
                 m_buf[i++] = static_cast<char>('0' + digit);
                 x /= 10;
             }
 
-            assert(i < s_capacity);
+            // make sure the number has been processed completely
+            assert(x == 0);
 
-            if (is_neg)
+            if (is_negative)
             {
+                // make sure there is capacity for the '-'
+                assert(i < m_buf.size() - 2);
                 m_buf[i++] = '-';
             }
 
@@ -8306,11 +8306,16 @@ class basic_json
                 return;
             }
 
+            // get number of digits for a text -> float -> text round-trip
             static constexpr auto d = std::numeric_limits<NumberType>::digits10;
-            static_assert(d == 6 or d == 15 or d == 16 or d == 17,
-                          "unexpected NumberType");
 
-            snprintf(m_buf.data(), m_buf.size(), "%.*g", d, x);
+            // the actual conversion
+            const auto written_bytes = snprintf(m_buf.data(), m_buf.size(), "%.*g", d, x);
+
+            // negative value indicates an error
+            assert(written_bytes > 0);
+            // check if buffer was large enough
+            assert(written_bytes < m_buf.size());
 
             // read information from locale
             const auto loc = localeconv();
@@ -8324,7 +8329,7 @@ class basic_json
             // erase thousands separator
             if (thousands_sep != '\0')
             {
-                const auto end = std::remove(m_buf.begin(), m_buf.end(), thousands_sep);
+                const auto end = std::remove(m_buf.begin(), m_buf.begin() + written_bytes, thousands_sep);
                 std::fill(end, m_buf.end(), '\0');
             }
 
