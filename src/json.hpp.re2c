@@ -8315,7 +8315,7 @@ class basic_json
             // negative value indicates an error
             assert(written_bytes > 0);
             // check if buffer was large enough
-            assert(written_bytes < m_buf.size());
+            assert(static_cast<size_t>(written_bytes) < m_buf.size());
 
             // read information from locale
             const auto loc = localeconv();
