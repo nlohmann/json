@@ -42,6 +42,28 @@ doctest:
 
 
 ##########################################################################
+# warning detector
+##########################################################################
+
+# calling Clang with all warnings, except:
+# -Wno-documentation-unknown-command: code uses user-defined commands like @complexity
+# -Wno-exit-time-destructors: warning in Catch code
+# -Wno-keyword-macro: unit-tests use "#define private public"
+# -Wno-deprecated-declarations: some functions are deprecated until 3.0.0
+# -Wno-range-loop-analysis: iterator_wrapper tests tests "for(const auto i...)"
+pedantic:
+	$(MAKE) json_unit CXXFLAGS="\
+		-std=c++11 \
+		-Werror \
+		-Weverything \
+		-Wno-documentation-unknown-command \
+		-Wno-exit-time-destructors \
+		-Wno-keyword-macro \
+		-Wno-deprecated-declarations \
+		-Wno-range-loop-analysis"
+
+
+##########################################################################
 # fuzzing
 ##########################################################################
 

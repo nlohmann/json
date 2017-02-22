@@ -237,7 +237,7 @@ TEST_CASE("CBOR")
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
 
-                    int16_t restored = -1 - ((result[1] << 8) + result[2]);
+                    int16_t restored = static_cast<int16_t>(-1 - ((result[1] << 8) + result[2]));
                     CHECK(restored == -9263);
 
                     // roundtrip

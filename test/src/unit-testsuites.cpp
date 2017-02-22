@@ -816,6 +816,8 @@ TEST_CASE("nst's JSONTestSuite")
     }
 }
 
+std::string trim(const std::string& str);
+
 // from http://stackoverflow.com/a/25829178/266378
 std::string trim(const std::string& str)
 {

@@ -350,8 +350,8 @@ TEST_CASE("regression tests")
 
         // double
         nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, double> j_double =
-            1.23e35f;
-        CHECK(j_double.get<double>() == 1.23e35f);
+            1.23e35;
+        CHECK(j_double.get<double>() == 1.23e35);
 
         // long double
         nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, long double>
@@ -641,7 +641,7 @@ TEST_CASE("regression tests")
         CHECK_THROWS_AS(json::from_msgpack(vec1), std::out_of_range);
 
         // more test cases for MessagePack
-        for (uint8_t b :
+        for (auto b :
                 {
                     0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f, // fixmap
                     0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f, // fixarray
@@ -649,12 +649,12 @@ TEST_CASE("regression tests")
                     0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf
                 })
         {
-            std::vector<uint8_t> vec(1, b);
+            std::vector<uint8_t> vec(1, static_cast<uint8_t>(b));
             CHECK_THROWS_AS(json::from_msgpack(vec), std::out_of_range);
         }
 
         // more test cases for CBOR
-        for (uint8_t b :
+        for (auto b :
                 {
                     0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
                     0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, // UTF-8 string
@@ -664,7 +664,7 @@ TEST_CASE("regression tests")
                     0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7 // map
                 })
         {
-            std::vector<uint8_t> vec(1, b);
+            std::vector<uint8_t> vec(1, static_cast<uint8_t>(b));
             CHECK_THROWS_AS(json::from_cbor(vec), std::out_of_range);
         }
 

@@ -163,7 +163,7 @@ TEST_CASE("README", "[hide]")
             j.clear();    // the array is empty again
 
             // comparison
-            j == "[\"foo\", 1, true]"_json;  // true
+            bool x = (j == "[\"foo\", 1, true]"_json);  // true
 
             // create an object
             json o;

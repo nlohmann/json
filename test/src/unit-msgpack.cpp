@@ -342,7 +342,7 @@ TEST_CASE("MessagePack")
                     const auto result = json::to_msgpack(j);
                     CHECK(result == expected);
 
-                    int16_t restored = (result[1] << 8) + result[2];
+                    int16_t restored = static_cast<int16_t>((result[1] << 8) + result[2]);
                     CHECK(restored == -9263);
 
                     // roundtrip
@@ -374,7 +374,7 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xd1);
-                        int16_t restored = (result[1] << 8) + result[2];
+                        int16_t restored = static_cast<int16_t>((result[1] << 8) + result[2]);
                         CHECK(restored == i);
 
                         // roundtrip

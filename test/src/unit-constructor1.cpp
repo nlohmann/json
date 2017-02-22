@@ -725,7 +725,7 @@ TEST_CASE("constructors")
 
         SECTION("long double")
         {
-            long double n = 42.23;
+            long double n = 42.23l;
             json j(n);
             CHECK(j.type() == json::value_t::number_float);
             CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));

@@ -63,9 +63,9 @@ TEST_CASE("bad_alloc")
     }
 }
 
-bool next_construct_fails = false;
-bool next_destroy_fails = false;
-bool next_deallocate_fails = false;
+static bool next_construct_fails = false;
+static bool next_destroy_fails = false;
+static bool next_deallocate_fails = false;
 
 template<class T>
 struct my_allocator : std::allocator<T>

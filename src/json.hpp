@@ -673,7 +673,7 @@ template<typename BasicJsonType, typename UnscopedEnumType,
          enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
 void from_json(const BasicJsonType& j, UnscopedEnumType& e)
 {
-    typename std::underlying_type<UnscopedEnumType>::type val = e;
+    typename std::underlying_type<UnscopedEnumType>::type val;
     get_arithmetic_value(j, val);
     e = static_cast<UnscopedEnumType>(val);
 }
@@ -917,7 +917,7 @@ struct adl_serializer
     @ref basic_json class (either explicit or via conversion operators).
 
     @param[in] j         JSON value to read from
-    @param[in, out] val  value to write to
+    @param[in,out] val  value to write to
     */
     template<typename BasicJsonType, typename ValueType>
     static void from_json(BasicJsonType&& j, ValueType& val) noexcept(
@@ -932,7 +932,7 @@ struct adl_serializer
     This function is usually called by the constructors of the @ref basic_json
     class.
 
-    @param[in, out] j  JSON value to write to
+    @param[in,out] j  JSON value to write to
     @param[in] val     value to read from
     */
     template<typename BasicJsonType, typename ValueType>
@@ -6537,6 +6537,11 @@ class basic_json
     /// @{
 
   private:
+    /*!
+    @note Some code in the switch cases has been copied, because otherwise
+          copilers would complain about implicit fallthrough and there is no
+          portable attribute to mute such warnings.
+    */
     template<typename T>
     static void add_to_vector(std::vector<uint8_t>& vec, size_t bytes, const T number)
     {
@@ -6550,20 +6555,27 @@ class basic_json
                 vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 060) & 0xff));
                 vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 050) & 0xff));
                 vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 040) & 0xff));
-                // intentional fall-through
+                vec.push_back(static_cast<uint8_t>((number >> 030) & 0xff));
+                vec.push_back(static_cast<uint8_t>((number >> 020) & 0xff));
+                vec.push_back(static_cast<uint8_t>((number >> 010) & 0xff));
+                vec.push_back(static_cast<uint8_t>(number & 0xff));
+                break;
             }
 
             case 4:
             {
                 vec.push_back(static_cast<uint8_t>((number >> 030) & 0xff));
                 vec.push_back(static_cast<uint8_t>((number >> 020) & 0xff));
-                // intentional fall-through
+                vec.push_back(static_cast<uint8_t>((number >> 010) & 0xff));
+                vec.push_back(static_cast<uint8_t>(number & 0xff));
+                break;
             }
 
             case 2:
             {
                 vec.push_back(static_cast<uint8_t>((number >> 010) & 0xff));
-                // intentional fall-through
+                vec.push_back(static_cast<uint8_t>(number & 0xff));
+                break;
             }
 
             case 1:
@@ -7865,7 +7877,9 @@ class basic_json
                 }
                 else
                 {
-                    val = mant == 0 ? INFINITY : NAN;
+                    val = mant == 0
+                          ? std::numeric_limits<double>::infinity()
+                          : std::numeric_limits<double>::quiet_NaN();
                 }
                 return (half & 0x8000) != 0 ? -val : val;
             }
@@ -11181,7 +11195,7 @@ basic_json_parser_74:
                 // of characters determined by the lexer (len)
                 const bool ok = (endptr == (data + len));
 
-                if (ok and (value == 0.0) and (*data == '-'))
+                if (ok and (value == static_cast<T>(0.0)) and (*data == '-'))
                 {
                     // some implementations forget to negate the zero
                     value = -0.0;
