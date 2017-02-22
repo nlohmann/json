@@ -228,6 +228,14 @@ install:
   # make sure CXX is correctly set
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
 
+  # get CMake (only for systems with brew - macOS)
+  - |
+     if [[ !(-x $(which cmake)) && (-x $(which brew)) ]]; then
+       brew update
+       brew install cmake
+       cmake --version
+     fi
+
   # install LLVM/clang when LLVM_VERSION is set
   - |
      if [[ "${LLVM_VERSION}" != "" ]]; then
@@ -266,7 +274,10 @@ script:
   - $CXX --version
 
   # compile and execute unit tests
-  - make check
+  - mkdir -p build && cd build
+  - cmake .. && cmake --build . --config Release -- -j4
+  - ctest -C Release -V
+  - cd ..
 
   # check if homebrew works (only checks develop branch)
   - if [ `which brew` ]; then

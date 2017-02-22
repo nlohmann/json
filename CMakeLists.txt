@@ -16,6 +16,8 @@ set(JSON_CONFIGVERSION_FILENAME "${JSON_PACKAGE_NAME}ConfigVersion.cmake")
 set(JSON_CONFIG_DESTINATION "cmake")
 set(JSON_INCLUDE_DESTINATION "include/nlohmann")
 
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
 # create and configure the library target
 add_library(${JSON_TARGET_NAME} INTERFACE)
 target_include_directories(${JSON_TARGET_NAME} INTERFACE
