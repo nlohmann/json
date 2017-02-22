@@ -26,6 +26,7 @@
 - [Supported compilers](#supported-compilers)
 - [License](#license)
 - [Thanks](#thanks)
+- [Used third-party tools](#used-third-party-tools)
 - [Projects using JSON for Modern C++](#projects-using-json-for-modern-c)
 - [Notes](#notes)
 - [Execute unit tests](#execute-unit-tests)
@@ -824,9 +825,38 @@ I deeply appreciate the help of the following people.
 - [ukhegg](https://github.com/ukhegg) found proposed an improvement for the examples section.
 - [rswanson-ihi](https://github.com/rswanson-ihi) noted a type in the README.
 - [Mihai Stan](https://github.com/stanmihai4) fixed a bug in the comparison with `nullptr`s.
-
+- [Tushar Maheshwari](https://github.com/tusharpm) added [cotire](https://github.com/sakra/cotire) support to speed up the compilation.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
+
+
+## Used third-party tools
+
+The library itself contains of a single header file licensed under the MIT license. However, it is built, tested, documented, and whatnot using a lot of thirs-party tools and services. Thanks a lot!
+
+- [**American fuzzy lop**](http://lcamtuf.coredump.cx/afl/) for fuzz testing
+- [**AppVeyor**](https://www.appveyor.com) for [continuous integration](https://ci.appveyor.com/project/nlohmann/json) on Windows
+- [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code identation
+- [**benchpress**](https://github.com/sbs-ableton/benchpress) to benchmark the code
+- [**Catch**](https://github.com/philsquared/Catch) for the unit tests
+- [**Clang**](http://clang.llvm.org) for compilation with code sanitizers
+- [**Cmake**](https://cmake.org) for build automation
+- [**Codacity**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
+- [**cotire**](https://github.com/sakra/cotire) to speed of compilation
+- [**Coveralls**](https://coveralls.io) to measure [code coverage](https://coveralls.io/github/nlohmann/json)
+- [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
+- [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
+- [**cxxopts**](https://github.com/jarro2783/cxxopts) to let benchpress parse command-line parameters
+- [**Doxygen**](http://www.stack.nl/~dimitri/doxygen/) to generate [documentation](https://nlohmann.github.io/json/)
+- [**git-update-ghpages**](https://github.com/rstacruz/git-update-ghpages) to upload the documentation to gh-pages
+- [**Github Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
+- [**libFuzzer**](http://llvm.org/docs/LibFuzzer.html) to implement fuzz testing for OSS-Fuzz
+- [**OSS-Fuzz**](https://github.com/google/oss-fuzz) for continuous fuzz testing of the library
+- [**re2c**](http://re2c.org) to generate an automaton for the lexical analysis
+- [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](http://melpon.org/wandbox)
+- [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
+- [**Valgrind**](http://valgrind.org) to check for correct memory management
+- [**Wandbox**](http://melpon.org/wandbox) for [online examples](http://melpon.org/wandbox/permlink/4NEU6ZZMoM9lpIex)
 
 
 ## Projects using JSON for Modern C++
