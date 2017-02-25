@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 2.1.0
+|  |  |__   |  |  | | | |  version 2.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -1136,10 +1136,10 @@ class basic_json
         result["url"] = "https://github.com/nlohmann/json";
         result["version"] =
         {
-            {"string", "2.1.0"},
+            {"string", "2.1.1"},
             {"major", 2},
             {"minor", 1},
-            {"patch", 0},
+            {"patch", 1}
         };
 
 #ifdef _WIN32
@@ -1747,7 +1747,7 @@ class basic_json
                 {
                     if (t == value_t::null)
                     {
-                        JSON_THROW(std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21 2.1.0")); // LCOV_EXCL_LINE
+                        JSON_THROW(std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21 2.1.1")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -7969,7 +7969,7 @@ class basic_json
     @sa @ref from_cbor(const std::vector<uint8_t>&, const size_t) for the
         related CBOR format
 
-    @since version 2.0.9, parameter @a start_index since 2.0.11
+    @since version 2.0.9, parameter @a start_index since 2.1.1
     */
     static basic_json from_msgpack(const std::vector<uint8_t>& v,
                                    const size_t start_index = 0)
@@ -8032,7 +8032,7 @@ class basic_json
     @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
         related MessagePack format
 
-    @since version 2.0.9, parameter @a start_index since 2.0.11
+    @since version 2.0.9, parameter @a start_index since 2.1.1
     */
     static basic_json from_cbor(const std::vector<uint8_t>& v,
                                 const size_t start_index = 0)

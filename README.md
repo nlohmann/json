@@ -887,7 +887,7 @@ $ make json_unit -Ctest
 $ ./test/json_unit "*""
 
 ===============================================================================
-All tests passed (11202596 assertions in 47 test cases)
+All tests passed (11202597 assertions in 47 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run
