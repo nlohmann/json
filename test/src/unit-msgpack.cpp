@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.0
+|  |  |__   |  |  | | | |  version 2.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -342,7 +342,7 @@ TEST_CASE("MessagePack")
                     const auto result = json::to_msgpack(j);
                     CHECK(result == expected);
 
-                    int16_t restored = (result[1] << 8) + result[2];
+                    int16_t restored = static_cast<int16_t>((result[1] << 8) + result[2]);
                     CHECK(restored == -9263);
 
                     // roundtrip
@@ -374,7 +374,7 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xd1);
-                        int16_t restored = (result[1] << 8) + result[2];
+                        int16_t restored = static_cast<int16_t>((result[1] << 8) + result[2]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -389,7 +389,7 @@ TEST_CASE("MessagePack")
                     numbers.push_back(-65536);
                     numbers.push_back(-77777);
                     numbers.push_back(-1048576);
-                    numbers.push_back(-2147483648);
+                    numbers.push_back(-2147483648ll);
                     for (auto i : numbers)
                     {
                         CAPTURE(i);
@@ -1039,6 +1039,10 @@ TEST_CASE("single MessagePack roundtrip")
 
         // compare parsed JSON values
         CHECK(j1 == j2);
+
+        // check with different start index
+        packed.insert(packed.begin(), 5, 0xff);
+        CHECK(j1 == json::from_msgpack(packed, 5));
     }
 }
 

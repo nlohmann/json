@@ -7,6 +7,7 @@ fuzz-testing
 *.gcno
 *.gcda
 
+build
 working
 
 doc/xml

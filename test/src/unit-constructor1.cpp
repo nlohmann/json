@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.0
+|  |  |__   |  |  | | | |  version 2.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -725,7 +725,7 @@ TEST_CASE("constructors")
 
         SECTION("long double")
         {
-            long double n = 42.23;
+            long double n = 42.23l;
             json j(n);
             CHECK(j.type() == json::value_t::number_float);
             CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));

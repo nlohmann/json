@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.0
+|  |  |__   |  |  | | | |  version 2.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -972,14 +972,14 @@ TEST_CASE("value conversion")
                 auto m5 = j5.get<std::list<std::string>>();
             }
 
-            //SECTION("std::forward_list")
-            //{
-            //    auto m1 = j1.get<std::forward_list<int>>();
-            //    auto m2 = j2.get<std::forward_list<unsigned int>>();
-            //    auto m3 = j3.get<std::forward_list<double>>();
-            //    auto m4 = j4.get<std::forward_list<bool>>();
-            //    auto m5 = j5.get<std::forward_list<std::string>>();
-            //}
+            SECTION("std::forward_list")
+            {
+                auto m1 = j1.get<std::forward_list<int>>();
+                auto m2 = j2.get<std::forward_list<unsigned int>>();
+                auto m3 = j3.get<std::forward_list<double>>();
+                auto m4 = j4.get<std::forward_list<bool>>();
+                auto m5 = j5.get<std::forward_list<std::string>>();
+            }
 
             SECTION("std::vector")
             {

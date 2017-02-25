@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.0
+|  |  |__   |  |  | | | |  version 2.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -250,14 +250,28 @@ TEST_CASE("object inspection")
             ss.str(std::string());
 
             // use stringstream for JSON serialization
-            json j_number = 3.141592653589793;
+            json j_number = 3.14159265358979;
             ss << j_number;
 
             // check that precision has been overridden during serialization
-            CHECK(ss.str() == "3.141592653589793");
+            CHECK(ss.str() == "3.14159265358979");
 
             // check that precision has been restored
             CHECK(ss.precision() == 3);
+        }
+    }
+
+    SECTION("round trips")
+    {
+        for (const auto& s :
+    {"3.141592653589793", "1000000000000000010E5"
+    })
+        {
+            json j1 = json::parse(s);
+            std::string s1 = j1.dump();
+            json j2 = json::parse(s1);
+            std::string s2 = j2.dump();
+            CHECK(s1 == s2);
         }
     }
 
