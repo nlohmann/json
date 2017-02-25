@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.14"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>JSON for Modern C++: nlohmann::basic_json&lt; ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer &gt; Class Template Reference</title>
+<title>JSON for Modern C++: nlohmann::basic_json Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -23,7 +23,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">JSON for Modern C++
-   &#160;<span id="projectnumber">2.1.0</span>
+   &#160;<span id="projectnumber">2.1.1</span>
    </div>
   </td>
  </tr>
@@ -72,7 +72,7 @@ $(function() {
 <a href="#friends">Friends</a> &#124;
 <a href="classnlohmann_1_1basic__json-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">nlohmann::basic_json&lt; ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer &gt; Class Template Reference</div>  </div>
+<div class="title">nlohmann::basic_json Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -569,21 +569,25 @@ lexicographical comparison operators</h2></td></tr>
 <tr class="memitem:a122640e7e2db1814fc7bbb3c122ec76e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a122640e7e2db1814fc7bbb3c122ec76e.html#a122640e7e2db1814fc7bbb3c122ec76e">operator==</a> (<a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> lhs, <a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> rhs) noexcept</td></tr>
 <tr class="memdesc:a122640e7e2db1814fc7bbb3c122ec76e"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison: equal  <a href="classnlohmann_1_1basic__json_a122640e7e2db1814fc7bbb3c122ec76e.html#a122640e7e2db1814fc7bbb3c122ec76e">More...</a><br /></td></tr>
 <tr class="separator:a122640e7e2db1814fc7bbb3c122ec76e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9730b9f7bc2150e641fe20198d4477c7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a9730b9f7bc2150e641fe20198d4477c7.html#a9730b9f7bc2150e641fe20198d4477c7">operator==</a> (<a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> v, std::nullptr_t) noexcept</td></tr>
-<tr class="memdesc:a9730b9f7bc2150e641fe20198d4477c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison: equal  <a href="classnlohmann_1_1basic__json_a9730b9f7bc2150e641fe20198d4477c7.html#a9730b9f7bc2150e641fe20198d4477c7">More...</a><br /></td></tr>
-<tr class="separator:a9730b9f7bc2150e641fe20198d4477c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a98e05a2c9b8f74bd60442772cddeee52"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a98e05a2c9b8f74bd60442772cddeee52.html#a98e05a2c9b8f74bd60442772cddeee52">operator==</a> (std::nullptr_t, <a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> v) noexcept</td></tr>
-<tr class="memdesc:a98e05a2c9b8f74bd60442772cddeee52"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison: equal  <a href="classnlohmann_1_1basic__json_a98e05a2c9b8f74bd60442772cddeee52.html#a98e05a2c9b8f74bd60442772cddeee52">More...</a><br /></td></tr>
-<tr class="separator:a98e05a2c9b8f74bd60442772cddeee52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba21440ea1aff44f718285ed7d6d20d9"><td class="memTemplParams" colspan="2">template&lt;typename ScalarType , typename std::enable_if&lt; std::is_scalar&lt; ScalarType &gt;::value, int &gt;::type  = 0&gt; </td></tr>
+<tr class="memitem:aba21440ea1aff44f718285ed7d6d20d9"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_aba21440ea1aff44f718285ed7d6d20d9.html#aba21440ea1aff44f718285ed7d6d20d9">operator==</a> (<a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> lhs, const ScalarType rhs) noexcept</td></tr>
+<tr class="memdesc:aba21440ea1aff44f718285ed7d6d20d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison: equal  <a href="classnlohmann_1_1basic__json_aba21440ea1aff44f718285ed7d6d20d9.html#aba21440ea1aff44f718285ed7d6d20d9">More...</a><br /></td></tr>
+<tr class="separator:aba21440ea1aff44f718285ed7d6d20d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef302e3ae215e46e5035d0e4fdf47235"><td class="memTemplParams" colspan="2">template&lt;typename ScalarType , typename std::enable_if&lt; std::is_scalar&lt; ScalarType &gt;::value, int &gt;::type  = 0&gt; </td></tr>
+<tr class="memitem:aef302e3ae215e46e5035d0e4fdf47235"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_aef302e3ae215e46e5035d0e4fdf47235.html#aef302e3ae215e46e5035d0e4fdf47235">operator==</a> (const ScalarType lhs, <a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> rhs) noexcept</td></tr>
+<tr class="memdesc:aef302e3ae215e46e5035d0e4fdf47235"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison: equal  <a href="classnlohmann_1_1basic__json_aef302e3ae215e46e5035d0e4fdf47235.html#aef302e3ae215e46e5035d0e4fdf47235">More...</a><br /></td></tr>
+<tr class="separator:aef302e3ae215e46e5035d0e4fdf47235"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6e2e21da48f5d9471716cd868a068327"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a6e2e21da48f5d9471716cd868a068327.html#a6e2e21da48f5d9471716cd868a068327">operator!=</a> (<a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> lhs, <a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> rhs) noexcept</td></tr>
 <tr class="memdesc:a6e2e21da48f5d9471716cd868a068327"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison: not equal  <a href="classnlohmann_1_1basic__json_a6e2e21da48f5d9471716cd868a068327.html#a6e2e21da48f5d9471716cd868a068327">More...</a><br /></td></tr>
 <tr class="separator:a6e2e21da48f5d9471716cd868a068327"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae347859ec88176ef76a0cbe5b4514fcf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_ae347859ec88176ef76a0cbe5b4514fcf.html#ae347859ec88176ef76a0cbe5b4514fcf">operator!=</a> (<a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> v, std::nullptr_t) noexcept</td></tr>
-<tr class="memdesc:ae347859ec88176ef76a0cbe5b4514fcf"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison: not equal  <a href="classnlohmann_1_1basic__json_ae347859ec88176ef76a0cbe5b4514fcf.html#ae347859ec88176ef76a0cbe5b4514fcf">More...</a><br /></td></tr>
-<tr class="separator:ae347859ec88176ef76a0cbe5b4514fcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f97a91ad8f1d5cf0b9213bd24f247c4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a7f97a91ad8f1d5cf0b9213bd24f247c4.html#a7f97a91ad8f1d5cf0b9213bd24f247c4">operator!=</a> (std::nullptr_t, <a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> v) noexcept</td></tr>
-<tr class="memdesc:a7f97a91ad8f1d5cf0b9213bd24f247c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison: not equal  <a href="classnlohmann_1_1basic__json_a7f97a91ad8f1d5cf0b9213bd24f247c4.html#a7f97a91ad8f1d5cf0b9213bd24f247c4">More...</a><br /></td></tr>
-<tr class="separator:a7f97a91ad8f1d5cf0b9213bd24f247c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afefc38fc08bdb7a9a7474b5ab4a1140f"><td class="memTemplParams" colspan="2">template&lt;typename ScalarType , typename std::enable_if&lt; std::is_scalar&lt; ScalarType &gt;::value, int &gt;::type  = 0&gt; </td></tr>
+<tr class="memitem:afefc38fc08bdb7a9a7474b5ab4a1140f"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_afefc38fc08bdb7a9a7474b5ab4a1140f.html#afefc38fc08bdb7a9a7474b5ab4a1140f">operator!=</a> (<a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> lhs, const ScalarType rhs) noexcept</td></tr>
+<tr class="memdesc:afefc38fc08bdb7a9a7474b5ab4a1140f"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison: not equal  <a href="classnlohmann_1_1basic__json_afefc38fc08bdb7a9a7474b5ab4a1140f.html#afefc38fc08bdb7a9a7474b5ab4a1140f">More...</a><br /></td></tr>
+<tr class="separator:afefc38fc08bdb7a9a7474b5ab4a1140f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0e886db6e9fa91ff9fd853333fed05b"><td class="memTemplParams" colspan="2">template&lt;typename ScalarType , typename std::enable_if&lt; std::is_scalar&lt; ScalarType &gt;::value, int &gt;::type  = 0&gt; </td></tr>
+<tr class="memitem:ab0e886db6e9fa91ff9fd853333fed05b"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_ab0e886db6e9fa91ff9fd853333fed05b.html#ab0e886db6e9fa91ff9fd853333fed05b">operator!=</a> (const ScalarType lhs, <a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> rhs) noexcept</td></tr>
+<tr class="memdesc:ab0e886db6e9fa91ff9fd853333fed05b"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison: not equal  <a href="classnlohmann_1_1basic__json_ab0e886db6e9fa91ff9fd853333fed05b.html#ab0e886db6e9fa91ff9fd853333fed05b">More...</a><br /></td></tr>
+<tr class="separator:ab0e886db6e9fa91ff9fd853333fed05b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aacd442b66140c764c594ac8ad7dfd5b3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_aacd442b66140c764c594ac8ad7dfd5b3.html#aacd442b66140c764c594ac8ad7dfd5b3">operator&lt;</a> (<a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> lhs, <a class="el" href="classnlohmann_1_1basic__json_a4057c5425f4faacfe39a8046871786ca.html#a4057c5425f4faacfe39a8046871786ca">const_reference</a> rhs) noexcept</td></tr>
 <tr class="memdesc:aacd442b66140c764c594ac8ad7dfd5b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">comparison: less than  <a href="classnlohmann_1_1basic__json_aacd442b66140c764c594ac8ad7dfd5b3.html#aacd442b66140c764c594ac8ad7dfd5b3">More...</a><br /></td></tr>
 <tr class="separator:aacd442b66140c764c594ac8ad7dfd5b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -642,15 +646,15 @@ binary serialization/deserialization support</h2></td></tr>
 <tr class="memitem:a09ca1dc273d226afe0ca83a9d7438d9c"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; uint8_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a09ca1dc273d226afe0ca83a9d7438d9c.html#a09ca1dc273d226afe0ca83a9d7438d9c">to_msgpack</a> (const <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> &amp;j)</td></tr>
 <tr class="memdesc:a09ca1dc273d226afe0ca83a9d7438d9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a MessagePack serialization of a given JSON value  <a href="classnlohmann_1_1basic__json_a09ca1dc273d226afe0ca83a9d7438d9c.html#a09ca1dc273d226afe0ca83a9d7438d9c">More...</a><br /></td></tr>
 <tr class="separator:a09ca1dc273d226afe0ca83a9d7438d9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a23df4c95e90c6e5c18d1c65ff552051b"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a23df4c95e90c6e5c18d1c65ff552051b.html#a23df4c95e90c6e5c18d1c65ff552051b">from_msgpack</a> (const std::vector&lt; uint8_t &gt; &amp;v)</td></tr>
-<tr class="memdesc:a23df4c95e90c6e5c18d1c65ff552051b"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a JSON value from a byte vector in MessagePack format  <a href="classnlohmann_1_1basic__json_a23df4c95e90c6e5c18d1c65ff552051b.html#a23df4c95e90c6e5c18d1c65ff552051b">More...</a><br /></td></tr>
-<tr class="separator:a23df4c95e90c6e5c18d1c65ff552051b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3eafe0b1fb2f2c443f1b3fea55c8a470"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a3eafe0b1fb2f2c443f1b3fea55c8a470.html#a3eafe0b1fb2f2c443f1b3fea55c8a470">from_msgpack</a> (const std::vector&lt; uint8_t &gt; &amp;v, const size_t start_index=0)</td></tr>
+<tr class="memdesc:a3eafe0b1fb2f2c443f1b3fea55c8a470"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a JSON value from a byte vector in MessagePack format  <a href="classnlohmann_1_1basic__json_a3eafe0b1fb2f2c443f1b3fea55c8a470.html#a3eafe0b1fb2f2c443f1b3fea55c8a470">More...</a><br /></td></tr>
+<tr class="separator:a3eafe0b1fb2f2c443f1b3fea55c8a470"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2566783e190dec524bf3445b322873b8"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; uint8_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_a2566783e190dec524bf3445b322873b8.html#a2566783e190dec524bf3445b322873b8">to_cbor</a> (const <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a> &amp;j)</td></tr>
 <tr class="memdesc:a2566783e190dec524bf3445b322873b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a MessagePack serialization of a given JSON value  <a href="classnlohmann_1_1basic__json_a2566783e190dec524bf3445b322873b8.html#a2566783e190dec524bf3445b322873b8">More...</a><br /></td></tr>
 <tr class="separator:a2566783e190dec524bf3445b322873b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa5a5634a13b83f93b0de027e703ae8c0"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_aa5a5634a13b83f93b0de027e703ae8c0.html#aa5a5634a13b83f93b0de027e703ae8c0">from_cbor</a> (const std::vector&lt; uint8_t &gt; &amp;v)</td></tr>
-<tr class="memdesc:aa5a5634a13b83f93b0de027e703ae8c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a JSON value from a byte vector in CBOR format  <a href="classnlohmann_1_1basic__json_aa5a5634a13b83f93b0de027e703ae8c0.html#aa5a5634a13b83f93b0de027e703ae8c0">More...</a><br /></td></tr>
-<tr class="separator:aa5a5634a13b83f93b0de027e703ae8c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5e3e1758c1a52ffe89b1d379ef7fbe1"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classnlohmann_1_1basic__json.html">basic_json</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnlohmann_1_1basic__json_ab5e3e1758c1a52ffe89b1d379ef7fbe1.html#ab5e3e1758c1a52ffe89b1d379ef7fbe1">from_cbor</a> (const std::vector&lt; uint8_t &gt; &amp;v, const size_t start_index=0)</td></tr>
+<tr class="memdesc:ab5e3e1758c1a52ffe89b1d379ef7fbe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a JSON value from a byte vector in CBOR format  <a href="classnlohmann_1_1basic__json_ab5e3e1758c1a52ffe89b1d379ef7fbe1.html#ab5e3e1758c1a52ffe89b1d379ef7fbe1">More...</a><br /></td></tr>
+<tr class="separator:ab5e3e1758c1a52ffe89b1d379ef7fbe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 JSON Pointer functions</h2></td></tr>
@@ -684,7 +688,7 @@ JSON Patch functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;template&lt; typename U, typename V, typename... Args &gt; class ObjectType = std::map, template&lt; typename U, typename... Args &gt; class ArrayType = std::vector, class StringType = std::string, class BooleanType = bool, class NumberIntegerType = std::int64_t, class NumberUnsignedType = std::uint64_t, class NumberFloatType = double, template&lt; typename U &gt; class AllocatorType = std::allocator, template&lt; typename T, typename SFINAE=void &gt; class JSONSerializer = adl_serializer&gt;<br />
-class nlohmann::basic_json&lt; ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer &gt;</h3>
+class nlohmann::basic_json</h3>
 
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -737,11 +741,11 @@ class nlohmann::basic_json&lt; ObjectType, ArrayType, StringType, BooleanType, N
 <dl class="section see"><dt>See also</dt><dd><a href="http://rfc7159.net/rfc7159">RFC 7159: The JavaScript Object Notation (JSON) Data Interchange Format</a></dd></dl>
 <dl class="section since"><dt>Since</dt><dd>version 1.0.0 </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="json_8hpp_source.html#l01038">1038</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="json_8hpp_source.html#l01039">1039</a> of file <a class="el" href="json_8hpp_source.html">json.hpp</a>.</p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Jan 28 2017 18:19:11 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Feb 25 2017 16:40:28 for JSON for Modern C++ by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.14
 </small></address>

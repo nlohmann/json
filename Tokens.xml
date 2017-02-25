@@ -1604,8 +1604,8 @@
       <Type>ffunc</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a9730b9f7bc2150e641fe20198d4477c7.html</Path>
-    <Anchor>a9730b9f7bc2150e641fe20198d4477c7</Anchor>
+    <Path>classnlohmann_1_1basic__json_aba21440ea1aff44f718285ed7d6d20d9.html</Path>
+    <Anchor>aba21440ea1aff44f718285ed7d6d20d9</Anchor>
     <Abstract>comparison: equal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1616,8 +1616,8 @@
       <Type>ffunc</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a98e05a2c9b8f74bd60442772cddeee52.html</Path>
-    <Anchor>a98e05a2c9b8f74bd60442772cddeee52</Anchor>
+    <Path>classnlohmann_1_1basic__json_aef302e3ae215e46e5035d0e4fdf47235.html</Path>
+    <Anchor>aef302e3ae215e46e5035d0e4fdf47235</Anchor>
     <Abstract>comparison: equal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1640,8 +1640,8 @@
       <Type>ffunc</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_ae347859ec88176ef76a0cbe5b4514fcf.html</Path>
-    <Anchor>ae347859ec88176ef76a0cbe5b4514fcf</Anchor>
+    <Path>classnlohmann_1_1basic__json_afefc38fc08bdb7a9a7474b5ab4a1140f.html</Path>
+    <Anchor>afefc38fc08bdb7a9a7474b5ab4a1140f</Anchor>
     <Abstract>comparison: not equal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1652,8 +1652,8 @@
       <Type>ffunc</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a7f97a91ad8f1d5cf0b9213bd24f247c4.html</Path>
-    <Anchor>a7f97a91ad8f1d5cf0b9213bd24f247c4</Anchor>
+    <Path>classnlohmann_1_1basic__json_ab0e886db6e9fa91ff9fd853333fed05b.html</Path>
+    <Anchor>ab0e886db6e9fa91ff9fd853333fed05b</Anchor>
     <Abstract>comparison: not equal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1844,8 +1844,8 @@
       <Type>clm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a23df4c95e90c6e5c18d1c65ff552051b.html</Path>
-    <Anchor>a23df4c95e90c6e5c18d1c65ff552051b</Anchor>
+    <Path>classnlohmann_1_1basic__json_a3eafe0b1fb2f2c443f1b3fea55c8a470.html</Path>
+    <Anchor>a3eafe0b1fb2f2c443f1b3fea55c8a470</Anchor>
     <Abstract>create a JSON value from a byte vector in MessagePack format </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1868,8 +1868,8 @@
       <Type>clm</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_aa5a5634a13b83f93b0de027e703ae8c0.html</Path>
-    <Anchor>aa5a5634a13b83f93b0de027e703ae8c0</Anchor>
+    <Path>classnlohmann_1_1basic__json_ab5e3e1758c1a52ffe89b1d379ef7fbe1.html</Path>
+    <Anchor>ab5e3e1758c1a52ffe89b1d379ef7fbe1</Anchor>
     <Abstract>create a JSON value from a byte vector in CBOR format </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -2744,6 +2744,39 @@
     <Path>classnlohmann_1_1basic__json_1_1json__reverse__iterator_af51506d91ecf911c97521e10a047c841.html</Path>
     <Anchor>af51506d91ecf911c97521e10a047c841</Anchor>
     <Abstract>return the value of an iterator </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>nlohmann::basic_json::lexer::strtonum</Name>
+      <APILanguage>c</APILanguage>
+      <Type>cl</Type>
+      <Scope>nlohmann::basic_json::lexer::strtonum</Scope>
+    </TokenIdentifier>
+    <Path>structnlohmann_1_1basic__json_1_1lexer_1_1strtonum.html</Path>
+    <Abstract>parse string into a built-in arithmetic type as if the current locale is POSIX. </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>strtonum</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>nlohmann::basic_json::lexer::strtonum</Scope>
+    </TokenIdentifier>
+    <Path>structnlohmann_1_1basic__json_1_1lexer_1_1strtonum_ae065098e24b08ea79a359950190006d8.html</Path>
+    <Anchor>ae065098e24b08ea79a359950190006d8</Anchor>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>to</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>nlohmann::basic_json::lexer::strtonum</Scope>
+    </TokenIdentifier>
+    <Path>structnlohmann_1_1basic__json_1_1lexer_1_1strtonum_af1b3dc99a67a854750437a60a22f4989.html</Path>
+    <Anchor>af1b3dc99a67a854750437a60a22f4989</Anchor>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
