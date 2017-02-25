@@ -1,6 +1,40 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.1.1](https://github.com/nlohmann/json/releases/tag/v2.1.1) (2017-02-25)
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.1.0...v2.1.1)
+
+- warning in the library [\#472](https://github.com/nlohmann/json/issues/472)
+- How to create an array of Objects? [\#470](https://github.com/nlohmann/json/issues/470)
+- \[Bug?\] Cannot get int pointer, but int64\_t works [\#468](https://github.com/nlohmann/json/issues/468)
+- Illegal indirection [\#467](https://github.com/nlohmann/json/issues/467)
+- in vs can't find linkageId   [\#466](https://github.com/nlohmann/json/issues/466)
+- Roundtrip error while parsing "1000000000000000010E5" [\#465](https://github.com/nlohmann/json/issues/465)
+- C4996 error and warning with Visual Studio [\#463](https://github.com/nlohmann/json/issues/463)
+- Support startIndex for from\_cbor/from\_msgpack [\#462](https://github.com/nlohmann/json/issues/462)
+- question: monospace font used in feature slideshow? [\#460](https://github.com/nlohmann/json/issues/460)
+- Object.keys\(\) [\#459](https://github.com/nlohmann/json/issues/459)
+- Use “, “ as delimiter for json-objects. [\#457](https://github.com/nlohmann/json/issues/457)
+- Enum -\> string during serialization and vice versa [\#455](https://github.com/nlohmann/json/issues/455)
+- doubles are printed as integers [\#454](https://github.com/nlohmann/json/issues/454)
+- Warnings with Visual Studio c++ \(VS2015 Update 3\) [\#453](https://github.com/nlohmann/json/issues/453)
+- Heap-buffer-overflow \(OSS-Fuzz issue 585\) [\#452](https://github.com/nlohmann/json/issues/452)
+- use of undeclared identifier 'UINT8\_MAX' [\#451](https://github.com/nlohmann/json/issues/451)
+- Question on the lifetime managment of objects at the lower levels [\#449](https://github.com/nlohmann/json/issues/449)
+- Json should not be constructible with 'json\*' [\#448](https://github.com/nlohmann/json/issues/448)
+- Move value\_t to namespace scope [\#447](https://github.com/nlohmann/json/issues/447)
+- Typo in README.md [\#446](https://github.com/nlohmann/json/issues/446)
+- make check compilation is unneccesarily slow [\#445](https://github.com/nlohmann/json/issues/445)
+- Problem in dump\(\) in json.h caused by ss.imbue [\#444](https://github.com/nlohmann/json/issues/444)
+- I want to create Windows Application in Visual Studio 2015 c++, and i have a problem [\#443](https://github.com/nlohmann/json/issues/443)
+- Implicit conversion issues [\#442](https://github.com/nlohmann/json/issues/442)
+- Parsing of floats locale dependent [\#302](https://github.com/nlohmann/json/issues/302)
+
+- Speedup CI builds using cotire [\#461](https://github.com/nlohmann/json/pull/461) ([tusharpm](https://github.com/tusharpm))
+- TurpentineDistillery feature/locale independent str to num [\#450](https://github.com/nlohmann/json/pull/450) ([nlohmann](https://github.com/nlohmann))
+- README: adjust boost::optional example [\#439](https://github.com/nlohmann/json/pull/439) ([jaredgrubb](https://github.com/jaredgrubb))
+- fix \#414 - comparing to 0 literal [\#415](https://github.com/nlohmann/json/pull/415) ([stanmihai4](https://github.com/stanmihai4))
+
 ## [v2.1.0](https://github.com/nlohmann/json/releases/tag/v2.1.0) (2017-01-28)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.10...v2.1.0)
 
@@ -20,6 +54,7 @@ All notable changes to this project will be documented in this file. This projec
 - size parameter for parse\(\) [\#419](https://github.com/nlohmann/json/issues/419)
 - json.hpp forcibly defines GCC\_VERSION [\#417](https://github.com/nlohmann/json/issues/417)
 - Use-of-uninitialized-value \(OSS-Fuzz issue 377\) [\#416](https://github.com/nlohmann/json/issues/416)
+- comparing to 0 literal [\#414](https://github.com/nlohmann/json/issues/414)
 - Single char converted to ASCII code instead of string [\#413](https://github.com/nlohmann/json/issues/413)
 - How to know if a string  was parsed as utf-8? [\#406](https://github.com/nlohmann/json/issues/406)
 - Overloaded += to add objects to an array makes no sense? [\#404](https://github.com/nlohmann/json/issues/404)
@@ -37,6 +72,7 @@ All notable changes to this project will be documented in this file. This projec
 
 - conversion from/to user-defined types [\#435](https://github.com/nlohmann/json/pull/435) ([nlohmann](https://github.com/nlohmann))
 - Fix documentation error [\#430](https://github.com/nlohmann/json/pull/430) ([vjon](https://github.com/vjon))
+- locale-independent num-to-str [\#378](https://github.com/nlohmann/json/pull/378) ([TurpentineDistillery](https://github.com/TurpentineDistillery))
 
 ## [v2.0.10](https://github.com/nlohmann/json/releases/tag/v2.0.10) (2017-01-02)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.9...v2.0.10)

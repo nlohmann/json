@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.0
+|  |  |__   |  |  | | | |  version 2.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -36,5 +36,12 @@ TEST_CASE("version information")
     SECTION("version()")
     {
         CHECK(json::meta()["name"] == "JSON for Modern C++");
+        CHECK(json::meta()["version"] == json(
+        {
+            {"string", "2.1.1"},
+            {"major", 2},
+            {"minor", 1},
+            {"patch", 1}
+        }));
     }
 }
