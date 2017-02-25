@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.0
+|  |  |__   |  |  | | | |  version 2.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -26,15 +26,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <array>
-#include <map>
-#include <string>
-#include <memory>
 #include "catch.hpp"
 
 #include "json.hpp"
 
 using nlohmann::json;
+
+#include <array>
+#include <map>
+#include <string>
+#include <memory>
 
 namespace udt
 {

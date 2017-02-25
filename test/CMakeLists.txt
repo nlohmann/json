@@ -1,8 +1,16 @@
+add_library(catch_main OBJECT
+    "src/unit.cpp"
+)
+set_target_properties(catch_main PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+)
+target_include_directories(catch_main PRIVATE "thirdparty/catch")
+
 # The unit test executable.
 set(JSON_UNITTEST_TARGET_NAME "json_unit")
 add_executable(${JSON_UNITTEST_TARGET_NAME}
-    "thirdparty/catch/catch.hpp"
-    "src/unit.cpp"
+    $<TARGET_OBJECTS:catch_main>
     "src/unit-algorithms.cpp"
     "src/unit-allocator.cpp"
     "src/unit-capacity.cpp"
@@ -43,12 +51,32 @@ add_executable(${JSON_UNITTEST_TARGET_NAME}
 set_target_properties(${JSON_UNITTEST_TARGET_NAME} PROPERTIES
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
-    COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
-    COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
 )
+
+if(MSVC)
+    set_target_properties(${JSON_UNITTEST_TARGET_NAME} PROPERTIES
+        COMPILE_DEFINITIONS "_SCL_SECURE_NO_WARNINGS"
+        COMPILE_OPTIONS "/EHsc;$<$<CONFIG:Release>:/Od>"
+    )
+endif()
 
 target_include_directories(${JSON_UNITTEST_TARGET_NAME} PRIVATE "src" "thirdparty/catch")
 target_link_libraries(${JSON_UNITTEST_TARGET_NAME} ${JSON_TARGET_NAME})
+
+include(cotire OPTIONAL)
+
+if(COMMAND cotire)
+    set_target_properties(${JSON_UNITTEST_TARGET_NAME} PROPERTIES
+        COTIRE_ADD_UNITY_BUILD FALSE
+        COTIRE_CXX_PREFIX_HEADER_INIT "src/prefix.hpp"
+    )
+    # HACK - CMAKE_INCLUDE_SYSTEM_FLAG_CXX has a trailing space, which Cotire doesn't strip
+    # Technically, this fix should go in cotire.cmake. TODO - submit a pull request upstream.
+    if (CMAKE_INCLUDE_SYSTEM_FLAG_CXX)
+		string (STRIP "${CMAKE_INCLUDE_SYSTEM_FLAG_CXX}" CMAKE_INCLUDE_SYSTEM_FLAG_CXX)
+    endif()
+    cotire(${JSON_UNITTEST_TARGET_NAME})
+endif()
 
 add_test(NAME "${JSON_UNITTEST_TARGET_NAME}_default"
 	COMMAND ${JSON_UNITTEST_TARGET_NAME}

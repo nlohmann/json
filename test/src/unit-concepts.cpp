@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.0
+|  |  |__   |  |  | | | |  version 2.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -72,8 +72,8 @@ TEST_CASE("concepts")
         // X::size_type must return an unsigned integer
         CHECK((std::is_unsigned<json::size_type>::value));
         // X::size_type can represent any non-negative value of X::difference_type
-        CHECK(std::numeric_limits<json::difference_type>::max() <=
-              std::numeric_limits<json::size_type>::max());
+        CHECK(static_cast<size_t>(std::numeric_limits<json::difference_type>::max()) <=
+              static_cast<size_t>(std::numeric_limits<json::size_type>::max()));
 
         // the expression "X u" has the post-condition "u.empty()"
         {

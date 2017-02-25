@@ -2,9 +2,9 @@
 
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
-[![Build status](https://doozer.io/badge/nlohmann/json/buildstatus/develop)](https://doozer.io/user/nlohmann/json)
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f3732b3327e34358a0e9d1fe9f661f08)](https://www.codacy.com/app/nlohmann/json?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/4NEU6ZZMoM9lpIex)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
@@ -26,6 +26,8 @@
 - [Supported compilers](#supported-compilers)
 - [License](#license)
 - [Thanks](#thanks)
+- [Used third-party tools](#used-third-party-tools)
+- [Projects using JSON for Modern C++](#projects-using-json-for-modern-c)
 - [Notes](#notes)
 - [Execute unit tests](#execute-unit-tests)
 
@@ -167,8 +169,14 @@ auto j2 = R"(
     "pi": 3.141
   }
 )"_json;
+```
 
-// or explicitly
+Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string `"{ "happy": true, "pi": 3.141 }"` rather than parsing the actual object.
+
+The above example can also be expressed explicitly using `json::parse()`:
+
+```cpp
+// parse explicitly
 auto j3 = json::parse("{ \"happy\": true, \"pi\": 3.141 }");
 ```
 
@@ -802,7 +810,7 @@ I deeply appreciate the help of the following people.
 - [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable.
 - [Denis Andrejew](https://github.com/seeekr) fixed a grammar issue in the README file.
 - [Pierre-Antoine Lacaze](https://github.com/palacaze) found a subtle bug in the `dump()` function.
-- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser and improved the benchmarking code.
+- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser, improved the benchmarking code, and realized locale-independent number parsing and printing.
 - [cgzones](https://github.com/cgzones) had an idea how to fix the Coverity scan.
 - [Jared Grubb](https://github.com/jaredgrubb) silenced a nasty documentation warning.
 - [Yixin Zhang](https://github.com/qwename) fixed an integer overflow check.
@@ -813,8 +821,47 @@ I deeply appreciate the help of the following people.
 - [Alexej Harm](https://github.com/qis) helped to get the user-defined types working with Visual Studio.
 - [Jared Grubb](https://github.com/jaredgrubb) supported the implementation of user-defined types.
 - [EnricoBilla](https://github.com/EnricoBilla) noted a typo in an example.
+- [Martin Hořeňovský](https://github.com/horenmar) found a way for a 2x speedup for the compilation time of the test suite.
+- [ukhegg](https://github.com/ukhegg) found proposed an improvement for the examples section.
+- [rswanson-ihi](https://github.com/rswanson-ihi) noted a type in the README.
+- [Mihai Stan](https://github.com/stanmihai4) fixed a bug in the comparison with `nullptr`s.
+- [Tushar Maheshwari](https://github.com/tusharpm) added [cotire](https://github.com/sakra/cotire) support to speed up the compilation.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
+
+
+## Used third-party tools
+
+The library itself contains of a single header file licensed under the MIT license. However, it is built, tested, documented, and whatnot using a lot of thirs-party tools and services. Thanks a lot!
+
+- [**American fuzzy lop**](http://lcamtuf.coredump.cx/afl/) for fuzz testing
+- [**AppVeyor**](https://www.appveyor.com) for [continuous integration](https://ci.appveyor.com/project/nlohmann/json) on Windows
+- [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code identation
+- [**benchpress**](https://github.com/sbs-ableton/benchpress) to benchmark the code
+- [**Catch**](https://github.com/philsquared/Catch) for the unit tests
+- [**Clang**](http://clang.llvm.org) for compilation with code sanitizers
+- [**Cmake**](https://cmake.org) for build automation
+- [**Codacity**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
+- [**cotire**](https://github.com/sakra/cotire) to speed of compilation
+- [**Coveralls**](https://coveralls.io) to measure [code coverage](https://coveralls.io/github/nlohmann/json)
+- [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
+- [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
+- [**cxxopts**](https://github.com/jarro2783/cxxopts) to let benchpress parse command-line parameters
+- [**Doxygen**](http://www.stack.nl/~dimitri/doxygen/) to generate [documentation](https://nlohmann.github.io/json/)
+- [**git-update-ghpages**](https://github.com/rstacruz/git-update-ghpages) to upload the documentation to gh-pages
+- [**Github Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
+- [**libFuzzer**](http://llvm.org/docs/LibFuzzer.html) to implement fuzz testing for OSS-Fuzz
+- [**OSS-Fuzz**](https://github.com/google/oss-fuzz) for continuous fuzz testing of the library
+- [**re2c**](http://re2c.org) to generate an automaton for the lexical analysis
+- [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](http://melpon.org/wandbox)
+- [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
+- [**Valgrind**](http://valgrind.org) to check for correct memory management
+- [**Wandbox**](http://melpon.org/wandbox) for [online examples](http://melpon.org/wandbox/permlink/4NEU6ZZMoM9lpIex)
+
+
+## Projects using JSON for Modern C++
+
+The library is currently used in Apple macOS Sierra and iOS 10. I am not sure what they are using the library for, but I am happy that it runs on so many devices.
 
 
 ## Notes
@@ -840,7 +887,7 @@ $ make json_unit -Ctest
 $ ./test/json_unit "*""
 
 ===============================================================================
-All tests passed (11202052 assertions in 47 test cases)
+All tests passed (11202597 assertions in 47 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run

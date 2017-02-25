@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 2.1.0
+|  |  |__   |  |  | | | |  version 2.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -29,22 +29,22 @@ SOFTWARE.
 #ifndef NLOHMANN_JSON_HPP
 #define NLOHMANN_JSON_HPP
 
-#include <algorithm> // all_of, for_each, transform
+#include <algorithm> // all_of, copy, fill, find, for_each, none_of, remove, reverse, transform
 #include <array> // array
 #include <cassert> // assert
 #include <cctype> // isdigit
 #include <ciso646> // and, not, or
-#include <cmath> // isfinite, ldexp, signbit
+#include <cmath> // isfinite, labs, ldexp, signbit
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <cstdint> // int64_t, uint64_t
-#include <cstdlib> // strtod, strtof, strtold, strtoul
+#include <cstdlib> // abort, strtod, strtof, strtold, strtoul, strtoll, strtoull
 #include <cstring> // strlen
 #include <forward_list> // forward_list
 #include <functional> // function, hash, less
 #include <initializer_list> // initializer_list
 #include <iomanip> // setw
 #include <iostream> // istream, ostream
-#include <iterator> // advance, begin, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
+#include <iterator> // advance, begin, back_inserter, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
 #include <limits> // numeric_limits
 #include <locale> // locale
 #include <map> // map
@@ -53,7 +53,7 @@ SOFTWARE.
 #include <sstream> // stringstream
 #include <stdexcept> // domain_error, invalid_argument, out_of_range
 #include <string> // getline, stoi, string, to_string
-#include <type_traits> // add_pointer, enable_if, is_arithmetic, is_base_of, is_const, is_constructible, is_convertible, is_floating_point, is_integral, is_nothrow_move_assignable, std::is_nothrow_move_constructible, std::is_pointer, std::is_reference, std::is_same, remove_const, remove_pointer, remove_reference
+#include <type_traits> // add_pointer, conditional, decay, enable_if, false_type, integral_constant, is_arithmetic, is_base_of, is_const, is_constructible, is_convertible, is_default_constructible, is_enum, is_floating_point, is_integral, is_nothrow_move_assignable, is_nothrow_move_constructible, is_pointer, is_reference, is_same, is_scalar, is_signed, remove_const, remove_cv, remove_pointer, remove_reference, true_type, underlying_type
 #include <utility> // declval, forward, make_pair, move, pair, swap
 #include <vector> // vector
 
@@ -523,8 +523,9 @@ struct has_to_json
 // to_json //
 /////////////
 
-template<typename BasicJsonType>
-void to_json(BasicJsonType& j, typename BasicJsonType::boolean_t b) noexcept
+template<typename BasicJsonType, typename T, enable_if_t<
+             std::is_same<T, typename BasicJsonType::boolean_t>::value, int> = 0>
+void to_json(BasicJsonType& j, T b) noexcept
 {
     external_constructor<value_t::boolean>::construct(j, b);
 }
@@ -672,7 +673,7 @@ template<typename BasicJsonType, typename UnscopedEnumType,
          enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
 void from_json(const BasicJsonType& j, UnscopedEnumType& e)
 {
-    typename std::underlying_type<UnscopedEnumType>::type val = e;
+    typename std::underlying_type<UnscopedEnumType>::type val;
     get_arithmetic_value(j, val);
     e = static_cast<UnscopedEnumType>(val);
 }
@@ -916,7 +917,7 @@ struct adl_serializer
     @ref basic_json class (either explicit or via conversion operators).
 
     @param[in] j         JSON value to read from
-    @param[in, out] val  value to write to
+    @param[in,out] val  value to write to
     */
     template<typename BasicJsonType, typename ValueType>
     static void from_json(BasicJsonType&& j, ValueType& val) noexcept(
@@ -931,7 +932,7 @@ struct adl_serializer
     This function is usually called by the constructors of the @ref basic_json
     class.
 
-    @param[in, out] j  JSON value to write to
+    @param[in,out] j  JSON value to write to
     @param[in] val     value to read from
     */
     template<typename BasicJsonType, typename ValueType>
@@ -1106,7 +1107,7 @@ class basic_json
     /*!
     @brief returns version information on the library
 
-    This function returns a JSON object with infiormation about the library,
+    This function returns a JSON object with information about the library,
     including the version number and information on the platform and compiler.
 
     @return JSON object holding version information
@@ -1135,10 +1136,10 @@ class basic_json
         result["url"] = "https://github.com/nlohmann/json";
         result["version"] =
         {
-            {"string", "2.1.0"},
+            {"string", "2.1.1"},
             {"major", 2},
             {"minor", 1},
-            {"patch", 0},
+            {"patch", 1}
         };
 
 #ifdef _WIN32
@@ -1746,7 +1747,7 @@ class basic_json
                 {
                     if (t == value_t::null)
                     {
-                        JSON_THROW(std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21 2.1.0")); // LCOV_EXCL_LINE
+                        JSON_THROW(std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21 2.1.1")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -2646,14 +2647,6 @@ class basic_json
     string_t dump(const int indent = -1) const
     {
         std::stringstream ss;
-        // fix locale problems
-        ss.imbue(std::locale::classic());
-
-        // 6, 15 or 16 digits of precision allows round-trip IEEE 754
-        // string->float->string, string->double->string or string->long
-        // double->string; to be safe, we read this value from
-        // std::numeric_limits<number_float_t>::digits10
-        ss.precision(std::numeric_limits<double>::digits10);
 
         if (indent >= 0)
         {
@@ -3149,8 +3142,8 @@ class basic_json
             return *ptr;
         }
 
-        throw std::domain_error("incompatible ReferenceType for get_ref, actual type is " +
-                                obj.type_name());
+        JSON_THROW(std::domain_error("incompatible ReferenceType for get_ref, actual type is " +
+                                     obj.type_name()));
     }
 
   public:
@@ -3417,7 +3410,7 @@ class basic_json
     /*!
     @brief get a reference value (implicit)
 
-    Implict reference access to the internally stored JSON value. No copies
+    Implicit reference access to the internally stored JSON value. No copies
     are made.
 
     @warning Writing data to the referee of the result yields an undefined
@@ -3492,7 +3485,7 @@ class basic_json
     template < typename ValueType, typename std::enable_if <
                    not std::is_pointer<ValueType>::value and
                    not std::is_same<ValueType, typename string_t::value_type>::value
-#ifndef _MSC_VER  // fix for issue #167 operator<< abiguity under VS2015
+#ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
                    , int >::type = 0 >
@@ -4285,7 +4278,7 @@ class basic_json
 
     @complexity The complexity depends on the type:
     - objects: amortized constant
-    - arrays: linear in distance between pos and the end of the container
+    - arrays: linear in distance between @a pos and the end of the container
     - strings: linear in the length of the string
     - other types: constant
 
@@ -5537,7 +5530,7 @@ class basic_json
     @throw std::domain_error if @a pos is not an iterator of *this; example:
     `"iterator does not fit current value"`
 
-    @complexity Constant plus linear in the distance between pos and end of
+    @complexity Constant plus linear in the distance between @a pos and end of
     the container.
 
     @liveexample{The example shows how `insert()` is used.,insert}
@@ -5963,34 +5956,24 @@ class basic_json
 
     /*!
     @brief comparison: equal
-
-    The functions compares the given JSON value against a null pointer. As the
-    null pointer can be used to initialize a JSON value to null, a comparison
-    of JSON value @a v with a null pointer should be equivalent to call
-    `v.is_null()`.
-
-    @param[in] v  JSON value to consider
-    @return whether @a v is null
-
-    @complexity Constant.
-
-    @liveexample{The example compares several JSON types to the null pointer.
-    ,operator__equal__nullptr_t}
-
-    @since version 1.0.0
+    @copydoc operator==(const_reference, const_reference)
     */
-    friend bool operator==(const_reference v, std::nullptr_t) noexcept
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator==(const_reference lhs, const ScalarType rhs) noexcept
     {
-        return v.is_null();
+        return (lhs == basic_json(rhs));
     }
 
     /*!
     @brief comparison: equal
-    @copydoc operator==(const_reference, std::nullptr_t)
+    @copydoc operator==(const_reference, const_reference)
     */
-    friend bool operator==(std::nullptr_t, const_reference v) noexcept
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator==(const ScalarType lhs, const_reference rhs) noexcept
     {
-        return v.is_null();
+        return (basic_json(lhs) == rhs);
     }
 
     /*!
@@ -6016,34 +5999,24 @@ class basic_json
 
     /*!
     @brief comparison: not equal
-
-    The functions compares the given JSON value against a null pointer. As the
-    null pointer can be used to initialize a JSON value to null, a comparison
-    of JSON value @a v with a null pointer should be equivalent to call
-    `not v.is_null()`.
-
-    @param[in] v  JSON value to consider
-    @return whether @a v is not null
-
-    @complexity Constant.
-
-    @liveexample{The example compares several JSON types to the null pointer.
-    ,operator__notequal__nullptr_t}
-
-    @since version 1.0.0
+    @copydoc operator!=(const_reference, const_reference)
     */
-    friend bool operator!=(const_reference v, std::nullptr_t) noexcept
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator!=(const_reference lhs, const ScalarType rhs) noexcept
     {
-        return not v.is_null();
+        return (lhs != basic_json(rhs));
     }
 
     /*!
     @brief comparison: not equal
-    @copydoc operator!=(const_reference, std::nullptr_t)
+    @copydoc operator!=(const_reference, const_reference)
     */
-    friend bool operator!=(std::nullptr_t, const_reference v) noexcept
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator!=(const ScalarType lhs, const_reference rhs) noexcept
     {
-        return not v.is_null();
+        return (basic_json(lhs) != rhs);
     }
 
     /*!
@@ -6234,10 +6207,6 @@ class basic_json
     `std::setw(4)` on @a o sets the indentation level to `4` and the
     serialization result is the same as calling `dump(4)`.
 
-    @note During serializaion, the locale and the precision of the output
-    stream @a o are changed. The original values are restored when the
-    function returns.
-
     @param[in,out] o  stream to serialize to
     @param[in] j  JSON value to serialize
 
@@ -6259,22 +6228,9 @@ class basic_json
         // reset width to 0 for subsequent calls to this stream
         o.width(0);
 
-        // fix locale problems
-        const auto old_locale = o.imbue(std::locale::classic());
-        // set precision
-
-        // 6, 15 or 16 digits of precision allows round-trip IEEE 754
-        // string->float->string, string->double->string or string->long
-        // double->string; to be safe, we read this value from
-        // std::numeric_limits<number_float_t>::digits10
-        const auto old_precision = o.precision(std::numeric_limits<double>::digits10);
-
         // do the actual serialization
         j.dump(o, pretty_print, static_cast<unsigned int>(indentation));
 
-        // reset locale and precision
-        o.imbue(old_locale);
-        o.precision(old_precision);
         return o;
     }
 
@@ -6581,6 +6537,11 @@ class basic_json
     /// @{
 
   private:
+    /*!
+    @note Some code in the switch cases has been copied, because otherwise
+          copilers would complain about implicit fallthrough and there is no
+          portable attribute to mute such warnings.
+    */
     template<typename T>
     static void add_to_vector(std::vector<uint8_t>& vec, size_t bytes, const T number)
     {
@@ -6590,24 +6551,31 @@ class basic_json
         {
             case 8:
             {
-                vec.push_back(static_cast<uint8_t>((number >> 070) & 0xff));
-                vec.push_back(static_cast<uint8_t>((number >> 060) & 0xff));
-                vec.push_back(static_cast<uint8_t>((number >> 050) & 0xff));
-                vec.push_back(static_cast<uint8_t>((number >> 040) & 0xff));
-                // intentional fall-through
+                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 070) & 0xff));
+                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 060) & 0xff));
+                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 050) & 0xff));
+                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 040) & 0xff));
+                vec.push_back(static_cast<uint8_t>((number >> 030) & 0xff));
+                vec.push_back(static_cast<uint8_t>((number >> 020) & 0xff));
+                vec.push_back(static_cast<uint8_t>((number >> 010) & 0xff));
+                vec.push_back(static_cast<uint8_t>(number & 0xff));
+                break;
             }
 
             case 4:
             {
                 vec.push_back(static_cast<uint8_t>((number >> 030) & 0xff));
                 vec.push_back(static_cast<uint8_t>((number >> 020) & 0xff));
-                // intentional fall-through
+                vec.push_back(static_cast<uint8_t>((number >> 010) & 0xff));
+                vec.push_back(static_cast<uint8_t>(number & 0xff));
+                break;
             }
 
             case 2:
             {
                 vec.push_back(static_cast<uint8_t>((number >> 010) & 0xff));
-                // intentional fall-through
+                vec.push_back(static_cast<uint8_t>(number & 0xff));
+                break;
             }
 
             case 1:
@@ -6712,25 +6680,25 @@ class basic_json
                         // positive fixnum
                         add_to_vector(v, 1, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= UINT8_MAX)
+                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint8_t>::max())
                     {
                         // uint 8
                         v.push_back(0xcc);
                         add_to_vector(v, 1, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= UINT16_MAX)
+                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint16_t>::max())
                     {
                         // uint 16
                         v.push_back(0xcd);
                         add_to_vector(v, 2, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= UINT32_MAX)
+                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint32_t>::max())
                     {
                         // uint 32
                         v.push_back(0xce);
                         add_to_vector(v, 4, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= UINT64_MAX)
+                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint64_t>::max())
                     {
                         // uint 64
                         v.push_back(0xcf);
@@ -6744,25 +6712,25 @@ class basic_json
                         // negative fixnum
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= INT8_MIN and j.m_value.number_integer <= INT8_MAX)
+                    else if (j.m_value.number_integer >= std::numeric_limits<int8_t>::min() and j.m_value.number_integer <= std::numeric_limits<int8_t>::max())
                     {
                         // int 8
                         v.push_back(0xd0);
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= INT16_MIN and j.m_value.number_integer <= INT16_MAX)
+                    else if (j.m_value.number_integer >= std::numeric_limits<int16_t>::min() and j.m_value.number_integer <= std::numeric_limits<int16_t>::max())
                     {
                         // int 16
                         v.push_back(0xd1);
                         add_to_vector(v, 2, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= INT32_MIN and j.m_value.number_integer <= INT32_MAX)
+                    else if (j.m_value.number_integer >= std::numeric_limits<int32_t>::min() and j.m_value.number_integer <= std::numeric_limits<int32_t>::max())
                     {
                         // int 32
                         v.push_back(0xd2);
                         add_to_vector(v, 4, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= INT64_MIN and j.m_value.number_integer <= INT64_MAX)
+                    else if (j.m_value.number_integer >= std::numeric_limits<int64_t>::min() and j.m_value.number_integer <= std::numeric_limits<int64_t>::max())
                     {
                         // int 64
                         v.push_back(0xd3);
@@ -6779,25 +6747,25 @@ class basic_json
                     // positive fixnum
                     add_to_vector(v, 1, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= UINT8_MAX)
+                else if (j.m_value.number_unsigned <= std::numeric_limits<uint8_t>::max())
                 {
                     // uint 8
                     v.push_back(0xcc);
                     add_to_vector(v, 1, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= UINT16_MAX)
+                else if (j.m_value.number_unsigned <= std::numeric_limits<uint16_t>::max())
                 {
                     // uint 16
                     v.push_back(0xcd);
                     add_to_vector(v, 2, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= UINT32_MAX)
+                else if (j.m_value.number_unsigned <= std::numeric_limits<uint32_t>::max())
                 {
                     // uint 32
                     v.push_back(0xce);
                     add_to_vector(v, 4, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= UINT64_MAX)
+                else if (j.m_value.number_unsigned <= std::numeric_limits<uint64_t>::max())
                 {
                     // uint 64
                     v.push_back(0xcf);
@@ -6954,19 +6922,19 @@ class basic_json
                     {
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer <= UINT8_MAX)
+                    else if (j.m_value.number_integer <= std::numeric_limits<uint8_t>::max())
                     {
                         v.push_back(0x18);
                         // one-byte uint8_t
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer <= UINT16_MAX)
+                    else if (j.m_value.number_integer <= std::numeric_limits<uint16_t>::max())
                     {
                         v.push_back(0x19);
                         // two-byte uint16_t
                         add_to_vector(v, 2, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer <= UINT32_MAX)
+                    else if (j.m_value.number_integer <= std::numeric_limits<uint32_t>::max())
                     {
                         v.push_back(0x1a);
                         // four-byte uint32_t
@@ -6988,19 +6956,19 @@ class basic_json
                     {
                         v.push_back(static_cast<uint8_t>(0x20 + positive_number));
                     }
-                    else if (positive_number <= UINT8_MAX)
+                    else if (positive_number <= std::numeric_limits<uint8_t>::max())
                     {
                         // int 8
                         v.push_back(0x38);
                         add_to_vector(v, 1, positive_number);
                     }
-                    else if (positive_number <= UINT16_MAX)
+                    else if (positive_number <= std::numeric_limits<uint16_t>::max())
                     {
                         // int 16
                         v.push_back(0x39);
                         add_to_vector(v, 2, positive_number);
                     }
-                    else if (positive_number <= UINT32_MAX)
+                    else if (positive_number <= std::numeric_limits<uint32_t>::max())
                     {
                         // int 32
                         v.push_back(0x3a);
@@ -7066,7 +7034,7 @@ class basic_json
                 const auto N = j.m_value.string->size();
                 if (N <= 0x17)
                 {
-                    v.push_back(0x60 + N);  // 1 byte for string + size
+                    v.push_back(0x60 + static_cast<uint8_t>(N));  // 1 byte for string + size
                 }
                 else if (N <= 0xff)
                 {
@@ -7102,7 +7070,7 @@ class basic_json
                 const auto N = j.m_value.array->size();
                 if (N <= 0x17)
                 {
-                    v.push_back(0x80 + N);  // 1 byte for array + size
+                    v.push_back(0x80 + static_cast<uint8_t>(N));  // 1 byte for array + size
                 }
                 else if (N <= 0xff)
                 {
@@ -7140,7 +7108,7 @@ class basic_json
                 const auto N = j.m_value.object->size();
                 if (N <= 0x17)
                 {
-                    v.push_back(0xa0 + N);  // 1 byte for object + size
+                    v.push_back(0xa0 + static_cast<uint8_t>(N));  // 1 byte for object + size
                 }
                 else if (N <= 0xff)
                 {
@@ -7909,7 +7877,9 @@ class basic_json
                 }
                 else
                 {
-                    val = mant == 0 ? INFINITY : NAN;
+                    val = mant == 0
+                          ? std::numeric_limits<double>::infinity()
+                          : std::numeric_limits<double>::quiet_NaN();
                 }
                 return (half & 0x8000) != 0 ? -val : val;
             }
@@ -7962,9 +7932,11 @@ class basic_json
     vector in MessagePack format.,to_msgpack}
 
     @sa http://msgpack.org
-    @sa @ref from_msgpack(const std::vector<uint8_t>&) for the analogous
-        deserialization
+    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
+        analogous deserialization
     @sa @ref to_cbor(const basic_json& for the related CBOR format
+
+    @since version 2.0.9
     */
     static std::vector<uint8_t> to_msgpack(const basic_json& j)
     {
@@ -7980,6 +7952,7 @@ class basic_json
     serialization format.
 
     @param[in] v  a byte vector in MessagePack format
+    @param[in] start_index the index to start reading from @a v (0 by default)
     @return deserialized JSON value
 
     @throw std::invalid_argument if unsupported features from MessagePack were
@@ -7993,11 +7966,15 @@ class basic_json
 
     @sa http://msgpack.org
     @sa @ref to_msgpack(const basic_json&) for the analogous serialization
-    @sa @ref from_cbor(const std::vector<uint8_t>&) for the related CBOR format
+    @sa @ref from_cbor(const std::vector<uint8_t>&, const size_t) for the
+        related CBOR format
+
+    @since version 2.0.9, parameter @a start_index since 2.1.1
     */
-    static basic_json from_msgpack(const std::vector<uint8_t>& v)
+    static basic_json from_msgpack(const std::vector<uint8_t>& v,
+                                   const size_t start_index = 0)
     {
-        size_t i = 0;
+        size_t i = start_index;
         return from_msgpack_internal(v, i);
     }
 
@@ -8018,9 +7995,11 @@ class basic_json
     vector in CBOR format.,to_cbor}
 
     @sa http://cbor.io
-    @sa @ref from_cbor(const std::vector<uint8_t>&) for the analogous
-        deserialization
+    @sa @ref from_cbor(const std::vector<uint8_t>&, const size_t) for the
+        analogous deserialization
     @sa @ref to_msgpack(const basic_json& for the related MessagePack format
+
+    @since version 2.0.9
     */
     static std::vector<uint8_t> to_cbor(const basic_json& j)
     {
@@ -8036,6 +8015,7 @@ class basic_json
     (Concise Binary Object Representation) serialization format.
 
     @param[in] v  a byte vector in CBOR format
+    @param[in] start_index the index to start reading from @a v (0 by default)
     @return deserialized JSON value
 
     @throw std::invalid_argument if unsupported features from CBOR were used in
@@ -8049,12 +8029,15 @@ class basic_json
 
     @sa http://cbor.io
     @sa @ref to_cbor(const basic_json&) for the analogous serialization
-    @sa @ref from_msgpack(const std::vector<uint8_t>&) for the related
-        MessagePack format
+    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
+        related MessagePack format
+
+    @since version 2.0.9, parameter @a start_index since 2.1.1
     */
-    static basic_json from_cbor(const std::vector<uint8_t>& v)
+    static basic_json from_cbor(const std::vector<uint8_t>& v,
+                                const size_t start_index = 0)
     {
-        size_t i = 0;
+        size_t i = start_index;
         return from_cbor_internal(v, i);
     }
 
@@ -8264,6 +8247,154 @@ class basic_json
         return result;
     }
 
+
+    /*!
+    @brief locale-independent serialization for built-in arithmetic types
+    */
+    struct numtostr
+    {
+      public:
+        template<typename NumberType>
+        numtostr(NumberType value)
+        {
+            x_write(value, std::is_integral<NumberType>());
+        }
+
+        const char* c_str() const
+        {
+            return m_buf.data();
+        }
+
+      private:
+        /// a (hopefully) large enough character buffer
+        std::array < char, 64 > m_buf{{}};
+
+        template<typename NumberType>
+        void x_write(NumberType x, /*is_integral=*/std::true_type)
+        {
+            // special case for "0"
+            if (x == 0)
+            {
+                m_buf[0] = '0';
+                return;
+            }
+
+            const bool is_negative = x < 0;
+            size_t i = 0;
+
+            // spare 1 byte for '\0'
+            while (x != 0 and i < m_buf.size() - 1)
+            {
+                const auto digit = std::labs(static_cast<long>(x % 10));
+                m_buf[i++] = static_cast<char>('0' + digit);
+                x /= 10;
+            }
+
+            // make sure the number has been processed completely
+            assert(x == 0);
+
+            if (is_negative)
+            {
+                // make sure there is capacity for the '-'
+                assert(i < m_buf.size() - 2);
+                m_buf[i++] = '-';
+            }
+
+            std::reverse(m_buf.begin(), m_buf.begin() + i);
+        }
+
+        template<typename NumberType>
+        void x_write(NumberType x, /*is_integral=*/std::false_type)
+        {
+            // special case for 0.0 and -0.0
+            if (x == 0)
+            {
+                size_t i = 0;
+                if (std::signbit(x))
+                {
+                    m_buf[i++] = '-';
+                }
+                m_buf[i++] = '0';
+                m_buf[i++] = '.';
+                m_buf[i] = '0';
+                return;
+            }
+
+            // get number of digits for a text -> float -> text round-trip
+            static constexpr auto d = std::numeric_limits<NumberType>::digits10;
+
+            // the actual conversion
+            const auto written_bytes = snprintf(m_buf.data(), m_buf.size(), "%.*g", d, x);
+
+            // negative value indicates an error
+            assert(written_bytes > 0);
+            // check if buffer was large enough
+            assert(static_cast<size_t>(written_bytes) < m_buf.size());
+
+            // read information from locale
+            const auto loc = localeconv();
+            assert(loc != nullptr);
+            const char thousands_sep = !loc->thousands_sep ? '\0'
+                                       : loc->thousands_sep[0];
+
+            const char decimal_point = !loc->decimal_point ? '\0'
+                                       : loc->decimal_point[0];
+
+            // erase thousands separator
+            if (thousands_sep != '\0')
+            {
+                const auto end = std::remove(m_buf.begin(), m_buf.begin() + written_bytes, thousands_sep);
+                std::fill(end, m_buf.end(), '\0');
+            }
+
+            // convert decimal point to '.'
+            if (decimal_point != '\0' and decimal_point != '.')
+            {
+                for (auto& c : m_buf)
+                {
+                    if (c == decimal_point)
+                    {
+                        c = '.';
+                        break;
+                    }
+                }
+            }
+
+            // determine if need to append ".0"
+            size_t i = 0;
+            bool value_is_int_like = true;
+            for (i = 0; i < m_buf.size(); ++i)
+            {
+                // break when end of number is reached
+                if (m_buf[i] == '\0')
+                {
+                    break;
+                }
+
+                // check if we find non-int character
+                value_is_int_like = value_is_int_like and m_buf[i] != '.' and
+                                    m_buf[i] != 'e' and m_buf[i] != 'E';
+            }
+
+            if (value_is_int_like)
+            {
+                // there must be 2 bytes left for ".0"
+                assert((i + 2) < m_buf.size());
+                // we write to the end of the number
+                assert(m_buf[i] == '\0');
+                assert(m_buf[i - 1] != '\0');
+
+                // add ".0"
+                m_buf[i] = '.';
+                m_buf[i + 1] = '0';
+
+                // the resulting string is properly terminated
+                assert(m_buf[i + 2] == '\0');
+            }
+        }
+    };
+
+
     /*!
     @brief internal implementation of the serialization function
 
@@ -8383,27 +8514,19 @@ class basic_json
 
             case value_t::number_integer:
             {
-                o << m_value.number_integer;
+                o << numtostr(m_value.number_integer).c_str();
                 return;
             }
 
             case value_t::number_unsigned:
             {
-                o << m_value.number_unsigned;
+                o << numtostr(m_value.number_unsigned).c_str();
                 return;
             }
 
             case value_t::number_float:
             {
-                if (m_value.number_float == 0)
-                {
-                    // special case for zero to get "0.0"/"-0.0"
-                    o << (std::signbit(m_value.number_float) ? "-0.0" : "0.0");
-                }
-                else
-                {
-                    o << m_value.number_float;
-                }
+                o << numtostr(m_value.number_float).c_str();
                 return;
             }
 
@@ -9444,7 +9567,9 @@ class basic_json
             literal_false,   ///< the `false` literal
             literal_null,    ///< the `null` literal
             value_string,    ///< a string -- use get_string() for actual value
-            value_number,    ///< a number -- use get_number() for actual value
+            value_unsigned,  ///< an unsigned integer -- use get_number() for actual value
+            value_integer,   ///< a signed integer -- use get_number() for actual value
+            value_float,     ///< an floating point number -- use get_number() for actual value
             begin_array,     ///< the character for array begin `[`
             begin_object,    ///< the character for object begin `{`
             end_array,       ///< the character for array end `]`
@@ -9596,7 +9721,9 @@ class basic_json
                     return "null literal";
                 case token_type::value_string:
                     return "string literal";
-                case token_type::value_number:
+                case lexer::token_type::value_unsigned:
+                case lexer::token_type::value_integer:
+                case lexer::token_type::value_float:
                     return "number literal";
                 case token_type::begin_array:
                     return "'['";
@@ -9869,37 +9996,47 @@ basic_json_parser_12:
                     }
                     if (yych <= '0')
                     {
-                        goto basic_json_parser_13;
+                        goto basic_json_parser_43;
                     }
                     if (yych <= '9')
                     {
-                        goto basic_json_parser_15;
+                        goto basic_json_parser_45;
                     }
                     goto basic_json_parser_5;
 basic_json_parser_13:
                     yyaccept = 1;
                     yych = *(m_marker = ++m_cursor);
-                    if (yych <= 'D')
+                    if (yych <= '9')
                     {
                         if (yych == '.')
                         {
-                            goto basic_json_parser_43;
+                            goto basic_json_parser_47;
+                        }
+                        if (yych >= '0')
+                        {
+                            goto basic_json_parser_48;
                         }
                     }
                     else
                     {
                         if (yych <= 'E')
                         {
-                            goto basic_json_parser_44;
+                            if (yych >= 'E')
+                            {
+                                goto basic_json_parser_51;
+                            }
                         }
-                        if (yych == 'e')
+                        else
                         {
-                            goto basic_json_parser_44;
+                            if (yych == 'e')
+                            {
+                                goto basic_json_parser_51;
+                            }
                         }
                     }
 basic_json_parser_14:
                     {
-                        last_token_type = token_type::value_number;
+                        last_token_type = token_type::value_unsigned;
                         break;
                     }
 basic_json_parser_15:
@@ -9918,7 +10055,7 @@ basic_json_parser_15:
                     {
                         if (yych == '.')
                         {
-                            goto basic_json_parser_43;
+                            goto basic_json_parser_47;
                         }
                         goto basic_json_parser_14;
                     }
@@ -9926,11 +10063,11 @@ basic_json_parser_15:
                     {
                         if (yych <= 'E')
                         {
-                            goto basic_json_parser_44;
+                            goto basic_json_parser_51;
                         }
                         if (yych == 'e')
                         {
-                            goto basic_json_parser_44;
+                            goto basic_json_parser_51;
                         }
                         goto basic_json_parser_14;
                     }
@@ -9957,7 +10094,7 @@ basic_json_parser_23:
                     yych = *(m_marker = ++m_cursor);
                     if (yych == 'a')
                     {
-                        goto basic_json_parser_45;
+                        goto basic_json_parser_52;
                     }
                     goto basic_json_parser_5;
 basic_json_parser_24:
@@ -9965,7 +10102,7 @@ basic_json_parser_24:
                     yych = *(m_marker = ++m_cursor);
                     if (yych == 'u')
                     {
-                        goto basic_json_parser_46;
+                        goto basic_json_parser_53;
                     }
                     goto basic_json_parser_5;
 basic_json_parser_25:
@@ -9973,7 +10110,7 @@ basic_json_parser_25:
                     yych = *(m_marker = ++m_cursor);
                     if (yych == 'r')
                     {
-                        goto basic_json_parser_47;
+                        goto basic_json_parser_54;
                     }
                     goto basic_json_parser_5;
 basic_json_parser_26:
@@ -10055,13 +10192,27 @@ basic_json_parser_31:
                     }
 basic_json_parser_32:
                     m_cursor = m_marker;
-                    if (yyaccept == 0)
+                    if (yyaccept <= 1)
                     {
-                        goto basic_json_parser_5;
+                        if (yyaccept == 0)
+                        {
+                            goto basic_json_parser_5;
+                        }
+                        else
+                        {
+                            goto basic_json_parser_14;
+                        }
                     }
                     else
                     {
-                        goto basic_json_parser_14;
+                        if (yyaccept == 2)
+                        {
+                            goto basic_json_parser_44;
+                        }
+                        else
+                        {
+                            goto basic_json_parser_58;
+                        }
                     }
 basic_json_parser_33:
                     ++m_cursor;
@@ -10142,7 +10293,7 @@ basic_json_parser_35:
                                 }
                                 if (yych <= 'u')
                                 {
-                                    goto basic_json_parser_48;
+                                    goto basic_json_parser_55;
                                 }
                                 goto basic_json_parser_32;
                             }
@@ -10261,59 +10412,87 @@ basic_json_parser_42:
                     }
                     goto basic_json_parser_32;
 basic_json_parser_43:
+                    yyaccept = 2;
+                    yych = *(m_marker = ++m_cursor);
+                    if (yych <= '9')
+                    {
+                        if (yych == '.')
+                        {
+                            goto basic_json_parser_47;
+                        }
+                        if (yych >= '0')
+                        {
+                            goto basic_json_parser_48;
+                        }
+                    }
+                    else
+                    {
+                        if (yych <= 'E')
+                        {
+                            if (yych >= 'E')
+                            {
+                                goto basic_json_parser_51;
+                            }
+                        }
+                        else
+                        {
+                            if (yych == 'e')
+                            {
+                                goto basic_json_parser_51;
+                            }
+                        }
+                    }
+basic_json_parser_44:
+                    {
+                        last_token_type = token_type::value_integer;
+                        break;
+                    }
+basic_json_parser_45:
+                    yyaccept = 2;
+                    m_marker = ++m_cursor;
+                    if ((m_limit - m_cursor) < 3)
+                    {
+                        fill_line_buffer(3);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
+                    if (yych <= '9')
+                    {
+                        if (yych == '.')
+                        {
+                            goto basic_json_parser_47;
+                        }
+                        if (yych <= '/')
+                        {
+                            goto basic_json_parser_44;
+                        }
+                        goto basic_json_parser_45;
+                    }
+                    else
+                    {
+                        if (yych <= 'E')
+                        {
+                            if (yych <= 'D')
+                            {
+                                goto basic_json_parser_44;
+                            }
+                            goto basic_json_parser_51;
+                        }
+                        else
+                        {
+                            if (yych == 'e')
+                            {
+                                goto basic_json_parser_51;
+                            }
+                            goto basic_json_parser_44;
+                        }
+                    }
+basic_json_parser_47:
                     yych = *++m_cursor;
                     if (yych <= '/')
                     {
                         goto basic_json_parser_32;
                     }
                     if (yych <= '9')
-                    {
-                        goto basic_json_parser_49;
-                    }
-                    goto basic_json_parser_32;
-basic_json_parser_44:
-                    yych = *++m_cursor;
-                    if (yych <= ',')
-                    {
-                        if (yych == '+')
-                        {
-                            goto basic_json_parser_51;
-                        }
-                        goto basic_json_parser_32;
-                    }
-                    else
-                    {
-                        if (yych <= '-')
-                        {
-                            goto basic_json_parser_51;
-                        }
-                        if (yych <= '/')
-                        {
-                            goto basic_json_parser_32;
-                        }
-                        if (yych <= '9')
-                        {
-                            goto basic_json_parser_52;
-                        }
-                        goto basic_json_parser_32;
-                    }
-basic_json_parser_45:
-                    yych = *++m_cursor;
-                    if (yych == 'l')
-                    {
-                        goto basic_json_parser_54;
-                    }
-                    goto basic_json_parser_32;
-basic_json_parser_46:
-                    yych = *++m_cursor;
-                    if (yych == 'l')
-                    {
-                        goto basic_json_parser_55;
-                    }
-                    goto basic_json_parser_32;
-basic_json_parser_47:
-                    yych = *++m_cursor;
-                    if (yych == 'u')
                     {
                         goto basic_json_parser_56;
                     }
@@ -10325,6 +10504,73 @@ basic_json_parser_48:
                         fill_line_buffer(1);    // LCOV_EXCL_LINE
                     }
                     yych = *m_cursor;
+                    if (yych <= '/')
+                    {
+                        goto basic_json_parser_50;
+                    }
+                    if (yych <= '9')
+                    {
+                        goto basic_json_parser_48;
+                    }
+basic_json_parser_50:
+                    {
+                        last_token_type = token_type::parse_error;
+                        break;
+                    }
+basic_json_parser_51:
+                    yych = *++m_cursor;
+                    if (yych <= ',')
+                    {
+                        if (yych == '+')
+                        {
+                            goto basic_json_parser_59;
+                        }
+                        goto basic_json_parser_32;
+                    }
+                    else
+                    {
+                        if (yych <= '-')
+                        {
+                            goto basic_json_parser_59;
+                        }
+                        if (yych <= '/')
+                        {
+                            goto basic_json_parser_32;
+                        }
+                        if (yych <= '9')
+                        {
+                            goto basic_json_parser_60;
+                        }
+                        goto basic_json_parser_32;
+                    }
+basic_json_parser_52:
+                    yych = *++m_cursor;
+                    if (yych == 'l')
+                    {
+                        goto basic_json_parser_62;
+                    }
+                    goto basic_json_parser_32;
+basic_json_parser_53:
+                    yych = *++m_cursor;
+                    if (yych == 'l')
+                    {
+                        goto basic_json_parser_63;
+                    }
+                    goto basic_json_parser_32;
+basic_json_parser_54:
+                    yych = *++m_cursor;
+                    if (yych == 'u')
+                    {
+                        goto basic_json_parser_64;
+                    }
+                    goto basic_json_parser_32;
+basic_json_parser_55:
+                    ++m_cursor;
+                    if (m_limit <= m_cursor)
+                    {
+                        fill_line_buffer(1);    // LCOV_EXCL_LINE
+                    }
+                    yych = *m_cursor;
                     if (yych <= '@')
                     {
                         if (yych <= '/')
@@ -10333,7 +10579,7 @@ basic_json_parser_48:
                         }
                         if (yych <= '9')
                         {
-                            goto basic_json_parser_57;
+                            goto basic_json_parser_65;
                         }
                         goto basic_json_parser_32;
                     }
@@ -10341,7 +10587,7 @@ basic_json_parser_48:
                     {
                         if (yych <= 'F')
                         {
-                            goto basic_json_parser_57;
+                            goto basic_json_parser_65;
                         }
                         if (yych <= '`')
                         {
@@ -10349,12 +10595,12 @@ basic_json_parser_48:
                         }
                         if (yych <= 'f')
                         {
-                            goto basic_json_parser_57;
+                            goto basic_json_parser_65;
                         }
                         goto basic_json_parser_32;
                     }
-basic_json_parser_49:
-                    yyaccept = 1;
+basic_json_parser_56:
+                    yyaccept = 3;
                     m_marker = ++m_cursor;
                     if ((m_limit - m_cursor) < 3)
                     {
@@ -10365,27 +10611,30 @@ basic_json_parser_49:
                     {
                         if (yych <= '/')
                         {
-                            goto basic_json_parser_14;
+                            goto basic_json_parser_58;
                         }
                         if (yych <= '9')
                         {
-                            goto basic_json_parser_49;
+                            goto basic_json_parser_56;
                         }
-                        goto basic_json_parser_14;
                     }
                     else
                     {
                         if (yych <= 'E')
                         {
-                            goto basic_json_parser_44;
+                            goto basic_json_parser_51;
                         }
                         if (yych == 'e')
                         {
-                            goto basic_json_parser_44;
+                            goto basic_json_parser_51;
                         }
-                        goto basic_json_parser_14;
                     }
-basic_json_parser_51:
+basic_json_parser_58:
+                    {
+                        last_token_type = token_type::value_float;
+                        break;
+                    }
+basic_json_parser_59:
                     yych = *++m_cursor;
                     if (yych <= '/')
                     {
@@ -10395,7 +10644,7 @@ basic_json_parser_51:
                     {
                         goto basic_json_parser_32;
                     }
-basic_json_parser_52:
+basic_json_parser_60:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
@@ -10404,35 +10653,35 @@ basic_json_parser_52:
                     yych = *m_cursor;
                     if (yych <= '/')
                     {
-                        goto basic_json_parser_14;
+                        goto basic_json_parser_58;
                     }
                     if (yych <= '9')
                     {
-                        goto basic_json_parser_52;
+                        goto basic_json_parser_60;
                     }
-                    goto basic_json_parser_14;
-basic_json_parser_54:
+                    goto basic_json_parser_58;
+basic_json_parser_62:
                     yych = *++m_cursor;
                     if (yych == 's')
                     {
-                        goto basic_json_parser_58;
+                        goto basic_json_parser_66;
                     }
                     goto basic_json_parser_32;
-basic_json_parser_55:
+basic_json_parser_63:
                     yych = *++m_cursor;
                     if (yych == 'l')
                     {
-                        goto basic_json_parser_59;
+                        goto basic_json_parser_67;
                     }
                     goto basic_json_parser_32;
-basic_json_parser_56:
+basic_json_parser_64:
                     yych = *++m_cursor;
                     if (yych == 'e')
                     {
-                        goto basic_json_parser_61;
+                        goto basic_json_parser_69;
                     }
                     goto basic_json_parser_32;
-basic_json_parser_57:
+basic_json_parser_65:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
@@ -10447,7 +10696,7 @@ basic_json_parser_57:
                         }
                         if (yych <= '9')
                         {
-                            goto basic_json_parser_63;
+                            goto basic_json_parser_71;
                         }
                         goto basic_json_parser_32;
                     }
@@ -10455,7 +10704,7 @@ basic_json_parser_57:
                     {
                         if (yych <= 'F')
                         {
-                            goto basic_json_parser_63;
+                            goto basic_json_parser_71;
                         }
                         if (yych <= '`')
                         {
@@ -10463,30 +10712,30 @@ basic_json_parser_57:
                         }
                         if (yych <= 'f')
                         {
-                            goto basic_json_parser_63;
+                            goto basic_json_parser_71;
                         }
                         goto basic_json_parser_32;
                     }
-basic_json_parser_58:
+basic_json_parser_66:
                     yych = *++m_cursor;
                     if (yych == 'e')
                     {
-                        goto basic_json_parser_64;
+                        goto basic_json_parser_72;
                     }
                     goto basic_json_parser_32;
-basic_json_parser_59:
+basic_json_parser_67:
                     ++m_cursor;
                     {
                         last_token_type = token_type::literal_null;
                         break;
                     }
-basic_json_parser_61:
+basic_json_parser_69:
                     ++m_cursor;
                     {
                         last_token_type = token_type::literal_true;
                         break;
                     }
-basic_json_parser_63:
+basic_json_parser_71:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
@@ -10501,7 +10750,7 @@ basic_json_parser_63:
                         }
                         if (yych <= '9')
                         {
-                            goto basic_json_parser_66;
+                            goto basic_json_parser_74;
                         }
                         goto basic_json_parser_32;
                     }
@@ -10509,7 +10758,7 @@ basic_json_parser_63:
                     {
                         if (yych <= 'F')
                         {
-                            goto basic_json_parser_66;
+                            goto basic_json_parser_74;
                         }
                         if (yych <= '`')
                         {
@@ -10517,17 +10766,17 @@ basic_json_parser_63:
                         }
                         if (yych <= 'f')
                         {
-                            goto basic_json_parser_66;
+                            goto basic_json_parser_74;
                         }
                         goto basic_json_parser_32;
                     }
-basic_json_parser_64:
+basic_json_parser_72:
                     ++m_cursor;
                     {
                         last_token_type = token_type::literal_false;
                         break;
                     }
-basic_json_parser_66:
+basic_json_parser_74:
                     ++m_cursor;
                     if (m_limit <= m_cursor)
                     {
@@ -10624,7 +10873,7 @@ basic_json_parser_66:
             if (m_stream == nullptr or m_stream->eof())
             {
                 // m_start may or may not be pointing into m_line_buffer at
-                // this point. We trust the standand library to do the right
+                // this point. We trust the standard library to do the right
                 // thing. See http://stackoverflow.com/q/28142011/266378
                 m_line_buffer.assign(m_start, m_limit);
 
@@ -10712,7 +10961,7 @@ basic_json_parser_66:
         m_start + 1 + x < m_cursor - 1 must hold to loop indefinitely. This
         can be rephrased to m_cursor - m_start - 2 > x. With the
         precondition, we x <= 0, meaning that the loop condition holds
-        indefinitly if i is always decreased. However, observe that the value
+        indefinitely if i is always decreased. However, observe that the value
         of i is strictly increasing with each iteration, as it is incremented
         by 1 in the iteration expression and never decremented inside the loop
         body. Hence, the loop condition will eventually be false which
@@ -10838,59 +11087,155 @@ basic_json_parser_66:
             return result;
         }
 
-        /*!
-        @brief parse floating point number
-
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
-
-        @param[in,out] endptr recieves a pointer to the first character after
-        the number
-
-        @return the floating point number
-        */
-        long double str_to_float_t(long double* /* type */, char** endptr) const
-        {
-            return std::strtold(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
-        }
 
         /*!
-        @brief parse floating point number
+        @brief parse string into a built-in arithmetic type as if the current
+               locale is POSIX.
 
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
+        @note in floating-point case strtod may parse past the token's end -
+              this is not an error
 
-        @param[in,out] endptr  recieves a pointer to the first character after
-        the number
-
-        @return the floating point number
+        @note any leading blanks are not handled
         */
-        double str_to_float_t(double* /* type */, char** endptr) const
+        struct strtonum
         {
-            return std::strtod(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
-        }
+          public:
+            strtonum(const char* start, const char* end)
+                : m_start(start), m_end(end)
+            {}
 
-        /*!
-        @brief parse floating point number
+            /*!
+            @return true iff parsed successfully as number of type T
 
-        This function (and its overloads) serves to select the most approprate
-        standard floating point number parsing function based on the type
-        supplied via the first parameter.  Set this to @a
-        static_cast<number_float_t*>(nullptr).
+            @param[in,out] val shall contain parsed value, or undefined value
+            if could not parse
+            */
+            template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value>::type>
+            bool to(T& val) const
+            {
+                return parse(val, std::is_integral<T>());
+            }
 
-        @param[in,out] endptr  recieves a pointer to the first character after
-        the number
+          private:
+            const char* const m_start = nullptr;
+            const char* const m_end = nullptr;
 
-        @return the floating point number
-        */
-        float str_to_float_t(float* /* type */, char** endptr) const
-        {
-            return std::strtof(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
-        }
+            // floating-point conversion
+
+            // overloaded wrappers for strtod/strtof/strtold
+            // that will be called from parse<floating_point_t>
+            static void strtof(float& f, const char* str, char** endptr)
+            {
+                f = std::strtof(str, endptr);
+            }
+
+            static void strtof(double& f, const char* str, char** endptr)
+            {
+                f = std::strtod(str, endptr);
+            }
+
+            static void strtof(long double& f, const char* str, char** endptr)
+            {
+                f = std::strtold(str, endptr);
+            }
+
+            template<typename T>
+            bool parse(T& value, /*is_integral=*/std::false_type) const
+            {
+                // replace decimal separator with locale-specific version,
+                // when necessary; data will point to either the original
+                // string, or buf, or tempstr containing the fixed string.
+                std::string tempstr;
+                std::array<char, 64> buf;
+                const size_t len = static_cast<size_t>(m_end - m_start);
+
+                // lexer will reject empty numbers
+                assert(len > 0);
+
+                // since dealing with strtod family of functions, we're
+                // getting the decimal point char from the C locale facilities
+                // instead of C++'s numpunct facet of the current std::locale
+                const auto loc = localeconv();
+                assert(loc != nullptr);
+                const char decimal_point_char = (loc->decimal_point == nullptr) ? '.' : loc->decimal_point[0];
+
+                const char* data = m_start;
+
+                if (decimal_point_char != '.')
+                {
+                    const size_t ds_pos = static_cast<size_t>(std::find(m_start, m_end, '.') - m_start);
+
+                    if (ds_pos != len)
+                    {
+                        // copy the data into the local buffer or tempstr, if
+                        // buffer is too small; replace decimal separator, and
+                        // update data to point to the modified bytes
+                        if ((len + 1) < buf.size())
+                        {
+                            std::copy(m_start, m_end, buf.begin());
+                            buf[len] = 0;
+                            buf[ds_pos] = decimal_point_char;
+                            data = buf.data();
+                        }
+                        else
+                        {
+                            tempstr.assign(m_start, m_end);
+                            tempstr[ds_pos] = decimal_point_char;
+                            data = tempstr.c_str();
+                        }
+                    }
+                }
+
+                char* endptr = nullptr;
+                value = 0;
+                // this calls appropriate overload depending on T
+                strtof(value, data, &endptr);
+
+                // parsing was successful iff strtof parsed exactly the number
+                // of characters determined by the lexer (len)
+                const bool ok = (endptr == (data + len));
+
+                if (ok and (value == static_cast<T>(0.0)) and (*data == '-'))
+                {
+                    // some implementations forget to negate the zero
+                    value = -0.0;
+                }
+
+                return ok;
+            }
+
+            // integral conversion
+
+            signed long long parse_integral(char** endptr, /*is_signed*/std::true_type) const
+            {
+                return std::strtoll(m_start, endptr, 10);
+            }
+
+            unsigned long long parse_integral(char** endptr, /*is_signed*/std::false_type) const
+            {
+                return std::strtoull(m_start, endptr, 10);
+            }
+
+            template<typename T>
+            bool parse(T& value, /*is_integral=*/std::true_type) const
+            {
+                char* endptr = nullptr;
+                errno = 0; // these are thread-local
+                const auto x = parse_integral(&endptr, std::is_signed<T>());
+
+                // called right overload?
+                static_assert(std::is_signed<T>() == std::is_signed<decltype(x)>(), "");
+
+                value = static_cast<T>(x);
+
+                return (x == static_cast<decltype(x)>(value)) // x fits into destination T
+                       and (x < 0) == (value < 0)             // preserved sign
+                       //and ((x != 0) or is_integral())        // strto[u]ll did nto fail
+                       and (errno == 0)                       // strto[u]ll did not overflow
+                       and (m_start < m_end)                  // token was not empty
+                       and (endptr == m_end);                 // parsed entire token exactly
+            }
+        };
 
         /*!
         @brief return number value for number tokens
@@ -10899,125 +11244,84 @@ basic_json_parser_66:
         number type (either integer, unsigned integer or floating point),
         which is passed back to the caller via the result parameter.
 
-        This function parses the integer component up to the radix point or
-        exponent while collecting information about the 'floating point
-        representation', which it stores in the result parameter. If there is
-        no radix point or exponent, and the number can fit into a @ref
-        number_integer_t or @ref number_unsigned_t then it sets the result
-        parameter accordingly.
+        integral numbers that don't fit into the the range of the respective
+        type are parsed as number_float_t
 
-        If the number is a floating point number the number is then parsed
-        using @a std:strtod (or @a std:strtof or @a std::strtold).
+        floating-point values do not satisfy std::isfinite predicate
+        are converted to value_t::null
 
-        @param[out] result  @ref basic_json object to receive the number, or
-        NAN if the conversion read past the current token. The latter case
-        needs to be treated by the caller function.
+        throws if the entire string [m_start .. m_cursor) cannot be
+        interpreted as a number
+
+        @param[out] result  @ref basic_json object to receive the number.
+        @param[in]  token   the type of the number token
         */
-        void get_number(basic_json& result) const
+        bool get_number(basic_json& result, const token_type token) const
         {
             assert(m_start != nullptr);
+            assert(m_start < m_cursor);
+            assert((token == token_type::value_unsigned) or
+                   (token == token_type::value_integer) or
+                   (token == token_type::value_float));
 
-            const lexer::lexer_char_t* curptr = m_start;
+            strtonum num_converter(reinterpret_cast<const char*>(m_start),
+                                   reinterpret_cast<const char*>(m_cursor));
 
-            // accumulate the integer conversion result (unsigned for now)
-            number_unsigned_t value = 0;
-
-            // maximum absolute value of the relevant integer type
-            number_unsigned_t max;
-
-            // temporarily store the type to avoid unecessary bitfield access
-            value_t type;
-
-            // look for sign
-            if (*curptr == '-')
+            switch (token)
             {
-                type = value_t::number_integer;
-                max = static_cast<uint64_t>((std::numeric_limits<number_integer_t>::max)()) + 1;
-                curptr++;
-            }
-            else
-            {
-                type = value_t::number_unsigned;
-                max = static_cast<uint64_t>((std::numeric_limits<number_unsigned_t>::max)());
-            }
-
-            // count the significant figures
-            for (; curptr < m_cursor; curptr++)
-            {
-                // quickly skip tests if a digit
-                if (*curptr < '0' or* curptr > '9')
+                case lexer::token_type::value_unsigned:
                 {
-                    if (*curptr == '.')
+                    number_unsigned_t val;
+                    if (num_converter.to(val))
                     {
-                        // don't count '.' but change to float
-                        type = value_t::number_float;
-                        continue;
+                        // parsing successful
+                        result.m_type = value_t::number_unsigned;
+                        result.m_value = val;
+                        return true;
                     }
-                    // assume exponent (if not then will fail parse): change to
-                    // float, stop counting and record exponent details
-                    type = value_t::number_float;
                     break;
                 }
 
-                // skip if definitely not an integer
-                if (type != value_t::number_float)
+                case lexer::token_type::value_integer:
                 {
-                    auto digit = static_cast<number_unsigned_t>(*curptr - '0');
-
-                    // overflow if value * 10 + digit > max, move terms around
-                    // to avoid overflow in intermediate values
-                    if (value > (max - digit) / 10)
+                    number_integer_t val;
+                    if (num_converter.to(val))
                     {
-                        // overflow
-                        type = value_t::number_float;
+                        // parsing successful
+                        result.m_type = value_t::number_integer;
+                        result.m_value = val;
+                        return true;
                     }
-                    else
-                    {
-                        // no overflow
-                        value = value * 10 + digit;
-                    }
+                    break;
+                }
+
+                default:
+                {
+                    break;
                 }
             }
 
-            // save the value (if not a float)
-            if (type == value_t::number_unsigned)
+            // parse float (either explicitly or because a previous conversion
+            // failed)
+            number_float_t val;
+            if (num_converter.to(val))
             {
-                result.m_value.number_unsigned = value;
-            }
-            else if (type == value_t::number_integer)
-            {
-                // invariant: if we parsed a '-', the absolute value is between
-                // 0 (we allow -0) and max == -INT64_MIN
-                assert(value >= 0);
-                assert(value <= max);
-
-                if (value == max)
-                {
-                    // we cannot simply negate value (== max == -INT64_MIN),
-                    // see https://github.com/nlohmann/json/issues/389
-                    result.m_value.number_integer = static_cast<number_integer_t>(INT64_MIN);
-                }
-                else
-                {
-                    // all other values can be negated safely
-                    result.m_value.number_integer = -static_cast<number_integer_t>(value);
-                }
-            }
-            else
-            {
-                // parse with strtod
-                result.m_value.number_float = str_to_float_t(static_cast<number_float_t*>(nullptr), nullptr);
+                // parsing successful
+                result.m_type = value_t::number_float;
+                result.m_value = val;
 
                 // replace infinity and NAN by null
                 if (not std::isfinite(result.m_value.number_float))
                 {
-                    type = value_t::null;
+                    result.m_type  = value_t::null;
                     result.m_value = basic_json::json_value();
                 }
+
+                return true;
             }
 
-            // save the type
-            result.m_type = type;
+            // couldn't parse number in any format
+            return false;
         }
 
       private:
@@ -11261,9 +11565,11 @@ basic_json_parser_66:
                     break;
                 }
 
-                case lexer::token_type::value_number:
+                case lexer::token_type::value_unsigned:
+                case lexer::token_type::value_integer:
+                case lexer::token_type::value_float:
                 {
-                    m_lexer.get_number(result);
+                    m_lexer.get_number(result, last_token);
                     get_token();
                     break;
                 }
@@ -11558,7 +11864,7 @@ basic_json_parser_66:
 
                         if (reference_token == "-")
                         {
-                            // explicityly treat "-" as index beyond the end
+                            // explicitly treat "-" as index beyond the end
                             ptr = &ptr->operator[](ptr->m_value.array->size());
                         }
                         else
@@ -11597,9 +11903,9 @@ basic_json_parser_66:
                         if (reference_token == "-")
                         {
                             // "-" always fails the range check
-                            throw std::out_of_range("array index '-' (" +
-                                                    std::to_string(ptr->m_value.array->size()) +
-                                                    ") is out of range");
+                            JSON_THROW(std::out_of_range("array index '-' (" +
+                                                         std::to_string(ptr->m_value.array->size()) +
+                                                         ") is out of range"));
                         }
 
                         // error condition (cf. RFC 6901, Sect. 4)
@@ -11649,9 +11955,9 @@ basic_json_parser_66:
                         if (reference_token == "-")
                         {
                             // "-" cannot be used for const access
-                            throw std::out_of_range("array index '-' (" +
-                                                    std::to_string(ptr->m_value.array->size()) +
-                                                    ") is out of range");
+                            JSON_THROW(std::out_of_range("array index '-' (" +
+                                                         std::to_string(ptr->m_value.array->size()) +
+                                                         ") is out of range"));
                         }
 
                         // error condition (cf. RFC 6901, Sect. 4)
@@ -11693,9 +11999,9 @@ basic_json_parser_66:
                         if (reference_token == "-")
                         {
                             // "-" always fails the range check
-                            throw std::out_of_range("array index '-' (" +
-                                                    std::to_string(ptr->m_value.array->size()) +
-                                                    ") is out of range");
+                            JSON_THROW(std::out_of_range("array index '-' (" +
+                                                         std::to_string(ptr->m_value.array->size()) +
+                                                         ") is out of range"));
                         }
 
                         // error condition (cf. RFC 6901, Sect. 4)
@@ -12065,7 +12371,7 @@ basic_json_parser_66:
     primitive. The original JSON value can be restored using the @ref
     unflatten() function.
 
-    @return an object that maps JSON pointers to primitve values
+    @return an object that maps JSON pointers to primitive values
 
     @note Empty objects and arrays are flattened to `null` and will not be
           reconstructed correctly by the @ref unflatten() function.
@@ -12132,7 +12438,7 @@ basic_json_parser_66:
 
     [JSON Patch](http://jsonpatch.com) defines a JSON document structure for
     expressing a sequence of operations to apply to a JSON) document. With
-    this funcion, a JSON Patch is applied to the current JSON value by
+    this function, a JSON Patch is applied to the current JSON value by
     executing all operations from the patch.
 
     @param[in] json_patch  JSON patch document
@@ -12300,7 +12606,7 @@ basic_json_parser_66:
             JSON_THROW(std::invalid_argument("JSON patch must be an array of objects"));
         }
 
-        // iterate and apply th eoperations
+        // iterate and apply the operations
         for (const auto& val : json_patch)
         {
             // wrapper to get a value for an operation
@@ -12439,8 +12745,8 @@ basic_json_parser_66:
     @note Currently, only `remove`, `add`, and `replace` operations are
           generated.
 
-    @param[in] source  JSON value to copare from
-    @param[in] target  JSON value to copare against
+    @param[in] source  JSON value to compare from
+    @param[in] target  JSON value to compare against
     @param[in] path    helper value to create JSON pointers
 
     @return a JSON patch to convert the @a source to @a target
@@ -12689,9 +12995,9 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #endif
 
 // clean up
-#undef JSON_THROW
-#undef JSON_TRY
 #undef JSON_CATCH
 #undef JSON_DEPRECATED
+#undef JSON_THROW
+#undef JSON_TRY
 
 #endif

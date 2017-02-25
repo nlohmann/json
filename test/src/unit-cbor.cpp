@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.0
+|  |  |__   |  |  | | | |  version 2.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -237,7 +237,7 @@ TEST_CASE("CBOR")
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
 
-                    int16_t restored = -1 - ((result[1] << 8) + result[2]);
+                    int16_t restored = static_cast<int16_t>(-1 - ((result[1] << 8) + result[2]));
                     CHECK(restored == -9263);
 
                     // roundtrip
@@ -1184,6 +1184,10 @@ TEST_CASE("single CBOR roundtrip")
 
         // compare parsed JSON values
         CHECK(j1 == j2);
+
+        // check with different start index
+        packed.insert(packed.begin(), 5, 0xff);
+        CHECK(j1 == json::from_cbor(packed, 5));
     }
 }
 
@@ -1267,7 +1271,7 @@ TEST_CASE("CBOR regressions", "[!throws]")
     SECTION("improve code coverage")
     {
         // exotic edge case
-        CHECK_THROWS_AS(json::check_length(0xffffffffffffffff, 0xfffffffffffffff0, 0xff), std::out_of_range);
+        CHECK_THROWS_AS(json::check_length(0xffffffffffffffffull, 0xfffffffffffffff0ull, 0xff), std::out_of_range);
     }
 }
 

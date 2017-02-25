@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.0
+|  |  |__   |  |  | | | |  version 2.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -350,8 +350,8 @@ TEST_CASE("regression tests")
 
         // double
         nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, double> j_double =
-            1.23e35f;
-        CHECK(j_double.get<double>() == 1.23e35f);
+            1.23e35;
+        CHECK(j_double.get<double>() == 1.23e35);
 
         // long double
         nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, long double>
@@ -361,8 +361,8 @@ TEST_CASE("regression tests")
 
     SECTION("issue #228 - double values are serialized with commas as decimal points")
     {
-        json j1a = 23.42;
-        json j1b = json::parse("23.42");
+        json j1a = 2312.42;
+        json j1b = json::parse("2312.42");
 
         json j2a = 2342e-2;
         //issue #230
@@ -380,33 +380,88 @@ TEST_CASE("regression tests")
             {
                 return ',';
             }
+
+            char do_thousands_sep() const
+            {
+                return '.';
+            }
+
+            std::string do_grouping() const
+            {
+                return "\03";
+            }
         };
 
         // change locale to mess with decimal points
-        std::locale::global(std::locale(std::locale(), new CommaDecimalSeparator));
+        auto orig_locale = std::locale::global(std::locale(std::locale(), new CommaDecimalSeparator));
 
-        CHECK(j1a.dump() == "23.42");
-        CHECK(j1b.dump() == "23.42");
+        CHECK(j1a.dump() == "2312.42");
+        CHECK(j1b.dump() == "2312.42");
 
         // check if locale is properly reset
         std::stringstream ss;
         ss.imbue(std::locale(std::locale(), new CommaDecimalSeparator));
-        ss << 47.11;
-        CHECK(ss.str() == "47,11");
+        ss << 4712.11;
+        CHECK(ss.str() == "4.712,11");
         ss << j1a;
-        CHECK(ss.str() == "47,1123.42");
+        CHECK(ss.str() == "4.712,112312.42");
         ss << 47.11;
-        CHECK(ss.str() == "47,1123.4247,11");
+        CHECK(ss.str() == "4.712,112312.4247,11");
 
         CHECK(j2a.dump() == "23.42");
         //issue #230
         //CHECK(j2b.dump() == "23.42");
 
-        CHECK(j3a.dump() == "10000");
-        CHECK(j3b.dump() == "10000");
-        CHECK(j3c.dump() == "10000");
+        CHECK(j3a.dump() == "10000.0");
+        CHECK(j3b.dump() == "10000.0");
+        CHECK(j3c.dump() == "10000.0");
         //CHECK(j3b.dump() == "1E04"); // roundtrip error
         //CHECK(j3c.dump() == "1e04"); // roundtrip error
+
+        std::locale::global(orig_locale);
+    }
+
+    SECTION("issue #378 - locale-independent num-to-str")
+    {
+        setlocale(LC_NUMERIC, "de_DE.UTF-8");
+
+        // Verify that snprintf uses special decimal and grouping characters.
+        // Disabled, because can't trigger locale-specific behavior in AppVeyor
+#ifndef _MSC_VER
+        {
+            std::array<char, 64> buf;
+            std::snprintf(buf.data(), buf.size(), "%.2f", 12345.67);
+            CHECK(strcmp(buf.data(), "12345,67") == 0);
+        }
+#endif
+
+        // verify that dumped correctly with '.' and no grouping
+        const json j1 = 12345.67;
+        CHECK(json(12345.67).dump() == "12345.67");
+        setlocale(LC_NUMERIC, "C");
+    }
+
+    SECTION("issue #379 - locale-independent str-to-num")
+    {
+        setlocale(LC_NUMERIC, "de_DE.UTF-8");
+
+        // disabled, because locale-specific beharivor is not
+        // triggered in AppVeyor for some reason
+#ifndef _MSC_VER
+        {
+            // verify that strtod now uses commas as decimal-separator
+            CHECK(std::strtod("3,14", nullptr) == 3.14);
+
+            // verify that strtod does not understand dots as decimal separator
+            CHECK(std::strtod("3.14", nullptr) == 3);
+        }
+#endif
+
+        // verify that parsed correctly despite using strtod internally
+        CHECK(json::parse("3.14").get<double>() == 3.14);
+
+        // check a different code path
+        CHECK(json::parse("1.000000000000000000000000000000000000000000000000000000000000000000000000").get<double>() == 1.0);
     }
 
     SECTION("issue #233 - Can't use basic_json::iterator as a base iterator for std::move_iterator")
@@ -586,7 +641,7 @@ TEST_CASE("regression tests")
         CHECK_THROWS_AS(json::from_msgpack(vec1), std::out_of_range);
 
         // more test cases for MessagePack
-        for (uint8_t b :
+        for (auto b :
                 {
                     0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f, // fixmap
                     0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f, // fixarray
@@ -594,12 +649,12 @@ TEST_CASE("regression tests")
                     0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf
                 })
         {
-            std::vector<uint8_t> vec(1, b);
+            std::vector<uint8_t> vec(1, static_cast<uint8_t>(b));
             CHECK_THROWS_AS(json::from_msgpack(vec), std::out_of_range);
         }
 
         // more test cases for CBOR
-        for (uint8_t b :
+        for (auto b :
                 {
                     0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
                     0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, // UTF-8 string
@@ -609,7 +664,7 @@ TEST_CASE("regression tests")
                     0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7 // map
                 })
         {
-            std::vector<uint8_t> vec(1, b);
+            std::vector<uint8_t> vec(1, static_cast<uint8_t>(b));
             CHECK_THROWS_AS(json::from_cbor(vec), std::out_of_range);
         }
 
@@ -672,6 +727,24 @@ TEST_CASE("regression tests")
         CHECK_THROWS_AS(json::from_cbor(vec3), std::out_of_range);
     }
 
+    SECTION("issue #414 - compare with literal 0)")
+    {
+#define CHECK_TYPE(v) \
+    CHECK((json(v) == v));\
+    CHECK((v == json(v)));\
+    CHECK_FALSE((json(v) != v));\
+    CHECK_FALSE((v != json(v)));
+
+        CHECK_TYPE(nullptr);
+        CHECK_TYPE(0);
+        CHECK_TYPE(0u);
+        CHECK_TYPE(0L);
+        CHECK_TYPE(0.0);
+        CHECK_TYPE("");
+
+#undef CHECK_TYPE
+    }
+
     SECTION("issue #416 - Use-of-uninitialized-value (OSS-Fuzz issue 377)")
     {
         // original test case
@@ -697,5 +770,26 @@ TEST_CASE("regression tests")
             0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0xfb
         };
         CHECK_THROWS_AS(json::from_cbor(vec2), std::out_of_range);
+    }
+
+    SECTION("issue #452 - Heap-buffer-overflow (OSS-Fuzz issue 585)")
+    {
+        std::vector<uint8_t> vec = {'-', '0', '1', '2', '2', '7', '4'};
+        CHECK_THROWS_AS(json::parse(vec), std::invalid_argument);
+    }
+
+    SECTION("issue #454 - doubles are printed as integers")
+    {
+        json j = R"({"bool_value":true,"double_value":2.0,"int_value":10,"level1":{"list_value":[3,"hi",false],"tmp":5.0},"string_value":"hello"})"_json;
+        CHECK(j["double_value"].is_number_float());
+    }
+
+    SECTION("issue #465 - roundtrip error while parsing 1000000000000000010E5")
+    {
+        json j1 = json::parse("1000000000000000010E5");
+        std::string s1 = j1.dump();
+        json j2 = json::parse(s1);
+        std::string s2 = j2.dump();
+        CHECK(s1 == s2);
     }
 }
