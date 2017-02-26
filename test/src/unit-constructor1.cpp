@@ -699,6 +699,15 @@ TEST_CASE("constructors")
             json j(n);
             CHECK(j.type() == json::value_t::number_float);
         }
+
+        SECTION("infinity")
+        {
+            // infinity is stored as null
+            // should change in the future: https://github.com/nlohmann/json/issues/388
+            json::number_float_t n(std::numeric_limits<json::number_float_t>::infinity());
+            json j(n);
+            CHECK(j.type() == json::value_t::null);
+        }
     }
 
     SECTION("create a floating-point number (implicit)")

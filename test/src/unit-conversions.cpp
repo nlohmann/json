@@ -182,6 +182,10 @@ TEST_CASE("value conversion")
                 std::vector<float> v;
                 CHECK_THROWS_AS(nlohmann::from_json(j, v), std::logic_error);
                 CHECK(v.capacity() == j.size());
+
+                // make sure all values are properly copied
+                std::vector<int> v2 = json({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+                CHECK(v2.size() == 10);
             }
 #endif
         }
