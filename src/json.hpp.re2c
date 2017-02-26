@@ -1136,10 +1136,7 @@ class basic_json
         result["url"] = "https://github.com/nlohmann/json";
         result["version"] =
         {
-            {"string", "2.1.1"},
-            {"major", 2},
-            {"minor", 1},
-            {"patch", 1}
+            {"string", "2.1.1"}, {"major", 2}, {"minor", 1}, {"patch", 1}
         };
 
 #ifdef _WIN32
