@@ -8414,9 +8414,6 @@ class basic_json
               const unsigned int indent_step,
               const unsigned int current_indent = 0) const
     {
-        // variable to hold indentation for recursive calls
-        unsigned int new_indent = current_indent;
-
         switch (m_type)
         {
             case value_t::object:
@@ -8427,35 +8424,43 @@ class basic_json
                     return;
                 }
 
-                o << "{";
-
-                // increase indentation
                 if (pretty_print)
                 {
-                    new_indent += indent_step;
-                    o << "\n";
-                }
+                    o << "{\n";
 
-                for (auto i = m_value.object->cbegin(); i != m_value.object->cend(); ++i)
-                {
-                    if (i != m_value.object->cbegin())
+                    // variable to hold indentation for recursive calls
+                    const auto new_indent = current_indent + indent_step;
+                    const std::string indent_string = string_t(new_indent, ' ');
+
+                    for (auto i = m_value.object->cbegin(); i != m_value.object->cend(); ++i)
                     {
-                        o << (pretty_print ? ",\n" : ",");
+                        if (i != m_value.object->cbegin())
+                        {
+                            o << ",\n";
+                        }
+                        o << indent_string << '\"' << escape_string(i->first) << "\": ";
+                        i->second.dump(o, true, indent_step, new_indent);
                     }
-                    o << string_t(new_indent, ' ') << "\""
-                      << escape_string(i->first) << "\":"
-                      << (pretty_print ? " " : "");
-                    i->second.dump(o, pretty_print, indent_step, new_indent);
-                }
 
-                // decrease indentation
-                if (pretty_print)
+                    o << '\n' << string_t(current_indent, ' ') + '}';
+                }
+                else
                 {
-                    new_indent -= indent_step;
-                    o << "\n";
+                    o << '{';
+
+                    for (auto i = m_value.object->cbegin(); i != m_value.object->cend(); ++i)
+                    {
+                        if (i != m_value.object->cbegin())
+                        {
+                            o << ',';
+                        }
+                        o << '\"' << escape_string(i->first) << "\":";
+                        i->second.dump(o, false, indent_step, current_indent);
+                    }
+
+                    o << '}';
                 }
 
-                o << string_t(new_indent, ' ') + "}";
                 return;
             }
 
@@ -8467,39 +8472,46 @@ class basic_json
                     return;
                 }
 
-                o << "[";
-
-                // increase indentation
                 if (pretty_print)
                 {
-                    new_indent += indent_step;
-                    o << "\n";
-                }
+                    o << "[\n";
 
-                for (auto i = m_value.array->cbegin(); i != m_value.array->cend(); ++i)
-                {
-                    if (i != m_value.array->cbegin())
+                    // variable to hold indentation for recursive calls
+                    const auto new_indent = current_indent + indent_step;
+                    const std::string indent_string = string_t(new_indent, ' ');
+
+                    for (auto i = m_value.array->cbegin(); i != m_value.array->cend() - 1; ++i)
                     {
-                        o << (pretty_print ? ",\n" : ",");
+                        o << indent_string;
+                        i->dump(o, true, indent_step, new_indent);
+                        o << ",\n";
                     }
-                    o << string_t(new_indent, ' ');
-                    i->dump(o, pretty_print, indent_step, new_indent);
-                }
 
-                // decrease indentation
-                if (pretty_print)
+                    o << indent_string;
+                    assert(not m_value.array->empty());
+                    m_value.array->back().dump(o, true, indent_step, new_indent);
+
+                    o << '\n' << string_t(current_indent, ' ') << ']';
+                }
+                else
                 {
-                    new_indent -= indent_step;
-                    o << "\n";
+                    o << '[';
+                    for (auto i = m_value.array->cbegin(); i != m_value.array->cend() - 1; ++i)
+                    {
+                        i->dump(o, false, indent_step, current_indent);
+                        o << ',';
+                    }
+                    assert(not m_value.array->empty());
+                    m_value.array->back().dump(o, false, indent_step, current_indent);
+                    o << ']';
                 }
 
-                o << string_t(new_indent, ' ') << "]";
                 return;
             }
 
             case value_t::string:
             {
-                o << string_t("\"") << escape_string(*m_value.string) << "\"";
+                o << '\"' << escape_string(*m_value.string) << '\"';
                 return;
             }
 
