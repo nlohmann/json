@@ -8430,34 +8430,36 @@ class basic_json
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
-                    const std::string indent_string = string_t(new_indent, ' ');
+                    string_t indent_string = string_t(new_indent, ' ');
 
-                    for (auto i = m_value.object->cbegin(); i != m_value.object->cend(); ++i)
+                    auto i = m_value.object->cbegin();
+                    for (size_t cnt = 0; cnt < m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        if (i != m_value.object->cbegin())
-                        {
-                            o << ",\n";
-                        }
                         o << indent_string << '\"' << escape_string(i->first) << "\": ";
                         i->second.dump(o, true, indent_step, new_indent);
+                        o << ",\n";
                     }
 
-                    o << '\n' << string_t(current_indent, ' ') + '}';
+                    o << indent_string << '\"' << escape_string(i->first) << "\": ";
+                    i->second.dump(o, true, indent_step, new_indent);
+
+                    indent_string.resize(current_indent);
+                    o << '\n' << indent_string << '}';
                 }
                 else
                 {
                     o << '{';
 
-                    for (auto i = m_value.object->cbegin(); i != m_value.object->cend(); ++i)
+                    auto i = m_value.object->cbegin();
+                    for (size_t cnt = 0; cnt < m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        if (i != m_value.object->cbegin())
-                        {
-                            o << ',';
-                        }
                         o << '\"' << escape_string(i->first) << "\":";
                         i->second.dump(o, false, indent_step, current_indent);
+                        o << ',';
                     }
 
+                    o << '\"' << escape_string(i->first) << "\":";
+                    i->second.dump(o, false, indent_step, current_indent);
                     o << '}';
                 }
 
@@ -8478,7 +8480,7 @@ class basic_json
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
-                    const std::string indent_string = string_t(new_indent, ' ');
+                    string_t indent_string = string_t(new_indent, ' ');
 
                     for (auto i = m_value.array->cbegin(); i != m_value.array->cend() - 1; ++i)
                     {
@@ -8491,7 +8493,8 @@ class basic_json
                     assert(not m_value.array->empty());
                     m_value.array->back().dump(o, true, indent_step, new_indent);
 
-                    o << '\n' << string_t(current_indent, ' ') << ']';
+                    indent_string.resize(current_indent);
+                    o << '\n' << indent_string << ']';
                 }
                 else
                 {
