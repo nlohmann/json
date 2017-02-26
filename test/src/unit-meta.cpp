@@ -33,10 +33,14 @@ using nlohmann::json;
 
 TEST_CASE("version information")
 {
-    SECTION("version()")
+    SECTION("meta()")
     {
-        CHECK(json::meta()["name"] == "JSON for Modern C++");
-        CHECK(json::meta()["version"] == json(
+        json j = json::meta();
+
+        CHECK(j["name"] == "JSON for Modern C++");
+        CHECK(j["copyright"] == "(C) 2013-2017 Niels Lohmann");
+        CHECK(j["url"] == "https://github.com/nlohmann/json");
+        CHECK(j["version"] == json(
         {
             {"string", "2.1.1"},
             {"major", 2},
