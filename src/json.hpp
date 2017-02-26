@@ -12477,7 +12477,7 @@ basic_json_parser_74:
         // the valid JSON Patch operations
         enum class patch_operations {add, remove, replace, move, copy, test, invalid};
 
-        const auto get_op = [](const std::string op)
+        const auto get_op = [](const std::string & op)
         {
             if (op == "add")
             {
