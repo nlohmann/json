@@ -2644,14 +2644,15 @@ class basic_json
     string_t dump(const int indent = -1) const
     {
         std::stringstream ss;
+        serializer s(ss);
 
         if (indent >= 0)
         {
-            dump(ss, true, static_cast<unsigned int>(indent));
+            s.dump(*this, true, static_cast<unsigned int>(indent));
         }
         else
         {
-            dump(ss, false, 0);
+            s.dump(*this, false, 0);
         }
 
         return ss.str();
@@ -6194,6 +6195,531 @@ class basic_json
     /// @name serialization
     /// @{
 
+  private:
+    class serializer
+    {
+      public:
+        serializer(std::ostream& s)
+            : o(s)
+        {}
+
+        /*!
+        @brief internal implementation of the serialization function
+
+        This function is called by the public member function dump and organizes
+        the serialization internally. The indentation level is propagated as
+        additional parameter. In case of arrays and objects, the function is
+        called recursively. Note that
+
+        - strings and object keys are escaped using `escape_string()`
+        - integer numbers are converted implicitly via `operator<<`
+        - floating-point numbers are converted to a string using `"%g"` format
+
+        @param[in] val             value to serialize
+        @param[in] pretty_print    whether the output shall be pretty-printed
+        @param[in] indent_step     the indent level
+        @param[in] current_indent  the current indent level (only used internally)
+        */
+        void dump(const basic_json& val,
+                  const bool pretty_print,
+                  const unsigned int indent_step,
+                  const unsigned int current_indent = 0) const
+        {
+            switch (val.m_type)
+            {
+                case value_t::object:
+                {
+                    if (val.m_value.object->empty())
+                    {
+                        o.write("{}", 2);
+                        return;
+                    }
+
+                    if (pretty_print)
+                    {
+                        o.write("{\n", 2);
+
+                        // variable to hold indentation for recursive calls
+                        const auto new_indent = current_indent + indent_step;
+                        string_t indent_string = string_t(new_indent, ' ');
+
+                        // first n-1 elements
+                        auto i = val.m_value.object->cbegin();
+                        for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
+                        {
+                            o.write(indent_string.c_str(), new_indent);
+                            o.put('\"');
+                            const auto s = escape_string(i->first);
+                            o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                            o.write("\": ", 3);
+                            dump(i->second, true, indent_step, new_indent);
+                            o.write(",\n", 2);
+                        }
+
+                        // last element
+                        assert(i != val.m_value.object->cend());
+                        o.write(indent_string.c_str(), new_indent);
+                        o.put('\"');
+                        const auto s = escape_string(i->first);
+                        o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                        o.write("\": ", 3);
+                        dump(i->second, true, indent_step, new_indent);
+
+                        o.put('\n');
+                        o.write(indent_string.c_str(), current_indent);
+                        o.put('}');
+                    }
+                    else
+                    {
+                        o.put('{');
+
+                        // first n-1 elements
+                        auto i = val.m_value.object->cbegin();
+                        for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
+                        {
+                            o.put('\"');
+                            const auto s = escape_string(i->first);
+                            o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                            o.write("\":", 2);
+                            dump(i->second, false, indent_step, current_indent);
+                            o.put(',');
+                        }
+
+                        // last element
+                        assert(i != val.m_value.object->cend());
+                        o.put('\"');
+                        const auto s = escape_string(i->first);
+                        o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                        o.write("\":", 2);
+                        dump(i->second, false, indent_step, current_indent);
+
+                        o.put('}');
+                    }
+
+                    return;
+                }
+
+                case value_t::array:
+                {
+                    if (val.m_value.array->empty())
+                    {
+                        o.write("[]", 2);
+                        return;
+                    }
+
+                    if (pretty_print)
+                    {
+                        o.write("[\n", 2);
+
+                        // variable to hold indentation for recursive calls
+                        const auto new_indent = current_indent + indent_step;
+                        string_t indent_string = string_t(new_indent, ' ');
+
+                        // first n-1 elements
+                        for (auto i = val.m_value.array->cbegin(); i != val.m_value.array->cend() - 1; ++i)
+                        {
+                            o.write(indent_string.c_str(), new_indent);
+                            dump(*i, true, indent_step, new_indent);
+                            o.write(",\n", 2);
+                        }
+
+                        // last element
+                        assert(not val.m_value.array->empty());
+                        o.write(indent_string.c_str(), new_indent);
+                        dump(val.m_value.array->back(), true, indent_step, new_indent);
+
+                        o.put('\n');
+                        o.write(indent_string.c_str(), current_indent);
+                        o.put(']');
+                    }
+                    else
+                    {
+                        o.put('[');
+
+                        // first n-1 elements
+                        for (auto i = val.m_value.array->cbegin(); i != val.m_value.array->cend() - 1; ++i)
+                        {
+                            dump(*i, false, indent_step, current_indent);
+                            o.put(',');
+                        }
+
+                        // last element
+                        assert(not val.m_value.array->empty());
+                        dump(val.m_value.array->back(), false, indent_step, current_indent);
+
+                        o.put(']');
+                    }
+
+                    return;
+                }
+
+                case value_t::string:
+                {
+                    o.put('\"');
+                    const auto s = escape_string(*val.m_value.string);
+                    o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                    o.put('\"');
+                    return;
+                }
+
+                case value_t::boolean:
+                {
+                    if (val.m_value.boolean)
+                    {
+                        o.write("true", 4);
+                    }
+                    else
+                    {
+                        o.write("false", 5);
+                    }
+                    return;
+                }
+
+                case value_t::number_integer:
+                {
+                    o << numtostr(val.m_value.number_integer).c_str();
+                    return;
+                }
+
+                case value_t::number_unsigned:
+                {
+                    o << numtostr(val.m_value.number_unsigned).c_str();
+                    return;
+                }
+
+                case value_t::number_float:
+                {
+                    o << numtostr(val.m_value.number_float).c_str();
+                    return;
+                }
+
+                case value_t::discarded:
+                {
+                    o.write("<discarded>", 11);
+                    return;
+                }
+
+                case value_t::null:
+                {
+                    o.write("null", 4);
+                    return;
+                }
+            }
+        }
+
+      private:
+        /*!
+        @brief calculates the extra space to escape a JSON string
+
+        @param[in] s  the string to escape
+        @return the number of characters required to escape string @a s
+
+        @complexity Linear in the length of string @a s.
+        */
+        static std::size_t extra_space(const string_t& s) noexcept
+        {
+            return std::accumulate(s.begin(), s.end(), size_t{},
+                                   [](size_t res, typename string_t::value_type c)
+            {
+                switch (c)
+                {
+                    case '"':
+                    case '\\':
+                    case '\b':
+                    case '\f':
+                    case '\n':
+                    case '\r':
+                    case '\t':
+                    {
+                        // from c (1 byte) to \x (2 bytes)
+                        return res + 1;
+                    }
+
+                    default:
+                    {
+                        if (c >= 0x00 and c <= 0x1f)
+                        {
+                            // from c (1 byte) to \uxxxx (6 bytes)
+                            return res + 5;
+                        }
+
+                        return res;
+                    }
+                }
+            });
+        }
+
+        /*!
+        @brief escape a string
+
+        Escape a string by replacing certain special characters by a sequence of
+        an escape character (backslash) and another character and other control
+        characters by a sequence of "\u" followed by a four-digit hex
+        representation.
+
+        @param[in] s  the string to escape
+        @return  the escaped string
+
+        @complexity Linear in the length of string @a s.
+        */
+        static string_t escape_string(const string_t& s)
+        {
+            const auto space = extra_space(s);
+            if (space == 0)
+            {
+                return s;
+            }
+
+            // create a result string of necessary size
+            string_t result(s.size() + space, '\\');
+            std::size_t pos = 0;
+
+            for (const auto& c : s)
+            {
+                switch (c)
+                {
+                    // quotation mark (0x22)
+                    case '"':
+                    {
+                        result[pos + 1] = '"';
+                        pos += 2;
+                        break;
+                    }
+
+                    // reverse solidus (0x5c)
+                    case '\\':
+                    {
+                        // nothing to change
+                        pos += 2;
+                        break;
+                    }
+
+                    // backspace (0x08)
+                    case '\b':
+                    {
+                        result[pos + 1] = 'b';
+                        pos += 2;
+                        break;
+                    }
+
+                    // formfeed (0x0c)
+                    case '\f':
+                    {
+                        result[pos + 1] = 'f';
+                        pos += 2;
+                        break;
+                    }
+
+                    // newline (0x0a)
+                    case '\n':
+                    {
+                        result[pos + 1] = 'n';
+                        pos += 2;
+                        break;
+                    }
+
+                    // carriage return (0x0d)
+                    case '\r':
+                    {
+                        result[pos + 1] = 'r';
+                        pos += 2;
+                        break;
+                    }
+
+                    // horizontal tab (0x09)
+                    case '\t':
+                    {
+                        result[pos + 1] = 't';
+                        pos += 2;
+                        break;
+                    }
+
+                    default:
+                    {
+                        if (c >= 0x00 and c <= 0x1f)
+                        {
+                            // convert a number 0..15 to its hex representation
+                            // (0..f)
+                            static const char hexify[16] =
+                            {
+                                '0', '1', '2', '3', '4', '5', '6', '7',
+                                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+                            };
+
+                            // print character c as \uxxxx
+                            for (const char m :
+                        { 'u', '0', '0', hexify[c >> 4], hexify[c & 0x0f]
+                            })
+                            {
+                                result[++pos] = m;
+                            }
+
+                            ++pos;
+                        }
+                        else
+                        {
+                            // all other characters are added as-is
+                            result[pos++] = c;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /*!
+        @brief locale-independent serialization for built-in arithmetic types
+        */
+        struct numtostr
+        {
+          public:
+            template<typename NumberType>
+            numtostr(NumberType value)
+            {
+                x_write(value, std::is_integral<NumberType>());
+            }
+
+            const char* c_str() const
+            {
+                return m_buf.data();
+            }
+
+          private:
+            /// a (hopefully) large enough character buffer
+            std::array < char, 64 > m_buf{{}};
+
+            template<typename NumberType>
+            void x_write(NumberType x, /*is_integral=*/std::true_type)
+            {
+                // special case for "0"
+                if (x == 0)
+                {
+                    m_buf[0] = '0';
+                    return;
+                }
+
+                const bool is_negative = x < 0;
+                size_t i = 0;
+
+                // spare 1 byte for '\0'
+                while (x != 0 and i < m_buf.size() - 1)
+                {
+                    const auto digit = std::labs(static_cast<long>(x % 10));
+                    m_buf[i++] = static_cast<char>('0' + digit);
+                    x /= 10;
+                }
+
+                // make sure the number has been processed completely
+                assert(x == 0);
+
+                if (is_negative)
+                {
+                    // make sure there is capacity for the '-'
+                    assert(i < m_buf.size() - 2);
+                    m_buf[i++] = '-';
+                }
+
+                std::reverse(m_buf.begin(), m_buf.begin() + i);
+            }
+
+            template<typename NumberType>
+            void x_write(NumberType x, /*is_integral=*/std::false_type)
+            {
+                // special case for 0.0 and -0.0
+                if (x == 0)
+                {
+                    size_t i = 0;
+                    if (std::signbit(x))
+                    {
+                        m_buf[i++] = '-';
+                    }
+                    m_buf[i++] = '0';
+                    m_buf[i++] = '.';
+                    m_buf[i] = '0';
+                    return;
+                }
+
+                // get number of digits for a text -> float -> text round-trip
+                static constexpr auto d = std::numeric_limits<NumberType>::digits10;
+
+                // the actual conversion
+                const auto written_bytes = snprintf(m_buf.data(), m_buf.size(), "%.*g", d, x);
+
+                // negative value indicates an error
+                assert(written_bytes > 0);
+                // check if buffer was large enough
+                assert(static_cast<size_t>(written_bytes) < m_buf.size());
+
+                // read information from locale
+                const auto loc = localeconv();
+                assert(loc != nullptr);
+                const char thousands_sep = !loc->thousands_sep ? '\0'
+                                           : loc->thousands_sep[0];
+
+                const char decimal_point = !loc->decimal_point ? '\0'
+                                           : loc->decimal_point[0];
+
+                // erase thousands separator
+                if (thousands_sep != '\0')
+                {
+                    const auto end = std::remove(m_buf.begin(), m_buf.begin() + written_bytes, thousands_sep);
+                    std::fill(end, m_buf.end(), '\0');
+                }
+
+                // convert decimal point to '.'
+                if (decimal_point != '\0' and decimal_point != '.')
+                {
+                    for (auto& c : m_buf)
+                    {
+                        if (c == decimal_point)
+                        {
+                            c = '.';
+                            break;
+                        }
+                    }
+                }
+
+                // determine if need to append ".0"
+                size_t i = 0;
+                bool value_is_int_like = true;
+                for (i = 0; i < m_buf.size(); ++i)
+                {
+                    // break when end of number is reached
+                    if (m_buf[i] == '\0')
+                    {
+                        break;
+                    }
+
+                    // check if we find non-int character
+                    value_is_int_like = value_is_int_like and m_buf[i] != '.' and
+                                        m_buf[i] != 'e' and m_buf[i] != 'E';
+                }
+
+                if (value_is_int_like)
+                {
+                    // there must be 2 bytes left for ".0"
+                    assert((i + 2) < m_buf.size());
+                    // we write to the end of the number
+                    assert(m_buf[i] == '\0');
+                    assert(m_buf[i - 1] != '\0');
+
+                    // add ".0"
+                    m_buf[i] = '.';
+                    m_buf[i + 1] = '0';
+
+                    // the resulting string is properly terminated
+                    assert(m_buf[i + 2] == '\0');
+                }
+            }
+        };
+
+      private:
+        std::ostream& o;
+    };
+
+  public:
     /*!
     @brief serialize to stream
 
@@ -6226,7 +6752,8 @@ class basic_json
         o.width(0);
 
         // do the actual serialization
-        j.dump(o, pretty_print, static_cast<unsigned int>(indentation));
+        serializer s(o);
+        s.dump(j, pretty_print, static_cast<unsigned int>(indentation));
 
         return o;
     }
@@ -8082,519 +8609,6 @@ class basic_json
         }
     }
 
-  private:
-    /*!
-    @brief calculates the extra space to escape a JSON string
-
-    @param[in] s  the string to escape
-    @return the number of characters required to escape string @a s
-
-    @complexity Linear in the length of string @a s.
-    */
-    static std::size_t extra_space(const string_t& s) noexcept
-    {
-        return std::accumulate(s.begin(), s.end(), size_t{},
-                               [](size_t res, typename string_t::value_type c)
-        {
-            switch (c)
-            {
-                case '"':
-                case '\\':
-                case '\b':
-                case '\f':
-                case '\n':
-                case '\r':
-                case '\t':
-                {
-                    // from c (1 byte) to \x (2 bytes)
-                    return res + 1;
-                }
-
-                default:
-                {
-                    if (c >= 0x00 and c <= 0x1f)
-                    {
-                        // from c (1 byte) to \uxxxx (6 bytes)
-                        return res + 5;
-                    }
-
-                    return res;
-                }
-            }
-        });
-    }
-
-    /*!
-    @brief escape a string
-
-    Escape a string by replacing certain special characters by a sequence of
-    an escape character (backslash) and another character and other control
-    characters by a sequence of "\u" followed by a four-digit hex
-    representation.
-
-    @param[in] s  the string to escape
-    @return  the escaped string
-
-    @complexity Linear in the length of string @a s.
-    */
-    static string_t escape_string(const string_t& s)
-    {
-        const auto space = extra_space(s);
-        if (space == 0)
-        {
-            return s;
-        }
-
-        // create a result string of necessary size
-        string_t result(s.size() + space, '\\');
-        std::size_t pos = 0;
-
-        for (const auto& c : s)
-        {
-            switch (c)
-            {
-                // quotation mark (0x22)
-                case '"':
-                {
-                    result[pos + 1] = '"';
-                    pos += 2;
-                    break;
-                }
-
-                // reverse solidus (0x5c)
-                case '\\':
-                {
-                    // nothing to change
-                    pos += 2;
-                    break;
-                }
-
-                // backspace (0x08)
-                case '\b':
-                {
-                    result[pos + 1] = 'b';
-                    pos += 2;
-                    break;
-                }
-
-                // formfeed (0x0c)
-                case '\f':
-                {
-                    result[pos + 1] = 'f';
-                    pos += 2;
-                    break;
-                }
-
-                // newline (0x0a)
-                case '\n':
-                {
-                    result[pos + 1] = 'n';
-                    pos += 2;
-                    break;
-                }
-
-                // carriage return (0x0d)
-                case '\r':
-                {
-                    result[pos + 1] = 'r';
-                    pos += 2;
-                    break;
-                }
-
-                // horizontal tab (0x09)
-                case '\t':
-                {
-                    result[pos + 1] = 't';
-                    pos += 2;
-                    break;
-                }
-
-                default:
-                {
-                    if (c >= 0x00 and c <= 0x1f)
-                    {
-                        // convert a number 0..15 to its hex representation
-                        // (0..f)
-                        static const char hexify[16] =
-                        {
-                            '0', '1', '2', '3', '4', '5', '6', '7',
-                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-                        };
-
-                        // print character c as \uxxxx
-                        for (const char m :
-                    { 'u', '0', '0', hexify[c >> 4], hexify[c & 0x0f]
-                        })
-                        {
-                            result[++pos] = m;
-                        }
-
-                        ++pos;
-                    }
-                    else
-                    {
-                        // all other characters are added as-is
-                        result[pos++] = c;
-                    }
-                    break;
-                }
-            }
-        }
-
-        return result;
-    }
-
-
-    /*!
-    @brief locale-independent serialization for built-in arithmetic types
-    */
-    struct numtostr
-    {
-      public:
-        template<typename NumberType>
-        numtostr(NumberType value)
-        {
-            x_write(value, std::is_integral<NumberType>());
-        }
-
-        const char* c_str() const
-        {
-            return m_buf.data();
-        }
-
-      private:
-        /// a (hopefully) large enough character buffer
-        std::array < char, 64 > m_buf{{}};
-
-        template<typename NumberType>
-        void x_write(NumberType x, /*is_integral=*/std::true_type)
-        {
-            // special case for "0"
-            if (x == 0)
-            {
-                m_buf[0] = '0';
-                return;
-            }
-
-            const bool is_negative = x < 0;
-            size_t i = 0;
-
-            // spare 1 byte for '\0'
-            while (x != 0 and i < m_buf.size() - 1)
-            {
-                const auto digit = std::labs(static_cast<long>(x % 10));
-                m_buf[i++] = static_cast<char>('0' + digit);
-                x /= 10;
-            }
-
-            // make sure the number has been processed completely
-            assert(x == 0);
-
-            if (is_negative)
-            {
-                // make sure there is capacity for the '-'
-                assert(i < m_buf.size() - 2);
-                m_buf[i++] = '-';
-            }
-
-            std::reverse(m_buf.begin(), m_buf.begin() + i);
-        }
-
-        template<typename NumberType>
-        void x_write(NumberType x, /*is_integral=*/std::false_type)
-        {
-            // special case for 0.0 and -0.0
-            if (x == 0)
-            {
-                size_t i = 0;
-                if (std::signbit(x))
-                {
-                    m_buf[i++] = '-';
-                }
-                m_buf[i++] = '0';
-                m_buf[i++] = '.';
-                m_buf[i] = '0';
-                return;
-            }
-
-            // get number of digits for a text -> float -> text round-trip
-            static constexpr auto d = std::numeric_limits<NumberType>::digits10;
-
-            // the actual conversion
-            const auto written_bytes = snprintf(m_buf.data(), m_buf.size(), "%.*g", d, x);
-
-            // negative value indicates an error
-            assert(written_bytes > 0);
-            // check if buffer was large enough
-            assert(static_cast<size_t>(written_bytes) < m_buf.size());
-
-            // read information from locale
-            const auto loc = localeconv();
-            assert(loc != nullptr);
-            const char thousands_sep = !loc->thousands_sep ? '\0'
-                                       : loc->thousands_sep[0];
-
-            const char decimal_point = !loc->decimal_point ? '\0'
-                                       : loc->decimal_point[0];
-
-            // erase thousands separator
-            if (thousands_sep != '\0')
-            {
-                const auto end = std::remove(m_buf.begin(), m_buf.begin() + written_bytes, thousands_sep);
-                std::fill(end, m_buf.end(), '\0');
-            }
-
-            // convert decimal point to '.'
-            if (decimal_point != '\0' and decimal_point != '.')
-            {
-                for (auto& c : m_buf)
-                {
-                    if (c == decimal_point)
-                    {
-                        c = '.';
-                        break;
-                    }
-                }
-            }
-
-            // determine if need to append ".0"
-            size_t i = 0;
-            bool value_is_int_like = true;
-            for (i = 0; i < m_buf.size(); ++i)
-            {
-                // break when end of number is reached
-                if (m_buf[i] == '\0')
-                {
-                    break;
-                }
-
-                // check if we find non-int character
-                value_is_int_like = value_is_int_like and m_buf[i] != '.' and
-                                    m_buf[i] != 'e' and m_buf[i] != 'E';
-            }
-
-            if (value_is_int_like)
-            {
-                // there must be 2 bytes left for ".0"
-                assert((i + 2) < m_buf.size());
-                // we write to the end of the number
-                assert(m_buf[i] == '\0');
-                assert(m_buf[i - 1] != '\0');
-
-                // add ".0"
-                m_buf[i] = '.';
-                m_buf[i + 1] = '0';
-
-                // the resulting string is properly terminated
-                assert(m_buf[i + 2] == '\0');
-            }
-        }
-    };
-
-
-    /*!
-    @brief internal implementation of the serialization function
-
-    This function is called by the public member function dump and organizes
-    the serialization internally. The indentation level is propagated as
-    additional parameter. In case of arrays and objects, the function is
-    called recursively. Note that
-
-    - strings and object keys are escaped using `escape_string()`
-    - integer numbers are converted implicitly via `operator<<`
-    - floating-point numbers are converted to a string using `"%g"` format
-
-    @param[out] o              stream to write to
-    @param[in] pretty_print    whether the output shall be pretty-printed
-    @param[in] indent_step     the indent level
-    @param[in] current_indent  the current indent level (only used internally)
-    */
-    void dump(std::ostream& o,
-              const bool pretty_print,
-              const unsigned int indent_step,
-              const unsigned int current_indent = 0) const
-    {
-        switch (m_type)
-        {
-            case value_t::object:
-            {
-                if (m_value.object->empty())
-                {
-                    o.write("{}", 2);
-                    return;
-                }
-
-                if (pretty_print)
-                {
-                    o.write("{\n", 2);
-
-                    // variable to hold indentation for recursive calls
-                    const auto new_indent = current_indent + indent_step;
-                    string_t indent_string = string_t(new_indent, ' ');
-
-                    // first n-1 elements
-                    auto i = m_value.object->cbegin();
-                    for (size_t cnt = 0; cnt < m_value.object->size() - 1; ++cnt, ++i)
-                    {
-                        o.write(indent_string.c_str(), new_indent);
-                        o.put('\"');
-                        const auto s = escape_string(i->first);
-                        o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
-                        o.write("\": ", 3);
-                        i->second.dump(o, true, indent_step, new_indent);
-                        o.write(",\n", 2);
-                    }
-
-                    // last element
-                    assert(i != m_value.object->cend());
-                    o.write(indent_string.c_str(), new_indent);
-                    o.put('\"');
-                    const auto s = escape_string(i->first);
-                    o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
-                    o.write("\": ", 3);
-                    i->second.dump(o, true, indent_step, new_indent);
-
-                    o.put('\n');
-                    o.write(indent_string.c_str(), current_indent);
-                    o.put('}');
-                }
-                else
-                {
-                    o.put('{');
-
-                    // first n-1 elements
-                    auto i = m_value.object->cbegin();
-                    for (size_t cnt = 0; cnt < m_value.object->size() - 1; ++cnt, ++i)
-                    {
-                        o.put('\"');
-                        const auto s = escape_string(i->first);
-                        o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
-                        o.write("\":", 2);
-                        i->second.dump(o, false, indent_step, current_indent);
-                        o.put(',');
-                    }
-
-                    // last element
-                    assert(i != m_value.object->cend());
-                    o.put('\"');
-                    const auto s = escape_string(i->first);
-                    o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
-                    o.write("\":", 2);
-                    i->second.dump(o, false, indent_step, current_indent);
-
-                    o.put('}');
-                }
-
-                return;
-            }
-
-            case value_t::array:
-            {
-                if (m_value.array->empty())
-                {
-                    o.write("[]", 2);
-                    return;
-                }
-
-                if (pretty_print)
-                {
-                    o.write("[\n", 2);
-
-                    // variable to hold indentation for recursive calls
-                    const auto new_indent = current_indent + indent_step;
-                    string_t indent_string = string_t(new_indent, ' ');
-
-                    // first n-1 elements
-                    for (auto i = m_value.array->cbegin(); i != m_value.array->cend() - 1; ++i)
-                    {
-                        o.write(indent_string.c_str(), new_indent);
-                        i->dump(o, true, indent_step, new_indent);
-                        o.write(",\n", 2);
-                    }
-
-                    // last element
-                    assert(not m_value.array->empty());
-                    o.write(indent_string.c_str(), new_indent);
-                    m_value.array->back().dump(o, true, indent_step, new_indent);
-
-                    o.put('\n');
-                    o.write(indent_string.c_str(), current_indent);
-                    o.put(']');
-                }
-                else
-                {
-                    o.put('[');
-
-                    // first n-1 elements
-                    for (auto i = m_value.array->cbegin(); i != m_value.array->cend() - 1; ++i)
-                    {
-                        i->dump(o, false, indent_step, current_indent);
-                        o.put(',');
-                    }
-
-                    // last element
-                    assert(not m_value.array->empty());
-                    m_value.array->back().dump(o, false, indent_step, current_indent);
-
-                    o.put(']');
-                }
-
-                return;
-            }
-
-            case value_t::string:
-            {
-                o.put('\"');
-                const auto s = escape_string(*m_value.string);
-                o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
-                o.put('\"');
-                return;
-            }
-
-            case value_t::boolean:
-            {
-                if (m_value.boolean)
-                {
-                    o.write("true", 4);
-                }
-                else
-                {
-                    o.write("false", 5);
-                }
-                return;
-            }
-
-            case value_t::number_integer:
-            {
-                o << numtostr(m_value.number_integer).c_str();
-                return;
-            }
-
-            case value_t::number_unsigned:
-            {
-                o << numtostr(m_value.number_unsigned).c_str();
-                return;
-            }
-
-            case value_t::number_float:
-            {
-                o << numtostr(m_value.number_float).c_str();
-                return;
-            }
-
-            case value_t::discarded:
-            {
-                o.write("<discarded>", 11);
-                return;
-            }
-
-            case value_t::null:
-            {
-                o.write("null", 4);
-                return;
-            }
-        }
-    }
 
   private:
     //////////////////////
