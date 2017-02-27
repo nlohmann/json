@@ -8252,14 +8252,9 @@ class basic_json
     {
       public:
         template<typename NumberType>
-        numtostr(NumberType value)
+        numtostr(NumberType value, std::ostream& o)
         {
-            x_write(value, std::is_integral<NumberType>());
-        }
-
-        const char* c_str() const
-        {
-            return m_buf.data();
+            x_write(value, std::is_integral<NumberType>(), o);
         }
 
       private:
@@ -8267,12 +8262,12 @@ class basic_json
         std::array < char, 64 > m_buf{{}};
 
         template<typename NumberType>
-        void x_write(NumberType x, /*is_integral=*/std::true_type)
+        void x_write(NumberType x, /*is_integral=*/std::true_type, std::ostream& o)
         {
             // special case for "0"
             if (x == 0)
             {
-                m_buf[0] = '0';
+                o.put('0');
                 return;
             }
 
@@ -8298,30 +8293,31 @@ class basic_json
             }
 
             std::reverse(m_buf.begin(), m_buf.begin() + i);
+            o.write(m_buf.data(), static_cast<std::streamsize>(i));
         }
 
         template<typename NumberType>
-        void x_write(NumberType x, /*is_integral=*/std::false_type)
+        void x_write(NumberType x, /*is_integral=*/std::false_type, std::ostream& o)
         {
             // special case for 0.0 and -0.0
             if (x == 0)
             {
-                size_t i = 0;
                 if (std::signbit(x))
                 {
-                    m_buf[i++] = '-';
+                    o.write("-0.0", 4);
                 }
-                m_buf[i++] = '0';
-                m_buf[i++] = '.';
-                m_buf[i] = '0';
+                else
+                {
+                    o.write("0.0", 3);
+                }
                 return;
             }
 
             // get number of digits for a text -> float -> text round-trip
             static constexpr auto d = std::numeric_limits<NumberType>::digits10;
 
-            // the actual conversion
-            const auto written_bytes = snprintf(m_buf.data(), m_buf.size(), "%.*g", d, x);
+            // the actual conversion; store how many bytes have been written
+            auto written_bytes = snprintf(m_buf.data(), m_buf.size(), "%.*g", d, x);
 
             // negative value indicates an error
             assert(written_bytes > 0);
@@ -8342,6 +8338,7 @@ class basic_json
             {
                 const auto end = std::remove(m_buf.begin(), m_buf.begin() + written_bytes, thousands_sep);
                 std::fill(end, m_buf.end(), '\0');
+                written_bytes -= m_buf.end() - end;
             }
 
             // convert decimal point to '.'
@@ -8357,36 +8354,19 @@ class basic_json
                 }
             }
 
+            o.write(m_buf.data(), static_cast<std::streamsize>(written_bytes));
+
             // determine if need to append ".0"
-            size_t i = 0;
-            bool value_is_int_like = true;
-            for (i = 0; i < m_buf.size(); ++i)
+            const bool value_is_int_like = std::all_of(m_buf.begin(),
+                                           m_buf.begin() + written_bytes + 1,
+                                           [](char c)
             {
-                // break when end of number is reached
-                if (m_buf[i] == '\0')
-                {
-                    break;
-                }
-
-                // check if we find non-int character
-                value_is_int_like = value_is_int_like and m_buf[i] != '.' and
-                                    m_buf[i] != 'e' and m_buf[i] != 'E';
-            }
-
+                // we use %g above, so there cannot be an 'E' character
+                return c != '.' and c != 'e';
+            });
             if (value_is_int_like)
             {
-                // there must be 2 bytes left for ".0"
-                assert((i + 2) < m_buf.size());
-                // we write to the end of the number
-                assert(m_buf[i] == '\0');
-                assert(m_buf[i - 1] != '\0');
-
-                // add ".0"
-                m_buf[i] = '.';
-                m_buf[i + 1] = '0';
-
-                // the resulting string is properly terminated
-                assert(m_buf[i + 2] == '\0');
+                o.write(".0", 2);
             }
         }
     };
@@ -8566,19 +8546,19 @@ class basic_json
 
             case value_t::number_integer:
             {
-                o << numtostr(m_value.number_integer).c_str();
+                numtostr(m_value.number_integer, o);
                 return;
             }
 
             case value_t::number_unsigned:
             {
-                o << numtostr(m_value.number_unsigned).c_str();
+                numtostr(m_value.number_unsigned, o);
                 return;
             }
 
             case value_t::number_float:
             {
-                o << numtostr(m_value.number_float).c_str();
+                numtostr(m_value.number_float, o);
                 return;
             }
 
