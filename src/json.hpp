@@ -8420,47 +8420,69 @@ class basic_json
             {
                 if (m_value.object->empty())
                 {
-                    o << "{}";
+                    o.write("{}", 2);
                     return;
                 }
 
                 if (pretty_print)
                 {
-                    o << "{\n";
+                    o.write("{\n", 2);
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
                     string_t indent_string = string_t(new_indent, ' ');
 
+                    // first n-1 elements
                     auto i = m_value.object->cbegin();
                     for (size_t cnt = 0; cnt < m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        o << indent_string << '\"' << escape_string(i->first) << "\": ";
+                        o.write(indent_string.c_str(), new_indent);
+                        o.put('\"');
+                        const auto s = escape_string(i->first);
+                        o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                        o.write("\": ", 3);
                         i->second.dump(o, true, indent_step, new_indent);
-                        o << ",\n";
+                        o.write(",\n", 2);
                     }
 
-                    o << indent_string << '\"' << escape_string(i->first) << "\": ";
+                    // last element
+                    assert(i != m_value.object->cend());
+                    o.write(indent_string.c_str(), new_indent);
+                    o.put('\"');
+                    const auto s = escape_string(i->first);
+                    o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                    o.write("\": ", 3);
                     i->second.dump(o, true, indent_step, new_indent);
 
-                    indent_string.resize(current_indent);
-                    o << '\n' << indent_string << '}';
+                    o.put('\n');
+                    o.write(indent_string.c_str(), current_indent);
+                    o.put('}');
                 }
                 else
                 {
-                    o << '{';
+                    o.put('{');
 
+                    // first n-1 elements
                     auto i = m_value.object->cbegin();
                     for (size_t cnt = 0; cnt < m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        o << '\"' << escape_string(i->first) << "\":";
+                        o.put('\"');
+                        const auto s = escape_string(i->first);
+                        o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                        o.write("\":", 2);
                         i->second.dump(o, false, indent_step, current_indent);
-                        o << ',';
+                        o.put(',');
                     }
 
-                    o << '\"' << escape_string(i->first) << "\":";
+                    // last element
+                    assert(i != m_value.object->cend());
+                    o.put('\"');
+                    const auto s = escape_string(i->first);
+                    o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                    o.write("\":", 2);
                     i->second.dump(o, false, indent_step, current_indent);
-                    o << '}';
+
+                    o.put('}');
                 }
 
                 return;
@@ -8470,43 +8492,51 @@ class basic_json
             {
                 if (m_value.array->empty())
                 {
-                    o << "[]";
+                    o.write("[]", 2);
                     return;
                 }
 
                 if (pretty_print)
                 {
-                    o << "[\n";
+                    o.write("[\n", 2);
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
                     string_t indent_string = string_t(new_indent, ' ');
 
+                    // first n-1 elements
                     for (auto i = m_value.array->cbegin(); i != m_value.array->cend() - 1; ++i)
                     {
-                        o << indent_string;
+                        o.write(indent_string.c_str(), new_indent);
                         i->dump(o, true, indent_step, new_indent);
-                        o << ",\n";
+                        o.write(",\n", 2);
                     }
 
-                    o << indent_string;
+                    // last element
                     assert(not m_value.array->empty());
+                    o.write(indent_string.c_str(), new_indent);
                     m_value.array->back().dump(o, true, indent_step, new_indent);
 
-                    indent_string.resize(current_indent);
-                    o << '\n' << indent_string << ']';
+                    o.put('\n');
+                    o.write(indent_string.c_str(), current_indent);
+                    o.put(']');
                 }
                 else
                 {
-                    o << '[';
+                    o.put('[');
+
+                    // first n-1 elements
                     for (auto i = m_value.array->cbegin(); i != m_value.array->cend() - 1; ++i)
                     {
                         i->dump(o, false, indent_step, current_indent);
-                        o << ',';
+                        o.put(',');
                     }
+
+                    // last element
                     assert(not m_value.array->empty());
                     m_value.array->back().dump(o, false, indent_step, current_indent);
-                    o << ']';
+
+                    o.put(']');
                 }
 
                 return;
@@ -8514,13 +8544,23 @@ class basic_json
 
             case value_t::string:
             {
-                o << '\"' << escape_string(*m_value.string) << '\"';
+                o.put('\"');
+                const auto s = escape_string(*m_value.string);
+                o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                o.put('\"');
                 return;
             }
 
             case value_t::boolean:
             {
-                o << (m_value.boolean ? "true" : "false");
+                if (m_value.boolean)
+                {
+                    o.write("true", 4);
+                }
+                else
+                {
+                    o.write("false", 5);
+                }
                 return;
             }
 
@@ -8544,13 +8584,13 @@ class basic_json
 
             case value_t::discarded:
             {
-                o << "<discarded>";
+                o.write("<discarded>", 11);
                 return;
             }
 
             case value_t::null:
             {
-                o << "null";
+                o.write("null", 4);
                 return;
             }
         }
