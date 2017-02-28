@@ -6648,7 +6648,8 @@ class basic_json
             {
                 const auto end = std::remove(m_buf.begin(), m_buf.begin() + written_bytes, thousands_sep);
                 std::fill(end, m_buf.end(), '\0');
-                written_bytes -= (m_buf.end() - end);
+                assert((end - m_buf.begin()) <= written_bytes);
+                written_bytes = (end - m_buf.begin());
             }
 
             // convert decimal point to '.'
