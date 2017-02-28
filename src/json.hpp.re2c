@@ -34,6 +34,7 @@ SOFTWARE.
 #include <cassert> // assert
 #include <cctype> // isdigit
 #include <ciso646> // and, not, or
+#include <clocale> // lconv, localeconv
 #include <cmath> // isfinite, labs, ldexp, signbit
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <cstdint> // int64_t, uint64_t
@@ -6203,7 +6204,9 @@ class basic_json
     {
       public:
         serializer(std::ostream& s)
-            : o(s)
+            : o(s), loc(std::localeconv()),
+              thousands_sep(!loc->thousands_sep ? '\0' : loc->thousands_sep[0]),
+              decimal_point(!loc->decimal_point ? '\0' : loc->decimal_point[0])
         {}
 
         /*!
@@ -6244,7 +6247,10 @@ class basic_json
 
                         // variable to hold indentation for recursive calls
                         const auto new_indent = current_indent + indent_step;
-                        string_t indent_string = string_t(new_indent, ' ');
+                        if (indent_string.size() < new_indent)
+                        {
+                            indent_string.resize(new_indent, ' ');
+                        }
 
                         // first n-1 elements
                         auto i = val.m_value.object->cbegin();
@@ -6252,8 +6258,7 @@ class basic_json
                         {
                             o.write(indent_string.c_str(), new_indent);
                             o.put('\"');
-                            const auto s = escape_string(i->first);
-                            o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                            dump_escaped(i->first);
                             o.write("\": ", 3);
                             dump(i->second, true, indent_step, new_indent);
                             o.write(",\n", 2);
@@ -6263,8 +6268,7 @@ class basic_json
                         assert(i != val.m_value.object->cend());
                         o.write(indent_string.c_str(), new_indent);
                         o.put('\"');
-                        const auto s = escape_string(i->first);
-                        o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                        dump_escaped(i->first);
                         o.write("\": ", 3);
                         dump(i->second, true, indent_step, new_indent);
 
@@ -6281,8 +6285,7 @@ class basic_json
                         for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
                         {
                             o.put('\"');
-                            const auto s = escape_string(i->first);
-                            o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                            dump_escaped(i->first);
                             o.write("\":", 2);
                             dump(i->second, false, indent_step, current_indent);
                             o.put(',');
@@ -6291,8 +6294,7 @@ class basic_json
                         // last element
                         assert(i != val.m_value.object->cend());
                         o.put('\"');
-                        const auto s = escape_string(i->first);
-                        o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                        dump_escaped(i->first);
                         o.write("\":", 2);
                         dump(i->second, false, indent_step, current_indent);
 
@@ -6316,7 +6318,10 @@ class basic_json
 
                         // variable to hold indentation for recursive calls
                         const auto new_indent = current_indent + indent_step;
-                        string_t indent_string = string_t(new_indent, ' ');
+                        if (indent_string.size() < new_indent)
+                        {
+                            indent_string.resize(new_indent, ' ');
+                        }
 
                         // first n-1 elements
                         for (auto i = val.m_value.array->cbegin(); i != val.m_value.array->cend() - 1; ++i)
@@ -6359,8 +6364,7 @@ class basic_json
                 case value_t::string:
                 {
                     o.put('\"');
-                    const auto s = escape_string(*val.m_value.string);
-                    o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                    dump_escaped(*val.m_value.string);
                     o.put('\"');
                     return;
                 }
@@ -6380,19 +6384,19 @@ class basic_json
 
                 case value_t::number_integer:
                 {
-                    x_write(val.m_value.number_integer);
+                    dump_integer(val.m_value.number_integer);
                     return;
                 }
 
                 case value_t::number_unsigned:
                 {
-                    x_write(val.m_value.number_unsigned);
+                    dump_integer(val.m_value.number_unsigned);
                     return;
                 }
 
                 case value_t::number_float:
                 {
-                    x_write(val.m_value.number_float);
+                    dump_float(val.m_value.number_float);
                     return;
                 }
 
@@ -6438,14 +6442,40 @@ class basic_json
                         return res + 1;
                     }
 
+                    case 0x00:
+                    case 0x01:
+                    case 0x02:
+                    case 0x03:
+                    case 0x04:
+                    case 0x05:
+                    case 0x06:
+                    case 0x07:
+                    case 0x0b:
+                    case 0x0e:
+                    case 0x0f:
+                    case 0x10:
+                    case 0x11:
+                    case 0x12:
+                    case 0x13:
+                    case 0x14:
+                    case 0x15:
+                    case 0x16:
+                    case 0x17:
+                    case 0x18:
+                    case 0x19:
+                    case 0x1a:
+                    case 0x1b:
+                    case 0x1c:
+                    case 0x1d:
+                    case 0x1e:
+                    case 0x1f:
+                    {
+                        // from c (1 byte) to \uxxxx (6 bytes)
+                        return res + 5;
+                    }
+
                     default:
                     {
-                        if (c >= 0x00 and c <= 0x1f)
-                        {
-                            // from c (1 byte) to \uxxxx (6 bytes)
-                            return res + 5;
-                        }
-
                         return res;
                     }
                 }
@@ -6465,12 +6495,13 @@ class basic_json
 
         @complexity Linear in the length of string @a s.
         */
-        static string_t escape_string(const string_t& s)
+        void dump_escaped(const string_t& s) const
         {
             const auto space = extra_space(s);
             if (space == 0)
             {
-                return s;
+                o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                return;
             }
 
             // create a result string of necessary size
@@ -6537,43 +6568,69 @@ class basic_json
                         break;
                     }
 
+                    case 0x00:
+                    case 0x01:
+                    case 0x02:
+                    case 0x03:
+                    case 0x04:
+                    case 0x05:
+                    case 0x06:
+                    case 0x07:
+                    case 0x0b:
+                    case 0x0e:
+                    case 0x0f:
+                    case 0x10:
+                    case 0x11:
+                    case 0x12:
+                    case 0x13:
+                    case 0x14:
+                    case 0x15:
+                    case 0x16:
+                    case 0x17:
+                    case 0x18:
+                    case 0x19:
+                    case 0x1a:
+                    case 0x1b:
+                    case 0x1c:
+                    case 0x1d:
+                    case 0x1e:
+                    case 0x1f:
+                    {
+                        // convert a number 0..15 to its hex representation
+                        // (0..f)
+                        static const char hexify[16] =
+                        {
+                            '0', '1', '2', '3', '4', '5', '6', '7',
+                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+                        };
+
+                        // print character c as \uxxxx
+                        for (const char m :
+                    { 'u', '0', '0', hexify[c >> 4], hexify[c & 0x0f]
+                        })
+                        {
+                            result[++pos] = m;
+                        }
+
+                        ++pos;
+                        break;
+                    }
+
                     default:
                     {
-                        if (c >= 0x00 and c <= 0x1f)
-                        {
-                            // convert a number 0..15 to its hex representation
-                            // (0..f)
-                            static const char hexify[16] =
-                            {
-                                '0', '1', '2', '3', '4', '5', '6', '7',
-                                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-                            };
-
-                            // print character c as \uxxxx
-                            for (const char m :
-                        { 'u', '0', '0', hexify[c >> 4], hexify[c & 0x0f]
-                            })
-                            {
-                                result[++pos] = m;
-                            }
-
-                            ++pos;
-                        }
-                        else
-                        {
-                            // all other characters are added as-is
-                            result[pos++] = c;
-                        }
+                        // all other characters are added as-is
+                        result[pos++] = c;
                         break;
                     }
                 }
             }
 
-            return result;
+            assert(pos == s.size() + space);
+            o.write(result.c_str(), static_cast<std::streamsize>(result.size()));
         }
 
         template<typename NumberType>
-        void x_write(NumberType x)
+        void dump_integer(NumberType x)
         {
             // special case for "0"
             if (x == 0)
@@ -6607,7 +6664,7 @@ class basic_json
             o.write(m_buf.data(), static_cast<std::streamsize>(i));
         }
 
-        void x_write(number_float_t x)
+        void dump_float(number_float_t x)
         {
             // special case for 0.0 and -0.0
             if (x == 0)
@@ -6633,15 +6690,6 @@ class basic_json
             assert(written_bytes > 0);
             // check if buffer was large enough
             assert(static_cast<size_t>(written_bytes) < m_buf.size());
-
-            // read information from locale
-            const auto loc = localeconv();
-            assert(loc != nullptr);
-            const char thousands_sep = !loc->thousands_sep ? '\0'
-                                       : loc->thousands_sep[0];
-
-            const char decimal_point = !loc->decimal_point ? '\0'
-                                       : loc->decimal_point[0];
 
             // erase thousands separator
             if (thousands_sep != '\0')
@@ -6687,6 +6735,12 @@ class basic_json
 
         /// a (hopefully) large enough character buffer
         std::array < char, 64 > m_buf{{}};
+
+        const std::lconv* loc = nullptr;
+        const char thousands_sep = '\0';
+        const char decimal_point = '\0';
+
+        string_t indent_string = string_t(512, ' ');
     };
 
   public:

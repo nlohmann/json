@@ -49,44 +49,53 @@ TEST_CASE("convenience functions")
 
     SECTION("string escape")
     {
-        CHECK(json::serializer::escape_string("\"") == "\\\"");
-        CHECK(json::serializer::escape_string("\\") == "\\\\");
-        CHECK(json::serializer::escape_string("\b") == "\\b");
-        CHECK(json::serializer::escape_string("\f") == "\\f");
-        CHECK(json::serializer::escape_string("\n") == "\\n");
-        CHECK(json::serializer::escape_string("\r") == "\\r");
-        CHECK(json::serializer::escape_string("\t") == "\\t");
+        const auto check_escaped = [](const char* original,
+                                      const char* escaped)
+        {
+            std::stringstream ss;
+            json::serializer s(ss);
+            s.dump_escaped(original);
+            CHECK(ss.str() == escaped);
+        };
 
-        CHECK(json::serializer::escape_string("\x01") == "\\u0001");
-        CHECK(json::serializer::escape_string("\x02") == "\\u0002");
-        CHECK(json::serializer::escape_string("\x03") == "\\u0003");
-        CHECK(json::serializer::escape_string("\x04") == "\\u0004");
-        CHECK(json::serializer::escape_string("\x05") == "\\u0005");
-        CHECK(json::serializer::escape_string("\x06") == "\\u0006");
-        CHECK(json::serializer::escape_string("\x07") == "\\u0007");
-        CHECK(json::serializer::escape_string("\x08") == "\\b");
-        CHECK(json::serializer::escape_string("\x09") == "\\t");
-        CHECK(json::serializer::escape_string("\x0a") == "\\n");
-        CHECK(json::serializer::escape_string("\x0b") == "\\u000b");
-        CHECK(json::serializer::escape_string("\x0c") == "\\f");
-        CHECK(json::serializer::escape_string("\x0d") == "\\r");
-        CHECK(json::serializer::escape_string("\x0e") == "\\u000e");
-        CHECK(json::serializer::escape_string("\x0f") == "\\u000f");
-        CHECK(json::serializer::escape_string("\x10") == "\\u0010");
-        CHECK(json::serializer::escape_string("\x11") == "\\u0011");
-        CHECK(json::serializer::escape_string("\x12") == "\\u0012");
-        CHECK(json::serializer::escape_string("\x13") == "\\u0013");
-        CHECK(json::serializer::escape_string("\x14") == "\\u0014");
-        CHECK(json::serializer::escape_string("\x15") == "\\u0015");
-        CHECK(json::serializer::escape_string("\x16") == "\\u0016");
-        CHECK(json::serializer::escape_string("\x17") == "\\u0017");
-        CHECK(json::serializer::escape_string("\x18") == "\\u0018");
-        CHECK(json::serializer::escape_string("\x19") == "\\u0019");
-        CHECK(json::serializer::escape_string("\x1a") == "\\u001a");
-        CHECK(json::serializer::escape_string("\x1b") == "\\u001b");
-        CHECK(json::serializer::escape_string("\x1c") == "\\u001c");
-        CHECK(json::serializer::escape_string("\x1d") == "\\u001d");
-        CHECK(json::serializer::escape_string("\x1e") == "\\u001e");
-        CHECK(json::serializer::escape_string("\x1f") == "\\u001f");
+        check_escaped("\"", "\\\"");
+        check_escaped("\\", "\\\\");
+        check_escaped("\b", "\\b");
+        check_escaped("\f", "\\f");
+        check_escaped("\n", "\\n");
+        check_escaped("\r", "\\r");
+        check_escaped("\t", "\\t");
+
+        check_escaped("\x01", "\\u0001");
+        check_escaped("\x02", "\\u0002");
+        check_escaped("\x03", "\\u0003");
+        check_escaped("\x04", "\\u0004");
+        check_escaped("\x05", "\\u0005");
+        check_escaped("\x06", "\\u0006");
+        check_escaped("\x07", "\\u0007");
+        check_escaped("\x08", "\\b");
+        check_escaped("\x09", "\\t");
+        check_escaped("\x0a", "\\n");
+        check_escaped("\x0b", "\\u000b");
+        check_escaped("\x0c", "\\f");
+        check_escaped("\x0d", "\\r");
+        check_escaped("\x0e", "\\u000e");
+        check_escaped("\x0f", "\\u000f");
+        check_escaped("\x10", "\\u0010");
+        check_escaped("\x11", "\\u0011");
+        check_escaped("\x12", "\\u0012");
+        check_escaped("\x13", "\\u0013");
+        check_escaped("\x14", "\\u0014");
+        check_escaped("\x15", "\\u0015");
+        check_escaped("\x16", "\\u0016");
+        check_escaped("\x17", "\\u0017");
+        check_escaped("\x18", "\\u0018");
+        check_escaped("\x19", "\\u0019");
+        check_escaped("\x1a", "\\u001a");
+        check_escaped("\x1b", "\\u001b");
+        check_escaped("\x1c", "\\u001c");
+        check_escaped("\x1d", "\\u001d");
+        check_escaped("\x1e", "\\u001e");
+        check_escaped("\x1f", "\\u001f");
     }
 }
