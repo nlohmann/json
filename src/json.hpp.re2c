@@ -6684,7 +6684,7 @@ class basic_json
             static constexpr auto d = std::numeric_limits<number_float_t>::digits10;
 
             // the actual conversion
-            auto written_bytes = snprintf(m_buf.data(), m_buf.size(), "%.*g", d, x);
+            long written_bytes = snprintf(m_buf.data(), m_buf.size(), "%.*g", d, x);
 
             // negative value indicates an error
             assert(written_bytes > 0);
