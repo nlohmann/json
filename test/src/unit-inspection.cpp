@@ -213,6 +213,18 @@ TEST_CASE("object inspection")
                   "{\n    \"array\": [\n        1,\n        2,\n        3,\n        4\n    ],\n    \"boolean\": false,\n    \"null\": null,\n    \"number\": 42,\n    \"object\": {},\n    \"string\": \"Hello world\"\n}");
         }
 
+        SECTION("indent=x")
+        {
+            CHECK(j.dump().size() == 94);
+            CHECK(j.dump(1).size() == 127);
+            CHECK(j.dump(2).size() == 142);
+            CHECK(j.dump(512).size() == 7792);
+
+            // important test, because it yields a resize of the indent_string
+            // inside the dump() function
+            CHECK(j.dump(1024).size() == 15472);
+        }
+
         SECTION("dump and floating-point numbers")
         {
             auto s = json(42.23).dump();
