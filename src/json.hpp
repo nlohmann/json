@@ -6203,6 +6203,9 @@ class basic_json
     class serializer
     {
       public:
+        /*!
+        @param[in] s  output stream to serialize to
+        */
         serializer(std::ostream& s)
             : o(s), loc(std::localeconv()),
               thousands_sep(!loc->thousands_sep ? '\0' : loc->thousands_sep[0]),
@@ -6212,10 +6215,10 @@ class basic_json
         /*!
         @brief internal implementation of the serialization function
 
-        This function is called by the public member function dump and organizes
-        the serialization internally. The indentation level is propagated as
-        additional parameter. In case of arrays and objects, the function is
-        called recursively. Note that
+        This function is called by the public member function dump and
+        organizes the serialization internally. The indentation level is
+        propagated as additional parameter. In case of arrays and objects, the
+        function is called recursively.
 
         - strings and object keys are escaped using `escape_string()`
         - integer numbers are converted implicitly via `operator<<`
@@ -6483,15 +6486,14 @@ class basic_json
         }
 
         /*!
-        @brief escape a string
+        @brief dump escaped string
 
-        Escape a string by replacing certain special characters by a sequence of
-        an escape character (backslash) and another character and other control
-        characters by a sequence of "\u" followed by a four-digit hex
-        representation.
+        Escape a string by replacing certain special characters by a sequence
+        of an escape character (backslash) and another character and other
+        control characters by a sequence of "\u" followed by a four-digit hex
+        representation. The escaped string is written to output stream @a o.
 
         @param[in] s  the string to escape
-        @return  the escaped string
 
         @complexity Linear in the length of string @a s.
         */
@@ -6629,7 +6631,18 @@ class basic_json
             o.write(result.c_str(), static_cast<std::streamsize>(result.size()));
         }
 
-        template<typename NumberType>
+        /*!
+        @brief dump an integer
+
+        Dump a given integer to output stream @a o. Works internally with
+        @a number_buffer.
+
+        @param[in] x  integer number (signed or unsigned) to dump
+        @tparam NumberType either @a number_integer_t or @a number_unsigned_t
+        */
+        template<typename NumberType, detail::enable_if_t <
+                     std::is_same<NumberType, number_unsigned_t>::value or
+                     std::is_same<NumberType, number_integer_t>::value, int> = 0>
         void dump_integer(NumberType x)
         {
             // special case for "0"
@@ -6643,10 +6656,10 @@ class basic_json
             size_t i = 0;
 
             // spare 1 byte for '\0'
-            while (x != 0 and i < m_buf.size() - 1)
+            while (x != 0 and i < number_buffer.size() - 1)
             {
                 const auto digit = std::labs(static_cast<long>(x % 10));
-                m_buf[i++] = static_cast<char>('0' + digit);
+                number_buffer[i++] = static_cast<char>('0' + digit);
                 x /= 10;
             }
 
@@ -6656,14 +6669,22 @@ class basic_json
             if (is_negative)
             {
                 // make sure there is capacity for the '-'
-                assert(i < m_buf.size() - 2);
-                m_buf[i++] = '-';
+                assert(i < number_buffer.size() - 2);
+                number_buffer[i++] = '-';
             }
 
-            std::reverse(m_buf.begin(), m_buf.begin() + i);
-            o.write(m_buf.data(), static_cast<std::streamsize>(i));
+            std::reverse(number_buffer.begin(), number_buffer.begin() + i);
+            o.write(number_buffer.data(), static_cast<std::streamsize>(i));
         }
 
+        /*!
+        @brief dump a floating-point number
+
+        Dump a given floating-point number to output stream @a o. Works
+        internally with @a number_buffer.
+
+        @param[in] x  floating-point number to dump
+        */
         void dump_float(number_float_t x)
         {
             // special case for 0.0 and -0.0
@@ -6684,26 +6705,29 @@ class basic_json
             static constexpr auto d = std::numeric_limits<number_float_t>::digits10;
 
             // the actual conversion
-            long written_bytes = snprintf(m_buf.data(), m_buf.size(), "%.*g", d, x);
+            long len = snprintf(number_buffer.data(), number_buffer.size(),
+                                "%.*g", d, x);
 
             // negative value indicates an error
-            assert(written_bytes > 0);
+            assert(len > 0);
             // check if buffer was large enough
-            assert(static_cast<size_t>(written_bytes) < m_buf.size());
+            assert(static_cast<size_t>(len) < number_buffer.size());
 
             // erase thousands separator
             if (thousands_sep != '\0')
             {
-                const auto end = std::remove(m_buf.begin(), m_buf.begin() + written_bytes, thousands_sep);
-                std::fill(end, m_buf.end(), '\0');
-                assert((end - m_buf.begin()) <= written_bytes);
-                written_bytes = (end - m_buf.begin());
+                const auto end = std::remove(number_buffer.begin(),
+                                             number_buffer.begin() + len,
+                                             thousands_sep);
+                std::fill(end, number_buffer.end(), '\0');
+                assert((end - number_buffer.begin()) <= len);
+                len = (end - number_buffer.begin());
             }
 
             // convert decimal point to '.'
             if (decimal_point != '\0' and decimal_point != '.')
             {
-                for (auto& c : m_buf)
+                for (auto& c : number_buffer)
                 {
                     if (c == decimal_point)
                     {
@@ -6713,16 +6737,15 @@ class basic_json
                 }
             }
 
-            // determine if need to append ".0"
-            bool value_is_int_like = true;
-            for (size_t i = 0; i < static_cast<size_t>(written_bytes); ++i)
-            {
-                // check if we find non-int character
-                value_is_int_like = value_is_int_like and m_buf[i] != '.' and
-                                    m_buf[i] != 'e';
-            }
+            o.write(number_buffer.data(), static_cast<std::streamsize>(len));
 
-            o.write(m_buf.data(), static_cast<std::streamsize>(written_bytes));
+            // determine if need to append ".0"
+            const bool value_is_int_like = std::none_of(number_buffer.begin(),
+                                           number_buffer.begin() + len + 1,
+                                           [](char c)
+            {
+                return c == '.' or c == 'e';
+            });
 
             if (value_is_int_like)
             {
@@ -6731,15 +6754,20 @@ class basic_json
         }
 
       private:
+        /// the output of the serializer
         std::ostream& o;
 
         /// a (hopefully) large enough character buffer
-        std::array < char, 64 > m_buf{{}};
+        std::array<char, 64> number_buffer{{}};
 
+        /// the locale
         const std::lconv* loc = nullptr;
+        /// the locale's thousand separator character
         const char thousands_sep = '\0';
+        /// the locale's decimal point character
         const char decimal_point = '\0';
 
+        /// the indentation string
         string_t indent_string = string_t(512, ' ');
     };
 
