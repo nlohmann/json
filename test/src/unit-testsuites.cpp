@@ -79,7 +79,7 @@ TEST_CASE("compliance tests from json.org")
             CAPTURE(filename);
             json j;
             std::ifstream f(filename);
-            CHECK_THROWS_AS(j << f, std::invalid_argument);
+            CHECK_THROWS_AS(j << f, json::parse_error);
         }
     }
 
@@ -757,7 +757,7 @@ TEST_CASE("nst's JSONTestSuite")
                 CAPTURE(filename);
                 std::ifstream f(filename);
                 json j;
-                CHECK_THROWS_AS(j << f, std::invalid_argument);
+                CHECK_THROWS_AS(j << f, json::parse_error);
             }
         }
 
@@ -810,7 +810,7 @@ TEST_CASE("nst's JSONTestSuite")
                 CAPTURE(filename);
                 std::ifstream f(filename);
                 json j;
-                CHECK_THROWS_AS(j << f, std::invalid_argument);
+                CHECK_THROWS_AS(j << f, json::parse_error);
             }
         }
     }

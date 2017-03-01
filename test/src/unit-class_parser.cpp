@@ -89,52 +89,56 @@ TEST_CASE("parser class")
             SECTION("errors")
             {
                 // error: tab in string
-                CHECK_THROWS_AS(json::parser("\"\t\"").parse(), std::invalid_argument);
-                CHECK_THROWS_WITH(json::parser("\"\t\"").parse(), "parse error - unexpected '\"'");
+                CHECK_THROWS_AS(json::parser("\"\t\"").parse(), json::parse_error);
+                CHECK_THROWS_WITH(json::parser("\"\t\"").parse(),
+                                  "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
                 // error: newline in string
-                CHECK_THROWS_AS(json::parser("\"\n\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\r\"").parse(), std::invalid_argument);
-                CHECK_THROWS_WITH(json::parser("\"\n\"").parse(), "parse error - unexpected '\"'");
-                CHECK_THROWS_WITH(json::parser("\"\r\"").parse(), "parse error - unexpected '\"'");
+                CHECK_THROWS_AS(json::parser("\"\n\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\r\"").parse(), json::parse_error);
+                CHECK_THROWS_WITH(json::parser("\"\n\"").parse(),
+                                  "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                CHECK_THROWS_WITH(json::parser("\"\r\"").parse(),
+                                  "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
                 // error: backspace in string
-                CHECK_THROWS_AS(json::parser("\"\b\"").parse(), std::invalid_argument);
-                CHECK_THROWS_WITH(json::parser("\"\b\"").parse(), "parse error - unexpected '\"'");
+                CHECK_THROWS_AS(json::parser("\"\b\"").parse(), json::parse_error);
+                CHECK_THROWS_WITH(json::parser("\"\b\"").parse(),
+                                  "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
                 // improve code coverage
-                CHECK_THROWS_AS(json::parser("\uFF01").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("[-4:1,]").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\uFF01").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("[-4:1,]").parse(), json::parse_error);
                 // unescaped control characters
-                CHECK_THROWS_AS(json::parser("\"\x00\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x01\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x02\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x03\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x04\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x05\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x06\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x07\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x08\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x09\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x0a\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x0b\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x0c\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x0d\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x0e\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x0f\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x10\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x11\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x12\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x13\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x14\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x15\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x16\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x17\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x18\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x19\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x1a\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x1b\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x1c\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x1d\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x1e\"").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("\"\x1f\"").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("\"\x00\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x01\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x02\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x03\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x04\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x05\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x06\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x07\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x08\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x09\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x0a\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x0b\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x0c\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x0d\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x0e\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x0f\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x10\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x11\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x12\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x13\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x14\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x15\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x16\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x17\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x18\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x19\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x1a\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x1b\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x1c\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x1d\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x1e\"").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("\"\x1f\"").parse(), json::parse_error);
             }
 
             SECTION("escaped")
@@ -277,60 +281,61 @@ TEST_CASE("parser class")
 
             SECTION("invalid numbers")
             {
-                CHECK_THROWS_AS(json::parser("01").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("--1").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("1.").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("1E").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("1E-").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("1.E1").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("-1E").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("-0E#").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("-0E-#").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("-0#").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("-0.0:").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("-0.0Z").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("-0E123:").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("-0e0-:").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("-0e-:").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("-0f").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("01").parse(),      json::parse_error);
+                CHECK_THROWS_AS(json::parser("--1").parse(),     json::parse_error);
+                CHECK_THROWS_AS(json::parser("1.").parse(),      json::parse_error);
+                CHECK_THROWS_AS(json::parser("1E").parse(),      json::parse_error);
+                CHECK_THROWS_AS(json::parser("1E-").parse(),     json::parse_error);
+                CHECK_THROWS_AS(json::parser("1.E1").parse(),    json::parse_error);
+                CHECK_THROWS_AS(json::parser("-1E").parse(),     json::parse_error);
+                CHECK_THROWS_AS(json::parser("-0E#").parse(),    json::parse_error);
+                CHECK_THROWS_AS(json::parser("-0E-#").parse(),   json::parse_error);
+                CHECK_THROWS_AS(json::parser("-0#").parse(),     json::parse_error);
+                CHECK_THROWS_AS(json::parser("-0.0:").parse(),   json::parse_error);
+                CHECK_THROWS_AS(json::parser("-0.0Z").parse(),   json::parse_error);
+                CHECK_THROWS_AS(json::parser("-0E123:").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("-0e0-:").parse(),  json::parse_error);
+                CHECK_THROWS_AS(json::parser("-0e-:").parse(),   json::parse_error);
+                CHECK_THROWS_AS(json::parser("-0f").parse(),     json::parse_error);
 
                 // numbers must not begin with "+"
-                CHECK_THROWS_AS(json::parser("+1").parse(), std::invalid_argument);
-                CHECK_THROWS_AS(json::parser("+0").parse(), std::invalid_argument);
+                CHECK_THROWS_AS(json::parser("+1").parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser("+0").parse(), json::parse_error);
 
                 CHECK_THROWS_WITH(json::parser("01").parse(),
-                                  "parse error - unexpected '01'");
+                                  "[json.exception.parse_error.101] parse error at 2: parse error - unexpected '01'");
                 CHECK_THROWS_WITH(json::parser("-01").parse(),
-                                  "parse error - unexpected '-01'");
-                CHECK_THROWS_WITH(json::parser("--1").parse(), "parse error - unexpected '-'");
+                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected '-01'");
+                CHECK_THROWS_WITH(json::parser("--1").parse(),
+                                  "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '-'");
                 CHECK_THROWS_WITH(json::parser("1.").parse(),
-                                  "parse error - unexpected '.'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 2: parse error - unexpected '.'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("1E").parse(),
-                                  "parse error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("1E-").parse(),
-                                  "parse error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("1.E1").parse(),
-                                  "parse error - unexpected '.'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 2: parse error - unexpected '.'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-1E").parse(),
-                                  "parse error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0E#").parse(),
-                                  "parse error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0E-#").parse(),
-                                  "parse error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0#").parse(),
-                                  "parse error - unexpected '#'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected '#'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0.0:").parse(),
-                                  "parse error - unexpected ':'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 5: parse error - unexpected ':'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0.0Z").parse(),
-                                  "parse error - unexpected 'Z'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 5: parse error - unexpected 'Z'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0E123:").parse(),
-                                  "parse error - unexpected ':'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 7: parse error - unexpected ':'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0e0-:").parse(),
-                                  "parse error - unexpected '-'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 5: parse error - unexpected '-'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0e-:").parse(),
-                                  "parse error - unexpected 'e'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected 'e'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0f").parse(),
-                                  "parse error - unexpected 'f'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected 'f'; expected end of input");
             }
         }
     }
@@ -338,147 +343,150 @@ TEST_CASE("parser class")
     SECTION("parse errors")
     {
         // unexpected end of number
-        CHECK_THROWS_AS(json::parser("0.").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("-").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("--").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("-0.").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("-.").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("-:").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("0.:").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("e.").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("1e.").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("1e/").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("1e:").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("1E.").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("1E/").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("1E:").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("0.").parse(),  json::parse_error);
+        CHECK_THROWS_AS(json::parser("-").parse(),   json::parse_error);
+        CHECK_THROWS_AS(json::parser("--").parse(),  json::parse_error);
+        CHECK_THROWS_AS(json::parser("-0.").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("-.").parse(),  json::parse_error);
+        CHECK_THROWS_AS(json::parser("-:").parse(),  json::parse_error);
+        CHECK_THROWS_AS(json::parser("0.:").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("e.").parse(),  json::parse_error);
+        CHECK_THROWS_AS(json::parser("1e.").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("1e/").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("1e:").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("1E.").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("1E/").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("1E:").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("0.").parse(),
-                          "parse error - unexpected '.'; expected end of input");
-        CHECK_THROWS_WITH(json::parser("-").parse(), "parse error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected '.'; expected end of input");
+        CHECK_THROWS_WITH(json::parser("-").parse(),
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("--").parse(),
-                          "parse error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("-0.").parse(),
-                          "parse error - unexpected '.'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 3: parse error - unexpected '.'; expected end of input");
         CHECK_THROWS_WITH(json::parser("-.").parse(),
-                          "parse error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("-:").parse(),
-                          "parse error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("0.:").parse(),
-                          "parse error - unexpected '.'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected '.'; expected end of input");
         CHECK_THROWS_WITH(json::parser("e.").parse(),
-                          "parse error - unexpected 'e'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'e'");
         CHECK_THROWS_WITH(json::parser("1e.").parse(),
-                          "parse error - unexpected 'e'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'e'; expected end of input");
         CHECK_THROWS_WITH(json::parser("1e/").parse(),
-                          "parse error - unexpected 'e'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'e'; expected end of input");
         CHECK_THROWS_WITH(json::parser("1e:").parse(),
-                          "parse error - unexpected 'e'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'e'; expected end of input");
         CHECK_THROWS_WITH(json::parser("1E.").parse(),
-                          "parse error - unexpected 'E'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'E'; expected end of input");
         CHECK_THROWS_WITH(json::parser("1E/").parse(),
-                          "parse error - unexpected 'E'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'E'; expected end of input");
         CHECK_THROWS_WITH(json::parser("1E:").parse(),
-                          "parse error - unexpected 'E'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'E'; expected end of input");
 
         // unexpected end of null
-        CHECK_THROWS_AS(json::parser("n").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("nu").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("nul").parse(), std::invalid_argument);
-        CHECK_THROWS_WITH(json::parser("n").parse(), "parse error - unexpected 'n'");
+        CHECK_THROWS_AS(json::parser("n").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("nu").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("nul").parse(), json::parse_error);
+        CHECK_THROWS_WITH(json::parser("n").parse(), "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'n'");
         CHECK_THROWS_WITH(json::parser("nu").parse(),
-                          "parse error - unexpected 'n'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'n'");
         CHECK_THROWS_WITH(json::parser("nul").parse(),
-                          "parse error - unexpected 'n'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'n'");
 
         // unexpected end of true
-        CHECK_THROWS_AS(json::parser("t").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("tr").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("tru").parse(), std::invalid_argument);
-        CHECK_THROWS_WITH(json::parser("t").parse(), "parse error - unexpected 't'");
+        CHECK_THROWS_AS(json::parser("t").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("tr").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("tru").parse(), json::parse_error);
+        CHECK_THROWS_WITH(json::parser("t").parse(), "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 't'");
         CHECK_THROWS_WITH(json::parser("tr").parse(),
-                          "parse error - unexpected 't'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 't'");
         CHECK_THROWS_WITH(json::parser("tru").parse(),
-                          "parse error - unexpected 't'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 't'");
 
         // unexpected end of false
-        CHECK_THROWS_AS(json::parser("f").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("fa").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("fal").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("fals").parse(), std::invalid_argument);
-        CHECK_THROWS_WITH(json::parser("f").parse(), "parse error - unexpected 'f'");
+        CHECK_THROWS_AS(json::parser("f").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("fa").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("fal").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("fals").parse(), json::parse_error);
+        CHECK_THROWS_WITH(json::parser("f").parse(), "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'f'");
         CHECK_THROWS_WITH(json::parser("fa").parse(),
-                          "parse error - unexpected 'f'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'f'");
         CHECK_THROWS_WITH(json::parser("fal").parse(),
-                          "parse error - unexpected 'f'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'f'");
         CHECK_THROWS_WITH(json::parser("fals").parse(),
-                          "parse error - unexpected 'f'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'f'");
 
         // missing/unexpected end of array
-        CHECK_THROWS_AS(json::parser("[").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("[1").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("[1,").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("[1,]").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("]").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("[").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("[1").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("[1,").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("[1,]").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("]").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("[").parse(),
-                          "parse error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected end of input");
         CHECK_THROWS_WITH(json::parser("[1").parse(),
-                          "parse error - unexpected end of input; expected ']'");
+                          "[json.exception.parse_error.101] parse error at 3: parse error - unexpected end of input; expected ']'");
         CHECK_THROWS_WITH(json::parser("[1,").parse(),
-                          "parse error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 4: parse error - unexpected end of input");
         CHECK_THROWS_WITH(json::parser("[1,]").parse(),
-                          "parse error - unexpected ']'");
-        CHECK_THROWS_WITH(json::parser("]").parse(), "parse error - unexpected ']'");
+                          "[json.exception.parse_error.101] parse error at 4: parse error - unexpected ']'");
+        CHECK_THROWS_WITH(json::parser("]").parse(),
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected ']'");
 
         // missing/unexpected end of object
-        CHECK_THROWS_AS(json::parser("{").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("{\"foo\"").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("{\"foo\":").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("{\"foo\":}").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("{\"foo\":1,}").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("}").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("{").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("{\"foo\"").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("{\"foo\":").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("{\"foo\":}").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("{\"foo\":1,}").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("}").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("{").parse(),
-                          "parse error - unexpected end of input; expected string literal");
+                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected end of input; expected string literal");
         CHECK_THROWS_WITH(json::parser("{\"foo\"").parse(),
-                          "parse error - unexpected end of input; expected ':'");
+                          "[json.exception.parse_error.101] parse error at 7: parse error - unexpected end of input; expected ':'");
         CHECK_THROWS_WITH(json::parser("{\"foo\":").parse(),
-                          "parse error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 8: parse error - unexpected end of input");
         CHECK_THROWS_WITH(json::parser("{\"foo\":}").parse(),
-                          "parse error - unexpected '}'");
+                          "[json.exception.parse_error.101] parse error at 8: parse error - unexpected '}'");
         CHECK_THROWS_WITH(json::parser("{\"foo\":1,}").parse(),
-                          "parse error - unexpected '}'; expected string literal");
-        CHECK_THROWS_WITH(json::parser("}").parse(), "parse error - unexpected '}'");
+                          "[json.exception.parse_error.101] parse error at 10: parse error - unexpected '}'; expected string literal");
+        CHECK_THROWS_WITH(json::parser("}").parse(),
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '}'");
 
         // missing/unexpected end of string
-        CHECK_THROWS_AS(json::parser("\"").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\"\\\"").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\"\\u\"").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\"\\u0\"").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\"\\u01\"").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\"\\u012\"").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\"\\u").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\"\\u0").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\"\\u01").parse(), std::invalid_argument);
-        CHECK_THROWS_AS(json::parser("\"\\u012").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("\"").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("\"\\\"").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("\"\\u\"").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("\"\\u0\"").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("\"\\u01\"").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("\"\\u012\"").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("\"\\u").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("\"\\u0").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("\"\\u01").parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser("\"\\u012").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("\"").parse(),
-                          "parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\\"").parse(),
-                          "parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u\"").parse(),
-                          "parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u0\"").parse(),
-                          "parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u01\"").parse(),
-                          "parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u012\"").parse(),
-                          "parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u").parse(),
-                          "parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u0").parse(),
-                          "parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u01").parse(),
-                          "parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u012").parse(),
-                          "parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
 
         // invalid escapes
         for (int c = 1; c < 128; ++c)
@@ -510,8 +518,9 @@ TEST_CASE("parser class")
                 // any other combination of backslash and character is invalid
                 default:
                 {
-                    CHECK_THROWS_AS(json::parser(s.c_str()).parse(), std::invalid_argument);
-                    CHECK_THROWS_WITH(json::parser(s.c_str()).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_AS(json::parser(s.c_str()).parse(), json::parse_error);
+                    CHECK_THROWS_WITH(json::parser(s.c_str()).parse(),
+                                      "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
                     break;
                 }
             }
@@ -576,40 +585,49 @@ TEST_CASE("parser class")
                 }
                 else
                 {
-                    CHECK_THROWS_AS(json::parser(s1.c_str()).parse(), std::invalid_argument);
-                    CHECK_THROWS_AS(json::parser(s2.c_str()).parse(), std::invalid_argument);
-                    CHECK_THROWS_AS(json::parser(s3.c_str()).parse(), std::invalid_argument);
-                    CHECK_THROWS_AS(json::parser(s4.c_str()).parse(), std::invalid_argument);
+                    CHECK_THROWS_AS(json::parser(s1.c_str()).parse(), json::parse_error);
+                    CHECK_THROWS_AS(json::parser(s2.c_str()).parse(), json::parse_error);
+                    CHECK_THROWS_AS(json::parser(s3.c_str()).parse(), json::parse_error);
+                    CHECK_THROWS_AS(json::parser(s4.c_str()).parse(), json::parse_error);
 
-                    CHECK_THROWS_WITH(json::parser(s1.c_str()).parse(), "parse error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s2.c_str()).parse(), "parse error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s3.c_str()).parse(), "parse error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s4.c_str()).parse(), "parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s1.c_str()).parse(),
+                                      "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s2.c_str()).parse(),
+                                      "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s3.c_str()).parse(),
+                                      "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                    CHECK_THROWS_WITH(json::parser(s4.c_str()).parse(),
+                                      "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
                 }
             }
         }
 
         // missing part of a surrogate pair
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\""), std::invalid_argument);
-        CHECK_THROWS_WITH(json::parse("\"\\uD80C\""), "missing low surrogate");
+        CHECK_THROWS_AS(json::parse("\"\\uD80C\""), json::parse_error);
+        CHECK_THROWS_WITH(json::parse("\"\\uD80C\""),
+                          "[json.exception.parse_error.102] parse error at 8: missing low surrogate");
         // invalid surrogate pair
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uD80C\""), std::invalid_argument);
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\\u0000\""), std::invalid_argument);
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uFFFF\""), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uD80C\""), json::parse_error);
+        CHECK_THROWS_AS(json::parse("\"\\uD80C\\u0000\""), json::parse_error);
+        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uFFFF\""), json::parse_error);
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\uD80C\""),
-                          "missing or wrong low surrogate");
+                          "[json.exception.parse_error.102] parse error at 14: missing or wrong low surrogate");
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\u0000\""),
-                          "missing or wrong low surrogate");
+                          "[json.exception.parse_error.102] parse error at 14: missing or wrong low surrogate");
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\uFFFF\""),
-                          "missing or wrong low surrogate");
+                          "[json.exception.parse_error.102] parse error at 14: missing or wrong low surrogate");
     }
 
     SECTION("tests found by mutate++")
     {
         // test case to make sure no comma preceeds the first key
-        CHECK_THROWS_AS(json::parser("{,\"key\": false}").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("{,\"key\": false}").parse(), json::parse_error);
+        CHECK_THROWS_WITH(json::parser("{,\"key\": false}").parse(),
+                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected ','");
         // test case to make sure an object is properly closed
-        CHECK_THROWS_AS(json::parser("[{\"key\": false true]").parse(), std::invalid_argument);
+        CHECK_THROWS_AS(json::parser("[{\"key\": false true]").parse(), json::parse_error);
+        CHECK_THROWS_WITH(json::parser("[{\"key\": false true]").parse(),
+                          "[json.exception.parse_error.101] parse error at 19: parse error - unexpected true literal; expected '}'");
 
         // test case to make sure the callback is properly evaluated after reading a key
         {
