@@ -81,15 +81,6 @@ SOFTWARE.
     #pragma GCC diagnostic ignored "-Wdocumentation"
 #endif
 
-// allow for portable deprecation warnings
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    #define JSON_DEPRECATED __attribute__((deprecated))
-#elif defined(_MSC_VER)
-    #define JSON_DEPRECATED __declspec(deprecated)
-#else
-    #define JSON_DEPRECATED
-#endif
-
 // allow to disable exceptions
 #if not defined(JSON_NOEXCEPTION) || defined(__EXCEPTIONS)
     #define JSON_THROW(exception) throw exception
@@ -2362,40 +2353,6 @@ class basic_json
         assert_invariant();
     }
 
-    /*!
-    @brief construct a JSON value given an input stream
-
-    @param[in,out] i  stream to read a serialized JSON value from
-    @param[in] cb a parser callback function of type @ref parser_callback_t
-    which is used to control the deserialization by filtering unwanted values
-    (optional)
-
-    @complexity Linear in the length of the input. The parser is a predictive
-    LL(1) parser. The complexity can be higher if the parser callback function
-    @a cb has a super-linear complexity.
-
-    @note A UTF-8 byte order mark is silently ignored.
-
-    @deprecated This constructor is deprecated and will be removed in version
-      3.0.0 to unify the interface of the library. Deserialization will be
-      done by stream operators or by calling one of the `parse` functions,
-      e.g. @ref parse(std::istream&, const parser_callback_t). That is, calls
-      like `json j(i);` for an input stream @a i need to be replaced by
-      `json j = json::parse(i);`. See the example below.
-
-    @liveexample{The example below demonstrates constructing a JSON value from
-    a `std::stringstream` with and without callback
-    function.,basic_json__istream}
-
-    @since version 2.0.0, deprecated in version 2.0.3, to be removed in
-           version 3.0.0
-    */
-    JSON_DEPRECATED
-    explicit basic_json(std::istream& i, const parser_callback_t cb = nullptr)
-    {
-        *this = parser(i, cb).parse();
-        assert_invariant();
-    }
 
     ///////////////////////////////////////
     // other constructors and destructor //
@@ -12147,7 +12104,6 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 
 // clean up
 #undef JSON_CATCH
-#undef JSON_DEPRECATED
 #undef JSON_THROW
 #undef JSON_TRY
 

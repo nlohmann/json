@@ -49,7 +49,6 @@ doctest:
 # -Wno-documentation-unknown-command: code uses user-defined commands like @complexity
 # -Wno-exit-time-destructors: warning in Catch code
 # -Wno-keyword-macro: unit-tests use "#define private public"
-# -Wno-deprecated-declarations: some functions are deprecated until 3.0.0
 # -Wno-range-loop-analysis: iterator_wrapper tests tests "for(const auto i...)"
 pedantic:
 	$(MAKE) json_unit CXXFLAGS="\
@@ -59,7 +58,6 @@ pedantic:
 		-Wno-documentation-unknown-command \
 		-Wno-exit-time-destructors \
 		-Wno-keyword-macro \
-		-Wno-deprecated-declarations \
 		-Wno-range-loop-analysis"
 
 
