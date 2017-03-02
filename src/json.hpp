@@ -1107,8 +1107,8 @@ class basic_json
     json.exception.[parse_error](@ref parse_error).101 | `"parse error at 2: unexpected end of input; expected string literal"` | This error indicates a syntax error while deserializing a JSON text. The error message describes that an unexpected token (character) was encountered, and the member @ref parse_error::byte indicates the error position.
     json.exception.[parse_error](@ref parse_error).102 | `"parse error at 14: missing or wrong low surrogate"` | JSON uses the `\uxxxx` format to describe Unicode characters. Code points above above 0xFFFF are split into two `\uxxxx` entries ("surrogate pairs"). This error indicates that the surrogate pair is incomplete or contains an invalid code point.
     json.exception.[parse_error](@ref parse_error).103 | `"parse error: code points above 0x10FFFF are invalid"` | Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
-    json.exception.[parse_error](@ref parse_error).104 | "parse error: JSON patch must be an array of objects" | [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON documentthat represents an array of objects.
-    json.exception.[parse_error](@ref parse_error).105 | "parse error: operation must have string member 'op'" | An operation of a JSON Patch document must contain Operation objects MUST have exactly one "op" member, whose value indicates the operation to perform. Its value MUST be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
+    json.exception.[parse_error](@ref parse_error).104 | `"parse error: JSON patch must be an array of objects"` | [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON document that represents an array of objects.
+    json.exception.[parse_error](@ref parse_error).105 | `"parse error: operation must have string member 'op'"` | An operation of a JSON Patch document must contain exactly one "op" member, whose value indicates the operation to perform. Its value must be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
     json.exception.[parse_error](@ref parse_error).106 | "parse error: array index must not begin with '0'" | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number wihtout a leading `0`.
     json.exception.[parse_error](@ref parse_error).107 | "parse error: JSON pointer must be empty or begin with '/'" | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
     json.exception.[parse_error](@ref parse_error).108 | "parse error: escape character '~' must be followed with '0' or '1'" | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
@@ -12713,6 +12713,8 @@ basic_json_parser_74:
     not found"`
     @throw invalid_argument if the JSON patch is malformed (e.g., mandatory
     attributes are missing); example: `"operation add must have member path"`
+    @throw parse_error.104 if the JSON patch does not consist of an array of
+    objects
 
     @complexity Linear in the size of the JSON value and the length of the
     JSON patch. As usually only a fraction of the JSON value is affected by
@@ -12858,11 +12860,10 @@ basic_json_parser_74:
             }
         };
 
-        // type check
+        // type check: top level value must be an array
         if (not json_patch.is_array())
         {
-            // a JSON patch must be an array of objects
-            JSON_THROW(std::invalid_argument("JSON patch must be an array of objects"));
+            JSON_THROW(parse_error(104, 0, "JSON patch must be an array of objects"));
         }
 
         // iterate and apply the operations
@@ -12882,23 +12883,23 @@ basic_json_parser_74:
                 // check if desired value is present
                 if (it == val.m_value.object->end())
                 {
-                    JSON_THROW(std::invalid_argument(error_msg + " must have member '" + member + "'"));
+                    JSON_THROW(parse_error(105, 0, error_msg + " must have member '" + member + "'"));
                 }
 
                 // check if result is of type string
                 if (string_type and not it->second.is_string())
                 {
-                    JSON_THROW(std::invalid_argument(error_msg + " must have string member '" + member + "'"));
+                    JSON_THROW(parse_error(105, 0, error_msg + " must have string member '" + member + "'"));
                 }
 
                 // no error: return value
                 return it->second;
             };
 
-            // type check
+            // type check: every element of the array must be an object
             if (not val.is_object())
             {
-                JSON_THROW(std::invalid_argument("JSON patch must be an array of objects"));
+                JSON_THROW(parse_error(104, 0, "JSON patch must be an array of objects"));
             }
 
             // collect mandatory members
@@ -12981,7 +12982,7 @@ basic_json_parser_74:
                 {
                     // op must be "add", "remove", "replace", "move", "copy", or
                     // "test"
-                    JSON_THROW(std::invalid_argument("operation value '" + op + "' is invalid"));
+                    JSON_THROW(parse_error(105, 0, "operation value '" + op + "' is invalid"));
                 }
             }
         }
