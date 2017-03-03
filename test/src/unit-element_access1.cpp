@@ -689,13 +689,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = "foo";
-                    CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
-                    CHECK_THROWS_WITH(j.erase(j.end()), "iterator out of range");
+                    CHECK_THROWS_AS(j.erase(j.end()), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.erase(j.end()), "[json.exception.invalid_iterator.205] iterator out of range");
                 }
                 {
                     json j = "bar";
-                    CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
-                    CHECK_THROWS_WITH(j.erase(j.cend()), "iterator out of range");
+                    CHECK_THROWS_AS(j.erase(j.cend()), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.erase(j.cend()), "[json.exception.invalid_iterator.205] iterator out of range");
                 }
             }
 
@@ -703,13 +703,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = false;
-                    CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
-                    CHECK_THROWS_WITH(j.erase(j.end()), "iterator out of range");
+                    CHECK_THROWS_AS(j.erase(j.end()), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.erase(j.end()), "[json.exception.invalid_iterator.205] iterator out of range");
                 }
                 {
                     json j = true;
-                    CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
-                    CHECK_THROWS_WITH(j.erase(j.cend()), "iterator out of range");
+                    CHECK_THROWS_AS(j.erase(j.cend()), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.erase(j.cend()), "[json.exception.invalid_iterator.205] iterator out of range");
                 }
             }
 
@@ -717,13 +717,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = 17;
-                    CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
-                    CHECK_THROWS_WITH(j.erase(j.end()), "iterator out of range");
+                    CHECK_THROWS_AS(j.erase(j.end()), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.erase(j.end()), "[json.exception.invalid_iterator.205] iterator out of range");
                 }
                 {
                     json j = 17;
-                    CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
-                    CHECK_THROWS_WITH(j.erase(j.cend()), "iterator out of range");
+                    CHECK_THROWS_AS(j.erase(j.cend()), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.erase(j.cend()), "[json.exception.invalid_iterator.205] iterator out of range");
                 }
             }
 
@@ -731,13 +731,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = 17u;
-                    CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
-                    CHECK_THROWS_WITH(j.erase(j.end()), "iterator out of range");
+                    CHECK_THROWS_AS(j.erase(j.end()), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.erase(j.end()), "[json.exception.invalid_iterator.205] iterator out of range");
                 }
                 {
                     json j = 17u;
-                    CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
-                    CHECK_THROWS_WITH(j.erase(j.cend()), "iterator out of range");
+                    CHECK_THROWS_AS(j.erase(j.cend()), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.erase(j.cend()), "[json.exception.invalid_iterator.205] iterator out of range");
                 }
             }
 
@@ -745,13 +745,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = 23.42;
-                    CHECK_THROWS_AS(j.erase(j.end()), std::out_of_range);
-                    CHECK_THROWS_WITH(j.erase(j.end()), "iterator out of range");
+                    CHECK_THROWS_AS(j.erase(j.end()), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.erase(j.end()), "[json.exception.invalid_iterator.205] iterator out of range");
                 }
                 {
                     json j = 23.42;
-                    CHECK_THROWS_AS(j.erase(j.cend()), std::out_of_range);
-                    CHECK_THROWS_WITH(j.erase(j.cend()), "iterator out of range");
+                    CHECK_THROWS_AS(j.erase(j.cend()), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.erase(j.cend()), "[json.exception.invalid_iterator.205] iterator out of range");
                 }
             }
         }

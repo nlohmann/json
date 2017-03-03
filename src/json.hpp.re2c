@@ -2422,8 +2422,8 @@ class basic_json
     boolean, or string) where an out of range error can be detected easily;
     example: `"iterators out of range"`
     @throw std::bad_alloc if allocation for object, array, or string fails
-    @throw std::domain_error if called with a null value; example: `"cannot
-    use construct with iterators from null"`
+    @throw invalid_iterator.206 if called with a null value; example: `"cannot
+    construct with iterators from null"`
 
     @complexity Linear in distance between @a first and @a last.
 
@@ -2519,7 +2519,8 @@ class basic_json
 
             default:
             {
-                JSON_THROW(std::domain_error("cannot use construct with iterators from " + first.m_object->type_name()));
+                JSON_THROW(invalid_iterator(206, "cannot construct with iterators from " +
+                                            first.m_object->type_name()));
             }
         }
 
@@ -4402,7 +4403,7 @@ class basic_json
     @throw invalid_iterator.202 if called on an iterator which does not belong
     to the current JSON value; example: `"iterator does not fit current
     value"`
-    @throw std::out_of_range if called on a primitive type with invalid
+    @throw invalid_iterator.205 if called on a primitive type with invalid
     iterator (i.e., any iterator which is not `begin()`); example: `"iterator
     out of range"`
 
@@ -4448,7 +4449,7 @@ class basic_json
             {
                 if (not pos.m_it.primitive_iterator.is_begin())
                 {
-                    JSON_THROW(std::out_of_range("iterator out of range"));
+                    JSON_THROW(invalid_iterator(205, "iterator out of range"));
                 }
 
                 if (is_string())
@@ -9625,7 +9626,7 @@ class basic_json
             {
                 case basic_json::value_t::object:
                 {
-                    JSON_THROW(std::domain_error("cannot use operator[] for object iterators"));
+                    JSON_THROW(invalid_iterator(208, "cannot use operator[] for object iterators"));
                 }
 
                 case basic_json::value_t::array:
@@ -9663,7 +9664,7 @@ class basic_json
                 return m_it.object_iterator->first;
             }
 
-            JSON_THROW(std::domain_error("cannot use key() for non-object iterators"));
+            JSON_THROW(invalid_iterator(207, "cannot use key() for non-object iterators"));
         }
 
         /*!

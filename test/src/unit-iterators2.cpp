@@ -380,17 +380,17 @@ TEST_CASE("iterators 2")
             {
                 {
                     auto it = j_object.begin();
-                    CHECK_THROWS_AS(it[0], std::domain_error);
-                    CHECK_THROWS_AS(it[1], std::domain_error);
-                    CHECK_THROWS_WITH(it[0], "cannot use operator[] for object iterators");
-                    CHECK_THROWS_WITH(it[1], "cannot use operator[] for object iterators");
+                    CHECK_THROWS_AS(it[0], json::invalid_iterator);
+                    CHECK_THROWS_AS(it[1], json::invalid_iterator);
+                    CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators");
+                    CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators");
                 }
                 {
                     auto it = j_object.cbegin();
-                    CHECK_THROWS_AS(it[0], std::domain_error);
-                    CHECK_THROWS_AS(it[1], std::domain_error);
-                    CHECK_THROWS_WITH(it[0], "cannot use operator[] for object iterators");
-                    CHECK_THROWS_WITH(it[1], "cannot use operator[] for object iterators");
+                    CHECK_THROWS_AS(it[0], json::invalid_iterator);
+                    CHECK_THROWS_AS(it[1], json::invalid_iterator);
+                    CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators");
+                    CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators");
                 }
             }
 

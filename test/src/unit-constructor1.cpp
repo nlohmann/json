@@ -1106,13 +1106,15 @@ TEST_CASE("constructors")
                 {
                     {
                         json j;
-                        CHECK_THROWS_AS(json(j.begin(), j.end()), std::domain_error);
-                        CHECK_THROWS_WITH(json(j.begin(), j.end()), "cannot use construct with iterators from null");
+                        CHECK_THROWS_AS(json(j.begin(), j.end()), json::invalid_iterator);
+                        CHECK_THROWS_WITH(json(j.begin(), j.end()),
+                                          "[json.exception.invalid_iterator.206] cannot construct with iterators from null");
                     }
                     {
                         json j;
-                        CHECK_THROWS_AS(json(j.cbegin(), j.cend()), std::domain_error);
-                        CHECK_THROWS_WITH(json(j.cbegin(), j.cend()), "cannot use construct with iterators from null");
+                        CHECK_THROWS_AS(json(j.cbegin(), j.cend()), json::invalid_iterator);
+                        CHECK_THROWS_WITH(json(j.cbegin(), j.cend()),
+                                          "[json.exception.invalid_iterator.206] cannot construct with iterators from null");
                     }
                 }
 
