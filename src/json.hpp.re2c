@@ -1109,9 +1109,9 @@ class basic_json
     json.exception.[parse_error](@ref parse_error).103 | `"parse error: code points above 0x10FFFF are invalid"` | Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
     json.exception.[parse_error](@ref parse_error).104 | `"parse error: JSON patch must be an array of objects"` | [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON document that represents an array of objects.
     json.exception.[parse_error](@ref parse_error).105 | `"parse error: operation must have string member 'op'"` | An operation of a JSON Patch document must contain exactly one "op" member, whose value indicates the operation to perform. Its value must be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
-    json.exception.[parse_error](@ref parse_error).106 | "parse error: array index must not begin with '0'" | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number wihtout a leading `0`.
-    json.exception.[parse_error](@ref parse_error).107 | "parse error: JSON pointer must be empty or begin with '/'" | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
-    json.exception.[parse_error](@ref parse_error).108 | "parse error: escape character '~' must be followed with '0' or '1'" | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
+    json.exception.[parse_error](@ref parse_error).106 | `"parse error: array index '01' must not begin with '0'"` | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number wihtout a leading `0`.
+    json.exception.[parse_error](@ref parse_error).107 | `"parse error: JSON pointer must be empty or begin with '/' - was: 'foo'"` | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
+    json.exception.[parse_error](@ref parse_error).108 | `"parse error: escape character '~' must be followed with '0' or '1'"` | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
     json.exception.[parse_error](@ref parse_error).109 | "parse error: array index 'one' is not a number" | A JSON Pointer array index must be a number.
     json.exception.[invalid_iterator](@ref invalid_iterator).201 | "iterators are not compatible" | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
     json.exception.[invalid_iterator](@ref invalid_iterator).202 | "iterator does not fit current value" | In an erase or insert function, the passed iterator @a pos does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
@@ -10951,12 +10951,12 @@ class basic_json
                       empty string is assumed which references the whole JSON
                       value
 
-        @throw std::domain_error if reference token is nonempty and does not
+        @throw parse_error.107 if reference token is nonempty and does not
         begin with a slash (`/`); example: `"JSON pointer must be empty or
-        begin with /"`
-        @throw std::domain_error if a tilde (`~`) is not followed by `0`
-        (representing `~`) or `1` (representing `/`); example: `"escape error:
-        ~ must be followed with 0 or 1"`
+        begin with / - was: 'foo'"`
+        @throw parse_error.108 if a tilde (`~`) is not followed by `0`
+        (representing `~`) or `1` (representing `/`); example: `"escape
+        character '~' must be followed with '0' or '1'"`
 
         @liveexample{The example shows the construction several valid JSON
         pointers as well as the exceptional behavior.,json_pointer}
@@ -11107,7 +11107,7 @@ class basic_json
         @complexity Linear in the length of the JSON pointer.
 
         @throw std::out_of_range      if the JSON pointer can not be resolved
-        @throw std::domain_error      if an array index begins with '0'
+        @throw parse_error.106        if an array index begins with '0'
         @throw std::invalid_argument  if an array index was not a number
         */
         reference get_unchecked(pointer ptr) const
@@ -11151,7 +11151,7 @@ class basic_json
                         // error condition (cf. RFC 6901, Sect. 4)
                         if (reference_token.size() > 1 and reference_token[0] == '0')
                         {
-                            JSON_THROW(std::domain_error("array index must not begin with '0'"));
+                            JSON_THROW(parse_error(106, 0, "array index '" + reference_token + "' must not begin with '0'"));
                         }
 
                         if (reference_token == "-")
@@ -11203,7 +11203,7 @@ class basic_json
                         // error condition (cf. RFC 6901, Sect. 4)
                         if (reference_token.size() > 1 and reference_token[0] == '0')
                         {
-                            JSON_THROW(std::domain_error("array index must not begin with '0'"));
+                            JSON_THROW(parse_error(106, 0, "array index '" + reference_token + "' must not begin with '0'"));
                         }
 
                         // note: at performs range check
@@ -11255,7 +11255,7 @@ class basic_json
                         // error condition (cf. RFC 6901, Sect. 4)
                         if (reference_token.size() > 1 and reference_token[0] == '0')
                         {
-                            JSON_THROW(std::domain_error("array index must not begin with '0'"));
+                            JSON_THROW(parse_error(106, 0, "array index '" + reference_token + "' must not begin with '0'"));
                         }
 
                         // use unchecked array access
@@ -11299,7 +11299,7 @@ class basic_json
                         // error condition (cf. RFC 6901, Sect. 4)
                         if (reference_token.size() > 1 and reference_token[0] == '0')
                         {
-                            JSON_THROW(std::domain_error("array index must not begin with '0'"));
+                            JSON_THROW(parse_error(106, 0, "array index '" + reference_token + "' must not begin with '0'"));
                         }
 
                         // note: at performs range check
@@ -11331,7 +11331,7 @@ class basic_json
             // check if nonempty reference string begins with slash
             if (reference_string[0] != '/')
             {
-                JSON_THROW(std::domain_error("JSON pointer must be empty or begin with '/'"));
+                JSON_THROW(parse_error(107, 1, "JSON pointer must be empty or begin with '/' - was: '" + reference_string + "'"));
             }
 
             // extract the reference tokens:
@@ -11366,7 +11366,7 @@ class basic_json
                             (reference_token[pos + 1] != '0' and
                              reference_token[pos + 1] != '1'))
                     {
-                        JSON_THROW(std::domain_error("escape error: '~' must be followed with '0' or '1'"));
+                        JSON_THROW(parse_error(108, 0, "escape character '~' must be followed with '0' or '1'"));
                     }
                 }
 

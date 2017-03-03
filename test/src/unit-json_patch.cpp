@@ -686,7 +686,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"foo", "bar"}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation must have member 'op'");
+                                  "[json.exception.parse_error.105] parse error: operation must have member 'op'");
             }
 
             SECTION("non-string 'op'")
@@ -695,7 +695,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", 1}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation must have string member 'op'");
+                                  "[json.exception.parse_error.105] parse error: operation must have string member 'op'");
             }
 
             SECTION("invalid operation")
@@ -704,7 +704,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "foo"}, {"path", ""}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation value 'foo' is invalid");
+                                  "[json.exception.parse_error.105] parse error: operation value 'foo' is invalid");
             }
         }
 
@@ -716,7 +716,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "add"}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'add' must have member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'add' must have member 'path'");
             }
 
             SECTION("non-string 'path'")
@@ -725,7 +725,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "add"}, {"path", 1}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'add' must have string member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'add' must have string member 'path'");
             }
 
             SECTION("missing 'value'")
@@ -734,7 +734,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "add"}, {"path", ""}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'add' must have member 'value'");
+                                  "[json.exception.parse_error.105] parse error: operation 'add' must have member 'value'");
             }
 
             SECTION("invalid array index")
@@ -754,7 +754,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "remove"}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'remove' must have member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'remove' must have member 'path'");
             }
 
             SECTION("non-string 'path'")
@@ -763,7 +763,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "remove"}, {"path", 1}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'remove' must have string member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'remove' must have string member 'path'");
             }
 
             SECTION("nonexisting target location (array)")
@@ -799,7 +799,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "replace"}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'replace' must have member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'replace' must have member 'path'");
             }
 
             SECTION("non-string 'path'")
@@ -808,7 +808,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "replace"}, {"path", 1}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'replace' must have string member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'replace' must have string member 'path'");
             }
 
             SECTION("missing 'value'")
@@ -817,7 +817,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "replace"}, {"path", ""}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'replace' must have member 'value'");
+                                  "[json.exception.parse_error.105] parse error: operation 'replace' must have member 'value'");
             }
 
             SECTION("nonexisting target location (array)")
@@ -845,7 +845,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "move"}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'move' must have member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'move' must have member 'path'");
             }
 
             SECTION("non-string 'path'")
@@ -854,7 +854,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "move"}, {"path", 1}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'move' must have string member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'move' must have string member 'path'");
             }
 
             SECTION("missing 'from'")
@@ -863,7 +863,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "move"}, {"path", ""}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'move' must have member 'from'");
+                                  "[json.exception.parse_error.105] parse error: operation 'move' must have member 'from'");
             }
 
             SECTION("non-string 'from'")
@@ -872,7 +872,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "move"}, {"path", ""}, {"from", 1}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'move' must have string member 'from'");
+                                  "[json.exception.parse_error.105] parse error: operation 'move' must have string member 'from'");
             }
 
             SECTION("nonexisting from location (array)")
@@ -900,7 +900,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "copy"}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'copy' must have member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'copy' must have member 'path'");
             }
 
             SECTION("non-string 'path'")
@@ -909,7 +909,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "copy"}, {"path", 1}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'copy' must have string member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'copy' must have string member 'path'");
             }
 
             SECTION("missing 'from'")
@@ -918,7 +918,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "copy"}, {"path", ""}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'copy' must have member 'from'");
+                                  "[json.exception.parse_error.105] parse error: operation 'copy' must have member 'from'");
             }
 
             SECTION("non-string 'from'")
@@ -927,7 +927,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "copy"}, {"path", ""}, {"from", 1}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'copy' must have string member 'from'");
+                                  "[json.exception.parse_error.105] parse error: operation 'copy' must have string member 'from'");
             }
 
             SECTION("nonexisting from location (array)")
@@ -955,7 +955,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "test"}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'test' must have member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'test' must have member 'path'");
             }
 
             SECTION("non-string 'path'")
@@ -964,7 +964,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "test"}, {"path", 1}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'test' must have string member 'path'");
+                                  "[json.exception.parse_error.105] parse error: operation 'test' must have string member 'path'");
             }
 
             SECTION("missing 'value'")
@@ -973,7 +973,7 @@ TEST_CASE("JSON patch")
                 json patch = {{{"op", "test"}, {"path", ""}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error);
                 CHECK_THROWS_WITH(j.patch(patch),
-                    "[json.exception.parse_error.105] parse error: operation 'test' must have member 'value'");
+                                  "[json.exception.parse_error.105] parse error: operation 'test' must have member 'value'");
             }
         }
     }

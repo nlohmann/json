@@ -36,14 +36,17 @@ TEST_CASE("JSON pointers")
 {
     SECTION("errors")
     {
-        CHECK_THROWS_AS(json::json_pointer("foo"), std::domain_error);
-        CHECK_THROWS_WITH(json::json_pointer("foo"), "JSON pointer must be empty or begin with '/'");
+        CHECK_THROWS_AS(json::json_pointer("foo"), json::parse_error);
+        CHECK_THROWS_WITH(json::json_pointer("foo"),
+                          "[json.exception.parse_error.107] parse error at 1: JSON pointer must be empty or begin with '/' - was: 'foo'");
 
-        CHECK_THROWS_AS(json::json_pointer("/~~"), std::domain_error);
-        CHECK_THROWS_WITH(json::json_pointer("/~~"), "escape error: '~' must be followed with '0' or '1'");
+        CHECK_THROWS_AS(json::json_pointer("/~~"), json::parse_error);
+        CHECK_THROWS_WITH(json::json_pointer("/~~"),
+                          "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'");
 
-        CHECK_THROWS_AS(json::json_pointer("/~"), std::domain_error);
-        CHECK_THROWS_WITH(json::json_pointer("/~"), "escape error: '~' must be followed with '0' or '1'");
+        CHECK_THROWS_AS(json::json_pointer("/~"), json::parse_error);
+        CHECK_THROWS_WITH(json::json_pointer("/~"),
+                          "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'");
 
         json::json_pointer p;
         CHECK_THROWS_AS(p.top(), std::domain_error);
@@ -245,14 +248,18 @@ TEST_CASE("JSON pointers")
             CHECK(j == json({1, 13, 3, 33, nullptr, 55}));
 
             // error with leading 0
-            CHECK_THROWS_AS(j["/01"_json_pointer], std::domain_error);
-            CHECK_THROWS_WITH(j["/01"_json_pointer], "array index must not begin with '0'");
-            CHECK_THROWS_AS(j_const["/01"_json_pointer], std::domain_error);
-            CHECK_THROWS_WITH(j_const["/01"_json_pointer], "array index must not begin with '0'");
-            CHECK_THROWS_AS(j.at("/01"_json_pointer), std::domain_error);
-            CHECK_THROWS_WITH(j.at("/01"_json_pointer), "array index must not begin with '0'");
-            CHECK_THROWS_AS(j_const.at("/01"_json_pointer), std::domain_error);
-            CHECK_THROWS_WITH(j_const.at("/01"_json_pointer), "array index must not begin with '0'");
+            CHECK_THROWS_AS(j["/01"_json_pointer], json::parse_error);
+            CHECK_THROWS_WITH(j["/01"_json_pointer],
+                              "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'");
+            CHECK_THROWS_AS(j_const["/01"_json_pointer], json::parse_error);
+            CHECK_THROWS_WITH(j_const["/01"_json_pointer],
+                              "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'");
+            CHECK_THROWS_AS(j.at("/01"_json_pointer), json::parse_error);
+            CHECK_THROWS_WITH(j.at("/01"_json_pointer),
+                              "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'");
+            CHECK_THROWS_AS(j_const.at("/01"_json_pointer), json::parse_error);
+            CHECK_THROWS_WITH(j_const.at("/01"_json_pointer),
+                              "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'");
 
             // error with incorrect numbers
             CHECK_THROWS_AS(j["/one"_json_pointer] = 1, std::invalid_argument);
