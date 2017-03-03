@@ -2418,7 +2418,7 @@ class basic_json
     @throw invalid_iterator.201 if iterators are not compatible; that is, do
     not belong to the same JSON value; example: `"iterators are not
     compatible"`
-    @throw std::out_of_range if iterators are for a primitive type (number,
+    @throw invalid_iterator.204 if iterators are for a primitive type (number,
     boolean, or string) where an out of range error can be detected easily;
     example: `"iterators out of range"`
     @throw std::bad_alloc if allocation for object, array, or string fails
@@ -2460,7 +2460,7 @@ class basic_json
             {
                 if (not first.m_it.primitive_iterator.is_begin() or not last.m_it.primitive_iterator.is_end())
                 {
-                    JSON_THROW(std::out_of_range("iterators out of range"));
+                    JSON_THROW(invalid_iterator(204, "iterators out of range"));
                 }
                 break;
             }
@@ -4507,9 +4507,9 @@ class basic_json
 
     @throw std::domain_error if called on a `null` value; example: `"cannot
     use erase() with null"`
-    @throw std::domain_error if called on iterators which does not belong to
-    the current JSON value; example: `"iterators do not fit current value"`
-    @throw std::out_of_range if called on a primitive type with invalid
+    @throw invalid_iterator.203 if called on iterators which does not belong
+    to the current JSON value; example: `"iterators do not fit current value"`
+    @throw invalid_iterator.204 if called on a primitive type with invalid
     iterators (i.e., if `first != begin()` and `last != end()`); example:
     `"iterators out of range"`
 
@@ -4540,7 +4540,7 @@ class basic_json
         // make sure iterator fits the current value
         if (this != first.m_object or this != last.m_object)
         {
-            JSON_THROW(std::domain_error("iterators do not fit current value"));
+            JSON_THROW(invalid_iterator(203, "iterators do not fit current value"));
         }
 
         IteratorType result = end();
@@ -4555,7 +4555,7 @@ class basic_json
             {
                 if (not first.m_it.primitive_iterator.is_begin() or not last.m_it.primitive_iterator.is_end())
                 {
-                    JSON_THROW(std::out_of_range("iterators out of range"));
+                    JSON_THROW(invalid_iterator(204, "iterators out of range"));
                 }
 
                 if (is_string())
