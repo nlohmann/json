@@ -5755,9 +5755,9 @@ class basic_json
     example: `"cannot use insert() with string"`
     @throw invalid_iterator.202 if @a pos is not an iterator of *this;
     example: `"iterator does not fit current value"`
-    @throw std::domain_error if @a first and @a last do not belong to the same
-    JSON value; example: `"iterators do not fit"`
-    @throw std::domain_error if @a first or @a last are iterators into
+    @throw invalid_iterator.210 if @a first and @a last do not belong to the
+    same JSON value; example: `"iterators do not fit"`
+    @throw invalid_iterator.211 if @a first or @a last are iterators into
     container for which insert is called; example: `"passed iterators may not
     belong to container"`
 
@@ -5788,12 +5788,12 @@ class basic_json
         // check if range iterators belong to the same JSON object
         if (first.m_object != last.m_object)
         {
-            JSON_THROW(std::domain_error("iterators do not fit"));
+            JSON_THROW(invalid_iterator(210, "iterators do not fit"));
         }
 
         if (first.m_object == this or last.m_object == this)
         {
-            JSON_THROW(std::domain_error("passed iterators may not belong to container"));
+            JSON_THROW(invalid_iterator(211, "passed iterators may not belong to container"));
         }
 
         // insert to array and return iterator
@@ -9288,7 +9288,7 @@ class basic_json
 
                 case basic_json::value_t::null:
                 {
-                    JSON_THROW(std::out_of_range("cannot get value"));
+                    JSON_THROW(invalid_iterator(214, "cannot get value"));
                 }
 
                 default:
@@ -9298,7 +9298,7 @@ class basic_json
                         return *m_object;
                     }
 
-                    JSON_THROW(std::out_of_range("cannot get value"));
+                    JSON_THROW(invalid_iterator(214, "cannot get value"));
                 }
             }
         }
@@ -9332,7 +9332,7 @@ class basic_json
                         return m_object;
                     }
 
-                    JSON_THROW(std::out_of_range("cannot get value"));
+                    JSON_THROW(invalid_iterator(214, "cannot get value"));
                 }
             }
         }
@@ -9432,7 +9432,7 @@ class basic_json
             // if objects are not the same, the comparison is undefined
             if (m_object != other.m_object)
             {
-                JSON_THROW(std::domain_error("cannot compare iterators of different containers"));
+                JSON_THROW(invalid_iterator(212, "cannot compare iterators of different containers"));
             }
 
             assert(m_object != nullptr);
@@ -9474,7 +9474,7 @@ class basic_json
             // if objects are not the same, the comparison is undefined
             if (m_object != other.m_object)
             {
-                JSON_THROW(std::domain_error("cannot compare iterators of different containers"));
+                JSON_THROW(invalid_iterator(212, "cannot compare iterators of different containers"));
             }
 
             assert(m_object != nullptr);
@@ -9483,7 +9483,7 @@ class basic_json
             {
                 case basic_json::value_t::object:
                 {
-                    JSON_THROW(std::domain_error("cannot compare order of object iterators"));
+                    JSON_THROW(invalid_iterator(213, "cannot compare order of object iterators"));
                 }
 
                 case basic_json::value_t::array:
@@ -9537,7 +9537,7 @@ class basic_json
             {
                 case basic_json::value_t::object:
                 {
-                    JSON_THROW(std::domain_error("cannot use offsets with object iterators"));
+                    JSON_THROW(invalid_iterator(209, "cannot use offsets with object iterators"));
                 }
 
                 case basic_json::value_t::array:
@@ -9599,7 +9599,7 @@ class basic_json
             {
                 case basic_json::value_t::object:
                 {
-                    JSON_THROW(std::domain_error("cannot use offsets with object iterators"));
+                    JSON_THROW(invalid_iterator(209, "cannot use offsets with object iterators"));
                 }
 
                 case basic_json::value_t::array:
@@ -9636,7 +9636,7 @@ class basic_json
 
                 case basic_json::value_t::null:
                 {
-                    JSON_THROW(std::out_of_range("cannot get value"));
+                    JSON_THROW(invalid_iterator(214, "cannot get value"));
                 }
 
                 default:
@@ -9646,7 +9646,7 @@ class basic_json
                         return *m_object;
                     }
 
-                    JSON_THROW(std::out_of_range("cannot get value"));
+                    JSON_THROW(invalid_iterator(214, "cannot get value"));
                 }
             }
         }

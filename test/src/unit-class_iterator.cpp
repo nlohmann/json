@@ -131,8 +131,8 @@ TEST_CASE("iterator class")
             {
                 json j(json::value_t::null);
                 json::iterator it = j.begin();
-                CHECK_THROWS_AS(*it, std::out_of_range);
-                CHECK_THROWS_WITH(*it, "cannot get value");
+                CHECK_THROWS_AS(*it, json::invalid_iterator);
+                CHECK_THROWS_WITH(*it, "[json.exception.invalid_iterator.214] cannot get value");
             }
 
             SECTION("number")
@@ -141,8 +141,8 @@ TEST_CASE("iterator class")
                 json::iterator it = j.begin();
                 CHECK(*it == json(17));
                 it = j.end();
-                CHECK_THROWS_AS(*it, std::out_of_range);
-                CHECK_THROWS_WITH(*it, "cannot get value");
+                CHECK_THROWS_AS(*it, json::invalid_iterator);
+                CHECK_THROWS_WITH(*it, "[json.exception.invalid_iterator.214] cannot get value");
             }
 
             SECTION("object")
@@ -166,8 +166,8 @@ TEST_CASE("iterator class")
             {
                 json j(json::value_t::null);
                 json::iterator it = j.begin();
-                CHECK_THROWS_AS(it->type_name(), std::out_of_range);
-                CHECK_THROWS_WITH(it->type_name(), "cannot get value");
+                CHECK_THROWS_AS(it->type_name(), json::invalid_iterator);
+                CHECK_THROWS_WITH(it->type_name(), "[json.exception.invalid_iterator.214] cannot get value");
             }
 
             SECTION("number")
@@ -176,8 +176,8 @@ TEST_CASE("iterator class")
                 json::iterator it = j.begin();
                 CHECK(it->type_name() == "number");
                 it = j.end();
-                CHECK_THROWS_AS(it->type_name(), std::out_of_range);
-                CHECK_THROWS_WITH(it->type_name(), "cannot get value");
+                CHECK_THROWS_AS(it->type_name(), json::invalid_iterator);
+                CHECK_THROWS_WITH(it->type_name(), "[json.exception.invalid_iterator.214] cannot get value");
             }
 
             SECTION("object")

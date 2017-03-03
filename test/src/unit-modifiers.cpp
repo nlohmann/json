@@ -616,14 +616,15 @@ TEST_CASE("modifiers")
             {
                 json j_other_array2 = {"first", "second"};
 
-                CHECK_THROWS_AS(j_array.insert(j_array.end(), j_array.begin(), j_array.end()), std::domain_error);
+                CHECK_THROWS_AS(j_array.insert(j_array.end(), j_array.begin(), j_array.end()),
+                                json::invalid_iterator);
                 CHECK_THROWS_AS(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()),
-                                std::domain_error);
+                                json::invalid_iterator);
 
                 CHECK_THROWS_WITH(j_array.insert(j_array.end(), j_array.begin(), j_array.end()),
-                                  "passed iterators may not belong to container");
+                                  "[json.exception.invalid_iterator.211] passed iterators may not belong to container");
                 CHECK_THROWS_WITH(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()),
-                                  "iterators do not fit");
+                                  "[json.exception.invalid_iterator.210] iterators do not fit");
             }
         }
 

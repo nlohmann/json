@@ -501,17 +501,17 @@ TEST_CASE("element access 1")
             {
                 {
                     json j;
-                    CHECK_THROWS_AS(j.front(), std::out_of_range);
-                    CHECK_THROWS_AS(j.back(), std::out_of_range);
-                    CHECK_THROWS_WITH(j.front(), "cannot get value");
-                    CHECK_THROWS_WITH(j.back(), "cannot get value");
+                    CHECK_THROWS_AS(j.front(), json::invalid_iterator);
+                    CHECK_THROWS_AS(j.back(), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.front(), "[json.exception.invalid_iterator.214] cannot get value");
+                    CHECK_THROWS_WITH(j.back(), "[json.exception.invalid_iterator.214] cannot get value");
                 }
                 {
                     const json j{};
-                    CHECK_THROWS_AS(j.front(), std::out_of_range);
-                    CHECK_THROWS_AS(j.back(), std::out_of_range);
-                    CHECK_THROWS_WITH(j.front(), "cannot get value");
-                    CHECK_THROWS_WITH(j.back(), "cannot get value");
+                    CHECK_THROWS_AS(j.front(), json::invalid_iterator);
+                    CHECK_THROWS_AS(j.back(), json::invalid_iterator);
+                    CHECK_THROWS_WITH(j.front(), "[json.exception.invalid_iterator.214] cannot get value");
+                    CHECK_THROWS_WITH(j.back(), "[json.exception.invalid_iterator.214] cannot get value");
                 }
             }
 
