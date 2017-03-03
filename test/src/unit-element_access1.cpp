@@ -405,12 +405,13 @@ TEST_CASE("element access 1")
                     {
                         json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json jarray2 = {"foo", "bar"};
-                        CHECK_THROWS_AS(jarray.erase(jarray2.begin()), std::domain_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.begin()), json::invalid_iterator);
                         CHECK_THROWS_AS(jarray.erase(jarray.begin(), jarray2.end()), std::domain_error);
                         CHECK_THROWS_AS(jarray.erase(jarray2.begin(), jarray.end()), std::domain_error);
                         CHECK_THROWS_AS(jarray.erase(jarray2.begin(), jarray2.end()), std::domain_error);
 
-                        CHECK_THROWS_WITH(jarray.erase(jarray2.begin()), "iterator does not fit current value");
+                        CHECK_THROWS_WITH(jarray.erase(jarray2.begin()),
+                                          "[json.exception.invalid_iterator.202] iterator does not fit current value");
                         CHECK_THROWS_WITH(jarray.erase(jarray.begin(), jarray2.end()),
                                           "iterators do not fit current value");
                         CHECK_THROWS_WITH(jarray.erase(jarray2.begin(), jarray.end()),
@@ -421,12 +422,13 @@ TEST_CASE("element access 1")
                     {
                         json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json jarray2 = {"foo", "bar"};
-                        CHECK_THROWS_AS(jarray.erase(jarray2.cbegin()), std::domain_error);
+                        CHECK_THROWS_AS(jarray.erase(jarray2.cbegin()), json::invalid_iterator);
                         CHECK_THROWS_AS(jarray.erase(jarray.cbegin(), jarray2.cend()), std::domain_error);
                         CHECK_THROWS_AS(jarray.erase(jarray2.cbegin(), jarray.cend()), std::domain_error);
                         CHECK_THROWS_AS(jarray.erase(jarray2.cbegin(), jarray2.cend()), std::domain_error);
 
-                        CHECK_THROWS_WITH(jarray.erase(jarray2.cbegin()), "iterator does not fit current value");
+                        CHECK_THROWS_WITH(jarray.erase(jarray2.cbegin()),
+                                          "[json.exception.invalid_iterator.202] iterator does not fit current value");
                         CHECK_THROWS_WITH(jarray.erase(jarray.cbegin(), jarray2.cend()),
                                           "iterators do not fit current value");
                         CHECK_THROWS_WITH(jarray.erase(jarray2.cbegin(), jarray.cend()),

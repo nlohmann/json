@@ -685,11 +685,12 @@ TEST_CASE("element access 2")
                     {
                         json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
                         json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                        CHECK_THROWS_AS(jobject.erase(jobject2.begin()), std::domain_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.begin()), json::invalid_iterator);
                         CHECK_THROWS_AS(jobject.erase(jobject.begin(), jobject2.end()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject.end()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject2.end()), std::domain_error);
-                        CHECK_THROWS_WITH(jobject.erase(jobject2.begin()), "iterator does not fit current value");
+                        CHECK_THROWS_WITH(jobject.erase(jobject2.begin()),
+                                          "[json.exception.invalid_iterator.202] iterator does not fit current value");
                         CHECK_THROWS_WITH(jobject.erase(jobject.begin(), jobject2.end()),
                                           "iterators do not fit current value");
                         CHECK_THROWS_WITH(jobject.erase(jobject2.begin(), jobject.end()),
@@ -700,11 +701,12 @@ TEST_CASE("element access 2")
                     {
                         json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
                         json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin()), std::domain_error);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin()), json::invalid_iterator);
                         CHECK_THROWS_AS(jobject.erase(jobject.cbegin(), jobject2.cend()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject.cend()), std::domain_error);
                         CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject2.cend()), std::domain_error);
-                        CHECK_THROWS_WITH(jobject.erase(jobject2.cbegin()), "iterator does not fit current value");
+                        CHECK_THROWS_WITH(jobject.erase(jobject2.cbegin()),
+                                          "[json.exception.invalid_iterator.202] iterator does not fit current value");
                         CHECK_THROWS_WITH(jobject.erase(jobject.cbegin(), jobject2.cend()),
                                           "iterators do not fit current value");
                         CHECK_THROWS_WITH(jobject.erase(jobject2.cbegin(), jobject.cend()),
