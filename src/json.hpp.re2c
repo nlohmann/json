@@ -1104,14 +1104,14 @@ class basic_json
 
     name / id                      | example massage | description
     ------------------------------ | --------------- | -------------------------
-    json.exception.[parse_error](@ref parse_error).101 | `"parse error at 2: unexpected end of input; expected string literal"` | This error indicates a syntax error while deserializing a JSON text. The error message describes that an unexpected token (character) was encountered, and the member @ref parse_error::byte indicates the error position.
-    json.exception.[parse_error](@ref parse_error).102 | `"parse error at 14: missing or wrong low surrogate"` | JSON uses the `\uxxxx` format to describe Unicode characters. Code points above above 0xFFFF are split into two `\uxxxx` entries ("surrogate pairs"). This error indicates that the surrogate pair is incomplete or contains an invalid code point.
-    json.exception.[parse_error](@ref parse_error).103 | `"parse error: code points above 0x10FFFF are invalid"` | Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
-    json.exception.[parse_error](@ref parse_error).104 | `"parse error: JSON patch must be an array of objects"` | [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON document that represents an array of objects.
-    json.exception.[parse_error](@ref parse_error).105 | `"parse error: operation must have string member 'op'"` | An operation of a JSON Patch document must contain exactly one "op" member, whose value indicates the operation to perform. Its value must be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
-    json.exception.[parse_error](@ref parse_error).106 | `"parse error: array index '01' must not begin with '0'"` | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number wihtout a leading `0`.
-    json.exception.[parse_error](@ref parse_error).107 | `"parse error: JSON pointer must be empty or begin with '/' - was: 'foo'"` | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
-    json.exception.[parse_error](@ref parse_error).108 | `"parse error: escape character '~' must be followed with '0' or '1'"` | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
+    json.exception.[parse_error](@ref parse_error).101 | "parse error at 2: unexpected end of input; expected string literal" | This error indicates a syntax error while deserializing a JSON text. The error message describes that an unexpected token (character) was encountered, and the member @ref parse_error::byte indicates the error position.
+    json.exception.[parse_error](@ref parse_error).102 | "parse error at 14: missing or wrong low surrogate" | JSON uses the `\uxxxx` format to describe Unicode characters. Code points above above 0xFFFF are split into two `\uxxxx` entries ("surrogate pairs"). This error indicates that the surrogate pair is incomplete or contains an invalid code point.
+    json.exception.[parse_error](@ref parse_error).103 | "parse error: code points above 0x10FFFF are invalid" | Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
+    json.exception.[parse_error](@ref parse_error).104 | "parse error: JSON patch must be an array of objects" | [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON document that represents an array of objects.
+    json.exception.[parse_error](@ref parse_error).105 | "parse error: operation must have string member 'op'" | An operation of a JSON Patch document must contain exactly one "op" member, whose value indicates the operation to perform. Its value must be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
+    json.exception.[parse_error](@ref parse_error).106 | "parse error: array index '01' must not begin with '0'" | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number wihtout a leading `0`.
+    json.exception.[parse_error](@ref parse_error).107 | "parse error: JSON pointer must be empty or begin with '/' - was: 'foo'" | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
+    json.exception.[parse_error](@ref parse_error).108 | "parse error: escape character '~' must be followed with '0' or '1'" | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
     json.exception.[parse_error](@ref parse_error).109 | "parse error: array index 'one' is not a number" | A JSON Pointer array index must be a number.
     json.exception.[invalid_iterator](@ref invalid_iterator).201 | "iterators are not compatible" | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
     json.exception.[invalid_iterator](@ref invalid_iterator).202 | "iterator does not fit current value" | In an erase or insert function, the passed iterator @a pos does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
@@ -11070,7 +11070,14 @@ class basic_json
                     case value_t::array:
                     {
                         // create an entry in the array
-                        result = &result->operator[](static_cast<size_type>(std::stoi(reference_token)));
+                        JSON_TRY
+                        {
+                            result = &result->operator[](static_cast<size_type>(std::stoi(reference_token)));
+                        }
+                        JSON_CATCH(std::invalid_argument&)
+                        {
+                            JSON_THROW(parse_error(109, 0, "array index '" + reference_token + "' is not a number"));
+                        }
                         break;
                     }
 
@@ -11162,7 +11169,14 @@ class basic_json
                         else
                         {
                             // convert array index to number; unchecked access
-                            ptr = &ptr->operator[](static_cast<size_type>(std::stoi(reference_token)));
+                            JSON_TRY
+                            {
+                                ptr = &ptr->operator[](static_cast<size_type>(std::stoi(reference_token)));
+                            }
+                            JSON_CATCH(std::invalid_argument&)
+                            {
+                                JSON_THROW(parse_error(109, 0, "array index '" + reference_token + "' is not a number"));
+                            }
                         }
                         break;
                     }
@@ -11207,7 +11221,14 @@ class basic_json
                         }
 
                         // note: at performs range check
-                        ptr = &ptr->at(static_cast<size_type>(std::stoi(reference_token)));
+                        JSON_TRY
+                        {
+                            ptr = &ptr->at(static_cast<size_type>(std::stoi(reference_token)));
+                        }
+                        JSON_CATCH(std::invalid_argument&)
+                        {
+                            JSON_THROW(parse_error(109, 0, "array index '" + reference_token + "' is not a number"));
+                        }
                         break;
                     }
 
@@ -11259,7 +11280,14 @@ class basic_json
                         }
 
                         // use unchecked array access
-                        ptr = &ptr->operator[](static_cast<size_type>(std::stoi(reference_token)));
+                        JSON_TRY
+                        {
+                            ptr = &ptr->operator[](static_cast<size_type>(std::stoi(reference_token)));
+                        }
+                        JSON_CATCH(std::invalid_argument&)
+                        {
+                            JSON_THROW(parse_error(109, 0, "array index '" + reference_token + "' is not a number"));
+                        }
                         break;
                     }
 
@@ -11303,7 +11331,14 @@ class basic_json
                         }
 
                         // note: at performs range check
-                        ptr = &ptr->at(static_cast<size_type>(std::stoi(reference_token)));
+                        JSON_TRY
+                        {
+                            ptr = &ptr->at(static_cast<size_type>(std::stoi(reference_token)));
+                        }
+                        JSON_CATCH(std::invalid_argument&)
+                        {
+                            JSON_THROW(parse_error(109, 0, "array index '" + reference_token + "' is not a number"));
+                        }
                         break;
                     }
 
