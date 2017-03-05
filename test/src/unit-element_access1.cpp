@@ -63,11 +63,13 @@ TEST_CASE("element access 1")
 
             SECTION("access outside bounds")
             {
-                CHECK_THROWS_AS(j.at(8), std::out_of_range);
-                CHECK_THROWS_AS(j_const.at(8), std::out_of_range);
+                CHECK_THROWS_AS(j.at(8), json::out_of_range);
+                CHECK_THROWS_AS(j_const.at(8), json::out_of_range);
 
-                CHECK_THROWS_WITH(j.at(8), "array index 8 is out of range");
-                CHECK_THROWS_WITH(j_const.at(8), "array index 8 is out of range");
+                CHECK_THROWS_WITH(j.at(8),
+                                  "[json.exception.out_of_range.401] array index 8 is out of range");
+                CHECK_THROWS_WITH(j_const.at(8),
+                                  "[json.exception.out_of_range.401] array index 8 is out of range");
             }
 
             SECTION("access on non-array type")
@@ -311,8 +313,9 @@ TEST_CASE("element access 1")
                 }
                 {
                     json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
-                    CHECK_THROWS_AS(jarray.erase(8), std::out_of_range);
-                    CHECK_THROWS_WITH(jarray.erase(8), "array index 8 is out of range");
+                    CHECK_THROWS_AS(jarray.erase(8), json::out_of_range);
+                    CHECK_THROWS_WITH(jarray.erase(8),
+                                      "[json.exception.out_of_range.401] array index 8 is out of range");
                 }
             }
 

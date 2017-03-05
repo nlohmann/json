@@ -741,8 +741,9 @@ TEST_CASE("JSON patch")
             {
                 json j = {1, 2};
                 json patch = {{{"op", "add"}, {"path", "/4"}, {"value", 4}}};
-                CHECK_THROWS_AS(j.patch(patch), std::out_of_range);
-                CHECK_THROWS_WITH(j.patch(patch), "array index 4 is out of range");
+                CHECK_THROWS_AS(j.patch(patch), json::out_of_range);
+                CHECK_THROWS_WITH(j.patch(patch),
+                                  "[json.exception.out_of_range.401] array index 4 is out of range");
             }
         }
 
@@ -770,8 +771,9 @@ TEST_CASE("JSON patch")
             {
                 json j = {1, 2, 3};
                 json patch = {{{"op", "remove"}, {"path", "/17"}}};
-                CHECK_THROWS_AS(j.patch(patch), std::out_of_range);
-                CHECK_THROWS_WITH(j.patch(patch), "array index 17 is out of range");
+                CHECK_THROWS_AS(j.patch(patch), json::out_of_range);
+                CHECK_THROWS_WITH(j.patch(patch),
+                                  "[json.exception.out_of_range.401] array index 17 is out of range");
             }
 
             SECTION("nonexisting target location (object)")
@@ -824,8 +826,9 @@ TEST_CASE("JSON patch")
             {
                 json j = {1, 2, 3};
                 json patch = {{{"op", "replace"}, {"path", "/17"}, {"value", 19}}};
-                CHECK_THROWS_AS(j.patch(patch), std::out_of_range);
-                CHECK_THROWS_WITH(j.patch(patch), "array index 17 is out of range");
+                CHECK_THROWS_AS(j.patch(patch), json::out_of_range);
+                CHECK_THROWS_WITH(j.patch(patch),
+                                  "[json.exception.out_of_range.401] array index 17 is out of range");
             }
 
             SECTION("nonexisting target location (object)")
@@ -879,8 +882,9 @@ TEST_CASE("JSON patch")
             {
                 json j = {1, 2, 3};
                 json patch = {{{"op", "move"}, {"path", "/0"}, {"from", "/5"}}};
-                CHECK_THROWS_AS(j.patch(patch), std::out_of_range);
-                CHECK_THROWS_WITH(j.patch(patch), "array index 5 is out of range");
+                CHECK_THROWS_AS(j.patch(patch), json::out_of_range);
+                CHECK_THROWS_WITH(j.patch(patch),
+                                  "[json.exception.out_of_range.401] array index 5 is out of range");
             }
 
             SECTION("nonexisting from location (object)")
@@ -934,8 +938,9 @@ TEST_CASE("JSON patch")
             {
                 json j = {1, 2, 3};
                 json patch = {{{"op", "copy"}, {"path", "/0"}, {"from", "/5"}}};
-                CHECK_THROWS_AS(j.patch(patch), std::out_of_range);
-                CHECK_THROWS_WITH(j.patch(patch), "array index 5 is out of range");
+                CHECK_THROWS_AS(j.patch(patch), json::out_of_range);
+                CHECK_THROWS_WITH(j.patch(patch),
+                                  "[json.exception.out_of_range.401] array index 5 is out of range");
             }
 
             SECTION("nonexisting from location (object)")

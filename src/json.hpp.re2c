@@ -3648,7 +3648,7 @@ class basic_json
 
     @throw type_error.304 if the JSON value is not an array; example: `"cannot
     use at() with string"`
-    @throw std::out_of_range if the index @a idx is out of range of the array;
+    @throw out_of_range.401 if the index @a idx is out of range of the array;
     that is, `idx >= size()`; example: `"array index 7 is out of range"`
 
     @complexity Constant.
@@ -3670,7 +3670,7 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(std::out_of_range("array index " + std::to_string(idx) + " is out of range"));
+                JSON_THROW(out_of_range(401, "array index " + std::to_string(idx) + " is out of range"));
             }
         }
         else
@@ -3691,7 +3691,7 @@ class basic_json
 
     @throw type_error.304 if the JSON value is not an array; example: `"cannot
     use at() with string"`
-    @throw std::out_of_range if the index @a idx is out of range of the array;
+    @throw out_of_range.401 if the index @a idx is out of range of the array;
     that is, `idx >= size()`; example: `"array index 7 is out of range"`
 
     @complexity Constant.
@@ -3713,7 +3713,7 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(std::out_of_range("array index " + std::to_string(idx) + " is out of range"));
+                JSON_THROW(out_of_range(401, "array index " + std::to_string(idx) + " is out of range"));
             }
         }
         else
@@ -4666,7 +4666,7 @@ class basic_json
         {
             if (idx >= size())
             {
-                JSON_THROW(std::out_of_range("array index " + std::to_string(idx) + " is out of range"));
+                JSON_THROW(out_of_range(401, "array index " + std::to_string(idx) + " is out of range"));
             }
 
             m_value.array->erase(m_value.array->begin() + static_cast<difference_type>(idx));
@@ -11212,9 +11212,9 @@ class basic_json
                         if (reference_token == "-")
                         {
                             // "-" always fails the range check
-                            JSON_THROW(std::out_of_range("array index '-' (" +
-                                                         std::to_string(ptr->m_value.array->size()) +
-                                                         ") is out of range"));
+                            JSON_THROW(out_of_range(402, "array index '-' (" +
+                                                    std::to_string(ptr->m_value.array->size()) +
+                                                    ") is out of range"));
                         }
 
                         // error condition (cf. RFC 6901, Sect. 4)
@@ -11271,9 +11271,9 @@ class basic_json
                         if (reference_token == "-")
                         {
                             // "-" cannot be used for const access
-                            JSON_THROW(std::out_of_range("array index '-' (" +
-                                                         std::to_string(ptr->m_value.array->size()) +
-                                                         ") is out of range"));
+                            JSON_THROW(out_of_range(402, "array index '-' (" +
+                                                    std::to_string(ptr->m_value.array->size()) +
+                                                    ") is out of range"));
                         }
 
                         // error condition (cf. RFC 6901, Sect. 4)
@@ -11322,9 +11322,9 @@ class basic_json
                         if (reference_token == "-")
                         {
                             // "-" always fails the range check
-                            JSON_THROW(std::out_of_range("array index '-' (" +
-                                                         std::to_string(ptr->m_value.array->size()) +
-                                                         ") is out of range"));
+                            JSON_THROW(out_of_range(402, "array index '-' (" +
+                                                    std::to_string(ptr->m_value.array->size()) +
+                                                    ") is out of range"));
                         }
 
                         // error condition (cf. RFC 6901, Sect. 4)
@@ -11883,7 +11883,7 @@ class basic_json
                             if (static_cast<size_type>(idx) > parent.size())
                             {
                                 // avoid undefined behavior
-                                JSON_THROW(std::out_of_range("array index " + std::to_string(idx) + " is out of range"));
+                                JSON_THROW(out_of_range(401, "array index " + std::to_string(idx) + " is out of range"));
                             }
                             else
                             {

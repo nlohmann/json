@@ -271,14 +271,17 @@ TEST_CASE("JSON pointers")
             CHECK(j == json({1, 13, 3, 33, nullptr, 55, 99}));
 
             // error when using "-" in const object
-            CHECK_THROWS_AS(j_const["/-"_json_pointer], std::out_of_range);
-            CHECK_THROWS_WITH(j_const["/-"_json_pointer], "array index '-' (3) is out of range");
+            CHECK_THROWS_AS(j_const["/-"_json_pointer], json::out_of_range);
+            CHECK_THROWS_WITH(j_const["/-"_json_pointer],
+                              "[json.exception.out_of_range.402] array index '-' (3) is out of range");
 
             // error when using "-" with at
-            CHECK_THROWS_AS(j.at("/-"_json_pointer), std::out_of_range);
-            CHECK_THROWS_WITH(j.at("/-"_json_pointer), "array index '-' (7) is out of range");
-            CHECK_THROWS_AS(j_const.at("/-"_json_pointer), std::out_of_range);
-            CHECK_THROWS_WITH(j_const.at("/-"_json_pointer), "array index '-' (3) is out of range");
+            CHECK_THROWS_AS(j.at("/-"_json_pointer), json::out_of_range);
+            CHECK_THROWS_WITH(j.at("/-"_json_pointer),
+                              "[json.exception.out_of_range.402] array index '-' (7) is out of range");
+            CHECK_THROWS_AS(j_const.at("/-"_json_pointer), json::out_of_range);
+            CHECK_THROWS_WITH(j_const.at("/-"_json_pointer),
+                              "[json.exception.out_of_range.402] array index '-' (3) is out of range");
         }
 
         SECTION("const access")
@@ -291,18 +294,22 @@ TEST_CASE("JSON pointers")
             CHECK(j["/2"_json_pointer] == j[2]);
 
             // assign to nonexisting index
-            CHECK_THROWS_AS(j.at("/3"_json_pointer), std::out_of_range);
-            CHECK_THROWS_WITH(j.at("/3"_json_pointer), "array index 3 is out of range");
+            CHECK_THROWS_AS(j.at("/3"_json_pointer), json::out_of_range);
+            CHECK_THROWS_WITH(j.at("/3"_json_pointer),
+                              "[json.exception.out_of_range.401] array index 3 is out of range");
 
             // assign to nonexisting index (with gap)
-            CHECK_THROWS_AS(j.at("/5"_json_pointer), std::out_of_range);
-            CHECK_THROWS_WITH(j.at("/5"_json_pointer), "array index 5 is out of range");
+            CHECK_THROWS_AS(j.at("/5"_json_pointer), json::out_of_range);
+            CHECK_THROWS_WITH(j.at("/5"_json_pointer),
+                              "[json.exception.out_of_range.401] array index 5 is out of range");
 
             // assign to "-"
-            CHECK_THROWS_AS(j["/-"_json_pointer], std::out_of_range);
-            CHECK_THROWS_WITH(j["/-"_json_pointer], "array index '-' (3) is out of range");
-            CHECK_THROWS_AS(j.at("/-"_json_pointer), std::out_of_range);
-            CHECK_THROWS_WITH(j.at("/-"_json_pointer), "array index '-' (3) is out of range");
+            CHECK_THROWS_AS(j["/-"_json_pointer], json::out_of_range);
+            CHECK_THROWS_WITH(j["/-"_json_pointer],
+                              "[json.exception.out_of_range.402] array index '-' (3) is out of range");
+            CHECK_THROWS_AS(j.at("/-"_json_pointer), json::out_of_range);
+            CHECK_THROWS_WITH(j.at("/-"_json_pointer),
+                              "[json.exception.out_of_range.402] array index '-' (3) is out of range");
         }
 
     }
