@@ -2223,8 +2223,8 @@ class basic_json
     value_t::array and @ref value_t::object are valid); when @a type_deduction
     is set to `true`, this parameter has no effect
 
-    @throw std::domain_error if @a type_deduction is `false`, @a manual_type
-    is `value_t::object`, but @a init contains an element which is not a pair
+    @throw type_error.301 if @a type_deduction is `false`, @a manual_type is
+    `value_t::object`, but @a init contains an element which is not a pair
     whose first element is a string; example: `"cannot create object from
     initializer list"`
 
@@ -2264,7 +2264,7 @@ class basic_json
             // if object is wanted but impossible, throw an exception
             if (manual_type == value_t::object and not is_an_object)
             {
-                JSON_THROW(std::domain_error("cannot create object from initializer list"));
+                JSON_THROW(type_error(301, "cannot create object from initializer list"));
             }
         }
 
@@ -2347,7 +2347,7 @@ class basic_json
 
     @return JSON object value
 
-    @throw std::domain_error if @a init is not a pair whose first elements are
+    @throw type_error.301 if @a init is not a pair whose first elements are
     strings; thrown by
     @ref basic_json(std::initializer_list<basic_json>, bool, value_t)
 

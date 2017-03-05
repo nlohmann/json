@@ -943,9 +943,9 @@ TEST_CASE("constructors")
             SECTION("object with error")
             {
                 CHECK_THROWS_AS(json::object({ {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false}, 13 }),
-                std::logic_error);
+                json::type_error);
                 CHECK_THROWS_WITH(json::object({ {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false}, 13 }),
-                "cannot create object from initializer list");
+                "[json.exception.type_error.301] cannot create object from initializer list");
             }
 
             SECTION("empty array")
