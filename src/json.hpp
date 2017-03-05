@@ -5607,7 +5607,7 @@ class basic_json
             already-existing element if no insertion happened, and a bool
             denoting whether the insertion took place.
 
-    @throw std::domain_error when called on a type other than JSON object or
+    @throw type_error.311 when called on a type other than JSON object or
     null; example: `"cannot use emplace() with number"`
 
     @complexity Logarithmic in the size of the container, O(log(`size()`)).
@@ -5625,7 +5625,7 @@ class basic_json
         // emplace only works for null objects or arrays
         if (not(is_null() or is_object()))
         {
-            JSON_THROW(std::domain_error("cannot use emplace() with " + type_name()));
+            JSON_THROW(type_error(311, "cannot use emplace() with " + type_name()));
         }
 
         // transform null object into an object
