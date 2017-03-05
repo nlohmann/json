@@ -1137,6 +1137,7 @@ class basic_json
     json.exception.[type_error](@ref type_error).308 | "cannot use push_back() with string" | The @ref push_back() and @ref operator+= member functions can only be executed for certain JSON types.
     json.exception.[type_error](@ref type_error).309 | "cannot use insert() with" | The @ref insert() member functions can only be executed for certain JSON types.
     json.exception.[type_error](@ref type_error).310 | "cannot use swap() with number" | The @ref swap() member functions can only be executed for certain JSON types.
+    json.exception.[type_error](@ref type_error).311 | "cannot use emplace_back() with string" | The @ref emplace_back() member function can only be executed for certain JSON types.
     json.exception.[type_error](@ref type_error).313 | "invalid value to unflatten" | The @ref unflatten function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well defined.
     json.exception.[type_error](@ref type_error).314 | "only objects can be unflattened" | The @ref unflatten function only works for an object whose keys are JSON Pointers.
     json.exception.[type_error](@ref type_error).315 | "values in object must be primitive" | The @ref unflatten function only works for an object whose keys are JSON Pointers and whose values are primitive.
@@ -5559,7 +5560,7 @@ class basic_json
     @param[in] args arguments to forward to a constructor of @ref basic_json
     @tparam Args compatible types to create a @ref basic_json object
 
-    @throw std::domain_error when called on a type other than JSON array or
+    @throw type_error.311 when called on a type other than JSON array or
     null; example: `"cannot use emplace_back() with number"`
 
     @complexity Amortized constant.
@@ -5576,7 +5577,7 @@ class basic_json
         // emplace_back only works for null objects or arrays
         if (not(is_null() or is_array()))
         {
-            JSON_THROW(std::domain_error("cannot use emplace_back() with " + type_name()));
+            JSON_THROW(type_error(311, "cannot use emplace_back() with " + type_name()));
         }
 
         // transform null object into an array

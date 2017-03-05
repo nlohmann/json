@@ -291,8 +291,9 @@ TEST_CASE("modifiers")
         SECTION("other type")
         {
             json j = 1;
-            CHECK_THROWS_AS(j.emplace_back("Hello"), std::domain_error);
-            CHECK_THROWS_WITH(j.emplace_back("Hello"), "cannot use emplace_back() with number");
+            CHECK_THROWS_AS(j.emplace_back("Hello"), json::type_error);
+            CHECK_THROWS_WITH(j.emplace_back("Hello"),
+                "[json.exception.type_error.311] cannot use emplace_back() with number");
         }
     }
 
