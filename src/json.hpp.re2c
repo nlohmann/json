@@ -3828,8 +3828,8 @@ class basic_json
 
     @return reference to the element at index @a idx
 
-    @throw std::domain_error if JSON is not an array or null; example:
-    `"cannot use operator[] with string"`
+    @throw type_error.305 if JSON is not an array or null; example: `"cannot
+    use operator[] with string"
 
     @complexity Constant if @a idx is in the range of the array. Otherwise
     linear in `idx - size()`.
@@ -3864,7 +3864,7 @@ class basic_json
             return m_value.array->operator[](idx);
         }
 
-        JSON_THROW(std::domain_error("cannot use operator[] with " + type_name()));
+        JSON_THROW(type_error(305, "cannot use operator[] with " + type_name()));
     }
 
     /*!
@@ -3876,7 +3876,7 @@ class basic_json
 
     @return const reference to the element at index @a idx
 
-    @throw std::domain_error if JSON is not an array; example: `"cannot use
+    @throw type_error.305 if JSON is not an array; example: `"cannot use
     operator[] with null"`
 
     @complexity Constant.
@@ -3894,7 +3894,7 @@ class basic_json
             return m_value.array->operator[](idx);
         }
 
-        JSON_THROW(std::domain_error("cannot use operator[] with " + type_name()));
+        JSON_THROW(type_error(305, "cannot use operator[] with " + type_name()));
     }
 
     /*!
@@ -3910,8 +3910,8 @@ class basic_json
 
     @return reference to the element at key @a key
 
-    @throw std::domain_error if JSON is not an object or null; example:
-    `"cannot use operator[] with string"`
+    @throw type_error.305 if JSON is not an object or null; example: `"cannot
+    use operator[] with string"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -3940,7 +3940,7 @@ class basic_json
             return m_value.object->operator[](key);
         }
 
-        JSON_THROW(std::domain_error("cannot use operator[] with " + type_name()));
+        JSON_THROW(type_error(305, "cannot use operator[] with " + type_name()));
     }
 
     /*!
@@ -3959,7 +3959,7 @@ class basic_json
     @pre The element with key @a key must exist. **This precondition is
          enforced with an assertion.**
 
-    @throw std::domain_error if JSON is not an object; example: `"cannot use
+    @throw type_error.305 if JSON is not an object; example: `"cannot use
     operator[] with null"`
 
     @complexity Logarithmic in the size of the container.
@@ -3982,7 +3982,7 @@ class basic_json
             return m_value.object->find(key)->second;
         }
 
-        JSON_THROW(std::domain_error("cannot use operator[] with " + type_name()));
+        JSON_THROW(type_error(305, "cannot use operator[] with " + type_name()));
     }
 
     /*!
@@ -3998,8 +3998,8 @@ class basic_json
 
     @return reference to the element at key @a key
 
-    @throw std::domain_error if JSON is not an object or null; example:
-    `"cannot use operator[] with string"`
+    @throw type_error.305 if JSON is not an object or null; example: `"cannot
+    use operator[] with string"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -4066,8 +4066,8 @@ class basic_json
 
     @return reference to the element at key @a key
 
-    @throw std::domain_error if JSON is not an object or null; example:
-    `"cannot use operator[] with string"`
+    @throw type_error.305 if JSON is not an object or null; example: `"cannot
+    use operator[] with string"`
 
     @complexity Logarithmic in the size of the container.
 
@@ -4097,7 +4097,7 @@ class basic_json
             return m_value.object->operator[](key);
         }
 
-        JSON_THROW(std::domain_error("cannot use operator[] with " + type_name()));
+        JSON_THROW(type_error(305, "cannot use operator[] with " + type_name()));
     }
 
     /*!
@@ -4116,7 +4116,7 @@ class basic_json
     @pre The element with key @a key must exist. **This precondition is
          enforced with an assertion.**
 
-    @throw std::domain_error if JSON is not an object; example: `"cannot use
+    @throw type_error.305 if JSON is not an object; example: `"cannot use
     operator[] with null"`
 
     @complexity Logarithmic in the size of the container.
@@ -4140,7 +4140,7 @@ class basic_json
             return m_value.object->find(key)->second;
         }
 
-        JSON_THROW(std::domain_error("cannot use operator[] with " + type_name()));
+        JSON_THROW(type_error(305, "cannot use operator[] with " + type_name()));
     }
 
     /*!

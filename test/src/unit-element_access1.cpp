@@ -191,8 +191,8 @@ TEST_CASE("element access 1")
                         json j_nonarray(json::value_t::null);
                         const json j_nonarray_const(j_nonarray);
                         CHECK_NOTHROW(j_nonarray[0]);
-                        CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
-                        CHECK_THROWS_WITH(j_nonarray_const[0], "cannot use operator[] with null");
+                        CHECK_THROWS_AS(j_nonarray_const[0], json::type_error);
+                        CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with null");
                     }
 
                     SECTION("implicit transformation to properly filled array")
@@ -207,60 +207,60 @@ TEST_CASE("element access 1")
                 {
                     json j_nonarray(json::value_t::boolean);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonarray[0], "cannot use operator[] with boolean");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "cannot use operator[] with boolean");
+                    CHECK_THROWS_AS(j_nonarray[0], json::type_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], json::type_error);
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with boolean");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with boolean");
                 }
 
                 SECTION("string")
                 {
                     json j_nonarray(json::value_t::string);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonarray[0], "cannot use operator[] with string");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "cannot use operator[] with string");
+                    CHECK_THROWS_AS(j_nonarray[0], json::type_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], json::type_error);
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with string");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with string");
                 }
 
                 SECTION("object")
                 {
                     json j_nonarray(json::value_t::object);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonarray[0], "cannot use operator[] with object");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "cannot use operator[] with object");
+                    CHECK_THROWS_AS(j_nonarray[0], json::type_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], json::type_error);
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with object");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with object");
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonarray(json::value_t::number_integer);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonarray[0], "cannot use operator[] with number");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "cannot use operator[] with number");
+                    CHECK_THROWS_AS(j_nonarray[0], json::type_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], json::type_error);
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with number");
                 }
 
                 SECTION("number (unsigned)")
                 {
                     json j_nonarray(json::value_t::number_unsigned);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonarray[0], "cannot use operator[] with number");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "cannot use operator[] with number");
+                    CHECK_THROWS_AS(j_nonarray[0], json::type_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], json::type_error);
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with number");
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonarray(json::value_t::number_float);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_AS(j_nonarray[0], std::domain_error);
-                    CHECK_THROWS_AS(j_nonarray_const[0], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonarray[0], "cannot use operator[] with number");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "cannot use operator[] with number");
+                    CHECK_THROWS_AS(j_nonarray[0], json::type_error);
+                    CHECK_THROWS_AS(j_nonarray_const[0], json::type_error);
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with number");
                 }
             }
         }

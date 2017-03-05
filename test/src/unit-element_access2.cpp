@@ -447,106 +447,118 @@ TEST_CASE("element access 2")
                     const json j_const_nonobject(j_nonobject);
                     CHECK_NOTHROW(j_nonobject["foo"]);
                     CHECK_NOTHROW(j_nonobject2[json::object_t::key_type("foo")]);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_WITH(j_const_nonobject["foo"], "cannot use operator[] with null");
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_WITH(j_const_nonobject["foo"], "[json.exception.type_error.305] cannot use operator[] with null");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with null");
+                                      "[json.exception.type_error.305] cannot use operator[] with null");
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject["foo"], "cannot use operator[] with boolean");
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with boolean");
                     CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with boolean");
-                    CHECK_THROWS_WITH(j_const_nonobject["foo"], "cannot use operator[] with boolean");
+                                      "[json.exception.type_error.305] cannot use operator[] with boolean");
+                    CHECK_THROWS_WITH(j_const_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with boolean");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with boolean");
+                                      "[json.exception.type_error.305] cannot use operator[] with boolean");
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject["foo"], "cannot use operator[] with string");
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with string");
                     CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with string");
-                    CHECK_THROWS_WITH(j_const_nonobject["foo"], "cannot use operator[] with string");
+                                      "[json.exception.type_error.305] cannot use operator[] with string");
+                    CHECK_THROWS_WITH(j_const_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with string");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with string");
+                                      "[json.exception.type_error.305] cannot use operator[] with string");
                 }
 
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject["foo"], "cannot use operator[] with array");
-                    CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")], "cannot use operator[] with array");
-                    CHECK_THROWS_WITH(j_const_nonobject["foo"], "cannot use operator[] with array");
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with array");
+                    CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")], "[json.exception.type_error.305] cannot use operator[] with array");
+                    CHECK_THROWS_WITH(j_const_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with array");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with array");
+                                      "[json.exception.type_error.305] cannot use operator[] with array");
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject["foo"], "cannot use operator[] with number");
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
                     CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with number");
-                    CHECK_THROWS_WITH(j_const_nonobject["foo"], "cannot use operator[] with number");
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_const_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with number");
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
                 }
 
                 SECTION("number (unsigned)")
                 {
                     json j_nonobject(json::value_t::number_unsigned);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject["foo"], "cannot use operator[] with number");
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
                     CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with number");
-                    CHECK_THROWS_WITH(j_const_nonobject["foo"], "cannot use operator[] with number");
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_const_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with number");
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], std::domain_error);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject["foo"], "cannot use operator[] with number");
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
                     CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with number");
-                    CHECK_THROWS_WITH(j_const_nonobject["foo"], "cannot use operator[] with number");
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_const_nonobject["foo"],
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "cannot use operator[] with number");
+                                      "[json.exception.type_error.305] cannot use operator[] with number");
                 }
             }
         }
