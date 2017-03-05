@@ -791,8 +791,9 @@ TEST_CASE("JSON patch")
             {
                 json j = "string";
                 json patch = {{{"op", "remove"}, {"path", ""}}};
-                CHECK_THROWS_AS(j.patch(patch), std::domain_error);
-                CHECK_THROWS_WITH(j.patch(patch), "JSON pointer has no parent");
+                CHECK_THROWS_AS(j.patch(patch), json::out_of_range);
+                CHECK_THROWS_WITH(j.patch(patch),
+                                  "[json.exception.out_of_range.405] JSON pointer has no parent");
             }
         }
 

@@ -11974,7 +11974,7 @@ basic_json_parser_74:
         {
             if (is_root())
             {
-                JSON_THROW(std::domain_error("JSON pointer has no parent"));
+                JSON_THROW(out_of_range(405, "JSON pointer has no parent"));
             }
 
             auto last = reference_tokens.back();
@@ -11992,7 +11992,7 @@ basic_json_parser_74:
         {
             if (is_root())
             {
-                JSON_THROW(std::domain_error("JSON pointer has no parent"));
+                JSON_THROW(out_of_range(405, "JSON pointer has no parent"));
             }
 
             json_pointer result = *this;
@@ -12083,7 +12083,7 @@ basic_json_parser_74:
 
         @complexity Linear in the length of the JSON pointer.
 
-        @throw std::out_of_range      if the JSON pointer can not be resolved
+        @throw out_of_range.404       if the JSON pointer can not be resolved
         @throw parse_error.106        if an array index begins with '0'
         @throw std::invalid_argument  if an array index was not a number
         */
@@ -12153,7 +12153,7 @@ basic_json_parser_74:
 
                     default:
                     {
-                        JSON_THROW(std::out_of_range("unresolved reference token '" + reference_token + "'"));
+                        JSON_THROW(out_of_range(404, "unresolved reference token '" + reference_token + "'"));
                     }
                 }
             }
@@ -12204,7 +12204,7 @@ basic_json_parser_74:
 
                     default:
                     {
-                        JSON_THROW(std::out_of_range("unresolved reference token '" + reference_token + "'"));
+                        JSON_THROW(out_of_range(404, "unresolved reference token '" + reference_token + "'"));
                     }
                 }
             }
@@ -12263,7 +12263,7 @@ basic_json_parser_74:
 
                     default:
                     {
-                        JSON_THROW(std::out_of_range("unresolved reference token '" + reference_token + "'"));
+                        JSON_THROW(out_of_range(404, "unresolved reference token '" + reference_token + "'"));
                     }
                 }
             }
@@ -12314,7 +12314,7 @@ basic_json_parser_74:
 
                     default:
                     {
-                        JSON_THROW(std::out_of_range("unresolved reference token '" + reference_token + "'"));
+                        JSON_THROW(out_of_range(404, "unresolved reference token '" + reference_token + "'"));
                     }
                 }
             }

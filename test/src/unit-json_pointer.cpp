@@ -49,10 +49,12 @@ TEST_CASE("JSON pointers")
                           "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'");
 
         json::json_pointer p;
-        CHECK_THROWS_AS(p.top(), std::domain_error);
-        CHECK_THROWS_WITH(p.top(), "JSON pointer has no parent");
-        CHECK_THROWS_AS(p.pop_back(), std::domain_error);
-        CHECK_THROWS_WITH(p.pop_back(), "JSON pointer has no parent");
+        CHECK_THROWS_AS(p.top(), json::out_of_range);
+        CHECK_THROWS_WITH(p.top(),
+                          "[json.exception.out_of_range.405] JSON pointer has no parent");
+        CHECK_THROWS_AS(p.pop_back(), json::out_of_range);
+        CHECK_THROWS_WITH(p.pop_back(),
+                          "[json.exception.out_of_range.405] JSON pointer has no parent");
     }
 
     SECTION("examples from RFC 6901")
@@ -124,10 +126,12 @@ TEST_CASE("JSON pointers")
 
             // unresolved access
             json j_primitive = 1;
-            CHECK_THROWS_AS(j_primitive["/foo"_json_pointer], std::out_of_range);
-            CHECK_THROWS_WITH(j_primitive["/foo"_json_pointer], "unresolved reference token 'foo'");
-            CHECK_THROWS_AS(j_primitive.at("/foo"_json_pointer), std::out_of_range);
-            CHECK_THROWS_WITH(j_primitive.at("/foo"_json_pointer), "unresolved reference token 'foo'");
+            CHECK_THROWS_AS(j_primitive["/foo"_json_pointer], json::out_of_range);
+            CHECK_THROWS_WITH(j_primitive["/foo"_json_pointer],
+                              "[json.exception.out_of_range.404] unresolved reference token 'foo'");
+            CHECK_THROWS_AS(j_primitive.at("/foo"_json_pointer), json::out_of_range);
+            CHECK_THROWS_WITH(j_primitive.at("/foo"_json_pointer),
+                              "[json.exception.out_of_range.404] unresolved reference token 'foo'");
         }
 
         SECTION("const access")
@@ -191,10 +195,12 @@ TEST_CASE("JSON pointers")
 
             // unresolved access
             const json j_primitive = 1;
-            CHECK_THROWS_AS(j_primitive["/foo"_json_pointer], std::out_of_range);
-            CHECK_THROWS_WITH(j_primitive["/foo"_json_pointer], "unresolved reference token 'foo'");
-            CHECK_THROWS_AS(j_primitive.at("/foo"_json_pointer), std::out_of_range);
-            CHECK_THROWS_WITH(j_primitive.at("/foo"_json_pointer), "unresolved reference token 'foo'");
+            CHECK_THROWS_AS(j_primitive["/foo"_json_pointer], json::out_of_range);
+            CHECK_THROWS_WITH(j_primitive["/foo"_json_pointer],
+                              "[json.exception.out_of_range.404] unresolved reference token 'foo'");
+            CHECK_THROWS_AS(j_primitive.at("/foo"_json_pointer), json::out_of_range);
+            CHECK_THROWS_WITH(j_primitive.at("/foo"_json_pointer),
+                              "[json.exception.out_of_range.404] unresolved reference token 'foo'");
         }
 
         SECTION("user-defined string literal")
