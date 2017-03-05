@@ -75,70 +75,70 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::null);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "cannot use at() with null");
-                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "cannot use at() with null");
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with null");
+                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with null");
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "cannot use at() with boolean");
-                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "cannot use at() with boolean");
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with boolean");
+                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with boolean");
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "cannot use at() with string");
-                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "cannot use at() with string");
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with string");
+                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with string");
                 }
 
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "cannot use at() with array");
-                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "cannot use at() with array");
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with array");
+                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with array");
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "cannot use at() with number");
-                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "cannot use at() with number");
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
+                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
                 }
 
                 SECTION("number (unsigned)")
                 {
                     json j_nonobject(json::value_t::number_unsigned);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "cannot use at() with number");
-                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "cannot use at() with number");
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
+                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), std::domain_error);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "cannot use at() with number");
-                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "cannot use at() with number");
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
+                    CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
                 }
             }
         }

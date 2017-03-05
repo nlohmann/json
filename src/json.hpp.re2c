@@ -3255,7 +3255,7 @@ class basic_json
 
     @tparam ThisType will be deduced as `basic_json` or `const basic_json`
 
-    @throw std::domain_error if ReferenceType does not match underlying value
+    @throw type_error.303 if ReferenceType does not match underlying value
     type of the current JSON
     */
     template<typename ReferenceType, typename ThisType>
@@ -3272,8 +3272,7 @@ class basic_json
             return *ptr;
         }
 
-        JSON_THROW(std::domain_error("incompatible ReferenceType for get_ref, actual type is " +
-                                     obj.type_name()));
+        JSON_THROW(type_error(303, "incompatible ReferenceType for get_ref, actual type is " + obj.type_name()));
     }
 
   public:
@@ -3554,8 +3553,8 @@ class basic_json
     reference type @a ReferenceType fits to the JSON value; throws
     std::domain_error otherwise
 
-    @throw std::domain_error in case passed type @a ReferenceType is
-    incompatible with the stored JSON value
+    @throw type_error.303 in case passed type @a ReferenceType is incompatible
+    with the stored JSON value
 
     @complexity Constant.
 
@@ -3646,8 +3645,8 @@ class basic_json
 
     @return reference to the element at index @a idx
 
-    @throw std::domain_error if the JSON value is not an array; example:
-    `"cannot use at() with string"`
+    @throw type_error.304 if the JSON value is not an array; example: `"cannot
+    use at() with string"`
     @throw std::out_of_range if the index @a idx is out of range of the array;
     that is, `idx >= size()`; example: `"array index 7 is out of range"`
 
@@ -3675,7 +3674,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(std::domain_error("cannot use at() with " + type_name()));
+            JSON_THROW(type_error(304, "cannot use at() with " + type_name()));
         }
     }
 
@@ -3689,8 +3688,8 @@ class basic_json
 
     @return const reference to the element at index @a idx
 
-    @throw std::domain_error if the JSON value is not an array; example:
-    `"cannot use at() with string"`
+    @throw type_error.304 if the JSON value is not an array; example: `"cannot
+    use at() with string"`
     @throw std::out_of_range if the index @a idx is out of range of the array;
     that is, `idx >= size()`; example: `"array index 7 is out of range"`
 
@@ -3718,7 +3717,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(std::domain_error("cannot use at() with " + type_name()));
+            JSON_THROW(type_error(304, "cannot use at() with " + type_name()));
         }
     }
 
@@ -3732,7 +3731,7 @@ class basic_json
 
     @return reference to the element at key @a key
 
-    @throw std::domain_error if the JSON value is not an object; example:
+    @throw type_error.304 if the JSON value is not an object; example:
     `"cannot use at() with boolean"`
     @throw std::out_of_range if the key @a key is is not stored in the object;
     that is, `find(key) == end()`; example: `"key "the fast" not found"`
@@ -3765,7 +3764,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(std::domain_error("cannot use at() with " + type_name()));
+            JSON_THROW(type_error(304, "cannot use at() with " + type_name()));
         }
     }
 
@@ -3779,7 +3778,7 @@ class basic_json
 
     @return const reference to the element at key @a key
 
-    @throw std::domain_error if the JSON value is not an object; example:
+    @throw type_error.304 if the JSON value is not an object; example:
     `"cannot use at() with boolean"`
     @throw std::out_of_range if the key @a key is is not stored in the object;
     that is, `find(key) == end()`; example: `"key "the fast" not found"`
@@ -3812,7 +3811,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(std::domain_error("cannot use at() with " + type_name()));
+            JSON_THROW(type_error(304, "cannot use at() with " + type_name()));
         }
     }
 
