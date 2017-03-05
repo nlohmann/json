@@ -152,8 +152,8 @@ TEST_CASE("modifiers")
                 SECTION("other type")
                 {
                     json j = 1;
-                    CHECK_THROWS_AS(j.push_back("Hello"), std::domain_error);
-                    CHECK_THROWS_WITH(j.push_back("Hello"), "cannot use push_back() with number");
+                    CHECK_THROWS_AS(j.push_back("Hello"), json::type_error);
+                    CHECK_THROWS_WITH(j.push_back("Hello"), "[json.exception.type_error.308] cannot use push_back() with number");
                 }
             }
 
@@ -182,8 +182,8 @@ TEST_CASE("modifiers")
                 {
                     json j = 1;
                     json k("Hello");
-                    CHECK_THROWS_AS(j.push_back(k), std::domain_error);
-                    CHECK_THROWS_WITH(j.push_back(k), "cannot use push_back() with number");
+                    CHECK_THROWS_AS(j.push_back(k), json::type_error);
+                    CHECK_THROWS_WITH(j.push_back(k), "[json.exception.type_error.308] cannot use push_back() with number");
                 }
             }
         }
@@ -215,9 +215,9 @@ TEST_CASE("modifiers")
             {
                 json j = 1;
                 json k("Hello");
-                CHECK_THROWS_AS(j.push_back(json::object_t::value_type({"one", 1})), std::domain_error);
+                CHECK_THROWS_AS(j.push_back(json::object_t::value_type({"one", 1})), json::type_error);
                 CHECK_THROWS_WITH(j.push_back(json::object_t::value_type({"one", 1})),
-                                  "cannot use push_back() with number");
+                                  "[json.exception.type_error.308] cannot use push_back() with number");
             }
         }
 
@@ -252,8 +252,8 @@ TEST_CASE("modifiers")
                 CHECK(j == json({{"key1", 1}, {"key2", "bar"}}));
 
                 json k = {{"key1", 1}};
-                CHECK_THROWS_AS(k.push_back({1, 2, 3, 4}), std::domain_error);
-                CHECK_THROWS_WITH(k.push_back({1, 2, 3, 4}), "cannot use push_back() with object");
+                CHECK_THROWS_AS(k.push_back({1, 2, 3, 4}), json::type_error);
+                CHECK_THROWS_WITH(k.push_back({1, 2, 3, 4}), "[json.exception.type_error.308] cannot use push_back() with object");
             }
         }
     }
@@ -381,8 +381,8 @@ TEST_CASE("modifiers")
                 SECTION("other type")
                 {
                     json j = 1;
-                    CHECK_THROWS_AS(j += "Hello", std::domain_error);
-                    CHECK_THROWS_WITH(j += "Hello", "cannot use push_back() with number");
+                    CHECK_THROWS_AS(j += "Hello", json::type_error);
+                    CHECK_THROWS_WITH(j += "Hello", "[json.exception.type_error.308] cannot use push_back() with number");
                 }
             }
 
@@ -411,8 +411,8 @@ TEST_CASE("modifiers")
                 {
                     json j = 1;
                     json k("Hello");
-                    CHECK_THROWS_AS(j += k, std::domain_error);
-                    CHECK_THROWS_WITH(j += k, "cannot use push_back() with number");
+                    CHECK_THROWS_AS(j += k, json::type_error);
+                    CHECK_THROWS_WITH(j += k, "[json.exception.type_error.308] cannot use push_back() with number");
                 }
             }
         }
@@ -444,9 +444,9 @@ TEST_CASE("modifiers")
             {
                 json j = 1;
                 json k("Hello");
-                CHECK_THROWS_AS(j += json::object_t::value_type({"one", 1}), std::domain_error);
+                CHECK_THROWS_AS(j += json::object_t::value_type({"one", 1}), json::type_error);
                 CHECK_THROWS_WITH(j += json::object_t::value_type({"one", 1}),
-                                  "cannot use push_back() with number");
+                                  "[json.exception.type_error.308] cannot use push_back() with number");
             }
         }
 
@@ -481,8 +481,8 @@ TEST_CASE("modifiers")
                 CHECK(j == json({{"key1", 1}, {"key2", "bar"}}));
 
                 json k = {{"key1", 1}};
-                CHECK_THROWS_AS((k += {1, 2, 3, 4}), std::domain_error);
-                CHECK_THROWS_WITH((k += {1, 2, 3, 4}), "cannot use push_back() with object");
+                CHECK_THROWS_AS((k += {1, 2, 3, 4}), json::type_error);
+                CHECK_THROWS_WITH((k += {1, 2, 3, 4}), "[json.exception.type_error.308] cannot use push_back() with object");
             }
         }
     }

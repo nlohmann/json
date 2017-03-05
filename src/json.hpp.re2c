@@ -5374,7 +5374,7 @@ class basic_json
 
     @param[in] val the value to add to the JSON array
 
-    @throw std::domain_error when called on a type other than JSON array or
+    @throw type_error.308 when called on a type other than JSON array or
     null; example: `"cannot use push_back() with number"`
 
     @complexity Amortized constant.
@@ -5390,7 +5390,7 @@ class basic_json
         // push_back only works for null objects or arrays
         if (not(is_null() or is_array()))
         {
-            JSON_THROW(std::domain_error("cannot use push_back() with " + type_name()));
+            JSON_THROW(type_error(308, "cannot use push_back() with " + type_name()));
         }
 
         // transform null object into an array
@@ -5426,7 +5426,7 @@ class basic_json
         // push_back only works for null objects or arrays
         if (not(is_null() or is_array()))
         {
-            JSON_THROW(std::domain_error("cannot use push_back() with " + type_name()));
+            JSON_THROW(type_error(308, "cannot use push_back() with " + type_name()));
         }
 
         // transform null object into an array
@@ -5460,7 +5460,7 @@ class basic_json
 
     @param[in] val the value to add to the JSON object
 
-    @throw std::domain_error when called on a type other than JSON object or
+    @throw type_error.308 when called on a type other than JSON object or
     null; example: `"cannot use push_back() with number"`
 
     @complexity Logarithmic in the size of the container, O(log(`size()`)).
@@ -5476,7 +5476,7 @@ class basic_json
         // push_back only works for null objects or objects
         if (not(is_null() or is_object()))
         {
-            JSON_THROW(std::domain_error("cannot use push_back() with " + type_name()));
+            JSON_THROW(type_error(308, "cannot use push_back() with " + type_name()));
         }
 
         // transform null object into an object
