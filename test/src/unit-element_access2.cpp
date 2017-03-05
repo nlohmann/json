@@ -757,43 +757,49 @@ TEST_CASE("element access 2")
                 SECTION("null")
                 {
                     json j_nonobject(json::value_t::null);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase("foo"), "cannot use erase() with null");
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase("foo"),
+                                      "[json.exception.type_error.307] cannot use erase() with null");
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase("foo"), "cannot use erase() with boolean");
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase("foo"),
+                                      "[json.exception.type_error.307] cannot use erase() with boolean");
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase("foo"), "cannot use erase() with string");
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase("foo"),
+                                      "[json.exception.type_error.307] cannot use erase() with string");
                 }
 
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase("foo"), "cannot use erase() with array");
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase("foo"),
+                                      "[json.exception.type_error.307] cannot use erase() with array");
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase("foo"), "cannot use erase() with number");
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase("foo"),
+                                      "[json.exception.type_error.307] cannot use erase() with number");
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase("foo"), "cannot use erase() with number");
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase("foo"),
+                                      "[json.exception.type_error.307] cannot use erase() with number");
                 }
             }
         }

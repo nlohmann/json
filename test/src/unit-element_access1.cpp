@@ -444,50 +444,57 @@ TEST_CASE("element access 1")
                 SECTION("null")
                 {
                     json j_nonobject(json::value_t::null);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase(0), "cannot use erase() with null");
+                    CHECK_THROWS_AS(j_nonobject.erase(0), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase(0),
+                                      "[json.exception.type_error.307] cannot use erase() with null");
                 }
 
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase(0), "cannot use erase() with boolean");
+                    CHECK_THROWS_AS(j_nonobject.erase(0), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase(0),
+                                      "[json.exception.type_error.307] cannot use erase() with boolean");
                 }
 
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase(0), "cannot use erase() with string");
+                    CHECK_THROWS_AS(j_nonobject.erase(0), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase(0),
+                                      "[json.exception.type_error.307] cannot use erase() with string");
                 }
 
                 SECTION("object")
                 {
                     json j_nonobject(json::value_t::object);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase(0), "cannot use erase() with object");
+                    CHECK_THROWS_AS(j_nonobject.erase(0), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase(0),
+                                      "[json.exception.type_error.307] cannot use erase() with object");
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase(0), "cannot use erase() with number");
+                    CHECK_THROWS_AS(j_nonobject.erase(0), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase(0),
+                                      "[json.exception.type_error.307] cannot use erase() with number");
                 }
 
                 SECTION("number (unsigned)")
                 {
                     json j_nonobject(json::value_t::number_unsigned);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase(0), "cannot use erase() with number");
+                    CHECK_THROWS_AS(j_nonobject.erase(0), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase(0),
+                                      "[json.exception.type_error.307] cannot use erase() with number");
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
-                    CHECK_THROWS_AS(j_nonobject.erase(0), std::domain_error);
-                    CHECK_THROWS_WITH(j_nonobject.erase(0), "cannot use erase() with number");
+                    CHECK_THROWS_AS(j_nonobject.erase(0), json::type_error);
+                    CHECK_THROWS_WITH(j_nonobject.erase(0),
+                                      "[json.exception.type_error.307] cannot use erase() with number");
                 }
             }
         }
@@ -592,13 +599,15 @@ TEST_CASE("element access 1")
             {
                 {
                     json j;
-                    CHECK_THROWS_AS(j.erase(j.begin()), std::domain_error);
-                    CHECK_THROWS_WITH(j.erase(j.begin()), "cannot use erase() with null");
+                    CHECK_THROWS_AS(j.erase(j.begin()), json::type_error);
+                    CHECK_THROWS_WITH(j.erase(j.begin()),
+                                      "[json.exception.type_error.307] cannot use erase() with null");
                 }
                 {
                     json j;
-                    CHECK_THROWS_AS(j.erase(j.cbegin()), std::domain_error);
-                    CHECK_THROWS_WITH(j.erase(j.begin()), "cannot use erase() with null");
+                    CHECK_THROWS_AS(j.erase(j.cbegin()), json::type_error);
+                    CHECK_THROWS_WITH(j.erase(j.begin()),
+                                      "[json.exception.type_error.307] cannot use erase() with null");
                 }
             }
 
@@ -690,12 +699,14 @@ TEST_CASE("element access 1")
                 {
                     json j = "foo";
                     CHECK_THROWS_AS(j.erase(j.end()), json::invalid_iterator);
-                    CHECK_THROWS_WITH(j.erase(j.end()), "[json.exception.invalid_iterator.205] iterator out of range");
+                    CHECK_THROWS_WITH(j.erase(j.end()),
+                                      "[json.exception.invalid_iterator.205] iterator out of range");
                 }
                 {
                     json j = "bar";
                     CHECK_THROWS_AS(j.erase(j.cend()), json::invalid_iterator);
-                    CHECK_THROWS_WITH(j.erase(j.cend()), "[json.exception.invalid_iterator.205] iterator out of range");
+                    CHECK_THROWS_WITH(j.erase(j.cend()),
+                                      "[json.exception.invalid_iterator.205] iterator out of range");
                 }
             }
 
@@ -704,12 +715,14 @@ TEST_CASE("element access 1")
                 {
                     json j = false;
                     CHECK_THROWS_AS(j.erase(j.end()), json::invalid_iterator);
-                    CHECK_THROWS_WITH(j.erase(j.end()), "[json.exception.invalid_iterator.205] iterator out of range");
+                    CHECK_THROWS_WITH(j.erase(j.end()),
+                                      "[json.exception.invalid_iterator.205] iterator out of range");
                 }
                 {
                     json j = true;
                     CHECK_THROWS_AS(j.erase(j.cend()), json::invalid_iterator);
-                    CHECK_THROWS_WITH(j.erase(j.cend()), "[json.exception.invalid_iterator.205] iterator out of range");
+                    CHECK_THROWS_WITH(j.erase(j.cend()),
+                                      "[json.exception.invalid_iterator.205] iterator out of range");
                 }
             }
 
@@ -718,12 +731,14 @@ TEST_CASE("element access 1")
                 {
                     json j = 17;
                     CHECK_THROWS_AS(j.erase(j.end()), json::invalid_iterator);
-                    CHECK_THROWS_WITH(j.erase(j.end()), "[json.exception.invalid_iterator.205] iterator out of range");
+                    CHECK_THROWS_WITH(j.erase(j.end()),
+                                      "[json.exception.invalid_iterator.205] iterator out of range");
                 }
                 {
                     json j = 17;
                     CHECK_THROWS_AS(j.erase(j.cend()), json::invalid_iterator);
-                    CHECK_THROWS_WITH(j.erase(j.cend()), "[json.exception.invalid_iterator.205] iterator out of range");
+                    CHECK_THROWS_WITH(j.erase(j.cend()),
+                                      "[json.exception.invalid_iterator.205] iterator out of range");
                 }
             }
 
@@ -732,12 +747,14 @@ TEST_CASE("element access 1")
                 {
                     json j = 17u;
                     CHECK_THROWS_AS(j.erase(j.end()), json::invalid_iterator);
-                    CHECK_THROWS_WITH(j.erase(j.end()), "[json.exception.invalid_iterator.205] iterator out of range");
+                    CHECK_THROWS_WITH(j.erase(j.end()),
+                                      "[json.exception.invalid_iterator.205] iterator out of range");
                 }
                 {
                     json j = 17u;
                     CHECK_THROWS_AS(j.erase(j.cend()), json::invalid_iterator);
-                    CHECK_THROWS_WITH(j.erase(j.cend()), "[json.exception.invalid_iterator.205] iterator out of range");
+                    CHECK_THROWS_WITH(j.erase(j.cend()),
+                                      "[json.exception.invalid_iterator.205] iterator out of range");
                 }
             }
 
@@ -746,12 +763,14 @@ TEST_CASE("element access 1")
                 {
                     json j = 23.42;
                     CHECK_THROWS_AS(j.erase(j.end()), json::invalid_iterator);
-                    CHECK_THROWS_WITH(j.erase(j.end()), "[json.exception.invalid_iterator.205] iterator out of range");
+                    CHECK_THROWS_WITH(j.erase(j.end()),
+                                      "[json.exception.invalid_iterator.205] iterator out of range");
                 }
                 {
                     json j = 23.42;
                     CHECK_THROWS_AS(j.erase(j.cend()), json::invalid_iterator);
-                    CHECK_THROWS_WITH(j.erase(j.cend()), "[json.exception.invalid_iterator.205] iterator out of range");
+                    CHECK_THROWS_WITH(j.erase(j.cend()),
+                                      "[json.exception.invalid_iterator.205] iterator out of range");
                 }
             }
         }
@@ -762,13 +781,15 @@ TEST_CASE("element access 1")
             {
                 {
                     json j;
-                    CHECK_THROWS_AS(j.erase(j.begin(), j.end()), std::domain_error);
-                    CHECK_THROWS_WITH(j.erase(j.begin(), j.end()), "cannot use erase() with null");
+                    CHECK_THROWS_AS(j.erase(j.begin(), j.end()), json::type_error);
+                    CHECK_THROWS_WITH(j.erase(j.begin(), j.end()),
+                                      "[json.exception.type_error.307] cannot use erase() with null");
                 }
                 {
                     json j;
-                    CHECK_THROWS_AS(j.erase(j.cbegin(), j.cend()), std::domain_error);
-                    CHECK_THROWS_WITH(j.erase(j.cbegin(), j.cend()), "cannot use erase() with null");
+                    CHECK_THROWS_AS(j.erase(j.cbegin(), j.cend()), json::type_error);
+                    CHECK_THROWS_WITH(j.erase(j.cbegin(), j.cend()),
+                                      "[json.exception.type_error.307] cannot use erase() with null");
                 }
             }
 

@@ -4397,8 +4397,8 @@ class basic_json
     @post Invalidates iterators and references at or after the point of the
     erase, including the `end()` iterator.
 
-    @throw std::domain_error if called on a `null` value; example: `"cannot
-    use erase() with null"`
+    @throw type_error.307 if called on a `null` value; example: `"cannot use
+    erase() with null"`
     @throw invalid_iterator.202 if called on an iterator which does not belong
     to the current JSON value; example: `"iterator does not fit current
     value"`
@@ -4478,7 +4478,7 @@ class basic_json
 
             default:
             {
-                JSON_THROW(std::domain_error("cannot use erase() with " + type_name()));
+                JSON_THROW(type_error(307, "cannot use erase() with " + type_name()));
             }
         }
 
@@ -4505,8 +4505,8 @@ class basic_json
     @post Invalidates iterators and references at or after the point of the
     erase, including the `end()` iterator.
 
-    @throw std::domain_error if called on a `null` value; example: `"cannot
-    use erase() with null"`
+    @throw type_error.307 if called on a `null` value; example: `"cannot use
+    erase() with null"`
     @throw invalid_iterator.203 if called on iterators which does not belong
     to the current JSON value; example: `"iterators do not fit current value"`
     @throw invalid_iterator.204 if called on a primitive type with invalid
@@ -4587,7 +4587,7 @@ class basic_json
 
             default:
             {
-                JSON_THROW(std::domain_error("cannot use erase() with " + type_name()));
+                JSON_THROW(type_error(307, "cannot use erase() with " + type_name()));
             }
         }
 
@@ -4608,7 +4608,7 @@ class basic_json
     @post References and iterators to the erased elements are invalidated.
     Other references and iterators are not affected.
 
-    @throw std::domain_error when called on a type other than JSON object;
+    @throw type_error.307 when called on a type other than JSON object;
     example: `"cannot use erase() with null"`
 
     @complexity `log(size()) + count(key)`
@@ -4631,7 +4631,7 @@ class basic_json
             return m_value.object->erase(key);
         }
 
-        JSON_THROW(std::domain_error("cannot use erase() with " + type_name()));
+        JSON_THROW(type_error(307, "cannot use erase() with " + type_name()));
     }
 
     /*!
@@ -4641,7 +4641,7 @@ class basic_json
 
     @param[in] idx index of the element to remove
 
-    @throw std::domain_error when called on a type other than JSON array;
+    @throw type_error.307 when called on a type other than JSON object;
     example: `"cannot use erase() with null"`
     @throw std::out_of_range when `idx >= size()`; example: `"array index 17
     is out of range"`
@@ -4672,7 +4672,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(std::domain_error("cannot use erase() with " + type_name()));
+            JSON_THROW(type_error(307, "cannot use erase() with " + type_name()));
         }
     }
 
