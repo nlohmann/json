@@ -5887,8 +5887,8 @@ class basic_json
 
     @param[in,out] other array to exchange the contents with
 
-    @throw std::domain_error when JSON value is not an array; example:
-    `"cannot use swap() with string"`
+    @throw type_error.310 when JSON value is not an array; example: `"cannot
+    use swap() with string"`
 
     @complexity Constant.
 
@@ -5906,7 +5906,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(std::domain_error("cannot use swap() with " + type_name()));
+            JSON_THROW(type_error(310, "cannot use swap() with " + type_name()));
         }
     }
 
@@ -5920,7 +5920,7 @@ class basic_json
 
     @param[in,out] other object to exchange the contents with
 
-    @throw std::domain_error when JSON value is not an object; example:
+    @throw type_error.310 when JSON value is not an object; example:
     `"cannot use swap() with string"`
 
     @complexity Constant.
@@ -5939,7 +5939,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(std::domain_error("cannot use swap() with " + type_name()));
+            JSON_THROW(type_error(310, "cannot use swap() with " + type_name()));
         }
     }
 
@@ -5953,7 +5953,7 @@ class basic_json
 
     @param[in,out] other string to exchange the contents with
 
-    @throw std::domain_error when JSON value is not a string; example: `"cannot
+    @throw type_error.310 when JSON value is not a string; example: `"cannot
     use swap() with boolean"`
 
     @complexity Constant.
@@ -5972,7 +5972,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(std::domain_error("cannot use swap() with " + type_name()));
+            JSON_THROW(type_error(310, "cannot use swap() with " + type_name()));
         }
     }
 

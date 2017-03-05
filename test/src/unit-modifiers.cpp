@@ -751,8 +751,8 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::array_t a = {"foo", "bar", "baz"};
 
-                CHECK_THROWS_AS(j.swap(a), std::domain_error);
-                CHECK_THROWS_WITH(j.swap(a), "cannot use swap() with number");
+                CHECK_THROWS_AS(j.swap(a), json::type_error);
+                CHECK_THROWS_WITH(j.swap(a), "[json.exception.type_error.310] cannot use swap() with number");
             }
         }
 
@@ -777,8 +777,8 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::object_t o = {{"cow", "Kuh"}, {"chicken", "Huhn"}};
 
-                CHECK_THROWS_AS(j.swap(o), std::domain_error);
-                CHECK_THROWS_WITH(j.swap(o), "cannot use swap() with number");
+                CHECK_THROWS_AS(j.swap(o), json::type_error);
+                CHECK_THROWS_WITH(j.swap(o), "[json.exception.type_error.310] cannot use swap() with number");
             }
         }
 
@@ -803,8 +803,8 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::string_t s = "Hallo Welt";
 
-                CHECK_THROWS_AS(j.swap(s), std::domain_error);
-                CHECK_THROWS_WITH(j.swap(s), "cannot use swap() with number");
+                CHECK_THROWS_AS(j.swap(s), json::type_error);
+                CHECK_THROWS_WITH(j.swap(s), "[json.exception.type_error.310] cannot use swap() with number");
             }
         }
     }
