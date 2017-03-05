@@ -185,8 +185,9 @@ TEST_CASE("JSON pointers")
             CHECK(j[json::json_pointer("/m~0n")] == j["m~n"]);
 
             // unescaped access
-            CHECK_THROWS_AS(j.at(json::json_pointer("/a/b")), std::out_of_range);
-            CHECK_THROWS_WITH(j.at(json::json_pointer("/a/b")), "key 'a' not found");
+            CHECK_THROWS_AS(j.at(json::json_pointer("/a/b")), json::out_of_range);
+            CHECK_THROWS_WITH(j.at(json::json_pointer("/a/b")),
+                              "[json.exception.out_of_range.403] key 'a' not found");
 
             // unresolved access
             const json j_primitive = 1;

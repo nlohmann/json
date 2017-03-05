@@ -3734,7 +3734,7 @@ class basic_json
 
     @throw type_error.304 if the JSON value is not an object; example:
     `"cannot use at() with boolean"`
-    @throw std::out_of_range if the key @a key is is not stored in the object;
+    @throw out_of_range.403 if the key @a key is is not stored in the object;
     that is, `find(key) == end()`; example: `"key "the fast" not found"`
 
     @complexity Logarithmic in the size of the container.
@@ -3760,7 +3760,7 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(std::out_of_range("key '" + key + "' not found"));
+                JSON_THROW(out_of_range(403, "key '" + key + "' not found"));
             }
         }
         else
@@ -3781,7 +3781,7 @@ class basic_json
 
     @throw type_error.304 if the JSON value is not an object; example:
     `"cannot use at() with boolean"`
-    @throw std::out_of_range if the key @a key is is not stored in the object;
+    @throw out_of_range.403 if the key @a key is is not stored in the object;
     that is, `find(key) == end()`; example: `"key "the fast" not found"`
 
     @complexity Logarithmic in the size of the container.
@@ -3807,7 +3807,7 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(std::out_of_range("key '" + key + "' not found"));
+                JSON_THROW(out_of_range(403, "key '" + key + "' not found"));
             }
         }
         else
@@ -4154,7 +4154,7 @@ class basic_json
     @code {.cpp}
     try {
         return at(key);
-    } catch(std::out_of_range) {
+    } catch(out_of_range) {
         return default_value;
     }
     @endcode
@@ -4233,7 +4233,7 @@ class basic_json
     @code {.cpp}
     try {
         return at(ptr);
-    } catch(std::out_of_range) {
+    } catch(out_of_range) {
         return default_value;
     }
     @endcode
@@ -4276,7 +4276,7 @@ class basic_json
             {
                 return ptr.get_checked(this);
             }
-            JSON_CATCH (std::out_of_range&)
+            JSON_CATCH (out_of_range&)
             {
                 return default_value;
             }
@@ -11779,9 +11779,9 @@ class basic_json
           any case, the original value is not changed: the patch is applied
           to a copy of the value.
 
-    @throw std::out_of_range if a JSON pointer inside the patch could not
-    be resolved successfully in the current JSON value; example: `"key baz
-    not found"`
+    @throw out_of_range.403 if a JSON pointer inside the patch could not be
+    resolved successfully in the current JSON value; example: `"key baz not
+    found"`
     @throw invalid_argument if the JSON patch is malformed (e.g., mandatory
     attributes are missing); example: `"operation add must have member path"`
     @throw parse_error.104 if the JSON patch does not consist of an array of
@@ -11921,7 +11921,7 @@ class basic_json
                 }
                 else
                 {
-                    JSON_THROW(std::out_of_range("key '" + last_path + "' not found"));
+                    JSON_THROW(out_of_range(403, "key '" + last_path + "' not found"));
                 }
             }
             else if (parent.is_array())
@@ -12035,7 +12035,7 @@ class basic_json
                         // the "path" location must exist - use at()
                         success = (result.at(ptr) == get_value("test", "value", false));
                     }
-                    JSON_CATCH (std::out_of_range&)
+                    JSON_CATCH (out_of_range&)
                     {
                         // ignore out of range errors: success remains false
                     }

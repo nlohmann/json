@@ -63,10 +63,12 @@ TEST_CASE("element access 2")
 
             SECTION("access outside bounds")
             {
-                CHECK_THROWS_AS(j.at("foo"), std::out_of_range);
-                CHECK_THROWS_AS(j_const.at("foo"), std::out_of_range);
-                CHECK_THROWS_WITH(j.at("foo"), "key 'foo' not found");
-                CHECK_THROWS_WITH(j_const.at("foo"), "key 'foo' not found");
+                CHECK_THROWS_AS(j.at("foo"), json::out_of_range);
+                CHECK_THROWS_AS(j_const.at("foo"), json::out_of_range);
+                CHECK_THROWS_WITH(j.at("foo"),
+                                  "[json.exception.out_of_range.403] key 'foo' not found");
+                CHECK_THROWS_WITH(j_const.at("foo"),
+                                  "[json.exception.out_of_range.403] key 'foo' not found");
             }
 
             SECTION("access on non-object type")

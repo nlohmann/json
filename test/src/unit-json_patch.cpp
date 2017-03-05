@@ -75,8 +75,9 @@ TEST_CASE("JSON patch")
             json doc2 = R"({ "q": { "bar": 2 } })"_json;
 
             // because "a" does not exist.
-            CHECK_THROWS_AS(doc2.patch(patch), std::out_of_range);
-            CHECK_THROWS_WITH(doc2.patch(patch), "key 'a' not found");
+            CHECK_THROWS_AS(doc2.patch(patch), json::out_of_range);
+            CHECK_THROWS_WITH(doc2.patch(patch),
+                              "[json.exception.out_of_range.403] key 'a' not found");
         }
 
         SECTION("4.2 remove")
@@ -420,8 +421,9 @@ TEST_CASE("JSON patch")
             // references neither the root of the document, nor a member of
             // an existing object, nor a member of an existing array.
 
-            CHECK_THROWS_AS(doc.patch(patch), std::out_of_range);
-            CHECK_THROWS_WITH(doc.patch(patch), "key 'baz' not found");
+            CHECK_THROWS_AS(doc.patch(patch), json::out_of_range);
+            CHECK_THROWS_WITH(doc.patch(patch),
+                              "[json.exception.out_of_range.403] key 'baz' not found");
         }
 
         // A.13. Invalid JSON Patch Document
@@ -780,8 +782,9 @@ TEST_CASE("JSON patch")
             {
                 json j = {{"foo", 1}, {"bar", 2}};
                 json patch = {{{"op", "remove"}, {"path", "/baz"}}};
-                CHECK_THROWS_AS(j.patch(patch), std::out_of_range);
-                CHECK_THROWS_WITH(j.patch(patch), "key 'baz' not found");
+                CHECK_THROWS_AS(j.patch(patch), json::out_of_range);
+                CHECK_THROWS_WITH(j.patch(patch),
+                                  "[json.exception.out_of_range.403] key 'baz' not found");
             }
 
             SECTION("root element as target location")
@@ -835,8 +838,9 @@ TEST_CASE("JSON patch")
             {
                 json j = {{"foo", 1}, {"bar", 2}};
                 json patch = {{{"op", "replace"}, {"path", "/baz"}, {"value", 3}}};
-                CHECK_THROWS_AS(j.patch(patch), std::out_of_range);
-                CHECK_THROWS_WITH(j.patch(patch), "key 'baz' not found");
+                CHECK_THROWS_AS(j.patch(patch), json::out_of_range);
+                CHECK_THROWS_WITH(j.patch(patch),
+                                  "[json.exception.out_of_range.403] key 'baz' not found");
             }
         }
 
@@ -891,8 +895,9 @@ TEST_CASE("JSON patch")
             {
                 json j = {{"foo", 1}, {"bar", 2}};
                 json patch = {{{"op", "move"}, {"path", "/baz"}, {"from", "/baz"}}};
-                CHECK_THROWS_AS(j.patch(patch), std::out_of_range);
-                CHECK_THROWS_WITH(j.patch(patch), "key 'baz' not found");
+                CHECK_THROWS_AS(j.patch(patch), json::out_of_range);
+                CHECK_THROWS_WITH(j.patch(patch),
+                                  "[json.exception.out_of_range.403] key 'baz' not found");
             }
         }
 
@@ -947,8 +952,9 @@ TEST_CASE("JSON patch")
             {
                 json j = {{"foo", 1}, {"bar", 2}};
                 json patch = {{{"op", "copy"}, {"path", "/fob"}, {"from", "/baz"}}};
-                CHECK_THROWS_AS(j.patch(patch), std::out_of_range);
-                CHECK_THROWS_WITH(j.patch(patch), "key 'baz' not found");
+                CHECK_THROWS_AS(j.patch(patch), json::out_of_range);
+                CHECK_THROWS_WITH(j.patch(patch),
+                                  "[json.exception.out_of_range.403] key 'baz' not found");
             }
         }
 
