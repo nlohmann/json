@@ -5655,7 +5655,7 @@ class basic_json
     @param[in] val element to insert
     @return iterator pointing to the inserted @a val.
 
-    @throw std::domain_error if called on JSON values other than arrays;
+    @throw type_error.309 if called on JSON values other than arrays;
     example: `"cannot use insert() with string"`
     @throw invalid_iterator.202 if @a pos is not an iterator of *this;
     example: `"iterator does not fit current value"`
@@ -5684,7 +5684,7 @@ class basic_json
             return result;
         }
 
-        JSON_THROW(std::domain_error("cannot use insert() with " + type_name()));
+        JSON_THROW(type_error(309, "cannot use insert() with " + type_name()));
     }
 
     /*!
@@ -5708,8 +5708,8 @@ class basic_json
     @return iterator pointing to the first element inserted, or @a pos if
     `cnt==0`
 
-    @throw std::domain_error if called on JSON values other than arrays;
-    example: `"cannot use insert() with string"`
+    @throw type_error.309 if called on JSON values other than arrays; example:
+    `"cannot use insert() with string"`
     @throw invalid_iterator.202 if @a pos is not an iterator of *this;
     example: `"iterator does not fit current value"`
 
@@ -5737,7 +5737,7 @@ class basic_json
             return result;
         }
 
-        JSON_THROW(std::domain_error("cannot use insert() with " + type_name()));
+        JSON_THROW(type_error(309, "cannot use insert() with " + type_name()));
     }
 
     /*!
@@ -5750,8 +5750,8 @@ class basic_json
     @param[in] first begin of the range of elements to insert
     @param[in] last end of the range of elements to insert
 
-    @throw std::domain_error if called on JSON values other than arrays;
-    example: `"cannot use insert() with string"`
+    @throw type_error.309 if called on JSON values other than arrays; example:
+    `"cannot use insert() with string"`
     @throw invalid_iterator.202 if @a pos is not an iterator of *this;
     example: `"iterator does not fit current value"`
     @throw invalid_iterator.210 if @a first and @a last do not belong to the
@@ -5775,7 +5775,7 @@ class basic_json
         // insert only works for arrays
         if (not is_array())
         {
-            JSON_THROW(std::domain_error("cannot use insert() with " + type_name()));
+            JSON_THROW(type_error(309, "cannot use insert() with " + type_name()));
         }
 
         // check if iterator pos fits to this JSON value
@@ -5813,8 +5813,8 @@ class basic_json
     the end() iterator
     @param[in] ilist initializer list to insert the values from
 
-    @throw std::domain_error if called on JSON values other than arrays;
-    example: `"cannot use insert() with string"`
+    @throw type_error.309 if called on JSON values other than arrays; example:
+    `"cannot use insert() with string"`
     @throw invalid_iterator.202 if @a pos is not an iterator of *this;
     example: `"iterator does not fit current value"`
 
@@ -5833,7 +5833,7 @@ class basic_json
         // insert only works for arrays
         if (not is_array())
         {
-            JSON_THROW(std::domain_error("cannot use insert() with " + type_name()));
+            JSON_THROW(type_error(309, "cannot use insert() with " + type_name()));
         }
 
         // check if iterator pos fits to this JSON value

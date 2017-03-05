@@ -686,20 +686,20 @@ TEST_CASE("modifiers")
             // call insert on a non-array type
             json j_nonarray = 3;
             json j_yet_another_array = {"first", "second"};
-            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), 10), std::domain_error);
-            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), j_value), std::domain_error);
-            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), 10, 11), std::domain_error);
+            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), 10), json::type_error);
+            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), j_value), json::type_error);
+            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), 10, 11), json::type_error);
             CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), j_yet_another_array.begin(),
-                                              j_yet_another_array.end()), std::domain_error);
-            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), {1, 2, 3, 4}), std::domain_error);
+                                              j_yet_another_array.end()), json::type_error);
+            CHECK_THROWS_AS(j_nonarray.insert(j_nonarray.end(), {1, 2, 3, 4}), json::type_error);
 
-            CHECK_THROWS_WITH(j_nonarray.insert(j_nonarray.end(), 10), "cannot use insert() with number");
-            CHECK_THROWS_WITH(j_nonarray.insert(j_nonarray.end(), j_value), "cannot use insert() with number");
-            CHECK_THROWS_WITH(j_nonarray.insert(j_nonarray.end(), 10, 11), "cannot use insert() with number");
+            CHECK_THROWS_WITH(j_nonarray.insert(j_nonarray.end(), 10), "[json.exception.type_error.309] cannot use insert() with number");
+            CHECK_THROWS_WITH(j_nonarray.insert(j_nonarray.end(), j_value), "[json.exception.type_error.309] cannot use insert() with number");
+            CHECK_THROWS_WITH(j_nonarray.insert(j_nonarray.end(), 10, 11), "[json.exception.type_error.309] cannot use insert() with number");
             CHECK_THROWS_WITH(j_nonarray.insert(j_nonarray.end(), j_yet_another_array.begin(),
-                                                j_yet_another_array.end()), "cannot use insert() with number");
+                                                j_yet_another_array.end()), "[json.exception.type_error.309] cannot use insert() with number");
             CHECK_THROWS_WITH(j_nonarray.insert(j_nonarray.end(), {1, 2, 3, 4}),
-                              "cannot use insert() with number");
+                              "[json.exception.type_error.309] cannot use insert() with number");
         }
     }
 
