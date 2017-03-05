@@ -4176,7 +4176,7 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
-    @throw std::domain_error if JSON is not an object; example: `"cannot use
+    @throw type_error.306 if JSON is not an object; example: `"cannot use
     value() with null"`
 
     @complexity Logarithmic in the size of the container.
@@ -4209,7 +4209,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(std::domain_error("cannot use value() with " + type_name()));
+            JSON_THROW(type_error(306, "cannot use value() with " + type_name()));
         }
     }
 
@@ -4251,7 +4251,7 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
-    @throw std::domain_error if JSON is not an object; example: `"cannot use
+    @throw type_error.306 if JSON is not an object; example: `"cannot use
     value() with null"`
 
     @complexity Logarithmic in the size of the container.
@@ -4281,7 +4281,7 @@ class basic_json
             }
         }
 
-        JSON_THROW(std::domain_error("cannot use value() with " + type_name()));
+        JSON_THROW(type_error(306, "cannot use value() with " + type_name()));
     }
 
     /*!

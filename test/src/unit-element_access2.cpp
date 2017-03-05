@@ -200,70 +200,84 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::null);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with null");
-                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with null");
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with null");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with null");
                     }
 
                     SECTION("boolean")
                     {
                         json j_nonobject(json::value_t::boolean);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with boolean");
-                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with boolean");
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with boolean");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with boolean");
                     }
 
                     SECTION("string")
                     {
                         json j_nonobject(json::value_t::string);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with string");
-                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with string");
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with string");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with string");
                     }
 
                     SECTION("array")
                     {
                         json j_nonobject(json::value_t::array);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with array");
-                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with array");
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with array");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with array");
                     }
 
                     SECTION("number (integer)")
                     {
                         json j_nonobject(json::value_t::number_integer);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with number");
-                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with number");
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with number");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with number");
                     }
 
                     SECTION("number (unsigned)")
                     {
                         json j_nonobject(json::value_t::number_unsigned);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with number");
-                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with number");
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with number");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with number");
                     }
 
                     SECTION("number (floating-point)")
                     {
                         json j_nonobject(json::value_t::number_float);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1), "cannot use value() with number");
-                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1), "cannot use value() with number");
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with number");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
+                                          "[json.exception.type_error.306] cannot use value() with number");
                     }
                 }
             }
@@ -304,75 +318,84 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::null);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with null");
-                        CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1), "cannot use value() with null");
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
+                                          "[json.exception.type_error.306] cannot use value() with null");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                          "[json.exception.type_error.306] cannot use value() with null");
                     }
 
                     SECTION("boolean")
                     {
                         json j_nonobject(json::value_t::boolean);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with boolean");
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
+                                          "[json.exception.type_error.306] cannot use value() with boolean");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
-                                          "cannot use value() with boolean");
+                                          "[json.exception.type_error.306] cannot use value() with boolean");
                     }
 
                     SECTION("string")
                     {
                         json j_nonobject(json::value_t::string);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with string");
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
+                                          "[json.exception.type_error.306] cannot use value() with string");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
-                                          "cannot use value() with string");
+                                          "[json.exception.type_error.306] cannot use value() with string");
                     }
 
                     SECTION("array")
                     {
                         json j_nonobject(json::value_t::array);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with array");
-                        CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1), "cannot use value() with array");
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
+                                          "[json.exception.type_error.306] cannot use value() with array");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                          "[json.exception.type_error.306] cannot use value() with array");
                     }
 
                     SECTION("number (integer)")
                     {
                         json j_nonobject(json::value_t::number_integer);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with number");
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
+                                          "[json.exception.type_error.306] cannot use value() with number");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
-                                          "cannot use value() with number");
+                                          "[json.exception.type_error.306] cannot use value() with number");
                     }
 
                     SECTION("number (unsigned)")
                     {
                         json j_nonobject(json::value_t::number_unsigned);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with number");
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
+                                          "[json.exception.type_error.306] cannot use value() with number");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
-                                          "cannot use value() with number");
+                                          "[json.exception.type_error.306] cannot use value() with number");
                     }
 
                     SECTION("number (floating-point)")
                     {
                         json j_nonobject(json::value_t::number_float);
                         const json j_nonobject_const(j_nonobject);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), std::domain_error);
-                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1), "cannot use value() with number");
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
+                                          "[json.exception.type_error.306] cannot use value() with number");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
-                                          "cannot use value() with number");
+                                          "[json.exception.type_error.306] cannot use value() with number");
                     }
                 }
             }
