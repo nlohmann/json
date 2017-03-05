@@ -12059,7 +12059,7 @@ basic_json_parser_74:
                     */
                     default:
                     {
-                        JSON_THROW(std::domain_error("invalid value to unflatten"));
+                        JSON_THROW(type_error(313, "invalid value to unflatten"));
                     }
                 }
             }
@@ -12496,7 +12496,7 @@ basic_json_parser_74:
         {
             if (not value.is_object())
             {
-                JSON_THROW(std::domain_error("only objects can be unflattened"));
+                JSON_THROW(type_error(314, "only objects can be unflattened"));
             }
 
             basic_json result;
@@ -12506,7 +12506,7 @@ basic_json_parser_74:
             {
                 if (not element.second.is_primitive())
                 {
-                    JSON_THROW(std::domain_error("values in object must be primitive"));
+                    JSON_THROW(type_error(315, "values in object must be primitive"));
                 }
 
                 // assign value to reference pointed to by JSON pointer; Note

@@ -358,17 +358,20 @@ TEST_CASE("JSON pointers")
         CHECK(j_flatten.unflatten() == j);
 
         // error for nonobjects
-        CHECK_THROWS_AS(json(1).unflatten(), std::domain_error);
-        CHECK_THROWS_WITH(json(1).unflatten(), "only objects can be unflattened");
+        CHECK_THROWS_AS(json(1).unflatten(), json::type_error);
+        CHECK_THROWS_WITH(json(1).unflatten(),
+                          "[json.exception.type_error.314] only objects can be unflattened");
 
         // error for nonprimitve values
-        CHECK_THROWS_AS(json({{"/1", {1, 2, 3}}}).unflatten(), std::domain_error);
-        CHECK_THROWS_WITH(json({{"/1", {1, 2, 3}}}).unflatten(), "values in object must be primitive");
+        CHECK_THROWS_AS(json({{"/1", {1, 2, 3}}}).unflatten(), json::type_error);
+        CHECK_THROWS_WITH(json({{"/1", {1, 2, 3}}}).unflatten(),
+        "[json.exception.type_error.315] values in object must be primitive");
 
         // error for conflicting values
         json j_error = {{"", 42}, {"/foo", 17}};
-        CHECK_THROWS_AS(j_error.unflatten(), std::domain_error);
-        CHECK_THROWS_WITH(j_error.unflatten(), "invalid value to unflatten");
+        CHECK_THROWS_AS(j_error.unflatten(), json::type_error);
+        CHECK_THROWS_WITH(j_error.unflatten(),
+                          "[json.exception.type_error.313] invalid value to unflatten");
 
         // explicit roundtrip check
         CHECK(j.flatten().unflatten() == j);
