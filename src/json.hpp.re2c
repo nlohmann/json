@@ -156,7 +156,8 @@ file.
 
 @note For an input with n bytes, 1 is the index of the first character
       and n+1 is the index of the terminating null byte or the end of
-      file.
+      file. This also holds true when reading a byte vector (CBOR or
+      MessagePack).
 
 Exceptions have ids 1xx.
 
@@ -171,6 +172,8 @@ json.exception.[parse_error](@ref parse_error).106 | "parse error: array index '
 json.exception.[parse_error](@ref parse_error).107 | "parse error: JSON pointer must be empty or begin with '/' - was: 'foo'" | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
 json.exception.[parse_error](@ref parse_error).108 | "parse error: escape character '~' must be followed with '0' or '1'" | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
 json.exception.[parse_error](@ref parse_error).109 | "parse error: array index 'one' is not a number" | A JSON Pointer array index must be a number.
+json.exception.[parse_error](@ref parse_error).110 | "parse error at 1: cannot read 2 bytes from vector" | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
+
 
 @since version 3.0.0
 */
@@ -198,7 +201,8 @@ class parse_error : public exception
 
     @note For an input with n bytes, 1 is the index of the first character
           and n+1 is the index of the terminating null byte or the end of
-          file.
+          file. This also holds true when reading a byte vector (CBOR or
+          MessagePack).
     */
     const size_t byte;
 };
@@ -7344,7 +7348,7 @@ class basic_json
 
     @tparam T the integral return type
 
-    @throw std::out_of_range if there are less than sizeof(T)+1 bytes in the
+    @throw parse_error.110 if there are less than sizeof(T)+1 bytes in the
            vector @a vec to read
 
     In the for loop, the bytes from the vector are copied in reverse order into
@@ -7371,7 +7375,7 @@ class basic_json
     {
         if (current_index + sizeof(T) + 1 > vec.size())
         {
-            JSON_THROW(std::out_of_range("cannot read " + std::to_string(sizeof(T)) + " bytes from vector"));
+            JSON_THROW(parse_error(110, current_index + 1, "cannot read " + std::to_string(sizeof(T)) + " bytes from vector"));
         }
 
         T result;

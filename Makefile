@@ -49,6 +49,7 @@ doctest:
 # -Wno-documentation-unknown-command: code uses user-defined commands like @complexity
 # -Wno-exit-time-destructors: warning in Catch code
 # -Wno-keyword-macro: unit-tests use "#define private public"
+# -Wno-weak-vtables: exception class is defined inline, but has virtual method
 # -Wno-range-loop-analysis: iterator_wrapper tests tests "for(const auto i...)"
 pedantic:
 	$(MAKE) json_unit CXXFLAGS="\
@@ -58,6 +59,7 @@ pedantic:
 		-Wno-documentation-unknown-command \
 		-Wno-exit-time-destructors \
 		-Wno-keyword-macro \
+		-Wno-weak-vtables \
 		-Wno-range-loop-analysis"
 
 
