@@ -7957,11 +7957,11 @@ class basic_json
     */
     static basic_json from_msgpack_internal(const std::vector<uint8_t>& v, size_t& idx)
     {
-        // make sure reading 1 byte is safe
-        check_length(v.size(), 1, idx);
-
         // store and increment index
         const size_t current_idx = idx++;
+
+        // make sure reading 1 byte is safe
+        check_length(v.size(), 1, current_idx);
 
         if (v[current_idx] <= 0xbf)
         {
@@ -8026,9 +8026,10 @@ class basic_json
                 {
                     // copy bytes in reverse order into the double variable
                     float res;
+                    check_length(v.size(), sizeof(float), current_idx + 1);
                     for (size_t byte = 0; byte < sizeof(float); ++byte)
                     {
-                        reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v.at(current_idx + 1 + byte);
+                        reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v[current_idx + 1 + byte];
                     }
                     idx += sizeof(float); // skip content bytes
                     return res;
@@ -8038,9 +8039,10 @@ class basic_json
                 {
                     // copy bytes in reverse order into the double variable
                     double res;
+                    check_length(v.size(), sizeof(double), current_idx + 1);
                     for (size_t byte = 0; byte < sizeof(double); ++byte)
                     {
-                        reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v.at(current_idx + 1 + byte);
+                        reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v[current_idx + 1 + byte];
                     }
                     idx += sizeof(double); // skip content bytes
                     return res;
@@ -8198,7 +8200,10 @@ class basic_json
         // store and increment index
         const size_t current_idx = idx++;
 
-        switch (v.at(current_idx))
+        // make sure reading 1 byte is safe
+        check_length(v.size(), 1, current_idx);
+
+        switch (v[current_idx])
         {
             // Integer 0x00..0x17 (0..23)
             case 0x00:
@@ -8379,7 +8384,7 @@ class basic_json
             case 0x7f: // UTF-8 string (indefinite length)
             {
                 std::string result;
-                while (v.at(idx) != 0xff)
+                while (check_length(v.size(), 1, idx), v[idx] != 0xff)
                 {
                     string_t s = from_cbor_internal(v, idx);
                     result += s;
@@ -8475,7 +8480,7 @@ class basic_json
             case 0x9f: // array (indefinite length)
             {
                 basic_json result = value_t::array;
-                while (v.at(idx) != 0xff)
+                while (check_length(v.size(), 1, idx), v[idx] != 0xff)
                 {
                     result.push_back(from_cbor_internal(v, idx));
                 }
@@ -8575,7 +8580,7 @@ class basic_json
             case 0xbf: // map (indefinite length)
             {
                 basic_json result = value_t::object;
-                while (v.at(idx) != 0xff)
+                while (check_length(v.size(), 1, idx), v[idx] != 0xff)
                 {
                     std::string key = from_cbor_internal(v, idx);
                     result[key] = from_cbor_internal(v, idx);
@@ -8611,7 +8616,8 @@ class basic_json
                 // include at least decoding support for them even without such
                 // support. An example of a small decoder for half-precision
                 // floating-point numbers in the C language is shown in Fig. 3.
-                const int half = (v.at(current_idx + 1) << 8) + v.at(current_idx + 2);
+                check_length(v.size(), 2, current_idx + 1);
+                const int half = (v[current_idx + 1] << 8) + v[current_idx + 2];
                 const int exp = (half >> 10) & 0x1f;
                 const int mant = half & 0x3ff;
                 double val;
@@ -8636,9 +8642,10 @@ class basic_json
             {
                 // copy bytes in reverse order into the float variable
                 float res;
+                check_length(v.size(), sizeof(float), current_idx + 1);
                 for (size_t byte = 0; byte < sizeof(float); ++byte)
                 {
-                    reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v.at(current_idx + 1 + byte);
+                    reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v[current_idx + 1 + byte];
                 }
                 idx += sizeof(float); // skip content bytes
                 return res;
@@ -8648,9 +8655,10 @@ class basic_json
             {
                 // copy bytes in reverse order into the double variable
                 double res;
+                check_length(v.size(), sizeof(double), current_idx + 1);
                 for (size_t byte = 0; byte < sizeof(double); ++byte)
                 {
-                    reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v.at(current_idx + 1 + byte);
+                    reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v[current_idx + 1 + byte];
                 }
                 idx += sizeof(double); // skip content bytes
                 return res;
