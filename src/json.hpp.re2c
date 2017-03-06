@@ -173,7 +173,7 @@ json.exception.[parse_error](@ref parse_error).107 | "parse error: JSON pointer 
 json.exception.[parse_error](@ref parse_error).108 | "parse error: escape character '~' must be followed with '0' or '1'" | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
 json.exception.[parse_error](@ref parse_error).109 | "parse error: array index 'one' is not a number" | A JSON Pointer array index must be a number.
 json.exception.[parse_error](@ref parse_error).110 | "parse error at 1: cannot read 2 bytes from vector" | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
-
+json.exception.[parse_error](@ref parse_error).111 | "parse error: bad input stream" | Parsing CBOR or MessagePack from an input stream where the `badbit` or `failbit` is set.
 
 @since version 3.0.0
 */
@@ -9889,7 +9889,7 @@ class basic_json
             // immediately abort if stream is erroneous
             if (s.fail())
             {
-                JSON_THROW(std::invalid_argument("stream error"));
+                JSON_THROW(parse_error(111, 0, "bad input stream"));
             }
 
             // fill buffer

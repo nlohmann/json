@@ -565,7 +565,8 @@ TEST_CASE("regression tests")
     SECTION("issue #366 - json::parse on failed stream gets stuck")
     {
         std::ifstream f("file_not_found.json");
-        CHECK_THROWS_AS(json::parse(f), std::invalid_argument);
+        CHECK_THROWS_AS(json::parse(f), json::parse_error);
+        CHECK_THROWS_WITH(json::parse(f), "[json.exception.parse_error.111] parse error: bad input stream");
     }
 
     SECTION("issue #367 - calling stream at EOF")
