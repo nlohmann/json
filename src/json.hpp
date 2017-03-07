@@ -174,6 +174,7 @@ json.exception.[parse_error](@ref parse_error).108 | "parse error: escape charac
 json.exception.[parse_error](@ref parse_error).109 | "parse error: array index 'one' is not a number" | A JSON Pointer array index must be a number.
 json.exception.[parse_error](@ref parse_error).110 | "parse error at 1: cannot read 2 bytes from vector" | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
 json.exception.[parse_error](@ref parse_error).111 | "parse error: bad input stream" | Parsing CBOR or MessagePack from an input stream where the `badbit` or `failbit` is set.
+json.exception.[parse_error](@ref parse_error).112 | "parse error at 1: error reading CBOR; last byte: 0xf8" | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
 
 @since version 3.0.0
 */
@@ -8175,7 +8176,9 @@ class basic_json
 
                 default:
                 {
-                    JSON_THROW(std::invalid_argument("error parsing a msgpack @ " + std::to_string(current_idx) + ": " + std::to_string(static_cast<int>(v[current_idx]))));
+                    std::stringstream ss;
+                    ss << std::hex << static_cast<int>(v[current_idx]);
+                    JSON_THROW(parse_error(112, current_idx + 1, "error reading MessagePack; last byte: 0x" + ss.str()));
                 }
             }
         }
@@ -8666,7 +8669,9 @@ class basic_json
 
             default: // anything else (0xFF is handled inside the other types)
             {
-                JSON_THROW(std::invalid_argument("error parsing a CBOR @ " + std::to_string(current_idx) + ": " + std::to_string(static_cast<int>(v[current_idx]))));
+                std::stringstream ss;
+                ss << std::hex << static_cast<int>(v[current_idx]);
+                JSON_THROW(parse_error(112, current_idx + 1, "error reading CBOR; last byte: 0x" + ss.str()));
             }
         }
     }
