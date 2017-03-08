@@ -21,8 +21,8 @@ int main()
     {
         array.at(5) = "sixth";
     }
-    catch (std::out_of_range& e)
+    catch (json::out_of_range& e)
     {
-        std::cout << "out of range: " << e.what() << '\n';
+        std::cout << e.what() << '\n';
     }
 }

@@ -20,7 +20,7 @@ int main()
     {
         std::cout << object.at("the fast") << '\n';
     }
-    catch (std::out_of_range)
+    catch (json::out_of_range)
     {
         std::cout << "out of range" << '\n';
     }

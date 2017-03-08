@@ -15,7 +15,7 @@ int main()
     {
         std::cout << array.at(5) << '\n';
     }
-    catch (std::out_of_range)
+    catch (json::out_of_range)
     {
         std::cout << "out of range" << '\n';
     }

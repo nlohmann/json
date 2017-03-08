@@ -301,7 +301,8 @@ Exceptions have ids 5xx.
 
 name / id                      | example massage | description
 ------------------------------ | --------------- | -------------------------
-json.exception.[other_error](@ref other_error).501 | "unsuccessful" | A JSON Patch operation 'test' failed.
+json.exception.[other_error](@ref other_error).501 | "unsuccessful: {"op":"test","path":"/baz",
+  "value":"bar"}" | A JSON Patch operation 'test' failed.
 
 @since version 3.0.0
 */
@@ -3652,7 +3653,7 @@ class basic_json
 
     @return copy of the JSON value, converted to type @a ValueType
 
-    @throw std::domain_error in case passed type @a ValueType is incompatible
+    @throw type_error.302 in case passed type @a ValueType is incompatible
     to JSON, thrown by @ref get() const
 
     @complexity Linear in the size of the JSON value.
@@ -4088,7 +4089,7 @@ class basic_json
 
     @return const reference to the element at key @a key
 
-    @throw std::domain_error if JSON is not an object; example: `"cannot use
+    @throw type_error.305 if JSON is not an object; example: `"cannot use
     operator[] with null"`
 
     @complexity Logarithmic in the size of the container.
@@ -4365,7 +4366,7 @@ class basic_json
     assertions**).
     @post The JSON value remains unchanged.
 
-    @throw std::out_of_range when called on `null` value
+    @throw invalid_iterator.214 when called on `null` value
 
     @liveexample{The following code shows an example for `front()`.,front}
 
@@ -4408,7 +4409,7 @@ class basic_json
     assertions**).
     @post The JSON value remains unchanged.
 
-    @throw std::out_of_range when called on `null` value.
+    @throw invalid_iterator.214 when called on `null` value.
 
     @liveexample{The following code shows an example for `back()`.,back}
 
@@ -4698,7 +4699,7 @@ class basic_json
 
     @throw type_error.307 when called on a type other than JSON object;
     example: `"cannot use erase() with null"`
-    @throw std::out_of_range when `idx >= size()`; example: `"array index 17
+    @throw out_of_range.401 when `idx >= size()`; example: `"array index 17
     is out of range"`
 
     @complexity Linear in distance between @a idx and the end of the container.
@@ -7032,6 +7033,8 @@ class basic_json
 
     @throw parse_error.101 if a parse error occurs; example: `""unexpected end
     of input; expected string literal""`
+    @throw parse_error.102 if to_unicode fails or surrogate error
+    @throw parse_error.103 if to_unicode fails
 
     @complexity Linear in the length of the input. The parser is a predictive
     LL(1) parser. The complexity can be higher if the parser callback function
@@ -7062,6 +7065,10 @@ class basic_json
     (optional)
 
     @return result of the deserialization
+
+    @throw parse_error.101 in case of an unexpected token
+    @throw parse_error.102 if to_unicode fails or surrogate error
+    @throw parse_error.103 if to_unicode fails
 
     @complexity Linear in the length of the input. The parser is a predictive
     LL(1) parser. The complexity can be higher if the parser callback function
@@ -7098,6 +7105,11 @@ class basic_json
     (optional)
 
     @return result of the deserialization
+
+    @throw parse_error.101 in case of an unexpected token
+    @throw parse_error.102 if to_unicode fails or surrogate error
+    @throw parse_error.103 if to_unicode fails
+    @throw parse_error.111 if input stream is in a bad state
 
     @complexity Linear in the length of the input. The parser is a predictive
     LL(1) parser. The complexity can be higher if the parser callback function
@@ -7157,6 +7169,10 @@ class basic_json
     (optional)
 
     @return result of the deserialization
+
+    @throw parse_error.101 in case of an unexpected token
+    @throw parse_error.102 if to_unicode fails or surrogate error
+    @throw parse_error.103 if to_unicode fails
 
     @complexity Linear in the length of the input. The parser is a predictive
     LL(1) parser. The complexity can be higher if the parser callback function
@@ -7228,6 +7244,10 @@ class basic_json
 
     @return result of the deserialization
 
+    @throw parse_error.101 in case of an unexpected token
+    @throw parse_error.102 if to_unicode fails or surrogate error
+    @throw parse_error.103 if to_unicode fails
+
     @complexity Linear in the length of the input. The parser is a predictive
     LL(1) parser. The complexity can be higher if the parser callback function
     @a cb has a super-linear complexity.
@@ -7260,7 +7280,10 @@ class basic_json
     @param[in,out] i  input stream to read a serialized JSON value from
     @param[in,out] j  JSON value to write the deserialized input to
 
-    @throw std::invalid_argument in case of parse errors
+    @throw parse_error.101 in case of an unexpected token
+    @throw parse_error.102 if to_unicode fails or surrogate error
+    @throw parse_error.103 if to_unicode fails
+    @throw parse_error.111 if input stream is in a bad state
 
     @complexity Linear in the length of the input. The parser is a predictive
     LL(1) parser.
@@ -7963,9 +7986,9 @@ class basic_json
 
     @return deserialized JSON value
 
-    @throw std::invalid_argument if unsupported features from MessagePack were
+    @throw parse_error.110 if the given vector ends prematurely
+    @throw parse_error.112 if unsupported features from MessagePack were
     used in the given vector @a v or if the input is not valid MessagePack
-    @throw std::out_of_range if the given vector ends prematurely
 
     @sa https://github.com/msgpack/msgpack/blob/master/spec.md
     */
@@ -8205,9 +8228,9 @@ class basic_json
 
     @return deserialized JSON value
 
-    @throw std::invalid_argument if unsupported features from CBOR were used in
-    the given vector @a v or if the input is not valid CBOR
-    @throw std::out_of_range if the given vector ends prematurely
+    @throw parse_error.110 if the given vector ends prematurely
+    @throw parse_error.112 if unsupported features from CBOR were
+    used in the given vector @a v or if the input is not valid CBOR
 
     @sa https://tools.ietf.org/html/rfc7049
     */
@@ -8729,9 +8752,9 @@ class basic_json
     @param[in] start_index the index to start reading from @a v (0 by default)
     @return deserialized JSON value
 
-    @throw std::invalid_argument if unsupported features from MessagePack were
+    @throw parse_error.110 if the given vector ends prematurely
+    @throw parse_error.112 if unsupported features from MessagePack were
     used in the given vector @a v or if the input is not valid MessagePack
-    @throw std::out_of_range if the given vector ends prematurely
 
     @complexity Linear in the size of the byte vector @a v.
 
@@ -8792,9 +8815,9 @@ class basic_json
     @param[in] start_index the index to start reading from @a v (0 by default)
     @return deserialized JSON value
 
-    @throw std::invalid_argument if unsupported features from CBOR were used in
-    the given vector @a v or if the input is not valid MessagePack
-    @throw std::out_of_range if the given vector ends prematurely
+    @throw parse_error.110 if the given vector ends prematurely
+    @throw parse_error.112 if unsupported features from CBOR were
+    used in the given vector @a v or if the input is not valid CBOR
 
     @complexity Linear in the size of the byte vector @a v.
 
@@ -9908,7 +9931,10 @@ class basic_json
             m_limit = m_content + len;
         }
 
-        /// a lexer from an input stream
+        /*!
+        @brief a lexer from an input stream
+        @throw parse_error.111 if input stream is in a bad state
+        */
         explicit lexer(std::istream& s)
             : m_stream(&s), m_line_buffer()
         {
@@ -11288,7 +11314,7 @@ basic_json_parser_74:
 
         @return string value of current token without opening and closing
         quotes
-        @throw parse_error.102 if to_unicode fails
+        @throw parse_error.102 if to_unicode fails or surrogate error
         @throw parse_error.103 if to_unicode fails
         */
         string_t get_string() const
@@ -11685,7 +11711,10 @@ basic_json_parser_74:
               m_lexer(reinterpret_cast<const typename lexer::lexer_char_t*>(buff), std::strlen(buff))
         {}
 
-        /// a parser reading from an input stream
+        /*!
+        @brief a parser reading from an input stream
+        @throw parse_error.111 if input stream is in a bad state
+        */
         parser(std::istream& is, const parser_callback_t cb = nullptr)
             : callback(cb), m_lexer(is)
         {}
@@ -11701,7 +11730,12 @@ basic_json_parser_74:
                       static_cast<size_t>(std::distance(first, last)))
         {}
 
-        /// public parser interface
+        /*!
+        @brief public parser interface
+        @throw parse_error.101 in case of an unexpected token
+        @throw parse_error.102 if to_unicode fails or surrogate error
+        @throw parse_error.103 if to_unicode fails
+        */
         basic_json parse()
         {
             // read first token
@@ -11718,7 +11752,12 @@ basic_json_parser_74:
         }
 
       private:
-        /// the actual parser
+        /*!
+        @brief the actual parser
+        @throw parse_error.101 in case of an unexpected token
+        @throw parse_error.102 if to_unicode fails or surrogate error
+        @throw parse_error.103 if to_unicode fails
+        */
         basic_json parse_internal(bool keep)
         {
             auto result = basic_json(value_t::discarded);
@@ -11921,6 +11960,9 @@ basic_json_parser_74:
             return last_token;
         }
 
+        /*!
+        @throw parse_error.101 if expected token did not occur
+        */
         void expect(typename lexer::token_type t) const
         {
             if (t != last_token)
@@ -11934,6 +11976,9 @@ basic_json_parser_74:
             }
         }
 
+        /*!
+        @throw parse_error.101 if unexpected token occurred
+        */
         void unexpect(typename lexer::token_type t) const
         {
             if (t == last_token)
@@ -11985,12 +12030,12 @@ basic_json_parser_74:
                       empty string is assumed which references the whole JSON
                       value
 
-        @throw parse_error.107 if reference token is nonempty and does not
-        begin with a slash (`/`); example: `"JSON pointer must be empty or
-        begin with / - was: 'foo'"`
-        @throw parse_error.108 if a tilde (`~`) is not followed by `0`
-        (representing `~`) or `1` (representing `/`); example: `"escape
-        character '~' must be followed with '0' or '1'"`
+        @throw parse_error.107 if the given JSON pointer @a s is nonempty and
+        does not begin with a slash (`/`); see example below
+
+        @throw parse_error.108 if a tilde (`~`) in the given JSON pointer @a s
+        is not followed by `0` (representing `~`) or `1` (representing `/`);
+        see example below
 
         @liveexample{The example shows the construction several valid JSON
         pointers as well as the exceptional behavior.,json_pointer}
@@ -12033,7 +12078,10 @@ basic_json_parser_74:
         }
 
       private:
-        /// remove and return last reference pointer
+        /*!
+        @brief remove and return last reference pointer
+        @throw out_of_range.405 if JSON pointer has no parent
+        */
         std::string pop_back()
         {
             if (is_root())
@@ -12068,6 +12116,9 @@ basic_json_parser_74:
         @brief create and return a reference to the pointed to value
 
         @complexity Linear in the number of reference tokens.
+
+        @throw parse_error.109 if array index is not a number
+        @throw type_error.313 if value cannot be unflattened
         */
         reference get_and_create(reference j) const
         {
@@ -12147,9 +12198,9 @@ basic_json_parser_74:
 
         @complexity Linear in the length of the JSON pointer.
 
-        @throw out_of_range.404       if the JSON pointer can not be resolved
-        @throw parse_error.106        if an array index begins with '0'
-        @throw std::invalid_argument  if an array index was not a number
+        @throw parse_error.106   if an array index begins with '0'
+        @throw parse_error.109   if an array index was not a number
+        @throw out_of_range.404  if the JSON pointer can not be resolved
         */
         reference get_unchecked(pointer ptr) const
         {
@@ -12225,6 +12276,12 @@ basic_json_parser_74:
             return *ptr;
         }
 
+        /*!
+        @throw parse_error.106   if an array index begins with '0'
+        @throw parse_error.109   if an array index was not a number
+        @throw out_of_range.402  if the array index '-' is used
+        @throw out_of_range.404  if the JSON pointer can not be resolved
+        */
         reference get_checked(pointer ptr) const
         {
             for (const auto& reference_token : reference_tokens)
@@ -12283,6 +12340,11 @@ basic_json_parser_74:
 
         @return const reference to the JSON value pointed to by the JSON
                 pointer
+
+        @throw parse_error.106   if an array index begins with '0'
+        @throw parse_error.109   if an array index was not a number
+        @throw out_of_range.402  if the array index '-' is used
+        @throw out_of_range.404  if the JSON pointer can not be resolved
         */
         const_reference get_unchecked(const_pointer ptr) const
         {
@@ -12335,6 +12397,12 @@ basic_json_parser_74:
             return *ptr;
         }
 
+        /*!
+        @throw parse_error.106   if an array index begins with '0'
+        @throw parse_error.109   if an array index was not a number
+        @throw out_of_range.402  if the array index '-' is used
+        @throw out_of_range.404  if the JSON pointer can not be resolved
+        */
         const_reference get_checked(const_pointer ptr) const
         {
             for (const auto& reference_token : reference_tokens)
@@ -12386,7 +12454,15 @@ basic_json_parser_74:
             return *ptr;
         }
 
-        /// split the string input to reference tokens
+        /*!
+        @brief split the string input to reference tokens
+
+        @note This function is only called by the json_pointer constructor.
+              All exceptions below are documented there.
+
+        @throw parse_error.107  if the pointer is not empty or begins with '/'
+        @throw parse_error.108  if character '~' is not followed by '0' or '1'
+        */
         static std::vector<std::string> split(const std::string& reference_string)
         {
             std::vector<std::string> result;
@@ -12447,7 +12523,6 @@ basic_json_parser_74:
             return result;
         }
 
-      private:
         /*!
         @brief replace all occurrences of a substring by another string
 
@@ -12456,7 +12531,8 @@ basic_json_parser_74:
         @param[in]     f  the substring to replace with @a t
         @param[in]     t  the string to replace @a f
 
-        @pre The search string @a f must not be empty.
+        @pre The search string @a f must not be empty. **This precondition is
+             enforced with an assertion.**
 
         @since version 2.0.0
         */
@@ -12556,6 +12632,11 @@ basic_json_parser_74:
         @param[in] value  flattened JSON
 
         @return unflattened JSON
+
+        @throw parse_error.109 if array index is not a number
+        @throw type_error.314  if value is not an object
+        @throw type_error.315  if object values are not primitive
+        @throw type_error.313  if value cannot be unflattened
         */
         static basic_json unflatten(const basic_json& value)
         {
@@ -12585,7 +12666,6 @@ basic_json_parser_74:
             return result;
         }
 
-      private:
         friend bool operator==(json_pointer const& lhs,
                                json_pointer const& rhs) noexcept
         {
@@ -12634,9 +12714,9 @@ basic_json_parser_74:
 
     @complexity Constant.
 
-    @throw std::out_of_range      if the JSON pointer can not be resolved
-    @throw std::domain_error      if an array index begins with '0'
-    @throw std::invalid_argument  if an array index was not a number
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.404  if the JSON pointer can not be resolved
 
     @liveexample{The behavior is shown in the example.,operatorjson_pointer}
 
@@ -12661,9 +12741,10 @@ basic_json_parser_74:
 
     @complexity Constant.
 
-    @throw std::out_of_range      if the JSON pointer can not be resolved
-    @throw std::domain_error      if an array index begins with '0'
-    @throw std::invalid_argument  if an array index was not a number
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.402  if the array index '-' is used
+    @throw out_of_range.404  if the JSON pointer can not be resolved
 
     @liveexample{The behavior is shown in the example.,operatorjson_pointer_const}
 
@@ -12686,9 +12767,10 @@ basic_json_parser_74:
 
     @complexity Constant.
 
-    @throw std::out_of_range      if the JSON pointer can not be resolved
-    @throw std::domain_error      if an array index begins with '0'
-    @throw std::invalid_argument  if an array index was not a number
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.402  if the array index '-' is used
+    @throw out_of_range.404  if the JSON pointer can not be resolved
 
     @liveexample{The behavior is shown in the example.,at_json_pointer}
 
@@ -12711,9 +12793,10 @@ basic_json_parser_74:
 
     @complexity Constant.
 
-    @throw std::out_of_range      if the JSON pointer can not be resolved
-    @throw std::domain_error      if an array index begins with '0'
-    @throw std::invalid_argument  if an array index was not a number
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.402  if the array index '-' is used
+    @throw out_of_range.404  if the JSON pointer can not be resolved
 
     @liveexample{The behavior is shown in the example.,at_json_pointer_const}
 
@@ -12773,6 +12856,9 @@ basic_json_parser_74:
 
     @complexity Linear in the size the JSON value.
 
+    @throw type_error.314  if value is not an object
+    @throw type_error.315  if object values are not primitve
+
     @liveexample{The following code shows how a flattened JSON object is
     unflattened into the original nested JSON object.,unflatten}
 
@@ -12810,13 +12896,22 @@ basic_json_parser_74:
           any case, the original value is not changed: the patch is applied
           to a copy of the value.
 
+    @throw parse_error.104 if the JSON patch does not consist of an array of
+    objects
+
+    @throw parse_error.105 if the JSON patch is malformed (e.g., mandatory
+    attributes are missing); example: `"operation add must have member path"`
+
+    @throw out_of_range.401 if an array index is out of range.
+
     @throw out_of_range.403 if a JSON pointer inside the patch could not be
     resolved successfully in the current JSON value; example: `"key baz not
     found"`
-    @throw invalid_argument if the JSON patch is malformed (e.g., mandatory
-    attributes are missing); example: `"operation add must have member path"`
-    @throw parse_error.104 if the JSON patch does not consist of an array of
-    objects
+
+    @throw out_of_range.405 if JSON pointer has no parent ("add", "remove",
+    "move")
+
+    @throw other_error.501 if "test" operation was unsuccessful
 
     @complexity Linear in the size of the JSON value and the length of the
     JSON patch. As usually only a fraction of the JSON value is affected by
