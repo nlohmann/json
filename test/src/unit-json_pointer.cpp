@@ -272,6 +272,20 @@ TEST_CASE("JSON pointers")
             CHECK_THROWS_AS(j["/one"_json_pointer] = 1, json::parse_error);
             CHECK_THROWS_WITH(j["/one"_json_pointer] = 1,
                               "[json.exception.parse_error.109] parse error: array index 'one' is not a number");
+            CHECK_THROWS_AS(j_const["/one"_json_pointer] == 1, json::parse_error);
+            CHECK_THROWS_WITH(j_const["/one"_json_pointer] == 1,
+                              "[json.exception.parse_error.109] parse error: array index 'one' is not a number");
+
+            CHECK_THROWS_AS(j.at("/one"_json_pointer) = 1, json::parse_error);
+            CHECK_THROWS_WITH(j.at("/one"_json_pointer) = 1,
+                              "[json.exception.parse_error.109] parse error: array index 'one' is not a number");
+            CHECK_THROWS_AS(j_const.at("/one"_json_pointer) == 1, json::parse_error);
+            CHECK_THROWS_WITH(j_const.at("/one"_json_pointer) == 1,
+                              "[json.exception.parse_error.109] parse error: array index 'one' is not a number");
+
+            CHECK_THROWS_AS(json({{"/list/0", 1}, {"/list/1", 2}, {"/list/three", 3}}).unflatten(), json::parse_error);
+            CHECK_THROWS_WITH(json({{"/list/0", 1}, {"/list/1", 2}, {"/list/three", 3}}).unflatten(),
+            "[json.exception.parse_error.109] parse error: array index 'three' is not a number");
 
             // assign to "-"
             j["/-"_json_pointer] = 99;
