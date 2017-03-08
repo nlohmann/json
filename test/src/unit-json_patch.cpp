@@ -337,8 +337,8 @@ TEST_CASE("JSON patch")
                 )"_json;
 
             // check that evaluation throws
-            CHECK_THROWS_AS(doc.patch(patch), std::domain_error);
-            CHECK_THROWS_WITH(doc.patch(patch), "unsuccessful: " + patch[0].dump());
+            CHECK_THROWS_AS(doc.patch(patch), json::other_error);
+            CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
         }
 
         SECTION("A.10. Adding a Nested Member Object")
@@ -478,8 +478,8 @@ TEST_CASE("JSON patch")
                 )"_json;
 
             // check that evaluation throws
-            CHECK_THROWS_AS(doc.patch(patch), std::domain_error);
-            CHECK_THROWS_WITH(doc.patch(patch), "unsuccessful: " + patch[0].dump());
+            CHECK_THROWS_AS(doc.patch(patch), json::other_error);
+            CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
         }
 
         SECTION("A.16. Adding an Array Value")
@@ -1177,8 +1177,8 @@ TEST_CASE("JSON patch")
                 )"_json;
 
                 // the test will fail
-                CHECK_THROWS_AS(doc.patch(patch), std::domain_error);
-                CHECK_THROWS_WITH(doc.patch(patch), "unsuccessful: " + patch[0].dump());
+                CHECK_THROWS_AS(doc.patch(patch), json::other_error);
+                CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
             }
         }
     }

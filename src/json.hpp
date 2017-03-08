@@ -52,7 +52,6 @@ SOFTWARE.
 #include <memory> // addressof, allocator, allocator_traits, unique_ptr
 #include <numeric> // accumulate
 #include <sstream> // stringstream
-#include <stdexcept> // domain_error, invalid_argument, out_of_range
 #include <string> // getline, stoi, string, to_string
 #include <type_traits> // add_pointer, conditional, decay, enable_if, false_type, integral_constant, is_arithmetic, is_base_of, is_const, is_constructible, is_convertible, is_default_constructible, is_enum, is_floating_point, is_integral, is_nothrow_move_assignable, is_nothrow_move_constructible, is_pointer, is_reference, is_same, is_scalar, is_signed, remove_const, remove_cv, remove_pointer, remove_reference, true_type, underlying_type
 #include <utility> // declval, forward, make_pair, move, pair, swap
@@ -294,6 +293,26 @@ class out_of_range : public exception
         : exception(id_, "out_of_range", what_arg_)
     {}
 };
+
+/*!
+@brief exception indicating other errors
+
+Exceptions have ids 5xx.
+
+name / id                      | example massage | description
+------------------------------ | --------------- | -------------------------
+json.exception.[other_error](@ref other_error).501 | "unsuccessful" | A JSON Patch operation 'test' failed.
+
+@since version 3.0.0
+*/
+class other_error : public exception
+{
+  public:
+    other_error(int id_, const std::string& what_arg_)
+        : exception(id_, "other_error", what_arg_)
+    {}
+};
+
 
 
 ///////////////////////////
@@ -1240,12 +1259,6 @@ class basic_json
     /// Classes to implement user-defined exceptions.
     /// @{
 
-    /*
-    name / id                      | example massage | description
-    ------------------------------ | --------------- | -------------------------
-    json.exception.other.500 | "unsuccessful" | A JSON Patch operation 'test' failed.
-    */
-
     /// @copydoc detail::parse_error
     using parse_error = detail::parse_error;
     /// @copydoc detail::invalid_iterator
@@ -1254,6 +1267,8 @@ class basic_json
     using type_error = detail::type_error;
     /// @copydoc detail::out_of_range
     using out_of_range = detail::out_of_range;
+    /// @copydoc detail::other_error
+    using other_error = detail::other_error;
 
     /// @}
 
@@ -1948,7 +1963,7 @@ class basic_json
                 {
                     if (t == value_t::null)
                     {
-                        JSON_THROW(std::domain_error("961c151d2e87f2686a955a9be24d316f1362bf21 2.1.1")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error(500, "961c151d2e87f2686a955a9be24d316f1362bf21 2.1.1")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -7374,11 +7389,8 @@ class basic_json
     template<typename T>
     static T get_from_vector(const std::vector<uint8_t>& vec, const size_t current_index)
     {
+        // check if we can read sizeof(T) bytes starting the next index
         check_length(vec.size(), sizeof(T), current_index + 1);
-        //if (current_index + sizeof(T) + 1 > vec.size())
-        //{
-        //    JSON_THROW(parse_error(110, current_index + 1, "cannot read " + std::to_string(sizeof(T)) + " bytes from vector"));
-        //}
 
         T result;
         auto* ptr = reinterpret_cast<uint8_t*>(&result);
@@ -13062,7 +13074,7 @@ basic_json_parser_74:
                     // throw an exception if test fails
                     if (not success)
                     {
-                        JSON_THROW(std::domain_error("unsuccessful: " + val.dump()));
+                        JSON_THROW(other_error(501, "unsuccessful: " + val.dump()));
                     }
 
                     break;
