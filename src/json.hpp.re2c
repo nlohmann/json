@@ -162,18 +162,18 @@ Exceptions have ids 1xx.
 
 name / id                      | example massage | description
 ------------------------------ | --------------- | -------------------------
-json.exception.[parse_error](@ref parse_error).101 | "parse error at 2: unexpected end of input; expected string literal" | This error indicates a syntax error while deserializing a JSON text. The error message describes that an unexpected token (character) was encountered, and the member @ref parse_error::byte indicates the error position.
-json.exception.[parse_error](@ref parse_error).102 | "parse error at 14: missing or wrong low surrogate" | JSON uses the `\uxxxx` format to describe Unicode characters. Code points above above 0xFFFF are split into two `\uxxxx` entries ("surrogate pairs"). This error indicates that the surrogate pair is incomplete or contains an invalid code point.
-json.exception.[parse_error](@ref parse_error).103 | "parse error: code points above 0x10FFFF are invalid" | Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
-json.exception.[parse_error](@ref parse_error).104 | "parse error: JSON patch must be an array of objects" | [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON document that represents an array of objects.
-json.exception.[parse_error](@ref parse_error).105 | "parse error: operation must have string member 'op'" | An operation of a JSON Patch document must contain exactly one "op" member, whose value indicates the operation to perform. Its value must be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
-json.exception.[parse_error](@ref parse_error).106 | "parse error: array index '01' must not begin with '0'" | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number wihtout a leading `0`.
-json.exception.[parse_error](@ref parse_error).107 | "parse error: JSON pointer must be empty or begin with '/' - was: 'foo'" | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
-json.exception.[parse_error](@ref parse_error).108 | "parse error: escape character '~' must be followed with '0' or '1'" | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
-json.exception.[parse_error](@ref parse_error).109 | "parse error: array index 'one' is not a number" | A JSON Pointer array index must be a number.
-json.exception.[parse_error](@ref parse_error).110 | "parse error at 1: cannot read 2 bytes from vector" | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
-json.exception.[parse_error](@ref parse_error).111 | "parse error: bad input stream" | Parsing CBOR or MessagePack from an input stream where the `badbit` or `failbit` is set.
-json.exception.[parse_error](@ref parse_error).112 | "parse error at 1: error reading CBOR; last byte: 0xf8" | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
+json.exception.parse_error.101 | parse error at 2: unexpected end of input; expected string literal | This error indicates a syntax error while deserializing a JSON text. The error message describes that an unexpected token (character) was encountered, and the member @a byte indicates the error position.
+json.exception.parse_error.102 | parse error at 14: missing or wrong low surrogate | JSON uses the `\uxxxx` format to describe Unicode characters. Code points above above 0xFFFF are split into two `\uxxxx` entries ("surrogate pairs"). This error indicates that the surrogate pair is incomplete or contains an invalid code point.
+json.exception.parse_error.103 | parse error: code points above 0x10FFFF are invalid | Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
+json.exception.parse_error.104 | parse error: JSON patch must be an array of objects | [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON document that represents an array of objects.
+json.exception.parse_error.105 | parse error: operation must have string member 'op' | An operation of a JSON Patch document must contain exactly one "op" member, whose value indicates the operation to perform. Its value must be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
+json.exception.parse_error.106 | parse error: array index '01' must not begin with '0' | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number wihtout a leading `0`.
+json.exception.parse_error.107 | parse error: JSON pointer must be empty or begin with '/' - was: 'foo' | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
+json.exception.parse_error.108 | parse error: escape character '~' must be followed with '0' or '1' | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
+json.exception.parse_error.109 | parse error: array index 'one' is not a number | A JSON Pointer array index must be a number.
+json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
+json.exception.parse_error.111 | parse error: bad input stream | Parsing CBOR or MessagePack from an input stream where the [`badbit` or `failbit`](http://en.cppreference.com/w/cpp/io/ios_base/iostate) is set.
+json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xf8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
 
 @since version 3.0.0
 */
@@ -212,22 +212,22 @@ class parse_error : public exception
 
 Exceptions have ids 2xx.
 
-name / id                      | example massage | description
------------------------------- | --------------- | -------------------------
-json.exception.[invalid_iterator](@ref invalid_iterator).201 | "iterators are not compatible" | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
-json.exception.[invalid_iterator](@ref invalid_iterator).202 | "iterator does not fit current value" | In an erase or insert function, the passed iterator @a pos does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
-json.exception.[invalid_iterator](@ref invalid_iterator).203 | "iterators do not fit current value" | Either iterator passed to function @ref erase(IteratorType first, IteratorType last) does not belong to the JSON value from which values shall be erased. It hence does not define a valid range to delete values from.
-json.exception.[invalid_iterator](@ref invalid_iterator).204 | "iterators out of range" | When an iterator range for a primitive type (number, boolean, or string) is passed to a constructor or an erase function, this range has to be exactly (@ref begin(), @ref end()), because this is the only way the single stored value is expressed. All other ranges are invalid.
-json.exception.[invalid_iterator](@ref invalid_iterator).205 | "iterator out of range" | When an iterator for a primitive type (number, boolean, or string) is passed to an erase function, the iterator has to be the @ref begin() iterator, because it is the only way to address the stored value. All other iterators are invalid.
-json.exception.[invalid_iterator](@ref invalid_iterator).206 | "cannot construct with iterators from null" | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) belong to a JSON null value and hence to not define a valid range.
-json.exception.[invalid_iterator](@ref invalid_iterator).207 | "cannot use key() for non-object iterators" | The key() member function can only be used on iterators belonging to a JSON object, because other types do not have a concept of a key.
-json.exception.[invalid_iterator](@ref invalid_iterator).208 | "cannot use operator[] for object iterators" | The operator[] to specify a concrete offset cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
-json.exception.[invalid_iterator](@ref invalid_iterator).209 | "cannot use offsets with object iterators" | The offset operators (+, -, +=, -=) cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
-json.exception.[invalid_iterator](@ref invalid_iterator).210 | "iterators do not fit" | The iterator range passed to the insert function are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
-json.exception.[invalid_iterator](@ref invalid_iterator).211 | "passed iterators may not belong to container" | The iterator range passed to the insert function must not be a subrange of the container to insert to.
-json.exception.[invalid_iterator](@ref invalid_iterator).212 | "cannot compare iterators of different containers" | When two iterators are compared, they must belong to the same container.
-json.exception.[invalid_iterator](@ref invalid_iterator).213 | "cannot compare order of object iterators" | The order of object iterators cannot be compated, because JSON objects are unordered.
-json.exception.[invalid_iterator](@ref invalid_iterator).214 | "cannot get value" | Cannot get value for iterator: Either the iterator belongs to a null value or it is an iterator to a primitive type (number, boolean, or string), but the iterator is different to @ref begin().
+name / id                           | example massage | description
+----------------------------------- | --------------- | -------------------------
+json.exception.invalid_iterator.201 | iterators are not compatible | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
+json.exception.invalid_iterator.202 | iterator does not fit current value | In an erase or insert function, the passed iterator @a pos does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
+json.exception.invalid_iterator.203 | iterators do not fit current value | Either iterator passed to function @ref erase(IteratorType first, IteratorType last) does not belong to the JSON value from which values shall be erased. It hence does not define a valid range to delete values from.
+json.exception.invalid_iterator.204 | iterators out of range | When an iterator range for a primitive type (number, boolean, or string) is passed to a constructor or an erase function, this range has to be exactly (@ref begin(), @ref end()), because this is the only way the single stored value is expressed. All other ranges are invalid.
+json.exception.invalid_iterator.205 | iterator out of range | When an iterator for a primitive type (number, boolean, or string) is passed to an erase function, the iterator has to be the @ref begin() iterator, because it is the only way to address the stored value. All other iterators are invalid.
+json.exception.invalid_iterator.206 | cannot construct with iterators from null | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) belong to a JSON null value and hence to not define a valid range.
+json.exception.invalid_iterator.207 | cannot use key() for non-object iterators | The key() member function can only be used on iterators belonging to a JSON object, because other types do not have a concept of a key.
+json.exception.invalid_iterator.208 | cannot use operator[] for object iterators | The operator[] to specify a concrete offset cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
+json.exception.invalid_iterator.209 | cannot use offsets with object iterators | The offset operators (+, -, +=, -=) cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
+json.exception.invalid_iterator.210 | iterators do not fit | The iterator range passed to the insert function are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
+json.exception.invalid_iterator.211 | passed iterators may not belong to container | The iterator range passed to the insert function must not be a subrange of the container to insert to.
+json.exception.invalid_iterator.212 | cannot compare iterators of different containers | When two iterators are compared, they must belong to the same container.
+json.exception.invalid_iterator.213 | cannot compare order of object iterators | The order of object iterators cannot be compated, because JSON objects are unordered.
+json.exception.invalid_iterator.214 | cannot get value | Cannot get value for iterator: Either the iterator belongs to a null value or it is an iterator to a primitive type (number, boolean, or string), but the iterator is different to @ref begin().
 
 @since version 3.0.0
 */
@@ -244,22 +244,22 @@ class invalid_iterator : public exception
 
 Exceptions have ids 3xx.
 
-name / id                      | example massage | description
------------------------------- | --------------- | -------------------------
-json.exception.[type_error](@ref type_error).301 | "cannot create object from initializer list" | To create an object from an initializer list, the initializer list must consist only of a list of pairs whose first element is a string. When this constraint is violated, an array is created instead.
-json.exception.[type_error](@ref type_error).302 | "type must be object, but is array" | During implicit or explicit value conversion, the JSON type must be compatible to the target type. For instance, a JSON string can only be converted into string types, but not into numbers or boolean types.
-json.exception.[type_error](@ref type_error).303 | "incompatible ReferenceType for get_ref, actual type is object" | To retrieve a reference to a value stored in a @ref basic_json object with @ref get_ref, the type of the reference must match the value type. For instance, for a JSON array, the @a ReferenceType must be @ref array_t&.
-json.exception.[type_error](@ref type_error).304 | "cannot use at() with string" | The @ref at() member functions can only be executed for certain JSON types.
-json.exception.[type_error](@ref type_error).305 | "cannot use operator[] with string" | The @ref operator[] member functions can only be executed for certain JSON types.
-json.exception.[type_error](@ref type_error).306 | "cannot use value() with string" | The @ref value() member functions can only be executed for certain JSON types.
-json.exception.[type_error](@ref type_error).307 | "cannot use erase() with string" | The @ref erase() member functions can only be executed for certain JSON types.
-json.exception.[type_error](@ref type_error).308 | "cannot use push_back() with string" | The @ref push_back() and @ref operator+= member functions can only be executed for certain JSON types.
-json.exception.[type_error](@ref type_error).309 | "cannot use insert() with" | The @ref insert() member functions can only be executed for certain JSON types.
-json.exception.[type_error](@ref type_error).310 | "cannot use swap() with number" | The @ref swap() member functions can only be executed for certain JSON types.
-json.exception.[type_error](@ref type_error).311 | "cannot use emplace_back() with string" | The @ref emplace_back() member function can only be executed for certain JSON types.
-json.exception.[type_error](@ref type_error).313 | "invalid value to unflatten" | The @ref unflatten function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well defined.
-json.exception.[type_error](@ref type_error).314 | "only objects can be unflattened" | The @ref unflatten function only works for an object whose keys are JSON Pointers.
-json.exception.[type_error](@ref type_error).315 | "values in object must be primitive" | The @ref unflatten function only works for an object whose keys are JSON Pointers and whose values are primitive.
+name / id                     | example massage | description
+----------------------------- | --------------- | -------------------------
+json.exception.type_error.301 | cannot create object from initializer list | To create an object from an initializer list, the initializer list must consist only of a list of pairs whose first element is a string. When this constraint is violated, an array is created instead.
+json.exception.type_error.302 | type must be object, but is array | During implicit or explicit value conversion, the JSON type must be compatible to the target type. For instance, a JSON string can only be converted into string types, but not into numbers or boolean types.
+json.exception.type_error.303 | incompatible ReferenceType for get_ref, actual type is object | To retrieve a reference to a value stored in a @ref basic_json object with @ref get_ref, the type of the reference must match the value type. For instance, for a JSON array, the @a ReferenceType must be @ref array_t&.
+json.exception.type_error.304 | cannot use at() with string | The @ref at() member functions can only be executed for certain JSON types.
+json.exception.type_error.305 | cannot use operator[] with string | The @ref operator[] member functions can only be executed for certain JSON types.
+json.exception.type_error.306 | cannot use value() with string | The @ref value() member functions can only be executed for certain JSON types.
+json.exception.type_error.307 | cannot use erase() with string | The @ref erase() member functions can only be executed for certain JSON types.
+json.exception.type_error.308 | cannot use push_back() with string | The @ref push_back() and @ref operator+= member functions can only be executed for certain JSON types.
+json.exception.type_error.309 | cannot use insert() with | The @ref insert() member functions can only be executed for certain JSON types.
+json.exception.type_error.310 | cannot use swap() with number | The @ref swap() member functions can only be executed for certain JSON types.
+json.exception.type_error.311 | cannot use emplace_back() with string | The @ref emplace_back() member function can only be executed for certain JSON types.
+json.exception.type_error.313 | invalid value to unflatten | The @ref unflatten function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well defined.
+json.exception.type_error.314 | only objects can be unflattened | The @ref unflatten function only works for an object whose keys are JSON Pointers.
+json.exception.type_error.315 | values in object must be primitive | The @ref unflatten function only works for an object whose keys are JSON Pointers and whose values are primitive.
 
 @since version 3.0.0
 */
@@ -276,13 +276,13 @@ class type_error : public exception
 
 Exceptions have ids 4xx.
 
-name / id                      | example massage | description
------------------------------- | --------------- | -------------------------
-json.exception.[out_of_range](@ref out_of_range).401 | "array index 3 is out of range" | The provided array index @a i is larger than @a size-1.
-json.exception.[out_of_range](@ref out_of_range).402 | "array index '-' (3) is out of range" | The special array index `-` in a JSON Pointer never describes a valid element of the array, but the index past the end.
-json.exception.[out_of_range](@ref out_of_range).403 | "key 'foo' not found" | The provided key was not found in the JSON object.
-json.exception.[out_of_range](@ref out_of_range).404 | "unresolved reference token 'foo'" | A reference token in a JSON Pointer could not be resolved.
-json.exception.[out_of_range](@ref out_of_range).405 | "JSON pointer has no parent" | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
+name / id                       | example massage | description
+------------------------------- | --------------- | -------------------------
+json.exception.out_of_range.401 | array index 3 is out of range | The provided array index @a i is larger than @a size-1.
+json.exception.out_of_range.402 | array index '-' (3) is out of range | The special array index `-` in a JSON Pointer never describes a valid element of the array, but the index past the end. That is, it can only be used to add elements at this position, but not to read it.
+json.exception.out_of_range.403 | key 'foo' not found | The provided key was not found in the JSON object.
+json.exception.out_of_range.404 | unresolved reference token 'foo' | A reference token in a JSON Pointer could not be resolved.
+json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
 
 @since version 3.0.0
 */
@@ -301,8 +301,7 @@ Exceptions have ids 5xx.
 
 name / id                      | example massage | description
 ------------------------------ | --------------- | -------------------------
-json.exception.[other_error](@ref other_error).501 | "unsuccessful: {"op":"test","path":"/baz",
-  "value":"bar"}" | A JSON Patch operation 'test' failed.
+json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "value":"bar"} | A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
 
 @since version 3.0.0
 */
@@ -2122,9 +2121,6 @@ class basic_json
 
     @complexity Constant.
 
-    @throw std::bad_alloc if allocation for object, array, or string value
-    fails
-
     @liveexample{The following code shows the constructor for different @ref
     value_t values,basic_json__value_t}
 
@@ -2281,8 +2277,10 @@ class basic_json
 
     @throw type_error.301 if @a type_deduction is `false`, @a manual_type is
     `value_t::object`, but @a init contains an element which is not a pair
-    whose first element is a string; example: `"cannot create object from
-    initializer list"`
+    whose first element is a string. In this case, the constructor could not
+    create an object. If @a type_deduction would have be `true`, an array
+    would have been created. See @ref object(std::initializer_list<basic_json>)
+    for an example.
 
     @complexity Linear in the size of the initializer list @a init.
 
@@ -2396,16 +2394,17 @@ class basic_json
     related function @ref array(std::initializer_list<basic_json>), there are
     no cases which can only be expressed by this function. That is, any
     initializer list @a init can also be passed to the initializer list
-    constructor @ref basic_json(std::initializer_list<basic_json>, bool,
-    value_t).
+    constructor @ref basic_json(std::initializer_list<basic_json>, bool, value_t).
 
     @param[in] init  initializer list to create an object from (optional)
 
     @return JSON object value
 
-    @throw type_error.301 if @a init is not a pair whose first elements are
-    strings; thrown by
-    @ref basic_json(std::initializer_list<basic_json>, bool, value_t)
+    @throw type_error.301 if @a init is not a list of pairs whose first
+    elements are strings. In this case, no object can be created. When such a
+    value is passed to @ref basic_json(std::initializer_list<basic_json>, bool, value_t),
+    an array would have been created from the passed initializer list @a init.
+    See example below.
 
     @complexity Linear in the size of @a init.
 
@@ -2457,10 +2456,10 @@ class basic_json
     The semantics depends on the different types a JSON value can have:
     - In case of primitive types (number, boolean, or string), @a first must
       be `begin()` and @a last must be `end()`. In this case, the value is
-      copied. Otherwise, std::out_of_range is thrown.
+      copied. Otherwise, invalid_iterator.204 is thrown.
     - In case of structured types (array, object), the constructor behaves as
       similar versions for `std::vector`.
-    - In case of a null type, std::domain_error is thrown.
+    - In case of a null type, invalid_iterator.206 is thrown.
 
     @tparam InputIT an input iterator type (@ref iterator or @ref
     const_iterator)
@@ -2471,15 +2470,19 @@ class basic_json
     @pre Iterators @a first and @a last must be initialized. **This
          precondition is enforced with an assertion.**
 
-    @throw invalid_iterator.201 if iterators are not compatible; that is, do
-    not belong to the same JSON value; example: `"iterators are not
-    compatible"`
-    @throw invalid_iterator.204 if iterators are for a primitive type (number,
-    boolean, or string) where an out of range error can be detected easily;
-    example: `"iterators out of range"`
-    @throw std::bad_alloc if allocation for object, array, or string fails
-    @throw invalid_iterator.206 if called with a null value; example: `"cannot
-    construct with iterators from null"`
+    @pre Range `[first, last)` is valid. Usually, this precondition cannot be
+         checked efficiently. Only certain edge cases are detected; see the
+         description of the exceptions below.
+
+    @throw invalid_iterator.201 if iterators @a first and @a last are not
+    compatible (i.e., do not belong to the same JSON value). In this case,
+    the range `[first, last)` is undefined.
+    @throw invalid_iterator.204 if iterators @a first and @a last belong to a
+    primitive type (number, boolean, or string), but @a first does not point
+    to the first element any more. In this case, the range `[first, last)` is
+    undefined. See example code below.
+    @throw invalid_iterator.206 if iterators @a first and @a last belong to a
+    null value. In this case, the range `[first, last)` is undefined.
 
     @complexity Linear in distance between @a first and @a last.
 
@@ -2602,8 +2605,6 @@ class basic_json
     requirements:
     - The complexity is linear.
     - As postcondition, it holds: `other == basic_json(other)`.
-
-    @throw std::bad_alloc if allocation for object, array, or string fails.
 
     @liveexample{The following code shows an example for the copy
     constructor.,basic_json__basic_json}
@@ -3607,10 +3608,10 @@ class basic_json
 
     @return reference to the internally stored JSON value if the requested
     reference type @a ReferenceType fits to the JSON value; throws
-    std::domain_error otherwise
+    type_error.303 otherwise
 
     @throw type_error.303 in case passed type @a ReferenceType is incompatible
-    with the stored JSON value
+    with the stored JSON value; see example below
 
     @complexity Constant.
 
@@ -3654,7 +3655,8 @@ class basic_json
     @return copy of the JSON value, converted to type @a ValueType
 
     @throw type_error.302 in case passed type @a ValueType is incompatible
-    to JSON, thrown by @ref get() const
+    to the JSON value type (e.g., the JSON value is of type boolean, but a
+    string is requested); see example below
 
     @complexity Linear in the size of the JSON value.
 
@@ -3701,10 +3703,10 @@ class basic_json
 
     @return reference to the element at index @a idx
 
-    @throw type_error.304 if the JSON value is not an array; example: `"cannot
-    use at() with string"`
+    @throw type_error.304 if the JSON value is not an array; in this case,
+    calling `at` with an index makes no sense.
     @throw out_of_range.401 if the index @a idx is out of range of the array;
-    that is, `idx >= size()`; example: `"array index 7 is out of range"`
+    that is, `idx >= size()`; see example below.
 
     @complexity Constant.
 
@@ -3744,10 +3746,10 @@ class basic_json
 
     @return const reference to the element at index @a idx
 
-    @throw type_error.304 if the JSON value is not an array; example: `"cannot
-    use at() with string"`
+    @throw type_error.304 if the JSON value is not an array; in this case,
+    calling `at` with an index makes no sense.
     @throw out_of_range.401 if the index @a idx is out of range of the array;
-    that is, `idx >= size()`; example: `"array index 7 is out of range"`
+    that is, `idx >= size()`; see example below.
 
     @complexity Constant.
 
@@ -3787,10 +3789,10 @@ class basic_json
 
     @return reference to the element at key @a key
 
-    @throw type_error.304 if the JSON value is not an object; example:
-    `"cannot use at() with boolean"`
+    @throw type_error.304 if the JSON value is not an object; in this case,
+    calling `at` with a key makes no sense.
     @throw out_of_range.403 if the key @a key is is not stored in the object;
-    that is, `find(key) == end()`; example: `"key "the fast" not found"`
+    that is, `find(key) == end()`; see example below.
 
     @complexity Logarithmic in the size of the container.
 
@@ -3834,10 +3836,10 @@ class basic_json
 
     @return const reference to the element at key @a key
 
-    @throw type_error.304 if the JSON value is not an object; example:
-    `"cannot use at() with boolean"`
+    @throw type_error.304 if the JSON value is not an object; in this case,
+    calling `at` with a key makes no sense.
     @throw out_of_range.403 if the key @a key is is not stored in the object;
-    that is, `find(key) == end()`; example: `"key "the fast" not found"`
+    that is, `find(key) == end()`; see example below.
 
     @complexity Logarithmic in the size of the container.
 
@@ -3884,8 +3886,8 @@ class basic_json
 
     @return reference to the element at index @a idx
 
-    @throw type_error.305 if JSON is not an array or null; example: `"cannot
-    use operator[] with string"
+    @throw type_error.305 if the JSON value is not an array or null; in that
+    cases, using the [] operator with an index makes no sense.
 
     @complexity Constant if @a idx is in the range of the array. Otherwise
     linear in `idx - size()`.
@@ -3932,8 +3934,8 @@ class basic_json
 
     @return const reference to the element at index @a idx
 
-    @throw type_error.305 if JSON is not an array; example: `"cannot use
-    operator[] with null"`
+    @throw type_error.305 if the JSON value is not an array; in that cases,
+    using the [] operator with an index makes no sense.
 
     @complexity Constant.
 
@@ -3966,8 +3968,8 @@ class basic_json
 
     @return reference to the element at key @a key
 
-    @throw type_error.305 if JSON is not an object or null; example: `"cannot
-    use operator[] with string"`
+    @throw type_error.305 if the JSON value is not an object or null; in that
+    cases, using the [] operator with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
 
@@ -4015,8 +4017,8 @@ class basic_json
     @pre The element with key @a key must exist. **This precondition is
          enforced with an assertion.**
 
-    @throw type_error.305 if JSON is not an object; example: `"cannot use
-    operator[] with null"`
+    @throw type_error.305 if the JSON value is not an object; in that cases,
+    using the [] operator with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
 
@@ -4054,8 +4056,8 @@ class basic_json
 
     @return reference to the element at key @a key
 
-    @throw type_error.305 if JSON is not an object or null; example: `"cannot
-    use operator[] with string"`
+    @throw type_error.305 if the JSON value is not an object or null; in that
+    cases, using the [] operator with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
 
@@ -4089,8 +4091,8 @@ class basic_json
 
     @return const reference to the element at key @a key
 
-    @throw type_error.305 if JSON is not an object; example: `"cannot use
-    operator[] with null"`
+    @throw type_error.305 if the JSON value is not an object; in that cases,
+    using the [] operator with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
 
@@ -4122,8 +4124,8 @@ class basic_json
 
     @return reference to the element at key @a key
 
-    @throw type_error.305 if JSON is not an object or null; example: `"cannot
-    use operator[] with string"`
+    @throw type_error.305 if the JSON value is not an object or null; in that
+    cases, using the [] operator with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
 
@@ -4172,8 +4174,8 @@ class basic_json
     @pre The element with key @a key must exist. **This precondition is
          enforced with an assertion.**
 
-    @throw type_error.305 if JSON is not an object; example: `"cannot use
-    operator[] with null"`
+    @throw type_error.305 if the JSON value is not an object; in that cases,
+    using the [] operator with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
 
@@ -4232,8 +4234,8 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
-    @throw type_error.306 if JSON is not an object; example: `"cannot use
-    value() with null"`
+    @throw type_error.306 if the JSON value is not an objec; in that cases,
+    using `value()` with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
 
@@ -4307,8 +4309,8 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
-    @throw type_error.306 if JSON is not an object; example: `"cannot use
-    value() with null"`
+    @throw type_error.306 if the JSON value is not an objec; in that cases,
+    using `value()` with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
 

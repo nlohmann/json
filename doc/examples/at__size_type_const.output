@@ -1,2 +1,2 @@
 "third"
-out of range
+[json.exception.out_of_range.401] array index 5 is out of range
