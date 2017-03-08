@@ -4,3 +4,4 @@
 2
 "bar"
 [1,21]
+[json.exception.out_of_range.404] unresolved reference token 'foo'

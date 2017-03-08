@@ -20,4 +20,14 @@ int main()
     std::cout << j.at("/array"_json_pointer) << '\n';
     // output element with JSON pointer "/array/1"
     std::cout << j.at("/array/1"_json_pointer) << '\n';
+
+    // try to use an invalid JSON pointer
+    try
+    {
+        auto ref = j.at("/number/foo"_json_pointer);
+    }
+    catch (json::out_of_range& e)
+    {
+        std::cout << e.what() << '\n';
+    }
 }

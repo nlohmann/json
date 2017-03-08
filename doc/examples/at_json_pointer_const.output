@@ -2,3 +2,4 @@
 "foo"
 [1,2]
 2
+[json.exception.out_of_range.404] unresolved reference token 'foo'

@@ -4411,7 +4411,8 @@ class basic_json
     assertions**).
     @post The JSON value remains unchanged.
 
-    @throw invalid_iterator.214 when called on `null` value.
+    @throw invalid_iterator.214 when called on a `null` value. See example
+    below.
 
     @liveexample{The following code shows an example for `back()`.,back}
 
@@ -12769,10 +12770,18 @@ basic_json_parser_74:
 
     @complexity Constant.
 
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
-    @throw out_of_range.402  if the array index '-' is used
-    @throw out_of_range.404  if the JSON pointer can not be resolved
+    @throw parse_error.106 if an array index in the passed JSON pointer @a ptr
+    begins with '0'
+
+    @throw parse_error.109 if an array index in the passed JSON pointer @a ptr
+    is not a number
+
+    @throw out_of_range.402 if the array index `-` is used in the passed JSON
+    pointer @a ptr. As `at` provides checked access (and no elements are
+    implicitly inserted), the index `-` is always invalid.
+
+    @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved;
+    see example below.
 
     @liveexample{The behavior is shown in the example.,at_json_pointer}
 
@@ -12795,10 +12804,18 @@ basic_json_parser_74:
 
     @complexity Constant.
 
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
-    @throw out_of_range.402  if the array index '-' is used
-    @throw out_of_range.404  if the JSON pointer can not be resolved
+    @throw parse_error.106 if an array index in the passed JSON pointer @a ptr
+    begins with '0'
+
+    @throw parse_error.109 if an array index in the passed JSON pointer @a ptr
+    is not a number
+
+    @throw out_of_range.402 if the array index `-` is used in the passed JSON
+    pointer @a ptr. As `at` provides checked access (and no elements are
+    implicitly inserted), the index `-` is always invalid.
+
+    @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved;
+    see example below.
 
     @liveexample{The behavior is shown in the example.,at_json_pointer_const}
 
