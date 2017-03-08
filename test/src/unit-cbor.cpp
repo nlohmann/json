@@ -1358,8 +1358,6 @@ TEST_CASE("CBOR regressions", "[!throws]")
     {
         // exotic edge case
         CHECK_THROWS_AS(json::check_length(0xffffffffffffffffull, 0xfffffffffffffff0ull, 0xff), json::parse_error);
-        CHECK_THROWS_WITH(json::check_length(0xffffffffffffffffull, 0xfffffffffffffff0ull, 0xff),
-                          "[json.exception.parse_error.110] parse error at 256: cannot read 18446744073709551600 bytes from vector");
     }
 }
 
