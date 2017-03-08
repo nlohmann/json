@@ -1162,35 +1162,35 @@ TEST_CASE("CBOR")
             CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})), json::parse_error);
 
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x18})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 1 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 1 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x19})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 2 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 2 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x19, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 2 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 2 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1a})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 4 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 4 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1a, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 4 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 4 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1a, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 4 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 4 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1a, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 4 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 4 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1b})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 1: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
         }
 
         SECTION("unsupported bytes")
@@ -1341,21 +1341,13 @@ TEST_CASE("CBOR regressions", "[!throws]")
                     // deserializations must match
                     CHECK(j1 == j2);
                 }
-                catch (const std::invalid_argument&)
+                catch (const json::parse_error&)
                 {
                     // parsing a CBOR serialization must not fail
                     CHECK(false);
                 }
             }
-            catch (const std::invalid_argument&)
-            {
-                // parse errors are ok, because input may be random bytes
-            }
-            catch (const std::out_of_range&)
-            {
-                // parse errors are ok, because input may be random bytes
-            }
-            catch (const std::domain_error&)
+            catch (const json::parse_error&)
             {
                 // parse errors are ok, because input may be random bytes
             }
@@ -1365,7 +1357,9 @@ TEST_CASE("CBOR regressions", "[!throws]")
     SECTION("improve code coverage")
     {
         // exotic edge case
-        CHECK_THROWS_AS(json::check_length(0xffffffffffffffffull, 0xfffffffffffffff0ull, 0xff), std::out_of_range);
+        CHECK_THROWS_AS(json::check_length(0xffffffffffffffffull, 0xfffffffffffffff0ull, 0xff), json::parse_error);
+        CHECK_THROWS_WITH(json::check_length(0xffffffffffffffffull, 0xfffffffffffffff0ull, 0xff),
+                          "[json.exception.parse_error.110] parse error at 256: cannot read 18446744073709551600 bytes from vector");
     }
 }
 

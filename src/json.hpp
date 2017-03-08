@@ -7374,10 +7374,11 @@ class basic_json
     template<typename T>
     static T get_from_vector(const std::vector<uint8_t>& vec, const size_t current_index)
     {
-        if (current_index + sizeof(T) + 1 > vec.size())
-        {
-            JSON_THROW(parse_error(110, current_index + 1, "cannot read " + std::to_string(sizeof(T)) + " bytes from vector"));
-        }
+        check_length(vec.size(), sizeof(T), current_index + 1);
+        //if (current_index + sizeof(T) + 1 > vec.size())
+        //{
+        //    JSON_THROW(parse_error(110, current_index + 1, "cannot read " + std::to_string(sizeof(T)) + " bytes from vector"));
+        //}
 
         T result;
         auto* ptr = reinterpret_cast<uint8_t*>(&result);
@@ -7926,19 +7927,19 @@ class basic_json
         // simple case: requested length is greater than the vector's length
         if (len > size or offset > size)
         {
-            JSON_THROW(std::out_of_range("len out of range"));
+            JSON_THROW(parse_error(110, offset + 1, "cannot read " + std::to_string(len) + " bytes from vector"));
         }
 
         // second case: adding offset would result in overflow
         if ((size > (std::numeric_limits<size_t>::max() - offset)))
         {
-            JSON_THROW(std::out_of_range("len+offset out of range"));
+            JSON_THROW(parse_error(110, offset + 1, "cannot read " + std::to_string(len) + " bytes from vector"));
         }
 
         // last case: reading past the end of the vector
         if (len + offset > size)
         {
-            JSON_THROW(std::out_of_range("len+offset out of range"));
+            JSON_THROW(parse_error(110, offset + 1, "cannot read " + std::to_string(len) + " bytes from vector"));
         }
     }
 
