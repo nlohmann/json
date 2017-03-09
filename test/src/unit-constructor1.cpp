@@ -699,6 +699,15 @@ TEST_CASE("constructors")
             json j(n);
             CHECK(j.type() == json::value_t::number_float);
         }
+
+        SECTION("infinity")
+        {
+            // infinity is stored as null
+            // should change in the future: https://github.com/nlohmann/json/issues/388
+            json::number_float_t n(std::numeric_limits<json::number_float_t>::infinity());
+            json j(n);
+            CHECK(j.type() == json::value_t::null);
+        }
     }
 
     SECTION("create a floating-point number (implicit)")
@@ -1270,42 +1279,6 @@ TEST_CASE("constructors")
                     }
                 }
             }
-        }
-    }
-
-    SECTION("create a JSON value from an input stream")
-    {
-        SECTION("std::stringstream")
-        {
-            std::stringstream ss;
-            ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
-            json j(ss);
-            CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
-        }
-
-        SECTION("with callback function")
-        {
-            std::stringstream ss;
-            ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
-            json j(ss, [](int, json::parse_event_t, const json & val)
-            {
-                // filter all number(2) elements
-                if (val == json(2))
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            });
-            CHECK(j == json({"foo", 1, 3, false, {{"one", 1}}}));
-        }
-
-        SECTION("std::ifstream")
-        {
-            std::ifstream f("test/data/json_tests/pass1.json");
-            json j(f);
         }
     }
 }

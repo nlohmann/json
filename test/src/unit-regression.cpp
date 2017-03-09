@@ -63,7 +63,7 @@ TEST_CASE("regression tests")
 
     SECTION("pull request #71 - handle enum type")
     {
-        enum { t = 0, u = 1};
+        enum { t = 0, u = 102};
         json j = json::array();
         j.push_back(t);
 
@@ -72,6 +72,9 @@ TEST_CASE("regression tests")
 
         auto anon_enum_value = j2.get<decltype(u)>();
         CHECK(u == anon_enum_value);
+
+        // check if the actual value was stored
+        CHECK(j2 == 102);
 
         static_assert(std::is_same<decltype(anon_enum_value), decltype(u)>::value, "");
 

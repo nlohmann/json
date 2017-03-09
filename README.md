@@ -5,7 +5,7 @@
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f3732b3327e34358a0e9d1fe9f661f08)](https://www.codacy.com/app/nlohmann/json?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/4NEU6ZZMoM9lpIex)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](http://melpon.org/wandbox/permlink/nv9fOg0XVVhWmFFy)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
@@ -64,6 +64,8 @@ using json = nlohmann::json;
 to the files you want to use JSON objects. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 
 :beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann_json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann_json --HEAD`.
+
+:warning: [Version 3.0.0](https://github.com/nlohmann/json/wiki/Road-toward-3.0.0) is currently under development. Branch `develop` is used for the ongoing work and is probably **unstable**. Please use the `master` branch for the last stable version 2.1.1.
 
 
 ## Examples
@@ -823,9 +825,10 @@ I deeply appreciate the help of the following people.
 - [EnricoBilla](https://github.com/EnricoBilla) noted a typo in an example.
 - [Martin Hořeňovský](https://github.com/horenmar) found a way for a 2x speedup for the compilation time of the test suite.
 - [ukhegg](https://github.com/ukhegg) found proposed an improvement for the examples section.
-- [rswanson-ihi](https://github.com/rswanson-ihi) noted a type in the README.
+- [rswanson-ihi](https://github.com/rswanson-ihi) noted a typo in the README.
 - [Mihai Stan](https://github.com/stanmihai4) fixed a bug in the comparison with `nullptr`s.
 - [Tushar Maheshwari](https://github.com/tusharpm) added [cotire](https://github.com/sakra/cotire) support to speed up the compilation.
+- [TedLyngmo](https://github.com/TedLyngmo) noted a typo in the README.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -876,6 +879,7 @@ The library is currently used in Apple macOS Sierra and iOS 10. I am not sure wh
   - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
 - The code can be compiled without C++ **runtime type identification** features; that is, you can use the `-fno-rtti` compiler flag.
 - **Exceptions** are used widly within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `JSON_NOEXCEPTION`. In this case, exceptions are replaced by an `abort()` call.
+- By default, the library does not preserve the **insertion order of object elements**. This is standards-compliant, as the [JSON standard](https://tools.ietf.org/html/rfc7159.html) defines objects as "an unordered collection of zero or more name/value pairs". If you do want to preserve the insertion order, you can specialize the object type with containers like [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) or [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map).
 
 
 ## Execute unit tests
@@ -884,7 +888,7 @@ To compile and run the tests, you need to execute
 
 ```sh
 $ make json_unit -Ctest
-$ ./test/json_unit "*""
+$ ./test/json_unit "*"
 
 ===============================================================================
 All tests passed (11202597 assertions in 47 test cases)
