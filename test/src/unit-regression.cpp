@@ -795,4 +795,13 @@ TEST_CASE("regression tests")
         std::string s2 = j2.dump();
         CHECK(s1 == s2);
     }
+
+    SECTION("issue #494 - conversion from vector<bool> to json fails to build")
+    {
+        std::vector<bool> boolVector = {false, true, false, false};
+        json j;
+        j["bool_vector"] = boolVector;
+
+        CHECK(j["bool_vector"].dump() == "[false,true,false,false]");
+    }
 }
