@@ -795,4 +795,11 @@ TEST_CASE("regression tests")
         std::string s2 = j2.dump();
         CHECK(s1 == s2);
     }
+
+    SECTION("issue #486 - json::value_t can't be a map's key type in VC++ 2015")
+    {
+        // the code below must compile with MSVC
+        std::map<json::value_t, std::string> jsonTypes ;
+        jsonTypes[json::value_t::array] = "array";
+    }
 }
