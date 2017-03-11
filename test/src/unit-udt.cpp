@@ -49,19 +49,19 @@ enum class country
 struct age
 {
     int m_val;
-    age(int rhs=0) : m_val(rhs) {}
+    age(int rhs = 0) : m_val(rhs) {}
 };
 
 struct name
 {
     std::string m_val;
-    name(const std::string rhs="") : m_val(rhs) {}
+    name(const std::string rhs = "") : m_val(rhs) {}
 };
 
 struct address
 {
     std::string m_val;
-    address(const std::string rhs="") : m_val(rhs) {}
+    address(const std::string rhs = "") : m_val(rhs) {}
 };
 
 struct person
@@ -69,7 +69,7 @@ struct person
     age m_age;
     name m_name;
     country m_country;
-    person() : m_age(),m_name(),m_country() {}
+    person() : m_age(), m_name(), m_country() {}
     person(const age& a, const name& n, const country& c) : m_age(a), m_name(n), m_country(c) {}
 };
 
