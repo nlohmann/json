@@ -6168,6 +6168,21 @@ class basic_json
               thousands_sep(!loc->thousands_sep ? '\0' : loc->thousands_sep[0]),
               decimal_point(!loc->decimal_point ? '\0' : loc->decimal_point[0])
         {}
+        serializer(const serializer& cpy)
+            : o(cpy.o),
+              thousands_sep(cpy.thousands_sep),
+              decimal_point(cpy.decimal_point),
+              loc(cpy.loc),
+              indent_string(cpy.indent_string)
+        {}
+        serializer& operator=(const serializer& rhs) {
+            o = rhs.o;
+            thousands_sep = rhs.thousands_sep;
+            decimal_point = rhs.decimal_point;
+            loc = rhs.loc;
+            indent_string = rhs.indent_string;
+            return *this;
+        }
 
         /*!
         @brief internal implementation of the serialization function
