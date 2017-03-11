@@ -324,6 +324,19 @@ struct external_constructor<value_t::array>
         j.m_value.array = j.template create<typename BasicJsonType::array_t>(begin(arr), end(arr));
         j.assert_invariant();
     }
+
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, const std::vector<bool>& arr)
+    {
+        j.m_type = value_t::array;
+        j.m_value = value_t::array;
+        j.m_value.array->reserve(arr.size());
+        for (bool x : arr)
+        {
+            j.m_value.array->push_back(x);
+        }
+        j.assert_invariant();
+    }
 };
 
 template<>
@@ -560,6 +573,12 @@ template<typename BasicJsonType, typename UnscopedEnumType,
 void to_json(BasicJsonType& j, UnscopedEnumType e) noexcept
 {
     external_constructor<value_t::number_integer>::construct(j, e);
+}
+
+template<typename BasicJsonType>
+void to_json(BasicJsonType& j, std::vector<bool> e) noexcept
+{
+    external_constructor<value_t::array>::construct(j, e);
 }
 
 template <
