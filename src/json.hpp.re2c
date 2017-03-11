@@ -576,7 +576,7 @@ void to_json(BasicJsonType& j, UnscopedEnumType e) noexcept
 }
 
 template<typename BasicJsonType>
-void to_json(BasicJsonType& j, std::vector<bool> e) noexcept
+void to_json(BasicJsonType& j, const std::vector<bool>& e)
 {
     external_constructor<value_t::array>::construct(j, e);
 }
