@@ -6159,6 +6159,10 @@ class basic_json
     */
     class serializer
     {
+      private:
+        serializer(const serializer&) = delete;
+        serializer& operator=(const serializer&) = delete;
+
       public:
         /*!
         @param[in] s  output stream to serialize to
