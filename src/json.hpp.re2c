@@ -82,7 +82,7 @@ SOFTWARE.
 #endif
 
 // allow to disable exceptions
-#if __cpp_exceptions && not defined(JSON_NOEXCEPTION)
+#if (__cpp_exceptions || defined(_CPPUNWIND)) && not defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
     #define JSON_TRY try
     #define JSON_CATCH(exception) catch(exception)
