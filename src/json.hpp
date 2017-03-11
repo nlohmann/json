@@ -10988,6 +10988,13 @@ basic_json_parser_74:
                 m_line_buffer.erase(0, num_processed_chars);
                 // read next line from input stream
                 m_line_buffer_tmp.clear();
+
+                // check if stream is still good
+                if (not m_stream->good())
+                {
+                    JSON_THROW(std::invalid_argument("stream error"));
+                }
+
                 std::getline(*m_stream, m_line_buffer_tmp, '\n');
 
                 // add line with newline symbol to the line buffer
