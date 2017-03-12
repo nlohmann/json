@@ -44,23 +44,19 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
             // deserializations must match
             assert(j1 == j2);
         }
-        catch (const std::invalid_argument&)
+        catch (const json::parse_error&)
         {
             // parsing a CBOR serialization must not fail
             assert(false);
         }
     }
-    catch (const std::invalid_argument&)
+    catch (const json::parse_error&)
     {
         // parse errors are ok, because input may be random bytes
     }
-    catch (const std::out_of_range&)
+    catch (const json::type_error&)
     {
-        // parse errors are ok, because input may be random bytes
-    }
-    catch (const std::domain_error&)
-    {
-        // parse errors are ok, because input may be random bytes
+        // type errors can occur during parsing, too
     }
 
     // return 0 - non-zero return values are reserved for future use

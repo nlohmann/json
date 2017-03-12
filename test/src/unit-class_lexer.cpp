@@ -190,8 +190,10 @@ TEST_CASE("lexer class")
 
     SECTION("to_unicode")
     {
-        CHECK(json::lexer::to_unicode(0x1F4A9) == "💩");
-        CHECK_THROWS_AS(json::lexer::to_unicode(0x200000), std::out_of_range);
-        CHECK_THROWS_WITH(json::lexer::to_unicode(0x200000), "code points above 0x10FFFF are invalid");
+        // lexer to call to_unicode on
+        json::lexer dummy_lexer(reinterpret_cast<const json::lexer::lexer_char_t*>(""), 0);
+        CHECK(dummy_lexer.to_unicode(0x1F4A9) == "💩");
+        CHECK_THROWS_AS(dummy_lexer.to_unicode(0x200000), json::parse_error);
+        CHECK_THROWS_WITH(dummy_lexer.to_unicode(0x200000), "[json.exception.parse_error.103] parse error: code points above 0x10FFFF are invalid");
     }
 }
