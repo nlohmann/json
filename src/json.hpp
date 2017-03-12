@@ -700,22 +700,15 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::array_t& arr)
 }
 
 // forward_list doesn't have an insert method
-template<typename BasicJsonType, typename T, typename Allocator>
+template<typename BasicJsonType, typename T, typename Allocator,
+         enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
 void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 {
-    // do not perform the check when user wants to retrieve jsons
-    // (except when it's null.. ?)
-    if (j.is_null())
+    if (not j.is_array())
     {
         JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
     }
-    if (not std::is_same<T, BasicJsonType>::value)
-    {
-        if (not j.is_array())
-        {
-            JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
-        }
-    }
+
     for (auto it = j.rbegin(), end = j.rend(); it != end; ++it)
     {
         l.push_front(it->template get<T>());
@@ -747,8 +740,8 @@ auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
     using std::end;
 
     arr.reserve(j.size());
-    std::transform(
-        j.begin(), j.end(), std::inserter(arr, end(arr)), [](const BasicJsonType & i)
+    std::transform(j.begin(), j.end(),
+                   std::inserter(arr, end(arr)), [](const BasicJsonType & i)
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
@@ -758,22 +751,15 @@ auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
 
 template<typename BasicJsonType, typename CompatibleArrayType,
          enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
+                     std::is_convertible<BasicJsonType, typename CompatibleArrayType::value_type>::value and
                      not std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value, int> = 0>
 void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
 {
-    if (j.is_null())
+    if (not j.is_array())
     {
         JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
     }
 
-    // when T == BasicJsonType, do not check if value_t is correct
-    if (not std::is_same<typename CompatibleArrayType::value_type, BasicJsonType>::value)
-    {
-        if (not j.is_array())
-        {
-            JSON_THROW(std::domain_error("type must be array, but is " + j.type_name()));
-        }
-    }
     from_json_array_impl(j, arr, priority_tag<1> {});
 }
 
