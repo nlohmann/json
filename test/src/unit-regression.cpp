@@ -32,6 +32,7 @@ SOFTWARE.
 using nlohmann::json;
 
 #include <fstream>
+#include <list>
 
 TEST_CASE("regression tests")
 {
@@ -794,6 +795,55 @@ TEST_CASE("regression tests")
         json j2 = json::parse(s1);
         std::string s2 = j2.dump();
         CHECK(s1 == s2);
+    }
+
+    SECTION("issue #473 - inconsistent behavior in conversion to array type")
+    {
+        json j_array = {1, 2, 3, 4};
+        json j_number = 42;
+        json j_null = nullptr;
+
+        SECTION("std::vector")
+        {
+            auto create = [](const json & j)
+            {
+                std::vector<int> v = j;
+            };
+
+            CHECK_NOTHROW(create(j_array));
+            CHECK_THROWS_AS(create(j_number), std::domain_error);
+            CHECK_THROWS_WITH(create(j_number), "type must be array, but is number");
+            CHECK_THROWS_AS(create(j_null), std::domain_error);
+            CHECK_THROWS_WITH(create(j_null), "type must be array, but is null");
+        }
+
+        SECTION("std::list")
+        {
+            auto create = [](const json & j)
+            {
+                std::list<int> v = j;
+            };
+
+            CHECK_NOTHROW(create(j_array));
+            CHECK_THROWS_AS(create(j_number), std::domain_error);
+            CHECK_THROWS_WITH(create(j_number), "type must be array, but is number");
+            CHECK_THROWS_AS(create(j_null), std::domain_error);
+            CHECK_THROWS_WITH(create(j_null), "type must be array, but is null");
+        }
+
+        SECTION("std::forward_list")
+        {
+            auto create = [](const json & j)
+            {
+                std::forward_list<int> v = j;
+            };
+
+            CHECK_NOTHROW(create(j_array));
+            CHECK_THROWS_AS(create(j_number), std::domain_error);
+            CHECK_THROWS_WITH(create(j_number), "type must be array, but is number");
+            CHECK_THROWS_AS(create(j_null), std::domain_error);
+            CHECK_THROWS_WITH(create(j_null), "type must be array, but is null");
+        }
     }
 
     SECTION("issue #486 - json::value_t can't be a map's key type in VC++ 2015")
