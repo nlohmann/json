@@ -15,9 +15,23 @@ int main()
     // output element with key "the ugly"
     std::cout << object.at("the ugly") << '\n';
 
-    // try to read from a nonexisting key
+
+    // exception type_error.304
     try
     {
+        // use at() on a non-object type
+        const json str = "I am a string";
+        std::cout << str.at("the good") << '\n';
+    }
+    catch (json::type_error& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
+    // exception out_of_range.401
+    try
+    {
+        // try to read from a nonexisting key
         std::cout << object.at("the fast") << '\n';
     }
     catch (json::out_of_range)

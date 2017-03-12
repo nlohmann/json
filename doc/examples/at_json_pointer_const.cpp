@@ -5,7 +5,7 @@ using json = nlohmann::json;
 int main()
 {
     // create a JSON value
-    json j =
+    const json j =
     {
         {"number", 1}, {"string", "foo"}, {"array", {1, 2}}
     };
@@ -21,10 +21,44 @@ int main()
     // output element with JSON pointer "/array/1"
     std::cout << j.at("/array/1"_json_pointer) << '\n';
 
-    // try to use an invalid JSON pointer
+    // out_of_range.109
     try
     {
-        auto ref = j.at("/number/foo"_json_pointer);
+        // try to use an array index that is not a number
+        json::const_reference ref = j.at("/array/one"_json_pointer);
+    }
+    catch (json::parse_error& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
+    // out_of_range.401
+    try
+    {
+        // try to use a an invalid array index
+        json::const_reference ref = j.at("/array/4"_json_pointer);
+    }
+    catch (json::out_of_range& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
+    // out_of_range.402
+    try
+    {
+        // try to use the array index '-'
+        json::const_reference ref = j.at("/array/-"_json_pointer);
+    }
+    catch (json::out_of_range& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
+    // out_of_range.404
+    try
+    {
+        // try to use a JSON pointer that cannot be resolved
+        json::const_reference ref = j.at("/number/foo"_json_pointer);
     }
     catch (json::out_of_range& e)
     {

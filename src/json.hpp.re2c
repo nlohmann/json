@@ -3723,16 +3723,20 @@ class basic_json
     @return reference to the element at index @a idx
 
     @throw type_error.304 if the JSON value is not an array; in this case,
-    calling `at` with an index makes no sense.
+    calling `at` with an index makes no sense. See example below.
     @throw out_of_range.401 if the index @a idx is out of range of the array;
-    that is, `idx >= size()`; see example below.
+    that is, `idx >= size()`. See example below.
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes in the JSON value.
 
     @complexity Constant.
 
-    @liveexample{The example below shows how array elements can be read and
-    written using `at()`.,at__size_type}
-
     @since version 1.0.0
+
+    @liveexample{The example below shows how array elements can be read and
+    written using `at()`. It also demonstrates the different exceptions that
+    can be thrown.,at__size_type}
     */
     reference at(size_type idx)
     {
@@ -3766,16 +3770,20 @@ class basic_json
     @return const reference to the element at index @a idx
 
     @throw type_error.304 if the JSON value is not an array; in this case,
-    calling `at` with an index makes no sense.
+    calling `at` with an index makes no sense. See example below.
     @throw out_of_range.401 if the index @a idx is out of range of the array;
-    that is, `idx >= size()`; see example below.
+    that is, `idx >= size()`. See example below.
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes in the JSON value.
 
     @complexity Constant.
 
-    @liveexample{The example below shows how array elements can be read using
-    `at()`.,at__size_type_const}
-
     @since version 1.0.0
+
+    @liveexample{The example below shows how array elements can be read using
+    `at()`. It also demonstrates the different exceptions that can be thrown.,
+    at__size_type_const}
     */
     const_reference at(size_type idx) const
     {
@@ -3809,20 +3817,24 @@ class basic_json
     @return reference to the element at key @a key
 
     @throw type_error.304 if the JSON value is not an object; in this case,
-    calling `at` with a key makes no sense.
+    calling `at` with a key makes no sense. See example below.
     @throw out_of_range.403 if the key @a key is is not stored in the object;
-    that is, `find(key) == end()`; see example below.
+    that is, `find(key) == end()`. See example below.
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes in the JSON value.
 
     @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be read and
-    written using `at()`.,at__object_t_key_type}
 
     @sa @ref operator[](const typename object_t::key_type&) for unchecked
     access by reference
     @sa @ref value() for access by value with a default value
 
     @since version 1.0.0
+
+    @liveexample{The example below shows how object elements can be read and
+    written using `at()`. It also demonstrates the different exceptions that
+    can be thrown.,at__object_t_key_type}
     */
     reference at(const typename object_t::key_type& key)
     {
@@ -3856,20 +3868,24 @@ class basic_json
     @return const reference to the element at key @a key
 
     @throw type_error.304 if the JSON value is not an object; in this case,
-    calling `at` with a key makes no sense.
+    calling `at` with a key makes no sense. See example below.
     @throw out_of_range.403 if the key @a key is is not stored in the object;
-    that is, `find(key) == end()`; see example below.
+    that is, `find(key) == end()`. See example below.
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes in the JSON value.
 
     @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be read using
-    `at()`.,at__object_t_key_type_const}
 
     @sa @ref operator[](const typename object_t::key_type&) for unchecked
     access by reference
     @sa @ref value() for access by value with a default value
 
     @since version 1.0.0
+
+    @liveexample{The example below shows how object elements can be read using
+    `at()`. It also demonstrates the different exceptions that can be thrown.,
+    at__object_t_key_type_const}
     */
     const_reference at(const typename object_t::key_type& key) const
     {
@@ -11824,24 +11840,30 @@ class basic_json
 
     @return reference to the element pointed to by @a ptr
 
-    @complexity Constant.
-
     @throw parse_error.106 if an array index in the passed JSON pointer @a ptr
-    begins with '0'
+    begins with '0'. See example below.
 
     @throw parse_error.109 if an array index in the passed JSON pointer @a ptr
-    is not a number
+    is not a number. See example below.
 
-    @throw out_of_range.402 if the array index `-` is used in the passed JSON
+    @throw out_of_range.401 if an array index in the passed JSON pointer @a ptr
+    is out of range. See example below.
+
+    @throw out_of_range.402 if the array index '-' is used in the passed JSON
     pointer @a ptr. As `at` provides checked access (and no elements are
-    implicitly inserted), the index `-` is always invalid.
+    implicitly inserted), the index '-' is always invalid. See example below.
 
-    @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved;
-    see example below.
+    @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved.
+    See example below.
 
-    @liveexample{The behavior is shown in the example.,at_json_pointer}
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes in the JSON value.
+
+    @complexity Constant.
 
     @since version 2.0.0
+
+    @liveexample{The behavior is shown in the example.,at_json_pointer}
     */
     reference at(const json_pointer& ptr)
     {
@@ -11858,24 +11880,30 @@ class basic_json
 
     @return reference to the element pointed to by @a ptr
 
-    @complexity Constant.
-
     @throw parse_error.106 if an array index in the passed JSON pointer @a ptr
-    begins with '0'
+    begins with '0'. See example below.
 
     @throw parse_error.109 if an array index in the passed JSON pointer @a ptr
-    is not a number
+    is not a number. See example below.
 
-    @throw out_of_range.402 if the array index `-` is used in the passed JSON
+    @throw out_of_range.401 if an array index in the passed JSON pointer @a ptr
+    is out of range. See example below.
+
+    @throw out_of_range.402 if the array index '-' is used in the passed JSON
     pointer @a ptr. As `at` provides checked access (and no elements are
-    implicitly inserted), the index `-` is always invalid.
+    implicitly inserted), the index '-' is always invalid. See example below.
 
-    @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved;
-    see example below.
+    @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved.
+    See example below.
 
-    @liveexample{The behavior is shown in the example.,at_json_pointer_const}
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes in the JSON value.
+
+    @complexity Constant.
 
     @since version 2.0.0
+
+    @liveexample{The behavior is shown in the example.,at_json_pointer_const}
     */
     const_reference at(const json_pointer& ptr) const
     {

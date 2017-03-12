@@ -21,9 +21,23 @@ int main()
     // output changed array
     std::cout << object << '\n';
 
-    // try to write at a nonexisting key
+
+    // exception type_error.304
     try
     {
+        // use at() on a non-object type
+        json str = "I am a string";
+        str.at("the good") = "Another string";
+    }
+    catch (json::type_error& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
+    // exception out_of_range.401
+    try
+    {
+        // try to write at a nonexisting key
         object.at("the fast") = "il rapido";
     }
     catch (json::out_of_range& e)
