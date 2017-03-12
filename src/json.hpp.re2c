@@ -12082,6 +12082,22 @@ struct hash<nlohmann::json>
         return h(j.dump());
     }
 };
+
+/// specialization for std::less<value_t>
+template <>
+struct less<::nlohmann::detail::value_t>
+{
+    /*!
+    @brief compare two value_t enum values
+    @since version 3.0.0
+    */
+    bool operator()(nlohmann::detail::value_t lhs,
+                    nlohmann::detail::value_t rhs) const noexcept
+    {
+        return nlohmann::detail::operator<(lhs, rhs);
+    }
+};
+
 } // namespace std
 
 /*!

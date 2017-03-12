@@ -796,6 +796,13 @@ TEST_CASE("regression tests")
         CHECK(s1 == s2);
     }
 
+    SECTION("issue #486 - json::value_t can't be a map's key type in VC++ 2015")
+    {
+        // the code below must compile with MSVC
+        std::map<json::value_t, std::string> jsonTypes ;
+        jsonTypes[json::value_t::array] = "array";
+    }
+
     SECTION("issue #494 - conversion from vector<bool> to json fails to build")
     {
         std::vector<bool> boolVector = {false, true, false, false};
