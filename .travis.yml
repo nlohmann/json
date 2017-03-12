@@ -84,7 +84,7 @@ matrix:
         packages: [g++-4.9, cppcheck]
     after_success:
       - make clean
-      - CPPFLAGS="-DJSON_NOEXCEPTION" make check TEST_PATTERN=-e \"*\""
+      - CPPFLAGS="-DJSON_NOEXCEPTION" make check TEST_PATTERN="-e \"*\""
 
   # Coveralls (http://gronlier.fr/blog/2015/01/adding-code-coverage-to-your-c-project/)
 
