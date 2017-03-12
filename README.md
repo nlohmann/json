@@ -828,7 +828,7 @@ I deeply appreciate the help of the following people.
 - [rswanson-ihi](https://github.com/rswanson-ihi) noted a typo in the README.
 - [Mihai Stan](https://github.com/stanmihai4) fixed a bug in the comparison with `nullptr`s.
 - [Tushar Maheshwari](https://github.com/tusharpm) added [cotire](https://github.com/sakra/cotire) support to speed up the compilation.
-- [TedLyngmo](https://github.com/TedLyngmo) noted a typo in the README.
+- [TedLyngmo](https://github.com/TedLyngmo) noted a typo in the README and fixed some `-Weffc++` warnings.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

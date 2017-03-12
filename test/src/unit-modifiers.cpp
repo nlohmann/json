@@ -585,10 +585,11 @@ TEST_CASE("modifiers")
 
             SECTION("insert nothing (count = 0)")
             {
-                auto pos = j_array.end();
                 auto it = j_array.insert(j_array.end(), 0, 5);
                 CHECK(j_array.size() == 4);
-                CHECK(it == pos);
+                // the returned iterator points to the first inserted element;
+                // there were 4 elements, so it should point to the 5th
+                CHECK(it == j_array.begin() + 4);
                 CHECK(j_array == json({1, 2, 3, 4}));
             }
         }
