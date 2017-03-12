@@ -797,7 +797,7 @@ TEST_CASE("nst's JSONTestSuite")
                 CAPTURE(filename);
                 std::ifstream f(filename);
                 json j;
-                CHECK_THROWS_AS(j << f, std::out_of_range);
+                CHECK_THROWS_AS(j << f, json::out_of_range);
             }
         }
 

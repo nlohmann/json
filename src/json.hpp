@@ -283,6 +283,7 @@ json.exception.out_of_range.402 | array index '-' (3) is out of range | The spec
 json.exception.out_of_range.403 | key 'foo' not found | The provided key was not found in the JSON object.
 json.exception.out_of_range.404 | unresolved reference token 'foo' | A reference token in a JSON Pointer could not be resolved.
 json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
+json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed number could not be stored as without changing it to NaN or INF.
 
 @since version 3.0.0
 */
@@ -11717,7 +11718,7 @@ basic_json_parser_74:
                 // throw in case of infinity or NAN
                 if (not std::isfinite(result.m_value.number_float))
                 {
-                    JSON_THROW(std::out_of_range("number overflow: " + get_token_string()));
+                    JSON_THROW(out_of_range(406, "number overflow parsing '" + get_token_string() + "'"));
                 }
 
                 return true;
