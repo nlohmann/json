@@ -263,16 +263,8 @@ struct external_constructor<value_t::number_float>
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, typename BasicJsonType::number_float_t val) noexcept
     {
-        // replace infinity and NAN by null
-        if (not std::isfinite(val))
-        {
-            j = BasicJsonType{};
-        }
-        else
-        {
-            j.m_type = value_t::number_float;
-            j.m_value = val;
-        }
+        j.m_type = value_t::number_float;
+        j.m_value = val;
         j.assert_invariant();
     }
 };
@@ -6653,6 +6645,13 @@ class basic_json
         */
         void dump_float(number_float_t x)
         {
+            // NaN / inf
+            if (not std::isfinite(x) or std::isnan(x))
+            {
+                o.write("null", 4);
+                return;
+            }
+
             // special case for 0.0 and -0.0
             if (x == 0)
             {
@@ -10459,11 +10458,10 @@ class basic_json
                 result.m_type = value_t::number_float;
                 result.m_value = val;
 
-                // replace infinity and NAN by null
+                // throw in case of infinity or NAN
                 if (not std::isfinite(result.m_value.number_float))
                 {
-                    result.m_type  = value_t::null;
-                    result.m_value = basic_json::json_value();
+                    JSON_THROW(std::out_of_range("number overflow: " + get_token_string()));
                 }
 
                 return true;

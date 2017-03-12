@@ -460,7 +460,6 @@ TEST_CASE("nst's JSONTestSuite")
                         "test/data/nst_json_testsuite/test_parsing/y_number_after_space.json",
                         "test/data/nst_json_testsuite/test_parsing/y_number_double_close_to_zero.json",
                         "test/data/nst_json_testsuite/test_parsing/y_number_double_huge_neg_exp.json",
-                        "test/data/nst_json_testsuite/test_parsing/y_number_huge_exp.json",
                         "test/data/nst_json_testsuite/test_parsing/y_number_int_with_exp.json",
                         "test/data/nst_json_testsuite/test_parsing/y_number_minus_zero.json",
                         "test/data/nst_json_testsuite/test_parsing/y_number_negative_int.json",
@@ -472,9 +471,7 @@ TEST_CASE("nst's JSONTestSuite")
                         "test/data/nst_json_testsuite/test_parsing/y_number_real_exponent.json",
                         "test/data/nst_json_testsuite/test_parsing/y_number_real_fraction_exponent.json",
                         "test/data/nst_json_testsuite/test_parsing/y_number_real_neg_exp.json",
-                        "test/data/nst_json_testsuite/test_parsing/y_number_real_neg_overflow.json",
                         "test/data/nst_json_testsuite/test_parsing/y_number_real_pos_exponent.json",
-                        "test/data/nst_json_testsuite/test_parsing/y_number_real_pos_overflow.json",
                         "test/data/nst_json_testsuite/test_parsing/y_number_real_underflow.json",
                         "test/data/nst_json_testsuite/test_parsing/y_number_simple_int.json",
                         "test/data/nst_json_testsuite/test_parsing/y_number_simple_real.json",
@@ -765,9 +762,6 @@ TEST_CASE("nst's JSONTestSuite")
         {
             for (auto filename :
                     {
-                        // we currently do not limit exponents
-                        "test/data/nst_json_testsuite/test_parsing/i_number_neg_int_huge_exp.json",
-                        "test/data/nst_json_testsuite/test_parsing/i_number_pos_double_huge_exp.json",
                         // we do not pose a limit on nesting
                         "test/data/nst_json_testsuite/test_parsing/i_structure_500_nested_arrays.json",
                         // we silently ignore BOMs
@@ -784,6 +778,26 @@ TEST_CASE("nst's JSONTestSuite")
                 std::ifstream f(filename);
                 json j;
                 CHECK_NOTHROW(j << f);
+            }
+        }
+
+        // numbers that overflow during parsing
+        SECTION("i/y -> n (out of range)")
+        {
+            for (auto filename :
+                    {
+                        "test/data/nst_json_testsuite/test_parsing/i_number_neg_int_huge_exp.json",
+                        "test/data/nst_json_testsuite/test_parsing/i_number_pos_double_huge_exp.json",
+                        "test/data/nst_json_testsuite/test_parsing/y_number_huge_exp.json",
+                        "test/data/nst_json_testsuite/test_parsing/y_number_real_neg_overflow.json",
+                        "test/data/nst_json_testsuite/test_parsing/y_number_real_pos_overflow.json"
+                    }
+                )
+            {
+                CAPTURE(filename);
+                std::ifstream f(filename);
+                json j;
+                CHECK_THROWS_AS(j << f, std::out_of_range);
             }
         }
 

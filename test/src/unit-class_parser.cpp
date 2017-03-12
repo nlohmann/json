@@ -272,7 +272,9 @@ TEST_CASE("parser class")
 
             SECTION("overflow")
             {
-                CHECK(json::parser("1.18973e+4932").parse() == json());
+                // overflows during parsing yield an exception
+                CHECK_THROWS_AS(json::parser("1.18973e+4932").parse() == json(), std::out_of_range);
+                CHECK_THROWS_WITH(json::parser("1.18973e+4932").parse() == json(), "number overflow: 1.18973e+4932");
             }
 
             SECTION("invalid numbers")

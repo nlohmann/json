@@ -702,11 +702,17 @@ TEST_CASE("constructors")
 
         SECTION("infinity")
         {
-            // infinity is stored as null
-            // should change in the future: https://github.com/nlohmann/json/issues/388
+            // infinity is stored properly, but serialized to null
             json::number_float_t n(std::numeric_limits<json::number_float_t>::infinity());
             json j(n);
-            CHECK(j.type() == json::value_t::null);
+            CHECK(j.type() == json::value_t::number_float);
+
+            // check round trip of infinity
+            json::number_float_t d = j;
+            CHECK(d == n);
+
+            // check that inf is serialized to null
+            CHECK(j.dump() == "null");
         }
     }
 

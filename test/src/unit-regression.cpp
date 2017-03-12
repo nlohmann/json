@@ -49,6 +49,7 @@ TEST_CASE("regression tests")
 
     SECTION("issue #70 - Handle infinity and NaN cases")
     {
+        /*
         SECTION("NAN value")
         {
             CHECK(json(NAN) == json());
@@ -59,6 +60,36 @@ TEST_CASE("regression tests")
         {
             CHECK(json(INFINITY) == json());
             CHECK(json(json::number_float_t(INFINITY)) == json());
+        }
+        */
+
+        // With 3.0.0, the semantics of this changed: NAN and infinity are
+        // stored properly inside the JSON value (no exception or conversion
+        // to null), but are serialized as null.
+        SECTION("NAN value")
+        {
+            json j1 = NAN;
+            CHECK(j1.is_number_float());
+            json::number_float_t f1 = j1;
+            CHECK(std::isnan(f1));
+
+            json j2 = json::number_float_t(NAN);
+            CHECK(j2.is_number_float());
+            json::number_float_t f2 = j2;
+            CHECK(std::isnan(f2));
+        }
+
+        SECTION("infinity")
+        {
+            json j1 = INFINITY;
+            CHECK(j1.is_number_float());
+            json::number_float_t f1 = j1;
+            CHECK(not std::isfinite(f1));
+
+            json j2 = json::number_float_t(INFINITY);
+            CHECK(j2.is_number_float());
+            json::number_float_t f2 = j2;
+            CHECK(not std::isfinite(f2));
         }
     }
 
@@ -559,8 +590,8 @@ TEST_CASE("regression tests")
 
     SECTION("issue #329 - serialized value not always can be parsed")
     {
-        json j = json::parse("22e2222");
-        CHECK(j == json());
+        CHECK_THROWS_AS(json::parse("22e2222"), std::out_of_range);
+        CHECK_THROWS_WITH(json::parse("22e2222"), "number overflow: 22e2222");
     }
 
     SECTION("issue #366 - json::parse on failed stream gets stuck")
