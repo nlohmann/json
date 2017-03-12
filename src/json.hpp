@@ -7749,6 +7749,35 @@ class basic_json
     }
 
     /*!
+    @brief check if the next byte belongs to a string
+
+    While parsing a map, the keys must be strings. This function checks if the
+    current byte is one of the start bytes for a string in MessagePack:
+
+    - 0xa0 - 0xbf: fixstr
+    - 0xd9: str 8
+    - 0xda: str 16
+    - 0xdb: str 32
+
+    @param[in] v  MessagePack serialization
+    @param[in] idx  byte index in @a v to check for a string
+
+    @throw std::invalid_argument if `v[idx]` does not belong to a string
+    */
+    static void msgpack_expect_string(const std::vector<uint8_t>& v, size_t idx)
+    {
+        check_length(v.size(), 1, idx);
+
+        const auto byte = v[idx];
+        if ((byte >= 0xa0 and byte <= 0xbf) or (byte >= 0xd9 and byte <= 0xdb))
+        {
+            return;
+        }
+
+        JSON_THROW(std::invalid_argument("error parsing a msgpack string @ " + std::to_string(idx) + ": " + std::to_string(static_cast<int>(v[idx]))));
+    }
+
+    /*!
     @brief create a JSON value from a given MessagePack vector
 
     @param[in] v  MessagePack serialization
@@ -7782,6 +7811,7 @@ class basic_json
                 const size_t len = v[current_idx] & 0x0f;
                 for (size_t i = 0; i < len; ++i)
                 {
+                    msgpack_expect_string(v, idx);
                     std::string key = from_msgpack_internal(v, idx);
                     result[key] = from_msgpack_internal(v, idx);
                 }
@@ -7959,6 +7989,7 @@ class basic_json
                     idx += 2; // skip 2 size bytes
                     for (size_t i = 0; i < len; ++i)
                     {
+                        msgpack_expect_string(v, idx);
                         std::string key = from_msgpack_internal(v, idx);
                         result[key] = from_msgpack_internal(v, idx);
                     }
@@ -7972,6 +8003,7 @@ class basic_json
                     idx += 4; // skip 4 size bytes
                     for (size_t i = 0; i < len; ++i)
                     {
+                        msgpack_expect_string(v, idx);
                         std::string key = from_msgpack_internal(v, idx);
                         result[key] = from_msgpack_internal(v, idx);
                     }
