@@ -32,6 +32,7 @@ SOFTWARE.
 using nlohmann::json;
 
 #include <fstream>
+#include <list>
 
 TEST_CASE("regression tests")
 {
@@ -48,6 +49,7 @@ TEST_CASE("regression tests")
 
     SECTION("issue #70 - Handle infinity and NaN cases")
     {
+        /*
         SECTION("NAN value")
         {
             CHECK(json(NAN) == json());
@@ -58,6 +60,36 @@ TEST_CASE("regression tests")
         {
             CHECK(json(INFINITY) == json());
             CHECK(json(json::number_float_t(INFINITY)) == json());
+        }
+        */
+
+        // With 3.0.0, the semantics of this changed: NAN and infinity are
+        // stored properly inside the JSON value (no exception or conversion
+        // to null), but are serialized as null.
+        SECTION("NAN value")
+        {
+            json j1 = NAN;
+            CHECK(j1.is_number_float());
+            json::number_float_t f1 = j1;
+            CHECK(std::isnan(f1));
+
+            json j2 = json::number_float_t(NAN);
+            CHECK(j2.is_number_float());
+            json::number_float_t f2 = j2;
+            CHECK(std::isnan(f2));
+        }
+
+        SECTION("infinity")
+        {
+            json j1 = INFINITY;
+            CHECK(j1.is_number_float());
+            json::number_float_t f1 = j1;
+            CHECK(not std::isfinite(f1));
+
+            json j2 = json::number_float_t(INFINITY);
+            CHECK(j2.is_number_float());
+            json::number_float_t f2 = j2;
+            CHECK(not std::isfinite(f2));
         }
     }
 
@@ -558,8 +590,8 @@ TEST_CASE("regression tests")
 
     SECTION("issue #329 - serialized value not always can be parsed")
     {
-        json j = json::parse("22e2222");
-        CHECK(j == json());
+        CHECK_THROWS_AS(json::parse("22e2222"), std::out_of_range);
+        CHECK_THROWS_WITH(json::parse("22e2222"), "number overflow: 22e2222");
     }
 
     SECTION("issue #366 - json::parse on failed stream gets stuck")
@@ -832,6 +864,55 @@ TEST_CASE("regression tests")
         json j2 = json::parse(s1);
         std::string s2 = j2.dump();
         CHECK(s1 == s2);
+    }
+
+    SECTION("issue #473 - inconsistent behavior in conversion to array type")
+    {
+        json j_array = {1, 2, 3, 4};
+        json j_number = 42;
+        json j_null = nullptr;
+
+        SECTION("std::vector")
+        {
+            auto create = [](const json & j)
+            {
+                std::vector<int> v = j;
+            };
+
+            CHECK_NOTHROW(create(j_array));
+            CHECK_THROWS_AS(create(j_number), json::type_error);
+            CHECK_THROWS_WITH(create(j_number), "[json.exception.type_error.302] type must be array, but is number");
+            CHECK_THROWS_AS(create(j_null), json::type_error);
+            CHECK_THROWS_WITH(create(j_null), "[json.exception.type_error.302] type must be array, but is null");
+        }
+
+        SECTION("std::list")
+        {
+            auto create = [](const json & j)
+            {
+                std::list<int> v = j;
+            };
+
+            CHECK_NOTHROW(create(j_array));
+            CHECK_THROWS_AS(create(j_number), json::type_error);
+            CHECK_THROWS_WITH(create(j_number), "[json.exception.type_error.302] type must be array, but is number");
+            CHECK_THROWS_AS(create(j_null), json::type_error);
+            CHECK_THROWS_WITH(create(j_null), "[json.exception.type_error.302] type must be array, but is null");
+        }
+
+        SECTION("std::forward_list")
+        {
+            auto create = [](const json & j)
+            {
+                std::forward_list<int> v = j;
+            };
+
+            CHECK_NOTHROW(create(j_array));
+            CHECK_THROWS_AS(create(j_number), json::type_error);
+            CHECK_THROWS_WITH(create(j_number), "[json.exception.type_error.302] type must be array, but is number");
+            CHECK_THROWS_AS(create(j_null), json::type_error);
+            CHECK_THROWS_WITH(create(j_null), "[json.exception.type_error.302] type must be array, but is null");
+        }
     }
 
     SECTION("issue #486 - json::value_t can't be a map's key type in VC++ 2015")

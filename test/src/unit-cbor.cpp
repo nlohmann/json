@@ -744,13 +744,17 @@ TEST_CASE("CBOR")
                 SECTION("infinity")
                 {
                     json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
-                    CHECK(j == nullptr);
+                    json::number_float_t d = j;
+                    CHECK(not std::isfinite(d));
+                    CHECK(j.dump() == "null");
                 }
 
                 SECTION("NaN")
                 {
                     json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x01}));
-                    CHECK(j == nullptr);
+                    json::number_float_t d = j;
+                    CHECK(std::isnan(d));
+                    CHECK(j.dump() == "null");
                 }
             }
         }
@@ -1430,7 +1434,7 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                     "test/data/nst_json_testsuite/test_parsing/y_number_after_space.json",
                     "test/data/nst_json_testsuite/test_parsing/y_number_double_close_to_zero.json",
                     "test/data/nst_json_testsuite/test_parsing/y_number_double_huge_neg_exp.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_huge_exp.json",
+                    //"test/data/nst_json_testsuite/test_parsing/y_number_huge_exp.json",
                     "test/data/nst_json_testsuite/test_parsing/y_number_int_with_exp.json",
                     "test/data/nst_json_testsuite/test_parsing/y_number_minus_zero.json",
                     "test/data/nst_json_testsuite/test_parsing/y_number_negative_int.json",
@@ -1442,9 +1446,9 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                     "test/data/nst_json_testsuite/test_parsing/y_number_real_exponent.json",
                     "test/data/nst_json_testsuite/test_parsing/y_number_real_fraction_exponent.json",
                     "test/data/nst_json_testsuite/test_parsing/y_number_real_neg_exp.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_real_neg_overflow.json",
+                    //"test/data/nst_json_testsuite/test_parsing/y_number_real_neg_overflow.json",
                     "test/data/nst_json_testsuite/test_parsing/y_number_real_pos_exponent.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_real_pos_overflow.json",
+                    //"test/data/nst_json_testsuite/test_parsing/y_number_real_pos_overflow.json",
                     "test/data/nst_json_testsuite/test_parsing/y_number_real_underflow.json",
                     "test/data/nst_json_testsuite/test_parsing/y_number_simple_int.json",
                     "test/data/nst_json_testsuite/test_parsing/y_number_simple_real.json",

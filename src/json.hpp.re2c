@@ -468,16 +468,8 @@ struct external_constructor<value_t::number_float>
     template<typename BasicJsonType>
     static void construct(BasicJsonType& j, typename BasicJsonType::number_float_t val) noexcept
     {
-        // replace infinity and NAN by null
-        if (not std::isfinite(val))
-        {
-            j = BasicJsonType{};
-        }
-        else
-        {
-            j.m_type = value_t::number_float;
-            j.m_value = val;
-        }
+        j.m_type = value_t::number_float;
+        j.m_value = val;
         j.assert_invariant();
     }
 };
@@ -904,22 +896,15 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::array_t& arr)
 }
 
 // forward_list doesn't have an insert method
-template<typename BasicJsonType, typename T, typename Allocator>
+template<typename BasicJsonType, typename T, typename Allocator,
+         enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
 void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 {
-    // do not perform the check when user wants to retrieve jsons
-    // (except when it's null.. ?)
-    if (j.is_null())
+    if (not j.is_array())
     {
         JSON_THROW(type_error(302, "type must be array, but is " + j.type_name()));
     }
-    if (not std::is_same<T, BasicJsonType>::value)
-    {
-        if (not j.is_array())
-        {
-            JSON_THROW(type_error(302, "type must be array, but is " + j.type_name()));
-        }
-    }
+
     for (auto it = j.rbegin(), end = j.rend(); it != end; ++it)
     {
         l.push_front(it->template get<T>());
@@ -951,8 +936,8 @@ auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
     using std::end;
 
     arr.reserve(j.size());
-    std::transform(
-        j.begin(), j.end(), std::inserter(arr, end(arr)), [](const BasicJsonType & i)
+    std::transform(j.begin(), j.end(),
+                   std::inserter(arr, end(arr)), [](const BasicJsonType & i)
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
@@ -962,22 +947,15 @@ auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
 
 template<typename BasicJsonType, typename CompatibleArrayType,
          enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
+                     std::is_convertible<BasicJsonType, typename CompatibleArrayType::value_type>::value and
                      not std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value, int> = 0>
 void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
 {
-    if (j.is_null())
+    if (not j.is_array())
     {
         JSON_THROW(type_error(302, "type must be array, but is " + j.type_name()));
     }
 
-    // when T == BasicJsonType, do not check if value_t is correct
-    if (not std::is_same<typename CompatibleArrayType::value_type, BasicJsonType>::value)
-    {
-        if (not j.is_array())
-        {
-            JSON_THROW(type_error(302, "type must be array, but is " + j.type_name()));
-        }
-    }
     from_json_array_impl(j, arr, priority_tag<1> {});
 }
 
@@ -6916,6 +6894,13 @@ class basic_json
         */
         void dump_float(number_float_t x)
         {
+            // NaN / inf
+            if (not std::isfinite(x) or std::isnan(x))
+            {
+                o.write("null", 4);
+                return;
+            }
+
             // special case for 0.0 and -0.0
             if (x == 0)
             {
@@ -8021,6 +8006,35 @@ class basic_json
     }
 
     /*!
+    @brief check if the next byte belongs to a string
+
+    While parsing a map, the keys must be strings. This function checks if the
+    current byte is one of the start bytes for a string in MessagePack:
+
+    - 0xa0 - 0xbf: fixstr
+    - 0xd9: str 8
+    - 0xda: str 16
+    - 0xdb: str 32
+
+    @param[in] v  MessagePack serialization
+    @param[in] idx  byte index in @a v to check for a string
+
+    @throw std::invalid_argument if `v[idx]` does not belong to a string
+    */
+    static void msgpack_expect_string(const std::vector<uint8_t>& v, size_t idx)
+    {
+        check_length(v.size(), 1, idx);
+
+        const auto byte = v[idx];
+        if ((byte >= 0xa0 and byte <= 0xbf) or (byte >= 0xd9 and byte <= 0xdb))
+        {
+            return;
+        }
+
+        JSON_THROW(std::invalid_argument("error parsing a msgpack string @ " + std::to_string(idx) + ": " + std::to_string(static_cast<int>(v[idx]))));
+    }
+
+    /*!
     @brief create a JSON value from a given MessagePack vector
 
     @param[in] v  MessagePack serialization
@@ -8054,6 +8068,7 @@ class basic_json
                 const size_t len = v[current_idx] & 0x0f;
                 for (size_t i = 0; i < len; ++i)
                 {
+                    msgpack_expect_string(v, idx);
                     std::string key = from_msgpack_internal(v, idx);
                     result[key] = from_msgpack_internal(v, idx);
                 }
@@ -8233,6 +8248,7 @@ class basic_json
                     idx += 2; // skip 2 size bytes
                     for (size_t i = 0; i < len; ++i)
                     {
+                        msgpack_expect_string(v, idx);
                         std::string key = from_msgpack_internal(v, idx);
                         result[key] = from_msgpack_internal(v, idx);
                     }
@@ -8246,6 +8262,7 @@ class basic_json
                     idx += 4; // skip 4 size bytes
                     for (size_t i = 0; i < len; ++i)
                     {
+                        msgpack_expect_string(v, idx);
                         std::string key = from_msgpack_internal(v, idx);
                         result[key] = from_msgpack_internal(v, idx);
                     }
@@ -10730,11 +10747,10 @@ class basic_json
                 result.m_type = value_t::number_float;
                 result.m_value = val;
 
-                // replace infinity and NAN by null
+                // throw in case of infinity or NAN
                 if (not std::isfinite(result.m_value.number_float))
                 {
-                    result.m_type  = value_t::null;
-                    result.m_value = basic_json::json_value();
+                    JSON_THROW(std::out_of_range("number overflow: " + get_token_string()));
                 }
 
                 return true;
