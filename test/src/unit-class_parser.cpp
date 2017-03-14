@@ -279,7 +279,7 @@ TEST_CASE("parser class")
                 // overflows during parsing yield an exception
                 CHECK_THROWS_AS(json::parser("1.18973e+4932").parse() == json(), json::out_of_range);
                 CHECK_THROWS_WITH(json::parser("1.18973e+4932").parse() == json(),
-                    "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'");
+                                  "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'");
             }
 
             SECTION("invalid numbers")

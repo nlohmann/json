@@ -592,7 +592,7 @@ TEST_CASE("regression tests")
     {
         CHECK_THROWS_AS(json::parse("22e2222"), json::out_of_range);
         CHECK_THROWS_WITH(json::parse("22e2222"),
-            "[json.exception.out_of_range.406] number overflow parsing '22e2222'");
+                          "[json.exception.out_of_range.406] number overflow parsing '22e2222'");
     }
 
     SECTION("issue #366 - json::parse on failed stream gets stuck")
