@@ -7494,25 +7494,25 @@ class basic_json
                         // positive fixnum
                         add_to_vector(v, 1, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint8_t>::max())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                     {
                         // uint 8
                         v.push_back(0xcc);
                         add_to_vector(v, 1, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint16_t>::max())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
                     {
                         // uint 16
                         v.push_back(0xcd);
                         add_to_vector(v, 2, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint32_t>::max())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
                     {
                         // uint 32
                         v.push_back(0xce);
                         add_to_vector(v, 4, j.m_value.number_unsigned);
                     }
-                    else if (j.m_value.number_unsigned <= std::numeric_limits<uint64_t>::max())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
                     {
                         // uint 64
                         v.push_back(0xcf);
@@ -7526,25 +7526,25 @@ class basic_json
                         // negative fixnum
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= std::numeric_limits<int8_t>::min() and j.m_value.number_integer <= std::numeric_limits<int8_t>::max())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<int8_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int8_t>::max)())
                     {
                         // int 8
                         v.push_back(0xd0);
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= std::numeric_limits<int16_t>::min() and j.m_value.number_integer <= std::numeric_limits<int16_t>::max())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<int16_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
                     {
                         // int 16
                         v.push_back(0xd1);
                         add_to_vector(v, 2, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= std::numeric_limits<int32_t>::min() and j.m_value.number_integer <= std::numeric_limits<int32_t>::max())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<int32_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
                     {
                         // int 32
                         v.push_back(0xd2);
                         add_to_vector(v, 4, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer >= std::numeric_limits<int64_t>::min() and j.m_value.number_integer <= std::numeric_limits<int64_t>::max())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<int64_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int64_t>::max)())
                     {
                         // int 64
                         v.push_back(0xd3);
@@ -7561,25 +7561,25 @@ class basic_json
                     // positive fixnum
                     add_to_vector(v, 1, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= std::numeric_limits<uint8_t>::max())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                 {
                     // uint 8
                     v.push_back(0xcc);
                     add_to_vector(v, 1, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= std::numeric_limits<uint16_t>::max())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
                 {
                     // uint 16
                     v.push_back(0xcd);
                     add_to_vector(v, 2, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= std::numeric_limits<uint32_t>::max())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
                 {
                     // uint 32
                     v.push_back(0xce);
                     add_to_vector(v, 4, j.m_value.number_unsigned);
                 }
-                else if (j.m_value.number_unsigned <= std::numeric_limits<uint64_t>::max())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
                 {
                     // uint 64
                     v.push_back(0xcf);
@@ -7736,19 +7736,19 @@ class basic_json
                     {
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer <= std::numeric_limits<uint8_t>::max())
+                    else if (j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
                     {
                         v.push_back(0x18);
                         // one-byte uint8_t
                         add_to_vector(v, 1, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer <= std::numeric_limits<uint16_t>::max())
+                    else if (j.m_value.number_integer <= (std::numeric_limits<uint16_t>::max)())
                     {
                         v.push_back(0x19);
                         // two-byte uint16_t
                         add_to_vector(v, 2, j.m_value.number_integer);
                     }
-                    else if (j.m_value.number_integer <= std::numeric_limits<uint32_t>::max())
+                    else if (j.m_value.number_integer <= (std::numeric_limits<uint32_t>::max)())
                     {
                         v.push_back(0x1a);
                         // four-byte uint32_t
@@ -7770,19 +7770,19 @@ class basic_json
                     {
                         v.push_back(static_cast<uint8_t>(0x20 + positive_number));
                     }
-                    else if (positive_number <= std::numeric_limits<uint8_t>::max())
+                    else if (positive_number <= (std::numeric_limits<uint8_t>::max)())
                     {
                         // int 8
                         v.push_back(0x38);
                         add_to_vector(v, 1, positive_number);
                     }
-                    else if (positive_number <= std::numeric_limits<uint16_t>::max())
+                    else if (positive_number <= (std::numeric_limits<uint16_t>::max)())
                     {
                         // int 16
                         v.push_back(0x39);
                         add_to_vector(v, 2, positive_number);
                     }
-                    else if (positive_number <= std::numeric_limits<uint32_t>::max())
+                    else if (positive_number <= (std::numeric_limits<uint32_t>::max)())
                     {
                         // int 32
                         v.push_back(0x3a);
@@ -7995,7 +7995,7 @@ class basic_json
         }
 
         // second case: adding offset would result in overflow
-        if ((size > (std::numeric_limits<size_t>::max() - offset)))
+        if ((size > ((std::numeric_limits<size_t>::max)() - offset)))
         {
             JSON_THROW(parse_error(110, offset + 1, "cannot read " + std::to_string(len) + " bytes from vector"));
         }
