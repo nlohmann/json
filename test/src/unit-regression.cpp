@@ -460,16 +460,6 @@ TEST_CASE("regression tests")
     {
         setlocale(LC_NUMERIC, "de_DE.UTF-8");
 
-        // Verify that snprintf uses special decimal and grouping characters.
-        // Disabled, because can't trigger locale-specific behavior in AppVeyor
-#ifndef _MSC_VER
-        {
-            std::array<char, 64> buf;
-            std::snprintf(buf.data(), buf.size(), "%.2f", 12345.67);
-            CHECK(strcmp(buf.data(), "12345,67") == 0);
-        }
-#endif
-
         // verify that dumped correctly with '.' and no grouping
         const json j1 = 12345.67;
         CHECK(json(12345.67).dump() == "12345.67");
@@ -479,18 +469,6 @@ TEST_CASE("regression tests")
     SECTION("issue #379 - locale-independent str-to-num")
     {
         setlocale(LC_NUMERIC, "de_DE.UTF-8");
-
-        // disabled, because locale-specific beharivor is not
-        // triggered in AppVeyor for some reason
-#ifndef _MSC_VER
-        {
-            // verify that strtod now uses commas as decimal-separator
-            CHECK(std::strtod("3,14", nullptr) == 3.14);
-
-            // verify that strtod does not understand dots as decimal separator
-            CHECK(std::strtod("3.14", nullptr) == 3);
-        }
-#endif
 
         // verify that parsed correctly despite using strtod internally
         CHECK(json::parse("3.14").get<double>() == 3.14);
