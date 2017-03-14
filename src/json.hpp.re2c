@@ -174,6 +174,7 @@ json.exception.parse_error.109 | parse error: array index 'one' is not a number 
 json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
 json.exception.parse_error.111 | parse error: bad input stream | Parsing CBOR or MessagePack from an input stream where the [`badbit` or `failbit`](http://en.cppreference.com/w/cpp/io/ios_base/iostate) is set.
 json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xf8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
+json.exception.parse_error.113 |  | While parsing a map key, a value that is not a string has been read.
 
 @since version 3.0.0
 */
@@ -8020,7 +8021,7 @@ class basic_json
     @param[in] v  MessagePack serialization
     @param[in] idx  byte index in @a v to check for a string
 
-    @throw std::invalid_argument if `v[idx]` does not belong to a string
+    @throw parse_error.113 if `v[idx]` does not belong to a string
     */
     static void msgpack_expect_string(const std::vector<uint8_t>& v, size_t idx)
     {
@@ -8032,7 +8033,39 @@ class basic_json
             return;
         }
 
-        JSON_THROW(std::invalid_argument("error parsing a msgpack string @ " + std::to_string(idx) + ": " + std::to_string(static_cast<int>(v[idx]))));
+        std::stringstream ss;
+        ss << std::hex << static_cast<int>(v[idx]);
+        JSON_THROW(parse_error(113, idx + 1, "expected a MessagePack string; last byte: 0x" + ss.str()));
+    }
+
+    /*!
+    @brief check if the next byte belongs to a string
+
+    While parsing a map, the keys must be strings. This function checks if the
+    current byte is one of the start bytes for a string in CBOR:
+
+    - 0x60 - 0x77: fixed length
+    - 0x78 - 0x7b: variable length
+    - 0x7f: indefinity length
+
+    @param[in] v  CBOR serialization
+    @param[in] idx  byte index in @a v to check for a string
+
+    @throw parse_error.113 if `v[idx]` does not belong to a string
+    */
+    static void cbor_expect_string(const std::vector<uint8_t>& v, size_t idx)
+    {
+        check_length(v.size(), 1, idx);
+
+        const auto byte = v[idx];
+        if ((byte >= 0x60 and byte <= 0x7b) or byte == 0x7f)
+        {
+            return;
+        }
+
+        std::stringstream ss;
+        ss << std::hex << static_cast<int>(v[idx]);
+        JSON_THROW(parse_error(113, idx + 1, "expected a CBOR string; last byte: 0x" + ss.str()));
     }
 
     /*!
@@ -8046,6 +8079,7 @@ class basic_json
     @throw parse_error.110 if the given vector ends prematurely
     @throw parse_error.112 if unsupported features from MessagePack were
     used in the given vector @a v or if the input is not valid MessagePack
+    @throw parse_error.113 if a string was expected as map key, but not found
 
     @sa https://github.com/msgpack/msgpack/blob/master/spec.md
     */
@@ -8291,6 +8325,7 @@ class basic_json
     @throw parse_error.110 if the given vector ends prematurely
     @throw parse_error.112 if unsupported features from CBOR were
     used in the given vector @a v or if the input is not valid CBOR
+    @throw parse_error.113 if a string was expected as map key, but not found
 
     @sa https://tools.ietf.org/html/rfc7049
     */

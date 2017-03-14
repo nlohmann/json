@@ -909,4 +909,24 @@ TEST_CASE("regression tests")
 
         CHECK(j["bool_vector"].dump() == "[false,true,false,false]");
     }
+
+    SECTION("issue #504 - assertion error (OSS-Fuzz 856)")
+    {
+        std::vector<uint8_t> vec1 = {0xf9, 0xff, 0xff, 0x4a, 0x3a, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01, 0x37, 0x02, 0x38};
+        json j1 = json::from_cbor(vec1);
+
+        // step 2: round trip
+        std::vector<uint8_t> vec2 = json::to_cbor(j1);
+
+        // parse serialization
+        json j2 = json::from_cbor(vec2);
+
+        // NaN is dumped to "null"
+        CHECK(j2.is_number_float());
+        CHECK(std::isnan(j2.get<json::number_float_t>()));
+        CHECK(j2.dump() == "null");
+
+        // check if serializations match
+        CHECK(json::to_cbor(j2) == vec2);
+    }
 }
