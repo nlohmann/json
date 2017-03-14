@@ -46,4 +46,14 @@ int main()
     {
         std::cout << i.first << ": " << i.second << '\n';
     }
+
+    // example for an exception
+    try
+    {
+        bool v1 = json_types["string"];
+    }
+    catch (json::type_error& e)
+    {
+        std::cout << e.what() << '\n';
+    }
 }

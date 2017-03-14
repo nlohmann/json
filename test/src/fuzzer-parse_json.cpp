@@ -49,13 +49,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
             // serializations must match
             assert(s1 == s2);
         }
-        catch (const std::invalid_argument&)
+        catch (const json::parse_error&)
         {
             // parsing a JSON serialization must not fail
             assert(false);
         }
     }
-    catch (const std::invalid_argument&)
+    catch (const json::parse_error&)
     {
         // parse errors are ok, because input may be random bytes
     }

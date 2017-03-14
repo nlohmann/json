@@ -32,4 +32,60 @@ int main()
     j.at("/array/1"_json_pointer) = 21;
     // output the changed array
     std::cout << j["array"] << '\n';
+
+
+    // out_of_range.106
+    try
+    {
+        // try to use an array index with leading '0'
+        json::reference ref = j.at("/array/01"_json_pointer);
+    }
+    catch (json::parse_error& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
+    // out_of_range.109
+    try
+    {
+        // try to use an array index that is not a number
+        json::reference ref = j.at("/array/one"_json_pointer);
+    }
+    catch (json::parse_error& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
+    // out_of_range.401
+    try
+    {
+        // try to use a an invalid array index
+        json::reference ref = j.at("/array/4"_json_pointer);
+    }
+    catch (json::out_of_range& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
+    // out_of_range.402
+    try
+    {
+        // try to use the array index '-'
+        json::reference ref = j.at("/array/-"_json_pointer);
+    }
+    catch (json::out_of_range& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
+    // out_of_range.404
+    try
+    {
+        // try to use a JSON pointer that cannot be resolved
+        json::reference ref = j.at("/number/foo"_json_pointer);
+    }
+    catch (json::out_of_range& e)
+    {
+        std::cout << e.what() << '\n';
+    }
 }
