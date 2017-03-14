@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "catch.hpp"
 
+#define private public
 #include "json.hpp"
 using nlohmann::json;
 
@@ -908,6 +909,39 @@ TEST_CASE("regression tests")
         j["bool_vector"] = boolVector;
 
         CHECK(j["bool_vector"].dump() == "[false,true,false,false]");
+    }
+
+    SECTION("issue #495 - fill_line_buffer incorrectly tests m_stream for eof but not fail or bad bits")
+    {
+        SECTION("setting failbit")
+        {
+            std::stringstream ss;
+            ss << "[1,2,3\n,4,5]";
+
+            json::lexer l(ss);
+
+            CHECK(l.m_line_buffer == "[1,2,3\n");
+
+            l.m_stream->setstate(std::ios_base::failbit);
+
+            CHECK_THROWS_AS(l.fill_line_buffer(), json::parse_error);
+            CHECK_THROWS_WITH(l.fill_line_buffer(), "[json.exception.parse_error.111] parse error: bad input stream");
+        }
+
+        SECTION("setting badbit")
+        {
+            std::stringstream ss;
+            ss << "[1,2,3\n,4,5]";
+
+            json::lexer l(ss);
+
+            CHECK(l.m_line_buffer == "[1,2,3\n");
+
+            l.m_stream->setstate(std::ios_base::badbit);
+
+            CHECK_THROWS_AS(l.fill_line_buffer(), json::parse_error);
+            CHECK_THROWS_WITH(l.fill_line_buffer(), "[json.exception.parse_error.111] parse error: bad input stream");
+        }
     }
 
     SECTION("issue #504 - assertion error (OSS-Fuzz 856)")

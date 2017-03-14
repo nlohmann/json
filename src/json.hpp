@@ -8815,6 +8815,55 @@ class basic_json
     serialization format. MessagePack is a binary serialization format which
     aims to be more compact than JSON itself, yet more efficient to parse.
 
+    The library uses the following mapping from JSON values types to
+    MessagePack types according to the MessagePack specification:
+
+    JSON value type | value/range                       | MessagePack type | first byte
+    --------------- | --------------------------------- | ---------------- | ----------
+    null            | `null`                            | nil              | 0xc0
+    boolean         | `true`                            | true             | 0xc3
+    boolean         | `false`                           | false            | 0xc2
+    number_integer  | -9223372036854775808..-2147483649 | int64            | 0xd3
+    number_integer  | -2147483648..-32769               | int32            | 0xd2
+    number_integer  | -32768..-129                      | int16            | 0xd1
+    number_integer  | -128..-33                         | int8             | 0xd0
+    number_integer  | -32..-1                           | negative fixint  | 0xe0..0xff
+    number_integer  | 0..127                            | positive fixint  | 0x00..0x7f
+    number_integer  | 128..255                          | uint 8           | 0xcc
+    number_integer  | 256..65535                        | uint 16          | 0xcd
+    number_integer  | 65536..4294967295                 | uint 32          | 0xce
+    number_integer  | 4294967296..18446744073709551615  | uint 64          | 0xcf
+    number_unsigned | 0..127                            | positive fixint  | 0x00..0x7f
+    number_unsigned | 128..255                          | uint 8           | 0xcc
+    number_unsigned | 256..65535                        | uint 16          | 0xcd
+    number_unsigned | 65536..4294967295                 | uint 32          | 0xce
+    number_unsigned | 4294967296..18446744073709551615  | uint 64          | 0xcf
+    number_float    | *any value*                       | float 64         | 0xcb
+    string          | *length*: 0..31                   | fixstr           | 0xa0..0xbf
+    string          | *length*: 32..255                 | str 8            | 0xd9
+    string          | *length*: 256..65535              | str 16           | 0xda
+    string          | *length*: 65536..4294967295       | str 32           | 0xdb
+    array           | *size*: 0..15                     | fixarray         | 0x90..0x9f
+    array           | *size*: 16..65535                 | array 16         | 0xdc
+    array           | *size*: 65536..4294967295         | array 32         | 0xdd
+    object          | *size*: 0..15                     | fix map          | 0x80..0x8f
+    object          | *size*: 16..65535                 | map 16           | 0xde
+    object          | *size*: 65536..4294967295         | map 32           | 0xdf
+
+    @note The mapping is **complete** in the sense that any JSON value type
+          can be converted to a MessagePack value.
+
+    @note The following values can **not** be converted to a MessagePack value:
+          - strings with more than 4294967295 bytes
+          - arrays with more than 4294967295 elements
+          - objects with more than 4294967295 elements
+
+    @note The following MessagePack types are not used in the conversion:
+          - bin 8 - bin 32 (0xc4..0xc6)
+          - ext 8 - ext 32 (0xc7..0xc9)
+          - float 32 (0xca)
+          - fixext 1 - fixext 16 (0xd4..0xd8)
+
     @param[in] j  JSON value to serialize
     @return MessagePack serialization as byte vector
 
@@ -8877,6 +8926,65 @@ class basic_json
     Binary Object Representation) serialization format. CBOR is a binary
     serialization format which aims to be more compact than JSON itself, yet
     more efficient to parse.
+
+    The library uses the following mapping from JSON values types to
+    CBOR types according to the CBOR specification (RFC 7049):
+
+    JSON value type | value/range                                | CBOR type                          | first byte
+    --------------- | ------------------------------------------ | ---------------------------------- | ---------------
+    null            | `null`                                     | Null                               | 0xf6
+    boolean         | `true`                                     | True                               | 0xf5
+    boolean         | `false`                                    | False                              | 0xf4
+    number_integer  | -9223372036854775808..-2147483649          | Negative integer (8 bytes follow)  | 0x3b
+    number_integer  | -2147483648..-32769                        | Negative integer (4 bytes follow)  | 0x3a
+    number_integer  | -32768..-129                               | Negative integer (2 bytes follow)  | 0x39
+    number_integer  | -128..-25                                  | Negative integer (1 byte follow)   | 0x38
+    number_integer  | -24..-1                                    | Negative integer                   | 0x20..0x37
+    number_integer  | 0..23                                      | Integer                            | 0x00..0x17
+    number_integer  | 24..255                                    | Unsigned integer (1 byte follow)   | 0x18
+    number_integer  | 256..65535                                 | Unsigned integer (2 bytes follow)  | 0x19
+    number_integer  | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1a
+    number_integer  | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1b
+    number_unsigned | 0..23                                      | Integer                            | 0x00..0x17
+    number_unsigned | 24..255                                    | Unsigned integer (1 byte follow)   | 0x18
+    number_unsigned | 256..65535                                 | Unsigned integer (2 bytes follow)  | 0x19
+    number_unsigned | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1a
+    number_unsigned | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1b
+    number_float    | *any value*                                | Double-Precision Float             | 0xfb
+    string          | *length*: 0..23                            | UTF-8 string                       | 0x60..0x77
+    string          | *length*: 23..255                          | UTF-8 string (1 byte follow)       | 0x78
+    string          | *length*: 256..65535                       | UTF-8 string (2 bytes follow)      | 0x79
+    string          | *length*: 65536..4294967295                | UTF-8 string (4 bytes follow)      | 0x7a
+    string          | *length*: 4294967296..18446744073709551615 | UTF-8 string (8 bytes follow)      | 0x7b
+    array           | *size*: 0..23                              | array                              | 0x80..0x97
+    array           | *size*: 23..255                            | array (1 byte follow)              | 0x98
+    array           | *size*: 256..65535                         | array (2 bytes follow)             | 0x99
+    array           | *size*: 65536..4294967295                  | array (4 bytes follow)             | 0x9a
+    array           | *size*: 4294967296..18446744073709551615   | array (8 bytes follow)             | 0x9b
+    object          | *size*: 0..23                              | map                                | 0xa0..0xb7
+    object          | *size*: 23..255                            | map (1 byte follow)                | 0xb8
+    object          | *size*: 256..65535                         | map (2 bytes follow)               | 0xb9
+    object          | *size*: 65536..4294967295                  | map (4 bytes follow)               | 0xba
+    object          | *size*: 4294967296..18446744073709551615   | map (8 bytes follow)               | 0xbb
+
+    @note The mapping is **complete** in the sense that any JSON value type
+          can be converted to a CBOR value.
+
+    @note The following CBOR types are not used in the conversion:
+          - byte strings (0x40..0x5f)
+          - UTF-8 strings terminated by "break" (0x7f)
+          - arrays terminated by "break" (0x9f)
+          - maps terminated by "break" (0xbf)
+          - date/time (0xc0..0xc1)
+          - bignum (0xc2..0xc3)
+          - decimal fraction (0xc4)
+          - bigfloat (0xc5)
+          - tagged items (0xc6..0xd4, 0xd8..0xdb)
+          - expected conversions (0xd5..0xd7)
+          - simple values (0xe0..0xf3, 0xf8)
+          - undefined (0xf7)
+          - half and single-precision floats (0xf9-0xfa)
+          - break (0xff)
 
     @param[in] j  JSON value to serialize
     @return MessagePack serialization as byte vector
@@ -11330,6 +11438,13 @@ basic_json_parser_74:
                 m_line_buffer.erase(0, num_processed_chars);
                 // read next line from input stream
                 m_line_buffer_tmp.clear();
+
+                // check if stream is still good
+                if (m_stream->fail())
+                {
+                    JSON_THROW(parse_error(111, 0, "bad input stream"));
+                }
+
                 std::getline(*m_stream, m_line_buffer_tmp, '\n');
 
                 // add line with newline symbol to the line buffer
