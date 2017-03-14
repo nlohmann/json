@@ -11334,7 +11334,7 @@ basic_json_parser_74:
                 // check if stream is still good
                 if (m_stream->fail())
                 {
-                    JSON_THROW(std::invalid_argument("stream error"));
+                    JSON_THROW(parse_error(111, 0, "bad input stream"));
                 }
 
                 std::getline(*m_stream, m_line_buffer_tmp, '\n');

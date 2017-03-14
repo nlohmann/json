@@ -924,7 +924,8 @@ TEST_CASE("regression tests")
 
             l.m_stream->setstate(std::ios_base::failbit);
 
-            CHECK_THROWS_AS(l.fill_line_buffer(), std::invalid_argument);
+            CHECK_THROWS_AS(l.fill_line_buffer(), json::parse_error);
+            CHECK_THROWS_WITH(l.fill_line_buffer(), "[json.exception.parse_error.111] parse error: bad input stream");
         }
 
         SECTION("setting badbit")
@@ -938,7 +939,8 @@ TEST_CASE("regression tests")
 
             l.m_stream->setstate(std::ios_base::badbit);
 
-            CHECK_THROWS_AS(l.fill_line_buffer(), std::invalid_argument);
+            CHECK_THROWS_AS(l.fill_line_buffer(), json::parse_error);
+            CHECK_THROWS_WITH(l.fill_line_buffer(), "[json.exception.parse_error.111] parse error: bad input stream");
         }
     }
 
