@@ -32,7 +32,6 @@ SOFTWARE.
 #include <algorithm> // all_of, copy, fill, find, for_each, none_of, remove, reverse, transform
 #include <array> // array
 #include <cassert> // assert
-#include <cctype> // isdigit
 #include <ciso646> // and, not, or
 #include <clocale> // lconv, localeconv
 #include <cmath> // isfinite, labs, ldexp, signbit
@@ -43,7 +42,6 @@ SOFTWARE.
 #include <forward_list> // forward_list
 #include <functional> // function, hash, less
 #include <initializer_list> // initializer_list
-#include <iomanip> // setw
 #include <iostream> // istream, ostream
 #include <iterator> // advance, begin, back_inserter, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
 #include <limits> // numeric_limits
@@ -130,7 +128,7 @@ class exception : public std::exception
     {}
 
     /// returns the explanatory string
-    virtual const char* what() const noexcept
+    virtual const char* what() const noexcept override
     {
         return what_arg.c_str();
     }
@@ -174,7 +172,7 @@ json.exception.parse_error.109 | parse error: array index 'one' is not a number 
 json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
 json.exception.parse_error.111 | parse error: bad input stream | Parsing CBOR or MessagePack from an input stream where the [`badbit` or `failbit`](http://en.cppreference.com/w/cpp/io/ios_base/iostate) is set.
 json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xf8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
-json.exception.parse_error.113 |  | While parsing a map key, a value that is not a string has been read.
+json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last byte: 0x98 | While parsing a map key, a value that is not a string has been read.
 
 @since version 3.0.0
 */
@@ -6468,7 +6466,7 @@ class basic_json
                         auto i = val.m_value.object->cbegin();
                         for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
                         {
-                            o.write(indent_string.c_str(), new_indent);
+                            o.write(indent_string.c_str(), static_cast<std::streamsize>(new_indent));
                             o.put('\"');
                             dump_escaped(i->first);
                             o.write("\": ", 3);
@@ -6478,14 +6476,14 @@ class basic_json
 
                         // last element
                         assert(i != val.m_value.object->cend());
-                        o.write(indent_string.c_str(), new_indent);
+                        o.write(indent_string.c_str(), static_cast<std::streamsize>(new_indent));
                         o.put('\"');
                         dump_escaped(i->first);
                         o.write("\": ", 3);
                         dump(i->second, true, indent_step, new_indent);
 
                         o.put('\n');
-                        o.write(indent_string.c_str(), current_indent);
+                        o.write(indent_string.c_str(), static_cast<std::streamsize>(current_indent));
                         o.put('}');
                     }
                     else
@@ -6538,18 +6536,18 @@ class basic_json
                         // first n-1 elements
                         for (auto i = val.m_value.array->cbegin(); i != val.m_value.array->cend() - 1; ++i)
                         {
-                            o.write(indent_string.c_str(), new_indent);
+                            o.write(indent_string.c_str(), static_cast<std::streamsize>(new_indent));
                             dump(*i, true, indent_step, new_indent);
                             o.write(",\n", 2);
                         }
 
                         // last element
                         assert(not val.m_value.array->empty());
-                        o.write(indent_string.c_str(), new_indent);
+                        o.write(indent_string.c_str(), static_cast<std::streamsize>(new_indent));
                         dump(val.m_value.array->back(), true, indent_step, new_indent);
 
                         o.put('\n');
-                        o.write(indent_string.c_str(), current_indent);
+                        o.write(indent_string.c_str(), static_cast<std::streamsize>(current_indent));
                         o.put(']');
                     }
                     else
@@ -7848,7 +7846,7 @@ class basic_json
                 const auto N = j.m_value.string->size();
                 if (N <= 0x17)
                 {
-                    v.push_back(0x60 + static_cast<uint8_t>(N));  // 1 byte for string + size
+                    v.push_back(static_cast<uint8_t>(0x60 + N));  // 1 byte for string + size
                 }
                 else if (N <= 0xff)
                 {
@@ -7884,7 +7882,7 @@ class basic_json
                 const auto N = j.m_value.array->size();
                 if (N <= 0x17)
                 {
-                    v.push_back(0x80 + static_cast<uint8_t>(N));  // 1 byte for array + size
+                    v.push_back(static_cast<uint8_t>(0x80 + N));  // 1 byte for array + size
                 }
                 else if (N <= 0xff)
                 {
@@ -7922,7 +7920,7 @@ class basic_json
                 const auto N = j.m_value.object->size();
                 if (N <= 0x17)
                 {
-                    v.push_back(0xa0 + static_cast<uint8_t>(N));  // 1 byte for object + size
+                    v.push_back(static_cast<uint8_t>(0xa0 + N));  // 1 byte for object + size
                 }
                 else if (N <= 0xff)
                 {
@@ -8653,6 +8651,7 @@ class basic_json
                 const auto len = static_cast<size_t>(v[current_idx] - 0xa0);
                 for (size_t i = 0; i < len; ++i)
                 {
+                    cbor_expect_string(v, idx);
                     std::string key = from_cbor_internal(v, idx);
                     result[key] = from_cbor_internal(v, idx);
                 }
@@ -8666,6 +8665,7 @@ class basic_json
                 idx += 1; // skip 1 size byte
                 for (size_t i = 0; i < len; ++i)
                 {
+                    cbor_expect_string(v, idx);
                     std::string key = from_cbor_internal(v, idx);
                     result[key] = from_cbor_internal(v, idx);
                 }
@@ -8679,6 +8679,7 @@ class basic_json
                 idx += 2; // skip 2 size bytes
                 for (size_t i = 0; i < len; ++i)
                 {
+                    cbor_expect_string(v, idx);
                     std::string key = from_cbor_internal(v, idx);
                     result[key] = from_cbor_internal(v, idx);
                 }
@@ -8692,6 +8693,7 @@ class basic_json
                 idx += 4; // skip 4 size bytes
                 for (size_t i = 0; i < len; ++i)
                 {
+                    cbor_expect_string(v, idx);
                     std::string key = from_cbor_internal(v, idx);
                     result[key] = from_cbor_internal(v, idx);
                 }
@@ -8705,6 +8707,7 @@ class basic_json
                 idx += 8; // skip 8 size bytes
                 for (size_t i = 0; i < len; ++i)
                 {
+                    cbor_expect_string(v, idx);
                     std::string key = from_cbor_internal(v, idx);
                     result[key] = from_cbor_internal(v, idx);
                 }
@@ -8716,6 +8719,7 @@ class basic_json
                 basic_json result = value_t::object;
                 while (check_length(v.size(), 1, idx), v[idx] != 0xff)
                 {
+                    cbor_expect_string(v, idx);
                     std::string key = from_cbor_internal(v, idx);
                     result[key] = from_cbor_internal(v, idx);
                 }
@@ -8864,6 +8868,9 @@ class basic_json
           - float 32 (0xca)
           - fixext 1 - fixext 16 (0xd4..0xd8)
 
+    @note Any MessagePack output created @ref to_msgpack can be successfully
+          parsed by @ref from_msgpack.
+
     @param[in] j  JSON value to serialize
     @return MessagePack serialization as byte vector
 
@@ -8892,6 +8899,46 @@ class basic_json
     Deserializes a given byte vector @a v to a JSON value using the MessagePack
     serialization format.
 
+    The library maps MessagePack types to JSON value types as follows:
+
+    MessagePack type | JSON value type | first byte
+    ---------------- | --------------- | ----------
+    positive fixint  | number_unsigned | 0x00..0x7f
+    fixmap           | object          | 0x80..0x8f
+    fixarray         | array           | 0x90..0x9f
+    fixstr           | string          | 0xa0..0xbf
+    nil              | `null`          | 0xc0
+    false            | `false`         | 0xc2
+    true             | `true`          | 0xc3
+    float 32         | number_float    | 0xca
+    float 64         | number_float    | 0xcb
+    uint 8           | number_unsigned | 0xcc
+    uint 16          | number_unsigned | 0xcd
+    uint 32          | number_unsigned | 0xce
+    uint 64          | number_unsigned | 0xcf
+    int 8            | number_integer  | 0xd0
+    int 16           | number_integer  | 0xd1
+    int 32           | number_integer  | 0xd2
+    int 64           | number_integer  | 0xd3
+    str 8            | string          | 0xd9
+    str 16           | string          | 0xda
+    str 32           | string          | 0xdb
+    array 16         | array           | 0xdc
+    array 32         | array           | 0xdd
+    map 16           | object          | 0xde
+    map 32           | object          | 0xdf
+    negative fixint  | number_integer  | 0xe0-0xff
+
+    @warning The mapping is **incomplete** in the sense that not all
+             MessagePack types can be converted to a JSON value. The following
+             MessagePack types are not supported and will yield parse errors:
+              - bin 8 - bin 32 (0xc4..0xc6)
+              - ext 8 - ext 32 (0xc7..0xc9)
+              - fixext 1 - fixext 16 (0xd4..0xd8)
+
+    @note Any MessagePack output created @ref to_msgpack can be successfully
+          parsed by @ref from_msgpack.
+
     @param[in] v  a byte vector in MessagePack format
     @param[in] start_index the index to start reading from @a v (0 by default)
     @return deserialized JSON value
@@ -8899,6 +8946,7 @@ class basic_json
     @throw parse_error.110 if the given vector ends prematurely
     @throw parse_error.112 if unsupported features from MessagePack were
     used in the given vector @a v or if the input is not valid MessagePack
+    @throw parse_error.113 if a string was expected as map key, but not found
 
     @complexity Linear in the size of the byte vector @a v.
 
@@ -9014,6 +9062,66 @@ class basic_json
     Deserializes a given byte vector @a v to a JSON value using the CBOR
     (Concise Binary Object Representation) serialization format.
 
+    The library maps CBOR types to JSON value types as follows:
+
+    CBOR type              | JSON value type | first byte
+    ---------------------- | --------------- | ----------
+    Integer                | number_unsigned | 0x00..0x17
+    Unsigned integer       | number_unsigned | 0x18
+    Unsigned integer       | number_unsigned | 0x19
+    Unsigned integer       | number_unsigned | 0x1a
+    Unsigned integer       | number_unsigned | 0x1b
+    Negative integer       | number_integer  | 0x20..0x37
+    Negative integer       | number_integer  | 0x38
+    Negative integer       | number_integer  | 0x39
+    Negative integer       | number_integer  | 0x3a
+    Negative integer       | number_integer  | 0x3b
+    Negative integer       | number_integer  | 0x40..0x57
+    UTF-8 string           | string          | 0x60..0x77
+    UTF-8 string           | string          | 0x78
+    UTF-8 string           | string          | 0x79
+    UTF-8 string           | string          | 0x7a
+    UTF-8 string           | string          | 0x7b
+    UTF-8 string           | string          | 0x7f
+    array                  | array           | 0x80..0x97
+    array                  | array           | 0x98
+    array                  | array           | 0x99
+    array                  | array           | 0x9a
+    array                  | array           | 0x9b
+    array                  | array           | 0x9f
+    map                    | object          | 0xa0..0xb7
+    map                    | object          | 0xb8
+    map                    | object          | 0xb9
+    map                    | object          | 0xba
+    map                    | object          | 0xbb
+    map                    | object          | 0xbf
+    False                  | `false`         | 0xf4
+    True                   | `true`          | 0xf5
+    Nill                   | `null`          | 0xf6
+    Half-Precision Float   | number_float    | 0xf9
+    Single-Precision Float | number_float    | 0xfa
+    Double-Precision Float | number_float    | 0xfb
+
+    @warning The mapping is **incomplete** in the sense that not all CBOR
+             types can be converted to a JSON value. The following CBOR types
+             are not supported and will yield parse errors (parse_error.112):
+             - byte strings (0x40..0x5f)
+             - date/time (0xc0..0xc1)
+             - bignum (0xc2..0xc3)
+             - decimal fraction (0xc4)
+             - bigfloat (0xc5)
+             - tagged items (0xc6..0xd4, 0xd8..0xdb)
+             - expected conversions (0xd5..0xd7)
+             - simple values (0xe0..0xf3, 0xf8)
+             - undefined (0xf7)
+
+    @warning CBOR allows map keys of any type, whereas JSON only allows
+             strings as keys in object values. Therefore, CBOR maps with keys
+             other than UTF-8 strings are rejected (parse_error.113).
+
+    @note Any CBOR output created @ref to_cbor can be successfully parsed by
+          @ref from_cbor.
+
     @param[in] v  a byte vector in CBOR format
     @param[in] start_index the index to start reading from @a v (0 by default)
     @return deserialized JSON value
@@ -9021,6 +9129,7 @@ class basic_json
     @throw parse_error.110 if the given vector ends prematurely
     @throw parse_error.112 if unsupported features from CBOR were
     used in the given vector @a v or if the input is not valid CBOR
+    @throw parse_error.113 if a string was expected as map key, but not found
 
     @complexity Linear in the size of the byte vector @a v.
 
@@ -12423,7 +12532,7 @@ basic_json_parser_74:
                                                   reference_token.end(),
                                                   [](const char x)
                     {
-                        return std::isdigit(x);
+                        return (x >= '0' and x <= '9');
                     });
 
                     // change value to array for numbers or "-" or to object

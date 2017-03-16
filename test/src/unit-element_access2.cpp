@@ -48,7 +48,7 @@ TEST_CASE("element access 2")
                 CHECK(j.at("null") == json(nullptr));
                 CHECK(j.at("string") == json("hello world"));
                 CHECK(j.at("floating") == json(42.23));
-                CHECK(j.at("object") == json(json::object()));
+                CHECK(j.at("object") == json::object());
                 CHECK(j.at("array") == json({1, 2, 3}));
 
                 CHECK(j_const.at("integer") == json(1));
@@ -57,7 +57,7 @@ TEST_CASE("element access 2")
                 CHECK(j_const.at("null") == json(nullptr));
                 CHECK(j_const.at("string") == json("hello world"));
                 CHECK(j_const.at("floating") == json(42.23));
-                CHECK(j_const.at("object") == json(json::object()));
+                CHECK(j_const.at("object") == json::object());
                 CHECK(j_const.at("array") == json({1, 2, 3}));
             }
 
@@ -161,7 +161,7 @@ TEST_CASE("element access 2")
                     CHECK(j.value("string", std::string("bar")) == "hello world");
                     CHECK(j.value("floating", 12.34) == Approx(42.23));
                     CHECK(j.value("floating", 12) == 42);
-                    CHECK(j.value("object", json({{"foo", "bar"}})) == json(json::object()));
+                    CHECK(j.value("object", json({{"foo", "bar"}})) == json::object());
                     CHECK(j.value("array", json({10, 100})) == json({1, 2, 3}));
 
                     CHECK(j_const.value("integer", 2) == 1);
@@ -173,7 +173,7 @@ TEST_CASE("element access 2")
                     CHECK(j_const.value("string", std::string("bar")) == "hello world");
                     CHECK(j_const.value("floating", 12.34) == Approx(42.23));
                     CHECK(j_const.value("floating", 12) == 42);
-                    CHECK(j_const.value("object", json({{"foo", "bar"}})) == json(json::object()));
+                    CHECK(j_const.value("object", json({{"foo", "bar"}})) == json::object());
                     CHECK(j_const.value("array", json({10, 100})) == json({1, 2, 3}));
                 }
 
@@ -298,7 +298,7 @@ TEST_CASE("element access 2")
                     CHECK(j.value("/string"_json_pointer, std::string("bar")) == "hello world");
                     CHECK(j.value("/floating"_json_pointer, 12.34) == Approx(42.23));
                     CHECK(j.value("/floating"_json_pointer, 12) == 42);
-                    CHECK(j.value("/object"_json_pointer, json({{"foo", "bar"}})) == json(json::object()));
+                    CHECK(j.value("/object"_json_pointer, json({{"foo", "bar"}})) == json::object());
                     CHECK(j.value("/array"_json_pointer, json({10, 100})) == json({1, 2, 3}));
 
                     CHECK(j_const.value("/integer"_json_pointer, 2) == 1);
@@ -310,7 +310,7 @@ TEST_CASE("element access 2")
                     CHECK(j_const.value("/string"_json_pointer, std::string("bar")) == "hello world");
                     CHECK(j_const.value("/floating"_json_pointer, 12.34) == Approx(42.23));
                     CHECK(j_const.value("/floating"_json_pointer, 12) == 42);
-                    CHECK(j_const.value("/object"_json_pointer, json({{"foo", "bar"}})) == json(json::object()));
+                    CHECK(j_const.value("/object"_json_pointer, json({{"foo", "bar"}})) == json::object());
                     CHECK(j_const.value("/array"_json_pointer, json({10, 100})) == json({1, 2, 3}));
                 }
 
@@ -435,7 +435,7 @@ TEST_CASE("element access 2")
                 CHECK(j["floating"] == json(42.23));
                 CHECK(j[json::object_t::key_type("floating")] == j["floating"]);
 
-                CHECK(j["object"] == json(json::object()));
+                CHECK(j["object"] == json::object());
                 CHECK(j[json::object_t::key_type("object")] == j["object"]);
 
                 CHECK(j["array"] == json({1, 2, 3}));
@@ -456,7 +456,7 @@ TEST_CASE("element access 2")
                 CHECK(j_const["floating"] == json(42.23));
                 CHECK(j_const[json::object_t::key_type("floating")] == j["floating"]);
 
-                CHECK(j_const["object"] == json(json::object()));
+                CHECK(j_const["object"] == json::object());
                 CHECK(j_const[json::object_t::key_type("object")] == j["object"]);
 
                 CHECK(j_const["array"] == json({1, 2, 3}));

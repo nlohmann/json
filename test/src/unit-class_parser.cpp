@@ -494,7 +494,7 @@ TEST_CASE("parser class")
         // invalid escapes
         for (int c = 1; c < 128; ++c)
         {
-            auto s = std::string("\"\\") + std::string(1, c) + "\"";
+            auto s = std::string("\"\\") + std::string(1, static_cast<char>(c)) + "\"";
 
             switch (c)
             {
@@ -574,10 +574,10 @@ TEST_CASE("parser class")
                 std::string s = "\"\\u";
 
                 // create a string with the iterated character at each position
-                auto s1 = s + "000" + std::string(1, c) + "\"";
-                auto s2 = s + "00" + std::string(1, c) + "0\"";
-                auto s3 = s + "0" + std::string(1, c) + "00\"";
-                auto s4 = s + std::string(1, c) + "000\"";
+                auto s1 = s + "000" + std::string(1, static_cast<char>(c)) + "\"";
+                auto s2 = s + "00" + std::string(1, static_cast<char>(c)) + "0\"";
+                auto s3 = s + "0" + std::string(1, static_cast<char>(c)) + "00\"";
+                auto s4 = s + std::string(1, static_cast<char>(c)) + "000\"";
 
                 if (valid(c))
                 {

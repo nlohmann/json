@@ -203,7 +203,7 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xcd);
-                        uint16_t restored = static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]);
+                        uint16_t restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -242,10 +242,10 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xce);
-                        uint32_t restored = static_cast<uint32_t>((static_cast<uint32_t>(result[1]) << 030) +
+                        uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
                                             (static_cast<uint32_t>(result[2]) << 020) +
                                             (static_cast<uint32_t>(result[3]) << 010) +
-                                            static_cast<uint32_t>(result[4]));
+                                            static_cast<uint32_t>(result[4]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -288,14 +288,14 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xcf);
-                        uint64_t restored = static_cast<uint64_t>((static_cast<uint64_t>(result[1]) << 070) +
+                        uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
                                             (static_cast<uint64_t>(result[2]) << 060) +
                                             (static_cast<uint64_t>(result[3]) << 050) +
                                             (static_cast<uint64_t>(result[4]) << 040) +
                                             (static_cast<uint64_t>(result[5]) << 030) +
                                             (static_cast<uint64_t>(result[6]) << 020) +
                                             (static_cast<uint64_t>(result[7]) << 010) +
-                                            static_cast<uint64_t>(result[8]));
+                                            static_cast<uint64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -415,10 +415,10 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xd2);
-                        uint32_t restored = static_cast<uint32_t>((static_cast<uint32_t>(result[1]) << 030) +
+                        uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
                                             (static_cast<uint32_t>(result[2]) << 020) +
                                             (static_cast<uint32_t>(result[3]) << 010) +
-                                            static_cast<uint32_t>(result[4]));
+                                            static_cast<uint32_t>(result[4]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -460,14 +460,14 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xd3);
-                        int64_t restored = static_cast<int64_t>((static_cast<int64_t>(result[1]) << 070) +
-                                                                (static_cast<int64_t>(result[2]) << 060) +
-                                                                (static_cast<int64_t>(result[3]) << 050) +
-                                                                (static_cast<int64_t>(result[4]) << 040) +
-                                                                (static_cast<int64_t>(result[5]) << 030) +
-                                                                (static_cast<int64_t>(result[6]) << 020) +
-                                                                (static_cast<int64_t>(result[7]) << 010) +
-                                                                static_cast<int64_t>(result[8]));
+                        int64_t restored = (static_cast<int64_t>(result[1]) << 070) +
+                                           (static_cast<int64_t>(result[2]) << 060) +
+                                           (static_cast<int64_t>(result[3]) << 050) +
+                                           (static_cast<int64_t>(result[4]) << 040) +
+                                           (static_cast<int64_t>(result[5]) << 030) +
+                                           (static_cast<int64_t>(result[6]) << 020) +
+                                           (static_cast<int64_t>(result[7]) << 010) +
+                                           static_cast<int64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -564,7 +564,7 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xcd);
-                        uint16_t restored = static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]);
+                        uint16_t restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -602,10 +602,10 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xce);
-                        uint32_t restored = static_cast<uint32_t>((static_cast<uint32_t>(result[1]) << 030) +
+                        uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
                                             (static_cast<uint32_t>(result[2]) << 020) +
                                             (static_cast<uint32_t>(result[3]) << 010) +
-                                            static_cast<uint32_t>(result[4]));
+                                            static_cast<uint32_t>(result[4]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -647,14 +647,14 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xcf);
-                        uint64_t restored = static_cast<uint64_t>((static_cast<uint64_t>(result[1]) << 070) +
+                        uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
                                             (static_cast<uint64_t>(result[2]) << 060) +
                                             (static_cast<uint64_t>(result[3]) << 050) +
                                             (static_cast<uint64_t>(result[4]) << 040) +
                                             (static_cast<uint64_t>(result[5]) << 030) +
                                             (static_cast<uint64_t>(result[6]) << 020) +
                                             (static_cast<uint64_t>(result[7]) << 010) +
-                                            static_cast<uint64_t>(result[8]));
+                                            static_cast<uint64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip

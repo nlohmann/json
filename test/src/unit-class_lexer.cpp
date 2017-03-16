@@ -139,7 +139,7 @@ TEST_CASE("lexer class")
         for (int c = 1; c < 128; ++c)
         {
             // create string from the ASCII code
-            const auto s = std::string(1, c);
+            const auto s = std::string(1, static_cast<char>(c));
             // store scan() result
             const auto res = json::lexer(reinterpret_cast<const json::lexer::lexer_char_t*>(s.c_str()),
                                          1).scan();

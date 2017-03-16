@@ -412,17 +412,17 @@ TEST_CASE("regression tests")
         class CommaDecimalSeparator : public std::numpunct<char>
         {
           protected:
-            char do_decimal_point() const
+            char do_decimal_point() const override
             {
                 return ',';
             }
 
-            char do_thousands_sep() const
+            char do_thousands_sep() const override
             {
                 return '.';
             }
 
-            std::string do_grouping() const
+            std::string do_grouping() const override
             {
                 return "\03";
             }
@@ -755,7 +755,7 @@ TEST_CASE("regression tests")
         };
         CHECK_THROWS_AS(json::from_cbor(vec), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec),
-                          "[json.exception.parse_error.110] parse error at 137: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.113] parse error at 2: expected a CBOR string; last byte: 0x98");
 
         // related test case: nonempty UTF-8 string (indefinite length)
         std::vector<uint8_t> vec1 {0x7f, 0x61, 0x61};
@@ -808,7 +808,7 @@ TEST_CASE("regression tests")
         };
         CHECK_THROWS_AS(json::from_cbor(vec1), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec1),
-                          "[json.exception.parse_error.110] parse error at 49: cannot read 4 bytes from vector");
+                          "[json.exception.parse_error.113] parse error at 13: expected a CBOR string; last byte: 0xb4");
 
         // related test case: double-precision
         std::vector<uint8_t> vec2
@@ -822,7 +822,7 @@ TEST_CASE("regression tests")
         };
         CHECK_THROWS_AS(json::from_cbor(vec2), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec2),
-                          "[json.exception.parse_error.110] parse error at 49: cannot read 8 bytes from vector");
+                          "[json.exception.parse_error.113] parse error at 13: expected a CBOR string; last byte: 0xb4");
     }
 
     SECTION("issue #452 - Heap-buffer-overflow (OSS-Fuzz issue 585)")

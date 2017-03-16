@@ -48,7 +48,7 @@ TEST_CASE("element access 1")
                 CHECK(j.at(3) == json(nullptr));
                 CHECK(j.at(4) == json("string"));
                 CHECK(j.at(5) == json(42.23));
-                CHECK(j.at(6) == json(json::object()));
+                CHECK(j.at(6) == json::object());
                 CHECK(j.at(7) == json({1, 2, 3}));
 
                 CHECK(j_const.at(0) == json(1));
@@ -57,7 +57,7 @@ TEST_CASE("element access 1")
                 CHECK(j_const.at(3) == json(nullptr));
                 CHECK(j_const.at(4) == json("string"));
                 CHECK(j_const.at(5) == json(42.23));
-                CHECK(j_const.at(6) == json(json::object()));
+                CHECK(j_const.at(6) == json::object());
                 CHECK(j_const.at(7) == json({1, 2, 3}));
             }
 
@@ -171,7 +171,7 @@ TEST_CASE("element access 1")
                 CHECK(j[3] == json(nullptr));
                 CHECK(j[4] == json("string"));
                 CHECK(j[5] == json(42.23));
-                CHECK(j[6] == json(json::object()));
+                CHECK(j[6] == json::object());
                 CHECK(j[7] == json({1, 2, 3}));
 
                 CHECK(j_const[0] == json(1));
@@ -180,7 +180,7 @@ TEST_CASE("element access 1")
                 CHECK(j_const[3] == json(nullptr));
                 CHECK(j_const[4] == json("string"));
                 CHECK(j_const[5] == json(42.23));
-                CHECK(j_const[6] == json(json::object()));
+                CHECK(j_const[6] == json::object());
                 CHECK(j_const[7] == json({1, 2, 3}));
             }
 
