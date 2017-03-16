@@ -230,17 +230,17 @@ Please note that setting the exception bit for `failbit` is inappropriate for th
 
 #### Read from iterator range
 
-You can also read JSON from an iterator range; that is, from any container accessible by iterators whose content is stored as contiguous byte sequence, for instance a `std::vector<uint8_t>`:
+You can also read JSON from an iterator range; that is, from any container accessible by iterators whose content is stored as contiguous byte sequence, for instance a `std::vector<std::uint8_t>`:
 
 ```cpp
-std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
+std::vector<std::uint8_t> v = {'t', 'r', 'u', 'e'};
 json j = json::parse(v.begin(), v.end());
 ```
 
 You may leave the iterators for the range [begin, end):
 
 ```cpp
-std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
+std::vector<std::uint8_t> v = {'t', 'r', 'u', 'e'};
 json j = json::parse(v);
 ```
 
@@ -682,7 +682,7 @@ Though JSON is a ubiquitous data format, it is not a very compact format suitabl
 json j = R"({"compact": true, "schema": 0})"_json;
 
 // serialize to CBOR
-std::vector<uint8_t> v_cbor = json::to_cbor(j);
+std::vector<std::uint8_t> v_cbor = json::to_cbor(j);
 
 // 0xa2, 0x67, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74, 0xf5, 0x66, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x00
 
@@ -690,7 +690,7 @@ std::vector<uint8_t> v_cbor = json::to_cbor(j);
 json j_from_cbor = json::from_cbor(v_cbor);
 
 // serialize to MessagePack
-std::vector<uint8_t> v_msgpack = json::to_msgpack(j);
+std::vector<std::uint8_t> v_msgpack = json::to_msgpack(j);
 
 // 0x82, 0xa7, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74, 0xc3, 0xa6, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x00
 
