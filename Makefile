@@ -51,7 +51,7 @@ doctest:
 # -Wno-keyword-macro: unit-tests use "#define private public"
 # -Wno-weak-vtables: exception class is defined inline, but has virtual method
 # -Wno-range-loop-analysis: iterator_wrapper tests tests "for(const auto i...)"
-pedantic:
+pedantic_clang:
 	$(MAKE) json_unit CXXFLAGS="\
 		-std=c++11 \
 		-Werror \
@@ -62,6 +62,66 @@ pedantic:
 		-Wno-weak-vtables \
 		-Wno-range-loop-analysis"
 
+# calling GCC with most warnings
+pedantic_gcc:
+	$(MAKE) json_unit CXX=g++ CXXFLAGS="\
+		-std=c++11 \
+		-Werror \
+		-Wall -Wpedantic -Wextra \
+		-Walloca \
+		-Warray-bounds=2 \
+		-Wcast-qual -Wcast-align \
+		-Wchar-subscripts \
+		-Wconditionally-supported \
+		-Wconversion \
+		-Wdate-time \
+		-Wdeprecated \
+		-Wdisabled-optimization \
+		-Wdouble-promotion \
+		-Wduplicated-branches \
+		-Wduplicated-cond \
+		-Weffc++ \
+		-Wformat-overflow=2 \
+		-Wformat-signedness \
+		-Wformat-truncation=2 \
+		-Wformat=2 \
+		-Wimplicit-fallthrough=5 \
+		-Wlogical-op \
+		-Wmissing-declarations \
+		-Wmissing-format-attribute \
+		-Wmissing-include-dirs \
+		-Wnoexcept \
+		-Wnonnull \
+		-Wnull-dereference \
+		-Wold-style-cast \
+		-Woverloaded-virtual \
+		-Wparentheses \
+		-Wplacement-new=2 \
+		-Wredundant-decls \
+		-Wreorder \
+		-Wrestrict \
+		-Wshadow=global \
+		-Wshift-overflow=2 \
+		-Wsign-conversion \
+		-Wsign-promo \
+		-Wsized-deallocation \
+		-Wstrict-overflow=5 \
+		-Wsuggest-attribute=const \
+		-Wsuggest-attribute=format \
+		-Wsuggest-attribute=noreturn \
+		-Wsuggest-attribute=pure \
+		-Wsuggest-final-methods \
+		-Wsuggest-final-types \
+		-Wsuggest-override \
+		-Wtrigraphs \
+		-Wundef \
+		-Wuninitialized -Wunknown-pragmas \
+		-Wunused \
+		-Wunused-const-variable=2 \
+		-Wunused-macros \
+		-Wunused-parameter \
+		-Wuseless-cast \
+		-Wvariadic-macros"
 
 ##########################################################################
 # fuzzing
