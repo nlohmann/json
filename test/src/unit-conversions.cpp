@@ -192,16 +192,16 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays")
         {
-          const char str[] = "a string";
-          const int nbs[] = {0, 1, 2};
+            const char str[] = "a string";
+            const int nbs[] = {0, 1, 2};
 
-          json j2 = nbs;
-          json j3 = str;
+            json j2 = nbs;
+            json j3 = str;
 
-          auto v = j2.get<std::vector<int>>();
-          auto s = j3.get<std::string>();
-          CHECK(std::equal(v.begin(), v.end(), std::begin(nbs)));
-          CHECK(s == str);
+            auto v = j2.get<std::vector<int>>();
+            auto s = j3.get<std::string>();
+            CHECK(std::equal(v.begin(), v.end(), std::begin(nbs)));
+            CHECK(s == str);
         }
 
         SECTION("std::deque<json>")
