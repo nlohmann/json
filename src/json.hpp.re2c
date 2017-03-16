@@ -800,6 +800,13 @@ void to_json(BasicJsonType& j, const  CompatibleObjectType& arr)
     external_constructor<value_t::object>::construct(j, arr);
 }
 
+template <typename BasicJsonType, typename T, std::size_t N,
+          enable_if_t<not std::is_constructible<
+                          typename BasicJsonType::string_t, T (&)[N]>::value,
+                      int> = 0>
+void to_json(BasicJsonType &j, T (&arr)[N]) {
+  external_constructor<value_t::array>::construct(j, arr);
+}
 
 ///////////////
 // from_json //
