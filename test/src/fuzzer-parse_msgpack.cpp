@@ -41,8 +41,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
             // parse serialization
             json j2 = json::from_msgpack(vec2);
 
-            // deserializations must match
-            assert(j1 == j2);
+            // serializations must match
+            assert(json::to_msgpack(j2) == vec2);
         }
         catch (const json::parse_error&)
         {
