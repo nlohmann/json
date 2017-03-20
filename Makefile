@@ -1,7 +1,7 @@
 .PHONY: pretty clean ChangeLog.md
 
 # used programs
-RE2C = re2c
+RE2C := $(shell command -v re2c 2> /dev/null)
 SED = sed
 
 # main target
@@ -185,6 +185,9 @@ clang_sanitize: clean
 
 # create scanner with re2c
 re2c: src/json.hpp.re2c
+ifndef RE2C
+	$(error "re2c is not available, please install re2c")
+endif
 	$(RE2C) -W --utf-8 --encoding-policy fail --bit-vectors --nested-ifs --no-debug-info $< | $(SED) '1d' > src/json.hpp
 
 # pretty printer
