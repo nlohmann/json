@@ -1264,6 +1264,8 @@ class basic_json
     /// Classes to implement user-defined exceptions.
     /// @{
 
+    /// @copydoc detail::exception
+    using exception = detail::exception;
     /// @copydoc detail::parse_error
     using parse_error = detail::parse_error;
     /// @copydoc detail::invalid_iterator
