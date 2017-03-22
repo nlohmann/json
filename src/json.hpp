@@ -6929,8 +6929,8 @@ class basic_json
             static constexpr auto d = std::numeric_limits<number_float_t>::digits10;
 
             // the actual conversion
-            long len = snprintf(number_buffer.data(), number_buffer.size(),
-                                "%.*g", d, x);
+            std::ptrdiff_t len = snprintf(number_buffer.data(), number_buffer.size(),
+                                          "%.*g", d, x);
 
             // negative value indicates an error
             assert(len > 0);
@@ -10429,10 +10429,9 @@ class basic_json
 
         Proof (by contradiction): Assume a finite input. To loop forever, the
         loop must never hit code with a `break` statement. The only code
-        snippets without a `break` statement are the continue statements for
-        whitespace and byte-order-marks. To loop forever, the input must be an
-        infinite sequence of whitespace or byte-order-marks. This contradicts
-        the assumption of finite input, q.e.d.
+        snippets without a `break` statement is the continue statement for
+        whitespace. To loop forever, the input must be an infinite sequence
+        whitespace. This contradicts the assumption of finite input, q.e.d.
         */
         token_type scan()
         {
