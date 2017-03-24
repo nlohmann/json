@@ -10344,20 +10344,20 @@ class basic_json
             else if (codepoint <= 0x7ff)
             {
                 // 2-byte characters: 110xxxxx 10xxxxxx
-                result.append(1, static_cast<typename string_t::value_type>(0xC0 | ((codepoint >> 6) & 0x1F)));
+                result.append(1, static_cast<typename string_t::value_type>(0xC0 | (codepoint >> 6)));
                 result.append(1, static_cast<typename string_t::value_type>(0x80 | (codepoint & 0x3F)));
             }
             else if (codepoint <= 0xffff)
             {
                 // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                result.append(1, static_cast<typename string_t::value_type>(0xE0 | ((codepoint >> 12) & 0x0F)));
+                result.append(1, static_cast<typename string_t::value_type>(0xE0 | (codepoint >> 12)));
                 result.append(1, static_cast<typename string_t::value_type>(0x80 | ((codepoint >> 6) & 0x3F)));
                 result.append(1, static_cast<typename string_t::value_type>(0x80 | (codepoint & 0x3F)));
             }
             else if (codepoint <= 0x10ffff)
             {
                 // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                result.append(1, static_cast<typename string_t::value_type>(0xF0 | ((codepoint >> 18) & 0x07)));
+                result.append(1, static_cast<typename string_t::value_type>(0xF0 | (codepoint >> 18)));
                 result.append(1, static_cast<typename string_t::value_type>(0x80 | ((codepoint >> 12) & 0x3F)));
                 result.append(1, static_cast<typename string_t::value_type>(0x80 | ((codepoint >> 6) & 0x3F)));
                 result.append(1, static_cast<typename string_t::value_type>(0x80 | (codepoint & 0x3F)));
