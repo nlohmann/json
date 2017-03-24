@@ -36,10 +36,11 @@ using nlohmann::json;
 
 TEST_CASE("Unicode", "[hide]")
 {
+    /* NOTE: to_unicode is not used any more
     SECTION("full enumeration of Unicode code points")
     {
         // lexer to call to_unicode on
-        json::lexer dummy_lexer(reinterpret_cast<const json::lexer::lexer_char_t*>(""), 0);
+        json::lexer dummy_lexer("", 0);
 
         // create an escaped string from a code point
         const auto codepoint_to_unicode = [](std::size_t cp)
@@ -118,6 +119,7 @@ TEST_CASE("Unicode", "[hide]")
             CHECK(j3 == j4);
         }
     }
+     */
 
     SECTION("read all unicode characters")
     {

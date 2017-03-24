@@ -594,7 +594,7 @@ TEST_CASE("regression tests")
         // a parse error because of the EOF.
         CHECK_THROWS_AS(j << ss, json::parse_error);
         CHECK_THROWS_WITH(j << ss,
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
     }
 
     SECTION("issue #389 - Integer-overflow (OSS-Fuzz issue 267)")
@@ -911,6 +911,7 @@ TEST_CASE("regression tests")
         CHECK(j["bool_vector"].dump() == "[false,true,false,false]");
     }
 
+    /* NOTE: m_line_buffer is not used any more
     SECTION("issue #495 - fill_line_buffer incorrectly tests m_stream for eof but not fail or bad bits")
     {
         SECTION("setting failbit")
@@ -943,6 +944,7 @@ TEST_CASE("regression tests")
             CHECK_THROWS_WITH(l.fill_line_buffer(), "[json.exception.parse_error.111] parse error: bad input stream");
         }
     }
+     */
 
     SECTION("issue #504 - assertion error (OSS-Fuzz 856)")
     {

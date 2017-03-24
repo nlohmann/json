@@ -92,7 +92,7 @@ TEST_CASE("deserialization")
             ss2 << "[\"foo\",1,2,3,false,{\"one\":1}";
             CHECK_THROWS_AS(json::parse(ss1), json::parse_error);
             CHECK_THROWS_WITH(json::parse(ss2),
-                              "[json.exception.parse_error.101] parse error at 30: parse error - unexpected end of input; expected ']'");
+                              "[json.exception.parse_error.101] parse error at 29: syntax error - unexpected end of input; expected ']'");
         }
 
         SECTION("string")
@@ -100,7 +100,7 @@ TEST_CASE("deserialization")
             json::string_t s = "[\"foo\",1,2,3,false,{\"one\":1}";
             CHECK_THROWS_AS(json::parse(s), json::parse_error);
             CHECK_THROWS_WITH(json::parse(s),
-                              "[json.exception.parse_error.101] parse error at 29: parse error - unexpected end of input; expected ']'");
+                              "[json.exception.parse_error.101] parse error at 29: syntax error - unexpected end of input; expected ']'");
         }
 
         SECTION("operator<<")
@@ -111,7 +111,7 @@ TEST_CASE("deserialization")
             json j;
             CHECK_THROWS_AS(j << ss1, json::parse_error);
             CHECK_THROWS_WITH(j << ss2,
-                              "[json.exception.parse_error.101] parse error at 30: parse error - unexpected end of input; expected ']'");
+                              "[json.exception.parse_error.101] parse error at 29: syntax error - unexpected end of input; expected ']'");
         }
 
         SECTION("operator>>")
@@ -122,14 +122,14 @@ TEST_CASE("deserialization")
             json j;
             CHECK_THROWS_AS(ss1 >> j, json::parse_error);
             CHECK_THROWS_WITH(ss2 >> j,
-                              "[json.exception.parse_error.101] parse error at 30: parse error - unexpected end of input; expected ']'");
+                              "[json.exception.parse_error.101] parse error at 29: syntax error - unexpected end of input; expected ']'");
         }
 
         SECTION("user-defined string literal")
         {
             CHECK_THROWS_AS("[\"foo\",1,2,3,false,{\"one\":1}"_json, json::parse_error);
             CHECK_THROWS_WITH("[\"foo\",1,2,3,false,{\"one\":1}"_json,
-                              "[json.exception.parse_error.101] parse error at 29: parse error - unexpected end of input; expected ']'");
+                              "[json.exception.parse_error.101] parse error at 29: syntax error - unexpected end of input; expected ']'");
         }
     }
 

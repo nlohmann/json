@@ -91,18 +91,18 @@ TEST_CASE("parser class")
                 // error: tab in string
                 CHECK_THROWS_AS(json::parser("\"\t\"").parse(), json::parse_error);
                 CHECK_THROWS_WITH(json::parser("\"\t\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                                  "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
                 // error: newline in string
                 CHECK_THROWS_AS(json::parser("\"\n\"").parse(), json::parse_error);
                 CHECK_THROWS_AS(json::parser("\"\r\"").parse(), json::parse_error);
                 CHECK_THROWS_WITH(json::parser("\"\n\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                                  "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
                 CHECK_THROWS_WITH(json::parser("\"\r\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                                  "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
                 // error: backspace in string
                 CHECK_THROWS_AS(json::parser("\"\b\"").parse(), json::parse_error);
                 CHECK_THROWS_WITH(json::parser("\"\b\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                                  "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
                 // improve code coverage
                 CHECK_THROWS_AS(json::parser("\uFF01").parse(), json::parse_error);
                 CHECK_THROWS_AS(json::parser("[-4:1,]").parse(), json::parse_error);
@@ -306,39 +306,39 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("+0").parse(), json::parse_error);
 
                 CHECK_THROWS_WITH(json::parser("01").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: parse error - unexpected '01'");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected '01'");
                 CHECK_THROWS_WITH(json::parser("-01").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected '-01'");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected '-01'");
                 CHECK_THROWS_WITH(json::parser("--1").parse(),
-                                  "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '-'");
+                                  "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '-'");
                 CHECK_THROWS_WITH(json::parser("1.").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: parse error - unexpected '.'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected '.'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("1E").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("1E-").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("1.E1").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: parse error - unexpected '.'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected '.'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-1E").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0E#").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0E-#").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected 'E'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0#").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected '#'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected '#'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0.0:").parse(),
-                                  "[json.exception.parse_error.101] parse error at 5: parse error - unexpected ':'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 5: syntax error - unexpected ':'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0.0Z").parse(),
-                                  "[json.exception.parse_error.101] parse error at 5: parse error - unexpected 'Z'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 5: syntax error - unexpected 'Z'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0E123:").parse(),
-                                  "[json.exception.parse_error.101] parse error at 7: parse error - unexpected ':'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 7: syntax error - unexpected ':'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0e0-:").parse(),
-                                  "[json.exception.parse_error.101] parse error at 5: parse error - unexpected '-'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 5: syntax error - unexpected '-'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0e-:").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected 'e'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected 'e'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0f").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: parse error - unexpected 'f'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected 'f'; expected end of input");
             }
         }
     }
@@ -361,66 +361,66 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("1E/").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("1E:").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("0.").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected '.'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected '.'; expected end of input");
         CHECK_THROWS_WITH(json::parser("-").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("--").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("-0.").parse(),
-                          "[json.exception.parse_error.101] parse error at 3: parse error - unexpected '.'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected '.'; expected end of input");
         CHECK_THROWS_WITH(json::parser("-.").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("-:").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '-'");
         CHECK_THROWS_WITH(json::parser("0.:").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected '.'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected '.'; expected end of input");
         CHECK_THROWS_WITH(json::parser("e.").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'e'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'e'");
         CHECK_THROWS_WITH(json::parser("1e.").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'e'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'e'; expected end of input");
         CHECK_THROWS_WITH(json::parser("1e/").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'e'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'e'; expected end of input");
         CHECK_THROWS_WITH(json::parser("1e:").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'e'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'e'; expected end of input");
         CHECK_THROWS_WITH(json::parser("1E.").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'E'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'E'; expected end of input");
         CHECK_THROWS_WITH(json::parser("1E/").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'E'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'E'; expected end of input");
         CHECK_THROWS_WITH(json::parser("1E:").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected 'E'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'E'; expected end of input");
 
         // unexpected end of null
         CHECK_THROWS_AS(json::parser("n").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("nu").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("nul").parse(), json::parse_error);
-        CHECK_THROWS_WITH(json::parser("n").parse(), "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'n'");
+        CHECK_THROWS_WITH(json::parser("n").parse(), "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'n'");
         CHECK_THROWS_WITH(json::parser("nu").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'n'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'n'");
         CHECK_THROWS_WITH(json::parser("nul").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'n'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'n'");
 
         // unexpected end of true
         CHECK_THROWS_AS(json::parser("t").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("tr").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("tru").parse(), json::parse_error);
-        CHECK_THROWS_WITH(json::parser("t").parse(), "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 't'");
+        CHECK_THROWS_WITH(json::parser("t").parse(), "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 't'");
         CHECK_THROWS_WITH(json::parser("tr").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 't'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 't'");
         CHECK_THROWS_WITH(json::parser("tru").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 't'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 't'");
 
         // unexpected end of false
         CHECK_THROWS_AS(json::parser("f").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("fa").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("fal").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("fals").parse(), json::parse_error);
-        CHECK_THROWS_WITH(json::parser("f").parse(), "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'f'");
+        CHECK_THROWS_WITH(json::parser("f").parse(), "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'f'");
         CHECK_THROWS_WITH(json::parser("fa").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'f'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'f'");
         CHECK_THROWS_WITH(json::parser("fal").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'f'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'f'");
         CHECK_THROWS_WITH(json::parser("fals").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected 'f'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'f'");
 
         // missing/unexpected end of array
         CHECK_THROWS_AS(json::parser("[").parse(), json::parse_error);
@@ -429,15 +429,15 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("[1,]").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("]").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("[").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected end of input");
         CHECK_THROWS_WITH(json::parser("[1").parse(),
-                          "[json.exception.parse_error.101] parse error at 3: parse error - unexpected end of input; expected ']'");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected end of input; expected ']'");
         CHECK_THROWS_WITH(json::parser("[1,").parse(),
-                          "[json.exception.parse_error.101] parse error at 4: parse error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - unexpected end of input");
         CHECK_THROWS_WITH(json::parser("[1,]").parse(),
-                          "[json.exception.parse_error.101] parse error at 4: parse error - unexpected ']'");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - unexpected ']'");
         CHECK_THROWS_WITH(json::parser("]").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected ']'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected ']'");
 
         // missing/unexpected end of object
         CHECK_THROWS_AS(json::parser("{").parse(), json::parse_error);
@@ -447,17 +447,17 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("{\"foo\":1,}").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("}").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("{").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected end of input; expected string literal");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected end of input; expected string literal");
         CHECK_THROWS_WITH(json::parser("{\"foo\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 7: parse error - unexpected end of input; expected ':'");
+                          "[json.exception.parse_error.101] parse error at 7: syntax error - unexpected end of input; expected ':'");
         CHECK_THROWS_WITH(json::parser("{\"foo\":").parse(),
-                          "[json.exception.parse_error.101] parse error at 8: parse error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 8: syntax error - unexpected end of input");
         CHECK_THROWS_WITH(json::parser("{\"foo\":}").parse(),
-                          "[json.exception.parse_error.101] parse error at 8: parse error - unexpected '}'");
+                          "[json.exception.parse_error.101] parse error at 8: syntax error - unexpected '}'");
         CHECK_THROWS_WITH(json::parser("{\"foo\":1,}").parse(),
-                          "[json.exception.parse_error.101] parse error at 10: parse error - unexpected '}'; expected string literal");
+                          "[json.exception.parse_error.101] parse error at 10: syntax error - unexpected '}'; expected string literal");
         CHECK_THROWS_WITH(json::parser("}").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '}'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '}'");
 
         // missing/unexpected end of string
         CHECK_THROWS_AS(json::parser("\"").parse(), json::parse_error);
@@ -471,25 +471,25 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("\"\\u01").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("\"\\u012").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u0\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u01\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u012\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u0").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u01").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u012").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
 
         // invalid escapes
         for (int c = 1; c < 128; ++c)
@@ -523,7 +523,7 @@ TEST_CASE("parser class")
                 {
                     CHECK_THROWS_AS(json::parser(s.c_str()).parse(), json::parse_error);
                     CHECK_THROWS_WITH(json::parser(s.c_str()).parse(),
-                                      "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                                      "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
                     break;
                 }
             }
@@ -594,13 +594,13 @@ TEST_CASE("parser class")
                     CHECK_THROWS_AS(json::parser(s4.c_str()).parse(), json::parse_error);
 
                     CHECK_THROWS_WITH(json::parser(s1.c_str()).parse(),
-                                      "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                                      "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
                     CHECK_THROWS_WITH(json::parser(s2.c_str()).parse(),
-                                      "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                                      "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
                     CHECK_THROWS_WITH(json::parser(s3.c_str()).parse(),
-                                      "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                                      "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
                     CHECK_THROWS_WITH(json::parser(s4.c_str()).parse(),
-                                      "[json.exception.parse_error.101] parse error at 1: parse error - unexpected '\"'");
+                                      "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
                 }
             }
         }
@@ -626,11 +626,11 @@ TEST_CASE("parser class")
         // test case to make sure no comma preceeds the first key
         CHECK_THROWS_AS(json::parser("{,\"key\": false}").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("{,\"key\": false}").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: parse error - unexpected ','");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected ','");
         // test case to make sure an object is properly closed
         CHECK_THROWS_AS(json::parser("[{\"key\": false true]").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("[{\"key\": false true]").parse(),
-                          "[json.exception.parse_error.101] parse error at 19: parse error - unexpected true literal; expected '}'");
+                          "[json.exception.parse_error.101] parse error at 19: syntax error - unexpected true literal; expected '}'");
 
         // test case to make sure the callback is properly evaluated after reading a key
         {
