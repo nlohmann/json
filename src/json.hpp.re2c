@@ -123,13 +123,13 @@ Extension of std::exception objects with a member @a id for exception ids.
 
 @since version 3.0.0
 */
-class exception : public std::runtime_error
+class exception : public std::exception
 {
   public:
     /// returns the explanatory string
     virtual const char* what() const noexcept override
     {
-        return std::runtime_error::what();
+        return m.what();
     }
 
     /// the id of the exception
@@ -137,13 +137,16 @@ class exception : public std::runtime_error
 
   protected:
     exception(int id_, const char* what_arg)
-        : std::runtime_error(what_arg), id(id_)
+        : id(id_), m(what_arg)
     {}
 
     static std::string name(const std::string& ename, int id_)
     {
         return "[json.exception." + ename + "." + std::to_string(id_) + "] ";
     }
+
+  private:
+    std::runtime_error m;
 };
 
 /*!
