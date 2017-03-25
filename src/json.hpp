@@ -12486,7 +12486,7 @@ basic_json_parser_74:
                         {
                             result = &result->operator[](static_cast<size_type>(std::stoi(reference_token)));
                         }
-                        JSON_CATCH(std::invalid_argument&)
+                        JSON_CATCH (std::invalid_argument&)
                         {
                             JSON_THROW(parse_error(109, 0, "array index '" + reference_token + "' is not a number"));
                         }
@@ -12585,7 +12585,7 @@ basic_json_parser_74:
                             {
                                 ptr = &ptr->operator[](static_cast<size_type>(std::stoi(reference_token)));
                             }
-                            JSON_CATCH(std::invalid_argument&)
+                            JSON_CATCH (std::invalid_argument&)
                             {
                                 JSON_THROW(parse_error(109, 0, "array index '" + reference_token + "' is not a number"));
                             }
@@ -12643,7 +12643,7 @@ basic_json_parser_74:
                         {
                             ptr = &ptr->at(static_cast<size_type>(std::stoi(reference_token)));
                         }
-                        JSON_CATCH(std::invalid_argument&)
+                        JSON_CATCH (std::invalid_argument&)
                         {
                             JSON_THROW(parse_error(109, 0, "array index '" + reference_token + "' is not a number"));
                         }
@@ -12707,7 +12707,7 @@ basic_json_parser_74:
                         {
                             ptr = &ptr->operator[](static_cast<size_type>(std::stoi(reference_token)));
                         }
-                        JSON_CATCH(std::invalid_argument&)
+                        JSON_CATCH (std::invalid_argument&)
                         {
                             JSON_THROW(parse_error(109, 0, "array index '" + reference_token + "' is not a number"));
                         }
@@ -12764,7 +12764,7 @@ basic_json_parser_74:
                         {
                             ptr = &ptr->at(static_cast<size_type>(std::stoi(reference_token)));
                         }
-                        JSON_CATCH(std::invalid_argument&)
+                        JSON_CATCH (std::invalid_argument&)
                         {
                             JSON_THROW(parse_error(109, 0, "array index '" + reference_token + "' is not a number"));
                         }
