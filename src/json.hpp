@@ -116,7 +116,7 @@ namespace detail
 
 Extension of std::exception objects with a member @a id for exception ids.
 
-@note To have nothrow-copy-constructible exceptions, we inherit from
+@note To have nothrow-copy-constructible exceptions, we internally use
       std::runtime_error which can cope with arbitrary-length error messages.
       Intermediate strings are built with static functions and then passed to
       the actual constructor.
@@ -136,16 +136,17 @@ class exception : public std::exception
     const int id;
 
   protected:
-    exception(int id_, const char* what_arg)
+    exception(int id_, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
         : id(id_), m(what_arg)
     {}
 
-    static std::string name(const std::string& ename, int id_)
+    static std::string name(const std::string& ename, int id)
     {
-        return "[json.exception." + ename + "." + std::to_string(id_) + "] ";
+        return "[json.exception." + ename + "." + std::to_string(id) + "] ";
     }
 
   private:
+    /// an exception object as storage for error messages
     std::runtime_error m;
 };
 
@@ -184,23 +185,23 @@ json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last 
 
 @since version 3.0.0
 */
-class parse_error : public exception
+class parse_error : private exception
 {
   public:
     /*!
     @brief create a parse error exception
-    @param[in] id_        the id of the exception
+    @param[in] id         the id of the exception
     @param[in] byte_      the byte index where the error occured (or 0 if
                           the position cannot be determined)
     @param[in] what_arg   the explanatory string
     @return parse_error object
     */
-    static parse_error create(int id_, size_t byte_, const std::string& what_arg)
+    static parse_error create(int id, size_t byte_, const std::string& what_arg)
     {
-        std::string w = exception::name("parse_error", id_) + "parse error" +
+        std::string w = exception::name("parse_error", id) + "parse error" +
                         (byte_ != 0 ? (" at " + std::to_string(byte_)) : "") +
                         ": " + what_arg;
-        return parse_error(id_, byte_, w.c_str());
+        return parse_error(id, byte_, w.c_str());
     }
 
     /*!
@@ -216,9 +217,8 @@ class parse_error : public exception
     const size_t byte;
 
   private:
-    parse_error(int id_, size_t byte_, const char* what_arg)
-        : exception(id_, what_arg),
-          byte(byte_)
+    parse_error(int id, size_t byte_, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
+        : exception(id, what_arg), byte(byte_)
     {}
 };
 
@@ -249,15 +249,15 @@ json.exception.invalid_iterator.214 | cannot get value | Cannot get value for it
 class invalid_iterator : public exception
 {
   public:
-    static invalid_iterator create(int id_, const std::string& what_arg)
+    static invalid_iterator create(int id, const std::string& what_arg)
     {
-        std::string w = exception::name("invalid_iterator", id_) + what_arg;
-        return invalid_iterator(id_, w.c_str());
+        std::string w = exception::name("invalid_iterator", id) + what_arg;
+        return invalid_iterator(id, w.c_str());
     }
 
   private:
-    invalid_iterator(int id_, const char* what_arg)
-        : exception(id_, what_arg)
+    invalid_iterator(int id, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
+        : exception(id, what_arg)
     {}
 };
 
@@ -288,15 +288,15 @@ json.exception.type_error.315 | values in object must be primitive | The @ref un
 class type_error : public exception
 {
   public:
-    static type_error create(int id_, const std::string& what_arg)
+    static type_error create(int id, const std::string& what_arg)
     {
-        std::string w = exception::name("type_error", id_) + what_arg;
-        return type_error(id_, w.c_str());
+        std::string w = exception::name("type_error", id) + what_arg;
+        return type_error(id, w.c_str());
     }
 
   private:
-    type_error(int id_, const char* what_arg)
-        : exception(id_, what_arg)
+    type_error(int id, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
+        : exception(id, what_arg)
     {}
 };
 
@@ -319,15 +319,15 @@ json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed n
 class out_of_range : public exception
 {
   public:
-    static out_of_range create(int id_, const std::string& what_arg)
+    static out_of_range create(int id, const std::string& what_arg)
     {
-        std::string w = exception::name("out_of_range", id_) + what_arg;
-        return out_of_range(id_, w.c_str());
+        std::string w = exception::name("out_of_range", id) + what_arg;
+        return out_of_range(id, w.c_str());
     }
 
   private:
-    out_of_range(int id_, const char* what_arg)
-        : exception(id_, what_arg)
+    out_of_range(int id, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
+        : exception(id, what_arg)
     {}
 };
 
@@ -345,15 +345,15 @@ json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "valu
 class other_error : public exception
 {
   public:
-    static other_error create(int id_, const std::string& what_arg)
+    static other_error create(int id, const std::string& what_arg)
     {
-        std::string w = exception::name("other_error", id_) + what_arg;
-        return other_error(id_, w.c_str());
+        std::string w = exception::name("other_error", id) + what_arg;
+        return other_error(id, w.c_str());
     }
 
   private:
-    other_error(int id_, const char* what_arg)
-        : exception(id_, what_arg)
+    other_error(int id, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
+        : exception(id, what_arg)
     {}
 };
 
