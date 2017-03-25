@@ -58,10 +58,19 @@ static_assert(noexcept(j.get<pod>()), "");
 static_assert(not noexcept(j.get<pod_bis>()), "");
 static_assert(noexcept(json(pod{})), "");
 
-// for ERR60-CPP (https://github.com/nlohmann/json/issues/531)
-static_assert(std::is_nothrow_copy_constructible<json::exception>::value, "json::exception must be nothrow copy constructible");
-static_assert(std::is_nothrow_copy_constructible<json::parse_error>::value, "json::parse_error must be nothrow copy constructible");
-static_assert(std::is_nothrow_copy_constructible<json::invalid_iterator>::value, "json::invalid_iterator must be nothrow copy constructible");
-static_assert(std::is_nothrow_copy_constructible<json::type_error>::value, "json::type_error must be nothrow copy constructible");
-static_assert(std::is_nothrow_copy_constructible<json::out_of_range>::value, "json::out_of_range must be nothrow copy constructible");
-static_assert(std::is_nothrow_copy_constructible<json::other_error>::value, "json::other_error must be nothrow copy constructible");
+TEST_CASE("runtime checks")
+{
+    SECTION("nothrow-copy-constructible exceptions")
+    {
+        // for ERR60-CPP (https://github.com/nlohmann/json/issues/531)
+        if (std::is_nothrow_copy_constructible<std::runtime_error>::value)
+        {
+            CHECK(std::is_nothrow_copy_constructible<json::exception>::value);
+            CHECK(std::is_nothrow_copy_constructible<json::parse_error>::value);
+            CHECK(std::is_nothrow_copy_constructible<json::invalid_iterator>::value);
+            CHECK(std::is_nothrow_copy_constructible<json::type_error>::value);
+            CHECK(std::is_nothrow_copy_constructible<json::out_of_range>::value);
+            CHECK(std::is_nothrow_copy_constructible<json::other_error>::value);
+        }
+    }
+}
