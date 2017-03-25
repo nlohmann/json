@@ -584,7 +584,7 @@ struct pod_serializer
                   std::is_pod<U>::value and std::is_class<U>::value, int>::type = 0>
     static void to_json(BasicJsonType& j, const  T& t) noexcept
     {
-        auto bytes = static_cast< const unsigned char*>(static_cast<const void*>(&t));
+        auto bytes = static_cast<const unsigned char*>(static_cast<const void*>(&t));
         std::uint64_t value = bytes[0];
         for (auto i = 1; i < 8; ++i)
             value |= std::uint64_t{bytes[i]} << 8 * i;
