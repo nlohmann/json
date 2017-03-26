@@ -1,7 +1,0 @@
-- test/test-class_parser
-    - 617 failed
-- test/test-regression
-    - 11 failed
-- test/test-testsuites
-    - 43 failed
-

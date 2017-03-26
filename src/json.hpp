@@ -10517,12 +10517,13 @@ class basic_json
         }
 
         explicit lexer(std::istream& i)
-        //        : ia(new input_stream_adapter(i))
-            : ia(new cached_input_stream_adapter(i))
+            : ia(new cached_input_stream_adapter(i)),
+              decimal_point_char(get_decimal_point())
         {}
 
         lexer(const char* buff, const size_t len)
-            : ia(new input_buffer_adapter(buff, len))
+            : ia(new input_buffer_adapter(buff, len)),
+              decimal_point_char(get_decimal_point())
         {}
 
         ~lexer()
@@ -10536,6 +10537,18 @@ class basic_json
         lexer operator=(const lexer&) = delete;
 
       private:
+        /////////////////////
+        // locales
+        /////////////////////
+
+        /// return the locale-dependent decimal point
+        static char get_decimal_point() noexcept
+        {
+            const auto loc = localeconv();
+            assert(loc != nullptr);
+            return (loc->decimal_point == nullptr) ? '.' : loc->decimal_point[0];
+        }
+
         /////////////////////
         // scan functions
         /////////////////////
@@ -10815,7 +10828,8 @@ class basic_json
                     return token_type::parse_error;
                 }
 
-                add(current);
+                // add current character and fix decimal point
+                add((state == 4) ? decimal_point_char : current);
                 get();
                 old_state = state;
                 state = lookup[state][static_cast<unsigned char>(current)];
@@ -11103,6 +11117,9 @@ class basic_json
         long long value_integer = 0;
         unsigned long long value_unsigned = 0;
         double value_float = 0;
+
+        // the decimal point
+        const char decimal_point_char = '\0';
     };
 
     /*!
