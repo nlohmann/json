@@ -310,21 +310,21 @@ TEST_CASE("parser class")
                 CHECK_THROWS_WITH(json::parser("-01").parse(),
                                   "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected '-01'");
                 CHECK_THROWS_WITH(json::parser("--1").parse(),
-                                  "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '-'");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid number; expected digit after '-'; last read '--'");
                 CHECK_THROWS_WITH(json::parser("1.").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected '.'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected digit after '.'; last read '1.'");
                 CHECK_THROWS_WITH(json::parser("1E").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected '+', '-', or digit after exponent; last read '1E'");
                 CHECK_THROWS_WITH(json::parser("1E-").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 4: syntax error - invalid number; expected digit after exponent sign; last read '1E-'");
                 CHECK_THROWS_WITH(json::parser("1.E1").parse(),
                                   "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected '.'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-1E").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 4: syntax error - invalid number; expected '+', '-', or digit after exponent; last read '-1E'");
                 CHECK_THROWS_WITH(json::parser("-0E#").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 4: syntax error - invalid number; expected '+', '-', or digit after exponent; last read '-0E#'");
                 CHECK_THROWS_WITH(json::parser("-0E-#").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected 'E'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 5: syntax error - invalid number; expected digit after exponent sign; last read '-0E-#'");
                 CHECK_THROWS_WITH(json::parser("-0#").parse(),
                                   "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected '#'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0.0:").parse(),
@@ -336,7 +336,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_WITH(json::parser("-0e0-:").parse(),
                                   "[json.exception.parse_error.101] parse error at 5: syntax error - unexpected '-'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0e-:").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected 'e'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 5: syntax error - invalid number; expected digit after exponent sign; last read '-0e-:'");
                 CHECK_THROWS_WITH(json::parser("-0f").parse(),
                                   "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected 'f'; expected end of input");
             }
@@ -361,33 +361,33 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("1E/").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("1E:").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("0.").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected '.'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected digit after '.'; last read '0.'");
         CHECK_THROWS_WITH(json::parser("-").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid number; expected digit after '-'; last read '-'");
         CHECK_THROWS_WITH(json::parser("--").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid number; expected digit after '-'; last read '--'");
         CHECK_THROWS_WITH(json::parser("-0.").parse(),
-                          "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected '.'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid number; expected digit after '.'; last read '-0.'");
         CHECK_THROWS_WITH(json::parser("-.").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid number; expected digit after '-'; last read '-.'");
         CHECK_THROWS_WITH(json::parser("-:").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '-'");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid number; expected digit after '-'; last read '-:'");
         CHECK_THROWS_WITH(json::parser("0.:").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected '.'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected digit after '.'; last read '0.:'");
         CHECK_THROWS_WITH(json::parser("e.").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'e'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - invalid literal; last read 'e'");
         CHECK_THROWS_WITH(json::parser("1e.").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'e'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected '+', '-', or digit after exponent; last read '1e.'");
         CHECK_THROWS_WITH(json::parser("1e/").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'e'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected '+', '-', or digit after exponent; last read '1e/'");
         CHECK_THROWS_WITH(json::parser("1e:").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'e'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected '+', '-', or digit after exponent; last read '1e:'");
         CHECK_THROWS_WITH(json::parser("1E.").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'E'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected '+', '-', or digit after exponent; last read '1E.'");
         CHECK_THROWS_WITH(json::parser("1E/").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'E'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected '+', '-', or digit after exponent; last read '1E/'");
         CHECK_THROWS_WITH(json::parser("1E:").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected 'E'; expected end of input");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected '+', '-', or digit after exponent; last read '1E:'");
 
         // unexpected end of null
         CHECK_THROWS_AS(json::parser("n").parse(), json::parse_error);
