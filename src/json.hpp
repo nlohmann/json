@@ -10771,6 +10771,23 @@ class basic_json
             }
         }
 
+        // overloaded wrappers for strtod/strtof/strtold
+        // that will be called from parse<floating_point_t>
+        static void strtof(float& f, const char* str, char** endptr) noexcept
+        {
+            f = std::strtof(str, endptr);
+        }
+
+        static void strtof(double& f, const char* str, char** endptr) noexcept
+        {
+            f = std::strtod(str, endptr);
+        }
+
+        static void strtof(long double& f, const char* str, char** endptr) noexcept
+        {
+            f = std::strtold(str, endptr);
+        }
+
         token_type scan_number()
         {
             static unsigned char lookup[9][256] =
@@ -10851,23 +10868,25 @@ class basic_json
                 errno = 0;
                 if (has_sign)
                 {
-                    value_integer = std::strtoll(yytext.data(), &endptr, 10);
-                    if (JSON_LIKELY(errno == 0 and endptr == yytext.data() + yylen))
+                    const auto x = std::strtoll(yytext.data(), &endptr, 10);
+                    value_integer = static_cast<number_integer_t>(x);
+                    if (JSON_LIKELY(errno == 0 and endptr == yytext.data() + yylen and value_integer == x))
                     {
                         return token_type::value_integer;
                     }
                 }
                 else
                 {
-                    value_unsigned = std::strtoull(yytext.data(), &endptr, 10);
-                    if (JSON_LIKELY(errno == 0 and endptr == yytext.data() + yylen))
+                    const auto x = std::strtoull(yytext.data(), &endptr, 10);
+                    value_unsigned = static_cast<number_unsigned_t>(x);
+                    if (JSON_LIKELY(errno == 0 and endptr == yytext.data() + yylen and value_unsigned == x))
                     {
                         return token_type::value_unsigned;
                     }
                 }
             }
 
-            value_float = std::strtod(yytext.data(), nullptr);
+            strtof(value_float, yytext.data(), nullptr);
             return token_type::value_float;
         }
 
@@ -10996,14 +11015,14 @@ class basic_json
                 case lexer::token_type::value_unsigned:
                 {
                     result.m_type = value_t::number_unsigned;
-                    result.m_value = static_cast<number_unsigned_t>(value_unsigned);
+                    result.m_value = value_unsigned;
                     return true;
                 }
 
                 case lexer::token_type::value_integer:
                 {
                     result.m_type = value_t::number_integer;
-                    result.m_value = static_cast<number_integer_t>(value_integer);
+                    result.m_value = value_integer;
                     return true;
                 }
 
@@ -11016,7 +11035,7 @@ class basic_json
                     }
 
                     result.m_type = value_t::number_float;
-                    result.m_value = static_cast<number_float_t>(value_float);
+                    result.m_value = value_float;
                     return true;
                 }
 
@@ -11114,9 +11133,9 @@ class basic_json
         std::string error_message = "";
 
         // number values
-        long long value_integer = 0;
-        unsigned long long value_unsigned = 0;
-        double value_float = 0;
+        number_integer_t value_integer = 0;
+        number_unsigned_t value_unsigned = 0;
+        number_float_t value_float = 0;
 
         // the decimal point
         const char decimal_point_char = '\0';
