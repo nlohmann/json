@@ -529,7 +529,7 @@ TEST_CASE("parser class")
                     if (c > 0x1f)
                     {
                         CHECK_THROWS_WITH(json::parser(s.c_str()).parse(),
-                                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid string: forbidden character after backspace; last read '\"\\" + std::string(1, c) + "'");
+                                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid string: forbidden character after backspace; last read '\"\\" + std::string(1, static_cast<char>(c)) + "'");
                     }
                     break;
                 }

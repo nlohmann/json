@@ -216,6 +216,7 @@ TEST_CASE("regression tests")
         {
             json a = {1, 2, 3};
             json::reverse_iterator rit = ++a.rbegin();
+            CHECK(*rit == json(2));
         }
         {
             json a = {1, 2, 3};

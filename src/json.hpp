@@ -222,8 +222,8 @@ class parse_error : public exception
     const size_t byte;
 
   private:
-    parse_error(int id, size_t byte_, const char* what_arg)
-        : exception(id, what_arg), byte(byte_)
+    parse_error(int id_, size_t byte_, const char* what_arg)
+        : exception(id_, what_arg), byte(byte_)
     {}
 };
 
@@ -261,8 +261,8 @@ class invalid_iterator : public exception
     }
 
   private:
-    invalid_iterator(int id, const char* what_arg)
-        : exception(id, what_arg)
+    invalid_iterator(int id_, const char* what_arg)
+        : exception(id_, what_arg)
     {}
 };
 
@@ -300,8 +300,8 @@ class type_error : public exception
     }
 
   private:
-    type_error(int id, const char* what_arg)
-        : exception(id, what_arg)
+    type_error(int id_, const char* what_arg)
+        : exception(id_, what_arg)
     {}
 };
 
@@ -331,8 +331,8 @@ class out_of_range : public exception
     }
 
   private:
-    out_of_range(int id, const char* what_arg)
-        : exception(id, what_arg)
+    out_of_range(int id_, const char* what_arg)
+        : exception(id_, what_arg)
     {}
 };
 
@@ -357,8 +357,8 @@ class other_error : public exception
     }
 
   private:
-    other_error(int id, const char* what_arg)
-        : exception(id, what_arg)
+    other_error(int id_, const char* what_arg)
+        : exception(id_, what_arg)
     {}
 };
 
@@ -10828,24 +10828,33 @@ class basic_json
             add('\0');
             --yylen;
 
-            if (has_exp or has_point)
+            // the conversion
+            char* endptr = nullptr;
+
+            // try to parse integers first and fall back to floats
+            if (not has_exp and not has_point)
             {
-                value_float = std::strtod(yytext.data(), nullptr);
-                return token_type::value_float;
+                errno = 0;
+                if (has_sign)
+                {
+                    value_integer = std::strtoll(yytext.data(), &endptr, 10);
+                    if (JSON_LIKELY(errno == 0 and endptr == yytext.data() + yylen))
+                    {
+                        return token_type::value_integer;
+                    }
+                }
+                else
+                {
+                    value_unsigned = std::strtoull(yytext.data(), &endptr, 10);
+                    if (JSON_LIKELY(errno == 0 and endptr == yytext.data() + yylen))
+                    {
+                        return token_type::value_unsigned;
+                    }
+                }
             }
 
-            if (has_sign)
-            {
-                char* endptr = nullptr;
-                value_integer = std::strtoll(yytext.data(), &endptr, 10);
-                return token_type::value_integer;
-            }
-            else
-            {
-                char* endptr = nullptr;
-                value_unsigned = std::strtoull(yytext.data(), &endptr, 10);
-                return token_type::value_unsigned;
-            }
+            value_float = std::strtod(yytext.data(), nullptr);
+            return token_type::value_float;
         }
 
         token_type scan_true()
@@ -10986,6 +10995,12 @@ class basic_json
 
                 case lexer::token_type::value_float:
                 {
+                    // throw in case of infinity or NAN
+                    if (not std::isfinite(value_float))
+                    {
+                        JSON_THROW(out_of_range::create(406, "number overflow parsing '" + get_token_string() + "'"));
+                    }
+
                     result.m_type = value_t::number_float;
                     result.m_value = static_cast<number_float_t>(value_float);
                     return true;
