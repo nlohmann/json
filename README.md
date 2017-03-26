@@ -706,6 +706,7 @@ Though it's 2016 already, the support for C++11 is still a bit sparse. Currently
 - GCC 4.9 - 6.0 (and possibly later)
 - Clang 3.4 - 3.9 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
+- Microsoft Visual C++ 2017 / Build Tools 15.1.548.43366 (and possibly later)
 
 I would be happy to learn about other compilers/versions.
 
@@ -744,7 +745,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 8.1 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
 | Clang Xcode 8.2 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25123.0 | 
-
+| Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.1.548.43366 |
 
 ## License
 
@@ -809,7 +810,7 @@ I deeply appreciate the help of the following people.
 - [Stefan](https://github.com/5tefan) fixed a minor issue in the documentation.
 - [Vasil Dimov](https://github.com/vasild) fixed the documentation regarding conversions from `std::multiset`.
 - [ChristophJud](https://github.com/ChristophJud) overworked the CMake files to ease project inclusion.
-- [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable.
+- [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable and added Visual Studio 17 to the build matrix.
 - [Denis Andrejew](https://github.com/seeekr) fixed a grammar issue in the README file.
 - [Pierre-Antoine Lacaze](https://github.com/palacaze) found a subtle bug in the `dump()` function.
 - [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser, improved the benchmarking code, and realized locale-independent number parsing and printing.
@@ -893,7 +894,7 @@ $ make json_unit -Ctest
 $ ./test/json_unit "*"
 
 ===============================================================================
-All tests passed (11202597 assertions in 47 test cases)
+All tests passed (11203022 assertions in 48 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run
