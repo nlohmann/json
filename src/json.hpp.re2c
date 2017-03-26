@@ -136,7 +136,7 @@ class exception : public std::exception
     const int id;
 
   protected:
-    exception(int id_, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
+    exception(int id_, const char* what_arg)
         : id(id_), m(what_arg)
     {}
 
@@ -217,7 +217,7 @@ class parse_error : public exception
     const size_t byte;
 
   private:
-    parse_error(int id, size_t byte_, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
+    parse_error(int id, size_t byte_, const char* what_arg)
         : exception(id, what_arg), byte(byte_)
     {}
 };
@@ -256,7 +256,7 @@ class invalid_iterator : public exception
     }
 
   private:
-    invalid_iterator(int id, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
+    invalid_iterator(int id, const char* what_arg)
         : exception(id, what_arg)
     {}
 };
@@ -295,7 +295,7 @@ class type_error : public exception
     }
 
   private:
-    type_error(int id, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
+    type_error(int id, const char* what_arg)
         : exception(id, what_arg)
     {}
 };
@@ -326,7 +326,7 @@ class out_of_range : public exception
     }
 
   private:
-    out_of_range(int id, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
+    out_of_range(int id, const char* what_arg)
         : exception(id, what_arg)
     {}
 };
@@ -352,7 +352,7 @@ class other_error : public exception
     }
 
   private:
-    other_error(int id, const char* what_arg) noexcept(noexcept(std::runtime_error(what_arg)))
+    other_error(int id, const char* what_arg)
         : exception(id, what_arg)
     {}
 };
