@@ -42,6 +42,7 @@ SOFTWARE.
 #include <forward_list> // forward_list
 #include <functional> // function, hash, less
 #include <initializer_list> // initializer_list
+#include <iomanip> // hex
 #include <iostream> // istream, ostream
 #include <iterator> // advance, begin, back_inserter, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
 #include <limits> // numeric_limits
@@ -10542,36 +10543,30 @@ class basic_json
         // must be called after \u was read; returns following xxxx as hex or -1 when error
         int get_codepoint()
         {
-            // read xxxx of \uxxxx
-            std::vector<char> buffer(5, '\0');
+            // a mapping to discover hex numbers
+            static int8_t ascii_to_hex[256] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+
+            int codepoint = 0;
+
             for (size_t i = 0; i < 4; ++i)
             {
-                get();
-                if (JSON_UNLIKELY(current != std::char_traits<char>::eof()))
+                const int8_t digit = ascii_to_hex[static_cast<unsigned char>(get())];
+                if (JSON_UNLIKELY(digit == -1))
                 {
-                    buffer[i] = static_cast<char>(current);
+                    return -1;
                 }
                 else
                 {
-                    // error message will be created by caller
-                    return -1;
+                    codepoint += digit;
+                }
+
+                if (i != 3)
+                {
+                    codepoint <<= 4;
                 }
             }
 
-            char* endptr;
-            errno = 0;
-
-            const int codepoint = static_cast<int>(std::strtoul(buffer.data(), &endptr, 16));
-
-            if (JSON_LIKELY(errno == 0 and endptr == buffer.data() + 4))
-            {
-                return codepoint;
-            }
-            else
-            {
-                // conversion incomplete or failure
-                return -1;
-            }
+            return codepoint;
         }
 
         token_type scan_string()

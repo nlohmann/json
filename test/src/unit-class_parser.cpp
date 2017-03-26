@@ -91,18 +91,18 @@ TEST_CASE("parser class")
                 // error: tab in string
                 CHECK_THROWS_AS(json::parser("\"\t\"").parse(), json::parse_error);
                 CHECK_THROWS_WITH(json::parser("\"\t\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control characters (U+0000 through U+001f) must be escaped; last read '\"<U+0009>'");
                 // error: newline in string
                 CHECK_THROWS_AS(json::parser("\"\n\"").parse(), json::parse_error);
                 CHECK_THROWS_AS(json::parser("\"\r\"").parse(), json::parse_error);
                 CHECK_THROWS_WITH(json::parser("\"\n\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control characters (U+0000 through U+001f) must be escaped; last read '\"<U+000a>'");
                 CHECK_THROWS_WITH(json::parser("\"\r\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control characters (U+0000 through U+001f) must be escaped; last read '\"<U+000d>'");
                 // error: backspace in string
                 CHECK_THROWS_AS(json::parser("\"\b\"").parse(), json::parse_error);
                 CHECK_THROWS_WITH(json::parser("\"\b\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control characters (U+0000 through U+001f) must be escaped; last read '\"<U+0008>'");
                 // improve code coverage
                 CHECK_THROWS_AS(json::parser("\uFF01").parse(), json::parse_error);
                 CHECK_THROWS_AS(json::parser("[-4:1,]").parse(), json::parse_error);
@@ -393,34 +393,37 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("n").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("nu").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("nul").parse(), json::parse_error);
-        CHECK_THROWS_WITH(json::parser("n").parse(), "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'n'");
+        CHECK_THROWS_WITH(json::parser("n").parse(),
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; expected 'null'; last read 'n'");
         CHECK_THROWS_WITH(json::parser("nu").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'n'");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; expected 'null'; last read 'nu'");
         CHECK_THROWS_WITH(json::parser("nul").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'n'");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; expected 'null'; last read 'nul'");
 
         // unexpected end of true
         CHECK_THROWS_AS(json::parser("t").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("tr").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("tru").parse(), json::parse_error);
-        CHECK_THROWS_WITH(json::parser("t").parse(), "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 't'");
+        CHECK_THROWS_WITH(json::parser("t").parse(),
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; expected 'true'; last read 't'");
         CHECK_THROWS_WITH(json::parser("tr").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 't'");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; expected 'true'; last read 'tr'");
         CHECK_THROWS_WITH(json::parser("tru").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 't'");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; expected 'true'; last read 'tru'");
 
         // unexpected end of false
         CHECK_THROWS_AS(json::parser("f").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("fa").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("fal").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("fals").parse(), json::parse_error);
-        CHECK_THROWS_WITH(json::parser("f").parse(), "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'f'");
+        CHECK_THROWS_WITH(json::parser("f").parse(),
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; expected 'false'; last read 'f'");
         CHECK_THROWS_WITH(json::parser("fa").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'f'");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; expected 'false'; last read 'fa'");
         CHECK_THROWS_WITH(json::parser("fal").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'f'");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; expected 'false'; last read 'fal'");
         CHECK_THROWS_WITH(json::parser("fals").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected 'f'");
+                          "[json.exception.parse_error.101] parse error at 5: syntax error - invalid literal; expected 'false'; last read 'fals'");
 
         // missing/unexpected end of array
         CHECK_THROWS_AS(json::parser("[").parse(), json::parse_error);
@@ -471,25 +474,25 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser("\"\\u01").parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser("\"\\u012").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: missing closing quote; last read '\"'");
         CHECK_THROWS_WITH(json::parser("\"\\\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid string: missing closing quote; last read '\"\\\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '\"\\u\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u0\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 5: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '\"\\u0\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u01\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 6: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '\"\\u01\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u012\"").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 7: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '\"\\u012\"'");
         CHECK_THROWS_WITH(json::parser("\"\\u").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '\"\\u'");
         CHECK_THROWS_WITH(json::parser("\"\\u0").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 5: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '\"\\u0'");
         CHECK_THROWS_WITH(json::parser("\"\\u01").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 6: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '\"\\u01'");
         CHECK_THROWS_WITH(json::parser("\"\\u012").parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                          "[json.exception.parse_error.101] parse error at 7: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '\"\\u012'");
 
         // invalid escapes
         for (int c = 1; c < 128; ++c)
@@ -522,8 +525,12 @@ TEST_CASE("parser class")
                 default:
                 {
                     CHECK_THROWS_AS(json::parser(s.c_str()).parse(), json::parse_error);
-                    CHECK_THROWS_WITH(json::parser(s.c_str()).parse(),
-                                      "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                    // only check error message if c is not a control character
+                    if (c > 0x1f)
+                    {
+                        CHECK_THROWS_WITH(json::parser(s.c_str()).parse(),
+                                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid string: forbidden character after backspace; last read '\"\\" + std::string(1, c) + "'");
+                    }
                     break;
                 }
             }
@@ -581,26 +588,52 @@ TEST_CASE("parser class")
 
                 if (valid(c))
                 {
+                    CAPTURE(s1);
                     CHECK_NOTHROW(json::parser(s1.c_str()).parse());
+                    CAPTURE(s2);
                     CHECK_NOTHROW(json::parser(s2.c_str()).parse());
+                    CAPTURE(s3);
                     CHECK_NOTHROW(json::parser(s3.c_str()).parse());
+                    CAPTURE(s4);
                     CHECK_NOTHROW(json::parser(s4.c_str()).parse());
                 }
                 else
                 {
+                    CAPTURE(s1);
                     CHECK_THROWS_AS(json::parser(s1.c_str()).parse(), json::parse_error);
-                    CHECK_THROWS_AS(json::parser(s2.c_str()).parse(), json::parse_error);
-                    CHECK_THROWS_AS(json::parser(s3.c_str()).parse(), json::parse_error);
-                    CHECK_THROWS_AS(json::parser(s4.c_str()).parse(), json::parse_error);
+                    // only check error message if c is not a control character
+                    if (c > 0x1f)
+                    {
+                        CHECK_THROWS_WITH(json::parser(s1.c_str()).parse(),
+                                          "[json.exception.parse_error.101] parse error at 7: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '" + s1.substr(0, 7) + "'");
+                    }
 
-                    CHECK_THROWS_WITH(json::parser(s1.c_str()).parse(),
-                                      "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s2.c_str()).parse(),
-                                      "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s3.c_str()).parse(),
-                                      "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
-                    CHECK_THROWS_WITH(json::parser(s4.c_str()).parse(),
-                                      "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '\"'");
+                    CAPTURE(s2);
+                    CHECK_THROWS_AS(json::parser(s2.c_str()).parse(), json::parse_error);
+                    // only check error message if c is not a control character
+                    if (c > 0x1f)
+                    {
+                        CHECK_THROWS_WITH(json::parser(s2.c_str()).parse(),
+                                          "[json.exception.parse_error.101] parse error at 6: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '" + s2.substr(0, 6) + "'");
+                    }
+
+                    CAPTURE(s3);
+                    CHECK_THROWS_AS(json::parser(s3.c_str()).parse(), json::parse_error);
+                    // only check error message if c is not a control character
+                    if (c > 0x1f)
+                    {
+                        CHECK_THROWS_WITH(json::parser(s3.c_str()).parse(),
+                                          "[json.exception.parse_error.101] parse error at 5: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '" + s3.substr(0, 5) + "'");
+                    }
+
+                    CAPTURE(s4);
+                    CHECK_THROWS_AS(json::parser(s4.c_str()).parse(), json::parse_error);
+                    // only check error message if c is not a control character
+                    if (c > 0x1f)
+                    {
+                        CHECK_THROWS_WITH(json::parser(s4.c_str()).parse(),
+                                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid string: '\\u' must be followed by 4 hex digits; last read '" + s4.substr(0, 4) + "'");
+                    }
                 }
             }
         }
@@ -608,17 +641,17 @@ TEST_CASE("parser class")
         // missing part of a surrogate pair
         CHECK_THROWS_AS(json::parse("\"\\uD80C\""), json::parse_error);
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\""),
-                          "[json.exception.parse_error.102] parse error at 8: missing low surrogate");
+                          "[json.exception.parse_error.101] parse error at 8: syntax error - invalid string: missing low surrogate; last read '\"\\uD80C\"'");
         // invalid surrogate pair
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\uD80C\""), json::parse_error);
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\u0000\""), json::parse_error);
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\uFFFF\""), json::parse_error);
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\uD80C\""),
-                          "[json.exception.parse_error.102] parse error at 14: missing or wrong low surrogate");
+                          "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: invalid low surrogate; last read '\"\\uD80C\\uD80C'");
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\u0000\""),
-                          "[json.exception.parse_error.102] parse error at 14: missing or wrong low surrogate");
+                          "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: invalid low surrogate; last read '\"\\uD80C\\u0000'");
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\uFFFF\""),
-                          "[json.exception.parse_error.102] parse error at 14: missing or wrong low surrogate");
+                          "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: invalid low surrogate; last read '\"\\uD80C\\uFFFF'");
     }
 
     SECTION("tests found by mutate++")
