@@ -10587,8 +10587,20 @@ class basic_json
             // reset yytext (ignore opening quote)
             reset();
 
+            // we entered the function by reading an open quote
+            assert (current == '\"');
+
+            static unsigned char next[256] = {17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 5, 2, 2, 6, 3, 3, 3, 7, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18};
+
+            // state variable
+            int state = -1;
+
+            // whether the state is already set
+            bool state_set = false;
+
             while (true)
             {
+                // get next character
                 get();
 
                 // end of file while parsing string
@@ -10598,25 +10610,240 @@ class basic_json
                     return token_type::parse_error;
                 }
 
-                // control character
-                if (JSON_UNLIKELY('\x00' <= current and current <= '\x1f'))
-                {
-                    error_message = "invalid string: control characters (U+0000 through U+001f) must be escaped";
-                    return token_type::parse_error;
-                }
+                // after coping with EOF, we only cope with bytes
+                //assert(0 <= current and current <= 255);
+                unsigned char ch = static_cast<unsigned char>(current);
 
-                switch (current)
+                // get next state
+                state = state_set ? state : next[ch];
+                // reset variable
+                state_set = false;
+
+                // 'add': 0,
+                // 'add_check1': 1,
+                // 'add_check2': 2,
+                // 'add_check3': 3,
+                // 'add_check_e0': 4,
+                // 'add_check_ed': 5,
+                // 'add_check_f0': 6,
+                // 'add_check_f4': 7,
+                // 'check1': 8,
+                // 'check2': 9,
+                // 'check3': 10,
+                // 'check_e0': 11,
+                // 'check_ed': 12,
+                // 'check_f0': 13,
+                // 'check_f4': 14,
+                // 'escape': 15,
+                // 'end': 16,
+                // 'error_invalid': 17,
+                // 'error_utf8': 18
+                assert(0 <= state and state <= 18);
+
+                switch (state)
                 {
-                    // closing quote
-                    case '\"':
+                    // add
+                    case 0:
                     {
-                        add('\0');
-                        --yylen;
-                        return token_type::value_string;
+                        add(current);
+                        break;
                     }
 
-                    // escape sequence
-                    case '\\':
+                    // add_check1
+                    case 1:
+                    {
+                        add(current);
+                        // next state is check1
+                        state = 8;
+                        state_set = true;
+                        break;
+                    }
+
+                    // add_check2
+                    case 2:
+                    {
+                        add(current);
+                        // next state is check2
+                        state = 9;
+                        state_set = true;
+                        break;
+                    }
+
+                    // add_check3
+                    case 3:
+                    {
+                        add(current);
+                        // next state is check3
+                        state = 10;
+                        state_set = true;
+                        break;
+                    }
+
+                    // add_check_e0
+                    case 4:
+                    {
+                        add(current);
+                        // next state is check_e0
+                        state = 11;
+                        state_set = true;
+                        break;
+                    }
+
+                    // add_check_ed
+                    case 5:
+                    {
+                        add(current);
+                        // next state is check_ed
+                        state = 12;
+                        state_set = true;
+                        break;
+                    }
+
+                    // add_check_f0
+                    case 6:
+                    {
+                        add(current);
+                        // next state is check_f0
+                        state = 13;
+                        state_set = true;
+                        break;
+                    }
+
+                    // add_check_f4
+                    case 7:
+                    {
+                        add(current);
+                        // next state is check_f4
+                        state = 14;
+                        state_set = true;
+                        break;
+                    }
+
+                    // check1
+                    case 8:
+                    {
+                        if (JSON_LIKELY(0x80 <= ch and ch <= 0xBF))
+                        {
+                            add(current);
+                            break;
+                        }
+                        else
+                        {
+                            error_message = "invalid string: not well-formed UTF-8 byte";
+                            return token_type::parse_error;
+                        }
+                    }
+
+                    // check2
+                    case 9:
+                    {
+                        if (JSON_LIKELY(0x80 <= ch and ch <= 0xBF))
+                        {
+                            add(current);
+                            // next state is check1
+                            state = 8;
+                            state_set = true;
+                            break;
+                        }
+                        else
+                        {
+                            error_message = "invalid string: not well-formed UTF-8 byte";
+                            return token_type::parse_error;
+                        }
+                    }
+
+                    // check3
+                    case 10:
+                    {
+                        if (JSON_LIKELY(0x80 <= ch and ch <= 0xBF))
+                        {
+                            add(current);
+                            // next state is check2
+                            state = 9;
+                            state_set = true;
+                            break;
+                        }
+                        else
+                        {
+                            error_message = "invalid string: not well-formed UTF-8 byte";
+                            return token_type::parse_error;
+                        }
+                    }
+
+                    // check_e0
+                    case 11:
+                    {
+                        if (JSON_LIKELY(0xA0 <= ch and ch <= 0xBF))
+                        {
+                            add(current);
+                            // next state is check1
+                            state = 8;
+                            state_set = true;
+                            break;
+                        }
+                        else
+                        {
+                            error_message = "invalid string: not well-formed UTF-8 byte";
+                            return token_type::parse_error;
+                        }
+                    }
+
+                    // check_ed
+                    case 12:
+                    {
+                        if (JSON_LIKELY(0x80 <= ch and ch <= 0x9F))
+                        {
+                            add(current);
+                            // next state is check1
+                            state = 8;
+                            state_set = true;
+                            break;
+                        }
+                        else
+                        {
+                            error_message = "invalid string: not well-formed UTF-8 byte";
+                            return token_type::parse_error;
+                        }
+                    }
+
+                    // check_f0
+                    case 13:
+                    {
+                        if (JSON_LIKELY(0x90 <= ch and ch <= 0xBF))
+                        {
+                            add(current);
+                            // next state is check2
+                            state = 9;
+                            state_set = true;
+                            break;
+                        }
+                        else
+                        {
+                            error_message = "invalid string: not well-formed UTF-8 byte";
+                            return token_type::parse_error;
+                        }
+                    }
+
+                    // check_f4
+                    case 14:
+                    {
+                        if (JSON_LIKELY(0x80 <= ch and ch <= 0x8F))
+                        {
+                            add(current);
+                            // next state is check2
+                            state = 9;
+                            state_set = true;
+                            break;
+                        }
+                        else
+                        {
+                            error_message = "invalid string: not well-formed UTF-8 byte";
+                            return token_type::parse_error;
+                        }
+                    }
+
+                    // escape
+                    case 15:
                     {
                         switch (get())
                         {
@@ -10761,11 +10988,31 @@ class basic_json
                         break;
                     }
 
-                    // any other character
+                    // end
+                    case 16:
+                    {
+                        add('\0');
+                        --yylen;
+                        return token_type::value_string;
+                    }
+
+                    // error_invalid
+                    case 17:
+                    {
+                        error_message = "invalid string: control characters (U+0000 through U+001f) must be escaped";
+                        return token_type::parse_error;
+                    }
+
+                    // error_utf8
+                    case 18:
+                    {
+                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        return token_type::parse_error;
+                    }
+
                     default:
                     {
-                        add(current);
-                        break;
+                        assert(false);
                     }
                 }
             }
