@@ -10443,7 +10443,7 @@ class basic_json
             std::string read(size_t offset, size_t length) override
             {
                 // avoid reading too many characters
-                const size_t max_length = static_cast<size_t>(limit-start);
+                const size_t max_length = static_cast<size_t>(limit - start);
                 return std::string(start + offset, std::min({length, max_length}));
             }
 
@@ -10462,9 +10462,9 @@ class basic_json
             literal_false,   ///< the `false` literal
             literal_null,    ///< the `null` literal
             value_string,    ///< a string -- use get_string() for actual value
-            value_unsigned,  ///< an unsigned integer -- use get_number() for actual value
-            value_integer,   ///< a signed integer -- use get_number() for actual value
-            value_float,     ///< an floating point number -- use get_number() for actual value
+            value_unsigned,  ///< an unsigned integer -- use get_number_unsigned() for actual value
+            value_integer,   ///< a signed integer -- use get_number_integer() for actual value
+            value_float,     ///< an floating point number -- use get_number_float() for actual value
             begin_array,     ///< the character for array begin `[`
             begin_object,    ///< the character for object begin `{`
             end_array,       ///< the character for array end `]`
@@ -10476,7 +10476,7 @@ class basic_json
         };
 
         /// return name of values of type token_type (only used for errors)
-        static std::string token_type_name(const token_type t)
+        static const char* token_type_name(const token_type t) noexcept
         {
             switch (t)
             {
@@ -10563,6 +10563,7 @@ class basic_json
 
             int codepoint = 0;
 
+            // check the next 4 bytes
             for (size_t i = 0; i < 4; ++i)
             {
                 const int8_t digit = ascii_to_hex[static_cast<unsigned char>(get())];
@@ -10575,6 +10576,7 @@ class basic_json
                     codepoint += digit;
                 }
 
+                // except the last byte, result must be multiplied by 16
                 if (i != 3)
                 {
                     codepoint <<= 4;
@@ -10895,7 +10897,7 @@ class basic_json
                                 }
 
                                 // check if code point is a high surrogate
-                                if (codepoint1 >= 0xD800 and codepoint1 <= 0xDBFF)
+                                if (0xD800 <= codepoint1 and codepoint1 <= 0xDBFF)
                                 {
                                     // expect next \uxxxx entry
                                     if (JSON_LIKELY(get() == '\\' and get() == 'u'))
@@ -10909,7 +10911,7 @@ class basic_json
                                         }
 
                                         // check if codepoint2 is a low surrogate
-                                        if (codepoint2 >= 0xDC00 and codepoint2 <= 0xDFFF)
+                                        if (JSON_LIKELY(0xDC00 <= codepoint2 and codepoint2 <= 0xDFFF))
                                         {
                                             codepoint =
                                                 // high surrogate occupies the most significant 22 bits
@@ -10935,7 +10937,7 @@ class basic_json
                                 }
                                 else
                                 {
-                                    if (JSON_UNLIKELY(codepoint1 >= 0xDC00 and codepoint1 <= 0xDFFF))
+                                    if (JSON_UNLIKELY(0xDC00 <= codepoint1 and codepoint1 <= 0xDFFF))
                                     {
                                         error_message = "invalid string: missing high surrogate";
                                         return token_type::parse_error;
@@ -10993,6 +10995,7 @@ class basic_json
                     // end
                     case 16:
                     {
+                        // terminate yytext
                         add('\0');
                         --yylen;
                         return token_type::value_string;
@@ -11108,15 +11111,13 @@ class basic_json
             add('\0');
             --yylen;
 
-            // the conversion
-            char* endptr = nullptr;
-
             // try to parse integers first and fall back to floats
             if (not has_exp and not has_point)
             {
                 errno = 0;
                 if (has_sign)
                 {
+                    char* endptr = nullptr;
                     const auto x = std::strtoll(yytext.data(), &endptr, 10);
                     value_integer = static_cast<number_integer_t>(x);
                     if (JSON_LIKELY(errno == 0 and endptr == yytext.data() + yylen and value_integer == x))
@@ -11126,6 +11127,7 @@ class basic_json
                 }
                 else
                 {
+                    char* endptr = nullptr;
                     const auto x = std::strtoull(yytext.data(), &endptr, 10);
                     value_unsigned = static_cast<number_unsigned_t>(x);
                     if (JSON_LIKELY(errno == 0 and endptr == yytext.data() + yylen and value_unsigned == x))
@@ -11218,9 +11220,24 @@ class basic_json
         }
 
       public:
-        constexpr size_t get_position() const
+        constexpr size_t get_position() const noexcept
         {
             return chars_read;
+        }
+
+        constexpr number_integer_t get_number_integer() const noexcept
+        {
+            return value_integer;
+        }
+
+        constexpr number_unsigned_t get_number_unsigned() const noexcept
+        {
+            return value_unsigned;
+        }
+
+        constexpr number_float_t get_number_float() const noexcept
+        {
+            return value_float;
         }
 
         const std::string get_string()
@@ -11252,47 +11269,9 @@ class basic_json
             return ss.str();
         }
 
-        const std::string& get_error_message() const
+        const std::string& get_error_message() const noexcept
         {
             return error_message;
-        }
-
-        bool get_number(basic_json& result, const token_type token) const
-        {
-            switch (token)
-            {
-                case lexer::token_type::value_unsigned:
-                {
-                    result.m_type = value_t::number_unsigned;
-                    result.m_value = value_unsigned;
-                    return true;
-                }
-
-                case lexer::token_type::value_integer:
-                {
-                    result.m_type = value_t::number_integer;
-                    result.m_value = value_integer;
-                    return true;
-                }
-
-                case lexer::token_type::value_float:
-                {
-                    // throw in case of infinity or NAN
-                    if (not std::isfinite(value_float))
-                    {
-                        JSON_THROW(out_of_range::create(406, "number overflow parsing '" + get_token_string() + "'"));
-                    }
-
-                    result.m_type = value_t::number_float;
-                    result.m_value = value_float;
-                    return true;
-                }
-
-                default:
-                {
-                    return false;
-                }
-            }
         }
 
         token_type scan()
@@ -11602,8 +11581,8 @@ class basic_json
 
                 case lexer::token_type::literal_null:
                 {
-                    get_token();
                     result.m_type = value_t::null;
+                    get_token();
                     break;
                 }
 
@@ -11616,25 +11595,47 @@ class basic_json
 
                 case lexer::token_type::literal_true:
                 {
-                    get_token();
                     result.m_type = value_t::boolean;
                     result.m_value = true;
+                    get_token();
                     break;
                 }
 
                 case lexer::token_type::literal_false:
                 {
-                    get_token();
                     result.m_type = value_t::boolean;
                     result.m_value = false;
+                    get_token();
                     break;
                 }
 
                 case lexer::token_type::value_unsigned:
+                {
+                    result.m_type = value_t::number_unsigned;
+                    result.m_value = m_lexer.get_number_unsigned();
+                    get_token();
+                    break;
+                }
+
                 case lexer::token_type::value_integer:
+                {
+                    result.m_type = value_t::number_integer;
+                    result.m_value = m_lexer.get_number_integer();
+                    get_token();
+                    break;
+                }
+
                 case lexer::token_type::value_float:
                 {
-                    m_lexer.get_number(result, last_token);
+                    result.m_type = value_t::number_float;
+                    result.m_value = m_lexer.get_number_float();
+
+                    // throw in case of infinity or NAN
+                    if (JSON_UNLIKELY(not std::isfinite(result.m_value.number_float)))
+                    {
+                        JSON_THROW(out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
+                    }
+
                     get_token();
                     break;
                 }
@@ -11674,10 +11675,10 @@ class basic_json
                 }
                 else
                 {
-                    error_msg += "unexpected " + lexer::token_type_name(last_token);
+                    error_msg += "unexpected " + std::string(lexer::token_type_name(last_token));
                 }
 
-                error_msg += "; expected " + lexer::token_type_name(t);
+                error_msg += "; expected " + std::string(lexer::token_type_name(t));
                 JSON_THROW(parse_error::create(101, m_lexer.get_position(), error_msg));
             }
         }
@@ -11696,7 +11697,7 @@ class basic_json
                 }
                 else
                 {
-                    error_msg += "unexpected " + lexer::token_type_name(last_token);
+                    error_msg += "unexpected " + std::string(lexer::token_type_name(last_token));
                 }
 
                 JSON_THROW(parse_error::create(101, m_lexer.get_position(), error_msg));
