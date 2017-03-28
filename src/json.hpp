@@ -91,8 +91,13 @@ SOFTWARE.
 #endif
 
 // manual branch prediction
-#define JSON_LIKELY(x)      __builtin_expect(!!(x), 1)
-#define JSON_UNLIKELY(x)    __builtin_expect(!!(x), 0)
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+    #define JSON_LIKELY(x)      __builtin_expect(!!(x), 1)
+    #define JSON_UNLIKELY(x)    __builtin_expect(!!(x), 0)
+#else
+    #define JSON_LIKELY(x)      x
+    #define JSON_UNLIKELY(x)    x
+#endif
 
 /*!
 @brief namespace for Niels Lohmann
