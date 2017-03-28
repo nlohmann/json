@@ -217,6 +217,7 @@ TEST_CASE("regression tests")
             json a = {1, 2, 3};
             json::reverse_iterator rit = ++a.rbegin();
             CHECK(*rit == json(2));
+            CHECK(rit.value() == json(2));
         }
         {
             json a = {1, 2, 3};
@@ -541,7 +542,7 @@ TEST_CASE("regression tests")
             CAPTURE(filename);
             json j;
             std::ifstream f(filename);
-            CHECK_NOTHROW(j << f);
+            CHECK_NOTHROW(f >> j);
         }
     }
 
@@ -557,7 +558,7 @@ TEST_CASE("regression tests")
             CAPTURE(filename);
             json j;
             std::ifstream f(filename);
-            CHECK_NOTHROW(j << f);
+            CHECK_NOTHROW(f >> j);
         }
     }
 
@@ -587,15 +588,15 @@ TEST_CASE("regression tests")
         std::stringstream ss;
         json j;
         ss << "123";
-        CHECK_NOTHROW(j << ss);
+        CHECK_NOTHROW(ss >> j);
 
         // see https://github.com/nlohmann/json/issues/367#issuecomment-262841893:
         // ss is not at EOF; this yielded an error before the fix
         // (threw basic_string::append). No, it should just throw
         // a parse error because of the EOF.
-        CHECK_THROWS_AS(j << ss, json::parse_error);
-        CHECK_THROWS_WITH(j << ss,
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+        CHECK_THROWS_AS(ss >> j, json::parse_error);
+        CHECK_THROWS_WITH(ss >> j,
+                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected end of input");
     }
 
     SECTION("issue #389 - Integer-overflow (OSS-Fuzz issue 267)")

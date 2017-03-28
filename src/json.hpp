@@ -79,6 +79,15 @@ SOFTWARE.
     #pragma GCC diagnostic ignored "-Wdocumentation"
 #endif
 
+// allow for portable deprecation warnings
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+    #define JSON_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+    #define JSON_DEPRECATED __declspec(deprecated)
+#else
+    #define JSON_DEPRECATED
+#endif
+
 // allow to disable exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && not defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
@@ -7093,8 +7102,12 @@ class basic_json
 
     /*!
     @brief serialize to stream
-    @copydoc operator<<(std::ostream&, const basic_json&)
+    @deprecated This stream operator is deprecated and will be removed in a
+                future version of the library. Please use
+                @ref std::ostream& operator<<(std::ostream&, const basic_json&)
+                instead; that is, replace calls like `j >> o;` with `o << j;`.
     */
+    JSON_DEPRECATED
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
     {
         return o << j;
@@ -7369,6 +7382,20 @@ class basic_json
 
     /*!
     @brief deserialize from stream
+    @deprecated This stream operator is deprecated and will be removed in a
+                future version of the library. Please use
+                @ref std::istream& operator>>(std::istream&, basic_json&)
+                instead; that is, replace calls like `j << i;` with `i >> j;`.
+    */
+    JSON_DEPRECATED
+    friend std::istream& operator<<(basic_json& j, std::istream& i)
+    {
+        j = parser(i).parse();
+        return i;
+    }
+
+    /*!
+    @brief deserialize from stream
 
     Deserializes an input stream to a JSON value.
 
@@ -7392,16 +7419,6 @@ class basic_json
     parser callback function to filter values while parsing
 
     @since version 1.0.0
-    */
-    friend std::istream& operator<<(basic_json& j, std::istream& i)
-    {
-        j = parser(i).parse(false);
-        return i;
-    }
-
-    /*!
-    @brief deserialize from stream
-    @copydoc operator<<(basic_json&, std::istream&)
     */
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
@@ -13259,5 +13276,6 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_TRY
 #undef JSON_LIKELY
 #undef JSON_UNLIKELY
+#undef JSON_DEPRECATED
 
 #endif

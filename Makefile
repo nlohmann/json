@@ -45,6 +45,7 @@ doctest:
 # -Wno-documentation-unknown-command: code uses user-defined commands like @complexity
 # -Wno-exit-time-destructors: warning in Catch code
 # -Wno-keyword-macro: unit-tests use "#define private public"
+# -Wno-deprecated-declarations: the library deprecated some functions
 # -Wno-weak-vtables: exception class is defined inline, but has virtual method
 # -Wno-range-loop-analysis: iterator_wrapper tests tests "for(const auto i...)"
 pedantic_clang:
@@ -55,6 +56,7 @@ pedantic_clang:
 		-Wno-documentation-unknown-command \
 		-Wno-exit-time-destructors \
 		-Wno-keyword-macro \
+		-Wno-deprecated-declarations \
 		-Wno-weak-vtables \
 		-Wno-range-loop-analysis"
 
@@ -62,6 +64,7 @@ pedantic_clang:
 pedantic_gcc:
 	$(MAKE) json_unit CXX=g++ CXXFLAGS="\
 		-std=c++11 \
+		-Wno-deprecated-declarations \
 		-Werror \
 		-Wall -Wpedantic -Wextra \
 		-Walloca \
