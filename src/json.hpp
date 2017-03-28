@@ -10323,7 +10323,7 @@ class basic_json
                     // refill
                     is.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(buffer.size()));
                     // set unfilled characters to EOF
-                    std::fill_n(buffer.begin() + is.gcount(),
+                    std::fill_n(buffer.begin() + static_cast<int>(is.gcount()),
                                 buffer.size() - static_cast<size_t>(is.gcount()),
                                 std::char_traits<char>::eof());
                     // the buffer is ready
