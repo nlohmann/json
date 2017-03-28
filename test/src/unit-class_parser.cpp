@@ -306,9 +306,9 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(json::parser("+0").parse(), json::parse_error);
 
                 CHECK_THROWS_WITH(json::parser("01").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected '01'");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected number literal; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-01").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected '-01'");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected number literal; expected end of input");
                 CHECK_THROWS_WITH(json::parser("--1").parse(),
                                   "[json.exception.parse_error.101] parse error at 2: syntax error - invalid number; expected digit after '-'; last read '--'");
                 CHECK_THROWS_WITH(json::parser("1.").parse(),
@@ -318,7 +318,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_WITH(json::parser("1E-").parse(),
                                   "[json.exception.parse_error.101] parse error at 4: syntax error - invalid number; expected digit after exponent sign; last read '1E-'");
                 CHECK_THROWS_WITH(json::parser("1.E1").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected '.'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected digit after '.'; last read '1.E'");
                 CHECK_THROWS_WITH(json::parser("-1E").parse(),
                                   "[json.exception.parse_error.101] parse error at 4: syntax error - invalid number; expected '+', '-', or digit after exponent; last read '-1E'");
                 CHECK_THROWS_WITH(json::parser("-0E#").parse(),
@@ -326,19 +326,19 @@ TEST_CASE("parser class")
                 CHECK_THROWS_WITH(json::parser("-0E-#").parse(),
                                   "[json.exception.parse_error.101] parse error at 5: syntax error - invalid number; expected digit after exponent sign; last read '-0E-#'");
                 CHECK_THROWS_WITH(json::parser("-0#").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected '#'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; last read: '-0#'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0.0:").parse(),
                                   "[json.exception.parse_error.101] parse error at 5: syntax error - unexpected ':'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0.0Z").parse(),
-                                  "[json.exception.parse_error.101] parse error at 5: syntax error - unexpected 'Z'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 5: syntax error - invalid literal; last read: '-0.0Z'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0E123:").parse(),
                                   "[json.exception.parse_error.101] parse error at 7: syntax error - unexpected ':'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0e0-:").parse(),
-                                  "[json.exception.parse_error.101] parse error at 5: syntax error - unexpected '-'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 6: syntax error - invalid number; expected digit after '-'; last read: '-:'; expected end of input");
                 CHECK_THROWS_WITH(json::parser("-0e-:").parse(),
                                   "[json.exception.parse_error.101] parse error at 5: syntax error - invalid number; expected digit after exponent sign; last read '-0e-:'");
                 CHECK_THROWS_WITH(json::parser("-0f").parse(),
-                                  "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected 'f'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; expected 'false'; last read: '-0f'; expected end of input");
             }
         }
     }
