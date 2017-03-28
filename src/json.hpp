@@ -8575,7 +8575,7 @@ class basic_json
             case 0x7f: // UTF-8 string (indefinite length)
             {
                 std::string result;
-                while (check_length(v.size(), 1, idx), v[idx] != 0xff)
+                while (static_cast<void>(check_length(v.size(), 1, idx)), v[idx] != 0xff)
                 {
                     string_t s = from_cbor_internal(v, idx);
                     result += s;
@@ -8671,7 +8671,7 @@ class basic_json
             case 0x9f: // array (indefinite length)
             {
                 basic_json result = value_t::array;
-                while (check_length(v.size(), 1, idx), v[idx] != 0xff)
+                while (static_cast<void>(check_length(v.size(), 1, idx)), v[idx] != 0xff)
                 {
                     result.push_back(from_cbor_internal(v, idx));
                 }
@@ -8776,7 +8776,7 @@ class basic_json
             case 0xbf: // map (indefinite length)
             {
                 basic_json result = value_t::object;
-                while (check_length(v.size(), 1, idx), v[idx] != 0xff)
+                while (static_cast<void>(check_length(v.size(), 1, idx)), v[idx] != 0xff)
                 {
                     cbor_expect_string(v, idx);
                     std::string key = from_cbor_internal(v, idx);
@@ -10442,7 +10442,9 @@ class basic_json
 
             std::string read(size_t offset, size_t length) override
             {
-                return std::string(start + offset, length);
+                // avoid reading too many characters
+                const size_t max_length = static_cast<size_t>(limit-start);
+                return std::string(start + offset, std::min({length, max_length}));
             }
 
           private:
