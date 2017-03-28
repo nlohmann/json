@@ -78,6 +78,15 @@ SOFTWARE.
     #pragma GCC diagnostic ignored "-Wdocumentation"
 #endif
 
+// allow for portable deprecation warnings
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+    #define JSON_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+    #define JSON_DEPRECATED __declspec(deprecated)
+#else
+    #define JSON_DEPRECATED
+#endif
+
 // allow to disable exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && not defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
@@ -217,8 +226,8 @@ class parse_error : public exception
     const size_t byte;
 
   private:
-    parse_error(int id, size_t byte_, const char* what_arg)
-        : exception(id, what_arg), byte(byte_)
+    parse_error(int id_, size_t byte_, const char* what_arg)
+        : exception(id_, what_arg), byte(byte_)
     {}
 };
 
@@ -256,8 +265,8 @@ class invalid_iterator : public exception
     }
 
   private:
-    invalid_iterator(int id, const char* what_arg)
-        : exception(id, what_arg)
+    invalid_iterator(int id_, const char* what_arg)
+        : exception(id_, what_arg)
     {}
 };
 
@@ -295,8 +304,8 @@ class type_error : public exception
     }
 
   private:
-    type_error(int id, const char* what_arg)
-        : exception(id, what_arg)
+    type_error(int id_, const char* what_arg)
+        : exception(id_, what_arg)
     {}
 };
 
@@ -326,8 +335,8 @@ class out_of_range : public exception
     }
 
   private:
-    out_of_range(int id, const char* what_arg)
-        : exception(id, what_arg)
+    out_of_range(int id_, const char* what_arg)
+        : exception(id_, what_arg)
     {}
 };
 
@@ -352,8 +361,8 @@ class other_error : public exception
     }
 
   private:
-    other_error(int id, const char* what_arg)
-        : exception(id, what_arg)
+    other_error(int id_, const char* what_arg)
+        : exception(id_, what_arg)
     {}
 };
 
@@ -7083,8 +7092,12 @@ class basic_json
 
     /*!
     @brief serialize to stream
-    @copydoc operator<<(std::ostream&, const basic_json&)
+    @deprecated This stream operator is deprecated and will be removed in a
+                future version of the library. Please use
+                @ref std::ostream& operator<<(std::ostream&, const basic_json&)
+                instead; that is, replace calls like `j >> o;` with `o << j;`.
     */
+    JSON_DEPRECATED
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
     {
         return o << j;
@@ -7359,6 +7372,20 @@ class basic_json
 
     /*!
     @brief deserialize from stream
+    @deprecated This stream operator is deprecated and will be removed in a
+                future version of the library. Please use
+                @ref std::istream& operator>>(std::istream&, basic_json&)
+                instead; that is, replace calls like `j << i;` with `i >> j;`.
+    */
+    JSON_DEPRECATED
+    friend std::istream& operator<<(basic_json& j, std::istream& i)
+    {
+        j = parser(i).parse();
+        return i;
+    }
+
+    /*!
+    @brief deserialize from stream
 
     Deserializes an input stream to a JSON value.
 
@@ -7382,16 +7409,6 @@ class basic_json
     parser callback function to filter values while parsing
 
     @since version 1.0.0
-    */
-    friend std::istream& operator<<(basic_json& j, std::istream& i)
-    {
-        j = parser(i).parse();
-        return i;
-    }
-
-    /*!
-    @brief deserialize from stream
-    @copydoc operator<<(basic_json&, std::istream&)
     */
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
@@ -8574,7 +8591,7 @@ class basic_json
             case 0x7f: // UTF-8 string (indefinite length)
             {
                 std::string result;
-                while (check_length(v.size(), 1, idx), v[idx] != 0xff)
+                while (static_cast<void>(check_length(v.size(), 1, idx)), v[idx] != 0xff)
                 {
                     string_t s = from_cbor_internal(v, idx);
                     result += s;
@@ -8670,7 +8687,7 @@ class basic_json
             case 0x9f: // array (indefinite length)
             {
                 basic_json result = value_t::array;
-                while (check_length(v.size(), 1, idx), v[idx] != 0xff)
+                while (static_cast<void>(check_length(v.size(), 1, idx)), v[idx] != 0xff)
                 {
                     result.push_back(from_cbor_internal(v, idx));
                 }
@@ -8775,7 +8792,7 @@ class basic_json
             case 0xbf: // map (indefinite length)
             {
                 basic_json result = value_t::object;
-                while (check_length(v.size(), 1, idx), v[idx] != 0xff)
+                while (static_cast<void>(check_length(v.size(), 1, idx)), v[idx] != 0xff)
                 {
                     cbor_expect_string(v, idx);
                     std::string key = from_cbor_internal(v, idx);
@@ -13874,5 +13891,6 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_CATCH
 #undef JSON_THROW
 #undef JSON_TRY
+#undef JSON_DEPRECATED
 
 #endif

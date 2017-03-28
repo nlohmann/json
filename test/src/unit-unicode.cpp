@@ -125,7 +125,7 @@ TEST_CASE("Unicode", "[hide]")
         // strings in a JSON array
         std::ifstream f("test/data/json_nlohmann_tests/all_unicode.json");
         json j;
-        CHECK_NOTHROW(j << f);
+        CHECK_NOTHROW(f >> j);
 
         // the array has 1112064 + 1 elemnts (a terminating "null" value)
         // Note: 1112064 = 0x1FFFFF code points - 2048 invalid values between
@@ -168,7 +168,7 @@ TEST_CASE("Unicode", "[hide]")
         // read a file with a UTF-8 BOM
         std::ifstream f("test/data/json_nlohmann_tests/bom.json");
         json j;
-        CHECK_NOTHROW(j << f);
+        CHECK_NOTHROW(f >> j);
     }
 
     SECTION("error for incomplete/wrong BOM")
