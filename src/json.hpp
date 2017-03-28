@@ -10296,10 +10296,11 @@ class basic_json
                     JSON_THROW(parse_error::create(111, 0, "bad input stream"));
                 }
 
-                // initial fill; unfilled buffer charaters remain EOF
+                // initial fill; unfilled buffer characters remain EOF
                 is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
 
-                // ignore byte-order mark
+                // skip byte-order mark
+                assert(buffer.size() >= 3);
                 if (buffer[0] == '\xEF' and buffer[1] == '\xBB' and buffer[2] == '\xBF')
                 {
                     buffer_pos += 3;
@@ -10317,7 +10318,7 @@ class basic_json
 
             int get_character() override
             {
-                // check if refilling is neccessary
+                // check if refilling is necessary
                 if (JSON_UNLIKELY(buffer_pos == buffer.size()))
                 {
                     // refill
@@ -10360,17 +10361,18 @@ class basic_json
             }
 
           private:
+            /// the associated input stream
             std::istream& is;
 
-            // chars returned via get_character()
+            /// chars returned via get_character()
             size_t processed_chars = 0;
-            // chars processed in the current buffer
+            /// chars processed in the current buffer
             size_t buffer_pos = 0;
 
-            // position of the stream when we started
+            /// position of the stream when we started
             const std::streampos start_position;
 
-            // internal buffer
+            /// internal buffer
             std::vector<char> buffer;
         };
 
@@ -10419,6 +10421,7 @@ class basic_json
             }
 
           private:
+            /// the associated input stream
             std::istream& is;
         };
 
@@ -10430,6 +10433,7 @@ class basic_json
                 : input_adapter(), cursor(b), limit(b + l), start(b)
             {}
 
+            // delete because of pointer members
             input_buffer_adapter(const input_buffer_adapter&) = delete;
             input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
 
@@ -10453,8 +10457,11 @@ class basic_json
             }
 
           private:
+            /// pointer to the current character
             const char* cursor;
+            /// pointer past the last character
             const char* limit;
+            /// pointer to the first character
             const char* start;
         };
 
@@ -10597,7 +10604,7 @@ class basic_json
             reset();
 
             // we entered the function by reading an open quote
-            assert (current == '\"');
+            assert(current == '\"');
 
             static unsigned char next[256] = {17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 5, 2, 2, 6, 3, 3, 3, 7, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18};
 
@@ -11022,14 +11029,12 @@ class basic_json
 
                     default:
                     {
-                        assert(false);
+                        assert(false); // LCOV_EXCL_LINE
                     }
                 }
             }
         }
 
-        // overloaded wrappers for strtod/strtof/strtold
-        // that will be called from parse<floating_point_t>
         static void strtof(float& f, const char* str, char** endptr) noexcept
         {
             f = std::strtof(str, endptr);
@@ -11125,7 +11130,7 @@ class basic_json
                     char* endptr = nullptr;
                     const auto x = std::strtoll(yytext.data(), &endptr, 10);
                     value_integer = static_cast<number_integer_t>(x);
-                    if (JSON_LIKELY(errno == 0 and endptr == yytext.data() + yylen and value_integer == x))
+                    if (errno == 0 and endptr == yytext.data() + yylen and value_integer == x)
                     {
                         return token_type::value_integer;
                     }
@@ -11135,7 +11140,7 @@ class basic_json
                     char* endptr = nullptr;
                     const auto x = std::strtoull(yytext.data(), &endptr, 10);
                     value_unsigned = static_cast<number_unsigned_t>(x);
-                    if (JSON_LIKELY(errno == 0 and endptr == yytext.data() + yylen and value_unsigned == x))
+                    if (errno == 0 and endptr == yytext.data() + yylen and value_unsigned == x)
                     {
                         return token_type::value_unsigned;
                     }
@@ -11148,6 +11153,7 @@ class basic_json
 
         token_type scan_true()
         {
+            assert(current == 't');
             if (JSON_LIKELY((get() == 'r' and get() == 'u' and get() == 'e')))
             {
                 return token_type::literal_true;
@@ -11159,6 +11165,7 @@ class basic_json
 
         token_type scan_false()
         {
+            assert(current == 'f');
             if (JSON_LIKELY((get() == 'a' and get() == 'l' and get() == 's' and get() == 'e')))
             {
                 return token_type::literal_false;
@@ -11170,6 +11177,7 @@ class basic_json
 
         token_type scan_null()
         {
+            assert(current == 'n');
             if (JSON_LIKELY((get() == 'u' and get() == 'l' and get() == 'l')))
             {
                 return token_type::literal_null;
@@ -11183,13 +11191,14 @@ class basic_json
         // input management
         /////////////////////
 
-        void reset()
+        /// reset yytext
+        void reset() noexcept
         {
             yylen = 0;
             start_pos = chars_read - 1;
         }
 
-        // get a character from the input
+        /// get a character from the input
         int get()
         {
             ++chars_read;
@@ -11206,14 +11215,14 @@ class basic_json
             return current;
         }
 
-        // unget a character to the input
-        void unget()
+        /// unget a character to the input
+        void unget() noexcept
         {
             --chars_read;
             next_unget = true;
         }
 
-        // add a character to yytext
+        /// add a character to yytext
         void add(int c)
         {
             // resize yytext if necessary
@@ -11225,48 +11234,70 @@ class basic_json
         }
 
       public:
-        constexpr size_t get_position() const noexcept
-        {
-            return chars_read;
-        }
+        /////////////////////
+        // value getters
+        /////////////////////
 
+        /// return integer value
         constexpr number_integer_t get_number_integer() const noexcept
         {
             return value_integer;
         }
 
+        /// return unsigned integer value
         constexpr number_unsigned_t get_number_unsigned() const noexcept
         {
             return value_unsigned;
         }
 
+        /// return floating-point value
         constexpr number_float_t get_number_float() const noexcept
         {
             return value_float;
         }
 
+        /// return string value
         const std::string get_string()
         {
+            // yytext cannot be returned as char*, because it may contain a
+            // null byte
             return std::string(yytext.data(), yylen);
         }
 
+        /////////////////////
+        // diagnostics
+        /////////////////////
+
+        /// return position of last read token
+        constexpr size_t get_position() const noexcept
+        {
+            return chars_read;
+        }
+
+        /// return the last read token (for errors only)
         std::string get_token_string() const
         {
+            // get the raw byte sequence of the last token
             std::string s = ia->read(start_pos, chars_read - start_pos);
-            std::stringstream ss;
 
+            // escape control characters
+            std::stringstream ss;
             for (auto c : s)
             {
                 if (c == '\0' or c == std::char_traits<char>::eof())
                 {
+                    // ignore EOF
                     continue;
                 }
                 else if ('\x00' <= c and c <= '\x1f')
                 {
+                    // escape control characters
                     ss << "<U+" << std::setw(4) << std::setfill('0') << std::hex << int(c) << ">";
                 }
                 else
                 {
+
+                    // add character as is
                     ss << c;
                 }
             }
@@ -11274,10 +11305,15 @@ class basic_json
             return ss.str();
         }
 
+        /// return syntax error message
         const std::string& get_error_message() const noexcept
         {
             return error_message;
         }
+
+        /////////////////////
+        // actual scanner
+        /////////////////////
 
         token_type scan()
         {
@@ -11370,7 +11406,7 @@ class basic_json
         number_unsigned_t value_unsigned = 0;
         number_float_t value_float = 0;
 
-        // the decimal point
+        /// the decimal point
         const char decimal_point_char = '\0';
     };
 
