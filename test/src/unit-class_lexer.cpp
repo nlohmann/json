@@ -87,22 +87,22 @@ TEST_CASE("lexer class")
 
     SECTION("token_type_name")
     {
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::uninitialized) == "<uninitialized>"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::literal_true) == "true literal"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::literal_false) == "false literal"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::literal_null) == "null literal"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::value_string) == "string literal"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::value_unsigned) == "number literal"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::value_integer) == "number literal"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::value_float) == "number literal"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::begin_array) == "'['"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::begin_object) == "'{'"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::end_array) == "']'"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::end_object) == "'}'"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::name_separator) == "':'"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::value_separator) == "','"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::parse_error) == "<parse error>"));
-        CHECK((json::lexer::token_type_name(json::lexer::token_type::end_of_input) == "end of input"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::uninitialized)) == "<uninitialized>"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::literal_true)) == "true literal"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::literal_false)) == "false literal"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::literal_null)) == "null literal"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::value_string)) == "string literal"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::value_unsigned)) == "number literal"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::value_integer)) == "number literal"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::value_float)) == "number literal"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::begin_array)) == "'['"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::begin_object)) == "'{'"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::end_array)) == "']'"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::end_object)) == "'}'"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::name_separator)) == "':'"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::value_separator)) == "','"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::parse_error)) == "<parse error>"));
+        CHECK((json::lexer::token_type_name(std::string(json::lexer::token_type::end_of_input)) == "end of input"));
     }
 
     SECTION("parse errors on first character")
