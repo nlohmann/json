@@ -5650,7 +5650,7 @@ class basic_json
     @ref push_back(const typename object_t::value_type&). Otherwise, @a init
     is converted to a JSON value and added using @ref push_back(basic_json&&).
 
-    @param init  an initializer list
+    @param[in] init  an initializer list
 
     @complexity Linear in the size of the initializer list @a init.
 
@@ -6127,12 +6127,16 @@ class basic_json
 
     Compares two JSON values for equality according to the following rules:
     - Two JSON values are equal if (1) they are from the same type and (2)
-      their stored values are the same.
+      their stored values are the same according to their respective
+      `operator==`.
     - Integer and floating-point numbers are automatically converted before
       comparison. Floating-point numbers are compared indirectly: two
       floating-point numbers `f1` and `f2` are considered equal if neither
-      `f1 > f2` nor `f2 > f1` holds.
+      `f1 > f2` nor `f2 > f1` holds. Note than two NaN values are always
+      treated as unequal.
     - Two JSON null values are equal.
+
+    @note NaN values never compare equal to themselves or to other NaN values.
 
     @param[in] lhs  first JSON value to consider
     @param[in] rhs  second JSON value to consider
