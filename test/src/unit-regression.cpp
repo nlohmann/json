@@ -837,6 +837,14 @@ TEST_CASE("regression tests")
         CHECK(j["double_value"].is_number_float());
     }
 
+    SECTION("issue #464 - VS2017 implicit to std::string conversion fix")
+    {
+        json v = "test";
+        std::string test;
+        test = v;
+        CHECK(v == "test");
+    }
+
     SECTION("issue #465 - roundtrip error while parsing 1000000000000000010E5")
     {
         json j1 = json::parse("1000000000000000010E5");
