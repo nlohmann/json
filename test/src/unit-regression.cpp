@@ -596,7 +596,7 @@ TEST_CASE("regression tests")
         // a parse error because of the EOF.
         CHECK_THROWS_AS(ss >> j, json::parse_error);
         CHECK_THROWS_WITH(ss >> j,
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
     }
 
     SECTION("issue #389 - Integer-overflow (OSS-Fuzz issue 267)")

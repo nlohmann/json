@@ -7390,7 +7390,7 @@ class basic_json
     JSON_DEPRECATED
     friend std::istream& operator<<(basic_json& j, std::istream& i)
     {
-        j = parser(i).parse();
+        j = parser(i).parse(true);
         return i;
     }
 
@@ -7422,7 +7422,7 @@ class basic_json
     */
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
-        j = parser(i).parse(false);
+        j = parser(i).parse(true);
         return i;
     }
 
