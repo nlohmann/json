@@ -659,7 +659,7 @@ TEST_CASE("parser class")
         // test case to make sure no comma preceeds the first key
         CHECK_THROWS_AS(json::parser("{,\"key\": false}").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("{,\"key\": false}").parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected ','");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected ','; expected string literal");
         // test case to make sure an object is properly closed
         CHECK_THROWS_AS(json::parser("[{\"key\": false true]").parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser("[{\"key\": false true]").parse(),

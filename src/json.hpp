@@ -10552,7 +10552,7 @@ class basic_json
         }
 
         explicit lexer(std::istream& i)
-            : ia(new cached_input_stream_adapter(i, 1024 * 1024)),
+            : ia(new cached_input_stream_adapter(i, 16384)),
               decimal_point_char(get_decimal_point())
         {}
 
@@ -10591,29 +10591,243 @@ class basic_json
         // must be called after \u was read; returns following xxxx as hex or -1 when error
         int get_codepoint()
         {
-            // a mapping to discover hex numbers
-            static int8_t ascii_to_hex[256] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-
+            assert(current == 'u');
             int codepoint = 0;
 
-            // check the next 4 bytes
-            for (size_t i = 0; i < 4; ++i)
+            switch (get())
             {
-                const int8_t digit = ascii_to_hex[static_cast<unsigned char>(get())];
-                if (JSON_UNLIKELY(digit == -1))
-                {
+                case '0':
+                    break;
+                case '1':
+                    codepoint += 0x1000;
+                    break;
+                case '2':
+                    codepoint += 0x2000;
+                    break;
+                case '3':
+                    codepoint += 0x3000;
+                    break;
+                case '4':
+                    codepoint += 0x4000;
+                    break;
+                case '5':
+                    codepoint += 0x5000;
+                    break;
+                case '6':
+                    codepoint += 0x6000;
+                    break;
+                case '7':
+                    codepoint += 0x7000;
+                    break;
+                case '8':
+                    codepoint += 0x8000;
+                    break;
+                case '9':
+                    codepoint += 0x9000;
+                    break;
+                case 'A':
+                case 'a':
+                    codepoint += 0xa000;
+                    break;
+                case 'B':
+                case 'b':
+                    codepoint += 0xb000;
+                    break;
+                case 'C':
+                case 'c':
+                    codepoint += 0xc000;
+                    break;
+                case 'D':
+                case 'd':
+                    codepoint += 0xd000;
+                    break;
+                case 'E':
+                case 'e':
+                    codepoint += 0xe000;
+                    break;
+                case 'F':
+                case 'f':
+                    codepoint += 0xf000;
+                    break;
+                default:
                     return -1;
-                }
-                else
-                {
-                    codepoint += digit;
-                }
+            }
 
-                // except the last byte, result must be multiplied by 16
-                if (i != 3)
-                {
-                    codepoint <<= 4;
-                }
+            switch (get())
+            {
+                case '0':
+                    break;
+                case '1':
+                    codepoint += 0x0100;
+                    break;
+                case '2':
+                    codepoint += 0x0200;
+                    break;
+                case '3':
+                    codepoint += 0x0300;
+                    break;
+                case '4':
+                    codepoint += 0x0400;
+                    break;
+                case '5':
+                    codepoint += 0x0500;
+                    break;
+                case '6':
+                    codepoint += 0x0600;
+                    break;
+                case '7':
+                    codepoint += 0x0700;
+                    break;
+                case '8':
+                    codepoint += 0x0800;
+                    break;
+                case '9':
+                    codepoint += 0x0900;
+                    break;
+                case 'A':
+                case 'a':
+                    codepoint += 0x0a00;
+                    break;
+                case 'B':
+                case 'b':
+                    codepoint += 0x0b00;
+                    break;
+                case 'C':
+                case 'c':
+                    codepoint += 0x0c00;
+                    break;
+                case 'D':
+                case 'd':
+                    codepoint += 0x0d00;
+                    break;
+                case 'E':
+                case 'e':
+                    codepoint += 0x0e00;
+                    break;
+                case 'F':
+                case 'f':
+                    codepoint += 0x0f00;
+                    break;
+                default:
+                    return -1;
+            }
+
+            switch (get())
+            {
+                case '0':
+                    break;
+                case '1':
+                    codepoint += 0x0010;
+                    break;
+                case '2':
+                    codepoint += 0x0020;
+                    break;
+                case '3':
+                    codepoint += 0x0030;
+                    break;
+                case '4':
+                    codepoint += 0x0040;
+                    break;
+                case '5':
+                    codepoint += 0x0050;
+                    break;
+                case '6':
+                    codepoint += 0x0060;
+                    break;
+                case '7':
+                    codepoint += 0x0070;
+                    break;
+                case '8':
+                    codepoint += 0x0080;
+                    break;
+                case '9':
+                    codepoint += 0x0090;
+                    break;
+                case 'A':
+                case 'a':
+                    codepoint += 0x00a0;
+                    break;
+                case 'B':
+                case 'b':
+                    codepoint += 0x00b0;
+                    break;
+                case 'C':
+                case 'c':
+                    codepoint += 0x00c0;
+                    break;
+                case 'D':
+                case 'd':
+                    codepoint += 0x00d0;
+                    break;
+                case 'E':
+                case 'e':
+                    codepoint += 0x00e0;
+                    break;
+                case 'F':
+                case 'f':
+                    codepoint += 0x00f0;
+                    break;
+                default:
+                    return -1;
+            }
+
+            switch (get())
+            {
+                case '0':
+                    break;
+                case '1':
+                    codepoint += 0x0001;
+                    break;
+                case '2':
+                    codepoint += 0x0002;
+                    break;
+                case '3':
+                    codepoint += 0x0003;
+                    break;
+                case '4':
+                    codepoint += 0x0004;
+                    break;
+                case '5':
+                    codepoint += 0x0005;
+                    break;
+                case '6':
+                    codepoint += 0x0006;
+                    break;
+                case '7':
+                    codepoint += 0x0007;
+                    break;
+                case '8':
+                    codepoint += 0x0008;
+                    break;
+                case '9':
+                    codepoint += 0x0009;
+                    break;
+                case 'A':
+                case 'a':
+                    codepoint += 0x000a;
+                    break;
+                case 'B':
+                case 'b':
+                    codepoint += 0x000b;
+                    break;
+                case 'C':
+                case 'c':
+                    codepoint += 0x000c;
+                    break;
+                case 'D':
+                case 'd':
+                    codepoint += 0x000d;
+                    break;
+                case 'E':
+                case 'e':
+                    codepoint += 0x000e;
+                    break;
+                case 'F':
+                case 'f':
+                    codepoint += 0x000f;
+                    break;
+                default:
+                    return -1;
             }
 
             return codepoint;
@@ -10627,260 +10841,31 @@ class basic_json
             // we entered the function by reading an open quote
             assert(current == '\"');
 
-            static unsigned char next[256] = {17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 5, 2, 2, 6, 3, 3, 3, 7, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18};
-
-            // state variable
-            int state = -1;
-
-            // whether the state is already set
-            bool state_set = false;
-
             while (true)
             {
                 // get next character
                 get();
 
-                // end of file while parsing string
-                if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
+                switch (current)
                 {
-                    error_message = "invalid string: missing closing quote";
-                    return token_type::parse_error;
-                }
-
-                // after coping with EOF, we only cope with bytes
-                //assert(0 <= current and current <= 255);
-                unsigned char ch = static_cast<unsigned char>(current);
-
-                // get next state
-                state = state_set ? state : next[ch];
-                // reset variable
-                state_set = false;
-
-                // 'add': 0,
-                // 'add_check1': 1,
-                // 'add_check2': 2,
-                // 'add_check3': 3,
-                // 'add_check_e0': 4,
-                // 'add_check_ed': 5,
-                // 'add_check_f0': 6,
-                // 'add_check_f4': 7,
-                // 'check1': 8,
-                // 'check2': 9,
-                // 'check3': 10,
-                // 'check_e0': 11,
-                // 'check_ed': 12,
-                // 'check_f0': 13,
-                // 'check_f4': 14,
-                // 'escape': 15,
-                // 'end': 16,
-                // 'error_invalid': 17,
-                // 'error_utf8': 18
-                assert(0 <= state and state <= 18);
-
-                switch (state)
-                {
-                    // add
-                    case 0:
+                    // end of file while parsing string
+                    case std::char_traits<char>::eof():
                     {
-                        add(current);
-                        break;
+                        error_message = "invalid string: missing closing quote";
+                        return token_type::parse_error;
                     }
 
-                    // add_check1
-                    case 1:
+                    // closing quote
+                    case '\"':
                     {
-                        add(current);
-                        // next state is check1
-                        state = 8;
-                        state_set = true;
-                        break;
+                        // terminate yytext
+                        add('\0');
+                        --yylen;
+                        return token_type::value_string;
                     }
 
-                    // add_check2
-                    case 2:
-                    {
-                        add(current);
-                        // next state is check2
-                        state = 9;
-                        state_set = true;
-                        break;
-                    }
-
-                    // add_check3
-                    case 3:
-                    {
-                        add(current);
-                        // next state is check3
-                        state = 10;
-                        state_set = true;
-                        break;
-                    }
-
-                    // add_check_e0
-                    case 4:
-                    {
-                        add(current);
-                        // next state is check_e0
-                        state = 11;
-                        state_set = true;
-                        break;
-                    }
-
-                    // add_check_ed
-                    case 5:
-                    {
-                        add(current);
-                        // next state is check_ed
-                        state = 12;
-                        state_set = true;
-                        break;
-                    }
-
-                    // add_check_f0
-                    case 6:
-                    {
-                        add(current);
-                        // next state is check_f0
-                        state = 13;
-                        state_set = true;
-                        break;
-                    }
-
-                    // add_check_f4
-                    case 7:
-                    {
-                        add(current);
-                        // next state is check_f4
-                        state = 14;
-                        state_set = true;
-                        break;
-                    }
-
-                    // check1
-                    case 8:
-                    {
-                        if (JSON_LIKELY(0x80 <= ch and ch <= 0xBF))
-                        {
-                            add(current);
-                            break;
-                        }
-                        else
-                        {
-                            error_message = "invalid string: not well-formed UTF-8 byte";
-                            return token_type::parse_error;
-                        }
-                    }
-
-                    // check2
-                    case 9:
-                    {
-                        if (JSON_LIKELY(0x80 <= ch and ch <= 0xBF))
-                        {
-                            add(current);
-                            // next state is check1
-                            state = 8;
-                            state_set = true;
-                            break;
-                        }
-                        else
-                        {
-                            error_message = "invalid string: not well-formed UTF-8 byte";
-                            return token_type::parse_error;
-                        }
-                    }
-
-                    // check3
-                    case 10:
-                    {
-                        if (JSON_LIKELY(0x80 <= ch and ch <= 0xBF))
-                        {
-                            add(current);
-                            // next state is check2
-                            state = 9;
-                            state_set = true;
-                            break;
-                        }
-                        else
-                        {
-                            error_message = "invalid string: not well-formed UTF-8 byte";
-                            return token_type::parse_error;
-                        }
-                    }
-
-                    // check_e0
-                    case 11:
-                    {
-                        if (JSON_LIKELY(0xA0 <= ch and ch <= 0xBF))
-                        {
-                            add(current);
-                            // next state is check1
-                            state = 8;
-                            state_set = true;
-                            break;
-                        }
-                        else
-                        {
-                            error_message = "invalid string: not well-formed UTF-8 byte";
-                            return token_type::parse_error;
-                        }
-                    }
-
-                    // check_ed
-                    case 12:
-                    {
-                        if (JSON_LIKELY(0x80 <= ch and ch <= 0x9F))
-                        {
-                            add(current);
-                            // next state is check1
-                            state = 8;
-                            state_set = true;
-                            break;
-                        }
-                        else
-                        {
-                            error_message = "invalid string: not well-formed UTF-8 byte";
-                            return token_type::parse_error;
-                        }
-                    }
-
-                    // check_f0
-                    case 13:
-                    {
-                        if (JSON_LIKELY(0x90 <= ch and ch <= 0xBF))
-                        {
-                            add(current);
-                            // next state is check2
-                            state = 9;
-                            state_set = true;
-                            break;
-                        }
-                        else
-                        {
-                            error_message = "invalid string: not well-formed UTF-8 byte";
-                            return token_type::parse_error;
-                        }
-                    }
-
-                    // check_f4
-                    case 14:
-                    {
-                        if (JSON_LIKELY(0x80 <= ch and ch <= 0x8F))
-                        {
-                            add(current);
-                            // next state is check2
-                            state = 9;
-                            state_set = true;
-                            break;
-                        }
-                        else
-                        {
-                            error_message = "invalid string: not well-formed UTF-8 byte";
-                            return token_type::parse_error;
-                        }
-                    }
-
-                    // escape
-                    case 15:
+                    // escapes
+                    case '\\':
                     {
                         switch (get())
                         {
@@ -10935,7 +10920,7 @@ class basic_json
                                     // expect next \uxxxx entry
                                     if (JSON_LIKELY(get() == '\\' and get() == 'u'))
                                     {
-                                        int codepoint2 = get_codepoint();
+                                        const int codepoint2 = get_codepoint();
 
                                         if (JSON_UNLIKELY(codepoint2 == -1))
                                         {
@@ -11025,32 +11010,344 @@ class basic_json
                         break;
                     }
 
-                    // end
-                    case 16:
-                    {
-                        // terminate yytext
-                        add('\0');
-                        --yylen;
-                        return token_type::value_string;
-                    }
-
-                    // error_invalid
-                    case 17:
+                    // invalid control characters
+                    case '\x00':
+                    case '\x01':
+                    case '\x02':
+                    case '\x03':
+                    case '\x04':
+                    case '\x05':
+                    case '\x06':
+                    case '\x07':
+                    case '\x08':
+                    case '\x09':
+                    case '\x0a':
+                    case '\x0b':
+                    case '\x0c':
+                    case '\x0d':
+                    case '\x0e':
+                    case '\x0f':
+                    case '\x10':
+                    case '\x11':
+                    case '\x12':
+                    case '\x13':
+                    case '\x14':
+                    case '\x15':
+                    case '\x16':
+                    case '\x17':
+                    case '\x18':
+                    case '\x19':
+                    case '\x1a':
+                    case '\x1b':
+                    case '\x1c':
+                    case '\x1d':
+                    case '\x1e':
+                    case '\x1f':
                     {
                         error_message = "invalid string: control characters (U+0000 through U+001f) must be escaped";
                         return token_type::parse_error;
                     }
 
-                    // error_utf8
-                    case 18:
+                    // U+0020..U+007F (except U+0022 (quote) and U+005C (backspace))
+                    case '\x20':
+                    case '\x21':
+                    case '\x23':
+                    case '\x24':
+                    case '\x25':
+                    case '\x26':
+                    case '\x27':
+                    case '\x28':
+                    case '\x29':
+                    case '\x2a':
+                    case '\x2b':
+                    case '\x2c':
+                    case '\x2d':
+                    case '\x2e':
+                    case '\x2f':
+                    case '\x30':
+                    case '\x31':
+                    case '\x32':
+                    case '\x33':
+                    case '\x34':
+                    case '\x35':
+                    case '\x36':
+                    case '\x37':
+                    case '\x38':
+                    case '\x39':
+                    case '\x3a':
+                    case '\x3b':
+                    case '\x3c':
+                    case '\x3d':
+                    case '\x3e':
+                    case '\x3f':
+                    case '\x40':
+                    case '\x41':
+                    case '\x42':
+                    case '\x43':
+                    case '\x44':
+                    case '\x45':
+                    case '\x46':
+                    case '\x47':
+                    case '\x48':
+                    case '\x49':
+                    case '\x4a':
+                    case '\x4b':
+                    case '\x4c':
+                    case '\x4d':
+                    case '\x4e':
+                    case '\x4f':
+                    case '\x50':
+                    case '\x51':
+                    case '\x52':
+                    case '\x53':
+                    case '\x54':
+                    case '\x55':
+                    case '\x56':
+                    case '\x57':
+                    case '\x58':
+                    case '\x59':
+                    case '\x5a':
+                    case '\x5b':
+                    case '\x5d':
+                    case '\x5e':
+                    case '\x5f':
+                    case '\x60':
+                    case '\x61':
+                    case '\x62':
+                    case '\x63':
+                    case '\x64':
+                    case '\x65':
+                    case '\x66':
+                    case '\x67':
+                    case '\x68':
+                    case '\x69':
+                    case '\x6a':
+                    case '\x6b':
+                    case '\x6c':
+                    case '\x6d':
+                    case '\x6e':
+                    case '\x6f':
+                    case '\x70':
+                    case '\x71':
+                    case '\x72':
+                    case '\x73':
+                    case '\x74':
+                    case '\x75':
+                    case '\x76':
+                    case '\x77':
+                    case '\x78':
+                    case '\x79':
+                    case '\x7a':
+                    case '\x7b':
+                    case '\x7c':
+                    case '\x7d':
+                    case '\x7e':
+                    case '\x7f':
                     {
+                        add(current);
+                        break;
+                    }
+
+                    // U+0080..U+07FF: bytes C2..DF 80..BF
+                    case '\xc2':
+                    case '\xc3':
+                    case '\xc4':
+                    case '\xc5':
+                    case '\xc6':
+                    case '\xc7':
+                    case '\xc8':
+                    case '\xc9':
+                    case '\xca':
+                    case '\xcb':
+                    case '\xcc':
+                    case '\xcd':
+                    case '\xce':
+                    case '\xcf':
+                    case '\xd0':
+                    case '\xd1':
+                    case '\xd2':
+                    case '\xd3':
+                    case '\xd4':
+                    case '\xd5':
+                    case '\xd6':
+                    case '\xd7':
+                    case '\xd8':
+                    case '\xd9':
+                    case '\xda':
+                    case '\xdb':
+                    case '\xdc':
+                    case '\xdd':
+                    case '\xde':
+                    case '\xdf':
+                    {
+                        add(current);
+                        get();
+                        if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                        {
+                            add(current);
+                            continue;
+                        }
+
                         error_message = "invalid string: not well-formed UTF-8 byte";
                         return token_type::parse_error;
                     }
 
+                    // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
+                    case '\xe0':
+                    {
+                        add(current);
+                        get();
+                        if (JSON_LIKELY('\xa0' <= current and current <= '\xbf'))
+                        {
+                            add(current);
+                            get();
+                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            {
+                                add(current);
+                                continue;
+                            }
+                        }
+
+                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        return token_type::parse_error;
+                    }
+
+                    // U+1000..U+CFFF: bytes E1..EC 80..BF 80..BF
+                    // U+E000..U+FFFF: bytes EE..EF 80..BF 80..BF
+                    case '\xe1':
+                    case '\xe2':
+                    case '\xe3':
+                    case '\xe4':
+                    case '\xe5':
+                    case '\xe6':
+                    case '\xe7':
+                    case '\xe8':
+                    case '\xe9':
+                    case '\xea':
+                    case '\xeb':
+                    case '\xec':
+                    case '\xee':
+                    case '\xef':
+                    {
+                        add(current);
+                        get();
+                        if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                        {
+                            add(current);
+                            get();
+                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            {
+                                add(current);
+                                continue;
+                            }
+                        }
+
+                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        return token_type::parse_error;
+                    }
+
+                    // U+D000..U+D7FF: bytes ED 80..9F 80..BF
+                    case '\xed':
+                    {
+                        add(current);
+                        get();
+                        if (JSON_LIKELY('\x80' <= current and current <= '\x9f'))
+                        {
+                            add(current);
+                            get();
+                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            {
+                                add(current);
+                                continue;
+                            }
+                        }
+
+                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        return token_type::parse_error;
+                    }
+
+                    // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
+                    case '\xf0':
+                    {
+                        add(current);
+                        get();
+                        if (JSON_LIKELY('\x90' <= current and current <= '\xbf'))
+                        {
+                            add(current);
+                            get();
+                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            {
+                                add(current);
+                                get();
+                                if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                                {
+                                    add(current);
+                                    continue;
+                                }
+                            }
+                        }
+
+                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        return token_type::parse_error;
+                    }
+
+                    // U+40000..U+FFFFF F1..F3 80..BF 80..BF 80..BF
+                    case '\xf1':
+                    case '\xf2':
+                    case '\xf3':
+                    {
+                        add(current);
+                        get();
+                        if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                        {
+                            add(current);
+                            get();
+                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            {
+                                add(current);
+                                get();
+                                if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                                {
+                                    add(current);
+                                    continue;
+                                }
+                            }
+                        }
+
+                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        return token_type::parse_error;
+                    }
+
+                    // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
+                    case '\xf4':
+                    {
+                        add(current);
+                        get();
+                        if (JSON_LIKELY('\x80' <= current and current <= '\x8f'))
+                        {
+                            add(current);
+                            get();
+                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            {
+                                add(current);
+                                get();
+                                if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                                {
+                                    add(current);
+                                    continue;
+                                }
+                            }
+                        }
+
+                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        return token_type::parse_error;
+                    }
+
+                    // remaining bytes (80..C1 and F5..FF) are not well-formed
                     default:
                     {
-                        assert(false); // LCOV_EXCL_LINE
+                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        return token_type::parse_error;
                     }
                 }
             }
@@ -11071,70 +11368,301 @@ class basic_json
             f = std::strtold(str, endptr);
         }
 
+        /*!
+        state    | 0        | 1-9      | e E      | +       | -       | .        | anything
+        ---------|----------|----------|----------|---------|---------|----------|-----------
+        init     | zero     | any1     | [error]  | [error] | minus   | [error]  | [error]
+        minus    | zero     | any1     | [error]  | [error] | [error] | [error]  | [error]
+        zero     | done     | done     | exponent | done    | done    | decimal1 | done
+        any1     | any1     | any1     | exponent | done    | done    | decimal1 | done
+        decimal1 | decimal2 | [error]  | [error]  | [error] | [error] | [error]  | [error]
+        decimal2 | decimal2 | decimal2 | exponent | done    | done    | done     | done
+        exponent | any2     | any2     | [error]  | sign    | sign    | [error]  | [error]
+        sign     | any2     | any2     | [error]  | [error] | [error] | [error]  | [error]
+        any2     | any2     | any2     | done     | done    | done    | done     | done
+        */
         token_type scan_number()
         {
-            static unsigned char lookup[9][256] =
-            {
-                {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 1, 10, 10, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-                {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-                {9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 4, 9, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9},
-                {9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 4, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9},
-                {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-                {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 8, 10, 8, 10, 10, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-                {9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9},
-                {9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9},
-                {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10}
-            };
-
             reset();
 
-            bool has_sign = false;
-            bool has_exp = false;
-            bool has_point = false;
+            // the type of the parsed number; initially set to unsigned; will
+            // be changed if minus sign, decimal point or exponent is read
+            token_type number_type = token_type::value_unsigned;
 
-            int state = lookup[0][static_cast<unsigned char>(current)];
-            int old_state = 0;
-
-            while (state != 9)
+            // state: we just found out we need to scan a number
+            switch (current)
             {
-                has_sign = has_sign or (state == 1);
-                has_point = has_point or (state == 4);
-                has_exp = has_exp or (state == 5);
-
-                if (JSON_UNLIKELY(state == 10))
+                case '-':
                 {
-                    // create error message based on previous state
-                    switch (old_state)
-                    {
-                        case 0:
-                            error_message = "invalid number; expected '-' or digit";
-                            break;
-                        case 1:
-                            error_message = "invalid number; expected digit after '-'";
-                            break;
-                        case 4:
-                            error_message = "invalid number; expected digit after '.'";
-                            break;
-                        case 5:
-                            error_message = "invalid number; expected '+', '-', or digit after exponent";
-                            break;
-                        case 8:
-                            error_message = "invalid number; expected digit after exponent sign";
-                            break;
-                        default:
-                            assert(false); // no error in the other states
-                            break;
-                    }
-                    return token_type::parse_error;
+                    add(current);
+                    goto scan_number_minus;
                 }
 
-                // add current character and fix decimal point
-                add((state == 4) ? decimal_point_char : current);
-                get();
-                old_state = state;
-                state = lookup[state][static_cast<unsigned char>(current)];
+                case '0':
+                {
+                    add(current);
+                    goto scan_number_zero;
+                }
+
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                {
+                    add(current);
+                    goto scan_number_any1;
+                }
+
+                default:
+                {
+                    // all other characters are rejected outside scan_number()
+                    assert(false);  // LCOV_EXCL_LINE
+                }
             }
 
+scan_number_minus:
+            // state: we just parsed a leading minus sign
+            number_type = token_type::value_integer;
+            switch (get())
+            {
+                case '0':
+                {
+                    add(current);
+                    goto scan_number_zero;
+                }
+
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                {
+                    add(current);
+                    goto scan_number_any1;
+                }
+
+                default:
+                {
+                    error_message = "invalid number; expected digit after '-'";
+                    return token_type::parse_error;
+                }
+            }
+
+scan_number_zero:
+            // state: we just parse a zero (maybe with a leading minus sign)
+            switch (get())
+            {
+                case '.':
+                {
+                    add(decimal_point_char);
+                    goto scan_number_decimal1;
+                }
+
+                case 'e':
+                case 'E':
+                {
+                    add(current);
+                    goto scan_number_exponent;
+                }
+
+                default:
+                {
+                    goto scan_number_done;
+                }
+            }
+
+scan_number_any1:
+            // state: we just parsed a number 0-9 (maybe with a leading minus sign)
+            switch (get())
+            {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                {
+                    add(current);
+                    goto scan_number_any1;
+                }
+
+                case '.':
+                {
+                    add(decimal_point_char);
+                    goto scan_number_decimal1;
+                }
+
+                case 'e':
+                case 'E':
+                {
+                    add(current);
+                    goto scan_number_exponent;
+                }
+
+                default:
+                {
+                    goto scan_number_done;
+                }
+            }
+
+scan_number_decimal1:
+            // state: we just parsed a decimal point
+            number_type = token_type::value_float;
+            switch (get())
+            {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                {
+                    add(current);
+                    goto scan_number_decimal2;
+                }
+
+                default:
+                {
+                    error_message = "invalid number; expected digit after '.'";
+                    return token_type::parse_error;
+                }
+            }
+
+scan_number_decimal2:
+            // we just parsed at least one number after a decimal point
+            switch (get())
+            {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                {
+                    add(current);
+                    goto scan_number_decimal2;
+                }
+
+                case 'e':
+                case 'E':
+                {
+                    add(current);
+                    goto scan_number_exponent;
+                }
+
+                default:
+                {
+                    goto scan_number_done;
+                }
+            }
+
+scan_number_exponent:
+            // we just parsed an exponent
+            number_type = token_type::value_float;
+            switch (get())
+            {
+                case '+':
+                case '-':
+                {
+                    add(current);
+                    goto scan_number_sign;
+                }
+
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                {
+                    add(current);
+                    goto scan_number_any2;
+                }
+
+                default:
+                {
+                    error_message = "invalid number; expected '+', '-', or digit after exponent";
+                    return token_type::parse_error;
+                }
+            }
+
+scan_number_sign:
+            // we just parsed an exponent sign
+            switch (get())
+            {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                {
+                    add(current);
+                    goto scan_number_any2;
+                }
+
+                default:
+                {
+                    error_message = "invalid number; expected digit after exponent sign";
+                    return token_type::parse_error;
+                }
+            }
+
+scan_number_any2:
+            // we just parsed a number after the exponent or exponent sign
+            switch (get())
+            {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                {
+                    add(current);
+                    goto scan_number_any2;
+                }
+
+                default:
+                {
+                    goto scan_number_done;
+                }
+            }
+
+scan_number_done:
             // unget the character after the number
             unget();
 
@@ -11143,27 +11671,39 @@ class basic_json
             --yylen;
 
             // try to parse integers first and fall back to floats
-            if (not has_exp and not has_point)
+            if (number_type == token_type::value_unsigned)
             {
+                char* endptr = nullptr;
                 errno = 0;
-                if (has_sign)
+                const auto x = std::strtoull(yytext.data(), &endptr, 10);
+
+                // we checked the number format before
+                assert(endptr == yytext.data() + yylen);
+
+                if (errno == 0)
                 {
-                    char* endptr = nullptr;
-                    const auto x = std::strtoll(yytext.data(), &endptr, 10);
-                    value_integer = static_cast<number_integer_t>(x);
-                    if (errno == 0 and endptr == yytext.data() + yylen and value_integer == x)
-                    {
-                        return token_type::value_integer;
-                    }
-                }
-                else
-                {
-                    char* endptr = nullptr;
-                    const auto x = std::strtoull(yytext.data(), &endptr, 10);
                     value_unsigned = static_cast<number_unsigned_t>(x);
-                    if (errno == 0 and endptr == yytext.data() + yylen and value_unsigned == x)
+                    if (value_unsigned == x)
                     {
                         return token_type::value_unsigned;
+                    }
+                }
+            }
+            else if (number_type == token_type::value_integer)
+            {
+                char* endptr = nullptr;
+                errno = 0;
+                const auto x = std::strtoll(yytext.data(), &endptr, 10);
+
+                // we checked the number format before
+                assert(endptr == yytext.data() + yylen);
+
+                if (errno == 0)
+                {
+                    value_integer = static_cast<number_integer_t>(x);
+                    if (value_integer == x)
+                    {
+                        return token_type::value_integer;
                     }
                 }
             }
@@ -11223,17 +11763,9 @@ class basic_json
         int get()
         {
             ++chars_read;
-
-            if (JSON_UNLIKELY(next_unget))
-            {
-                next_unget = false;
-            }
-            else
-            {
-                current = ia->get_character();
-            }
-
-            return current;
+            return next_unget
+                   ? (next_unget = false, current)
+                   : (current = ia->get_character());
         }
 
         /// unget a character to the input
@@ -11317,7 +11849,6 @@ class basic_json
                 }
                 else
                 {
-
                     // add character as is
                     ss << c;
                 }
@@ -11441,8 +11972,7 @@ class basic_json
       public:
         /// a parser reading from a string literal
         parser(const char* buff, const parser_callback_t cb = nullptr)
-            : callback(cb),
-              m_lexer(buff, std::strlen(buff))
+            : callback(cb), m_lexer(buff, std::strlen(buff))
         {}
 
         /*!
@@ -11528,22 +12058,11 @@ class basic_json
                         return result;
                     }
 
-                    // no comma is expected here
-                    unexpect(lexer::token_type::value_separator);
-
-                    // otherwise: parse key-value pairs
-                    do
+                    // parse values
+                    while (true)
                     {
-                        // ugly, but could be fixed with loop reorganization
-                        if (last_token == lexer::token_type::value_separator)
-                        {
-                            get_token();
-                        }
-
                         // store key
                         expect(lexer::token_type::value_string);
-                        // FIXME get_string returns const char*; maybe we can
-                        // avoid this copy in the future
                         const auto key = m_lexer.get_string();
 
                         bool keep_tag = false;
@@ -11571,12 +12090,20 @@ class basic_json
                         {
                             result[key] = std::move(value);
                         }
-                    }
-                    while (last_token == lexer::token_type::value_separator);
 
-                    // closing }
-                    expect(lexer::token_type::end_object);
-                    get_token();
+                        // comma -> next value
+                        if (last_token == lexer::token_type::value_separator)
+                        {
+                            get_token();
+                            continue;
+                        }
+
+                        // closing }
+                        expect(lexer::token_type::end_object);
+                        get_token();
+                        break;
+                    }
+
                     if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
                     {
                         result = basic_json(value_t::discarded);
@@ -11609,30 +12136,29 @@ class basic_json
                         return result;
                     }
 
-                    // no comma is expected here
-                    unexpect(lexer::token_type::value_separator);
-
-                    // otherwise: parse values
-                    do
+                    // parse values
+                    while (true)
                     {
-                        // ugly, but could be fixed with loop reorganization
-                        if (last_token == lexer::token_type::value_separator)
-                        {
-                            get_token();
-                        }
-
                         // parse value
                         auto value = parse_internal(keep);
                         if (keep and not value.is_discarded())
                         {
                             result.push_back(std::move(value));
                         }
-                    }
-                    while (last_token == lexer::token_type::value_separator);
 
-                    // closing ]
-                    expect(lexer::token_type::end_array);
-                    get_token();
+                        // comma -> next value
+                        if (last_token == lexer::token_type::value_separator)
+                        {
+                            get_token();
+                            continue;
+                        }
+
+                        // closing ]
+                        expect(lexer::token_type::end_array);
+                        get_token();
+                        break;
+                    }
+
                     if (keep and callback and not callback(--depth, parse_event_t::array_end, result))
                     {
                         result = basic_json(value_t::discarded);
@@ -11728,7 +12254,7 @@ class basic_json
         */
         void expect(typename lexer::token_type t) const
         {
-            if (t != last_token)
+            if (JSON_UNLIKELY(t != last_token))
             {
                 std::string error_msg = "syntax error - ";
                 if (last_token == lexer::token_type::parse_error)
@@ -11750,7 +12276,7 @@ class basic_json
         */
         void unexpect(typename lexer::token_type t) const
         {
-            if (t == last_token)
+            if (JSON_UNLIKELY(t == last_token))
             {
                 std::string error_msg = "syntax error - ";
                 if (last_token == lexer::token_type::parse_error)
