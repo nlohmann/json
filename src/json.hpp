@@ -10307,9 +10307,9 @@ class basic_json
         class cached_input_stream_adapter : public input_adapter
         {
           public:
-            cached_input_stream_adapter(std::istream& i)
+            cached_input_stream_adapter(std::istream& i, const size_t buffer_size)
                 : is(i), start_position(is.tellg()),
-                  buffer(1024 * 1024, std::char_traits<char>::eof())
+                  buffer(buffer_size, std::char_traits<char>::eof())
             {
                 // immediately abort if stream is erroneous
                 if (JSON_UNLIKELY(i.fail()))
@@ -10552,7 +10552,7 @@ class basic_json
         }
 
         explicit lexer(std::istream& i)
-            : ia(new cached_input_stream_adapter(i)),
+            : ia(new cached_input_stream_adapter(i, 1024 * 1024)),
               decimal_point_char(get_decimal_point())
         {}
 
