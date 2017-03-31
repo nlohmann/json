@@ -13795,6 +13795,9 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
     #pragma GCC diagnostic pop
 #endif
+#if defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
 
 // clean up
 #undef JSON_CATCH

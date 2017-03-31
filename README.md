@@ -517,9 +517,9 @@ namespace ns {
     }
 
     void from_json(const json& j, person& p) {
-        p.name = j["name"].get<std::string>();
-        p.address = j["address"].get<std::string>();
-        p.age = j["age"].get<int>();
+        p.name = j.at("name").get<std::string>();
+        p.address = j.at("address").get<std::string>();
+        p.age = j.at("age").get<int>();
     }
 } // namespace ns
 ```
@@ -531,6 +531,7 @@ Some important things:
 
 * Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
 * When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible). (There is a way to bypass this requirement described later.)
+* In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exists, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 
 #### How do I convert third-party types?
 
@@ -833,6 +834,7 @@ I deeply appreciate the help of the following people.
 - [TedLyngmo](https://github.com/TedLyngmo) noted a typo in the README, removed unnecessary bit arithmetic, and fixed some `-Weffc++` warnings.
 - [Krzysztof Woś](https://github.com/krzysztofwos) made exceptions more visible.
 - [ftillier](https://github.com/ftillier) fixed a compiler warning.
+- [tinloaf](https://github.com/tinloaf) made sure all pushed warnings are properly popped.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
