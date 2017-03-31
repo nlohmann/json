@@ -11664,7 +11664,8 @@ scan_number_any2:
 
 scan_number_done:
             // unget the character after the number
-            unget();
+            --chars_read;
+            next_unget = true;
 
             // terminate token
             add('\0');
@@ -11766,13 +11767,6 @@ scan_number_done:
             return next_unget
                    ? (next_unget = false, current)
                    : (current = ia->get_character());
-        }
-
-        /// unget a character to the input
-        void unget() noexcept
-        {
-            --chars_read;
-            next_unget = true;
         }
 
         /// add a character to yytext
