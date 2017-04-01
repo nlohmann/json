@@ -10965,6 +10965,9 @@ class basic_json
                                     codepoint = codepoint1;
                                 }
 
+                                // result of the above calculation yields a proper codepoint
+                                assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
+
                                 // translate code point to bytes
                                 if (codepoint < 0x80)
                                 {
@@ -10984,18 +10987,13 @@ class basic_json
                                     add(0x80 | ((codepoint >> 6) & 0x3F));
                                     add(0x80 | (codepoint & 0x3F));
                                 }
-                                else if (codepoint <= 0x10ffff)
+                                else
                                 {
                                     // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
                                     add(0xF0 | (codepoint >> 18));
                                     add(0x80 | ((codepoint >> 12) & 0x3F));
                                     add(0x80 | ((codepoint >> 6) & 0x3F));
                                     add(0x80 | (codepoint & 0x3F));
-                                }
-                                else
-                                {
-                                    error_message = "invalid string: code points above U+10FFFF are invalid";
-                                    return token_type::parse_error;
                                 }
 
                                 break;

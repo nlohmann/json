@@ -158,6 +158,15 @@ TEST_CASE("lexer class")
         }
     }
 
+    SECTION("very large string")
+    {
+        // strings larger than 1024 bytes yield a resize of the lexer's yytext buffer
+        std::string s("\"");
+        s += std::string(2048, 'x');
+        s += "\"";
+        CHECK((json::lexer(s.c_str(), 2050).scan() == json::lexer::token_type::value_string));
+    }
+
     /* NOTE: to_unicode function has been removed
     SECTION("to_unicode")
     {
