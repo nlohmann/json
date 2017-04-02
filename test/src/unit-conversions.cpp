@@ -917,6 +917,15 @@ TEST_CASE("value conversion")
         }
     }
 
+    SECTION("get an enum")
+    {
+        enum c_enum { value_1, value_2 };
+        enum class cpp_enum { value_1, value_2 };
+
+        CHECK(json(value_1).get<c_enum>() == value_1);
+        CHECK(json(cpp_enum::value_1).get<cpp_enum>() == cpp_enum::value_1);
+    }
+
     SECTION("more involved conversions")
     {
         SECTION("object-like STL containers")
