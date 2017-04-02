@@ -47,7 +47,8 @@ doctest:
 # -Wno-keyword-macro: unit-tests use "#define private public"
 # -Wno-deprecated-declarations: the library deprecated some functions
 # -Wno-weak-vtables: exception class is defined inline, but has virtual method
-# -Wno-range-loop-analysis: iterator_wrapper tests tests "for(const auto i...)"
+# -Wno-range-loop-analysis: iterator_wrapper tests "for(const auto i...)"
+# -Wno-float-equal: not all comparisons in the tests can be replaced by Approx
 pedantic_clang:
 	$(MAKE) json_unit CXXFLAGS="\
 		-std=c++11 \
@@ -58,7 +59,8 @@ pedantic_clang:
 		-Wno-keyword-macro \
 		-Wno-deprecated-declarations \
 		-Wno-weak-vtables \
-		-Wno-range-loop-analysis"
+		-Wno-range-loop-analysis \
+		-Wno-float-equal"
 
 # calling GCC with most warnings
 pedantic_gcc:

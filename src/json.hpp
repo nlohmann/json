@@ -38,7 +38,7 @@ SOFTWARE.
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <cstdint> // int64_t, uint64_t
 #include <cstdlib> // abort, strtod, strtof, strtold, strtoul, strtoll, strtoull
-#include <cstring> // strlen
+#include <cstring> // memcpy, strlen
 #include <forward_list> // forward_list
 #include <functional> // function, hash, less
 #include <initializer_list> // initializer_list
@@ -9228,12 +9228,12 @@ class basic_json
 
     @since version 2.0.9, parameter @a start_index since 2.1.1
     */
-    static basic_json from_cbor(const std::vector<uint8_t>& v,
-                                const size_t start_index = 0)
-    {
-        size_t i = start_index;
-        return from_cbor_internal(v, i);
-    }
+    //static basic_json from_cbor(const std::vector<uint8_t>& v,
+    //                            const size_t start_index = 0)
+    //{
+    //    size_t i = start_index;
+    //    return from_cbor_internal(v, i);
+    //}
 
     /// @}
 
@@ -10281,10 +10281,727 @@ class basic_json
 
 
   private:
+    ////////////////////
+    // input adapters //
+    ////////////////////
+
+    /// abstract input adapter interface
+    class input_adapter
+    {
+      public:
+        virtual int get_character() = 0;
+        virtual std::string read(size_t offset, size_t length) = 0;
+        virtual ~input_adapter() {}
+    };
+
+    /// input adapter for cached stream input
+    class cached_input_stream_adapter : public input_adapter
+    {
+      public:
+        cached_input_stream_adapter(std::istream& i, const size_t buffer_size)
+            : is(i), start_position(is.tellg()),
+              buffer(buffer_size, std::char_traits<char>::eof())
+        {
+            // immediately abort if stream is erroneous
+            if (JSON_UNLIKELY(i.fail()))
+            {
+                JSON_THROW(parse_error::create(111, 0, "bad input stream"));
+            }
+
+            // initial fill; unfilled buffer characters remain EOF
+            is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+
+            // skip byte-order mark
+            assert(buffer.size() >= 3);
+            if (buffer[0] == '\xEF' and buffer[1] == '\xBB' and buffer[2] == '\xBF')
+            {
+                buffer_pos += 3;
+                processed_chars += 3;
+            }
+        }
+
+        ~cached_input_stream_adapter() override
+        {
+            // clear stream flags
+            is.clear();
+            // set stream after last processed char
+            is.seekg(start_position + static_cast<std::streamoff>(processed_chars - 1));
+        }
+
+        int get_character() override
+        {
+            // check if refilling is necessary
+            if (JSON_UNLIKELY(buffer_pos == buffer.size()))
+            {
+                // refill
+                is.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(buffer.size()));
+                // set unfilled characters to EOF
+                std::fill_n(buffer.begin() + static_cast<int>(is.gcount()),
+                            buffer.size() - static_cast<size_t>(is.gcount()),
+                            std::char_traits<char>::eof());
+                // the buffer is ready
+                buffer_pos = 0;
+            }
+
+            ++processed_chars;
+            const int res = buffer[buffer_pos++];
+            return (res == std::char_traits<char>::eof()) ? res : res & 0xFF;
+        }
+
+        std::string read(size_t offset, size_t length) override
+        {
+            // create buffer
+            std::string result(length, '\0');
+
+            // save stream position
+            auto current_pos = is.tellg();
+            // save stream flags
+            auto flags = is.rdstate();
+
+            // clear stream flags
+            is.clear();
+            // set stream position
+            is.seekg(static_cast<std::streamoff>(offset));
+            // read bytes
+            is.read(&result[0], static_cast<std::streamsize>(length));
+
+            // reset stream position
+            is.seekg(current_pos);
+            // reset stream flags
+            is.setstate(flags);
+
+            return result;
+        }
+
+      private:
+        /// the associated input stream
+        std::istream& is;
+
+        /// chars returned via get_character()
+        size_t processed_chars = 0;
+        /// chars processed in the current buffer
+        size_t buffer_pos = 0;
+
+        /// position of the stream when we started
+        const std::streampos start_position;
+
+        /// internal buffer
+        std::vector<char> buffer;
+    };
+
+    /// input adapter for buffer input
+    class input_buffer_adapter : public input_adapter
+    {
+      public:
+        input_buffer_adapter(const char* b, size_t l)
+            : input_adapter(), cursor(b), limit(b + l), start(b)
+        {}
+
+        // delete because of pointer members
+        input_buffer_adapter(const input_buffer_adapter&) = delete;
+        input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
+
+        int get_character() override
+        {
+            if (JSON_LIKELY(cursor < limit))
+            {
+                return *(cursor++) & 0xFF;
+            }
+            else
+            {
+                return std::char_traits<char>::eof();
+            }
+        }
+
+        std::string read(size_t offset, size_t length) override
+        {
+            // avoid reading too many characters
+            const size_t max_length = static_cast<size_t>(limit - start);
+            return std::string(start + offset, std::min({length, max_length}));
+        }
+
+      private:
+        /// pointer to the current character
+        const char* cursor;
+        /// pointer past the last character
+        const char* limit;
+        /// pointer to the first character
+        const char* start;
+    };
+
+    ////////////////////
+    // binary formats //
+    ////////////////////
+
+  private:
+    class binary_reader
+    {
+      public:
+        explicit binary_reader(std::istream& i)
+            : ia(new cached_input_stream_adapter(i, 16384))
+        {}
+
+        binary_reader(const char* buff, const size_t len)
+            : ia(new input_buffer_adapter(buff, len))
+        {}
+
+        ~binary_reader()
+        {
+            delete ia;
+        }
+
+        // switch off unwanted functions (due to pointer members)
+        binary_reader(const binary_reader&) = delete;
+        binary_reader operator=(const binary_reader&) = delete;
+
+        /*!
+        @param[in] get_char  whether a new character should be retrieved from
+                             the input (true, default) or whether the last
+                             read character should be considered instead
+        */
+        basic_json parse_cbor(const bool get_char = true)
+        {
+            switch (get_char ? get() : current)
+            {
+                // EOF
+                case std::char_traits<char>::eof():
+                {
+                    JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
+                }
+
+                // Integer 0x00..0x17 (0..23)
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x04:
+                case 0x05:
+                case 0x06:
+                case 0x07:
+                case 0x08:
+                case 0x09:
+                case 0x0a:
+                case 0x0b:
+                case 0x0c:
+                case 0x0d:
+                case 0x0e:
+                case 0x0f:
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x14:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                {
+                    return static_cast<number_unsigned_t>(current);
+                }
+
+                case 0x18: // Unsigned integer (one-byte uint8_t follows)
+                {
+                    return get_number<uint8_t>();
+                }
+
+                case 0x19: // Unsigned integer (two-byte uint16_t follows)
+                {
+                    return get_number<uint16_t>();
+                }
+
+                case 0x1a: // Unsigned integer (four-byte uint32_t follows)
+                {
+                    return get_number<uint32_t>();
+                }
+
+                case 0x1b: // Unsigned integer (eight-byte uint64_t follows)
+                {
+                    return get_number<uint64_t>();
+                }
+
+                // Negative integer -1-0x00..-1-0x17 (-1..-24)
+                case 0x20:
+                case 0x21:
+                case 0x22:
+                case 0x23:
+                case 0x24:
+                case 0x25:
+                case 0x26:
+                case 0x27:
+                case 0x28:
+                case 0x29:
+                case 0x2a:
+                case 0x2b:
+                case 0x2c:
+                case 0x2d:
+                case 0x2e:
+                case 0x2f:
+                case 0x30:
+                case 0x31:
+                case 0x32:
+                case 0x33:
+                case 0x34:
+                case 0x35:
+                case 0x36:
+                case 0x37:
+                {
+                    return static_cast<int8_t>(0x20 - 1 - current);
+                }
+
+                case 0x38: // Negative integer (one-byte uint8_t follows)
+                {
+                    // must be uint8_t !
+                    return static_cast<number_integer_t>(-1) - get_number<uint8_t>();
+                }
+
+                case 0x39: // Negative integer -1-n (two-byte uint16_t follows)
+                {
+                    return static_cast<number_integer_t>(-1) - get_number<uint16_t>();
+                }
+
+                case 0x3a: // Negative integer -1-n (four-byte uint32_t follows)
+                {
+                    return static_cast<number_integer_t>(-1) - get_number<uint32_t>();
+                }
+
+                case 0x3b: // Negative integer -1-n (eight-byte uint64_t follows)
+                {
+                    return static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(get_number<uint64_t>());
+                }
+
+                // UTF-8 string (0x00..0x17 bytes follow)
+                case 0x60:
+                case 0x61:
+                case 0x62:
+                case 0x63:
+                case 0x64:
+                case 0x65:
+                case 0x66:
+                case 0x67:
+                case 0x68:
+                case 0x69:
+                case 0x6a:
+                case 0x6b:
+                case 0x6c:
+                case 0x6d:
+                case 0x6e:
+                case 0x6f:
+                case 0x70:
+                case 0x71:
+                case 0x72:
+                case 0x73:
+                case 0x74:
+                case 0x75:
+                case 0x76:
+                case 0x77:
+                case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
+                case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
+                case 0x7a: // UTF-8 string (four-byte uint32_t for n follow)
+                case 0x7b: // UTF-8 string (eight-byte uint64_t for n follow)
+                case 0x7f: // UTF-8 string (indefinite length)
+                {
+                    return get_cbor_string();
+                }
+
+                // array (0x00..0x17 data items follow)
+                case 0x80:
+                case 0x81:
+                case 0x82:
+                case 0x83:
+                case 0x84:
+                case 0x85:
+                case 0x86:
+                case 0x87:
+                case 0x88:
+                case 0x89:
+                case 0x8a:
+                case 0x8b:
+                case 0x8c:
+                case 0x8d:
+                case 0x8e:
+                case 0x8f:
+                case 0x90:
+                case 0x91:
+                case 0x92:
+                case 0x93:
+                case 0x94:
+                case 0x95:
+                case 0x96:
+                case 0x97:
+                {
+                    basic_json result = value_t::array;
+                    const auto len = static_cast<size_t>(current - 0x80);
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        result.push_back(parse_cbor());
+                    }
+                    return result;
+                }
+
+                case 0x98: // array (one-byte uint8_t for n follows)
+                {
+                    basic_json result = value_t::array;
+                    const auto len = static_cast<size_t>(get_number<uint8_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        result.push_back(parse_cbor());
+                    }
+                    return result;
+                }
+
+                case 0x99: // array (two-byte uint16_t for n follow)
+                {
+                    basic_json result = value_t::array;
+                    const auto len = static_cast<size_t>(get_number<uint16_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        result.push_back(parse_cbor());
+                    }
+                    return result;
+                }
+
+                case 0x9a: // array (four-byte uint32_t for n follow)
+                {
+                    basic_json result = value_t::array;
+                    const auto len = static_cast<size_t>(get_number<uint32_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        result.push_back(parse_cbor());
+                    }
+                    return result;
+                }
+
+                case 0x9b: // array (eight-byte uint64_t for n follow)
+                {
+                    basic_json result = value_t::array;
+                    const auto len = static_cast<size_t>(get_number<uint64_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        result.push_back(parse_cbor());
+                    }
+                    return result;
+                }
+
+                case 0x9f: // array (indefinite length)
+                {
+                    basic_json result = value_t::array;
+                    while (get() != 0xff)
+                    {
+                        result.push_back(parse_cbor(false));
+                    }
+                    return result;
+                }
+
+                // map (0x00..0x17 pairs of data items follow)
+                case 0xa0:
+                case 0xa1:
+                case 0xa2:
+                case 0xa3:
+                case 0xa4:
+                case 0xa5:
+                case 0xa6:
+                case 0xa7:
+                case 0xa8:
+                case 0xa9:
+                case 0xaa:
+                case 0xab:
+                case 0xac:
+                case 0xad:
+                case 0xae:
+                case 0xaf:
+                case 0xb0:
+                case 0xb1:
+                case 0xb2:
+                case 0xb3:
+                case 0xb4:
+                case 0xb5:
+                case 0xb6:
+                case 0xb7:
+                {
+                    basic_json result = value_t::object;
+                    const auto len = static_cast<size_t>(current - 0xa0);
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        get();
+                        result[get_cbor_string()] = parse_cbor();
+                    }
+                    return result;
+                }
+
+                case 0xb8: // map (one-byte uint8_t for n follows)
+                {
+                    basic_json result = value_t::object;
+                    const auto len = static_cast<size_t>(get_number<uint8_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        get();
+                        result[get_cbor_string()] = parse_cbor();
+                    }
+                    return result;
+                }
+
+                case 0xb9: // map (two-byte uint16_t for n follow)
+                {
+                    basic_json result = value_t::object;
+                    const auto len = static_cast<size_t>(get_number<uint16_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        get();
+                        result[get_cbor_string()] = parse_cbor();
+                    }
+                    return result;
+                }
+
+                case 0xba: // map (four-byte uint32_t for n follow)
+                {
+                    basic_json result = value_t::object;
+                    const auto len = static_cast<size_t>(get_number<uint32_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        get();
+                        result[get_cbor_string()] = parse_cbor();
+                    }
+                    return result;
+                }
+
+                case 0xbb: // map (eight-byte uint64_t for n follow)
+                {
+                    basic_json result = value_t::object;
+                    const auto len = static_cast<size_t>(get_number<uint64_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        get();
+                        result[get_cbor_string()] = parse_cbor();
+                    }
+                    return result;
+                }
+
+                case 0xbf: // map (indefinite length)
+                {
+                    basic_json result = value_t::object;
+                    while (get() != 0xff)
+                    {
+                        result[get_cbor_string()] = parse_cbor();
+                    }
+                    return result;
+                }
+
+                case 0xf4: // false
+                {
+                    return false;
+                }
+
+                case 0xf5: // true
+                {
+                    return true;
+                }
+
+                case 0xf6: // null
+                {
+                    return value_t::null;
+                }
+
+                case 0xf9: // Half-Precision Float (two-byte IEEE 754)
+                {
+                    const int byte1 = get();
+                    check_eof();
+                    const int byte2 = get();
+                    check_eof();
+
+                    // code from RFC 7049, Appendix D, Figure 3:
+                    // As half-precision floating-point numbers were only added to
+                    // IEEE 754 in 2008, today's programming platforms often still
+                    // only have limited support for them. It is very easy to
+                    // include at least decoding support for them even without such
+                    // support. An example of a small decoder for half-precision
+                    // floating-point numbers in the C language is shown in Fig. 3.
+                    const int half = (byte1 << 8) + byte2;
+                    const int exp = (half >> 10) & 0x1f;
+                    const int mant = half & 0x3ff;
+                    double val;
+                    if (exp == 0)
+                    {
+                        val = std::ldexp(mant, -24);
+                    }
+                    else if (exp != 31)
+                    {
+                        val = std::ldexp(mant + 1024, exp - 25);
+                    }
+                    else
+                    {
+                        val = mant == 0
+                              ? std::numeric_limits<double>::infinity()
+                              : std::numeric_limits<double>::quiet_NaN();
+                    }
+                    return (half & 0x8000) != 0 ? -val : val;
+                }
+
+                case 0xfa: // Single-Precision Float (four-byte IEEE 754)
+                {
+                    return get_number<float>();
+                }
+
+                case 0xfb: // Double-Precision Float (eight-byte IEEE 754)
+                {
+                    return get_number<double>();
+                }
+
+                default: // anything else (0xFF is handled inside the other types)
+                {
+                    std::stringstream ss;
+                    ss << std::hex << current;
+                    JSON_THROW(parse_error::create(112, chars_read, "error reading CBOR; last byte: 0x" + ss.str()));
+                }
+            }
+        }
+
+      private:
+        int get()
+        {
+            ++chars_read;
+            return (current = ia->get_character());
+        }
+
+        // todo: check if this breaks with endianess
+        template<typename T>
+        T get_number()
+        {
+            std::array<uint8_t, sizeof(T)> vec;
+            for (size_t i = 0; i < sizeof(T); ++i)
+            {
+                get();
+                check_eof();
+                vec[sizeof(T) - i - 1] = static_cast<uint8_t>(current);
+            }
+
+            T result;
+            std::memcpy(&result, vec.data(), sizeof(T));
+            return result;
+        }
+
+        std::string get_string(const size_t len)
+        {
+            std::string result;
+            for (size_t i = 0; i < len; ++i)
+            {
+                get();
+                check_eof();
+                result.append(1, static_cast<char>(current));
+            }
+            return result;
+        }
+
+        std::string get_cbor_string()
+        {
+            check_eof();
+
+            switch (current)
+            {
+                // UTF-8 string (0x00..0x17 bytes follow)
+                case 0x60:
+                case 0x61:
+                case 0x62:
+                case 0x63:
+                case 0x64:
+                case 0x65:
+                case 0x66:
+                case 0x67:
+                case 0x68:
+                case 0x69:
+                case 0x6a:
+                case 0x6b:
+                case 0x6c:
+                case 0x6d:
+                case 0x6e:
+                case 0x6f:
+                case 0x70:
+                case 0x71:
+                case 0x72:
+                case 0x73:
+                case 0x74:
+                case 0x75:
+                case 0x76:
+                case 0x77:
+                {
+                    const auto len = static_cast<size_t>(current - 0x60);
+                    return get_string(len);
+                }
+
+                case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
+                {
+                    const auto len = static_cast<size_t>(get_number<uint8_t>());
+                    return get_string(len);
+                }
+
+                case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
+                {
+                    const auto len = static_cast<size_t>(get_number<uint16_t>());
+                    return get_string(len);
+                }
+
+                case 0x7a: // UTF-8 string (four-byte uint32_t for n follow)
+                {
+                    const auto len = static_cast<size_t>(get_number<uint32_t>());
+                    return get_string(len);
+                }
+
+                case 0x7b: // UTF-8 string (eight-byte uint64_t for n follow)
+                {
+                    const auto len = static_cast<size_t>(get_number<uint64_t>());
+                    return get_string(len);
+                }
+
+                case 0x7f: // UTF-8 string (indefinite length)
+                {
+                    std::string result;
+                    while (get() != 0xff)
+                    {
+                        check_eof();
+                        result.append(1, static_cast<char>(current));
+                    }
+                    return result;
+                }
+
+                default:
+                {
+                    std::stringstream ss;
+                    ss << std::hex << current;
+                    JSON_THROW(parse_error::create(113, chars_read, "expected a CBOR string; last byte: 0x" + ss.str()));
+                }
+            }
+        }
+
+        void check_eof()
+        {
+            if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
+            {
+                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
+            }
+        }
+
+      private:
+        /// input adapter
+        input_adapter* ia = nullptr;
+
+        /// the current character
+        int current = std::char_traits<char>::eof();
+
+        /// the number of characters read
+        size_t chars_read = 0;
+    };
+
+  public:
+    static basic_json from_cbor(const std::vector<uint8_t>& v,
+                                const size_t start_index = 0)
+    {
+        binary_reader br(reinterpret_cast<const char*>(v.data() + start_index), v.size() - start_index);
+        return br.parse_cbor();
+    }
+
     //////////////////////
     // lexer and parser //
     //////////////////////
 
+  private:
     /*!
     @brief lexical analysis
 
@@ -10292,200 +11009,6 @@ class basic_json
     */
     class lexer
     {
-      private:
-
-        /// abstract input adapter interface
-        class input_adapter
-        {
-          public:
-            virtual int get_character() = 0;
-            virtual std::string read(size_t offset, size_t length) = 0;
-            virtual ~input_adapter() {}
-        };
-
-        /// input adapter for cached stream input
-        class cached_input_stream_adapter : public input_adapter
-        {
-          public:
-            cached_input_stream_adapter(std::istream& i, const size_t buffer_size)
-                : is(i), start_position(is.tellg()),
-                  buffer(buffer_size, std::char_traits<char>::eof())
-            {
-                // immediately abort if stream is erroneous
-                if (JSON_UNLIKELY(i.fail()))
-                {
-                    JSON_THROW(parse_error::create(111, 0, "bad input stream"));
-                }
-
-                // initial fill; unfilled buffer characters remain EOF
-                is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-
-                // skip byte-order mark
-                assert(buffer.size() >= 3);
-                if (buffer[0] == '\xEF' and buffer[1] == '\xBB' and buffer[2] == '\xBF')
-                {
-                    buffer_pos += 3;
-                    processed_chars += 3;
-                }
-            }
-
-            ~cached_input_stream_adapter() override
-            {
-                // clear stream flags
-                is.clear();
-                // set stream after last processed char
-                is.seekg(start_position + static_cast<std::streamoff>(processed_chars - 1));
-            }
-
-            int get_character() override
-            {
-                // check if refilling is necessary
-                if (JSON_UNLIKELY(buffer_pos == buffer.size()))
-                {
-                    // refill
-                    is.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(buffer.size()));
-                    // set unfilled characters to EOF
-                    std::fill_n(buffer.begin() + static_cast<int>(is.gcount()),
-                                buffer.size() - static_cast<size_t>(is.gcount()),
-                                std::char_traits<char>::eof());
-                    // the buffer is ready
-                    buffer_pos = 0;
-                }
-
-                ++processed_chars;
-                return buffer[buffer_pos++];
-            }
-
-            std::string read(size_t offset, size_t length) override
-            {
-                // create buffer
-                std::string result(length, '\0');
-
-                // save stream position
-                auto current_pos = is.tellg();
-                // save stream flags
-                auto flags = is.rdstate();
-
-                // clear stream flags
-                is.clear();
-                // set stream position
-                is.seekg(static_cast<std::streamoff>(offset));
-                // read bytes
-                is.read(&result[0], static_cast<std::streamsize>(length));
-
-                // reset stream position
-                is.seekg(current_pos);
-                // reset stream flags
-                is.setstate(flags);
-
-                return result;
-            }
-
-          private:
-            /// the associated input stream
-            std::istream& is;
-
-            /// chars returned via get_character()
-            size_t processed_chars = 0;
-            /// chars processed in the current buffer
-            size_t buffer_pos = 0;
-
-            /// position of the stream when we started
-            const std::streampos start_position;
-
-            /// internal buffer
-            std::vector<char> buffer;
-        };
-
-        /// input adapter for uncached stream input
-        class input_stream_adapter : public input_adapter
-        {
-          public:
-            input_stream_adapter(std::istream& i)
-                : is(i)
-            {
-                // immediately abort if stream is erroneous
-                if (i.fail())
-                {
-                    JSON_THROW(parse_error::create(111, 0, "bad input stream"));
-                }
-            }
-
-            int get_character() override
-            {
-                return is.get();
-            }
-
-            std::string read(size_t offset, size_t length) override
-            {
-                // create buffer
-                std::string result(length, '\0');
-
-                // save stream position
-                auto current_pos = is.tellg();
-                // save stream flags
-                auto flags = is.rdstate();
-
-                // clear stream flags
-                is.clear();
-                // set stream position
-                is.seekg(offset);
-                // read bytes
-                is.read(&result[0], length);
-
-                // reset stream position
-                is.seekg(current_pos);
-                // reset stream flags
-                is.setstate(flags);
-
-                return result;
-            }
-
-          private:
-            /// the associated input stream
-            std::istream& is;
-        };
-
-        /// input adapter for buffer input
-        class input_buffer_adapter : public input_adapter
-        {
-          public:
-            input_buffer_adapter(const char* b, size_t l)
-                : input_adapter(), cursor(b), limit(b + l), start(b)
-            {}
-
-            // delete because of pointer members
-            input_buffer_adapter(const input_buffer_adapter&) = delete;
-            input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
-
-            int get_character() override
-            {
-                if (JSON_LIKELY(cursor < limit))
-                {
-                    return *cursor++;
-                }
-                else
-                {
-                    return std::char_traits<char>::eof();
-                }
-            }
-
-            std::string read(size_t offset, size_t length) override
-            {
-                // avoid reading too many characters
-                const size_t max_length = static_cast<size_t>(limit - start);
-                return std::string(start + offset, std::min({length, max_length}));
-            }
-
-          private:
-            /// pointer to the current character
-            const char* cursor;
-            /// pointer past the last character
-            const char* limit;
-            /// pointer to the first character
-            const char* start;
-        };
-
       public:
         /// token types for the parser
         enum class token_type
@@ -11009,178 +11532,178 @@ class basic_json
                     }
 
                     // invalid control characters
-                    case '\x00':
-                    case '\x01':
-                    case '\x02':
-                    case '\x03':
-                    case '\x04':
-                    case '\x05':
-                    case '\x06':
-                    case '\x07':
-                    case '\x08':
-                    case '\x09':
-                    case '\x0a':
-                    case '\x0b':
-                    case '\x0c':
-                    case '\x0d':
-                    case '\x0e':
-                    case '\x0f':
-                    case '\x10':
-                    case '\x11':
-                    case '\x12':
-                    case '\x13':
-                    case '\x14':
-                    case '\x15':
-                    case '\x16':
-                    case '\x17':
-                    case '\x18':
-                    case '\x19':
-                    case '\x1a':
-                    case '\x1b':
-                    case '\x1c':
-                    case '\x1d':
-                    case '\x1e':
-                    case '\x1f':
+                    case 0x00:
+                    case 0x01:
+                    case 0x02:
+                    case 0x03:
+                    case 0x04:
+                    case 0x05:
+                    case 0x06:
+                    case 0x07:
+                    case 0x08:
+                    case 0x09:
+                    case 0x0a:
+                    case 0x0b:
+                    case 0x0c:
+                    case 0x0d:
+                    case 0x0e:
+                    case 0x0f:
+                    case 0x10:
+                    case 0x11:
+                    case 0x12:
+                    case 0x13:
+                    case 0x14:
+                    case 0x15:
+                    case 0x16:
+                    case 0x17:
+                    case 0x18:
+                    case 0x19:
+                    case 0x1a:
+                    case 0x1b:
+                    case 0x1c:
+                    case 0x1d:
+                    case 0x1e:
+                    case 0x1f:
                     {
                         error_message = "invalid string: control characters (U+0000 through U+001f) must be escaped";
                         return token_type::parse_error;
                     }
 
                     // U+0020..U+007F (except U+0022 (quote) and U+005C (backspace))
-                    case '\x20':
-                    case '\x21':
-                    case '\x23':
-                    case '\x24':
-                    case '\x25':
-                    case '\x26':
-                    case '\x27':
-                    case '\x28':
-                    case '\x29':
-                    case '\x2a':
-                    case '\x2b':
-                    case '\x2c':
-                    case '\x2d':
-                    case '\x2e':
-                    case '\x2f':
-                    case '\x30':
-                    case '\x31':
-                    case '\x32':
-                    case '\x33':
-                    case '\x34':
-                    case '\x35':
-                    case '\x36':
-                    case '\x37':
-                    case '\x38':
-                    case '\x39':
-                    case '\x3a':
-                    case '\x3b':
-                    case '\x3c':
-                    case '\x3d':
-                    case '\x3e':
-                    case '\x3f':
-                    case '\x40':
-                    case '\x41':
-                    case '\x42':
-                    case '\x43':
-                    case '\x44':
-                    case '\x45':
-                    case '\x46':
-                    case '\x47':
-                    case '\x48':
-                    case '\x49':
-                    case '\x4a':
-                    case '\x4b':
-                    case '\x4c':
-                    case '\x4d':
-                    case '\x4e':
-                    case '\x4f':
-                    case '\x50':
-                    case '\x51':
-                    case '\x52':
-                    case '\x53':
-                    case '\x54':
-                    case '\x55':
-                    case '\x56':
-                    case '\x57':
-                    case '\x58':
-                    case '\x59':
-                    case '\x5a':
-                    case '\x5b':
-                    case '\x5d':
-                    case '\x5e':
-                    case '\x5f':
-                    case '\x60':
-                    case '\x61':
-                    case '\x62':
-                    case '\x63':
-                    case '\x64':
-                    case '\x65':
-                    case '\x66':
-                    case '\x67':
-                    case '\x68':
-                    case '\x69':
-                    case '\x6a':
-                    case '\x6b':
-                    case '\x6c':
-                    case '\x6d':
-                    case '\x6e':
-                    case '\x6f':
-                    case '\x70':
-                    case '\x71':
-                    case '\x72':
-                    case '\x73':
-                    case '\x74':
-                    case '\x75':
-                    case '\x76':
-                    case '\x77':
-                    case '\x78':
-                    case '\x79':
-                    case '\x7a':
-                    case '\x7b':
-                    case '\x7c':
-                    case '\x7d':
-                    case '\x7e':
-                    case '\x7f':
+                    case 0x20:
+                    case 0x21:
+                    case 0x23:
+                    case 0x24:
+                    case 0x25:
+                    case 0x26:
+                    case 0x27:
+                    case 0x28:
+                    case 0x29:
+                    case 0x2a:
+                    case 0x2b:
+                    case 0x2c:
+                    case 0x2d:
+                    case 0x2e:
+                    case 0x2f:
+                    case 0x30:
+                    case 0x31:
+                    case 0x32:
+                    case 0x33:
+                    case 0x34:
+                    case 0x35:
+                    case 0x36:
+                    case 0x37:
+                    case 0x38:
+                    case 0x39:
+                    case 0x3a:
+                    case 0x3b:
+                    case 0x3c:
+                    case 0x3d:
+                    case 0x3e:
+                    case 0x3f:
+                    case 0x40:
+                    case 0x41:
+                    case 0x42:
+                    case 0x43:
+                    case 0x44:
+                    case 0x45:
+                    case 0x46:
+                    case 0x47:
+                    case 0x48:
+                    case 0x49:
+                    case 0x4a:
+                    case 0x4b:
+                    case 0x4c:
+                    case 0x4d:
+                    case 0x4e:
+                    case 0x4f:
+                    case 0x50:
+                    case 0x51:
+                    case 0x52:
+                    case 0x53:
+                    case 0x54:
+                    case 0x55:
+                    case 0x56:
+                    case 0x57:
+                    case 0x58:
+                    case 0x59:
+                    case 0x5a:
+                    case 0x5b:
+                    case 0x5d:
+                    case 0x5e:
+                    case 0x5f:
+                    case 0x60:
+                    case 0x61:
+                    case 0x62:
+                    case 0x63:
+                    case 0x64:
+                    case 0x65:
+                    case 0x66:
+                    case 0x67:
+                    case 0x68:
+                    case 0x69:
+                    case 0x6a:
+                    case 0x6b:
+                    case 0x6c:
+                    case 0x6d:
+                    case 0x6e:
+                    case 0x6f:
+                    case 0x70:
+                    case 0x71:
+                    case 0x72:
+                    case 0x73:
+                    case 0x74:
+                    case 0x75:
+                    case 0x76:
+                    case 0x77:
+                    case 0x78:
+                    case 0x79:
+                    case 0x7a:
+                    case 0x7b:
+                    case 0x7c:
+                    case 0x7d:
+                    case 0x7e:
+                    case 0x7f:
                     {
                         add(current);
                         break;
                     }
 
                     // U+0080..U+07FF: bytes C2..DF 80..BF
-                    case '\xc2':
-                    case '\xc3':
-                    case '\xc4':
-                    case '\xc5':
-                    case '\xc6':
-                    case '\xc7':
-                    case '\xc8':
-                    case '\xc9':
-                    case '\xca':
-                    case '\xcb':
-                    case '\xcc':
-                    case '\xcd':
-                    case '\xce':
-                    case '\xcf':
-                    case '\xd0':
-                    case '\xd1':
-                    case '\xd2':
-                    case '\xd3':
-                    case '\xd4':
-                    case '\xd5':
-                    case '\xd6':
-                    case '\xd7':
-                    case '\xd8':
-                    case '\xd9':
-                    case '\xda':
-                    case '\xdb':
-                    case '\xdc':
-                    case '\xdd':
-                    case '\xde':
-                    case '\xdf':
+                    case 0xc2:
+                    case 0xc3:
+                    case 0xc4:
+                    case 0xc5:
+                    case 0xc6:
+                    case 0xc7:
+                    case 0xc8:
+                    case 0xc9:
+                    case 0xca:
+                    case 0xcb:
+                    case 0xcc:
+                    case 0xcd:
+                    case 0xce:
+                    case 0xcf:
+                    case 0xd0:
+                    case 0xd1:
+                    case 0xd2:
+                    case 0xd3:
+                    case 0xd4:
+                    case 0xd5:
+                    case 0xd6:
+                    case 0xd7:
+                    case 0xd8:
+                    case 0xd9:
+                    case 0xda:
+                    case 0xdb:
+                    case 0xdc:
+                    case 0xdd:
+                    case 0xde:
+                    case 0xdf:
                     {
                         add(current);
                         get();
-                        if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                        if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                         {
                             add(current);
                             continue;
@@ -11191,15 +11714,15 @@ class basic_json
                     }
 
                     // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
-                    case '\xe0':
+                    case 0xe0:
                     {
                         add(current);
                         get();
-                        if (JSON_LIKELY('\xa0' <= current and current <= '\xbf'))
+                        if (JSON_LIKELY(0xa0 <= current and current <= 0xbf))
                         {
                             add(current);
                             get();
-                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                             {
                                 add(current);
                                 continue;
@@ -11212,28 +11735,28 @@ class basic_json
 
                     // U+1000..U+CFFF: bytes E1..EC 80..BF 80..BF
                     // U+E000..U+FFFF: bytes EE..EF 80..BF 80..BF
-                    case '\xe1':
-                    case '\xe2':
-                    case '\xe3':
-                    case '\xe4':
-                    case '\xe5':
-                    case '\xe6':
-                    case '\xe7':
-                    case '\xe8':
-                    case '\xe9':
-                    case '\xea':
-                    case '\xeb':
-                    case '\xec':
-                    case '\xee':
-                    case '\xef':
+                    case 0xe1:
+                    case 0xe2:
+                    case 0xe3:
+                    case 0xe4:
+                    case 0xe5:
+                    case 0xe6:
+                    case 0xe7:
+                    case 0xe8:
+                    case 0xe9:
+                    case 0xea:
+                    case 0xeb:
+                    case 0xec:
+                    case 0xee:
+                    case 0xef:
                     {
                         add(current);
                         get();
-                        if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                        if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                         {
                             add(current);
                             get();
-                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                             {
                                 add(current);
                                 continue;
@@ -11245,15 +11768,15 @@ class basic_json
                     }
 
                     // U+D000..U+D7FF: bytes ED 80..9F 80..BF
-                    case '\xed':
+                    case 0xed:
                     {
                         add(current);
                         get();
-                        if (JSON_LIKELY('\x80' <= current and current <= '\x9f'))
+                        if (JSON_LIKELY(0x80 <= current and current <= 0x9f))
                         {
                             add(current);
                             get();
-                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                             {
                                 add(current);
                                 continue;
@@ -11265,19 +11788,19 @@ class basic_json
                     }
 
                     // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
-                    case '\xf0':
+                    case 0xf0:
                     {
                         add(current);
                         get();
-                        if (JSON_LIKELY('\x90' <= current and current <= '\xbf'))
+                        if (JSON_LIKELY(0x90 <= current and current <= 0xbf))
                         {
                             add(current);
                             get();
-                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                             {
                                 add(current);
                                 get();
-                                if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                                if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                                 {
                                     add(current);
                                     continue;
@@ -11290,21 +11813,21 @@ class basic_json
                     }
 
                     // U+40000..U+FFFFF F1..F3 80..BF 80..BF 80..BF
-                    case '\xf1':
-                    case '\xf2':
-                    case '\xf3':
+                    case 0xf1:
+                    case 0xf2:
+                    case 0xf3:
                     {
                         add(current);
                         get();
-                        if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                        if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                         {
                             add(current);
                             get();
-                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                             {
                                 add(current);
                                 get();
-                                if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                                if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                                 {
                                     add(current);
                                     continue;
@@ -11317,19 +11840,19 @@ class basic_json
                     }
 
                     // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
-                    case '\xf4':
+                    case 0xf4:
                     {
                         add(current);
                         get();
-                        if (JSON_LIKELY('\x80' <= current and current <= '\x8f'))
+                        if (JSON_LIKELY(0x80 <= current and current <= 0x8f))
                         {
                             add(current);
                             get();
-                            if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                            if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                             {
                                 add(current);
                                 get();
-                                if (JSON_LIKELY('\x80' <= current and current <= '\xbf'))
+                                if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
                                 {
                                     add(current);
                                     continue;
