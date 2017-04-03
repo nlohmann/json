@@ -8397,505 +8397,6 @@ class basic_json
         }
     }
 
-    /*!
-    @brief create a JSON value from a given CBOR vector
-
-    @param[in] v  CBOR serialization
-    @param[in] idx  byte index to start reading from @a v
-
-    @return deserialized JSON value
-
-    @throw parse_error.110 if the given vector ends prematurely
-    @throw parse_error.112 if unsupported features from CBOR were
-    used in the given vector @a v or if the input is not valid CBOR
-    @throw parse_error.113 if a string was expected as map key, but not found
-
-    @sa https://tools.ietf.org/html/rfc7049
-    */
-    static basic_json from_cbor_internal(const std::vector<uint8_t>& v, size_t& idx)
-    {
-        // store and increment index
-        const size_t current_idx = idx++;
-
-        // make sure reading 1 byte is safe
-        check_length(v.size(), 1, current_idx);
-
-        switch (v[current_idx])
-        {
-            // Integer 0x00..0x17 (0..23)
-            case 0x00:
-            case 0x01:
-            case 0x02:
-            case 0x03:
-            case 0x04:
-            case 0x05:
-            case 0x06:
-            case 0x07:
-            case 0x08:
-            case 0x09:
-            case 0x0a:
-            case 0x0b:
-            case 0x0c:
-            case 0x0d:
-            case 0x0e:
-            case 0x0f:
-            case 0x10:
-            case 0x11:
-            case 0x12:
-            case 0x13:
-            case 0x14:
-            case 0x15:
-            case 0x16:
-            case 0x17:
-            {
-                return v[current_idx];
-            }
-
-            case 0x18: // Unsigned integer (one-byte uint8_t follows)
-            {
-                idx += 1; // skip content byte
-                return get_from_vector<uint8_t>(v, current_idx);
-            }
-
-            case 0x19: // Unsigned integer (two-byte uint16_t follows)
-            {
-                idx += 2; // skip 2 content bytes
-                return get_from_vector<uint16_t>(v, current_idx);
-            }
-
-            case 0x1a: // Unsigned integer (four-byte uint32_t follows)
-            {
-                idx += 4; // skip 4 content bytes
-                return get_from_vector<uint32_t>(v, current_idx);
-            }
-
-            case 0x1b: // Unsigned integer (eight-byte uint64_t follows)
-            {
-                idx += 8; // skip 8 content bytes
-                return get_from_vector<uint64_t>(v, current_idx);
-            }
-
-            // Negative integer -1-0x00..-1-0x17 (-1..-24)
-            case 0x20:
-            case 0x21:
-            case 0x22:
-            case 0x23:
-            case 0x24:
-            case 0x25:
-            case 0x26:
-            case 0x27:
-            case 0x28:
-            case 0x29:
-            case 0x2a:
-            case 0x2b:
-            case 0x2c:
-            case 0x2d:
-            case 0x2e:
-            case 0x2f:
-            case 0x30:
-            case 0x31:
-            case 0x32:
-            case 0x33:
-            case 0x34:
-            case 0x35:
-            case 0x36:
-            case 0x37:
-            {
-                return static_cast<int8_t>(0x20 - 1 - v[current_idx]);
-            }
-
-            case 0x38: // Negative integer (one-byte uint8_t follows)
-            {
-                idx += 1; // skip content byte
-                // must be uint8_t !
-                return static_cast<number_integer_t>(-1) - get_from_vector<uint8_t>(v, current_idx);
-            }
-
-            case 0x39: // Negative integer -1-n (two-byte uint16_t follows)
-            {
-                idx += 2; // skip 2 content bytes
-                return static_cast<number_integer_t>(-1) - get_from_vector<uint16_t>(v, current_idx);
-            }
-
-            case 0x3a: // Negative integer -1-n (four-byte uint32_t follows)
-            {
-                idx += 4; // skip 4 content bytes
-                return static_cast<number_integer_t>(-1) - get_from_vector<uint32_t>(v, current_idx);
-            }
-
-            case 0x3b: // Negative integer -1-n (eight-byte uint64_t follows)
-            {
-                idx += 8; // skip 8 content bytes
-                return static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(get_from_vector<uint64_t>(v, current_idx));
-            }
-
-            // UTF-8 string (0x00..0x17 bytes follow)
-            case 0x60:
-            case 0x61:
-            case 0x62:
-            case 0x63:
-            case 0x64:
-            case 0x65:
-            case 0x66:
-            case 0x67:
-            case 0x68:
-            case 0x69:
-            case 0x6a:
-            case 0x6b:
-            case 0x6c:
-            case 0x6d:
-            case 0x6e:
-            case 0x6f:
-            case 0x70:
-            case 0x71:
-            case 0x72:
-            case 0x73:
-            case 0x74:
-            case 0x75:
-            case 0x76:
-            case 0x77:
-            {
-                const auto len = static_cast<size_t>(v[current_idx] - 0x60);
-                const size_t offset = current_idx + 1;
-                idx += len; // skip content bytes
-                check_length(v.size(), len, offset);
-                return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-            }
-
-            case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
-            {
-                const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
-                const size_t offset = current_idx + 2;
-                idx += len + 1; // skip size byte + content bytes
-                check_length(v.size(), len, offset);
-                return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-            }
-
-            case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
-            {
-                const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
-                const size_t offset = current_idx + 3;
-                idx += len + 2; // skip 2 size bytes + content bytes
-                check_length(v.size(), len, offset);
-                return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-            }
-
-            case 0x7a: // UTF-8 string (four-byte uint32_t for n follow)
-            {
-                const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
-                const size_t offset = current_idx + 5;
-                idx += len + 4; // skip 4 size bytes + content bytes
-                check_length(v.size(), len, offset);
-                return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-            }
-
-            case 0x7b: // UTF-8 string (eight-byte uint64_t for n follow)
-            {
-                const auto len = static_cast<size_t>(get_from_vector<uint64_t>(v, current_idx));
-                const size_t offset = current_idx + 9;
-                idx += len + 8; // skip 8 size bytes + content bytes
-                check_length(v.size(), len, offset);
-                return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-            }
-
-            case 0x7f: // UTF-8 string (indefinite length)
-            {
-                std::string result;
-                while (static_cast<void>(check_length(v.size(), 1, idx)), v[idx] != 0xff)
-                {
-                    string_t s = from_cbor_internal(v, idx);
-                    result += s;
-                }
-                // skip break byte (0xFF)
-                idx += 1;
-                return result;
-            }
-
-            // array (0x00..0x17 data items follow)
-            case 0x80:
-            case 0x81:
-            case 0x82:
-            case 0x83:
-            case 0x84:
-            case 0x85:
-            case 0x86:
-            case 0x87:
-            case 0x88:
-            case 0x89:
-            case 0x8a:
-            case 0x8b:
-            case 0x8c:
-            case 0x8d:
-            case 0x8e:
-            case 0x8f:
-            case 0x90:
-            case 0x91:
-            case 0x92:
-            case 0x93:
-            case 0x94:
-            case 0x95:
-            case 0x96:
-            case 0x97:
-            {
-                basic_json result = value_t::array;
-                const auto len = static_cast<size_t>(v[current_idx] - 0x80);
-                for (size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(from_cbor_internal(v, idx));
-                }
-                return result;
-            }
-
-            case 0x98: // array (one-byte uint8_t for n follows)
-            {
-                basic_json result = value_t::array;
-                const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
-                idx += 1; // skip 1 size byte
-                for (size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(from_cbor_internal(v, idx));
-                }
-                return result;
-            }
-
-            case 0x99: // array (two-byte uint16_t for n follow)
-            {
-                basic_json result = value_t::array;
-                const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
-                idx += 2; // skip 4 size bytes
-                for (size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(from_cbor_internal(v, idx));
-                }
-                return result;
-            }
-
-            case 0x9a: // array (four-byte uint32_t for n follow)
-            {
-                basic_json result = value_t::array;
-                const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
-                idx += 4; // skip 4 size bytes
-                for (size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(from_cbor_internal(v, idx));
-                }
-                return result;
-            }
-
-            case 0x9b: // array (eight-byte uint64_t for n follow)
-            {
-                basic_json result = value_t::array;
-                const auto len = static_cast<size_t>(get_from_vector<uint64_t>(v, current_idx));
-                idx += 8; // skip 8 size bytes
-                for (size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(from_cbor_internal(v, idx));
-                }
-                return result;
-            }
-
-            case 0x9f: // array (indefinite length)
-            {
-                basic_json result = value_t::array;
-                while (static_cast<void>(check_length(v.size(), 1, idx)), v[idx] != 0xff)
-                {
-                    result.push_back(from_cbor_internal(v, idx));
-                }
-                // skip break byte (0xFF)
-                idx += 1;
-                return result;
-            }
-
-            // map (0x00..0x17 pairs of data items follow)
-            case 0xa0:
-            case 0xa1:
-            case 0xa2:
-            case 0xa3:
-            case 0xa4:
-            case 0xa5:
-            case 0xa6:
-            case 0xa7:
-            case 0xa8:
-            case 0xa9:
-            case 0xaa:
-            case 0xab:
-            case 0xac:
-            case 0xad:
-            case 0xae:
-            case 0xaf:
-            case 0xb0:
-            case 0xb1:
-            case 0xb2:
-            case 0xb3:
-            case 0xb4:
-            case 0xb5:
-            case 0xb6:
-            case 0xb7:
-            {
-                basic_json result = value_t::object;
-                const auto len = static_cast<size_t>(v[current_idx] - 0xa0);
-                for (size_t i = 0; i < len; ++i)
-                {
-                    cbor_expect_string(v, idx);
-                    std::string key = from_cbor_internal(v, idx);
-                    result[key] = from_cbor_internal(v, idx);
-                }
-                return result;
-            }
-
-            case 0xb8: // map (one-byte uint8_t for n follows)
-            {
-                basic_json result = value_t::object;
-                const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
-                idx += 1; // skip 1 size byte
-                for (size_t i = 0; i < len; ++i)
-                {
-                    cbor_expect_string(v, idx);
-                    std::string key = from_cbor_internal(v, idx);
-                    result[key] = from_cbor_internal(v, idx);
-                }
-                return result;
-            }
-
-            case 0xb9: // map (two-byte uint16_t for n follow)
-            {
-                basic_json result = value_t::object;
-                const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
-                idx += 2; // skip 2 size bytes
-                for (size_t i = 0; i < len; ++i)
-                {
-                    cbor_expect_string(v, idx);
-                    std::string key = from_cbor_internal(v, idx);
-                    result[key] = from_cbor_internal(v, idx);
-                }
-                return result;
-            }
-
-            case 0xba: // map (four-byte uint32_t for n follow)
-            {
-                basic_json result = value_t::object;
-                const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
-                idx += 4; // skip 4 size bytes
-                for (size_t i = 0; i < len; ++i)
-                {
-                    cbor_expect_string(v, idx);
-                    std::string key = from_cbor_internal(v, idx);
-                    result[key] = from_cbor_internal(v, idx);
-                }
-                return result;
-            }
-
-            case 0xbb: // map (eight-byte uint64_t for n follow)
-            {
-                basic_json result = value_t::object;
-                const auto len = static_cast<size_t>(get_from_vector<uint64_t>(v, current_idx));
-                idx += 8; // skip 8 size bytes
-                for (size_t i = 0; i < len; ++i)
-                {
-                    cbor_expect_string(v, idx);
-                    std::string key = from_cbor_internal(v, idx);
-                    result[key] = from_cbor_internal(v, idx);
-                }
-                return result;
-            }
-
-            case 0xbf: // map (indefinite length)
-            {
-                basic_json result = value_t::object;
-                while (static_cast<void>(check_length(v.size(), 1, idx)), v[idx] != 0xff)
-                {
-                    cbor_expect_string(v, idx);
-                    std::string key = from_cbor_internal(v, idx);
-                    result[key] = from_cbor_internal(v, idx);
-                }
-                // skip break byte (0xFF)
-                idx += 1;
-                return result;
-            }
-
-            case 0xf4: // false
-            {
-                return false;
-            }
-
-            case 0xf5: // true
-            {
-                return true;
-            }
-
-            case 0xf6: // null
-            {
-                return value_t::null;
-            }
-
-            case 0xf9: // Half-Precision Float (two-byte IEEE 754)
-            {
-                idx += 2; // skip two content bytes
-
-                // code from RFC 7049, Appendix D, Figure 3:
-                // As half-precision floating-point numbers were only added to
-                // IEEE 754 in 2008, today's programming platforms often still
-                // only have limited support for them. It is very easy to
-                // include at least decoding support for them even without such
-                // support. An example of a small decoder for half-precision
-                // floating-point numbers in the C language is shown in Fig. 3.
-                check_length(v.size(), 2, current_idx + 1);
-                const int half = (v[current_idx + 1] << 8) + v[current_idx + 2];
-                const int exp = (half >> 10) & 0x1f;
-                const int mant = half & 0x3ff;
-                double val;
-                if (exp == 0)
-                {
-                    val = std::ldexp(mant, -24);
-                }
-                else if (exp != 31)
-                {
-                    val = std::ldexp(mant + 1024, exp - 25);
-                }
-                else
-                {
-                    val = mant == 0
-                          ? std::numeric_limits<double>::infinity()
-                          : std::numeric_limits<double>::quiet_NaN();
-                }
-                return (half & 0x8000) != 0 ? -val : val;
-            }
-
-            case 0xfa: // Single-Precision Float (four-byte IEEE 754)
-            {
-                // copy bytes in reverse order into the float variable
-                float res;
-                check_length(v.size(), sizeof(float), current_idx + 1);
-                for (size_t byte = 0; byte < sizeof(float); ++byte)
-                {
-                    reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v[current_idx + 1 + byte];
-                }
-                idx += sizeof(float); // skip content bytes
-                return res;
-            }
-
-            case 0xfb: // Double-Precision Float (eight-byte IEEE 754)
-            {
-                // copy bytes in reverse order into the double variable
-                double res;
-                check_length(v.size(), sizeof(double), current_idx + 1);
-                for (size_t byte = 0; byte < sizeof(double); ++byte)
-                {
-                    reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v[current_idx + 1 + byte];
-                }
-                idx += sizeof(double); // skip content bytes
-                return res;
-            }
-
-            default: // anything else (0xFF is handled inside the other types)
-            {
-                std::stringstream ss;
-                ss << std::hex << static_cast<int>(v[current_idx]);
-                JSON_THROW(parse_error::create(112, current_idx + 1, "error reading CBOR; last byte: 0x" + ss.str()));
-            }
-        }
-    }
-
   public:
     /*!
     @brief create a MessagePack serialization of a given JSON value
@@ -9053,7 +8554,7 @@ class basic_json
     }
 
     /*!
-    @brief create a MessagePack serialization of a given JSON value
+    @brief create a CBOR serialization of a given JSON value
 
     Serializes a given JSON value @a j to a byte vector using the CBOR (Concise
     Binary Object Representation) serialization format. CBOR is a binary
@@ -9140,100 +8641,6 @@ class basic_json
         to_cbor_internal(j, result);
         return result;
     }
-
-    /*!
-    @brief create a JSON value from a byte vector in CBOR format
-
-    Deserializes a given byte vector @a v to a JSON value using the CBOR
-    (Concise Binary Object Representation) serialization format.
-
-    The library maps CBOR types to JSON value types as follows:
-
-    CBOR type              | JSON value type | first byte
-    ---------------------- | --------------- | ----------
-    Integer                | number_unsigned | 0x00..0x17
-    Unsigned integer       | number_unsigned | 0x18
-    Unsigned integer       | number_unsigned | 0x19
-    Unsigned integer       | number_unsigned | 0x1a
-    Unsigned integer       | number_unsigned | 0x1b
-    Negative integer       | number_integer  | 0x20..0x37
-    Negative integer       | number_integer  | 0x38
-    Negative integer       | number_integer  | 0x39
-    Negative integer       | number_integer  | 0x3a
-    Negative integer       | number_integer  | 0x3b
-    Negative integer       | number_integer  | 0x40..0x57
-    UTF-8 string           | string          | 0x60..0x77
-    UTF-8 string           | string          | 0x78
-    UTF-8 string           | string          | 0x79
-    UTF-8 string           | string          | 0x7a
-    UTF-8 string           | string          | 0x7b
-    UTF-8 string           | string          | 0x7f
-    array                  | array           | 0x80..0x97
-    array                  | array           | 0x98
-    array                  | array           | 0x99
-    array                  | array           | 0x9a
-    array                  | array           | 0x9b
-    array                  | array           | 0x9f
-    map                    | object          | 0xa0..0xb7
-    map                    | object          | 0xb8
-    map                    | object          | 0xb9
-    map                    | object          | 0xba
-    map                    | object          | 0xbb
-    map                    | object          | 0xbf
-    False                  | `false`         | 0xf4
-    True                   | `true`          | 0xf5
-    Nill                   | `null`          | 0xf6
-    Half-Precision Float   | number_float    | 0xf9
-    Single-Precision Float | number_float    | 0xfa
-    Double-Precision Float | number_float    | 0xfb
-
-    @warning The mapping is **incomplete** in the sense that not all CBOR
-             types can be converted to a JSON value. The following CBOR types
-             are not supported and will yield parse errors (parse_error.112):
-             - byte strings (0x40..0x5f)
-             - date/time (0xc0..0xc1)
-             - bignum (0xc2..0xc3)
-             - decimal fraction (0xc4)
-             - bigfloat (0xc5)
-             - tagged items (0xc6..0xd4, 0xd8..0xdb)
-             - expected conversions (0xd5..0xd7)
-             - simple values (0xe0..0xf3, 0xf8)
-             - undefined (0xf7)
-
-    @warning CBOR allows map keys of any type, whereas JSON only allows
-             strings as keys in object values. Therefore, CBOR maps with keys
-             other than UTF-8 strings are rejected (parse_error.113).
-
-    @note Any CBOR output created @ref to_cbor can be successfully parsed by
-          @ref from_cbor.
-
-    @param[in] v  a byte vector in CBOR format
-    @param[in] start_index the index to start reading from @a v (0 by default)
-    @return deserialized JSON value
-
-    @throw parse_error.110 if the given vector ends prematurely
-    @throw parse_error.112 if unsupported features from CBOR were
-    used in the given vector @a v or if the input is not valid CBOR
-    @throw parse_error.113 if a string was expected as map key, but not found
-
-    @complexity Linear in the size of the byte vector @a v.
-
-    @liveexample{The example shows the deserialization of a byte vector in CBOR
-    format to a JSON value.,from_cbor}
-
-    @sa http://cbor.io
-    @sa @ref to_cbor(const basic_json&) for the analogous serialization
-    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
-        related MessagePack format
-
-    @since version 2.0.9, parameter @a start_index since 2.1.1
-    */
-    //static basic_json from_cbor(const std::vector<uint8_t>& v,
-    //                            const size_t start_index = 0)
-    //{
-    //    size_t i = start_index;
-    //    return from_cbor_internal(v, i);
-    //}
 
     /// @}
 
@@ -10996,6 +10403,94 @@ class basic_json
     };
 
   public:
+
+    /*!
+    @brief create a JSON value from a byte vector in CBOR format
+
+    Deserializes a given byte vector @a v to a JSON value using the CBOR
+    (Concise Binary Object Representation) serialization format.
+
+    The library maps CBOR types to JSON value types as follows:
+
+    CBOR type              | JSON value type | first byte
+    ---------------------- | --------------- | ----------
+    Integer                | number_unsigned | 0x00..0x17
+    Unsigned integer       | number_unsigned | 0x18
+    Unsigned integer       | number_unsigned | 0x19
+    Unsigned integer       | number_unsigned | 0x1a
+    Unsigned integer       | number_unsigned | 0x1b
+    Negative integer       | number_integer  | 0x20..0x37
+    Negative integer       | number_integer  | 0x38
+    Negative integer       | number_integer  | 0x39
+    Negative integer       | number_integer  | 0x3a
+    Negative integer       | number_integer  | 0x3b
+    Negative integer       | number_integer  | 0x40..0x57
+    UTF-8 string           | string          | 0x60..0x77
+    UTF-8 string           | string          | 0x78
+    UTF-8 string           | string          | 0x79
+    UTF-8 string           | string          | 0x7a
+    UTF-8 string           | string          | 0x7b
+    UTF-8 string           | string          | 0x7f
+    array                  | array           | 0x80..0x97
+    array                  | array           | 0x98
+    array                  | array           | 0x99
+    array                  | array           | 0x9a
+    array                  | array           | 0x9b
+    array                  | array           | 0x9f
+    map                    | object          | 0xa0..0xb7
+    map                    | object          | 0xb8
+    map                    | object          | 0xb9
+    map                    | object          | 0xba
+    map                    | object          | 0xbb
+    map                    | object          | 0xbf
+    False                  | `false`         | 0xf4
+    True                   | `true`          | 0xf5
+    Nill                   | `null`          | 0xf6
+    Half-Precision Float   | number_float    | 0xf9
+    Single-Precision Float | number_float    | 0xfa
+    Double-Precision Float | number_float    | 0xfb
+
+    @warning The mapping is **incomplete** in the sense that not all CBOR
+             types can be converted to a JSON value. The following CBOR types
+             are not supported and will yield parse errors (parse_error.112):
+             - byte strings (0x40..0x5f)
+             - date/time (0xc0..0xc1)
+             - bignum (0xc2..0xc3)
+             - decimal fraction (0xc4)
+             - bigfloat (0xc5)
+             - tagged items (0xc6..0xd4, 0xd8..0xdb)
+             - expected conversions (0xd5..0xd7)
+             - simple values (0xe0..0xf3, 0xf8)
+             - undefined (0xf7)
+
+    @warning CBOR allows map keys of any type, whereas JSON only allows
+             strings as keys in object values. Therefore, CBOR maps with keys
+             other than UTF-8 strings are rejected (parse_error.113).
+
+    @note Any CBOR output created @ref to_cbor can be successfully parsed by
+          @ref from_cbor.
+
+    @param[in] v  a byte vector in CBOR format
+    @param[in] start_index the index to start reading from @a v (0 by default)
+    @return deserialized JSON value
+
+    @throw parse_error.110 if the given vector ends prematurely
+    @throw parse_error.112 if unsupported features from CBOR were
+    used in the given vector @a v or if the input is not valid CBOR
+    @throw parse_error.113 if a string was expected as map key, but not found
+
+    @complexity Linear in the size of the byte vector @a v.
+
+    @liveexample{The example shows the deserialization of a byte vector in CBOR
+    format to a JSON value.,from_cbor}
+
+    @sa http://cbor.io
+    @sa @ref to_cbor(const basic_json&) for the analogous serialization
+    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
+        related MessagePack format
+
+    @since version 2.0.9, parameter @a start_index since 2.1.1
+    */
     static basic_json from_cbor(const std::vector<uint8_t>& v,
                                 const size_t start_index = 0)
     {
