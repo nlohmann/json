@@ -10722,7 +10722,8 @@ class basic_json
                     for (size_t i = 0; i < len; ++i)
                     {
                         get();
-                        result[get_cbor_string()] = parse_cbor();
+                        auto key = get_cbor_string();
+                        result[key] = parse_cbor();
                     }
                     return result;
                 }
@@ -10734,7 +10735,8 @@ class basic_json
                     for (size_t i = 0; i < len; ++i)
                     {
                         get();
-                        result[get_cbor_string()] = parse_cbor();
+                        auto key = get_cbor_string();
+                        result[key] = parse_cbor();
                     }
                     return result;
                 }
@@ -10746,7 +10748,8 @@ class basic_json
                     for (size_t i = 0; i < len; ++i)
                     {
                         get();
-                        result[get_cbor_string()] = parse_cbor();
+                        auto key = get_cbor_string();
+                        result[key] = parse_cbor();
                     }
                     return result;
                 }
@@ -10758,7 +10761,8 @@ class basic_json
                     for (size_t i = 0; i < len; ++i)
                     {
                         get();
-                        result[get_cbor_string()] = parse_cbor();
+                        auto key = get_cbor_string();
+                        result[key] = parse_cbor();
                     }
                     return result;
                 }
@@ -10770,7 +10774,8 @@ class basic_json
                     for (size_t i = 0; i < len; ++i)
                     {
                         get();
-                        result[get_cbor_string()] = parse_cbor();
+                        auto key = get_cbor_string();
+                        result[key] = parse_cbor();
                     }
                     return result;
                 }
@@ -10780,7 +10785,8 @@ class basic_json
                     basic_json result = value_t::object;
                     while (get() != 0xff)
                     {
-                        result[get_cbor_string()] = parse_cbor();
+                        auto key = get_cbor_string();
+                        result[key] = parse_cbor();
                     }
                     return result;
                 }
