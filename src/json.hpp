@@ -9364,11 +9364,13 @@ class basic_json
     {
       public:
         explicit binary_reader(std::istream& i)
-            : ia(new cached_input_stream_adapter(i, 16384))
+            : ia(new cached_input_stream_adapter(i, 16384)),
+              is_little_endian(little_endianess())
         {}
 
         binary_reader(const char* buff, const size_t len)
-            : ia(new input_buffer_adapter(buff, len))
+            : ia(new input_buffer_adapter(buff, len)),
+              is_little_endian(little_endianess())
         {}
 
         ~binary_reader()
@@ -9555,7 +9557,7 @@ class basic_json
                 case 0x97:
                 {
                     basic_json result = value_t::array;
-                    const auto len = static_cast<size_t>(current - 0x80);
+                    const auto len = static_cast<size_t>(current & 0x1f);
                     for (size_t i = 0; i < len; ++i)
                     {
                         result.push_back(parse_cbor());
@@ -9644,7 +9646,7 @@ class basic_json
                 case 0xb7:
                 {
                     basic_json result = value_t::object;
-                    const auto len = static_cast<size_t>(current - 0xa0);
+                    const auto len = static_cast<size_t>(current & 0x1f);
                     for (size_t i = 0; i < len; ++i)
                     {
                         get();
@@ -9780,7 +9782,7 @@ class basic_json
                 default: // anything else (0xFF is handled inside the other types)
                 {
                     std::stringstream ss;
-                    ss << std::hex << current;
+                    ss << std::setw(2) << std::setfill('0') << std::hex << current;
                     JSON_THROW(parse_error::create(112, chars_read, "error reading CBOR; last byte: 0x" + ss.str()));
                 }
             }
@@ -10182,20 +10184,26 @@ class basic_json
                 default: // anything else
                 {
                     std::stringstream ss;
-                    ss << std::hex << current;
+                    ss << std::setw(2) << std::setfill('0') << std::hex << current;
                     JSON_THROW(parse_error::create(112, chars_read, "error reading MessagePack; last byte: 0x" + ss.str()));
                 }
             }
         }
 
       private:
+        // from http://stackoverflow.com/a/1001328/266378
+        static bool little_endianess()
+        {
+            int num = 1;
+            return (*reinterpret_cast<char*>(&num) == 1);
+        }
+
         int get()
         {
             ++chars_read;
             return (current = ia->get_character());
         }
 
-        // todo: check if this breaks with endianess
         template<typename T>
         T get_number()
         {
@@ -10204,7 +10212,16 @@ class basic_json
             {
                 get();
                 check_eof();
-                vec[sizeof(T) - i - 1] = static_cast<uint8_t>(current);
+
+                // reverse byte order prior to conversion if necessary
+                if (is_little_endian)
+                {
+                    vec[sizeof(T) - i - 1] = static_cast<uint8_t>(current);
+                }
+                else
+                {
+                    vec[i] = static_cast<uint8_t>(current);
+                }
             }
 
             T result;
@@ -10256,7 +10273,7 @@ class basic_json
                 case 0x76:
                 case 0x77:
                 {
-                    const auto len = static_cast<size_t>(current - 0x60);
+                    const auto len = static_cast<size_t>(current & 0x1f);
                     return get_string(len);
                 }
 
@@ -10298,7 +10315,7 @@ class basic_json
                 default:
                 {
                     std::stringstream ss;
-                    ss << std::hex << current;
+                    ss << std::setw(2) << std::setfill('0') << std::hex << current;
                     JSON_THROW(parse_error::create(113, chars_read, "expected a CBOR string; last byte: 0x" + ss.str()));
                 }
             }
@@ -10369,7 +10386,7 @@ class basic_json
                 default:
                 {
                     std::stringstream ss;
-                    ss << std::hex << current;
+                    ss << std::setw(2) << std::setfill('0') << std::hex << current;
                     JSON_THROW(parse_error::create(113, chars_read, "expected a MessagePack string; last byte: 0x" + ss.str()));
                 }
             }
@@ -10392,6 +10409,9 @@ class basic_json
 
         /// the number of characters read
         size_t chars_read = 0;
+
+        /// whether we can assume little endianess
+        const bool is_little_endian = true;
     };
 
   public:
