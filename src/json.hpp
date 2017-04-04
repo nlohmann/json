@@ -464,12 +464,6 @@ using enable_if_t = typename std::enable_if<B, T>::type;
 template<typename T>
 using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
 
-// taken from http://stackoverflow.com/a/26936864/266378
-template<typename T>
-using is_unscoped_enum =
-    std::integral_constant<bool, std::is_convertible<T, int>::value and
-    std::is_enum<T>::value>;
-
 /*
 Implementation of two C++17 constructs: conjunction, negation. This is needed
 to avoid evaluating all the traits in a condition
@@ -828,11 +822,12 @@ void to_json(BasicJsonType& j, CompatibleNumberIntegerType val) noexcept
     external_constructor<value_t::number_integer>::construct(j, static_cast<typename BasicJsonType::number_integer_t>(val));
 }
 
-template<typename BasicJsonType, typename UnscopedEnumType,
-         enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
-void to_json(BasicJsonType& j, UnscopedEnumType e) noexcept
+template<typename BasicJsonType, typename EnumType,
+         enable_if_t<std::is_enum<EnumType>::value, int> = 0>
+void to_json(BasicJsonType& j, EnumType e) noexcept
 {
-    external_constructor<value_t::number_integer>::construct(j, e);
+    using underlying_type = typename std::underlying_type<EnumType>::type;
+    external_constructor<value_t::number_integer>::construct(j, static_cast<underlying_type>(e));
 }
 
 template<typename BasicJsonType>
@@ -947,13 +942,13 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::number_integer_t&
     get_arithmetic_value(j, val);
 }
 
-template<typename BasicJsonType, typename UnscopedEnumType,
-         enable_if_t<is_unscoped_enum<UnscopedEnumType>::value, int> = 0>
-void from_json(const BasicJsonType& j, UnscopedEnumType& e)
+template<typename BasicJsonType, typename EnumType,
+         enable_if_t<std::is_enum<EnumType>::value, int> = 0>
+void from_json(const BasicJsonType& j, EnumType& e)
 {
-    typename std::underlying_type<UnscopedEnumType>::type val;
+    typename std::underlying_type<EnumType>::type val;
     get_arithmetic_value(j, val);
-    e = static_cast<UnscopedEnumType>(val);
+    e = static_cast<EnumType>(val);
 }
 
 template<typename BasicJsonType>
