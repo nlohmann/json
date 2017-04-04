@@ -638,13 +638,13 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec1 {0xcb, 0x8f, 0x0a};
         CHECK_THROWS_AS(json::from_msgpack(vec1), json::parse_error);
         CHECK_THROWS_WITH(json::from_msgpack(vec1),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
 
         // related test case: incomplete float32
         std::vector<uint8_t> vec2 {0xca, 0x8f, 0x0a};
         CHECK_THROWS_AS(json::from_msgpack(vec2), json::parse_error);
         CHECK_THROWS_WITH(json::from_msgpack(vec2),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 4 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
 
         // related test case: incomplete Half-Precision Float (CBOR)
         std::vector<uint8_t> vec3 {0xf9, 0x8f};
@@ -671,7 +671,7 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec1 {0x87};
         CHECK_THROWS_AS(json::from_msgpack(vec1), json::parse_error);
         CHECK_THROWS_WITH(json::from_msgpack(vec1),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
 
         // more test cases for MessagePack
         for (auto b :
@@ -708,7 +708,7 @@ TEST_CASE("regression tests")
                           "[json.exception.parse_error.110] parse error at 1: unexpected end of input");
         CHECK_THROWS_AS(json::from_msgpack(vec2), json::parse_error);
         CHECK_THROWS_WITH(json::from_msgpack(vec2),
-                          "[json.exception.parse_error.110] parse error at 1: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 1: unexpected end of input");
     }
 
     SECTION("issue #411 - Heap-buffer-overflow (OSS-Fuzz issue 366)")

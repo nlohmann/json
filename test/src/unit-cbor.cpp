@@ -28,7 +28,6 @@ SOFTWARE.
 
 #include "catch.hpp"
 
-#define private public
 #include "json.hpp"
 using nlohmann::json;
 
@@ -1356,12 +1355,6 @@ TEST_CASE("CBOR regressions", "[!throws]")
                 // parse errors are ok, because input may be random bytes
             }
         }
-    }
-
-    SECTION("improve code coverage")
-    {
-        // exotic edge case
-        CHECK_THROWS_AS(json::check_length(0xffffffffffffffffull, 0xfffffffffffffff0ull, 0xff), json::parse_error);
     }
 }
 

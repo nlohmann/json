@@ -7481,57 +7481,6 @@ class basic_json
     }
 
     /*!
-    @brief take sufficient bytes from a vector to fill an integer variable
-
-    In the context of binary serialization formats, we need to read several
-    bytes from a byte vector and combine them to multi-byte integral data
-    types.
-
-    @param[in] vec  byte vector to read from
-    @param[in] current_index  the position in the vector after which to read
-
-    @return the next sizeof(T) bytes from @a vec, in reverse order as T
-
-    @tparam T the integral return type
-
-    @throw parse_error.110 if there are less than sizeof(T)+1 bytes in the
-           vector @a vec to read
-
-    In the for loop, the bytes from the vector are copied in reverse order into
-    the return value. In the figures below, let sizeof(T)=4 and `i` be the loop
-    variable.
-
-    Precondition:
-
-    vec:   |   |   | a | b | c | d |      T: |   |   |   |   |
-                 ^               ^             ^                ^
-           current_index         i            ptr        sizeof(T)
-
-    Postcondition:
-
-    vec:   |   |   | a | b | c | d |      T: | d | c | b | a |
-                 ^   ^                                     ^
-                 |   i                                    ptr
-           current_index
-
-    @sa Code adapted from <http://stackoverflow.com/a/41031865/266378>.
-    */
-    template<typename T>
-    static T get_from_vector(const std::vector<uint8_t>& vec, const size_t current_index)
-    {
-        // check if we can read sizeof(T) bytes starting the next index
-        check_length(vec.size(), sizeof(T), current_index + 1);
-
-        T result;
-        auto* ptr = reinterpret_cast<uint8_t*>(&result);
-        for (size_t i = 0; i < sizeof(T); ++i)
-        {
-            *ptr++ = vec[current_index + sizeof(T) - i];
-        }
-        return result;
-    }
-
-    /*!
     @brief create a MessagePack serialization of a given JSON value
 
     This is a straightforward implementation of the MessagePack specification.
@@ -8041,357 +7990,6 @@ class basic_json
         }
     }
 
-
-    /*
-    @brief checks if given lengths do not exceed the size of a given vector
-
-    To secure the access to the byte vector during CBOR/MessagePack
-    deserialization, bytes are copied from the vector into buffers. This
-    function checks if the number of bytes to copy (@a len) does not exceed
-    the size @s size of the vector. Additionally, an @a offset is given from
-    where to start reading the bytes.
-
-    This function checks whether reading the bytes is safe; that is, offset is
-    a valid index in the vector, offset+len
-
-    @param[in] size    size of the byte vector
-    @param[in] len     number of bytes to read
-    @param[in] offset  offset where to start reading
-
-    vec:  x x x x x X X X X X
-          ^         ^         ^
-          0         offset    len
-
-    @throws out_of_range if `len > v.size()`
-    */
-    static void check_length(const size_t size, const size_t len, const size_t offset)
-    {
-        // simple case: requested length is greater than the vector's length
-        if (len > size or offset > size)
-        {
-            JSON_THROW(parse_error::create(110, offset + 1, "cannot read " + std::to_string(len) + " bytes from vector"));
-        }
-
-        // second case: adding offset would result in overflow
-        if ((size > ((std::numeric_limits<size_t>::max)() - offset)))
-        {
-            JSON_THROW(parse_error::create(110, offset + 1, "cannot read " + std::to_string(len) + " bytes from vector"));
-        }
-
-        // last case: reading past the end of the vector
-        if (len + offset > size)
-        {
-            JSON_THROW(parse_error::create(110, offset + 1, "cannot read " + std::to_string(len) + " bytes from vector"));
-        }
-    }
-
-    /*!
-    @brief check if the next byte belongs to a string
-
-    While parsing a map, the keys must be strings. This function checks if the
-    current byte is one of the start bytes for a string in MessagePack:
-
-    - 0xa0 - 0xbf: fixstr
-    - 0xd9: str 8
-    - 0xda: str 16
-    - 0xdb: str 32
-
-    @param[in] v  MessagePack serialization
-    @param[in] idx  byte index in @a v to check for a string
-
-    @throw parse_error.113 if `v[idx]` does not belong to a string
-    */
-    static void msgpack_expect_string(const std::vector<uint8_t>& v, size_t idx)
-    {
-        check_length(v.size(), 1, idx);
-
-        const auto byte = v[idx];
-        if ((byte >= 0xa0 and byte <= 0xbf) or (byte >= 0xd9 and byte <= 0xdb))
-        {
-            return;
-        }
-
-        std::stringstream ss;
-        ss << std::hex << static_cast<int>(v[idx]);
-        JSON_THROW(parse_error::create(113, idx + 1, "expected a MessagePack string; last byte: 0x" + ss.str()));
-    }
-
-    /*!
-    @brief check if the next byte belongs to a string
-
-    While parsing a map, the keys must be strings. This function checks if the
-    current byte is one of the start bytes for a string in CBOR:
-
-    - 0x60 - 0x77: fixed length
-    - 0x78 - 0x7b: variable length
-    - 0x7f: indefinity length
-
-    @param[in] v  CBOR serialization
-    @param[in] idx  byte index in @a v to check for a string
-
-    @throw parse_error.113 if `v[idx]` does not belong to a string
-    */
-    static void cbor_expect_string(const std::vector<uint8_t>& v, size_t idx)
-    {
-        check_length(v.size(), 1, idx);
-
-        const auto byte = v[idx];
-        if ((byte >= 0x60 and byte <= 0x7b) or byte == 0x7f)
-        {
-            return;
-        }
-
-        std::stringstream ss;
-        ss << std::hex << static_cast<int>(v[idx]);
-        JSON_THROW(parse_error::create(113, idx + 1, "expected a CBOR string; last byte: 0x" + ss.str()));
-    }
-
-    /*!
-    @brief create a JSON value from a given MessagePack vector
-
-    @param[in] v  MessagePack serialization
-    @param[in] idx  byte index to start reading from @a v
-
-    @return deserialized JSON value
-
-    @throw parse_error.110 if the given vector ends prematurely
-    @throw parse_error.112 if unsupported features from MessagePack were
-    used in the given vector @a v or if the input is not valid MessagePack
-    @throw parse_error.113 if a string was expected as map key, but not found
-
-    @sa https://github.com/msgpack/msgpack/blob/master/spec.md
-    */
-    static basic_json from_msgpack_internal(const std::vector<uint8_t>& v, size_t& idx)
-    {
-        // store and increment index
-        const size_t current_idx = idx++;
-
-        // make sure reading 1 byte is safe
-        check_length(v.size(), 1, current_idx);
-
-        if (v[current_idx] <= 0xbf)
-        {
-            if (v[current_idx] <= 0x7f) // positive fixint
-            {
-                return v[current_idx];
-            }
-            if (v[current_idx] <= 0x8f) // fixmap
-            {
-                basic_json result = value_t::object;
-                const size_t len = v[current_idx] & 0x0f;
-                for (size_t i = 0; i < len; ++i)
-                {
-                    msgpack_expect_string(v, idx);
-                    std::string key = from_msgpack_internal(v, idx);
-                    result[key] = from_msgpack_internal(v, idx);
-                }
-                return result;
-            }
-            else if (v[current_idx] <= 0x9f) // fixarray
-            {
-                basic_json result = value_t::array;
-                const size_t len = v[current_idx] & 0x0f;
-                for (size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(from_msgpack_internal(v, idx));
-                }
-                return result;
-            }
-            else // fixstr
-            {
-                const size_t len = v[current_idx] & 0x1f;
-                const size_t offset = current_idx + 1;
-                idx += len; // skip content bytes
-                check_length(v.size(), len, offset);
-                return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-            }
-        }
-        else if (v[current_idx] >= 0xe0) // negative fixint
-        {
-            return static_cast<int8_t>(v[current_idx]);
-        }
-        else
-        {
-            switch (v[current_idx])
-            {
-                case 0xc0: // nil
-                {
-                    return value_t::null;
-                }
-
-                case 0xc2: // false
-                {
-                    return false;
-                }
-
-                case 0xc3: // true
-                {
-                    return true;
-                }
-
-                case 0xca: // float 32
-                {
-                    // copy bytes in reverse order into the double variable
-                    float res;
-                    check_length(v.size(), sizeof(float), current_idx + 1);
-                    for (size_t byte = 0; byte < sizeof(float); ++byte)
-                    {
-                        reinterpret_cast<uint8_t*>(&res)[sizeof(float) - byte - 1] = v[current_idx + 1 + byte];
-                    }
-                    idx += sizeof(float); // skip content bytes
-                    return res;
-                }
-
-                case 0xcb: // float 64
-                {
-                    // copy bytes in reverse order into the double variable
-                    double res;
-                    check_length(v.size(), sizeof(double), current_idx + 1);
-                    for (size_t byte = 0; byte < sizeof(double); ++byte)
-                    {
-                        reinterpret_cast<uint8_t*>(&res)[sizeof(double) - byte - 1] = v[current_idx + 1 + byte];
-                    }
-                    idx += sizeof(double); // skip content bytes
-                    return res;
-                }
-
-                case 0xcc: // uint 8
-                {
-                    idx += 1; // skip content byte
-                    return get_from_vector<uint8_t>(v, current_idx);
-                }
-
-                case 0xcd: // uint 16
-                {
-                    idx += 2; // skip 2 content bytes
-                    return get_from_vector<uint16_t>(v, current_idx);
-                }
-
-                case 0xce: // uint 32
-                {
-                    idx += 4; // skip 4 content bytes
-                    return get_from_vector<uint32_t>(v, current_idx);
-                }
-
-                case 0xcf: // uint 64
-                {
-                    idx += 8; // skip 8 content bytes
-                    return get_from_vector<uint64_t>(v, current_idx);
-                }
-
-                case 0xd0: // int 8
-                {
-                    idx += 1; // skip content byte
-                    return get_from_vector<int8_t>(v, current_idx);
-                }
-
-                case 0xd1: // int 16
-                {
-                    idx += 2; // skip 2 content bytes
-                    return get_from_vector<int16_t>(v, current_idx);
-                }
-
-                case 0xd2: // int 32
-                {
-                    idx += 4; // skip 4 content bytes
-                    return get_from_vector<int32_t>(v, current_idx);
-                }
-
-                case 0xd3: // int 64
-                {
-                    idx += 8; // skip 8 content bytes
-                    return get_from_vector<int64_t>(v, current_idx);
-                }
-
-                case 0xd9: // str 8
-                {
-                    const auto len = static_cast<size_t>(get_from_vector<uint8_t>(v, current_idx));
-                    const size_t offset = current_idx + 2;
-                    idx += len + 1; // skip size byte + content bytes
-                    check_length(v.size(), len, offset);
-                    return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-                }
-
-                case 0xda: // str 16
-                {
-                    const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
-                    const size_t offset = current_idx + 3;
-                    idx += len + 2; // skip 2 size bytes + content bytes
-                    check_length(v.size(), len, offset);
-                    return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-                }
-
-                case 0xdb: // str 32
-                {
-                    const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
-                    const size_t offset = current_idx + 5;
-                    idx += len + 4; // skip 4 size bytes + content bytes
-                    check_length(v.size(), len, offset);
-                    return std::string(reinterpret_cast<const char*>(v.data()) + offset, len);
-                }
-
-                case 0xdc: // array 16
-                {
-                    basic_json result = value_t::array;
-                    const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
-                    idx += 2; // skip 2 size bytes
-                    for (size_t i = 0; i < len; ++i)
-                    {
-                        result.push_back(from_msgpack_internal(v, idx));
-                    }
-                    return result;
-                }
-
-                case 0xdd: // array 32
-                {
-                    basic_json result = value_t::array;
-                    const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
-                    idx += 4; // skip 4 size bytes
-                    for (size_t i = 0; i < len; ++i)
-                    {
-                        result.push_back(from_msgpack_internal(v, idx));
-                    }
-                    return result;
-                }
-
-                case 0xde: // map 16
-                {
-                    basic_json result = value_t::object;
-                    const auto len = static_cast<size_t>(get_from_vector<uint16_t>(v, current_idx));
-                    idx += 2; // skip 2 size bytes
-                    for (size_t i = 0; i < len; ++i)
-                    {
-                        msgpack_expect_string(v, idx);
-                        std::string key = from_msgpack_internal(v, idx);
-                        result[key] = from_msgpack_internal(v, idx);
-                    }
-                    return result;
-                }
-
-                case 0xdf: // map 32
-                {
-                    basic_json result = value_t::object;
-                    const auto len = static_cast<size_t>(get_from_vector<uint32_t>(v, current_idx));
-                    idx += 4; // skip 4 size bytes
-                    for (size_t i = 0; i < len; ++i)
-                    {
-                        msgpack_expect_string(v, idx);
-                        std::string key = from_msgpack_internal(v, idx);
-                        result[key] = from_msgpack_internal(v, idx);
-                    }
-                    return result;
-                }
-
-                default:
-                {
-                    std::stringstream ss;
-                    ss << std::hex << static_cast<int>(v[current_idx]);
-                    JSON_THROW(parse_error::create(112, current_idx + 1, "error reading MessagePack; last byte: 0x" + ss.str()));
-                }
-            }
-        }
-    }
-
   public:
     /*!
     @brief create a MessagePack serialization of a given JSON value
@@ -8472,80 +8070,6 @@ class basic_json
         std::vector<uint8_t> result;
         to_msgpack_internal(j, result);
         return result;
-    }
-
-    /*!
-    @brief create a JSON value from a byte vector in MessagePack format
-
-    Deserializes a given byte vector @a v to a JSON value using the MessagePack
-    serialization format.
-
-    The library maps MessagePack types to JSON value types as follows:
-
-    MessagePack type | JSON value type | first byte
-    ---------------- | --------------- | ----------
-    positive fixint  | number_unsigned | 0x00..0x7f
-    fixmap           | object          | 0x80..0x8f
-    fixarray         | array           | 0x90..0x9f
-    fixstr           | string          | 0xa0..0xbf
-    nil              | `null`          | 0xc0
-    false            | `false`         | 0xc2
-    true             | `true`          | 0xc3
-    float 32         | number_float    | 0xca
-    float 64         | number_float    | 0xcb
-    uint 8           | number_unsigned | 0xcc
-    uint 16          | number_unsigned | 0xcd
-    uint 32          | number_unsigned | 0xce
-    uint 64          | number_unsigned | 0xcf
-    int 8            | number_integer  | 0xd0
-    int 16           | number_integer  | 0xd1
-    int 32           | number_integer  | 0xd2
-    int 64           | number_integer  | 0xd3
-    str 8            | string          | 0xd9
-    str 16           | string          | 0xda
-    str 32           | string          | 0xdb
-    array 16         | array           | 0xdc
-    array 32         | array           | 0xdd
-    map 16           | object          | 0xde
-    map 32           | object          | 0xdf
-    negative fixint  | number_integer  | 0xe0-0xff
-
-    @warning The mapping is **incomplete** in the sense that not all
-             MessagePack types can be converted to a JSON value. The following
-             MessagePack types are not supported and will yield parse errors:
-              - bin 8 - bin 32 (0xc4..0xc6)
-              - ext 8 - ext 32 (0xc7..0xc9)
-              - fixext 1 - fixext 16 (0xd4..0xd8)
-
-    @note Any MessagePack output created @ref to_msgpack can be successfully
-          parsed by @ref from_msgpack.
-
-    @param[in] v  a byte vector in MessagePack format
-    @param[in] start_index the index to start reading from @a v (0 by default)
-    @return deserialized JSON value
-
-    @throw parse_error.110 if the given vector ends prematurely
-    @throw parse_error.112 if unsupported features from MessagePack were
-    used in the given vector @a v or if the input is not valid MessagePack
-    @throw parse_error.113 if a string was expected as map key, but not found
-
-    @complexity Linear in the size of the byte vector @a v.
-
-    @liveexample{The example shows the deserialization of a byte vector in
-    MessagePack format to a JSON value.,from_msgpack}
-
-    @sa http://msgpack.org
-    @sa @ref to_msgpack(const basic_json&) for the analogous serialization
-    @sa @ref from_cbor(const std::vector<uint8_t>&, const size_t) for the
-        related CBOR format
-
-    @since version 2.0.9, parameter @a start_index since 2.1.1
-    */
-    static basic_json from_msgpack(const std::vector<uint8_t>& v,
-                                   const size_t start_index = 0)
-    {
-        size_t i = start_index;
-        return from_msgpack_internal(v, i);
     }
 
     /*!
@@ -10262,6 +9786,408 @@ class basic_json
             }
         }
 
+        basic_json parse_msgpack()
+        {
+            switch (get())
+            {
+                // EOF
+                case std::char_traits<char>::eof():
+                {
+                    JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
+                }
+
+                // positive fixint
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x04:
+                case 0x05:
+                case 0x06:
+                case 0x07:
+                case 0x08:
+                case 0x09:
+                case 0x0a:
+                case 0x0b:
+                case 0x0c:
+                case 0x0d:
+                case 0x0e:
+                case 0x0f:
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x14:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                case 0x18:
+                case 0x19:
+                case 0x1a:
+                case 0x1b:
+                case 0x1c:
+                case 0x1d:
+                case 0x1e:
+                case 0x1f:
+                case 0x20:
+                case 0x21:
+                case 0x22:
+                case 0x23:
+                case 0x24:
+                case 0x25:
+                case 0x26:
+                case 0x27:
+                case 0x28:
+                case 0x29:
+                case 0x2a:
+                case 0x2b:
+                case 0x2c:
+                case 0x2d:
+                case 0x2e:
+                case 0x2f:
+                case 0x30:
+                case 0x31:
+                case 0x32:
+                case 0x33:
+                case 0x34:
+                case 0x35:
+                case 0x36:
+                case 0x37:
+                case 0x38:
+                case 0x39:
+                case 0x3a:
+                case 0x3b:
+                case 0x3c:
+                case 0x3d:
+                case 0x3e:
+                case 0x3f:
+                case 0x40:
+                case 0x41:
+                case 0x42:
+                case 0x43:
+                case 0x44:
+                case 0x45:
+                case 0x46:
+                case 0x47:
+                case 0x48:
+                case 0x49:
+                case 0x4a:
+                case 0x4b:
+                case 0x4c:
+                case 0x4d:
+                case 0x4e:
+                case 0x4f:
+                case 0x50:
+                case 0x51:
+                case 0x52:
+                case 0x53:
+                case 0x54:
+                case 0x55:
+                case 0x56:
+                case 0x57:
+                case 0x58:
+                case 0x59:
+                case 0x5a:
+                case 0x5b:
+                case 0x5c:
+                case 0x5d:
+                case 0x5e:
+                case 0x5f:
+                case 0x60:
+                case 0x61:
+                case 0x62:
+                case 0x63:
+                case 0x64:
+                case 0x65:
+                case 0x66:
+                case 0x67:
+                case 0x68:
+                case 0x69:
+                case 0x6a:
+                case 0x6b:
+                case 0x6c:
+                case 0x6d:
+                case 0x6e:
+                case 0x6f:
+                case 0x70:
+                case 0x71:
+                case 0x72:
+                case 0x73:
+                case 0x74:
+                case 0x75:
+                case 0x76:
+                case 0x77:
+                case 0x78:
+                case 0x79:
+                case 0x7a:
+                case 0x7b:
+                case 0x7c:
+                case 0x7d:
+                case 0x7e:
+                case 0x7f:
+                {
+                    return static_cast<number_unsigned_t>(current);
+                }
+
+                // fixmap
+                case 0x80:
+                case 0x81:
+                case 0x82:
+                case 0x83:
+                case 0x84:
+                case 0x85:
+                case 0x86:
+                case 0x87:
+                case 0x88:
+                case 0x89:
+                case 0x8a:
+                case 0x8b:
+                case 0x8c:
+                case 0x8d:
+                case 0x8e:
+                case 0x8f:
+                {
+                    basic_json result = value_t::object;
+                    const auto len = static_cast<size_t>(current & 0x0f);
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        get();
+                        auto key = get_msgpack_string();
+                        result[key] = parse_msgpack();
+                    }
+                    return result;
+                }
+
+                // fixarray
+                case 0x90:
+                case 0x91:
+                case 0x92:
+                case 0x93:
+                case 0x94:
+                case 0x95:
+                case 0x96:
+                case 0x97:
+                case 0x98:
+                case 0x99:
+                case 0x9a:
+                case 0x9b:
+                case 0x9c:
+                case 0x9d:
+                case 0x9e:
+                case 0x9f:
+                {
+                    basic_json result = value_t::array;
+                    const auto len = static_cast<size_t>(current & 0x0f);
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        result.push_back(parse_msgpack());
+                    }
+                    return result;
+                }
+
+                // fixstr
+                case 0xa0:
+                case 0xa1:
+                case 0xa2:
+                case 0xa3:
+                case 0xa4:
+                case 0xa5:
+                case 0xa6:
+                case 0xa7:
+                case 0xa8:
+                case 0xa9:
+                case 0xaa:
+                case 0xab:
+                case 0xac:
+                case 0xad:
+                case 0xae:
+                case 0xaf:
+                case 0xb0:
+                case 0xb1:
+                case 0xb2:
+                case 0xb3:
+                case 0xb4:
+                case 0xb5:
+                case 0xb6:
+                case 0xb7:
+                case 0xb8:
+                case 0xb9:
+                case 0xba:
+                case 0xbb:
+                case 0xbc:
+                case 0xbd:
+                case 0xbe:
+                case 0xbf:
+                {
+                    return get_msgpack_string();
+                }
+
+                case 0xc0: // nil
+                {
+                    return value_t::null;
+                }
+
+                case 0xc2: // false
+                {
+                    return false;
+                }
+
+                case 0xc3: // true
+                {
+                    return true;
+                }
+
+                case 0xca: // float 32
+                {
+                    return get_number<float>();
+                }
+
+                case 0xcb: // float 64
+                {
+                    return get_number<double>();
+                }
+
+                case 0xcc: // uint 8
+                {
+                    return get_number<uint8_t>();
+                }
+
+                case 0xcd: // uint 16
+                {
+                    return get_number<uint16_t>();
+                }
+
+                case 0xce: // uint 32
+                {
+                    return get_number<uint32_t>();
+                }
+
+                case 0xcf: // uint 64
+                {
+                    return get_number<uint64_t>();
+                }
+
+                case 0xd0: // int 8
+                {
+                    return get_number<int8_t>();
+                }
+
+                case 0xd1: // int 16
+                {
+                    return get_number<int16_t>();
+                }
+
+                case 0xd2: // int 32
+                {
+                    return get_number<int32_t>();
+                }
+
+                case 0xd3: // int 64
+                {
+                    return get_number<int64_t>();
+                }
+
+                case 0xd9: // str 8
+                case 0xda: // str 16
+                case 0xdb: // str 32
+                {
+                    return get_msgpack_string();
+                }
+
+                case 0xdc: // array 16
+                {
+                    basic_json result = value_t::array;
+                    const auto len = static_cast<size_t>(get_number<uint16_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        result.push_back(parse_msgpack());
+                    }
+                    return result;
+                }
+
+                case 0xdd: // array 32
+                {
+                    basic_json result = value_t::array;
+                    const auto len = static_cast<size_t>(get_number<uint32_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        result.push_back(parse_msgpack());
+                    }
+                    return result;
+                }
+
+                case 0xde: // map 16
+                {
+                    basic_json result = value_t::object;
+                    const auto len = static_cast<size_t>(get_number<uint16_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        get();
+                        auto key = get_msgpack_string();
+                        result[key] = parse_msgpack();
+                    }
+                    return result;
+                }
+
+                case 0xdf: // map 32
+                {
+                    basic_json result = value_t::object;
+                    const auto len = static_cast<size_t>(get_number<uint32_t>());
+                    for (size_t i = 0; i < len; ++i)
+                    {
+                        get();
+                        auto key = get_msgpack_string();
+                        result[key] = parse_msgpack();
+                    }
+                    return result;
+                }
+
+                // positive fixint
+                case 0xe0:
+                case 0xe1:
+                case 0xe2:
+                case 0xe3:
+                case 0xe4:
+                case 0xe5:
+                case 0xe6:
+                case 0xe7:
+                case 0xe8:
+                case 0xe9:
+                case 0xea:
+                case 0xeb:
+                case 0xec:
+                case 0xed:
+                case 0xee:
+                case 0xef:
+                case 0xf0:
+                case 0xf1:
+                case 0xf2:
+                case 0xf3:
+                case 0xf4:
+                case 0xf5:
+                case 0xf6:
+                case 0xf7:
+                case 0xf8:
+                case 0xf9:
+                case 0xfa:
+                case 0xfb:
+                case 0xfc:
+                case 0xfd:
+                case 0xfe:
+                case 0xff:
+                {
+                    return static_cast<int8_t>(current);
+                }
+
+                default: // anything else
+                {
+                    std::stringstream ss;
+                    ss << std::hex << current;
+                    JSON_THROW(parse_error::create(112, chars_read, "error reading MessagePack; last byte: 0x" + ss.str()));
+                }
+            }
+        }
+
       private:
         int get()
         {
@@ -10374,6 +10300,77 @@ class basic_json
                     std::stringstream ss;
                     ss << std::hex << current;
                     JSON_THROW(parse_error::create(113, chars_read, "expected a CBOR string; last byte: 0x" + ss.str()));
+                }
+            }
+        }
+
+        std::string get_msgpack_string()
+        {
+            check_eof();
+
+            switch (current)
+            {
+                // fixstr
+                case 0xa0:
+                case 0xa1:
+                case 0xa2:
+                case 0xa3:
+                case 0xa4:
+                case 0xa5:
+                case 0xa6:
+                case 0xa7:
+                case 0xa8:
+                case 0xa9:
+                case 0xaa:
+                case 0xab:
+                case 0xac:
+                case 0xad:
+                case 0xae:
+                case 0xaf:
+                case 0xb0:
+                case 0xb1:
+                case 0xb2:
+                case 0xb3:
+                case 0xb4:
+                case 0xb5:
+                case 0xb6:
+                case 0xb7:
+                case 0xb8:
+                case 0xb9:
+                case 0xba:
+                case 0xbb:
+                case 0xbc:
+                case 0xbd:
+                case 0xbe:
+                case 0xbf:
+                {
+                    const auto len = static_cast<size_t>(current & 0x1f);
+                    return get_string(len);
+                }
+
+                case 0xd9: // str 8
+                {
+                    const auto len = static_cast<size_t>(get_number<uint8_t>());
+                    return get_string(len);
+                }
+
+                case 0xda: // str 16
+                {
+                    const auto len = static_cast<size_t>(get_number<uint16_t>());
+                    return get_string(len);
+                }
+
+                case 0xdb: // str 32
+                {
+                    const auto len = static_cast<size_t>(get_number<uint32_t>());
+                    return get_string(len);
+                }
+
+                default:
+                {
+                    std::stringstream ss;
+                    ss << std::hex << current;
+                    JSON_THROW(parse_error::create(113, chars_read, "expected a MessagePack string; last byte: 0x" + ss.str()));
                 }
             }
         }
@@ -10491,6 +10488,81 @@ class basic_json
     {
         binary_reader br(reinterpret_cast<const char*>(v.data() + start_index), v.size() - start_index);
         return br.parse_cbor();
+    }
+
+
+    /*!
+    @brief create a JSON value from a byte vector in MessagePack format
+
+    Deserializes a given byte vector @a v to a JSON value using the MessagePack
+    serialization format.
+
+    The library maps MessagePack types to JSON value types as follows:
+
+    MessagePack type | JSON value type | first byte
+    ---------------- | --------------- | ----------
+    positive fixint  | number_unsigned | 0x00..0x7f
+    fixmap           | object          | 0x80..0x8f
+    fixarray         | array           | 0x90..0x9f
+    fixstr           | string          | 0xa0..0xbf
+    nil              | `null`          | 0xc0
+    false            | `false`         | 0xc2
+    true             | `true`          | 0xc3
+    float 32         | number_float    | 0xca
+    float 64         | number_float    | 0xcb
+    uint 8           | number_unsigned | 0xcc
+    uint 16          | number_unsigned | 0xcd
+    uint 32          | number_unsigned | 0xce
+    uint 64          | number_unsigned | 0xcf
+    int 8            | number_integer  | 0xd0
+    int 16           | number_integer  | 0xd1
+    int 32           | number_integer  | 0xd2
+    int 64           | number_integer  | 0xd3
+    str 8            | string          | 0xd9
+    str 16           | string          | 0xda
+    str 32           | string          | 0xdb
+    array 16         | array           | 0xdc
+    array 32         | array           | 0xdd
+    map 16           | object          | 0xde
+    map 32           | object          | 0xdf
+    negative fixint  | number_integer  | 0xe0-0xff
+
+    @warning The mapping is **incomplete** in the sense that not all
+             MessagePack types can be converted to a JSON value. The following
+             MessagePack types are not supported and will yield parse errors:
+              - bin 8 - bin 32 (0xc4..0xc6)
+              - ext 8 - ext 32 (0xc7..0xc9)
+              - fixext 1 - fixext 16 (0xd4..0xd8)
+
+    @note Any MessagePack output created @ref to_msgpack can be successfully
+          parsed by @ref from_msgpack.
+
+    @param[in] v  a byte vector in MessagePack format
+    @param[in] start_index the index to start reading from @a v (0 by default)
+    @return deserialized JSON value
+
+    @throw parse_error.110 if the given vector ends prematurely
+    @throw parse_error.112 if unsupported features from MessagePack were
+    used in the given vector @a v or if the input is not valid MessagePack
+    @throw parse_error.113 if a string was expected as map key, but not found
+
+    @complexity Linear in the size of the byte vector @a v.
+
+    @liveexample{The example shows the deserialization of a byte vector in
+    MessagePack format to a JSON value.,from_msgpack}
+
+    @sa http://msgpack.org
+    @sa @ref to_msgpack(const basic_json&) for the analogous serialization
+    @sa @ref from_cbor(const std::vector<uint8_t>&, const size_t) for the
+        related CBOR format
+
+    @since version 2.0.9, parameter @a start_index since 2.1.1
+    */
+    static basic_json from_msgpack(const std::vector<uint8_t>& v,
+                                   const size_t start_index = 0)
+    {
+        binary_reader br(reinterpret_cast<const char*>(v.data() + start_index), v.size() - start_index);
+        return br.parse_msgpack();
     }
 
     //////////////////////
