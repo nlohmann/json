@@ -7423,746 +7423,6 @@ class basic_json
 
     /// @}
 
-    //////////////////////////////////////////
-    // binary serialization/deserialization //
-    //////////////////////////////////////////
-
-    /// @name binary serialization/deserialization support
-    /// @{
-
-  private:
-    /*!
-    @note Some code in the switch cases has been copied, because otherwise
-          copilers would complain about implicit fallthrough and there is no
-          portable attribute to mute such warnings.
-    */
-    template<typename T>
-    static void add_to_vector(std::vector<uint8_t>& vec, size_t bytes, const T number)
-    {
-        assert(bytes == 1 or bytes == 2 or bytes == 4 or bytes == 8);
-
-        switch (bytes)
-        {
-            case 8:
-            {
-                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 070) & 0xff));
-                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 060) & 0xff));
-                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 050) & 0xff));
-                vec.push_back(static_cast<uint8_t>((static_cast<uint64_t>(number) >> 040) & 0xff));
-                vec.push_back(static_cast<uint8_t>((number >> 030) & 0xff));
-                vec.push_back(static_cast<uint8_t>((number >> 020) & 0xff));
-                vec.push_back(static_cast<uint8_t>((number >> 010) & 0xff));
-                vec.push_back(static_cast<uint8_t>(number & 0xff));
-                break;
-            }
-
-            case 4:
-            {
-                vec.push_back(static_cast<uint8_t>((number >> 030) & 0xff));
-                vec.push_back(static_cast<uint8_t>((number >> 020) & 0xff));
-                vec.push_back(static_cast<uint8_t>((number >> 010) & 0xff));
-                vec.push_back(static_cast<uint8_t>(number & 0xff));
-                break;
-            }
-
-            case 2:
-            {
-                vec.push_back(static_cast<uint8_t>((number >> 010) & 0xff));
-                vec.push_back(static_cast<uint8_t>(number & 0xff));
-                break;
-            }
-
-            case 1:
-            {
-                vec.push_back(static_cast<uint8_t>(number & 0xff));
-                break;
-            }
-        }
-    }
-
-    /*!
-    @brief create a MessagePack serialization of a given JSON value
-
-    This is a straightforward implementation of the MessagePack specification.
-
-    @param[in] j  JSON value to serialize
-    @param[in,out] v  byte vector to write the serialization to
-
-    @sa https://github.com/msgpack/msgpack/blob/master/spec.md
-    */
-    static void to_msgpack_internal(const basic_json& j, std::vector<uint8_t>& v)
-    {
-        switch (j.type())
-        {
-            case value_t::null:
-            {
-                // nil
-                v.push_back(0xc0);
-                break;
-            }
-
-            case value_t::boolean:
-            {
-                // true and false
-                v.push_back(j.m_value.boolean ? 0xc3 : 0xc2);
-                break;
-            }
-
-            case value_t::number_integer:
-            {
-                if (j.m_value.number_integer >= 0)
-                {
-                    // MessagePack does not differentiate between positive
-                    // signed integers and unsigned integers. Therefore, we
-                    // used the code from the value_t::number_unsigned case
-                    // here.
-                    if (j.m_value.number_unsigned < 128)
-                    {
-                        // positive fixnum
-                        add_to_vector(v, 1, j.m_value.number_unsigned);
-                    }
-                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
-                    {
-                        // uint 8
-                        v.push_back(0xcc);
-                        add_to_vector(v, 1, j.m_value.number_unsigned);
-                    }
-                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
-                    {
-                        // uint 16
-                        v.push_back(0xcd);
-                        add_to_vector(v, 2, j.m_value.number_unsigned);
-                    }
-                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
-                    {
-                        // uint 32
-                        v.push_back(0xce);
-                        add_to_vector(v, 4, j.m_value.number_unsigned);
-                    }
-                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
-                    {
-                        // uint 64
-                        v.push_back(0xcf);
-                        add_to_vector(v, 8, j.m_value.number_unsigned);
-                    }
-                }
-                else
-                {
-                    if (j.m_value.number_integer >= -32)
-                    {
-                        // negative fixnum
-                        add_to_vector(v, 1, j.m_value.number_integer);
-                    }
-                    else if (j.m_value.number_integer >= (std::numeric_limits<int8_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int8_t>::max)())
-                    {
-                        // int 8
-                        v.push_back(0xd0);
-                        add_to_vector(v, 1, j.m_value.number_integer);
-                    }
-                    else if (j.m_value.number_integer >= (std::numeric_limits<int16_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
-                    {
-                        // int 16
-                        v.push_back(0xd1);
-                        add_to_vector(v, 2, j.m_value.number_integer);
-                    }
-                    else if (j.m_value.number_integer >= (std::numeric_limits<int32_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
-                    {
-                        // int 32
-                        v.push_back(0xd2);
-                        add_to_vector(v, 4, j.m_value.number_integer);
-                    }
-                    else if (j.m_value.number_integer >= (std::numeric_limits<int64_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int64_t>::max)())
-                    {
-                        // int 64
-                        v.push_back(0xd3);
-                        add_to_vector(v, 8, j.m_value.number_integer);
-                    }
-                }
-                break;
-            }
-
-            case value_t::number_unsigned:
-            {
-                if (j.m_value.number_unsigned < 128)
-                {
-                    // positive fixnum
-                    add_to_vector(v, 1, j.m_value.number_unsigned);
-                }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
-                {
-                    // uint 8
-                    v.push_back(0xcc);
-                    add_to_vector(v, 1, j.m_value.number_unsigned);
-                }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
-                {
-                    // uint 16
-                    v.push_back(0xcd);
-                    add_to_vector(v, 2, j.m_value.number_unsigned);
-                }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
-                {
-                    // uint 32
-                    v.push_back(0xce);
-                    add_to_vector(v, 4, j.m_value.number_unsigned);
-                }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
-                {
-                    // uint 64
-                    v.push_back(0xcf);
-                    add_to_vector(v, 8, j.m_value.number_unsigned);
-                }
-                break;
-            }
-
-            case value_t::number_float:
-            {
-                // float 64
-                v.push_back(0xcb);
-                const auto* helper = reinterpret_cast<const uint8_t*>(&(j.m_value.number_float));
-                for (size_t i = 0; i < 8; ++i)
-                {
-                    v.push_back(helper[7 - i]);
-                }
-                break;
-            }
-
-            case value_t::string:
-            {
-                const auto N = j.m_value.string->size();
-                if (N <= 31)
-                {
-                    // fixstr
-                    v.push_back(static_cast<uint8_t>(0xa0 | N));
-                }
-                else if (N <= 255)
-                {
-                    // str 8
-                    v.push_back(0xd9);
-                    add_to_vector(v, 1, N);
-                }
-                else if (N <= 65535)
-                {
-                    // str 16
-                    v.push_back(0xda);
-                    add_to_vector(v, 2, N);
-                }
-                else if (N <= 4294967295)
-                {
-                    // str 32
-                    v.push_back(0xdb);
-                    add_to_vector(v, 4, N);
-                }
-
-                // append string
-                std::copy(j.m_value.string->begin(), j.m_value.string->end(),
-                          std::back_inserter(v));
-                break;
-            }
-
-            case value_t::array:
-            {
-                const auto N = j.m_value.array->size();
-                if (N <= 15)
-                {
-                    // fixarray
-                    v.push_back(static_cast<uint8_t>(0x90 | N));
-                }
-                else if (N <= 0xffff)
-                {
-                    // array 16
-                    v.push_back(0xdc);
-                    add_to_vector(v, 2, N);
-                }
-                else if (N <= 0xffffffff)
-                {
-                    // array 32
-                    v.push_back(0xdd);
-                    add_to_vector(v, 4, N);
-                }
-
-                // append each element
-                for (const auto& el : *j.m_value.array)
-                {
-                    to_msgpack_internal(el, v);
-                }
-                break;
-            }
-
-            case value_t::object:
-            {
-                const auto N = j.m_value.object->size();
-                if (N <= 15)
-                {
-                    // fixmap
-                    v.push_back(static_cast<uint8_t>(0x80 | (N & 0xf)));
-                }
-                else if (N <= 65535)
-                {
-                    // map 16
-                    v.push_back(0xde);
-                    add_to_vector(v, 2, N);
-                }
-                else if (N <= 4294967295)
-                {
-                    // map 32
-                    v.push_back(0xdf);
-                    add_to_vector(v, 4, N);
-                }
-
-                // append each element
-                for (const auto& el : *j.m_value.object)
-                {
-                    to_msgpack_internal(el.first, v);
-                    to_msgpack_internal(el.second, v);
-                }
-                break;
-            }
-
-            default:
-            {
-                break;
-            }
-        }
-    }
-
-    /*!
-    @brief create a CBOR serialization of a given JSON value
-
-    This is a straightforward implementation of the CBOR specification.
-
-    @param[in] j  JSON value to serialize
-    @param[in,out] v  byte vector to write the serialization to
-
-    @sa https://tools.ietf.org/html/rfc7049
-    */
-    static void to_cbor_internal(const basic_json& j, std::vector<uint8_t>& v)
-    {
-        switch (j.type())
-        {
-            case value_t::null:
-            {
-                v.push_back(0xf6);
-                break;
-            }
-
-            case value_t::boolean:
-            {
-                v.push_back(j.m_value.boolean ? 0xf5 : 0xf4);
-                break;
-            }
-
-            case value_t::number_integer:
-            {
-                if (j.m_value.number_integer >= 0)
-                {
-                    // CBOR does not differentiate between positive signed
-                    // integers and unsigned integers. Therefore, we used the
-                    // code from the value_t::number_unsigned case here.
-                    if (j.m_value.number_integer <= 0x17)
-                    {
-                        add_to_vector(v, 1, j.m_value.number_integer);
-                    }
-                    else if (j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
-                    {
-                        v.push_back(0x18);
-                        // one-byte uint8_t
-                        add_to_vector(v, 1, j.m_value.number_integer);
-                    }
-                    else if (j.m_value.number_integer <= (std::numeric_limits<uint16_t>::max)())
-                    {
-                        v.push_back(0x19);
-                        // two-byte uint16_t
-                        add_to_vector(v, 2, j.m_value.number_integer);
-                    }
-                    else if (j.m_value.number_integer <= (std::numeric_limits<uint32_t>::max)())
-                    {
-                        v.push_back(0x1a);
-                        // four-byte uint32_t
-                        add_to_vector(v, 4, j.m_value.number_integer);
-                    }
-                    else
-                    {
-                        v.push_back(0x1b);
-                        // eight-byte uint64_t
-                        add_to_vector(v, 8, j.m_value.number_integer);
-                    }
-                }
-                else
-                {
-                    // The conversions below encode the sign in the first
-                    // byte, and the value is converted to a positive number.
-                    const auto positive_number = -1 - j.m_value.number_integer;
-                    if (j.m_value.number_integer >= -24)
-                    {
-                        v.push_back(static_cast<uint8_t>(0x20 + positive_number));
-                    }
-                    else if (positive_number <= (std::numeric_limits<uint8_t>::max)())
-                    {
-                        // int 8
-                        v.push_back(0x38);
-                        add_to_vector(v, 1, positive_number);
-                    }
-                    else if (positive_number <= (std::numeric_limits<uint16_t>::max)())
-                    {
-                        // int 16
-                        v.push_back(0x39);
-                        add_to_vector(v, 2, positive_number);
-                    }
-                    else if (positive_number <= (std::numeric_limits<uint32_t>::max)())
-                    {
-                        // int 32
-                        v.push_back(0x3a);
-                        add_to_vector(v, 4, positive_number);
-                    }
-                    else
-                    {
-                        // int 64
-                        v.push_back(0x3b);
-                        add_to_vector(v, 8, positive_number);
-                    }
-                }
-                break;
-            }
-
-            case value_t::number_unsigned:
-            {
-                if (j.m_value.number_unsigned <= 0x17)
-                {
-                    v.push_back(static_cast<uint8_t>(j.m_value.number_unsigned));
-                }
-                else if (j.m_value.number_unsigned <= 0xff)
-                {
-                    v.push_back(0x18);
-                    // one-byte uint8_t
-                    add_to_vector(v, 1, j.m_value.number_unsigned);
-                }
-                else if (j.m_value.number_unsigned <= 0xffff)
-                {
-                    v.push_back(0x19);
-                    // two-byte uint16_t
-                    add_to_vector(v, 2, j.m_value.number_unsigned);
-                }
-                else if (j.m_value.number_unsigned <= 0xffffffff)
-                {
-                    v.push_back(0x1a);
-                    // four-byte uint32_t
-                    add_to_vector(v, 4, j.m_value.number_unsigned);
-                }
-                else if (j.m_value.number_unsigned <= 0xffffffffffffffff)
-                {
-                    v.push_back(0x1b);
-                    // eight-byte uint64_t
-                    add_to_vector(v, 8, j.m_value.number_unsigned);
-                }
-                break;
-            }
-
-            case value_t::number_float:
-            {
-                // Double-Precision Float
-                v.push_back(0xfb);
-                const auto* helper = reinterpret_cast<const uint8_t*>(&(j.m_value.number_float));
-                for (size_t i = 0; i < 8; ++i)
-                {
-                    v.push_back(helper[7 - i]);
-                }
-                break;
-            }
-
-            case value_t::string:
-            {
-                const auto N = j.m_value.string->size();
-                if (N <= 0x17)
-                {
-                    v.push_back(static_cast<uint8_t>(0x60 + N));  // 1 byte for string + size
-                }
-                else if (N <= 0xff)
-                {
-                    v.push_back(0x78);  // one-byte uint8_t for N
-                    add_to_vector(v, 1, N);
-                }
-                else if (N <= 0xffff)
-                {
-                    v.push_back(0x79);  // two-byte uint16_t for N
-                    add_to_vector(v, 2, N);
-                }
-                else if (N <= 0xffffffff)
-                {
-                    v.push_back(0x7a); // four-byte uint32_t for N
-                    add_to_vector(v, 4, N);
-                }
-                // LCOV_EXCL_START
-                else if (N <= 0xffffffffffffffff)
-                {
-                    v.push_back(0x7b);  // eight-byte uint64_t for N
-                    add_to_vector(v, 8, N);
-                }
-                // LCOV_EXCL_STOP
-
-                // append string
-                std::copy(j.m_value.string->begin(), j.m_value.string->end(),
-                          std::back_inserter(v));
-                break;
-            }
-
-            case value_t::array:
-            {
-                const auto N = j.m_value.array->size();
-                if (N <= 0x17)
-                {
-                    v.push_back(static_cast<uint8_t>(0x80 + N));  // 1 byte for array + size
-                }
-                else if (N <= 0xff)
-                {
-                    v.push_back(0x98);  // one-byte uint8_t for N
-                    add_to_vector(v, 1, N);
-                }
-                else if (N <= 0xffff)
-                {
-                    v.push_back(0x99);  // two-byte uint16_t for N
-                    add_to_vector(v, 2, N);
-                }
-                else if (N <= 0xffffffff)
-                {
-                    v.push_back(0x9a);  // four-byte uint32_t for N
-                    add_to_vector(v, 4, N);
-                }
-                // LCOV_EXCL_START
-                else if (N <= 0xffffffffffffffff)
-                {
-                    v.push_back(0x9b);  // eight-byte uint64_t for N
-                    add_to_vector(v, 8, N);
-                }
-                // LCOV_EXCL_STOP
-
-                // append each element
-                for (const auto& el : *j.m_value.array)
-                {
-                    to_cbor_internal(el, v);
-                }
-                break;
-            }
-
-            case value_t::object:
-            {
-                const auto N = j.m_value.object->size();
-                if (N <= 0x17)
-                {
-                    v.push_back(static_cast<uint8_t>(0xa0 + N));  // 1 byte for object + size
-                }
-                else if (N <= 0xff)
-                {
-                    v.push_back(0xb8);
-                    add_to_vector(v, 1, N);  // one-byte uint8_t for N
-                }
-                else if (N <= 0xffff)
-                {
-                    v.push_back(0xb9);
-                    add_to_vector(v, 2, N);  // two-byte uint16_t for N
-                }
-                else if (N <= 0xffffffff)
-                {
-                    v.push_back(0xba);
-                    add_to_vector(v, 4, N);  // four-byte uint32_t for N
-                }
-                // LCOV_EXCL_START
-                else if (N <= 0xffffffffffffffff)
-                {
-                    v.push_back(0xbb);
-                    add_to_vector(v, 8, N);  // eight-byte uint64_t for N
-                }
-                // LCOV_EXCL_STOP
-
-                // append each element
-                for (const auto& el : *j.m_value.object)
-                {
-                    to_cbor_internal(el.first, v);
-                    to_cbor_internal(el.second, v);
-                }
-                break;
-            }
-
-            default:
-            {
-                break;
-            }
-        }
-    }
-
-  public:
-    /*!
-    @brief create a MessagePack serialization of a given JSON value
-
-    Serializes a given JSON value @a j to a byte vector using the MessagePack
-    serialization format. MessagePack is a binary serialization format which
-    aims to be more compact than JSON itself, yet more efficient to parse.
-
-    The library uses the following mapping from JSON values types to
-    MessagePack types according to the MessagePack specification:
-
-    JSON value type | value/range                       | MessagePack type | first byte
-    --------------- | --------------------------------- | ---------------- | ----------
-    null            | `null`                            | nil              | 0xc0
-    boolean         | `true`                            | true             | 0xc3
-    boolean         | `false`                           | false            | 0xc2
-    number_integer  | -9223372036854775808..-2147483649 | int64            | 0xd3
-    number_integer  | -2147483648..-32769               | int32            | 0xd2
-    number_integer  | -32768..-129                      | int16            | 0xd1
-    number_integer  | -128..-33                         | int8             | 0xd0
-    number_integer  | -32..-1                           | negative fixint  | 0xe0..0xff
-    number_integer  | 0..127                            | positive fixint  | 0x00..0x7f
-    number_integer  | 128..255                          | uint 8           | 0xcc
-    number_integer  | 256..65535                        | uint 16          | 0xcd
-    number_integer  | 65536..4294967295                 | uint 32          | 0xce
-    number_integer  | 4294967296..18446744073709551615  | uint 64          | 0xcf
-    number_unsigned | 0..127                            | positive fixint  | 0x00..0x7f
-    number_unsigned | 128..255                          | uint 8           | 0xcc
-    number_unsigned | 256..65535                        | uint 16          | 0xcd
-    number_unsigned | 65536..4294967295                 | uint 32          | 0xce
-    number_unsigned | 4294967296..18446744073709551615  | uint 64          | 0xcf
-    number_float    | *any value*                       | float 64         | 0xcb
-    string          | *length*: 0..31                   | fixstr           | 0xa0..0xbf
-    string          | *length*: 32..255                 | str 8            | 0xd9
-    string          | *length*: 256..65535              | str 16           | 0xda
-    string          | *length*: 65536..4294967295       | str 32           | 0xdb
-    array           | *size*: 0..15                     | fixarray         | 0x90..0x9f
-    array           | *size*: 16..65535                 | array 16         | 0xdc
-    array           | *size*: 65536..4294967295         | array 32         | 0xdd
-    object          | *size*: 0..15                     | fix map          | 0x80..0x8f
-    object          | *size*: 16..65535                 | map 16           | 0xde
-    object          | *size*: 65536..4294967295         | map 32           | 0xdf
-
-    @note The mapping is **complete** in the sense that any JSON value type
-          can be converted to a MessagePack value.
-
-    @note The following values can **not** be converted to a MessagePack value:
-          - strings with more than 4294967295 bytes
-          - arrays with more than 4294967295 elements
-          - objects with more than 4294967295 elements
-
-    @note The following MessagePack types are not used in the conversion:
-          - bin 8 - bin 32 (0xc4..0xc6)
-          - ext 8 - ext 32 (0xc7..0xc9)
-          - float 32 (0xca)
-          - fixext 1 - fixext 16 (0xd4..0xd8)
-
-    @note Any MessagePack output created @ref to_msgpack can be successfully
-          parsed by @ref from_msgpack.
-
-    @param[in] j  JSON value to serialize
-    @return MessagePack serialization as byte vector
-
-    @complexity Linear in the size of the JSON value @a j.
-
-    @liveexample{The example shows the serialization of a JSON value to a byte
-    vector in MessagePack format.,to_msgpack}
-
-    @sa http://msgpack.org
-    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
-        analogous deserialization
-    @sa @ref to_cbor(const basic_json& for the related CBOR format
-
-    @since version 2.0.9
-    */
-    static std::vector<uint8_t> to_msgpack(const basic_json& j)
-    {
-        std::vector<uint8_t> result;
-        to_msgpack_internal(j, result);
-        return result;
-    }
-
-    /*!
-    @brief create a CBOR serialization of a given JSON value
-
-    Serializes a given JSON value @a j to a byte vector using the CBOR (Concise
-    Binary Object Representation) serialization format. CBOR is a binary
-    serialization format which aims to be more compact than JSON itself, yet
-    more efficient to parse.
-
-    The library uses the following mapping from JSON values types to
-    CBOR types according to the CBOR specification (RFC 7049):
-
-    JSON value type | value/range                                | CBOR type                          | first byte
-    --------------- | ------------------------------------------ | ---------------------------------- | ---------------
-    null            | `null`                                     | Null                               | 0xf6
-    boolean         | `true`                                     | True                               | 0xf5
-    boolean         | `false`                                    | False                              | 0xf4
-    number_integer  | -9223372036854775808..-2147483649          | Negative integer (8 bytes follow)  | 0x3b
-    number_integer  | -2147483648..-32769                        | Negative integer (4 bytes follow)  | 0x3a
-    number_integer  | -32768..-129                               | Negative integer (2 bytes follow)  | 0x39
-    number_integer  | -128..-25                                  | Negative integer (1 byte follow)   | 0x38
-    number_integer  | -24..-1                                    | Negative integer                   | 0x20..0x37
-    number_integer  | 0..23                                      | Integer                            | 0x00..0x17
-    number_integer  | 24..255                                    | Unsigned integer (1 byte follow)   | 0x18
-    number_integer  | 256..65535                                 | Unsigned integer (2 bytes follow)  | 0x19
-    number_integer  | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1a
-    number_integer  | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1b
-    number_unsigned | 0..23                                      | Integer                            | 0x00..0x17
-    number_unsigned | 24..255                                    | Unsigned integer (1 byte follow)   | 0x18
-    number_unsigned | 256..65535                                 | Unsigned integer (2 bytes follow)  | 0x19
-    number_unsigned | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1a
-    number_unsigned | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1b
-    number_float    | *any value*                                | Double-Precision Float             | 0xfb
-    string          | *length*: 0..23                            | UTF-8 string                       | 0x60..0x77
-    string          | *length*: 23..255                          | UTF-8 string (1 byte follow)       | 0x78
-    string          | *length*: 256..65535                       | UTF-8 string (2 bytes follow)      | 0x79
-    string          | *length*: 65536..4294967295                | UTF-8 string (4 bytes follow)      | 0x7a
-    string          | *length*: 4294967296..18446744073709551615 | UTF-8 string (8 bytes follow)      | 0x7b
-    array           | *size*: 0..23                              | array                              | 0x80..0x97
-    array           | *size*: 23..255                            | array (1 byte follow)              | 0x98
-    array           | *size*: 256..65535                         | array (2 bytes follow)             | 0x99
-    array           | *size*: 65536..4294967295                  | array (4 bytes follow)             | 0x9a
-    array           | *size*: 4294967296..18446744073709551615   | array (8 bytes follow)             | 0x9b
-    object          | *size*: 0..23                              | map                                | 0xa0..0xb7
-    object          | *size*: 23..255                            | map (1 byte follow)                | 0xb8
-    object          | *size*: 256..65535                         | map (2 bytes follow)               | 0xb9
-    object          | *size*: 65536..4294967295                  | map (4 bytes follow)               | 0xba
-    object          | *size*: 4294967296..18446744073709551615   | map (8 bytes follow)               | 0xbb
-
-    @note The mapping is **complete** in the sense that any JSON value type
-          can be converted to a CBOR value.
-
-    @note The following CBOR types are not used in the conversion:
-          - byte strings (0x40..0x5f)
-          - UTF-8 strings terminated by "break" (0x7f)
-          - arrays terminated by "break" (0x9f)
-          - maps terminated by "break" (0xbf)
-          - date/time (0xc0..0xc1)
-          - bignum (0xc2..0xc3)
-          - decimal fraction (0xc4)
-          - bigfloat (0xc5)
-          - tagged items (0xc6..0xd4, 0xd8..0xdb)
-          - expected conversions (0xd5..0xd7)
-          - simple values (0xe0..0xf3, 0xf8)
-          - undefined (0xf7)
-          - half and single-precision floats (0xf9-0xfa)
-          - break (0xff)
-
-    @param[in] j  JSON value to serialize
-    @return MessagePack serialization as byte vector
-
-    @complexity Linear in the size of the JSON value @a j.
-
-    @liveexample{The example shows the serialization of a JSON value to a byte
-    vector in CBOR format.,to_cbor}
-
-    @sa http://cbor.io
-    @sa @ref from_cbor(const std::vector<uint8_t>&, const size_t) for the
-        analogous deserialization
-    @sa @ref to_msgpack(const basic_json& for the related MessagePack format
-
-    @since version 2.0.9
-    */
-    static std::vector<uint8_t> to_cbor(const basic_json& j)
-    {
-        std::vector<uint8_t> result;
-        to_cbor_internal(j, result);
-        return result;
-    }
-
-    /// @}
-
     ///////////////////////////
     // convenience functions //
     ///////////////////////////
@@ -9355,9 +8615,12 @@ class basic_json
         const char* start;
     };
 
-    ////////////////////
-    // binary formats //
-    ////////////////////
+    //////////////////////////////////////////
+    // binary serialization/deserialization //
+    //////////////////////////////////////////
+
+    /// @name binary serialization/deserialization support
+    /// @{
 
   private:
     class binary_reader
@@ -10414,7 +9677,699 @@ class basic_json
         const bool is_little_endian = true;
     };
 
+    class binary_writer
+    {
+      public:
+        binary_writer()
+            : is_little_endian(little_endianess())
+        {}
+
+        std::vector<uint8_t> write_cbor(const basic_json& j)
+        {
+            write_cbor_internal(j);
+            return v;
+        }
+
+        std::vector<uint8_t> write_msgpack(const basic_json& j)
+        {
+            write_msgpack_internal(j);
+            return v;
+        }
+
+      private:
+        void write_cbor_internal(const basic_json& j)
+        {
+            switch (j.type())
+            {
+                case value_t::null:
+                {
+                    v.push_back(0xf6);
+                    break;
+                }
+
+                case value_t::boolean:
+                {
+                    v.push_back(j.m_value.boolean ? 0xf5 : 0xf4);
+                    break;
+                }
+
+                case value_t::number_integer:
+                {
+                    if (j.m_value.number_integer >= 0)
+                    {
+                        // CBOR does not differentiate between positive signed
+                        // integers and unsigned integers. Therefore, we used the
+                        // code from the value_t::number_unsigned case here.
+                        if (j.m_value.number_integer <= 0x17)
+                        {
+                            write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                        }
+                        else if (j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
+                        {
+                            v.push_back(0x18);
+                            write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                        }
+                        else if (j.m_value.number_integer <= (std::numeric_limits<uint16_t>::max)())
+                        {
+                            v.push_back(0x19);
+                            write_number(static_cast<uint16_t>(j.m_value.number_integer));
+                        }
+                        else if (j.m_value.number_integer <= (std::numeric_limits<uint32_t>::max)())
+                        {
+                            v.push_back(0x1a);
+                            write_number(static_cast<uint32_t>(j.m_value.number_integer));
+                        }
+                        else
+                        {
+                            v.push_back(0x1b);
+                            write_number(static_cast<uint64_t>(j.m_value.number_integer));
+                        }
+                    }
+                    else
+                    {
+                        // The conversions below encode the sign in the first
+                        // byte, and the value is converted to a positive number.
+                        const auto positive_number = -1 - j.m_value.number_integer;
+                        if (j.m_value.number_integer >= -24)
+                        {
+                            write_number(static_cast<uint8_t>(0x20 + positive_number));
+                        }
+                        else if (positive_number <= (std::numeric_limits<uint8_t>::max)())
+                        {
+                            v.push_back(0x38);
+                            write_number(static_cast<uint8_t>(positive_number));
+                        }
+                        else if (positive_number <= (std::numeric_limits<uint16_t>::max)())
+                        {
+                            v.push_back(0x39);
+                            write_number(static_cast<uint16_t>(positive_number));
+                        }
+                        else if (positive_number <= (std::numeric_limits<uint32_t>::max)())
+                        {
+                            v.push_back(0x3a);
+                            write_number(static_cast<uint32_t>(positive_number));
+                        }
+                        else
+                        {
+                            v.push_back(0x3b);
+                            write_number(static_cast<uint64_t>(positive_number));
+                        }
+                    }
+                    break;
+                }
+
+                case value_t::number_unsigned:
+                {
+                    if (j.m_value.number_unsigned <= 0x17)
+                    {
+                        write_number(static_cast<uint8_t>(j.m_value.number_unsigned));
+                    }
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
+                    {
+                        v.push_back(0x18);
+                        write_number(static_cast<uint8_t>(j.m_value.number_unsigned));
+                    }
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
+                    {
+                        v.push_back(0x19);
+                        write_number(static_cast<uint16_t>(j.m_value.number_unsigned));
+                    }
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
+                    {
+                        v.push_back(0x1a);
+                        write_number(static_cast<uint32_t>(j.m_value.number_unsigned));
+                    }
+                    else
+                    {
+                        v.push_back(0x1b);
+                        write_number(static_cast<uint64_t>(j.m_value.number_unsigned));
+                    }
+                    break;
+                }
+
+                case value_t::number_float:
+                {
+                    // Double-Precision Float
+                    v.push_back(0xfb);
+                    write_number(j.m_value.number_float);
+                    break;
+                }
+
+                case value_t::string:
+                {
+                    const auto N = j.m_value.string->size();
+                    if (N <= 0x17)
+                    {
+                        write_number(static_cast<uint8_t>(0x60 + N));
+                    }
+                    else if (N <= 0xff)
+                    {
+                        v.push_back(0x78);
+                        write_number(static_cast<uint8_t>(N));
+                    }
+                    else if (N <= 0xffff)
+                    {
+                        v.push_back(0x79);
+                        write_number(static_cast<uint16_t>(N));
+                    }
+                    else if (N <= 0xffffffff)
+                    {
+                        v.push_back(0x7a);
+                        write_number(static_cast<uint32_t>(N));
+                    }
+                    // LCOV_EXCL_START
+                    else if (N <= 0xffffffffffffffff)
+                    {
+                        v.push_back(0x7b);
+                        write_number(static_cast<uint64_t>(N));
+                    }
+                    // LCOV_EXCL_STOP
+
+                    // append string
+                    std::copy(j.m_value.string->begin(), j.m_value.string->end(),
+                              std::back_inserter(v));
+                    break;
+                }
+
+                case value_t::array:
+                {
+                    const auto N = j.m_value.array->size();
+                    if (N <= 0x17)
+                    {
+                        write_number(static_cast<uint8_t>(0x80 + N));
+                    }
+                    else if (N <= 0xff)
+                    {
+                        v.push_back(0x98);
+                        write_number(static_cast<uint8_t>(N));
+                    }
+                    else if (N <= 0xffff)
+                    {
+                        v.push_back(0x99);
+                        write_number(static_cast<uint16_t>(N));
+                    }
+                    else if (N <= 0xffffffff)
+                    {
+                        v.push_back(0x9a);
+                        write_number(static_cast<uint32_t>(N));
+                    }
+                    // LCOV_EXCL_START
+                    else if (N <= 0xffffffffffffffff)
+                    {
+                        v.push_back(0x9b);
+                        write_number(static_cast<uint64_t>(N));
+                    }
+                    // LCOV_EXCL_STOP
+
+                    // append each element
+                    for (const auto& el : *j.m_value.array)
+                    {
+                        write_cbor_internal(el);
+                    }
+                    break;
+                }
+
+                case value_t::object:
+                {
+                    const auto N = j.m_value.object->size();
+                    if (N <= 0x17)
+                    {
+                        write_number(static_cast<uint8_t>(0xa0 + N));
+                    }
+                    else if (N <= 0xff)
+                    {
+                        v.push_back(0xb8);
+                        write_number(static_cast<uint8_t>(N));
+                    }
+                    else if (N <= 0xffff)
+                    {
+                        v.push_back(0xb9);
+                        write_number(static_cast<uint16_t>(N));
+                    }
+                    else if (N <= 0xffffffff)
+                    {
+                        v.push_back(0xba);
+                        write_number(static_cast<uint32_t>(N));
+                    }
+                    // LCOV_EXCL_START
+                    else if (N <= 0xffffffffffffffff)
+                    {
+                        v.push_back(0xbb);
+                        write_number(static_cast<uint64_t>(N));
+                    }
+                    // LCOV_EXCL_STOP
+
+                    // append each element
+                    for (const auto& el : *j.m_value.object)
+                    {
+                        write_cbor_internal(el.first);
+                        write_cbor_internal(el.second);
+                    }
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
+
+        void write_msgpack_internal(const basic_json& j)
+        {
+            switch (j.type())
+            {
+                case value_t::null:
+                {
+                    // nil
+                    v.push_back(0xc0);
+                    break;
+                }
+
+                case value_t::boolean:
+                {
+                    // true and false
+                    v.push_back(j.m_value.boolean ? 0xc3 : 0xc2);
+                    break;
+                }
+
+                case value_t::number_integer:
+                {
+                    if (j.m_value.number_integer >= 0)
+                    {
+                        // MessagePack does not differentiate between positive
+                        // signed integers and unsigned integers. Therefore, we
+                        // used the code from the value_t::number_unsigned case
+                        // here.
+                        if (j.m_value.number_unsigned < 128)
+                        {
+                            // positive fixnum
+                            write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                        }
+                        else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
+                        {
+                            // uint 8
+                            v.push_back(0xcc);
+                            write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                        }
+                        else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
+                        {
+                            // uint 16
+                            v.push_back(0xcd);
+                            write_number(static_cast<uint16_t>(j.m_value.number_integer));
+                        }
+                        else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
+                        {
+                            // uint 32
+                            v.push_back(0xce);
+                            write_number(static_cast<uint32_t>(j.m_value.number_integer));
+                        }
+                        else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
+                        {
+                            // uint 64
+                            v.push_back(0xcf);
+                            write_number(static_cast<uint64_t>(j.m_value.number_integer));
+                        }
+                    }
+                    else
+                    {
+                        if (j.m_value.number_integer >= -32)
+                        {
+                            // negative fixnum
+                            write_number(static_cast<int8_t>(j.m_value.number_integer));
+                        }
+                        else if (j.m_value.number_integer >= (std::numeric_limits<int8_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int8_t>::max)())
+                        {
+                            // int 8
+                            v.push_back(0xd0);
+                            write_number(static_cast<int8_t>(j.m_value.number_integer));
+                        }
+                        else if (j.m_value.number_integer >= (std::numeric_limits<int16_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
+                        {
+                            // int 16
+                            v.push_back(0xd1);
+                            write_number(static_cast<int16_t>(j.m_value.number_integer));
+                        }
+                        else if (j.m_value.number_integer >= (std::numeric_limits<int32_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
+                        {
+                            // int 32
+                            v.push_back(0xd2);
+                            write_number(static_cast<int32_t>(j.m_value.number_integer));
+                        }
+                        else if (j.m_value.number_integer >= (std::numeric_limits<int64_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int64_t>::max)())
+                        {
+                            // int 64
+                            v.push_back(0xd3);
+                            write_number(static_cast<int64_t>(j.m_value.number_integer));
+                        }
+                    }
+                    break;
+                }
+
+                case value_t::number_unsigned:
+                {
+                    if (j.m_value.number_unsigned < 128)
+                    {
+                        // positive fixnum
+                        write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                    }
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
+                    {
+                        // uint 8
+                        v.push_back(0xcc);
+                        write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                    }
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
+                    {
+                        // uint 16
+                        v.push_back(0xcd);
+                        write_number(static_cast<uint16_t>(j.m_value.number_integer));
+                    }
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
+                    {
+                        // uint 32
+                        v.push_back(0xce);
+                        write_number(static_cast<uint32_t>(j.m_value.number_integer));
+                    }
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
+                    {
+                        // uint 64
+                        v.push_back(0xcf);
+                        write_number(static_cast<uint64_t>(j.m_value.number_integer));
+                    }
+                    break;
+                }
+
+                case value_t::number_float:
+                {
+                    // float 64
+                    v.push_back(0xcb);
+                    write_number(j.m_value.number_float);
+                    break;
+                }
+
+                case value_t::string:
+                {
+                    const auto N = j.m_value.string->size();
+                    if (N <= 31)
+                    {
+                        // fixstr
+                        write_number(static_cast<uint8_t>(0xa0 | N));
+                    }
+                    else if (N <= 255)
+                    {
+                        // str 8
+                        v.push_back(0xd9);
+                        write_number(static_cast<uint8_t>(N));
+                    }
+                    else if (N <= 65535)
+                    {
+                        // str 16
+                        v.push_back(0xda);
+                        write_number(static_cast<uint16_t>(N));
+                    }
+                    else if (N <= 4294967295)
+                    {
+                        // str 32
+                        v.push_back(0xdb);
+                        write_number(static_cast<uint32_t>(N));
+                    }
+
+                    // append string
+                    std::copy(j.m_value.string->begin(), j.m_value.string->end(),
+                              std::back_inserter(v));
+                    break;
+                }
+
+                case value_t::array:
+                {
+                    const auto N = j.m_value.array->size();
+                    if (N <= 15)
+                    {
+                        // fixarray
+                        write_number(static_cast<uint8_t>(0x90 | N));
+                    }
+                    else if (N <= 0xffff)
+                    {
+                        // array 16
+                        v.push_back(0xdc);
+                        write_number(static_cast<uint16_t>(N));
+                    }
+                    else if (N <= 0xffffffff)
+                    {
+                        // array 32
+                        v.push_back(0xdd);
+                        write_number(static_cast<uint32_t>(N));
+                    }
+
+                    // append each element
+                    for (const auto& el : *j.m_value.array)
+                    {
+                        write_msgpack_internal(el);
+                    }
+                    break;
+                }
+
+                case value_t::object:
+                {
+                    const auto N = j.m_value.object->size();
+                    if (N <= 15)
+                    {
+                        // fixmap
+                        write_number(static_cast<uint8_t>(0x80 | (N & 0xf)));
+                    }
+                    else if (N <= 65535)
+                    {
+                        // map 16
+                        v.push_back(0xde);
+                        write_number(static_cast<uint16_t>(N));
+                    }
+                    else if (N <= 4294967295)
+                    {
+                        // map 32
+                        v.push_back(0xdf);
+                        write_number(static_cast<uint32_t>(N));
+                    }
+
+                    // append each element
+                    for (const auto& el : *j.m_value.object)
+                    {
+                        write_msgpack_internal(el.first);
+                        write_msgpack_internal(el.second);
+                    }
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
+
+        template<typename T>
+        void write_number(T n)
+        {
+            std::array<uint8_t, sizeof(T)> vec;
+            std::memcpy(vec.data(), &n, sizeof(T));
+
+            for (size_t i = 0; i < sizeof(T); ++i)
+            {
+                // reverse byte order prior to conversion if necessary
+                if (is_little_endian)
+                {
+                    v.push_back(vec[sizeof(T) - i - 1]);
+                }
+                else
+                {
+                    v.push_back(vec[i]);
+                }
+            }
+        }
+
+        // from http://stackoverflow.com/a/1001328/266378
+        static bool little_endianess()
+        {
+            int num = 1;
+            return (*reinterpret_cast<char*>(&num) == 1);
+        }
+
+      private:
+        /// whether we can assume little endianess
+        const bool is_little_endian = true;
+
+        /// the vector that is used as output
+        std::vector<uint8_t> v;
+    };
+
   public:
+    /*!
+    @brief create a CBOR serialization of a given JSON value
+
+    Serializes a given JSON value @a j to a byte vector using the CBOR (Concise
+    Binary Object Representation) serialization format. CBOR is a binary
+    serialization format which aims to be more compact than JSON itself, yet
+    more efficient to parse.
+
+    The library uses the following mapping from JSON values types to
+    CBOR types according to the CBOR specification (RFC 7049):
+
+    JSON value type | value/range                                | CBOR type                          | first byte
+    --------------- | ------------------------------------------ | ---------------------------------- | ---------------
+    null            | `null`                                     | Null                               | 0xf6
+    boolean         | `true`                                     | True                               | 0xf5
+    boolean         | `false`                                    | False                              | 0xf4
+    number_integer  | -9223372036854775808..-2147483649          | Negative integer (8 bytes follow)  | 0x3b
+    number_integer  | -2147483648..-32769                        | Negative integer (4 bytes follow)  | 0x3a
+    number_integer  | -32768..-129                               | Negative integer (2 bytes follow)  | 0x39
+    number_integer  | -128..-25                                  | Negative integer (1 byte follow)   | 0x38
+    number_integer  | -24..-1                                    | Negative integer                   | 0x20..0x37
+    number_integer  | 0..23                                      | Integer                            | 0x00..0x17
+    number_integer  | 24..255                                    | Unsigned integer (1 byte follow)   | 0x18
+    number_integer  | 256..65535                                 | Unsigned integer (2 bytes follow)  | 0x19
+    number_integer  | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1a
+    number_integer  | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1b
+    number_unsigned | 0..23                                      | Integer                            | 0x00..0x17
+    number_unsigned | 24..255                                    | Unsigned integer (1 byte follow)   | 0x18
+    number_unsigned | 256..65535                                 | Unsigned integer (2 bytes follow)  | 0x19
+    number_unsigned | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1a
+    number_unsigned | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1b
+    number_float    | *any value*                                | Double-Precision Float             | 0xfb
+    string          | *length*: 0..23                            | UTF-8 string                       | 0x60..0x77
+    string          | *length*: 23..255                          | UTF-8 string (1 byte follow)       | 0x78
+    string          | *length*: 256..65535                       | UTF-8 string (2 bytes follow)      | 0x79
+    string          | *length*: 65536..4294967295                | UTF-8 string (4 bytes follow)      | 0x7a
+    string          | *length*: 4294967296..18446744073709551615 | UTF-8 string (8 bytes follow)      | 0x7b
+    array           | *size*: 0..23                              | array                              | 0x80..0x97
+    array           | *size*: 23..255                            | array (1 byte follow)              | 0x98
+    array           | *size*: 256..65535                         | array (2 bytes follow)             | 0x99
+    array           | *size*: 65536..4294967295                  | array (4 bytes follow)             | 0x9a
+    array           | *size*: 4294967296..18446744073709551615   | array (8 bytes follow)             | 0x9b
+    object          | *size*: 0..23                              | map                                | 0xa0..0xb7
+    object          | *size*: 23..255                            | map (1 byte follow)                | 0xb8
+    object          | *size*: 256..65535                         | map (2 bytes follow)               | 0xb9
+    object          | *size*: 65536..4294967295                  | map (4 bytes follow)               | 0xba
+    object          | *size*: 4294967296..18446744073709551615   | map (8 bytes follow)               | 0xbb
+
+    @note The mapping is **complete** in the sense that any JSON value type
+          can be converted to a CBOR value.
+
+    @note The following CBOR types are not used in the conversion:
+          - byte strings (0x40..0x5f)
+          - UTF-8 strings terminated by "break" (0x7f)
+          - arrays terminated by "break" (0x9f)
+          - maps terminated by "break" (0xbf)
+          - date/time (0xc0..0xc1)
+          - bignum (0xc2..0xc3)
+          - decimal fraction (0xc4)
+          - bigfloat (0xc5)
+          - tagged items (0xc6..0xd4, 0xd8..0xdb)
+          - expected conversions (0xd5..0xd7)
+          - simple values (0xe0..0xf3, 0xf8)
+          - undefined (0xf7)
+          - half and single-precision floats (0xf9-0xfa)
+          - break (0xff)
+
+    @param[in] j  JSON value to serialize
+    @return MessagePack serialization as byte vector
+
+    @complexity Linear in the size of the JSON value @a j.
+
+    @liveexample{The example shows the serialization of a JSON value to a byte
+    vector in CBOR format.,to_cbor}
+
+    @sa http://cbor.io
+    @sa @ref from_cbor(const std::vector<uint8_t>&, const size_t) for the
+        analogous deserialization
+    @sa @ref to_msgpack(const basic_json& for the related MessagePack format
+
+    @since version 2.0.9
+    */
+    static std::vector<uint8_t> to_cbor(const basic_json& j)
+    {
+        binary_writer bw;
+        return bw.write_cbor(j);
+    }
+
+    /*!
+    @brief create a MessagePack serialization of a given JSON value
+
+    Serializes a given JSON value @a j to a byte vector using the MessagePack
+    serialization format. MessagePack is a binary serialization format which
+    aims to be more compact than JSON itself, yet more efficient to parse.
+
+    The library uses the following mapping from JSON values types to
+    MessagePack types according to the MessagePack specification:
+
+    JSON value type | value/range                       | MessagePack type | first byte
+    --------------- | --------------------------------- | ---------------- | ----------
+    null            | `null`                            | nil              | 0xc0
+    boolean         | `true`                            | true             | 0xc3
+    boolean         | `false`                           | false            | 0xc2
+    number_integer  | -9223372036854775808..-2147483649 | int64            | 0xd3
+    number_integer  | -2147483648..-32769               | int32            | 0xd2
+    number_integer  | -32768..-129                      | int16            | 0xd1
+    number_integer  | -128..-33                         | int8             | 0xd0
+    number_integer  | -32..-1                           | negative fixint  | 0xe0..0xff
+    number_integer  | 0..127                            | positive fixint  | 0x00..0x7f
+    number_integer  | 128..255                          | uint 8           | 0xcc
+    number_integer  | 256..65535                        | uint 16          | 0xcd
+    number_integer  | 65536..4294967295                 | uint 32          | 0xce
+    number_integer  | 4294967296..18446744073709551615  | uint 64          | 0xcf
+    number_unsigned | 0..127                            | positive fixint  | 0x00..0x7f
+    number_unsigned | 128..255                          | uint 8           | 0xcc
+    number_unsigned | 256..65535                        | uint 16          | 0xcd
+    number_unsigned | 65536..4294967295                 | uint 32          | 0xce
+    number_unsigned | 4294967296..18446744073709551615  | uint 64          | 0xcf
+    number_float    | *any value*                       | float 64         | 0xcb
+    string          | *length*: 0..31                   | fixstr           | 0xa0..0xbf
+    string          | *length*: 32..255                 | str 8            | 0xd9
+    string          | *length*: 256..65535              | str 16           | 0xda
+    string          | *length*: 65536..4294967295       | str 32           | 0xdb
+    array           | *size*: 0..15                     | fixarray         | 0x90..0x9f
+    array           | *size*: 16..65535                 | array 16         | 0xdc
+    array           | *size*: 65536..4294967295         | array 32         | 0xdd
+    object          | *size*: 0..15                     | fix map          | 0x80..0x8f
+    object          | *size*: 16..65535                 | map 16           | 0xde
+    object          | *size*: 65536..4294967295         | map 32           | 0xdf
+
+    @note The mapping is **complete** in the sense that any JSON value type
+          can be converted to a MessagePack value.
+
+    @note The following values can **not** be converted to a MessagePack value:
+          - strings with more than 4294967295 bytes
+          - arrays with more than 4294967295 elements
+          - objects with more than 4294967295 elements
+
+    @note The following MessagePack types are not used in the conversion:
+          - bin 8 - bin 32 (0xc4..0xc6)
+          - ext 8 - ext 32 (0xc7..0xc9)
+          - float 32 (0xca)
+          - fixext 1 - fixext 16 (0xd4..0xd8)
+
+    @note Any MessagePack output created @ref to_msgpack can be successfully
+          parsed by @ref from_msgpack.
+
+    @param[in] j  JSON value to serialize
+    @return MessagePack serialization as byte vector
+
+    @complexity Linear in the size of the JSON value @a j.
+
+    @liveexample{The example shows the serialization of a JSON value to a byte
+    vector in MessagePack format.,to_msgpack}
+
+    @sa http://msgpack.org
+    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
+        analogous deserialization
+    @sa @ref to_cbor(const basic_json& for the related CBOR format
+
+    @since version 2.0.9
+    */
+    static std::vector<uint8_t> to_msgpack(const basic_json& j)
+    {
+        binary_writer bw;
+        return bw.write_msgpack(j);
+    }
 
     /*!
     @brief create a JSON value from a byte vector in CBOR format
@@ -10584,6 +10539,8 @@ class basic_json
         binary_reader br(reinterpret_cast<const char*>(v.data() + start_index), v.size() - start_index);
         return br.parse_msgpack();
     }
+
+    /// @}
 
     //////////////////////
     // lexer and parser //
