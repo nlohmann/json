@@ -10199,7 +10199,7 @@ class basic_json
         const bool is_little_endian = true;
 
         /// the vector that is used as output
-        std::vector<uint8_t> v;
+        std::vector<uint8_t> v {};
     };
 
   public:
