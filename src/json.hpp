@@ -8485,8 +8485,7 @@ class basic_json
     {
       public:
         cached_input_stream_adapter(std::istream& i, const size_t buffer_size)
-            : is(i), start_position(is.tellg()),
-              buffer(buffer_size, std::char_traits<char>::eof())
+            : is(i), start_position(is.tellg()), buffer(buffer_size, '\0')
         {
             // immediately abort if stream is erroneous
             if (JSON_UNLIKELY(i.fail()))
@@ -8494,12 +8493,13 @@ class basic_json
                 JSON_THROW(parse_error::create(111, 0, "bad input stream"));
             }
 
-            // initial fill; unfilled buffer characters remain EOF
+            // initial fill
             is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+            // store number of bytes in the buffer
+            fill_size = static_cast<size_t>(is.gcount());
 
             // skip byte-order mark
-            assert(buffer.size() >= 3);
-            if (buffer[0] == '\xEF' and buffer[1] == '\xBB' and buffer[2] == '\xBF')
+            if (fill_size >= 3 and buffer[0] == '\xEF' and buffer[1] == '\xBB' and buffer[2] == '\xBF')
             {
                 buffer_pos += 3;
                 processed_chars += 3;
@@ -8516,22 +8516,28 @@ class basic_json
 
         int get_character() override
         {
-            // check if refilling is necessary
-            if (JSON_UNLIKELY(buffer_pos == buffer.size()))
+            // check if refilling is necessary and possible
+            if (buffer_pos == fill_size and not eof)
             {
                 // refill
-                is.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(buffer.size()));
-                // set unfilled characters to EOF
-                std::fill_n(buffer.begin() + static_cast<int>(is.gcount()),
-                            buffer.size() - static_cast<size_t>(is.gcount()),
-                            std::char_traits<char>::eof());
+                is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+                // store number of bytes in the buffer
+                fill_size = static_cast<size_t>(is.gcount());
+
+                // remember that filling did not yield new input
+                if (fill_size == 0)
+                {
+                    eof = true;
+                }
+
                 // the buffer is ready
                 buffer_pos = 0;
             }
 
             ++processed_chars;
-            const int res = buffer[buffer_pos++];
-            return (res == std::char_traits<char>::eof()) ? res : res & 0xFF;
+            return eof
+                   ? std::char_traits<char>::eof()
+                   : buffer[buffer_pos++] & 0xFF;
         }
 
         std::string read(size_t offset, size_t length) override
@@ -8567,6 +8573,11 @@ class basic_json
         size_t processed_chars = 0;
         /// chars processed in the current buffer
         size_t buffer_pos = 0;
+
+        /// whether stream reached eof
+        bool eof = false;
+        /// how many chars have been copied to the buffer by last (re)fill
+        size_t fill_size = 0;
 
         /// position of the stream when we started
         const std::streampos start_position;
