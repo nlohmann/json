@@ -594,7 +594,7 @@ TEST_CASE("modifiers")
             }
         }
 
-        SECTION("range")
+        SECTION("range for array")
         {
             json j_other_array = {"first", "second"};
 
@@ -628,6 +628,40 @@ TEST_CASE("modifiers")
                                   "[json.exception.invalid_iterator.211] passed iterators may not belong to container");
                 CHECK_THROWS_WITH(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()),
                                   "[json.exception.invalid_iterator.210] iterators do not fit");
+            }
+        }
+
+        SECTION("range for object")
+        {
+            json j_object1 = {{"one", "eins"}, {"two", "zwei"}};
+            json j_object2 = {{"eleven", "elf"}, {"seventeen", "siebzehn"}};
+
+            SECTION("proper usage")
+            {
+                j_object1.insert(j_object2.begin(), j_object2.end());
+                CHECK(j_object1.size() == 4);
+            }
+
+            SECTION("empty range")
+            {
+                j_object1.insert(j_object2.begin(), j_object2.begin());
+                CHECK(j_object1.size() == 2);
+            }
+
+            SECTION("invalid iterators")
+            {
+                json j_other_array2 = {"first", "second"};
+
+                CHECK_THROWS_AS(j_array.insert(j_object2.begin(), j_object2.end()), json::type_error);
+                CHECK_THROWS_AS(j_object1.insert(j_object1.begin(), j_object2.end()), json::invalid_iterator);
+                CHECK_THROWS_AS(j_object1.insert(j_array.begin(), j_array.end()), json::invalid_iterator);
+
+                CHECK_THROWS_WITH(j_array.insert(j_object2.begin(), j_object2.end()),
+                                  "[json.exception.type_error.309] cannot use insert() with array");
+                CHECK_THROWS_WITH(j_object1.insert(j_object1.begin(), j_object2.end()),
+                                  "[json.exception.invalid_iterator.210] iterators do not fit");
+                CHECK_THROWS_WITH(j_object1.insert(j_array.begin(), j_array.end()),
+                                  "[json.exception.invalid_iterator.202] iterators first and last must point to objects");
             }
         }
 

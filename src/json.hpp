@@ -5979,6 +5979,52 @@ class basic_json
     }
 
     /*!
+    @brief inserts elements
+
+    Inserts elements from range `[first, last)`.
+
+    @param[in] first begin of the range of elements to insert
+    @param[in] last end of the range of elements to insert
+
+    @throw type_error.309 if called on JSON values other than objects; example:
+    `"cannot use insert() with string"`
+    @throw invalid_iterator.202 if iterator @a first or @a last does does not
+    point to an object; example: `"iterators first and last must point to
+    objects"`
+    @throw invalid_iterator.210 if @a first and @a last do not belong to the
+    same JSON value; example: `"iterators do not fit"`
+
+    @complexity Logarithmic: `O(N*log(size() + N))`, where `N` is the number
+    of elements to insert.
+
+    @liveexample{The example shows how `insert()` is used.,insert__range_object}
+
+    @since version 3.0.0
+    */
+    void insert(const_iterator first, const_iterator last)
+    {
+        // insert only works for objects
+        if (not is_object())
+        {
+            JSON_THROW(type_error::create(309, "cannot use insert() with " + type_name()));
+        }
+
+        // check if range iterators belong to the same JSON object
+        if (first.m_object != last.m_object)
+        {
+            JSON_THROW(invalid_iterator::create(210, "iterators do not fit"));
+        }
+
+        // passed iterators must belong to objects
+        if (not first.m_object->is_object() or not first.m_object->is_object())
+        {
+            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects"));
+        }
+
+        m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
+    }
+
+    /*!
     @brief exchanges the values
 
     Exchanges the contents of the JSON value with those of @a other. Does not
