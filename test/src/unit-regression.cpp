@@ -973,4 +973,39 @@ TEST_CASE("regression tests")
         // check if serializations match
         CHECK(json::to_cbor(j2) == vec2);
     }
+
+    SECTION("issue #512 - use of overloaded operator '<=' is ambiguous")
+    {
+        json j;
+        j["a"] = 5;
+
+        // json op scalar
+        CHECK(j["a"] == 5);
+        CHECK(j["a"] != 4);
+
+        CHECK(j["a"] <= 7);
+        CHECK(j["a"] <  7);
+        CHECK(j["a"] >= 3);
+        CHECK(j["a"] >  3);
+
+
+        CHECK(not(j["a"] <= 4));
+        CHECK(not(j["a"] <  4));
+        CHECK(not(j["a"] >= 6));
+        CHECK(not(j["a"] >  6));
+
+        // scalar op json
+        CHECK(5 == j["a"]);
+        CHECK(4 != j["a"]);
+
+        CHECK(7 >= j["a"]);
+        CHECK(7 >  j["a"]);
+        CHECK(3 <= j["a"]);
+        CHECK(3 <  j["a"]);
+
+        CHECK(not(4 >= j["a"]));
+        CHECK(not(4 >  j["a"]));
+        CHECK(not(6 <= j["a"]));
+        CHECK(not(6 <  j["a"]));
+    }
 }
