@@ -6396,6 +6396,28 @@ class basic_json
     }
 
     /*!
+    @brief comparison: less than
+    @copydoc operator<(const_reference, const_reference)
+    */
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator<(const_reference lhs, const ScalarType rhs) noexcept
+    {
+        return (lhs < basic_json(rhs));
+    }
+
+    /*!
+    @brief comparison: less than
+    @copydoc operator<(const_reference, const_reference)
+    */
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator<(const ScalarType lhs, const_reference rhs) noexcept
+    {
+        return (basic_json(lhs) < rhs);
+    }
+
+    /*!
     @brief comparison: less than or equal
 
     Compares whether one JSON value @a lhs is less than or equal to another
@@ -6415,6 +6437,28 @@ class basic_json
     friend bool operator<=(const_reference lhs, const_reference rhs) noexcept
     {
         return not (rhs < lhs);
+    }
+
+    /*!
+    @brief comparison: less than or equal
+    @copydoc operator<=(const_reference, const_reference)
+    */
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator<=(const_reference lhs, const ScalarType rhs) noexcept
+    {
+        return (lhs <= basic_json(rhs));
+    }
+
+    /*!
+    @brief comparison: less than or equal
+    @copydoc operator<=(const_reference, const_reference)
+    */
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator<=(const ScalarType lhs, const_reference rhs) noexcept
+    {
+        return (basic_json(lhs) <= rhs);
     }
 
     /*!
@@ -6440,6 +6484,28 @@ class basic_json
     }
 
     /*!
+    @brief comparison: greater than
+    @copydoc operator>(const_reference, const_reference)
+    */
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator>(const_reference lhs, const ScalarType rhs) noexcept
+    {
+        return (lhs > basic_json(rhs));
+    }
+
+    /*!
+    @brief comparison: greater than
+    @copydoc operator>(const_reference, const_reference)
+    */
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator>(const ScalarType lhs, const_reference rhs) noexcept
+    {
+        return (basic_json(lhs) > rhs);
+    }
+
+    /*!
     @brief comparison: greater than or equal
 
     Compares whether one JSON value @a lhs is greater than or equal to another
@@ -6459,6 +6525,28 @@ class basic_json
     friend bool operator>=(const_reference lhs, const_reference rhs) noexcept
     {
         return not (lhs < rhs);
+    }
+
+    /*!
+    @brief comparison: greater than or equal
+    @copydoc operator>=(const_reference, const_reference)
+    */
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator>=(const_reference lhs, const ScalarType rhs) noexcept
+    {
+        return (lhs >= basic_json(rhs));
+    }
+
+    /*!
+    @brief comparison: greater than or equal
+    @copydoc operator>=(const_reference, const_reference)
+    */
+    template<typename ScalarType, typename std::enable_if<
+                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    friend bool operator>=(const ScalarType lhs, const_reference rhs) noexcept
+    {
+        return (basic_json(lhs) >= rhs);
     }
 
     /// @}
