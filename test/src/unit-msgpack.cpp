@@ -676,14 +676,9 @@ TEST_CASE("MessagePack")
                     const auto result = json::to_msgpack(j);
                     CHECK(result == expected);
 
-                    // restore value (reverse array for endianess)
-                    double restored;
-                    std::reverse(expected.begin(), expected.end());
-                    memcpy(&restored, expected.data(), sizeof(double));
-                    CHECK(restored == v);
-
                     // roundtrip
                     CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result) == v);
                 }
             }
         }
