@@ -8626,6 +8626,9 @@ class basic_json
         }
     };
 
+    // a type to simplify interfaces
+    using input_adapter_t = std::shared_ptr<input_adapter>;
+
     /// input adapter for cached stream input
     class cached_input_stream_adapter : public input_adapter
     {
@@ -8783,8 +8786,8 @@ class basic_json
     class binary_reader
     {
       public:
-        explicit binary_reader(std::shared_ptr<input_adapter> a)
-            : ia(a), is_little_endian(little_endianess())
+        explicit binary_reader(input_adapter_t adapter)
+            : ia(adapter), is_little_endian(little_endianess())
         {}
 
         /*!
@@ -9807,7 +9810,7 @@ class basic_json
 
       private:
         /// input adapter
-        std::shared_ptr<input_adapter> ia = nullptr;
+        input_adapter_t ia = nullptr;
 
         /// the current character
         int current = std::char_traits<char>::eof();
@@ -10761,8 +10764,8 @@ class basic_json
             }
         }
 
-        explicit lexer(std::shared_ptr<input_adapter> a)
-            : ia(a), decimal_point_char(get_decimal_point())
+        explicit lexer(input_adapter_t adapter)
+            : ia(adapter), decimal_point_char(get_decimal_point())
         {}
 
       private:
@@ -12118,7 +12121,7 @@ scan_number_done:
 
       private:
         /// input adapter
-        std::shared_ptr<input_adapter> ia = nullptr;
+        input_adapter_t ia = nullptr;
 
         /// the current character
         int current = std::char_traits<char>::eof();
@@ -12157,9 +12160,9 @@ scan_number_done:
     {
       public:
         /// a parser reading from an input adapter
-        explicit parser(std::shared_ptr<input_adapter> ia,
+        explicit parser(input_adapter_t adapter,
                         const parser_callback_t cb = nullptr)
-            : callback(cb), m_lexer(ia)
+            : callback(cb), m_lexer(adapter)
         {}
 
         /*!
