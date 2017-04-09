@@ -9,6 +9,11 @@ environment:
   - additional_flags: ""
   - additional_flags: "/permissive- /std:c++latest /utf-8"
 
+matrix:
+  exclude:
+    - additional_flags: "/permissive- /std:c++latest /utf-8"
+      os: Visual Studio 2015
+  
 init: []
 
 install: []
