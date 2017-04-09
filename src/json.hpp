@@ -8775,6 +8775,46 @@ class basic_json
         const char* start;
     };
 
+    /////////////////////
+    // output adapters //
+    /////////////////////
+
+    class output_adapter
+    {
+      public:
+        virtual void write_character(uint8_t c) = 0;
+        virtual void write_characters(const uint8_t* s, size_t length) = 0;
+        virtual ~output_adapter() {}
+
+        static std::shared_ptr<output_adapter> create(std::vector<uint8_t>& vec)
+        {
+            return std::shared_ptr<output_adapter>(new output_vector_adapter(vec));
+        }
+    };
+
+    using output_adapter_t = std::shared_ptr<output_adapter>;
+
+    class output_vector_adapter : public output_adapter
+    {
+      public:
+        output_vector_adapter(std::vector<uint8_t>& vec)
+            : v(vec)
+        {}
+
+        void write_character(uint8_t c) override
+        {
+            v.push_back(c);
+        }
+
+        void write_characters(const uint8_t* s, size_t length) override
+        {
+            std::copy(s, s + length, std::back_inserter(v));
+        }
+
+      private:
+        std::vector<uint8_t>& v;
+    };
+
     //////////////////////////////////////////
     // binary serialization/deserialization //
     //////////////////////////////////////////
@@ -9829,32 +9869,23 @@ class basic_json
             : is_little_endian(little_endianess())
         {}
 
-        std::vector<uint8_t> write_cbor(const basic_json& j)
-        {
-            write_cbor_internal(j);
-            return v;
-        }
+        explicit binary_writer(output_adapter_t adapter)
+            : is_little_endian(little_endianess()), oa(adapter)
+        {}
 
-        std::vector<uint8_t> write_msgpack(const basic_json& j)
-        {
-            write_msgpack_internal(j);
-            return v;
-        }
-
-      private:
-        void write_cbor_internal(const basic_json& j)
+        void write_cbor(const basic_json& j)
         {
             switch (j.type())
             {
                 case value_t::null:
                 {
-                    v.push_back(0xf6);
+                    oa->write_character(0xf6);
                     break;
                 }
 
                 case value_t::boolean:
                 {
-                    v.push_back(j.m_value.boolean ? 0xf5 : 0xf4);
+                    oa->write_character(j.m_value.boolean ? 0xf5 : 0xf4);
                     break;
                 }
 
@@ -9871,22 +9902,22 @@ class basic_json
                         }
                         else if (j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
                         {
-                            v.push_back(0x18);
+                            oa->write_character(0x18);
                             write_number(static_cast<uint8_t>(j.m_value.number_integer));
                         }
                         else if (j.m_value.number_integer <= (std::numeric_limits<uint16_t>::max)())
                         {
-                            v.push_back(0x19);
+                            oa->write_character(0x19);
                             write_number(static_cast<uint16_t>(j.m_value.number_integer));
                         }
                         else if (j.m_value.number_integer <= (std::numeric_limits<uint32_t>::max)())
                         {
-                            v.push_back(0x1a);
+                            oa->write_character(0x1a);
                             write_number(static_cast<uint32_t>(j.m_value.number_integer));
                         }
                         else
                         {
-                            v.push_back(0x1b);
+                            oa->write_character(0x1b);
                             write_number(static_cast<uint64_t>(j.m_value.number_integer));
                         }
                     }
@@ -9901,22 +9932,22 @@ class basic_json
                         }
                         else if (positive_number <= (std::numeric_limits<uint8_t>::max)())
                         {
-                            v.push_back(0x38);
+                            oa->write_character(0x38);
                             write_number(static_cast<uint8_t>(positive_number));
                         }
                         else if (positive_number <= (std::numeric_limits<uint16_t>::max)())
                         {
-                            v.push_back(0x39);
+                            oa->write_character(0x39);
                             write_number(static_cast<uint16_t>(positive_number));
                         }
                         else if (positive_number <= (std::numeric_limits<uint32_t>::max)())
                         {
-                            v.push_back(0x3a);
+                            oa->write_character(0x3a);
                             write_number(static_cast<uint32_t>(positive_number));
                         }
                         else
                         {
-                            v.push_back(0x3b);
+                            oa->write_character(0x3b);
                             write_number(static_cast<uint64_t>(positive_number));
                         }
                     }
@@ -9931,22 +9962,22 @@ class basic_json
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                     {
-                        v.push_back(0x18);
+                        oa->write_character(0x18);
                         write_number(static_cast<uint8_t>(j.m_value.number_unsigned));
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
                     {
-                        v.push_back(0x19);
+                        oa->write_character(0x19);
                         write_number(static_cast<uint16_t>(j.m_value.number_unsigned));
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
                     {
-                        v.push_back(0x1a);
+                        oa->write_character(0x1a);
                         write_number(static_cast<uint32_t>(j.m_value.number_unsigned));
                     }
                     else
                     {
-                        v.push_back(0x1b);
+                        oa->write_character(0x1b);
                         write_number(static_cast<uint64_t>(j.m_value.number_unsigned));
                     }
                     break;
@@ -9955,7 +9986,7 @@ class basic_json
                 case value_t::number_float:
                 {
                     // Double-Precision Float
-                    v.push_back(0xfb);
+                    oa->write_character(0xfb);
                     write_number(j.m_value.number_float);
                     break;
                 }
@@ -9969,30 +10000,30 @@ class basic_json
                     }
                     else if (N <= 0xff)
                     {
-                        v.push_back(0x78);
+                        oa->write_character(0x78);
                         write_number(static_cast<uint8_t>(N));
                     }
                     else if (N <= 0xffff)
                     {
-                        v.push_back(0x79);
+                        oa->write_character(0x79);
                         write_number(static_cast<uint16_t>(N));
                     }
                     else if (N <= 0xffffffff)
                     {
-                        v.push_back(0x7a);
+                        oa->write_character(0x7a);
                         write_number(static_cast<uint32_t>(N));
                     }
                     // LCOV_EXCL_START
                     else if (N <= 0xffffffffffffffff)
                     {
-                        v.push_back(0x7b);
+                        oa->write_character(0x7b);
                         write_number(static_cast<uint64_t>(N));
                     }
                     // LCOV_EXCL_STOP
 
                     // append string
-                    std::copy(j.m_value.string->begin(), j.m_value.string->end(),
-                              std::back_inserter(v));
+                    oa->write_characters(reinterpret_cast<const uint8_t*>(j.m_value.string->c_str()),
+                                         j.m_value.string->size());
                     break;
                 }
 
@@ -10005,23 +10036,23 @@ class basic_json
                     }
                     else if (N <= 0xff)
                     {
-                        v.push_back(0x98);
+                        oa->write_character(0x98);
                         write_number(static_cast<uint8_t>(N));
                     }
                     else if (N <= 0xffff)
                     {
-                        v.push_back(0x99);
+                        oa->write_character(0x99);
                         write_number(static_cast<uint16_t>(N));
                     }
                     else if (N <= 0xffffffff)
                     {
-                        v.push_back(0x9a);
+                        oa->write_character(0x9a);
                         write_number(static_cast<uint32_t>(N));
                     }
                     // LCOV_EXCL_START
                     else if (N <= 0xffffffffffffffff)
                     {
-                        v.push_back(0x9b);
+                        oa->write_character(0x9b);
                         write_number(static_cast<uint64_t>(N));
                     }
                     // LCOV_EXCL_STOP
@@ -10029,7 +10060,7 @@ class basic_json
                     // append each element
                     for (const auto& el : *j.m_value.array)
                     {
-                        write_cbor_internal(el);
+                        write_cbor(el);
                     }
                     break;
                 }
@@ -10043,23 +10074,23 @@ class basic_json
                     }
                     else if (N <= 0xff)
                     {
-                        v.push_back(0xb8);
+                        oa->write_character(0xb8);
                         write_number(static_cast<uint8_t>(N));
                     }
                     else if (N <= 0xffff)
                     {
-                        v.push_back(0xb9);
+                        oa->write_character(0xb9);
                         write_number(static_cast<uint16_t>(N));
                     }
                     else if (N <= 0xffffffff)
                     {
-                        v.push_back(0xba);
+                        oa->write_character(0xba);
                         write_number(static_cast<uint32_t>(N));
                     }
                     // LCOV_EXCL_START
                     else if (N <= 0xffffffffffffffff)
                     {
-                        v.push_back(0xbb);
+                        oa->write_character(0xbb);
                         write_number(static_cast<uint64_t>(N));
                     }
                     // LCOV_EXCL_STOP
@@ -10067,8 +10098,8 @@ class basic_json
                     // append each element
                     for (const auto& el : *j.m_value.object)
                     {
-                        write_cbor_internal(el.first);
-                        write_cbor_internal(el.second);
+                        write_cbor(el.first);
+                        write_cbor(el.second);
                     }
                     break;
                 }
@@ -10080,21 +10111,21 @@ class basic_json
             }
         }
 
-        void write_msgpack_internal(const basic_json& j)
+        void write_msgpack(const basic_json& j)
         {
             switch (j.type())
             {
                 case value_t::null:
                 {
                     // nil
-                    v.push_back(0xc0);
+                    oa->write_character(0xc0);
                     break;
                 }
 
                 case value_t::boolean:
                 {
                     // true and false
-                    v.push_back(j.m_value.boolean ? 0xc3 : 0xc2);
+                    oa->write_character(j.m_value.boolean ? 0xc3 : 0xc2);
                     break;
                 }
 
@@ -10114,25 +10145,25 @@ class basic_json
                         else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                         {
                             // uint 8
-                            v.push_back(0xcc);
+                            oa->write_character(0xcc);
                             write_number(static_cast<uint8_t>(j.m_value.number_integer));
                         }
                         else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
                         {
                             // uint 16
-                            v.push_back(0xcd);
+                            oa->write_character(0xcd);
                             write_number(static_cast<uint16_t>(j.m_value.number_integer));
                         }
                         else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
                         {
                             // uint 32
-                            v.push_back(0xce);
+                            oa->write_character(0xce);
                             write_number(static_cast<uint32_t>(j.m_value.number_integer));
                         }
                         else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
                         {
                             // uint 64
-                            v.push_back(0xcf);
+                            oa->write_character(0xcf);
                             write_number(static_cast<uint64_t>(j.m_value.number_integer));
                         }
                     }
@@ -10146,25 +10177,25 @@ class basic_json
                         else if (j.m_value.number_integer >= (std::numeric_limits<int8_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int8_t>::max)())
                         {
                             // int 8
-                            v.push_back(0xd0);
+                            oa->write_character(0xd0);
                             write_number(static_cast<int8_t>(j.m_value.number_integer));
                         }
                         else if (j.m_value.number_integer >= (std::numeric_limits<int16_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
                         {
                             // int 16
-                            v.push_back(0xd1);
+                            oa->write_character(0xd1);
                             write_number(static_cast<int16_t>(j.m_value.number_integer));
                         }
                         else if (j.m_value.number_integer >= (std::numeric_limits<int32_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
                         {
                             // int 32
-                            v.push_back(0xd2);
+                            oa->write_character(0xd2);
                             write_number(static_cast<int32_t>(j.m_value.number_integer));
                         }
                         else if (j.m_value.number_integer >= (std::numeric_limits<int64_t>::min)() and j.m_value.number_integer <= (std::numeric_limits<int64_t>::max)())
                         {
                             // int 64
-                            v.push_back(0xd3);
+                            oa->write_character(0xd3);
                             write_number(static_cast<int64_t>(j.m_value.number_integer));
                         }
                     }
@@ -10181,25 +10212,25 @@ class basic_json
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                     {
                         // uint 8
-                        v.push_back(0xcc);
+                        oa->write_character(0xcc);
                         write_number(static_cast<uint8_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
                     {
                         // uint 16
-                        v.push_back(0xcd);
+                        oa->write_character(0xcd);
                         write_number(static_cast<uint16_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
                     {
                         // uint 32
-                        v.push_back(0xce);
+                        oa->write_character(0xce);
                         write_number(static_cast<uint32_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
                     {
                         // uint 64
-                        v.push_back(0xcf);
+                        oa->write_character(0xcf);
                         write_number(static_cast<uint64_t>(j.m_value.number_integer));
                     }
                     break;
@@ -10208,7 +10239,7 @@ class basic_json
                 case value_t::number_float:
                 {
                     // float 64
-                    v.push_back(0xcb);
+                    oa->write_character(0xcb);
                     write_number(j.m_value.number_float);
                     break;
                 }
@@ -10224,25 +10255,25 @@ class basic_json
                     else if (N <= 255)
                     {
                         // str 8
-                        v.push_back(0xd9);
+                        oa->write_character(0xd9);
                         write_number(static_cast<uint8_t>(N));
                     }
                     else if (N <= 65535)
                     {
                         // str 16
-                        v.push_back(0xda);
+                        oa->write_character(0xda);
                         write_number(static_cast<uint16_t>(N));
                     }
                     else if (N <= 4294967295)
                     {
                         // str 32
-                        v.push_back(0xdb);
+                        oa->write_character(0xdb);
                         write_number(static_cast<uint32_t>(N));
                     }
 
                     // append string
-                    std::copy(j.m_value.string->begin(), j.m_value.string->end(),
-                              std::back_inserter(v));
+                    oa->write_characters(reinterpret_cast<const uint8_t*>(j.m_value.string->c_str()),
+                                         j.m_value.string->size());
                     break;
                 }
 
@@ -10257,20 +10288,20 @@ class basic_json
                     else if (N <= 0xffff)
                     {
                         // array 16
-                        v.push_back(0xdc);
+                        oa->write_character(0xdc);
                         write_number(static_cast<uint16_t>(N));
                     }
                     else if (N <= 0xffffffff)
                     {
                         // array 32
-                        v.push_back(0xdd);
+                        oa->write_character(0xdd);
                         write_number(static_cast<uint32_t>(N));
                     }
 
                     // append each element
                     for (const auto& el : *j.m_value.array)
                     {
-                        write_msgpack_internal(el);
+                        write_msgpack(el);
                     }
                     break;
                 }
@@ -10286,21 +10317,21 @@ class basic_json
                     else if (N <= 65535)
                     {
                         // map 16
-                        v.push_back(0xde);
+                        oa->write_character(0xde);
                         write_number(static_cast<uint16_t>(N));
                     }
                     else if (N <= 4294967295)
                     {
                         // map 32
-                        v.push_back(0xdf);
+                        oa->write_character(0xdf);
                         write_number(static_cast<uint32_t>(N));
                     }
 
                     // append each element
                     for (const auto& el : *j.m_value.object)
                     {
-                        write_msgpack_internal(el.first);
-                        write_msgpack_internal(el.second);
+                        write_msgpack(el.first);
+                        write_msgpack(el.second);
                     }
                     break;
                 }
@@ -10312,6 +10343,7 @@ class basic_json
             }
         }
 
+      private:
         template<typename T>
         void write_number(T n)
         {
@@ -10323,11 +10355,11 @@ class basic_json
                 // reverse byte order prior to conversion if necessary
                 if (is_little_endian)
                 {
-                    v.push_back(vec[sizeof(T) - i - 1]);
+                    oa->write_character(vec[sizeof(T) - i - 1]);
                 }
                 else
                 {
-                    v.push_back(vec[i]);
+                    oa->write_character(vec[i]);
                 }
             }
         }
@@ -10343,8 +10375,8 @@ class basic_json
         /// whether we can assume little endianess
         const bool is_little_endian = true;
 
-        /// the vector that is used as output
-        std::vector<uint8_t> v {};
+        /// the output
+        output_adapter_t oa = nullptr;
     };
 
   public:
@@ -10432,8 +10464,10 @@ class basic_json
     */
     static std::vector<uint8_t> to_cbor(const basic_json& j)
     {
-        binary_writer bw;
-        return bw.write_cbor(j);
+        std::vector<uint8_t> result;
+        binary_writer bw(output_adapter::create(result));
+        bw.write_cbor(j);
+        return result;
     }
 
     /*!
@@ -10512,8 +10546,10 @@ class basic_json
     */
     static std::vector<uint8_t> to_msgpack(const basic_json& j)
     {
-        binary_writer bw;
-        return bw.write_msgpack(j);
+        std::vector<uint8_t> result;
+        binary_writer bw(output_adapter::create(result));
+        bw.write_msgpack(j);
+        return result;
     }
 
     /*!
