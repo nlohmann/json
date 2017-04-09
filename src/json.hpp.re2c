@@ -3730,7 +3730,7 @@ class basic_json
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
-#if defined(_MSC_VER) && defined(_HAS_CXX17) // fix for issue #464
+#if defined(_MSC_VER) && defined(_HAS_CXX17) && _HAS_CXX17 == 1 // fix for issue #464
                    and not std::is_same<ValueType, typename std::string_view>::value
 #endif
                    , int >::type = 0 >
