@@ -9,6 +9,7 @@ os:
   - Visual Studio 2017
 
 environment:
+  matrix:
   - additional_flags: "${CMAKE_CXXFLAGS}"
   - additional_flags: "${CMAKE_CXXFLAGS} /permissive- /std:c++latest /utf-8"
 
