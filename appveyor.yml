@@ -8,13 +8,17 @@ os:
   - Visual Studio 2015
   - Visual Studio 2017
 
+environment:
+  - additional_flags: "${CMAKE_CXXFLAGS}"
+  - additional_flags: "${CMAKE_CXXFLAGS} /permissive- /std:c++latest /utf-8"
+
 init: []
 
 install: []
 
 build_script:
   - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" ( SET GEN="Visual Studio 14 2015") ELSE (SET GEN="Visual Studio 15 2017")
-  - cmake . -G%GEN% 
+  - cmake . -G%GEN% -DCMAKE_CXX_FLAGS=%additional_flags%
   - cmake --build . --config Release
 
 test_script:
