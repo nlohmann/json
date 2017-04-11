@@ -207,6 +207,27 @@ matrix:
     env: LLVM_VERSION=3.8.1
     compiler: clang
 
+  - os: linux
+    addons:
+      apt:
+        sources: llvm-toolchain-trusty-3.9
+        packages: clang-3.9
+    env: COMPILER=clang++-3.9
+
+  - os: linux
+    addons:
+      apt:
+        sources: llvm-toolchain-trusty-4.0
+        packages: clang-4.0
+    env: COMPILER=clang++-4.0
+
+  - os: linux
+    addons:
+      apt:
+        sources: llvm-toolchain-trusty
+        packages: clang-5.0
+    env: COMPILER=clang++-5.0
+
 #####################
 # installation step #
 #####################
