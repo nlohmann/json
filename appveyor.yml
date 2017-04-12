@@ -1,12 +1,27 @@
 version: '{build}'
+
 os: 
-- Visual Studio 2015
-- Visual Studio 2017
+  - Visual Studio 2015
+  - Visual Studio 2017
+
+environment:
+  matrix:
+  - additional_flags: ""
+  - additional_flags: "/permissive- /std:c++latest /utf-8"
+
+matrix:
+  exclude:
+    - additional_flags: "/permissive- /std:c++latest /utf-8"
+      os: Visual Studio 2015
+  
 init: []
+
 install: []
+
 build_script:
-- IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" ( SET GEN="Visual Studio 14 2015") ELSE (SET GEN="Visual Studio 15 2017")
-- cmake . -G%GEN% 
-- cmake --build . --config Release
+  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" ( SET GEN="Visual Studio 14 2015") ELSE (SET GEN="Visual Studio 15 2017")
+  - cmake . -G%GEN% -DCMAKE_CXX_FLAGS="%additional_flags%"
+  - cmake --build . --config Release
+
 test_script:
-- ctest -C Release -V
+  - ctest -C Release -V

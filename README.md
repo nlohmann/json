@@ -841,7 +841,7 @@ Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I
 
 ## Used third-party tools
 
-The library itself contains of a single header file licensed under the MIT license. However, it is built, tested, documented, and whatnot using a lot of thirs-party tools and services. Thanks a lot!
+The library itself contains of a single header file licensed under the MIT license. However, it is built, tested, documented, and whatnot using a lot of third-party tools and services. Thanks a lot!
 
 - [**American fuzzy lop**](http://lcamtuf.coredump.cx/afl/) for fuzz testing
 - [**AppVeyor**](https://www.appveyor.com) for [continuous integration](https://ci.appveyor.com/project/nlohmann/json) on Windows
