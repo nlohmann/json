@@ -2897,8 +2897,8 @@ class basic_json
     */
     string_t dump(const int indent = -1) const
     {
-        std::stringstream ss;
-        serializer s(ss);
+        string_t result;
+        serializer s(output_adapter<char>::create(result));
 
         if (indent >= 0)
         {
@@ -2909,7 +2909,7 @@ class basic_json
             s.dump(*this, false, 0);
         }
 
-        return ss.str();
+        return result;
     }
 
     /*!
@@ -6554,6 +6554,104 @@ class basic_json
 
     /// @}
 
+  private:
+    /////////////////////
+    // output adapters //
+    /////////////////////
+
+    template<typename CharType>
+    class output_adapter
+    {
+      public:
+        virtual void write_character(CharType c) = 0;
+        virtual void write_characters(const CharType* s, size_t length) = 0;
+        virtual ~output_adapter() {}
+
+        static std::shared_ptr<output_adapter<CharType>> create(std::vector<CharType>& vec)
+        {
+            return std::shared_ptr<output_adapter>(new output_vector_adapter<CharType>(vec));
+        }
+
+        static std::shared_ptr<output_adapter<CharType>> create(std::ostream& s)
+        {
+            return std::shared_ptr<output_adapter>(new output_stream_adapter<CharType>(s));
+        }
+
+        static std::shared_ptr<output_adapter<CharType>> create(std::string& s)
+        {
+            return std::shared_ptr<output_adapter>(new output_string_adapter<CharType>(s));
+        }
+    };
+
+    template<typename CharType>
+    using output_adapter_t = std::shared_ptr<output_adapter<CharType>>;
+
+    template<typename CharType>
+    class output_vector_adapter : public output_adapter<CharType>
+    {
+      public:
+        output_vector_adapter(std::vector<CharType>& vec)
+            : v(vec)
+        {}
+
+        void write_character(CharType c) override
+        {
+            v.push_back(c);
+        }
+
+        void write_characters(const CharType* s, size_t length) override
+        {
+            std::copy(s, s + length, std::back_inserter(v));
+        }
+
+      private:
+        std::vector<CharType>& v;
+    };
+
+    template<typename CharType>
+    class output_stream_adapter : public output_adapter<CharType>
+    {
+      public:
+        output_stream_adapter(std::basic_ostream<CharType>& s)
+            : stream(s)
+        {}
+
+        void write_character(CharType c) override
+        {
+            stream.put(c);
+        }
+
+        void write_characters(const CharType* s, size_t length) override
+        {
+            stream.write(s, static_cast<std::streamsize>(length));
+        }
+
+      private:
+        std::basic_ostream<CharType>& stream;
+    };
+
+    template<typename CharType>
+    class output_string_adapter : public output_adapter<CharType>
+    {
+      public:
+        output_string_adapter(std::string& s)
+            : str(s)
+        {}
+
+        void write_character(CharType c) override
+        {
+            str.push_back(c);
+        }
+
+        void write_characters(const CharType* s, size_t length) override
+        {
+            str.append(s, length);
+        }
+
+      private:
+        std::basic_string<CharType>& str;
+    };
+
 
     ///////////////////
     // serialization //
@@ -6576,7 +6674,7 @@ class basic_json
         /*!
         @param[in] s  output stream to serialize to
         */
-        serializer(std::ostream& s)
+        serializer(output_adapter_t<char> s)
             : o(s), loc(std::localeconv()),
               thousands_sep(!loc->thousands_sep ? '\0' : loc->thousands_sep[0]),
               decimal_point(!loc->decimal_point ? '\0' : loc->decimal_point[0])
@@ -6610,13 +6708,13 @@ class basic_json
                 {
                     if (val.m_value.object->empty())
                     {
-                        o.write("{}", 2);
+                        o->write_characters("{}", 2);
                         return;
                     }
 
                     if (pretty_print)
                     {
-                        o.write("{\n", 2);
+                        o->write_characters("{\n", 2);
 
                         // variable to hold indentation for recursive calls
                         const auto new_indent = current_indent + indent_step;
@@ -6629,49 +6727,49 @@ class basic_json
                         auto i = val.m_value.object->cbegin();
                         for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
                         {
-                            o.write(indent_string.c_str(), static_cast<std::streamsize>(new_indent));
-                            o.put('\"');
+                            o->write_characters(indent_string.c_str(), new_indent);
+                            o->write_character('\"');
                             dump_escaped(i->first);
-                            o.write("\": ", 3);
+                            o->write_characters("\": ", 3);
                             dump(i->second, true, indent_step, new_indent);
-                            o.write(",\n", 2);
+                            o->write_characters(",\n", 2);
                         }
 
                         // last element
                         assert(i != val.m_value.object->cend());
-                        o.write(indent_string.c_str(), static_cast<std::streamsize>(new_indent));
-                        o.put('\"');
+                        o->write_characters(indent_string.c_str(), new_indent);
+                        o->write_character('\"');
                         dump_escaped(i->first);
-                        o.write("\": ", 3);
+                        o->write_characters("\": ", 3);
                         dump(i->second, true, indent_step, new_indent);
 
-                        o.put('\n');
-                        o.write(indent_string.c_str(), static_cast<std::streamsize>(current_indent));
-                        o.put('}');
+                        o->write_character('\n');
+                        o->write_characters(indent_string.c_str(), current_indent);
+                        o->write_character('}');
                     }
                     else
                     {
-                        o.put('{');
+                        o->write_character('{');
 
                         // first n-1 elements
                         auto i = val.m_value.object->cbegin();
                         for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
                         {
-                            o.put('\"');
+                            o->write_character('\"');
                             dump_escaped(i->first);
-                            o.write("\":", 2);
+                            o->write_characters("\":", 2);
                             dump(i->second, false, indent_step, current_indent);
-                            o.put(',');
+                            o->write_character(',');
                         }
 
                         // last element
                         assert(i != val.m_value.object->cend());
-                        o.put('\"');
+                        o->write_character('\"');
                         dump_escaped(i->first);
-                        o.write("\":", 2);
+                        o->write_characters("\":", 2);
                         dump(i->second, false, indent_step, current_indent);
 
-                        o.put('}');
+                        o->write_character('}');
                     }
 
                     return;
@@ -6681,13 +6779,13 @@ class basic_json
                 {
                     if (val.m_value.array->empty())
                     {
-                        o.write("[]", 2);
+                        o->write_characters("[]", 2);
                         return;
                     }
 
                     if (pretty_print)
                     {
-                        o.write("[\n", 2);
+                        o->write_characters("[\n", 2);
 
                         // variable to hold indentation for recursive calls
                         const auto new_indent = current_indent + indent_step;
@@ -6699,36 +6797,36 @@ class basic_json
                         // first n-1 elements
                         for (auto i = val.m_value.array->cbegin(); i != val.m_value.array->cend() - 1; ++i)
                         {
-                            o.write(indent_string.c_str(), static_cast<std::streamsize>(new_indent));
+                            o->write_characters(indent_string.c_str(), new_indent);
                             dump(*i, true, indent_step, new_indent);
-                            o.write(",\n", 2);
+                            o->write_characters(",\n", 2);
                         }
 
                         // last element
                         assert(not val.m_value.array->empty());
-                        o.write(indent_string.c_str(), static_cast<std::streamsize>(new_indent));
+                        o->write_characters(indent_string.c_str(), new_indent);
                         dump(val.m_value.array->back(), true, indent_step, new_indent);
 
-                        o.put('\n');
-                        o.write(indent_string.c_str(), static_cast<std::streamsize>(current_indent));
-                        o.put(']');
+                        o->write_character('\n');
+                        o->write_characters(indent_string.c_str(), current_indent);
+                        o->write_character(']');
                     }
                     else
                     {
-                        o.put('[');
+                        o->write_character('[');
 
                         // first n-1 elements
                         for (auto i = val.m_value.array->cbegin(); i != val.m_value.array->cend() - 1; ++i)
                         {
                             dump(*i, false, indent_step, current_indent);
-                            o.put(',');
+                            o->write_character(',');
                         }
 
                         // last element
                         assert(not val.m_value.array->empty());
                         dump(val.m_value.array->back(), false, indent_step, current_indent);
 
-                        o.put(']');
+                        o->write_character(']');
                     }
 
                     return;
@@ -6736,9 +6834,9 @@ class basic_json
 
                 case value_t::string:
                 {
-                    o.put('\"');
+                    o->write_character('\"');
                     dump_escaped(*val.m_value.string);
-                    o.put('\"');
+                    o->write_character('\"');
                     return;
                 }
 
@@ -6746,11 +6844,11 @@ class basic_json
                 {
                     if (val.m_value.boolean)
                     {
-                        o.write("true", 4);
+                        o->write_characters("true", 4);
                     }
                     else
                     {
-                        o.write("false", 5);
+                        o->write_characters("false", 5);
                     }
                     return;
                 }
@@ -6775,13 +6873,13 @@ class basic_json
 
                 case value_t::discarded:
                 {
-                    o.write("<discarded>", 11);
+                    o->write_characters("<discarded>", 11);
                     return;
                 }
 
                 case value_t::null:
                 {
-                    o.write("null", 4);
+                    o->write_characters("null", 4);
                     return;
                 }
             }
@@ -6872,7 +6970,7 @@ class basic_json
             const auto space = extra_space(s);
             if (space == 0)
             {
-                o.write(s.c_str(), static_cast<std::streamsize>(s.size()));
+                o->write_characters(s.c_str(), s.size());
                 return;
             }
 
@@ -6998,7 +7096,7 @@ class basic_json
             }
 
             assert(pos == s.size() + space);
-            o.write(result.c_str(), static_cast<std::streamsize>(result.size()));
+            o->write_characters(result.c_str(), result.size());
         }
 
         /*!
@@ -7018,7 +7116,7 @@ class basic_json
             // special case for "0"
             if (x == 0)
             {
-                o.put('0');
+                o->write_character('0');
                 return;
             }
 
@@ -7044,7 +7142,7 @@ class basic_json
             }
 
             std::reverse(number_buffer.begin(), number_buffer.begin() + i);
-            o.write(number_buffer.data(), static_cast<std::streamsize>(i));
+            o->write_characters(number_buffer.data(), i);
         }
 
         /*!
@@ -7060,7 +7158,7 @@ class basic_json
             // NaN / inf
             if (not std::isfinite(x) or std::isnan(x))
             {
-                o.write("null", 4);
+                o->write_characters("null", 4);
                 return;
             }
 
@@ -7069,11 +7167,11 @@ class basic_json
             {
                 if (std::signbit(x))
                 {
-                    o.write("-0.0", 4);
+                    o->write_characters("-0.0", 4);
                 }
                 else
                 {
-                    o.write("0.0", 3);
+                    o->write_characters("0.0", 3);
                 }
                 return;
             }
@@ -7114,7 +7212,7 @@ class basic_json
                 }
             }
 
-            o.write(number_buffer.data(), static_cast<std::streamsize>(len));
+            o->write_characters(number_buffer.data(), static_cast<size_t>(len));
 
             // determine if need to append ".0"
             const bool value_is_int_like = std::none_of(number_buffer.begin(),
@@ -7126,13 +7224,13 @@ class basic_json
 
             if (value_is_int_like)
             {
-                o.write(".0", 2);
+                o->write_characters(".0", 2);
             }
         }
 
       private:
         /// the output of the serializer
-        std::ostream& o;
+        output_adapter_t<char> o = nullptr;
 
         /// a (hopefully) large enough character buffer
         std::array<char, 64> number_buffer{{}};
@@ -7181,7 +7279,7 @@ class basic_json
         o.width(0);
 
         // do the actual serialization
-        serializer s(o);
+        serializer s(output_adapter<char>::create(o));
         s.dump(j, pretty_print, static_cast<unsigned int>(indentation));
         return o;
     }
@@ -8778,46 +8876,6 @@ class basic_json
         const char* start;
     };
 
-    /////////////////////
-    // output adapters //
-    /////////////////////
-
-    class output_adapter
-    {
-      public:
-        virtual void write_character(uint8_t c) = 0;
-        virtual void write_characters(const uint8_t* s, size_t length) = 0;
-        virtual ~output_adapter() {}
-
-        static std::shared_ptr<output_adapter> create(std::vector<uint8_t>& vec)
-        {
-            return std::shared_ptr<output_adapter>(new output_vector_adapter(vec));
-        }
-    };
-
-    using output_adapter_t = std::shared_ptr<output_adapter>;
-
-    class output_vector_adapter : public output_adapter
-    {
-      public:
-        output_vector_adapter(std::vector<uint8_t>& vec)
-            : v(vec)
-        {}
-
-        void write_character(uint8_t c) override
-        {
-            v.push_back(c);
-        }
-
-        void write_characters(const uint8_t* s, size_t length) override
-        {
-            std::copy(s, s + length, std::back_inserter(v));
-        }
-
-      private:
-        std::vector<uint8_t>& v;
-    };
-
     //////////////////////////////////////////
     // binary serialization/deserialization //
     //////////////////////////////////////////
@@ -9872,7 +9930,7 @@ class basic_json
             : is_little_endian(little_endianess())
         {}
 
-        explicit binary_writer(output_adapter_t adapter)
+        explicit binary_writer(output_adapter_t<uint8_t> adapter)
             : is_little_endian(little_endianess()), oa(adapter)
         {}
 
@@ -10379,7 +10437,7 @@ class basic_json
         const bool is_little_endian = true;
 
         /// the output
-        output_adapter_t oa = nullptr;
+        output_adapter_t<uint8_t> oa = nullptr;
     };
 
   public:
@@ -10468,7 +10526,7 @@ class basic_json
     static std::vector<uint8_t> to_cbor(const basic_json& j)
     {
         std::vector<uint8_t> result;
-        binary_writer bw(output_adapter::create(result));
+        binary_writer bw(output_adapter<uint8_t>::create(result));
         bw.write_cbor(j);
         return result;
     }
@@ -10550,7 +10608,7 @@ class basic_json
     static std::vector<uint8_t> to_msgpack(const basic_json& j)
     {
         std::vector<uint8_t> result;
-        binary_writer bw(output_adapter::create(result));
+        binary_writer bw(output_adapter<uint8_t>::create(result));
         bw.write_msgpack(j);
         return result;
     }
