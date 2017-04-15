@@ -11127,6 +11127,13 @@ class basic_json
             return codepoint;
         }
 
+        static std::string codepoint_to_string(int codepoint)
+        {
+            std::stringstream ss;
+            ss << "U+" << std::setw(4) << std::uppercase << std::setfill('0') << std::hex << codepoint;
+            return ss.str();
+        }
+
         token_type scan_string()
         {
             // reset yytext (ignore opening quote)
@@ -11237,13 +11244,13 @@ class basic_json
                                         }
                                         else
                                         {
-                                            error_message = "invalid string: invalid low surrogate";
+                                            error_message = "invalid string: surrogate " + codepoint_to_string(codepoint1) + " must be followed by U+DC00..U+DFFF instead of " + codepoint_to_string(codepoint2);
                                             return token_type::parse_error;
                                         }
                                     }
                                     else
                                     {
-                                        error_message = "invalid string: missing low surrogate";
+                                        error_message = "invalid string: surrogate " + codepoint_to_string(codepoint1) + " must be followed by U+DC00..U+DFFF";
                                         return token_type::parse_error;
                                     }
                                 }
@@ -11251,7 +11258,7 @@ class basic_json
                                 {
                                     if (JSON_UNLIKELY(0xDC00 <= codepoint1 and codepoint1 <= 0xDFFF))
                                     {
-                                        error_message = "invalid string: missing high surrogate";
+                                        error_message = "invalid string: surrogate " + codepoint_to_string(codepoint1) + " must follow U+D800..U+DBFF";
                                         return token_type::parse_error;
                                     }
 
@@ -11336,7 +11343,7 @@ class basic_json
                     case 0x1e:
                     case 0x1f:
                     {
-                        error_message = "invalid string: control characters (U+0000 through U+001f) must be escaped";
+                        error_message = "invalid string: control character " + codepoint_to_string(current) + " must be escaped";
                         return token_type::parse_error;
                     }
 
@@ -11480,7 +11487,7 @@ class basic_json
                             continue;
                         }
 
-                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        error_message = "invalid string: ill-formed UTF-8 byte";
                         return token_type::parse_error;
                     }
 
@@ -11500,7 +11507,7 @@ class basic_json
                             }
                         }
 
-                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        error_message = "invalid string: ill-formed UTF-8 byte";
                         return token_type::parse_error;
                     }
 
@@ -11534,7 +11541,7 @@ class basic_json
                             }
                         }
 
-                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        error_message = "invalid string: ill-formed UTF-8 byte";
                         return token_type::parse_error;
                     }
 
@@ -11554,7 +11561,7 @@ class basic_json
                             }
                         }
 
-                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        error_message = "invalid string: ill-formed UTF-8 byte";
                         return token_type::parse_error;
                     }
 
@@ -11579,7 +11586,7 @@ class basic_json
                             }
                         }
 
-                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        error_message = "invalid string: ill-formed UTF-8 byte";
                         return token_type::parse_error;
                     }
 
@@ -11606,7 +11613,7 @@ class basic_json
                             }
                         }
 
-                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        error_message = "invalid string: ill-formed UTF-8 byte";
                         return token_type::parse_error;
                     }
 
@@ -11631,14 +11638,14 @@ class basic_json
                             }
                         }
 
-                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        error_message = "invalid string: ill-formed UTF-8 byte";
                         return token_type::parse_error;
                     }
 
-                    // remaining bytes (80..C1 and F5..FF) are not well-formed
+                    // remaining bytes (80..C1 and F5..FF) are ill-formed
                     default:
                     {
-                        error_message = "invalid string: not well-formed UTF-8 byte";
+                        error_message = "invalid string: ill-formed UTF-8 byte";
                         return token_type::parse_error;
                     }
                 }
@@ -11681,7 +11688,7 @@ class basic_json
             // be changed if minus sign, decimal point or exponent is read
             token_type number_type = token_type::value_unsigned;
 
-            // state: we just found out we need to scan a number
+            // state (init): we just found out we need to scan a number
             switch (current)
             {
                 case '-':
@@ -12001,6 +12008,8 @@ scan_number_done:
                 }
             }
 
+            // this code is reached if we parse a floating-point number or if
+            // an integer conversion above failed
             strtof(value_float, yytext.data(), nullptr);
             return token_type::value_float;
         }
@@ -12064,7 +12073,8 @@ scan_number_done:
         /// add a character to yytext
         void add(int c)
         {
-            // resize yytext if necessary
+            // resize yytext if necessary; this condition is deemed unlikely,
+            // because we start with a 1024-byte buffer
             if (JSON_UNLIKELY((yylen + 1 > yytext.capacity())))
             {
                 yytext.resize(2 * yytext.capacity(), '\0');
@@ -12120,7 +12130,7 @@ scan_number_done:
             std::string s = ia->read(start_pos, chars_read - start_pos);
 
             // escape control characters
-            std::stringstream ss;
+            std::string result;
             for (auto c : s)
             {
                 if (c == '\0' or c == std::char_traits<char>::eof())
@@ -12131,16 +12141,16 @@ scan_number_done:
                 else if ('\x00' <= c and c <= '\x1f')
                 {
                     // escape control characters
-                    ss << "<U+" << std::setw(4) << std::setfill('0') << std::hex << int(c) << ">";
+                    result += "<" + codepoint_to_string(c) + ">";
                 }
                 else
                 {
                     // add character as is
-                    ss << c;
+                    result.append(1, c);
                 }
             }
 
-            return ss.str();
+            return result;
         }
 
         /// return syntax error message
@@ -12204,7 +12214,8 @@ scan_number_done:
                 case '9':
                     return scan_number();
 
-                // end of input
+                // end of input (the null byte is needed when parsing from
+                // string literals)
                 case '\0':
                 case std::char_traits<char>::eof():
                     return token_type::end_of_input;
