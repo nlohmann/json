@@ -9335,25 +9335,26 @@ class basic_json
     */
     std::string type_name() const
     {
+        switch (m_type)
         {
-            switch (m_type)
-            {
-                case value_t::null:
-                    return "null";
-                case value_t::object:
-                    return "object";
-                case value_t::array:
-                    return "array";
-                case value_t::string:
-                    return "string";
-                case value_t::boolean:
-                    return "boolean";
-                case value_t::discarded:
-                    return "discarded";
-                default:
-                    return "number";
-            }
+            case value_t::null:
+                return "null";
+            case value_t::object:
+                return "object";
+            case value_t::array:
+                return "array";
+            case value_t::string:
+                return "string";
+            case value_t::boolean:
+                return "boolean";
+            case value_t::discarded:
+                return "discarded";
+            case value_t::number_unsigned:
+            case value_t::number_integer:
+            case value_t::number_float:
+                return "number";
         }
+        assert(false);
     }
 
 
