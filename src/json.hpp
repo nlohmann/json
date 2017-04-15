@@ -12093,37 +12093,27 @@ basic_json_parser_74:
             strtonum num_converter(reinterpret_cast<const char*>(m_start),
                                    reinterpret_cast<const char*>(m_cursor));
 
-            switch (token)
+            if (token == lexer::token_type::value_unsigned)
             {
-                case lexer::token_type::value_unsigned:
+                number_unsigned_t val;
+                if (num_converter.to(val))
                 {
-                    number_unsigned_t val;
-                    if (num_converter.to(val))
-                    {
-                        // parsing successful
-                        result.m_type = value_t::number_unsigned;
-                        result.m_value = val;
-                        return true;
-                    }
-                    break;
+                    // parsing successful
+                    result.m_type = value_t::number_unsigned;
+                    result.m_value = val;
+                    return true;
                 }
+            }
 
-                case lexer::token_type::value_integer:
+            if (token == lexer::token_type::value_integer)
+            {
+                number_integer_t val;
+                if (num_converter.to(val))
                 {
-                    number_integer_t val;
-                    if (num_converter.to(val))
-                    {
-                        // parsing successful
-                        result.m_type = value_t::number_integer;
-                        result.m_value = val;
-                        return true;
-                    }
-                    break;
-                }
-
-                default:
-                {
-                    break;
+                    // parsing successful
+                    result.m_type = value_t::number_integer;
+                    result.m_value = val;
+                    return true;
                 }
             }
 
