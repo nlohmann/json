@@ -2825,7 +2825,7 @@ class basic_json
                 AllocatorType<object_t> alloc;
                 alloc.destroy(m_value.object);
                 alloc.deallocate(m_value.object, 1);
-                break;
+                return;
             }
 
             case value_t::array:
@@ -2833,7 +2833,7 @@ class basic_json
                 AllocatorType<array_t> alloc;
                 alloc.destroy(m_value.array);
                 alloc.deallocate(m_value.array, 1);
-                break;
+                return;
             }
 
             case value_t::string:
@@ -2841,15 +2841,21 @@ class basic_json
                 AllocatorType<string_t> alloc;
                 alloc.destroy(m_value.string);
                 alloc.deallocate(m_value.string, 1);
-                break;
+                return;
             }
 
-            default:
+            case value_t::null:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::discarded:
             {
                 // all other types need no specific destructor
-                break;
+                return;
             }
         }
+        assert(false);
     }
 
     /// @}
