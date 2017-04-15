@@ -1970,59 +1970,60 @@ class basic_json
                 case value_t::object:
                 {
                     object = create<object_t>();
-                    break;
+                    return;
                 }
 
                 case value_t::array:
                 {
                     array = create<array_t>();
-                    break;
+                    return;
                 }
 
                 case value_t::string:
                 {
                     string = create<string_t>("");
-                    break;
+                    return;
                 }
 
                 case value_t::boolean:
                 {
                     boolean = boolean_t(false);
-                    break;
+                    return;
                 }
 
                 case value_t::number_integer:
                 {
                     number_integer = number_integer_t(0);
-                    break;
+                    return;
                 }
 
                 case value_t::number_unsigned:
                 {
                     number_unsigned = number_unsigned_t(0);
-                    break;
+                    return;
                 }
 
                 case value_t::number_float:
                 {
                     number_float = number_float_t(0.0);
-                    break;
+                    return;
                 }
 
                 case value_t::null:
                 {
-                    break;
+                    return;
                 }
 
-                default:
+                case value_t::discarded:
                 {
                     if (t == value_t::null)
                     {
                         JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 2.1.1")); // LCOV_EXCL_LINE
                     }
-                    break;
+                    return;
                 }
             }
+            assert(false);
         }
 
         /// constructor for strings
