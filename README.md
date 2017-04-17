@@ -33,6 +33,8 @@
 
 ## Design goals
 
+[![Join the chat at https://gitter.im/nlohmann/json](https://badges.gitter.im/nlohmann/json.svg)](https://gitter.im/nlohmann/json?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 There are myriads of [JSON](http://json.org) libraries out there, and each may even have its reason to exist. Our class had these design goals:
 
 - **Intuitive syntax**. In languages such as Python, JSON feels like a first class data type. We used all the operator magic of modern C++ to achieve the same feeling in your code. Check out the [examples below](#examples) and you'll know what I mean.
