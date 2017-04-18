@@ -1,0 +1,123 @@
+{
+	"lugares": [{
+		"nombre": "Nueva York",
+		"apodo": "La Gran Manzana",
+		"longitud": -74.00594130000002,
+		"latitud": 40.7127837,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/1.jpg "
+	}, {
+		"nombre": "Miami",
+		"apodo": "La Ciudad Mágica",
+		"longitud": -80.19179020000001,
+		"latitud": 25.7616798,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/2.jpg "
+	}, {
+		"nombre": "Orlando",
+		"apodo": " La Ciudad Bella",
+		"longitud": -81.37923649999999,
+		"latitud": 28.5383355,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/3.jpg "
+	}, {
+		"nombre": "Chile",
+		"apodo": "Como la Víbora",
+		"longitud": -71.54296899999997,
+		"latitud": -35.675147,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/4.jpg "
+	}, {
+		"nombre": "México",
+		"apodo": "Raza de Bronce",
+		"longitud": -102.55278399999997,
+		"latitud": 23.634501,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/5.jpg "
+	}, {
+		"nombre": "Los Ángeles",
+		"apodo": "La Gran Naranja ",
+		"longitud": -118.2436849,
+		"latitud": 34.0522342,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/6.jpg "
+	}, {
+		"nombre": "Washington",
+		"apodo": "El Estado de la Hoja Perenne",
+		"longitud": -77.03687070000001,
+		"latitud": 38.9071923,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/7.jpg "
+	}, {
+		"nombre": "Vancouver",
+		"apodo": "La Ciudad del Capitán",
+		"longitud": -123.12073750000002,
+		"latitud": 49.2827291,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/8.jpg "
+	}, {
+		"nombre": "Bethel",
+		"apodo": "La Última frontera",
+		"longitud": -161.7558333,
+		"latitud": 60.7922222,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/9.jpg"
+	}, {
+		"nombre": "Regina",
+		"apodo": "La Ciudad de la Reina",
+		"longitud": -104.61889439999999,
+		"latitud": 50.4452112,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/10.jpg"
+	}, {
+		"nombre": "Bogotá",
+		"apodo": "La Atenas Suramericana",
+		"longitud": -74.072092,
+		"latitud": 4.710988599999999,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/11.jpg"
+	}, {
+		"nombre": "Caracas",
+		"apodo": "La Sucursal del Cielo",
+		"longitud": -66.90360629999998,
+		"latitud": 10.4805937,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/12.jpg"
+	}, {
+		"nombre": "Quito",
+		"apodo": "La Luz de América",
+		"longitud": -78.46783820000002,
+		"latitud": -0.1806532,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/13.jpg"
+	}, {
+		"nombre": "Cajamarca",
+		"apodo": "Hermosa Tierra del Cumbe",
+		"longitud": -78.5127855,
+		"latitud": -7.1617465,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/14.jpg"
+	}, {
+		"nombre": "Lima",
+		"apodo": "La Ciudad de los Reyes",
+		"longitud": -77.042754,
+		"latitud": -12.0463731,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/15.jpg"
+	}, {
+		"nombre": "Rio de Janeiro",
+		"apodo": "La Ciudad Maravillosa",
+		"longitud": -43.17289649999998,
+		"latitud": -22.9068467,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/16.jpg"
+	}, {
+		"nombre": "Sao Paulo",
+		"apodo": "Ciudad de la Garúa",
+		"longitud": -46.63330939999997,
+		"latitud": -23.5505199,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/17.jpg"
+	}, {
+		"nombre": "Buenos Aires",
+		"apodo": "El París de América del Sur",
+		"longitud": -58.381559100000004,
+		"latitud": -34.6036844,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/18.jpg"
+	}, {
+		"nombre": "Montevideo",
+		"apodo": "La ciudad de los Palacios ",
+		"longitud": -56.16453139999999,
+		"latitud": -34.9011127,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/19.jpg"
+	}, {
+		"nombre": "Cuba",
+		"apodo": "Donde abundan las Tierras fértiles",
+		"longitud": -77.78116699999998,
+		"latitud": 21.521757,
+		"imagen": "https://www.openprocessing.org/sketch/421502/files/20.jpg"
+	}]
+}
