@@ -34,23 +34,44 @@ using nlohmann::json;
 
 #include <fstream>
 
-std::string create_string(int byte1, int byte2 = -1, int byte3 = -1, int byte4 = -1)
+// create and check a JSON string with up to four UTF-8 bytes
+void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte3 = -1, int byte4 = -1)
 {
-    std::string result = "\"" + std::string(1, static_cast<char>(byte1));
+    std::string json_string = "\"";
+
+    CAPTURE(byte1);
+    json_string += std::string(1, static_cast<char>(byte1));
+
     if (byte2 != -1)
     {
-        result += std::string(1, static_cast<char>(byte2));
+        CAPTURE(byte2);
+        json_string += std::string(1, static_cast<char>(byte2));
     }
+
     if (byte3 != -1)
     {
-        result += std::string(1, static_cast<char>(byte3));
+        CAPTURE(byte3);
+        json_string += std::string(1, static_cast<char>(byte3));
     }
+
     if (byte4 != -1)
     {
-        result += std::string(1, static_cast<char>(byte4));
+        CAPTURE(byte4);
+        json_string += std::string(1, static_cast<char>(byte4));
     }
-    result += "\"";
-    return result;
+
+    json_string += "\"";
+
+    CAPTURE(json_string);
+
+    if (success_expected)
+    {
+        CHECK_NOTHROW(json::parse(json_string));
+    }
+    else
+    {
+        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+    }
 }
 
 TEST_CASE("RFC 3629", "[hide]")
@@ -79,18 +100,12 @@ TEST_CASE("RFC 3629", "[hide]")
     {
         for (int byte1 = 0x80; byte1 <= 0xC1; ++byte1)
         {
-            const auto json_string = create_string(byte1);
-            CAPTURE(byte1);
-            CAPTURE(json_string);
-            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+            check_utf8string(false, byte1);
         }
 
         for (int byte1 = 0xF5; byte1 <= 0xFF; ++byte1)
         {
-            const auto json_string = create_string(byte1);
-            CAPTURE(byte1);
-            CAPTURE(json_string);
-            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+            check_utf8string(false, byte1);
         }
     }
 
@@ -100,33 +115,29 @@ TEST_CASE("RFC 3629", "[hide]")
         {
             for (int byte1 = 0x00; byte1 <= 0x7F; ++byte1)
             {
-                const auto json_string = create_string(byte1);
-                CAPTURE(byte1);
-                CAPTURE(json_string);
-
                 // unescaped control characters are parse errors in JSON
                 if (0x00 <= byte1 and byte1 <= 0x1F)
                 {
-                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    check_utf8string(false, byte1);
                     continue;
                 }
 
                 // a single quote is a parse error in JSON
                 if (byte1 == 0x22)
                 {
-                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    check_utf8string(false, byte1);
                     continue;
                 }
 
                 // a single backslash is a parse error in JSON
                 if (byte1 == 0x5C)
                 {
-                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    check_utf8string(false, byte1);
                     continue;
                 }
 
                 // all other characters are OK
-                CHECK_NOTHROW(json::parse(json_string));
+                check_utf8string(true, byte1);
             }
         }
     }
@@ -139,11 +150,7 @@ TEST_CASE("RFC 3629", "[hide]")
             {
                 for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
                 {
-                    const auto json_string = create_string(byte1, byte2);
-                    CAPTURE(byte1);
-                    CAPTURE(byte2);
-                    CAPTURE(json_string);
-                    CHECK_NOTHROW(json::parse(json_string));
+                    check_utf8string(true, byte1, byte2);
                 }
             }
         }
@@ -152,10 +159,7 @@ TEST_CASE("RFC 3629", "[hide]")
         {
             for (int byte1 = 0xC2; byte1 <= 0xDF; ++byte1)
             {
-                const auto json_string = create_string(byte1);
-                CAPTURE(byte1);
-                CAPTURE(json_string);
-                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                check_utf8string(false, byte1);
             }
         }
 
@@ -171,11 +175,7 @@ TEST_CASE("RFC 3629", "[hide]")
                         continue;
                     }
 
-                    const auto json_string = create_string(byte1, byte2);
-                    CAPTURE(byte1);
-                    CAPTURE(byte2);
-                    CAPTURE(json_string);
-                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    check_utf8string(false, byte1, byte2);
                 }
             }
         }
@@ -191,12 +191,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 {
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_NOTHROW(json::parse(json_string));
+                        check_utf8string(true, byte1, byte2, byte3);
                     }
                 }
             }
@@ -206,10 +201,7 @@ TEST_CASE("RFC 3629", "[hide]")
         {
             for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
             {
-                const auto json_string = create_string(byte1);
-                CAPTURE(byte1);
-                CAPTURE(json_string);
-                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                check_utf8string(false, byte1);
             }
         }
 
@@ -219,11 +211,7 @@ TEST_CASE("RFC 3629", "[hide]")
             {
                 for (int byte2 = 0xA0; byte2 <= 0xBF; ++byte2)
                 {
-                    const auto json_string = create_string(byte1, byte2);
-                    CAPTURE(byte1);
-                    CAPTURE(byte2);
-                    CAPTURE(json_string);
-                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    check_utf8string(false, byte1, byte2);
                 }
             }
         }
@@ -242,12 +230,7 @@ TEST_CASE("RFC 3629", "[hide]")
 
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        check_utf8string(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -267,12 +250,7 @@ TEST_CASE("RFC 3629", "[hide]")
                             continue;
                         }
 
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        check_utf8string(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -289,12 +267,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 {
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_NOTHROW(json::parse(json_string));
+                        check_utf8string(true, byte1, byte2, byte3);
                     }
                 }
             }
@@ -304,10 +277,7 @@ TEST_CASE("RFC 3629", "[hide]")
         {
             for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
             {
-                const auto json_string = create_string(byte1);
-                CAPTURE(byte1);
-                CAPTURE(json_string);
-                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                check_utf8string(false, byte1);
             }
         }
 
@@ -317,11 +287,7 @@ TEST_CASE("RFC 3629", "[hide]")
             {
                 for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
                 {
-                    const auto json_string = create_string(byte1, byte2);
-                    CAPTURE(byte1);
-                    CAPTURE(byte2);
-                    CAPTURE(json_string);
-                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    check_utf8string(false, byte1, byte2);
                 }
             }
         }
@@ -340,12 +306,7 @@ TEST_CASE("RFC 3629", "[hide]")
 
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        check_utf8string(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -365,12 +326,7 @@ TEST_CASE("RFC 3629", "[hide]")
                             continue;
                         }
 
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        check_utf8string(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -387,12 +343,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 {
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_NOTHROW(json::parse(json_string));
+                        check_utf8string(true, byte1, byte2, byte3);
                     }
                 }
             }
@@ -402,10 +353,7 @@ TEST_CASE("RFC 3629", "[hide]")
         {
             for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
             {
-                const auto json_string = create_string(byte1);
-                CAPTURE(byte1);
-                CAPTURE(json_string);
-                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                check_utf8string(false, byte1);
             }
         }
 
@@ -415,11 +363,7 @@ TEST_CASE("RFC 3629", "[hide]")
             {
                 for (int byte2 = 0x80; byte2 <= 0x9F; ++byte2)
                 {
-                    const auto json_string = create_string(byte1, byte2);
-                    CAPTURE(byte1);
-                    CAPTURE(byte2);
-                    CAPTURE(json_string);
-                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    check_utf8string(false, byte1, byte2);
                 }
             }
         }
@@ -438,12 +382,7 @@ TEST_CASE("RFC 3629", "[hide]")
 
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        check_utf8string(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -463,12 +402,7 @@ TEST_CASE("RFC 3629", "[hide]")
                             continue;
                         }
 
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        check_utf8string(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -485,12 +419,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 {
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_NOTHROW(json::parse(json_string));
+                        check_utf8string(true, byte1, byte2, byte3);
                     }
                 }
             }
@@ -500,10 +429,7 @@ TEST_CASE("RFC 3629", "[hide]")
         {
             for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
             {
-                const auto json_string = create_string(byte1);
-                CAPTURE(byte1);
-                CAPTURE(json_string);
-                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                check_utf8string(false, byte1);
             }
         }
 
@@ -513,11 +439,7 @@ TEST_CASE("RFC 3629", "[hide]")
             {
                 for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
                 {
-                    const auto json_string = create_string(byte1, byte2);
-                    CAPTURE(byte1);
-                    CAPTURE(byte2);
-                    CAPTURE(json_string);
-                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    check_utf8string(false, byte1, byte2);
                 }
             }
         }
@@ -536,12 +458,7 @@ TEST_CASE("RFC 3629", "[hide]")
 
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        check_utf8string(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -561,12 +478,7 @@ TEST_CASE("RFC 3629", "[hide]")
                             continue;
                         }
 
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        check_utf8string(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -585,13 +497,7 @@ TEST_CASE("RFC 3629", "[hide]")
                     {
                         for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
                         {
-                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                            CAPTURE(byte1);
-                            CAPTURE(byte2);
-                            CAPTURE(byte3);
-                            CAPTURE(byte4);
-                            CAPTURE(json_string);
-                            CHECK_NOTHROW(json::parse(json_string));
+                            check_utf8string(true, byte1, byte2, byte3, byte4);
                         }
                     }
                 }
@@ -602,10 +508,7 @@ TEST_CASE("RFC 3629", "[hide]")
         {
             for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
             {
-                const auto json_string = create_string(byte1);
-                CAPTURE(byte1);
-                CAPTURE(json_string);
-                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                check_utf8string(false, byte1);
             }
         }
 
@@ -615,11 +518,7 @@ TEST_CASE("RFC 3629", "[hide]")
             {
                 for (int byte2 = 0x90; byte2 <= 0xBF; ++byte2)
                 {
-                    const auto json_string = create_string(byte1, byte2);
-                    CAPTURE(byte1);
-                    CAPTURE(byte2);
-                    CAPTURE(json_string);
-                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    check_utf8string(false, byte1, byte2);
                 }
             }
         }
@@ -632,12 +531,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 {
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        check_utf8string(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -659,13 +553,7 @@ TEST_CASE("RFC 3629", "[hide]")
                     {
                         for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
                         {
-                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                            CAPTURE(byte1);
-                            CAPTURE(byte2);
-                            CAPTURE(byte3);
-                            CAPTURE(byte4);
-                            CAPTURE(json_string);
-                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                            check_utf8string(false, byte1, byte2, byte3, byte4);
                         }
                     }
                 }
@@ -688,13 +576,7 @@ TEST_CASE("RFC 3629", "[hide]")
 
                         for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
                         {
-                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                            CAPTURE(byte1);
-                            CAPTURE(byte2);
-                            CAPTURE(byte3);
-                            CAPTURE(byte4);
-                            CAPTURE(json_string);
-                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                            check_utf8string(false, byte1, byte2, byte3, byte4);
                         }
                     }
                 }
@@ -709,24 +591,16 @@ TEST_CASE("RFC 3629", "[hide]")
                 {
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        {
                             for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
                             {
-                                // skip correct second byte
+                                // skip fourth second byte
                                 if (0x80 <= byte3 and byte3 <= 0xBF)
                                 {
                                     continue;
                                 }
 
-                                const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                                CAPTURE(byte1);
-                                CAPTURE(byte2);
-                                CAPTURE(byte3);
-                                CAPTURE(byte4);
-                                CAPTURE(json_string);
-                                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                                check_utf8string(false, byte1, byte2, byte3, byte4);
                             }
-                        }
                     }
                 }
             }
@@ -745,13 +619,7 @@ TEST_CASE("RFC 3629", "[hide]")
                     {
                         for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
                         {
-                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                            CAPTURE(byte1);
-                            CAPTURE(byte2);
-                            CAPTURE(byte3);
-                            CAPTURE(byte4);
-                            CAPTURE(json_string);
-                            CHECK_NOTHROW(json::parse(json_string));
+                            check_utf8string(true, byte1, byte2, byte3, byte4);
                         }
                     }
                 }
@@ -762,10 +630,7 @@ TEST_CASE("RFC 3629", "[hide]")
         {
             for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
             {
-                const auto json_string = create_string(byte1);
-                CAPTURE(byte1);
-                CAPTURE(json_string);
-                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                check_utf8string(false, byte1);
             }
         }
 
@@ -775,11 +640,7 @@ TEST_CASE("RFC 3629", "[hide]")
             {
                 for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
                 {
-                    const auto json_string = create_string(byte1, byte2);
-                    CAPTURE(byte1);
-                    CAPTURE(byte2);
-                    CAPTURE(json_string);
-                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    check_utf8string(false, byte1, byte2);
                 }
             }
         }
@@ -792,12 +653,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 {
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        check_utf8string(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -819,13 +675,7 @@ TEST_CASE("RFC 3629", "[hide]")
                     {
                         for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
                         {
-                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                            CAPTURE(byte1);
-                            CAPTURE(byte2);
-                            CAPTURE(byte3);
-                            CAPTURE(byte4);
-                            CAPTURE(json_string);
-                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                            check_utf8string(false, byte1, byte2, byte3, byte4);
                         }
                     }
                 }
@@ -848,13 +698,7 @@ TEST_CASE("RFC 3629", "[hide]")
 
                         for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
                         {
-                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                            CAPTURE(byte1);
-                            CAPTURE(byte2);
-                            CAPTURE(byte3);
-                            CAPTURE(byte4);
-                            CAPTURE(json_string);
-                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                            check_utf8string(false, byte1, byte2, byte3, byte4);
                         }
                     }
                 }
@@ -871,19 +715,13 @@ TEST_CASE("RFC 3629", "[hide]")
                     {
                         for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
                         {
-                            // skip correct second byte
+                            // skip correct fourth byte
                             if (0x80 <= byte3 and byte3 <= 0xBF)
                             {
                                 continue;
                             }
 
-                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                            CAPTURE(byte1);
-                            CAPTURE(byte2);
-                            CAPTURE(byte3);
-                            CAPTURE(byte4);
-                            CAPTURE(json_string);
-                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                            check_utf8string(false, byte1, byte2, byte3, byte4);
                         }
                     }
                 }
@@ -903,13 +741,7 @@ TEST_CASE("RFC 3629", "[hide]")
                     {
                         for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
                         {
-                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                            CAPTURE(byte1);
-                            CAPTURE(byte2);
-                            CAPTURE(byte3);
-                            CAPTURE(byte4);
-                            CAPTURE(json_string);
-                            CHECK_NOTHROW(json::parse(json_string));
+                            check_utf8string(true, byte1, byte2, byte3, byte4);
                         }
                     }
                 }
@@ -920,10 +752,7 @@ TEST_CASE("RFC 3629", "[hide]")
         {
             for (int byte1 = 0xF4; byte1 <= 0xF4; ++byte1)
             {
-                const auto json_string = create_string(byte1);
-                CAPTURE(byte1);
-                CAPTURE(json_string);
-                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                check_utf8string(false, byte1);
             }
         }
 
@@ -933,11 +762,7 @@ TEST_CASE("RFC 3629", "[hide]")
             {
                 for (int byte2 = 0x80; byte2 <= 0x8F; ++byte2)
                 {
-                    const auto json_string = create_string(byte1, byte2);
-                    CAPTURE(byte1);
-                    CAPTURE(byte2);
-                    CAPTURE(json_string);
-                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    check_utf8string(false, byte1, byte2);
                 }
             }
         }
@@ -950,12 +775,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 {
                     for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                     {
-                        const auto json_string = create_string(byte1, byte2, byte3);
-                        CAPTURE(byte1);
-                        CAPTURE(byte2);
-                        CAPTURE(byte3);
-                        CAPTURE(json_string);
-                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        check_utf8string(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -977,13 +797,7 @@ TEST_CASE("RFC 3629", "[hide]")
                     {
                         for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
                         {
-                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                            CAPTURE(byte1);
-                            CAPTURE(byte2);
-                            CAPTURE(byte3);
-                            CAPTURE(byte4);
-                            CAPTURE(json_string);
-                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                            check_utf8string(false, byte1, byte2, byte3, byte4);
                         }
                     }
                 }
@@ -1006,13 +820,7 @@ TEST_CASE("RFC 3629", "[hide]")
 
                         for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
                         {
-                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                            CAPTURE(byte1);
-                            CAPTURE(byte2);
-                            CAPTURE(byte3);
-                            CAPTURE(byte4);
-                            CAPTURE(json_string);
-                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                            check_utf8string(false, byte1, byte2, byte3, byte4);
                         }
                     }
                 }
@@ -1029,19 +837,13 @@ TEST_CASE("RFC 3629", "[hide]")
                     {
                         for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
                         {
-                            // skip correct second byte
+                            // skip correct fourth byte
                             if (0x80 <= byte3 and byte3 <= 0xBF)
                             {
                                 continue;
                             }
 
-                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
-                            CAPTURE(byte1);
-                            CAPTURE(byte2);
-                            CAPTURE(byte3);
-                            CAPTURE(byte4);
-                            CAPTURE(json_string);
-                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                            check_utf8string(false, byte1, byte2, byte3, byte4);
                         }
                     }
                 }
