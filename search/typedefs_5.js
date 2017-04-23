@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['json',['json',['../namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474',1,'nlohmann']]],
-  ['json_5fserializer',['json_serializer',['../classnlohmann_1_1basic__json_a7768841baaaa7a21098a401c932efaff.html#a7768841baaaa7a21098a401c932efaff',1,'nlohmann::basic_json']]]
+  ['invalid_5fiterator',['invalid_iterator',['../classnlohmann_1_1basic__json_ac13d32f7cbd02d616e71d8dc30dadcbf.html#ac13d32f7cbd02d616e71d8dc30dadcbf',1,'nlohmann::basic_json']]],
+  ['iterator',['iterator',['../classnlohmann_1_1basic__json_a099316232c76c034030a38faa6e34dca.html#a099316232c76c034030a38faa6e34dca',1,'nlohmann::basic_json']]],
+  ['iterator_5fcategory',['iterator_category',['../classnlohmann_1_1basic__json_1_1iter__impl_adbe1b700b9cdc38f6991fc68683a9c2c.html#adbe1b700b9cdc38f6991fc68683a9c2c',1,'nlohmann::basic_json::iter_impl']]]
 ];

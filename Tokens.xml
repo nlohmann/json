@@ -154,6 +154,72 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>exception</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a9a0aced019cb1d65bb49703406c84970.html</Path>
+    <Anchor>a9a0aced019cb1d65bb49703406c84970</Anchor>
+    <Abstract>general exception of the basic_json class </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>parse_error</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_af1efc2468e6022be6e35fc2944cabe4d.html</Path>
+    <Anchor>af1efc2468e6022be6e35fc2944cabe4d</Anchor>
+    <Abstract>exception indicating a parse error </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>invalid_iterator</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ac13d32f7cbd02d616e71d8dc30dadcbf.html</Path>
+    <Anchor>ac13d32f7cbd02d616e71d8dc30dadcbf</Anchor>
+    <Abstract>exception indicating errors with iterators </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>type_error</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a4010e8e268fefd86da773c10318f2902.html</Path>
+    <Anchor>a4010e8e268fefd86da773c10318f2902</Anchor>
+    <Abstract>exception indicating executing a member function with a wrong type </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>out_of_range</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a28f7c2f087274a0012eb7a2333ee1580.html</Path>
+    <Anchor>a28f7c2f087274a0012eb7a2333ee1580</Anchor>
+    <Abstract>exception indicating access out of the defined range </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>other_error</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>tdef</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a3333a5a8714912adda33a35b369f7b3d.html</Path>
+    <Anchor>a3333a5a8714912adda33a35b369f7b3d</Anchor>
+    <Abstract>exception indicating other errors </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>value_type</Name>
       <APILanguage>cpp</APILanguage>
       <Type>tdef</Type>
@@ -455,18 +521,6 @@
     <Path>classnlohmann_1_1basic__json_abe197e9f3184487805cfb5bba6fd5938.html</Path>
     <Anchor>abe197e9f3184487805cfb5bba6fd5938</Anchor>
     <Abstract>construct a JSON container given an iterator range </Abstract>
-    <DeclaredIn>json.hpp</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>basic_json</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>nlohmann::basic_json</Scope>
-    </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a757e90574a742ae9cc54c97422fb3043.html</Path>
-    <Anchor>a757e90574a742ae9cc54c97422fb3043</Anchor>
-    <Abstract>construct a JSON value given an input stream </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
   <Token>
@@ -1539,6 +1593,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>insert</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a1b0a4e60d56f1fe80501ed941e122892.html</Path>
+    <Anchor>a1b0a4e60d56f1fe80501ed941e122892</Anchor>
+    <Abstract>inserts elements </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>swap</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
@@ -1671,6 +1737,30 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>operator&lt;</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>ffunc</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a7999ee3a69a4979d92e98ab1e88c8759.html</Path>
+    <Anchor>a7999ee3a69a4979d92e98ab1e88c8759</Anchor>
+    <Abstract>comparison: less than </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator&lt;</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>ffunc</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_abed3e9b4ab75f5bcbd3cd20f5af5cdab.html</Path>
+    <Anchor>abed3e9b4ab75f5bcbd3cd20f5af5cdab</Anchor>
+    <Abstract>comparison: less than </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>operator&lt;=</Name>
       <APILanguage>cpp</APILanguage>
       <Type>ffunc</Type>
@@ -1678,6 +1768,30 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a5c8bb5200f5eac10d31e26be46e5b1ac.html</Path>
     <Anchor>a5c8bb5200f5eac10d31e26be46e5b1ac</Anchor>
+    <Abstract>comparison: less than or equal </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator&lt;=</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>ffunc</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a7e368211047f725f333696aefdf39ffd.html</Path>
+    <Anchor>a7e368211047f725f333696aefdf39ffd</Anchor>
+    <Abstract>comparison: less than or equal </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator&lt;=</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>ffunc</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_ad73f88f70fe5acfa521750a8cd710026.html</Path>
+    <Anchor>ad73f88f70fe5acfa521750a8cd710026</Anchor>
     <Abstract>comparison: less than or equal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1695,6 +1809,30 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>operator&gt;</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>ffunc</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a412895af9a582869a4d369a64fb1b6d6.html</Path>
+    <Anchor>a412895af9a582869a4d369a64fb1b6d6</Anchor>
+    <Abstract>comparison: greater than </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator&gt;</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>ffunc</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a124c319566198d9f092c5bebea46ce77.html</Path>
+    <Anchor>a124c319566198d9f092c5bebea46ce77</Anchor>
+    <Abstract>comparison: greater than </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>operator&gt;=</Name>
       <APILanguage>cpp</APILanguage>
       <Type>ffunc</Type>
@@ -1702,6 +1840,30 @@
     </TokenIdentifier>
     <Path>classnlohmann_1_1basic__json_a74a943800c7f103d0990d7eef82c6453.html</Path>
     <Anchor>a74a943800c7f103d0990d7eef82c6453</Anchor>
+    <Abstract>comparison: greater than or equal </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator&gt;=</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>ffunc</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a68e3a92b3d9be1faa05c92d096299189.html</Path>
+    <Anchor>a68e3a92b3d9be1faa05c92d096299189</Anchor>
+    <Abstract>comparison: greater than or equal </Abstract>
+    <DeclaredIn>json.hpp</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>operator&gt;=</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>ffunc</Type>
+      <Scope>nlohmann::basic_json</Scope>
+    </TokenIdentifier>
+    <Path>classnlohmann_1_1basic__json_a5ee0e3e8afc7cbd932d6ed66418fa80a.html</Path>
+    <Anchor>a5ee0e3e8afc7cbd932d6ed66418fa80a</Anchor>
     <Abstract>comparison: greater than or equal </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1724,8 +1886,8 @@
       <Type>ffunc</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a34d6a60dd99e9f33b8273a1c8db5669b.html</Path>
-    <Anchor>a34d6a60dd99e9f33b8273a1c8db5669b</Anchor>
+    <Path>classnlohmann_1_1basic__json_a9e06deabe69262c3ffc5533d32856983.html</Path>
+    <Anchor>a9e06deabe69262c3ffc5533d32856983</Anchor>
     <Abstract>serialize to stream </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>
@@ -1736,8 +1898,8 @@
       <Type>ffunc</Type>
       <Scope>nlohmann::basic_json</Scope>
     </TokenIdentifier>
-    <Path>classnlohmann_1_1basic__json_a60ca396028b8d9714c6e10efbf475af6.html</Path>
-    <Anchor>a60ca396028b8d9714c6e10efbf475af6</Anchor>
+    <Path>classnlohmann_1_1basic__json_ab7285a92514fcdbe6de505ebaba92ea3.html</Path>
+    <Anchor>ab7285a92514fcdbe6de505ebaba92ea3</Anchor>
     <Abstract>deserialize from stream </Abstract>
     <DeclaredIn>json.hpp</DeclaredIn>
   </Token>

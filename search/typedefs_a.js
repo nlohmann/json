@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['size_5ftype',['size_type',['../classnlohmann_1_1basic__json_a39f2cd0b58106097e0e67bf185cc519b.html#a39f2cd0b58106097e0e67bf185cc519b',1,'nlohmann::basic_json']]],
-  ['string_5ft',['string_t',['../classnlohmann_1_1basic__json_a61f8566a1a85a424c7266fb531dca005.html#a61f8566a1a85a424c7266fb531dca005',1,'nlohmann::basic_json']]]
+  ['reference',['reference',['../classnlohmann_1_1basic__json_ac6a5eddd156c776ac75ff54cfe54a5bc.html#ac6a5eddd156c776ac75ff54cfe54a5bc',1,'nlohmann::basic_json::reference()'],['../classnlohmann_1_1basic__json_1_1iter__impl_ae09599e9cb4a947020a0265c0c4f3d5e.html#ae09599e9cb4a947020a0265c0c4f3d5e',1,'nlohmann::basic_json::iter_impl::reference()'],['../classnlohmann_1_1basic__json_1_1json__reverse__iterator_ab0021ef2007fd338615360af404dcd4e.html#ab0021ef2007fd338615360af404dcd4e',1,'nlohmann::basic_json::json_reverse_iterator::reference()']]],
+  ['reverse_5fiterator',['reverse_iterator',['../classnlohmann_1_1basic__json_ac223d5560c2b05a208c88de67376c5f2.html#ac223d5560c2b05a208c88de67376c5f2',1,'nlohmann::basic_json']]]
 ];

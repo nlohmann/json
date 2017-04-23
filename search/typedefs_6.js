@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['number_5ffloat_5ft',['number_float_t',['../classnlohmann_1_1basic__json_a88d6103cb3620410b35200ee8e313d97.html#a88d6103cb3620410b35200ee8e313d97',1,'nlohmann::basic_json']]],
-  ['number_5finteger_5ft',['number_integer_t',['../classnlohmann_1_1basic__json_a98e611d67b7bd75307de99c9358ab2dc.html#a98e611d67b7bd75307de99c9358ab2dc',1,'nlohmann::basic_json']]],
-  ['number_5funsigned_5ft',['number_unsigned_t',['../classnlohmann_1_1basic__json_ab906e29b5d83ac162e823ada2156b989.html#ab906e29b5d83ac162e823ada2156b989',1,'nlohmann::basic_json']]]
+  ['json',['json',['../namespacenlohmann_a2bfd99e845a2e5cd90aeaf1b1431f474.html#a2bfd99e845a2e5cd90aeaf1b1431f474',1,'nlohmann']]],
+  ['json_5fserializer',['json_serializer',['../classnlohmann_1_1basic__json_a7768841baaaa7a21098a401c932efaff.html#a7768841baaaa7a21098a401c932efaff',1,'nlohmann::basic_json']]]
 ];
