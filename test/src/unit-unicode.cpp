@@ -34,6 +34,25 @@ using nlohmann::json;
 
 #include <fstream>
 
+std::string create_string(int byte1, int byte2 = -1, int byte3 = -1, int byte4 = -1)
+{
+    std::string result = "\"" + std::string(1, static_cast<char>(byte1));
+    if (byte2 != -1)
+    {
+        result += std::string(1, static_cast<char>(byte2));
+    }
+    if (byte3 != -1)
+    {
+        result += std::string(1, static_cast<char>(byte3));
+    }
+    if (byte4 != -1)
+    {
+        result += std::string(1, static_cast<char>(byte4));
+    }
+    result += "\"";
+    return result;
+}
+
 TEST_CASE("RFC 3629", "[hide]")
 {
     /*
@@ -55,25 +74,6 @@ TEST_CASE("RFC 3629", "[hide]")
                       %xF4 %x80-8F 2( UTF8-tail )
         UTF8-tail   = %x80-BF
     */
-
-    auto create_string = [](int byte1, int byte2 = -1, int byte3 = -1, int byte4 = -1)
-    {
-        std::string result = "\"" + std::string(1, static_cast<char>(byte1));
-        if (byte2 != -1)
-        {
-            result += std::string(1, static_cast<char>(byte2));
-        }
-        if (byte3 != -1)
-        {
-            result += std::string(1, static_cast<char>(byte3));
-        }
-        if (byte4 != -1)
-        {
-            result += std::string(1, static_cast<char>(byte4));
-        }
-        result += "\"";
-        return result;
-    };
 
     SECTION("ill-formed first byte")
     {
