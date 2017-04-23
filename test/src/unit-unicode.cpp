@@ -34,6 +34,1058 @@ using nlohmann::json;
 
 #include <fstream>
 
+TEST_CASE("RFC 3629")
+{
+    /*
+    RFC 3629 describes in Sect. 4 the syntax of UTF-8 byte sequences as
+    follows:
+
+        A UTF-8 string is a sequence of octets representing a sequence of UCS
+        characters.  An octet sequence is valid UTF-8 only if it matches the
+        following syntax, which is derived from the rules for encoding UTF-8
+        and is expressed in the ABNF of [RFC2234].
+
+        UTF8-octets = *( UTF8-char )
+        UTF8-char   = UTF8-1 / UTF8-2 / UTF8-3 / UTF8-4
+        UTF8-1      = %x00-7F
+        UTF8-2      = %xC2-DF UTF8-tail
+        UTF8-3      = %xE0 %xA0-BF UTF8-tail / %xE1-EC 2( UTF8-tail ) /
+                      %xED %x80-9F UTF8-tail / %xEE-EF 2( UTF8-tail )
+        UTF8-4      = %xF0 %x90-BF 2( UTF8-tail ) / %xF1-F3 3( UTF8-tail ) /
+                      %xF4 %x80-8F 2( UTF8-tail )
+        UTF8-tail   = %x80-BF
+    */
+
+    auto create_string = [](int byte1, int byte2 = -1, int byte3 = -1, int byte4 = -1)
+    {
+        std::string result = "\"" + std::string(1, static_cast<char>(byte1));
+        if (byte2 != -1)
+        {
+            result += std::string(1, static_cast<char>(byte2));
+        }
+        if (byte3 != -1)
+        {
+            result += std::string(1, static_cast<char>(byte3));
+        }
+        if (byte4 != -1)
+        {
+            result += std::string(1, static_cast<char>(byte4));
+        }
+        result += "\"";
+        return result;
+    };
+
+    SECTION("ill-formed first byte")
+    {
+        for (int byte1 = 0x80; byte1 <= 0xC1; ++byte1)
+        {
+            const auto json_string = create_string(byte1);
+            CAPTURE(byte1);
+            CAPTURE(json_string);
+            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+        }
+
+        for (int byte1 = 0xF5; byte1 <= 0xFF; ++byte1)
+        {
+            const auto json_string = create_string(byte1);
+            CAPTURE(byte1);
+            CAPTURE(json_string);
+            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+        }
+    }
+
+    SECTION("UTF8-1 (x00-x7F)")
+    {
+        SECTION("well-formed")
+        {
+            for (int byte1 = 0x00; byte1 <= 0x7F; ++byte1)
+            {
+                const auto json_string = create_string(byte1);
+                CAPTURE(byte1);
+                CAPTURE(json_string);
+
+                // unescaped control characters are parse errors in JSON
+                if (0x00 <= byte1 and byte1 <= 0x1F)
+                {
+                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    continue;
+                }
+
+                // a single quote is a parse error in JSON
+                if (byte1 == 0x22)
+                {
+                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    continue;
+                }
+
+                // a single backslash is a parse error in JSON
+                if (byte1 == 0x5C)
+                {
+                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    continue;
+                }
+
+                // all other characters are OK
+                CHECK_NOTHROW(json::parse(json_string));
+            }
+        }
+    }
+
+    SECTION("UTF8-2 (xC2-xDF UTF8-tail)")
+    {
+        SECTION("well-formed")
+        {
+            for (int byte1 = 0xC2; byte1 <= 0xDF; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    const auto json_string = create_string(byte1, byte2);
+                    CAPTURE(byte1);
+                    CAPTURE(byte2);
+                    CAPTURE(json_string);
+                    CHECK_NOTHROW(json::parse(json_string));
+                }
+            }
+        }
+
+        SECTION("ill-formed: missing second byte")
+        {
+            for (int byte1 = 0xC2; byte1 <= 0xDF; ++byte1)
+            {
+                const auto json_string = create_string(byte1);
+                CAPTURE(byte1);
+                CAPTURE(json_string);
+                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+            }
+        }
+
+#ifdef WRONG_SECOND
+        SECTION("ill-formed: wrong second byte")
+        {
+            for (int byte1 = 0xC2; byte1 <= 0xDF; ++byte1)
+            {
+                for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
+                {
+                    // skip correct second byte
+                    if (0x80 <= byte2 and byte2 <= 0xBF)
+                    {
+                        continue;
+                    }
+
+                    const auto json_string = create_string(byte1, byte2);
+                    CAPTURE(byte1);
+                    CAPTURE(byte2);
+                    CAPTURE(json_string);
+                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                }
+            }
+        }
+#endif
+    }
+
+    SECTION("UTF8-3 (xE0 xA0-BF UTF8-tail)")
+    {
+        SECTION("well-formed")
+        {
+            for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
+            {
+                for (int byte2 = 0xA0; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_NOTHROW(json::parse(json_string));
+                    }
+                }
+            }
+        }
+
+        SECTION("ill-formed: missing second byte")
+        {
+            for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
+            {
+                const auto json_string = create_string(byte1);
+                CAPTURE(byte1);
+                CAPTURE(json_string);
+                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+            }
+        }
+
+        SECTION("ill-formed: missing third byte")
+        {
+            for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
+            {
+                for (int byte2 = 0xA0; byte2 <= 0xBF; ++byte2)
+                {
+                    const auto json_string = create_string(byte1, byte2);
+                    CAPTURE(byte1);
+                    CAPTURE(byte2);
+                    CAPTURE(json_string);
+                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                }
+            }
+        }
+
+#ifdef WRONG_SECOND
+        SECTION("ill-formed: wrong second byte")
+        {
+            for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
+            {
+                for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
+                {
+                    // skip correct second byte
+                    if (0xA0 <= byte2 and byte2 <= 0xBF)
+                    {
+                        continue;
+                    }
+
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    }
+                }
+            }
+        }
+#endif
+
+#ifdef WRONG_THIRD
+        SECTION("ill-formed: wrong third byte")
+        {
+            for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
+            {
+                for (int byte2 = 0xA0; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    {
+                        // skip correct third byte
+                        if (0x80 <= byte3 and byte3 <= 0xBF)
+                        {
+                            continue;
+                        }
+
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    }
+                }
+            }
+        }
+#endif
+    }
+
+    SECTION("UTF8-3 (xE1-xEC UTF8-tail UTF8-tail)")
+    {
+        SECTION("well-formed")
+        {
+            for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_NOTHROW(json::parse(json_string));
+                    }
+                }
+            }
+        }
+
+        SECTION("ill-formed: missing second byte")
+        {
+            for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
+            {
+                const auto json_string = create_string(byte1);
+                CAPTURE(byte1);
+                CAPTURE(json_string);
+                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+            }
+        }
+
+        SECTION("ill-formed: missing third byte")
+        {
+            for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    const auto json_string = create_string(byte1, byte2);
+                    CAPTURE(byte1);
+                    CAPTURE(byte2);
+                    CAPTURE(json_string);
+                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                }
+            }
+        }
+
+#ifdef WRONG_SECOND
+        SECTION("ill-formed: wrong second byte")
+        {
+            for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
+            {
+                for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
+                {
+                    // skip correct second byte
+                    if (0x80 <= byte2 and byte2 <= 0xBF)
+                    {
+                        continue;
+                    }
+
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    }
+                }
+            }
+        }
+#endif
+
+#ifdef WRONG_THIRD
+        SECTION("ill-formed: wrong third byte")
+        {
+            for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    {
+                        // skip correct third byte
+                        if (0x80 <= byte3 and byte3 <= 0xBF)
+                        {
+                            continue;
+                        }
+
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    }
+                }
+            }
+        }
+#endif
+    }
+
+    SECTION("UTF8-3 (xED x80-9F UTF8-tail)")
+    {
+        SECTION("well-formed")
+        {
+            for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0x9F; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_NOTHROW(json::parse(json_string));
+                    }
+                }
+            }
+        }
+
+        SECTION("ill-formed: missing second byte")
+        {
+            for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
+            {
+                const auto json_string = create_string(byte1);
+                CAPTURE(byte1);
+                CAPTURE(json_string);
+                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+            }
+        }
+
+        SECTION("ill-formed: missing third byte")
+        {
+            for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0x9F; ++byte2)
+                {
+                    const auto json_string = create_string(byte1, byte2);
+                    CAPTURE(byte1);
+                    CAPTURE(byte2);
+                    CAPTURE(json_string);
+                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                }
+            }
+        }
+
+#ifdef WRONG_SECOND
+        SECTION("ill-formed: wrong second byte")
+        {
+            for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
+            {
+                for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
+                {
+                    // skip correct second byte
+                    if (0x80 <= byte2 and byte2 <= 0x9F)
+                    {
+                        continue;
+                    }
+
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    }
+                }
+            }
+        }
+#endif
+
+#ifdef WRONG_THIRD
+        SECTION("ill-formed: wrong third byte")
+        {
+            for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0x9F; ++byte2)
+                {
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    {
+                        // skip correct third byte
+                        if (0x80 <= byte3 and byte3 <= 0xBF)
+                        {
+                            continue;
+                        }
+
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    }
+                }
+            }
+        }
+#endif
+    }
+
+    SECTION("UTF8-3 (xEE-xEF UTF8-tail UTF8-tail)")
+    {
+        SECTION("well-formed")
+        {
+            for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_NOTHROW(json::parse(json_string));
+                    }
+                }
+            }
+        }
+
+        SECTION("ill-formed: missing second byte")
+        {
+            for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
+            {
+                const auto json_string = create_string(byte1);
+                CAPTURE(byte1);
+                CAPTURE(json_string);
+                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+            }
+        }
+
+        SECTION("ill-formed: missing third byte")
+        {
+            for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    const auto json_string = create_string(byte1, byte2);
+                    CAPTURE(byte1);
+                    CAPTURE(byte2);
+                    CAPTURE(json_string);
+                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                }
+            }
+        }
+
+#ifdef WRONG_SECOND
+        SECTION("ill-formed: wrong second byte")
+        {
+            for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
+            {
+                for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
+                {
+                    // skip correct second byte
+                    if (0x80 <= byte2 and byte2 <= 0xBF)
+                    {
+                        continue;
+                    }
+
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    }
+                }
+            }
+        }
+#endif
+
+#ifdef WRONG_THIRD
+        SECTION("ill-formed: wrong third byte")
+        {
+            for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    {
+                        // skip correct third byte
+                        if (0x80 <= byte3 and byte3 <= 0xBF)
+                        {
+                            continue;
+                        }
+
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    }
+                }
+            }
+        }
+#endif
+    }
+
+    SECTION("UTF8-4 (xF0 x90-BF UTF8-tail UTF8-tail)")
+    {
+        SECTION("well-formed")
+        {
+            for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
+            {
+                for (int byte2 = 0x90; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
+                        {
+                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                            CAPTURE(byte1);
+                            CAPTURE(byte2);
+                            CAPTURE(byte3);
+                            CAPTURE(byte4);
+                            CAPTURE(json_string);
+                            CHECK_NOTHROW(json::parse(json_string));
+                        }
+                    }
+                }
+            }
+        }
+
+        SECTION("ill-formed: missing second byte")
+        {
+            for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
+            {
+                const auto json_string = create_string(byte1);
+                CAPTURE(byte1);
+                CAPTURE(json_string);
+                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+            }
+        }
+
+        SECTION("ill-formed: missing third byte")
+        {
+            for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
+            {
+                for (int byte2 = 0x90; byte2 <= 0xBF; ++byte2)
+                {
+                    const auto json_string = create_string(byte1, byte2);
+                    CAPTURE(byte1);
+                    CAPTURE(byte2);
+                    CAPTURE(json_string);
+                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                }
+            }
+        }
+
+        SECTION("ill-formed: missing fourth byte")
+        {
+            for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
+            {
+                for (int byte2 = 0x90; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    }
+                }
+            }
+        }
+
+#ifdef WRONG_SECOND
+        SECTION("ill-formed: wrong second byte")
+        {
+            for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
+            {
+                for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
+                {
+                    // skip correct second byte
+                    if (0x90 <= byte2 and byte2 <= 0xBF)
+                    {
+                        continue;
+                    }
+
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
+                        {
+                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                            CAPTURE(byte1);
+                            CAPTURE(byte2);
+                            CAPTURE(byte3);
+                            CAPTURE(byte4);
+                            CAPTURE(json_string);
+                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        }
+                    }
+                }
+            }
+        }
+#endif
+
+#ifdef WRONG_THIRD
+        SECTION("ill-formed: wrong third byte")
+        {
+            for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
+            {
+                for (int byte2 = 0x90; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    {
+                        // skip correct third byte
+                        if (0x80 <= byte3 and byte3 <= 0xBF)
+                        {
+                            continue;
+                        }
+
+                        for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
+                        {
+                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                            CAPTURE(byte1);
+                            CAPTURE(byte2);
+                            CAPTURE(byte3);
+                            CAPTURE(byte4);
+                            CAPTURE(json_string);
+                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        }
+                    }
+                }
+            }
+        }
+#endif
+
+#ifdef WRONG_FOURTH
+        SECTION("ill-formed: wrong fourth byte")
+        {
+            for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
+            {
+                for (int byte2 = 0x90; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        {
+                            for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
+                            {
+                                // skip correct second byte
+                                if (0x80 <= byte3 and byte3 <= 0xBF)
+                                {
+                                    continue;
+                                }
+
+                                const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                                CAPTURE(byte1);
+                                CAPTURE(byte2);
+                                CAPTURE(byte3);
+                                CAPTURE(byte4);
+                                CAPTURE(json_string);
+                                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+#endif
+    }
+
+    SECTION("UTF8-4 (xF1-F3 UTF8-tail UTF8-tail UTF8-tail)")
+    {
+        SECTION("well-formed")
+        {
+            for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
+                        {
+                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                            CAPTURE(byte1);
+                            CAPTURE(byte2);
+                            CAPTURE(byte3);
+                            CAPTURE(byte4);
+                            CAPTURE(json_string);
+                            CHECK_NOTHROW(json::parse(json_string));
+                        }
+                    }
+                }
+            }
+        }
+
+        SECTION("ill-formed: missing second byte")
+        {
+            for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
+            {
+                const auto json_string = create_string(byte1);
+                CAPTURE(byte1);
+                CAPTURE(json_string);
+                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+            }
+        }
+
+        SECTION("ill-formed: missing third byte")
+        {
+            for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    const auto json_string = create_string(byte1, byte2);
+                    CAPTURE(byte1);
+                    CAPTURE(byte2);
+                    CAPTURE(json_string);
+                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                }
+            }
+        }
+
+        SECTION("ill-formed: missing fourth byte")
+        {
+            for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    }
+                }
+            }
+        }
+
+#ifdef WRONG_SECOND
+        SECTION("ill-formed: wrong second byte")
+        {
+            for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
+            {
+                for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
+                {
+                    // skip correct second byte
+                    if (0x80 <= byte2 and byte2 <= 0xBF)
+                    {
+                        continue;
+                    }
+
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
+                        {
+                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                            CAPTURE(byte1);
+                            CAPTURE(byte2);
+                            CAPTURE(byte3);
+                            CAPTURE(byte4);
+                            CAPTURE(json_string);
+                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        }
+                    }
+                }
+            }
+        }
+#endif
+
+#ifdef WRONG_THIRD
+        SECTION("ill-formed: wrong third byte")
+        {
+            for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    {
+                        // skip correct third byte
+                        if (0x80 <= byte3 and byte3 <= 0xBF)
+                        {
+                            continue;
+                        }
+
+                        for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
+                        {
+                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                            CAPTURE(byte1);
+                            CAPTURE(byte2);
+                            CAPTURE(byte3);
+                            CAPTURE(byte4);
+                            CAPTURE(json_string);
+                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        }
+                    }
+                }
+            }
+        }
+#endif
+
+#ifdef WRONG_FOURTH
+        SECTION("ill-formed: wrong fourth byte")
+        {
+            for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
+                        {
+                            // skip correct second byte
+                            if (0x80 <= byte3 and byte3 <= 0xBF)
+                            {
+                                continue;
+                            }
+
+                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                            CAPTURE(byte1);
+                            CAPTURE(byte2);
+                            CAPTURE(byte3);
+                            CAPTURE(byte4);
+                            CAPTURE(json_string);
+                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        }
+                    }
+                }
+            }
+        }
+#endif
+    }
+
+    SECTION("UTF8-4 (xF4 x80-8F UTF8-tail UTF8-tail)")
+    {
+        SECTION("well-formed")
+        {
+            for (int byte1 = 0xF4; byte1 <= 0xF4; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0x8F; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
+                        {
+                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                            CAPTURE(byte1);
+                            CAPTURE(byte2);
+                            CAPTURE(byte3);
+                            CAPTURE(byte4);
+                            CAPTURE(json_string);
+                            CHECK_NOTHROW(json::parse(json_string));
+                        }
+                    }
+                }
+            }
+        }
+
+        SECTION("ill-formed: missing second byte")
+        {
+            for (int byte1 = 0xF4; byte1 <= 0xF4; ++byte1)
+            {
+                const auto json_string = create_string(byte1);
+                CAPTURE(byte1);
+                CAPTURE(json_string);
+                CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+            }
+        }
+
+        SECTION("ill-formed: missing third byte")
+        {
+            for (int byte1 = 0xF4; byte1 <= 0xF4; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0x8F; ++byte2)
+                {
+                    const auto json_string = create_string(byte1, byte2);
+                    CAPTURE(byte1);
+                    CAPTURE(byte2);
+                    CAPTURE(json_string);
+                    CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                }
+            }
+        }
+
+        SECTION("ill-formed: missing fourth byte")
+        {
+            for (int byte1 = 0xF4; byte1 <= 0xF4; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0x8F; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        const auto json_string = create_string(byte1, byte2, byte3);
+                        CAPTURE(byte1);
+                        CAPTURE(byte2);
+                        CAPTURE(byte3);
+                        CAPTURE(json_string);
+                        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                    }
+                }
+            }
+        }
+
+#ifdef WRONG_SECOND
+        SECTION("ill-formed: wrong second byte")
+        {
+            for (int byte1 = 0xF4; byte1 <= 0xF4; ++byte1)
+            {
+                for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
+                {
+                    // skip correct second byte
+                    if (0x80 <= byte2 and byte2 <= 0x8F)
+                    {
+                        continue;
+                    }
+
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
+                        {
+                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                            CAPTURE(byte1);
+                            CAPTURE(byte2);
+                            CAPTURE(byte3);
+                            CAPTURE(byte4);
+                            CAPTURE(json_string);
+                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        }
+                    }
+                }
+            }
+        }
+#endif
+
+#ifdef WRONG_THIRD
+        SECTION("ill-formed: wrong third byte")
+        {
+            for (int byte1 = 0xF4; byte1 <= 0xF4; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0x8F; ++byte2)
+                {
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    {
+                        // skip correct third byte
+                        if (0x80 <= byte3 and byte3 <= 0xBF)
+                        {
+                            continue;
+                        }
+
+                        for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
+                        {
+                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                            CAPTURE(byte1);
+                            CAPTURE(byte2);
+                            CAPTURE(byte3);
+                            CAPTURE(byte4);
+                            CAPTURE(json_string);
+                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        }
+                    }
+                }
+            }
+        }
+#endif
+
+#ifdef WRONG_FOURTH
+        SECTION("ill-formed: wrong fourth byte")
+        {
+            for (int byte1 = 0xF4; byte1 <= 0xF4; ++byte1)
+            {
+                for (int byte2 = 0x80; byte2 <= 0x8F; ++byte2)
+                {
+                    for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                    {
+                        for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
+                        {
+                            // skip correct second byte
+                            if (0x80 <= byte3 and byte3 <= 0xBF)
+                            {
+                                continue;
+                            }
+
+                            const auto json_string = create_string(byte1, byte2, byte3, byte4);
+                            CAPTURE(byte1);
+                            CAPTURE(byte2);
+                            CAPTURE(byte3);
+                            CAPTURE(byte4);
+                            CAPTURE(json_string);
+                            CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+                        }
+                    }
+                }
+            }
+        }
+#endif
+    }
+}
+
 TEST_CASE("Unicode", "[hide]")
 {
     /* NOTE: to_unicode is not used any more
