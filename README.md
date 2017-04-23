@@ -835,6 +835,7 @@ I deeply appreciate the help of the following people.
 - [Krzysztof Woś](https://github.com/krzysztofwos) made exceptions more visible.
 - [ftillier](https://github.com/ftillier) fixed a compiler warning.
 - [tinloaf](https://github.com/tinloaf) made sure all pushed warnings are properly popped.
+- [Fytch](https://github.com/Fytch) found a bug in the documentation.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

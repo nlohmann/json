@@ -254,8 +254,8 @@ The container functions known from STL have been extended to support the differe
   <tr>
     <td rowspan="2">lookup</td>
     <td>`find`</td>
-    <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink (returns `end()`)</td>
     <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink</td>
+    <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink (returns `end()`)</td>
     <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink (returns `end()`)</td>
     <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink (returns `end()`)</td>
     <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink (returns `end()`)</td>
@@ -263,8 +263,8 @@ The container functions known from STL have been extended to support the differe
   </tr>
   <tr>
     <td>`count`</td>
-    <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
     <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink</td>
+    <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
     <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
     <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
     <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
