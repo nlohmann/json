@@ -34,7 +34,7 @@ using nlohmann::json;
 
 #include <fstream>
 
-TEST_CASE("RFC 3629")
+TEST_CASE("RFC 3629", "[hide]")
 {
     /*
     RFC 3629 describes in Sect. 4 the syntax of UTF-8 byte sequences as
@@ -264,7 +264,7 @@ TEST_CASE("RFC 3629")
             {
                 for (int byte2 = 0xA0; byte2 <= 0xBF; ++byte2)
                 {
-                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
                         // skip correct third byte
                         if (0x80 <= byte3 and byte3 <= 0xBF)
@@ -366,7 +366,7 @@ TEST_CASE("RFC 3629")
             {
                 for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
                 {
-                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
                         // skip correct third byte
                         if (0x80 <= byte3 and byte3 <= 0xBF)
@@ -468,7 +468,7 @@ TEST_CASE("RFC 3629")
             {
                 for (int byte2 = 0x80; byte2 <= 0x9F; ++byte2)
                 {
-                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
                         // skip correct third byte
                         if (0x80 <= byte3 and byte3 <= 0xBF)
@@ -570,7 +570,7 @@ TEST_CASE("RFC 3629")
             {
                 for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
                 {
-                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
                         // skip correct third byte
                         if (0x80 <= byte3 and byte3 <= 0xBF)
@@ -699,7 +699,7 @@ TEST_CASE("RFC 3629")
             {
                 for (int byte2 = 0x90; byte2 <= 0xBF; ++byte2)
                 {
-                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
                         // skip correct third byte
                         if (0x80 <= byte3 and byte3 <= 0xBF)
@@ -865,7 +865,7 @@ TEST_CASE("RFC 3629")
             {
                 for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
                 {
-                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
                         // skip correct third byte
                         if (0x80 <= byte3 and byte3 <= 0xBF)
@@ -1029,7 +1029,7 @@ TEST_CASE("RFC 3629")
             {
                 for (int byte2 = 0x80; byte2 <= 0x8F; ++byte2)
                 {
-                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
                         // skip correct third byte
                         if (0x80 <= byte3 and byte3 <= 0xBF)
