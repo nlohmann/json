@@ -159,7 +159,6 @@ TEST_CASE("RFC 3629", "[hide]")
             }
         }
 
-#ifdef WRONG_SECOND
         SECTION("ill-formed: wrong second byte")
         {
             for (int byte1 = 0xC2; byte1 <= 0xDF; ++byte1)
@@ -180,7 +179,6 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
     }
 
     SECTION("UTF8-3 (xE0 xA0-BF UTF8-tail)")
@@ -230,7 +228,6 @@ TEST_CASE("RFC 3629", "[hide]")
             }
         }
 
-#ifdef WRONG_SECOND
         SECTION("ill-formed: wrong second byte")
         {
             for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
@@ -255,9 +252,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
 
-#ifdef WRONG_THIRD
         SECTION("ill-formed: wrong third byte")
         {
             for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
@@ -282,7 +277,6 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
     }
 
     SECTION("UTF8-3 (xE1-xEC UTF8-tail UTF8-tail)")
@@ -332,7 +326,6 @@ TEST_CASE("RFC 3629", "[hide]")
             }
         }
 
-#ifdef WRONG_SECOND
         SECTION("ill-formed: wrong second byte")
         {
             for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
@@ -357,9 +350,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
 
-#ifdef WRONG_THIRD
         SECTION("ill-formed: wrong third byte")
         {
             for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
@@ -384,7 +375,6 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
     }
 
     SECTION("UTF8-3 (xED x80-9F UTF8-tail)")
@@ -434,7 +424,6 @@ TEST_CASE("RFC 3629", "[hide]")
             }
         }
 
-#ifdef WRONG_SECOND
         SECTION("ill-formed: wrong second byte")
         {
             for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
@@ -459,9 +448,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
 
-#ifdef WRONG_THIRD
         SECTION("ill-formed: wrong third byte")
         {
             for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
@@ -486,7 +473,6 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
     }
 
     SECTION("UTF8-3 (xEE-xEF UTF8-tail UTF8-tail)")
@@ -536,7 +522,6 @@ TEST_CASE("RFC 3629", "[hide]")
             }
         }
 
-#ifdef WRONG_SECOND
         SECTION("ill-formed: wrong second byte")
         {
             for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
@@ -561,9 +546,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
 
-#ifdef WRONG_THIRD
         SECTION("ill-formed: wrong third byte")
         {
             for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
@@ -588,7 +571,6 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
     }
 
     SECTION("UTF8-4 (xF0 x90-BF UTF8-tail UTF8-tail)")
@@ -661,7 +643,6 @@ TEST_CASE("RFC 3629", "[hide]")
             }
         }
 
-#ifdef WRONG_SECOND
         SECTION("ill-formed: wrong second byte")
         {
             for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
@@ -690,9 +671,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
 
-#ifdef WRONG_THIRD
         SECTION("ill-formed: wrong third byte")
         {
             for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
@@ -721,9 +700,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
 
-#ifdef WRONG_FOURTH
         SECTION("ill-formed: wrong fourth byte")
         {
             for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
@@ -754,7 +731,6 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
     }
 
     SECTION("UTF8-4 (xF1-F3 UTF8-tail UTF8-tail UTF8-tail)")
@@ -827,7 +803,6 @@ TEST_CASE("RFC 3629", "[hide]")
             }
         }
 
-#ifdef WRONG_SECOND
         SECTION("ill-formed: wrong second byte")
         {
             for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
@@ -856,9 +831,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
 
-#ifdef WRONG_THIRD
         SECTION("ill-formed: wrong third byte")
         {
             for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
@@ -887,9 +860,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
 
-#ifdef WRONG_FOURTH
         SECTION("ill-formed: wrong fourth byte")
         {
             for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
@@ -918,7 +889,6 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
     }
 
     SECTION("UTF8-4 (xF4 x80-8F UTF8-tail UTF8-tail)")
@@ -991,7 +961,6 @@ TEST_CASE("RFC 3629", "[hide]")
             }
         }
 
-#ifdef WRONG_SECOND
         SECTION("ill-formed: wrong second byte")
         {
             for (int byte1 = 0xF4; byte1 <= 0xF4; ++byte1)
@@ -1020,9 +989,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
 
-#ifdef WRONG_THIRD
         SECTION("ill-formed: wrong third byte")
         {
             for (int byte1 = 0xF4; byte1 <= 0xF4; ++byte1)
@@ -1051,9 +1018,7 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
 
-#ifdef WRONG_FOURTH
         SECTION("ill-formed: wrong fourth byte")
         {
             for (int byte1 = 0xF4; byte1 <= 0xF4; ++byte1)
@@ -1082,7 +1047,6 @@ TEST_CASE("RFC 3629", "[hide]")
                 }
             }
         }
-#endif
     }
 }
 
