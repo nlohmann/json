@@ -6605,6 +6605,7 @@ class basic_json
     // output adapters //
     /////////////////////
 
+    /// abstract output adapter interface
     template<typename CharType>
     class output_adapter
     {
@@ -6629,9 +6630,11 @@ class basic_json
         }
     };
 
+    /// a type to simplify interfaces
     template<typename CharType>
     using output_adapter_t = std::shared_ptr<output_adapter<CharType>>;
 
+    /// output adapter for byte vectors
     template<typename CharType>
     class output_vector_adapter : public output_adapter<CharType>
     {
@@ -6654,6 +6657,7 @@ class basic_json
         std::vector<CharType>& v;
     };
 
+    /// putput adatpter for output streams
     template<typename CharType>
     class output_stream_adapter : public output_adapter<CharType>
     {
@@ -6676,6 +6680,7 @@ class basic_json
         std::basic_ostream<CharType>& stream;
     };
 
+    /// output adapter for basic_string
     template<typename CharType>
     class output_string_adapter : public output_adapter<CharType>
     {
@@ -8773,7 +8778,7 @@ class basic_json
         }
     };
 
-    // a type to simplify interfaces
+    /// a type to simplify interfaces
     using input_adapter_t = std::shared_ptr<input_adapter>;
 
     /// input adapter for cached stream input
@@ -8930,17 +8935,34 @@ class basic_json
     /// @{
 
   private:
+    /*!
+    @brief deserialization of CBOR and MessagePack values
+    */
     class binary_reader
     {
       public:
+        /*!
+        @brief create a binary reader
+
+        @param[in] adapter  input adapter to read from
+        */
         explicit binary_reader(input_adapter_t adapter)
             : ia(adapter), is_little_endian(little_endianess())
-        {}
+        {
+            assert(ia);
+        }
 
         /*!
+        @brief create a JSON value from CBOR input
+
         @param[in] get_char  whether a new character should be retrieved from
                              the input (true, default) or whether the last
                              read character should be considered instead
+
+        @return JSON value created from CBOR input
+
+        @throw parse_error.110 if input ended unexpectedly
+        @throw parse_error.112 if unsupported byte was read
         */
         basic_json parse_cbor(const bool get_char = true)
         {
@@ -9297,12 +9319,13 @@ class basic_json
                     check_eof();
 
                     // code from RFC 7049, Appendix D, Figure 3:
-                    // As half-precision floating-point numbers were only added to
-                    // IEEE 754 in 2008, today's programming platforms often still
-                    // only have limited support for them. It is very easy to
-                    // include at least decoding support for them even without such
-                    // support. An example of a small decoder for half-precision
-                    // floating-point numbers in the C language is shown in Fig. 3.
+                    // As half-precision floating-point numbers were only added
+                    // to IEEE 754 in 2008, today's programming platforms often
+                    // still only have limited support for them. It is very
+                    // easy to include at least decoding support for them even
+                    // without such support. An example of a small decoder for
+                    // half-precision floating-point numbers in the C language
+                    // is shown in Fig. 3.
                     const int half = (byte1 << 8) + byte2;
                     const int exp = (half >> 10) & 0x1f;
                     const int mant = half & 0x3ff;
@@ -9343,6 +9366,14 @@ class basic_json
             }
         }
 
+        /*!
+        @brief create a JSON value from MessagePack input
+
+        @return JSON value created from MessagePack input
+
+        @throw parse_error.110 if input ended unexpectedly
+        @throw parse_error.112 if unsupported byte was read
+        */
         basic_json parse_msgpack()
         {
             switch (get())
@@ -9745,23 +9776,52 @@ class basic_json
             }
         }
 
-      private:
-        // from http://stackoverflow.com/a/1001328/266378
-        static bool little_endianess()
+        /*!
+        @brief determine system byte order
+
+        @return true iff system's byte order is little endian
+
+        @note from http://stackoverflow.com/a/1001328/266378
+        */
+        static bool little_endianess() noexcept
         {
             int num = 1;
             return (*reinterpret_cast<char*>(&num) == 1);
         }
 
+      private:
+        /*!
+        @brief get next character from the input
+
+        This function provides the interface to the used input adapter. It does
+        not throw in case the input reached EOF, but returns
+        `std::char_traits<char>::eof()` in that case.
+
+        @return character read from the input
+        */
         int get()
         {
             ++chars_read;
             return (current = ia->get_character());
         }
 
+        /*
+        @brief read a number from the input
+
+        @tparam T the type of the number
+
+        @return number of type @a T
+
+        @note This function needs to respect the system's endianess, because
+              bytes in CBOR and MessagePack are stored in network order (big
+              endian) and therefore need reordering on little endian systems.
+
+        @throw parse_error.110 if input has less than `sizeof(T)` bytes
+        */
         template<typename T>
         T get_number()
         {
+            // step 1: read input into array with system's byte order
             std::array<uint8_t, sizeof(T)> vec;
             for (size_t i = 0; i < sizeof(T); ++i)
             {
@@ -9779,11 +9839,21 @@ class basic_json
                 }
             }
 
+            // step 2: convert array into number of type T and return
             T result;
             std::memcpy(&result, vec.data(), sizeof(T));
             return result;
         }
 
+        /*!
+        @brief create a string by reading characters from the input
+
+        @param[in] len number of bytes to read
+
+        @return string created by reading @a len bytes
+
+        @throw parse_error.110 if input has less than @a len bytes
+        */
         std::string get_string(const size_t len)
         {
             std::string result;
@@ -9796,6 +9866,18 @@ class basic_json
             return result;
         }
 
+        /*!
+        @brief reads a CBOR string
+
+        This function first reads starting bytes to determine the expected
+        string length and then copies this number of bytes into a string.
+        Additionally, CBOR's strings with indefinite lengths are supported.
+
+        @return string
+
+        @throw parse_error.110 if input ended
+        @throw parse_error.113 if an unexpexted byte is read
+        */
         std::string get_cbor_string()
         {
             check_eof();
@@ -9876,6 +9958,17 @@ class basic_json
             }
         }
 
+        /*!
+        @brief reads a MessagePack string
+
+        This function first reads starting bytes to determine the expected
+        string length and then copies this number of bytes into a string.
+
+        @return string
+
+        @throw parse_error.110 if input ended
+        @throw parse_error.113 if an unexpexted byte is read
+        */
         std::string get_msgpack_string()
         {
             check_eof();
@@ -9947,7 +10040,11 @@ class basic_json
             }
         }
 
-        void check_eof()
+        /*!
+        @brief check if input ended
+        @throw parse_error.110 if input ended
+        */
+        void check_eof() const
         {
             if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
             {
@@ -9969,17 +10066,26 @@ class basic_json
         const bool is_little_endian = true;
     };
 
+    /*!
+    @brief serialization to CBOR and MessagePack values
+    */
     class binary_writer
     {
       public:
-        binary_writer()
-            : is_little_endian(little_endianess())
-        {}
+        /*!
+        @brief create a binary writer
 
+        @param[in] adapter  output adapter to write to
+        */
         explicit binary_writer(output_adapter_t<uint8_t> adapter)
-            : is_little_endian(little_endianess()), oa(adapter)
-        {}
+            : is_little_endian(binary_reader::little_endianess()), oa(adapter)
+        {
+            assert(oa);
+        }
 
+        /*!
+        @brief[in] j  JSON value to serialize
+        */
         void write_cbor(const basic_json& j)
         {
             switch (j.type())
@@ -10100,6 +10206,7 @@ class basic_json
 
                 case value_t::string:
                 {
+                    // step 1: write control byte and the string length
                     const auto N = j.m_value.string->size();
                     if (N <= 0x17)
                     {
@@ -10128,7 +10235,7 @@ class basic_json
                     }
                     // LCOV_EXCL_STOP
 
-                    // append string
+                    // step 2: write the string
                     oa->write_characters(reinterpret_cast<const uint8_t*>(j.m_value.string->c_str()),
                                          j.m_value.string->size());
                     break;
@@ -10136,6 +10243,7 @@ class basic_json
 
                 case value_t::array:
                 {
+                    // step 1: write control byte and the array size
                     const auto N = j.m_value.array->size();
                     if (N <= 0x17)
                     {
@@ -10164,7 +10272,7 @@ class basic_json
                     }
                     // LCOV_EXCL_STOP
 
-                    // append each element
+                    // step 2: write each element
                     for (const auto& el : *j.m_value.array)
                     {
                         write_cbor(el);
@@ -10174,6 +10282,7 @@ class basic_json
 
                 case value_t::object:
                 {
+                    // step 1: write control byte and the object size
                     const auto N = j.m_value.object->size();
                     if (N <= 0x17)
                     {
@@ -10202,7 +10311,7 @@ class basic_json
                     }
                     // LCOV_EXCL_STOP
 
-                    // append each element
+                    // step 2: write each element
                     for (const auto& el : *j.m_value.object)
                     {
                         write_cbor(el.first);
@@ -10218,6 +10327,9 @@ class basic_json
             }
         }
 
+        /*!
+        @brief[in] j  JSON value to serialize
+        */
         void write_msgpack(const basic_json& j)
         {
             switch (j.type())
@@ -10353,6 +10465,7 @@ class basic_json
 
                 case value_t::string:
                 {
+                    // step 1: write control byte and the string length
                     const auto N = j.m_value.string->size();
                     if (N <= 31)
                     {
@@ -10378,7 +10491,7 @@ class basic_json
                         write_number(static_cast<uint32_t>(N));
                     }
 
-                    // append string
+                    // step 2: write the string
                     oa->write_characters(reinterpret_cast<const uint8_t*>(j.m_value.string->c_str()),
                                          j.m_value.string->size());
                     break;
@@ -10386,6 +10499,7 @@ class basic_json
 
                 case value_t::array:
                 {
+                    // step 1: write control byte and the array size
                     const auto N = j.m_value.array->size();
                     if (N <= 15)
                     {
@@ -10405,7 +10519,7 @@ class basic_json
                         write_number(static_cast<uint32_t>(N));
                     }
 
-                    // append each element
+                    // step 2: write each element
                     for (const auto& el : *j.m_value.array)
                     {
                         write_msgpack(el);
@@ -10415,6 +10529,7 @@ class basic_json
 
                 case value_t::object:
                 {
+                    // step 1: write control byte and the object size
                     const auto N = j.m_value.object->size();
                     if (N <= 15)
                     {
@@ -10434,7 +10549,7 @@ class basic_json
                         write_number(static_cast<uint32_t>(N));
                     }
 
-                    // append each element
+                    // step 2: write each element
                     for (const auto& el : *j.m_value.object)
                     {
                         write_msgpack(el.first);
@@ -10451,12 +10566,24 @@ class basic_json
         }
 
       private:
+        /*
+        @brief write a number to output input
+
+        @param[in] n number of type @a T
+        @tparam T the type of the number
+
+        @note This function needs to respect the system's endianess, because
+              bytes in CBOR and MessagePack are stored in network order (big
+              endian) and therefore need reordering on little endian systems.
+        */
         template<typename T>
         void write_number(T n)
         {
+            // step 1: write number to array of length T
             std::array<uint8_t, sizeof(T)> vec;
             std::memcpy(vec.data(), &n, sizeof(T));
 
+            // step 2: write array to output (with possible reordering)
             for (size_t i = 0; i < sizeof(T); ++i)
             {
                 // reverse byte order prior to conversion if necessary
@@ -10469,13 +10596,6 @@ class basic_json
                     oa->write_character(vec[i]);
                 }
             }
-        }
-
-        // from http://stackoverflow.com/a/1001328/266378
-        static bool little_endianess()
-        {
-            int num = 1;
-            return (*reinterpret_cast<char*>(&num) == 1);
         }
 
       private:
@@ -10928,12 +11048,19 @@ class basic_json
         // scan functions
         /////////////////////
 
-        // must be called after \u was read; returns following xxxx as hex or -1 when error
+        /*!
+        @brief get codepoint from 4 hex characters following `\u`
+
+        @return codepoint or -1 in case of an error (e.g. EOF or non-hex
+                character)
+        */
         int get_codepoint()
         {
+            // this function only makes sense after reading `\u`
             assert(current == 'u');
             int codepoint = 0;
 
+            // byte 1: \uXxxx
             switch (get())
             {
                 case '0':
@@ -10993,6 +11120,7 @@ class basic_json
                     return -1;
             }
 
+            // byte 2: \uxXxx
             switch (get())
             {
                 case '0':
@@ -11052,6 +11180,7 @@ class basic_json
                     return -1;
             }
 
+            // byte 3: \uxxXx
             switch (get())
             {
                 case '0':
@@ -11111,6 +11240,7 @@ class basic_json
                     return -1;
             }
 
+            // byte 4: \uxxxX
             switch (get())
             {
                 case '0':
@@ -11173,6 +11303,10 @@ class basic_json
             return codepoint;
         }
 
+        /*!
+        @brief create diagnostic representation of a codepoint
+        @return string "U+XXXX" for codepoint XXXX
+        */
         static std::string codepoint_to_string(int codepoint)
         {
             std::stringstream ss;
@@ -11180,6 +11314,20 @@ class basic_json
             return ss.str();
         }
 
+        /*!
+        @brief scan a string literal
+
+        This function scans a string according to Sect. 7 of RFC 7159. While
+        scanning, bytes are escaped and copied into buffer yytext. Then the
+        function returns successfully, yytext is null-terminated and yylen
+        contains the number of bytes in the string.
+
+        @return token_type::value_string if string could be successfully
+                scanned, token_type::parse_error otherwise
+
+        @note In case of errors, variable error_message contains a textual
+              description.
+        */
         token_type scan_string()
         {
             // reset yytext (ignore opening quote)
@@ -11714,6 +11862,17 @@ class basic_json
         }
 
         /*!
+        @brief scan a number literal
+
+        This function scans a string according to Sect. 6 of RFC 7159.
+
+        The function is realized with a deterministic finite state machine
+        derived from the grammar described in RFC 7159. Starting in state
+        "init", the input is read and used to determined the next state. Only
+        state "done" accepts the number. State "error" is a trap state to model
+        errors. In the table below, "anything" means any character but the ones
+        listed before.
+
         state    | 0        | 1-9      | e E      | +       | -       | .        | anything
         ---------|----------|----------|----------|---------|---------|----------|-----------
         init     | zero     | any1     | [error]  | [error] | minus   | [error]  | [error]
@@ -11725,13 +11884,31 @@ class basic_json
         exponent | any2     | any2     | [error]  | sign    | sign    | [error]  | [error]
         sign     | any2     | any2     | [error]  | [error] | [error] | [error]  | [error]
         any2     | any2     | any2     | done     | done    | done    | done     | done
+
+        The state machine is realized with one label per state (prefixed with
+        "scan_number_") and `goto` statements between them. The state machine
+        contains cycles, but any cycle can be left when EOF is read. Therefore,
+        the function is guaranteed to terminate.
+
+        During scanning, the read bytes are stored in yytext. This string is
+        then converted to a signed integer, an unsigned integer, or a
+        floating-point number.
+
+        @return token_type::value_unsigned, token_type::value_integer, or
+                token_type::value_float if number could be successfully scanned,
+                token_type::parse_error otherwise
+
+        @note The scanner is independent of the current locale. Internally, the
+              locale's decimal point is used instead of `.` to work with the
+              locale-dependent converters.
         */
         token_type scan_number()
         {
+            // reset yytext to store the number's bytes
             reset();
 
-            // the type of the parsed number; initially set to unsigned; will
-            // be changed if minus sign, decimal point or exponent is read
+            // the type of the parsed number; initially set to unsigned; will be
+            // changed if minus sign, decimal point or exponent is read
             token_type number_type = token_type::value_unsigned;
 
             // state (init): we just found out we need to scan a number
@@ -12008,7 +12185,8 @@ scan_number_any2:
             }
 
 scan_number_done:
-            // unget the character after the number
+            // unget the character after the number (we only read it to know
+            // that we are done scanning a number)
             --chars_read;
             next_unget = true;
 
@@ -12155,7 +12333,7 @@ scan_number_done:
         const std::string get_string()
         {
             // yytext cannot be returned as char*, because it may contain a
-            // null byte
+            // null byte (parsed as "\u0000")
             return std::string(yytext.data(), yylen);
         }
 
@@ -12302,7 +12480,7 @@ scan_number_done:
         number_float_t value_float = 0;
 
         /// the decimal point
-        const char decimal_point_char = '\0';
+        const char decimal_point_char = '.';
     };
 
     /*!
