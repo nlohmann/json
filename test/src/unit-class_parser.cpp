@@ -350,6 +350,268 @@ TEST_CASE("parser class")
         }
     }
 
+    SECTION("accept")
+    {
+        SECTION("null")
+        {
+            CHECK(parse_string("null").accept());
+        }
+
+        SECTION("true")
+        {
+            CHECK(parse_string("true").accept());
+        }
+
+        SECTION("false")
+        {
+            CHECK(parse_string("false").accept());
+        }
+
+        SECTION("array")
+        {
+            SECTION("empty array")
+            {
+                CHECK(parse_string("[]").accept());
+                CHECK(parse_string("[ ]").accept());
+            }
+
+            SECTION("nonempty array")
+            {
+                CHECK(parse_string("[true, false, null]").accept());
+            }
+        }
+
+        SECTION("object")
+        {
+            SECTION("empty object")
+            {
+                CHECK(parse_string("{}").accept());
+                CHECK(parse_string("{ }").accept());
+            }
+
+            SECTION("nonempty object")
+            {
+                CHECK(parse_string("{\"\": true, \"one\": 1, \"two\": null}").accept());
+            }
+        }
+
+        SECTION("string")
+        {
+            // empty string
+            CHECK(parse_string("\"\"").accept());
+
+            SECTION("errors")
+            {
+                // error: tab in string
+                CHECK(parse_string("\"\t\"").accept() == false);
+                // error: newline in string
+                CHECK(parse_string("\"\n\"").accept() == false);
+                CHECK(parse_string("\"\r\"").accept() == false);
+                // error: backspace in string
+                CHECK(parse_string("\"\b\"").accept() == false);
+                // improve code coverage
+                CHECK(parse_string("\uFF01").accept() == false);
+                CHECK(parse_string("[-4:1,]").accept() == false);
+                // unescaped control characters
+                CHECK(parse_string("\"\x00\"").accept() == false);
+                CHECK(parse_string("\"\x01\"").accept() == false);
+                CHECK(parse_string("\"\x02\"").accept() == false);
+                CHECK(parse_string("\"\x03\"").accept() == false);
+                CHECK(parse_string("\"\x04\"").accept() == false);
+                CHECK(parse_string("\"\x05\"").accept() == false);
+                CHECK(parse_string("\"\x06\"").accept() == false);
+                CHECK(parse_string("\"\x07\"").accept() == false);
+                CHECK(parse_string("\"\x08\"").accept() == false);
+                CHECK(parse_string("\"\x09\"").accept() == false);
+                CHECK(parse_string("\"\x0a\"").accept() == false);
+                CHECK(parse_string("\"\x0b\"").accept() == false);
+                CHECK(parse_string("\"\x0c\"").accept() == false);
+                CHECK(parse_string("\"\x0d\"").accept() == false);
+                CHECK(parse_string("\"\x0e\"").accept() == false);
+                CHECK(parse_string("\"\x0f\"").accept() == false);
+                CHECK(parse_string("\"\x10\"").accept() == false);
+                CHECK(parse_string("\"\x11\"").accept() == false);
+                CHECK(parse_string("\"\x12\"").accept() == false);
+                CHECK(parse_string("\"\x13\"").accept() == false);
+                CHECK(parse_string("\"\x14\"").accept() == false);
+                CHECK(parse_string("\"\x15\"").accept() == false);
+                CHECK(parse_string("\"\x16\"").accept() == false);
+                CHECK(parse_string("\"\x17\"").accept() == false);
+                CHECK(parse_string("\"\x18\"").accept() == false);
+                CHECK(parse_string("\"\x19\"").accept() == false);
+                CHECK(parse_string("\"\x1a\"").accept() == false);
+                CHECK(parse_string("\"\x1b\"").accept() == false);
+                CHECK(parse_string("\"\x1c\"").accept() == false);
+                CHECK(parse_string("\"\x1d\"").accept() == false);
+                CHECK(parse_string("\"\x1e\"").accept() == false);
+                CHECK(parse_string("\"\x1f\"").accept() == false);
+            }
+
+            SECTION("escaped")
+            {
+                // quotation mark "\""
+                auto r1 = R"("\"")"_json;
+                CHECK(parse_string("\"\\\"\"").accept());
+                // reverse solidus "\\"
+                auto r2 = R"("\\")"_json;
+                CHECK(parse_string("\"\\\\\"").accept());
+                // solidus
+                CHECK(parse_string("\"\\/\"").accept());
+                // backspace
+                CHECK(parse_string("\"\\b\"").accept());
+                // formfeed
+                CHECK(parse_string("\"\\f\"").accept());
+                // newline
+                CHECK(parse_string("\"\\n\"").accept());
+                // carriage return
+                CHECK(parse_string("\"\\r\"").accept());
+                // horizontal tab
+                CHECK(parse_string("\"\\t\"").accept());
+
+                CHECK(parse_string("\"\\u0001\"").accept());
+                CHECK(parse_string("\"\\u000a\"").accept());
+                CHECK(parse_string("\"\\u00b0\"").accept());
+                CHECK(parse_string("\"\\u0c00\"").accept());
+                CHECK(parse_string("\"\\ud000\"").accept());
+                CHECK(parse_string("\"\\u000E\"").accept());
+                CHECK(parse_string("\"\\u00F0\"").accept());
+                CHECK(parse_string("\"\\u0100\"").accept());
+                CHECK(parse_string("\"\\u2000\"").accept());
+                CHECK(parse_string("\"\\uFFFF\"").accept());
+                CHECK(parse_string("\"\\u20AC\"").accept());
+                CHECK(parse_string("\"€\"").accept());
+                CHECK(parse_string("\"🎈\"").accept());
+
+                CHECK(parse_string("\"\\ud80c\\udc60\"").accept());
+                CHECK(parse_string("\"\\ud83c\\udf1e\"").accept());
+            }
+        }
+
+        SECTION("number")
+        {
+            SECTION("integers")
+            {
+                SECTION("without exponent")
+                {
+                    CHECK(parse_string("-128").accept());
+                    CHECK(parse_string("-0").accept());
+                    CHECK(parse_string("0").accept());
+                    CHECK(parse_string("128").accept());
+                }
+
+                SECTION("with exponent")
+                {
+                    CHECK(parse_string("0e1").accept());
+                    CHECK(parse_string("0E1").accept());
+
+                    CHECK(parse_string("10000E-4").accept());
+                    CHECK(parse_string("10000E-3").accept());
+                    CHECK(parse_string("10000E-2").accept());
+                    CHECK(parse_string("10000E-1").accept());
+                    CHECK(parse_string("10000E0").accept());
+                    CHECK(parse_string("10000E1").accept());
+                    CHECK(parse_string("10000E2").accept());
+                    CHECK(parse_string("10000E3").accept());
+                    CHECK(parse_string("10000E4").accept());
+
+                    CHECK(parse_string("10000e-4").accept());
+                    CHECK(parse_string("10000e-3").accept());
+                    CHECK(parse_string("10000e-2").accept());
+                    CHECK(parse_string("10000e-1").accept());
+                    CHECK(parse_string("10000e0").accept());
+                    CHECK(parse_string("10000e1").accept());
+                    CHECK(parse_string("10000e2").accept());
+                    CHECK(parse_string("10000e3").accept());
+                    CHECK(parse_string("10000e4").accept());
+
+                    CHECK(parse_string("-0e1").accept());
+                    CHECK(parse_string("-0E1").accept());
+                    CHECK(parse_string("-0E123").accept());
+                }
+
+                SECTION("edge cases")
+                {
+                    // From RFC7159, Section 6:
+                    // Note that when such software is used, numbers that are
+                    // integers and are in the range [-(2**53)+1, (2**53)-1]
+                    // are interoperable in the sense that implementations will
+                    // agree exactly on their numeric values.
+
+                    // -(2**53)+1
+                    CHECK(parse_string("-9007199254740991").accept());
+                    // (2**53)-1
+                    CHECK(parse_string("9007199254740991").accept());
+                }
+
+                SECTION("over the edge cases")  // issue #178 - Integer conversion to unsigned (incorrect handling of 64 bit integers)
+                {
+                    // While RFC7159, Section 6 specifies a preference for support
+                    // for ranges in range of IEEE 754-2008 binary64 (double precision)
+                    // this does not accommodate 64 bit integers without loss of accuracy.
+                    // As 64 bit integers are now widely used in software, it is desirable
+                    // to expand support to to the full 64 bit (signed and unsigned) range
+                    // i.e. -(2**63) -> (2**64)-1.
+
+                    // -(2**63)    ** Note: compilers see negative literals as negated positive numbers (hence the -1))
+                    CHECK(parse_string("-9223372036854775808").accept());
+                    // (2**63)-1
+                    CHECK(parse_string("9223372036854775807").accept());
+                    // (2**64)-1
+                    CHECK(parse_string("18446744073709551615").accept());
+                }
+            }
+
+            SECTION("floating-point")
+            {
+                SECTION("without exponent")
+                {
+                    CHECK(parse_string("-128.5").accept());
+                    CHECK(parse_string("0.999").accept());
+                    CHECK(parse_string("128.5").accept());
+                    CHECK(parse_string("-0.0").accept());
+                }
+
+                SECTION("with exponent")
+                {
+                    CHECK(parse_string("-128.5E3").accept());
+                    CHECK(parse_string("-128.5E-3").accept());
+                    CHECK(parse_string("-0.0e1").accept());
+                    CHECK(parse_string("-0.0E1").accept());
+                }
+            }
+
+            SECTION("overflow")
+            {
+                // overflows during parsing yield an exception, but is accepted anyway
+                CHECK(parse_string("1.18973e+4932").accept());
+            }
+
+            SECTION("invalid numbers")
+            {
+                CHECK(parse_string("01").accept() == false);
+                CHECK(parse_string("--1").accept() == false);
+                CHECK(parse_string("1.").accept() == false);
+                CHECK(parse_string("1E").accept() == false);
+                CHECK(parse_string("1E-").accept() == false);
+                CHECK(parse_string("1.E1").accept() == false);
+                CHECK(parse_string("-1E").accept() == false);
+                CHECK(parse_string("-0E#").accept() == false);
+                CHECK(parse_string("-0E-#").accept() == false);
+                CHECK(parse_string("-0#").accept() == false);
+                CHECK(parse_string("-0.0:").accept() == false);
+                CHECK(parse_string("-0.0Z").accept() == false);
+                CHECK(parse_string("-0E123:").accept() == false);
+                CHECK(parse_string("-0e0-:").accept() == false);
+                CHECK(parse_string("-0e-:").accept() == false);
+                CHECK(parse_string("-0f").accept() == false);
+
+                // numbers must not begin with "+"
+                CHECK(parse_string("+1").accept() == false);
+                CHECK(parse_string("+0").accept() == false);
+            }
+        }
+    }
+
     SECTION("parse errors")
     {
         // unexpected end of number
@@ -659,6 +921,189 @@ TEST_CASE("parser class")
                           "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: surrogate U+D80C must be followed by U+DC00..U+DFFF instead of U+0000; last read '\"\\uD80C\\u0000'");
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\uFFFF\""),
                           "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: surrogate U+D80C must be followed by U+DC00..U+DFFF instead of U+FFFF; last read '\"\\uD80C\\uFFFF'");
+    }
+
+    SECTION("parse errors (accept)")
+    {
+        // unexpected end of number
+        CHECK(parse_string("0.").accept() == false);
+        CHECK(parse_string("-").accept() == false);
+        CHECK(parse_string("--").accept() == false);
+        CHECK(parse_string("-0.").accept() == false);
+        CHECK(parse_string("-.").accept() == false);
+        CHECK(parse_string("-:").accept() == false);
+        CHECK(parse_string("0.:").accept() == false);
+        CHECK(parse_string("e.").accept() == false);
+        CHECK(parse_string("1e.").accept() == false);
+        CHECK(parse_string("1e/").accept() == false);
+        CHECK(parse_string("1e:").accept() == false);
+        CHECK(parse_string("1E.").accept() == false);
+        CHECK(parse_string("1E/").accept() == false);
+        CHECK(parse_string("1E:").accept() == false);
+
+        // unexpected end of null
+        CHECK(parse_string("n").accept() == false);
+        CHECK(parse_string("nu").accept() == false);
+        CHECK(parse_string("nul").accept() == false);
+
+        // unexpected end of true
+        CHECK(parse_string("t").accept() == false);
+        CHECK(parse_string("tr").accept() == false);
+        CHECK(parse_string("tru").accept() == false);
+
+        // unexpected end of false
+        CHECK(parse_string("f").accept() == false);
+        CHECK(parse_string("fa").accept() == false);
+        CHECK(parse_string("fal").accept() == false);
+        CHECK(parse_string("fals").accept() == false);
+
+        // missing/unexpected end of array
+        CHECK(parse_string("[").accept() == false);
+        CHECK(parse_string("[1").accept() == false);
+        CHECK(parse_string("[1,").accept() == false);
+        CHECK(parse_string("[1,]").accept() == false);
+        CHECK(parse_string("]").accept() == false);
+
+        // missing/unexpected end of object
+        CHECK(parse_string("{").accept() == false);
+        CHECK(parse_string("{\"foo\"").accept() == false);
+        CHECK(parse_string("{\"foo\":").accept() == false);
+        CHECK(parse_string("{\"foo\":}").accept() == false);
+        CHECK(parse_string("{\"foo\":1,}").accept() == false);
+        CHECK(parse_string("}").accept() == false);
+
+        // missing/unexpected end of string
+        CHECK(parse_string("\"").accept() == false);
+        CHECK(parse_string("\"\\\"").accept() == false);
+        CHECK(parse_string("\"\\u\"").accept() == false);
+        CHECK(parse_string("\"\\u0\"").accept() == false);
+        CHECK(parse_string("\"\\u01\"").accept() == false);
+        CHECK(parse_string("\"\\u012\"").accept() == false);
+        CHECK(parse_string("\"\\u").accept() == false);
+        CHECK(parse_string("\"\\u0").accept() == false);
+        CHECK(parse_string("\"\\u01").accept() == false);
+        CHECK(parse_string("\"\\u012").accept() == false);
+
+        // invalid escapes
+        for (int c = 1; c < 128; ++c)
+        {
+            auto s = std::string("\"\\") + std::string(1, static_cast<char>(c)) + "\"";
+
+            switch (c)
+            {
+                // valid escapes
+                case ('"'):
+                case ('\\'):
+                case ('/'):
+                case ('b'):
+                case ('f'):
+                case ('n'):
+                case ('r'):
+                case ('t'):
+                {
+                    CHECK(parse_string(s.c_str()).accept());
+                    break;
+                }
+
+                // \u must be followed with four numbers, so we skip it here
+                case ('u'):
+                {
+                    break;
+                }
+
+                // any other combination of backslash and character is invalid
+                default:
+                {
+                    CHECK(parse_string(s.c_str()).accept() == false);
+                    break;
+                }
+            }
+        }
+
+        // invalid \uxxxx escapes
+        {
+            // check whether character is a valid hex character
+            const auto valid = [](int c)
+            {
+                switch (c)
+                {
+                    case ('0'):
+                    case ('1'):
+                    case ('2'):
+                    case ('3'):
+                    case ('4'):
+                    case ('5'):
+                    case ('6'):
+                    case ('7'):
+                    case ('8'):
+                    case ('9'):
+                    case ('a'):
+                    case ('b'):
+                    case ('c'):
+                    case ('d'):
+                    case ('e'):
+                    case ('f'):
+                    case ('A'):
+                    case ('B'):
+                    case ('C'):
+                    case ('D'):
+                    case ('E'):
+                    case ('F'):
+                    {
+                        return true;
+                    }
+
+                    default:
+                    {
+                        return false;
+                    }
+                }
+            };
+
+            for (int c = 1; c < 128; ++c)
+            {
+                std::string s = "\"\\u";
+
+                // create a string with the iterated character at each position
+                auto s1 = s + "000" + std::string(1, static_cast<char>(c)) + "\"";
+                auto s2 = s + "00" + std::string(1, static_cast<char>(c)) + "0\"";
+                auto s3 = s + "0" + std::string(1, static_cast<char>(c)) + "00\"";
+                auto s4 = s + std::string(1, static_cast<char>(c)) + "000\"";
+
+                if (valid(c))
+                {
+                    CAPTURE(s1);
+                    CHECK(parse_string(s1.c_str()).accept());
+                    CAPTURE(s2);
+                    CHECK(parse_string(s2.c_str()).accept());
+                    CAPTURE(s3);
+                    CHECK(parse_string(s3.c_str()).accept());
+                    CAPTURE(s4);
+                    CHECK(parse_string(s4.c_str()).accept());
+                }
+                else
+                {
+                    CAPTURE(s1);
+                    CHECK(parse_string(s1.c_str()).accept() == false);
+
+                    CAPTURE(s2);
+                    CHECK(parse_string(s2.c_str()).accept() == false);
+
+                    CAPTURE(s3);
+                    CHECK(parse_string(s3.c_str()).accept() == false);
+
+                    CAPTURE(s4);
+                    CHECK(parse_string(s4.c_str()).accept() == false);
+                }
+            }
+        }
+
+        // missing part of a surrogate pair
+        CHECK(parse_string("\"\\uD80C\"").accept() == false);
+        // invalid surrogate pair
+        CHECK(parse_string("\"\\uD80C\\uD80C\"").accept() == false);
+        CHECK(parse_string("\"\\uD80C\\u0000\"").accept() == false);
+        CHECK(parse_string("\"\\uD80C\\uFFFF\"").accept() == false);
     }
 
     SECTION("tests found by mutate++")

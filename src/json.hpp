@@ -12501,6 +12501,7 @@ scan_number_done:
         @brief public parser interface
 
         @param[in] strict  whether to expect the last token to be EOF
+        @return parsed JSON value
 
         @throw parse_error.101 in case of an unexpected token
         @throw parse_error.102 if to_unicode fails or surrogate error
@@ -12522,6 +12523,30 @@ scan_number_done:
             // return parser result and replace it with null in case the
             // top-level value was discarded by the callback function
             return result.is_discarded() ? basic_json() : std::move(result);
+        }
+
+        /*!
+        @brief public accept interface
+
+        @param[in] strict  whether to expect the last token to be EOF
+        @return whether the input is a proper JSON text
+        */
+        bool accept(const bool strict = true)
+        {
+            // read first token
+            get_token();
+
+            if (not accept_internal())
+            {
+                return false;
+            }
+
+            if (strict and last_token != lexer::token_type::end_of_input)
+            {
+                return false;
+            }
+
+            return true;
         }
 
       private:
@@ -12743,6 +12768,125 @@ scan_number_done:
                 result = basic_json(value_t::discarded);
             }
             return result;
+        }
+
+        /*!
+        @brief the acutal acceptor
+        */
+        bool accept_internal()
+        {
+            switch (last_token)
+            {
+                case lexer::token_type::begin_object:
+                {
+                    // read next token
+                    get_token();
+
+                    // closing } -> we are done
+                    if (last_token == lexer::token_type::end_object)
+                    {
+                        get_token();
+                        return true;
+                    }
+
+                    // parse values
+                    while (true)
+                    {
+                        // parse key
+                        if (last_token != lexer::token_type::value_string)
+                        {
+                            return false;
+                        }
+
+                        // parse separator (:)
+                        get_token();
+                        if (last_token != lexer::token_type::name_separator)
+                        {
+                            return false;
+                        }
+
+                        // parse value
+                        get_token();
+                        if (not accept_internal())
+                        {
+                            return false;
+                        }
+
+                        // comma -> next value
+                        if (last_token == lexer::token_type::value_separator)
+                        {
+                            get_token();
+                            continue;
+                        }
+
+                        // closing }
+                        if (last_token != lexer::token_type::end_object)
+                        {
+                            return false;
+                        }
+
+                        get_token();
+                        return true;
+                    }
+                }
+
+                case lexer::token_type::begin_array:
+                {
+                    // read next token
+                    get_token();
+
+                    // closing ] -> we are done
+                    if (last_token == lexer::token_type::end_array)
+                    {
+                        get_token();
+                        return true;
+                    }
+
+                    // parse values
+                    while (true)
+                    {
+                        // parse value
+                        if (not accept_internal())
+                        {
+                            return false;
+                        }
+
+                        // comma -> next value
+                        if (last_token == lexer::token_type::value_separator)
+                        {
+                            get_token();
+                            continue;
+                        }
+
+                        // closing ]
+                        if (last_token != lexer::token_type::end_array)
+                        {
+                            return false;
+                        }
+
+                        get_token();
+                        return true;
+                    }
+                }
+
+                case lexer::token_type::literal_null:
+                case lexer::token_type::value_string:
+                case lexer::token_type::literal_true:
+                case lexer::token_type::literal_false:
+                case lexer::token_type::value_unsigned:
+                case lexer::token_type::value_integer:
+                case lexer::token_type::value_float:
+                {
+                    get_token();
+                    return true;
+                }
+
+                default:
+                {
+                    // the last token was unexpected
+                    return false;
+                }
+            }
         }
 
         /// get next token from lexer
