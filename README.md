@@ -705,7 +705,7 @@ json j_from_msgpack = json::from_msgpack(v_msgpack);
 
 Though it's 2016 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.9 - 6.0 (and possibly later)
+- GCC 4.8.5 - 6.0 (and possibly later)
 - Clang 3.4 - 3.9 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.1.548.43366 (and possibly later)
