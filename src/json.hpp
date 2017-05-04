@@ -1970,59 +1970,60 @@ class basic_json
                 case value_t::object:
                 {
                     object = create<object_t>();
-                    break;
+                    return;
                 }
 
                 case value_t::array:
                 {
                     array = create<array_t>();
-                    break;
+                    return;
                 }
 
                 case value_t::string:
                 {
                     string = create<string_t>("");
-                    break;
+                    return;
                 }
 
                 case value_t::boolean:
                 {
                     boolean = boolean_t(false);
-                    break;
+                    return;
                 }
 
                 case value_t::number_integer:
                 {
                     number_integer = number_integer_t(0);
-                    break;
+                    return;
                 }
 
                 case value_t::number_unsigned:
                 {
                     number_unsigned = number_unsigned_t(0);
-                    break;
+                    return;
                 }
 
                 case value_t::number_float:
                 {
                     number_float = number_float_t(0.0);
-                    break;
+                    return;
                 }
 
                 case value_t::null:
                 {
-                    break;
+                    return;
                 }
 
-                default:
+                case value_t::discarded:
                 {
                     if (t == value_t::null)
                     {
                         JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 2.1.1")); // LCOV_EXCL_LINE
                     }
-                    break;
+                    return;
                 }
             }
+            assert(false);
         }
 
         /// constructor for strings
@@ -2824,7 +2825,7 @@ class basic_json
                 AllocatorType<object_t> alloc;
                 alloc.destroy(m_value.object);
                 alloc.deallocate(m_value.object, 1);
-                break;
+                return;
             }
 
             case value_t::array:
@@ -2832,7 +2833,7 @@ class basic_json
                 AllocatorType<array_t> alloc;
                 alloc.destroy(m_value.array);
                 alloc.deallocate(m_value.array, 1);
-                break;
+                return;
             }
 
             case value_t::string:
@@ -2840,15 +2841,21 @@ class basic_json
                 AllocatorType<string_t> alloc;
                 alloc.destroy(m_value.string);
                 alloc.deallocate(m_value.string, 1);
-                break;
+                return;
             }
 
-            default:
+            case value_t::null:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::discarded:
             {
                 // all other types need no specific destructor
-                break;
+                return;
             }
         }
+        assert(false);
     }
 
     /// @}
@@ -9380,25 +9387,26 @@ class basic_json
     */
     std::string type_name() const
     {
+        switch (m_type)
         {
-            switch (m_type)
-            {
-                case value_t::null:
-                    return "null";
-                case value_t::object:
-                    return "object";
-                case value_t::array:
-                    return "array";
-                case value_t::string:
-                    return "string";
-                case value_t::boolean:
-                    return "boolean";
-                case value_t::discarded:
-                    return "discarded";
-                default:
-                    return "number";
-            }
+            case value_t::null:
+                return "null";
+            case value_t::object:
+                return "object";
+            case value_t::array:
+                return "array";
+            case value_t::string:
+                return "string";
+            case value_t::boolean:
+                return "boolean";
+            case value_t::discarded:
+                return "discarded";
+            case value_t::number_unsigned:
+            case value_t::number_integer:
+            case value_t::number_float:
+                return "number";
         }
+        assert(false);
     }
 
 
@@ -12137,37 +12145,27 @@ basic_json_parser_74:
             strtonum num_converter(reinterpret_cast<const char*>(m_start),
                                    reinterpret_cast<const char*>(m_cursor));
 
-            switch (token)
+            if (token == lexer::token_type::value_unsigned)
             {
-                case lexer::token_type::value_unsigned:
+                number_unsigned_t val;
+                if (num_converter.to(val))
                 {
-                    number_unsigned_t val;
-                    if (num_converter.to(val))
-                    {
-                        // parsing successful
-                        result.m_type = value_t::number_unsigned;
-                        result.m_value = val;
-                        return true;
-                    }
-                    break;
+                    // parsing successful
+                    result.m_type = value_t::number_unsigned;
+                    result.m_value = val;
+                    return true;
                 }
+            }
 
-                case lexer::token_type::value_integer:
+            if (token == lexer::token_type::value_integer)
+            {
+                number_integer_t val;
+                if (num_converter.to(val))
                 {
-                    number_integer_t val;
-                    if (num_converter.to(val))
-                    {
-                        // parsing successful
-                        result.m_type = value_t::number_integer;
-                        result.m_value = val;
-                        return true;
-                    }
-                    break;
-                }
-
-                default:
-                {
-                    break;
+                    // parsing successful
+                    result.m_type = value_t::number_integer;
+                    result.m_value = val;
+                    return true;
                 }
             }
 
