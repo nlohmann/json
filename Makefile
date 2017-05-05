@@ -1,9 +1,5 @@
 .PHONY: pretty clean ChangeLog.md
 
-# used programs
-RE2C := $(shell command -v re2c 2> /dev/null)
-SED = sed
-
 # main target
 all:
 	$(MAKE) -C test
@@ -51,7 +47,8 @@ doctest:
 # -Wno-keyword-macro: unit-tests use "#define private public"
 # -Wno-deprecated-declarations: the library deprecated some functions
 # -Wno-weak-vtables: exception class is defined inline, but has virtual method
-# -Wno-range-loop-analysis: iterator_wrapper tests tests "for(const auto i...)"
+# -Wno-range-loop-analysis: iterator_wrapper tests "for(const auto i...)"
+# -Wno-float-equal: not all comparisons in the tests can be replaced by Approx
 pedantic_clang:
 	$(MAKE) json_unit CXXFLAGS="\
 		-std=c++11 \
@@ -62,7 +59,8 @@ pedantic_clang:
 		-Wno-keyword-macro \
 		-Wno-deprecated-declarations \
 		-Wno-weak-vtables \
-		-Wno-range-loop-analysis"
+		-Wno-range-loop-analysis \
+		-Wno-float-equal"
 
 # calling GCC with most warnings
 pedantic_gcc:
@@ -186,13 +184,6 @@ clang_sanitize: clean
 # maintainer targets
 ##########################################################################
 
-# create scanner with re2c
-re2c: src/json.hpp.re2c
-ifndef RE2C
-	$(error "re2c is not available, please install re2c")
-endif
-	$(RE2C) -W --utf-8 --encoding-policy fail --bit-vectors --nested-ifs --no-debug-info $< | $(SED) '1d' > src/json.hpp
-
 # pretty printer
 pretty:
 	astyle --style=allman --indent=spaces=4 --indent-modifiers \
@@ -200,7 +191,7 @@ pretty:
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none --formatted \
-	   src/json.hpp src/json.hpp.re2c test/src/*.cpp \
+	   src/json.hpp test/src/*.cpp \
 	   benchmarks/benchmarks.cpp doc/examples/*.cpp
 
 

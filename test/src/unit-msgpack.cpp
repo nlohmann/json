@@ -676,14 +676,9 @@ TEST_CASE("MessagePack")
                     const auto result = json::to_msgpack(j);
                     CHECK(result == expected);
 
-                    // restore value (reverse array for endianess)
-                    double restored;
-                    std::reverse(expected.begin(), expected.end());
-                    memcpy(&restored, expected.data(), sizeof(double));
-                    CHECK(restored == v);
-
                     // roundtrip
                     CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result) == v);
                 }
             }
         }
@@ -1038,35 +1033,35 @@ TEST_CASE("MessagePack")
             CHECK_THROWS_AS(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})), json::parse_error);
 
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcc})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 1 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcd})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 2 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcd, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 2 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xce})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 4 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xce, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 4 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xce, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 4 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xce, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 4 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 5: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 5: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 6: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 7: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 8: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
+                              "[json.exception.parse_error.110] parse error at 9: unexpected end of input");
         }
 
         SECTION("unsupported bytes")

@@ -596,7 +596,7 @@ TEST_CASE("regression tests")
         // a parse error because of the EOF.
         CHECK_THROWS_AS(ss >> j, json::parse_error);
         CHECK_THROWS_WITH(ss >> j,
-                          "[json.exception.parse_error.101] parse error at 1: parse error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
     }
 
     SECTION("issue #389 - Integer-overflow (OSS-Fuzz issue 267)")
@@ -629,7 +629,7 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec {0x65, 0xf5, 0x0a, 0x48, 0x21};
         CHECK_THROWS_AS(json::from_cbor(vec), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 5 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 6: unexpected end of input");
     }
 
     SECTION("issue #407 - Heap-buffer-overflow (OSS-Fuzz issue 343)")
@@ -638,31 +638,31 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec1 {0xcb, 0x8f, 0x0a};
         CHECK_THROWS_AS(json::from_msgpack(vec1), json::parse_error);
         CHECK_THROWS_WITH(json::from_msgpack(vec1),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
 
         // related test case: incomplete float32
         std::vector<uint8_t> vec2 {0xca, 0x8f, 0x0a};
         CHECK_THROWS_AS(json::from_msgpack(vec2), json::parse_error);
         CHECK_THROWS_WITH(json::from_msgpack(vec2),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 4 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
 
         // related test case: incomplete Half-Precision Float (CBOR)
         std::vector<uint8_t> vec3 {0xf9, 0x8f};
         CHECK_THROWS_AS(json::from_cbor(vec3), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec3),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 2 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
 
         // related test case: incomplete Single-Precision Float (CBOR)
         std::vector<uint8_t> vec4 {0xfa, 0x8f, 0x0a};
         CHECK_THROWS_AS(json::from_cbor(vec4), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec4),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 4 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
 
         // related test case: incomplete Double-Precision Float (CBOR)
         std::vector<uint8_t> vec5 {0xfb, 0x8f, 0x0a};
         CHECK_THROWS_AS(json::from_cbor(vec5), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec5),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 8 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
     }
 
     SECTION("issue #408 - Heap-buffer-overflow (OSS-Fuzz issue 344)")
@@ -671,7 +671,7 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec1 {0x87};
         CHECK_THROWS_AS(json::from_msgpack(vec1), json::parse_error);
         CHECK_THROWS_WITH(json::from_msgpack(vec1),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
 
         // more test cases for MessagePack
         for (auto b :
@@ -705,10 +705,10 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec2;
         CHECK_THROWS_AS(json::from_cbor(vec2), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec2),
-                          "[json.exception.parse_error.110] parse error at 1: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 1: unexpected end of input");
         CHECK_THROWS_AS(json::from_msgpack(vec2), json::parse_error);
         CHECK_THROWS_WITH(json::from_msgpack(vec2),
-                          "[json.exception.parse_error.110] parse error at 1: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 1: unexpected end of input");
     }
 
     SECTION("issue #411 - Heap-buffer-overflow (OSS-Fuzz issue 366)")
@@ -717,19 +717,19 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec1 {0x7f};
         CHECK_THROWS_AS(json::from_cbor(vec1), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec1),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
 
         // related test case: empty array (indefinite length)
         std::vector<uint8_t> vec2 {0x9f};
         CHECK_THROWS_AS(json::from_cbor(vec2), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec2),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
 
         // related test case: empty map (indefinite length)
         std::vector<uint8_t> vec3 {0xbf};
         CHECK_THROWS_AS(json::from_cbor(vec3), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec3),
-                          "[json.exception.parse_error.110] parse error at 2: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
     }
 
     SECTION("issue #412 - Heap-buffer-overflow (OSS-Fuzz issue 367)")
@@ -763,19 +763,19 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec1 {0x7f, 0x61, 0x61};
         CHECK_THROWS_AS(json::from_cbor(vec1), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec1),
-                          "[json.exception.parse_error.110] parse error at 4: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
 
         // related test case: nonempty array (indefinite length)
         std::vector<uint8_t> vec2 {0x9f, 0x01};
         CHECK_THROWS_AS(json::from_cbor(vec2), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec2),
-                          "[json.exception.parse_error.110] parse error at 3: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
 
         // related test case: nonempty map (indefinite length)
         std::vector<uint8_t> vec3 {0xbf, 0x61, 0x61, 0x01};
         CHECK_THROWS_AS(json::from_cbor(vec3), json::parse_error);
         CHECK_THROWS_WITH(json::from_cbor(vec3),
-                          "[json.exception.parse_error.110] parse error at 5: cannot read 1 bytes from vector");
+                          "[json.exception.parse_error.110] parse error at 5: unexpected end of input");
     }
 
     SECTION("issue #414 - compare with literal 0)")
@@ -921,6 +921,7 @@ TEST_CASE("regression tests")
         CHECK(j["bool_vector"].dump() == "[false,true,false,false]");
     }
 
+    /* NOTE: m_line_buffer is not used any more
     SECTION("issue #495 - fill_line_buffer incorrectly tests m_stream for eof but not fail or bad bits")
     {
         SECTION("setting failbit")
@@ -953,6 +954,7 @@ TEST_CASE("regression tests")
             CHECK_THROWS_WITH(l.fill_line_buffer(), "[json.exception.parse_error.111] parse error: bad input stream");
         }
     }
+     */
 
     SECTION("issue #504 - assertion error (OSS-Fuzz 856)")
     {

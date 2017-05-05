@@ -77,8 +77,8 @@ TEST_CASE("compliance tests from json.org")
                 })
         {
             CAPTURE(filename);
-            json j;
             std::ifstream f(filename);
+            json j;
             CHECK_THROWS_AS(f >> j, json::parse_error);
         }
     }
@@ -93,8 +93,8 @@ TEST_CASE("compliance tests from json.org")
                 })
         {
             CAPTURE(filename);
-            json j;
             std::ifstream f(filename);
+            json j;
             CHECK_NOTHROW(f >> j);
         }
     }
@@ -305,6 +305,7 @@ TEST_CASE("compliance tests from nativejson-benchmark")
             std::string json_string( (std::istreambuf_iterator<char>(f) ),
                                      (std::istreambuf_iterator<char>()) );
 
+            CAPTURE(json_string);
             json j = json::parse(json_string);
             CHECK(j.dump() == json_string);
         }
