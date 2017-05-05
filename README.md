@@ -10,6 +10,7 @@
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
 [![Github Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
+[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/nlohmann/json.svg)](http://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
 
 - [Design goals](#design-goals)
@@ -835,6 +836,7 @@ I deeply appreciate the help of the following people.
 - [Krzysztof Woś](https://github.com/krzysztofwos) made exceptions more visible.
 - [ftillier](https://github.com/ftillier) fixed a compiler warning.
 - [tinloaf](https://github.com/tinloaf) made sure all pushed warnings are properly popped.
+- [Fytch](https://github.com/Fytch) found a bug in the documentation.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

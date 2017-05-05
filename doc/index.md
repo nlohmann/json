@@ -27,6 +27,7 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
     - @link nlohmann::basic_json::get_ptr get_ptr @endlink -- get a value pointer
     - @link nlohmann::basic_json::get_ref get_ref @endlink -- get a value reference
     - @link nlohmann::basic_json::operator ValueType() const operator ValueType @endlink -- get a value (implicit conversion)
+    - @link nlohmann::basic_json::value value @endlink -- get a value from an object and return default value if key is not present
   - lexicographical comparison operators
   - serialization
   - deserialization
@@ -254,8 +255,8 @@ The container functions known from STL have been extended to support the differe
   <tr>
     <td rowspan="2">lookup</td>
     <td>`find`</td>
-    <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink (returns `end()`)</td>
     <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink</td>
+    <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink (returns `end()`)</td>
     <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink (returns `end()`)</td>
     <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink (returns `end()`)</td>
     <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink (returns `end()`)</td>
@@ -263,8 +264,8 @@ The container functions known from STL have been extended to support the differe
   </tr>
   <tr>
     <td>`count`</td>
-    <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
     <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink</td>
+    <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
     <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
     <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
     <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
