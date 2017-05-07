@@ -8915,7 +8915,7 @@ class basic_json
         {
             // avoid reading too many characters
             const size_t max_length = static_cast<size_t>(limit - start);
-            return std::string(start + offset, std::min({length, max_length}));
+            return std::string(start + offset, std::min({length, max_length - offset}));
         }
 
       private:

@@ -1010,4 +1010,10 @@ TEST_CASE("regression tests")
         CHECK(not(6 <= j["a"]));
         CHECK(not(6 <  j["a"]));
     }
+
+    SECTION("issue #575 - heap-buffer-overflow (OSS-Fuzz 1400)")
+    {
+        std::vector<uint8_t> vec = {'"', '\\', '"', 'X', '"', '"'};
+        CHECK_THROWS_AS(json::parse(vec), json::parse_error);
+    }
 }
