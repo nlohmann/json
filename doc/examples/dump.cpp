@@ -13,8 +13,10 @@ int main()
     std::cout << j_object.dump(-1) << "\n\n";
     std::cout << j_object.dump(0) << "\n\n";
     std::cout << j_object.dump(4) << "\n\n";
+    std::cout << j_object.dump(1, '\t') << "\n\n";
     std::cout << j_array.dump() << "\n\n";
     std::cout << j_array.dump(-1) << "\n\n";
     std::cout << j_array.dump(0) << "\n\n";
     std::cout << j_array.dump(4) << "\n\n";
+    std::cout << j_array.dump(1, '\t') << "\n\n";
 }

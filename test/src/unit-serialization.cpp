@@ -51,6 +51,15 @@ TEST_CASE("serialization")
             CHECK(ss.str() ==
                   "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
         }
+
+        SECTION("given fill")
+        {
+            std::stringstream ss;
+            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            ss << std::setw(1) << std::setfill('\t') << j;
+            CHECK(ss.str() ==
+                  "[\n\t\"foo\",\n\t1,\n\t2,\n\t3,\n\tfalse,\n\t{\n\t\t\"one\": 1\n\t}\n]");
+        }
     }
 
     SECTION("operator>>")
@@ -71,6 +80,17 @@ TEST_CASE("serialization")
             j >> ss;
             CHECK(ss.str() ==
                   "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
+        }
+
+        SECTION("given fill")
+        {
+            std::stringstream ss;
+            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            ss.width(1);
+            ss.fill('\t');
+            j >> ss;
+            CHECK(ss.str() ==
+                  "[\n\t\"foo\",\n\t1,\n\t2,\n\t3,\n\tfalse,\n\t{\n\t\t\"one\": 1\n\t}\n]");
         }
     }
 }

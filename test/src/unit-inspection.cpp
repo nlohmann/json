@@ -207,6 +207,12 @@ TEST_CASE("object inspection")
                   "{\n\"array\": [\n1,\n2,\n3,\n4\n],\n\"boolean\": false,\n\"null\": null,\n\"number\": 42,\n\"object\": {},\n\"string\": \"Hello world\"\n}");
         }
 
+        SECTION("indent=1, space='\t'")
+        {
+            CHECK(j.dump(1, '\t') ==
+                  "{\n\t\"array\": [\n\t\t1,\n\t\t2,\n\t\t3,\n\t\t4\n\t],\n\t\"boolean\": false,\n\t\"null\": null,\n\t\"number\": 42,\n\t\"object\": {},\n\t\"string\": \"Hello world\"\n}");
+        }
+
         SECTION("indent=4")
         {
             CHECK(j.dump(4) ==

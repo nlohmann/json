@@ -2883,6 +2883,8 @@ class basic_json
     members will be pretty-printed with that indent level. An indent level of
     `0` will only insert newlines. `-1` (the default) selects the most compact
     representation.
+    @param[in] indent_char The character to use for indentation of @a indent is
+    greate than `0`. The default is ` ` (space).
 
     @return string containing the serialization of the JSON value
 
@@ -2893,12 +2895,12 @@ class basic_json
 
     @see https://docs.python.org/2/library/json.html#json.dump
 
-    @since version 1.0.0
+    @since version 1.0.0; indentaction character added in version 3.0.0
     */
-    string_t dump(const int indent = -1) const
+    string_t dump(const int indent = -1, const char indent_char = ' ') const
     {
         string_t result;
-        serializer s(output_adapter<char>::create(result));
+        serializer s(output_adapter<char>::create(result), indent_char);
 
         if (indent >= 0)
         {
@@ -6724,11 +6726,13 @@ class basic_json
       public:
         /*!
         @param[in] s  output stream to serialize to
+        @param[in] ichar  indentation character to use
         */
-        serializer(output_adapter_t<char> s)
+        serializer(output_adapter_t<char> s, const char ichar)
             : o(s), loc(std::localeconv()),
               thousands_sep(!loc->thousands_sep ? '\0' : loc->thousands_sep[0]),
-              decimal_point(!loc->decimal_point ? '\0' : loc->decimal_point[0])
+              decimal_point(!loc->decimal_point ? '\0' : loc->decimal_point[0]),
+              indent_char(ichar), indent_string(512, indent_char)
         {}
 
         /*!
@@ -7293,8 +7297,11 @@ class basic_json
         /// the locale's decimal point character
         const char decimal_point = '\0';
 
+        /// the indentation character
+        const char indent_char;
+
         /// the indentation string
-        string_t indent_string = string_t(512, ' ');
+        string_t indent_string;
     };
 
   public:
@@ -7302,11 +7309,17 @@ class basic_json
     @brief serialize to stream
 
     Serialize the given JSON value @a j to the output stream @a o. The JSON
-    value will be serialized using the @ref dump member function. The
-    indentation of the output can be controlled with the member variable
-    `width` of the output stream @a o. For instance, using the manipulator
-    `std::setw(4)` on @a o sets the indentation level to `4` and the
-    serialization result is the same as calling `dump(4)`.
+    value will be serialized using the @ref dump member function.
+
+    - The indentation of the output can be controlled with the member variable
+      `width` of the output stream @a o. For instance, using the manipulator
+      `std::setw(4)` on @a o sets the indentation level to `4` and the
+      serialization result is the same as calling `dump(4)`.
+
+    - The indentation characrer can be controlled with the member variable
+      `fill` of the output stream @a o. For instance, the manipulator
+      `std::setfill('\\t')` sets indentation to use a tab character rather than
+      the default space character.
 
     @param[in,out] o  stream to serialize to
     @param[in] j  JSON value to serialize
@@ -7318,7 +7331,7 @@ class basic_json
     @liveexample{The example below shows the serialization with different
     parameters to `width` to adjust the indentation level.,operator_serialize}
 
-    @since version 1.0.0
+    @since version 1.0.0; indentaction character added in version 3.0.0
     */
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
     {
@@ -7330,7 +7343,7 @@ class basic_json
         o.width(0);
 
         // do the actual serialization
-        serializer s(output_adapter<char>::create(o));
+        serializer s(output_adapter<char>::create(o), o.fill());
         s.dump(j, pretty_print, static_cast<unsigned int>(indentation));
         return o;
     }

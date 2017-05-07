@@ -16,4 +16,5 @@ int main()
     // serialize with indentation
     std::cout << std::setw(4) << j_object << "\n\n";
     std::cout << std::setw(2) << j_array << "\n\n";
+    std::cout << std::setw(1) << std::setfill('\t') << j_object << "\n\n";
 }
