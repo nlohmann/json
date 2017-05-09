@@ -67,7 +67,6 @@ to the files you want to use JSON objects. That's it. Do not forget to set the n
 :beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann_json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann_json --HEAD`.
 
 If you are using the Meson Build System, then you can wrap this repo as a subproject.
-You can then create a reference to it in your `meson.build` file by adding the line:
 
 :warning: [Version 3.0.0](https://github.com/nlohmann/json/wiki/Road-toward-3.0.0) is currently under development. Branch `develop` is used for the ongoing work and is probably **unstable**. Please use the `master` branch for the last stable version 2.1.1.
 
