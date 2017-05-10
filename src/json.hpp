@@ -7913,6 +7913,14 @@ class basic_json
             {
               return proxy.value();
             }
+
+            /// assignment operator (calls value())
+            template<typename ValueType>
+            iterator_value_property<ProxyType>& operator=(const ValueType& value)
+            {
+              proxy.value() = value;
+              return *this;
+            }
         };
 
         /// helper class for iteration
