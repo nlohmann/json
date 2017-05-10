@@ -7877,6 +7877,44 @@ class basic_json
     class iteration_proxy
     {
       private:
+        /// helper class for first "property"
+        template<typename ProxyType>
+        class iterator_key_property
+        {
+          private:
+            /// the reference to the proxy
+            ProxyType& proxy;
+
+          public:
+            explicit iterator_key_property(ProxyType& proxyRef) noexcept
+                : proxy(proxyRef) {}
+
+            /// conversion operator (calls key())
+            operator typename basic_json::string_t() const
+            {
+              return proxy.key();
+            }
+        };
+
+        /// helper class for second "property"
+        template<typename ProxyType>
+        class iterator_value_property
+        {
+          private:
+            /// the reference to the proxy
+            ProxyType& proxy;
+
+          public:
+            explicit iterator_value_property(ProxyType& proxyRef) noexcept
+                : proxy(proxyRef) {}
+
+            /// conversion operator (calls value())
+            operator typename IteratorType::reference() const
+            {
+              return proxy.value();
+            }
+        };
+
         /// helper class for iteration
         class iteration_proxy_internal
         {
@@ -7887,8 +7925,11 @@ class basic_json
             size_t array_index = 0;
 
           public:
+            iterator_key_property<iteration_proxy_internal> first;
+            iterator_value_property<iteration_proxy_internal> second;
+
             explicit iteration_proxy_internal(IteratorType it) noexcept
-                : anchor(it)
+                : anchor(it), first(*this), second(*this)
             {}
 
             /// dereference operator (needed for range-based for)
