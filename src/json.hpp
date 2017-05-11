@@ -7897,14 +7897,14 @@ class basic_json
 
             /// equal operator (calls key())
             template<typename KeyType>
-            bool operator==(const KeyType& key)
+            bool operator==(const KeyType& key) const
             {
               return proxy.key() == key;
             }
 
             /// not equal operator (calls key())
             template<typename KeyType>
-            bool operator!=(const KeyType& key)
+            bool operator!=(const KeyType& key) const
             {
               return proxy.key() != key;
             }
@@ -7930,14 +7930,14 @@ class basic_json
 
             /// equal operator (calls value())
             template<typename ValueType>
-            bool operator==(const ValueType& value)
+            bool operator==(const ValueType& value) const
             {
               return proxy.value() == value;
             }
 
             /// not equal operator (calls value())
             template<typename ValueType>
-            bool operator!=(const ValueType& value)
+            bool operator!=(const ValueType& value) const
             {
               return proxy.value() != value;
             }
