@@ -3447,9 +3447,9 @@ class basic_json
     This overloads is chosen if:
     - @a ValueType is not @ref basic_json,
     - @ref json_serializer<ValueType> has a `from_json()` method of the form
-      `void from_json(const @ref basic_json&, ValueType&)`, and
+      `void from_json(const ` @ref basic_json`&, ValueType&)`, and
     - @ref json_serializer<ValueType> does not have a `from_json()` method of
-      the form `ValueType from_json(const @ref basic_json&)`
+      the form `ValueType from_json(const ` @ref basic_json`&)`
 
     @tparam ValueTypeCV the provided value type
     @tparam ValueType the returned value type
@@ -3508,7 +3508,7 @@ class basic_json
     This overloads is chosen if:
     - @a ValueType is not @ref basic_json and
     - @ref json_serializer<ValueType> has a `from_json()` method of the form
-      `ValueType from_json(const @ref basic_json&)`
+      `ValueType from_json(const ` @ref basic_json`&)`
 
     @note If @ref json_serializer<ValueType> has both overloads of
     `from_json()`, this one is chosen.
