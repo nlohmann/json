@@ -11586,7 +11586,7 @@ class basic_json
 
                             // other characters after escape
                             default:
-                                error_message = "invalid string: forbidden character after backspace";
+                                error_message = "invalid string: forbidden character after backslash";
                                 return token_type::parse_error;
                         }
 
