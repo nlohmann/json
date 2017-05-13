@@ -7892,21 +7892,21 @@ class basic_json
             /// conversion operator (calls key())
             operator typename basic_json::string_t() const
             {
-              return proxy.key();
+                return proxy.key();
             }
 
             /// equal operator (calls key())
             template<typename KeyType>
             bool operator==(const KeyType& key) const
             {
-              return proxy.key() == key;
+                return proxy.key() == key;
             }
 
             /// not equal operator (calls key())
             template<typename KeyType>
             bool operator!=(const KeyType& key) const
             {
-              return proxy.key() != key;
+                return proxy.key() != key;
             }
         };
 
@@ -7925,29 +7925,29 @@ class basic_json
             /// conversion operator (calls value())
             operator typename IteratorType::reference() const
             {
-              return proxy.value();
+                return proxy.value();
             }
 
             /// equal operator (calls value())
             template<typename ValueType>
             bool operator==(const ValueType& value) const
             {
-              return proxy.value() == value;
+                return proxy.value() == value;
             }
 
             /// not equal operator (calls value())
             template<typename ValueType>
             bool operator!=(const ValueType& value) const
             {
-              return proxy.value() != value;
+                return proxy.value() != value;
             }
 
             /// assignment operator (calls value())
             template<typename ValueType>
             iterator_value_property<ProxyType>& operator=(const ValueType& value)
             {
-              proxy.value() = value;
-              return *this;
+                proxy.value() = value;
+                return *this;
             }
         };
 
@@ -9005,7 +9005,7 @@ class basic_json
         {
             // avoid reading too many characters
             const size_t max_length = static_cast<size_t>(limit - start);
-            return std::string(start + offset, std::min({length, max_length - offset}));
+            return std::string(start + offset, std::min(length, max_length - offset));
         }
 
       private:
