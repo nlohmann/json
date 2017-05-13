@@ -7894,6 +7894,20 @@ class basic_json
             {
               return proxy.key();
             }
+
+            /// equal operator (calls key())
+            template<typename KeyType>
+            bool operator==(const KeyType& key) const
+            {
+              return proxy.key() == key;
+            }
+
+            /// not equal operator (calls key())
+            template<typename KeyType>
+            bool operator!=(const KeyType& key) const
+            {
+              return proxy.key() != key;
+            }
         };
 
         /// helper class for second "property"
@@ -7912,6 +7926,28 @@ class basic_json
             operator typename IteratorType::reference() const
             {
               return proxy.value();
+            }
+
+            /// equal operator (calls value())
+            template<typename ValueType>
+            bool operator==(const ValueType& value) const
+            {
+              return proxy.value() == value;
+            }
+
+            /// not equal operator (calls value())
+            template<typename ValueType>
+            bool operator!=(const ValueType& value) const
+            {
+              return proxy.value() != value;
+            }
+
+            /// assignment operator (calls value())
+            template<typename ValueType>
+            iterator_value_property<ProxyType>& operator=(const ValueType& value)
+            {
+              proxy.value() = value;
+              return *this;
             }
         };
 
