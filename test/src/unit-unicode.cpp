@@ -34,6 +34,8 @@ using nlohmann::json;
 
 #include <fstream>
 
+void check_utf8string(bool success_expected, int byte1, int byte2, int byte3, int byte4);
+
 // create and check a JSON string with up to four UTF-8 bytes
 void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte3 = -1, int byte4 = -1)
 {

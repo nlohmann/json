@@ -5204,6 +5204,8 @@ class basic_json
     reference to the JSON values is returned, so there is no access to the
     underlying iterator.
 
+    @liveexample{The following code shows how the wrapper is used,iterator_wrapper}
+
     @note The name of this function is not yet final and may change in the
     future.
     */
@@ -7877,80 +7879,6 @@ class basic_json
     class iteration_proxy
     {
       private:
-        /// helper class for first "property"
-        template<typename ProxyType>
-        class iterator_key_property
-        {
-          private:
-            /// the reference to the proxy
-            ProxyType& proxy;
-
-          public:
-            explicit iterator_key_property(ProxyType& proxyRef) noexcept
-                : proxy(proxyRef) {}
-
-            /// conversion operator (calls key())
-            operator typename basic_json::string_t() const
-            {
-                return proxy.key();
-            }
-
-            /// equal operator (calls key())
-            template<typename KeyType>
-            bool operator==(const KeyType& key) const
-            {
-                return proxy.key() == key;
-            }
-
-            /// not equal operator (calls key())
-            template<typename KeyType>
-            bool operator!=(const KeyType& key) const
-            {
-                return proxy.key() != key;
-            }
-        };
-
-        /// helper class for second "property"
-        template<typename ProxyType>
-        class iterator_value_property
-        {
-          private:
-            /// the reference to the proxy
-            ProxyType& proxy;
-
-          public:
-            explicit iterator_value_property(ProxyType& proxyRef) noexcept
-                : proxy(proxyRef) {}
-
-            /// conversion operator (calls value())
-            operator typename IteratorType::reference() const
-            {
-                return proxy.value();
-            }
-
-            /// equal operator (calls value())
-            template<typename ValueType>
-            bool operator==(const ValueType& value) const
-            {
-                return proxy.value() == value;
-            }
-
-            /// not equal operator (calls value())
-            template<typename ValueType>
-            bool operator!=(const ValueType& value) const
-            {
-                return proxy.value() != value;
-            }
-
-            /// assignment operator (calls value())
-            template<typename ValueType>
-            iterator_value_property<ProxyType>& operator=(const ValueType& value)
-            {
-                proxy.value() = value;
-                return *this;
-            }
-        };
-
         /// helper class for iteration
         class iteration_proxy_internal
         {
@@ -7961,11 +7889,8 @@ class basic_json
             size_t array_index = 0;
 
           public:
-            iterator_key_property<iteration_proxy_internal> first;
-            iterator_value_property<iteration_proxy_internal> second;
-
             explicit iteration_proxy_internal(IteratorType it) noexcept
-                : anchor(it), first(*this), second(*this)
+                : anchor(it)
             {}
 
             /// dereference operator (needed for range-based for)

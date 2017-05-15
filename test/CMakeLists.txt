@@ -30,7 +30,6 @@ add_executable(${JSON_UNITTEST_TARGET_NAME}
     "src/unit-element_access2.cpp"
     "src/unit-inspection.cpp"
     "src/unit-iterator_wrapper.cpp"
-    "src/unit-iterator_wrapper_first_second.cpp"
     "src/unit-iterators1.cpp"
     "src/unit-iterators2.cpp"
     "src/unit-json_patch.cpp"

@@ -66,7 +66,7 @@ to the files you want to use JSON objects. That's it. Do not forget to set the n
 
 :beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann_json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann_json --HEAD`.
 
-If you are using the Meson Build System, then you can wrap this repo as a subproject.
+If you are using the [Meson Build System](http://mesonbuild.com), then you can wrap this repo as a subproject.
 
 :warning: [Version 3.0.0](https://github.com/nlohmann/json/wiki/Road-toward-3.0.0) is currently under development. Branch `develop` is used for the ongoing work and is probably **unstable**. Please use the `master` branch for the last stable version 2.1.1.
 
@@ -839,6 +839,7 @@ I deeply appreciate the help of the following people.
 - [ftillier](https://github.com/ftillier) fixed a compiler warning.
 - [tinloaf](https://github.com/tinloaf) made sure all pushed warnings are properly popped.
 - [Fytch](https://github.com/Fytch) found a bug in the documentation.
+- [Jay Sistar](https://github.com/Type1J) implemented a Meson build description
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -865,7 +866,6 @@ The library itself contains of a single header file licensed under the MIT licen
 - [**Github Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
 - [**libFuzzer**](http://llvm.org/docs/LibFuzzer.html) to implement fuzz testing for OSS-Fuzz
 - [**OSS-Fuzz**](https://github.com/google/oss-fuzz) for continuous fuzz testing of the library
-- [**re2c**](http://re2c.org) to generate an automaton for the lexical analysis
 - [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](http://melpon.org/wandbox)
 - [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
 - [**Valgrind**](http://valgrind.org) to check for correct memory management
