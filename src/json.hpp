@@ -12532,6 +12532,7 @@ scan_number_done:
 
             if (strict)
             {
+                get_token();
                 expect(lexer::token_type::end_of_input);
             }
 
@@ -12593,7 +12594,6 @@ scan_number_done:
                     // closing } -> we are done
                     if (last_token == lexer::token_type::end_object)
                     {
-                        get_token();
                         if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
                         {
                             result = basic_json(value_t::discarded);
@@ -12635,6 +12635,7 @@ scan_number_done:
                         }
 
                         // comma -> next value
+                        get_token();
                         if (last_token == lexer::token_type::value_separator)
                         {
                             get_token();
@@ -12643,7 +12644,6 @@ scan_number_done:
 
                         // closing }
                         expect(lexer::token_type::end_object);
-                        get_token();
                         break;
                     }
 
@@ -12671,7 +12671,6 @@ scan_number_done:
                     // closing ] -> we are done
                     if (last_token == lexer::token_type::end_array)
                     {
-                        get_token();
                         if (callback and not callback(--depth, parse_event_t::array_end, result))
                         {
                             result = basic_json(value_t::discarded);
@@ -12690,6 +12689,7 @@ scan_number_done:
                         }
 
                         // comma -> next value
+                        get_token();
                         if (last_token == lexer::token_type::value_separator)
                         {
                             get_token();
@@ -12698,7 +12698,6 @@ scan_number_done:
 
                         // closing ]
                         expect(lexer::token_type::end_array);
-                        get_token();
                         break;
                     }
 
@@ -12713,14 +12712,12 @@ scan_number_done:
                 case lexer::token_type::literal_null:
                 {
                     result.m_type = value_t::null;
-                    get_token();
                     break;
                 }
 
                 case lexer::token_type::value_string:
                 {
                     result = basic_json(m_lexer.get_string());
-                    get_token();
                     break;
                 }
 
@@ -12728,7 +12725,6 @@ scan_number_done:
                 {
                     result.m_type = value_t::boolean;
                     result.m_value = true;
-                    get_token();
                     break;
                 }
 
@@ -12736,7 +12732,6 @@ scan_number_done:
                 {
                     result.m_type = value_t::boolean;
                     result.m_value = false;
-                    get_token();
                     break;
                 }
 
@@ -12744,7 +12739,6 @@ scan_number_done:
                 {
                     result.m_type = value_t::number_unsigned;
                     result.m_value = m_lexer.get_number_unsigned();
-                    get_token();
                     break;
                 }
 
@@ -12752,7 +12746,6 @@ scan_number_done:
                 {
                     result.m_type = value_t::number_integer;
                     result.m_value = m_lexer.get_number_integer();
-                    get_token();
                     break;
                 }
 
@@ -12767,7 +12760,6 @@ scan_number_done:
                         JSON_THROW(out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
                     }
 
-                    get_token();
                     break;
                 }
 
