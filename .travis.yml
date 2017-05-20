@@ -177,6 +177,16 @@ matrix:
         sources: ['ubuntu-toolchain-r-test']
         packages: g++-6
 
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-6
+      - CXXFLAGS=-std=c++1z
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: g++-6
+
   # Linux / Clang
 
   - os: linux
