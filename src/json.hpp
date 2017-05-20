@@ -12556,7 +12556,7 @@ scan_number_done:
                 return false;
             }
 
-            if (strict and last_token != lexer::token_type::end_of_input)
+            if (strict and get_token() != lexer::token_type::end_of_input)
             {
                 return false;
             }
@@ -12787,6 +12787,14 @@ scan_number_done:
 
         /*!
         @brief the acutal acceptor
+
+        @invariant 1. The last token is not yet processed. Therefore, the
+                      caller of this function must make sure a token has
+                      been read.
+                   2. When this function returns, the last token is processed.
+                      That is, the last read character was already considered.
+
+        This invariant makes sure that no token needs to be "unput".
         */
         bool accept_internal()
         {
@@ -12800,7 +12808,6 @@ scan_number_done:
                     // closing } -> we are done
                     if (last_token == lexer::token_type::end_object)
                     {
-                        get_token();
                         return true;
                     }
 
@@ -12828,6 +12835,7 @@ scan_number_done:
                         }
 
                         // comma -> next value
+                        get_token();
                         if (last_token == lexer::token_type::value_separator)
                         {
                             get_token();
@@ -12840,7 +12848,6 @@ scan_number_done:
                             return false;
                         }
 
-                        get_token();
                         return true;
                     }
                 }
@@ -12853,7 +12860,6 @@ scan_number_done:
                     // closing ] -> we are done
                     if (last_token == lexer::token_type::end_array)
                     {
-                        get_token();
                         return true;
                     }
 
@@ -12867,6 +12873,7 @@ scan_number_done:
                         }
 
                         // comma -> next value
+                        get_token();
                         if (last_token == lexer::token_type::value_separator)
                         {
                             get_token();
@@ -12879,20 +12886,18 @@ scan_number_done:
                             return false;
                         }
 
-                        get_token();
                         return true;
                     }
                 }
 
-                case lexer::token_type::literal_null:
-                case lexer::token_type::value_string:
-                case lexer::token_type::literal_true:
                 case lexer::token_type::literal_false:
-                case lexer::token_type::value_unsigned:
-                case lexer::token_type::value_integer:
+                case lexer::token_type::literal_null:
+                case lexer::token_type::literal_true:
                 case lexer::token_type::value_float:
+                case lexer::token_type::value_integer:
+                case lexer::token_type::value_string:
+                case lexer::token_type::value_unsigned:
                 {
-                    get_token();
                     return true;
                 }
 
