@@ -8826,8 +8826,10 @@ class basic_json
         {
             // clear stream flags
             is.clear();
-            // set stream after last processed char
-            is.seekg(start_position + static_cast<std::streamoff>(processed_chars - 1));
+            // We initially read a lot of characters into the buffer, and we
+            // may not have processed all of them. Therefore, we need to
+            // "rewind" the stream after the last processed char.
+            is.seekg(start_position + static_cast<std::streamoff>(processed_chars));
         }
 
         int get_character() override
@@ -8840,20 +8842,19 @@ class basic_json
                 // store number of bytes in the buffer
                 fill_size = static_cast<size_t>(is.gcount());
 
+                // the buffer is ready
+                buffer_pos = 0;
+
                 // remember that filling did not yield new input
                 if (fill_size == 0)
                 {
                     eof = true;
+                    return std::char_traits<char>::eof();
                 }
-
-                // the buffer is ready
-                buffer_pos = 0;
             }
 
             ++processed_chars;
-            return eof
-                   ? std::char_traits<char>::eof()
-                   : buffer[buffer_pos++] & 0xFF;
+            return buffer[buffer_pos++] & 0xFF;;
         }
 
         std::string read(size_t offset, size_t length) override

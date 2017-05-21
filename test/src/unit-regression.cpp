@@ -599,6 +599,118 @@ TEST_CASE("regression tests")
                           "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
     }
 
+    SECTION("issue #367 - behavior of operator>> should more closely resemble that of built-in overloads")
+    {
+        SECTION("(empty)")
+        {
+            std::stringstream ss;
+            json j;
+            CHECK_THROWS_AS(ss >> j, json::parse_error);
+            CHECK_THROWS_WITH(ss >> j,
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+        }
+
+        SECTION("(whitespace)")
+        {
+            std::stringstream ss;
+            ss << "   ";
+            json j;
+            CHECK_THROWS_AS(ss >> j, json::parse_error);
+            CHECK_THROWS_WITH(ss >> j,
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+        }
+
+        SECTION("one value")
+        {
+            std::stringstream ss;
+            ss << "111";
+            json j;
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == 111);
+
+            CHECK_THROWS_AS(ss >> j, json::parse_error);
+            CHECK_THROWS_WITH(ss >> j,
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+        }
+
+        SECTION("one value + whitespace")
+        {
+            std::stringstream ss;
+            ss << "222 \t\n";
+            json j;
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == 222);
+
+            CHECK_THROWS_AS(ss >> j, json::parse_error);
+            CHECK_THROWS_WITH(ss >> j,
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+        }
+
+        SECTION("whitespace + one value")
+        {
+            std::stringstream ss;
+            ss << "\n\t 333";
+            json j;
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == 333);
+
+            CHECK_THROWS_AS(ss >> j, json::parse_error);
+            CHECK_THROWS_WITH(ss >> j,
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+        }
+
+        SECTION("three values")
+        {
+            std::stringstream ss;
+            ss << " 111 \n222\n \n  333";
+            json j;
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == 111);
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == 222);
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == 333);
+
+            CHECK_THROWS_AS(ss >> j, json::parse_error);
+            CHECK_THROWS_WITH(ss >> j,
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+        }
+
+        SECTION("literals without whitespace")
+        {
+            std::stringstream ss;
+            ss << "truefalsenull\"\"";
+            json j;
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == true);
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == false);
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == nullptr);
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == "");
+
+            CHECK_THROWS_AS(ss >> j, json::parse_error);
+            CHECK_THROWS_WITH(ss >> j,
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+        }
+
+        SECTION("example from #529")
+        {
+            std::stringstream ss;
+            ss << "{\n    \"one\"   : 1,\n    \"two\"   : 2\n}\n{\n    \"three\" : 3\n}";
+            json j;
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == json({{"one", 1}, {"two", 2}}));
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j == json({{"three", 3}}));
+
+            CHECK_THROWS_AS(ss >> j, json::parse_error);
+            CHECK_THROWS_WITH(ss >> j,
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+        }
+    }
+
     SECTION("issue #389 - Integer-overflow (OSS-Fuzz issue 267)")
     {
         // original test case
