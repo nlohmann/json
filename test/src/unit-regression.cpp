@@ -34,6 +34,7 @@ using nlohmann::json;
 
 #include <fstream>
 #include <list>
+#include <cstdio>
 
 TEST_CASE("regression tests")
 {
@@ -708,6 +709,44 @@ TEST_CASE("regression tests")
             CHECK_THROWS_AS(ss >> j, json::parse_error);
             CHECK_THROWS_WITH(ss >> j,
                               "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+        }
+
+        SECTION("second example from #529")
+        {
+            std::string str = "{\n\"one\"   : 1,\n\"two\"   : 2\n}\n{\n\"three\" : 3\n}";
+
+            {
+                std::ofstream file("test.json");
+                file << str;
+            }
+
+            std::ifstream stream("test.json", std::ifstream::in);
+            json val;
+
+            size_t i = 0;
+            while (stream.peek() != EOF)
+            {
+                CAPTURE(i);
+                CHECK_NOTHROW(stream >> val);
+
+                CHECK(i < 2);
+
+                if (i == 0)
+                {
+                    CHECK(val == json({{"one", 1}, {"two", 2}}));
+                    CHECK(stream.tellg() == 28);
+                }
+
+                if (i == 1)
+                {
+                    CHECK(val == json({{"three", 3}}));
+                    CHECK(stream.tellg() == 44);
+                }
+
+                ++i;
+            }
+
+            std::remove("test.json");
         }
     }
 
