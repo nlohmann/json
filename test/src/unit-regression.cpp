@@ -734,13 +734,13 @@ TEST_CASE("regression tests")
                 if (i == 0)
                 {
                     CHECK(val == json({{"one", 1}, {"two", 2}}));
-                    CHECK(stream.tellg() == 28);
+                    CHECK(static_cast<int>(stream.tellg()) == 28);
                 }
 
                 if (i == 1)
                 {
                     CHECK(val == json({{"three", 3}}));
-                    CHECK(stream.tellg() == 44);
+                    CHECK(static_cast<int>(stream.tellg()) == 44);
                 }
 
                 ++i;
