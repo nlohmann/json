@@ -271,6 +271,16 @@ TEST_CASE("iterators 2")
                 }
                 {
                     auto it = j_object.begin();
+                    CHECK_THROWS_AS(1 + it, std::domain_error);
+                    CHECK_THROWS_WITH(1 + it, "cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(1 + it, std::domain_error);
+                    CHECK_THROWS_WITH(1 + it, "cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.begin();
                     CHECK_THROWS_AS(it -= 1, std::domain_error);
                     CHECK_THROWS_WITH(it -= 1, "cannot use offsets with object iterators");
                 }
@@ -687,6 +697,16 @@ TEST_CASE("iterators 2")
                     auto it = j_object.crbegin();
                     CHECK_THROWS_AS(it + 1, std::domain_error);
                     CHECK_THROWS_WITH(it + 1, "cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(1 + it, std::domain_error);
+                    CHECK_THROWS_WITH(1 + it, "cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(1 + it, std::domain_error);
+                    CHECK_THROWS_WITH(1 + it, "cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.rbegin();
