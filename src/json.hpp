@@ -9317,9 +9317,20 @@ class basic_json
         @brief  add to iterator
         @pre The iterator is initialized; i.e. `m_object != nullptr`.
         */
-        iter_impl operator+(difference_type i)
+        iter_impl operator+(difference_type i) const
         {
             auto result = *this;
+            result += i;
+            return result;
+        }
+
+        /*!
+        @brief  addition of distance and iterator
+        @pre The iterator is initialized; i.e. `m_object != nullptr`.
+        */
+        friend iter_impl operator+(difference_type i, const iter_impl& it)
+        {
+            auto result = it;
             result += i;
             return result;
         }
@@ -9328,7 +9339,7 @@ class basic_json
         @brief  subtract from iterator
         @pre The iterator is initialized; i.e. `m_object != nullptr`.
         */
-        iter_impl operator-(difference_type i)
+        iter_impl operator-(difference_type i) const
         {
             auto result = *this;
             result -= i;
