@@ -8672,7 +8672,7 @@ class basic_json
         json_reverse_iterator operator+(difference_type i) const
         {
             auto result = *this;
-            result += i;
+            result -= i;
             return result;
         }
 
@@ -8680,14 +8680,14 @@ class basic_json
         json_reverse_iterator operator-(difference_type i) const
         {
             auto result = *this;
-            result -= i;
+            result += i;
             return result;
         }
 
         /// return difference
         difference_type operator-(const json_reverse_iterator& other) const
         {
-            return this->base() - other.base();
+            return other.base() - this->base();
         }
 
         /// access to successor

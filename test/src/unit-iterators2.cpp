@@ -747,7 +747,7 @@ TEST_CASE("iterators 2")
                     it += 3;
                     CHECK((j_array.rbegin() + 3) == it);
                     CHECK((it - 3) == j_array.rbegin());
-                    CHECK((j_array.rbegin() - it) == 3);
+                    CHECK((it - j_array.rbegin()) == 3);
                     CHECK(*it == json(3));
                     it -= 2;
                     CHECK(*it == json(5));
@@ -757,7 +757,7 @@ TEST_CASE("iterators 2")
                     it += 3;
                     CHECK((j_array.crbegin() + 3) == it);
                     CHECK((it - 3) == j_array.crbegin());
-                    CHECK((j_array.crbegin() - it) == 3);
+                    CHECK((it - j_array.crbegin()) == 3);
                     CHECK(*it == json(3));
                     it -= 2;
                     CHECK(*it == json(5));
@@ -769,9 +769,9 @@ TEST_CASE("iterators 2")
                 {
                     auto it = j_null.rbegin();
                     it += 3;
-                    CHECK((j_null.rbegin() + 3) == it);
-                    CHECK((it - 3) == j_null.rbegin());
-                    CHECK((j_null.rbegin() - it) == 3);
+                    CHECK((j_null.rbegin() - 3) == it);
+                    CHECK((it + 3) == j_null.rbegin());
+                    CHECK((it - j_null.rbegin()) == 3);
                     CHECK(it != j_null.rend());
                     it -= 3;
                     CHECK(it == j_null.rend());
@@ -779,9 +779,9 @@ TEST_CASE("iterators 2")
                 {
                     auto it = j_null.crbegin();
                     it += 3;
-                    CHECK((j_null.crbegin() + 3) == it);
-                    CHECK((it - 3) == j_null.crbegin());
-                    CHECK((j_null.crbegin() - it) == 3);
+                    CHECK((j_null.crbegin() - 3) == it);
+                    CHECK((it + 3) == j_null.crbegin());
+                    CHECK((it - j_null.crbegin()) == 3);
                     CHECK(it != j_null.crend());
                     it -= 3;
                     CHECK(it == j_null.crend());
@@ -793,9 +793,9 @@ TEST_CASE("iterators 2")
                 {
                     auto it = j_value.rbegin();
                     it += 3;
-                    CHECK((j_value.rbegin() + 3) == it);
-                    CHECK((it - 3) == j_value.rbegin());
-                    CHECK((j_value.rbegin() - it) == 3);
+                    CHECK((j_value.rbegin() - 3) == it);
+                    CHECK((it + 3) == j_value.rbegin());
+                    CHECK((it - j_value.rbegin()) == 3);
                     CHECK(it != j_value.rend());
                     it -= 3;
                     CHECK(*it == json(42));
@@ -803,9 +803,9 @@ TEST_CASE("iterators 2")
                 {
                     auto it = j_value.crbegin();
                     it += 3;
-                    CHECK((j_value.crbegin() + 3) == it);
-                    CHECK((it - 3) == j_value.crbegin());
-                    CHECK((j_value.crbegin() - it) == 3);
+                    CHECK((j_value.crbegin() - 3) == it);
+                    CHECK((it + 3) == j_value.crbegin());
+                    CHECK((it - j_value.crbegin()) == 3);
                     CHECK(it != j_value.crend());
                     it -= 3;
                     CHECK(*it == json(42));
