@@ -8626,7 +8626,7 @@ class basic_json
         using reference = typename Base::reference;
 
         /// create reverse iterator from iterator
-        json_reverse_iterator(const typename base_iterator::iterator_type& it) noexcept
+		json_reverse_iterator(const typename base_iterator::iterator_type& it) noexcept
             : base_iterator(it)
         {}
 
@@ -8671,29 +8671,25 @@ class basic_json
         /// add to iterator
         json_reverse_iterator operator+(difference_type i) const
         {
-            auto result = *this;
-            result -= i;
-            return result;
+            return json_reverse_iterator(base_iterator::operator+(i));
         }
 
         /// subtract from iterator
         json_reverse_iterator operator-(difference_type i) const
         {
-            auto result = *this;
-            result += i;
-            return result;
+            return json_reverse_iterator(base_iterator::operator-(i));
         }
 
         /// return difference
         difference_type operator-(const json_reverse_iterator& other) const
         {
-            return other.base() - this->base();
+            return base_iterator(*this) - base_iterator(other);
         }
 
         /// access to successor
         reference operator[](difference_type n) const
         {
-            return *(this->operator+(n));
+            return base_iterator::operator[](n);
         }
 
         /// return the key of an object iterator
