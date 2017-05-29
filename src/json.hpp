@@ -8638,46 +8638,43 @@ class basic_json
         /// post-increment (it++)
         json_reverse_iterator operator++(int)
         {
-            return base_iterator::operator++(1);
+            return static_cast<json_reverse_iterator>(base_iterator::operator++(1));
         }
 
         /// pre-increment (++it)
         json_reverse_iterator& operator++()
         {
-            base_iterator::operator++();
-            return *this;
+            return static_cast<json_reverse_iterator&>(base_iterator::operator++());
         }
 
         /// post-decrement (it--)
         json_reverse_iterator operator--(int)
         {
-            return base_iterator::operator--(1);
+            return static_cast<json_reverse_iterator>(base_iterator::operator--(1));
         }
 
         /// pre-decrement (--it)
         json_reverse_iterator& operator--()
         {
-            base_iterator::operator--();
-            return *this;
+            return static_cast<json_reverse_iterator&>(base_iterator::operator--());
         }
 
         /// add to iterator
         json_reverse_iterator& operator+=(difference_type i)
         {
-            base_iterator::operator+=(i);
-            return *this;
+            return static_cast<json_reverse_iterator&>(base_iterator::operator+=(i));
         }
 
         /// add to iterator
         json_reverse_iterator operator+(difference_type i) const
         {
-            return json_reverse_iterator(base_iterator::operator+(i));
+            return static_cast<json_reverse_iterator>(base_iterator::operator+(i));
         }
 
         /// subtract from iterator
         json_reverse_iterator operator-(difference_type i) const
         {
-            return json_reverse_iterator(base_iterator::operator-(i));
+            return static_cast<json_reverse_iterator>(base_iterator::operator-(i));
         }
 
         /// return difference
