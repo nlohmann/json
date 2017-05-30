@@ -8054,11 +8054,12 @@ class basic_json
         }
 
         /*!
-        @note The conventional copy constructor is not defined. It is replaced
-		      by either of the following two converting constructors.
-              They support copy from iterator to iterator,
-                           copy from const iterator to const iterator, 
-                           and conversion from iterator to const iterator.
+        @note The conventional copy constructor and copy assignment are
+              implicitly defined.
+			  Combined with the following converting constructor and assigment,
+			  they support: copy from iterator to iterator,
+                            copy from const iterator to const iterator, 
+                            and conversion from iterator to const iterator.
               However conversion from const iterator to iterator is not defined.
         */
 
@@ -8072,39 +8073,12 @@ class basic_json
         {}
 
         /*!
-        @brief converting constructor
-        @param[in] other  const iterator to copy from
-        @note It is not checked whether @a other is initialized.
-        */
-        iter_impl<const basic_json>(const iter_impl<const basic_json>& other) noexcept
-            : m_object(other.m_object), m_it(other.m_it)
-        {}
-
-        /*!
-        @brief copy assignment
+        @brief converting assignment
         @param[in,out] other  non-const iterator to copy from
 		@return const/non-const iterator
         @note It is not checked whether @a other is initialized.
         */
         iter_impl& operator=(iter_impl<basic_json> other) noexcept(
-            std::is_nothrow_move_constructible<pointer>::value and
-            std::is_nothrow_move_assignable<pointer>::value and
-            std::is_nothrow_move_constructible<struct internal_iterator>::value and
-            std::is_nothrow_move_assignable<struct internal_iterator>::value
-        )
-        {
-            std::swap(m_object, other.m_object);
-            std::swap(m_it, other.m_it);
-            return *this;
-        }
-
-        /*!
-        @brief copy assignment
-        @param[in,out] other  const iterator to copy from
-		@return const iterator
-        @note It is not checked whether @a other is initialized.
-        */
-        iter_impl<const basic_json>& operator=(iter_impl<const basic_json> other) noexcept(
             std::is_nothrow_move_constructible<pointer>::value and
             std::is_nothrow_move_assignable<pointer>::value and
             std::is_nothrow_move_constructible<struct internal_iterator>::value and
