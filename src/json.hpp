@@ -8089,8 +8089,8 @@ class basic_json
         iter_impl& operator=(iter_impl<basic_json> other) noexcept(
             std::is_nothrow_move_constructible<pointer>::value and
             std::is_nothrow_move_assignable<pointer>::value and
-            std::is_nothrow_move_constructible<internal_iterator>::value and
-            std::is_nothrow_move_assignable<internal_iterator>::value
+            std::is_nothrow_move_constructible<struct internal_iterator>::value and
+            std::is_nothrow_move_assignable<struct internal_iterator>::value
         )
         {
             std::swap(m_object, other.m_object);
@@ -8107,8 +8107,8 @@ class basic_json
         iter_impl<const basic_json>& operator=(iter_impl<const basic_json> other) noexcept(
             std::is_nothrow_move_constructible<pointer>::value and
             std::is_nothrow_move_assignable<pointer>::value and
-            std::is_nothrow_move_constructible<internal_iterator>::value and
-            std::is_nothrow_move_assignable<internal_iterator>::value
+            std::is_nothrow_move_constructible<struct internal_iterator>::value and
+            std::is_nothrow_move_assignable<struct internal_iterator>::value
         )
         {
             std::swap(m_object, other.m_object);
@@ -8601,7 +8601,7 @@ class basic_json
         /// associated JSON instance
         pointer m_object = nullptr;
         /// the actual iterator of the associated instance
-        internal_iterator m_it = internal_iterator();
+        struct internal_iterator m_it = internal_iterator();
     };
 
     /*!
