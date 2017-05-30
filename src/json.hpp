@@ -8056,9 +8056,9 @@ class basic_json
         /*!
         @note The conventional copy constructor and copy assignment are
               implicitly defined.
-			  Combined with the following converting constructor and assigment,
-			  they support: copy from iterator to iterator,
-                            copy from const iterator to const iterator, 
+              Combined with the following converting constructor and assigment,
+              they support: copy from iterator to iterator,
+                            copy from const iterator to const iterator,
                             and conversion from iterator to const iterator.
               However conversion from const iterator to iterator is not defined.
         */
@@ -8075,7 +8075,7 @@ class basic_json
         /*!
         @brief converting assignment
         @param[in,out] other  non-const iterator to copy from
-		@return const/non-const iterator
+        @return const/non-const iterator
         @note It is not checked whether @a other is initialized.
         */
         iter_impl& operator=(iter_impl<basic_json> other) noexcept(
