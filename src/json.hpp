@@ -8015,7 +8015,7 @@ class basic_json
               typename basic_json::const_reference,
               typename basic_json::reference>::type;
         /// the category of the iterator
-        using iterator_category = std::bidirectional_iterator_tag;
+        using iterator_category = std::random_access_iterator_tag;
 
         /// default constructor
         iter_impl() = default;
