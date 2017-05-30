@@ -8078,15 +8078,10 @@ class basic_json
         @return const/non-const iterator
         @note It is not checked whether @a other is initialized.
         */
-        iter_impl& operator=(iter_impl<basic_json> other) noexcept(
-            std::is_nothrow_move_constructible<pointer>::value and
-            std::is_nothrow_move_assignable<pointer>::value and
-            std::is_nothrow_move_constructible<struct internal_iterator>::value and
-            std::is_nothrow_move_assignable<struct internal_iterator>::value
-        )
+        iter_impl& operator=(const iter_impl<basic_json>& other) noexcept
         {
-            std::swap(m_object, other.m_object);
-            std::swap(m_it, other.m_it);
+            m_object = other.m_object;
+            m_it = other.m_it;
             return *this;
         }
 
