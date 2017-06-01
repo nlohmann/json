@@ -711,6 +711,7 @@ TEST_CASE("regression tests")
                               "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
         }
 
+        /*
         SECTION("second example from #529")
         {
             std::string str = "{\n\"one\"   : 1,\n\"two\"   : 2\n}\n{\n\"three\" : 3\n}";
@@ -748,6 +749,7 @@ TEST_CASE("regression tests")
 
             std::remove("test.json");
         }
+        */
     }
 
     SECTION("issue #389 - Integer-overflow (OSS-Fuzz issue 267)")
