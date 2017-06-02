@@ -1169,4 +1169,10 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec = {'"', '\\', '"', 'X', '"', '"'};
         CHECK_THROWS_AS(json::parse(vec), json::parse_error);
     }
+
+    SECTION("issue #602 - BOM not skipped when using json:parse(iterator)")
+    {
+        std::string i = "\xef\xbb\xbf{\n   \"foo\": true\n}";
+        CHECK_NOTHROW(json::parse(i.begin(), i.end()));
+    }
 }

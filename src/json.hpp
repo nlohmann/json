@@ -8814,7 +8814,7 @@ class basic_json
             // store number of bytes in the buffer
             fill_size = static_cast<size_t>(is.gcount());
 
-            // skip byte-order mark
+            // skip byte order mark
             if (fill_size >= 3 and buffer[0] == '\xEF' and buffer[1] == '\xBB' and buffer[2] == '\xBF')
             {
                 buffer_pos += 3;
@@ -8911,7 +8911,13 @@ class basic_json
       public:
         input_buffer_adapter(const char* b, size_t l)
             : input_adapter(), cursor(b), limit(b + l), start(b)
-        {}
+        {
+            // skip byte order mark
+            if (l >= 3 and b[0] == '\xEF' and b[1] == '\xBB' and b[2] == '\xBF')
+            {
+                cursor += 3;
+            }
+        }
 
         // delete because of pointer members
         input_buffer_adapter(const input_buffer_adapter&) = delete;

@@ -1012,10 +1012,19 @@ TEST_CASE("Unicode", "[hide]")
 
     SECTION("ignore byte-order-mark")
     {
-        // read a file with a UTF-8 BOM
-        std::ifstream f("test/data/json_nlohmann_tests/bom.json");
-        json j;
-        CHECK_NOTHROW(f >> j);
+        SECTION("in a stream")
+        {
+            // read a file with a UTF-8 BOM
+            std::ifstream f("test/data/json_nlohmann_tests/bom.json");
+            json j;
+            CHECK_NOTHROW(f >> j);
+        }
+
+        SECTION("with an iterator")
+        {
+            std::string i = "\xef\xbb\xbf{\n   \"foo\": true\n}";
+            CHECK_NOTHROW(json::parse(i.begin(), i.end()));
+        }
     }
 
     SECTION("error for incomplete/wrong BOM")
