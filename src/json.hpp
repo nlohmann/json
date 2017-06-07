@@ -8686,7 +8686,7 @@ class basic_json
         /// access to successor
         reference operator[](difference_type n) const
         {
-            return base_iterator::operator[](n);
+            return *(this->operator+(n));
         }
 
         /// return the key of an object iterator

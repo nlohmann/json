@@ -833,15 +833,15 @@ TEST_CASE("iterators 2")
                     auto it = j_object.rbegin();
                     CHECK_THROWS_AS(it[0], json::invalid_iterator);
                     CHECK_THROWS_AS(it[1], json::invalid_iterator);
-                    //CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
-                    //CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                    CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                    CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.crbegin();
                     CHECK_THROWS_AS(it[0], json::invalid_iterator);
                     CHECK_THROWS_AS(it[1], json::invalid_iterator);
-                    //CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
-                    //CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                    CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                    CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
                 }
             }
 
@@ -873,15 +873,15 @@ TEST_CASE("iterators 2")
                     auto it = j_null.rbegin();
                     CHECK_THROWS_AS(it[0], json::invalid_iterator);
                     CHECK_THROWS_AS(it[1], json::invalid_iterator);
-                    //CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.214] cannot get value");
-                    //CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.214] cannot get value");
+                    CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.214] cannot get value");
+                    CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.214] cannot get value");
                 }
                 {
                     auto it = j_null.crbegin();
                     CHECK_THROWS_AS(it[0], json::invalid_iterator);
                     CHECK_THROWS_AS(it[1], json::invalid_iterator);
-                    //CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.214] cannot get value");
-                    //CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.214] cannot get value");
+                    CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.214] cannot get value");
+                    CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.214] cannot get value");
                 }
             }
 
