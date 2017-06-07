@@ -1511,4 +1511,72 @@ TEST_CASE("iterators 1")
             }
         }
     }
+
+    SECTION("conversion from iterator to const iterator")
+    {
+        SECTION("boolean")
+        {
+            json j = true;
+            json::const_iterator it = j.begin();
+            CHECK(it == j.cbegin());
+            it = j.begin();
+            CHECK(it == j.cbegin());
+        }
+        SECTION("string")
+        {
+            json j = "hello world";
+            json::const_iterator it = j.begin();
+            CHECK(it == j.cbegin());
+            it = j.begin();
+            CHECK(it == j.cbegin());
+        }
+        SECTION("array")
+        {
+            json j = {1, 2, 3};
+            json::const_iterator it = j.begin();
+            CHECK(it == j.cbegin());
+            it = j.begin();
+            CHECK(it == j.cbegin());
+        }
+        SECTION("object")
+        {
+            json j = {{"A", 1}, {"B", 2}, {"C", 3}};
+            json::const_iterator it = j.begin();
+            CHECK(it == j.cbegin());
+            it = j.begin();
+            CHECK(it == j.cbegin());
+        }
+        SECTION("number (integer)")
+        {
+            json j = 23;
+            json::const_iterator it = j.begin();
+            CHECK(it == j.cbegin());
+            it = j.begin();
+            CHECK(it == j.cbegin());
+        }
+        SECTION("number (unsigned)")
+        {
+            json j = 23u;
+            json::const_iterator it = j.begin();
+            CHECK(it == j.cbegin());
+            it = j.begin();
+            CHECK(it == j.cbegin());
+        }
+        SECTION("number (float)")
+        {
+            json j = 23.42;
+            json::const_iterator it = j.begin();
+            CHECK(it == j.cbegin());
+            it = j.begin();
+            CHECK(it == j.cbegin());
+        }
+        SECTION("null")
+        {
+            json j = nullptr;
+            json::const_iterator it = j.begin();
+            CHECK(it == j.cbegin());
+            it = j.begin();
+            CHECK(it == j.cbegin());
+        }
+    }
 }

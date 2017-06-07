@@ -840,6 +840,7 @@ I deeply appreciate the help of the following people.
 - [tinloaf](https://github.com/tinloaf) made sure all pushed warnings are properly popped.
 - [Fytch](https://github.com/Fytch) found a bug in the documentation.
 - [Jay Sistar](https://github.com/Type1J) implemented a Meson build description
+- [Henry Lee](https://github.com/HenryRLee) fixed a warning in ICC
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
