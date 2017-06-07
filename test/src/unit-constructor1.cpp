@@ -156,6 +156,31 @@ TEST_CASE("constructors")
             CHECK(j == j_reference);
         }
 
+        SECTION("std::pair<CompatibleString, T>")
+        {
+            std::pair<std::string, std::string> p{"first", "second"};
+            json j(p);
+
+            CHECK((j.get<decltype(p)>() == p));
+
+            std::pair<std::string, int> p2{"first", 1};
+            // use char const*
+            json j2(std::make_pair("first", 1));
+
+            CHECK((j2.get<decltype(p2)>() == p2));
+        }
+
+        SECTION("std::map<std::string, std::string> #600")
+        {
+            std::map<std::string, std::string> m;
+            m["a"] = "b";
+            m["c"] = "d";
+            m["e"] = "f";
+
+            json j(m);
+            CHECK((j.get<decltype(m)>() == m));
+        }
+
         SECTION("std::map<const char*, json>")
         {
             std::map<const char*, json> o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
@@ -163,6 +188,7 @@ TEST_CASE("constructors")
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
         }
+
 
         SECTION("std::multimap<json::string_t, json>")
         {
@@ -953,6 +979,28 @@ TEST_CASE("constructors")
                 CHECK_THROWS_WITH(json::object({ {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false}, 13 }),
                 "[json.exception.type_error.301] cannot create object from initializer list");
             }
+
+            SECTION("std::pair<CompatibleString, T> with error")
+            {
+                SECTION("wrong field number")
+                {
+                    json j{{"too", "much"}, {"string", "fields"}};
+                    CHECK_THROWS_AS((j.get<std::pair<std::string, std::string>>()), json::other_error);
+                    CHECK_THROWS_WITH((j.get<std::pair<std::string, std::string>>()),
+                                      "[json.exception.other_error.502] conversion "
+                                      "to std::pair requires the object to have "
+                                      "exactly one field, but it has 2");
+                }
+
+                SECTION("wrong JSON type")
+                {
+                    json j(42);
+                    CHECK_THROWS_AS((j.get<std::pair<std::string, std::string>>()), json::type_error);
+                    CHECK_THROWS_WITH((j.get<std::pair<std::string, std::string>>()),
+                                      "[json.exception.type_error.302] type must be object, but is number");
+                }
+            }
+
 
             SECTION("empty array")
             {

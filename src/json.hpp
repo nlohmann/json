@@ -285,7 +285,7 @@ class invalid_iterator : public exception
 
 Exceptions have ids 3xx.
 
-name / id                     | example massage | description
+name / id                     | example message | description
 ----------------------------- | --------------- | -------------------------
 json.exception.type_error.301 | cannot create object from initializer list | To create an object from an initializer list, the initializer list must consist only of a list of pairs whose first element is a string. When this constraint is violated, an array is created instead.
 json.exception.type_error.302 | type must be object, but is array | During implicit or explicit value conversion, the JSON type must be compatible to the target type. For instance, a JSON string can only be converted into string types, but not into numbers or boolean types.
@@ -324,7 +324,7 @@ class type_error : public exception
 
 Exceptions have ids 4xx.
 
-name / id                       | example massage | description
+name / id                       | example message | description
 ------------------------------- | --------------- | -------------------------
 json.exception.out_of_range.401 | array index 3 is out of range | The provided array index @a i is larger than @a size-1.
 json.exception.out_of_range.402 | array index '-' (3) is out of range | The special array index `-` in a JSON Pointer never describes a valid element of the array, but the index past the end. That is, it can only be used to add elements at this position, but not to read it.
@@ -355,9 +355,10 @@ class out_of_range : public exception
 
 Exceptions have ids 5xx.
 
-name / id                      | example massage | description
+name / id                      | example message | description
 ------------------------------ | --------------- | -------------------------
 json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "value":"bar"} | A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
+json.exception.other_error.502 | invalid object size for conversion | Some conversions to user-defined types impose constraints on the object size (e.g. std::pair)
 
 @since version 3.0.0
 */
@@ -865,6 +866,14 @@ void to_json(BasicJsonType& j, T (&arr)[N])
     external_constructor<value_t::array>::construct(j, arr);
 }
 
+template <typename BasicJsonType, typename CompatibleString, typename T,
+          enable_if_t<std::is_constructible<typename BasicJsonType::string_t,
+                      CompatibleString>::value, int> = 0>
+void to_json(BasicJsonType& j, std::pair<CompatibleString, T> const& p)
+{
+    j[p.first] = p.second;
+}
+
 ///////////////
 // from_json //
 ///////////////
@@ -1037,10 +1046,24 @@ void from_json(const BasicJsonType& j, CompatibleObjectType& obj)
     auto inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
     using std::begin;
     using std::end;
+    using value_type = typename CompatibleObjectType::value_type;
+    std::vector<value_type> v;
+    v.reserve(j.size());
+    std::transform(
+        inner_object->begin(), inner_object->end(), std::back_inserter(v),
+        [](typename BasicJsonType::object_t::value_type const & p)
+    {
+        return value_type
+        {
+            p.first,
+            p.second
+            .template get<typename CompatibleObjectType::mapped_type>()};
+    });
     // we could avoid the assignment, but this might require a for loop, which
     // might be less efficient than the container constructor for some
     // containers (would it?)
-    obj = CompatibleObjectType(begin(*inner_object), end(*inner_object));
+    obj = CompatibleObjectType(std::make_move_iterator(begin(v)),
+                               std::make_move_iterator(end(v)));
 }
 
 // overload for arithmetic types, not chosen for basic_json template arguments
@@ -1084,6 +1107,27 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
             JSON_THROW(type_error::create(302, "type must be number, but is " + j.type_name()));
         }
     }
+}
+
+template <typename BasicJsonType, typename CompatibleString, typename T,
+          enable_if_t<std::is_constructible<typename BasicJsonType::string_t,
+                      CompatibleString>::value, int> = 0>
+void from_json(const BasicJsonType& j, std::pair<CompatibleString, T>& p)
+{
+    if (not j.is_object())
+    {
+        JSON_THROW(type_error::create(302, "type must be object, but is " + j.type_name()));
+    }
+
+    auto const inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
+    auto const size = inner_object->size();
+    if (size != 1)
+    {
+        JSON_THROW(other_error::create(502, "conversion to std::pair requires the object to have exactly one field, but it has " + std::to_string(size)));
+    }
+    auto const& obj = *inner_object->begin();
+    // cannot use *inner_object, need to convert both members
+    p = std::make_pair(obj.first, obj.second.template get<T>());
 }
 
 struct to_json_fn
