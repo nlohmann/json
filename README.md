@@ -839,8 +839,8 @@ I deeply appreciate the help of the following people.
 - [ftillier](https://github.com/ftillier) fixed a compiler warning.
 - [tinloaf](https://github.com/tinloaf) made sure all pushed warnings are properly popped.
 - [Fytch](https://github.com/Fytch) found a bug in the documentation.
-- [Jay Sistar](https://github.com/Type1J) implemented a Meson build description
-- [Henry Lee](https://github.com/HenryRLee) fixed a warning in ICC
+- [Jay Sistar](https://github.com/Type1J) implemented a Meson build description.
+- [Henry Lee](https://github.com/HenryRLee) fixed a warning in ICC and improved the iterator implementation.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
