@@ -8863,7 +8863,7 @@ class basic_json
             // may not have processed all of them. Therefore, we need to
             // "rewind" the stream after the last processed char.
             is.seekg(start_position);
-            is.ignore(processed_chars);
+            is.ignore(static_cast<std::streamsize>(processed_chars));
             // clear stream flags
             is.clear();
         }
