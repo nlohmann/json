@@ -711,7 +711,6 @@ TEST_CASE("regression tests")
                               "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
         }
 
-        /*
         SECTION("second example from #529")
         {
             std::string str = "{\n\"one\"   : 1,\n\"two\"   : 2\n}\n{\n\"three\" : 3\n}";
@@ -735,13 +734,11 @@ TEST_CASE("regression tests")
                 if (i == 0)
                 {
                     CHECK(val == json({{"one", 1}, {"two", 2}}));
-                    CHECK(static_cast<int>(stream.tellg()) == 28);
                 }
 
                 if (i == 1)
                 {
                     CHECK(val == json({{"three", 3}}));
-                    CHECK(static_cast<int>(stream.tellg()) == 44);
                 }
 
                 ++i;
@@ -749,7 +746,6 @@ TEST_CASE("regression tests")
 
             std::remove("test.json");
         }
-        */
     }
 
     SECTION("issue #389 - Integer-overflow (OSS-Fuzz issue 267)")

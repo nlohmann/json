@@ -8862,7 +8862,8 @@ class basic_json
             // We initially read a lot of characters into the buffer, and we
             // may not have processed all of them. Therefore, we need to
             // "rewind" the stream after the last processed char.
-            is.seekg(start_position + static_cast<std::streamoff>(processed_chars));
+            is.seekg(start_position);
+            is.ignore(static_cast<std::streamsize>(processed_chars));
             // clear stream flags
             is.clear();
         }
