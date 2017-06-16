@@ -7421,6 +7421,13 @@ class basic_json
         return parse(std::begin(array), std::end(array), cb);
     }
 
+    template<class T, std::size_t N>
+    static bool accept(T (&array)[N])
+    {
+        // delegate the call to the iterator-range accept overload
+        return accept(std::begin(array), std::end(array));
+    }
+
     /*!
     @brief deserialize from string literal
 
@@ -7462,6 +7469,15 @@ class basic_json
         return parser(input_adapter::create(s), cb).parse(true);
     }
 
+    template<typename CharT, typename std::enable_if<
+                 std::is_pointer<CharT>::value and
+                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
+                 sizeof(typename std::remove_pointer<CharT>::type) == 1, int>::type = 0>
+    static bool accept(const CharT s)
+    {
+        return parser(input_adapter::create(s)).accept(true);
+    }
+
     /*!
     @brief deserialize from stream
 
@@ -7497,6 +7513,11 @@ class basic_json
         return parser(input_adapter::create(i), cb).parse(true);
     }
 
+    static bool accept(std::istream& i)
+    {
+        return parser(input_adapter::create(i)).accept(true);
+    }
+
     /*!
     @copydoc parse(std::istream&, const parser_callback_t)
     */
@@ -7504,6 +7525,11 @@ class basic_json
                             const parser_callback_t cb = nullptr)
     {
         return parser(input_adapter::create(i), cb).parse(true);
+    }
+
+    static bool accept(std::istream&& i)
+    {
+        return parser(input_adapter::create(i)).accept(true);
     }
 
     /*!
@@ -7561,6 +7587,15 @@ class basic_json
         return parser(input_adapter::create(first, last), cb).parse(true);
     }
 
+    template<class IteratorType, typename std::enable_if<
+                 std::is_base_of<
+                     std::random_access_iterator_tag,
+                     typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
+    static bool accept(IteratorType first, IteratorType last)
+    {
+        return parser(input_adapter::create(first, last)).accept(true);
+    }
+
     /*!
     @brief deserialize from a container with contiguous storage
 
@@ -7616,6 +7651,18 @@ class basic_json
     {
         // delegate the call to the iterator-range parse overload
         return parse(std::begin(c), std::end(c), cb);
+    }
+
+    template<class ContiguousContainer, typename std::enable_if<
+                 not std::is_pointer<ContiguousContainer>::value and
+                 std::is_base_of<
+                     std::random_access_iterator_tag,
+                     typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value
+                 , int>::type = 0>
+    static bool accept(const ContiguousContainer& c)
+    {
+        // delegate the call to the iterator-range accept overload
+        return accept(std::begin(c), std::end(c));
     }
 
     /*!
