@@ -866,14 +866,6 @@ void to_json(BasicJsonType& j, T (&arr)[N])
     external_constructor<value_t::array>::construct(j, arr);
 }
 
-template <typename BasicJsonType, typename CompatibleString, typename T,
-          enable_if_t<std::is_constructible<typename BasicJsonType::string_t,
-                      CompatibleString>::value, int> = 0>
-void to_json(BasicJsonType& j, std::pair<CompatibleString, T> const& p)
-{
-    j[p.first] = p.second;
-}
-
 ///////////////
 // from_json //
 ///////////////
@@ -1047,23 +1039,16 @@ void from_json(const BasicJsonType& j, CompatibleObjectType& obj)
     using std::begin;
     using std::end;
     using value_type = typename CompatibleObjectType::value_type;
-    std::vector<value_type> v;
-    v.reserve(j.size());
     std::transform(
-        inner_object->begin(), inner_object->end(), std::back_inserter(v),
+        inner_object->begin(), inner_object->end(),
+        std::inserter(obj, obj.begin()),
         [](typename BasicJsonType::object_t::value_type const & p)
     {
-        return value_type
-        {
-            p.first,
-            p.second
-            .template get<typename CompatibleObjectType::mapped_type>()};
+        return value_type(
+                   p.first,
+                   p.second
+                   .template get<typename CompatibleObjectType::mapped_type>());
     });
-    // we could avoid the assignment, but this might require a for loop, which
-    // might be less efficient than the container constructor for some
-    // containers (would it?)
-    obj = CompatibleObjectType(std::make_move_iterator(begin(v)),
-                               std::make_move_iterator(end(v)));
 }
 
 // overload for arithmetic types, not chosen for basic_json template arguments
@@ -1107,27 +1092,6 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
             JSON_THROW(type_error::create(302, "type must be number, but is " + j.type_name()));
         }
     }
-}
-
-template <typename BasicJsonType, typename CompatibleString, typename T,
-          enable_if_t<std::is_constructible<typename BasicJsonType::string_t,
-                      CompatibleString>::value, int> = 0>
-void from_json(const BasicJsonType& j, std::pair<CompatibleString, T>& p)
-{
-    if (not j.is_object())
-    {
-        JSON_THROW(type_error::create(302, "type must be object, but is " + j.type_name()));
-    }
-
-    auto const inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
-    auto const size = inner_object->size();
-    if (size != 1)
-    {
-        JSON_THROW(other_error::create(502, "conversion to std::pair requires the object to have exactly one field, but it has " + std::to_string(size)));
-    }
-    auto const& obj = *inner_object->begin();
-    // cannot use *inner_object, need to convert both members
-    p = std::make_pair(obj.first, obj.second.template get<T>());
 }
 
 struct to_json_fn
