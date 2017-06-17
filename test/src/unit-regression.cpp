@@ -1166,6 +1166,41 @@ TEST_CASE("regression tests")
         CHECK_THROWS_AS(json::parse(vec), json::parse_error);
     }
 
+    SECTION("issue #600 - how does one convert a map in Json back to std::map?")
+    {
+        SECTION("example 1")
+        {
+            // create a map
+            std::map<std::string, int> m1 {{"key", 1}};
+
+            // create and print a JSON from the map
+            json j = m1;
+            std::cout << j << std::endl;
+
+            // get the map out of JSON
+            std::map<std::string, int> m2 = j;
+
+            // make sure the roundtrip succeeds
+            CHECK(m1 == m2);
+        }
+
+        SECTION("example 2")
+        {
+            // create a map
+            std::map<std::string, std::string> m1 {{"key", "val"}};
+
+            // create and print a JSON from the map
+            json j = m1;
+            std::cout << j << std::endl;
+
+            // get the map out of JSON
+            std::map<std::string, std::string> m2 = j;
+
+            // make sure the roundtrip succeeds
+            CHECK(m1 == m2);
+        }
+    }
+
     SECTION("issue #602 - BOM not skipped when using json:parse(iterator)")
     {
         std::string i = "\xef\xbb\xbf{\n   \"foo\": true\n}";
