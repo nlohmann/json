@@ -8761,15 +8761,15 @@ class basic_json
         // native support
 
         /// input adapter for input stream
-        static std::shared_ptr<input_adapter> create(std::istream& i, const size_t buffer_size = 16384)
+        static std::shared_ptr<input_adapter> create(std::istream& i)
         {
-            return std::shared_ptr<input_adapter>(new cached_input_stream_adapter(i, buffer_size));
+            return std::shared_ptr<input_adapter>(new cached_input_stream_adapter<16384>(i));
         }
 
         /// input adapter for input stream
-        static std::shared_ptr<input_adapter> create(std::istream&& i, const size_t buffer_size = 16384)
+        static std::shared_ptr<input_adapter> create(std::istream&& i)
         {
-            return std::shared_ptr<input_adapter>(new cached_input_stream_adapter(i, buffer_size));
+            return std::shared_ptr<input_adapter>(new cached_input_stream_adapter<16384>(i));
         }
 
         /// input adapter for buffer
@@ -8841,11 +8841,12 @@ class basic_json
     using input_adapter_t = std::shared_ptr<input_adapter>;
 
     /// input adapter for cached stream input
+    template<std::size_t N>
     class cached_input_stream_adapter : public input_adapter
     {
       public:
-        cached_input_stream_adapter(std::istream& i, const size_t buffer_size)
-            : is(i), start_position(is.tellg()), buffer(buffer_size, '\0')
+        cached_input_stream_adapter(std::istream& i)
+            : is(i), start_position(is.tellg())
         {
             // immediately abort if stream is erroneous
             if (JSON_UNLIKELY(i.fail()))
@@ -8853,10 +8854,7 @@ class basic_json
                 JSON_THROW(parse_error::create(111, 0, "bad input stream"));
             }
 
-            // initial fill
-            is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-            // store number of bytes in the buffer
-            fill_size = static_cast<size_t>(is.gcount());
+            fill_buffer();
 
             // skip byte order mark
             if (fill_size >= 3 and buffer[0] == '\xEF' and buffer[1] == '\xBB' and buffer[2] == '\xBF')
@@ -8884,20 +8882,17 @@ class basic_json
             // check if refilling is necessary and possible
             if (buffer_pos == fill_size and not eof)
             {
-                // refill
-                is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-                // store number of bytes in the buffer
-                fill_size = static_cast<size_t>(is.gcount());
+                fill_buffer();
 
-                // the buffer is ready
-                buffer_pos = 0;
-
-                // remember that filling did not yield new input
+                // check and remember that filling did not yield new input
                 if (fill_size == 0)
                 {
                     eof = true;
                     return std::char_traits<char>::eof();
                 }
+
+                // the buffer is ready
+                buffer_pos = 0;
             }
 
             ++processed_chars;
@@ -8910,9 +8905,9 @@ class basic_json
             std::string result(length, '\0');
 
             // save stream position
-            auto current_pos = is.tellg();
+            const auto current_pos = is.tellg();
             // save stream flags
-            auto flags = is.rdstate();
+            const auto flags = is.rdstate();
 
             // clear stream flags
             is.clear();
@@ -8930,6 +8925,14 @@ class basic_json
         }
 
       private:
+        void fill_buffer()
+        {
+            // fill
+            is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+            // store number of bytes in the buffer
+            fill_size = static_cast<size_t>(is.gcount());
+        }
+
         /// the associated input stream
         std::istream& is;
 
@@ -8947,7 +8950,7 @@ class basic_json
         const std::streampos start_position;
 
         /// internal buffer
-        std::vector<char> buffer;
+        std::array<char, N> buffer;
     };
 
     /// input adapter for buffer input
