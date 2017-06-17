@@ -68,6 +68,8 @@ to the files you want to use JSON objects. That's it. Do not forget to set the n
 
 If you are using the [Meson Build System](http://mesonbuild.com), then you can wrap this repo as a subproject.
 
+If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `jsonformoderncpp/x.y.z@vthiery/stable` to your `conanfile.py`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/vthiery/conan-jsonformoderncpp/issues) if you experience problems with the packages.
+
 :warning: [Version 3.0.0](https://github.com/nlohmann/json/wiki/Road-toward-3.0.0) is currently under development. Branch `develop` is used for the ongoing work and is probably **unstable**. Please use the `master` branch for the last stable version 2.1.1.
 
 
@@ -841,6 +843,8 @@ I deeply appreciate the help of the following people.
 - [Fytch](https://github.com/Fytch) found a bug in the documentation.
 - [Jay Sistar](https://github.com/Type1J) implemented a Meson build description.
 - [Henry Lee](https://github.com/HenryRLee) fixed a warning in ICC and improved the iterator implementation.
+- [Vincent Thiery](https://github.com/vthiery) maintains a package for the Conan package manager.
+
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
