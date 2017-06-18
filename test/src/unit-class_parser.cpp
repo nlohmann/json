@@ -98,18 +98,18 @@ TEST_CASE("parser class")
                 // error: tab in string
                 CHECK_THROWS_AS(parse_string("\"\t\"").parse(), json::parse_error);
                 CHECK_THROWS_WITH(parse_string("\"\t\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character U+0009 must be escaped; last read '\"<U+0009>'");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read '\"<U+0009>'");
                 // error: newline in string
                 CHECK_THROWS_AS(parse_string("\"\n\"").parse(), json::parse_error);
                 CHECK_THROWS_AS(parse_string("\"\r\"").parse(), json::parse_error);
                 CHECK_THROWS_WITH(parse_string("\"\n\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character U+000A must be escaped; last read '\"<U+000A>'");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read '\"<U+000A>'");
                 CHECK_THROWS_WITH(parse_string("\"\r\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character U+000D must be escaped; last read '\"<U+000D>'");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read '\"<U+000D>'");
                 // error: backspace in string
                 CHECK_THROWS_AS(parse_string("\"\b\"").parse(), json::parse_error);
                 CHECK_THROWS_WITH(parse_string("\"\b\"").parse(),
-                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character U+0008 must be escaped; last read '\"<U+0008>'");
+                                  "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read '\"<U+0008>'");
                 // improve code coverage
                 CHECK_THROWS_AS(parse_string("\uFF01").parse(), json::parse_error);
                 CHECK_THROWS_AS(parse_string("[-4:1,]").parse(), json::parse_error);
@@ -910,17 +910,17 @@ TEST_CASE("parser class")
         // missing part of a surrogate pair
         CHECK_THROWS_AS(json::parse("\"\\uD80C\""), json::parse_error);
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\""),
-                          "[json.exception.parse_error.101] parse error at 8: syntax error - invalid string: surrogate U+D80C must be followed by U+DC00..U+DFFF; last read '\"\\uD80C\"'");
+                          "[json.exception.parse_error.101] parse error at 8: syntax error - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read '\"\\uD80C\"'");
         // invalid surrogate pair
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\uD80C\""), json::parse_error);
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\u0000\""), json::parse_error);
         CHECK_THROWS_AS(json::parse("\"\\uD80C\\uFFFF\""), json::parse_error);
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\uD80C\""),
-                          "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: surrogate U+D80C must be followed by U+DC00..U+DFFF instead of U+D80C; last read '\"\\uD80C\\uD80C'");
+                          "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read '\"\\uD80C\\uD80C'");
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\u0000\""),
-                          "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: surrogate U+D80C must be followed by U+DC00..U+DFFF instead of U+0000; last read '\"\\uD80C\\u0000'");
+                          "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read '\"\\uD80C\\u0000'");
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\uFFFF\""),
-                          "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: surrogate U+D80C must be followed by U+DC00..U+DFFF instead of U+FFFF; last read '\"\\uD80C\\uFFFF'");
+                          "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read '\"\\uD80C\\uFFFF'");
     }
 
     SECTION("parse errors (accept)")

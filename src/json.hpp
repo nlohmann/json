@@ -8896,7 +8896,8 @@ class basic_json
             }
 
             ++processed_chars;
-            return buffer[buffer_pos++] & 0xFF;;
+            assert(buffer_pos < buffer.size());
+            return buffer[buffer_pos++] & 0xFF;
         }
 
         std::string read(size_t offset, size_t length) override
@@ -8971,7 +8972,7 @@ class basic_json
         input_buffer_adapter(const input_buffer_adapter&) = delete;
         input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
 
-        int get_character() override
+        int get_character() noexcept override
         {
             if (JSON_LIKELY(cursor < limit))
             {
@@ -11510,13 +11511,13 @@ class basic_json
                                         }
                                         else
                                         {
-                                            error_message = "invalid string: surrogate " + codepoint_to_string(codepoint1) + " must be followed by U+DC00..U+DFFF instead of " + codepoint_to_string(codepoint2);
+                                            error_message = "invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF";
                                             return token_type::parse_error;
                                         }
                                     }
                                     else
                                     {
-                                        error_message = "invalid string: surrogate " + codepoint_to_string(codepoint1) + " must be followed by U+DC00..U+DFFF";
+                                        error_message = "invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF";
                                         return token_type::parse_error;
                                     }
                                 }
@@ -11524,7 +11525,7 @@ class basic_json
                                 {
                                     if (JSON_UNLIKELY(0xDC00 <= codepoint1 and codepoint1 <= 0xDFFF))
                                     {
-                                        error_message = "invalid string: surrogate " + codepoint_to_string(codepoint1) + " must follow U+D800..U+DBFF";
+                                        error_message = "invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF";
                                         return token_type::parse_error;
                                     }
 
@@ -11609,7 +11610,7 @@ class basic_json
                     case 0x1e:
                     case 0x1f:
                     {
-                        error_message = "invalid string: control character " + codepoint_to_string(current) + " must be escaped";
+                        error_message = "invalid string: control character must be escaped";
                         return token_type::parse_error;
                     }
 
@@ -12450,7 +12451,7 @@ scan_number_done:
         }
 
         /// return syntax error message
-        const std::string& get_error_message() const noexcept
+        const char* get_error_message() const noexcept
         {
             return error_message;
         }
@@ -12544,7 +12545,7 @@ scan_number_done:
         size_t yylen = 0;
 
         /// a description of occurred lexer errors
-        std::string error_message = "";
+        const char* error_message = "";
 
         // number values
         number_integer_t value_integer = 0;
@@ -12975,7 +12976,7 @@ scan_number_done:
                 std::string error_msg = "syntax error - ";
                 if (last_token == lexer::token_type::parse_error)
                 {
-                    error_msg += m_lexer.get_error_message() + "; last read: '" + m_lexer.get_token_string() + "'";
+                    error_msg += std::string(m_lexer.get_error_message()) + "; last read: '" + m_lexer.get_token_string() + "'";
                 }
                 else
                 {
@@ -12997,7 +12998,7 @@ scan_number_done:
                 std::string error_msg = "syntax error - ";
                 if (last_token == lexer::token_type::parse_error)
                 {
-                    error_msg += m_lexer.get_error_message() + "; last read '" + m_lexer.get_token_string() + "'";
+                    error_msg += std::string(m_lexer.get_error_message()) + "; last read '" + m_lexer.get_token_string() + "'";
                 }
                 else
                 {
@@ -14189,7 +14190,7 @@ scan_number_done:
 
                 case patch_operations::copy:
                 {
-                    const std::string from_path = get_value("copy", "from", true);;
+                    const std::string from_path = get_value("copy", "from", true);
                     const json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
