@@ -1063,6 +1063,15 @@ auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
     });
 }
 
+template <typename BasicJsonType, typename T, std::size_t N>
+void from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr, priority_tag<2>)
+{
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        arr[i] = j.at(i).template get<T>();
+    }
+}
+
 template<typename BasicJsonType, typename CompatibleArrayType,
          enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
                      std::is_convertible<BasicJsonType, typename CompatibleArrayType::value_type>::value and
@@ -1074,7 +1083,7 @@ void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
         JSON_THROW(type_error::create(302, "type must be array, but is " + j.type_name()));
     }
 
-    from_json_array_impl(j, arr, priority_tag<1> {});
+    from_json_array_impl(j, arr, priority_tag<2> {});
 }
 
 template<typename BasicJsonType, typename CompatibleObjectType,

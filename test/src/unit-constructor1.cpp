@@ -283,12 +283,13 @@ TEST_CASE("constructors")
             CHECK(std::get<2>(t) == j[2]);
         }
 
-        SECTION("std::pair/tuple failures")
+        SECTION("std::pair/tuple/array failures")
         {
             json j{1};
 
             CHECK_THROWS((j.get<std::pair<int, int>>()));
             CHECK_THROWS((j.get<std::tuple<int, int>>()));
+            CHECK_THROWS((j.get<std::array<int, 3>>()));
         }
 
         SECTION("std::forward_list<json>")
@@ -299,12 +300,15 @@ TEST_CASE("constructors")
             CHECK(j == j_reference);
         }
 
-        SECTION("std::array<json, 5>")
+        SECTION("std::array<json, 6>")
         {
             std::array<json, 6> a {{json(1), json(1u), json(2.2), json(false), json("string"), json()}};
             json j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
+
+            const auto a2 = j.get<std::array<json, 6>>();
+            CHECK(a2 == a);
         }
 
         SECTION("std::vector<json>")
