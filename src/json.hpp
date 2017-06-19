@@ -12529,7 +12529,7 @@ scan_number_done:
         }
 
         /// return syntax error message
-        const char* get_error_message() const noexcept
+        constexpr const char* get_error_message() const noexcept
         {
             return error_message;
         }
