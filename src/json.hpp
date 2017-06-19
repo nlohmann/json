@@ -465,6 +465,39 @@ using enable_if_t = typename std::enable_if<B, T>::type;
 template<typename T>
 using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
 
+// implementation of C++14 index_sequence and affiliates
+// source: https://stackoverflow.com/a/32223343
+template <std::size_t... Ints>
+struct index_sequence
+{
+    using type = index_sequence;
+    using value_type = std::size_t;
+    static constexpr std::size_t size() noexcept
+    {
+        return sizeof...(Ints);
+    }
+};
+
+template <class Sequence1, class Sequence2>
+struct merge_and_renumber;
+
+template <std::size_t... I1, std::size_t... I2>
+struct merge_and_renumber<index_sequence<I1...>, index_sequence<I2...>>
+        : index_sequence < I1..., (sizeof...(I1) + I2)... >
+          { };
+
+template <std::size_t N>
+struct make_index_sequence
+    : merge_and_renumber < typename make_index_sequence < N / 2 >::type,
+      typename make_index_sequence < N - N / 2 >::type >
+{ };
+
+template<> struct make_index_sequence<0> : index_sequence<> { };
+template<> struct make_index_sequence<1> : index_sequence<0> { };
+
+template<typename... Ts>
+using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
+
 /*
 Implementation of two C++17 constructs: conjunction, negation. This is needed
 to avoid evaluating all the traits in a condition
@@ -866,6 +899,24 @@ void to_json(BasicJsonType& j, T (&arr)[N])
     external_constructor<value_t::array>::construct(j, arr);
 }
 
+template <typename BasicJsonType, typename... Args>
+void to_json(BasicJsonType& j, const std::pair<Args...>& p)
+{
+    j = {p.first, p.second};
+}
+
+template <typename BasicJsonType, typename Tuple, std::size_t... Idx>
+void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...>)
+{
+    j = {std::get<Idx>(t)...};
+}
+
+template <typename BasicJsonType, typename... Args>
+void to_json(BasicJsonType& j, const std::tuple<Args...>& t)
+{
+    to_json_tuple_impl(j, t, index_sequence_for<Args...> {});
+}
+
 ///////////////
 // from_json //
 ///////////////
@@ -1012,6 +1063,15 @@ auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
     });
 }
 
+template <typename BasicJsonType, typename T, std::size_t N>
+void from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr, priority_tag<2>)
+{
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        arr[i] = j.at(i).template get<T>();
+    }
+}
+
 template<typename BasicJsonType, typename CompatibleArrayType,
          enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
                      std::is_convertible<BasicJsonType, typename CompatibleArrayType::value_type>::value and
@@ -1023,7 +1083,7 @@ void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
         JSON_THROW(type_error::create(302, "type must be array, but is " + j.type_name()));
     }
 
-    from_json_array_impl(j, arr, priority_tag<1> {});
+    from_json_array_impl(j, arr, priority_tag<2> {});
 }
 
 template<typename BasicJsonType, typename CompatibleObjectType,
@@ -1092,6 +1152,24 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
             JSON_THROW(type_error::create(302, "type must be number, but is " + j.type_name()));
         }
     }
+}
+
+template <typename BasicJsonType, typename... Args>
+void from_json(const BasicJsonType& j, std::pair<Args...>& p)
+{
+    p = {j.at(0), j.at(1)};
+}
+
+template <typename BasicJsonType, typename Tuple, std::size_t... Idx>
+void from_json_tuple_impl(const BasicJsonType& j, Tuple& t, index_sequence<Idx...>)
+{
+    t = std::make_tuple(j.at(Idx)...);
+}
+
+template <typename BasicJsonType, typename... Args>
+void from_json(const BasicJsonType& j, std::tuple<Args...>& t)
+{
+    from_json_tuple_impl(j, t, index_sequence_for<Args...> {});
 }
 
 struct to_json_fn

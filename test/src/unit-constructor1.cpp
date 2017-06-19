@@ -239,6 +239,59 @@ TEST_CASE("constructors")
             CHECK(j == j_reference);
         }
 
+        SECTION("std::pair")
+        {
+            std::pair<float, std::string> p{1.0, "string"};
+            json j(p);
+
+            CHECK(j.type() == json::value_t::array);
+            REQUIRE(j.size() == 2);
+            CHECK(j[0] == std::get<0>(p));
+            CHECK(j[1] == std::get<1>(p));
+        }
+
+        SECTION("std::pair with discarded values")
+        {
+            json j{1, 2.0, "string"};
+
+            const auto p = j.get<std::pair<int, float>>();
+            CHECK(p.first == j[0]);
+            CHECK(p.second == j[1]);
+        }
+
+        SECTION("std::tuple")
+        {
+            const auto t = std::make_tuple(1.0, "string", 42, std::vector<int> {0, 1});
+            json j(t);
+
+            CHECK(j.type() == json::value_t::array);
+            REQUIRE(j.size() == 4);
+            CHECK(j[0] == std::get<0>(t));
+            CHECK(j[1] == std::get<1>(t));
+            CHECK(j[2] == std::get<2>(t));
+            CHECK(j[3][0] == 0);
+            CHECK(j[3][1] == 1);
+        }
+
+        SECTION("std::tuple with discarded values")
+        {
+            json j{1, 2.0, "string", 42};
+
+            const auto t = j.get<std::tuple<int, float, std::string>>();
+            CHECK(std::get<0>(t) == j[0]);
+            CHECK(std::get<1>(t) == j[1]);
+            CHECK(std::get<2>(t) == j[2]);
+        }
+
+        SECTION("std::pair/tuple/array failures")
+        {
+            json j{1};
+
+            CHECK_THROWS((j.get<std::pair<int, int>>()));
+            CHECK_THROWS((j.get<std::tuple<int, int>>()));
+            CHECK_THROWS((j.get<std::array<int, 3>>()));
+        }
+
         SECTION("std::forward_list<json>")
         {
             std::forward_list<json> a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
@@ -247,12 +300,15 @@ TEST_CASE("constructors")
             CHECK(j == j_reference);
         }
 
-        SECTION("std::array<json, 5>")
+        SECTION("std::array<json, 6>")
         {
             std::array<json, 6> a {{json(1), json(1u), json(2.2), json(false), json("string"), json()}};
             json j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
+
+            const auto a2 = j.get<std::array<json, 6>>();
+            CHECK(a2 == a);
         }
 
         SECTION("std::vector<json>")
