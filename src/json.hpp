@@ -9029,7 +9029,7 @@ class basic_json
         const std::streampos start_position;
 
         /// internal buffer
-        std::array<char, N> buffer = {};
+        std::array<char, N> buffer{{}};
     };
 
     /// input adapter for buffer input
