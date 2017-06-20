@@ -51,7 +51,7 @@ doctest:
 # -Wno-float-equal: not all comparisons in the tests can be replaced by Approx
 pedantic_clang:
 	$(MAKE) json_unit CXXFLAGS="\
-		-std=c++11 \
+		-std=c++11 -Wno-c++98-compat -Wno-c++98-compat-pedantic \
 		-Werror \
 		-Weverything \
 		-Wno-documentation-unknown-command \
@@ -60,7 +60,9 @@ pedantic_clang:
 		-Wno-deprecated-declarations \
 		-Wno-weak-vtables \
 		-Wno-range-loop-analysis \
-		-Wno-float-equal"
+		-Wno-float-equal \
+		-Wno-switch-enum -Wno-covered-switch-default \
+		-Wno-padded"
 
 # calling GCC with most warnings
 pedantic_gcc:
