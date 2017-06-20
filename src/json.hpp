@@ -6807,10 +6807,6 @@ class basic_json
     */
     class serializer
     {
-      private:
-        serializer(const serializer&) = delete;
-        serializer& operator=(const serializer&) = delete;
-
       public:
         /*!
         @param[in] s  output stream to serialize to
@@ -6822,6 +6818,10 @@ class basic_json
               decimal_point(!loc->decimal_point ? '\0' : loc->decimal_point[0]),
               indent_char(ichar), indent_string(512, indent_char)
         {}
+
+        // delete because of pointer members
+        serializer(const serializer&) = delete;
+        serializer& operator=(const serializer&) = delete;
 
         /*!
         @brief internal implementation of the serialization function
@@ -11181,6 +11181,10 @@ class basic_json
         explicit lexer(input_adapter_t adapter)
             : ia(adapter), decimal_point_char(get_decimal_point())
         {}
+
+        // delete because of pointer members
+        lexer(const lexer&) = delete;
+        lexer& operator=(lexer&) = delete;
 
       private:
         /////////////////////
