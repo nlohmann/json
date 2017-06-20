@@ -1094,6 +1094,13 @@ TEST_CASE("MessagePack")
                 }
             }
         }
+
+        SECTION("invalid string in map")
+        {
+            CHECK_THROWS_AS(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})), json::parse_error);
+            CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})),
+                              "[json.exception.parse_error.113] parse error at 2: expected a MessagePack string; last byte: 0xff");
+        }
     }
 }
 

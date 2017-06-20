@@ -9986,7 +9986,7 @@ class basic_json
                 }
                 else
                 {
-                    vec[i] = static_cast<uint8_t>(current);
+                    vec[i] = static_cast<uint8_t>(current);  // LCOV_EXCL_LINE
                 }
             }
 
@@ -10744,7 +10744,7 @@ class basic_json
                 }
                 else
                 {
-                    oa->write_character(vec[i]);
+                    oa->write_character(vec[i]);  // LCOV_EXCL_LINE
                 }
             }
         }
