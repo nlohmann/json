@@ -317,7 +317,7 @@ TEST_CASE("iterators 2")
                     auto it = j_array.begin();
                     it += 3;
                     CHECK((j_array.begin() + 3) == it);
-                    CHECK(json::iterator(3 + j_array.begin()) == it);
+                    CHECK((3 + j_array.begin()) == it);
                     CHECK((it - 3) == j_array.begin());
                     CHECK((it - j_array.begin()) == 3);
                     CHECK(*it == json(4));
@@ -328,7 +328,7 @@ TEST_CASE("iterators 2")
                     auto it = j_array.cbegin();
                     it += 3;
                     CHECK((j_array.cbegin() + 3) == it);
-                    CHECK(json::const_iterator(3 + j_array.cbegin()) == it);
+                    CHECK((3 + j_array.cbegin()) == it);
                     CHECK((it - 3) == j_array.cbegin());
                     CHECK((it - j_array.cbegin()) == 3);
                     CHECK(*it == json(4));
@@ -343,7 +343,7 @@ TEST_CASE("iterators 2")
                     auto it = j_null.begin();
                     it += 3;
                     CHECK((j_null.begin() + 3) == it);
-                    CHECK(json::iterator(3 + j_null.begin()) == it);
+                    CHECK((3 + j_null.begin()) == it);
                     CHECK((it - 3) == j_null.begin());
                     CHECK((it - j_null.begin()) == 3);
                     CHECK(it != j_null.end());
@@ -354,7 +354,7 @@ TEST_CASE("iterators 2")
                     auto it = j_null.cbegin();
                     it += 3;
                     CHECK((j_null.cbegin() + 3) == it);
-                    CHECK(json::const_iterator(3 + j_null.cbegin()) == it);
+                    CHECK((3 + j_null.cbegin()) == it);
                     CHECK((it - 3) == j_null.cbegin());
                     CHECK((it - j_null.cbegin()) == 3);
                     CHECK(it != j_null.cend());
@@ -369,7 +369,7 @@ TEST_CASE("iterators 2")
                     auto it = j_value.begin();
                     it += 3;
                     CHECK((j_value.begin() + 3) == it);
-                    CHECK(json::iterator(3 + j_value.begin()) == it);
+                    CHECK((3 + j_value.begin()) == it);
                     CHECK((it - 3) == j_value.begin());
                     CHECK((it - j_value.begin()) == 3);
                     CHECK(it != j_value.end());
@@ -380,7 +380,7 @@ TEST_CASE("iterators 2")
                     auto it = j_value.cbegin();
                     it += 3;
                     CHECK((j_value.cbegin() + 3) == it);
-                    CHECK(json::const_iterator(3 + j_value.cbegin()) == it);
+                    CHECK((3 + j_value.cbegin()) == it);
                     CHECK((it - 3) == j_value.cbegin());
                     CHECK((it - j_value.cbegin()) == 3);
                     CHECK(it != j_value.cend());
