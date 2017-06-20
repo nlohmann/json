@@ -362,7 +362,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 16")
             {
-                uint8_t v[] = {'{', '1', ',', ','};
+                uint8_t v[] = {'{', '\"', '\"', ':', '1', '1'};
                 CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(not json::accept(std::begin(v), std::end(v)));
             }
