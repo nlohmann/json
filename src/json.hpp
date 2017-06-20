@@ -12902,7 +12902,7 @@ scan_number_done:
                 default:
                 {
                     // the last token was unexpected
-                    unexpect(last_token);
+                    unexpect();
                 }
             }
 
@@ -13040,51 +13040,49 @@ scan_number_done:
         /// get next token from lexer
         typename lexer::token_type get_token()
         {
-            last_token = m_lexer.scan();
-            return last_token;
+            return (last_token = m_lexer.scan());
         }
 
         /*!
         @throw parse_error.101 if expected token did not occur
         */
-        void expect(typename lexer::token_type t) const
+        void expect(typename lexer::token_type t)
         {
             if (JSON_UNLIKELY(t != last_token))
             {
-                std::string error_msg = "syntax error - ";
-                if (last_token == lexer::token_type::parse_error)
-                {
-                    error_msg += std::string(m_lexer.get_error_message()) + "; last read: '" + m_lexer.get_token_string() + "'";
-                }
-                else
-                {
-                    error_msg += "unexpected " + std::string(lexer::token_type_name(last_token));
-                }
-
-                error_msg += "; expected " + std::string(lexer::token_type_name(t));
-                JSON_THROW(parse_error::create(101, m_lexer.get_position(), error_msg));
+                errored = true;
+                expected = t;
+                throw_exception();
             }
         }
 
         /*!
         @throw parse_error.101 if unexpected token occurred
         */
-        void unexpect(typename lexer::token_type t) const
+        void unexpect()
         {
-            if (JSON_UNLIKELY(t == last_token))
-            {
-                std::string error_msg = "syntax error - ";
-                if (last_token == lexer::token_type::parse_error)
-                {
-                    error_msg += std::string(m_lexer.get_error_message()) + "; last read '" + m_lexer.get_token_string() + "'";
-                }
-                else
-                {
-                    error_msg += "unexpected " + std::string(lexer::token_type_name(last_token));
-                }
+            errored = true;
+            throw_exception();
+        }
 
-                JSON_THROW(parse_error::create(101, m_lexer.get_position(), error_msg));
+        [[noreturn]] void throw_exception() const
+        {
+            std::string error_msg = "syntax error - ";
+            if (last_token == lexer::token_type::parse_error)
+            {
+                error_msg += std::string(m_lexer.get_error_message()) + "; last read: '" + m_lexer.get_token_string() + "'";
             }
+            else
+            {
+                error_msg += "unexpected " + std::string(lexer::token_type_name(last_token));
+            }
+
+            if (expected != lexer::token_type::uninitialized)
+            {
+                error_msg += "; expected " + std::string(lexer::token_type_name(expected));
+            }
+
+            JSON_THROW(parse_error::create(101, m_lexer.get_position(), error_msg));
         }
 
       private:
@@ -13096,6 +13094,10 @@ scan_number_done:
         typename lexer::token_type last_token = lexer::token_type::uninitialized;
         /// the lexer
         lexer m_lexer;
+        /// whether a syntax error occurred
+        bool errored = false;
+        /// possible reason for the syntax error
+        typename lexer::token_type expected = lexer::token_type::uninitialized;
     };
 
   public:
