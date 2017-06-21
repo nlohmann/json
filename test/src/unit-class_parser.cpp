@@ -694,15 +694,15 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("[1,]"))).parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("]"))).parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("["))).parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected end of input; expected '[', '{', or a literal");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("[1"))).parse(),
                           "[json.exception.parse_error.101] parse error at 3: syntax error - unexpected end of input; expected ']'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("[1,"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 4: syntax error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - unexpected end of input; expected '[', '{', or a literal");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("[1,]"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 4: syntax error - unexpected ']'");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - unexpected ']'; expected '[', '{', or a literal");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("]"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected ']'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected ']'; expected '[', '{', or a literal");
 
         // missing/unexpected end of object
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{"))).parse(), json::parse_error);
@@ -716,13 +716,13 @@ TEST_CASE("parser class")
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("{\"foo\""))).parse(),
                           "[json.exception.parse_error.101] parse error at 7: syntax error - unexpected end of input; expected ':'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("{\"foo\":"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 8: syntax error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 8: syntax error - unexpected end of input; expected '[', '{', or a literal");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("{\"foo\":}"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 8: syntax error - unexpected '}'");
+                          "[json.exception.parse_error.101] parse error at 8: syntax error - unexpected '}'; expected '[', '{', or a literal");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("{\"foo\":1,}"))).parse(),
                           "[json.exception.parse_error.101] parse error at 10: syntax error - unexpected '}'; expected string literal");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("}"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '}'");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '}'; expected '[', '{', or a literal");
 
         // missing/unexpected end of string
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\""))).parse(), json::parse_error);

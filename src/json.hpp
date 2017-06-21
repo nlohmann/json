@@ -11132,7 +11132,8 @@ class basic_json
             name_separator,  ///< the name separator `:`
             value_separator, ///< the value separator `,`
             parse_error,     ///< indicating a parse error
-            end_of_input     ///< indicating the end of the input buffer
+            end_of_input,    ///< indicating the end of the input buffer
+            literal_or_value ///< a literal or the begin of a value (only for diagnostics)
         };
 
         /// return name of values of type token_type (only used for errors)
@@ -11170,6 +11171,8 @@ class basic_json
                     return "<parse error>";
                 case token_type::end_of_input:
                     return "end of input";
+                case token_type::literal_or_value:
+                    return "'[', '{', or a literal";
                 default:
                 {
                     // catch non-enum values
@@ -12903,10 +12906,16 @@ scan_number_done:
                     break;
                 }
 
+                case lexer::token_type::parse_error:
+                {
+                    // using "uninitialized" to avoid "expected" message
+                    expect(lexer::token_type::uninitialized);
+                }
+
                 default:
                 {
-                    // the last token was unexpected
-                    unexpect();
+                    // we expected a value
+                    expect(lexer::token_type::literal_or_value);
                 }
             }
 
@@ -13058,15 +13067,6 @@ scan_number_done:
                 expected = t;
                 throw_exception();
             }
-        }
-
-        /*!
-        @throw parse_error.101 if unexpected token occurred
-        */
-        void unexpect()
-        {
-            errored = true;
-            throw_exception();
         }
 
         [[noreturn]] void throw_exception() const

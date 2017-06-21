@@ -597,7 +597,7 @@ TEST_CASE("regression tests")
         // a parse error because of the EOF.
         CHECK_THROWS_AS(ss >> j, json::parse_error);
         CHECK_THROWS_WITH(ss >> j,
-                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+                          "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
     }
 
     SECTION("issue #367 - behavior of operator>> should more closely resemble that of built-in overloads")
@@ -608,7 +608,7 @@ TEST_CASE("regression tests")
             json j;
             CHECK_THROWS_AS(ss >> j, json::parse_error);
             CHECK_THROWS_WITH(ss >> j,
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
         }
 
         SECTION("(whitespace)")
@@ -618,7 +618,7 @@ TEST_CASE("regression tests")
             json j;
             CHECK_THROWS_AS(ss >> j, json::parse_error);
             CHECK_THROWS_WITH(ss >> j,
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
         }
 
         SECTION("one value")
@@ -631,7 +631,7 @@ TEST_CASE("regression tests")
 
             CHECK_THROWS_AS(ss >> j, json::parse_error);
             CHECK_THROWS_WITH(ss >> j,
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
         }
 
         SECTION("one value + whitespace")
@@ -644,7 +644,7 @@ TEST_CASE("regression tests")
 
             CHECK_THROWS_AS(ss >> j, json::parse_error);
             CHECK_THROWS_WITH(ss >> j,
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
         }
 
         SECTION("whitespace + one value")
@@ -657,7 +657,7 @@ TEST_CASE("regression tests")
 
             CHECK_THROWS_AS(ss >> j, json::parse_error);
             CHECK_THROWS_WITH(ss >> j,
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
         }
 
         SECTION("three values")
@@ -674,7 +674,7 @@ TEST_CASE("regression tests")
 
             CHECK_THROWS_AS(ss >> j, json::parse_error);
             CHECK_THROWS_WITH(ss >> j,
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
         }
 
         SECTION("literals without whitespace")
@@ -693,7 +693,7 @@ TEST_CASE("regression tests")
 
             CHECK_THROWS_AS(ss >> j, json::parse_error);
             CHECK_THROWS_WITH(ss >> j,
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
         }
 
         SECTION("example from #529")
@@ -708,7 +708,7 @@ TEST_CASE("regression tests")
 
             CHECK_THROWS_AS(ss >> j, json::parse_error);
             CHECK_THROWS_WITH(ss >> j,
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input");
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
         }
 
         SECTION("second example from #529")
