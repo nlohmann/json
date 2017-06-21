@@ -845,6 +845,7 @@ I deeply appreciate the help of the following people.
 - [Henry Lee](https://github.com/HenryRLee) fixed a warning in ICC and improved the iterator implementation.
 - [Vincent Thiery](https://github.com/vthiery) maintains a package for the Conan package manager.
 - [Steffen](https://github.com/koemeet) fixed a potential issue with MSVC and `std::min`.
+- [Mike Tzou](https://github.com/Chocobo1) fixed some typos.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
