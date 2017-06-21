@@ -12914,7 +12914,7 @@ scan_number_done:
 
                 default:
                 {
-                    // we expected a value
+                    // the last token was unexpected; we expected a value
                     expect(lexer::token_type::literal_or_value);
                 }
             }

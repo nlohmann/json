@@ -34,11 +34,18 @@ using nlohmann::json;
 
 #include <fstream>
 
+size_t calls = 0;
+
 void check_utf8string(bool success_expected, int byte1, int byte2, int byte3, int byte4);
 
 // create and check a JSON string with up to four UTF-8 bytes
 void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte3 = -1, int byte4 = -1)
 {
+    if (++calls % 100000 == 0)
+    {
+        std::cout << calls << " UTF-8 strings checked" << std::endl;
+    }
+
     std::string json_string = "\"";
 
     CAPTURE(byte1);
