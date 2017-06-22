@@ -11462,17 +11462,6 @@ class basic_json
         }
 
         /*!
-        @brief create diagnostic representation of a codepoint
-        @return string "U+XXXX" for codepoint XXXX
-        */
-        static std::string codepoint_to_string(int codepoint)
-        {
-            std::stringstream ss;
-            ss << "U+" << std::setw(4) << std::uppercase << std::setfill('0') << std::hex << codepoint;
-            return ss.str();
-        }
-
-        /*!
         @brief scan a string literal
 
         This function scans a string according to Sect. 7 of RFC 7159. While
@@ -11497,9 +11486,7 @@ class basic_json
             while (true)
             {
                 // get next character
-                get();
-
-                switch (current)
+                switch (get())
                 {
                     // end of file while parsing string
                     case std::char_traits<char>::eof():
@@ -12396,40 +12383,24 @@ scan_number_done:
             return token_type::value_float;
         }
 
-        token_type scan_true()
+        /*!
+        @param[in] literal_text  the literal text to expect
+        @param[in] length        the length of the passed literal text
+        @param[in] return_type   the token type to return on success
+        */
+        token_type scan_literal(const char* literal_text, const size_t length,
+                                token_type return_type)
         {
-            assert(current == 't');
-            if (JSON_LIKELY((get() == 'r' and get() == 'u' and get() == 'e')))
+            assert(current == literal_text[0]);
+            for (size_t i = 1; i < length; ++i)
             {
-                return token_type::literal_true;
+                if (JSON_UNLIKELY(get() != literal_text[i]))
+                {
+                    error_message = "invalid literal";
+                    return token_type::parse_error;
+                }
             }
-
-            error_message = "invalid literal; expected 'true'";
-            return token_type::parse_error;
-        }
-
-        token_type scan_false()
-        {
-            assert(current == 'f');
-            if (JSON_LIKELY((get() == 'a' and get() == 'l' and get() == 's' and get() == 'e')))
-            {
-                return token_type::literal_false;
-            }
-
-            error_message = "invalid literal; expected 'false'";
-            return token_type::parse_error;
-        }
-
-        token_type scan_null()
-        {
-            assert(current == 'n');
-            if (JSON_LIKELY((get() == 'u' and get() == 'l' and get() == 'l')))
-            {
-                return token_type::literal_null;
-            }
-
-            error_message = "invalid literal; expected 'null'";
-            return token_type::parse_error;
+            return return_type;
         }
 
         /////////////////////
@@ -12461,6 +12432,7 @@ scan_number_done:
             {
                 yytext.resize(2 * yytext.capacity(), '\0');
             }
+            assert(yylen < yytext.size());
             yytext[yylen++] = static_cast<char>(c);
         }
 
@@ -12523,7 +12495,9 @@ scan_number_done:
                 else if ('\x00' <= c and c <= '\x1f')
                 {
                     // escape control characters
-                    result += "<" + codepoint_to_string(c) + ">";
+                    std::stringstream ss;
+                    ss << "<U+" << std::setw(4) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(c) << ">";
+                    result += ss.str();
                 }
                 else
                 {
@@ -12572,11 +12546,11 @@ scan_number_done:
 
                 // literals
                 case 't':
-                    return scan_true();
+                    return scan_literal("true", 4, token_type::literal_true);
                 case 'f':
-                    return scan_false();
+                    return scan_literal("false", 5, token_type::literal_false);
                 case 'n':
-                    return scan_null();
+                    return scan_literal("null", 4, token_type::literal_null);
 
                 // string
                 case '\"':

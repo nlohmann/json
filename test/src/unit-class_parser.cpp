@@ -338,7 +338,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("-0e-:"))).parse(),
                                   "[json.exception.parse_error.101] parse error at 5: syntax error - invalid number; expected digit after exponent sign; last read: '-0e-:'");
                 CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("-0f"))).parse(),
-                                  "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; expected 'false'; last read: '-0f'; expected end of input");
+                                  "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: '-0f'; expected end of input");
             }
         }
     }
@@ -656,22 +656,22 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("nu"))).parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("nul"))).parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("n"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; expected 'null'; last read: 'n'");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; last read: 'n'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("nu"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; expected 'null'; last read: 'nu'");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; last read: 'nu'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("nul"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; expected 'null'; last read: 'nul'");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'nul'");
 
         // unexpected end of true
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("t"))).parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("tr"))).parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("tru"))).parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("t"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; expected 'true'; last read: 't'");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; last read: 't'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("tr"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; expected 'true'; last read: 'tr'");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; last read: 'tr'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("tru"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; expected 'true'; last read: 'tru'");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'tru'");
 
         // unexpected end of false
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("f"))).parse(), json::parse_error);
@@ -679,13 +679,13 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("fal"))).parse(), json::parse_error);
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("fals"))).parse(), json::parse_error);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("f"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; expected 'false'; last read: 'f'");
+                          "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; last read: 'f'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("fa"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; expected 'false'; last read: 'fa'");
+                          "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; last read: 'fa'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("fal"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; expected 'false'; last read: 'fal'");
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'fal'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("fals"))).parse(),
-                          "[json.exception.parse_error.101] parse error at 5: syntax error - invalid literal; expected 'false'; last read: 'fals'");
+                          "[json.exception.parse_error.101] parse error at 5: syntax error - invalid literal; last read: 'fals'");
 
         // missing/unexpected end of array
         CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("["))).parse(), json::parse_error);
