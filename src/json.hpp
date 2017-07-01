@@ -115,6 +115,39 @@ SOFTWARE.
 */
 namespace nlohmann
 {
+template<typename = void, typename = void>
+struct adl_serializer;
+
+// forward declaration of basic_json (required to split the class)
+template <template <typename U, typename V, typename... Args> class ObjectType =
+          std::map,
+          template <typename U, typename... Args> class ArrayType = std::vector,
+          class StringType = std::string, class BooleanType = bool,
+          class NumberIntegerType = std::int64_t,
+          class NumberUnsignedType = std::uint64_t,
+          class NumberFloatType = double,
+          template <typename U> class AllocatorType = std::allocator,
+          template <typename T, typename SFINAE = void> class JSONSerializer =
+          adl_serializer>
+class basic_json;
+
+// Ugly macros to avoid uglier copy-paste when specializing basic_json
+// This is only temporary and will be removed in 3.0
+
+#define NLOHMANN_BASIC_JSON_TPL_DECLARATION                                    \
+    template <template <typename, typename, typename...> class ObjectType,       \
+              template <typename, typename...> class ArrayType,                  \
+              class StringType, class BooleanType, class NumberIntegerType,      \
+              class NumberUnsignedType, class NumberFloatType,                   \
+              template <typename> class AllocatorType,                           \
+              template <typename, typename = void> class JSONSerializer>
+
+#define NLOHMANN_BASIC_JSON_TPL                                                \
+    basic_json<ObjectType, ArrayType, StringType, BooleanType,                   \
+    NumberIntegerType, NumberUnsignedType, NumberFloatType,           \
+    AllocatorType, JSONSerializer>
+
+
 
 /*!
 @brief unnamed namespace with internal helper functions
@@ -1251,7 +1284,7 @@ This serializer ignores the template arguments and uses ADL
 ([argument-dependent lookup](http://en.cppreference.com/w/cpp/language/adl))
 for serialization.
 */
-template<typename = void, typename = void>
+template<typename, typename>
 struct adl_serializer
 {
     /*!
@@ -1369,25 +1402,13 @@ Format](http://rfc7159.net/rfc7159)
 
 @nosubgrouping
 */
-template <
-    template<typename U, typename V, typename... Args> class ObjectType = std::map,
-    template<typename U, typename... Args> class ArrayType = std::vector,
-    class StringType = std::string,
-    class BooleanType = bool,
-    class NumberIntegerType = std::int64_t,
-    class NumberUnsignedType = std::uint64_t,
-    class NumberFloatType = double,
-    template<typename U> class AllocatorType = std::allocator,
-    template<typename T, typename SFINAE = void> class JSONSerializer = adl_serializer
-    >
+NLOHMANN_BASIC_JSON_TPL_DECLARATION
 class basic_json
 {
   private:
     template<detail::value_t> friend struct detail::external_constructor;
     /// workaround type for MSVC
-    using basic_json_t = basic_json<ObjectType, ArrayType, StringType,
-          BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType,
-          AllocatorType, JSONSerializer>;
+    using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
 
   public:
     using value_t = detail::value_t;
@@ -14512,5 +14533,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_LIKELY
 #undef JSON_UNLIKELY
 #undef JSON_DEPRECATED
+#undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
+#undef NLOHMANN_BASIC_JSON_TPL
 
 #endif
