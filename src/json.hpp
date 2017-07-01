@@ -1265,6 +1265,270 @@ struct static_const
 
 template<typename T>
 constexpr T static_const<T>::value;
+
+////////////////////
+// input adapters //
+////////////////////
+
+/// abstract input adapter interface
+struct input_adapter
+{
+    virtual int get_character() = 0;
+    virtual std::string read(size_t offset, size_t length) = 0;
+    virtual ~input_adapter() {}
+};
+
+/// a type to simplify interfaces
+using input_adapter_t = std::shared_ptr<input_adapter>;
+
+/// input adapter for cached stream input
+template<std::size_t N>
+class cached_input_stream_adapter : public input_adapter
+{
+  public:
+    cached_input_stream_adapter(std::istream& i)
+        : is(i), start_position(is.tellg())
+    {
+        fill_buffer();
+
+        // skip byte order mark
+        if (fill_size >= 3 and buffer[0] == '\xEF' and buffer[1] == '\xBB' and buffer[2] == '\xBF')
+        {
+            buffer_pos += 3;
+            processed_chars += 3;
+        }
+    }
+
+    ~cached_input_stream_adapter() override
+    {
+        // clear stream flags
+        is.clear();
+        // We initially read a lot of characters into the buffer, and we
+        // may not have processed all of them. Therefore, we need to
+        // "rewind" the stream after the last processed char.
+        is.seekg(start_position);
+        is.ignore(static_cast<std::streamsize>(processed_chars));
+        // clear stream flags
+        is.clear();
+    }
+
+    int get_character() override
+    {
+        // check if refilling is necessary and possible
+        if (buffer_pos == fill_size and not eof)
+        {
+            fill_buffer();
+
+            // check and remember that filling did not yield new input
+            if (fill_size == 0)
+            {
+                eof = true;
+                return std::char_traits<char>::eof();
+            }
+
+            // the buffer is ready
+            buffer_pos = 0;
+        }
+
+        ++processed_chars;
+        assert(buffer_pos < buffer.size());
+        return buffer[buffer_pos++] & 0xFF;
+    }
+
+    std::string read(size_t offset, size_t length) override
+    {
+        // create buffer
+        std::string result(length, '\0');
+
+        // save stream position
+        const auto current_pos = is.tellg();
+        // save stream flags
+        const auto flags = is.rdstate();
+
+        // clear stream flags
+        is.clear();
+        // set stream position
+        is.seekg(static_cast<std::streamoff>(offset));
+        // read bytes
+        is.read(&result[0], static_cast<std::streamsize>(length));
+
+        // reset stream position
+        is.seekg(current_pos);
+        // reset stream flags
+        is.setstate(flags);
+
+        return result;
+    }
+
+  private:
+    void fill_buffer()
+    {
+        // fill
+        is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+        // store number of bytes in the buffer
+        fill_size = static_cast<size_t>(is.gcount());
+    }
+
+    /// the associated input stream
+    std::istream& is;
+
+    /// chars returned via get_character()
+    size_t processed_chars = 0;
+    /// chars processed in the current buffer
+    size_t buffer_pos = 0;
+
+    /// whether stream reached eof
+    bool eof = false;
+    /// how many chars have been copied to the buffer by last (re)fill
+    size_t fill_size = 0;
+
+    /// position of the stream when we started
+    const std::streampos start_position;
+
+    /// internal buffer
+    std::array<char, N> buffer{{}};
+};
+
+/// input adapter for buffer input
+class input_buffer_adapter : public input_adapter
+{
+  public:
+    input_buffer_adapter(const char* b, size_t l)
+        : input_adapter(), cursor(b), limit(b + l), start(b)
+    {
+        // skip byte order mark
+        if (l >= 3 and b[0] == '\xEF' and b[1] == '\xBB' and b[2] == '\xBF')
+        {
+            cursor += 3;
+        }
+    }
+
+    // delete because of pointer members
+    input_buffer_adapter(const input_buffer_adapter&) = delete;
+    input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
+
+    int get_character() noexcept override
+    {
+        if (JSON_LIKELY(cursor < limit))
+        {
+            return *(cursor++) & 0xFF;
+        }
+        else
+        {
+            return std::char_traits<char>::eof();
+        }
+    }
+
+    std::string read(size_t offset, size_t length) override
+    {
+        // avoid reading too many characters
+        const size_t max_length = static_cast<size_t>(limit - start);
+        return std::string(start + offset, (std::min)(length, max_length - offset));
+    }
+
+  private:
+    /// pointer to the current character
+    const char* cursor;
+    /// pointer past the last character
+    const char* limit;
+    /// pointer to the first character
+    const char* start;
+};
+
+struct input_adapter_factory
+{
+    // native support
+
+    /// input adapter for input stream
+    static std::shared_ptr<input_adapter> create(std::istream& i)
+    {
+        return std::make_shared<cached_input_stream_adapter<16384>> (i);
+    }
+
+    /// input adapter for input stream
+    static std::shared_ptr<input_adapter> create(std::istream&& i)
+    {
+        return std::make_shared<cached_input_stream_adapter<16384>>(i);
+    }
+
+    /// input adapter for buffer
+    static std::shared_ptr<input_adapter> create(const char* b, size_t l)
+    {
+        return std::make_shared<input_buffer_adapter>(b, l);
+    }
+
+    // derived support
+
+    /// input adapter for string literal
+    template <typename CharT,
+              typename std::enable_if<
+                  std::is_pointer<CharT>::value and
+                  std::is_integral<
+                      typename std::remove_pointer<CharT>::type>::value and
+                  sizeof(typename std::remove_pointer<CharT>::type) == 1,
+                  int>::type = 0>
+    static std::shared_ptr<input_adapter> create(CharT b)
+    {
+        return create(reinterpret_cast<const char*>(b),
+                      std::strlen(reinterpret_cast<const char*>(b)));
+    }
+
+    /// input adapter for iterator range with contiguous storage
+    template <class IteratorType,
+              typename std::enable_if<
+                  std::is_same<typename std::iterator_traits<
+                                   IteratorType>::iterator_category,
+                               std::random_access_iterator_tag>::value,
+                  int>::type = 0>
+    static std::shared_ptr<input_adapter> create(IteratorType first,
+            IteratorType last)
+    {
+        // assertion to check that the iterator range is indeed contiguous,
+        // see http://stackoverflow.com/a/35008842/266378 for more discussion
+        assert(std::accumulate(
+                   first, last, std::pair<bool, int>(true, 0),
+                   [&first](std::pair<bool, int> res, decltype(*first) val)
+        {
+            res.first &=
+                (val ==
+                 *(std::next(std::addressof(*first), res.second++)));
+            return res;
+        })
+        .first);
+
+        // assertion to check that each element is 1 byte long
+        static_assert(
+            sizeof(typename std::iterator_traits<IteratorType>::value_type) == 1, "each element in the iterator range must have the size of 1 byte");
+
+        return create(reinterpret_cast<const char*>(&(*first)),
+                      static_cast<size_t>(std::distance(first, last)));
+    }
+
+    /// input adapter for array
+    template <class T, std::size_t N>
+    static std::shared_ptr<input_adapter> create(T (&array)[N])
+    {
+        // delegate the call to the iterator-range overload
+        return create(std::begin(array), std::end(array));
+    }
+
+    /// input adapter for contiguous container
+    template <
+        class ContiguousContainer,
+        typename std::enable_if <
+            not std::is_pointer<ContiguousContainer>::value and
+            std::is_base_of<std::random_access_iterator_tag,
+                            typename std::iterator_traits<decltype(std::begin(
+                                        std::declval<ContiguousContainer const>()))>::
+                            iterator_category>::value,
+            int >::type = 0 >
+    static std::shared_ptr<input_adapter> create(const ContiguousContainer& c)
+    {
+        // delegate the call to the iterator-range overload
+        return create(std::begin(c), std::end(c));
+    }
+};
+
 } // namespace detail
 
 
@@ -7822,7 +8086,7 @@ class basic_json
     static basic_json parse(const CharT s,
                             const parser_callback_t cb = nullptr)
     {
-        return parser(input_adapter::create(s), cb).parse(true);
+        return parser(detail::input_adapter_factory::create(s), cb).parse(true);
     }
 
     template<typename CharT, typename std::enable_if<
@@ -7831,7 +8095,7 @@ class basic_json
                  sizeof(typename std::remove_pointer<CharT>::type) == 1, int>::type = 0>
     static bool accept(const CharT s)
     {
-        return parser(input_adapter::create(s)).accept(true);
+        return parser(detail::input_adapter_factory::create(s)).accept(true);
     }
 
     /*!
@@ -7865,12 +8129,12 @@ class basic_json
     static basic_json parse(std::istream& i,
                             const parser_callback_t cb = nullptr)
     {
-        return parser(input_adapter::create(i), cb).parse(true);
+        return parser(detail::input_adapter_factory::create(i), cb).parse(true);
     }
 
     static bool accept(std::istream& i)
     {
-        return parser(input_adapter::create(i)).accept(true);
+        return parser(detail::input_adapter_factory::create(i)).accept(true);
     }
 
     /*!
@@ -7879,12 +8143,12 @@ class basic_json
     static basic_json parse(std::istream&& i,
                             const parser_callback_t cb = nullptr)
     {
-        return parser(input_adapter::create(i), cb).parse(true);
+        return parser(detail::input_adapter_factory::create(i), cb).parse(true);
     }
 
     static bool accept(std::istream&& i)
     {
-        return parser(input_adapter::create(i)).accept(true);
+        return parser(detail::input_adapter_factory::create(i)).accept(true);
     }
 
     /*!
@@ -7939,7 +8203,7 @@ class basic_json
     static basic_json parse(IteratorType first, IteratorType last,
                             const parser_callback_t cb = nullptr)
     {
-        return parser(input_adapter::create(first, last), cb).parse(true);
+        return parser(detail::input_adapter_factory::create(first, last), cb).parse(true);
     }
 
     template<class IteratorType, typename std::enable_if<
@@ -7948,7 +8212,7 @@ class basic_json
                      typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
     static bool accept(IteratorType first, IteratorType last)
     {
-        return parser(input_adapter::create(first, last)).accept(true);
+        return parser(detail::input_adapter_factory::create(first, last)).accept(true);
     }
 
     /*!
@@ -8030,7 +8294,7 @@ class basic_json
     JSON_DEPRECATED
     friend std::istream& operator<<(basic_json& j, std::istream& i)
     {
-        j = parser(input_adapter::create(i)).parse(false);
+        j = parser(detail::input_adapter_factory::create(i)).parse(false);
         return i;
     }
 
@@ -8061,7 +8325,7 @@ class basic_json
     */
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
-        j = parser(input_adapter::create(i)).parse(false);
+        j = parser(detail::input_adapter_factory::create(i)).parse(false);
         return i;
     }
 
@@ -9100,263 +9364,6 @@ class basic_json
 
 
   private:
-    ////////////////////
-    // input adapters //
-    ////////////////////
-
-    /// abstract input adapter interface
-    class input_adapter
-    {
-      public:
-        virtual int get_character() = 0;
-        virtual std::string read(size_t offset, size_t length) = 0;
-        virtual ~input_adapter() {}
-
-        // native support
-
-        /// input adapter for input stream
-        static std::shared_ptr<input_adapter> create(std::istream& i)
-        {
-            return std::make_shared<cached_input_stream_adapter<16384>> (i);
-        }
-
-        /// input adapter for input stream
-        static std::shared_ptr<input_adapter> create(std::istream&& i)
-        {
-            return std::make_shared<cached_input_stream_adapter<16384>>(i);
-        }
-
-        /// input adapter for buffer
-        static std::shared_ptr<input_adapter> create(const char* b, size_t l)
-        {
-            return std::make_shared<input_buffer_adapter>(b, l);
-        }
-
-        // derived support
-
-        /// input adapter for string literal
-        template<typename CharT, typename std::enable_if<
-                     std::is_pointer<CharT>::value and
-                     std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-                     sizeof(typename std::remove_pointer<CharT>::type) == 1, int>::type = 0>
-        static std::shared_ptr<input_adapter> create(CharT b)
-        {
-            return create(reinterpret_cast<const char*>(b),
-                          std::strlen(reinterpret_cast<const char*>(b)));
-        }
-
-        /// input adapter for iterator range with contiguous storage
-        template<class IteratorType, typename std::enable_if<
-                     std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
-                     , int>::type
-                 = 0>
-        static std::shared_ptr<input_adapter> create(IteratorType first, IteratorType last)
-        {
-            // assertion to check that the iterator range is indeed contiguous,
-            // see http://stackoverflow.com/a/35008842/266378 for more discussion
-            assert(std::accumulate(first, last, std::pair<bool, int>(true, 0),
-                                   [&first](std::pair<bool, int> res, decltype(*first) val)
-            {
-                res.first &= (val == *(std::next(std::addressof(*first), res.second++)));
-                return res;
-            }).first);
-
-            // assertion to check that each element is 1 byte long
-            static_assert(sizeof(typename std::iterator_traits<IteratorType>::value_type) == 1,
-                          "each element in the iterator range must have the size of 1 byte");
-
-            const auto len = static_cast<size_t>(std::distance(first, last));
-            if (JSON_LIKELY(len > 0))
-            {
-                // there is at least one element: use the address of first
-                return create(reinterpret_cast<const char*>(&(*first)), len);
-            }
-            else
-            {
-                // the address of first cannot be used - use nullptr
-                return create(nullptr, len);
-            }
-        }
-
-        /// input adapter for array
-        template<class T, std::size_t N>
-        static std::shared_ptr<input_adapter> create(T (&array)[N])
-        {
-            // delegate the call to the iterator-range overload
-            return create(std::begin(array), std::end(array));
-        }
-
-        /// input adapter for contiguous container
-        template<class ContiguousContainer, typename std::enable_if<
-                     not std::is_pointer<ContiguousContainer>::value and
-                     std::is_base_of<
-                         std::random_access_iterator_tag,
-                         typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value
-                     , int>::type = 0>
-        static std::shared_ptr<input_adapter> create(const ContiguousContainer& c)
-        {
-            // delegate the call to the iterator-range overload
-            return create(std::begin(c), std::end(c));
-        }
-    };
-
-    /// a type to simplify interfaces
-    using input_adapter_t = std::shared_ptr<input_adapter>;
-
-    /// input adapter for cached stream input
-    template<std::size_t N>
-    class cached_input_stream_adapter : public input_adapter
-    {
-      public:
-        cached_input_stream_adapter(std::istream& i)
-            : is(i), start_position(is.tellg())
-        {
-            fill_buffer();
-
-            // skip byte order mark
-            if (fill_size >= 3 and buffer[0] == '\xEF' and buffer[1] == '\xBB' and buffer[2] == '\xBF')
-            {
-                buffer_pos += 3;
-                processed_chars += 3;
-            }
-        }
-
-        ~cached_input_stream_adapter() override
-        {
-            // clear stream flags
-            is.clear();
-            // We initially read a lot of characters into the buffer, and we
-            // may not have processed all of them. Therefore, we need to
-            // "rewind" the stream after the last processed char.
-            is.seekg(start_position);
-            is.ignore(static_cast<std::streamsize>(processed_chars));
-            // clear stream flags
-            is.clear();
-        }
-
-        int get_character() override
-        {
-            // check if refilling is necessary and possible
-            if (buffer_pos == fill_size and not eof)
-            {
-                fill_buffer();
-
-                // check and remember that filling did not yield new input
-                if (fill_size == 0)
-                {
-                    eof = true;
-                    return std::char_traits<char>::eof();
-                }
-
-                // the buffer is ready
-                buffer_pos = 0;
-            }
-
-            ++processed_chars;
-            assert(buffer_pos < buffer.size());
-            return buffer[buffer_pos++] & 0xFF;
-        }
-
-        std::string read(size_t offset, size_t length) override
-        {
-            // create buffer
-            std::string result(length, '\0');
-
-            // save stream position
-            const auto current_pos = is.tellg();
-            // save stream flags
-            const auto flags = is.rdstate();
-
-            // clear stream flags
-            is.clear();
-            // set stream position
-            is.seekg(static_cast<std::streamoff>(offset));
-            // read bytes
-            is.read(&result[0], static_cast<std::streamsize>(length));
-
-            // reset stream position
-            is.seekg(current_pos);
-            // reset stream flags
-            is.setstate(flags);
-
-            return result;
-        }
-
-      private:
-        void fill_buffer()
-        {
-            // fill
-            is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-            // store number of bytes in the buffer
-            fill_size = static_cast<size_t>(is.gcount());
-        }
-
-        /// the associated input stream
-        std::istream& is;
-
-        /// chars returned via get_character()
-        size_t processed_chars = 0;
-        /// chars processed in the current buffer
-        size_t buffer_pos = 0;
-
-        /// whether stream reached eof
-        bool eof = false;
-        /// how many chars have been copied to the buffer by last (re)fill
-        size_t fill_size = 0;
-
-        /// position of the stream when we started
-        const std::streampos start_position;
-
-        /// internal buffer
-        std::array<char, N> buffer{{}};
-    };
-
-    /// input adapter for buffer input
-    class input_buffer_adapter : public input_adapter
-    {
-      public:
-        input_buffer_adapter(const char* b, size_t l)
-            : input_adapter(), cursor(b), limit(b + l), start(b)
-        {
-            // skip byte order mark
-            if (l >= 3 and b[0] == '\xEF' and b[1] == '\xBB' and b[2] == '\xBF')
-            {
-                cursor += 3;
-            }
-        }
-
-        // delete because of pointer members
-        input_buffer_adapter(const input_buffer_adapter&) = delete;
-        input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
-
-        int get_character() noexcept override
-        {
-            if (JSON_LIKELY(cursor < limit))
-            {
-                return *(cursor++) & 0xFF;
-            }
-            else
-            {
-                return std::char_traits<char>::eof();
-            }
-        }
-
-        std::string read(size_t offset, size_t length) override
-        {
-            // avoid reading too many characters
-            const size_t max_length = static_cast<size_t>(limit - start);
-            return std::string(start + offset, (std::min)(length, max_length - offset));
-        }
-
-      private:
-        /// pointer to the current character
-        const char* cursor;
-        /// pointer past the last character
-        const char* limit;
-        /// pointer to the first character
-        const char* start;
-    };
-
     //////////////////////////////////////////
     // binary serialization/deserialization //
     //////////////////////////////////////////
@@ -9364,7 +9371,6 @@ class basic_json
     /// @name binary serialization/deserialization support
     /// @{
 
-  private:
     /*!
     @brief deserialization of CBOR and MessagePack values
     */
@@ -9376,7 +9382,7 @@ class basic_json
 
         @param[in] adapter  input adapter to read from
         */
-        explicit binary_reader(input_adapter_t adapter)
+        explicit binary_reader(detail::input_adapter_t adapter)
             : ia(adapter), is_little_endian(little_endianess())
         {
             assert(ia);
@@ -10489,7 +10495,7 @@ class basic_json
 
       private:
         /// input adapter
-        input_adapter_t ia = nullptr;
+        detail::input_adapter_t ia = nullptr;
 
         /// the current character
         int current = std::char_traits<char>::eof();
@@ -11299,7 +11305,7 @@ class basic_json
     static basic_json from_cbor(const std::vector<uint8_t>& v,
                                 const size_t start_index = 0)
     {
-        binary_reader br(input_adapter::create(v.begin() + static_cast<difference_type>(start_index), v.end()));
+        binary_reader br(detail::input_adapter_factory::create(v.begin() + static_cast<difference_type>(start_index), v.end()));
         return br.parse_cbor();
     }
 
@@ -11374,7 +11380,7 @@ class basic_json
     static basic_json from_msgpack(const std::vector<uint8_t>& v,
                                    const size_t start_index = 0)
     {
-        binary_reader br(input_adapter::create(v.begin() + static_cast<difference_type>(start_index), v.end()));
+        binary_reader br(detail::input_adapter_factory::create(v.begin() + static_cast<difference_type>(start_index), v.end()));
         return br.parse_msgpack();
     }
 
@@ -11460,7 +11466,7 @@ class basic_json
             }
         }
 
-        explicit lexer(input_adapter_t adapter)
+        explicit lexer(detail::input_adapter_t adapter)
             : ia(adapter), decimal_point_char(get_decimal_point())
         {}
 
@@ -12864,7 +12870,7 @@ scan_number_done:
 
       private:
         /// input adapter
-        input_adapter_t ia = nullptr;
+        detail::input_adapter_t ia = nullptr;
 
         /// the current character
         int current = std::char_traits<char>::eof();
@@ -12903,7 +12909,7 @@ scan_number_done:
     {
       public:
         /// a parser reading from an input adapter
-        explicit parser(input_adapter_t adapter,
+        explicit parser(detail::input_adapter_t adapter,
                         const parser_callback_t cb = nullptr)
             : callback(cb), m_lexer(adapter)
         {}
