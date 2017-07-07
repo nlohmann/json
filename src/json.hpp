@@ -8886,8 +8886,17 @@ class basic_json
             static_assert(sizeof(typename std::iterator_traits<IteratorType>::value_type) == 1,
                           "each element in the iterator range must have the size of 1 byte");
 
-            return create(reinterpret_cast<const char*>(&(*first)),
-                          static_cast<size_t>(std::distance(first, last)));
+            const auto len = static_cast<size_t>(std::distance(first, last));
+            if (JSON_LIKELY(len > 0))
+            {
+                // there is at least one element: use the address of first
+                return create(reinterpret_cast<const char*>(&(*first)), len);
+            }
+            else
+            {
+                // the address of first cannot be used - use nullptr
+                return create(nullptr, len);
+            }
         }
 
         /// input adapter for array
