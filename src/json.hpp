@@ -6273,10 +6273,7 @@ class basic_json
       their stored values are the same according to their respective
       `operator==`.
     - Integer and floating-point numbers are automatically converted before
-      comparison. Floating-point numbers are compared indirectly: two
-      floating-point numbers `f1` and `f2` are considered equal if neither
-      `f1 > f2` nor `f2 > f1` holds. Note than two NaN values are always
-      treated as unequal.
+      comparison. Note than two NaN values are always treated as unequal.
     - Two JSON null values are equal.
 
     @note NaN values never compare equal to themselves or to other NaN values.
