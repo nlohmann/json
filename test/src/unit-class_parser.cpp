@@ -89,56 +89,56 @@ TEST_CASE("parser class")
             SECTION("errors")
             {
                 // error: tab in string
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\t\""))).parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\t\""))).parse(), json::parse_error&);
                 CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("\"\t\""))).parse(),
                                   "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0009>'");
                 // error: newline in string
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\n\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\r\""))).parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\n\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\r\""))).parse(), json::parse_error&);
                 CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("\"\n\""))).parse(),
                                   "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+000A>'");
                 CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("\"\r\""))).parse(),
                                   "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+000D>'");
                 // error: backspace in string
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\b\""))).parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\b\""))).parse(), json::parse_error&);
                 CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("\"\b\""))).parse(),
                                   "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0008>'");
                 // improve code coverage
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\uFF01"))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("[-4:1,]"))).parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\uFF01"))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("[-4:1,]"))).parse(), json::parse_error&);
                 // unescaped control characters
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x00\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x01\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x02\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x03\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x04\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x05\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x06\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x07\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x08\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x09\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0a\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0b\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0c\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0d\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0e\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0f\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x10\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x11\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x12\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x13\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x14\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x15\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x16\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x17\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x18\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x19\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1a\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1b\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1c\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1d\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1e\""))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1f\""))).parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x00\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x01\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x02\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x03\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x04\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x05\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x06\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x07\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x08\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x09\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0a\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0b\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0c\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0d\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0e\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x0f\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x10\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x11\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x12\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x13\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x14\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x15\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x16\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x17\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x18\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x19\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1a\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1b\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1c\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1d\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1e\""))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\x1f\""))).parse(), json::parse_error&);
             }
 
             SECTION("escaped")
@@ -277,33 +277,33 @@ TEST_CASE("parser class")
             SECTION("overflow")
             {
                 // overflows during parsing yield an exception
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1.18973e+4932"))).parse() == json(), json::out_of_range);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1.18973e+4932"))).parse() == json(), json::out_of_range&);
                 CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("1.18973e+4932"))).parse() == json(),
                                   "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'");
             }
 
             SECTION("invalid numbers")
             {
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("01"))).parse(),      json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("--1"))).parse(),     json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1."))).parse(),      json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1E"))).parse(),      json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1E-"))).parse(),     json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1.E1"))).parse(),    json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-1E"))).parse(),     json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0E#"))).parse(),    json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0E-#"))).parse(),   json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0#"))).parse(),     json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0.0:"))).parse(),   json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0.0Z"))).parse(),   json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0E123:"))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0e0-:"))).parse(),  json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0e-:"))).parse(),   json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0f"))).parse(),     json::parse_error);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("01"))).parse(),      json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("--1"))).parse(),     json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1."))).parse(),      json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1E"))).parse(),      json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1E-"))).parse(),     json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1.E1"))).parse(),    json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-1E"))).parse(),     json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0E#"))).parse(),    json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0E-#"))).parse(),   json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0#"))).parse(),     json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0.0:"))).parse(),   json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0.0Z"))).parse(),   json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0E123:"))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0e0-:"))).parse(),  json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0e-:"))).parse(),   json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0f"))).parse(),     json::parse_error&);
 
                 // numbers must not begin with "+"
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("+1"))).parse(), json::parse_error);
-                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("+0"))).parse(), json::parse_error);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("+1"))).parse(), json::parse_error&);
+                CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("+0"))).parse(), json::parse_error&);
 
                 CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("01"))).parse(),
                                   "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected number literal; expected end of input");
@@ -608,20 +608,20 @@ TEST_CASE("parser class")
     SECTION("parse errors")
     {
         // unexpected end of number
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("0."))).parse(),  json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-"))).parse(),   json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("--"))).parse(),  json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0."))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-."))).parse(),  json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-:"))).parse(),  json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("0.:"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("e."))).parse(),  json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1e."))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1e/"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1e:"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1E."))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1E/"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1E:"))).parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("0."))).parse(),  json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-"))).parse(),   json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("--"))).parse(),  json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-0."))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-."))).parse(),  json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("-:"))).parse(),  json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("0.:"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("e."))).parse(),  json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1e."))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1e/"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1e:"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1E."))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1E/"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("1E:"))).parse(), json::parse_error&);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("0."))).parse(),
                           "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected digit after '.'; last read: '0.'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("-"))).parse(),
@@ -652,9 +652,9 @@ TEST_CASE("parser class")
                           "[json.exception.parse_error.101] parse error at 3: syntax error - invalid number; expected '+', '-', or digit after exponent; last read: '1E:'");
 
         // unexpected end of null
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("n"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("nu"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("nul"))).parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("n"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("nu"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("nul"))).parse(), json::parse_error&);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("n"))).parse(),
                           "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; last read: 'n'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("nu"))).parse(),
@@ -663,9 +663,9 @@ TEST_CASE("parser class")
                           "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'nul'");
 
         // unexpected end of true
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("t"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("tr"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("tru"))).parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("t"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("tr"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("tru"))).parse(), json::parse_error&);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("t"))).parse(),
                           "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; last read: 't'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("tr"))).parse(),
@@ -674,10 +674,10 @@ TEST_CASE("parser class")
                           "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'tru'");
 
         // unexpected end of false
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("f"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("fa"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("fal"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("fals"))).parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("f"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("fa"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("fal"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("fals"))).parse(), json::parse_error&);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("f"))).parse(),
                           "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; last read: 'f'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("fa"))).parse(),
@@ -688,11 +688,11 @@ TEST_CASE("parser class")
                           "[json.exception.parse_error.101] parse error at 5: syntax error - invalid literal; last read: 'fals'");
 
         // missing/unexpected end of array
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("["))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("[1"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("[1,"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("[1,]"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("]"))).parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("["))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("[1"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("[1,"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("[1,]"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("]"))).parse(), json::parse_error&);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("["))).parse(),
                           "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected end of input; expected '[', '{', or a literal");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("[1"))).parse(),
@@ -705,12 +705,12 @@ TEST_CASE("parser class")
                           "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected ']'; expected '[', '{', or a literal");
 
         // missing/unexpected end of object
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{\"foo\""))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{\"foo\":"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{\"foo\":}"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{\"foo\":1,}"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("}"))).parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{\"foo\""))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{\"foo\":"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{\"foo\":}"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{\"foo\":1,}"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("}"))).parse(), json::parse_error&);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("{"))).parse(),
                           "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected end of input; expected string literal");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("{\"foo\""))).parse(),
@@ -725,16 +725,16 @@ TEST_CASE("parser class")
                           "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected '}'; expected '[', '{', or a literal");
 
         // missing/unexpected end of string
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\""))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\\""))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u\""))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u0\""))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u01\""))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u012\""))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u0"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u01"))).parse(), json::parse_error);
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u012"))).parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\""))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\\""))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u\""))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u0\""))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u01\""))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u012\""))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u0"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u01"))).parse(), json::parse_error&);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("\"\\u012"))).parse(), json::parse_error&);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("\""))).parse(),
                           "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: missing closing quote; last read: '\"'");
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("\"\\\""))).parse(),
@@ -786,7 +786,7 @@ TEST_CASE("parser class")
                 // any other combination of backslash and character is invalid
                 default:
                 {
-                    CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string(s.c_str()))).parse(), json::parse_error);
+                    CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string(s.c_str()))).parse(), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
@@ -862,7 +862,7 @@ TEST_CASE("parser class")
                 else
                 {
                     CAPTURE(s1);
-                    CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string(s1.c_str()))).parse(), json::parse_error);
+                    CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string(s1.c_str()))).parse(), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
@@ -871,7 +871,7 @@ TEST_CASE("parser class")
                     }
 
                     CAPTURE(s2);
-                    CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string(s2.c_str()))).parse(), json::parse_error);
+                    CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string(s2.c_str()))).parse(), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
@@ -880,7 +880,7 @@ TEST_CASE("parser class")
                     }
 
                     CAPTURE(s3);
-                    CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string(s3.c_str()))).parse(), json::parse_error);
+                    CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string(s3.c_str()))).parse(), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
@@ -889,7 +889,7 @@ TEST_CASE("parser class")
                     }
 
                     CAPTURE(s4);
-                    CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string(s4.c_str()))).parse(), json::parse_error);
+                    CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string(s4.c_str()))).parse(), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
@@ -901,13 +901,13 @@ TEST_CASE("parser class")
         }
 
         // missing part of a surrogate pair
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\""), json::parse_error);
+        CHECK_THROWS_AS(json::parse("\"\\uD80C\""), json::parse_error&);
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\""),
                           "[json.exception.parse_error.101] parse error at 8: syntax error - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\"'");
         // invalid surrogate pair
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uD80C\""), json::parse_error);
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\\u0000\""), json::parse_error);
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uFFFF\""), json::parse_error);
+        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uD80C\""), json::parse_error&);
+        CHECK_THROWS_AS(json::parse("\"\\uD80C\\u0000\""), json::parse_error&);
+        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uFFFF\""), json::parse_error&);
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\uD80C\""),
                           "[json.exception.parse_error.101] parse error at 13: syntax error - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uD80C'");
         CHECK_THROWS_WITH(json::parse("\"\\uD80C\\u0000\""),
@@ -1102,11 +1102,11 @@ TEST_CASE("parser class")
     SECTION("tests found by mutate++")
     {
         // test case to make sure no comma preceeds the first key
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{,\"key\": false}"))).parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("{,\"key\": false}"))).parse(), json::parse_error&);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("{,\"key\": false}"))).parse(),
                           "[json.exception.parse_error.101] parse error at 2: syntax error - unexpected ','; expected string literal");
         // test case to make sure an object is properly closed
-        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("[{\"key\": false true]"))).parse(), json::parse_error);
+        CHECK_THROWS_AS(json::parser(json::input_adapter::create(std::string("[{\"key\": false true]"))).parse(), json::parse_error&);
         CHECK_THROWS_WITH(json::parser(json::input_adapter::create(std::string("[{\"key\": false true]"))).parse(),
                           "[json.exception.parse_error.101] parse error at 19: syntax error - unexpected true literal; expected '}'");
 

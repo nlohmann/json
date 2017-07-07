@@ -2268,7 +2268,7 @@ class basic_json
     object      | `{}`
     array       | `[]`
 
-    @param[in] value_type  the type of the value to create
+    @param[in] v  the type of the value to create
 
     @complexity Constant.
 
@@ -2277,8 +2277,8 @@ class basic_json
 
     @since version 1.0.0
     */
-    basic_json(const value_t value_type)
-        : m_type(value_type), m_value(value_type)
+    basic_json(const value_t v)
+        : m_type(v), m_value(v)
     {
         assert_invariant();
     }
@@ -12881,12 +12881,14 @@ scan_number_done:
                 {
                     // using "uninitialized" to avoid "expected" message
                     expect(lexer::token_type::uninitialized);
+                    break;
                 }
 
                 default:
                 {
                     // the last token was unexpected; we expected a value
                     expect(lexer::token_type::literal_or_value);
+                    break;
                 }
             }
 

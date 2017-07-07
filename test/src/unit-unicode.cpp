@@ -79,7 +79,7 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
     }
     else
     {
-        CHECK_THROWS_AS(json::parse(json_string), json::parse_error);
+        CHECK_THROWS_AS(json::parse(json_string), json::parse_error&);
     }
 }
 
@@ -933,7 +933,7 @@ TEST_CASE("Unicode", "[hide]")
                 {
                     std::string json_text = "\"" + codepoint_to_unicode(cp) + "\"";
                     CAPTURE(json_text);
-                    CHECK_THROWS_AS(json::parse(json_text), json::parse_error);
+                    CHECK_THROWS_AS(json::parse(json_text), json::parse_error&);
                 }
             }
 
@@ -952,7 +952,7 @@ TEST_CASE("Unicode", "[hide]")
 
                         std::string json_text = "\"" + codepoint_to_unicode(cp1) + codepoint_to_unicode(cp2) + "\"";
                         CAPTURE(json_text);
-                        CHECK_THROWS_AS(json::parse(json_text), json::parse_error);
+                        CHECK_THROWS_AS(json::parse(json_text), json::parse_error&);
                     }
                 }
             }
@@ -965,7 +965,7 @@ TEST_CASE("Unicode", "[hide]")
                 {
                     std::string json_text = "\"" + codepoint_to_unicode(cp) + "\"";
                     CAPTURE(json_text);
-                    CHECK_THROWS_AS(json::parse(json_text), json::parse_error);
+                    CHECK_THROWS_AS(json::parse(json_text), json::parse_error&);
                 }
             }
 
@@ -1036,7 +1036,7 @@ TEST_CASE("Unicode", "[hide]")
 
     SECTION("error for incomplete/wrong BOM")
     {
-        CHECK_THROWS_AS(json::parse("\xef\xbb"), json::parse_error);
-        CHECK_THROWS_AS(json::parse("\xef\xbb\xbb"), json::parse_error);
+        CHECK_THROWS_AS(json::parse("\xef\xbb"), json::parse_error&);
+        CHECK_THROWS_AS(json::parse("\xef\xbb\xbb"), json::parse_error&);
     }
 }

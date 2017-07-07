@@ -88,6 +88,7 @@ pedantic_gcc:
 		-Wformat-signedness \
 		-Wformat-truncation=2 \
 		-Wformat=2 \
+		-Wno-ignored-qualifiers \
 		-Wimplicit-fallthrough=5 \
 		-Wlogical-op \
 		-Wmissing-declarations \
