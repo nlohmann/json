@@ -9897,22 +9897,23 @@ class basic_json
         /*
         @brief read a number from the input
 
-        @tparam T the type of the number
+        @tparam NumberType the type of the number
 
-        @return number of type @a T
+        @return number of type @a NumberType
 
         @note This function needs to respect the system's endianess, because
               bytes in CBOR and MessagePack are stored in network order (big
               endian) and therefore need reordering on little endian systems.
 
-        @throw parse_error.110 if input has less than `sizeof(T)` bytes
+        @throw parse_error.110 if input has less than `sizeof(NumberType)`
+                               bytes
         */
-        template<typename T>
-        T get_number()
+        template<typename NumberType>
+        NumberType get_number()
         {
             // step 1: read input into array with system's byte order
-            std::array<uint8_t, sizeof(T)> vec;
-            for (size_t i = 0; i < sizeof(T); ++i)
+            std::array<uint8_t, sizeof(NumberType)> vec;
+            for (size_t i = 0; i < sizeof(NumberType); ++i)
             {
                 get();
                 check_eof();
@@ -9920,7 +9921,7 @@ class basic_json
                 // reverse byte order prior to conversion if necessary
                 if (is_little_endian)
                 {
-                    vec[sizeof(T) - i - 1] = static_cast<uint8_t>(current);
+                    vec[sizeof(NumberType) - i - 1] = static_cast<uint8_t>(current);
                 }
                 else
                 {
@@ -9929,8 +9930,8 @@ class basic_json
             }
 
             // step 2: convert array into number of type T and return
-            T result;
-            std::memcpy(&result, vec.data(), sizeof(T));
+            NumberType result;
+            std::memcpy(&result, vec.data(), sizeof(NumberType));
             return result;
         }
 
@@ -9938,6 +9939,10 @@ class basic_json
         @brief create a string by reading characters from the input
 
         @param[in] len number of bytes to read
+
+        @note We can not reserve @a len bytes for the result, because @a len
+              may be too large. Usually, @ref check_eof() detects the end of
+              the input before we run out of string memory.
 
         @return string created by reading @a len bytes
 
@@ -10658,33 +10663,28 @@ class basic_json
         /*
         @brief write a number to output input
 
-        @param[in] n number of type @a T
-        @tparam T the type of the number
+        @param[in] n number of type @a NumberType
+        @tparam NumberType the type of the number
 
         @note This function needs to respect the system's endianess, because
               bytes in CBOR and MessagePack are stored in network order (big
               endian) and therefore need reordering on little endian systems.
         */
-        template<typename T>
-        void write_number(T n)
+        template<typename NumberType>
+        void write_number(NumberType n)
         {
-            // step 1: write number to array of length T
-            std::array<uint8_t, sizeof(T)> vec;
-            std::memcpy(vec.data(), &n, sizeof(T));
+            // step 1: write number to array of length NumberType
+            std::array<uint8_t, sizeof(NumberType)> vec;
+            std::memcpy(vec.data(), &n, sizeof(NumberType));
 
             // step 2: write array to output (with possible reordering)
-            for (size_t i = 0; i < sizeof(T); ++i)
+            if (is_little_endian)
             {
                 // reverse byte order prior to conversion if necessary
-                if (is_little_endian)
-                {
-                    oa->write_character(vec[sizeof(T) - i - 1]);
-                }
-                else
-                {
-                    oa->write_character(vec[i]);  // LCOV_EXCL_LINE
-                }
+                std::reverse(vec.begin(), vec.end());
             }
+
+            oa->write_characters(vec.data(), sizeof(NumberType));
         }
 
       private:
