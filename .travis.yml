@@ -191,6 +191,14 @@ matrix:
         sources: ['ubuntu-toolchain-r-test']
         packages: g++-6
 
+  - os: linux
+    compiler: gcc
+    env: COMPILER=g++-7
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: g++-7
+
   # Linux / Clang
 
   - os: linux
