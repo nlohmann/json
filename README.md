@@ -751,6 +751,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 8.1 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
 | Clang Xcode 8.2 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
 | Clang Xcode 8.3 | Darwin Kernel Version 16.5.0 (macOS 10.12.4) | Apple LLVM version 8.1.0 (clang-802.0.38) |
+| Clang Xcode 9 beta | Darwin Kernel Version 16.6.0 (macOS 10.12.5) | Apple LLVM version 9.0.0 (clang-900.0.26) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1 | 
 | Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.1.1012.6693 |
 
