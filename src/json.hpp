@@ -210,7 +210,7 @@ class parse_error : public exception
     /*!
     @brief create a parse error exception
     @param[in] id         the id of the exception
-    @param[in] byte_      the byte index where the error occured (or 0 if
+    @param[in] byte_      the byte index where the error occurred (or 0 if
                           the position cannot be determined)
     @param[in] what_arg   the explanatory string
     @return parse_error object
@@ -260,7 +260,7 @@ json.exception.invalid_iterator.209 | cannot use offsets with object iterators |
 json.exception.invalid_iterator.210 | iterators do not fit | The iterator range passed to the insert function are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
 json.exception.invalid_iterator.211 | passed iterators may not belong to container | The iterator range passed to the insert function must not be a subrange of the container to insert to.
 json.exception.invalid_iterator.212 | cannot compare iterators of different containers | When two iterators are compared, they must belong to the same container.
-json.exception.invalid_iterator.213 | cannot compare order of object iterators | The order of object iterators cannot be compated, because JSON objects are unordered.
+json.exception.invalid_iterator.213 | cannot compare order of object iterators | The order of object iterators cannot be compared, because JSON objects are unordered.
 json.exception.invalid_iterator.214 | cannot get value | Cannot get value for iterator: Either the iterator belongs to a null value or it is an iterator to a primitive type (number, boolean, or string), but the iterator is different to @ref begin().
 
 @since version 3.0.0
@@ -2969,8 +2969,8 @@ class basic_json
     members will be pretty-printed with that indent level. An indent level of
     `0` will only insert newlines. `-1` (the default) selects the most compact
     representation.
-    @param[in] indent_char The character to use for indentation of @a indent is
-    greate than `0`. The default is ` ` (space).
+    @param[in] indent_char The character to use for indentation if @a indent is
+    greater than `0`. The default is ` ` (space).
 
     @return string containing the serialization of the JSON value
 
@@ -2981,7 +2981,7 @@ class basic_json
 
     @see https://docs.python.org/2/library/json.html#json.dump
 
-    @since version 1.0.0; indentaction character added in version 3.0.0
+    @since version 1.0.0; indentation character added in version 3.0.0
     */
     string_t dump(const int indent = -1, const char indent_char = ' ') const
     {
@@ -3460,7 +3460,7 @@ class basic_json
     /*!
     @brief helper function to implement get_ref()
 
-    This funcion helps to implement get_ref() without code duplication for
+    This function helps to implement get_ref() without code duplication for
     const and non-const overloads
 
     @tparam ThisType will be deduced as `basic_json` or `const basic_json`
@@ -6744,7 +6744,7 @@ class basic_json
         std::vector<CharType>& v;
     };
 
-    /// putput adatpter for output streams
+    /// putput adapter for output streams
     template<typename CharType>
     class output_stream_adapter : public output_adapter<CharType>
     {
@@ -8186,7 +8186,7 @@ class basic_json
         /*!
         @note The conventional copy constructor and copy assignment are
               implicitly defined.
-              Combined with the following converting constructor and assigment,
+              Combined with the following converting constructor and assignment,
               they support: copy from iterator to iterator,
                             copy from const iterator to const iterator,
                             and conversion from iterator to const iterator.
@@ -10033,7 +10033,7 @@ class basic_json
         @return string
 
         @throw parse_error.110 if input ended
-        @throw parse_error.113 if an unexpexted byte is read
+        @throw parse_error.113 if an unexpected byte is read
         */
         std::string get_cbor_string()
         {
@@ -10124,7 +10124,7 @@ class basic_json
         @return string
 
         @throw parse_error.110 if input ended
-        @throw parse_error.113 if an unexpexted byte is read
+        @throw parse_error.113 if an unexpected byte is read
         */
         std::string get_msgpack_string()
         {
@@ -13969,7 +13969,7 @@ scan_number_done:
     @complexity Linear in the size the JSON value.
 
     @throw type_error.314  if value is not an object
-    @throw type_error.315  if object values are not primitve
+    @throw type_error.315  if object values are not primitive
 
     @liveexample{The following code shows how a flattened JSON object is
     unflattened into the original nested JSON object.,unflatten}
