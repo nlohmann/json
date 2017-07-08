@@ -6789,9 +6789,9 @@ class basic_json
 
                         // variable to hold indentation for recursive calls
                         const auto new_indent = current_indent + indent_step;
-                        if (indent_string.size() < new_indent)
+                        if (JSON_UNLIKELY(indent_string.size() < new_indent))
                         {
-                            indent_string.resize(new_indent, ' ');
+                            indent_string.resize(indent_string.size() * 2, ' ');
                         }
 
                         // first n-1 elements
