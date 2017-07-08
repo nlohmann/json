@@ -152,6 +152,9 @@ matrix:
   - os: osx
     osx_image: xcode8.3
 
+  - os: osx
+    osx_image: xcode9
+
   # Linux / GCC
 
   - os: linux
