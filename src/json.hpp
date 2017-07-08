@@ -198,7 +198,6 @@ json.exception.parse_error.107 | parse error: JSON pointer must be empty or begi
 json.exception.parse_error.108 | parse error: escape character '~' must be followed with '0' or '1' | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
 json.exception.parse_error.109 | parse error: array index 'one' is not a number | A JSON Pointer array index must be a number.
 json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
-json.exception.parse_error.111 | parse error: bad input stream | Parsing CBOR or MessagePack from an input stream where the [`badbit` or `failbit`](http://en.cppreference.com/w/cpp/io/ios_base/iostate) is set.
 json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xf8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
 json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last byte: 0x98 | While parsing a map key, a value that is not a string has been read.
 
@@ -7498,7 +7497,6 @@ class basic_json
     @throw parse_error.101 in case of an unexpected token
     @throw parse_error.102 if to_unicode fails or surrogate error
     @throw parse_error.103 if to_unicode fails
-    @throw parse_error.111 if input stream is in a bad state
 
     @complexity Linear in the length of the input. The parser is a predictive
     LL(1) parser. The complexity can be higher if the parser callback function
@@ -7697,7 +7695,6 @@ class basic_json
     @throw parse_error.101 in case of an unexpected token
     @throw parse_error.102 if to_unicode fails or surrogate error
     @throw parse_error.103 if to_unicode fails
-    @throw parse_error.111 if input stream is in a bad state
 
     @complexity Linear in the length of the input. The parser is a predictive
     LL(1) parser.
@@ -8864,12 +8861,6 @@ class basic_json
         cached_input_stream_adapter(std::istream& i)
             : is(i), start_position(is.tellg())
         {
-            // immediately abort if stream is erroneous
-            if (JSON_UNLIKELY(i.fail()))
-            {
-                JSON_THROW(parse_error::create(111, 0, "bad input stream"));
-            }
-
             fill_buffer();
 
             // skip byte order mark
@@ -9429,7 +9420,7 @@ class basic_json
                     }
                     else
                     {
-                        val = mant == 0
+                        val = (mant == 0)
                               ? std::numeric_limits<double>::infinity()
                               : std::numeric_limits<double>::quiet_NaN();
                     }

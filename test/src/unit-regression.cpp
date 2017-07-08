@@ -581,7 +581,7 @@ TEST_CASE("regression tests")
     {
         std::ifstream f("file_not_found.json");
         CHECK_THROWS_AS(json::parse(f), json::parse_error&);
-        CHECK_THROWS_WITH(json::parse(f), "[json.exception.parse_error.111] parse error: bad input stream");
+        CHECK_THROWS_WITH(json::parse(f), "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
     }
 
     SECTION("issue #367 - calling stream at EOF")
