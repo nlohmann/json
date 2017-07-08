@@ -12822,14 +12822,14 @@ scan_number_done:
                 {
                     // using "uninitialized" to avoid "expected" message
                     expect(lexer::token_type::uninitialized);
-                    break;
+                    break;  // LCOV_EXCL_LINE
                 }
 
                 default:
                 {
                     // the last token was unexpected; we expected a value
                     expect(lexer::token_type::literal_or_value);
-                    break;
+                    break;  // LCOV_EXCL_LINE
                 }
             }
 
