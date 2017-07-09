@@ -36,7 +36,7 @@ using nlohmann::json;
 json::lexer::token_type scan_string(const char* s);
 json::lexer::token_type scan_string(const char* s)
 {
-    return json::lexer(json::input_adapter::create(s)).scan();
+    return json::lexer(nlohmann::detail::input_adapter_factory::create(s)).scan();
 }
 
 TEST_CASE("lexer class")
