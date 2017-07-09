@@ -6378,6 +6378,601 @@ class binary_writer
     /// the output
     output_adapter_t<uint8_t> oa = nullptr;
 };
+
+///////////////////
+// serialization //
+///////////////////
+
+template <typename BasicJsonType>
+class serializer
+{
+    using string_t = typename BasicJsonType::string_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+  public:
+    /*!
+    @param[in] s  output stream to serialize to
+    @param[in] ichar  indentation character to use
+    */
+    serializer(output_adapter_t<char> s, const char ichar)
+        : o(s), loc(std::localeconv()),
+          thousands_sep(!loc->thousands_sep ? '\0' : loc->thousands_sep[0]),
+          decimal_point(!loc->decimal_point ? '\0' : loc->decimal_point[0]),
+          indent_char(ichar), indent_string(512, indent_char) {}
+
+    // delete because of pointer members
+    serializer(const serializer&) = delete;
+    serializer& operator=(const serializer&) = delete;
+
+    /*!
+    @brief internal implementation of the serialization function
+
+    This function is called by the public member function dump and
+    organizes the serialization internally. The indentation level is
+    propagated as additional parameter. In case of arrays and objects, the
+    function is called recursively.
+
+    - strings and object keys are escaped using `escape_string()`
+    - integer numbers are converted implicitly via `operator<<`
+    - floating-point numbers are converted to a string using `"%g"` format
+
+    @param[in] val             value to serialize
+    @param[in] pretty_print    whether the output shall be pretty-printed
+    @param[in] indent_step     the indent level
+    @param[in] current_indent  the current indent level (only used internally)
+    */
+    void dump(const BasicJsonType& val, const bool pretty_print,
+              const unsigned int indent_step,
+              const unsigned int current_indent = 0)
+    {
+        switch (val.m_type)
+        {
+            case value_t::object:
+            {
+                if (val.m_value.object->empty())
+                {
+                    o->write_characters("{}", 2);
+                    return;
+                }
+
+                if (pretty_print)
+                {
+                    o->write_characters("{\n", 2);
+
+                    // variable to hold indentation for recursive calls
+                    const auto new_indent = current_indent + indent_step;
+                    if (JSON_UNLIKELY(indent_string.size() < new_indent))
+                    {
+                        indent_string.resize(indent_string.size() * 2, ' ');
+                    }
+
+                    // first n-1 elements
+                    auto i = val.m_value.object->cbegin();
+                    for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
+                    {
+                        o->write_characters(indent_string.c_str(), new_indent);
+                        o->write_character('\"');
+                        dump_escaped(i->first);
+                        o->write_characters("\": ", 3);
+                        dump(i->second, true, indent_step, new_indent);
+                        o->write_characters(",\n", 2);
+                    }
+
+                    // last element
+                    assert(i != val.m_value.object->cend());
+                    o->write_characters(indent_string.c_str(), new_indent);
+                    o->write_character('\"');
+                    dump_escaped(i->first);
+                    o->write_characters("\": ", 3);
+                    dump(i->second, true, indent_step, new_indent);
+
+                    o->write_character('\n');
+                    o->write_characters(indent_string.c_str(), current_indent);
+                    o->write_character('}');
+                }
+                else
+                {
+                    o->write_character('{');
+
+                    // first n-1 elements
+                    auto i = val.m_value.object->cbegin();
+                    for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
+                    {
+                        o->write_character('\"');
+                        dump_escaped(i->first);
+                        o->write_characters("\":", 2);
+                        dump(i->second, false, indent_step, current_indent);
+                        o->write_character(',');
+                    }
+
+                    // last element
+                    assert(i != val.m_value.object->cend());
+                    o->write_character('\"');
+                    dump_escaped(i->first);
+                    o->write_characters("\":", 2);
+                    dump(i->second, false, indent_step, current_indent);
+
+                    o->write_character('}');
+                }
+
+                return;
+            }
+
+            case value_t::array:
+            {
+                if (val.m_value.array->empty())
+                {
+                    o->write_characters("[]", 2);
+                    return;
+                }
+
+                if (pretty_print)
+                {
+                    o->write_characters("[\n", 2);
+
+                    // variable to hold indentation for recursive calls
+                    const auto new_indent = current_indent + indent_step;
+                    if (indent_string.size() < new_indent)
+                    {
+                        indent_string.resize(new_indent, ' ');
+                    }
+
+                    // first n-1 elements
+                    for (auto i = val.m_value.array->cbegin();
+                            i != val.m_value.array->cend() - 1; ++i)
+                    {
+                        o->write_characters(indent_string.c_str(), new_indent);
+                        dump(*i, true, indent_step, new_indent);
+                        o->write_characters(",\n", 2);
+                    }
+
+                    // last element
+                    assert(not val.m_value.array->empty());
+                    o->write_characters(indent_string.c_str(), new_indent);
+                    dump(val.m_value.array->back(), true, indent_step, new_indent);
+
+                    o->write_character('\n');
+                    o->write_characters(indent_string.c_str(), current_indent);
+                    o->write_character(']');
+                }
+                else
+                {
+                    o->write_character('[');
+
+                    // first n-1 elements
+                    for (auto i = val.m_value.array->cbegin();
+                            i != val.m_value.array->cend() - 1; ++i)
+                    {
+                        dump(*i, false, indent_step, current_indent);
+                        o->write_character(',');
+                    }
+
+                    // last element
+                    assert(not val.m_value.array->empty());
+                    dump(val.m_value.array->back(), false, indent_step, current_indent);
+
+                    o->write_character(']');
+                }
+
+                return;
+            }
+
+            case value_t::string:
+            {
+                o->write_character('\"');
+                dump_escaped(*val.m_value.string);
+                o->write_character('\"');
+                return;
+            }
+
+            case value_t::boolean:
+            {
+                if (val.m_value.boolean)
+                {
+                    o->write_characters("true", 4);
+                }
+                else
+                {
+                    o->write_characters("false", 5);
+                }
+                return;
+            }
+
+            case value_t::number_integer:
+            {
+                dump_integer(val.m_value.number_integer);
+                return;
+            }
+
+            case value_t::number_unsigned:
+            {
+                dump_integer(val.m_value.number_unsigned);
+                return;
+            }
+
+            case value_t::number_float:
+            {
+                dump_float(val.m_value.number_float);
+                return;
+            }
+
+            case value_t::discarded:
+            {
+                o->write_characters("<discarded>", 11);
+                return;
+            }
+
+            case value_t::null:
+            {
+                o->write_characters("null", 4);
+                return;
+            }
+        }
+    }
+
+  private:
+    /*!
+    @brief calculates the extra space to escape a JSON string
+
+    @param[in] s  the string to escape
+    @return the number of characters required to escape string @a s
+
+    @complexity Linear in the length of string @a s.
+    */
+    static std::size_t extra_space(const string_t& s) noexcept
+    {
+        return std::accumulate(s.begin(), s.end(), size_t{},
+                               [](size_t res, typename string_t::value_type c)
+        {
+            switch (c)
+            {
+                case '"':
+                case '\\':
+                case '\b':
+                case '\f':
+                case '\n':
+                case '\r':
+                case '\t':
+                {
+                    // from c (1 byte) to \x (2 bytes)
+                    return res + 1;
+                }
+
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x04:
+                case 0x05:
+                case 0x06:
+                case 0x07:
+                case 0x0b:
+                case 0x0e:
+                case 0x0f:
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x14:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                case 0x18:
+                case 0x19:
+                case 0x1a:
+                case 0x1b:
+                case 0x1c:
+                case 0x1d:
+                case 0x1e:
+                case 0x1f:
+                {
+                    // from c (1 byte) to \uxxxx (6 bytes)
+                    return res + 5;
+                }
+
+                default:
+                {
+                    return res;
+                }
+            }
+        });
+    }
+
+    /*!
+    @brief dump escaped string
+
+    Escape a string by replacing certain special characters by a sequence
+    of an escape character (backslash) and another character and other
+    control characters by a sequence of "\u" followed by a four-digit hex
+    representation. The escaped string is written to output stream @a o.
+
+    @param[in] s  the string to escape
+
+    @complexity Linear in the length of string @a s.
+    */
+    void dump_escaped(const string_t& s) const
+    {
+        const auto space = extra_space(s);
+        if (space == 0)
+        {
+            o->write_characters(s.c_str(), s.size());
+            return;
+        }
+
+        // create a result string of necessary size
+        string_t result(s.size() + space, '\\');
+        std::size_t pos = 0;
+
+        for (const auto& c : s)
+        {
+            switch (c)
+            {
+                // quotation mark (0x22)
+                case '"':
+                {
+                    result[pos + 1] = '"';
+                    pos += 2;
+                    break;
+                }
+
+                // reverse solidus (0x5c)
+                case '\\':
+                {
+                    // nothing to change
+                    pos += 2;
+                    break;
+                }
+
+                // backspace (0x08)
+                case '\b':
+                {
+                    result[pos + 1] = 'b';
+                    pos += 2;
+                    break;
+                }
+
+                // formfeed (0x0c)
+                case '\f':
+                {
+                    result[pos + 1] = 'f';
+                    pos += 2;
+                    break;
+                }
+
+                // newline (0x0a)
+                case '\n':
+                {
+                    result[pos + 1] = 'n';
+                    pos += 2;
+                    break;
+                }
+
+                // carriage return (0x0d)
+                case '\r':
+                {
+                    result[pos + 1] = 'r';
+                    pos += 2;
+                    break;
+                }
+
+                // horizontal tab (0x09)
+                case '\t':
+                {
+                    result[pos + 1] = 't';
+                    pos += 2;
+                    break;
+                }
+
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x04:
+                case 0x05:
+                case 0x06:
+                case 0x07:
+                case 0x0b:
+                case 0x0e:
+                case 0x0f:
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x14:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                case 0x18:
+                case 0x19:
+                case 0x1a:
+                case 0x1b:
+                case 0x1c:
+                case 0x1d:
+                case 0x1e:
+                case 0x1f:
+                {
+                    // convert a number 0..15 to its hex representation
+                    // (0..f)
+                    static const char hexify[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                                                    '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+                                                   };
+
+                    // print character c as \uxxxx
+                    for (const char m :
+                {'u', '0', '0', hexify[c >> 4], hexify[c & 0x0f]
+                    })
+                    {
+                        result[++pos] = m;
+                    }
+
+                    ++pos;
+                    break;
+                }
+
+                default:
+                {
+                    // all other characters are added as-is
+                    result[pos++] = c;
+                    break;
+                }
+            }
+        }
+
+        assert(pos == s.size() + space);
+        o->write_characters(result.c_str(), result.size());
+    }
+
+    /*!
+    @brief dump an integer
+
+    Dump a given integer to output stream @a o. Works internally with
+    @a number_buffer.
+
+    @param[in] x  integer number (signed or unsigned) to dump
+    @tparam NumberType either @a number_integer_t or @a number_unsigned_t
+    */
+    template <
+        typename NumberType,
+        detail::enable_if_t<std::is_same<NumberType, number_unsigned_t>::value or
+                            std::is_same<NumberType, number_integer_t>::value,
+                            int> = 0 >
+    void dump_integer(NumberType x)
+    {
+        // special case for "0"
+        if (x == 0)
+        {
+            o->write_character('0');
+            return;
+        }
+
+        const bool is_negative = x < 0;
+        size_t i = 0;
+
+        // spare 1 byte for '\0'
+        while (x != 0 and i < number_buffer.size() - 1)
+        {
+            const auto digit = std::labs(static_cast<long>(x % 10));
+            number_buffer[i++] = static_cast<char>('0' + digit);
+            x /= 10;
+        }
+
+        // make sure the number has been processed completely
+        assert(x == 0);
+
+        if (is_negative)
+        {
+            // make sure there is capacity for the '-'
+            assert(i < number_buffer.size() - 2);
+            number_buffer[i++] = '-';
+        }
+
+        std::reverse(number_buffer.begin(), number_buffer.begin() + i);
+        o->write_characters(number_buffer.data(), i);
+    }
+
+    /*!
+    @brief dump a floating-point number
+
+    Dump a given floating-point number to output stream @a o. Works
+    internally with @a number_buffer.
+
+    @param[in] x  floating-point number to dump
+    */
+    void dump_float(number_float_t x)
+    {
+        // NaN / inf
+        if (not std::isfinite(x) or std::isnan(x))
+        {
+            o->write_characters("null", 4);
+            return;
+        }
+
+        // special case for 0.0 and -0.0
+        if (x == 0)
+        {
+            if (std::signbit(x))
+            {
+                o->write_characters("-0.0", 4);
+            }
+            else
+            {
+                o->write_characters("0.0", 3);
+            }
+            return;
+        }
+
+        // get number of digits for a text -> float -> text round-trip
+        static constexpr auto d = std::numeric_limits<number_float_t>::digits10;
+
+        // the actual conversion
+        std::ptrdiff_t len =
+            snprintf(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
+
+        // negative value indicates an error
+        assert(len > 0);
+        // check if buffer was large enough
+        assert(static_cast<size_t>(len) < number_buffer.size());
+
+        // erase thousands separator
+        if (thousands_sep != '\0')
+        {
+            const auto end = std::remove(number_buffer.begin(),
+                                         number_buffer.begin() + len, thousands_sep);
+            std::fill(end, number_buffer.end(), '\0');
+            assert((end - number_buffer.begin()) <= len);
+            len = (end - number_buffer.begin());
+        }
+
+        // convert decimal point to '.'
+        if (decimal_point != '\0' and decimal_point != '.')
+        {
+            for (auto& c : number_buffer)
+            {
+                if (c == decimal_point)
+                {
+                    c = '.';
+                    break;
+                }
+            }
+        }
+
+        o->write_characters(number_buffer.data(), static_cast<size_t>(len));
+
+        // determine if need to append ".0"
+        const bool value_is_int_like =
+            std::none_of(number_buffer.begin(), number_buffer.begin() + len + 1,
+                         [](char c)
+        {
+            return c == '.' or c == 'e';
+        });
+
+        if (value_is_int_like)
+        {
+            o->write_characters(".0", 2);
+        }
+    }
+
+  private:
+    /// the output of the serializer
+    output_adapter_t<char> o = nullptr;
+
+    /// a (hopefully) large enough character buffer
+    std::array<char, 64> number_buffer{{}};
+
+    /// the locale
+    const std::lconv* loc = nullptr;
+    /// the locale's thousand separator character
+    const char thousands_sep = '\0';
+    /// the locale's decimal point character
+    const char decimal_point = '\0';
+
+    /// the indentation character
+    const char indent_char;
+
+    /// the indentation string
+    string_t indent_string;
+};
 } // namespace detail
 
 /// namespace to hold default `to_json` / `from_json` functions
@@ -6849,8 +7444,10 @@ class basic_json
     template<detail::value_t> friend struct detail::external_constructor;
     friend ::nlohmann::json_pointer;
     friend ::nlohmann::detail::parser<basic_json>;
+    friend ::nlohmann::detail::serializer<basic_json>;
     template <typename BasicJsonType>
     friend class ::nlohmann::detail::iter_impl;
+    friend ::nlohmann::detail::binary_writer<basic_json>;
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
 
@@ -6872,6 +7469,8 @@ class basic_json
 
     using binary_reader = ::nlohmann::detail::binary_reader<basic_json>;
     using binary_writer = ::nlohmann::detail::binary_writer<basic_json>;
+
+    using serializer = ::nlohmann::detail::serializer<basic_json>;
 
   public:
     using value_t = detail::value_t;
@@ -12077,598 +12676,6 @@ class basic_json
     /// @name serialization
     /// @{
 
-  private:
-    /*!
-    @brief wrapper around the serialization functions
-    */
-    class serializer
-    {
-      public:
-        /*!
-        @param[in] s  output stream to serialize to
-        @param[in] ichar  indentation character to use
-        */
-        serializer(output_adapter_t<char> s, const char ichar)
-            : o(s), loc(std::localeconv()),
-              thousands_sep(!loc->thousands_sep ? '\0' : loc->thousands_sep[0]),
-              decimal_point(!loc->decimal_point ? '\0' : loc->decimal_point[0]),
-              indent_char(ichar), indent_string(512, indent_char)
-        {}
-
-        // delete because of pointer members
-        serializer(const serializer&) = delete;
-        serializer& operator=(const serializer&) = delete;
-
-        /*!
-        @brief internal implementation of the serialization function
-
-        This function is called by the public member function dump and
-        organizes the serialization internally. The indentation level is
-        propagated as additional parameter. In case of arrays and objects, the
-        function is called recursively.
-
-        - strings and object keys are escaped using `escape_string()`
-        - integer numbers are converted implicitly via `operator<<`
-        - floating-point numbers are converted to a string using `"%g"` format
-
-        @param[in] val             value to serialize
-        @param[in] pretty_print    whether the output shall be pretty-printed
-        @param[in] indent_step     the indent level
-        @param[in] current_indent  the current indent level (only used internally)
-        */
-        void dump(const basic_json& val,
-                  const bool pretty_print,
-                  const unsigned int indent_step,
-                  const unsigned int current_indent = 0)
-        {
-            switch (val.m_type)
-            {
-                case value_t::object:
-                {
-                    if (val.m_value.object->empty())
-                    {
-                        o->write_characters("{}", 2);
-                        return;
-                    }
-
-                    if (pretty_print)
-                    {
-                        o->write_characters("{\n", 2);
-
-                        // variable to hold indentation for recursive calls
-                        const auto new_indent = current_indent + indent_step;
-                        if (JSON_UNLIKELY(indent_string.size() < new_indent))
-                        {
-                            indent_string.resize(indent_string.size() * 2, ' ');
-                        }
-
-                        // first n-1 elements
-                        auto i = val.m_value.object->cbegin();
-                        for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
-                        {
-                            o->write_characters(indent_string.c_str(), new_indent);
-                            o->write_character('\"');
-                            dump_escaped(i->first);
-                            o->write_characters("\": ", 3);
-                            dump(i->second, true, indent_step, new_indent);
-                            o->write_characters(",\n", 2);
-                        }
-
-                        // last element
-                        assert(i != val.m_value.object->cend());
-                        o->write_characters(indent_string.c_str(), new_indent);
-                        o->write_character('\"');
-                        dump_escaped(i->first);
-                        o->write_characters("\": ", 3);
-                        dump(i->second, true, indent_step, new_indent);
-
-                        o->write_character('\n');
-                        o->write_characters(indent_string.c_str(), current_indent);
-                        o->write_character('}');
-                    }
-                    else
-                    {
-                        o->write_character('{');
-
-                        // first n-1 elements
-                        auto i = val.m_value.object->cbegin();
-                        for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
-                        {
-                            o->write_character('\"');
-                            dump_escaped(i->first);
-                            o->write_characters("\":", 2);
-                            dump(i->second, false, indent_step, current_indent);
-                            o->write_character(',');
-                        }
-
-                        // last element
-                        assert(i != val.m_value.object->cend());
-                        o->write_character('\"');
-                        dump_escaped(i->first);
-                        o->write_characters("\":", 2);
-                        dump(i->second, false, indent_step, current_indent);
-
-                        o->write_character('}');
-                    }
-
-                    return;
-                }
-
-                case value_t::array:
-                {
-                    if (val.m_value.array->empty())
-                    {
-                        o->write_characters("[]", 2);
-                        return;
-                    }
-
-                    if (pretty_print)
-                    {
-                        o->write_characters("[\n", 2);
-
-                        // variable to hold indentation for recursive calls
-                        const auto new_indent = current_indent + indent_step;
-                        if (indent_string.size() < new_indent)
-                        {
-                            indent_string.resize(new_indent, ' ');
-                        }
-
-                        // first n-1 elements
-                        for (auto i = val.m_value.array->cbegin(); i != val.m_value.array->cend() - 1; ++i)
-                        {
-                            o->write_characters(indent_string.c_str(), new_indent);
-                            dump(*i, true, indent_step, new_indent);
-                            o->write_characters(",\n", 2);
-                        }
-
-                        // last element
-                        assert(not val.m_value.array->empty());
-                        o->write_characters(indent_string.c_str(), new_indent);
-                        dump(val.m_value.array->back(), true, indent_step, new_indent);
-
-                        o->write_character('\n');
-                        o->write_characters(indent_string.c_str(), current_indent);
-                        o->write_character(']');
-                    }
-                    else
-                    {
-                        o->write_character('[');
-
-                        // first n-1 elements
-                        for (auto i = val.m_value.array->cbegin(); i != val.m_value.array->cend() - 1; ++i)
-                        {
-                            dump(*i, false, indent_step, current_indent);
-                            o->write_character(',');
-                        }
-
-                        // last element
-                        assert(not val.m_value.array->empty());
-                        dump(val.m_value.array->back(), false, indent_step, current_indent);
-
-                        o->write_character(']');
-                    }
-
-                    return;
-                }
-
-                case value_t::string:
-                {
-                    o->write_character('\"');
-                    dump_escaped(*val.m_value.string);
-                    o->write_character('\"');
-                    return;
-                }
-
-                case value_t::boolean:
-                {
-                    if (val.m_value.boolean)
-                    {
-                        o->write_characters("true", 4);
-                    }
-                    else
-                    {
-                        o->write_characters("false", 5);
-                    }
-                    return;
-                }
-
-                case value_t::number_integer:
-                {
-                    dump_integer(val.m_value.number_integer);
-                    return;
-                }
-
-                case value_t::number_unsigned:
-                {
-                    dump_integer(val.m_value.number_unsigned);
-                    return;
-                }
-
-                case value_t::number_float:
-                {
-                    dump_float(val.m_value.number_float);
-                    return;
-                }
-
-                case value_t::discarded:
-                {
-                    o->write_characters("<discarded>", 11);
-                    return;
-                }
-
-                case value_t::null:
-                {
-                    o->write_characters("null", 4);
-                    return;
-                }
-            }
-        }
-
-      private:
-        /*!
-        @brief calculates the extra space to escape a JSON string
-
-        @param[in] s  the string to escape
-        @return the number of characters required to escape string @a s
-
-        @complexity Linear in the length of string @a s.
-        */
-        static std::size_t extra_space(const string_t& s) noexcept
-        {
-            return std::accumulate(s.begin(), s.end(), size_t{},
-                                   [](size_t res, typename string_t::value_type c)
-            {
-                switch (c)
-                {
-                    case '"':
-                    case '\\':
-                    case '\b':
-                    case '\f':
-                    case '\n':
-                    case '\r':
-                    case '\t':
-                    {
-                        // from c (1 byte) to \x (2 bytes)
-                        return res + 1;
-                    }
-
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x04:
-                    case 0x05:
-                    case 0x06:
-                    case 0x07:
-                    case 0x0b:
-                    case 0x0e:
-                    case 0x0f:
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x14:
-                    case 0x15:
-                    case 0x16:
-                    case 0x17:
-                    case 0x18:
-                    case 0x19:
-                    case 0x1a:
-                    case 0x1b:
-                    case 0x1c:
-                    case 0x1d:
-                    case 0x1e:
-                    case 0x1f:
-                    {
-                        // from c (1 byte) to \uxxxx (6 bytes)
-                        return res + 5;
-                    }
-
-                    default:
-                    {
-                        return res;
-                    }
-                }
-            });
-        }
-
-        /*!
-        @brief dump escaped string
-
-        Escape a string by replacing certain special characters by a sequence
-        of an escape character (backslash) and another character and other
-        control characters by a sequence of "\u" followed by a four-digit hex
-        representation. The escaped string is written to output stream @a o.
-
-        @param[in] s  the string to escape
-
-        @complexity Linear in the length of string @a s.
-        */
-        void dump_escaped(const string_t& s) const
-        {
-            const auto space = extra_space(s);
-            if (space == 0)
-            {
-                o->write_characters(s.c_str(), s.size());
-                return;
-            }
-
-            // create a result string of necessary size
-            string_t result(s.size() + space, '\\');
-            std::size_t pos = 0;
-
-            for (const auto& c : s)
-            {
-                switch (c)
-                {
-                    // quotation mark (0x22)
-                    case '"':
-                    {
-                        result[pos + 1] = '"';
-                        pos += 2;
-                        break;
-                    }
-
-                    // reverse solidus (0x5c)
-                    case '\\':
-                    {
-                        // nothing to change
-                        pos += 2;
-                        break;
-                    }
-
-                    // backspace (0x08)
-                    case '\b':
-                    {
-                        result[pos + 1] = 'b';
-                        pos += 2;
-                        break;
-                    }
-
-                    // formfeed (0x0c)
-                    case '\f':
-                    {
-                        result[pos + 1] = 'f';
-                        pos += 2;
-                        break;
-                    }
-
-                    // newline (0x0a)
-                    case '\n':
-                    {
-                        result[pos + 1] = 'n';
-                        pos += 2;
-                        break;
-                    }
-
-                    // carriage return (0x0d)
-                    case '\r':
-                    {
-                        result[pos + 1] = 'r';
-                        pos += 2;
-                        break;
-                    }
-
-                    // horizontal tab (0x09)
-                    case '\t':
-                    {
-                        result[pos + 1] = 't';
-                        pos += 2;
-                        break;
-                    }
-
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x04:
-                    case 0x05:
-                    case 0x06:
-                    case 0x07:
-                    case 0x0b:
-                    case 0x0e:
-                    case 0x0f:
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x14:
-                    case 0x15:
-                    case 0x16:
-                    case 0x17:
-                    case 0x18:
-                    case 0x19:
-                    case 0x1a:
-                    case 0x1b:
-                    case 0x1c:
-                    case 0x1d:
-                    case 0x1e:
-                    case 0x1f:
-                    {
-                        // convert a number 0..15 to its hex representation
-                        // (0..f)
-                        static const char hexify[16] =
-                        {
-                            '0', '1', '2', '3', '4', '5', '6', '7',
-                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-                        };
-
-                        // print character c as \uxxxx
-                        for (const char m :
-                    { 'u', '0', '0', hexify[c >> 4], hexify[c & 0x0f]
-                        })
-                        {
-                            result[++pos] = m;
-                        }
-
-                        ++pos;
-                        break;
-                    }
-
-                    default:
-                    {
-                        // all other characters are added as-is
-                        result[pos++] = c;
-                        break;
-                    }
-                }
-            }
-
-            assert(pos == s.size() + space);
-            o->write_characters(result.c_str(), result.size());
-        }
-
-        /*!
-        @brief dump an integer
-
-        Dump a given integer to output stream @a o. Works internally with
-        @a number_buffer.
-
-        @param[in] x  integer number (signed or unsigned) to dump
-        @tparam NumberType either @a number_integer_t or @a number_unsigned_t
-        */
-        template<typename NumberType, detail::enable_if_t <
-                     std::is_same<NumberType, number_unsigned_t>::value or
-                     std::is_same<NumberType, number_integer_t>::value, int> = 0>
-        void dump_integer(NumberType x)
-        {
-            // special case for "0"
-            if (x == 0)
-            {
-                o->write_character('0');
-                return;
-            }
-
-            const bool is_negative = x < 0;
-            size_t i = 0;
-
-            // spare 1 byte for '\0'
-            while (x != 0 and i < number_buffer.size() - 1)
-            {
-                const auto digit = std::labs(static_cast<long>(x % 10));
-                number_buffer[i++] = static_cast<char>('0' + digit);
-                x /= 10;
-            }
-
-            // make sure the number has been processed completely
-            assert(x == 0);
-
-            if (is_negative)
-            {
-                // make sure there is capacity for the '-'
-                assert(i < number_buffer.size() - 2);
-                number_buffer[i++] = '-';
-            }
-
-            std::reverse(number_buffer.begin(), number_buffer.begin() + i);
-            o->write_characters(number_buffer.data(), i);
-        }
-
-        /*!
-        @brief dump a floating-point number
-
-        Dump a given floating-point number to output stream @a o. Works
-        internally with @a number_buffer.
-
-        @param[in] x  floating-point number to dump
-        */
-        void dump_float(number_float_t x)
-        {
-            // NaN / inf
-            if (not std::isfinite(x) or std::isnan(x))
-            {
-                o->write_characters("null", 4);
-                return;
-            }
-
-            // special case for 0.0 and -0.0
-            if (x == 0)
-            {
-                if (std::signbit(x))
-                {
-                    o->write_characters("-0.0", 4);
-                }
-                else
-                {
-                    o->write_characters("0.0", 3);
-                }
-                return;
-            }
-
-            // get number of digits for a text -> float -> text round-trip
-            static constexpr auto d = std::numeric_limits<number_float_t>::digits10;
-
-            // the actual conversion
-            std::ptrdiff_t len = snprintf(number_buffer.data(), number_buffer.size(),
-                                          "%.*g", d, x);
-
-            // negative value indicates an error
-            assert(len > 0);
-            // check if buffer was large enough
-            assert(static_cast<size_t>(len) < number_buffer.size());
-
-            // erase thousands separator
-            if (thousands_sep != '\0')
-            {
-                const auto end = std::remove(number_buffer.begin(),
-                                             number_buffer.begin() + len,
-                                             thousands_sep);
-                std::fill(end, number_buffer.end(), '\0');
-                assert((end - number_buffer.begin()) <= len);
-                len = (end - number_buffer.begin());
-            }
-
-            // convert decimal point to '.'
-            if (decimal_point != '\0' and decimal_point != '.')
-            {
-                for (auto& c : number_buffer)
-                {
-                    if (c == decimal_point)
-                    {
-                        c = '.';
-                        break;
-                    }
-                }
-            }
-
-            o->write_characters(number_buffer.data(), static_cast<size_t>(len));
-
-            // determine if need to append ".0"
-            const bool value_is_int_like = std::none_of(number_buffer.begin(),
-                                           number_buffer.begin() + len + 1,
-                                           [](char c)
-            {
-                return c == '.' or c == 'e';
-            });
-
-            if (value_is_int_like)
-            {
-                o->write_characters(".0", 2);
-            }
-        }
-
-      private:
-        /// the output of the serializer
-        output_adapter_t<char> o = nullptr;
-
-        /// a (hopefully) large enough character buffer
-        std::array<char, 64> number_buffer{{}};
-
-        /// the locale
-        const std::lconv* loc = nullptr;
-        /// the locale's thousand separator character
-        const char thousands_sep = '\0';
-        /// the locale's decimal point character
-        const char decimal_point = '\0';
-
-        /// the indentation character
-        const char indent_char;
-
-        /// the indentation string
-        string_t indent_string;
-    };
-
-  public:
     /*!
     @brief serialize to stream
 
