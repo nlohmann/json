@@ -849,6 +849,7 @@ I deeply appreciate the help of the following people.
 - [Steffen](https://github.com/koemeet) fixed a potential issue with MSVC and `std::min`.
 - [Mike Tzou](https://github.com/Chocobo1) fixed some typos.
 - [amrcode](https://github.com/amrcode) noted a missleading documentation about comparison of floats.
+- [Oleg Endo](https://github.com/olegendo) reduced the memory consumption by replacing `<iostream>` with `<iosfwd>`
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
