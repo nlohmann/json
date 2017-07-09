@@ -43,7 +43,7 @@ SOFTWARE.
 #include <functional> // function, hash, less
 #include <initializer_list> // initializer_list
 #include <iomanip> // hex
-#include <iostream> // istream, ostream
+#include <iosfwd>   // istream, ostream
 #include <iterator> // advance, begin, back_inserter, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
 #include <limits> // numeric_limits
 #include <locale> // locale

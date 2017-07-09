@@ -36,6 +36,7 @@ using nlohmann::json;
 #include <list>
 #include <unordered_map>
 #include <unordered_set>
+#include <iostream>
 
 TEST_CASE("README", "[hide]")
 {
