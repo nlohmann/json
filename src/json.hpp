@@ -6675,7 +6675,7 @@ class basic_json
         std::vector<CharType>& v;
     };
 
-    /// putput adapter for output streams
+    /// output adapter for output streams
     template<typename CharType>
     class output_stream_adapter : public output_adapter<CharType>
     {
