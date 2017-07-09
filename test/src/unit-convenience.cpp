@@ -53,7 +53,7 @@ TEST_CASE("convenience functions")
                                       const char* escaped)
         {
             std::stringstream ss;
-            json::serializer s(json::output_adapter<char>::create(ss), ' ');
+            json::serializer s(nlohmann::detail::output_adapter_factory<char>::create(ss), ' ');
             s.dump_escaped(original);
             CHECK(ss.str() == escaped);
         };
