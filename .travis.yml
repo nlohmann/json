@@ -229,6 +229,22 @@ matrix:
     env: LLVM_VERSION=3.8.1
     compiler: clang
 
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-3.9
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-3.9']
+        packages: clang-3.9
+
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-4.0
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
+        packages: clang-4.0
+
 #  - os: linux
 #    addons:
 #      apt:

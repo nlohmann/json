@@ -709,7 +709,7 @@ json j_from_msgpack = json::from_msgpack(v_msgpack);
 
 Though it's 2016 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.9 - 6.0 (and possibly later)
+- GCC 4.9 - 7.1 (and possibly later)
 - Clang 3.4 - 3.9 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.1.548.43366 (and possibly later)
@@ -738,6 +738,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | GCC 4.9.4       | Ubuntu 14.04.5 LTS           | g++-4.9 (Ubuntu 4.9.4-2ubuntu1~14.04.1) 4.9.4 |
 | GCC 5.4.1       | Ubuntu 14.04.5 LTS           | g++-5 (Ubuntu 5.4.1-2ubuntu1~14.04) 5.4.1 20160904 |
 | GCC 6.3.0       | Ubuntu 14.04.5 LTS           | g++-6 (Ubuntu/Linaro 6.3.0-18ubuntu2~14.04) 6.3.0 20170519 |
+| GCC 7.1.0       | Ubuntu 14.04.5 LTS           | g++-7 (Ubuntu 7.1.0-5ubuntu2~14.04) 7.1.0
 | Clang 3.6.0     | Ubuntu 14.04.5 LTS           | clang version 3.6.0 (tags/RELEASE_360/final) |
 | Clang 3.6.1     | Ubuntu 14.04.5 LTS           | clang version 3.6.1 (tags/RELEASE_361/final) |
 | Clang 3.6.2     | Ubuntu 14.04.5 LTS           | clang version 3.6.2 (tags/RELEASE_362/final) |
