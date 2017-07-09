@@ -33,6 +33,7 @@ SOFTWARE.
 using nlohmann::json;
 
 #include <fstream>
+#include <iostream>
 
 extern size_t calls;
 size_t calls = 0;

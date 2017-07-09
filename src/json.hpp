@@ -43,7 +43,7 @@ SOFTWARE.
 #include <functional> // function, hash, less
 #include <initializer_list> // initializer_list
 #include <iomanip> // hex
-#include <iostream> // istream, ostream
+#include <iosfwd>   // istream, ostream
 #include <iterator> // advance, begin, back_inserter, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
 #include <limits> // numeric_limits
 #include <locale> // locale
@@ -6634,17 +6634,17 @@ class basic_json
 
         static std::shared_ptr<output_adapter<CharType>> create(std::vector<CharType>& vec)
         {
-            return std::shared_ptr<output_adapter>(new output_vector_adapter<CharType>(vec));
+            return std::make_shared<output_vector_adapter<CharType>>(vec);
         }
 
         static std::shared_ptr<output_adapter<CharType>> create(std::ostream& s)
         {
-            return std::shared_ptr<output_adapter>(new output_stream_adapter<CharType>(s));
+            return std::make_shared<output_stream_adapter<CharType>>(s);
         }
 
         static std::shared_ptr<output_adapter<CharType>> create(std::string& s)
         {
-            return std::shared_ptr<output_adapter>(new output_string_adapter<CharType>(s));
+            return std::make_shared<output_string_adapter<CharType>>(s);
         }
     };
 
@@ -6675,7 +6675,7 @@ class basic_json
         std::vector<CharType>& v;
     };
 
-    /// putput adapter for output streams
+    /// output adapter for output streams
     template<typename CharType>
     class output_stream_adapter : public output_adapter<CharType>
     {
@@ -8767,19 +8767,19 @@ class basic_json
         /// input adapter for input stream
         static std::shared_ptr<input_adapter> create(std::istream& i)
         {
-            return std::shared_ptr<input_adapter>(new cached_input_stream_adapter<16384>(i));
+            return std::make_shared<cached_input_stream_adapter<16384>> (i);
         }
 
         /// input adapter for input stream
         static std::shared_ptr<input_adapter> create(std::istream&& i)
         {
-            return std::shared_ptr<input_adapter>(new cached_input_stream_adapter<16384>(i));
+            return std::make_shared<cached_input_stream_adapter<16384>>(i);
         }
 
         /// input adapter for buffer
         static std::shared_ptr<input_adapter> create(const char* b, size_t l)
         {
-            return std::shared_ptr<input_adapter>(new input_buffer_adapter(b, l));
+            return std::make_shared<input_buffer_adapter>(b, l);
         }
 
         // derived support
