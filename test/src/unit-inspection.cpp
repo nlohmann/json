@@ -250,6 +250,13 @@ TEST_CASE("object inspection")
             CHECK(json("❤️").dump() == "\"❤️\"");
         }
 
+        SECTION("dump with ensure_ascii and non-ASCII characters")
+        {
+            CHECK(json("ä").dump(-1, ' ', true) == R"("\u00c3\u00a4")");
+            CHECK(json("Ö").dump(-1, ' ', true) == R"("\u00c3\u0096")");
+            CHECK(json("❤️").dump(-1, ' ', true) == R"("\u00e2\u009d\u00a4\u00ef\u00b8\u008f")");
+        }
+
         SECTION("serialization of discarded element")
         {
             json j_discarded(json::value_t::discarded);

@@ -6423,6 +6423,7 @@ class serializer
     @param[in] current_indent  the current indent level (only used internally)
     */
     void dump(const BasicJsonType& val, const bool pretty_print,
+              const bool ensure_ascii,
               const unsigned int indent_step,
               const unsigned int current_indent = 0)
     {
@@ -6453,9 +6454,9 @@ class serializer
                     {
                         o->write_characters(indent_string.c_str(), new_indent);
                         o->write_character('\"');
-                        dump_escaped(i->first);
+                        dump_escaped(i->first, ensure_ascii);
                         o->write_characters("\": ", 3);
-                        dump(i->second, true, indent_step, new_indent);
+                        dump(i->second, true, ensure_ascii, indent_step, new_indent);
                         o->write_characters(",\n", 2);
                     }
 
@@ -6463,9 +6464,9 @@ class serializer
                     assert(i != val.m_value.object->cend());
                     o->write_characters(indent_string.c_str(), new_indent);
                     o->write_character('\"');
-                    dump_escaped(i->first);
+                    dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\": ", 3);
-                    dump(i->second, true, indent_step, new_indent);
+                    dump(i->second, true, ensure_ascii, indent_step, new_indent);
 
                     o->write_character('\n');
                     o->write_characters(indent_string.c_str(), current_indent);
@@ -6480,18 +6481,18 @@ class serializer
                     for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
                     {
                         o->write_character('\"');
-                        dump_escaped(i->first);
+                        dump_escaped(i->first, ensure_ascii);
                         o->write_characters("\":", 2);
-                        dump(i->second, false, indent_step, current_indent);
+                        dump(i->second, false, ensure_ascii, indent_step, current_indent);
                         o->write_character(',');
                     }
 
                     // last element
                     assert(i != val.m_value.object->cend());
                     o->write_character('\"');
-                    dump_escaped(i->first);
+                    dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\":", 2);
-                    dump(i->second, false, indent_step, current_indent);
+                    dump(i->second, false, ensure_ascii, indent_step, current_indent);
 
                     o->write_character('}');
                 }
@@ -6523,14 +6524,14 @@ class serializer
                             i != val.m_value.array->cend() - 1; ++i)
                     {
                         o->write_characters(indent_string.c_str(), new_indent);
-                        dump(*i, true, indent_step, new_indent);
+                        dump(*i, true, ensure_ascii, indent_step, new_indent);
                         o->write_characters(",\n", 2);
                     }
 
                     // last element
                     assert(not val.m_value.array->empty());
                     o->write_characters(indent_string.c_str(), new_indent);
-                    dump(val.m_value.array->back(), true, indent_step, new_indent);
+                    dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
 
                     o->write_character('\n');
                     o->write_characters(indent_string.c_str(), current_indent);
@@ -6544,13 +6545,13 @@ class serializer
                     for (auto i = val.m_value.array->cbegin();
                             i != val.m_value.array->cend() - 1; ++i)
                     {
-                        dump(*i, false, indent_step, current_indent);
+                        dump(*i, false, ensure_ascii, indent_step, current_indent);
                         o->write_character(',');
                     }
 
                     // last element
                     assert(not val.m_value.array->empty());
-                    dump(val.m_value.array->back(), false, indent_step, current_indent);
+                    dump(val.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
 
                     o->write_character(']');
                 }
@@ -6561,7 +6562,7 @@ class serializer
             case value_t::string:
             {
                 o->write_character('\"');
-                dump_escaped(*val.m_value.string);
+                dump_escaped(*val.m_value.string, ensure_ascii);
                 o->write_character('\"');
                 return;
             }
@@ -6616,14 +6617,15 @@ class serializer
     @brief calculates the extra space to escape a JSON string
 
     @param[in] s  the string to escape
+    @param[in] ensure_ascii  whether to escape non-ASCII characters with \uXXXX sequences
     @return the number of characters required to escape string @a s
 
     @complexity Linear in the length of string @a s.
     */
-    static std::size_t extra_space(const string_t& s) noexcept
+    static std::size_t extra_space(const string_t& s, const bool ensure_ascii) noexcept
     {
         return std::accumulate(s.begin(), s.end(), size_t{},
-                               [](size_t res, typename string_t::value_type c)
+                               [ensure_ascii](size_t res, typename string_t::value_type c)
         {
             switch (c)
             {
@@ -6673,6 +6675,11 @@ class serializer
 
                 default:
                 {
+                    if (c & 0x80 and ensure_ascii)
+                    {
+                        // from c (1 byte) to \uxxxx (6 bytes)
+                        return res + 5;
+                    }
                     return res;
                 }
             }
@@ -6688,12 +6695,13 @@ class serializer
     representation. The escaped string is written to output stream @a o.
 
     @param[in] s  the string to escape
+    @param[in] ensure_ascii  whether to escape non-ASCII characters with \uXXXX sequences
 
     @complexity Linear in the length of string @a s.
     */
-    void dump_escaped(const string_t& s) const
+    void dump_escaped(const string_t& s, const bool ensure_ascii) const
     {
-        const auto space = extra_space(s);
+        const auto space = extra_space(s, ensure_ascii);
         if (space == 0)
         {
             o->write_characters(s.c_str(), s.size());
@@ -6703,6 +6711,27 @@ class serializer
         // create a result string of necessary size
         string_t result(s.size() + space, '\\');
         std::size_t pos = 0;
+
+        auto escape_character = [&result, &pos](const typename string_t::value_type c)
+        {
+            // convert a number 0..15 to its hex representation
+            // (0..f)
+            static const char hexify[16] =
+            {
+                '0', '1', '2', '3', '4', '5', '6', '7',
+                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+            };
+
+            // print character c as \uxxxx
+            for (const char m :
+        { 'u', '0', '0', hexify[(c >> 4) & 0x0f], hexify[c & 0x0f]
+            })
+            {
+                result[++pos] = m;
+            }
+
+            ++pos;
+        };
 
         for (const auto& c : s)
         {
@@ -6792,28 +6821,21 @@ class serializer
                 case 0x1e:
                 case 0x1f:
                 {
-                    // convert a number 0..15 to its hex representation
-                    // (0..f)
-                    static const char hexify[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
-                                                    '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-                                                   };
-
-                    // print character c as \uxxxx
-                    for (const char m :
-                {'u', '0', '0', hexify[c >> 4], hexify[c & 0x0f]
-                    })
-                    {
-                        result[++pos] = m;
-                    }
-
-                    ++pos;
+                    escape_character(c);
                     break;
                 }
 
                 default:
                 {
-                    // all other characters are added as-is
-                    result[pos++] = c;
+                    if (c & 0x80 and ensure_ascii)
+                    {
+                        escape_character(c);
+                    }
+                    else
+                    {
+                        // all other characters are added as-is
+                        result[pos++] = c;
+                    }
                     break;
                 }
             }
@@ -9017,7 +9039,7 @@ class basic_json
 
     Serialization function for JSON values. The function tries to mimic
     Python's `json.dumps()` function, and currently supports its @a indent
-    parameter.
+    and @a ensure_ascii parameters.
 
     @param[in] indent If indent is nonnegative, then array elements and object
     members will be pretty-printed with that indent level. An indent level of
@@ -9025,30 +9047,33 @@ class basic_json
     representation.
     @param[in] indent_char The character to use for indentation if @a indent is
     greater than `0`. The default is ` ` (space).
+    @param[in] ensure_ascii If ensure_ascii is true (the default), all non-ASCII
+    characters in the output are escaped with \uXXXX sequences, and the result
+    consists of ASCII characters only.
 
     @return string containing the serialization of the JSON value
 
     @complexity Linear.
 
     @liveexample{The following example shows the effect of different @a indent
-    parameters to the result of the serialization.,dump}
+    parameters to the result of the serialization.dump}
 
     @see https://docs.python.org/2/library/json.html#json.dump
 
     @since version 1.0.0; indentation character added in version 3.0.0
     */
-    string_t dump(const int indent = -1, const char indent_char = ' ') const
+    string_t dump(const int indent = -1, const char indent_char = ' ', const bool ensure_ascii = false) const
     {
         string_t result;
         serializer s(detail::output_adapter_factory<char>::create(result), indent_char);
 
         if (indent >= 0)
         {
-            s.dump(*this, true, static_cast<unsigned int>(indent));
+            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent));
         }
         else
         {
-            s.dump(*this, false, 0);
+            s.dump(*this, false, ensure_ascii, 0);
         }
 
         return result;
@@ -12715,7 +12740,7 @@ class basic_json
 
         // do the actual serialization
         serializer s(detail::output_adapter_factory<char>::create(o), o.fill());
-        s.dump(j, pretty_print, static_cast<unsigned int>(indentation));
+        s.dump(j, pretty_print, false, static_cast<unsigned int>(indentation));
         return o;
     }
 

@@ -50,11 +50,12 @@ TEST_CASE("convenience functions")
     SECTION("string escape")
     {
         const auto check_escaped = [](const char* original,
-                                      const char* escaped)
+                                      const char* escaped,
+                                      const bool ensure_ascii = false)
         {
             std::stringstream ss;
             json::serializer s(nlohmann::detail::output_adapter_factory<char>::create(ss), ' ');
-            s.dump_escaped(original);
+            s.dump_escaped(original, ensure_ascii);
             CHECK(ss.str() == escaped);
         };
 
@@ -97,5 +98,7 @@ TEST_CASE("convenience functions")
         check_escaped("\x1d", "\\u001d");
         check_escaped("\x1e", "\\u001e");
         check_escaped("\x1f", "\\u001f");
+        check_escaped("\xA9", "\xA9");
+        check_escaped("\xA9", "\\u00a9", true);
     }
 }
