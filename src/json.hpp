@@ -9047,9 +9047,9 @@ class basic_json
     representation.
     @param[in] indent_char The character to use for indentation if @a indent is
     greater than `0`. The default is ` ` (space).
-    @param[in] ensure_ascii If ensure_ascii is true (the default), all non-ASCII
-    characters in the output are escaped with \uXXXX sequences, and the result
-    consists of ASCII characters only.
+    @param[in] ensure_ascii If ensure_ascii is true, all non-ASCII characters
+    in the output are escaped with \uXXXX sequences, and the result consists
+    of ASCII characters only.
 
     @return string containing the serialization of the JSON value
 
