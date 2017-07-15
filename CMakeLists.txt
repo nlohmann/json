@@ -5,7 +5,7 @@ project(nlohmann_json VERSION 2.1.1 LANGUAGES CXX)
 
 enable_testing()
 
-option(BuildTests "Build the unit tests" ON)
+option(JSON_BuildTests "Build the unit tests" ON)
 
 # define project variables
 set(JSON_TARGET_NAME ${PROJECT_NAME})
@@ -25,7 +25,7 @@ target_include_directories(${JSON_TARGET_NAME} INTERFACE
   $<INSTALL_INTERFACE:${JSON_INCLUDE_DESTINATION}>)
 
 # create and configure the unit test target
-if(BuildTests)
+if(JSON_BuildTests)
     add_subdirectory(test)
 endif()
 
