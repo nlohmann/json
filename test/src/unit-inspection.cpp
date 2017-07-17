@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "catch.hpp"
 
+#include <fstream>
 #include "json.hpp"
 using nlohmann::json;
 
@@ -252,9 +253,35 @@ TEST_CASE("object inspection")
 
         SECTION("dump with ensure_ascii and non-ASCII characters")
         {
-            CHECK(json("ä").dump(-1, ' ', true) == R"("\u00c3\u00a4")");
-            CHECK(json("Ö").dump(-1, ' ', true) == R"("\u00c3\u0096")");
-            CHECK(json("❤️").dump(-1, ' ', true) == R"("\u00e2\u009d\u00a4\u00ef\u00b8\u008f")");
+            CHECK(json("ä").dump(-1, ' ', true) == "\"\\u00e4\"");
+            CHECK(json("Ö").dump(-1, ' ', true) == "\"\\u00d6\"");
+            CHECK(json("❤️").dump(-1, ' ', true) == "\"\\u2764\\ufe0f\"");
+        }
+
+        SECTION("full Unicode escaping to ASCII")
+        {
+            SECTION("parsing yields the same JSON value")
+            {
+                std::ifstream f_escaped("test/data/json_nlohmann_tests/all_unicode_ascii.json");
+                std::ifstream f_unescaped("test/data/json_nlohmann_tests/all_unicode.json");
+
+                json j1 = json::parse(f_escaped);
+                json j2 = json::parse(f_unescaped);
+                CHECK(j1 == j2);
+            }
+
+            SECTION("dumping yields the same JSON text")
+            {
+                std::ifstream f_escaped("test/data/json_nlohmann_tests/all_unicode_ascii.json");
+                std::ifstream f_unescaped("test/data/json_nlohmann_tests/all_unicode.json");
+
+                json value = json::parse(f_unescaped);
+                std::string text = value.dump(4, ' ', true);
+
+                std::string expected((std::istreambuf_iterator<char>(f_escaped)),
+                                     std::istreambuf_iterator<char>());
+                CHECK(text == expected);
+            }
         }
 
         SECTION("serialization of discarded element")

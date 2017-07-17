@@ -98,7 +98,9 @@ TEST_CASE("convenience functions")
         check_escaped("\x1d", "\\u001d");
         check_escaped("\x1e", "\\u001e");
         check_escaped("\x1f", "\\u001f");
-        check_escaped("\xA9", "\xA9");
-        check_escaped("\xA9", "\\u00a9", true);
+
+        // invalid UTF-8 characters
+        check_escaped("ä\xA9ü", "ä\xA9ü");
+        check_escaped("ä\xA9ü", "\\u00e4\xA9\\u00fc", true);
     }
 }

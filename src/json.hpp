@@ -247,7 +247,7 @@ class parse_error : public exception
     @param[in] what_arg   the explanatory string
     @return parse_error object
     */
-    static parse_error create(int id, size_t byte_, const std::string& what_arg)
+    static parse_error create(int id, std::size_t byte_, const std::string& what_arg)
     {
         std::string w = exception::name("parse_error", id) + "parse error" +
                         (byte_ != 0 ? (" at " + std::to_string(byte_)) : "") +
@@ -265,10 +265,10 @@ class parse_error : public exception
           file. This also holds true when reading a byte vector (CBOR or
           MessagePack).
     */
-    const size_t byte;
+    const std::size_t byte;
 
   private:
-    parse_error(int id_, size_t byte_, const char* what_arg)
+    parse_error(int id_, std::size_t byte_, const char* what_arg)
         : exception(id_, what_arg), byte(byte_)
     {}
 };
@@ -1278,7 +1278,7 @@ constexpr T static_const<T>::value;
 struct input_adapter
 {
     virtual int get_character() = 0;
-    virtual std::string read(size_t offset, size_t length) = 0;
+    virtual std::string read(std::size_t offset, std::size_t length) = 0;
     virtual ~input_adapter() {}
 };
 
@@ -1339,7 +1339,7 @@ class cached_input_stream_adapter : public input_adapter
         return buffer[buffer_pos++] & 0xFF;
     }
 
-    std::string read(size_t offset, size_t length) override
+    std::string read(std::size_t offset, std::size_t length) override
     {
         // create buffer
         std::string result(length, '\0');
@@ -1377,14 +1377,14 @@ class cached_input_stream_adapter : public input_adapter
     std::istream& is;
 
     /// chars returned via get_character()
-    size_t processed_chars = 0;
+    std::size_t processed_chars = 0;
     /// chars processed in the current buffer
-    size_t buffer_pos = 0;
+    std::size_t buffer_pos = 0;
 
     /// whether stream reached eof
     bool eof = false;
     /// how many chars have been copied to the buffer by last (re)fill
-    size_t fill_size = 0;
+    std::size_t fill_size = 0;
 
     /// position of the stream when we started
     const std::streampos start_position;
@@ -1397,7 +1397,7 @@ class cached_input_stream_adapter : public input_adapter
 class input_buffer_adapter : public input_adapter
 {
   public:
-    input_buffer_adapter(const char* b, size_t l)
+    input_buffer_adapter(const char* b, std::size_t l)
         : input_adapter(), cursor(b), limit(b + l), start(b)
     {
         // skip byte order mark
@@ -1423,10 +1423,10 @@ class input_buffer_adapter : public input_adapter
         }
     }
 
-    std::string read(size_t offset, size_t length) override
+    std::string read(std::size_t offset, std::size_t length) override
     {
         // avoid reading too many characters
-        const size_t max_length = static_cast<size_t>(limit - start);
+        const std::size_t max_length = static_cast<size_t>(limit - start);
         return std::string(start + offset, (std::min)(length, max_length - offset));
     }
 
@@ -1456,7 +1456,7 @@ struct input_adapter_factory
     }
 
     /// input adapter for buffer
-    static std::shared_ptr<input_adapter> create(const char* b, size_t l)
+    static std::shared_ptr<input_adapter> create(const char* b, std::size_t l)
     {
         return std::make_shared<input_buffer_adapter>(b, l);
     }
@@ -1504,8 +1504,17 @@ struct input_adapter_factory
         static_assert(
             sizeof(typename std::iterator_traits<IteratorType>::value_type) == 1, "each element in the iterator range must have the size of 1 byte");
 
-        return create(reinterpret_cast<const char*>(&(*first)),
-                      static_cast<size_t>(std::distance(first, last)));
+        const auto len = static_cast<size_t>(std::distance(first, last));
+        if (JSON_LIKELY(len > 0))
+        {
+            // there is at least one element: use the address of first
+            return create(reinterpret_cast<const char*>(&(*first)), len);
+        }
+        else
+        {
+            // the address of first cannot be used - use nullptr
+            return create(nullptr, len);
+        }
     }
 
     /// input adapter for array
@@ -2843,11 +2852,11 @@ scan_number_done:
     @param[in] length        the length of the passed literal text
     @param[in] return_type   the token type to return on success
     */
-    token_type scan_literal(const char* literal_text, const size_t length,
+    token_type scan_literal(const char* literal_text, const std::size_t length,
                             token_type return_type)
     {
         assert(current == literal_text[0]);
-        for (size_t i = 1; i < length; ++i)
+        for (std::size_t i = 1; i < length; ++i)
         {
             if (JSON_UNLIKELY(get() != literal_text[i]))
             {
@@ -2926,7 +2935,7 @@ scan_number_done:
     /////////////////////
 
     /// return position of last read token
-    constexpr size_t get_position() const noexcept
+    constexpr std::size_t get_position() const noexcept
     {
         return chars_read;
     }
@@ -3050,14 +3059,14 @@ scan_number_done:
     bool next_unget = false;
 
     /// the number of characters read
-    size_t chars_read = 0;
+    std::size_t chars_read = 0;
     /// the start position of the current token
-    size_t start_pos = 0;
+    std::size_t start_pos = 0;
 
     /// buffer for variable-length tokens (numbers, strings)
     std::vector<char> yytext = std::vector<char>(1024, '\0');
     /// current index in yytext
-    size_t yylen = 0;
+    std::size_t yylen = 0;
 
     /// a description of occurred lexer errors
     const char* error_message = "";
@@ -4379,7 +4388,7 @@ template <typename IteratorType> class iteration_proxy
         /// the iterator
         IteratorType anchor;
         /// an index for arrays (used to create key names)
-        size_t array_index = 0;
+        std::size_t array_index = 0;
 
       public:
         explicit iteration_proxy_internal(IteratorType it) noexcept : anchor(it) {}
@@ -4574,7 +4583,7 @@ template <typename CharType> class output_adapter
 {
   public:
     virtual void write_character(CharType c) = 0;
-    virtual void write_characters(const CharType* s, size_t length) = 0;
+    virtual void write_characters(const CharType* s, std::size_t length) = 0;
     virtual ~output_adapter() {}
 };
 
@@ -4594,7 +4603,7 @@ class output_vector_adapter : public output_adapter<CharType>
         v.push_back(c);
     }
 
-    void write_characters(const CharType* s, size_t length) override
+    void write_characters(const CharType* s, std::size_t length) override
     {
         std::copy(s, s + length, std::back_inserter(v));
     }
@@ -4615,7 +4624,7 @@ class output_stream_adapter : public output_adapter<CharType>
         stream.put(c);
     }
 
-    void write_characters(const CharType* s, size_t length) override
+    void write_characters(const CharType* s, std::size_t length) override
     {
         stream.write(s, static_cast<std::streamsize>(length));
     }
@@ -4636,7 +4645,7 @@ class output_string_adapter : public output_adapter<CharType>
         str.push_back(c);
     }
 
-    void write_characters(const CharType* s, size_t length) override
+    void write_characters(const CharType* s, std::size_t length) override
     {
         str.append(s, length);
     }
@@ -4874,7 +4883,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::array;
                 const auto len = static_cast<size_t>(current & 0x1f);
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     result.push_back(parse_cbor());
                 }
@@ -4885,7 +4894,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::array;
                 const auto len = static_cast<size_t>(get_number<uint8_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     result.push_back(parse_cbor());
                 }
@@ -4896,7 +4905,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::array;
                 const auto len = static_cast<size_t>(get_number<uint16_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     result.push_back(parse_cbor());
                 }
@@ -4907,7 +4916,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::array;
                 const auto len = static_cast<size_t>(get_number<uint32_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     result.push_back(parse_cbor());
                 }
@@ -4918,7 +4927,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::array;
                 const auto len = static_cast<size_t>(get_number<uint64_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     result.push_back(parse_cbor());
                 }
@@ -4963,7 +4972,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::object;
                 const auto len = static_cast<size_t>(current & 0x1f);
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     get();
                     auto key = get_cbor_string();
@@ -4976,7 +4985,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::object;
                 const auto len = static_cast<size_t>(get_number<uint8_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     get();
                     auto key = get_cbor_string();
@@ -4989,7 +4998,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::object;
                 const auto len = static_cast<size_t>(get_number<uint16_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     get();
                     auto key = get_cbor_string();
@@ -5002,7 +5011,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::object;
                 const auto len = static_cast<size_t>(get_number<uint32_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     get();
                     auto key = get_cbor_string();
@@ -5015,7 +5024,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::object;
                 const auto len = static_cast<size_t>(get_number<uint64_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     get();
                     auto key = get_cbor_string();
@@ -5277,7 +5286,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::object;
                 const auto len = static_cast<size_t>(current & 0x0f);
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     get();
                     auto key = get_msgpack_string();
@@ -5306,7 +5315,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::array;
                 const auto len = static_cast<size_t>(current & 0x0f);
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     result.push_back(parse_msgpack());
                 }
@@ -5426,7 +5435,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::array;
                 const auto len = static_cast<size_t>(get_number<uint16_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     result.push_back(parse_msgpack());
                 }
@@ -5437,7 +5446,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::array;
                 const auto len = static_cast<size_t>(get_number<uint32_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     result.push_back(parse_msgpack());
                 }
@@ -5448,7 +5457,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::object;
                 const auto len = static_cast<size_t>(get_number<uint16_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     get();
                     auto key = get_msgpack_string();
@@ -5461,7 +5470,7 @@ class binary_reader
             {
                 BasicJsonType result = value_t::object;
                 const auto len = static_cast<size_t>(get_number<uint32_t>());
-                for (size_t i = 0; i < len; ++i)
+                for (std::size_t i = 0; i < len; ++i)
                 {
                     get();
                     auto key = get_msgpack_string();
@@ -5565,7 +5574,7 @@ class binary_reader
     {
         // step 1: read input into array with system's byte order
         std::array<uint8_t, sizeof(NumberType)> vec;
-        for (size_t i = 0; i < sizeof(NumberType); ++i)
+        for (std::size_t i = 0; i < sizeof(NumberType); ++i)
         {
             get();
             check_eof();
@@ -5600,10 +5609,10 @@ class binary_reader
 
     @throw parse_error.110 if input has less than @a len bytes
     */
-    std::string get_string(const size_t len)
+    std::string get_string(const std::size_t len)
     {
         std::string result;
-        for (size_t i = 0; i < len; ++i)
+        for (std::size_t i = 0; i < len; ++i)
         {
             get();
             check_eof();
@@ -5810,7 +5819,7 @@ class binary_reader
     int current = std::char_traits<char>::eof();
 
     /// the number of characters read
-    size_t chars_read = 0;
+    std::size_t chars_read = 0;
 
     /// whether we can assume little endianess
     const bool is_little_endian = true;
@@ -6450,7 +6459,7 @@ class serializer
 
                     // first n-1 elements
                     auto i = val.m_value.object->cbegin();
-                    for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
+                    for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
                     {
                         o->write_characters(indent_string.c_str(), new_indent);
                         o->write_character('\"');
@@ -6478,7 +6487,7 @@ class serializer
 
                     // first n-1 elements
                     auto i = val.m_value.object->cbegin();
-                    for (size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
+                    for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
                     {
                         o->write_character('\"');
                         dump_escaped(i->first, ensure_ascii);
@@ -6614,21 +6623,39 @@ class serializer
 
   private:
     /*!
+    @brief returns the number of expected bytes following in UTF-8 string
+
+    @param[in]  u  the first byte of a UTF-8 string
+    @return  the number of expected bytes following
+    */
+    static constexpr std::size_t bytes_following(const uint8_t u)
+    {
+        return ((0 <= u and u <= 127) ? 0
+                : ((192 <= u and u <= 223) ? 1
+                   : ((224 <= u and u <= 239) ? 2
+                      : ((240 <= u and u <= 247) ? 3 : std::string::npos))));
+    }
+
+    /*!
     @brief calculates the extra space to escape a JSON string
 
     @param[in] s  the string to escape
-    @param[in] ensure_ascii  whether to escape non-ASCII characters with \uXXXX sequences
+    @param[in] ensure_ascii  whether to escape non-ASCII characters with
+                             \uXXXX sequences
     @return the number of characters required to escape string @a s
 
     @complexity Linear in the length of string @a s.
     */
-    static std::size_t extra_space(const string_t& s, const bool ensure_ascii) noexcept
+    static std::size_t extra_space(const string_t& s,
+                                   const bool ensure_ascii) noexcept
     {
-        return std::accumulate(s.begin(), s.end(), size_t{},
-                               [ensure_ascii](size_t res, typename string_t::value_type c)
+        std::size_t res = 0;
+
+        for (std::size_t i = 0; i < s.size(); ++i)
         {
-            switch (c)
+            switch (s[i])
             {
+                // control characters that can be escaped with a backslash
                 case '"':
                 case '\\':
                 case '\b':
@@ -6638,9 +6665,11 @@ class serializer
                 case '\t':
                 {
                     // from c (1 byte) to \x (2 bytes)
-                    return res + 1;
+                    res += 1;
+                    break;
                 }
 
+                // control characters that need \uxxxx escaping
                 case 0x00:
                 case 0x01:
                 case 0x02:
@@ -6670,20 +6699,96 @@ class serializer
                 case 0x1f:
                 {
                     // from c (1 byte) to \uxxxx (6 bytes)
-                    return res + 5;
+                    res += 5;
+                    break;
                 }
 
                 default:
                 {
-                    if (c & 0x80 and ensure_ascii)
+                    if (ensure_ascii and (s[i] & 0x80 or s[i] == 0x7F))
                     {
-                        // from c (1 byte) to \uxxxx (6 bytes)
-                        return res + 5;
+                        const std::size_t bytes = bytes_following(static_cast<uint8_t>(s[i]));
+                        if (bytes == std::string::npos)
+                        {
+                            // invalid characters are treated as is, so no
+                            // additional space will be used
+                            break;
+                        }
+
+                        if (bytes == 3)
+                        {
+                            // codepoints that need 4 bytes (i.e., 3
+                            // additional bytes) in UTF-8 needs a surrogate
+                            // pair when \u escaping is used:
+                            // from 4 bytes to \uxxxx\uxxxx (12 bytes)
+                            res += (12 - bytes - 1);
+                        }
+                        else
+                        {
+                            // from x bytes to \uxxxx (6 bytes)
+                            res += (6 - bytes - 1);
+                        }
+
+                        // skip the additional bytes
+                        i += bytes;
                     }
-                    return res;
+                    break;
                 }
             }
-        });
+        }
+
+        return res;
+    }
+
+    static void escape_codepoint(const uint32_t codepoint,
+                                 string_t& result, size_t& pos)
+    {
+        // expecting a proper codepoint
+        assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
+
+        // the last written character was the backslash before the 'u'
+        assert(result[pos] == '\\');
+
+        // write the 'u'
+        result[++pos] = 'u';
+
+        // convert a number 0..15 to its hex representation (0..f)
+        static const std::array<char, 16> hexify =
+        {
+            {
+                '0', '1', '2', '3', '4', '5', '6', '7',
+                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+            }
+        };
+
+        if (codepoint < 0x10000)
+        {
+            // codepoints U+0000..U+FFFF can be represented as \uxxxx.
+            result[++pos] = hexify[(codepoint >> 12) & 0x0F];
+            result[++pos] = hexify[(codepoint >> 8) & 0x0F];
+            result[++pos] = hexify[(codepoint >> 4) & 0x0F];
+            result[++pos] = hexify[codepoint & 0x0F];
+        }
+        else
+        {
+            // codepoints U+10000..U+10FFFF need a surrogate pair to be
+            // represented as \uxxxx\uxxxx.
+            // http://www.unicode.org/faq/utf_bom.html#utf16-4
+            const uint32_t high_surrogate = 0xD800 - (0x10000 >> 10) + (codepoint >> 10);
+            const uint32_t low_surrogate = 0xDC00 + (codepoint & 0x3FF);
+            result[++pos] = hexify[(high_surrogate >> 12) & 0x0F];
+            result[++pos] = hexify[(high_surrogate >> 8) & 0x0F];
+            result[++pos] = hexify[(high_surrogate >> 4) & 0x0F];
+            result[++pos] = hexify[high_surrogate & 0x0F];
+            ++pos;  // backslash is already in output
+            result[++pos] = 'u';
+            result[++pos] = hexify[(low_surrogate >> 12) & 0x0F];
+            result[++pos] = hexify[(low_surrogate >> 8) & 0x0F];
+            result[++pos] = hexify[(low_surrogate >> 4) & 0x0F];
+            result[++pos] = hexify[low_surrogate & 0x0F];
+        }
+
+        ++pos;
     }
 
     /*!
@@ -6712,30 +6817,9 @@ class serializer
         string_t result(s.size() + space, '\\');
         std::size_t pos = 0;
 
-        auto escape_character = [&result, &pos](const typename string_t::value_type c)
+        for (std::size_t i = 0; i < s.size(); ++i)
         {
-            // convert a number 0..15 to its hex representation
-            // (0..f)
-            static const char hexify[16] =
-            {
-                '0', '1', '2', '3', '4', '5', '6', '7',
-                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-            };
-
-            // print character c as \uxxxx
-            for (const char m :
-        { 'u', '0', '0', hexify[(c >> 4) & 0x0f], hexify[c & 0x0f]
-            })
-            {
-                result[++pos] = m;
-            }
-
-            ++pos;
-        };
-
-        for (const auto& c : s)
-        {
-            switch (c)
+            switch (s[i])
             {
                 // quotation mark (0x22)
                 case '"':
@@ -6793,55 +6877,74 @@ class serializer
                     break;
                 }
 
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x04:
-                case 0x05:
-                case 0x06:
-                case 0x07:
-                case 0x0b:
-                case 0x0e:
-                case 0x0f:
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x14:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                case 0x18:
-                case 0x19:
-                case 0x1a:
-                case 0x1b:
-                case 0x1c:
-                case 0x1d:
-                case 0x1e:
-                case 0x1f:
-                {
-                    escape_character(c);
-                    break;
-                }
-
                 default:
                 {
-                    if (c & 0x80 and ensure_ascii)
+                    // escape control characters (0x00..0x1F) or, if
+                    // ensure_ascii paramter is used, non-ASCII characters
+                    if ((0x00 <= s[i] and s[i] <= 0x1F) or
+                            (ensure_ascii and (s[i] & 0x80 or s[i] == 0x7F)))
                     {
-                        escape_character(c);
+                        const std::size_t bytes = bytes_following(static_cast<uint8_t>(s[i]));
+                        if (bytes == std::string::npos)
+                        {
+                            // copy invalid character as is
+                            result[pos++] = s[i];
+                            break;
+                        }
+
+                        assert(i + bytes < s.size());
+
+                        // to use \uxxxx escaping, we first need to caluclate
+                        // the codepoint from the UTF-8 bytes
+                        uint32_t codepoint = 0;
+
+                        switch (bytes)
+                        {
+                            case 0:
+                            {
+                                codepoint = static_cast<uint8_t>(s[i]);
+                                break;
+                            }
+
+                            case 1:
+                            {
+                                codepoint = (static_cast<uint8_t>(s[i]) - 192) * 64
+                                            + (static_cast<uint8_t>(s[i + 1]) - 128);
+                                break;
+                            }
+
+                            case 2:
+                            {
+                                codepoint = (static_cast<uint8_t>(s[i]) - 224) * 4096
+                                            + (static_cast<uint8_t>(s[i + 1]) - 128) * 64
+                                            + (static_cast<uint8_t>(s[i + 2]) - 128);
+                                break;
+                            }
+
+                            case 3:
+                            {
+                                codepoint = (static_cast<uint8_t>(s[i]) - 240) * 262144
+                                            + (static_cast<uint8_t>(s[i + 1]) - 128) * 4096
+                                            + (static_cast<uint8_t>(s[i + 2]) - 128) * 64
+                                            + (static_cast<uint8_t>(s[i + 3]) - 128);
+                                break;
+                            }
+                        }
+
+                        escape_codepoint(codepoint, result, pos);
+                        i += bytes;
                     }
                     else
                     {
                         // all other characters are added as-is
-                        result[pos++] = c;
+                        result[pos++] = s[i];
                     }
                     break;
                 }
             }
         }
 
-        assert(pos == s.size() + space);
+        assert(pos == result.size());
         o->write_characters(result.c_str(), result.size());
     }
 
@@ -6869,7 +6972,7 @@ class serializer
         }
 
         const bool is_negative = x < 0;
-        size_t i = 0;
+        std::size_t i = 0;
 
         // spare 1 byte for '\0'
         while (x != 0 and i < number_buffer.size() - 1)
@@ -7258,7 +7361,7 @@ class json_pointer
         // - start: position after the previous slash
         for (
             // search for the first slash after the first character
-            size_t slash = reference_string.find_first_of('/', 1),
+            std::size_t slash = reference_string.find_first_of('/', 1),
             // set the beginning of the first reference token
             start = 1;
             // we can stop if start == string::npos+1 = 0
@@ -7274,7 +7377,7 @@ class json_pointer
             auto reference_token = reference_string.substr(start, slash - start);
 
             // check reference tokens are properly escaped
-            for (size_t pos = reference_token.find_first_of('~');
+            for (std::size_t pos = reference_token.find_first_of('~');
                     pos != std::string::npos;
                     pos = reference_token.find_first_of('~', pos + 1))
             {
@@ -7316,7 +7419,7 @@ class json_pointer
     {
         assert(not f.empty());
 
-        for (size_t pos = s.find(f);         // find first occurrence of f
+        for (std::size_t pos = s.find(f);         // find first occurrence of f
                 pos != std::string::npos;       // make sure f was found
                 s.replace(pos, f.size(), t),    // replace with t
                 pos = s.find(f, pos + t.size()) // find next occurrence of f
@@ -13419,7 +13522,7 @@ class basic_json
     @since version 2.0.9, parameter @a start_index since 2.1.1
     */
     static basic_json from_cbor(const std::vector<uint8_t>& v,
-                                const size_t start_index = 0)
+                                const std::size_t start_index = 0)
     {
         binary_reader br(detail::input_adapter_factory::create(v.begin() + static_cast<difference_type>(start_index), v.end()));
         return br.parse_cbor();
@@ -13494,7 +13597,7 @@ class basic_json
     @since version 2.0.9, parameter @a start_index since 2.1.1
     */
     static basic_json from_msgpack(const std::vector<uint8_t>& v,
-                                   const size_t start_index = 0)
+                                   const std::size_t start_index = 0)
     {
         binary_reader br(detail::input_adapter_factory::create(v.begin() + static_cast<difference_type>(start_index), v.end()));
         return br.parse_msgpack();
@@ -14097,7 +14200,7 @@ class basic_json
                 case value_t::array:
                 {
                     // first pass: traverse common elements
-                    size_t i = 0;
+                    std::size_t i = 0;
                     while (i < source.size() and i < target.size())
                     {
                         // recursive call to compare array values at index i
@@ -14565,7 +14668,7 @@ void json_pointer::flatten(const std::string& reference_string,
             else
             {
                 // iterate array and use index as reference string
-                for (size_t i = 0; i < value.m_value.array->size(); ++i)
+                for (std::size_t i = 0; i < value.m_value.array->size(); ++i)
                 {
                     flatten(reference_string + "/" + std::to_string(i),
                             value.m_value.array->operator[](i), result);
