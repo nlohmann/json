@@ -179,7 +179,7 @@ class exception : public std::exception
 {
   public:
     /// returns the explanatory string
-    virtual const char* what() const noexcept override
+    const char* what() const noexcept override
     {
         return m.what();
     }
@@ -1279,7 +1279,7 @@ struct input_adapter
 {
     virtual int get_character() = 0;
     virtual std::string read(std::size_t offset, std::size_t length) = 0;
-    virtual ~input_adapter() {}
+    virtual ~input_adapter() = default;
 };
 
 /// a type to simplify interfaces
@@ -1290,7 +1290,7 @@ template<std::size_t N>
 class cached_input_stream_adapter : public input_adapter
 {
   public:
-    cached_input_stream_adapter(std::istream& i)
+    explicit cached_input_stream_adapter(std::istream& i)
         : is(i), start_position(is.tellg())
     {
         fill_buffer();
@@ -1398,7 +1398,7 @@ class input_buffer_adapter : public input_adapter
 {
   public:
     input_buffer_adapter(const char* b, std::size_t l)
-        : input_adapter(), cursor(b), limit(b + l), start(b)
+        : cursor(b), limit(b + l), start(b)
     {
         // skip byte order mark
         if (l >= 3 and b[0] == '\xEF' and b[1] == '\xBB' and b[2] == '\xBF')
@@ -1417,16 +1417,14 @@ class input_buffer_adapter : public input_adapter
         {
             return *(cursor++) & 0xFF;
         }
-        else
-        {
-            return std::char_traits<char>::eof();
-        }
+
+        return std::char_traits<char>::eof();
     }
 
     std::string read(std::size_t offset, std::size_t length) override
     {
         // avoid reading too many characters
-        const std::size_t max_length = static_cast<size_t>(limit - start);
+        const auto max_length = static_cast<size_t>(limit - start);
         return std::string(start + offset, (std::min)(length, max_length - offset));
     }
 
@@ -3460,12 +3458,7 @@ class parser
                     }
 
                     // closing }
-                    if (last_token != token_type::end_object)
-                    {
-                        return false;
-                    }
-
-                    return true;
+                    return (last_token == token_type::end_object);
                 }
             }
 
@@ -3498,12 +3491,7 @@ class parser
                     }
 
                     // closing ]
-                    if (last_token != token_type::end_array)
-                    {
-                        return false;
-                    }
-
-                    return true;
+                    return (last_token == token_type::end_array);
                 }
             }
 
@@ -3746,9 +3734,9 @@ template <typename BasicJsonType> struct internal_iterator
     primitive_iterator_t primitive_iterator;
 
     /// create an uninitialized internal_iterator
-    internal_iterator() noexcept : object_iterator(),
-        array_iterator(),
-        primitive_iterator() {}
+    internal_iterator() noexcept
+        : object_iterator(), array_iterator(), primitive_iterator()
+    {}
 };
 
 template <typename IteratorType> class iteration_proxy;
@@ -4584,7 +4572,7 @@ template <typename CharType> class output_adapter
   public:
     virtual void write_character(CharType c) = 0;
     virtual void write_characters(const CharType* s, std::size_t length) = 0;
-    virtual ~output_adapter() {}
+    virtual ~output_adapter() = default;
 };
 
 /// a type to simplify interfaces
@@ -4617,7 +4605,7 @@ template <typename CharType>
 class output_stream_adapter : public output_adapter<CharType>
 {
   public:
-    output_stream_adapter(std::basic_ostream<CharType>& s) : stream(s) {}
+    explicit output_stream_adapter(std::basic_ostream<CharType>& s) : stream(s) {}
 
     void write_character(CharType c) override
     {
@@ -4638,7 +4626,7 @@ template <typename CharType>
 class output_string_adapter : public output_adapter<CharType>
 {
   public:
-    output_string_adapter(std::string& s) : str(s) {}
+    explicit output_string_adapter(std::string& s) : str(s) {}
 
     void write_character(CharType c) override
     {
@@ -6406,8 +6394,8 @@ class serializer
     */
     serializer(output_adapter_t<char> s, const char ichar)
         : o(s), loc(std::localeconv()),
-          thousands_sep(!loc->thousands_sep ? '\0' : loc->thousands_sep[0]),
-          decimal_point(!loc->decimal_point ? '\0' : loc->decimal_point[0]),
+          thousands_sep(loc->thousands_sep == nullptr ? '\0' : loc->thousands_sep[0]),
+          decimal_point(loc->decimal_point == nullptr ? '\0' : loc->decimal_point[0]),
           indent_char(ichar), indent_string(512, indent_char) {}
 
     // delete because of pointer members
@@ -6707,7 +6695,7 @@ class serializer
                 {
                     if (ensure_ascii and (s[i] & 0x80 or s[i] == 0x7F))
                     {
-                        const std::size_t bytes = bytes_following(static_cast<uint8_t>(s[i]));
+                        const auto bytes = bytes_following(s[i] & 0xFF);
                         if (bytes == std::string::npos)
                         {
                             // invalid characters are treated as is, so no
@@ -6740,7 +6728,7 @@ class serializer
         return res;
     }
 
-    static void escape_codepoint(const uint32_t codepoint,
+    static void escape_codepoint(const int codepoint,
                                  string_t& result, size_t& pos)
     {
         // expecting a proper codepoint
@@ -6774,8 +6762,8 @@ class serializer
             // codepoints U+10000..U+10FFFF need a surrogate pair to be
             // represented as \uxxxx\uxxxx.
             // http://www.unicode.org/faq/utf_bom.html#utf16-4
-            const uint32_t high_surrogate = 0xD800 - (0x10000 >> 10) + (codepoint >> 10);
-            const uint32_t low_surrogate = 0xDC00 + (codepoint & 0x3FF);
+            const int high_surrogate = 0xD800 - (0x10000 >> 10) + (codepoint >> 10);
+            const int low_surrogate = 0xDC00 + (codepoint & 0x3FF);
             result[++pos] = hexify[(high_surrogate >> 12) & 0x0F];
             result[++pos] = hexify[(high_surrogate >> 8) & 0x0F];
             result[++pos] = hexify[(high_surrogate >> 4) & 0x0F];
@@ -6880,11 +6868,11 @@ class serializer
                 default:
                 {
                     // escape control characters (0x00..0x1F) or, if
-                    // ensure_ascii paramter is used, non-ASCII characters
+                    // ensure_ascii parameter is used, non-ASCII characters
                     if ((0x00 <= s[i] and s[i] <= 0x1F) or
                             (ensure_ascii and (s[i] & 0x80 or s[i] == 0x7F)))
                     {
-                        const std::size_t bytes = bytes_following(static_cast<uint8_t>(s[i]));
+                        const auto bytes = bytes_following(s[i] & 0xFF);
                         if (bytes == std::string::npos)
                         {
                             // copy invalid character as is
@@ -6892,41 +6880,43 @@ class serializer
                             break;
                         }
 
+                        // check that the additional bytes are present
                         assert(i + bytes < s.size());
 
                         // to use \uxxxx escaping, we first need to caluclate
                         // the codepoint from the UTF-8 bytes
-                        uint32_t codepoint = 0;
+                        int codepoint = 0;
 
+                        assert(0 <= bytes and bytes <= 3);
                         switch (bytes)
                         {
                             case 0:
                             {
-                                codepoint = static_cast<uint8_t>(s[i]);
+                                codepoint = s[i] & 0xFF;
                                 break;
                             }
 
                             case 1:
                             {
-                                codepoint = (static_cast<uint8_t>(s[i]) - 192) * 64
-                                            + (static_cast<uint8_t>(s[i + 1]) - 128);
+                                codepoint = ((s[i] & 0x3F) << 6)
+                                            + (s[i + 1] & 0x7F);
                                 break;
                             }
 
                             case 2:
                             {
-                                codepoint = (static_cast<uint8_t>(s[i]) - 224) * 4096
-                                            + (static_cast<uint8_t>(s[i + 1]) - 128) * 64
-                                            + (static_cast<uint8_t>(s[i + 2]) - 128);
+                                codepoint = ((s[i] & 0x1F) << 12)
+                                            + ((s[i + 1] & 0x7F) << 6)
+                                            + (s[i + 2] & 0x7F);
                                 break;
                             }
 
                             case 3:
                             {
-                                codepoint = (static_cast<uint8_t>(s[i]) - 240) * 262144
-                                            + (static_cast<uint8_t>(s[i + 1]) - 128) * 4096
-                                            + (static_cast<uint8_t>(s[i + 2]) - 128) * 64
-                                            + (static_cast<uint8_t>(s[i + 3]) - 128);
+                                codepoint = ((s[i] & 0xF) << 18)
+                                            + ((s[i + 1] & 0x7F) << 12)
+                                            + ((s[i + 2] & 0x7F) << 6)
+                                            + (s[i + 3] & 0x7F);
                                 break;
                             }
                         }
