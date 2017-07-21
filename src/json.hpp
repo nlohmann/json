@@ -1065,7 +1065,7 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 }
 
 template<typename BasicJsonType, typename CompatibleArrayType>
-void from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, priority_tag<0>)
+void from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, priority_tag<0> /*unused*/)
 {
     using std::begin;
     using std::end;
@@ -1080,7 +1080,7 @@ void from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
 }
 
 template<typename BasicJsonType, typename CompatibleArrayType>
-auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, priority_tag<1>)
+auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, priority_tag<1> /*unused*/)
 -> decltype(
     arr.reserve(std::declval<typename CompatibleArrayType::size_type>()),
     void())
@@ -1099,7 +1099,7 @@ auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
 }
 
 template <typename BasicJsonType, typename T, std::size_t N>
-void from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr, priority_tag<2>)
+void from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr, priority_tag<2> /*unused*/)
 {
     for (std::size_t i = 0; i < N; ++i)
     {
@@ -1211,14 +1211,14 @@ struct to_json_fn
 {
   private:
     template<typename BasicJsonType, typename T>
-    auto call(BasicJsonType& j, T&& val, priority_tag<1>) const noexcept(noexcept(to_json(j, std::forward<T>(val))))
+    auto call(BasicJsonType& j, T&& val, priority_tag<1> /*unused*/) const noexcept(noexcept(to_json(j, std::forward<T>(val))))
     -> decltype(to_json(j, std::forward<T>(val)), void())
     {
         return to_json(j, std::forward<T>(val));
     }
 
     template<typename BasicJsonType, typename T>
-    void call(BasicJsonType&, T&&, priority_tag<0>) const noexcept
+    void call(BasicJsonType& /*unused*/, T&& /*unused*/, priority_tag<0> /*unused*/) const noexcept
     {
         static_assert(sizeof(BasicJsonType) == 0,
                       "could not find to_json() method in T's namespace");
@@ -1237,7 +1237,7 @@ struct from_json_fn
 {
   private:
     template<typename BasicJsonType, typename T>
-    auto call(const BasicJsonType& j, T& val, priority_tag<1>) const
+    auto call(const BasicJsonType& j, T& val, priority_tag<1> /*unused*/) const
     noexcept(noexcept(from_json(j, val)))
     -> decltype(from_json(j, val), void())
     {
@@ -1245,7 +1245,7 @@ struct from_json_fn
     }
 
     template<typename BasicJsonType, typename T>
-    void call(const BasicJsonType&, T&, priority_tag<0>) const noexcept
+    void call(const BasicJsonType& /*unused*/, T& /*unused*/, priority_tag<0> /*unused*/) const noexcept
     {
         static_assert(sizeof(BasicJsonType) == 0,
                       "could not find from_json() method in T's namespace");
@@ -3727,16 +3727,14 @@ https://github.com/nlohmann/json/pull/105.
 template <typename BasicJsonType> struct internal_iterator
 {
     /// iterator for JSON objects
-    typename BasicJsonType::object_t::iterator object_iterator;
+    typename BasicJsonType::object_t::iterator object_iterator {};
     /// iterator for JSON arrays
-    typename BasicJsonType::array_t::iterator array_iterator;
+    typename BasicJsonType::array_t::iterator array_iterator {};
     /// generic iterator for all other types
-    primitive_iterator_t primitive_iterator;
+    primitive_iterator_t primitive_iterator {};
 
     /// create an uninitialized internal_iterator
-    internal_iterator() noexcept
-        : object_iterator(), array_iterator(), primitive_iterator()
-    {}
+    internal_iterator() = default;
 };
 
 template <typename IteratorType> class iteration_proxy;
@@ -4584,7 +4582,7 @@ template <typename CharType>
 class output_vector_adapter : public output_adapter<CharType>
 {
   public:
-    output_vector_adapter(std::vector<CharType>& vec) : v(vec) {}
+    explicit output_vector_adapter(std::vector<CharType>& vec) : v(vec) {}
 
     void write_character(CharType c) override
     {
@@ -7408,13 +7406,11 @@ class json_pointer
                                   const std::string& t)
     {
         assert(not f.empty());
-
-        for (std::size_t pos = s.find(f);         // find first occurrence of f
-                pos != std::string::npos;       // make sure f was found
-                s.replace(pos, f.size(), t),    // replace with t
-                pos = s.find(f, pos + t.size()) // find next occurrence of f
-            )
-            ;
+        for (auto pos = s.find(f);                // find first occurrence of f
+                pos != std::string::npos;         // make sure f was found
+                s.replace(pos, f.size(), t),      // replace with t, and
+                pos = s.find(f, pos + t.size()))  // find next occurrence of f
+        {}
     }
 
     /// escape tilde and slash
