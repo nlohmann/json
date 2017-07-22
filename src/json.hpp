@@ -3281,6 +3281,7 @@ class parser
                 while (true)
                 {
                     // parse value
+                    value = value_t::discarded;
                     parse_internal(keep, value);
                     if (keep and not value.is_discarded())
                     {
