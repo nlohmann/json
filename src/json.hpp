@@ -134,17 +134,17 @@ class basic_json;
 // Ugly macros to avoid uglier copy-paste when specializing basic_json
 // This is only temporary and will be removed in 3.0
 
-#define NLOHMANN_BASIC_JSON_TPL_DECLARATION                                    \
-    template <template <typename, typename, typename...> class ObjectType,       \
-              template <typename, typename...> class ArrayType,                  \
-              class StringType, class BooleanType, class NumberIntegerType,      \
-              class NumberUnsignedType, class NumberFloatType,                   \
-              template <typename> class AllocatorType,                           \
+#define NLOHMANN_BASIC_JSON_TPL_DECLARATION                                 \
+    template <template <typename, typename, typename...> class ObjectType,  \
+              template <typename, typename...> class ArrayType,             \
+              class StringType, class BooleanType, class NumberIntegerType, \
+              class NumberUnsignedType, class NumberFloatType,              \
+              template <typename> class AllocatorType,                      \
               template <typename, typename = void> class JSONSerializer>
 
-#define NLOHMANN_BASIC_JSON_TPL                                                \
-    basic_json<ObjectType, ArrayType, StringType, BooleanType,                   \
-    NumberIntegerType, NumberUnsignedType, NumberFloatType,           \
+#define NLOHMANN_BASIC_JSON_TPL                                             \
+    basic_json<ObjectType, ArrayType, StringType, BooleanType,              \
+    NumberIntegerType, NumberUnsignedType, NumberFloatType,                 \
     AllocatorType, JSONSerializer>
 
 
@@ -189,8 +189,7 @@ class exception : public std::exception
 
   protected:
     exception(int id_, const char* what_arg)
-        : id(id_), m(what_arg)
-    {}
+        : id(id_), m(what_arg) {}
 
     static std::string name(const std::string& ename, int id)
     {
@@ -205,17 +204,16 @@ class exception : public std::exception
 /*!
 @brief exception indicating a parse error
 
-This excpetion is thrown by the library when a parse error occurs. Parse
-errors can occur during the deserialization of JSON text as well as when
-using JSON Patch.
+This excpetion is thrown by the library when a parse error occurs. Parse errors
+can occur during the deserialization of JSON text as well as when using JSON
+Patch.
 
 Member @a byte holds the byte index of the last read character in the input
 file.
 
-@note For an input with n bytes, 1 is the index of the first character
-      and n+1 is the index of the terminating null byte or the end of
-      file. This also holds true when reading a byte vector (CBOR or
-      MessagePack).
+@note For an input with n bytes, 1 is the index of the first character and n+1
+      is the index of the terminating null byte or the end of file. This also
+      holds true when reading a byte vector (CBOR or MessagePack).
 
 Exceptions have ids 1xx.
 
@@ -241,10 +239,10 @@ class parse_error : public exception
   public:
     /*!
     @brief create a parse error exception
-    @param[in] id         the id of the exception
-    @param[in] byte_      the byte index where the error occurred (or 0 if
-                          the position cannot be determined)
-    @param[in] what_arg   the explanatory string
+    @param[in] id        the id of the exception
+    @param[in] byte_     the byte index where the error occurred (or 0 if the
+                         position cannot be determined)
+    @param[in] what_arg  the explanatory string
     @return parse_error object
     */
     static parse_error create(int id, std::size_t byte_, const std::string& what_arg)
@@ -260,17 +258,15 @@ class parse_error : public exception
 
     The byte index of the last read character in the input file.
 
-    @note For an input with n bytes, 1 is the index of the first character
-          and n+1 is the index of the terminating null byte or the end of
-          file. This also holds true when reading a byte vector (CBOR or
-          MessagePack).
+    @note For an input with n bytes, 1 is the index of the first character and
+          n+1 is the index of the terminating null byte or the end of file.
+          This also holds true when reading a byte vector (CBOR or MessagePack).
     */
     const std::size_t byte;
 
   private:
     parse_error(int id_, std::size_t byte_, const char* what_arg)
-        : exception(id_, what_arg), byte(byte_)
-    {}
+        : exception(id_, what_arg), byte(byte_) {}
 };
 
 /*!
@@ -308,8 +304,7 @@ class invalid_iterator : public exception
 
   private:
     invalid_iterator(int id_, const char* what_arg)
-        : exception(id_, what_arg)
-    {}
+        : exception(id_, what_arg) {}
 };
 
 /*!
@@ -347,8 +342,7 @@ class type_error : public exception
 
   private:
     type_error(int id_, const char* what_arg)
-        : exception(id_, what_arg)
-    {}
+        : exception(id_, what_arg) {}
 };
 
 /*!
@@ -378,8 +372,7 @@ class out_of_range : public exception
 
   private:
     out_of_range(int id_, const char* what_arg)
-        : exception(id_, what_arg)
-    {}
+        : exception(id_, what_arg) {}
 };
 
 /*!
@@ -405,8 +398,7 @@ class other_error : public exception
 
   private:
     other_error(int id_, const char* what_arg)
-        : exception(id_, what_arg)
-    {}
+        : exception(id_, what_arg) {}
 };
 
 
@@ -1307,9 +1299,9 @@ class cached_input_stream_adapter : public input_adapter
     {
         // clear stream flags
         is.clear();
-        // We initially read a lot of characters into the buffer, and we
-        // may not have processed all of them. Therefore, we need to
-        // "rewind" the stream after the last processed char.
+        // We initially read a lot of characters into the buffer, and we may not
+        // have processed all of them. Therefore, we need to "rewind" the stream
+        // after the last processed char.
         is.seekg(start_position);
         is.ignore(static_cast<std::streamsize>(processed_chars));
         // clear stream flags
@@ -1491,16 +1483,14 @@ struct input_adapter_factory
                    first, last, std::pair<bool, int>(true, 0),
                    [&first](std::pair<bool, int> res, decltype(*first) val)
         {
-            res.first &=
-                (val ==
-                 *(std::next(std::addressof(*first), res.second++)));
+            res.first &= (val == *(std::next(std::addressof(*first), res.second++)));
             return res;
-        })
-        .first);
+        }).first);
 
         // assertion to check that each element is 1 byte long
         static_assert(
-            sizeof(typename std::iterator_traits<IteratorType>::value_type) == 1, "each element in the iterator range must have the size of 1 byte");
+            sizeof(typename std::iterator_traits<IteratorType>::value_type) == 1,
+            "each element in the iterator range must have the size of 1 byte");
 
         const auto len = static_cast<size_t>(std::distance(first, last));
         if (JSON_LIKELY(len > 0))
@@ -1911,12 +1901,12 @@ class lexer
     @brief scan a string literal
 
     This function scans a string according to Sect. 7 of RFC 7159. While
-    scanning, bytes are escaped and copied into buffer yytext. Then the
-    function returns successfully, yytext is null-terminated and yylen
-    contains the number of bytes in the string.
+    scanning, bytes are escaped and copied into buffer yytext. Then the function
+    returns successfully, yytext is null-terminated and yylen contains the
+    number of bytes in the string.
 
-    @return token_type::value_string if string could be successfully
-            scanned, token_type::parse_error otherwise
+    @return token_type::value_string if string could be successfully scanned,
+            token_type::parse_error otherwise
 
     @note In case of errors, variable error_message contains a textual
           description.
@@ -2011,8 +2001,7 @@ class lexer
 
                                     if (JSON_UNLIKELY(codepoint2 == -1))
                                     {
-                                        error_message =
-                                            "invalid string: '\\u' must be followed by 4 hex digits";
+                                        error_message = "invalid string: '\\u' must be followed by 4 hex digits";
                                         return token_type::parse_error;
                                     }
 
@@ -2031,15 +2020,13 @@ class lexer
                                     }
                                     else
                                     {
-                                        error_message = "invalid string: surrogate U+DC00..U+DFFF must "
-                                                        "be followed by U+DC00..U+DFFF";
+                                        error_message = "invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF";
                                         return token_type::parse_error;
                                     }
                                 }
                                 else
                                 {
-                                    error_message = "invalid string: surrogate U+DC00..U+DFFF must "
-                                                    "be followed by U+DC00..U+DFFF";
+                                    error_message = "invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF";
                                     return token_type::parse_error;
                                 }
                             }
@@ -2047,8 +2034,7 @@ class lexer
                             {
                                 if (JSON_UNLIKELY(0xDC00 <= codepoint1 and codepoint1 <= 0xDFFF))
                                 {
-                                    error_message = "invalid string: surrogate U+DC00..U+DFFF must "
-                                                    "follow U+D800..U+DBFF";
+                                    error_message = "invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF";
                                     return token_type::parse_error;
                                 }
 
@@ -3543,14 +3529,12 @@ class parser
         }
         else
         {
-            error_msg +=
-                "unexpected " + std::string(lexer_t::token_type_name(last_token));
+            error_msg += "unexpected " + std::string(lexer_t::token_type_name(last_token));
         }
 
         if (expected != token_type::uninitialized)
         {
-            error_msg +=
-                "; expected " + std::string(lexer_t::token_type_name(expected));
+            error_msg += "; expected " + std::string(lexer_t::token_type_name(expected));
         }
 
         JSON_THROW(parse_error::create(101, m_lexer.get_position(), error_msg));
@@ -3732,9 +3716,6 @@ template <typename BasicJsonType> struct internal_iterator
     typename BasicJsonType::array_t::iterator array_iterator {};
     /// generic iterator for all other types
     primitive_iterator_t primitive_iterator {};
-
-    /// create an uninitialized internal_iterator
-    internal_iterator() = default;
 };
 
 template <typename IteratorType> class iteration_proxy;
@@ -3745,11 +3726,10 @@ template <typename IteratorType> class iteration_proxy;
 This class implements a both iterators (iterator and const_iterator) for the
 @ref basic_json class.
 
-@note An iterator is called *initialized* when a pointer to a JSON value
-      has been set (e.g., by a constructor or a copy assignment). If the
-      iterator is default-constructed, it is *uninitialized* and most
-      methods are undefined. **The library uses assertions to detect calls
-      on uninitialized iterators.**
+@note An iterator is called *initialized* when a pointer to a JSON value has
+      been set (e.g., by a constructor or a copy assignment). If the iterator is
+      default-constructed, it is *uninitialized* and most methods are undefined.
+      **The library uses assertions to detect calls on uninitialized iterators.**
 
 @requirement The class satisfies the following concept requirements:
 -
@@ -4703,8 +4683,7 @@ class binary_reader
             // EOF
             case std::char_traits<char>::eof():
             {
-                JSON_THROW(
-                    parse_error::create(110, chars_read, "unexpected end of input"));
+                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
             }
 
             // Integer 0x00..0x17 (0..23)
@@ -5094,8 +5073,7 @@ class binary_reader
             {
                 std::stringstream ss;
                 ss << std::setw(2) << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(
-                               112, chars_read, "error reading CBOR; last byte: 0x" + ss.str()));
+                JSON_THROW(parse_error::create(112, chars_read, "error reading CBOR; last byte: 0x" + ss.str()));
             }
         }
     }
@@ -5115,8 +5093,7 @@ class binary_reader
             // EOF
             case std::char_traits<char>::eof():
             {
-                JSON_THROW(
-                    parse_error::create(110, chars_read, "unexpected end of input"));
+                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
             }
 
             // positive fixint
@@ -5520,9 +5497,8 @@ class binary_reader
 
     @note from http://stackoverflow.com/a/1001328/266378
     */
-    static bool little_endianess() noexcept
+    static constexpr bool little_endianess(int num = 1) noexcept
     {
-        int num = 1;
         return (*reinterpret_cast<char*>(&num) == 1);
     }
 
@@ -5792,8 +5768,7 @@ class binary_reader
     {
         if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
         {
-            JSON_THROW(
-                parse_error::create(110, chars_read, "unexpected end of input"));
+            JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
         }
     }
 
@@ -5859,20 +5834,17 @@ class binary_writer
                     {
                         write_number(static_cast<uint8_t>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer <=
-                             (std::numeric_limits<uint8_t>::max)())
+                    else if (j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
                     {
                         oa->write_character(0x18);
                         write_number(static_cast<uint8_t>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer <=
-                             (std::numeric_limits<uint16_t>::max)())
+                    else if (j.m_value.number_integer <= (std::numeric_limits<uint16_t>::max)())
                     {
                         oa->write_character(0x19);
                         write_number(static_cast<uint16_t>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer <=
-                             (std::numeric_limits<uint32_t>::max)())
+                    else if (j.m_value.number_integer <= (std::numeric_limits<uint32_t>::max)())
                     {
                         oa->write_character(0x1a);
                         write_number(static_cast<uint32_t>(j.m_value.number_integer));
@@ -5922,20 +5894,17 @@ class binary_writer
                 {
                     write_number(static_cast<uint8_t>(j.m_value.number_unsigned));
                 }
-                else if (j.m_value.number_unsigned <=
-                         (std::numeric_limits<uint8_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                 {
                     oa->write_character(0x18);
                     write_number(static_cast<uint8_t>(j.m_value.number_unsigned));
                 }
-                else if (j.m_value.number_unsigned <=
-                         (std::numeric_limits<uint16_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
                 {
                     oa->write_character(0x19);
                     write_number(static_cast<uint16_t>(j.m_value.number_unsigned));
                 }
-                else if (j.m_value.number_unsigned <=
-                         (std::numeric_limits<uint32_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
                 {
                     oa->write_character(0x1a);
                     write_number(static_cast<uint32_t>(j.m_value.number_unsigned));
@@ -6114,29 +6083,25 @@ class binary_writer
                         // positive fixnum
                         write_number(static_cast<uint8_t>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_unsigned <=
-                             (std::numeric_limits<uint8_t>::max)())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                     {
                         // uint 8
                         oa->write_character(0xcc);
                         write_number(static_cast<uint8_t>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_unsigned <=
-                             (std::numeric_limits<uint16_t>::max)())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
                     {
                         // uint 16
                         oa->write_character(0xcd);
                         write_number(static_cast<uint16_t>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_unsigned <=
-                             (std::numeric_limits<uint32_t>::max)())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
                     {
                         // uint 32
                         oa->write_character(0xce);
                         write_number(static_cast<uint32_t>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_unsigned <=
-                             (std::numeric_limits<uint64_t>::max)())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
                     {
                         // uint 64
                         oa->write_character(0xcf);
@@ -6150,37 +6115,29 @@ class binary_writer
                         // negative fixnum
                         write_number(static_cast<int8_t>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer >=
-                             (std::numeric_limits<int8_t>::min)() and
-                             j.m_value.number_integer <=
-                             (std::numeric_limits<int8_t>::max)())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<int8_t>::min)() and
+                             j.m_value.number_integer <= (std::numeric_limits<int8_t>::max)())
                     {
                         // int 8
                         oa->write_character(0xd0);
                         write_number(static_cast<int8_t>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer >=
-                             (std::numeric_limits<int16_t>::min)() and
-                             j.m_value.number_integer <=
-                             (std::numeric_limits<int16_t>::max)())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<int16_t>::min)() and
+                             j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
                     {
                         // int 16
                         oa->write_character(0xd1);
                         write_number(static_cast<int16_t>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer >=
-                             (std::numeric_limits<int32_t>::min)() and
-                             j.m_value.number_integer <=
-                             (std::numeric_limits<int32_t>::max)())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<int32_t>::min)() and
+                             j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
                     {
                         // int 32
                         oa->write_character(0xd2);
                         write_number(static_cast<int32_t>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer >=
-                             (std::numeric_limits<int64_t>::min)() and
-                             j.m_value.number_integer <=
-                             (std::numeric_limits<int64_t>::max)())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<int64_t>::min)() and
+                             j.m_value.number_integer <= (std::numeric_limits<int64_t>::max)())
                     {
                         // int 64
                         oa->write_character(0xd3);
@@ -6197,29 +6154,25 @@ class binary_writer
                     // positive fixnum
                     write_number(static_cast<uint8_t>(j.m_value.number_integer));
                 }
-                else if (j.m_value.number_unsigned <=
-                         (std::numeric_limits<uint8_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                 {
                     // uint 8
                     oa->write_character(0xcc);
                     write_number(static_cast<uint8_t>(j.m_value.number_integer));
                 }
-                else if (j.m_value.number_unsigned <=
-                         (std::numeric_limits<uint16_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
                 {
                     // uint 16
                     oa->write_character(0xcd);
                     write_number(static_cast<uint16_t>(j.m_value.number_integer));
                 }
-                else if (j.m_value.number_unsigned <=
-                         (std::numeric_limits<uint32_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
                 {
                     // uint 32
                     oa->write_character(0xce);
                     write_number(static_cast<uint32_t>(j.m_value.number_integer));
                 }
-                else if (j.m_value.number_unsigned <=
-                         (std::numeric_limits<uint64_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
                 {
                     // uint 64
                     oa->write_character(0xcf);
@@ -6726,8 +6679,7 @@ class serializer
         return res;
     }
 
-    static void escape_codepoint(const int codepoint,
-                                 string_t& result, size_t& pos)
+    static void escape_codepoint(int codepoint, string_t& result, size_t& pos)
     {
         // expecting a proper codepoint
         assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
@@ -6760,8 +6712,9 @@ class serializer
             // codepoints U+10000..U+10FFFF need a surrogate pair to be
             // represented as \uxxxx\uxxxx.
             // http://www.unicode.org/faq/utf_bom.html#utf16-4
-            const int high_surrogate = 0xD800 - (0x10000 >> 10) + (codepoint >> 10);
-            const int low_surrogate = 0xDC00 + (codepoint & 0x3FF);
+            codepoint -= 0x10000;
+            const int high_surrogate = 0xD800 | ((codepoint >> 10) & 0x3FF);
+            const int low_surrogate = 0xDC00 | (codepoint & 0x3FF);
             result[++pos] = hexify[(high_surrogate >> 12) & 0x0F];
             result[++pos] = hexify[(high_surrogate >> 8) & 0x0F];
             result[++pos] = hexify[(high_surrogate >> 4) & 0x0F];
@@ -7019,8 +6972,7 @@ class serializer
         static constexpr auto d = std::numeric_limits<number_float_t>::digits10;
 
         // the actual conversion
-        std::ptrdiff_t len =
-            snprintf(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
+        std::ptrdiff_t len = snprintf(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
 
         // negative value indicates an error
         assert(len > 0);
@@ -7158,44 +7110,43 @@ class json_pointer
 
   public:
     /*!
-      @brief create JSON pointer
+    @brief create JSON pointer
 
-      Create a JSON pointer according to the syntax described in
-      [Section 3 of RFC6901](https://tools.ietf.org/html/rfc6901#section-3).
+    Create a JSON pointer according to the syntax described in
+    [Section 3 of RFC6901](https://tools.ietf.org/html/rfc6901#section-3).
 
-      @param[in] s  string representing the JSON pointer; if omitted, the
-      empty string is assumed which references the whole JSON
-      value
+    @param[in] s  string representing the JSON pointer; if omitted, the empty
+                  string is assumed which references the whole JSON value
 
-      @throw parse_error.107 if the given JSON pointer @a s is nonempty and
-      does not begin with a slash (`/`); see example below
+    @throw parse_error.107 if the given JSON pointer @a s is nonempty and
+    does not begin with a slash (`/`); see example below
 
-      @throw parse_error.108 if a tilde (`~`) in the given JSON pointer @a s
-      is not followed by `0` (representing `~`) or `1` (representing `/`);
-      see example below
+    @throw parse_error.108 if a tilde (`~`) in the given JSON pointer @a s
+    is not followed by `0` (representing `~`) or `1` (representing `/`);
+    see example below
 
-      @liveexample{The example shows the construction several valid JSON
-      pointers as well as the exceptional behavior.,json_pointer}
+    @liveexample{The example shows the construction several valid JSON
+    pointers as well as the exceptional behavior.,json_pointer}
 
-      @since version 2.0.0
-      */
+    @since version 2.0.0
+    */
     explicit json_pointer(const std::string& s = "") : reference_tokens(split(s)) {}
 
     /*!
-      @brief return a string representation of the JSON pointer
+    @brief return a string representation of the JSON pointer
 
-      @invariant For each JSON pointer `ptr`, it holds:
-      @code {.cpp}
-      ptr == json_pointer(ptr.to_string());
-      @endcode
+    @invariant For each JSON pointer `ptr`, it holds:
+    @code {.cpp}
+    ptr == json_pointer(ptr.to_string());
+    @endcode
 
-      @return a string representation of the JSON pointer
+    @return a string representation of the JSON pointer
 
-      @liveexample{The example shows the result of `to_string`.,
-      json_pointer__to_string}
+    @liveexample{The example shows the result of `to_string`.,
+    json_pointer__to_string}
 
-      @since version 2.0.0
-      */
+    @since version 2.0.0
+    */
     std::string to_string() const noexcept
     {
         return std::accumulate(reference_tokens.begin(), reference_tokens.end(),
@@ -7214,15 +7165,14 @@ class json_pointer
 
   private:
     /*!
-      @brief remove and return last reference pointer
-      @throw out_of_range.405 if JSON pointer has no parent
-      */
+    @brief remove and return last reference pointer
+    @throw out_of_range.405 if JSON pointer has no parent
+    */
     std::string pop_back()
     {
         if (is_root())
         {
-            JSON_THROW(
-                detail::out_of_range::create(405, "JSON pointer has no parent"));
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
         }
 
         auto last = reference_tokens.back();
@@ -7250,81 +7200,81 @@ class json_pointer
 
 
     /*!
-      @brief create and return a reference to the pointed to value
+    @brief create and return a reference to the pointed to value
 
-      @complexity Linear in the number of reference tokens.
+    @complexity Linear in the number of reference tokens.
 
-      @throw parse_error.109 if array index is not a number
-      @throw type_error.313 if value cannot be unflattened
-      */
+    @throw parse_error.109 if array index is not a number
+    @throw type_error.313 if value cannot be unflattened
+    */
     NLOHMANN_BASIC_JSON_TPL_DECLARATION
     NLOHMANN_BASIC_JSON_TPL& get_and_create(NLOHMANN_BASIC_JSON_TPL& j) const;
 
     /*!
-      @brief return a reference to the pointed to value
+    @brief return a reference to the pointed to value
 
-      @note This version does not throw if a value is not present, but tries
-      to create nested values instead. For instance, calling this function
-      with pointer `"/this/that"` on a null value is equivalent to calling
-      `operator[]("this").operator[]("that")` on that value, effectively
-      changing the null value to an object.
+    @note This version does not throw if a value is not present, but tries to
+          create nested values instead. For instance, calling this function
+          with pointer `"/this/that"` on a null value is equivalent to calling
+          `operator[]("this").operator[]("that")` on that value, effectively
+          changing the null value to an object.
 
-      @param[in] ptr  a JSON value
+    @param[in] ptr  a JSON value
 
-      @return reference to the JSON value pointed to by the JSON pointer
+    @return reference to the JSON value pointed to by the JSON pointer
 
-      @complexity Linear in the length of the JSON pointer.
+    @complexity Linear in the length of the JSON pointer.
 
-      @throw parse_error.106   if an array index begins with '0'
-      @throw parse_error.109   if an array index was not a number
-      @throw out_of_range.404  if the JSON pointer can not be resolved
-      */
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.404  if the JSON pointer can not be resolved
+    */
     NLOHMANN_BASIC_JSON_TPL_DECLARATION
     NLOHMANN_BASIC_JSON_TPL& get_unchecked(NLOHMANN_BASIC_JSON_TPL* ptr) const;
 
     /*!
-      @throw parse_error.106   if an array index begins with '0'
-      @throw parse_error.109   if an array index was not a number
-      @throw out_of_range.402  if the array index '-' is used
-      @throw out_of_range.404  if the JSON pointer can not be resolved
-      */
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.402  if the array index '-' is used
+    @throw out_of_range.404  if the JSON pointer can not be resolved
+    */
     NLOHMANN_BASIC_JSON_TPL_DECLARATION
     NLOHMANN_BASIC_JSON_TPL& get_checked(NLOHMANN_BASIC_JSON_TPL* ptr) const;
 
     /*!
-      @brief return a const reference to the pointed to value
+    @brief return a const reference to the pointed to value
 
-      @param[in] ptr  a JSON value
+    @param[in] ptr  a JSON value
 
-      @return const reference to the JSON value pointed to by the JSON
-      pointer
+    @return const reference to the JSON value pointed to by the JSON
+    pointer
 
-      @throw parse_error.106   if an array index begins with '0'
-      @throw parse_error.109   if an array index was not a number
-      @throw out_of_range.402  if the array index '-' is used
-      @throw out_of_range.404  if the JSON pointer can not be resolved
-      */
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.402  if the array index '-' is used
+    @throw out_of_range.404  if the JSON pointer can not be resolved
+    */
     NLOHMANN_BASIC_JSON_TPL_DECLARATION
     const NLOHMANN_BASIC_JSON_TPL& get_unchecked(const NLOHMANN_BASIC_JSON_TPL* ptr) const;
 
     /*!
-      @throw parse_error.106   if an array index begins with '0'
-      @throw parse_error.109   if an array index was not a number
-      @throw out_of_range.402  if the array index '-' is used
-      @throw out_of_range.404  if the JSON pointer can not be resolved
-      */
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.402  if the array index '-' is used
+    @throw out_of_range.404  if the JSON pointer can not be resolved
+    */
     NLOHMANN_BASIC_JSON_TPL_DECLARATION
     const NLOHMANN_BASIC_JSON_TPL& get_checked(const NLOHMANN_BASIC_JSON_TPL* ptr) const;
 
     /*!
-      @brief split the string input to reference tokens
+    @brief split the string input to reference tokens
 
-      @note This function is only called by the json_pointer constructor.
-      All exceptions below are documented there.
+    @note This function is only called by the json_pointer constructor.
+          All exceptions below are documented there.
 
-      @throw parse_error.107  if the pointer is not empty or begins with '/'
-      @throw parse_error.108  if character '~' is not followed by '0' or '1'
-      */
+    @throw parse_error.107  if the pointer is not empty or begins with '/'
+    @throw parse_error.108  if character '~' is not followed by '0' or '1'
+    */
     static std::vector<std::string> split(const std::string& reference_string)
     {
         std::vector<std::string> result;
@@ -7390,18 +7340,18 @@ class json_pointer
     }
 
     /*!
-      @brief replace all occurrences of a substring by another string
+    @brief replace all occurrences of a substring by another string
 
-      @param[in,out] s  the string to manipulate; changed so that all
-      occurrences of @a f are replaced with @a t
-      @param[in]     f  the substring to replace with @a t
-      @param[in]     t  the string to replace @a f
+    @param[in,out] s  the string to manipulate; changed so that all
+                   occurrences of @a f are replaced with @a t
+    @param[in]     f  the substring to replace with @a t
+    @param[in]     t  the string to replace @a f
 
-      @pre The search string @a f must not be empty. **This precondition is
-      enforced with an assertion.**
+    @pre The search string @a f must not be empty. **This precondition is
+    enforced with an assertion.**
 
-      @since version 2.0.0
-      */
+    @since version 2.0.0
+    */
     static void replace_substring(std::string& s, const std::string& f,
                                   const std::string& t)
     {
@@ -7432,27 +7382,27 @@ class json_pointer
     }
 
     /*!
-      @param[in] reference_string  the reference string to the current value
-      @param[in] value             the value to consider
-      @param[in,out] result        the result object to insert values to
+    @param[in] reference_string  the reference string to the current value
+    @param[in] value             the value to consider
+    @param[in,out] result        the result object to insert values to
 
-      @note Empty objects or arrays are flattened to `null`.
-      */
+    @note Empty objects or arrays are flattened to `null`.
+    */
     NLOHMANN_BASIC_JSON_TPL_DECLARATION
     static void flatten(const std::string& reference_string,
                         const NLOHMANN_BASIC_JSON_TPL& value,
                         NLOHMANN_BASIC_JSON_TPL& result);
 
     /*!
-      @param[in] value  flattened JSON
+    @param[in] value  flattened JSON
 
-      @return unflattened JSON
+    @return unflattened JSON
 
-      @throw parse_error.109 if array index is not a number
-      @throw type_error.314  if value is not an object
-      @throw type_error.315  if object values are not primitive
-      @throw type_error.313  if value cannot be unflattened
-      */
+    @throw parse_error.109 if array index is not a number
+    @throw type_error.314  if value is not an object
+    @throw type_error.315  if object values are not primitive
+    @throw type_error.313  if value cannot be unflattened
+    */
     NLOHMANN_BASIC_JSON_TPL_DECLARATION
     static NLOHMANN_BASIC_JSON_TPL
     unflatten(const NLOHMANN_BASIC_JSON_TPL& value);
@@ -9151,7 +9101,8 @@ class basic_json
 
     @since version 1.0.0; indentation character added in version 3.0.0
     */
-    string_t dump(const int indent = -1, const char indent_char = ' ', const bool ensure_ascii = false) const
+    string_t dump(const int indent = -1, const char indent_char = ' ',
+                  const bool ensure_ascii = false) const
     {
         string_t result;
         serializer s(detail::output_adapter_factory<char>::create(result), indent_char);

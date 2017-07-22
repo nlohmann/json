@@ -11,6 +11,7 @@ target_include_directories(catch_main PRIVATE "thirdparty/catch")
 set(JSON_UNITTEST_TARGET_NAME "json_unit")
 add_executable(${JSON_UNITTEST_TARGET_NAME}
     $<TARGET_OBJECTS:catch_main>
+    "../src/json.hpp"
     "src/unit-algorithms.cpp"
     "src/unit-allocator.cpp"
     "src/unit-capacity.cpp"
