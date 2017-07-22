@@ -6644,7 +6644,7 @@ class serializer
                 {
                     if (ensure_ascii and (s[i] & 0x80 or s[i] == 0x7F))
                     {
-                        const auto bytes = bytes_following(s[i] & 0xFF);
+                        const auto bytes = bytes_following(static_cast<uint8_t>(s[i]));
                         if (bytes == std::string::npos)
                         {
                             // invalid characters are treated as is, so no
@@ -6821,7 +6821,7 @@ class serializer
                     if ((0x00 <= s[i] and s[i] <= 0x1F) or
                             (ensure_ascii and (s[i] & 0x80 or s[i] == 0x7F)))
                     {
-                        const auto bytes = bytes_following(s[i] & 0xFF);
+                        const auto bytes = bytes_following(static_cast<uint8_t>(s[i]));
                         if (bytes == std::string::npos)
                         {
                             // copy invalid character as is
