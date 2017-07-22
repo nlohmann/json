@@ -3107,19 +3107,19 @@ class parser
     /*!
     @brief public parser interface
 
-    @param[in] strict  whether to expect the last token to be EOF
-    @return parsed JSON value
+    @param[in] strict      whether to expect the last token to be EOF
+    @param[in,out] result  parsed JSON value
 
     @throw parse_error.101 in case of an unexpected token
     @throw parse_error.102 if to_unicode fails or surrogate error
     @throw parse_error.103 if to_unicode fails
     */
-    BasicJsonType parse(const bool strict = true)
+    void parse(const bool strict, BasicJsonType& result)
     {
         // read first token
         get_token();
 
-        BasicJsonType result = parse_internal(true);
+        parse_internal(true, result);
         result.assert_invariant();
 
         if (strict)
@@ -3128,9 +3128,12 @@ class parser
             expect(token_type::end_of_input);
         }
 
-        // return parser result and replace it with null in case the
-        // top-level value was discarded by the callback function
-        return result.is_discarded() ? BasicJsonType() : std::move(result);
+        // set top-level value to null if it was discarded by the callback
+        // function
+        if (result.is_discarded())
+        {
+            result = nullptr;
+        }
     }
 
     /*!
@@ -3164,17 +3167,19 @@ class parser
     @throw parse_error.102 if to_unicode fails or surrogate error
     @throw parse_error.103 if to_unicode fails
     */
-    BasicJsonType parse_internal(bool keep)
+    void parse_internal(bool keep, BasicJsonType& result)
     {
-        auto result = BasicJsonType(value_t::discarded);
+        // start with a discarded value
+        if (not result.is_discarded())
+        {
+            result.m_type = value_t::discarded;
+        }
 
         switch (last_token)
         {
             case token_type::begin_object:
             {
-                if (keep and (not callback or
-                              ((keep = callback(depth++, parse_event_t::object_start,
-                                                result)) != 0)))
+                if (keep and (not callback or ((keep = callback(depth++, parse_event_t::object_start, result)))))
                 {
                     // explicitly set result to object to cope with {}
                     result.m_type = value_t::object;
@@ -3187,15 +3192,15 @@ class parser
                 // closing } -> we are done
                 if (last_token == token_type::end_object)
                 {
-                    if (keep and callback and
-                            not callback(--depth, parse_event_t::object_end, result))
+                    if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
                     {
-                        result = BasicJsonType(value_t::discarded);
+                        result.m_type = value_t::discarded;
                     }
-                    return result;
+                    break;
                 }
 
                 // parse values
+                BasicJsonType value;
                 while (true)
                 {
                     // store key
@@ -3222,7 +3227,8 @@ class parser
 
                     // parse and add value
                     get_token();
-                    auto value = parse_internal(keep);
+                    value = value_t::discarded;
+                    parse_internal(keep, value);
                     if (keep and keep_tag and not value.is_discarded())
                     {
                         result[key] = std::move(value);
@@ -3241,20 +3247,16 @@ class parser
                     break;
                 }
 
-                if (keep and callback and
-                        not callback(--depth, parse_event_t::object_end, result))
+                if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
                 {
-                    result = BasicJsonType(value_t::discarded);
+                    result.m_type = value_t::discarded;
                 }
-
-                return result;
+                break;
             }
 
             case token_type::begin_array:
             {
-                if (keep and (not callback or
-                              ((keep = callback(depth++, parse_event_t::array_start,
-                                                result)) != 0)))
+                if (keep and (not callback or ((keep = callback(depth++, parse_event_t::array_start, result)))))
                 {
                     // explicitly set result to object to cope with []
                     result.m_type = value_t::array;
@@ -3267,19 +3269,19 @@ class parser
                 // closing ] -> we are done
                 if (last_token == token_type::end_array)
                 {
-                    if (callback and
-                            not callback(--depth, parse_event_t::array_end, result))
+                    if (callback and not callback(--depth, parse_event_t::array_end, result))
                     {
-                        result = BasicJsonType(value_t::discarded);
+                        result.m_type = value_t::discarded;
                     }
-                    return result;
+                    break;
                 }
 
                 // parse values
+                BasicJsonType value;
                 while (true)
                 {
                     // parse value
-                    auto value = parse_internal(keep);
+                    parse_internal(keep, value);
                     if (keep and not value.is_discarded())
                     {
                         result.push_back(std::move(value));
@@ -3298,13 +3300,11 @@ class parser
                     break;
                 }
 
-                if (keep and callback and
-                        not callback(--depth, parse_event_t::array_end, result))
+                if (keep and callback and not callback(--depth, parse_event_t::array_end, result))
                 {
-                    result = BasicJsonType(value_t::discarded);
+                    result.m_type = value_t::discarded;
                 }
-
-                return result;
+                break;
             }
 
             case token_type::literal_null:
@@ -3315,7 +3315,8 @@ class parser
 
             case token_type::value_string:
             {
-                result = BasicJsonType(m_lexer.get_string());
+                result.m_type = value_t::string;
+                result.m_value = m_lexer.get_string();
                 break;
             }
 
@@ -3359,7 +3360,6 @@ class parser
                                                     m_lexer.get_token_string() +
                                                     "'"));
                 }
-
                 break;
             }
 
@@ -3378,12 +3378,10 @@ class parser
             }
         }
 
-        if (keep and callback and
-                not callback(depth, parse_event_t::value, result))
+        if (keep and callback and not callback(depth, parse_event_t::value, result))
         {
-            result = BasicJsonType(value_t::discarded);
+            result.m_type = value_t::discarded;
         }
-        return result;
     }
 
     /*!
@@ -12892,7 +12890,9 @@ class basic_json
     static basic_json parse(const CharT s,
                             const parser_callback_t cb = nullptr)
     {
-        return parser(detail::input_adapter_factory::create(s), cb).parse(true);
+        basic_json result;
+        parser(detail::input_adapter_factory::create(s), cb).parse(true, result);
+        return result;
     }
 
     template<typename CharT, typename std::enable_if<
@@ -12935,7 +12935,9 @@ class basic_json
     static basic_json parse(std::istream& i,
                             const parser_callback_t cb = nullptr)
     {
-        return parser(detail::input_adapter_factory::create(i), cb).parse(true);
+        basic_json result;
+        parser(detail::input_adapter_factory::create(i), cb).parse(true, result);
+        return result;
     }
 
     static bool accept(std::istream& i)
@@ -12949,7 +12951,9 @@ class basic_json
     static basic_json parse(std::istream&& i,
                             const parser_callback_t cb = nullptr)
     {
-        return parser(detail::input_adapter_factory::create(i), cb).parse(true);
+        basic_json result;
+        parser(detail::input_adapter_factory::create(i), cb).parse(true, result);
+        return result;
     }
 
     static bool accept(std::istream&& i)
@@ -13009,7 +13013,9 @@ class basic_json
     static basic_json parse(IteratorType first, IteratorType last,
                             const parser_callback_t cb = nullptr)
     {
-        return parser(detail::input_adapter_factory::create(first, last), cb).parse(true);
+        basic_json result;
+        parser(detail::input_adapter_factory::create(first, last), cb).parse(true, result);
+        return result;
     }
 
     template<class IteratorType, typename std::enable_if<
@@ -13100,7 +13106,7 @@ class basic_json
     JSON_DEPRECATED
     friend std::istream& operator<<(basic_json& j, std::istream& i)
     {
-        j = parser(detail::input_adapter_factory::create(i)).parse(false);
+        parser(detail::input_adapter_factory::create(i)).parse(false, j);
         return i;
     }
 
@@ -13131,7 +13137,7 @@ class basic_json
     */
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
-        j = parser(detail::input_adapter_factory::create(i)).parse(false);
+        parser(detail::input_adapter_factory::create(i)).parse(false, j);
         return i;
     }
 
