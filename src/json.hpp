@@ -3172,6 +3172,7 @@ class parser
         // start with a discarded value
         if (not result.is_discarded())
         {
+            result.m_value.destroy(result.m_type);
             result.m_type = value_t::discarded;
         }
 
@@ -3194,6 +3195,7 @@ class parser
                 {
                     if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
                     {
+                        result.m_value.destroy(result.m_type);
                         result.m_type = value_t::discarded;
                     }
                     break;
@@ -3227,7 +3229,8 @@ class parser
 
                     // parse and add value
                     get_token();
-                    value = value_t::discarded;
+                    value.m_value.destroy(value.m_type);
+                    value.m_type = value_t::discarded;
                     parse_internal(keep, value);
                     if (keep and keep_tag and not value.is_discarded())
                     {
@@ -3249,6 +3252,7 @@ class parser
 
                 if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
                 {
+                    result.m_value.destroy(result.m_type);
                     result.m_type = value_t::discarded;
                 }
                 break;
@@ -3271,6 +3275,7 @@ class parser
                 {
                     if (callback and not callback(--depth, parse_event_t::array_end, result))
                     {
+                        result.m_value.destroy(result.m_type);
                         result.m_type = value_t::discarded;
                     }
                     break;
@@ -3281,7 +3286,8 @@ class parser
                 while (true)
                 {
                     // parse value
-                    value = value_t::discarded;
+                    value.m_value.destroy(value.m_type);
+                    value.m_type = value_t::discarded;
                     parse_internal(keep, value);
                     if (keep and not value.is_discarded())
                     {
@@ -3303,6 +3309,7 @@ class parser
 
                 if (keep and callback and not callback(--depth, parse_event_t::array_end, result))
                 {
+                    result.m_value.destroy(result.m_type);
                     result.m_type = value_t::discarded;
                 }
                 break;
@@ -8278,6 +8285,41 @@ class basic_json
         {
             array = create<array_t>(value);
         }
+
+        void destroy(value_t t)
+        {
+            switch (t)
+            {
+                case value_t::object:
+                {
+                    AllocatorType<object_t> alloc;
+                    alloc.destroy(object);
+                    alloc.deallocate(object, 1);
+                    break;
+                }
+
+                case value_t::array:
+                {
+                    AllocatorType<array_t> alloc;
+                    alloc.destroy(array);
+                    alloc.deallocate(array, 1);
+                    break;
+                }
+
+                case value_t::string:
+                {
+                    AllocatorType<string_t> alloc;
+                    alloc.destroy(string);
+                    alloc.deallocate(string, 1);
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
     };
 
     /*!
@@ -9026,39 +9068,7 @@ class basic_json
     ~basic_json()
     {
         assert_invariant();
-
-        switch (m_type)
-        {
-            case value_t::object:
-            {
-                AllocatorType<object_t> alloc;
-                alloc.destroy(m_value.object);
-                alloc.deallocate(m_value.object, 1);
-                break;
-            }
-
-            case value_t::array:
-            {
-                AllocatorType<array_t> alloc;
-                alloc.destroy(m_value.array);
-                alloc.deallocate(m_value.array, 1);
-                break;
-            }
-
-            case value_t::string:
-            {
-                AllocatorType<string_t> alloc;
-                alloc.destroy(m_value.string);
-                alloc.deallocate(m_value.string, 1);
-                break;
-            }
-
-            default:
-            {
-                // all other types need no specific destructor
-                break;
-            }
-        }
+        m_value.destroy(m_type);
     }
 
     /// @}
