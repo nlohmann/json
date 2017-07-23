@@ -7081,6 +7081,60 @@ class serializer
     /// the indentation string
     string_t indent_string;
 };
+
+template<typename BasicJsonType>
+struct json_ref
+{
+    typedef BasicJsonType value_type;
+
+    json_ref(value_type&&  value)
+        : value_(std::move(value))
+        , is_rvalue_(true)
+    {}
+
+    json_ref(const value_type& value)
+        : value_(value)
+        , is_rvalue_(false)
+    {}
+
+    json_ref(std::initializer_list<json_ref> init)
+        : value_(init)
+        , is_rvalue_(true)
+    {}
+
+    template <class... Args>
+    json_ref(Args... args)
+        : value_(std::forward<Args>(args)...)
+        , is_rvalue_(true)
+    {}
+
+    value_type moved() const
+    {
+        if (is_rvalue_)
+        {
+            return std::move(value_);
+        }
+        else
+        {
+            return value_;
+        }
+    }
+
+    value_type const& operator*() const
+    {
+        return value_;
+    }
+
+    value_type const* operator->() const
+    {
+        return &value_;
+    }
+
+  private:
+    mutable value_type value_;
+    bool is_rvalue_;
+};
+
 } // namespace detail
 
 /// namespace to hold default `to_json` / `from_json` functions
@@ -7583,6 +7637,7 @@ class basic_json
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
 
+    using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
 
     ////////////////
     // exceptions //
@@ -8614,10 +8669,10 @@ class basic_json
     With the rules described above, the following JSON values cannot be
     expressed by an initializer list:
 
-    - the empty array (`[]`): use @ref array(std::initializer_list<basic_json>)
+    - the empty array (`[]`): use @ref array(initializer_list_t)
       with an empty initializer list in this case
     - arrays whose elements satisfy rule 2: use @ref
-      array(std::initializer_list<basic_json>) with the same initializer list
+      array(initializer_list_t) with the same initializer list
       in this case
 
     @note When used without parentheses around an empty initializer list, @ref
@@ -8629,8 +8684,8 @@ class basic_json
     @param[in] type_deduction internal parameter; when set to `true`, the type
     of the JSON value is deducted from the initializer list @a init; when set
     to `false`, the type provided via @a manual_type is forced. This mode is
-    used by the functions @ref array(std::initializer_list<basic_json>) and
-    @ref object(std::initializer_list<basic_json>).
+    used by the functions @ref array(initializer_list_t) and
+    @ref object(initializer_list_t).
 
     @param[in] manual_type internal parameter; when @a type_deduction is set
     to `false`, the created JSON value will use the provided type (only @ref
@@ -8641,7 +8696,7 @@ class basic_json
     `value_t::object`, but @a init contains an element which is not a pair
     whose first element is a string. In this case, the constructor could not
     create an object. If @a type_deduction would have be `true`, an array
-    would have been created. See @ref object(std::initializer_list<basic_json>)
+    would have been created. See @ref object(initializer_list_t)
     for an example.
 
     @complexity Linear in the size of the initializer list @a init.
@@ -8649,23 +8704,23 @@ class basic_json
     @liveexample{The example below shows how JSON values are created from
     initializer lists.,basic_json__list_init_t}
 
-    @sa @ref array(std::initializer_list<basic_json>) -- create a JSON array
+    @sa @ref array(initializer_list_t) -- create a JSON array
     value from an initializer list
-    @sa @ref object(std::initializer_list<basic_json>) -- create a JSON object
+    @sa @ref object(initializer_list_t) -- create a JSON object
     value from an initializer list
 
     @since version 1.0.0
     */
-    basic_json(std::initializer_list<basic_json> init,
+    basic_json(initializer_list_t init,
                bool type_deduction = true,
                value_t manual_type = value_t::array)
     {
         // check if each element is an array with two elements whose first
         // element is a string
         bool is_an_object = std::all_of(init.begin(), init.end(),
-                                        [](const basic_json & element)
+                                        [](const detail::json_ref<basic_json>& element_ref)
         {
-            return element.is_array() and element.size() == 2 and element[0].is_string();
+            return element_ref->is_array() and element_ref->size() == 2 and (*element_ref)[0].is_string();
         });
 
         // adjust type if type deduction is not wanted
@@ -8690,16 +8745,19 @@ class basic_json
             m_type = value_t::object;
             m_value = value_t::object;
 
-            std::for_each(init.begin(), init.end(), [this](const basic_json & element)
+            std::for_each(init.begin(), init.end(), [this](const detail::json_ref<basic_json>& element_ref)
             {
-                m_value.object->emplace(*(element[0].m_value.string), element[1]);
+                basic_json element = element_ref.moved();
+                m_value.object->emplace(
+                    std::move(*((*element.m_value.array)[0].m_value.string)),
+                    std::move((*element.m_value.array)[1]));
             });
         }
         else
         {
             // the initializer list describes an array -> create array
             m_type = value_t::array;
-            m_value.array = create<array_t>(init);
+            m_value.array = create<array_t>(init.begin(), init.end());
         }
 
         assert_invariant();
@@ -8714,7 +8772,7 @@ class basic_json
 
     @note This function is only needed to express two edge cases that cannot
     be realized with the initializer list constructor (@ref
-    basic_json(std::initializer_list<basic_json>, bool, value_t)). These cases
+    basic_json(initializer_list_t, bool, value_t)). These cases
     are:
     1. creating an array whose elements are all pairs whose first element is a
     string -- in this case, the initializer list constructor would create an
@@ -8732,15 +8790,14 @@ class basic_json
     @liveexample{The following code shows an example for the `array`
     function.,array}
 
-    @sa @ref basic_json(std::initializer_list<basic_json>, bool, value_t) --
+    @sa @ref basic_json(initializer_list_t, bool, value_t) --
     create a JSON value from an initializer list
-    @sa @ref object(std::initializer_list<basic_json>) -- create a JSON object
+    @sa @ref object(initializer_list_t) -- create a JSON object
     value from an initializer list
 
     @since version 1.0.0
     */
-    static basic_json array(std::initializer_list<basic_json> init =
-                                std::initializer_list<basic_json>())
+    static basic_json array(initializer_list_t init = {})
     {
         return basic_json(init, false, value_t::array);
     }
@@ -8753,10 +8810,10 @@ class basic_json
     the initializer list is empty, the empty object `{}` is created.
 
     @note This function is only added for symmetry reasons. In contrast to the
-    related function @ref array(std::initializer_list<basic_json>), there are
+    related function @ref array(initializer_list_t), there are
     no cases which can only be expressed by this function. That is, any
     initializer list @a init can also be passed to the initializer list
-    constructor @ref basic_json(std::initializer_list<basic_json>, bool, value_t).
+    constructor @ref basic_json(initializer_list_t, bool, value_t).
 
     @param[in] init  initializer list to create an object from (optional)
 
@@ -8764,7 +8821,7 @@ class basic_json
 
     @throw type_error.301 if @a init is not a list of pairs whose first
     elements are strings. In this case, no object can be created. When such a
-    value is passed to @ref basic_json(std::initializer_list<basic_json>, bool, value_t),
+    value is passed to @ref basic_json(initializer_list_t, bool, value_t),
     an array would have been created from the passed initializer list @a init.
     See example below.
 
@@ -8773,15 +8830,14 @@ class basic_json
     @liveexample{The following code shows an example for the `object`
     function.,object}
 
-    @sa @ref basic_json(std::initializer_list<basic_json>, bool, value_t) --
+    @sa @ref basic_json(initializer_list_t, bool, value_t) --
     create a JSON value from an initializer list
-    @sa @ref array(std::initializer_list<basic_json>) -- create a JSON array
+    @sa @ref array(initializer_list_t) -- create a JSON array
     value from an initializer list
 
     @since version 1.0.0
     */
-    static basic_json object(std::initializer_list<basic_json> init =
-                                 std::initializer_list<basic_json>())
+    static basic_json object(initializer_list_t init = {})
     {
         return basic_json(init, false, value_t::object);
     }
@@ -8952,6 +9008,11 @@ class basic_json
     ///////////////////////////////////////
     // other constructors and destructor //
     ///////////////////////////////////////
+
+    basic_json(const detail::json_ref<basic_json>& ref)
+        : basic_json(ref.moved())
+    {
+    }
 
     /*!
     @brief copy constructor
@@ -11755,7 +11816,7 @@ class basic_json
     @brief add an object to an array
     @copydoc push_back(basic_json&&)
     */
-    reference operator+=(basic_json&& val)
+    reference operator+=(basic_json && val)
     {
         push_back(std::move(val));
         return *this;
@@ -11870,12 +11931,12 @@ class basic_json
     @liveexample{The example shows how initializer lists are treated as
     objects when possible.,push_back__initializer_list}
     */
-    void push_back(std::initializer_list<basic_json> init)
+    void push_back(initializer_list_t init)
     {
-        if (is_object() and init.size() == 2 and init.begin()->is_string())
+        if (is_object() and init.size() == 2 and (*init.begin())->is_string())
         {
-            const string_t key = *init.begin();
-            push_back(typename object_t::value_type(key, *(init.begin() + 1)));
+            basic_json&&  key = init.begin()->moved();
+            push_back(typename object_t::value_type(std::move(key.get_ref<string_t&>()), (init.begin() + 1)->moved()));
         }
         else
         {
@@ -11885,9 +11946,9 @@ class basic_json
 
     /*!
     @brief add an object to an object
-    @copydoc push_back(std::initializer_list<basic_json>)
+    @copydoc push_back(initializer_list_t)
     */
-    reference operator+=(std::initializer_list<basic_json> init)
+    reference operator+=(initializer_list_t init)
     {
         push_back(init);
         return *this;
@@ -12172,7 +12233,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    iterator insert(const_iterator pos, std::initializer_list<basic_json> ilist)
+    iterator insert(const_iterator pos, initializer_list_t ilist)
     {
         // insert only works for arrays
         if (not is_array())
@@ -12188,7 +12249,7 @@ class basic_json
 
         // insert to array and return iterator
         iterator result(this);
-        result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, ilist);
+        result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, ilist.begin(), ilist.end());
         return result;
     }
 
