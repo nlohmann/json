@@ -842,8 +842,7 @@ TEST_CASE("constructors")
         {
             SECTION("explicit")
             {
-                std::initializer_list<json> l;
-                json j(l);
+                json j(json::initializer_list_t {});
                 CHECK(j.type() == json::value_t::object);
             }
 
@@ -860,8 +859,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(json::array_t())};
-                    json j(l);
+                    json j(json::initializer_list_t {json(json::array_t())});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -876,8 +874,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(json::object_t())};
-                    json j(l);
+                    json j(json::initializer_list_t {json(json::object_t())});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -892,8 +889,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json("Hello world")};
-                    json j(l);
+                    json j(json::initializer_list_t {json("Hello world")});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -908,8 +904,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(true)};
-                    json j(l);
+                    json j(json::initializer_list_t {json(true)});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -924,8 +919,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(1)};
-                    json j(l);
+                    json j(json::initializer_list_t {json(1)});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -940,8 +934,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(1u)};
-                    json j(l);
+                    json j(json::initializer_list_t {json(1u)});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -956,8 +949,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(42.23)};
-                    json j(l);
+                    json j(json::initializer_list_t {json(42.23)});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -973,8 +965,7 @@ TEST_CASE("constructors")
         {
             SECTION("explicit")
             {
-                std::initializer_list<json> l = {1, 1u, 42.23, true, nullptr, json::object_t(), json::array_t()};
-                json j(l);
+                json j(json::initializer_list_t {1, 1u, 42.23, true, nullptr, json::object_t(), json::array_t()});
                 CHECK(j.type() == json::value_t::array);
             }
 
