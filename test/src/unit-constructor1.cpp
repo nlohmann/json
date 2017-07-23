@@ -1120,7 +1120,7 @@ TEST_CASE("constructors")
 
                 SECTION("constructor with implicit types (array)")
                 {
-                    json j {std::move(source)};
+                    json j {std::move(source), {}};
                     CHECK(&j[0][0] == source_addr);
                 }
 
@@ -1132,7 +1132,7 @@ TEST_CASE("constructors")
 
                 SECTION("assignment with implicit types (array)")
                 {
-                    json j = {std::move(source)};
+                    json j = {std::move(source), {}};
                     CHECK(&j[0][0] == source_addr);
                 }
 
