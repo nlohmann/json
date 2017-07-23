@@ -1519,16 +1519,60 @@ TEST_CASE("CBOR roundtrips", "[hide]")
             std::ifstream f_json(filename);
             json j1 = json::parse(f_json);
 
-            // parse CBOR file
-            std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
-            std::vector<uint8_t> packed(
-                (std::istreambuf_iterator<char>(f_cbor)),
-                std::istreambuf_iterator<char>());
-            json j2;
-            CHECK_NOTHROW(j2 = json::from_cbor(packed));
+            SECTION("std::vector<uint8_t>")
+            {
+                // parse CBOR file
+                std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_cbor)),
+                    std::istreambuf_iterator<char>());
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_cbor(packed));
 
-            // compare parsed JSON values
-            CHECK(j1 == j2);
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION("std::ifstream")
+            {
+                // parse CBOR file
+                std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_cbor(f_cbor));
+
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION("uint8_t* and size")
+            {
+                // parse CBOR file
+                std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_cbor)),
+                    std::istreambuf_iterator<char>());
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_cbor({packed.data(), packed.size()}));
+
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION("output to output adapters")
+            {
+                // parse CBOR file
+                std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_cbor)),
+                    std::istreambuf_iterator<char>());
+
+                SECTION("std::vector<uint8_t>")
+                {
+                    std::vector<uint8_t> vec;
+                    json::to_cbor(j1, vec);
+                    CHECK(vec == packed);
+                }
+            }
         }
     }
 }

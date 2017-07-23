@@ -1443,8 +1443,15 @@ class input_adapter
         : ia(std::make_shared<cached_input_stream_adapter<16384>>(i)) {}
 
     /// input adapter for buffer
-    input_adapter(const char* b, std::size_t l)
-        : ia(std::make_shared<input_buffer_adapter>(b, l)) {}
+    template <typename CharT,
+              typename std::enable_if<
+                  std::is_pointer<CharT>::value and
+                  std::is_integral<
+                      typename std::remove_pointer<CharT>::type>::value and
+                  sizeof(typename std::remove_pointer<CharT>::type) == 1,
+                  int>::type = 0>
+    input_adapter(CharT b, std::size_t l)
+        : ia(std::make_shared<input_buffer_adapter>(reinterpret_cast<const char*>(b), l)) {}
 
     // derived support
 
@@ -4546,21 +4553,20 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 /////////////////////
 
 /// abstract output adapter interface
-template <typename CharType> class output_adapter
+template <typename CharType> struct output_adapter_protocol
 {
-  public:
     virtual void write_character(CharType c) = 0;
     virtual void write_characters(const CharType* s, std::size_t length) = 0;
-    virtual ~output_adapter() = default;
+    virtual ~output_adapter_protocol() = default;
 };
 
 /// a type to simplify interfaces
 template <typename CharType>
-using output_adapter_t = std::shared_ptr<output_adapter<CharType>>;
+using output_adapter_t = std::shared_ptr<output_adapter_protocol<CharType>>;
 
 /// output adapter for byte vectors
 template <typename CharType>
-class output_vector_adapter : public output_adapter<CharType>
+class output_vector_adapter : public output_adapter_protocol<CharType>
 {
   public:
     explicit output_vector_adapter(std::vector<CharType>& vec) : v(vec) {}
@@ -4581,7 +4587,7 @@ class output_vector_adapter : public output_adapter<CharType>
 
 /// output adapter for output streams
 template <typename CharType>
-class output_stream_adapter : public output_adapter<CharType>
+class output_stream_adapter : public output_adapter_protocol<CharType>
 {
   public:
     explicit output_stream_adapter(std::basic_ostream<CharType>& s) : stream(s) {}
@@ -4602,10 +4608,10 @@ class output_stream_adapter : public output_adapter<CharType>
 
 /// output adapter for basic_string
 template <typename CharType>
-class output_string_adapter : public output_adapter<CharType>
+class output_string_adapter : public output_adapter_protocol<CharType>
 {
   public:
-    explicit output_string_adapter(std::string& s) : str(s) {}
+    explicit output_string_adapter(std::basic_string<CharType>& s) : str(s) {}
 
     void write_character(CharType c) override
     {
@@ -4621,23 +4627,26 @@ class output_string_adapter : public output_adapter<CharType>
     std::basic_string<CharType>& str;
 };
 
-template <typename CharType> struct output_adapter_factory
+template <typename CharType>
+class output_adapter
 {
-    static std::shared_ptr<output_adapter<CharType>>
-            create(std::vector<CharType>& vec)
+  public:
+    output_adapter(std::vector<CharType>& vec)
+        : oa(std::make_shared<output_vector_adapter<CharType>>(vec)) {}
+
+    output_adapter(std::basic_ostream<CharType>& s)
+        : oa(std::make_shared<output_stream_adapter<CharType>>(s)) {}
+
+    output_adapter(std::basic_string<CharType>& s)
+        : oa(std::make_shared<output_string_adapter<CharType>>(s)) {}
+
+    operator output_adapter_t<CharType>()
     {
-        return std::make_shared<output_vector_adapter<CharType>>(vec);
+        return oa;
     }
 
-    static std::shared_ptr<output_adapter<CharType>> create(std::ostream& s)
-    {
-        return std::make_shared<output_stream_adapter<CharType>>(s);
-    }
-
-    static std::shared_ptr<output_adapter<CharType>> create(std::string& s)
-    {
-        return std::make_shared<output_string_adapter<CharType>>(s);
-    }
+  private:
+    output_adapter_t<CharType> oa = nullptr;
 };
 
 //////////////////////////////
@@ -9109,7 +9118,7 @@ class basic_json
                   const bool ensure_ascii = false) const
     {
         string_t result;
-        serializer s(detail::output_adapter_factory<char>::create(result), indent_char);
+        serializer s(detail::output_adapter<char>(result), indent_char);
 
         if (indent >= 0)
         {
@@ -12783,7 +12792,7 @@ class basic_json
         o.width(0);
 
         // do the actual serialization
-        serializer s(detail::output_adapter_factory<char>::create(o), o.fill());
+        serializer s(detail::output_adapter<char>(o), o.fill());
         s.dump(j, pretty_print, false, static_cast<unsigned int>(indentation));
         return o;
     }
@@ -13162,9 +13171,13 @@ class basic_json
     static std::vector<uint8_t> to_cbor(const basic_json& j)
     {
         std::vector<uint8_t> result;
-        binary_writer bw(detail::output_adapter_factory<uint8_t>::create(result));
-        bw.write_cbor(j);
+        to_cbor(j, result);
         return result;
+    }
+
+    static void to_cbor(const basic_json& j, detail::output_adapter<uint8_t> o)
+    {
+        binary_writer(o).write_cbor(j);
     }
 
     /*!
@@ -13244,9 +13257,18 @@ class basic_json
     static std::vector<uint8_t> to_msgpack(const basic_json& j)
     {
         std::vector<uint8_t> result;
-        binary_writer bw(detail::output_adapter_factory<uint8_t>::create(result));
-        bw.write_msgpack(j);
+        to_msgpack(j, result);
         return result;
+    }
+
+    static void to_msgpack(const basic_json& j, detail::output_adapter<uint8_t> o)
+    {
+        binary_writer(o).write_msgpack(j);
+    }
+
+    static void to_msgpack(const basic_json& j, std::vector<uint8_t>& result)
+    {
+        binary_writer((detail::output_adapter<uint8_t>(result))).write_msgpack(j);
     }
 
     /*!
@@ -13343,6 +13365,11 @@ class basic_json
         return br.parse_cbor();
     }
 
+    static basic_json from_cbor(detail::input_adapter i)
+    {
+        return binary_reader(i).parse_cbor();
+    }
+
 
     /*!
     @brief create a JSON value from a byte vector in MessagePack format
@@ -13416,6 +13443,11 @@ class basic_json
     {
         binary_reader br(detail::input_adapter(v.begin() + static_cast<difference_type>(start_index), v.end()));
         return br.parse_msgpack();
+    }
+
+    static basic_json from_msgpack(detail::input_adapter i)
+    {
+        return binary_reader(i).parse_msgpack();
     }
 
     /// @}
