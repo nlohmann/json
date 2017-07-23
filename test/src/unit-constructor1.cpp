@@ -1034,6 +1034,125 @@ TEST_CASE("constructors")
                 CHECK(j.type() == json::value_t::array);
             }
         }
+
+        SECTION("move from initializer_list")
+        {
+            SECTION("string")
+            {
+                // This should break through any short string optimization in std::string
+                std::string source(1024, '!');
+                const char* source_addr = source.data();
+
+                SECTION("constructor with implicit types (array)")
+                {
+                    json j = {std::move(source)};
+                    CHECK(j[0].get_ref<std::string const&>().data() == source_addr);
+                }
+
+                SECTION("constructor with implicit types (object)")
+                {
+                    json j = {{"key", std::move(source)}};
+                    CHECK(j["key"].get_ref<std::string const&>().data() == source_addr);
+                }
+
+                SECTION("constructor with implicit types (object key)")
+                {
+                    json j = {{std::move(source), 42}};
+                    CHECK(j.get_ref<json::object_t&>().begin()->first.data() == source_addr);
+                }
+            }
+
+            SECTION("array")
+            {
+                json::array_t source = {1, 2, 3};
+                const json* source_addr = source.data();
+
+                SECTION("constructor with implicit types (array)")
+                {
+                    json j {std::move(source)};
+                    CHECK(j[0].get_ref<json::array_t const&>().data() == source_addr);
+                }
+
+                SECTION("constructor with implicit types (object)")
+                {
+                    json j {{"key", std::move(source)}};
+                    CHECK(j["key"].get_ref<json::array_t const&>().data() == source_addr);
+                }
+
+                SECTION("assignment with implicit types (array)")
+                {
+                    json j = {std::move(source)};
+                    CHECK(j[0].get_ref<json::array_t const&>().data() == source_addr);
+                }
+
+                SECTION("assignment with implicit types (object)")
+                {
+                    json j = {{"key", std::move(source)}};
+                    CHECK(j["key"].get_ref<json::array_t const&>().data() == source_addr);
+                }
+            }
+
+            SECTION("object")
+            {
+                json::object_t source = {{"hello", "world"}};
+                const json* source_addr = &source.at("hello");
+
+                SECTION("constructor with implicit types (array)")
+                {
+                    json j {std::move(source)};
+                    CHECK(&(j[0].get_ref<json::object_t const&>().at("hello")) == source_addr);
+                }
+
+                SECTION("constructor with implicit types (object)")
+                {
+                    json j {{"key", std::move(source)}};
+                    CHECK(&(j["key"].get_ref<json::object_t const&>().at("hello")) == source_addr);
+                }
+
+                SECTION("assignment with implicit types (array)")
+                {
+                    json j = {std::move(source)};
+                    CHECK(&(j[0].get_ref<json::object_t const&>().at("hello")) == source_addr);
+                }
+
+                SECTION("assignment with implicit types (object)")
+                {
+                    json j = {{"key", std::move(source)}};
+                    CHECK(&(j["key"].get_ref<json::object_t const&>().at("hello")) == source_addr);
+                }
+            }
+
+            SECTION("json")
+            {
+                json source {1, 2, 3};
+                const json* source_addr = &source[0];
+
+                SECTION("constructor with implicit types (array)")
+                {
+                    json j {std::move(source)};
+                    CHECK(&j[0][0] == source_addr);
+                }
+
+                SECTION("constructor with implicit types (object)")
+                {
+                    json j {{"key", std::move(source)}};
+                    CHECK(&j["key"][0] == source_addr);
+                }
+
+                SECTION("assignment with implicit types (array)")
+                {
+                    json j = {std::move(source)};
+                    CHECK(&j[0][0] == source_addr);
+                }
+
+                SECTION("assignment with implicit types (object)")
+                {
+                    json j = {{"key", std::move(source)}};
+                    CHECK(&j["key"][0] == source_addr);
+                }
+            }
+
+        }
     }
 
     SECTION("create an array of n copies of a given value")
