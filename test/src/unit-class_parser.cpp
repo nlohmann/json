@@ -40,13 +40,13 @@ bool accept_helper(const std::string& s);
 json parser_helper(const std::string& s)
 {
     json j;
-    json::parser(nlohmann::detail::input_adapter_factory::create(s)).parse(true, j);
+    json::parser(nlohmann::detail::input_adapter(s)).parse(true, j);
     return j;
 }
 
 bool accept_helper(const std::string& s)
 {
-    return json::parser(nlohmann::detail::input_adapter_factory::create(s)).accept(true);
+    return json::parser(nlohmann::detail::input_adapter(s)).accept(true);
 }
 
 TEST_CASE("parser class")
@@ -1009,7 +1009,7 @@ TEST_CASE("parser class")
                 case ('r'):
                 case ('t'):
                 {
-                    CHECK(json::parser(nlohmann::detail::input_adapter_factory::create(std::string(s.c_str()))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s.c_str()))).accept());
                     break;
                 }
 
@@ -1022,7 +1022,7 @@ TEST_CASE("parser class")
                 // any other combination of backslash and character is invalid
                 default:
                 {
-                    CHECK(json::parser(nlohmann::detail::input_adapter_factory::create(std::string(s.c_str()))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s.c_str()))).accept() == false);
                     break;
                 }
             }
@@ -1081,27 +1081,27 @@ TEST_CASE("parser class")
                 if (valid(c))
                 {
                     CAPTURE(s1);
-                    CHECK(json::parser(nlohmann::detail::input_adapter_factory::create(std::string(s1.c_str()))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s1.c_str()))).accept());
                     CAPTURE(s2);
-                    CHECK(json::parser(nlohmann::detail::input_adapter_factory::create(std::string(s2.c_str()))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s2.c_str()))).accept());
                     CAPTURE(s3);
-                    CHECK(json::parser(nlohmann::detail::input_adapter_factory::create(std::string(s3.c_str()))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s3.c_str()))).accept());
                     CAPTURE(s4);
-                    CHECK(json::parser(nlohmann::detail::input_adapter_factory::create(std::string(s4.c_str()))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s4.c_str()))).accept());
                 }
                 else
                 {
                     CAPTURE(s1);
-                    CHECK(json::parser(nlohmann::detail::input_adapter_factory::create(std::string(s1.c_str()))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s1.c_str()))).accept() == false);
 
                     CAPTURE(s2);
-                    CHECK(json::parser(nlohmann::detail::input_adapter_factory::create(std::string(s2.c_str()))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s2.c_str()))).accept() == false);
 
                     CAPTURE(s3);
-                    CHECK(json::parser(nlohmann::detail::input_adapter_factory::create(std::string(s3.c_str()))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s3.c_str()))).accept() == false);
 
                     CAPTURE(s4);
-                    CHECK(json::parser(nlohmann::detail::input_adapter_factory::create(std::string(s4.c_str()))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s4.c_str()))).accept() == false);
                 }
             }
         }
@@ -1311,7 +1311,7 @@ TEST_CASE("parser class")
         {
             std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
             json j;
-            json::parser(nlohmann::detail::input_adapter_factory::create(std::begin(v), std::end(v))).parse(true, j);
+            json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
         }
 
@@ -1319,7 +1319,7 @@ TEST_CASE("parser class")
         {
             std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
             json j;
-            json::parser(nlohmann::detail::input_adapter_factory::create(std::begin(v), std::end(v))).parse(true, j);
+            json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
         }
 
@@ -1327,7 +1327,7 @@ TEST_CASE("parser class")
         {
             uint8_t v[] = {'t', 'r', 'u', 'e'};
             json j;
-            json::parser(nlohmann::detail::input_adapter_factory::create(std::begin(v), std::end(v))).parse(true, j);
+            json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
         }
 
@@ -1340,7 +1340,7 @@ TEST_CASE("parser class")
         {
             std::string v = {'t', 'r', 'u', 'e'};
             json j;
-            json::parser(nlohmann::detail::input_adapter_factory::create(std::begin(v), std::end(v))).parse(true, j);
+            json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
         }
 
@@ -1348,7 +1348,7 @@ TEST_CASE("parser class")
         {
             std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e'};
             json j;
-            json::parser(nlohmann::detail::input_adapter_factory::create(std::begin(v), std::end(v))).parse(true, j);
+            json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
         }
 
@@ -1356,7 +1356,7 @@ TEST_CASE("parser class")
         {
             std::valarray<uint8_t> v = {'t', 'r', 'u', 'e'};
             json j;
-            json::parser(nlohmann::detail::input_adapter_factory::create(std::begin(v), std::end(v))).parse(true, j);
+            json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
         }
     }

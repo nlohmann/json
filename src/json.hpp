@@ -1267,19 +1267,19 @@ constexpr T static_const<T>::value;
 ////////////////////
 
 /// abstract input adapter interface
-struct input_adapter
+struct input_adapter_protocol
 {
     virtual int get_character() = 0;
     virtual std::string read(std::size_t offset, std::size_t length) = 0;
-    virtual ~input_adapter() = default;
+    virtual ~input_adapter_protocol() = default;
 };
 
 /// a type to simplify interfaces
-using input_adapter_t = std::shared_ptr<input_adapter>;
+using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
 
 /// input adapter for cached stream input
 template<std::size_t N>
-class cached_input_stream_adapter : public input_adapter
+class cached_input_stream_adapter : public input_adapter_protocol
 {
   public:
     explicit cached_input_stream_adapter(std::istream& i)
@@ -1386,7 +1386,7 @@ class cached_input_stream_adapter : public input_adapter
 };
 
 /// input adapter for buffer input
-class input_buffer_adapter : public input_adapter
+class input_buffer_adapter : public input_adapter_protocol
 {
   public:
     input_buffer_adapter(const char* b, std::size_t l)
@@ -1429,27 +1429,22 @@ class input_buffer_adapter : public input_adapter
     const char* start;
 };
 
-struct input_adapter_factory
+class input_adapter
 {
+  public:
     // native support
 
     /// input adapter for input stream
-    static std::shared_ptr<input_adapter> create(std::istream& i)
-    {
-        return std::make_shared<cached_input_stream_adapter<16384>> (i);
-    }
+    input_adapter(std::istream& i)
+        : ia(std::make_shared<cached_input_stream_adapter<16384>>(i)) {}
 
     /// input adapter for input stream
-    static std::shared_ptr<input_adapter> create(std::istream&& i)
-    {
-        return std::make_shared<cached_input_stream_adapter<16384>>(i);
-    }
+    input_adapter(std::istream&& i)
+        : ia(std::make_shared<cached_input_stream_adapter<16384>>(i)) {}
 
     /// input adapter for buffer
-    static std::shared_ptr<input_adapter> create(const char* b, std::size_t l)
-    {
-        return std::make_shared<input_buffer_adapter>(b, l);
-    }
+    input_adapter(const char* b, std::size_t l)
+        : ia(std::make_shared<input_buffer_adapter>(b, l)) {}
 
     // derived support
 
@@ -1461,11 +1456,9 @@ struct input_adapter_factory
                       typename std::remove_pointer<CharT>::type>::value and
                   sizeof(typename std::remove_pointer<CharT>::type) == 1,
                   int>::type = 0>
-    static std::shared_ptr<input_adapter> create(CharT b)
-    {
-        return create(reinterpret_cast<const char*>(b),
-                      std::strlen(reinterpret_cast<const char*>(b)));
-    }
+    input_adapter(CharT b)
+        : input_adapter(reinterpret_cast<const char*>(b),
+                        std::strlen(reinterpret_cast<const char*>(b))) {}
 
     /// input adapter for iterator range with contiguous storage
     template <class IteratorType,
@@ -1474,8 +1467,7 @@ struct input_adapter_factory
                                    IteratorType>::iterator_category,
                                std::random_access_iterator_tag>::value,
                   int>::type = 0>
-    static std::shared_ptr<input_adapter> create(IteratorType first,
-            IteratorType last)
+    input_adapter(IteratorType first, IteratorType last)
     {
         // assertion to check that the iterator range is indeed contiguous,
         // see http://stackoverflow.com/a/35008842/266378 for more discussion
@@ -1496,22 +1488,19 @@ struct input_adapter_factory
         if (JSON_LIKELY(len > 0))
         {
             // there is at least one element: use the address of first
-            return create(reinterpret_cast<const char*>(&(*first)), len);
+            ia = std::make_shared<input_buffer_adapter>(reinterpret_cast<const char*>(&(*first)), len);
         }
         else
         {
             // the address of first cannot be used - use nullptr
-            return create(nullptr, len);
+            ia = std::make_shared<input_buffer_adapter>(nullptr, len);
         }
     }
 
     /// input adapter for array
     template <class T, std::size_t N>
-    static std::shared_ptr<input_adapter> create(T (&array)[N])
-    {
-        // delegate the call to the iterator-range overload
-        return create(std::begin(array), std::end(array));
-    }
+    input_adapter(T (&array)[N])
+        : input_adapter(std::begin(array), std::end(array)) {}
 
     /// input adapter for contiguous container
     template <
@@ -1523,11 +1512,17 @@ struct input_adapter_factory
                                         std::declval<ContiguousContainer const>()))>::
                             iterator_category>::value,
             int >::type = 0 >
-    static std::shared_ptr<input_adapter> create(const ContiguousContainer& c)
+    input_adapter(const ContiguousContainer& c)
+        : input_adapter(std::begin(c), std::end(c)) {}
+
+    operator input_adapter_t()
     {
-        // delegate the call to the iterator-range overload
-        return create(std::begin(c), std::end(c));
+        return ia;
     }
+
+  private:
+    /// the actual adapter
+    input_adapter_t ia = nullptr;
 };
 
 //////////////////////
@@ -12817,15 +12812,36 @@ class basic_json
     /// @{
 
     /*!
-    @brief deserialize from an array
+    @brief deserialize from a compatible input
 
-    This function reads from an array of 1-byte values.
+    This function reads from a compatible input. Examples are:
+    - an array of 1-byte values
+    - strings with character/literal type with size of 1 byte
+    - input streams
+    - container with contiguous storage of 1-byte values. Compatible container
+      types include `std::vector`, `std::string`, `std::array`,
+      `std::valarray`, and `std::initializer_list`. Furthermore, C-style
+      arrays can be used with `std::begin()`/`std::end()`. User-defined
+      containers can be used as long as they implement random-access iterators
+      and a contiguous storage.
 
     @pre Each element of the container has a size of 1 byte. Violating this
     precondition yields undefined behavior. **This precondition is enforced
     with a static assertion.**
 
-    @param[in] array  array to read from
+    @pre The container storage is contiguous. Violating this precondition
+    yields undefined behavior. **This precondition is enforced with an
+    assertion.**
+    @pre Each element of the container has a size of 1 byte. Violating this
+    precondition yields undefined behavior. **This precondition is enforced
+    with a static assertion.**
+
+    @warning There is no way to enforce all preconditions at compile-time. If
+             the function is called with a noncompliant container and with
+             assertions switched off, the behavior is undefined and will most
+             likely yield segmentation violation.
+
+    @param[in] i  input to read from
     @param[in] cb  a parser callback function of type @ref parser_callback_t
     which is used to control the deserialization by filtering unwanted values
     (optional)
@@ -12846,130 +12862,44 @@ class basic_json
     @liveexample{The example below demonstrates the `parse()` function reading
     from an array.,parse__array__parser_callback_t}
 
-    @since version 2.0.3
-    */
-    template<class T, std::size_t N>
-    static basic_json parse(T (&array)[N],
-                            const parser_callback_t cb = nullptr)
-    {
-        // delegate the call to the iterator-range parse overload
-        return parse(std::begin(array), std::end(array), cb);
-    }
-
-    template<class T, std::size_t N>
-    static bool accept(T (&array)[N])
-    {
-        // delegate the call to the iterator-range accept overload
-        return accept(std::begin(array), std::end(array));
-    }
-
-    /*!
-    @brief deserialize from string literal
-
-    @tparam CharT character/literal type with size of 1 byte
-    @param[in] s  string literal to read a serialized JSON value from
-    @param[in] cb a parser callback function of type @ref parser_callback_t
-    which is used to control the deserialization by filtering unwanted values
-    (optional)
-
-    @return result of the deserialization
-
-    @throw parse_error.101 in case of an unexpected token
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
-
-    @complexity Linear in the length of the input. The parser is a predictive
-    LL(1) parser. The complexity can be higher if the parser callback function
-    @a cb has a super-linear complexity.
-
-    @note A UTF-8 byte order mark is silently ignored.
-    @note String containers like `std::string` or @ref string_t can be parsed
-          with @ref parse(const ContiguousContainer&, const parser_callback_t)
-
     @liveexample{The example below demonstrates the `parse()` function with
     and without callback function.,parse__string__parser_callback_t}
-
-    @sa @ref parse(std::istream&, const parser_callback_t) for a version that
-    reads from an input stream
-
-    @since version 1.0.0 (originally for @ref string_t)
-    */
-    template<typename CharT, typename std::enable_if<
-                 std::is_pointer<CharT>::value and
-                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-                 sizeof(typename std::remove_pointer<CharT>::type) == 1, int>::type = 0>
-    static basic_json parse(const CharT s,
-                            const parser_callback_t cb = nullptr)
-    {
-        basic_json result;
-        parser(detail::input_adapter_factory::create(s), cb).parse(true, result);
-        return result;
-    }
-
-    template<typename CharT, typename std::enable_if<
-                 std::is_pointer<CharT>::value and
-                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-                 sizeof(typename std::remove_pointer<CharT>::type) == 1, int>::type = 0>
-    static bool accept(const CharT s)
-    {
-        return parser(detail::input_adapter_factory::create(s)).accept(true);
-    }
-
-    /*!
-    @brief deserialize from stream
-
-    @param[in,out] i  stream to read a serialized JSON value from
-    @param[in] cb a parser callback function of type @ref parser_callback_t
-    which is used to control the deserialization by filtering unwanted values
-    (optional)
-
-    @return result of the deserialization
-
-    @throw parse_error.101 in case of an unexpected token
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
-
-    @complexity Linear in the length of the input. The parser is a predictive
-    LL(1) parser. The complexity can be higher if the parser callback function
-    @a cb has a super-linear complexity.
-
-    @note A UTF-8 byte order mark is silently ignored.
 
     @liveexample{The example below demonstrates the `parse()` function with
     and without callback function.,parse__istream__parser_callback_t}
 
-    @sa @ref parse(const CharT, const parser_callback_t) for a version
-    that reads from a string
+    @liveexample{The example below demonstrates the `parse()` function reading
+    from a contiguous container.,parse__contiguouscontainer__parser_callback_t}
 
-    @since version 1.0.0
+    @since version 2.0.3 (contiguous containers)
     */
-    static basic_json parse(std::istream& i,
+    static basic_json parse(detail::input_adapter i,
                             const parser_callback_t cb = nullptr)
     {
         basic_json result;
-        parser(detail::input_adapter_factory::create(i), cb).parse(true, result);
+        parser(i, cb).parse(true, result);
         return result;
-    }
-
-    static bool accept(std::istream& i)
-    {
-        return parser(detail::input_adapter_factory::create(i)).accept(true);
     }
 
     /*!
-    @copydoc parse(std::istream&, const parser_callback_t)
+    @copydoc basic_json parse(detail::input_adapter, const parser_callback_t)
     */
-    static basic_json parse(std::istream&& i,
+    static basic_json parse(detail::input_adapter& i,
                             const parser_callback_t cb = nullptr)
     {
         basic_json result;
-        parser(detail::input_adapter_factory::create(i), cb).parse(true, result);
+        parser(i, cb).parse(true, result);
         return result;
     }
 
-    static bool accept(std::istream&& i)
+    static bool accept(detail::input_adapter i)
     {
-        return parser(detail::input_adapter_factory::create(i)).accept(true);
+        return parser(i).accept(true);
+    }
+
+    static bool accept(detail::input_adapter& i)
+    {
+        return parser(i).accept(true);
     }
 
     /*!
@@ -13025,7 +12955,7 @@ class basic_json
                             const parser_callback_t cb = nullptr)
     {
         basic_json result;
-        parser(detail::input_adapter_factory::create(first, last), cb).parse(true, result);
+        parser(detail::input_adapter(first, last), cb).parse(true, result);
         return result;
     }
 
@@ -13035,76 +12965,7 @@ class basic_json
                      typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
     static bool accept(IteratorType first, IteratorType last)
     {
-        return parser(detail::input_adapter_factory::create(first, last)).accept(true);
-    }
-
-    /*!
-    @brief deserialize from a container with contiguous storage
-
-    This function reads from a container with contiguous storage of 1-byte
-    values. Compatible container types include `std::vector`, `std::string`,
-    `std::array`, and `std::initializer_list`. User-defined containers can be
-    used as long as they implement random-access iterators and a contiguous
-    storage.
-
-    @pre The container storage is contiguous. Violating this precondition
-    yields undefined behavior. **This precondition is enforced with an
-    assertion.**
-    @pre Each element of the container has a size of 1 byte. Violating this
-    precondition yields undefined behavior. **This precondition is enforced
-    with a static assertion.**
-
-    @warning There is no way to enforce all preconditions at compile-time. If
-             the function is called with a noncompliant container and with
-             assertions switched off, the behavior is undefined and will most
-             likely yield segmentation violation.
-
-    @tparam ContiguousContainer container type with contiguous storage
-    @param[in] c  container to read from
-    @param[in] cb  a parser callback function of type @ref parser_callback_t
-    which is used to control the deserialization by filtering unwanted values
-    (optional)
-
-    @return result of the deserialization
-
-    @throw parse_error.101 in case of an unexpected token
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
-
-    @complexity Linear in the length of the input. The parser is a predictive
-    LL(1) parser. The complexity can be higher if the parser callback function
-    @a cb has a super-linear complexity.
-
-    @note A UTF-8 byte order mark is silently ignored.
-
-    @liveexample{The example below demonstrates the `parse()` function reading
-    from a contiguous container.,parse__contiguouscontainer__parser_callback_t}
-
-    @since version 2.0.3
-    */
-    template<class ContiguousContainer, typename std::enable_if<
-                 not std::is_pointer<ContiguousContainer>::value and
-                 std::is_base_of<
-                     std::random_access_iterator_tag,
-                     typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value
-                 , int>::type = 0>
-    static basic_json parse(const ContiguousContainer& c,
-                            const parser_callback_t cb = nullptr)
-    {
-        // delegate the call to the iterator-range parse overload
-        return parse(std::begin(c), std::end(c), cb);
-    }
-
-    template<class ContiguousContainer, typename std::enable_if<
-                 not std::is_pointer<ContiguousContainer>::value and
-                 std::is_base_of<
-                     std::random_access_iterator_tag,
-                     typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value
-                 , int>::type = 0>
-    static bool accept(const ContiguousContainer& c)
-    {
-        // delegate the call to the iterator-range accept overload
-        return accept(std::begin(c), std::end(c));
+        return parser(detail::input_adapter(first, last)).accept(true);
     }
 
     /*!
@@ -13117,7 +12978,7 @@ class basic_json
     JSON_DEPRECATED
     friend std::istream& operator<<(basic_json& j, std::istream& i)
     {
-        parser(detail::input_adapter_factory::create(i)).parse(false, j);
+        parser(detail::input_adapter(i)).parse(false, j);
         return i;
     }
 
@@ -13148,7 +13009,7 @@ class basic_json
     */
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
-        parser(detail::input_adapter_factory::create(i)).parse(false, j);
+        parser(detail::input_adapter(i)).parse(false, j);
         return i;
     }
 
@@ -13478,7 +13339,7 @@ class basic_json
     static basic_json from_cbor(const std::vector<uint8_t>& v,
                                 const std::size_t start_index = 0)
     {
-        binary_reader br(detail::input_adapter_factory::create(v.begin() + static_cast<difference_type>(start_index), v.end()));
+        binary_reader br(detail::input_adapter(v.begin() + static_cast<difference_type>(start_index), v.end()));
         return br.parse_cbor();
     }
 
@@ -13553,7 +13414,7 @@ class basic_json
     static basic_json from_msgpack(const std::vector<uint8_t>& v,
                                    const std::size_t start_index = 0)
     {
-        binary_reader br(detail::input_adapter_factory::create(v.begin() + static_cast<difference_type>(start_index), v.end()));
+        binary_reader br(detail::input_adapter(v.begin() + static_cast<difference_type>(start_index), v.end()));
         return br.parse_msgpack();
     }
 
