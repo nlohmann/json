@@ -7088,50 +7088,55 @@ struct json_ref
     typedef BasicJsonType value_type;
 
     json_ref(value_type&&  value)
-        : value_(std::move(value))
+        : value_ref_(&value)
         , is_rvalue_(true)
     {}
 
     json_ref(const value_type& value)
-        : value_(value)
+        : value_ref_(const_cast<value_type*>(&value))
         , is_rvalue_(false)
     {}
 
     json_ref(std::initializer_list<json_ref> init)
-        : value_(init)
+        : owned_value_(init)
         , is_rvalue_(true)
-    {}
+    {
+        value_ref_ = &owned_value_;
+    }
 
     template <class... Args>
     json_ref(Args... args)
-        : value_(std::forward<Args>(args)...)
+        : owned_value_(std::forward<Args>(args)...)
         , is_rvalue_(true)
-    {}
+    {
+        value_ref_ = &owned_value_;
+    }
 
-    value_type moved() const
+    value_type moved_or_copied() const
     {
         if (is_rvalue_)
         {
-            return std::move(value_);
+            return std::move(*value_ref_);
         }
         else
         {
-            return value_;
+            return *value_ref_;
         }
     }
 
     value_type const& operator*() const
     {
-        return value_;
+        return *static_cast<value_type const*>(value_ref_);
     }
 
     value_type const* operator->() const
     {
-        return &value_;
+        return static_cast<value_type const*>(value_ref_);
     }
 
   private:
-    mutable value_type value_;
+    value_type * value_ref_;
+    mutable value_type owned_value_;
     bool is_rvalue_;
 };
 
@@ -8747,7 +8752,7 @@ class basic_json
 
             std::for_each(init.begin(), init.end(), [this](const detail::json_ref<basic_json>& element_ref)
             {
-                basic_json element = element_ref.moved();
+                basic_json element = element_ref.moved_or_copied();
                 m_value.object->emplace(
                     std::move(*((*element.m_value.array)[0].m_value.string)),
                     std::move((*element.m_value.array)[1]));
@@ -9010,7 +9015,7 @@ class basic_json
     ///////////////////////////////////////
 
     basic_json(const detail::json_ref<basic_json>& ref)
-        : basic_json(ref.moved())
+        : basic_json(ref.moved_or_copied())
     {
     }
 
@@ -11935,8 +11940,9 @@ class basic_json
     {
         if (is_object() and init.size() == 2 and (*init.begin())->is_string())
         {
-            basic_json&&  key = init.begin()->moved();
-            push_back(typename object_t::value_type(std::move(key.get_ref<string_t&>()), (init.begin() + 1)->moved()));
+            basic_json&&  key = init.begin()->moved_or_copied();
+            push_back(typename object_t::value_type(
+                        std::move(key.get_ref<string_t&>()), (init.begin() + 1)->moved_or_copied()));
         }
         else
         {
