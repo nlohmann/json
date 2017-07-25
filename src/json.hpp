@@ -7088,9 +7088,11 @@ struct json_ref
     typedef BasicJsonType value_type;
 
     json_ref(value_type&&  value)
-        : value_ref_(&value)
+        : owned_value_(std::move(value))
         , is_rvalue_(true)
-    {}
+    {
+        value_ref_ = &owned_value_;
+    }
 
     json_ref(const value_type& value)
         : value_ref_(const_cast<value_type*>(&value))
