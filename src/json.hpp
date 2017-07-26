@@ -3618,7 +3618,7 @@ class primitive_iterator_t
         return lhs.m_it - rhs.m_it;
     }
 
-    friend constexpr std::ostream& operator<<(std::ostream& os, primitive_iterator_t it)
+    friend std::ostream& operator<<(std::ostream& os, primitive_iterator_t it)
     {
         return os << it.m_it;
     }

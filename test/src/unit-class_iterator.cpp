@@ -166,32 +166,32 @@ TEST_CASE("iterator class")
             {
                 json j(json::value_t::null);
                 json::iterator it = j.begin();
-                CHECK_THROWS_AS(it->type_name(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(it->type_name(), "[json.exception.invalid_iterator.214] cannot get value");
+                CHECK_THROWS_AS(std::string(it->type_name()), json::invalid_iterator&);
+                CHECK_THROWS_WITH(std::string(it->type_name()), "[json.exception.invalid_iterator.214] cannot get value");
             }
 
             SECTION("number")
             {
                 json j(17);
                 json::iterator it = j.begin();
-                CHECK(it->type_name() == "number");
+                CHECK(std::string(it->type_name()) == "number");
                 it = j.end();
-                CHECK_THROWS_AS(it->type_name(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(it->type_name(), "[json.exception.invalid_iterator.214] cannot get value");
+                CHECK_THROWS_AS(std::string(it->type_name()), json::invalid_iterator&);
+                CHECK_THROWS_WITH(std::string(it->type_name()), "[json.exception.invalid_iterator.214] cannot get value");
             }
 
             SECTION("object")
             {
                 json j({{"foo", "bar"}});
                 json::iterator it = j.begin();
-                CHECK(it->type_name() == "string");
+                CHECK(std::string(it->type_name()) == "string");
             }
 
             SECTION("array")
             {
                 json j({1, 2, 3, 4});
                 json::iterator it = j.begin();
-                CHECK(it->type_name() == "number");
+                CHECK(std::string(it->type_name()) == "number");
             }
         }
     }
