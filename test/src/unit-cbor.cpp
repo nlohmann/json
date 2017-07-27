@@ -1284,6 +1284,25 @@ TEST_CASE("single CBOR roundtrip")
         // compare parsed JSON values
         CHECK(j1 == j2);
 
+        SECTION("roundtrips")
+        {
+            SECTION("std::ostringstream")
+            {
+                std::ostringstream ss;
+                json::to_cbor(j1, ss);
+                json j3 = json::from_cbor(ss.str());
+                CHECK(j1 == j3);
+            }
+
+            SECTION("std::string")
+            {
+                std::string s;
+                json::to_cbor(j1, s);
+                json j3 = json::from_cbor(s);
+                CHECK(j1 == j3);
+            }
+        }
+
         // check with different start index
         packed.insert(packed.begin(), 5, 0xff);
         CHECK(j1 == json::from_cbor(packed, 5));
