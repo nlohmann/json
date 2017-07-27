@@ -3071,8 +3071,11 @@ class parser
 
     /// a parser reading from an input adapter
     explicit parser(detail::input_adapter_t adapter,
-                    const parser_callback_t cb = nullptr)
-        : callback(cb), m_lexer(adapter) {}
+                    const parser_callback_t cb = nullptr,
+                    const bool allow_exceptions_ = true)
+        : callback(cb), m_lexer(adapter),
+          allow_exceptions(allow_exceptions_)
+    {}
 
     /*!
     @brief public parser interface
@@ -3092,10 +3095,18 @@ class parser
         parse_internal(true, result);
         result.assert_invariant();
 
+        // in strict mode, input must be completely read
         if (strict)
         {
             get_token();
             expect(token_type::end_of_input);
+        }
+
+        // in case of an error, return discarded value
+        if (errored)
+        {
+            result = value_t::discarded;
+            return;
         }
 
         // set top-level value to null if it was discarded by the callback
@@ -3176,7 +3187,10 @@ class parser
                 while (true)
                 {
                     // store key
-                    expect(token_type::value_string);
+                    if (not expect(token_type::value_string))
+                    {
+                        return;
+                    }
                     const auto key = m_lexer.get_string();
 
                     bool keep_tag = false;
@@ -3195,7 +3209,10 @@ class parser
 
                     // parse separator (:)
                     get_token();
-                    expect(token_type::name_separator);
+                    if (not expect(token_type::name_separator))
+                    {
+                        return;
+                    }
 
                     // parse and add value
                     get_token();
@@ -3216,7 +3233,10 @@ class parser
                     }
 
                     // closing }
-                    expect(token_type::end_object);
+                    if (not expect(token_type::end_object))
+                    {
+                        return;
+                    }
                     break;
                 }
 
@@ -3273,7 +3293,10 @@ class parser
                     }
 
                     // closing ]
-                    expect(token_type::end_array);
+                    if (not expect(token_type::end_array))
+                    {
+                        return;
+                    }
                     break;
                 }
 
@@ -3334,8 +3357,15 @@ class parser
                 // throw in case of infinity or NAN
                 if (JSON_UNLIKELY(not std::isfinite(result.m_value.number_float)))
                 {
-                    JSON_THROW(out_of_range::create(406, "number overflow parsing '" +
-                                                    m_lexer.get_token_string() + "'"));
+                    if (allow_exceptions)
+                    {
+                        JSON_THROW(out_of_range::create(406, "number overflow parsing '" +
+                                                        m_lexer.get_token_string() + "'"));
+                    }
+                    else
+                    {
+                        expect(token_type::uninitialized);
+                    }
                 }
                 break;
             }
@@ -3343,14 +3373,20 @@ class parser
             case token_type::parse_error:
             {
                 // using "uninitialized" to avoid "expected" message
-                expect(token_type::uninitialized);
+                if (not expect(token_type::uninitialized))
+                {
+                    return;
+                }
                 break; // LCOV_EXCL_LINE
             }
 
             default:
             {
                 // the last token was unexpected; we expected a value
-                expect(token_type::literal_or_value);
+                if (not expect(token_type::literal_or_value))
+                {
+                    return;
+                }
                 break; // LCOV_EXCL_LINE
             }
         }
@@ -3455,10 +3491,15 @@ class parser
                 }
             }
 
+            case token_type::value_float:
+            {
+                // reject infinity or NAN
+                return std::isfinite(m_lexer.get_number_float());
+            }
+
             case token_type::literal_false:
             case token_type::literal_null:
             case token_type::literal_true:
-            case token_type::value_float:
             case token_type::value_integer:
             case token_type::value_string:
             case token_type::value_unsigned:
@@ -3483,14 +3524,23 @@ class parser
     /*!
     @throw parse_error.101 if expected token did not occur
     */
-    void expect(token_type t)
+    bool expect(token_type t)
     {
         if (JSON_UNLIKELY(t != last_token))
         {
             errored = true;
             expected = t;
-            throw_exception();
+            if (allow_exceptions)
+            {
+                throw_exception();
+            }
+            else
+            {
+                return false;
+            }
         }
+
+        return true;
     }
 
     [[noreturn]] void throw_exception() const
@@ -3527,6 +3577,8 @@ class parser
     bool errored = false;
     /// possible reason for the syntax error
     token_type expected = token_type::uninitialized;
+    /// whether to throw exceptions in case of errors
+    const bool allow_exceptions = true;
 };
 
 ///////////////
@@ -12823,10 +12875,11 @@ class basic_json
     @since version 2.0.3 (contiguous containers)
     */
     static basic_json parse(detail::input_adapter i,
-                            const parser_callback_t cb = nullptr)
+                            const parser_callback_t cb = nullptr,
+                            const bool allow_exceptions = true)
     {
         basic_json result;
-        parser(i, cb).parse(true, result);
+        parser(i, cb, allow_exceptions).parse(true, result);
         return result;
     }
 
@@ -12834,10 +12887,11 @@ class basic_json
     @copydoc basic_json parse(detail::input_adapter, const parser_callback_t)
     */
     static basic_json parse(detail::input_adapter& i,
-                            const parser_callback_t cb = nullptr)
+                            const parser_callback_t cb = nullptr,
+                            const bool allow_exceptions = true)
     {
         basic_json result;
-        parser(i, cb).parse(true, result);
+        parser(i, cb, allow_exceptions).parse(true, result);
         return result;
     }
 
@@ -12901,10 +12955,11 @@ class basic_json
                      std::random_access_iterator_tag,
                      typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
     static basic_json parse(IteratorType first, IteratorType last,
-                            const parser_callback_t cb = nullptr)
+                            const parser_callback_t cb = nullptr,
+                            const bool allow_exceptions = true)
     {
         basic_json result;
-        parser(detail::input_adapter(first, last), cb).parse(true, result);
+        parser(detail::input_adapter(first, last), cb, allow_exceptions).parse(true, result);
         return result;
     }
 
