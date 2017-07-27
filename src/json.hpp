@@ -4333,7 +4333,7 @@ template<typename IteratorType> class iteration_proxy
         }
 
         /// inequality operator (needed for range-based for)
-        constexpr bool operator!=(const iteration_proxy_internal& o) const
+        bool operator!=(const iteration_proxy_internal& o) const noexcept
         {
             return anchor != o.anchor;
         }
