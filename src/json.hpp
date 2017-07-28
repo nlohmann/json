@@ -134,19 +134,18 @@ class basic_json;
 // Ugly macros to avoid uglier copy-paste when specializing basic_json
 // This is only temporary and will be removed in 3.0
 
-#define NLOHMANN_BASIC_JSON_TPL_DECLARATION                                 \
-    template<template<typename, typename, typename...> class ObjectType,  \
-             template<typename, typename...> class ArrayType,             \
+#define NLOHMANN_BASIC_JSON_TPL_DECLARATION                                \
+    template<template<typename, typename, typename...> class ObjectType,   \
+             template<typename, typename...> class ArrayType,              \
              class StringType, class BooleanType, class NumberIntegerType, \
              class NumberUnsignedType, class NumberFloatType,              \
-             template<typename> class AllocatorType,                      \
+             template<typename> class AllocatorType,                       \
              template<typename, typename = void> class JSONSerializer>
 
-#define NLOHMANN_BASIC_JSON_TPL                                             \
-    basic_json<ObjectType, ArrayType, StringType, BooleanType,              \
-    NumberIntegerType, NumberUnsignedType, NumberFloatType,                 \
+#define NLOHMANN_BASIC_JSON_TPL                                            \
+    basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
+    NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
     AllocatorType, JSONSerializer>
-
 
 
 /*!
@@ -509,13 +508,13 @@ struct merge_and_renumber;
 template<std::size_t... I1, std::size_t... I2>
 struct merge_and_renumber<index_sequence<I1...>, index_sequence<I2...>>
         : index_sequence < I1..., (sizeof...(I1) + I2)... >
-          { };
+          {};
 
 template<std::size_t N>
 struct make_index_sequence
     : merge_and_renumber < typename make_index_sequence < N / 2 >::type,
       typename make_index_sequence < N - N / 2 >::type >
-{ };
+{};
 
 template<> struct make_index_sequence<0> : index_sequence<> { };
 template<> struct make_index_sequence<1> : index_sequence<0> { };
@@ -665,8 +664,7 @@ struct external_constructor<value_t::object>
 
     template<typename BasicJsonType, typename CompatibleObjectType,
              enable_if_t<not std::is_same<CompatibleObjectType,
-                                          typename BasicJsonType::object_t>::value,
-                         int> = 0>
+                                          typename BasicJsonType::object_t>::value, int> = 0>
     static void construct(BasicJsonType& j, const CompatibleObjectType& obj)
     {
         using std::begin;
@@ -1118,9 +1116,7 @@ void from_json(const BasicJsonType& j, CompatibleObjectType& obj)
         std::inserter(obj, obj.begin()),
         [](typename BasicJsonType::object_t::value_type const & p)
     {
-        return value_type(
-                   p.first, p.second
-                   .template get<typename CompatibleObjectType::mapped_type>());
+        return value_type(p.first, p.second.template get<typename CompatibleObjectType::mapped_type>());
     });
 }
 
@@ -1264,7 +1260,7 @@ struct input_adapter_protocol
 using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
 
 /// input adapter for cached stream input
-template<std::size_t N>
+template<std::size_t BufferSize>
 class cached_input_stream_adapter : public input_adapter_protocol
 {
   public:
@@ -1368,14 +1364,14 @@ class cached_input_stream_adapter : public input_adapter_protocol
     const std::streampos start_position;
 
     /// internal buffer
-    std::array<char, N> buffer{{}};
+    std::array<char, BufferSize> buffer{{}};
 };
 
 /// input adapter for buffer input
 class input_buffer_adapter : public input_adapter_protocol
 {
   public:
-    input_buffer_adapter(const char* b, std::size_t l)
+    input_buffer_adapter(const char* b, const std::size_t l)
         : cursor(b), limit(b + l), start(b)
     {
         // skip byte order mark
@@ -1456,8 +1452,7 @@ class input_adapter
     /// input adapter for iterator range with contiguous storage
     template<class IteratorType,
              typename std::enable_if<
-                 std::is_same<typename std::iterator_traits<
-                                  IteratorType>::iterator_category,
+                 std::is_same<typename std::iterator_traits<IteratorType>::iterator_category,
                               std::random_access_iterator_tag>::value,
                  int>::type = 0>
     input_adapter(IteratorType first, IteratorType last)
@@ -1485,7 +1480,7 @@ class input_adapter
         }
         else
         {
-            // the address of first cannot be used - use nullptr
+            // the address of first cannot be used: use nullptr
             ia = std::make_shared<input_buffer_adapter>(nullptr, len);
         }
     }
@@ -1501,9 +1496,7 @@ class input_adapter
         typename std::enable_if <
             not std::is_pointer<ContiguousContainer>::value and
             std::is_base_of<std::random_access_iterator_tag,
-                            typename std::iterator_traits<decltype(std::begin(
-                                        std::declval<ContiguousContainer const>()))>::
-                            iterator_category>::value,
+                            typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
             int >::type = 0 >
     input_adapter(const ContiguousContainer& c)
         : input_adapter(std::begin(c), std::end(c)) {}
@@ -1629,7 +1622,17 @@ class lexer
     /*!
     @brief get codepoint from 4 hex characters following `\u`
 
-    @return codepoint or -1 in case of an error (e.g. EOF or non-hex character)
+    For input "\u c1 c2 c3 c4" the codepoint is:
+      (c1 * 0x1000) + (c2 * 0x0100) + (c3 * 0x0010) + c4
+    = (c1 << 12) + (c2 << 8) + (c3 << 4) + (c4 << 0)
+
+    Furthermore, the possible characters '0'..'9', 'A'..'F', and 'a'..'f'
+    must be converted to the integers 0x0..0x9, 0xA..0xF, 0xA..0xF, resp. The
+    conversion is done by subtracting the offset (0x30, 0x37, and 0x57)
+    between the ASCII value of the character and the desired integer value.
+
+    @return codepoint (0x0000..0xFFFF) or -1 in case of an error (e.g. EOF or
+            non-hex character)
     */
     int get_codepoint()
     {
@@ -1637,247 +1640,60 @@ class lexer
         assert(current == 'u');
         int codepoint = 0;
 
-        // byte 1: \uXxxx
-        switch (get())
+        for (int factor = 12; factor >= 0; factor -= 4)
         {
-            case '0':
-                break;
-            case '1':
-                codepoint += 0x1000;
-                break;
-            case '2':
-                codepoint += 0x2000;
-                break;
-            case '3':
-                codepoint += 0x3000;
-                break;
-            case '4':
-                codepoint += 0x4000;
-                break;
-            case '5':
-                codepoint += 0x5000;
-                break;
-            case '6':
-                codepoint += 0x6000;
-                break;
-            case '7':
-                codepoint += 0x7000;
-                break;
-            case '8':
-                codepoint += 0x8000;
-                break;
-            case '9':
-                codepoint += 0x9000;
-                break;
-            case 'A':
-            case 'a':
-                codepoint += 0xa000;
-                break;
-            case 'B':
-            case 'b':
-                codepoint += 0xb000;
-                break;
-            case 'C':
-            case 'c':
-                codepoint += 0xc000;
-                break;
-            case 'D':
-            case 'd':
-                codepoint += 0xd000;
-                break;
-            case 'E':
-            case 'e':
-                codepoint += 0xe000;
-                break;
-            case 'F':
-            case 'f':
-                codepoint += 0xf000;
-                break;
-            default:
+            get();
+
+            if (current >= '0' and current <= '9')
+            {
+                codepoint += ((current - 0x30) << factor);
+            }
+            else if (current >= 'A' and current <= 'F')
+            {
+                codepoint += ((current - 0x37) << factor);
+            }
+            else if (current >= 'a' and current <= 'f')
+            {
+                codepoint += ((current - 0x57) << factor);
+            }
+            else
+            {
                 return -1;
+            }
         }
 
-        // byte 2: \uxXxx
-        switch (get())
-        {
-            case '0':
-                break;
-            case '1':
-                codepoint += 0x0100;
-                break;
-            case '2':
-                codepoint += 0x0200;
-                break;
-            case '3':
-                codepoint += 0x0300;
-                break;
-            case '4':
-                codepoint += 0x0400;
-                break;
-            case '5':
-                codepoint += 0x0500;
-                break;
-            case '6':
-                codepoint += 0x0600;
-                break;
-            case '7':
-                codepoint += 0x0700;
-                break;
-            case '8':
-                codepoint += 0x0800;
-                break;
-            case '9':
-                codepoint += 0x0900;
-                break;
-            case 'A':
-            case 'a':
-                codepoint += 0x0a00;
-                break;
-            case 'B':
-            case 'b':
-                codepoint += 0x0b00;
-                break;
-            case 'C':
-            case 'c':
-                codepoint += 0x0c00;
-                break;
-            case 'D':
-            case 'd':
-                codepoint += 0x0d00;
-                break;
-            case 'E':
-            case 'e':
-                codepoint += 0x0e00;
-                break;
-            case 'F':
-            case 'f':
-                codepoint += 0x0f00;
-                break;
-            default:
-                return -1;
-        }
-
-        // byte 3: \uxxXx
-        switch (get())
-        {
-            case '0':
-                break;
-            case '1':
-                codepoint += 0x0010;
-                break;
-            case '2':
-                codepoint += 0x0020;
-                break;
-            case '3':
-                codepoint += 0x0030;
-                break;
-            case '4':
-                codepoint += 0x0040;
-                break;
-            case '5':
-                codepoint += 0x0050;
-                break;
-            case '6':
-                codepoint += 0x0060;
-                break;
-            case '7':
-                codepoint += 0x0070;
-                break;
-            case '8':
-                codepoint += 0x0080;
-                break;
-            case '9':
-                codepoint += 0x0090;
-                break;
-            case 'A':
-            case 'a':
-                codepoint += 0x00a0;
-                break;
-            case 'B':
-            case 'b':
-                codepoint += 0x00b0;
-                break;
-            case 'C':
-            case 'c':
-                codepoint += 0x00c0;
-                break;
-            case 'D':
-            case 'd':
-                codepoint += 0x00d0;
-                break;
-            case 'E':
-            case 'e':
-                codepoint += 0x00e0;
-                break;
-            case 'F':
-            case 'f':
-                codepoint += 0x00f0;
-                break;
-            default:
-                return -1;
-        }
-
-        // byte 4: \uxxxX
-        switch (get())
-        {
-            case '0':
-                break;
-            case '1':
-                codepoint += 0x0001;
-                break;
-            case '2':
-                codepoint += 0x0002;
-                break;
-            case '3':
-                codepoint += 0x0003;
-                break;
-            case '4':
-                codepoint += 0x0004;
-                break;
-            case '5':
-                codepoint += 0x0005;
-                break;
-            case '6':
-                codepoint += 0x0006;
-                break;
-            case '7':
-                codepoint += 0x0007;
-                break;
-            case '8':
-                codepoint += 0x0008;
-                break;
-            case '9':
-                codepoint += 0x0009;
-                break;
-            case 'A':
-            case 'a':
-                codepoint += 0x000a;
-                break;
-            case 'B':
-            case 'b':
-                codepoint += 0x000b;
-                break;
-            case 'C':
-            case 'c':
-                codepoint += 0x000c;
-                break;
-            case 'D':
-            case 'd':
-                codepoint += 0x000d;
-                break;
-            case 'E':
-            case 'e':
-                codepoint += 0x000e;
-                break;
-            case 'F':
-            case 'f':
-                codepoint += 0x000f;
-                break;
-            default:
-                return -1;
-        }
-
+        assert(0x0000 <= codepoint and codepoint <= 0xFFFF);
         return codepoint;
+    }
+
+    /*!
+    @brief check if the next byte(s) are inside a given range
+
+    Adds the current byte and, for each passed range, reads a new byte and
+    checks if it is inside the range. If a violation was detected, set up an
+    error message and return false. Otherwise, return true.
+
+    @return true iff no range violation was detected
+    */
+    bool next_byte_in_range(std::initializer_list<std::pair<int, int>> ranges)
+    {
+        add(current);
+
+        for (const auto& range : ranges)
+        {
+            get();
+            if (JSON_LIKELY(range.first <= current and current <= range.second))
+            {
+                add(current);
+            }
+            else
+            {
+                error_message = "invalid string: ill-formed UTF-8 byte";
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /*!
@@ -1965,7 +1781,7 @@ class lexer
                         case 'u':
                         {
                             int codepoint;
-                            int codepoint1 = get_codepoint();
+                            const int codepoint1 = get_codepoint();
 
                             if (JSON_UNLIKELY(codepoint1 == -1))
                             {
@@ -2237,36 +2053,21 @@ class lexer
                 case 0xde:
                 case 0xdf:
                 {
-                    add(current);
-                    get();
-                    if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
+                    if (JSON_UNLIKELY(not next_byte_in_range({{0x80, 0xBF}})))
                     {
-                        add(current);
-                        continue;
+                        return token_type::parse_error;
                     }
-
-                    error_message = "invalid string: ill-formed UTF-8 byte";
-                    return token_type::parse_error;
+                    break;
                 }
 
                 // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
                 case 0xe0:
                 {
-                    add(current);
-                    get();
-                    if (JSON_LIKELY(0xa0 <= current and current <= 0xbf))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({{0xA0, 0xBF}, {0x80, 0xBF}}))))
                     {
-                        add(current);
-                        get();
-                        if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
-                        {
-                            add(current);
-                            continue;
-                        }
+                        return token_type::parse_error;
                     }
-
-                    error_message = "invalid string: ill-formed UTF-8 byte";
-                    return token_type::parse_error;
+                    break;
                 }
 
                 // U+1000..U+CFFF: bytes E1..EC 80..BF 80..BF
@@ -2286,66 +2087,31 @@ class lexer
                 case 0xee:
                 case 0xef:
                 {
-                    add(current);
-                    get();
-                    if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({{0x80, 0xBF}, {0x80, 0xBF}}))))
                     {
-                        add(current);
-                        get();
-                        if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
-                        {
-                            add(current);
-                            continue;
-                        }
+                        return token_type::parse_error;
                     }
-
-                    error_message = "invalid string: ill-formed UTF-8 byte";
-                    return token_type::parse_error;
+                    break;
                 }
 
                 // U+D000..U+D7FF: bytes ED 80..9F 80..BF
                 case 0xed:
                 {
-                    add(current);
-                    get();
-                    if (JSON_LIKELY(0x80 <= current and current <= 0x9f))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({{0x80, 0x9F}, {0x80, 0xBF}}))))
                     {
-                        add(current);
-                        get();
-                        if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
-                        {
-                            add(current);
-                            continue;
-                        }
+                        return token_type::parse_error;
                     }
-
-                    error_message = "invalid string: ill-formed UTF-8 byte";
-                    return token_type::parse_error;
+                    break;
                 }
 
                 // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
                 case 0xf0:
                 {
-                    add(current);
-                    get();
-                    if (JSON_LIKELY(0x90 <= current and current <= 0xbf))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({{0x90, 0xBF}, {0x80, 0xBF}, {0x80, 0xBF}}))))
                     {
-                        add(current);
-                        get();
-                        if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
-                        {
-                            add(current);
-                            get();
-                            if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
-                            {
-                                add(current);
-                                continue;
-                            }
-                        }
+                        return token_type::parse_error;
                     }
-
-                    error_message = "invalid string: ill-formed UTF-8 byte";
-                    return token_type::parse_error;
+                    break;
                 }
 
                 // U+40000..U+FFFFF F1..F3 80..BF 80..BF 80..BF
@@ -2353,51 +2119,21 @@ class lexer
                 case 0xf2:
                 case 0xf3:
                 {
-                    add(current);
-                    get();
-                    if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({{0x80, 0xBF}, {0x80, 0xBF}, {0x80, 0xBF}}))))
                     {
-                        add(current);
-                        get();
-                        if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
-                        {
-                            add(current);
-                            get();
-                            if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
-                            {
-                                add(current);
-                                continue;
-                            }
-                        }
+                        return token_type::parse_error;
                     }
-
-                    error_message = "invalid string: ill-formed UTF-8 byte";
-                    return token_type::parse_error;
+                    break;
                 }
 
                 // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
                 case 0xf4:
                 {
-                    add(current);
-                    get();
-                    if (JSON_LIKELY(0x80 <= current and current <= 0x8f))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({{0x80, 0x8F}, {0x80, 0xBF}, {0x80, 0xBF}}))))
                     {
-                        add(current);
-                        get();
-                        if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
-                        {
-                            add(current);
-                            get();
-                            if (JSON_LIKELY(0x80 <= current and current <= 0xbf))
-                            {
-                                add(current);
-                                continue;
-                            }
-                        }
+                        return token_type::parse_error;
                     }
-
-                    error_message = "invalid string: ill-formed UTF-8 byte";
-                    return token_type::parse_error;
+                    break;
                 }
 
                 // remaining bytes (80..C1 and F5..FF) are ill-formed
