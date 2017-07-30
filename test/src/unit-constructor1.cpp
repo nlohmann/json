@@ -842,8 +842,7 @@ TEST_CASE("constructors")
         {
             SECTION("explicit")
             {
-                std::initializer_list<json> l;
-                json j(l);
+                json j(json::initializer_list_t {});
                 CHECK(j.type() == json::value_t::object);
             }
 
@@ -860,8 +859,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(json::array_t())};
-                    json j(l);
+                    json j(json::initializer_list_t {json(json::array_t())});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -876,8 +874,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(json::object_t())};
-                    json j(l);
+                    json j(json::initializer_list_t {json(json::object_t())});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -892,8 +889,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json("Hello world")};
-                    json j(l);
+                    json j(json::initializer_list_t {json("Hello world")});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -908,8 +904,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(true)};
-                    json j(l);
+                    json j(json::initializer_list_t {json(true)});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -924,8 +919,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(1)};
-                    json j(l);
+                    json j(json::initializer_list_t {json(1)});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -940,8 +934,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(1u)};
-                    json j(l);
+                    json j(json::initializer_list_t {json(1u)});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -956,8 +949,7 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
-                    std::initializer_list<json> l = {json(42.23)};
-                    json j(l);
+                    json j(json::initializer_list_t {json(42.23)});
                     CHECK(j.type() == json::value_t::array);
                 }
 
@@ -973,8 +965,7 @@ TEST_CASE("constructors")
         {
             SECTION("explicit")
             {
-                std::initializer_list<json> l = {1, 1u, 42.23, true, nullptr, json::object_t(), json::array_t()};
-                json j(l);
+                json j(json::initializer_list_t {1, 1u, 42.23, true, nullptr, json::object_t(), json::array_t()});
                 CHECK(j.type() == json::value_t::array);
             }
 
@@ -1033,6 +1024,125 @@ TEST_CASE("constructors")
                 json j = json::array({ {"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false} });
                 CHECK(j.type() == json::value_t::array);
             }
+        }
+
+        SECTION("move from initializer_list")
+        {
+            SECTION("string")
+            {
+                // This should break through any short string optimization in std::string
+                std::string source(1024, '!');
+                const char* source_addr = source.data();
+
+                SECTION("constructor with implicit types (array)")
+                {
+                    json j = {std::move(source)};
+                    CHECK(j[0].get_ref<std::string const&>().data() == source_addr);
+                }
+
+                SECTION("constructor with implicit types (object)")
+                {
+                    json j = {{"key", std::move(source)}};
+                    CHECK(j["key"].get_ref<std::string const&>().data() == source_addr);
+                }
+
+                SECTION("constructor with implicit types (object key)")
+                {
+                    json j = {{std::move(source), 42}};
+                    CHECK(j.get_ref<json::object_t&>().begin()->first.data() == source_addr);
+                }
+            }
+
+            SECTION("array")
+            {
+                json::array_t source = {1, 2, 3};
+                const json* source_addr = source.data();
+
+                SECTION("constructor with implicit types (array)")
+                {
+                    json j {std::move(source)};
+                    CHECK(j[0].get_ref<json::array_t const&>().data() == source_addr);
+                }
+
+                SECTION("constructor with implicit types (object)")
+                {
+                    json j {{"key", std::move(source)}};
+                    CHECK(j["key"].get_ref<json::array_t const&>().data() == source_addr);
+                }
+
+                SECTION("assignment with implicit types (array)")
+                {
+                    json j = {std::move(source)};
+                    CHECK(j[0].get_ref<json::array_t const&>().data() == source_addr);
+                }
+
+                SECTION("assignment with implicit types (object)")
+                {
+                    json j = {{"key", std::move(source)}};
+                    CHECK(j["key"].get_ref<json::array_t const&>().data() == source_addr);
+                }
+            }
+
+            SECTION("object")
+            {
+                json::object_t source = {{"hello", "world"}};
+                const json* source_addr = &source.at("hello");
+
+                SECTION("constructor with implicit types (array)")
+                {
+                    json j {std::move(source)};
+                    CHECK(&(j[0].get_ref<json::object_t const&>().at("hello")) == source_addr);
+                }
+
+                SECTION("constructor with implicit types (object)")
+                {
+                    json j {{"key", std::move(source)}};
+                    CHECK(&(j["key"].get_ref<json::object_t const&>().at("hello")) == source_addr);
+                }
+
+                SECTION("assignment with implicit types (array)")
+                {
+                    json j = {std::move(source)};
+                    CHECK(&(j[0].get_ref<json::object_t const&>().at("hello")) == source_addr);
+                }
+
+                SECTION("assignment with implicit types (object)")
+                {
+                    json j = {{"key", std::move(source)}};
+                    CHECK(&(j["key"].get_ref<json::object_t const&>().at("hello")) == source_addr);
+                }
+            }
+
+            SECTION("json")
+            {
+                json source {1, 2, 3};
+                const json* source_addr = &source[0];
+
+                SECTION("constructor with implicit types (array)")
+                {
+                    json j {std::move(source), {}};
+                    CHECK(&j[0][0] == source_addr);
+                }
+
+                SECTION("constructor with implicit types (object)")
+                {
+                    json j {{"key", std::move(source)}};
+                    CHECK(&j["key"][0] == source_addr);
+                }
+
+                SECTION("assignment with implicit types (array)")
+                {
+                    json j = {std::move(source), {}};
+                    CHECK(&j[0][0] == source_addr);
+                }
+
+                SECTION("assignment with implicit types (object)")
+                {
+                    json j = {{"key", std::move(source)}};
+                    CHECK(&j["key"][0] == source_addr);
+                }
+            }
+
         }
     }
 
