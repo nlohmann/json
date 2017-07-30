@@ -2967,7 +2967,7 @@ class parser
 
                     if (keep and keep_tag and not value.is_discarded())
                     {
-                        result.m_value.object->operator[](std::move(key)) = std::move(value);
+                        result.m_value.object->emplace(std::move(key), std::move(value));
                     }
 
                     // comma -> next value
