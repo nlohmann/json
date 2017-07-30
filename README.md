@@ -849,7 +849,9 @@ I deeply appreciate the help of the following people.
 - [Steffen](https://github.com/koemeet) fixed a potential issue with MSVC and `std::min`.
 - [Mike Tzou](https://github.com/Chocobo1) fixed some typos.
 - [amrcode](https://github.com/amrcode) noted a missleading documentation about comparison of floats.
-- [Oleg Endo](https://github.com/olegendo) reduced the memory consumption by replacing `<iostream>` with `<iosfwd>`
+- [Oleg Endo](https://github.com/olegendo) reduced the memory consumption by replacing `<iostream>` with `<iosfwd>`.
+- [dan-42](https://github.com/dan-42) cleaned up the CMake files to simplify including/reusing of the library.
+- [Nikita Ofitserov](https://github.com/himikof) allowed for moving values from initializer lists.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
@@ -912,7 +914,7 @@ $ make json_unit -Ctest
 $ ./test/json_unit "*"
 
 ===============================================================================
-All tests passed (13391115 assertions in 49 test cases)
+All tests passed (14504461 assertions in 48 test cases)
 ```
 
 Alternatively, you can use [CMake](https://cmake.org) and run

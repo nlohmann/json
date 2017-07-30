@@ -577,7 +577,7 @@ struct external_constructor<value_t::string>
     }
 
     template<typename BasicJsonType>
-    static void construct(BasicJsonType& j, typename BasicJsonType::string_t&&  s)
+    static void construct(BasicJsonType& j, typename BasicJsonType::string_t&& s)
     {
         j.m_type = value_t::string;
         j.m_value = std::move(s);
@@ -633,7 +633,7 @@ struct external_constructor<value_t::array>
     }
 
     template<typename BasicJsonType>
-    static void construct(BasicJsonType& j, typename BasicJsonType::array_t&&  arr)
+    static void construct(BasicJsonType& j, typename BasicJsonType::array_t&& arr)
     {
         j.m_type = value_t::array;
         j.m_value = std::move(arr);
@@ -679,7 +679,7 @@ struct external_constructor<value_t::object>
     }
 
     template<typename BasicJsonType>
-    static void construct(BasicJsonType& j, typename BasicJsonType::object_t&&  obj)
+    static void construct(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
     {
         j.m_type = value_t::object;
         j.m_value = std::move(obj);
@@ -875,7 +875,7 @@ void to_json(BasicJsonType& j, const CompatibleString& s)
 }
 
 template <typename BasicJsonType>
-void to_json(BasicJsonType& j, typename BasicJsonType::string_t&&  s)
+void to_json(BasicJsonType& j, typename BasicJsonType::string_t&& s)
 {
     external_constructor<value_t::string>::construct(j, std::move(s));
 }
@@ -931,7 +931,7 @@ void to_json(BasicJsonType& j, const  CompatibleArrayType& arr)
 }
 
 template <typename BasicJsonType>
-void to_json(BasicJsonType& j, typename BasicJsonType::array_t&&  arr)
+void to_json(BasicJsonType& j, typename BasicJsonType::array_t&& arr)
 {
     external_constructor<value_t::array>::construct(j, std::move(arr));
 }
@@ -946,7 +946,7 @@ void to_json(BasicJsonType& j, const  CompatibleObjectType& obj)
 }
 
 template <typename BasicJsonType>
-void to_json(BasicJsonType& j, typename BasicJsonType::object_t&&  obj)
+void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
 {
     external_constructor<value_t::object>::construct(j, std::move(obj));
 }
@@ -6843,63 +6843,61 @@ class serializer
 };
 
 template<typename BasicJsonType>
-struct json_ref
+class json_ref
 {
-    typedef BasicJsonType value_type;
+  public:
+    using value_type = BasicJsonType;
 
-    json_ref(value_type&&  value)
-        : owned_value_(std::move(value))
-        , is_rvalue_(true)
-    {
-        value_ref_ = &owned_value_;
-    }
+    json_ref(value_type&& value)
+        : owned_value(std::move(value)),
+          value_ref(&owned_value),
+          is_rvalue(true)
+    {}
 
     json_ref(const value_type& value)
-        : value_ref_(const_cast<value_type*>(&value))
-        , is_rvalue_(false)
+        : value_ref(const_cast<value_type*>(&value)),
+          is_rvalue(false)
     {}
 
     json_ref(std::initializer_list<json_ref> init)
-        : owned_value_(init)
-        , is_rvalue_(true)
-    {
-        value_ref_ = &owned_value_;
-    }
+        : owned_value(init),
+          value_ref(&owned_value),
+          is_rvalue(true)
+    {}
 
     template <class... Args>
     json_ref(Args... args)
-        : owned_value_(std::forward<Args>(args)...)
-        , is_rvalue_(true)
-    {
-        value_ref_ = &owned_value_;
-    }
+        : owned_value(std::forward<Args>(args)...),
+          value_ref(&owned_value),
+          is_rvalue(true)
+    {}
 
     value_type moved_or_copied() const
     {
-        if (is_rvalue_)
+        if (is_rvalue)
         {
-            return std::move(*value_ref_);
+            return std::move(*value_ref);
         }
         else
         {
-            return *value_ref_;
+            return *value_ref;
         }
     }
 
     value_type const& operator*() const
     {
-        return *static_cast<value_type const*>(value_ref_);
+        return *static_cast<value_type const*>(value_ref);
     }
 
     value_type const* operator->() const
     {
-        return static_cast<value_type const*>(value_ref_);
+        return static_cast<value_type const*>(value_ref);
     }
 
   private:
-    value_type * value_ref_;
-    mutable value_type owned_value_;
-    bool is_rvalue_;
+    mutable value_type owned_value;
+    value_type* value_ref = nullptr;
+    const bool is_rvalue;
 };
 
 } // namespace detail
@@ -8130,7 +8128,7 @@ class basic_json
         }
 
         /// constructor for rvalue strings
-        json_value(string_t&&  value)
+        json_value(string_t&& value)
         {
             string = create<string_t>(std::move(value));
         }
@@ -8142,7 +8140,7 @@ class basic_json
         }
 
         /// constructor for rvalue objects
-        json_value(object_t&&  value)
+        json_value(object_t&& value)
         {
             object = create<object_t>(std::move(value));
         }
@@ -8154,7 +8152,7 @@ class basic_json
         }
 
         /// constructor for rvalue arrays
-        json_value(array_t&&  value)
+        json_value(array_t&& value)
         {
             array = create<array_t>(std::move(value));
         }
@@ -8510,7 +8508,7 @@ class basic_json
 
             std::for_each(init.begin(), init.end(), [this](const detail::json_ref<basic_json>& element_ref)
             {
-                basic_json element = element_ref.moved_or_copied();
+                auto element = element_ref.moved_or_copied();
                 m_value.object->emplace(
                     std::move(*((*element.m_value.array)[0].m_value.string)),
                     std::move((*element.m_value.array)[1]));
@@ -8775,8 +8773,7 @@ class basic_json
 
     basic_json(const detail::json_ref<basic_json>& ref)
         : basic_json(ref.moved_or_copied())
-    {
-    }
+    {}
 
     /*!
     @brief copy constructor
@@ -11578,7 +11575,7 @@ class basic_json
     @brief add an object to an array
     @copydoc push_back(basic_json&&)
     */
-    reference operator+=(basic_json && val)
+    reference operator+=(basic_json&& val)
     {
         push_back(std::move(val));
         return *this;
@@ -11697,9 +11694,9 @@ class basic_json
     {
         if (is_object() and init.size() == 2 and (*init.begin())->is_string())
         {
-            basic_json&&  key = init.begin()->moved_or_copied();
+            basic_json&& key = init.begin()->moved_or_copied();
             push_back(typename object_t::value_type(
-                        std::move(key.get_ref<string_t&>()), (init.begin() + 1)->moved_or_copied()));
+                          std::move(key.get_ref<string_t&>()), (init.begin() + 1)->moved_or_copied()));
         }
         else
         {
