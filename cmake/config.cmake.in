@@ -1,7 +1,3 @@
 @PACKAGE_INIT@
-set_and_check(JSON_INCLUDE_DIR "@PACKAGE_JSON_INCLUDE_DESTINATION@")
-
-cmake_policy(PUSH)
-cmake_policy(SET CMP0024 OLD)
-include(${CMAKE_CURRENT_LIST_DIR}/@JSON_TARGETS_FILENAME@)
-cmake_policy(POP)
+include("${CMAKE_CURRENT_LIST_DIR}/@NLOHMANN_JSON_TARGETS_EXPORT_NAME@.cmake")
+check_required_components("@PROJECT_NAME@")
