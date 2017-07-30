@@ -1675,14 +1675,15 @@ class lexer
 
     @return true iff no range violation was detected
     */
-    bool next_byte_in_range(std::initializer_list<std::pair<int, int>> ranges)
+    bool next_byte_in_range(std::initializer_list<int> ranges)
     {
+        assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
         add(current);
 
-        for (const auto& range : ranges)
+        for (auto range = ranges.begin(); range != ranges.end(); ++range)
         {
             get();
-            if (JSON_LIKELY(range.first <= current and current <= range.second))
+            if (JSON_LIKELY(*range <= current and current <= *(++range)))
             {
                 add(current);
             }
@@ -2053,7 +2054,7 @@ class lexer
                 case 0xde:
                 case 0xdf:
                 {
-                    if (JSON_UNLIKELY(not next_byte_in_range({{0x80, 0xBF}})))
+                    if (JSON_UNLIKELY(not next_byte_in_range({0x80, 0xBF})))
                     {
                         return token_type::parse_error;
                     }
@@ -2063,7 +2064,7 @@ class lexer
                 // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
                 case 0xe0:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({{0xA0, 0xBF}, {0x80, 0xBF}}))))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -2087,7 +2088,7 @@ class lexer
                 case 0xee:
                 case 0xef:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({{0x80, 0xBF}, {0x80, 0xBF}}))))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -2097,7 +2098,7 @@ class lexer
                 // U+D000..U+D7FF: bytes ED 80..9F 80..BF
                 case 0xed:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({{0x80, 0x9F}, {0x80, 0xBF}}))))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -2107,7 +2108,7 @@ class lexer
                 // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
                 case 0xf0:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({{0x90, 0xBF}, {0x80, 0xBF}, {0x80, 0xBF}}))))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -2119,7 +2120,7 @@ class lexer
                 case 0xf2:
                 case 0xf3:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({{0x80, 0xBF}, {0x80, 0xBF}, {0x80, 0xBF}}))))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -2129,7 +2130,7 @@ class lexer
                 // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
                 case 0xf4:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({{0x80, 0x8F}, {0x80, 0xBF}, {0x80, 0xBF}}))))
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -2166,12 +2167,11 @@ class lexer
 
     This function scans a string according to Sect. 6 of RFC 7159.
 
-    The function is realized with a deterministic finite state machine
-    derived from the grammar described in RFC 7159. Starting in state
-    "init", the input is read and used to determined the next state. Only
-    state "done" accepts the number. State "error" is a trap state to model
-    errors. In the table below, "anything" means any character but the ones
-    listed before.
+    The function is realized with a deterministic finite state machine derived
+    from the grammar described in RFC 7159. Starting in state "init", the
+    input is read and used to determined the next state. Only state "done"
+    accepts the number. State "error" is a trap state to model errors. In the
+    table below, "anything" means any character but the ones listed before.
 
     state    | 0        | 1-9      | e E      | +       | -       | .        | anything
     ---------|----------|----------|----------|---------|---------|----------|-----------
@@ -2486,8 +2486,8 @@ scan_number_any2:
         }
 
 scan_number_done:
-        // unget the character after the number (we only read it to know that we
-        // are done scanning a number)
+        // unget the character after the number (we only read it to know that
+        // we are done scanning a number)
         --chars_read;
         next_unget = true;
 
@@ -2886,6 +2886,9 @@ class parser
     */
     void parse_internal(bool keep, BasicJsonType& result)
     {
+        // never parse after a parse error was detected
+        assert(not errored);
+
         // start with a discarded value
         if (not result.is_discarded())
         {
@@ -2919,6 +2922,7 @@ class parser
                 }
 
                 // parse values
+                std::string key;
                 BasicJsonType value;
                 while (true)
                 {
@@ -2927,7 +2931,7 @@ class parser
                     {
                         return;
                     }
-                    const auto key = m_lexer.get_string();
+                    key = m_lexer.get_string();
 
                     bool keep_tag = false;
                     if (keep)
@@ -2955,9 +2959,15 @@ class parser
                     value.m_value.destroy(value.m_type);
                     value.m_type = value_t::discarded;
                     parse_internal(keep, value);
+
+                    if (JSON_UNLIKELY(errored))
+                    {
+                        return;
+                    }
+
                     if (keep and keep_tag and not value.is_discarded())
                     {
-                        result[key] = std::move(value);
+                        result.m_value.object->operator[](std::move(key)) = std::move(value);
                     }
 
                     // comma -> next value
@@ -3015,9 +3025,15 @@ class parser
                     value.m_value.destroy(value.m_type);
                     value.m_type = value_t::discarded;
                     parse_internal(keep, value);
+
+                    if (JSON_UNLIKELY(errored))
+                    {
+                        return;
+                    }
+
                     if (keep and not value.is_discarded())
                     {
-                        result.push_back(std::move(value));
+                        result.m_value.array->push_back(std::move(value));
                     }
 
                     // comma -> next value
@@ -4405,8 +4421,7 @@ class binary_reader
 
     @param[in] adapter  input adapter to read from
     */
-    explicit binary_reader(input_adapter_t adapter)
-        : ia(adapter), is_little_endian(little_endianess())
+    explicit binary_reader(input_adapter_t adapter) : ia(adapter)
     {
         assert(ia);
     }
@@ -5526,7 +5541,7 @@ class binary_reader
     std::size_t chars_read = 0;
 
     /// whether we can assume little endianess
-    const bool is_little_endian = true;
+    const bool is_little_endian = little_endianess();
 };
 
 /*!
@@ -5541,8 +5556,7 @@ class binary_writer
 
     @param[in] adapter  output adapter to write to
     */
-    explicit binary_writer(output_adapter_t<CharType> adapter)
-        : is_little_endian(binary_reader<BasicJsonType>::little_endianess()), oa(adapter)
+    explicit binary_writer(output_adapter_t<CharType> adapter) : oa(adapter)
     {
         assert(oa);
     }
@@ -6067,7 +6081,7 @@ class binary_writer
 
   private:
     /// whether we can assume little endianess
-    const bool is_little_endian = true;
+    const bool is_little_endian = binary_reader<BasicJsonType>::little_endianess();
 
     /// the output
     output_adapter_t<CharType> oa = nullptr;
