@@ -1126,6 +1126,25 @@ TEST_CASE("single MessagePack roundtrip")
         // compare parsed JSON values
         CHECK(j1 == j2);
 
+        SECTION("roundtrips")
+        {
+            SECTION("std::ostringstream")
+            {
+                std::ostringstream ss;
+                json::to_msgpack(j1, ss);
+                json j3 = json::from_msgpack(ss.str());
+                CHECK(j1 == j3);
+            }
+
+            SECTION("std::string")
+            {
+                std::string s;
+                json::to_msgpack(j1, s);
+                json j3 = json::from_msgpack(s);
+                CHECK(j1 == j3);
+            }
+        }
+
         // check with different start index
         packed.insert(packed.begin(), 5, 0xff);
         CHECK(j1 == json::from_msgpack(packed, 5));
@@ -1292,15 +1311,60 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
             std::ifstream f_json(filename);
             json j1 = json::parse(f_json);
 
-            // parse MessagePack file
-            std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
-            std::vector<uint8_t> packed((std::istreambuf_iterator<char>(f_msgpack)),
-                                        std::istreambuf_iterator<char>());
-            json j2;
-            CHECK_NOTHROW(j2 = json::from_msgpack(packed));
+            SECTION("std::vector<uint8_t>")
+            {
+                // parse MessagePack file
+                std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_msgpack)),
+                    std::istreambuf_iterator<char>());
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_msgpack(packed));
 
-            // compare parsed JSON values
-            CHECK(j1 == j2);
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION("std::ifstream")
+            {
+                // parse MessagePack file
+                std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_msgpack(f_msgpack));
+
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION("uint8_t* and size")
+            {
+                // parse MessagePack file
+                std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_msgpack)),
+                    std::istreambuf_iterator<char>());
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_msgpack({packed.data(), packed.size()}));
+
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION("output to output adapters")
+            {
+                // parse MessagePack file
+                std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_msgpack)),
+                    std::istreambuf_iterator<char>());
+
+                SECTION("std::vector<uint8_t>")
+                {
+                    std::vector<uint8_t> vec;
+                    json::to_msgpack(j1, vec);
+                    CHECK(vec == packed);
+                }
+            }
         }
     }
 }

@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.0)
 # define the project
 project(nlohmann_json VERSION 2.1.1 LANGUAGES CXX)
 
-enable_testing()
-
 option(JSON_BuildTests "Build the unit tests" ON)
 
 # define project variables
@@ -26,6 +24,7 @@ target_include_directories(${JSON_TARGET_NAME} INTERFACE
 
 # create and configure the unit test target
 if(JSON_BuildTests)
+    enable_testing()
     add_subdirectory(test)
 endif()
 

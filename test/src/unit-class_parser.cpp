@@ -41,12 +41,31 @@ json parser_helper(const std::string& s)
 {
     json j;
     json::parser(nlohmann::detail::input_adapter(s)).parse(true, j);
+
+    // if this line was reached, no exception ocurred
+    // -> check if result is the same without exceptions
+    json j_nothrow;
+    CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j_nothrow));
+    CHECK(j_nothrow == j);
+
     return j;
 }
 
 bool accept_helper(const std::string& s)
 {
-    return json::parser(nlohmann::detail::input_adapter(s)).accept(true);
+    // 1. parse s without exceptions
+    json j;
+    CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j));
+    const bool ok_noexcept = not j.is_discarded();
+
+    // 2. accept s
+    const bool ok_accept = json::parser(nlohmann::detail::input_adapter(s)).accept(true);
+
+    // 3. check if both approaches come to the same result
+    CHECK(ok_noexcept == ok_accept);
+
+    // 4. return result
+    return ok_accept;
 }
 
 TEST_CASE("parser class")
@@ -590,8 +609,8 @@ TEST_CASE("parser class")
 
             SECTION("overflow")
             {
-                // overflows during parsing yield an exception, but is accepted anyway
-                CHECK(accept_helper("1.18973e+4932"));
+                // overflows during parsing
+                CHECK(not accept_helper("1.18973e+4932"));
             }
 
             SECTION("invalid numbers")

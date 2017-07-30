@@ -36,7 +36,7 @@ void check_escaped(const char* original, const char* escaped, const bool ensure_
 void check_escaped(const char* original, const char* escaped, const bool ensure_ascii)
 {
     std::stringstream ss;
-    json::serializer s(nlohmann::detail::output_adapter_factory<char>::create(ss), ' ');
+    json::serializer s(nlohmann::detail::output_adapter<char>(ss), ' ');
     s.dump_escaped(original, ensure_ascii);
     CHECK(ss.str() == escaped);
 }
@@ -45,15 +45,15 @@ TEST_CASE("convenience functions")
 {
     SECTION("type name as string")
     {
-        CHECK(json(json::value_t::null).type_name() == "null");
-        CHECK(json(json::value_t::object).type_name() == "object");
-        CHECK(json(json::value_t::array).type_name() == "array");
-        CHECK(json(json::value_t::number_integer).type_name() == "number");
-        CHECK(json(json::value_t::number_unsigned).type_name() == "number");
-        CHECK(json(json::value_t::number_float).type_name() == "number");
-        CHECK(json(json::value_t::boolean).type_name() == "boolean");
-        CHECK(json(json::value_t::string).type_name() == "string");
-        CHECK(json(json::value_t::discarded).type_name() == "discarded");
+        CHECK(std::string(json(json::value_t::null).type_name()) == "null");
+        CHECK(std::string(json(json::value_t::object).type_name()) == "object");
+        CHECK(std::string(json(json::value_t::array).type_name()) == "array");
+        CHECK(std::string(json(json::value_t::number_integer).type_name()) == "number");
+        CHECK(std::string(json(json::value_t::number_unsigned).type_name()) == "number");
+        CHECK(std::string(json(json::value_t::number_float).type_name()) == "number");
+        CHECK(std::string(json(json::value_t::boolean).type_name()) == "boolean");
+        CHECK(std::string(json(json::value_t::string).type_name()) == "string");
+        CHECK(std::string(json(json::value_t::discarded).type_name()) == "discarded");
     }
 
     SECTION("string escape")
