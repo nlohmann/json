@@ -6872,6 +6872,11 @@ class json_ref
           is_rvalue(true)
     {}
 
+    // class should be movable only
+    json_ref(json_ref&&) = default;
+    json_ref(const json_ref&) = delete;
+    json_ref& operator=(const json_ref&) = delete;
+
     value_type moved_or_copied() const
     {
         if (is_rvalue)
@@ -6895,7 +6900,7 @@ class json_ref
     }
 
   private:
-    mutable value_type owned_value;
+    mutable value_type owned_value = nullptr;
     value_type* value_ref = nullptr;
     const bool is_rvalue;
 };
@@ -9826,6 +9831,7 @@ class basic_json
     */
     template < typename ValueType, typename std::enable_if <
                    not std::is_pointer<ValueType>::value and
+                   not std::is_same<ValueType, detail::json_ref<basic_json>>::value and
                    not std::is_same<ValueType, typename string_t::value_type>::value
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
