@@ -70,6 +70,8 @@ If you are using the [Meson Build System](http://mesonbuild.com), then you can w
 
 If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `jsonformoderncpp/x.y.z@vthiery/stable` to your `conanfile.py`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/vthiery/conan-jsonformoderncpp/issues) if you experience problems with the packages.
 
+If you are using [hunter](https://github.com/ruslo/hunter/) on your project for external dependencies, then you can use the [nlohman_json package](https://github.com/ruslo/hunter/wiki/pkg.nlohmann_json). Please see the hunter project for any issues regarding the packaging.
+
 :warning: [Version 3.0.0](https://github.com/nlohmann/json/wiki/Road-toward-3.0.0) is currently under development. Branch `develop` is used for the ongoing work and is probably **unstable**. Please use the `master` branch for the last stable version 2.1.1.
 
 
