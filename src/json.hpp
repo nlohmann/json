@@ -10363,7 +10363,7 @@ class basic_json
     */
     template<class ValueType, typename std::enable_if<
                  std::is_convertible<basic_json_t, ValueType>::value, int>::type = 0>
-    ValueType value(const typename object_t::key_type& key, ValueType default_value) const
+    ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_LIKELY(is_object()))
@@ -10435,7 +10435,7 @@ class basic_json
     */
     template<class ValueType, typename std::enable_if<
                  std::is_convertible<basic_json_t, ValueType>::value, int>::type = 0>
-    ValueType value(const json_pointer& ptr, ValueType default_value) const
+    ValueType value(const json_pointer& ptr, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_LIKELY(is_object()))
