@@ -7624,7 +7624,7 @@ class basic_json
     [RFC 7159](http://rfc7159.net/rfc7159) specifies:
     > An implementation may set limits on the maximum depth of nesting.
 
-    In this class, the object's limit of nesting is not constraint explicitly.
+    In this class, the object's limit of nesting is not explicitly constrained.
     However, a maximum depth of nesting may be introduced by the compiler or
     runtime environment. A theoretical limit can be queried by calling the
     @ref max_size function of a JSON object.
@@ -7683,7 +7683,7 @@ class basic_json
     [RFC 7159](http://rfc7159.net/rfc7159) specifies:
     > An implementation may set limits on the maximum depth of nesting.
 
-    In this class, the array's limit of nesting is not constraint explicitly.
+    In this class, the array's limit of nesting is not explicitly constrained.
     However, a maximum depth of nesting may be introduced by the compiler or
     runtime environment. A theoretical limit can be queried by calling the
     @ref max_size function of a JSON array.
