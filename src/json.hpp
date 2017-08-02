@@ -12066,6 +12066,18 @@ class basic_json
         m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
     }
 
+    /*!
+    @brief updates a JSON object from another object, overwriting existing keys
+
+    Inserts all values from JSON object @a j and overwrites existing keys.
+
+    @param[in] j  JSON object to read values from
+
+    @complexity O(N*log(size() + N)), where N is the number of elements to
+                insert.
+
+    @since version 3.0.0
+    */
     void update(const_reference j)
     {
         // implicitly convert null value to an empty object
@@ -12078,16 +12090,50 @@ class basic_json
 
         if (JSON_UNLIKELY(not is_object()))
         {
-            JSON_THROW(type_error::create(305, "cannot use merge with " + type_name()));
+            JSON_THROW(type_error::create(305, "cannot use merge() with " + std::string(type_name())));
         }
         if (JSON_UNLIKELY(not j.is_object()))
         {
-            JSON_THROW(type_error::create(305, "cannot use merge with " + j.type_name()));
+            JSON_THROW(type_error::create(305, "cannot use merge() with " + std::string(j.type_name())));
         }
 
         for (auto it = j.begin(); it != j.end(); ++it)
         {
-            m_value.object->emplace(it.key(), it.value());
+            m_value.object->operator[](it.key()) = it.value();
+        }
+    }
+
+    void update(const_iterator first, const_iterator last)
+    {
+        // implicitly convert null value to an empty object
+        if (is_null())
+        {
+            m_type = value_t::object;
+            m_value.object = create<object_t>();
+            assert_invariant();
+        }
+
+        if (JSON_UNLIKELY(not is_object()))
+        {
+            JSON_THROW(type_error::create(305, "cannot use merge() with " + std::string(type_name())));
+        }
+
+        // check if range iterators belong to the same JSON object
+        if (JSON_UNLIKELY(first.m_object != last.m_object))
+        {
+            JSON_THROW(invalid_iterator::create(210, "iterators do not fit"));
+        }
+
+        // passed iterators must belong to objects
+        if (JSON_UNLIKELY(not first.m_object->is_object()
+                          or not first.m_object->is_object()))
+        {
+            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects"));
+        }
+
+        for (auto it = first; it != last; ++it)
+        {
+            m_value.object->operator[](it.key()) = it.value();
         }
     }
 
