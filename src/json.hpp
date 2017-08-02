@@ -12066,6 +12066,31 @@ class basic_json
         m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
     }
 
+    void update(const_reference j)
+    {
+        // implicitly convert null value to an empty object
+        if (is_null())
+        {
+            m_type = value_t::object;
+            m_value.object = create<object_t>();
+            assert_invariant();
+        }
+
+        if (JSON_UNLIKELY(not is_object()))
+        {
+            JSON_THROW(type_error::create(305, "cannot use merge with " + type_name()));
+        }
+        if (JSON_UNLIKELY(not j.is_object()))
+        {
+            JSON_THROW(type_error::create(305, "cannot use merge with " + j.type_name()));
+        }
+
+        for (auto it = j.begin(); it != j.end(); ++it)
+        {
+            m_value.object->emplace(it.key(), it.value());
+        }
+    }
+
     /*!
     @brief exchanges the values
 
