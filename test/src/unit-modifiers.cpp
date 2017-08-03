@@ -752,6 +752,19 @@ TEST_CASE("modifiers")
             {
                 j_object1.update(j_object2);
                 CHECK(j_object1 == json({{"one", "eins"}, {"two", "zwo"}, {"three", "drei"}}));
+
+                json j_null;
+                j_null.update(j_object2);
+                CHECK(j_null == j_object2);
+            }
+
+            SECTION("wrong types")
+            {
+                CHECK_THROWS_AS(j_array.update(j_object1), json::type_error&);
+                CHECK_THROWS_WITH(j_array.update(j_object1), "[json.exception.type_error.305] cannot use merge() with array");
+
+                CHECK_THROWS_AS(j_object1.update(j_array), json::type_error&);
+                CHECK_THROWS_WITH(j_object1.update(j_array), "[json.exception.type_error.305] cannot use merge() with array");
             }
         }
 
@@ -761,6 +774,10 @@ TEST_CASE("modifiers")
             {
                 j_object1.update(j_object2.begin(), j_object2.end());
                 CHECK(j_object1 == json({{"one", "eins"}, {"two", "zwo"}, {"three", "drei"}}));
+
+                json j_null;
+                j_null.update(j_object2.begin(), j_object2.end());
+                CHECK(j_null == j_object2);
             }
 
             SECTION("empty range")
