@@ -108,6 +108,44 @@ SOFTWARE.
     #define JSON_UNLIKELY(x)    x
 #endif
 
+namespace nlohmann
+{
+    namespace internal
+    {
+        // SFINAE workaround for missing lconv support in Android (gcc + libstdc++)
+        // See: https://github.com/fmtlib/fmt/commit/2fd6c0b24524f7ef107090d08cd86cdeb98fdac0
+        //
+        // Discussion: https://github.com/nlohmann/json/issues/638#issuecomment-314079985
+        // Note: Clang + libc++ should work (where available)
+        //
+        // Returns the thousands separator for the current locale.
+        // On android (gcc/libstdc++) the lconv structure is stubbed using an empty structure
+        // The test is for the size only, not for the presense of 
+        // thousands_sep in std::lconv, because if one would add thousands_sep
+        // at some point, the size of structure would be at least sizeof(char*)
+        //
+        // Ditto for decimal_point.
+        template<typename Lconv, bool=(sizeof(Lconv) >= sizeof(char*))>
+        struct Locale
+        {
+            static const char * thousands_sep() { return ""; }
+            static const char * decimal_point() { return "."; }
+        };
+
+        template<typename Lconv>
+        struct Locale<Lconv, true>
+        {
+            static const char * thousands_sep() { return static_cast<Lconv*>(std::localeconv())->thousands_sep; }
+            static const char * decimal_point() { return static_cast<Lconv*>(std::localeconv())->decimal_point; }
+        };
+
+        inline const char first_or_null(const char *str)
+        {
+            return str == nullptr ? '\0' : str[0];
+        }
+    }
+}
+
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann
@@ -1652,9 +1690,7 @@ class lexer
     /// return the locale-dependent decimal point
     static char get_decimal_point() noexcept
     {
-        const auto loc = localeconv();
-        assert(loc != nullptr);
-        return (loc->decimal_point == nullptr) ? '.' : loc->decimal_point[0];
+        return internal::first_or_null(internal::Locale<lconv>::decimal_point());
     }
 
     /////////////////////
@@ -6145,10 +6181,11 @@ class serializer
     @param[in] s  output stream to serialize to
     @param[in] ichar  indentation character to use
     */
+
     serializer(output_adapter_t<char> s, const char ichar)
         : o(s), loc(std::localeconv()),
-          thousands_sep(loc->thousands_sep == nullptr ? '\0' : loc->thousands_sep[0]),
-          decimal_point(loc->decimal_point == nullptr ? '\0' : loc->decimal_point[0]),
+          thousands_sep(internal::first_or_null(internal::Locale<lconv>::thousands_sep())),
+          decimal_point(internal::first_or_null(internal::Locale<lconv>::decimal_point())),
           indent_char(ichar), indent_string(512, indent_char) {}
 
     // delete because of pointer members
