@@ -120,6 +120,9 @@ matrix:
     compiler: clang
     before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
     addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+        packages: ['g++-6', 'clang-3.6']
       coverity_scan:
         project:
           name: "nlohmann/json"
@@ -129,8 +132,8 @@ matrix:
         build_command: "make"
         branch_pattern: coverity_scan
     env:
-      - LLVM_VERSION=3.6.0
       - SPECIAL=coverity
+      - COMPILER=clang++-3.6
 
   # OSX / Clang
 
@@ -248,6 +251,14 @@ matrix:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
         packages: ['g++-6', 'clang-4.0']
+
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-5.0
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty']
+        packages: ['g++-6', 'clang-5.0']
 
 ################
 # build script #
