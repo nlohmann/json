@@ -30,11 +30,11 @@ matrix:
 
   - os: linux
     compiler: clang
-    env: COMPILER=clang++-3.6
+    env: COMPILER=clang++-3.5
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
-        packages: ['g++-6', 'clang-3.6']
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
+        packages: ['g++-6', 'clang-3.5']
 
 ################
 # build script #
