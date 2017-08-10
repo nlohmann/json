@@ -854,6 +854,11 @@ I deeply appreciate the help of the following people.
 - [Oleg Endo](https://github.com/olegendo) reduced the memory consumption by replacing `<iostream>` with `<iosfwd>`.
 - [dan-42](https://github.com/dan-42) cleaned up the CMake files to simplify including/reusing of the library.
 - [Nikita Ofitserov](https://github.com/himikof) allowed for moving values from initializer lists.
+- [Greg Hurrell](https://github.com/wincent) fixed a typo.
+- [Dmitry Kukovinets](https://github.com/DmitryKuk) fixed a typo.
+- [kbthomp1](https://github.com/kbthomp1) fixed an issue related to the Intel OSX compiler.
+- [Markus Werle](https://github.com/daixtrose) fixed a typo.
+- [WebProdPP](https://github.com/WebProdPP) fixed a subtle error in a precondition check.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
