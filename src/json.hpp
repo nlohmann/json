@@ -463,13 +463,9 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
     };
 
     // discarded values are not comparable
-    if (lhs == value_t::discarded or rhs == value_t::discarded)
-    {
-        return false;
-    }
+    return lhs != value_t::discarded and rhs != value_t::discarded and
+           order[static_cast<std::size_t>(lhs)] < order[static_cast<std::size_t>(rhs)];
 
-    return order[static_cast<std::size_t>(lhs)] <
-           order[static_cast<std::size_t>(rhs)];
 }
 
 
@@ -1007,10 +1003,9 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
             val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_float_t*>());
             break;
         }
+
         default:
-        {
             JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name())));
-        }
     }
 }
 
@@ -1198,10 +1193,9 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
             val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::boolean_t*>());
             break;
         }
+
         default:
-        {
             JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name())));
-        }
     }
 }
 
@@ -1629,11 +1623,8 @@ class lexer
                 return "end of input";
             case token_type::literal_or_value:
                 return "'[', '{', or a literal";
-            default:
-            {
-                // catch non-enum values
+            default: // catch non-enum values
                 return "unknown token"; // LCOV_EXCL_LINE
-            }
         }
     }
 
@@ -2339,9 +2330,7 @@ scan_number_zero:
             }
 
             default:
-            {
                 goto scan_number_done;
-            }
         }
 
 scan_number_any1:
@@ -2377,9 +2366,7 @@ scan_number_any1:
             }
 
             default:
-            {
                 goto scan_number_done;
-            }
         }
 
 scan_number_decimal1:
@@ -2436,9 +2423,7 @@ scan_number_decimal2:
             }
 
             default:
-            {
                 goto scan_number_done;
-            }
         }
 
 scan_number_exponent:
@@ -2522,9 +2507,7 @@ scan_number_any2:
             }
 
             default:
-            {
                 goto scan_number_done;
-            }
         }
 
 scan_number_done:
@@ -2911,12 +2894,8 @@ class parser
             return false;
         }
 
-        if (strict and get_token() != token_type::end_of_input)
-        {
-            return false;
-        }
-
-        return true;
+        // strict => last token must be EOF
+        return not strict or (get_token() == token_type::end_of_input);
     }
 
   private:
@@ -3156,10 +3135,7 @@ class parser
                         JSON_THROW(out_of_range::create(406, "number overflow parsing '" +
                                                         m_lexer.get_token_string() + "'"));
                     }
-                    else
-                    {
-                        expect(token_type::uninitialized);
-                    }
+                    expect(token_type::uninitialized);
                 }
                 break;
             }
@@ -3297,15 +3273,10 @@ class parser
             case token_type::value_integer:
             case token_type::value_string:
             case token_type::value_unsigned:
-            {
                 return true;
-            }
 
-            default:
-            {
-                // the last token was unexpected
+            default: // the last token was unexpected
                 return false;
-            }
         }
     }
 
@@ -3740,9 +3711,7 @@ class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJso
             }
 
             case value_t::null:
-            {
                 JSON_THROW(invalid_iterator::create(214, "cannot get value"));
-            }
 
             default:
             {
@@ -3893,19 +3862,13 @@ class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJso
         switch (m_object->m_type)
         {
             case value_t::object:
-            {
                 return (m_it.object_iterator == other.m_it.object_iterator);
-            }
 
             case value_t::array:
-            {
                 return (m_it.array_iterator == other.m_it.array_iterator);
-            }
 
             default:
-            {
                 return (m_it.primitive_iterator == other.m_it.primitive_iterator);
-            }
         }
     }
 
@@ -3935,19 +3898,13 @@ class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJso
         switch (m_object->m_type)
         {
             case value_t::object:
-            {
                 JSON_THROW(invalid_iterator::create(213, "cannot compare order of object iterators"));
-            }
 
             case value_t::array:
-            {
                 return (m_it.array_iterator < other.m_it.array_iterator);
-            }
 
             default:
-            {
                 return (m_it.primitive_iterator < other.m_it.primitive_iterator);
-            }
         }
     }
 
@@ -3989,9 +3946,7 @@ class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJso
         switch (m_object->m_type)
         {
             case value_t::object:
-            {
                 JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
-            }
 
             case value_t::array:
             {
@@ -4062,19 +4017,13 @@ class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJso
         switch (m_object->m_type)
         {
             case value_t::object:
-            {
                 JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
-            }
 
             case value_t::array:
-            {
                 return m_it.array_iterator - other.m_it.array_iterator;
-            }
 
             default:
-            {
                 return m_it.primitive_iterator - other.m_it.primitive_iterator;
-            }
         }
     }
 
@@ -4089,19 +4038,13 @@ class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJso
         switch (m_object->m_type)
         {
             case value_t::object:
-            {
                 JSON_THROW(invalid_iterator::create(208, "cannot use operator[] for object iterators"));
-            }
 
             case value_t::array:
-            {
                 return *std::next(m_it.array_iterator, n);
-            }
 
             case value_t::null:
-            {
                 JSON_THROW(invalid_iterator::create(214, "cannot get value"));
-            }
 
             default:
             {
@@ -4193,21 +4136,15 @@ template<typename IteratorType> class iteration_proxy
             {
                 // use integer array index as key
                 case value_t::array:
-                {
                     return std::to_string(array_index);
-                }
 
                 // use key from the object
                 case value_t::object:
-                {
                     return anchor.key();
-                }
 
                 // use an empty key for all primitive types
                 default:
-                {
                     return "";
-                }
             }
         }
 
@@ -4486,9 +4423,7 @@ class binary_reader
         {
             // EOF
             case std::char_traits<char>::eof():
-            {
                 JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
-            }
 
             // Integer 0x00..0x17 (0..23)
             case 0x00:
@@ -4515,29 +4450,19 @@ class binary_reader
             case 0x15:
             case 0x16:
             case 0x17:
-            {
                 return static_cast<number_unsigned_t>(current);
-            }
 
             case 0x18: // Unsigned integer (one-byte uint8_t follows)
-            {
                 return get_number<uint8_t>();
-            }
 
             case 0x19: // Unsigned integer (two-byte uint16_t follows)
-            {
                 return get_number<uint16_t>();
-            }
 
             case 0x1a: // Unsigned integer (four-byte uint32_t follows)
-            {
                 return get_number<uint32_t>();
-            }
 
             case 0x1b: // Unsigned integer (eight-byte uint64_t follows)
-            {
                 return get_number<uint64_t>();
-            }
 
             // Negative integer -1-0x00..-1-0x17 (-1..-24)
             case 0x20:
@@ -4564,9 +4489,7 @@ class binary_reader
             case 0x35:
             case 0x36:
             case 0x37:
-            {
                 return static_cast<int8_t>(0x20 - 1 - current);
-            }
 
             case 0x38: // Negative integer (one-byte uint8_t follows)
             {
@@ -4896,9 +4819,7 @@ class binary_reader
         {
             // EOF
             case std::char_traits<char>::eof():
-            {
                 JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
-            }
 
             // positive fixint
             case 0x00:
@@ -5029,9 +4950,7 @@ class binary_reader
             case 0x7d:
             case 0x7e:
             case 0x7f:
-            {
                 return static_cast<number_unsigned_t>(current);
-            }
 
             // fixmap
             case 0x80:
@@ -5122,81 +5041,51 @@ class binary_reader
             case 0xbd:
             case 0xbe:
             case 0xbf:
-            {
                 return get_msgpack_string();
-            }
 
             case 0xc0: // nil
-            {
                 return value_t::null;
-            }
 
             case 0xc2: // false
-            {
                 return false;
-            }
 
             case 0xc3: // true
-            {
                 return true;
-            }
 
             case 0xca: // float 32
-            {
                 return get_number<float>();
-            }
 
             case 0xcb: // float 64
-            {
                 return get_number<double>();
-            }
 
             case 0xcc: // uint 8
-            {
                 return get_number<uint8_t>();
-            }
 
             case 0xcd: // uint 16
-            {
                 return get_number<uint16_t>();
-            }
 
             case 0xce: // uint 32
-            {
                 return get_number<uint32_t>();
-            }
 
             case 0xcf: // uint 64
-            {
                 return get_number<uint64_t>();
-            }
 
             case 0xd0: // int 8
-            {
                 return get_number<int8_t>();
-            }
 
             case 0xd1: // int 16
-            {
                 return get_number<int16_t>();
-            }
 
             case 0xd2: // int 32
-            {
                 return get_number<int32_t>();
-            }
 
             case 0xd3: // int 64
-            {
                 return get_number<int64_t>();
-            }
 
             case 0xd9: // str 8
             case 0xda: // str 16
             case 0xdb: // str 32
-            {
                 return get_msgpack_string();
-            }
 
             case 0xdc: // array 16
             {
@@ -5279,9 +5168,7 @@ class binary_reader
             case 0xfd:
             case 0xfe:
             case 0xff:
-            {
                 return static_cast<int8_t>(current);
-            }
 
             default: // anything else
             {
@@ -5718,9 +5605,8 @@ class binary_writer
                 break;
             }
 
-            case value_t::number_float:
+            case value_t::number_float: // Double-Precision Float
             {
-                // Double-Precision Float
                 oa->write_character(static_cast<CharType>(0xfb));
                 write_number(j.m_value.number_float);
                 break;
@@ -5844,9 +5730,7 @@ class binary_writer
             }
 
             default:
-            {
                 break;
-            }
         }
     }
 
@@ -5857,16 +5741,14 @@ class binary_writer
     {
         switch (j.type())
         {
-            case value_t::null:
+            case value_t::null: // nil
             {
-                // nil
                 oa->write_character(static_cast<CharType>(0xc0));
                 break;
             }
 
-            case value_t::boolean:
+            case value_t::boolean: // true and false
             {
-                // true and false
                 oa->write_character(j.m_value.boolean
                                     ? static_cast<CharType>(0xc3)
                                     : static_cast<CharType>(0xc2));
@@ -5983,9 +5865,8 @@ class binary_writer
                 break;
             }
 
-            case value_t::number_float:
+            case value_t::number_float: // float 64
             {
-                // float 64
                 oa->write_character(static_cast<CharType>(0xcb));
                 write_number(j.m_value.number_float);
                 break;
@@ -6088,9 +5969,7 @@ class binary_writer
             }
 
             default:
-            {
                 break;
-            }
         }
     }
 
@@ -6481,7 +6360,7 @@ class serializer
         return res;
     }
 
-    static void escape_codepoint(int codepoint, string_t& result, size_t& pos)
+    static void escape_codepoint(int codepoint, string_t& result, std::size_t& pos)
     {
         // expecting a proper codepoint
         assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
@@ -6563,56 +6442,49 @@ class serializer
         {
             switch (s[i])
             {
-                // quotation mark (0x22)
-                case '"':
+                case '"': // quotation mark (0x22)
                 {
                     result[pos + 1] = '"';
                     pos += 2;
                     break;
                 }
 
-                // reverse solidus (0x5c)
-                case '\\':
+                case '\\': // reverse solidus (0x5c)
                 {
                     // nothing to change
                     pos += 2;
                     break;
                 }
 
-                // backspace (0x08)
-                case '\b':
+                case '\b': // backspace (0x08)
                 {
                     result[pos + 1] = 'b';
                     pos += 2;
                     break;
                 }
 
-                // formfeed (0x0c)
-                case '\f':
+                case '\f': // formfeed (0x0c)
                 {
                     result[pos + 1] = 'f';
                     pos += 2;
                     break;
                 }
 
-                // newline (0x0a)
-                case '\n':
+                case '\n': // newline (0x0a)
                 {
                     result[pos + 1] = 'n';
                     pos += 2;
                     break;
                 }
 
-                // carriage return (0x0d)
-                case '\r':
+                case '\r': // carriage return (0x0d)
                 {
                     result[pos + 1] = 'r';
                     pos += 2;
                     break;
                 }
 
-                // horizontal tab (0x09)
-                case '\t':
+                case '\t': // horizontal tab (0x09)
                 {
                     result[pos + 1] = 't';
                     pos += 2;
@@ -6780,7 +6652,7 @@ class serializer
         // negative value indicates an error
         assert(len > 0);
         // check if buffer was large enough
-        assert(static_cast<size_t>(len) < number_buffer.size());
+        assert(static_cast<std::size_t>(len) < number_buffer.size());
 
         // erase thousands separator
         if (thousands_sep != '\0')
@@ -6805,7 +6677,7 @@ class serializer
             }
         }
 
-        o->write_characters(number_buffer.data(), static_cast<size_t>(len));
+        o->write_characters(number_buffer.data(), static_cast<std::size_t>(len));
 
         // determine if need to append ".0"
         const bool value_is_int_like =
@@ -8710,9 +8582,7 @@ class basic_json
             }
 
             default:
-            {
                 break;
-            }
         }
 
         switch (m_type)
@@ -8762,10 +8632,8 @@ class basic_json
             }
 
             default:
-            {
                 JSON_THROW(invalid_iterator::create(206, "cannot construct with iterators from " +
                                                     std::string(first.m_object->type_name())));
-            }
         }
 
         assert_invariant();
@@ -8851,9 +8719,7 @@ class basic_json
             }
 
             default:
-            {
                 break;
-            }
         }
 
         assert_invariant();
@@ -10648,9 +10514,7 @@ class basic_json
             }
 
             default:
-            {
                 JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
-            }
         }
 
         return result;
@@ -10758,9 +10622,7 @@ class basic_json
             }
 
             default:
-            {
                 JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
-            }
         }
 
         return result;
@@ -11529,9 +11391,7 @@ class basic_json
             }
 
             default:
-            {
                 break;
-            }
         }
     }
 
@@ -12238,41 +12098,31 @@ class basic_json
             switch (lhs_type)
             {
                 case value_t::array:
-                {
                     return (*lhs.m_value.array == *rhs.m_value.array);
-                }
+
                 case value_t::object:
-                {
                     return (*lhs.m_value.object == *rhs.m_value.object);
-                }
+
                 case value_t::null:
-                {
                     return true;
-                }
+
                 case value_t::string:
-                {
                     return (*lhs.m_value.string == *rhs.m_value.string);
-                }
+
                 case value_t::boolean:
-                {
                     return (lhs.m_value.boolean == rhs.m_value.boolean);
-                }
+
                 case value_t::number_integer:
-                {
                     return (lhs.m_value.number_integer == rhs.m_value.number_integer);
-                }
+
                 case value_t::number_unsigned:
-                {
                     return (lhs.m_value.number_unsigned == rhs.m_value.number_unsigned);
-                }
+
                 case value_t::number_float:
-                {
                     return (lhs.m_value.number_float == rhs.m_value.number_float);
-                }
+
                 default:
-                {
                     return false;
-                }
             }
         }
         else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
@@ -12402,41 +12252,31 @@ class basic_json
             switch (lhs_type)
             {
                 case value_t::array:
-                {
                     return (*lhs.m_value.array) < (*rhs.m_value.array);
-                }
+
                 case value_t::object:
-                {
                     return *lhs.m_value.object < *rhs.m_value.object;
-                }
+
                 case value_t::null:
-                {
                     return false;
-                }
+
                 case value_t::string:
-                {
                     return *lhs.m_value.string < *rhs.m_value.string;
-                }
+
                 case value_t::boolean:
-                {
                     return lhs.m_value.boolean < rhs.m_value.boolean;
-                }
+
                 case value_t::number_integer:
-                {
                     return lhs.m_value.number_integer < rhs.m_value.number_integer;
-                }
+
                 case value_t::number_unsigned:
-                {
                     return lhs.m_value.number_unsigned < rhs.m_value.number_unsigned;
-                }
+
                 case value_t::number_float:
-                {
                     return lhs.m_value.number_float < rhs.m_value.number_float;
-                }
+
                 default:
-                {
                     return false;
-                }
             }
         }
         else if (lhs_type == value_t::number_integer and rhs_type == value_t::number_float)
@@ -14105,9 +13945,7 @@ json_pointer::get_and_create(NLOHMANN_BASIC_JSON_TPL& j) const
             single value; that is, with an empty list of reference tokens.
             */
             default:
-            {
                 JSON_THROW(detail::type_error::create(313, "invalid value to unflatten"));
-            }
         }
     }
 
@@ -14179,9 +14017,7 @@ json_pointer::get_unchecked(NLOHMANN_BASIC_JSON_TPL* ptr) const
             }
 
             default:
-            {
                 JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-            }
         }
     }
 
@@ -14235,9 +14071,7 @@ json_pointer::get_checked(NLOHMANN_BASIC_JSON_TPL* ptr) const
             }
 
             default:
-            {
                 JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-            }
         }
     }
 
@@ -14292,9 +14126,7 @@ json_pointer::get_unchecked(const NLOHMANN_BASIC_JSON_TPL* ptr) const
             }
 
             default:
-            {
                 JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-            }
         }
     }
 
@@ -14348,9 +14180,7 @@ json_pointer::get_checked(const NLOHMANN_BASIC_JSON_TPL* ptr) const
             }
 
             default:
-            {
                 JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-            }
         }
     }
 
@@ -14491,9 +14321,10 @@ struct hash<nlohmann::json>
 };
 
 /// specialization for std::less<value_t>
+/// @note: do not remove the space after '<',
+///        see https://github.com/nlohmann/json/pull/679
 template<>
-struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', 
-                                          // see https://github.com/nlohmann/json/pull/679
+struct less< ::nlohmann::detail::value_t> 
 {
     /*!
     @brief compare two value_t enum values
