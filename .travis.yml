@@ -33,7 +33,7 @@ matrix:
     env: COMPILER=clang-3.6
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test'']
+        sources: ['ubuntu-toolchain-r-test']
         packages: ['g++-6', 'clang-3.6']
 
 ################
