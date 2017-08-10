@@ -28,12 +28,226 @@ env:
 matrix:
   include:
 
+  # Valgrind
+
   - os: linux
-    compiler: clang
-    env: COMPILER=clang++
+    compiler: gcc
+    env:
+      - COMPILER=g++-4.9
+      - SPECIAL=valgrind
     addons:
       apt:
-        packages: ['clang-3.4']
+        sources: ['ubuntu-toolchain-r-test']
+        packages: [g++-4.9, valgrind]
+    after_success:
+      - make check TEST_PREFIX="valgrind --error-exitcode=1 --leak-check=full " TEST_PATTERN=""
+
+  # cLang sanitizer
+  # note: sadly clang's libc++ has errors when running with sanitize,
+  # so we use clang with gcc's libstdc++ which doesn't give those error.
+  # that's why we need to install g++-6 to get the lastest version
+  - os: linux
+    env:
+      - LLVM_VERSION=3.8.1
+      - SPECIAL=sanitizer
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: g++-6
+    compiler: clang
+    before_script:
+      - make clang_sanitize
+
+  # cppcheck
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-4.9
+      - SPECIAL=cppcheck
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: [g++-4.9, cppcheck]
+    after_success:
+      - make cppcheck
+
+  # no exceptions
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-4.9
+      - SPECIAL=no_exceptions
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: [g++-4.9, cppcheck]
+    after_success:
+      - make clean
+      - CPPFLAGS="-DJSON_NOEXCEPTION" make check TEST_PATTERN="-e \"*\""
+
+  # Coveralls (http://gronlier.fr/blog/2015/01/adding-code-coverage-to-your-c-project/)
+
+  - os: linux
+    compiler: gcc
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-4.9', 'ruby']
+    before_script:
+      - wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
+      - tar xf lcov_1.11.orig.tar.gz
+      - sudo make -C lcov-1.11/ install
+      - gem install coveralls-lcov
+      - pip install --user cpp-coveralls
+    after_success:
+      - make clean
+      - CXXFLAGS="--coverage -g -O0" CPPFLAGS="-DNDEBUG" make json_unit
+      - test/json_unit "*"
+      - coveralls --build-root test --exclude src/catch.hpp --exclude src/unit-algorithms.cpp --exclude src/unit-allocator.cpp --exclude src/unit-capacity.cpp --exclude src/unit-class_const_iterator.cpp --exclude src/unit-class_iterator.cpp --exclude src/unit-class_lexer.cpp --exclude src/unit-class_parser.cpp --exclude src/unit-comparison.cpp --exclude src/unit-concepts.cpp --exclude src/unit-constructor1.cpp --exclude src/unit-constructor2.cpp --exclude src/unit-convenience.cpp --exclude src/unit-conversions.cpp --exclude src/unit-deserialization.cpp --exclude src/unit-element_access1.cpp --exclude src/unit-element_access2.cpp --exclude src/unit-inspection.cpp --exclude src/unit-iterator_wrapper.cpp --exclude src/unit-iterators1.cpp --exclude src/unit-iterators2.cpp --exclude src/unit-json_patch.cpp --exclude src/unit-json_pointer.cpp --exclude src/unit-modifiers.cpp --exclude src/unit-pointer_access.cpp --exclude src/unit-readme.cpp --exclude src/unit-reference_access.cpp --exclude src/unit-regression.cpp --exclude src/unit-serialization.cpp --exclude src/unit-testsuites.cpp --exclude src/unit-unicode.cpp --include ../src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
+      - lcov --directory src --directory test/src --capture --output-file coverage.info --rc lcov_branch_coverage=1 --no-external
+      - lcov --remove coverage.info 'test/src/*' --output-file coverage.info --rc lcov_branch_coverage=1
+      - lcov --list coverage.info --rc lcov_branch_coverage=1
+      - coveralls-lcov --repo-token F9bs4Nop10JRgqPQXRcifyQKYhb3FczkS coverage.info
+    env:
+      - COMPILER=g++-4.9
+      - SPECIAL=coveralls
+
+  # Coverity (only for branch coverity_scan)
+
+  - os: linux
+    compiler: clang
+    before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
+    addons:
+      coverity_scan:
+        project:
+          name: "nlohmann/json"
+          description: "Build submitted via Travis CI"
+        notification_email: niels.lohmann@gmail.com
+        build_command_prepend: "make clean"
+        build_command: "make"
+        branch_pattern: coverity_scan
+    env:
+      - LLVM_VERSION=3.6.0
+      - SPECIAL=coverity
+
+  # OSX / Clang
+
+  - os: osx
+    osx_image: xcode6.4
+
+  - os: osx
+    osx_image: xcode7.3
+
+  - os: osx
+    osx_image: xcode8
+
+  - os: osx
+    osx_image: xcode8.1
+
+  - os: osx
+    osx_image: xcode8.2
+
+  - os: osx
+    osx_image: xcode8.3
+
+  - os: osx
+    osx_image: xcode9
+
+  # Linux / GCC
+
+  - os: linux
+    compiler: gcc
+    env: COMPILER=g++-4.9
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: g++-4.9
+
+  - os: linux
+    compiler: gcc
+    env: COMPILER=g++-5
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: g++-5
+
+  - os: linux
+    compiler: gcc
+    env: COMPILER=g++-6
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: g++-6
+
+  - os: linux
+    compiler: gcc
+    env: COMPILER=g++-7
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: g++-7
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-7
+      - CXXFLAGS=-std=c++17
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: g++-7
+
+  # Linux / Clang
+
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-3.5
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
+        packages: ['g++-6', 'clang-3.5']
+
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-3.6
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+        packages: ['g++-6', 'clang-3.6']
+
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-3.7
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
+        packages: ['g++-6', 'clang-3.7']
+
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-3.8
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-6', 'clang-3.8']
+
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-3.9
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-6', 'clang-3.9']
+
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-4.0
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
+        packages: ['g++-6', 'clang-4.0']
 
 ################
 # build script #
@@ -52,3 +266,11 @@ script:
   - cmake .. && cmake --build . --config Release -- -j4
   - ctest -C Release -V
   - cd ..
+
+  # check if homebrew works (only checks develop branch)
+  - if [ `which brew` ]; then
+    brew update ;
+    brew tap nlohmann/json ;
+    brew install nlohmann_json --HEAD ;
+    brew test nlohmann_json ;
+    fi
