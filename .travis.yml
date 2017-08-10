@@ -256,7 +256,7 @@ matrix:
     compiler: clang
     env:
       - COMPILER=clang++-4.0
-      - CXXFLAGS=-std=c++17
+      - CXXFLAGS=-std=c++1z
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
