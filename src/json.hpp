@@ -14492,7 +14492,8 @@ struct hash<nlohmann::json>
 
 /// specialization for std::less<value_t>
 template<>
-struct less<nlohmann::detail::value_t>
+struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', 
+                                          // see https://github.com/nlohmann/json/pull/679
 {
     /*!
     @brief compare two value_t enum values
