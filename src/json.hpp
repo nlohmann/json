@@ -465,7 +465,6 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
     // discarded values are not comparable
     return lhs != value_t::discarded and rhs != value_t::discarded and
            order[static_cast<std::size_t>(lhs)] < order[static_cast<std::size_t>(rhs)];
-
 }
 
 
@@ -1075,11 +1074,11 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
     {
         JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
     }
-
-    for (auto it = j.rbegin(), end = j.rend(); it != end; ++it)
+    std::transform(j.rbegin(), j.rend(),
+                   std::front_inserter(l), [](const BasicJsonType & i)
     {
-        l.push_front(it->template get<T>());
-    }
+        return i.template get<T>();
+    });
 }
 
 template<typename BasicJsonType, typename CompatibleArrayType>
@@ -1673,7 +1672,8 @@ class lexer
         assert(current == 'u');
         int codepoint = 0;
 
-        for (int factor = 12; factor >= 0; factor -= 4)
+        const auto factors = { 12, 8, 4, 0 };
+        for (const auto factor : factors)
         {
             get();
 
@@ -2520,11 +2520,12 @@ scan_number_done:
         add('\0');
         --yylen;
 
+        char* endptr = nullptr;
+        errno = 0;
+
         // try to parse integers first and fall back to floats
         if (number_type == token_type::value_unsigned)
         {
-            char* endptr = nullptr;
-            errno = 0;
             const auto x = std::strtoull(yytext.data(), &endptr, 10);
 
             // we checked the number format before
@@ -2541,8 +2542,6 @@ scan_number_done:
         }
         else if (number_type == token_type::value_integer)
         {
-            char* endptr = nullptr;
-            errno = 0;
             const auto x = std::strtoll(yytext.data(), &endptr, 10);
 
             // we checked the number format before
@@ -2560,7 +2559,11 @@ scan_number_done:
 
         // this code is reached if we parse a floating-point number or if an
         // integer conversion above failed
-        strtof(value_float, yytext.data(), nullptr);
+        strtof(value_float, yytext.data(), &endptr);
+
+        // we checked the number format before
+        assert(endptr == yytext.data() + yylen);
+
         return token_type::value_float;
     }
 
@@ -2683,7 +2686,7 @@ scan_number_done:
             else
             {
                 // add character as is
-                result.append(1, c);
+                result.push_back(c);
             }
         }
 
@@ -2834,8 +2837,7 @@ class parser
     explicit parser(detail::input_adapter_t adapter,
                     const parser_callback_t cb = nullptr,
                     const bool allow_exceptions_ = true)
-        : callback(cb), m_lexer(adapter),
-          allow_exceptions(allow_exceptions_)
+        : callback(cb), m_lexer(adapter), allow_exceptions(allow_exceptions_)
     {}
 
     /*!
@@ -4573,57 +4575,27 @@ class binary_reader
             case 0x96:
             case 0x97:
             {
-                BasicJsonType result = value_t::array;
-                const auto len = static_cast<size_t>(current & 0x1f);
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(parse_cbor());
-                }
-                return result;
+                return get_cbor_array(current & 0x1f);
             }
 
             case 0x98: // array (one-byte uint8_t for n follows)
             {
-                BasicJsonType result = value_t::array;
-                const auto len = static_cast<size_t>(get_number<uint8_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(parse_cbor());
-                }
-                return result;
+                return get_cbor_array(get_number<uint8_t>());
             }
 
             case 0x99: // array (two-byte uint16_t for n follow)
             {
-                BasicJsonType result = value_t::array;
-                const auto len = static_cast<size_t>(get_number<uint16_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(parse_cbor());
-                }
-                return result;
+                return get_cbor_array(get_number<uint16_t>());
             }
 
             case 0x9a: // array (four-byte uint32_t for n follow)
             {
-                BasicJsonType result = value_t::array;
-                const auto len = static_cast<size_t>(get_number<uint32_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(parse_cbor());
-                }
-                return result;
+                return get_cbor_array(get_number<uint32_t>());
             }
 
             case 0x9b: // array (eight-byte uint64_t for n follow)
             {
-                BasicJsonType result = value_t::array;
-                const auto len = static_cast<size_t>(get_number<uint64_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(parse_cbor());
-                }
-                return result;
+                return get_cbor_array(get_number<uint64_t>());
             }
 
             case 0x9f: // array (indefinite length)
@@ -4662,67 +4634,27 @@ class binary_reader
             case 0xb6:
             case 0xb7:
             {
-                BasicJsonType result = value_t::object;
-                const auto len = static_cast<size_t>(current & 0x1f);
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    get();
-                    auto key = get_cbor_string();
-                    result[key] = parse_cbor();
-                }
-                return result;
+                return get_cbor_object(current & 0x1f);
             }
 
             case 0xb8: // map (one-byte uint8_t for n follows)
             {
-                BasicJsonType result = value_t::object;
-                const auto len = static_cast<size_t>(get_number<uint8_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    get();
-                    auto key = get_cbor_string();
-                    result[key] = parse_cbor();
-                }
-                return result;
+                return get_cbor_object(get_number<uint8_t>());
             }
 
             case 0xb9: // map (two-byte uint16_t for n follow)
             {
-                BasicJsonType result = value_t::object;
-                const auto len = static_cast<size_t>(get_number<uint16_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    get();
-                    auto key = get_cbor_string();
-                    result[key] = parse_cbor();
-                }
-                return result;
+                return get_cbor_object(get_number<uint16_t>());
             }
 
             case 0xba: // map (four-byte uint32_t for n follow)
             {
-                BasicJsonType result = value_t::object;
-                const auto len = static_cast<size_t>(get_number<uint32_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    get();
-                    auto key = get_cbor_string();
-                    result[key] = parse_cbor();
-                }
-                return result;
+                return get_cbor_object(get_number<uint32_t>());
             }
 
             case 0xbb: // map (eight-byte uint64_t for n follow)
             {
-                BasicJsonType result = value_t::object;
-                const auto len = static_cast<size_t>(get_number<uint64_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    get();
-                    auto key = get_cbor_string();
-                    result[key] = parse_cbor();
-                }
-                return result;
+                return get_cbor_object(get_number<uint64_t>());
             }
 
             case 0xbf: // map (indefinite length)
@@ -4970,15 +4902,7 @@ class binary_reader
             case 0x8e:
             case 0x8f:
             {
-                BasicJsonType result = value_t::object;
-                const auto len = static_cast<size_t>(current & 0x0f);
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    get();
-                    auto key = get_msgpack_string();
-                    result[key] = parse_msgpack();
-                }
-                return result;
+                return get_msgpack_object(current & 0x0f);
             }
 
             // fixarray
@@ -4999,13 +4923,7 @@ class binary_reader
             case 0x9e:
             case 0x9f:
             {
-                BasicJsonType result = value_t::array;
-                const auto len = static_cast<size_t>(current & 0x0f);
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(parse_msgpack());
-                }
-                return result;
+                return get_msgpack_array(current & 0x0f);
             }
 
             // fixstr
@@ -5089,50 +5007,22 @@ class binary_reader
 
             case 0xdc: // array 16
             {
-                BasicJsonType result = value_t::array;
-                const auto len = static_cast<size_t>(get_number<uint16_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(parse_msgpack());
-                }
-                return result;
+                return get_msgpack_array(get_number<uint16_t>());
             }
 
             case 0xdd: // array 32
             {
-                BasicJsonType result = value_t::array;
-                const auto len = static_cast<size_t>(get_number<uint32_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    result.push_back(parse_msgpack());
-                }
-                return result;
+                return get_msgpack_array(get_number<uint32_t>());
             }
 
             case 0xde: // map 16
             {
-                BasicJsonType result = value_t::object;
-                const auto len = static_cast<size_t>(get_number<uint16_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    get();
-                    auto key = get_msgpack_string();
-                    result[key] = parse_msgpack();
-                }
-                return result;
+                return get_msgpack_object(get_number<uint16_t>());
             }
 
             case 0xdf: // map 32
             {
-                BasicJsonType result = value_t::object;
-                const auto len = static_cast<size_t>(get_number<uint32_t>());
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    get();
-                    auto key = get_msgpack_string();
-                    result[key] = parse_msgpack();
-                }
-                return result;
+                return get_msgpack_object(get_number<uint32_t>());
             }
 
             // positive fixint
@@ -5260,15 +5150,16 @@ class binary_reader
 
     @throw parse_error.110 if input has less than @a len bytes
     */
-    std::string get_string(const std::size_t len)
+    template<typename NumberType>
+    std::string get_string(const NumberType len)
     {
         std::string result;
-        for (std::size_t i = 0; i < len; ++i)
+        std::generate_n(std::back_inserter(result), len, [this]()
         {
             get();
             check_eof();
-            result.append(1, static_cast<char>(current));
-        }
+            return current;
+        });
         return result;
     }
 
@@ -5316,32 +5207,27 @@ class binary_reader
             case 0x76:
             case 0x77:
             {
-                const auto len = static_cast<size_t>(current & 0x1f);
-                return get_string(len);
+                return get_string(current & 0x1f);
             }
 
             case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
             {
-                const auto len = static_cast<size_t>(get_number<uint8_t>());
-                return get_string(len);
+                return get_string(get_number<uint8_t>());
             }
 
             case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
             {
-                const auto len = static_cast<size_t>(get_number<uint16_t>());
-                return get_string(len);
+                return get_string(get_number<uint16_t>());
             }
 
             case 0x7a: // UTF-8 string (four-byte uint32_t for n follow)
             {
-                const auto len = static_cast<size_t>(get_number<uint32_t>());
-                return get_string(len);
+                return get_string(get_number<uint32_t>());
             }
 
             case 0x7b: // UTF-8 string (eight-byte uint64_t for n follow)
             {
-                const auto len = static_cast<size_t>(get_number<uint64_t>());
-                return get_string(len);
+                return get_string(get_number<uint64_t>());
             }
 
             case 0x7f: // UTF-8 string (indefinite length)
@@ -5350,7 +5236,7 @@ class binary_reader
                 while (get() != 0xff)
                 {
                     check_eof();
-                    result.append(1, static_cast<char>(current));
+                    result.push_back(static_cast<char>(current));
                 }
                 return result;
             }
@@ -5362,6 +5248,33 @@ class binary_reader
                 JSON_THROW(parse_error::create(113, chars_read, "expected a CBOR string; last byte: 0x" + ss.str()));
             }
         }
+    }
+
+    template<typename NumberType>
+    BasicJsonType get_cbor_array(const NumberType len)
+    {
+        BasicJsonType result = value_t::array;
+        std::generate_n(std::back_inserter(*result.m_value.array), len, [this]()
+        {
+            return parse_cbor();
+        });
+        return result;
+    }
+
+    template<typename NumberType>
+    BasicJsonType get_cbor_object(const NumberType len)
+    {
+        BasicJsonType result = value_t::object;
+        std::generate_n(std::inserter(*result.m_value.object,
+                                      result.m_value.object->end()),
+                        len, [this]()
+        {
+            get();
+            auto key = get_cbor_string();
+            auto val = parse_cbor();
+            return std::make_pair(std::move(key), std::move(val));
+        });
+        return result;
     }
 
     /*!
@@ -5415,26 +5328,22 @@ class binary_reader
             case 0xbe:
             case 0xbf:
             {
-                const auto len = static_cast<size_t>(current & 0x1f);
-                return get_string(len);
+                return get_string(current & 0x1f);
             }
 
             case 0xd9: // str 8
             {
-                const auto len = static_cast<size_t>(get_number<uint8_t>());
-                return get_string(len);
+                return get_string(get_number<uint8_t>());
             }
 
             case 0xda: // str 16
             {
-                const auto len = static_cast<size_t>(get_number<uint16_t>());
-                return get_string(len);
+                return get_string(get_number<uint16_t>());
             }
 
             case 0xdb: // str 32
             {
-                const auto len = static_cast<size_t>(get_number<uint32_t>());
-                return get_string(len);
+                return get_string(get_number<uint32_t>());
             }
 
             default:
@@ -5445,6 +5354,33 @@ class binary_reader
                                                "expected a MessagePack string; last byte: 0x" + ss.str()));
             }
         }
+    }
+
+    template<typename NumberType>
+    BasicJsonType get_msgpack_array(const NumberType len)
+    {
+        BasicJsonType result = value_t::array;
+        std::generate_n(std::back_inserter(*result.m_value.array), len, [this]()
+        {
+            return parse_msgpack();
+        });
+        return result;
+    }
+
+    template<typename NumberType>
+    BasicJsonType get_msgpack_object(const NumberType len)
+    {
+        BasicJsonType result = value_t::object;
+        std::generate_n(std::inserter(*result.m_value.object,
+                                      result.m_value.object->end()),
+                        len, [this]()
+        {
+            get();
+            auto key = get_msgpack_string();
+            auto val = parse_msgpack();
+            return std::make_pair(std::move(key), std::move(val));
+        });
+        return result;
     }
 
     /*!
@@ -6091,6 +6027,7 @@ class serializer
 
                     // last element
                     assert(i != val.m_value.object->cend());
+                    assert(std::next(i) == val.m_value.object->cend());
                     o->write_characters(indent_string.c_str(), new_indent);
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
@@ -6118,6 +6055,7 @@ class serializer
 
                     // last element
                     assert(i != val.m_value.object->cend());
+                    assert(std::next(i) == val.m_value.object->cend());
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\":", 2);
@@ -6338,7 +6276,7 @@ class serializer
                         if (bytes == 3)
                         {
                             // codepoints that need 4 bytes (i.e., 3 additional
-                            // bytes) in UTF-8 needs a surrogate pair when \u
+                            // bytes) in UTF-8 need a surrogate pair when \u
                             // escaping is used: from 4 bytes to \uxxxx\uxxxx
                             // (12 bytes)
                             res += (12 - bytes - 1);
@@ -7244,6 +7182,9 @@ class basic_json
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
     friend class ::nlohmann::detail::binary_writer;
+    template<typename BasicJsonType>
+    friend class ::nlohmann::detail::binary_reader;
+
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
 
@@ -12858,6 +12799,10 @@ class basic_json
     @note The mapping is **complete** in the sense that any JSON value type
           can be converted to a CBOR value.
 
+    @note If NaN or Infinity are stored inside a JSON number, they are
+          serialized properly. This behavior differs from the @ref dump()
+          function which serializes NaN or Infinity to `null`.
+
     @note The following CBOR types are not used in the conversion:
           - byte strings (0x40..0x5f)
           - UTF-8 strings terminated by "break" (0x7f)
@@ -12885,7 +12830,7 @@ class basic_json
     @sa http://cbor.io
     @sa @ref from_cbor(const std::vector<uint8_t>&, const size_t) for the
         analogous deserialization
-    @sa @ref to_msgpack(const basic_json& for the related MessagePack format
+    @sa @ref to_msgpack(const basic_json&) for the related MessagePack format
 
     @since version 2.0.9
     */
@@ -12964,6 +12909,10 @@ class basic_json
 
     @note Any MessagePack output created @ref to_msgpack can be successfully
           parsed by @ref from_msgpack.
+
+    @note If NaN or Infinity are stored inside a JSON number, they are
+          serialized properly. This behavior differs from the @ref dump()
+          function which serializes NaN or Infinity to `null`.
 
     @param[in] j  JSON value to serialize
     @return MessagePack serialization as byte vector
@@ -14324,7 +14273,7 @@ struct hash<nlohmann::json>
 /// @note: do not remove the space after '<',
 ///        see https://github.com/nlohmann/json/pull/679
 template<>
-struct less< ::nlohmann::detail::value_t> 
+struct less< ::nlohmann::detail::value_t>
 {
     /*!
     @brief compare two value_t enum values
