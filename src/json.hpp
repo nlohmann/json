@@ -29,7 +29,7 @@ SOFTWARE.
 #ifndef NLOHMANN_JSON_HPP
 #define NLOHMANN_JSON_HPP
 
-#include <algorithm> // all_of, copy, fill, find, for_each, none_of, remove, reverse, transform
+#include <algorithm> // all_of, copy, fill, find, for_each, generate_n, none_of, remove, reverse, transform
 #include <array> // array
 #include <cassert> // assert
 #include <ciso646> // and, not, or
@@ -6605,13 +6605,10 @@ class serializer
         // convert decimal point to '.'
         if (decimal_point != '\0' and decimal_point != '.')
         {
-            for (auto& c : number_buffer)
+            const auto dec_pos = std::find(number_buffer.begin(), number_buffer.end(), decimal_point);
+            if (dec_pos != number_buffer.end())
             {
-                if (c == decimal_point)
-                {
-                    c = '.';
-                    break;
-                }
+                *dec_pos = '.';
             }
         }
 
