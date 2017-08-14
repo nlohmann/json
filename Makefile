@@ -20,7 +20,8 @@ SRCS = ${SRCDIR}/json.hpp \
 			 ${SRCDIR}/detail/iterators/json_reverse_iterator.hpp \
 			 ${SRCDIR}/detail/parsing/output_adapters.hpp \
 			 ${SRCDIR}/detail/parsing/binary_reader.hpp \
-			 ${SRCDIR}/detail/parsing/binary_writer.hpp
+			 ${SRCDIR}/detail/parsing/binary_writer.hpp \
+			 ${SRCDIR}/detail/serializer.hpp
 
 # main target
 all:
