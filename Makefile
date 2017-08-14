@@ -18,10 +18,8 @@ SRCS = ${SRCDIR}/json.hpp \
 			 ${SRCDIR}/detail/iterators/iter_impl.hpp \
 			 ${SRCDIR}/detail/iterators/iteration_proxy.hpp \
 			 ${SRCDIR}/detail/iterators/json_reverse_iterator.hpp \
-			 ${SRCDIR}/detail/parsing/output_adapters.hpp 
-
-
-
+			 ${SRCDIR}/detail/parsing/output_adapters.hpp \
+			 ${SRCDIR}/detail/parsing/binary_reader.hpp
 
 # main target
 all:
