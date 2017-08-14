@@ -7,6 +7,12 @@ cmake_minimum_required(VERSION 3.0.0)
 project(nlohmann_json VERSION 3.0.1 LANGUAGES CXX)
 
 ##
+## INCLUDE
+##
+##
+include(ExternalProject)
+
+##
 ## OPTIONS
 ##
 option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
@@ -15,7 +21,7 @@ option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
 ## CONFIGURATION
 ##
 set(NLOHMANN_JSON_TARGET_NAME               ${PROJECT_NAME})
-set(NLOHMANN_JSON_SOURCE_DIR                "src/")
+set(NLOHMANN_JSON_SOURCE_DIR                "src")
 set(NLOHMANN_JSON_CONFIG_INSTALL_DIR        "lib/cmake/${PROJECT_NAME}")
 set(NLOHMANN_JSON_INCLUDE_INSTALL_DIR       "include")
 set(NLOHMANN_JSON_HEADER_INSTALL_DIR        "${NLOHMANN_JSON_INCLUDE_INSTALL_DIR}/nlohmann")
@@ -61,6 +67,19 @@ if(BUILD_TESTING AND JSON_BuildTests)
     include_directories(${NLOHMANN_JSON_SOURCE_DIR})
     add_subdirectory(test)
 endif()
+
+ExternalProject_Add(amalgamate
+  GIT_REPOSITORY "https://github.com/theodelrieu/Amalgamate"
+  CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
+)
+
+# There is no way to tell amalgamate to force-write the output file even if it already exists...
+add_custom_target(single_header ALL rm -f "${CMAKE_SOURCE_DIR}/single_header/json.hpp"
+  COMMENT "Amalgamating json.hpp..."
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${NLOHMANN_JSON_SOURCE_DIR}
+  DEPENDS amalgamate
+  COMMAND "${CMAKE_BINARY_DIR}/bin/amalgamate" -w '*.hpp' -i . json.hpp "${CMAKE_SOURCE_DIR}/single_header/json.hpp"
+)
 
 ##
 ## INSTALL
