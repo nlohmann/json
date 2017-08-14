@@ -22,7 +22,8 @@ SRCS = ${SRCDIR}/json.hpp \
 			 ${SRCDIR}/detail/parsing/binary_reader.hpp \
 			 ${SRCDIR}/detail/parsing/binary_writer.hpp \
 			 ${SRCDIR}/detail/serializer.hpp \
-			 ${SRCDIR}/detail/json_ref.hpp
+			 ${SRCDIR}/detail/json_ref.hpp \
+			 ${SRCDIR}/adl_serializer.hpp
 
 # main target
 all:
