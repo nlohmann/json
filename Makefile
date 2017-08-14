@@ -15,7 +15,8 @@ SRCS = ${SRCDIR}/json.hpp \
 			 ${SRCDIR}/detail/parsing/parser.hpp \
 			 ${SRCDIR}/detail/iterators/primitive_iterator.hpp \
 			 ${SRCDIR}/detail/iterators/internal_iterator.hpp \
-			 ${SRCDIR}/detail/iterators/iter_impl.hpp
+			 ${SRCDIR}/detail/iterators/iter_impl.hpp \
+			 ${SRCDIR}/detail/iterators/iteration_proxy.hpp
 
 
 
