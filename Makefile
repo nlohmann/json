@@ -11,7 +11,8 @@ SRCS = ${SRCDIR}/json.hpp \
 			 ${SRCDIR}/detail/conversions/from_json.hpp \
 			 ${SRCDIR}/detail/conversions/to_json.hpp \
 			 ${SRCDIR}/detail/parsing/input_adapters.hpp \
-			 ${SRCDIR}/detail/parsing/lexer.hpp
+			 ${SRCDIR}/detail/parsing/lexer.hpp \
+			 ${SRCDIR}/detail/parsing/parser.hpp
 
 
 
