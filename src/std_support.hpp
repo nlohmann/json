@@ -16,7 +16,7 @@ namespace std_support {
 
     int stoi(const std::string &str);
 
-    long long strtoll(const std::string &str, char **endptr = nullptr, int base = 10);
+    long long strtoll(const char *str, char **endptr = nullptr, int base = 10);
 
-    unsigned long long strtoull(const std::string &str, char **endptr = nullptr, int base = 10);
+    unsigned long long strtoull(const char *str, char **endptr = nullptr, int base = 10);
 };
