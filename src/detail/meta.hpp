@@ -220,6 +220,16 @@ struct has_to_json
     static constexpr bool value = std::is_integral<decltype(detect(
                                       std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
 };
+
+// taken from ranges-v3
+template<typename T>
+struct static_const
+{
+    static constexpr T value{};
+};
+
+template<typename T>
+constexpr T static_const<T>::value;
 }
 }
 
