@@ -1,5 +1,10 @@
 .PHONY: pretty clean ChangeLog.md
 
+SRCDIR = src
+SRCS = ${SRCDIR}/json.hpp \
+			 ${SRCDIR}/json_fwd.hpp
+
+# main target
 all:
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check - compile and execute test suite"
@@ -218,9 +223,8 @@ pretty:
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none --formatted \
-	   src/json.hpp test/src/*.cpp \
+	   $(SRCS) test/src/*.cpp \
 	   benchmarks/src/benchmarks.cpp doc/examples/*.cpp
-
 
 ##########################################################################
 # changelog

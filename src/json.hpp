@@ -36,7 +36,6 @@ SOFTWARE.
 #include <clocale> // lconv, localeconv
 #include <cmath> // isfinite, labs, ldexp, signbit
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
-#include <cstdint> // int64_t, uint64_t
 #include <cstdlib> // abort, strtod, strtof, strtold, strtoul, strtoll, strtoull
 #include <cstring> // memcpy, strlen
 #include <forward_list> // forward_list
@@ -47,15 +46,13 @@ SOFTWARE.
 #include <iterator> // advance, begin, back_inserter, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
 #include <limits> // numeric_limits
 #include <locale> // locale
-#include <map> // map
-#include <memory> // addressof, allocator, allocator_traits, unique_ptr
 #include <numeric> // accumulate
 #include <sstream> // stringstream
-#include <string> // getline, stoi, string, to_string
 #include <type_traits> // add_pointer, conditional, decay, enable_if, false_type, integral_constant, is_arithmetic, is_base_of, is_const, is_constructible, is_convertible, is_default_constructible, is_enum, is_floating_point, is_integral, is_nothrow_move_assignable, is_nothrow_move_constructible, is_pointer, is_reference, is_same, is_scalar, is_signed, remove_const, remove_cv, remove_pointer, remove_reference, true_type, underlying_type
 #include <utility> // declval, forward, make_pair, move, pair, swap
 #include <valarray> // valarray
-#include <vector> // vector
+
+#include "json_fwd.hpp"
 
 // exclude unsupported compilers
 #if defined(__clang__)
@@ -124,20 +121,6 @@ SOFTWARE.
 */
 namespace nlohmann
 {
-template<typename = void, typename = void>
-struct adl_serializer;
-
-// forward declaration of basic_json (required to split the class)
-template<template<typename, typename, typename...> class ObjectType = std::map,
-         template<typename, typename...> class ArrayType = std::vector,
-         class StringType = std::string, class BooleanType = bool,
-         class NumberIntegerType = std::int64_t,
-         class NumberUnsignedType = std::uint64_t,
-         class NumberFloatType = double,
-         template<typename> class AllocatorType = std::allocator,
-         template<typename, typename = void> class JSONSerializer = adl_serializer>
-class basic_json;
-
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
 // may be removed in the future once the class is split.
 
@@ -6896,14 +6879,6 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::value;
 }
 
-
-/*!
-@brief default JSONSerializer template argument
-
-This serializer ignores the template arguments and uses ADL
-([argument-dependent lookup](http://en.cppreference.com/w/cpp/language/adl))
-for serialization.
-*/
 template<typename, typename>
 struct adl_serializer
 {
@@ -6940,17 +6915,6 @@ struct adl_serializer
     }
 };
 
-/*!
-@brief JSON Pointer
-
-A JSON pointer defines a string syntax for identifying a specific value
-within a JSON document. It can be used with functions `at` and
-`operator[]`. Furthermore, JSON pointers are the base for JSON patches.
-
-@sa [RFC 6901](https://tools.ietf.org/html/rfc6901)
-
-@since version 2.0.0
-*/
 class json_pointer
 {
     /// allow basic_json to access private members
@@ -14410,20 +14374,6 @@ class basic_json
 
     /// @}
 };
-
-/////////////
-// presets //
-/////////////
-
-/*!
-@brief default JSON class
-
-This type is the default specialization of the @ref basic_json class which
-uses the standard template types.
-
-@since version 1.0.0
-*/
-using json = basic_json<>;
 
 //////////////////
 // json_pointer //
