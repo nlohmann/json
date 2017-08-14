@@ -20,6 +20,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # create and configure the library target
 add_library(${JSON_TARGET_NAME} INTERFACE)
+
 target_include_directories(${JSON_TARGET_NAME} INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
   $<INSTALL_INTERFACE:${JSON_INCLUDE_DESTINATION}>)
@@ -48,6 +49,7 @@ export(PACKAGE ${JSON_PACKAGE_NAME})
 install(TARGETS ${JSON_TARGET_NAME}
     EXPORT ${JSON_PACKAGE_NAME})
 install(FILES "src/json.hpp"
+        "src/std_support.hpp"
     DESTINATION ${JSON_INCLUDE_DESTINATION})
 install(EXPORT ${JSON_PACKAGE_NAME}
     FILE ${JSON_TARGETS_FILENAME}
