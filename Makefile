@@ -9,7 +9,8 @@ SRCS = ${SRCDIR}/json.hpp \
 			 ${SRCDIR}/detail/exceptions.hpp \
 			 ${SRCDIR}/detail/value_t.hpp \
 			 ${SRCDIR}/detail/conversions/from_json.hpp \
-			 ${SRCDIR}/detail/conversions/to_json.hpp
+			 ${SRCDIR}/detail/conversions/to_json.hpp \
+			 ${SRCDIR}/detail/parsing/input_adapters.hpp
 
 
 
