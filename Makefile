@@ -6,7 +6,8 @@ SRCS = ${SRCDIR}/json.hpp \
 			 ${SRCDIR}/detail/macro_scope.hpp \
 			 ${SRCDIR}/detail/macro_unscope.hpp \
 			 ${SRCDIR}/detail/meta.hpp \
-			 ${SRCDIR}/detail/exceptions.hpp
+			 ${SRCDIR}/detail/exceptions.hpp \
+			 ${SRCDIR}/detail/value_t.hpp
 
 
 
