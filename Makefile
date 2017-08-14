@@ -4,7 +4,9 @@ SRCDIR = src
 SRCS = ${SRCDIR}/json.hpp \
 			 ${SRCDIR}/json_fwd.hpp \
 			 ${SRCDIR}/detail/macro_scope.hpp \
-			 ${SRCDIR}/detail/macro_unscope.hpp
+			 ${SRCDIR}/detail/macro_unscope.hpp \
+			 ${SRCDIR}/detail/meta.hpp
+
 
 # main target
 all:
