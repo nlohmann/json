@@ -8,7 +8,8 @@ SRCS = ${SRCDIR}/json.hpp \
 			 ${SRCDIR}/detail/meta.hpp \
 			 ${SRCDIR}/detail/exceptions.hpp \
 			 ${SRCDIR}/detail/value_t.hpp \
-			 ${SRCDIR}/detail/conversions/from_json.hpp
+			 ${SRCDIR}/detail/conversions/from_json.hpp \
+			 ${SRCDIR}/detail/conversions/to_json.hpp
 
 
 
