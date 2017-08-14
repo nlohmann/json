@@ -1,11 +1,11 @@
 #ifndef NLOHMANN_JSON_DETAIL_PARSING_BINARY_WRITER_HPP
 #define NLOHMANN_JSON_DETAIL_PARSING_BINARY_WRITER_HPP
 
-#include <algorithm>
-#include <array>
-#include <cstdint>
-#include <cstring>
-#include <limits>
+#include <algorithm> // reverse
+#include <array> // array
+#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstring> // memcpy
+#include <limits> // numeric_limits
 
 #include "detail/parsing/binary_reader.hpp"
 #include "detail/parsing/output_adapters.hpp"

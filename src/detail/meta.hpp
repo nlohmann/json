@@ -1,10 +1,11 @@
 #ifndef NLOHMANN_JSON_DETAIL_META_HPP
 #define NLOHMANN_JSON_DETAIL_META_HPP
 
-#include <cstdint>
-#include <limits>
-#include <type_traits> // add_pointer, conditional, decay, enable_if, false_type, integral_constant, is_arithmetic, is_base_of, is_const, is_constructible, is_convertible, is_default_constructible, is_enum, is_floating_point, is_integral, is_nothrow_move_assignable, is_nothrow_move_constructible, is_pointer, is_reference, is_same, is_scalar, is_signed, remove_const, remove_cv, remove_pointer, remove_reference, true_type, underlying_type
-#include <utility>
+#include <ciso646> // not
+#include <cstddef> // size_t
+#include <limits> // numeric_limits
+#include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
+#include <utility> // declval
 
 #include "json_fwd.hpp"
 #include "detail/macro_scope.hpp"

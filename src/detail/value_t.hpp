@@ -1,6 +1,7 @@
 #ifndef NLOHMANN_JSON_DETAIL_VALUE_T_HPP
 #define NLOHMANN_JSON_DETAIL_VALUE_T_HPP
 
+#include <array> // array
 #include <ciso646> // and
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
@@ -37,7 +38,7 @@ value with the default value for a given type
 
 @since version 1.0.0
 */
-enum class value_t : uint8_t
+enum class value_t : std::uint8_t
 {
     null,             ///< null value
     object,           ///< object (unordered set of name/value pairs)
@@ -62,7 +63,7 @@ Returns an ordering that is similar to Python:
 */
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 {
-    static constexpr std::array<uint8_t, 8> order = {{
+    static constexpr std::array<std::uint8_t, 8> order = {{
             0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */,
             1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */
         }

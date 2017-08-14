@@ -1,10 +1,16 @@
 #ifndef NLOHMANN_JSON_DETAIL_CONVERSIONS_FROM_JSON_HPP
 #define NLOHMANN_JSON_DETAIL_CONVERSIONS_FROM_JSON_HPP
 
-#include <array>
-#include <tuple>
-#include <utility>
-#include <valarray>
+#include <algorithm> // transform
+#include <array> // array
+#include <ciso646> // and, not
+#include <forward_list> // forward_list
+#include <iterator> // inserter, front_inserter, end
+#include <string> // string
+#include <tuple> // tuple, make_tuple
+#include <type_traits> // is_arithmetic, is_same, is_enum, underlying_type, is_convertible
+#include <utility> // pair, declval
+#include <valarray> // valarray
 
 #include "detail/exceptions.hpp"
 #include "detail/macro_scope.hpp"
@@ -15,10 +21,6 @@ namespace nlohmann
 {
 namespace detail
 {
-///////////////
-// from_json //
-///////////////
-
 // overloads for basic_json template parameters
 template<typename BasicJsonType, typename ArithmeticType,
          enable_if_t<std::is_arithmetic<ArithmeticType>::value and

@@ -1,14 +1,20 @@
 #ifndef NLOHMANN_JSON_DETAIL_PARSING_BINARY_READER_HPP
 #define NLOHMANN_JSON_DETAIL_PARSING_BINARY_READER_HPP
 
-#include <algorithm>
-#include <array>
-#include <cstdint>
-#include <cstring>
-#include <iomanip>
-#include <sstream>
-#include <string>
-#include <utility>
+#include <algorithm> // generate_n
+#include <array> // array
+#include <cassert> // assert
+#include <cmath> // ldexp
+#include <cstddef> // size_t
+#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstring> // memcpy
+#include <iomanip> // setw, setfill
+#include <ios> // hex
+#include <iterator> // back_inserter
+#include <limits> // numeric_limits
+#include <sstream> // stringstream
+#include <string> // char_traits, string
+#include <utility> // make_pair, move
 
 #include "detail/exceptions.hpp"
 #include "detail/macro_scope.hpp"

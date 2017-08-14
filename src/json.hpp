@@ -29,26 +29,17 @@ SOFTWARE.
 #ifndef NLOHMANN_JSON_HPP
 #define NLOHMANN_JSON_HPP
 
-#include <algorithm> // all_of, copy, fill, find, for_each, generate_n, none_of, remove, reverse, transform
-#include <array> // array
+#include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
 #include <ciso646> // and, not, or
-#include <clocale> // lconv, localeconv
-#include <cmath> // isfinite, labs, ldexp, signbit
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
-#include <cstdlib> // abort, strtod, strtof, strtold, strtoul, strtoll, strtoull
-#include <cstring> // memcpy, strlen
-#include <forward_list> // forward_list
-#include <functional> // function, hash, less
+#include <functional> // hash, less
 #include <initializer_list> // initializer_list
-#include <iomanip> // hex
-#include <iosfwd>   // istream, ostream
-#include <iterator> // advance, begin, back_inserter, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
-#include <limits> // numeric_limits
-#include <locale> // locale
+#include <iosfwd> // istream, ostream
+#include <iterator> // iterator_traits, random_access_iterator_tag
 #include <numeric> // accumulate
-#include <sstream> // stringstream
-#include <utility> // declval, forward, make_pair, move, pair, swap
+#include <string> // string, stoi, to_string
+#include <utility> // declval, forward, move, pair, swap
 
 #include "json_fwd.hpp"
 #include "detail/macro_scope.hpp"

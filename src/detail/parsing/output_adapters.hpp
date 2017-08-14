@@ -1,12 +1,14 @@
 #ifndef NLOHMANN_JSON_DETAIL_PARSING_OUTPUT_ADAPTERS_HPP
 #define NLOHMANN_JSON_DETAIL_PARSING_OUTPUT_ADAPTERS_HPP
 
-#include <algorithm>
-#include <cstddef>
-#include <iosfwd>
-#include <iterator>
-#include <memory>
-#include <vector>
+#include <algorithm> // copy
+#include <cstddef> // size_t
+#include <ios> // streamsize
+#include <iterator> // back_inserter
+#include <memory> // shared_ptr, make_shared
+#include <ostream> // basic_ostream
+#include <string> // basic_string
+#include <vector> // vector
 
 namespace nlohmann
 {

@@ -1,9 +1,10 @@
 #ifndef NLOHMANN_JSON_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
 #define NLOHMANN_JSON_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
 
-#include <cstddef>
-#include <iosfwd>
-#include <limits>
+#include <ciso646> // not
+#include <cstddef> // ptrdiff_t
+#include <limits>  // numeric_limits
+#include <ostream> // ostream
 
 namespace nlohmann
 {

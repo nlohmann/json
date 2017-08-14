@@ -1,9 +1,13 @@
 #ifndef NLOHMANN_JSON_DETAIL_CONVERSIONS_TO_JSON_HPP
 #define NLOHMANN_JSON_DETAIL_CONVERSIONS_TO_JSON_HPP
 
-#include <type_traits>
-#include <utility>
-#include <valarray>
+#include <ciso646> // or, and, not
+#include <iterator> // begin, end
+#include <tuple> // tuple, get
+#include <type_traits> // is_same, is_constructible, is_floating_point, is_enum, underlying_type
+#include <utility> // move, forward, declval, pair
+#include <valarray> // valarray
+#include <vector> // vector
 
 #include "detail/meta.hpp"
 #include "detail/value_t.hpp"

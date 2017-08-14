@@ -3,8 +3,8 @@
 
 #include <cstdint> // int64_t, uint64_t
 #include <map> // map
-#include <memory> // addressof, allocator, allocator_traits, unique_ptr
-#include <string> // getline, stoi, string, to_string
+#include <memory> // allocator
+#include <string> // string
 #include <vector> // vector
 
 /*!

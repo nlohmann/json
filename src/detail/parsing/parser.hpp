@@ -1,15 +1,18 @@
 #ifndef NLOHMANN_JSON_DETAIL_PARSING_PARSER_HPP
 #define NLOHMANN_JSON_DETAIL_PARSING_PARSER_HPP
 
-#include <cmath>
-#include <functional>
-#include <string>
-#include <utility>
+#include <cassert> // assert
+#include <cmath> // isfinite
+#include <cstdint> // uint8_t
+#include <functional> // function
+#include <string> // string
+#include <utility> // move
 
 #include "detail/exceptions.hpp"
 #include "detail/macro_scope.hpp"
 #include "detail/parsing/input_adapters.hpp"
 #include "detail/parsing/lexer.hpp"
+#include "detail/value_t.hpp"
 
 namespace nlohmann
 {

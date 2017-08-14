@@ -1,9 +1,9 @@
 #ifndef NLOHMANN_JSON_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
 #define NLOHMANN_JSON_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
 
-#include <cstddef>
-#include <iterator>
-#include <utility>
+#include <cstddef> // ptrdiff_t
+#include <iterator> // reverse_iterator
+#include <utility> // declval
 
 namespace nlohmann
 {

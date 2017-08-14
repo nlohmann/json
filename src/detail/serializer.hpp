@@ -1,21 +1,24 @@
 #ifndef NLOHMANN_JSON_DETAIL_SERIALIZER_HPP
 #define NLOHMANN_JSON_DETAIL_SERIALIZER_HPP
 
-#include <algorithm>
-#include <array>
-#include <clocale>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <iterator>
-#include <limits>
-#include <string>
-#include <type_traits>
+#include <algorithm> // reverse, remove, fill, find, none_of
+#include <array> // array
+#include <cassert> // assert
+#include <ciso646> // and, or
+#include <clocale> // localeconv, lconv
+#include <cmath> // labs, isfinite, isnan, signbit
+#include <cstddef> // size_t, ptrdiff_t
+#include <cstdint> // uint8_t
+#include <cstdio> // snprintf
+#include <iterator> // next
+#include <limits> // numeric_limits
+#include <string> // string
+#include <type_traits> // is_same
 
 #include "detail/macro_scope.hpp"
 #include "detail/meta.hpp"
 #include "detail/parsing/output_adapters.hpp"
+#include "detail/value_t.hpp"
 
 namespace nlohmann
 {

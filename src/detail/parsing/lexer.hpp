@@ -1,9 +1,15 @@
 #ifndef NLOHMANN_JSON_DETAIL_PARSING_LEXER_HPP
 #define NLOHMANN_JSON_DETAIL_PARSING_LEXER_HPP
 
-#include <clocale>
-#include <cstddef>
-#include <vector>
+#include <clocale> // localeconv
+#include <cstddef> // size_t
+#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
+#include <initializer_list> // initializer_list
+#include <ios> // hex, uppercase
+#include <iomanip> // setw, setfill
+#include <sstream> // stringstream
+#include <string> // char_traits, string
+#include <vector> // vector
 
 #include "detail/macro_scope.hpp"
 #include "detail/parsing/input_adapters.hpp"

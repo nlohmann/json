@@ -1,6 +1,8 @@
 #ifndef NLOHMANN_JSON_MACRO_SCOPE_HPP
 #define NLOHMANN_JSON_MACRO_SCOPE_HPP
 
+#include <ciso646> // not
+
 // This file contains all internal macro definitions
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
 

@@ -1,8 +1,10 @@
 #ifndef NLOHMANN_JSON_DETAIL_ITERATORS_ITERATION_PROXY_HPP
 #define NLOHMANN_JSON_DETAIL_ITERATORS_ITERATION_PROXY_HPP
 
-#include <cstddef>
-#include <string>
+#include <cstddef> // size_t
+#include <string> // string, to_string
+
+#include "detail/value_t.hpp"
 
 namespace nlohmann
 {
