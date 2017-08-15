@@ -42,7 +42,7 @@ matrix:
     after_success:
       - make check TEST_PREFIX="valgrind --error-exitcode=1 --leak-check=full " TEST_PATTERN=""
 
-  # cLang sanitizer
+  # clang sanitizer
   # note: sadly clang's libc++ has errors when running with sanitize,
   # so we use clang with gcc's libstdc++ which doesn't give those error.
   # that's why we need to install g++-6 to get the lastest version
@@ -267,6 +267,14 @@ matrix:
 ################
 
 script:
+  # get CMake (only for systems with brew - macOS)
+  - |
+     if [[ !(-x $(which cmake)) && (-x $(which brew)) ]]; then
+       brew update
+       brew install cmake
+       cmake --version
+     fi
+
   # make sure CXX is correctly set
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
 
