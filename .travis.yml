@@ -120,6 +120,9 @@ matrix:
     compiler: clang
     before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
     addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+        packages: ['g++-6', 'clang-3.6']
       coverity_scan:
         project:
           name: "nlohmann/json"
@@ -129,8 +132,8 @@ matrix:
         build_command: "make"
         branch_pattern: coverity_scan
     env:
-      - LLVM_VERSION=3.6.0
       - SPECIAL=coverity
+      - COMPILER=clang++-3.6
 
   # OSX / Clang
 
@@ -202,119 +205,71 @@ matrix:
   # Linux / Clang
 
   - os: linux
-    env: LLVM_VERSION=3.6.0
     compiler: clang
+    env: COMPILER=clang++-3.5
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
+        packages: ['g++-6', 'clang-3.5']
 
   - os: linux
-    env: LLVM_VERSION=3.6.1
     compiler: clang
+    env: COMPILER=clang++-3.6
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+        packages: ['g++-6', 'clang-3.6']
 
   - os: linux
-    env: LLVM_VERSION=3.6.2
     compiler: clang
-
-#  - os: linux
-#    env: LLVM_VERSION=3.7.0
-#    compiler: clang
-
-#  - os: linux
-#    env: LLVM_VERSION=3.7.1
-#    compiler: clang
+    env: COMPILER=clang++-3.7
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
+        packages: ['g++-6', 'clang-3.7']
 
   - os: linux
-    env: LLVM_VERSION=3.8.0
     compiler: clang
+    env: COMPILER=clang++-3.8
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-6', 'clang-3.8']
 
   - os: linux
-    env: LLVM_VERSION=3.8.1
     compiler: clang
+    env: COMPILER=clang++-3.9
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-6', 'clang-3.9']
 
-#  - os: linux
-#    addons:
-#      apt:
-#        sources: llvm-toolchain-trusty-3.9
-#        packages: clang-3.9
-#    env: COMPILER=clang++-3.9
-#
-#  - os: linux
-#    addons:
-#      apt:
-#        sources: llvm-toolchain-trusty-4.0
-#        packages: clang-4.0
-#    env: COMPILER=clang++-4.0
-#
-#  - os: linux
-#    addons:
-#      apt:
-#        sources: llvm-toolchain-trusty
-#        packages: clang-5.0
-#    env: COMPILER=clang++-5.0
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-4.0
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
+        packages: ['g++-6', 'clang-4.0']
 
-#####################
-# installation step #
-#####################
-
-# set directories to cache
-cache:
-  directories:
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.2
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.1
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.0
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.7.0
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.7.1
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.0
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.1
-
-
-install:
-  # create deps dir if not existing
-  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
-  - mkdir -p ${DEPS_DIR}
-
-  # make sure CXX is correctly set
-  - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
-
-  # get CMake (only for systems with brew - macOS)
-  - |
-     if [[ !(-x $(which cmake)) && (-x $(which brew)) ]]; then
-       brew update
-       brew install cmake
-       cmake --version
-     fi
-
-  # install LLVM/clang when LLVM_VERSION is set
-  - |
-     if [[ "${LLVM_VERSION}" != "" ]]; then
-       LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
-       if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
-         travis_retry wget --quiet https://cmake.org/files/v3.6/cmake-3.6.1.tar.gz
-         tar xfz cmake-3.6.1.tar.gz
-         (cd cmake-3.6.1 && ./configure --prefix=${LLVM_DIR}/cmake && make install)
-         export PATH="${LLVM_DIR}/cmake/bin:${PATH}"
-         LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
-         LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
-         LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
-         CLANG_URL="http://llvm.org/releases/${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
-         mkdir -p ${LLVM_DIR} ${LLVM_DIR}/build ${LLVM_DIR}/projects/libcxx ${LLVM_DIR}/projects/libcxxabi ${LLVM_DIR}/clang
-         travis_retry wget --quiet -O - ${LLVM_URL}      | tar --strip-components=1 -xJ -C ${LLVM_DIR}
-         travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
-         travis_retry wget --quiet -O - ${LIBCXXABI_URL} | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxxabi
-         travis_retry wget --quiet -O - ${CLANG_URL}     | tar --strip-components=1 -xJ -C ${LLVM_DIR}/clang
-         (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=clang++)
-         (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
-         (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
-       fi
-       export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
-       export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
-       export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
-       export PATH="${LLVM_DIR}/clang/bin:${PATH}"
-     fi
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-4.0
+      - CXXFLAGS=-std=c++1z
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
+        packages: ['g++-6', 'clang-4.0']
 
 ################
 # build script #
 ################
 
 script:
+  # make sure CXX is correctly set
+  - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
+
   # show OS/compiler version
   - uname -a
   - $CXX --version
