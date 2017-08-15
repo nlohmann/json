@@ -761,10 +761,10 @@ TEST_CASE("modifiers")
             SECTION("wrong types")
             {
                 CHECK_THROWS_AS(j_array.update(j_object1), json::type_error&);
-                CHECK_THROWS_WITH(j_array.update(j_object1), "[json.exception.type_error.305] cannot use merge() with array");
+                CHECK_THROWS_WITH(j_array.update(j_object1), "[json.exception.type_error.312] cannot use update() with array");
 
                 CHECK_THROWS_AS(j_object1.update(j_array), json::type_error&);
-                CHECK_THROWS_WITH(j_object1.update(j_array), "[json.exception.type_error.305] cannot use merge() with array");
+                CHECK_THROWS_WITH(j_object1.update(j_array), "[json.exception.type_error.312] cannot use update() with array");
             }
         }
 
@@ -795,7 +795,7 @@ TEST_CASE("modifiers")
                 CHECK_THROWS_AS(j_object1.update(j_array.begin(), j_array.end()), json::invalid_iterator&);
 
                 CHECK_THROWS_WITH(j_array.update(j_object2.begin(), j_object2.end()),
-                                  "[json.exception.type_error.305] cannot use merge() with array");
+                                  "[json.exception.type_error.312] cannot use update() with array");
                 CHECK_THROWS_WITH(j_object1.update(j_object1.begin(), j_object2.end()),
                                   "[json.exception.invalid_iterator.210] iterators do not fit");
                 CHECK_THROWS_WITH(j_object1.update(j_array.begin(), j_array.end()),
