@@ -1101,6 +1101,23 @@ TEST_CASE("MessagePack")
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})),
                               "[json.exception.parse_error.113] parse error at 2: expected a MessagePack string; last byte: 0xff");
         }
+
+        SECTION("strict mode")
+        {
+            std::vector<uint8_t> vec = {0xc0, 0xc0};
+            SECTION("non-strict mode")
+            {
+                const auto result = json::from_msgpack(vec, false);
+                CHECK(result == json());
+            }
+
+            SECTION("strict mode")
+            {
+                CHECK_THROWS_AS(json::from_msgpack(vec), json::parse_error);
+                CHECK_THROWS_WITH(json::from_msgpack(vec),
+                                  "[json.exception.parse_error.110] parse error at 2: expected end of input");
+            }
+        }
     }
 }
 
@@ -1147,7 +1164,7 @@ TEST_CASE("single MessagePack roundtrip")
 
         // check with different start index
         packed.insert(packed.begin(), 5, 0xff);
-        CHECK(j1 == json::from_msgpack(packed, 5));
+        CHECK(j1 == json::from_msgpack({packed.begin() + 5, packed.end()}));
     }
 }
 

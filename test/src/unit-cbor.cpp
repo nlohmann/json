@@ -1260,6 +1260,23 @@ TEST_CASE("CBOR")
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01})),
                               "[json.exception.parse_error.113] parse error at 2: expected a CBOR string; last byte: 0xff");
         }
+
+        SECTION("strict mode")
+        {
+            std::vector<uint8_t> vec = {0xf6, 0xf6};
+            SECTION("non-strict mode")
+            {
+                const auto result = json::from_cbor(vec, false);
+                CHECK(result == json());
+            }
+
+            SECTION("strict mode")
+            {
+                CHECK_THROWS_AS(json::from_cbor(vec), json::parse_error);
+                CHECK_THROWS_WITH(json::from_cbor(vec),
+                                  "[json.exception.parse_error.110] parse error at 2: expected end of input");
+            }
+        }
     }
 }
 
@@ -1305,7 +1322,7 @@ TEST_CASE("single CBOR roundtrip")
 
         // check with different start index
         packed.insert(packed.begin(), 5, 0xff);
-        CHECK(j1 == json::from_cbor(packed, 5));
+        CHECK(j1 == json::from_cbor({packed.begin() + 5, packed.end()}));
     }
 }
 
@@ -1654,7 +1671,7 @@ TEST_CASE("all first bytes", "[!throws]")
 
         try
         {
-            json::from_cbor({byte});
+            json::from_cbor(std::vector<uint8_t>(1, byte));
         }
         catch (const json::parse_error& e)
         {

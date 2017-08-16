@@ -4411,16 +4411,14 @@ class binary_reader
     /*!
     @brief create a JSON value from CBOR input
 
-    @param[in] get_char  whether a new character should be retrieved from
-                         the input (true, default) or whether the last
-                         read character should be considered instead
-
+    @param[in] strict  whether to expect the input to be consumed completed
     @return JSON value created from CBOR input
 
-    @throw parse_error.110 if input ended unexpectedly
+    @throw parse_error.110 if input ended unexpectedly or the end of file was
+                           not reached when @a strict was set to true
     @throw parse_error.112 if unsupported byte was read
     */
-    BasicJsonType parse_cbor(const bool strict = false)
+    BasicJsonType parse_cbor(const bool strict)
     {
         const auto res = parse_cbor_internal();
         if (strict)
@@ -4434,12 +4432,14 @@ class binary_reader
     /*!
     @brief create a JSON value from MessagePack input
 
+    @param[in] strict  whether to expect the input to be consumed completed
     @return JSON value created from MessagePack input
 
-    @throw parse_error.110 if input ended unexpectedly
+    @throw parse_error.110 if input ended unexpectedly or the end of file was
+                           not reached when @a strict was set to true
     @throw parse_error.112 if unsupported byte was read
     */
-    BasicJsonType parse_msgpack(const bool strict = false)
+    BasicJsonType parse_msgpack(const bool strict)
     {
         const auto res =  parse_msgpack_internal();
         if (strict)
@@ -4463,6 +4463,11 @@ class binary_reader
     }
 
   private:
+    /*!
+    @param[in] get_char  whether a new character should be retrieved from the
+                         input (true, default) or whether the last read
+                         character should be considered instead
+    */
     BasicJsonType parse_cbor_internal(const bool get_char = true)
     {
         switch (get_char ? get() : current)
@@ -13081,10 +13086,10 @@ class basic_json
     }
 
     /*!
-    @brief create a JSON value from a byte vector in CBOR format
+    @brief create a JSON value from an input in CBOR format
 
-    Deserializes a given byte vector @a v to a JSON value using the CBOR
-    (Concise Binary Object Representation) serialization format.
+    Deserializes a given input @a i to a JSON value using the CBOR (Concise
+    Binary Object Representation) serialization format.
 
     The library maps CBOR types to JSON value types as follows:
 
@@ -13146,44 +13151,42 @@ class basic_json
     @note Any CBOR output created @ref to_cbor can be successfully parsed by
           @ref from_cbor.
 
-    @param[in] v  a byte vector in CBOR format
-    @param[in] start_index the index to start reading from @a v (0 by default)
+    @param[in] i  an input in CBOR format convertible to an input adapter
+    @param[in] strict  whether to expect the input to be consumed until EOF
+                       (true by default)
     @return deserialized JSON value
 
-    @throw parse_error.110 if the given vector ends prematurely
+    @throw parse_error.110 if the given input ends prematurely or the end of
+    file was not reached when @a strict was set to true
     @throw parse_error.112 if unsupported features from CBOR were
-    used in the given vector @a v or if the input is not valid CBOR
+    used in the given input @a v or if the input is not valid CBOR
     @throw parse_error.113 if a string was expected as map key, but not found
 
-    @complexity Linear in the size of the byte vector @a v.
+    @complexity Linear in the size of the input @a i.
 
     @liveexample{The example shows the deserialization of a byte vector in CBOR
     format to a JSON value.,from_cbor}
 
     @sa http://cbor.io
     @sa @ref to_cbor(const basic_json&) for the analogous serialization
-    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
+    @sa @ref from_msgpack(detail::input_adapter, const bool) for the
         related MessagePack format
 
-    @since version 2.0.9, parameter @a start_index since 2.1.1
+    @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
+           consume input adapters, removed start_index parameter, and added
+           @a strict parameter since 3.0.0
     */
-    static basic_json from_cbor(const std::vector<uint8_t>& v,
-                                const std::size_t start_index = 0)
+    static basic_json from_cbor(detail::input_adapter i,
+                                const bool strict = true)
     {
-        binary_reader br(detail::input_adapter(v.begin() + static_cast<difference_type>(start_index), v.end()));
-        return br.parse_cbor();
-    }
-
-    static basic_json from_cbor(detail::input_adapter i)
-    {
-        return binary_reader(i).parse_cbor();
+        return binary_reader(i).parse_cbor(strict);
     }
 
 
     /*!
-    @brief create a JSON value from a byte vector in MessagePack format
+    @brief create a JSON value from an input in MessagePack format
 
-    Deserializes a given byte vector @a v to a JSON value using the MessagePack
+    Deserializes a given input @a i to a JSON value using the MessagePack
     serialization format.
 
     The library maps MessagePack types to JSON value types as follows:
@@ -13226,37 +13229,35 @@ class basic_json
     @note Any MessagePack output created @ref to_msgpack can be successfully
           parsed by @ref from_msgpack.
 
-    @param[in] v  a byte vector in MessagePack format
-    @param[in] start_index the index to start reading from @a v (0 by default)
-    @return deserialized JSON value
+    @param[in] i  an input in MessagePack format convertible to an input
+                  adapter
+    @param[in] strict  whether to expect the input to be consumed until EOF
+                       (true by default)
 
-    @throw parse_error.110 if the given vector ends prematurely
+    @throw parse_error.110 if the given input ends prematurely or the end of
+    file was not reached when @a strict was set to true
     @throw parse_error.112 if unsupported features from MessagePack were
-    used in the given vector @a v or if the input is not valid MessagePack
+    used in the given input @a i or if the input is not valid MessagePack
     @throw parse_error.113 if a string was expected as map key, but not found
 
-    @complexity Linear in the size of the byte vector @a v.
+    @complexity Linear in the size of the input @a i.
 
     @liveexample{The example shows the deserialization of a byte vector in
     MessagePack format to a JSON value.,from_msgpack}
 
     @sa http://msgpack.org
     @sa @ref to_msgpack(const basic_json&) for the analogous serialization
-    @sa @ref from_cbor(const std::vector<uint8_t>&, const size_t) for the
-        related CBOR format
+    @sa @ref from_cbor(detail::input_adapter, const bool) for the related CBOR
+        format
 
-    @since version 2.0.9, parameter @a start_index since 2.1.1
+    @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
+           consume input adapters, removed start_index parameter, and added
+           @a strict parameter since 3.0.0
     */
-    static basic_json from_msgpack(const std::vector<uint8_t>& v,
-                                   const std::size_t start_index = 0)
+    static basic_json from_msgpack(detail::input_adapter i,
+                                   const bool strict = true)
     {
-        binary_reader br(detail::input_adapter(v.begin() + static_cast<difference_type>(start_index), v.end()));
-        return br.parse_msgpack();
-    }
-
-    static basic_json from_msgpack(detail::input_adapter i)
-    {
-        return binary_reader(i).parse_msgpack();
+        return binary_reader(i).parse_msgpack(strict);
     }
 
     /// @}
