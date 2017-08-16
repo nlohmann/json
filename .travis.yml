@@ -48,13 +48,12 @@ matrix:
   # that's why we need to install g++-6 to get the lastest version
   - os: linux
     env:
-      - LLVM_VERSION=3.8.1
+      - COMPILER=clang++-4.0
       - SPECIAL=sanitizer
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: g++-6
-    compiler: clang
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
+        packages: ['g++-6', 'clang-4.0']
     before_script:
       - make clang_sanitize
 
