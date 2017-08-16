@@ -44,7 +44,7 @@ SOFTWARE.
 #include <initializer_list> // initializer_list
 #include <iomanip> // hex
 #include <iosfwd>   // istream, ostream
-#include <iterator> // advance, begin, back_inserter, bidirectional_iterator_tag, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
+#include <iterator> // advance, begin, back_inserter, distance, end, inserter, iterator, iterator_traits, next, random_access_iterator_tag, reverse_iterator
 #include <limits> // numeric_limits
 #include <locale> // locale
 #include <map> // map
@@ -281,8 +281,6 @@ json.exception.invalid_iterator.204 | iterators out of range | When an iterator 
 json.exception.invalid_iterator.205 | iterator out of range | When an iterator for a primitive type (number, boolean, or string) is passed to an erase function, the iterator has to be the @ref begin() iterator, because it is the only way to address the stored value. All other iterators are invalid.
 json.exception.invalid_iterator.206 | cannot construct with iterators from null | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) belong to a JSON null value and hence to not define a valid range.
 json.exception.invalid_iterator.207 | cannot use key() for non-object iterators | The key() member function can only be used on iterators belonging to a JSON object, because other types do not have a concept of a key.
-json.exception.invalid_iterator.208 | cannot use operator[] for object iterators | The operator[] to specify a concrete offset cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
-json.exception.invalid_iterator.209 | cannot use offsets with object iterators | The offset operators (+, -, +=, -=) cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
 json.exception.invalid_iterator.210 | iterators do not fit | The iterator range passed to the insert function are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
 json.exception.invalid_iterator.211 | passed iterators may not belong to container | The iterator range passed to the insert function must not be a subrange of the container to insert to.
 json.exception.invalid_iterator.212 | cannot compare iterators of different containers | When two iterators are compared, they must belong to the same container.
@@ -3555,7 +3553,7 @@ class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJso
         typename BasicJsonType::const_reference,
         typename BasicJsonType::reference>::type;
     /// the category of the iterator
-    using iterator_category = std::bidirectional_iterator_tag;
+    using iterator_category = std::random_access_iterator_tag;
 
     /// default constructor
     iter_impl() = default;
@@ -3949,7 +3947,8 @@ class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJso
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
+                std::advance(m_it.object_iterator, i);
+                break;
 
             case value_t::array:
             {
@@ -4020,7 +4019,11 @@ class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJso
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
+            {
+                difference_type result = 0;
+                for (auto it = other; it != *this; ++it, ++result);
+                return result;
+            }
 
             case value_t::array:
                 return m_it.array_iterator - other.m_it.array_iterator;
@@ -4041,7 +4044,11 @@ class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJso
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(208, "cannot use operator[] for object iterators"));
+            {
+                auto it = *this;
+                std::advance(it.m_it.object_iterator, n);
+                return *it;
+            }
 
             case value_t::array:
                 return *std::next(m_it.array_iterator, n);
@@ -13187,7 +13194,7 @@ class basic_json
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_cbor(A1&& a1, A2&& a2, const bool strict = true)
+    static basic_json from_cbor(A1 && a1, A2 && a2, const bool strict = true)
     {
         return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_cbor(strict);
     }
@@ -13274,7 +13281,7 @@ class basic_json
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_msgpack(A1&& a1, A2&& a2, const bool strict = true)
+    static basic_json from_msgpack(A1 && a1, A2 && a2, const bool strict = true)
     {
         return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_msgpack(strict);
     }
