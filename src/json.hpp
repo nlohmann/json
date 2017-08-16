@@ -4419,7 +4419,50 @@ class binary_reader
     @throw parse_error.110 if input ended unexpectedly
     @throw parse_error.112 if unsupported byte was read
     */
-    BasicJsonType parse_cbor(const bool get_char = true)
+    BasicJsonType parse_cbor(const bool strict = false)
+    {
+        const auto res = parse_cbor_internal();
+        if (strict)
+        {
+            get();
+            check_eof(true);
+        }
+        return res;
+    }
+
+    /*!
+    @brief create a JSON value from MessagePack input
+
+    @return JSON value created from MessagePack input
+
+    @throw parse_error.110 if input ended unexpectedly
+    @throw parse_error.112 if unsupported byte was read
+    */
+    BasicJsonType parse_msgpack(const bool strict = false)
+    {
+        const auto res =  parse_msgpack_internal();
+        if (strict)
+        {
+            get();
+            check_eof(true);
+        }
+        return res;
+    }
+
+    /*!
+    @brief determine system byte order
+
+    @return true iff system's byte order is little endian
+
+    @note from http://stackoverflow.com/a/1001328/266378
+    */
+    static constexpr bool little_endianess(int num = 1) noexcept
+    {
+        return (*reinterpret_cast<char*>(&num) == 1);
+    }
+
+  private:
+    BasicJsonType parse_cbor_internal(const bool get_char = true)
     {
         switch (get_char ? get() : current)
         {
@@ -4603,7 +4646,7 @@ class binary_reader
                 BasicJsonType result = value_t::array;
                 while (get() != 0xff)
                 {
-                    result.push_back(parse_cbor(false));
+                    result.push_back(parse_cbor_internal(false));
                 }
                 return result;
             }
@@ -4663,7 +4706,7 @@ class binary_reader
                 while (get() != 0xff)
                 {
                     auto key = get_cbor_string();
-                    result[key] = parse_cbor();
+                    result[key] = parse_cbor_internal();
                 }
                 return result;
             }
@@ -4737,15 +4780,7 @@ class binary_reader
         }
     }
 
-    /*!
-    @brief create a JSON value from MessagePack input
-
-    @return JSON value created from MessagePack input
-
-    @throw parse_error.110 if input ended unexpectedly
-    @throw parse_error.112 if unsupported byte was read
-    */
-    BasicJsonType parse_msgpack()
+    BasicJsonType parse_msgpack_internal()
     {
         switch (get())
         {
@@ -5071,19 +5106,6 @@ class binary_reader
     }
 
     /*!
-    @brief determine system byte order
-
-    @return true iff system's byte order is little endian
-
-    @note from http://stackoverflow.com/a/1001328/266378
-    */
-    static constexpr bool little_endianess(int num = 1) noexcept
-    {
-        return (*reinterpret_cast<char*>(&num) == 1);
-    }
-
-  private:
-    /*!
     @brief get next character from the input
 
     This function provides the interface to the used input adapter. It does
@@ -5256,7 +5278,7 @@ class binary_reader
         BasicJsonType result = value_t::array;
         std::generate_n(std::back_inserter(*result.m_value.array), len, [this]()
         {
-            return parse_cbor();
+            return parse_cbor_internal();
         });
         return result;
     }
@@ -5271,7 +5293,7 @@ class binary_reader
         {
             get();
             auto key = get_cbor_string();
-            auto val = parse_cbor();
+            auto val = parse_cbor_internal();
             return std::make_pair(std::move(key), std::move(val));
         });
         return result;
@@ -5362,7 +5384,7 @@ class binary_reader
         BasicJsonType result = value_t::array;
         std::generate_n(std::back_inserter(*result.m_value.array), len, [this]()
         {
-            return parse_msgpack();
+            return parse_msgpack_internal();
         });
         return result;
     }
@@ -5377,7 +5399,7 @@ class binary_reader
         {
             get();
             auto key = get_msgpack_string();
-            auto val = parse_msgpack();
+            auto val = parse_msgpack_internal();
             return std::make_pair(std::move(key), std::move(val));
         });
         return result;
@@ -5387,11 +5409,21 @@ class binary_reader
     @brief check if input ended
     @throw parse_error.110 if input ended
     */
-    void check_eof() const
+    void check_eof(const bool expect_eof = false) const
     {
-        if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
+        if (expect_eof)
         {
-            JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
+            if (JSON_UNLIKELY(current != std::char_traits<char>::eof()))
+            {
+                JSON_THROW(parse_error::create(110, chars_read, "expected end of input"));
+            }
+        }
+        else
+        {
+            if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
+            {
+                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
+            }
         }
     }
 
