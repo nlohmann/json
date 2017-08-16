@@ -53,7 +53,7 @@ matrix:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
         packages: ['g++-6', 'clang-4.0']
     after_success:
-      - make clang_sanitize
+      - make clang_sanitize -j4
 
   # cppcheck
 
