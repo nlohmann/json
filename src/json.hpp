@@ -13182,6 +13182,15 @@ class basic_json
         return binary_reader(i).parse_cbor(strict);
     }
 
+    /*!
+    @copydoc from_cbor(detail::input_adapter, const bool)
+    */
+    template<typename A1, typename A2,
+             detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+    static basic_json from_cbor(A1&& a1, A2&& a2, const bool strict = true)
+    {
+        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_cbor(strict);
+    }
 
     /*!
     @brief create a JSON value from an input in MessagePack format
@@ -13258,6 +13267,16 @@ class basic_json
                                    const bool strict = true)
     {
         return binary_reader(i).parse_msgpack(strict);
+    }
+
+    /*!
+    @copydoc from_msgpack(detail::input_adapter, const bool)
+    */
+    template<typename A1, typename A2,
+             detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+    static basic_json from_msgpack(A1&& a1, A2&& a2, const bool strict = true)
+    {
+        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_msgpack(strict);
     }
 
     /// @}

@@ -1322,7 +1322,7 @@ TEST_CASE("single CBOR roundtrip")
 
         // check with different start index
         packed.insert(packed.begin(), 5, 0xff);
-        CHECK(j1 == json::from_cbor({packed.begin() + 5, packed.end()}));
+        CHECK(j1 == json::from_cbor(packed.begin() + 5, packed.end()));
     }
 }
 

@@ -1164,7 +1164,7 @@ TEST_CASE("single MessagePack roundtrip")
 
         // check with different start index
         packed.insert(packed.begin(), 5, 0xff);
-        CHECK(j1 == json::from_msgpack({packed.begin() + 5, packed.end()}));
+        CHECK(j1 == json::from_msgpack(packed.begin() + 5, packed.end()));
     }
 }
 
