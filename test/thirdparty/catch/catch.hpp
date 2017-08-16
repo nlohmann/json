@@ -1,6 +1,6 @@
 /*
- *  Catch v1.9.6
- *  Generated: 2017-06-27 12:19:54.557875
+ *  Catch v1.9.7
+ *  Generated: 2017-08-10 23:49:15.233907
  *  ----------------------------------------------------------
  *  This file has been merged from multiple headers. Please don't edit it directly
  *  Copyright (c) 2012 Two Blue Cubes Ltd. All rights reserved.
@@ -143,6 +143,11 @@
 #       define CATCH_INTERNAL_CONFIG_NO_POSIX_SIGNALS
 #   endif
 
+#endif
+
+#ifdef __OS400__
+#       define CATCH_INTERNAL_CONFIG_NO_POSIX_SIGNALS
+#       define CATCH_CONFIG_COLOUR_NONE
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -414,14 +419,14 @@ namespace Catch {
     };
 
     template<typename ContainerT>
-    inline void deleteAll( ContainerT& container ) {
+    void deleteAll( ContainerT& container ) {
         typename ContainerT::const_iterator it = container.begin();
         typename ContainerT::const_iterator itEnd = container.end();
         for(; it != itEnd; ++it )
             delete *it;
     }
     template<typename AssociativeContainerT>
-    inline void deleteAllValues( AssociativeContainerT& container ) {
+    void deleteAllValues( AssociativeContainerT& container ) {
         typename AssociativeContainerT::const_iterator it = container.begin();
         typename AssociativeContainerT::const_iterator itEnd = container.end();
         for(; it != itEnd; ++it )
@@ -501,7 +506,6 @@ namespace Catch {
     {
     public:
         NotImplementedException( SourceLineInfo const& lineInfo );
-        NotImplementedException( NotImplementedException const& ) {}
 
         virtual ~NotImplementedException() CATCH_NOEXCEPT {}
 
@@ -771,7 +775,7 @@ void registerTestCaseFunction
     #define INTERNAL_CATCH_TESTCASE2( TestName, ... ) \
         static void TestName(); \
         CATCH_INTERNAL_SUPPRESS_ETD_WARNINGS \
-        namespace{ Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar )( &TestName, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( __VA_ARGS__ ) ); } \
+        namespace{ Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar )( &TestName, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( __VA_ARGS__ ) ); } /* NOLINT */ \
         CATCH_INTERNAL_UNSUPPRESS_ETD_WARNINGS \
         static void TestName()
     #define INTERNAL_CATCH_TESTCASE( ... ) \
@@ -780,7 +784,7 @@ void registerTestCaseFunction
     ///////////////////////////////////////////////////////////////////////////////
     #define INTERNAL_CATCH_METHOD_AS_TEST_CASE( QualifiedMethod, ... ) \
         CATCH_INTERNAL_SUPPRESS_ETD_WARNINGS \
-        namespace{ Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar )( &QualifiedMethod, "&" #QualifiedMethod, Catch::NameAndDesc( __VA_ARGS__ ), CATCH_INTERNAL_LINEINFO ); } \
+        namespace{ Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar )( &QualifiedMethod, "&" #QualifiedMethod, Catch::NameAndDesc( __VA_ARGS__ ), CATCH_INTERNAL_LINEINFO ); } /* NOLINT */ \
         CATCH_INTERNAL_UNSUPPRESS_ETD_WARNINGS
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -790,7 +794,7 @@ void registerTestCaseFunction
             struct TestName : ClassName{ \
                 void test(); \
             }; \
-            Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &TestName::test, #ClassName, Catch::NameAndDesc( __VA_ARGS__ ), CATCH_INTERNAL_LINEINFO ); \
+            Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &TestName::test, #ClassName, Catch::NameAndDesc( __VA_ARGS__ ), CATCH_INTERNAL_LINEINFO ); /* NOLINT */ \
         } \
         CATCH_INTERNAL_UNSUPPRESS_ETD_WARNINGS \
         void TestName::test()
@@ -800,7 +804,7 @@ void registerTestCaseFunction
     ///////////////////////////////////////////////////////////////////////////////
     #define INTERNAL_CATCH_REGISTER_TESTCASE( Function, ... ) \
         CATCH_INTERNAL_SUPPRESS_ETD_WARNINGS \
-        Catch::AutoReg( Function, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( __VA_ARGS__ ) ); \
+        Catch::AutoReg( Function, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( __VA_ARGS__ ) ); /* NOLINT */ \
         CATCH_INTERNAL_UNSUPPRESS_ETD_WARNINGS
 
 #else
@@ -808,7 +812,7 @@ void registerTestCaseFunction
     #define INTERNAL_CATCH_TESTCASE2( TestName, Name, Desc ) \
         static void TestName(); \
         CATCH_INTERNAL_SUPPRESS_ETD_WARNINGS \
-        namespace{ Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar )( &TestName, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( Name, Desc ) ); }\
+        namespace{ Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar )( &TestName, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( Name, Desc ) ); } /* NOLINT */ \
         CATCH_INTERNAL_UNSUPPRESS_ETD_WARNINGS \
         static void TestName()
     #define INTERNAL_CATCH_TESTCASE( Name, Desc ) \
@@ -817,7 +821,7 @@ void registerTestCaseFunction
     ///////////////////////////////////////////////////////////////////////////////
     #define INTERNAL_CATCH_METHOD_AS_TEST_CASE( QualifiedMethod, Name, Desc ) \
         CATCH_INTERNAL_SUPPRESS_ETD_WARNINGS \
-        namespace{ Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar )( &QualifiedMethod, "&" #QualifiedMethod, Catch::NameAndDesc( Name, Desc ), CATCH_INTERNAL_LINEINFO ); } \
+        namespace{ Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar )( &QualifiedMethod, "&" #QualifiedMethod, Catch::NameAndDesc( Name, Desc ), CATCH_INTERNAL_LINEINFO ); } /* NOLINT */ \
         CATCH_INTERNAL_UNSUPPRESS_ETD_WARNINGS
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -827,7 +831,7 @@ void registerTestCaseFunction
             struct TestCaseName : ClassName{ \
                 void test(); \
             }; \
-            Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &TestCaseName::test, #ClassName, Catch::NameAndDesc( TestName, Desc ), CATCH_INTERNAL_LINEINFO ); \
+            Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &TestCaseName::test, #ClassName, Catch::NameAndDesc( TestName, Desc ), CATCH_INTERNAL_LINEINFO ); /* NOLINT */ \
         } \
         CATCH_INTERNAL_UNSUPPRESS_ETD_WARNINGS \
         void TestCaseName::test()
@@ -837,7 +841,7 @@ void registerTestCaseFunction
     ///////////////////////////////////////////////////////////////////////////////
     #define INTERNAL_CATCH_REGISTER_TESTCASE( Function, Name, Desc ) \
         CATCH_INTERNAL_SUPPRESS_ETD_WARNINGS \
-        Catch::AutoReg( Function, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( Name, Desc ) ); \
+        Catch::AutoReg( Function, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( Name, Desc ) ); /* NOLINT */ \
         CATCH_INTERNAL_UNSUPPRESS_ETD_WARNINGS
 
 #endif
@@ -933,7 +937,7 @@ namespace Catch {
 
     struct AssertionInfo
     {
-        AssertionInfo() {}
+        AssertionInfo();
         AssertionInfo(  char const * _macroName,
                         SourceLineInfo const& _lineInfo,
                         char const * _capturedExpression,
@@ -1158,23 +1162,23 @@ namespace Matchers {
     // This allows the types to be inferred
     // - deprecated: prefer ||, && and !
     template<typename T>
-    inline Impl::MatchNotOf<T> Not( Impl::MatcherBase<T> const& underlyingMatcher ) {
+    Impl::MatchNotOf<T> Not( Impl::MatcherBase<T> const& underlyingMatcher ) {
         return Impl::MatchNotOf<T>( underlyingMatcher );
     }
     template<typename T>
-    inline Impl::MatchAllOf<T> AllOf( Impl::MatcherBase<T> const& m1, Impl::MatcherBase<T> const& m2 ) {
+    Impl::MatchAllOf<T> AllOf( Impl::MatcherBase<T> const& m1, Impl::MatcherBase<T> const& m2 ) {
         return Impl::MatchAllOf<T>() && m1 && m2;
     }
     template<typename T>
-    inline Impl::MatchAllOf<T> AllOf( Impl::MatcherBase<T> const& m1, Impl::MatcherBase<T> const& m2, Impl::MatcherBase<T> const& m3 ) {
+    Impl::MatchAllOf<T> AllOf( Impl::MatcherBase<T> const& m1, Impl::MatcherBase<T> const& m2, Impl::MatcherBase<T> const& m3 ) {
         return Impl::MatchAllOf<T>() && m1 && m2 && m3;
     }
     template<typename T>
-    inline Impl::MatchAnyOf<T> AnyOf( Impl::MatcherBase<T> const& m1, Impl::MatcherBase<T> const& m2 ) {
+    Impl::MatchAnyOf<T> AnyOf( Impl::MatcherBase<T> const& m1, Impl::MatcherBase<T> const& m2 ) {
         return Impl::MatchAnyOf<T>() || m1 || m2;
     }
     template<typename T>
-    inline Impl::MatchAnyOf<T> AnyOf( Impl::MatcherBase<T> const& m1, Impl::MatcherBase<T> const& m2, Impl::MatcherBase<T> const& m3 ) {
+    Impl::MatchAnyOf<T> AnyOf( Impl::MatcherBase<T> const& m1, Impl::MatcherBase<T> const& m2, Impl::MatcherBase<T> const& m3 ) {
         return Impl::MatchAnyOf<T>() || m1 || m2 || m3;
     }
 
@@ -1219,7 +1223,7 @@ namespace Catch {
 
         template<typename T>
         ResultBuilder& operator << ( T const& value ) {
-            m_stream().oss << value;
+            stream().oss << value;
             return *this;
         }
 
@@ -1253,6 +1257,16 @@ namespace Catch {
         AssertionInfo m_assertionInfo;
         AssertionResultData m_data;
 
+        CopyableStream &stream()
+        {
+            if(!m_usedStream)
+            {
+                m_usedStream = true;
+                m_stream().oss.str("");
+            }
+            return m_stream();
+        }
+
         static CopyableStream &m_stream()
         {
             static CopyableStream s;
@@ -1262,6 +1276,7 @@ namespace Catch {
         bool m_shouldDebugBreak;
         bool m_shouldThrow;
         bool m_guardException;
+        bool m_usedStream;
     };
 
 } // namespace Catch
@@ -1302,7 +1317,7 @@ namespace Internal {
     template<> struct OperatorTraits<IsGreaterThanOrEqualTo>{ static const char* getName(){ return ">="; } };
 
     template<typename T>
-    inline T& opCast(T const& t) { return const_cast<T&>(t); }
+    T& opCast(T const& t) { return const_cast<T&>(t); }
 
 // nullptr_t support based on pull request #154 from Konstantin Baumann
 #ifdef CATCH_CONFIG_CPP11_NULLPTR
@@ -1312,7 +1327,7 @@ namespace Internal {
     // So the compare overloads can be operator agnostic we convey the operator as a template
     // enum, which is used to specialise an Evaluator for doing the comparison.
     template<typename T1, typename T2, Operator Op>
-    class Evaluator{};
+    struct Evaluator{};
 
     template<typename T1, typename T2>
     struct Evaluator<T1, T2, IsEqualTo> {
@@ -1667,7 +1682,7 @@ namespace Detail {
     std::string rawMemoryToString( const void *object, std::size_t size );
 
     template<typename T>
-    inline std::string rawMemoryToString( const T& object ) {
+    std::string rawMemoryToString( const T& object ) {
       return rawMemoryToString( &object, sizeof(object) );
     }
 
@@ -1956,7 +1971,7 @@ private:
 namespace Catch {
 
     template<typename T>
-    inline ExpressionLhs<T const&> ResultBuilder::operator <= ( T const& operand ) {
+    ExpressionLhs<T const&> ResultBuilder::operator <= ( T const& operand ) {
         return ExpressionLhs<T const&>( *this, operand );
     }
 
@@ -1965,7 +1980,7 @@ namespace Catch {
     }
 
     template<typename ArgT, typename MatcherT>
-    inline void ResultBuilder::captureMatch( ArgT const& arg, MatcherT const& matcher,
+    void ResultBuilder::captureMatch( ArgT const& arg, MatcherT const& matcher,
                                              char const* matcherString ) {
         MatchExpression<ArgT const&, MatcherT const&> expr( arg, matcher, matcherString );
         setResultType( matcher.match( arg ) );
@@ -2064,6 +2079,10 @@ namespace Catch {
         virtual void exceptionEarlyReported() = 0;
 
         virtual void handleFatalErrorCondition( std::string const& message ) = 0;
+
+        virtual bool lastAssertionPassed() = 0;
+        virtual void assertionPassed() = 0;
+        virtual void assertionRun() = 0;
     };
 
     IResultCapture& getResultCapture();
@@ -2106,9 +2125,9 @@ namespace Catch{
     #if defined(__ppc64__) || defined(__ppc__)
         #define CATCH_TRAP() \
                 __asm__("li r0, 20\nsc\nnop\nli r0, 37\nli r4, 2\nsc\nnop\n" \
-                : : : "memory","r0","r3","r4" )
+                : : : "memory","r0","r3","r4" ) /* NOLINT */
     #else
-        #define CATCH_TRAP() __asm__("int $3\n" : : )
+        #define CATCH_TRAP() __asm__("int $3\n" : : /* NOLINT */ )
     #endif
 
 #elif defined(CATCH_PLATFORM_LINUX)
@@ -2116,7 +2135,7 @@ namespace Catch{
     // directly at the location of the failing check instead of breaking inside
     // raise() called from it, i.e. one stack frame below.
     #if defined(__GNUC__) && (defined(__i386) || defined(__x86_64))
-        #define CATCH_TRAP() asm volatile ("int $3")
+        #define CATCH_TRAP() asm volatile ("int $3") /* NOLINT */
     #else // Fall back to the generic way.
         #include <signal.h>
 
@@ -2211,12 +2230,12 @@ namespace Catch {
 ///////////////////////////////////////////////////////////////////////////////
 #define INTERNAL_CATCH_IF( macroName, resultDisposition, expr ) \
     INTERNAL_CATCH_TEST( macroName, resultDisposition, expr ); \
-    if( Catch::getResultCapture().getLastResult()->succeeded() )
+    if( Catch::getResultCapture().lastAssertionPassed() )
 
 ///////////////////////////////////////////////////////////////////////////////
 #define INTERNAL_CATCH_ELSE( macroName, resultDisposition, expr ) \
     INTERNAL_CATCH_TEST( macroName, resultDisposition, expr ); \
-    if( !Catch::getResultCapture().getLastResult()->succeeded() )
+    if( !Catch::getResultCapture().lastAssertionPassed() )
 
 ///////////////////////////////////////////////////////////////////////////////
 #define INTERNAL_CATCH_NO_THROW( macroName, resultDisposition, expr ) \
@@ -2774,13 +2793,6 @@ namespace Detail {
             m_margin( 0.0 ),
             m_scale( 1.0 ),
             m_value( value )
-        {}
-
-        Approx( Approx const& other )
-        :   m_epsilon( other.m_epsilon ),
-            m_margin( other.m_margin ),
-            m_scale( other.m_scale ),
-            m_value( other.m_value )
         {}
 
         static Approx custom() {
@@ -3706,7 +3718,7 @@ namespace Catch {
         ITagAliasRegistry const* m_tagAliases;
 
     public:
-        TestSpecParser( ITagAliasRegistry const& tagAliases ) : m_tagAliases( &tagAliases ) {}
+        TestSpecParser( ITagAliasRegistry const& tagAliases ) :m_mode(None), m_exclusion(false), m_start(0), m_pos(0), m_tagAliases( &tagAliases ) {}
 
         TestSpecParser& parse( std::string const& arg ) {
             m_mode = None;
@@ -3890,6 +3902,7 @@ namespace Catch {
 
     std::ostream& cout();
     std::ostream& cerr();
+    std::ostream& clog();
 
     struct IStream {
         virtual ~IStream() CATCH_NOEXCEPT;
@@ -4222,7 +4235,7 @@ namespace Tbc {
             return oss.str();
         }
 
-        inline friend std::ostream& operator << ( std::ostream& _stream, Text const& _text ) {
+        friend std::ostream& operator << ( std::ostream& _stream, Text const& _text ) {
             for( Text::const_iterator it = _text.begin(), itEnd = _text.end();
                 it != itEnd; ++it ) {
                 if( it != _text.begin() )
@@ -6574,6 +6587,29 @@ namespace Catch {
         std::string& m_targetString;
     };
 
+    // StdErr has two constituent streams in C++, std::cerr and std::clog
+    // This means that we need to redirect 2 streams into 1 to keep proper
+    // order of writes and cannot use StreamRedirect on its own
+    class StdErrRedirect {
+    public:
+        StdErrRedirect(std::string& targetString)
+        :m_cerrBuf( cerr().rdbuf() ), m_clogBuf(clog().rdbuf()),
+        m_targetString(targetString){
+            cerr().rdbuf(m_oss.rdbuf());
+            clog().rdbuf(m_oss.rdbuf());
+        }
+        ~StdErrRedirect() {
+            m_targetString += m_oss.str();
+            cerr().rdbuf(m_cerrBuf);
+            clog().rdbuf(m_clogBuf);
+        }
+    private:
+        std::streambuf* m_cerrBuf;
+        std::streambuf* m_clogBuf;
+        std::ostringstream m_oss;
+        std::string& m_targetString;
+    };
+
     ///////////////////////////////////////////////////////////////////////////
 
     class RunContext : public IResultCapture, public IRunner {
@@ -6676,6 +6712,23 @@ namespace Catch {
             m_lastResult = result;
         }
 
+        virtual bool lastAssertionPassed()
+        {
+            return m_totals.assertions.passed == (m_prevPassed + 1);
+        }
+
+        virtual void assertionPassed()
+        {
+            m_totals.assertions.passed++;
+            m_lastAssertionInfo.capturedExpression = "{Unknown expression after the reported line}";
+            m_lastAssertionInfo.macroName = "";
+        }
+
+        virtual void assertionRun()
+        {
+            m_prevPassed = m_totals.assertions.passed;
+        }
+
         virtual bool sectionStarted (
             SectionInfo const& sectionInfo,
             Counts& assertions
@@ -6776,6 +6829,7 @@ namespace Catch {
 
             Totals deltaTotals;
             deltaTotals.testCases.failed = 1;
+            deltaTotals.assertions.failed = 1;
             m_reporter->testCaseEnded( TestCaseStats(   testInfo,
                                                         deltaTotals,
                                                         std::string(),
@@ -6810,7 +6864,7 @@ namespace Catch {
                 timer.start();
                 if( m_reporter->getPreferences().shouldRedirectStdOut ) {
                     StreamRedirect coutRedir( Catch::cout(), redirectedCout );
-                    StreamRedirect cerrRedir( Catch::cerr(), redirectedCerr );
+                    StdErrRedirect errRedir( redirectedCerr );
                     invokeActiveTestCase();
                 }
                 else {
@@ -6886,6 +6940,7 @@ namespace Catch {
         std::vector<SectionEndInfo> m_unfinishedSections;
         std::vector<ITracker*> m_activeSections;
         TrackerContext m_trackerContext;
+        size_t m_prevPassed;
         bool m_shouldReportUnexpected;
     };
 
@@ -6944,10 +6999,14 @@ namespace Catch {
         return reporter;
     }
 
+#if !defined(CATCH_CONFIG_DEFAULT_REPORTER)
+#define CATCH_CONFIG_DEFAULT_REPORTER "console"
+#endif
+
     Ptr<IStreamingReporter> makeReporter( Ptr<Config> const& config ) {
         std::vector<std::string> reporters = config->getReporterNames();
         if( reporters.empty() )
-            reporters.push_back( "console" );
+            reporters.push_back( CATCH_CONFIG_DEFAULT_REPORTER );
 
         Ptr<IStreamingReporter> reporter;
         for( std::vector<std::string>::const_iterator it = reporters.begin(), itEnd = reporters.end();
@@ -7007,11 +7066,11 @@ namespace Catch {
             if( lastSlash != std::string::npos )
                 filename = filename.substr( lastSlash+1 );
 
-            std::string::size_type lastDot = filename.find_last_of( "." );
+            std::string::size_type lastDot = filename.find_last_of( '.' );
             if( lastDot != std::string::npos )
                 filename = filename.substr( 0, lastDot );
 
-            tags.insert( "#" + filename );
+            tags.insert( '#' + filename );
             setTags( test, tags );
         }
     }
@@ -7663,6 +7722,9 @@ namespace Catch {
     std::ostream& cerr() {
         return std::cerr;
     }
+    std::ostream& clog() {
+        return std::clog;
+    }
 #endif
 }
 
@@ -8033,6 +8095,8 @@ namespace Catch {
 
 namespace Catch {
 
+    AssertionInfo::AssertionInfo():macroName(""), capturedExpression(""), resultDisposition(ResultDisposition::Normal), secondArg(""){}
+
     AssertionInfo::AssertionInfo(   char const * _macroName,
                                     SourceLineInfo const& _lineInfo,
                                     char const * _capturedExpression,
@@ -8342,7 +8406,7 @@ namespace Catch {
     }
 
     inline Version libraryVersion() {
-        static Version version( 1, 9, 6, "", 0 );
+        static Version version( 1, 9, 7, "", 0 );
         return version;
     }
 
@@ -9050,15 +9114,14 @@ namespace Catch {
     :   m_assertionInfo( macroName, lineInfo, capturedExpression, resultDisposition, secondArg ),
         m_shouldDebugBreak( false ),
         m_shouldThrow( false ),
-        m_guardException( false )
-    {
-        m_stream().oss.str("");
-    }
+        m_guardException( false ),
+        m_usedStream( false )
+    {}
 
     ResultBuilder::~ResultBuilder() {
 #if defined(CATCH_CONFIG_FAST_COMPILE)
         if ( m_guardException ) {
-            m_stream().oss << "Exception translation was disabled by CATCH_CONFIG_FAST_COMPILE";
+            stream().oss << "Exception translation was disabled by CATCH_CONFIG_FAST_COMPILE";
             captureResult( ResultWas::ThrewException );
             getCurrentContext().getResultCapture()->exceptionEarlyReported();
         }
@@ -9075,13 +9138,25 @@ namespace Catch {
     }
 
     void ResultBuilder::endExpression( DecomposedExpression const& expr ) {
-        AssertionResult result = build( expr );
-        handleResult( result );
+        // Flip bool results if FalseTest flag is set
+        if( isFalseTest( m_assertionInfo.resultDisposition ) ) {
+            m_data.negate( expr.isBinaryExpression() );
+        }
+
+        getResultCapture().assertionRun();
+
+        if(getCurrentContext().getConfig()->includeSuccessfulResults() || m_data.resultType != ResultWas::Ok)
+        {
+            AssertionResult result = build( expr );
+            handleResult( result );
+        }
+        else
+            getResultCapture().assertionPassed();
     }
 
     void ResultBuilder::useActiveException( ResultDisposition::Flags resultDisposition ) {
         m_assertionInfo.resultDisposition = resultDisposition;
-        m_stream().oss << Catch::translateActiveException();
+        stream().oss << Catch::translateActiveException();
         captureResult( ResultWas::ThrewException );
     }
 
@@ -9163,12 +9238,8 @@ namespace Catch {
         assert( m_data.resultType != ResultWas::Unknown );
         AssertionResultData data = m_data;
 
-        // Flip bool results if FalseTest flag is set
-        if( isFalseTest( m_assertionInfo.resultDisposition ) ) {
-            data.negate( expr.isBinaryExpression() );
-        }
-
-        data.message = m_stream().oss.str();
+        if(m_usedStream)
+            data.message = m_stream().oss.str();
         data.decomposedExpression = &expr; // for lazy reconstruction
         return AssertionResult( m_assertionInfo, data );
     }
@@ -9597,7 +9668,8 @@ namespace Catch {
             BySectionInfo( SectionInfo const& other ) : m_other( other ) {}
             BySectionInfo( BySectionInfo const& other ) : m_other( other.m_other ) {}
             bool operator() ( Ptr<SectionNode> const& node ) const {
-                return node->stats.sectionInfo.lineInfo == m_other.lineInfo;
+                return ((node->stats.sectionInfo.name == m_other.name) &&
+                        (node->stats.sectionInfo.lineInfo == m_other.lineInfo));
             }
         private:
             void operator=( BySectionInfo const& );
@@ -10319,6 +10391,7 @@ namespace Catch {
         JunitReporter( ReporterConfig const& _config )
         :   CumulativeReporterBase( _config ),
             xml( _config.stream() ),
+            unexpectedExceptions( 0 ),
             m_okToFail( false )
         {
             m_reporterPrefs.shouldRedirectStdOut = true;
