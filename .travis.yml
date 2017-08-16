@@ -43,10 +43,8 @@ matrix:
       - make check TEST_PREFIX="valgrind --error-exitcode=1 --leak-check=full " TEST_PATTERN=""
 
   # clang sanitizer
-  # note: sadly clang's libc++ has errors when running with sanitize,
-  # so we use clang with gcc's libstdc++ which doesn't give those error.
-  # that's why we need to install g++-6 to get the lastest version
   - os: linux
+    compiler: clang
     env:
       - COMPILER=clang++-4.0
       - SPECIAL=sanitizer
@@ -54,7 +52,7 @@ matrix:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
         packages: ['g++-6', 'clang-4.0']
-    before_script:
+    after_success:
       - make clang_sanitize
 
   # cppcheck
