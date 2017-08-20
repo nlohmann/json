@@ -240,7 +240,7 @@ TEST_CASE("iterators 2")
 
     SECTION("iterator arithmetic")
     {
-        json j_object = {{"one", 1}, {"two", 2}, {"three", 3}, {"four", 4}};
+        json j_object = {{"one", 1}, {"two", 2}, {"three", 3}};
         json j_array = {1, 2, 3, 4, 5, 6};
         json j_null = nullptr;
         json j_value = 42;
@@ -251,25 +251,63 @@ TEST_CASE("iterators 2")
             {
                 {
                     auto it = j_object.begin();
-                    it += 3;
-                    CHECK((j_object.begin() + 3) == it);
-                    CHECK((3 + j_object.begin()) == it);
-                    CHECK((it - 3) == j_object.begin());
-                    CHECK((it - j_object.begin()) == 3);
-                    CHECK(*it == json(2));
-                    it -= 2;
-                    CHECK(*it == json(1));
+                    CHECK_THROWS_AS(it += 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it += 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.cbegin();
-                    it += 3;
-                    CHECK((j_object.cbegin() + 3) == it);
-                    CHECK((3 + j_object.cbegin()) == it);
-                    CHECK((it - 3) == j_object.cbegin());
-                    CHECK((it - j_object.cbegin()) == 3);
-                    CHECK(*it == json(2));
-                    it -= 2;
-                    CHECK(*it == json(1));
+                    CHECK_THROWS_AS(it += 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it += 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.begin();
+                    CHECK_THROWS_AS(it + 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it + 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(it + 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it + 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.begin();
+                    CHECK_THROWS_AS(1 + it, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(1 + it, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(1 + it, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(1 + it, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.begin();
+                    CHECK_THROWS_AS(it -= 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it -= 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(it -= 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it -= 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.begin();
+                    CHECK_THROWS_AS(it - 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it - 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(it - 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it - 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.begin();
+                    CHECK_THROWS_AS(it - it, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it - it, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(it - it, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it - it, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
                 }
             }
 
@@ -358,17 +396,17 @@ TEST_CASE("iterators 2")
             {
                 {
                     auto it = j_object.begin();
-                    CHECK(it[0] == json(4));
-                    CHECK(it[1] == json(1));
-                    CHECK(it[2] == json(3));
-                    CHECK(it[3] == json(2));
+                    CHECK_THROWS_AS(it[0], json::invalid_iterator&);
+                    CHECK_THROWS_AS(it[1], json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators");
+                    CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators");
                 }
                 {
                     auto it = j_object.cbegin();
-                    CHECK(it[0] == json(4));
-                    CHECK(it[1] == json(1));
-                    CHECK(it[2] == json(3));
-                    CHECK(it[3] == json(2));
+                    CHECK_THROWS_AS(it[0], json::invalid_iterator&);
+                    CHECK_THROWS_AS(it[1], json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators");
+                    CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators");
                 }
             }
 
@@ -637,7 +675,7 @@ TEST_CASE("iterators 2")
 
     SECTION("reverse iterator arithmetic")
     {
-        json j_object = {{"one", 1}, {"two", 2}, {"three", 3}, {"four", 4}};
+        json j_object = {{"one", 1}, {"two", 2}, {"three", 3}};
         json j_array = {1, 2, 3, 4, 5, 6};
         json j_null = nullptr;
         json j_value = 42;
@@ -648,25 +686,63 @@ TEST_CASE("iterators 2")
             {
                 {
                     auto it = j_object.rbegin();
-                    it += 3;
-                    CHECK((j_object.rbegin() + 3) == it);
-                    CHECK(json::reverse_iterator(3 + j_object.rbegin()) == it);
-                    CHECK((it - 3) == j_object.rbegin());
-                    CHECK((it - j_object.rbegin()) == 3);
-                    CHECK(*it == json(4));
-                    it -= 2;
-                    CHECK(*it == json(3));
+                    CHECK_THROWS_AS(it += 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it += 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.crbegin();
-                    it += 3;
-                    CHECK((j_object.crbegin() + 3) == it);
-                    CHECK(json::const_reverse_iterator(3 + j_object.crbegin()) == it);
-                    CHECK((it - 3) == j_object.crbegin());
-                    CHECK((it - j_object.crbegin()) == 3);
-                    CHECK(*it == json(4));
-                    it -= 2;
-                    CHECK(*it == json(3));
+                    CHECK_THROWS_AS(it += 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it += 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(it + 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it + 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(it + 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it + 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(1 + it, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(1 + it, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(1 + it, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(1 + it, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(it -= 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it -= 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(it -= 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it -= 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(it - 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it - 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(it - 1, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it - 1, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.rbegin();
+                    CHECK_THROWS_AS(it - it, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it - it, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                }
+                {
+                    auto it = j_object.crbegin();
+                    CHECK_THROWS_AS(it - it, json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it - it, "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
                 }
             }
 
@@ -755,17 +831,17 @@ TEST_CASE("iterators 2")
             {
                 {
                     auto it = j_object.rbegin();
-                    CHECK(it[0] == json(2));
-                    CHECK(it[1] == json(3));
-                    CHECK(it[2] == json(1));
-                    CHECK(it[3] == json(4));
+                    CHECK_THROWS_AS(it[0], json::invalid_iterator&);
+                    CHECK_THROWS_AS(it[1], json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                    CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
                 }
                 {
                     auto it = j_object.crbegin();
-                    CHECK(it[0] == json(2));
-                    CHECK(it[1] == json(3));
-                    CHECK(it[2] == json(1));
-                    CHECK(it[3] == json(4));
+                    CHECK_THROWS_AS(it[0], json::invalid_iterator&);
+                    CHECK_THROWS_AS(it[1], json::invalid_iterator&);
+                    CHECK_THROWS_WITH(it[0], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
+                    CHECK_THROWS_WITH(it[1], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
                 }
             }
 
