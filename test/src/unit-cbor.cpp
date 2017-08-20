@@ -1272,7 +1272,7 @@ TEST_CASE("CBOR")
 
             SECTION("strict mode")
             {
-                CHECK_THROWS_AS(json::from_cbor(vec), json::parse_error);
+                CHECK_THROWS_AS(json::from_cbor(vec), json::parse_error&);
                 CHECK_THROWS_WITH(json::from_cbor(vec),
                                   "[json.exception.parse_error.110] parse error at 2: expected end of input");
             }
