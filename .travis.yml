@@ -259,6 +259,14 @@ matrix:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
         packages: ['g++-6', 'clang-4.0']
 
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-5.0
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
+        packages: ['g++-6', 'clang-5.0']
+
 ################
 # build script #
 ################
