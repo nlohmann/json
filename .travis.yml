@@ -46,12 +46,12 @@ matrix:
   - os: linux
     compiler: clang
     env:
-      - COMPILER=clang++-4.0
+      - COMPILER=clang++-5.0
       - SPECIAL=sanitizer
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
-        packages: ['g++-6', 'clang-4.0']
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
+        packages: ['g++-6', 'clang-5.0']
     after_success:
       - make clang_sanitize -j4
 
@@ -251,17 +251,17 @@ matrix:
 
   - os: linux
     compiler: clang
-    env:
-      - COMPILER=clang++-4.0
-      - CXXFLAGS=-std=c++1z
+    env: COMPILER=clang++-5.0
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
-        packages: ['g++-6', 'clang-4.0']
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
+        packages: ['g++-6', 'clang-5.0']
 
   - os: linux
     compiler: clang
-    env: COMPILER=clang++-5.0
+    env:
+      - COMPILER=clang++-5.0
+      - CXXFLAGS=-std=c++1z
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
