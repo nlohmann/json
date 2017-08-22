@@ -37,6 +37,7 @@ using nlohmann::json;
 #include <list>
 #include <unordered_map>
 #include <unordered_set>
+#include <valarray>
 
 TEST_CASE("value conversion")
 {
@@ -1008,6 +1009,15 @@ TEST_CASE("value conversion")
                 auto m5 = j5.get<std::forward_list<std::string>>();
             }
 
+            SECTION("std::valarray")
+            {
+                auto m1 = j1.get<std::valarray<int>>();
+                auto m2 = j2.get<std::valarray<unsigned int>>();
+                auto m3 = j3.get<std::valarray<double>>();
+                auto m4 = j4.get<std::valarray<bool>>();
+                auto m5 = j5.get<std::valarray<std::string>>();
+            }
+
             SECTION("std::vector")
             {
                 auto m1 = j1.get<std::vector<int>>();
@@ -1050,6 +1060,7 @@ TEST_CASE("value conversion")
                 CHECK_THROWS_AS((json().get<std::vector<int>>()), json::type_error&);
                 CHECK_THROWS_AS((json().get<std::vector<json>>()), json::type_error&);
                 CHECK_THROWS_AS((json().get<std::list<json>>()), json::type_error&);
+                CHECK_THROWS_AS((json().get<std::valarray<int>>()), json::type_error&);
 
                 // does type really must be an array? or it rather must not be null?
                 // that's what I thought when other test like this one broke
@@ -1057,6 +1068,7 @@ TEST_CASE("value conversion")
                 CHECK_THROWS_WITH((json().get<std::vector<int>>()), "[json.exception.type_error.302] type must be array, but is null");
                 CHECK_THROWS_WITH((json().get<std::vector<json>>()), "[json.exception.type_error.302] type must be array, but is null");
                 CHECK_THROWS_WITH((json().get<std::list<json>>()), "[json.exception.type_error.302] type must be array, but is null");
+                CHECK_THROWS_WITH((json().get<std::valarray<int>>()), "[json.exception.type_error.302] type must be array, but is null");
             }
         }
     }

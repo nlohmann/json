@@ -54,6 +54,7 @@ SOFTWARE.
 #include <string> // getline, stoi, string, to_string
 #include <type_traits> // add_pointer, conditional, decay, enable_if, false_type, integral_constant, is_arithmetic, is_base_of, is_const, is_constructible, is_convertible, is_default_constructible, is_enum, is_floating_point, is_integral, is_nothrow_move_assignable, is_nothrow_move_constructible, is_pointer, is_reference, is_same, is_scalar, is_signed, remove_const, remove_cv, remove_pointer, remove_reference, true_type, underlying_type
 #include <utility> // declval, forward, make_pair, move, pair, swap
+#include <valarray> // valarray
 #include <vector> // vector
 
 // exclude unsupported compilers
@@ -661,6 +662,18 @@ struct external_constructor<value_t::array>
         }
         j.assert_invariant();
     }
+
+    template<typename BasicJsonType, typename T,
+             enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
+    static void construct(BasicJsonType& j, const std::valarray<T>& arr)
+    {
+        using std::begin;
+        using std::end;
+        j.m_type = value_t::array;
+        j.m_value = value_t::array;
+        j.m_value.array = j.template create<typename BasicJsonType::array_t>(begin(arr), end(arr));
+        j.assert_invariant();
+    }
 };
 
 template<>
@@ -921,9 +934,16 @@ template <
         is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value or
         std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value,
         int > = 0 >
-void to_json(BasicJsonType& j, const  CompatibleArrayType& arr)
+void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
     external_constructor<value_t::array>::construct(j, arr);
+}
+
+template <typename BasicJsonType, typename T,
+          enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
+void to_json(BasicJsonType& j, std::valarray<T> arr)
+{
+    external_constructor<value_t::array>::construct(j, std::move(arr));
 }
 
 template <typename BasicJsonType>
@@ -936,7 +956,7 @@ template <
     typename BasicJsonType, typename CompatibleObjectType,
     enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value,
                 int> = 0 >
-void to_json(BasicJsonType& j, const  CompatibleObjectType& obj)
+void to_json(BasicJsonType& j, const CompatibleObjectType& obj)
 {
     external_constructor<value_t::object>::construct(j, obj);
 }
@@ -1080,6 +1100,22 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
     {
         return i.template get<T>();
     });
+}
+
+// valarray doesn't have an insert method
+template<typename BasicJsonType, typename T,
+         enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
+void from_json(const BasicJsonType& j, std::valarray<T>& l)
+{
+    if (JSON_UNLIKELY(not j.is_array()))
+    {
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+    }
+    l.resize(j.size());
+    for (size_t i = 0; i < j.size(); ++i)
+    {
+        l[i] = j[i];
+    }
 }
 
 template<typename BasicJsonType, typename CompatibleArrayType>
@@ -4441,7 +4477,7 @@ class binary_reader
     */
     BasicJsonType parse_msgpack(const bool strict)
     {
-        const auto res =  parse_msgpack_internal();
+        const auto res = parse_msgpack_internal();
         if (strict)
         {
             get();
@@ -13187,7 +13223,7 @@ class basic_json
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_cbor(A1&& a1, A2&& a2, const bool strict = true)
+    static basic_json from_cbor(A1 && a1, A2 && a2, const bool strict = true)
     {
         return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_cbor(strict);
     }
@@ -13274,7 +13310,7 @@ class basic_json
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_msgpack(A1&& a1, A2&& a2, const bool strict = true)
+    static basic_json from_msgpack(A1 && a1, A2 && a2, const bool strict = true)
     {
         return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_msgpack(strict);
     }

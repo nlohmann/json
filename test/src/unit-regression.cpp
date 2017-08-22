@@ -1204,4 +1204,33 @@ TEST_CASE("regression tests")
         std::string i = "\xef\xbb\xbf{\n   \"foo\": true\n}";
         CHECK_NOTHROW(json::parse(i.begin(), i.end()));
     }
+
+    SECTION("issue #702 - conversion from valarray<double> to json fails to build")
+    {
+        SECTION("original example")
+        {
+        std::valarray<double> v;
+        nlohmann::json j;
+        j["test"] = v;
+        }
+
+        SECTION("full example")
+        {
+            std::valarray<double> v = {1.2, 2.3, 3.4, 4.5};
+            json j = v;
+            std::valarray<double> vj = j;
+
+            CHECK(j == json(vj));
+            CHECK(v.size() == vj.size());
+            for (size_t i = 0; i < v.size(); ++i)
+            {
+                CHECK(v[i] == vj[i]);
+                CHECK(v[i] == j[i]);
+            }
+
+            CHECK_THROWS_AS(json().get<std::valarray<double>>(), json::type_error&);
+            CHECK_THROWS_WITH(json().get<std::valarray<double>>(),
+                "[json.exception.type_error.302] type must be array, but is null");
+        }
+    }
 }

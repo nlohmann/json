@@ -38,6 +38,7 @@ using nlohmann::json;
 #include <list>
 #include <unordered_map>
 #include <unordered_set>
+#include <valarray>
 
 TEST_CASE("constructors")
 {
@@ -309,6 +310,36 @@ TEST_CASE("constructors")
 
             const auto a2 = j.get<std::array<json, 6>>();
             CHECK(a2 == a);
+        }
+
+        SECTION("std::valarray<int>")
+        {
+            std::valarray<int> va = {1, 2, 3, 4, 5};
+            json j(va);
+            CHECK(j.type() == json::value_t::array);
+            CHECK(j == json({1, 2, 3, 4, 5}));
+
+            std::valarray<int> jva = j;
+            CHECK(jva.size() == va.size());
+            for (size_t i = 0; i < jva.size(); ++i)
+            {
+                CHECK(va[i] == jva[i]);
+            }
+        }
+
+        SECTION("std::valarray<double>")
+        {
+            std::valarray<double> va = {1.2, 2.3, 3.4, 4.5, 5.6};
+            json j(va);
+            CHECK(j.type() == json::value_t::array);
+            CHECK(j == json({1.2, 2.3, 3.4, 4.5, 5.6}));
+
+            std::valarray<double> jva = j;
+            CHECK(jva.size() == va.size());
+            for (size_t i = 0; i < jva.size(); ++i)
+            {
+                CHECK(va[i] == jva[i]);
+            }
         }
 
         SECTION("std::vector<json>")
