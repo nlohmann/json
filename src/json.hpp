@@ -1665,7 +1665,7 @@ class lexer
     }
 
     explicit lexer(detail::input_adapter_t adapter)
-        : ia(adapter), decimal_point_char(get_decimal_point()) {}
+        : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
@@ -4439,7 +4439,7 @@ class binary_reader
 
     @param[in] adapter  input adapter to read from
     */
-    explicit binary_reader(input_adapter_t adapter) : ia(adapter)
+    explicit binary_reader(input_adapter_t adapter) : ia(std::move(adapter))
     {
         assert(ia);
     }
@@ -6035,7 +6035,7 @@ class serializer
     @param[in] ichar  indentation character to use
     */
     serializer(output_adapter_t<char> s, const char ichar)
-        : o(s), loc(std::localeconv()),
+        : o(std::move(s)), loc(std::localeconv()),
           thousands_sep(loc->thousands_sep == nullptr ? '\0' : loc->thousands_sep[0]),
           decimal_point(loc->decimal_point == nullptr ? '\0' : loc->decimal_point[0]),
           indent_char(ichar), indent_string(512, indent_char) {}
@@ -6557,6 +6557,9 @@ class serializer
                                             + (s[i + 3] & 0x7F);
                                 break;
                             }
+
+                            default:
+                                break;  // LCOV_EXCL_LINE
                         }
 
                         escape_codepoint(codepoint, result, pos);
@@ -6764,10 +6767,7 @@ class json_ref
         {
             return std::move(*value_ref);
         }
-        else
-        {
-            return *value_ref;
-        }
+        return *value_ref;
     }
 
     value_type const& operator*() const
@@ -10255,10 +10255,8 @@ class basic_json
 
             return default_value;
         }
-        else
-        {
-            JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name())));
-        }
+
+        JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name())));
     }
 
     /*!
