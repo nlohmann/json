@@ -1495,13 +1495,15 @@ class input_adapter
     {
         // assertion to check that the iterator range is indeed contiguous,
         // see http://stackoverflow.com/a/35008842/266378 for more discussion
+        auto lf_is_contiguous =
+            [&first](std::pair<bool, int> res, decltype(*first) val)
+            {
+                res.first &= (val == *(std::next(std::addressof(*first), res.second++)));
+                return res;
+            };
         assert(std::accumulate(
                    first, last, std::pair<bool, int>(true, 0),
-                   [&first](std::pair<bool, int> res, decltype(*first) val)
-        {
-            res.first &= (val == *(std::next(std::addressof(*first), res.second++)));
-            return res;
-        }).first);
+                   lf_is_contiguous).first);
 
         // assertion to check that each element is 1 byte long
         static_assert(
