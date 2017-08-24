@@ -246,6 +246,7 @@ TEST_CASE("constructors")
             json j(p);
 
             CHECK(j.type() == json::value_t::array);
+            CHECK(j.get<decltype(p)>() == p);
             REQUIRE(j.size() == 2);
             CHECK(j[0] == std::get<0>(p));
             CHECK(j[1] == std::get<1>(p));
@@ -262,11 +263,12 @@ TEST_CASE("constructors")
 
         SECTION("std::tuple")
         {
-            const auto t = std::make_tuple(1.0, "string", 42, std::vector<int> {0, 1});
+            const auto t = std::make_tuple(1.0, std::string{"string"}, 42, std::vector<int> {0, 1});
             json j(t);
 
             CHECK(j.type() == json::value_t::array);
             REQUIRE(j.size() == 4);
+            CHECK(j.get<decltype(t)>() == t);
             CHECK(j[0] == std::get<0>(t));
             CHECK(j[1] == std::get<1>(t));
             CHECK(j[2] == std::get<2>(t));

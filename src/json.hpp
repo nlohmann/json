@@ -1235,16 +1235,16 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
     }
 }
 
-template<typename BasicJsonType, typename... Args>
-void from_json(const BasicJsonType& j, std::pair<Args...>& p)
+template<typename BasicJsonType, typename A1, typename A2>
+void from_json(const BasicJsonType& j, std::pair<A1, A2>& p)
 {
-    p = {j.at(0), j.at(1)};
+    p = {j.at(0).template get<A1>(), j.at(1).template get<A2>()};
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
 void from_json_tuple_impl(const BasicJsonType& j, Tuple& t, index_sequence<Idx...>)
 {
-    t = std::make_tuple(j.at(Idx)...);
+    t = std::make_tuple(j.at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
 }
 
 template<typename BasicJsonType, typename... Args>
