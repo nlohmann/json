@@ -48,7 +48,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
-        packages: ['g++-6', 'clang-5.0', 'ninja-build']
+        packages: ['clang-5.0', 'llvm-5.0-dev', 'ninja-build']
 
   # cppcheck
   - os: linux
