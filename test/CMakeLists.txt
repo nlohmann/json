@@ -1,5 +1,6 @@
 option(JSON_Sanitizer "Build test suite with Clang sanitizer" OFF)
 option(JSON_Valgrind "Execute test suite with Valgrind" OFF)
+option(JSON_NoExceptions "Build test suite without exceptions" OFF)
 
 if(JSON_Sanitizer)
     message(STATUS "Building test suite with Clang sanitizer")
@@ -14,6 +15,14 @@ if(JSON_Valgrind)
     set(MEMORYCHECK_COMMAND_OPTIONS "--error-exitcode=1 --leak-check=full")
     set(memcheck_command "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS}")
     separate_arguments(memcheck_command)
+endif()
+
+if(JSON_NoExceptions)
+    message(STATUS "Building test suite without exceptions")
+    if(NOT MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJSON_NOEXCEPTION")
+    endif()
+    set(CATCH_TEST_FILTER -e)
 endif()
 
 #############################################################################
@@ -62,20 +71,20 @@ foreach(file ${files})
     endif()
 
     add_test(NAME "${testcase}_default"
-      COMMAND ${testcase}
+      COMMAND ${testcase} ${CATCH_TEST_FILTER}
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
     set_tests_properties("${testcase}_default" PROPERTIES LABELS "default")
 
     add_test(NAME "${testcase}_all"
-      COMMAND ${testcase} "*"
+      COMMAND ${testcase} ${CATCH_TEST_FILTER} "*"
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
     set_tests_properties("${testcase}_all" PROPERTIES LABELS "all")
 
     if(JSON_Valgrind)
         add_test(NAME "${testcase}_valgrind"
-          COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase}
+          COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${CATCH_TEST_FILTER}
           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
         set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")

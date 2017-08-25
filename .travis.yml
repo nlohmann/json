@@ -64,19 +64,15 @@ matrix:
       - make cppcheck
 
   # no exceptions
-
   - os: linux
     compiler: gcc
     env:
       - COMPILER=g++-4.9
-      - SPECIAL=no_exceptions
+      - CMAKE_OPTIONS=-DJSON_NoExceptions=ON
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'cppcheck', 'ninja-build']
-    after_success:
-      - make clean
-      - CPPFLAGS="-DJSON_NOEXCEPTION" make check TEST_PATTERN="-e \"*\""
+        packages: ['g++-4.9', 'ninja-build']
 
   # Coveralls (http://gronlier.fr/blog/2015/01/adding-code-coverage-to-your-c-project/)
 
