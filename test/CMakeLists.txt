@@ -1,3 +1,19 @@
+option(JSON_Sanitizer "Build with Clang Sanitizer" OFF)
+option(JSON_Valgrind "Execute tests with Valgrind" OFF)
+
+if(JSON_Sanitizer)
+    if(NOT MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
+    endif()
+endif()
+
+if(JSON_Valgrind)
+    find_program(CMAKE_MEMORYCHECK_COMMAND valgrind)
+    set(MEMORYCHECK_COMMAND_OPTIONS "--error-exitcode=1 --leak-check=full")
+    set(memcheck_command "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS}")
+    separate_arguments(memcheck_command)
+endif()
+
 #############################################################################
 # Catch library with the main function to speed up build
 #############################################################################
@@ -35,7 +51,7 @@ foreach(file ${files})
     target_link_libraries(${testcase} ${JSON_TARGET_NAME})
 
     if(NOT MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-float-equal")
+        set_target_properties(${testcase} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-float-equal")
     endif()
 
     include(cotire OPTIONAL)
@@ -54,4 +70,13 @@ foreach(file ${files})
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
     set_tests_properties("${testcase}_all" PROPERTIES LABELS "all")
+
+    if(JSON_Valgrind)
+        add_test(NAME "${testcase}_valgrind"
+          COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase}
+          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        )
+        set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
+    endif()
+
 endforeach()

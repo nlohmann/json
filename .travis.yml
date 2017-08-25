@@ -29,34 +29,28 @@ matrix:
   include:
 
   # Valgrind
-
   - os: linux
     compiler: gcc
     env:
       - COMPILER=g++-4.9
-      - SPECIAL=valgrind
+      - CMAKE_OPTIONS=-DJSON_Valgrind=ON
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
         packages: [g++-4.9, valgrind]
-    after_success:
-      - make check TEST_PREFIX="valgrind --error-exitcode=1 --leak-check=full " TEST_PATTERN=""
 
   # clang sanitizer
   - os: linux
     compiler: clang
     env:
       - COMPILER=clang++-5.0
-      - SPECIAL=sanitizer
+      - CMAKE_OPTIONS=-DJSON_Sanitizer=ON
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
         packages: ['g++-6', 'clang-5.0']
-    after_success:
-      - make clang_sanitize -j4
 
   # cppcheck
-
   - os: linux
     compiler: gcc
     env:
@@ -289,7 +283,7 @@ script:
 
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - cmake .. && cmake --build . --config Release -- -j4
+  - cmake .. ${CMAKE_OPTIONS} && cmake --build . --config Release -- -j4
   - ctest -C Release -V
   - cd ..
 
