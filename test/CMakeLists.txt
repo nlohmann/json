@@ -1,7 +1,8 @@
-option(JSON_Sanitizer "Build with Clang Sanitizer" OFF)
-option(JSON_Valgrind "Execute tests with Valgrind" OFF)
+option(JSON_Sanitizer "Build test suite with Clang sanitizer" OFF)
+option(JSON_Valgrind "Execute test suite with Valgrind" OFF)
 
 if(JSON_Sanitizer)
+    message(STATUS "Building test suite with Clang sanitizer")
     if(NOT MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
     endif()
@@ -9,6 +10,7 @@ endif()
 
 if(JSON_Valgrind)
     find_program(CMAKE_MEMORYCHECK_COMMAND valgrind)
+    message(STATUS "Executing test suite with Valgrind (${CMAKE_MEMORYCHECK_COMMAND})")
     set(MEMORYCHECK_COMMAND_OPTIONS "--error-exitcode=1 --leak-check=full")
     set(memcheck_command "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS}")
     separate_arguments(memcheck_command)
