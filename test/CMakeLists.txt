@@ -5,7 +5,7 @@ option(JSON_NoExceptions "Build test suite without exceptions" OFF)
 if(JSON_Sanitizer)
     message(STATUS "Building test suite with Clang sanitizer")
     if(NOT MSVC)
-        set(CMAKE_CXX_FLAGS "-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
+        set(CMAKE_CXX_FLAGS "-std=c++11 -g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
     endif()
 endif()
 
