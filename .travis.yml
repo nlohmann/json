@@ -49,8 +49,6 @@ matrix:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
         packages: ['g++-6', 'clang-5.0', 'ninja-build']
-    after_failure:
-      - make clang_sanitize -j4
 
   # cppcheck
   - os: linux
