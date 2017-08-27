@@ -667,11 +667,10 @@ struct external_constructor<value_t::array>
              enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
     static void construct(BasicJsonType& j, const std::valarray<T>& arr)
     {
-        using std::begin;
-        using std::end;
         j.m_type = value_t::array;
         j.m_value = value_t::array;
-        j.m_value.array = j.template create<typename BasicJsonType::array_t>(begin(arr), end(arr));
+        j.m_value.array->resize(arr.size());
+        std::copy(std::begin(arr), std::end(arr), j.m_value.array->begin());
         j.assert_invariant();
     }
 };
@@ -1112,10 +1111,7 @@ void from_json(const BasicJsonType& j, std::valarray<T>& l)
         JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
     }
     l.resize(j.size());
-    for (size_t i = 0; i < j.size(); ++i)
-    {
-        l[i] = j[i];
-    }
+    std::copy(j.m_value.array->begin(), j.m_value.array->end(), std::begin(l));
 }
 
 template<typename BasicJsonType, typename CompatibleArrayType>
