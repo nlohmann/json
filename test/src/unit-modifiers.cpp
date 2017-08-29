@@ -38,17 +38,21 @@ TEST_CASE("modifiers")
         SECTION("boolean")
         {
             json j = true;
+            json k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::boolean));
+            CHECK(j == json(k.type()));
         }
 
         SECTION("string")
         {
             json j = "hello world";
+            json k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::string));
+            CHECK(j == json(k.type()));
         }
 
         SECTION("array")
@@ -56,19 +60,23 @@ TEST_CASE("modifiers")
             SECTION("empty array")
             {
                 json j = json::array();
+                json k = j;
 
                 j.clear();
                 CHECK(j.empty());
                 CHECK(j == json(json::value_t::array));
+                CHECK(j == json(k.type()));
             }
 
             SECTION("filled array")
             {
                 json j = {1, 2, 3};
+                json k = j;
 
                 j.clear();
                 CHECK(j.empty());
                 CHECK(j == json(json::value_t::array));
+                CHECK(j == json(k.type()));
             }
         }
 
@@ -77,52 +85,64 @@ TEST_CASE("modifiers")
             SECTION("empty object")
             {
                 json j = json::object();
+                json k = j;
 
                 j.clear();
                 CHECK(j.empty());
                 CHECK(j == json(json::value_t::object));
+                CHECK(j == json(k.type()));
             }
 
             SECTION("filled object")
             {
                 json j = {{"one", 1}, {"two", 2}, {"three", 3}};
+                json k = j;
 
                 j.clear();
                 CHECK(j.empty());
                 CHECK(j == json(json::value_t::object));
+                CHECK(j == json(k.type()));
             }
         }
 
         SECTION("number (integer)")
         {
             json j = 23;
+            json k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::number_integer));
+            CHECK(j == json(k.type()));
         }
 
         SECTION("number (unsigned)")
         {
             json j = 23u;
+            json k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::number_integer));
+            CHECK(j == json(k.type()));
         }
 
         SECTION("number (float)")
         {
             json j = 23.42;
+            json k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::number_float));
+            CHECK(j == json(k.type()));
         }
 
         SECTION("null")
         {
             json j = nullptr;
+            json k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::null));
+            CHECK(j == json(k.type()));
         }
     }
 

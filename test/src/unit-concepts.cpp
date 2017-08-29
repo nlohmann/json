@@ -94,6 +94,7 @@ TEST_CASE("concepts")
 
         SECTION("MoveConstructible")
         {
+            CHECK(std::is_move_constructible<json>::value);
             CHECK(std::is_nothrow_move_constructible<json>::value);
         }
 

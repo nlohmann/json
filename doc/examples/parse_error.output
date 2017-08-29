@@ -1,0 +1,3 @@
+message: [json.exception.parse_error.101] parse error at 8: syntax error - unexpected ']'; expected '[', '{', or a literal
+exception id: 101
+byte position of error: 8

@@ -166,12 +166,28 @@ namespace detail
 /*!
 @brief general exception of the @ref basic_json class
 
-Extension of std::exception objects with a member @a id for exception ids.
+This class is an extension of `std::exception` objects with a member @a id for
+exception ids. It is used as the base class for all exceptions thrown by the
+@ref basic_json class. This class can hence be used as "wildcard" to catch
+exceptions.
 
+Subclasses:
+- @ref parse_error for exceptions indicating a parse error
+- @ref invalid_iterator for exceptions indicating errors with iterators
+- @ref type_error for exceptions indicating executing a member function with
+                  a wrong type
+- @ref out_of_range for exceptions indicating access out of the defined range
+- @ref other_error for exceptions indicating other library errors
+
+@internal
 @note To have nothrow-copy-constructible exceptions, we internally use
-      std::runtime_error which can cope with arbitrary-length error messages.
+      `std::runtime_error` which can cope with arbitrary-length error messages.
       Intermediate strings are built with static functions and then passed to
       the actual constructor.
+@endinternal
+
+@liveexample{The following code shows how arbitrary library exceptions can be
+caught.,exception}
 
 @since version 3.0.0
 */
@@ -204,8 +220,8 @@ class exception : public std::exception
 @brief exception indicating a parse error
 
 This excpetion is thrown by the library when a parse error occurs. Parse errors
-can occur during the deserialization of JSON text as well as when using JSON
-Patch.
+can occur during the deserialization of JSON text, CBOR, MessagePack, as well
+as when using JSON Patch.
 
 Member @a byte holds the byte index of the last read character in the input
 file.
@@ -230,6 +246,16 @@ json.exception.parse_error.109 | parse error: array index 'one' is not a number 
 json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
 json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xf8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
 json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last byte: 0x98 | While parsing a map key, a value that is not a string has been read.
+
+@liveexample{The following code shows how a `parse_error` exception can be
+caught.,parse_error}
+
+@sa @ref exception for the base class of the library exceptions
+@sa @ref invalid_iterator for exceptions indicating errors with iterators
+@sa @ref type_error for exceptions indicating executing a member function with
+                    a wrong type
+@sa @ref out_of_range for exceptions indicating access out of the defined range
+@sa @ref other_error for exceptions indicating other library errors
 
 @since version 3.0.0
 */
@@ -271,6 +297,9 @@ class parse_error : public exception
 /*!
 @brief exception indicating errors with iterators
 
+This exception is thrown if iterators passed to a library function do not match
+the expected semantics.
+
 Exceptions have ids 2xx.
 
 name / id                           | example message | description
@@ -290,6 +319,16 @@ json.exception.invalid_iterator.212 | cannot compare iterators of different cont
 json.exception.invalid_iterator.213 | cannot compare order of object iterators | The order of object iterators cannot be compared, because JSON objects are unordered.
 json.exception.invalid_iterator.214 | cannot get value | Cannot get value for iterator: Either the iterator belongs to a null value or it is an iterator to a primitive type (number, boolean, or string), but the iterator is different to @ref begin().
 
+@liveexample{The following code shows how an `invalid_iterator` exception can be
+caught.,invalid_iterator}
+
+@sa @ref exception for the base class of the library exceptions
+@sa @ref parse_error for exceptions indicating a parse error
+@sa @ref type_error for exceptions indicating executing a member function with
+                    a wrong type
+@sa @ref out_of_range for exceptions indicating access out of the defined range
+@sa @ref other_error for exceptions indicating other library errors
+
 @since version 3.0.0
 */
 class invalid_iterator : public exception
@@ -308,6 +347,9 @@ class invalid_iterator : public exception
 
 /*!
 @brief exception indicating executing a member function with a wrong type
+
+This exception is thrown in case of a type error; that is, a library function is
+executed on a JSON value whose type does not match the expected semantics.
 
 Exceptions have ids 3xx.
 
@@ -329,6 +371,15 @@ json.exception.type_error.313 | invalid value to unflatten | The @ref unflatten 
 json.exception.type_error.314 | only objects can be unflattened | The @ref unflatten function only works for an object whose keys are JSON Pointers.
 json.exception.type_error.315 | values in object must be primitive | The @ref unflatten function only works for an object whose keys are JSON Pointers and whose values are primitive.
 
+@liveexample{The following code shows how a `type_error` exception can be
+caught.,type_error}
+
+@sa @ref exception for the base class of the library exceptions
+@sa @ref parse_error for exceptions indicating a parse error
+@sa @ref invalid_iterator for exceptions indicating errors with iterators
+@sa @ref out_of_range for exceptions indicating access out of the defined range
+@sa @ref other_error for exceptions indicating other library errors
+
 @since version 3.0.0
 */
 class type_error : public exception
@@ -347,6 +398,10 @@ class type_error : public exception
 /*!
 @brief exception indicating access out of the defined range
 
+This exception is thrown in case a library function is called on an input
+parameter that exceeds the expected range, for instance in case of array
+indices or nonexisting object keys.
+
 Exceptions have ids 4xx.
 
 name / id                       | example message | description
@@ -357,6 +412,16 @@ json.exception.out_of_range.403 | key 'foo' not found | The provided key was not
 json.exception.out_of_range.404 | unresolved reference token 'foo' | A reference token in a JSON Pointer could not be resolved.
 json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
 json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed number could not be stored as without changing it to NaN or INF.
+
+@liveexample{The following code shows how an `out_of_range` exception can be
+caught.,out_of_range}
+
+@sa @ref exception for the base class of the library exceptions
+@sa @ref parse_error for exceptions indicating a parse error
+@sa @ref invalid_iterator for exceptions indicating errors with iterators
+@sa @ref type_error for exceptions indicating executing a member function with
+                    a wrong type
+@sa @ref other_error for exceptions indicating other library errors
 
 @since version 3.0.0
 */
@@ -374,7 +439,10 @@ class out_of_range : public exception
 };
 
 /*!
-@brief exception indicating other errors
+@brief exception indicating other library errors
+
+This exception is thrown in case of errors that cannot be classified with the
+other exception types.
 
 Exceptions have ids 5xx.
 
@@ -382,6 +450,16 @@ name / id                      | example message | description
 ------------------------------ | --------------- | -------------------------
 json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "value":"bar"} | A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
 json.exception.other_error.502 | invalid object size for conversion | Some conversions to user-defined types impose constraints on the object size (e.g. std::pair)
+
+@sa @ref exception for the base class of the library exceptions
+@sa @ref parse_error for exceptions indicating a parse error
+@sa @ref invalid_iterator for exceptions indicating errors with iterators
+@sa @ref type_error for exceptions indicating executing a member function with
+                    a wrong type
+@sa @ref out_of_range for exceptions indicating access out of the defined range
+
+@liveexample{The following code shows how an `other_error` exception can be
+caught.,other_error}
 
 @since version 3.0.0
 */
@@ -1743,7 +1821,7 @@ class lexer
     checks if it is inside the range. If a violation was detected, set up an
     error message and return false. Otherwise, return true.
 
-    @return true iff no range violation was detected
+    @return true if and only if no range violation was detected
     */
     bool next_byte_in_range(std::initializer_list<int> ranges)
     {
@@ -4489,7 +4567,7 @@ class binary_reader
     /*!
     @brief determine system byte order
 
-    @return true iff system's byte order is little endian
+    @return true if and only if system's byte order is little endian
 
     @note from http://stackoverflow.com/a/1001328/266378
     */
@@ -7382,6 +7460,9 @@ class basic_json
     @liveexample{The following code shows an example output of the `meta()`
     function.,meta}
 
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes to any JSON value.
+
     @complexity Constant.
 
     @since 2.1.0
@@ -8188,8 +8269,13 @@ class basic_json
 
     @complexity Constant.
 
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes to any JSON value.
+
     @liveexample{The following code shows the constructor for different @ref
     value_t values,basic_json__value_t}
+
+    @sa @ref clear() -- restores the postcondition of this constructor
 
     @since version 1.0.0
     */
@@ -8235,9 +8321,9 @@ class basic_json
     following types:
     - **arrays**: @ref array_t and all kinds of compatible containers such as
       `std::vector`, `std::deque`, `std::list`, `std::forward_list`,
-      `std::array`, `std::set`, `std::unordered_set`, `std::multiset`, and
-      `unordered_multiset` with a `value_type` from which a @ref basic_json
-      value can be constructed.
+      `std::array`, `std::valarray`, `std::set`, `std::unordered_set`,
+      `std::multiset`, and `std::unordered_multiset` with a `value_type` from
+      which a @ref basic_json value can be constructed.
     - **objects**: @ref object_t and all kinds of compatible associative
       containers such as `std::map`, `std::unordered_map`, `std::multimap`,
       and `std::unordered_multimap` with a `key_type` compatible to
@@ -8263,13 +8349,16 @@ class basic_json
 
     @tparam U = `uncvref_t<CompatibleType>`
 
-    @param[in] val the value to be forwarded
+    @param[in] val the value to be forwarded to the respective constructor
 
     @complexity Usually linear in the size of the passed @a val, also
                 depending on the implementation of the called `to_json()`
                 method.
 
-    @throw what `json_serializer<U>::to_json()` throws
+    @exceptionsafety Depends on the called constructor. For types directly
+    supported by the library (i.e., all types for which no `to_json()` function
+    was provided), strong guarantee holds: if an exception is thrown, there are
+    no changes to any JSON value.
 
     @liveexample{The following code shows the constructor with several
     compatible types.,basic_json__CompatibleType}
@@ -8309,7 +8398,7 @@ class basic_json
 
     1. The empty initializer list is written as `{}` which is exactly an empty
        JSON object.
-    2. C++ has now way of describing mapped types other than to list a list of
+    2. C++ has no way of describing mapped types other than to list a list of
        pairs. As JSON requires that keys must be of type string, rule 2 is the
        weakest constraint one can pose on initializer lists to interpret them
        as an object.
@@ -8350,6 +8439,9 @@ class basic_json
     for an example.
 
     @complexity Linear in the size of the initializer list @a init.
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes to any JSON value.
 
     @liveexample{The example below shows how JSON values are created from
     initializer lists.,basic_json__list_init_t}
@@ -8437,6 +8529,9 @@ class basic_json
 
     @complexity Linear in the size of @a init.
 
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes to any JSON value.
+
     @liveexample{The following code shows an example for the `array`
     function.,array}
 
@@ -8477,6 +8572,9 @@ class basic_json
 
     @complexity Linear in the size of @a init.
 
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes to any JSON value.
+
     @liveexample{The following code shows an example for the `object`
     function.,object}
 
@@ -8496,13 +8594,17 @@ class basic_json
     @brief construct an array with count copies of given value
 
     Constructs a JSON array value by creating @a cnt copies of a passed value.
-    In case @a cnt is `0`, an empty array is created. As postcondition,
-    `std::distance(begin(),end()) == cnt` holds.
+    In case @a cnt is `0`, an empty array is created.
 
     @param[in] cnt  the number of JSON copies of @a val to create
     @param[in] val  the JSON value to copy
 
+    @post `std::distance(begin(),end()) == cnt` holds.
+
     @complexity Linear in @a cnt.
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes to any JSON value.
 
     @liveexample{The following code shows examples for the @ref
     basic_json(size_type\, const basic_json&)
@@ -8522,12 +8624,13 @@ class basic_json
 
     Constructs the JSON value with the contents of the range `[first, last)`.
     The semantics depends on the different types a JSON value can have:
-    - In case of primitive types (number, boolean, or string), @a first must
-      be `begin()` and @a last must be `end()`. In this case, the value is
+    - In case of a null type, invalid_iterator.206 is thrown.
+    - In case of other primitive types (number, boolean, or string), @a first
+      must be `begin()` and @a last must be `end()`. In this case, the value is
       copied. Otherwise, invalid_iterator.204 is thrown.
     - In case of structured types (array, object), the constructor behaves as
-      similar versions for `std::vector`.
-    - In case of a null type, invalid_iterator.206 is thrown.
+      similar versions for `std::vector` or `std::map`; that is, a JSON array
+      or object is constructed from the values in the range.
 
     @tparam InputIT an input iterator type (@ref iterator or @ref
     const_iterator)
@@ -8536,11 +8639,20 @@ class basic_json
     @param[in] last end of the range to copy from (excluded)
 
     @pre Iterators @a first and @a last must be initialized. **This
-         precondition is enforced with an assertion.**
+         precondition is enforced with an assertion (see warning).** If
+         assertions are switched off, a violation of this precondition yields
+         undefined behavior.
 
     @pre Range `[first, last)` is valid. Usually, this precondition cannot be
          checked efficiently. Only certain edge cases are detected; see the
-         description of the exceptions below.
+         description of the exceptions below. A violation of this precondition
+         yields undefined behavior.
+
+    @warning A precondition is enforced with a runtime assertion that will
+             result in calling `std::abort` if this precondition is not met.
+             Assertions can be disabled by defining `NDEBUG` at compile time.
+             See http://en.cppreference.com/w/cpp/error/assert for more
+             information.
 
     @throw invalid_iterator.201 if iterators @a first and @a last are not
     compatible (i.e., do not belong to the same JSON value). In this case,
@@ -8553,6 +8665,9 @@ class basic_json
     null value. In this case, the range `[first, last)` is undefined.
 
     @complexity Linear in distance between @a first and @a last.
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes to any JSON value.
 
     @liveexample{The example below shows several ways to create JSON values by
     specifying a subrange with iterators.,basic_json__InputIt_InputIt}
@@ -8656,6 +8771,7 @@ class basic_json
     // other constructors and destructor //
     ///////////////////////////////////////
 
+    /// @private
     basic_json(const detail::json_ref<basic_json>& ref)
         : basic_json(ref.moved_or_copied())
     {}
@@ -8667,7 +8783,12 @@ class basic_json
 
     @param[in] other  the JSON value to copy
 
+    @post `*this == other`
+
     @complexity Linear in the size of @a other.
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes to any JSON value.
 
     @requirement This function helps `basic_json` satisfying the
     [Container](http://en.cppreference.com/w/cpp/concept/Container)
@@ -8746,9 +8867,17 @@ class basic_json
 
     @param[in,out] other  value to move to this object
 
-    @post @a other is a JSON null value
+    @post `*this` has the same value as @a other before the call.
+    @post @a other is a JSON null value.
 
     @complexity Constant.
+
+    @exceptionsafety No-throw guarantee: this constructor never throws
+    exceptions.
+
+    @requirement This function helps `basic_json` satisfying the
+    [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible)
+    requirements.
 
     @liveexample{The code below shows the move constructor explicitly called
     via std::move.,basic_json__moveconstructor}
@@ -8774,7 +8903,7 @@ class basic_json
 
     Copy assignment operator. Copies a JSON value via the "copy and swap"
     strategy: It is expressed in terms of the copy constructor, destructor,
-    and the swap() member function.
+    and the `swap()` member function.
 
     @param[in] other  value to copy from
 
@@ -8855,7 +8984,7 @@ class basic_json
     representation.
     @param[in] indent_char The character to use for indentation if @a indent is
     greater than `0`. The default is ` ` (space).
-    @param[in] ensure_ascii If ensure_ascii is true, all non-ASCII characters
+    @param[in] ensure_ascii If @a ensure_ascii is true, all non-ASCII characters
     in the output are escaped with \uXXXX sequences, and the result consists
     of ASCII characters only.
 
@@ -8863,12 +8992,17 @@ class basic_json
 
     @complexity Linear.
 
-    @liveexample{The following example shows the effect of different @a indent
-    parameters to the result of the serialization.,dump}
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes in the JSON value.
+
+    @liveexample{The following example shows the effect of different @a indent\,
+    @a indent_char\, and @a ensure_ascii parameters to the result of the
+    serialization.,dump}
 
     @see https://docs.python.org/2/library/json.html#json.dump
 
-    @since version 1.0.0; indentation character added in version 3.0.0
+    @since version 1.0.0; indentation character @a indent_char and option
+           @a ensure_ascii added in version 3.0.0
     */
     string_t dump(const int indent = -1, const char indent_char = ' ',
                   const bool ensure_ascii = false) const
@@ -8895,6 +9029,17 @@ class basic_json
     enumeration.
 
     @return the type of the JSON value
+            Value type                | return value
+            ------------------------- | -------------------------
+            null                      | value_t::null
+            boolean                   | value_t::boolean
+            string                    | value_t::string
+            number (integer)          | value_t::number_integer
+            number (unsigned integer) | value_t::number_unsigned
+            number (foating-point)    | value_t::number_float
+            object                    | value_t::object
+            array                     | value_t::array
+            discarded                 | value_t::discarded
 
     @complexity Constant.
 
@@ -8903,6 +9048,9 @@ class basic_json
 
     @liveexample{The following code exemplifies `type()` for all JSON
     types.,type}
+
+    @sa @ref operator value_t() -- return the type of the JSON value (implicit) 
+    @sa @ref type_name() -- return the type as string
 
     @since version 1.0.0
     */
@@ -8914,8 +9062,8 @@ class basic_json
     /*!
     @brief return whether type is primitive
 
-    This function returns true iff the JSON type is primitive (string, number,
-    boolean, or null).
+    This function returns true if and only if the JSON type is primitive
+    (string, number, boolean, or null).
 
     @return `true` if type is primitive (string, number, boolean, or null),
     `false` otherwise.
@@ -8944,8 +9092,8 @@ class basic_json
     /*!
     @brief return whether type is structured
 
-    This function returns true iff the JSON type is structured (array or
-    object).
+    This function returns true if and only if the JSON type is structured
+    (array or object).
 
     @return `true` if type is structured (array or object), `false` otherwise.
 
@@ -8971,7 +9119,7 @@ class basic_json
     /*!
     @brief return whether value is null
 
-    This function returns true iff the JSON value is null.
+    This function returns true if and only if the JSON value is null.
 
     @return `true` if type is null, `false` otherwise.
 
@@ -8993,7 +9141,7 @@ class basic_json
     /*!
     @brief return whether value is a boolean
 
-    This function returns true iff the JSON value is a boolean.
+    This function returns true if and only if the JSON value is a boolean.
 
     @return `true` if type is boolean, `false` otherwise.
 
@@ -9015,8 +9163,8 @@ class basic_json
     /*!
     @brief return whether value is a number
 
-    This function returns true iff the JSON value is a number. This includes
-    both integer and floating-point values.
+    This function returns true if and only if the JSON value is a number. This
+    includes both integer (signed and unsigned) and floating-point values.
 
     @return `true` if type is number (regardless whether integer, unsigned
     integer or floating-type), `false` otherwise.
@@ -9045,8 +9193,8 @@ class basic_json
     /*!
     @brief return whether value is an integer number
 
-    This function returns true iff the JSON value is an integer or unsigned
-    integer number. This excludes floating-point values.
+    This function returns true if and only if the JSON value is a signed or
+    unsigned integer number. This excludes floating-point values.
 
     @return `true` if type is an integer or unsigned integer number, `false`
     otherwise.
@@ -9074,8 +9222,8 @@ class basic_json
     /*!
     @brief return whether value is an unsigned integer number
 
-    This function returns true iff the JSON value is an unsigned integer
-    number. This excludes floating-point and (signed) integer values.
+    This function returns true if and only if the JSON value is an unsigned
+    integer number. This excludes floating-point and signed integer values.
 
     @return `true` if type is an unsigned integer number, `false` otherwise.
 
@@ -9102,8 +9250,8 @@ class basic_json
     /*!
     @brief return whether value is a floating-point number
 
-    This function returns true iff the JSON value is a floating-point number.
-    This excludes integer and unsigned integer values.
+    This function returns true if and only if the JSON value is a
+    floating-point number. This excludes signed and unsigned integer values.
 
     @return `true` if type is a floating-point number, `false` otherwise.
 
@@ -9130,7 +9278,7 @@ class basic_json
     /*!
     @brief return whether value is an object
 
-    This function returns true iff the JSON value is an object.
+    This function returns true if and only if the JSON value is an object.
 
     @return `true` if type is object, `false` otherwise.
 
@@ -9152,7 +9300,7 @@ class basic_json
     /*!
     @brief return whether value is an array
 
-    This function returns true iff the JSON value is an array.
+    This function returns true if and only if the JSON value is an array.
 
     @return `true` if type is array, `false` otherwise.
 
@@ -9174,7 +9322,7 @@ class basic_json
     /*!
     @brief return whether value is a string
 
-    This function returns true iff the JSON value is a string.
+    This function returns true if and only if the JSON value is a string.
 
     @return `true` if type is string, `false` otherwise.
 
@@ -9196,8 +9344,8 @@ class basic_json
     /*!
     @brief return whether value is discarded
 
-    This function returns true iff the JSON value was discarded during parsing
-    with a callback function (see @ref parser_callback_t).
+    This function returns true if and only if the JSON value was discarded
+    during parsing with a callback function (see @ref parser_callback_t).
 
     @note This function will always be `false` for JSON values after parsing.
     That is, discarded values can only occur during parsing, but will be
@@ -9235,6 +9383,9 @@ class basic_json
 
     @liveexample{The following code exemplifies the @ref value_t operator for
     all JSON types.,operator__value_t}
+
+    @sa @ref type() -- return the type of the JSON value (explicit)
+    @sa @ref type_name() -- return the type as string
 
     @since version 1.0.0
     */
@@ -11336,7 +11487,8 @@ class basic_json
     @brief clears the contents
 
     Clears the content of a JSON value and resets it to the default value as
-    if @ref basic_json(value_t) would have been called:
+    if @ref basic_json(value_t) would have been called with the current value
+    type from @ref type():
 
     Value type  | initial value
     ----------- | -------------
@@ -11347,10 +11499,19 @@ class basic_json
     object      | `{}`
     array       | `[]`
 
+    @post Has the same effect as calling
+    @code {.cpp}
+    *this = basic_json(type());
+    @endcode
+
     @complexity Linear in the size of the JSON value.
+
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
 
     @liveexample{The example below shows the effect of `clear()` to different
     JSON types.,clear}
+
+    @sa @ref basic_json(value_t) -- constructor that creates
 
     @since version 1.0.0
     */
@@ -12189,11 +12350,26 @@ class basic_json
       comparison. Note than two NaN values are always treated as unequal.
     - Two JSON null values are equal.
 
+    @note Floating-point inside JSON values numbers are compared with
+    `json::number_float_t::operator==` which is `double::operator==` by
+    default. To compare floating-point while respecting an epsilon, an alternative
+    [comparison function](https://github.com/mariokonrad/marnav/blob/master/src/marnav/math/floatingpoint.hpp#L34-#L39)
+    could be used, for instance
+    @code {.cpp}
+    template <typename T, typename = typename std::enable_if<std::is_floating_point<T>::value, T>::type>
+    inline bool is_same(T a, T b, T epsilon = std::numeric_limits<T>::epsilon()) noexcept
+    {
+        return std::abs(a - b) <= epsilon;
+    }
+    @endcode
+
     @note NaN values never compare equal to themselves or to other NaN values.
 
     @param[in] lhs  first JSON value to consider
     @param[in] rhs  second JSON value to consider
     @return whether the values @a lhs and @a rhs are equal
+
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
 
     @complexity Linear.
 
@@ -12300,6 +12476,8 @@ class basic_json
 
     @complexity Linear.
 
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
+
     @liveexample{The example demonstrates comparing several JSON
     types.,operator__notequal}
 
@@ -12350,6 +12528,8 @@ class basic_json
     @return whether @a lhs is less than @a rhs
 
     @complexity Linear.
+
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
 
     @liveexample{The example demonstrates comparing several JSON
     types.,operator__less}
@@ -12458,6 +12638,8 @@ class basic_json
 
     @complexity Linear.
 
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
+
     @liveexample{The example demonstrates comparing several JSON
     types.,operator__greater}
 
@@ -12502,6 +12684,8 @@ class basic_json
 
     @complexity Linear.
 
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
+
     @liveexample{The example demonstrates comparing several JSON
     types.,operator__lessequal}
 
@@ -12545,6 +12729,8 @@ class basic_json
     @return whether @a lhs is greater than or equal to @a rhs
 
     @complexity Linear.
+
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
 
     @liveexample{The example demonstrates comparing several JSON
     types.,operator__greaterequal}
@@ -12634,7 +12820,7 @@ class basic_json
     @brief serialize to stream
     @deprecated This stream operator is deprecated and will be removed in a
                 future version of the library. Please use
-                @ref std::ostream& operator<<(std::ostream&, const basic_json&)
+                @ref operator<<(std::ostream&, const basic_json&)
                 instead; that is, replace calls like `j >> o;` with `o << j;`.
     */
     JSON_DEPRECATED
@@ -12817,7 +13003,7 @@ class basic_json
     @brief deserialize from stream
     @deprecated This stream operator is deprecated and will be removed in a
                 future version of the library. Please use
-                @ref std::istream& operator>>(std::istream&, basic_json&)
+                @ref operator>>(std::istream&, basic_json&)
                 instead; that is, replace calls like `j << i;` with `i >> j;`.
     */
     JSON_DEPRECATED
@@ -12869,16 +13055,31 @@ class basic_json
     Returns the type name as string to be used in error messages - usually to
     indicate that a function was called on a wrong JSON type.
 
-    @return basically a string representation of a the @a m_type member
+    @return a string representation of a the @a m_type member:
+            Value type  | return value
+            ----------- | -------------
+            null        | `"null"`
+            boolean     | `"boolean"`
+            string      | `"string"`
+            number      | `"number"` (for all number types)
+            object      | `"object"`
+            array       | `"array"`
+            discarded   | `"discarded"`
+
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
 
     @complexity Constant.
 
     @liveexample{The following code exemplifies `type_name()` for all JSON
     types.,type_name}
 
-    @since version 1.0.0, public since 2.1.0, const char* since 3.0.0
+    @sa @ref type() -- return the type of the JSON value
+    @sa @ref operator value_t() -- return the type of the JSON value (implicit) 
+
+    @since version 1.0.0, public since 2.1.0, `const char*` and `noexcept`
+    since 3.0.0
     */
-    const char* type_name() const
+    const char* type_name() const noexcept
     {
         {
             switch (m_type)

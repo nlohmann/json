@@ -1,4 +1,4 @@
-# Doxyfile 1.8.9.1
+# Doxyfile 1.8.14
 
 #---------------------------------------------------------------------------
 # Project related configuration options
@@ -6,7 +6,7 @@
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "JSON for Modern C++"
 PROJECT_NUMBER         = 2.1.1
-PROJECT_BRIEF          = 
+PROJECT_BRIEF          =
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = .
 CREATE_SUBDIRS         = NO
@@ -27,10 +27,10 @@ MULTILINE_CPP_IS_BRIEF = NO
 INHERIT_DOCS           = YES
 SEPARATE_MEMBER_PAGES  = YES
 TAB_SIZE               = 4
-ALIASES                = "complexity=@par Complexity\n"
-ALIASES                += liveexample{2}="@par Example\n \1 \n @includelineno \2.cpp \n Output (play with this example @htmlinclude \2.link):\n @verbinclude \2.output \n The example code above can be translated with @verbatim g++ -std=c++11 -Isrc doc/examples/\2.cpp -o \2 @endverbatim"
-ALIASES                += requirement="@par Requirements\n"
-ALIASES                += exceptionsafety="@par Exception safety\n"
+ALIASES                = "complexity=@par Complexity\n" \
+                         "liveexample{2}=@par Example\n \1 \n @includelineno \2.cpp \n Output (play with this example @htmlinclude \2.link):\n @verbinclude \2.output \n The <a href= https://github.com/nlohmann/json/blob/develop/doc/examples/\2.cpp>example code</a> above can be translated with @verbatim g++ -std=c++11 -Isrc doc/examples/\2.cpp -o \2 @endverbatim" \
+                         "requirement=@par Requirements\n" \
+                         "exceptionsafety=@par Exception safety\n"
 TCL_SUBST              =
 OPTIMIZE_OUTPUT_FOR_C  = NO
 OPTIMIZE_OUTPUT_JAVA   = NO
@@ -38,12 +38,14 @@ OPTIMIZE_FOR_FORTRAN   = NO
 OPTIMIZE_OUTPUT_VHDL   = NO
 EXTENSION_MAPPING      =
 MARKDOWN_SUPPORT       = YES
+TOC_INCLUDE_HEADINGS   = 0
 AUTOLINK_SUPPORT       = NO
 BUILTIN_STL_SUPPORT    = YES
 CPP_CLI_SUPPORT        = NO
 SIP_SUPPORT            = NO
 IDL_PROPERTY_SUPPORT   = YES
 DISTRIBUTE_GROUP_DOC   = NO
+GROUP_NESTED_COMPOUNDS = NO
 SUBGROUPING            = YES
 INLINE_GROUPED_CLASSES = NO
 INLINE_SIMPLE_STRUCTS  = NO
@@ -97,12 +99,14 @@ WARNINGS               = YES
 WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
 WARN_NO_PARAMDOC       = YES
+WARN_AS_ERROR          = NO
 WARN_FORMAT            = "$file:$line: $text"
 WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ../src/json.hpp index.md
+INPUT                  = ../src/json.hpp \
+                         index.md
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
 RECURSIVE              = NO
@@ -131,6 +135,8 @@ REFERENCES_LINK_SOURCE = NO
 SOURCE_TOOLTIPS        = YES
 USE_HTAGS              = NO
 VERBATIM_HEADERS       = NO
+CLANG_ASSISTED_PARSING = YES
+CLANG_OPTIONS          = -std=c++11
 #---------------------------------------------------------------------------
 # Configuration options related to the alphabetical class index
 #---------------------------------------------------------------------------
@@ -152,13 +158,14 @@ HTML_COLORSTYLE_HUE    = 220
 HTML_COLORSTYLE_SAT    = 100
 HTML_COLORSTYLE_GAMMA  = 80
 HTML_TIMESTAMP         = YES
+HTML_DYNAMIC_MENUS     = YES
 HTML_DYNAMIC_SECTIONS  = YES
 HTML_INDEX_NUM_ENTRIES = 100
 GENERATE_DOCSET        = YES
 DOCSET_FEEDNAME        = "Doxygen generated docs"
 DOCSET_BUNDLE_ID       = me.nlohmann.json
 DOCSET_PUBLISHER_ID    = me.nlohmann
-DOCSET_PUBLISHER_NAME  = Niels Lohmann
+DOCSET_PUBLISHER_NAME  = NielsLohmann
 GENERATE_HTMLHELP      = NO
 CHM_FILE               =
 HHC_LOCATION           =
@@ -215,6 +222,7 @@ LATEX_BATCHMODE        = NO
 LATEX_HIDE_INDICES     = NO
 LATEX_SOURCE_CODE      = NO
 LATEX_BIB_STYLE        = plain
+LATEX_TIMESTAMP        = NO
 #---------------------------------------------------------------------------
 # Configuration options related to the RTF output
 #---------------------------------------------------------------------------
@@ -308,6 +316,7 @@ DOTFILE_DIRS           =
 MSCFILE_DIRS           =
 DIAFILE_DIRS           =
 PLANTUML_JAR_PATH      =
+PLANTUML_CFG_FILE      =
 PLANTUML_INCLUDE_PATH  =
 DOT_GRAPH_MAX_NODES    = 50
 MAX_DOT_GRAPH_DEPTH    = 0
