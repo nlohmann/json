@@ -1676,6 +1676,8 @@ class lexer
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
+	using string_t = typename BasicJsonType::string_t;
+	using value_t = typename string_t::_Alloc::value_type;
 
   public:
     /// token types for the parser
@@ -1701,7 +1703,7 @@ class lexer
     };
 
     /// return name of values of type token_type (only used for errors)
-    static const char* token_type_name(const token_type t) noexcept
+    static const value_t* token_type_name(const token_type t) noexcept
     {
         switch (t)
         {
@@ -2295,17 +2297,17 @@ class lexer
         }
     }
 
-    static void strtof(float& f, const char* str, char** endptr) noexcept
+    static void strtof(float& f, const value_t* str, value_t** endptr) noexcept
     {
         f = std::strtof(str, endptr);
     }
 
-    static void strtof(double& f, const char* str, char** endptr) noexcept
+    static void strtof(double& f, const value_t* str, value_t** endptr) noexcept
     {
         f = std::strtod(str, endptr);
     }
 
-    static void strtof(long double& f, const char* str, char** endptr) noexcept
+    static void strtof(long double& f, const value_t* str, value_t** endptr) noexcept
     {
         f = std::strtold(str, endptr);
     }
@@ -2687,7 +2689,7 @@ scan_number_done:
     @param[in] length        the length of the passed literal text
     @param[in] return_type   the token type to return on success
     */
-    token_type scan_literal(const char* literal_text, const std::size_t length,
+    token_type scan_literal(const value_t* literal_text, const std::size_t length,
                             token_type return_type)
     {
         assert(current == literal_text[0]);
@@ -2758,11 +2760,11 @@ scan_number_done:
     }
 
     /// return string value
-    const std::string get_string()
+    const string_t get_string()
     {
         // yytext cannot be returned as char*, because it may contain a null
         // byte (parsed as "\u0000")
-        return std::string(yytext.data(), yylen);
+        return string_t(yytext.data(), yylen);
     }
 
     /////////////////////
@@ -2809,7 +2811,7 @@ scan_number_done:
     }
 
     /// return syntax error message
-    constexpr const char* get_error_message() const noexcept
+    constexpr const value_t* get_error_message() const noexcept
     {
         return error_message;
     }
@@ -2887,7 +2889,7 @@ scan_number_done:
     detail::input_adapter_t ia = nullptr;
 
     /// the current character
-    int current = std::char_traits<char>::eof();
+    int current = std::char_traits<value_t>::eof();
 
     /// whether get() should return the last character again
     bool next_unget = false;
@@ -2896,14 +2898,13 @@ scan_number_done:
     std::size_t chars_read = 0;
     /// the start position of the current token
     std::size_t start_pos = 0;
-
     /// buffer for variable-length tokens (numbers, strings)
-    std::vector<char> yytext = std::vector<char>(1024, '\0');
+    std::vector<value_t> yytext = std::vector<value_t>(1024, '\0');
     /// current index in yytext
     std::size_t yylen = 0;
 
     /// a description of occurred lexer errors
-    const char* error_message = "";
+    const value_t* error_message = "";
 
     // number values
     number_integer_t value_integer = 0;
@@ -2911,7 +2912,7 @@ scan_number_done:
     number_float_t value_float = 0;
 
     /// the decimal point
-    const char decimal_point_char = '.';
+    const value_t decimal_point_char = '.';
 };
 
 /*!
@@ -2927,6 +2928,8 @@ class parser
     using number_float_t = typename BasicJsonType::number_float_t;
     using lexer_t = lexer<BasicJsonType>;
     using token_type = typename lexer_t::token_type;
+	using string_t = typename BasicJsonType::string_t;
+	using value_t = typename string_t::_Alloc::value_type;
 
   public:
     enum class parse_event_t : uint8_t
@@ -3060,7 +3063,7 @@ class parser
                 }
 
                 // parse values
-                std::string key;
+				string_t key;
                 BasicJsonType value;
                 while (true)
                 {
