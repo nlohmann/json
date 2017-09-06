@@ -226,10 +226,6 @@ as when using JSON Patch.
 Member @a byte holds the byte index of the last read character in the input
 file.
 
-@note For an input with n bytes, 1 is the index of the first character and n+1
-      is the index of the terminating null byte or the end of file. This also
-      holds true when reading a byte vector (CBOR or MessagePack).
-
 Exceptions have ids 1xx.
 
 name / id                      | example message | description
@@ -246,6 +242,10 @@ json.exception.parse_error.109 | parse error: array index 'one' is not a number 
 json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
 json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xf8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
 json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last byte: 0x98 | While parsing a map key, a value that is not a string has been read.
+
+@note For an input with n bytes, 1 is the index of the first character and n+1
+      is the index of the terminating null byte or the end of file. This also
+      holds true when reading a byte vector (CBOR or MessagePack).
 
 @liveexample{The following code shows how a `parse_error` exception can be
 caught.,parse_error}
@@ -11279,9 +11279,9 @@ class basic_json
     /// @{
 
     /*!
-    @brief checks whether the container is empty
+    @brief checks whether the container is empty.
 
-    Checks if a JSON value has no elements.
+    Checks if a JSON value has no elements (i.e. whether its @ref size is `0`).
 
     @return The return value depends on the different types and is
             defined as follows:
@@ -11294,22 +11294,26 @@ class basic_json
             object      | result of function `object_t::empty()`
             array       | result of function `array_t::empty()`
 
-    @note This function does not return whether a string stored as JSON value
-    is empty - it returns whether the JSON container itself is empty which is
-    false in the case of a string.
+    @liveexample{The following code uses `empty()` to check if a JSON
+    object contains any elements.,empty}
 
     @complexity Constant, as long as @ref array_t and @ref object_t satisfy
     the Container concept; that is, their `empty()` functions have constant
     complexity.
+
+    @iterators No changes.
+
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
+
+    @note This function does not return whether a string stored as JSON value
+    is empty - it returns whether the JSON container itself is empty which is
+    false in the case of a string.
 
     @requirement This function helps `basic_json` satisfying the
     [Container](http://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `begin() == end()`.
-
-    @liveexample{The following code uses `empty()` to check if a JSON
-    object contains any elements.,empty}
 
     @sa @ref size() -- returns the number of elements
 
@@ -11361,22 +11365,26 @@ class basic_json
             object      | result of function object_t::size()
             array       | result of function array_t::size()
 
-    @note This function does not return the length of a string stored as JSON
-    value - it returns the number of elements in the JSON value which is 1 in
-    the case of a string.
+    @liveexample{The following code calls `size()` on the different value
+    types.,size}
 
     @complexity Constant, as long as @ref array_t and @ref object_t satisfy
     the Container concept; that is, their size() functions have constant
     complexity.
+
+    @iterators No changes.
+
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
+
+    @note This function does not return the length of a string stored as JSON
+    value - it returns the number of elements in the JSON value which is 1 in
+    the case of a string.
 
     @requirement This function helps `basic_json` satisfying the
     [Container](http://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `std::distance(begin(), end())`.
-
-    @liveexample{The following code calls `size()` on the different value
-    types.,size}
 
     @sa @ref empty() -- checks whether the container is empty
     @sa @ref max_size() -- returns the maximal number of elements
@@ -11431,9 +11439,16 @@ class basic_json
             object      | result of function `object_t::max_size()`
             array       | result of function `array_t::max_size()`
 
+    @liveexample{The following code calls `max_size()` on the different value
+    types. Note the output is implementation specific.,max_size}
+
     @complexity Constant, as long as @ref array_t and @ref object_t satisfy
     the Container concept; that is, their `max_size()` functions have constant
     complexity.
+
+    @iterators No changes.
+
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
 
     @requirement This function helps `basic_json` satisfying the
     [Container](http://en.cppreference.com/w/cpp/concept/Container)
@@ -11441,9 +11456,6 @@ class basic_json
     - The complexity is constant.
     - Has the semantics of returning `b.size()` where `b` is the largest
       possible JSON value.
-
-    @liveexample{The following code calls `max_size()` on the different value
-    types. Note the output is implementation specific.,max_size}
 
     @sa @ref size() -- returns the number of elements
 
@@ -11504,14 +11516,18 @@ class basic_json
     *this = basic_json(type());
     @endcode
 
-    @complexity Linear in the size of the JSON value.
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
     @liveexample{The example below shows the effect of `clear()` to different
     JSON types.,clear}
 
-    @sa @ref basic_json(value_t) -- constructor that creates
+    @complexity Linear in the size of the JSON value.
+
+    @iterators All iterators, pointers and references related to this container
+               are invalidated.
+
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
+
+    @sa @ref basic_json(value_t) -- constructor that creates an object with the
+        same value than calling `clear()`
 
     @since version 1.0.0
     */
