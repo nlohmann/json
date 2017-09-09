@@ -287,6 +287,37 @@ TEST_CASE("parser class")
                     CHECK(parser_helper("-0e1") == json(-0e1));
                     CHECK(parser_helper("-0E1") == json(-0e1));
                     CHECK(parser_helper("-0E123") == json(-0e123));
+
+                    // numbers after exponent
+                    CHECK(parser_helper("10E0") == json(10e0));
+                    CHECK(parser_helper("10E1") == json(10e1));
+                    CHECK(parser_helper("10E2") == json(10e2));
+                    CHECK(parser_helper("10E3") == json(10e3));
+                    CHECK(parser_helper("10E4") == json(10e4));
+                    CHECK(parser_helper("10E5") == json(10e5));
+                    CHECK(parser_helper("10E6") == json(10e6));
+                    CHECK(parser_helper("10E7") == json(10e7));
+                    CHECK(parser_helper("10E8") == json(10e8));
+                    CHECK(parser_helper("10E9") == json(10e9));
+                    CHECK(parser_helper("10E+0") == json(10e0));
+                    CHECK(parser_helper("10E+1") == json(10e1));
+                    CHECK(parser_helper("10E+2") == json(10e2));
+                    CHECK(parser_helper("10E+3") == json(10e3));
+                    CHECK(parser_helper("10E+4") == json(10e4));
+                    CHECK(parser_helper("10E+5") == json(10e5));
+                    CHECK(parser_helper("10E+6") == json(10e6));
+                    CHECK(parser_helper("10E+7") == json(10e7));
+                    CHECK(parser_helper("10E+8") == json(10e8));
+                    CHECK(parser_helper("10E+9") == json(10e9));
+                    CHECK(parser_helper("10E-1") == json(10e-1));
+                    CHECK(parser_helper("10E-2") == json(10e-2));
+                    CHECK(parser_helper("10E-3") == json(10e-3));
+                    CHECK(parser_helper("10E-4") == json(10e-4));
+                    CHECK(parser_helper("10E-5") == json(10e-5));
+                    CHECK(parser_helper("10E-6") == json(10e-6));
+                    CHECK(parser_helper("10E-7") == json(10e-7));
+                    CHECK(parser_helper("10E-8") == json(10e-8));
+                    CHECK(parser_helper("10E-9") == json(10e-9));
                 }
 
                 SECTION("edge cases")
