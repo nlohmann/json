@@ -1209,9 +1209,9 @@ TEST_CASE("regression tests")
     {
         SECTION("original example")
         {
-        std::valarray<double> v;
-        nlohmann::json j;
-        j["test"] = v;
+            std::valarray<double> v;
+            nlohmann::json j;
+            j["test"] = v;
         }
 
         SECTION("full example")
@@ -1230,7 +1230,7 @@ TEST_CASE("regression tests")
 
             CHECK_THROWS_AS(json().get<std::valarray<double>>(), json::type_error&);
             CHECK_THROWS_WITH(json().get<std::valarray<double>>(),
-                "[json.exception.type_error.302] type must be array, but is null");
+                              "[json.exception.type_error.302] type must be array, but is null");
         }
     }
 }

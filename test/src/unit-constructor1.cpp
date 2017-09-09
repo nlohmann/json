@@ -1181,12 +1181,33 @@ TEST_CASE("constructors")
 
     SECTION("create an array of n copies of a given value")
     {
-        json v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2u}}};
-        json arr(3, v);
-        CHECK(arr.size() == 3);
-        for (auto& x : arr)
+        SECTION("cnt = 0")
         {
-            CHECK(x == v);
+            json v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2u}}};
+            json arr(0, v);
+            CHECK(arr.size() == 0);
+        }
+
+        SECTION("cnt = 1")
+        {
+            json v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2u}}};
+            json arr(1, v);
+            CHECK(arr.size() == 1);
+            for (auto& x : arr)
+            {
+                CHECK(x == v);
+            }
+        }
+
+        SECTION("cnt = 3")
+        {
+            json v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2u}}};
+            json arr(3, v);
+            CHECK(arr.size() == 3);
+            for (auto& x : arr)
+            {
+                CHECK(x == v);
+            }
         }
     }
 

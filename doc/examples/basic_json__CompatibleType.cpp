@@ -5,6 +5,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <valarray>
 #include "json.hpp"
 
 using json = nlohmann::json;
@@ -67,6 +68,10 @@ int main()
     std::vector<int> c_vector {1, 2, 3, 4};
     json j_vec(c_vector);
 
+    // create an array from std::valarray
+    std::valarray<short> c_valarray {10, 9, 8, 7};
+    json j_valarray(c_valarray);
+
     // create an array from std::deque
     std::deque<double> c_deque {1.2, 2.3, 3.4, 5.6};
     json j_deque(c_deque);
@@ -102,6 +107,7 @@ int main()
     // serialize the JSON arrays
     std::cout << j_array_t << '\n';
     std::cout << j_vec << '\n';
+    std::cout << j_valarray << '\n';
     std::cout << j_deque << '\n';
     std::cout << j_list << '\n';
     std::cout << j_flist << '\n';

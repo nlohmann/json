@@ -173,6 +173,38 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(parser_helper("\"\x1d\""), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("\"\x1e\""), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("\"\x1f\""), json::parse_error&);
+                CHECK_THROWS_WITH(parser_helper("\"\x00\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: missing closing quote; last read: '\"'");
+                CHECK_THROWS_WITH(parser_helper("\"\x01\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0001>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x02\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0002>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x03\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0003>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x04\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0004>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x05\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0005>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x06\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0006>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x07\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0007>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x08\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0008>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x09\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0009>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x0a\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+000A>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x0b\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+000B>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x0c\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+000C>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x0d\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+000D>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x0e\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+000E>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x0f\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+000F>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x10\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0010>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x11\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0011>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x12\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0012>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x13\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0013>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x14\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0014>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x15\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0015>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x16\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0016>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x17\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0017>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x18\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0018>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x19\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0019>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x1a\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+001A>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x1b\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+001B>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x1c\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+001C>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x1d\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+001D>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x1e\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+001E>'");
+                CHECK_THROWS_WITH(parser_helper("\"\x1f\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+001F>'");
             }
 
             SECTION("escaped")
