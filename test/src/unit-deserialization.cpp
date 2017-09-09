@@ -324,7 +324,7 @@ TEST_CASE("deserialization")
                 uint8_t v[] = {'\"', 0x7F, 0xDF, 0x7F};
                 CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK_THROWS_WITH(json::parse(std::begin(v), std::end(v)),
-                    "[json.exception.parse_error.101] parse error at 4: syntax error - invalid string: ill-formed UTF-8 byte; last read: '\"\x7f\xdf\x7f'");
+                                  "[json.exception.parse_error.101] parse error at 4: syntax error - invalid string: ill-formed UTF-8 byte; last read: '\"\x7f\xdf\x7f'");
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;

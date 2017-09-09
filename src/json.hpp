@@ -3497,43 +3497,23 @@ class primitive_iterator_t
     /// return whether the iterator can be dereferenced
     constexpr bool is_begin() const noexcept
     {
-        return (m_it == begin_value);
+        return m_it == begin_value;
     }
 
     /// return whether the iterator is at end
     constexpr bool is_end() const noexcept
     {
-        return (m_it == end_value);
+        return m_it == end_value;
     }
 
     friend constexpr bool operator==(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
     {
-        return (lhs.m_it == rhs.m_it);
-    }
-
-    friend constexpr bool operator!=(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
-    {
-        return not(lhs == rhs);
+        return lhs.m_it == rhs.m_it;
     }
 
     friend constexpr bool operator<(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
     {
         return lhs.m_it < rhs.m_it;
-    }
-
-    friend constexpr bool operator<=(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
-    {
-        return lhs.m_it <= rhs.m_it;
-    }
-
-    friend constexpr bool operator>(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
-    {
-        return lhs.m_it > rhs.m_it;
-    }
-
-    friend constexpr bool operator>=(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
-    {
-        return lhs.m_it >= rhs.m_it;
     }
 
     primitive_iterator_t operator+(difference_type i)
@@ -3596,7 +3576,7 @@ class primitive_iterator_t
     static constexpr difference_type end_value = begin_value + 1;
 
     /// iterator as signed integer type
-    difference_type m_it = std::numeric_limits<std::ptrdiff_t>::denorm_min();
+    difference_type m_it = std::numeric_limits<std::ptrdiff_t>::min();
 };
 
 /*!
@@ -9045,7 +9025,7 @@ class basic_json
     @liveexample{The following code exemplifies `type()` for all JSON
     types.,type}
 
-    @sa @ref operator value_t() -- return the type of the JSON value (implicit) 
+    @sa @ref operator value_t() -- return the type of the JSON value (implicit)
     @sa @ref type_name() -- return the type as string
 
     @since version 1.0.0
@@ -13086,7 +13066,7 @@ class basic_json
     types.,type_name}
 
     @sa @ref type() -- return the type of the JSON value
-    @sa @ref operator value_t() -- return the type of the JSON value (implicit) 
+    @sa @ref operator value_t() -- return the type of the JSON value (implicit)
 
     @since version 1.0.0, public since 2.1.0, `const char*` and `noexcept`
     since 3.0.0
