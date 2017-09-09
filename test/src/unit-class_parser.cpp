@@ -721,29 +721,43 @@ TEST_CASE("parser class")
         CHECK_THROWS_AS(parser_helper("n"), json::parse_error&);
         CHECK_THROWS_AS(parser_helper("nu"), json::parse_error&);
         CHECK_THROWS_AS(parser_helper("nul"), json::parse_error&);
+        CHECK_THROWS_AS(parser_helper("nulk"), json::parse_error&);
+        CHECK_THROWS_AS(parser_helper("nulm"), json::parse_error&);
         CHECK_THROWS_WITH(parser_helper("n"),
                           "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; last read: 'n'");
         CHECK_THROWS_WITH(parser_helper("nu"),
                           "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; last read: 'nu'");
         CHECK_THROWS_WITH(parser_helper("nul"),
                           "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'nul'");
+        CHECK_THROWS_WITH(parser_helper("nulk"),
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'nulk'");
+        CHECK_THROWS_WITH(parser_helper("nulm"),
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'nulm'");
 
         // unexpected end of true
         CHECK_THROWS_AS(parser_helper("t"), json::parse_error&);
         CHECK_THROWS_AS(parser_helper("tr"), json::parse_error&);
         CHECK_THROWS_AS(parser_helper("tru"), json::parse_error&);
+        CHECK_THROWS_AS(parser_helper("trud"), json::parse_error&);
+        CHECK_THROWS_AS(parser_helper("truf"), json::parse_error&);
         CHECK_THROWS_WITH(parser_helper("t"),
                           "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; last read: 't'");
         CHECK_THROWS_WITH(parser_helper("tr"),
                           "[json.exception.parse_error.101] parse error at 3: syntax error - invalid literal; last read: 'tr'");
         CHECK_THROWS_WITH(parser_helper("tru"),
                           "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'tru'");
+        CHECK_THROWS_WITH(parser_helper("trud"),
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'trud'");
+        CHECK_THROWS_WITH(parser_helper("truf"),
+                          "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'truf'");
 
         // unexpected end of false
         CHECK_THROWS_AS(parser_helper("f"), json::parse_error&);
         CHECK_THROWS_AS(parser_helper("fa"), json::parse_error&);
         CHECK_THROWS_AS(parser_helper("fal"), json::parse_error&);
         CHECK_THROWS_AS(parser_helper("fals"), json::parse_error&);
+        CHECK_THROWS_AS(parser_helper("falsd"), json::parse_error&);
+        CHECK_THROWS_AS(parser_helper("falsf"), json::parse_error&);
         CHECK_THROWS_WITH(parser_helper("f"),
                           "[json.exception.parse_error.101] parse error at 2: syntax error - invalid literal; last read: 'f'");
         CHECK_THROWS_WITH(parser_helper("fa"),
@@ -752,6 +766,10 @@ TEST_CASE("parser class")
                           "[json.exception.parse_error.101] parse error at 4: syntax error - invalid literal; last read: 'fal'");
         CHECK_THROWS_WITH(parser_helper("fals"),
                           "[json.exception.parse_error.101] parse error at 5: syntax error - invalid literal; last read: 'fals'");
+        CHECK_THROWS_WITH(parser_helper("falsd"),
+                          "[json.exception.parse_error.101] parse error at 5: syntax error - invalid literal; last read: 'falsd'");
+        CHECK_THROWS_WITH(parser_helper("falsf"),
+                          "[json.exception.parse_error.101] parse error at 5: syntax error - invalid literal; last read: 'falsf'");
 
         // missing/unexpected end of array
         CHECK_THROWS_AS(parser_helper("["), json::parse_error&);
