@@ -225,6 +225,114 @@ TEST_CASE("iterators 1")
                 CHECK(*it == j_const);
             }
 
+            SECTION("additional tests")
+            {
+                SECTION("!(begin != begin)")
+                {
+                    CHECK(not(j.begin() != j.begin()));
+                }
+
+                SECTION("!(end != end)")
+                {
+                    CHECK(not(j.end() != j.end()));
+                }
+
+                SECTION("begin < end")
+                {
+                    CHECK(j.begin() < j.end());
+                }
+
+                SECTION("begin <= end")
+                {
+                    CHECK(j.begin() <= j.end());
+                }
+
+                SECTION("end > begin")
+                {
+                    CHECK(j.end() > j.begin());
+                }
+
+                SECTION("end >= begin")
+                {
+                    CHECK(j.end() >= j.begin());
+                }
+
+                SECTION("end == end")
+                {
+                    CHECK(j.end() == j.end());
+                }
+
+                SECTION("end <= end")
+                {
+                    CHECK(j.end() <= j.end());
+                }
+
+                SECTION("begin == begin")
+                {
+                    CHECK(j.begin() == j.begin());
+                }
+
+                SECTION("begin <= begin")
+                {
+                    CHECK(j.begin() <= j.begin());
+                }
+
+                SECTION("begin >= begin")
+                {
+                    CHECK(j.begin() >= j.begin());
+                }
+
+                SECTION("!(begin == end)")
+                {
+                    CHECK(not(j.begin() == j.end()));
+                }
+
+                SECTION("begin != end")
+                {
+                    CHECK(j.begin() != j.end());
+                }
+
+                SECTION("begin+1 == end")
+                {
+                    CHECK(j.begin() + 1 == j.end());
+                }
+
+                SECTION("begin == end-1")
+                {
+                    CHECK(j.begin() == j.end() - 1);
+                }
+
+                SECTION("begin != end+1")
+                {
+                    CHECK(j.begin() != j.end() + 1);
+                }
+
+                SECTION("end != end+1")
+                {
+                    CHECK(j.end() != j.end() + 1);
+                }
+
+                SECTION("begin+1 != begin+2")
+                {
+                    CHECK(j.begin() + 1 != j.begin() + 2);
+                }
+
+                SECTION("begin+1 < begin+2")
+                {
+                    CHECK(j.begin() + 1 < j.begin() + 2);
+                }
+
+                SECTION("begin+1 <= begin+2")
+                {
+                    CHECK(j.begin() + 1 <= j.begin() + 2);
+                }
+
+                SECTION("end+1 != end+2")
+                {
+                    CHECK(j.end() + 1 != j.end() + 2);
+                }
+            }
+
             SECTION("key/value")
             {
                 auto it = j.begin();
