@@ -31,6 +31,7 @@ SOFTWARE.
 #include "json.hpp"
 using nlohmann::json;
 
+#include <iostream>
 #include <valarray>
 
 TEST_CASE("deserialization")
@@ -441,6 +442,97 @@ TEST_CASE("deserialization")
                 CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
                 CHECK(j_error.is_discarded());
             }
+        }
+    }
+
+    SECTION("ignoring byte-order marks")
+    {
+        std::string bom = "\xEF\xBB\xBF";
+
+        SECTION("BOM only")
+        {
+            CHECK_THROWS_AS(json::parse(bom), json::parse_error);
+            CHECK_THROWS_WITH(json::parse(bom),
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+
+            CHECK_THROWS_AS(json::parse(std::istringstream(bom)), json::parse_error);
+            CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+        }
+
+        SECTION("BOM and content")
+        {
+            CHECK(json::parse(bom + "1") == 1);
+            CHECK(json::parse(std::istringstream(bom + "1")) == 1);
+        }
+
+        SECTION("2 byte of BOM")
+        {
+            CHECK_THROWS_AS(json::parse(bom.substr(0, 2)), json::parse_error);
+            CHECK_THROWS_WITH(json::parse(bom),
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+
+            CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 2))), json::parse_error);
+            CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+        }
+
+        SECTION("1 byte of BOM")
+        {
+            CHECK_THROWS_AS(json::parse(bom.substr(0, 1)), json::parse_error);
+            CHECK_THROWS_WITH(json::parse(bom),
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+
+            CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 1))), json::parse_error);
+            CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+        }
+
+        SECTION("variations")
+        {
+            // calculate variations of each byte of the BOM to make sure
+            // that the BOM and only the BOM is skipped
+            for (int i0 = -1; i0 < 2; ++i0)
+            {
+                for (int i1 = -1; i1 < 2; ++i1)
+                {
+                    for (int i2 = -1; i2 < 2; ++i2)
+                    {
+                        // debug output for the variations
+                        CAPTURE(i0);
+                        CAPTURE(i1);
+                        CAPTURE(i2);
+
+                        std::string s = "";
+                        s.push_back(bom[0] + i0);
+                        s.push_back(bom[1] + i1);
+                        s.push_back(bom[2] + i2);
+
+                        if (i0 == 0 and i1 == 0 and i2 == 0)
+                        {
+                            // without any variation, we skip the BOM
+                            CHECK(json::parse(s + "null") == json());
+                            CHECK(json::parse(std::istringstream(s + "null")) == json());
+                        }
+                        else
+                        {
+                            // any variation is an error
+                            CHECK_THROWS_AS(json::parse(s + "null"), json::parse_error);
+                            CHECK_THROWS_AS(json::parse(std::istringstream(s + "null")), json::parse_error);
+                        }
+                    }
+                }
+            }
+        }
+
+        SECTION("preserve state after parsing")
+        {
+            std::istringstream s(bom + "123 456");
+            json j;
+            j << s;
+            CHECK(j == 123);
+            j << s;
+            CHECK(j == 456);
         }
     }
 }
