@@ -1224,6 +1224,13 @@ TEST_CASE("CBOR")
 
     SECTION("errors")
     {
+        SECTION("empty byte vector")
+        {
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>()), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>()),
+                              "[json.exception.parse_error.110] parse error at 1: unexpected end of input");
+        }
+
         SECTION("too short byte vector")
         {
             CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x18})), json::parse_error&);
