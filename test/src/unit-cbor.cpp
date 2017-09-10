@@ -735,6 +735,89 @@ TEST_CASE("CBOR")
 
             SECTION("half-precision float (edge cases)")
             {
+                SECTION("errors")
+                {
+                    SECTION("no byte follows")
+                    {
+                        CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0xf9})), json::parse_error);
+                        CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0xf9})),
+                                          "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
+                    }
+                    SECTION("only one byte follows")
+                    {
+                        CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c})), json::parse_error);
+                        CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c})),
+                                          "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
+                    }
+                }
+
+                SECTION("exp = 0b00000")
+                {
+                    SECTION("0 (0 00000 0000000000)")
+                    {
+                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x00, 0x00}));
+                        json::number_float_t d = j;
+                        CHECK(d == 0.0);
+                    }
+
+                    SECTION("-0 (1 00000 0000000000)")
+                    {
+                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x80, 0x00}));
+                        json::number_float_t d = j;
+                        CHECK(d == -0.0);
+                    }
+
+                    SECTION("2**-24 (0 00000 0000000001)")
+                    {
+                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x00, 0x01}));
+                        json::number_float_t d = j;
+                        CHECK(d == std::pow(2.0, -24.0));
+                    }
+                }
+
+                SECTION("exp = 0b11111")
+                {
+                    SECTION("infinity (0 11111 0000000000)")
+                    {
+                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
+                        json::number_float_t d = j;
+                        CHECK(d == std::numeric_limits<json::number_float_t>::infinity());
+                        CHECK(j.dump() == "null");
+                    }
+
+                    SECTION("-infinity (1 11111 0000000000)")
+                    {
+                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0xfc, 0x00}));
+                        json::number_float_t d = j;
+                        CHECK(d == -std::numeric_limits<json::number_float_t>::infinity());
+                        CHECK(j.dump() == "null");
+                    }
+                }
+
+                SECTION("other values from https://en.wikipedia.org/wiki/Half-precision_floating-point_format")
+                {
+                    SECTION("1 (0 01111 0000000000)")
+                    {
+                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x3c, 0x00}));
+                        json::number_float_t d = j;
+                        CHECK(d == 1);
+                    }
+
+                    SECTION("-2 (1 10000 0000000000)")
+                    {
+                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0xc0, 0x00}));
+                        json::number_float_t d = j;
+                        CHECK(d == -2);
+                    }
+
+                    SECTION("65504 (0 11110 1111111111)")
+                    {
+                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7b, 0xff}));
+                        json::number_float_t d = j;
+                        CHECK(d == 65504);
+                    }
+                }
+
                 SECTION("infinity")
                 {
                     json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
