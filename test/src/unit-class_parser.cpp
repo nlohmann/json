@@ -205,6 +205,18 @@ TEST_CASE("parser class")
                 CHECK_THROWS_WITH(parser_helper("\"\x1d\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+001D>'");
                 CHECK_THROWS_WITH(parser_helper("\"\x1e\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+001E>'");
                 CHECK_THROWS_WITH(parser_helper("\"\x1f\""), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+001F>'");
+
+                SECTION("additional test for null byte")
+                {
+                    // The test above for the null byte is wrong, because passing
+                    // a string to the parser only reads int until it encounters
+                    // a null byte. This test inserts the null byte later on and
+                    // uses an iterator range.
+                    std::string s = "\"1\"";
+                    s[1] = '\0';
+                    CHECK_THROWS_AS(json::parse(s.begin(), s.end()), json::parse_error&);
+                    CHECK_THROWS_WITH(json::parse(s.begin(), s.end()), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"'");
+                }
             }
 
             SECTION("escaped")
