@@ -12818,6 +12818,7 @@ class basic_json
                 future version of the library. Please use
                 @ref operator<<(std::ostream&, const basic_json&)
                 instead; that is, replace calls like `j >> o;` with `o << j;`.
+    @since version 1.0.0; deprecated since version 3.0.0
     */
     JSON_DEPRECATED
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
@@ -13001,6 +13002,7 @@ class basic_json
                 future version of the library. Please use
                 @ref operator>>(std::istream&, basic_json&)
                 instead; that is, replace calls like `j << i;` with `i >> j;`.
+    @since version 1.0.0; deprecated since version 3.0.0
     */
     JSON_DEPRECATED
     friend std::istream& operator<<(basic_json& j, std::istream& i)
