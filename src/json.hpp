@@ -6660,7 +6660,7 @@ class serializer
             return;
         }
 
-        const auto is_negative = std::signbit(x);
+        const bool is_negative = x < 0;
         std::size_t i = 0;
 
         // spare 1 byte for '\0'
