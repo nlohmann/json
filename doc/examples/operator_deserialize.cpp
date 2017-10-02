@@ -18,7 +18,7 @@ int main()
 
     // create JSON value and read the serialization from the stream
     json j;
-    j << ss;
+    ss >> j;
 
     // serialize JSON
     std::cout << std::setw(2) << j << '\n';

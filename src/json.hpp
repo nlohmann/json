@@ -62,7 +62,7 @@ SOFTWARE.
     #if (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__) < 30400
         #error "unsupported Clang version - see https://github.com/nlohmann/json#supported-compilers"
     #endif
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
     #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
         #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
     #endif
@@ -3576,7 +3576,7 @@ class primitive_iterator_t
     static constexpr difference_type end_value = begin_value + 1;
 
     /// iterator as signed integer type
-    difference_type m_it = std::numeric_limits<std::ptrdiff_t>::min();
+    difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
 };
 
 /*!
@@ -6316,7 +6316,7 @@ class serializer
     */
     static constexpr std::size_t bytes_following(const uint8_t u)
     {
-        return ((0 <= u and u <= 127) ? 0
+        return ((u <= 127) ? 0
                 : ((192 <= u and u <= 223) ? 1
                    : ((224 <= u and u <= 239) ? 2
                       : ((240 <= u and u <= 247) ? 3 : std::string::npos))));
@@ -9755,7 +9755,7 @@ class basic_json
             , "incompatible pointer type");
 
         // delegate the call to get_impl_ptr<>() const
-        return get_impl_ptr(static_cast<const PointerType>(nullptr));
+        return get_impl_ptr(static_cast<PointerType>(nullptr));
     }
 
     /*!
@@ -12814,6 +12814,7 @@ class basic_json
                 future version of the library. Please use
                 @ref operator<<(std::ostream&, const basic_json&)
                 instead; that is, replace calls like `j >> o;` with `o << j;`.
+    @since version 1.0.0; deprecated since version 3.0.0
     */
     JSON_DEPRECATED
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
@@ -12997,6 +12998,7 @@ class basic_json
                 future version of the library. Please use
                 @ref operator>>(std::istream&, basic_json&)
                 instead; that is, replace calls like `j << i;` with `i >> j;`.
+    @since version 1.0.0; deprecated since version 3.0.0
     */
     JSON_DEPRECATED
     friend std::istream& operator<<(basic_json& j, std::istream& i)

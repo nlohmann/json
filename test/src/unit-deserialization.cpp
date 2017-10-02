@@ -451,11 +451,11 @@ TEST_CASE("deserialization")
 
         SECTION("BOM only")
         {
-            CHECK_THROWS_AS(json::parse(bom), json::parse_error);
+            CHECK_THROWS_AS(json::parse(bom), json::parse_error&);
             CHECK_THROWS_WITH(json::parse(bom),
                               "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
 
-            CHECK_THROWS_AS(json::parse(std::istringstream(bom)), json::parse_error);
+            CHECK_THROWS_AS(json::parse(std::istringstream(bom)), json::parse_error&);
             CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
                               "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
         }
@@ -468,22 +468,22 @@ TEST_CASE("deserialization")
 
         SECTION("2 byte of BOM")
         {
-            CHECK_THROWS_AS(json::parse(bom.substr(0, 2)), json::parse_error);
+            CHECK_THROWS_AS(json::parse(bom.substr(0, 2)), json::parse_error&);
             CHECK_THROWS_WITH(json::parse(bom),
                               "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
 
-            CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 2))), json::parse_error);
+            CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 2))), json::parse_error&);
             CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
                               "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
         }
 
         SECTION("1 byte of BOM")
         {
-            CHECK_THROWS_AS(json::parse(bom.substr(0, 1)), json::parse_error);
+            CHECK_THROWS_AS(json::parse(bom.substr(0, 1)), json::parse_error&);
             CHECK_THROWS_WITH(json::parse(bom),
                               "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
 
-            CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 1))), json::parse_error);
+            CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 1))), json::parse_error&);
             CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
                               "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
         }
@@ -504,9 +504,9 @@ TEST_CASE("deserialization")
                         CAPTURE(i2);
 
                         std::string s = "";
-                        s.push_back(bom[0] + i0);
-                        s.push_back(bom[1] + i1);
-                        s.push_back(bom[2] + i2);
+                        s.push_back(static_cast<char>(bom[0] + i0));
+                        s.push_back(static_cast<char>(bom[1] + i1));
+                        s.push_back(static_cast<char>(bom[2] + i2));
 
                         if (i0 == 0 and i1 == 0 and i2 == 0)
                         {
@@ -517,8 +517,8 @@ TEST_CASE("deserialization")
                         else
                         {
                             // any variation is an error
-                            CHECK_THROWS_AS(json::parse(s + "null"), json::parse_error);
-                            CHECK_THROWS_AS(json::parse(std::istringstream(s + "null")), json::parse_error);
+                            CHECK_THROWS_AS(json::parse(s + "null"), json::parse_error&);
+                            CHECK_THROWS_AS(json::parse(std::istringstream(s + "null")), json::parse_error&);
                         }
                     }
                 }

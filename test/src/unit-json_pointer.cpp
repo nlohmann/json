@@ -430,4 +430,23 @@ TEST_CASE("JSON pointers")
             CHECK(json::json_pointer(ptr).to_string() == ptr);
         }
     }
+
+    SECTION("conversion")
+    {
+        SECTION("array")
+        {
+            json j;
+            // all numbers -> array
+            j["/12"_json_pointer] = 0;
+            CHECK(j.is_array());
+        }
+
+        SECTION("object")
+        {
+            json j;
+            // contains a number, but is not a number -> object
+            j["/a12"_json_pointer] = 0;
+            CHECK(j.is_object());
+        }
+    }
 }
