@@ -1398,119 +1398,60 @@ constexpr T static_const<T>::value;
 struct input_adapter_protocol
 {
     virtual int get_character() = 0;
-    virtual std::string read(std::size_t offset, std::size_t length) = 0;
     virtual ~input_adapter_protocol() = default;
 };
 
 /// a type to simplify interfaces
 using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
 
-/// input adapter for cached stream input
-template<std::size_t BufferSize>
-class cached_input_stream_adapter : public input_adapter_protocol
+
+/// input adapter for a (caching) istream.  Ignores a UFT Byte Order Mark at beginning of input.
+class input_stream_adapter : public input_adapter_protocol
 {
   public:
-    explicit cached_input_stream_adapter(std::istream& i)
-        : is(i), start_position(is.tellg())
+    explicit input_stream_adapter(std::istream& i)
+        : is(i)
     {
-        fill_buffer();
-
-        // skip byte order mark
-        if (fill_size >= 3 and buffer[0] == '\xEF' and buffer[1] == '\xBB' and buffer[2] == '\xBF')
-        {
-            buffer_pos += 3;
-            processed_chars += 3;
-        }
+	// Ignore Byte Order Mark at start of input
+	int c;
+	if (( c = get_character() ) == 0xEF )
+	{
+	    if (( c = get_character() ) == 0xBB )
+	    {
+		if (( c = get_character() ) == 0xBF )
+		{
+		    return; // Ignore BOM
+		}
+		else if ( c != std::char_traits<char>::eof() )
+		{
+		    is.unget();
+		}
+		is.putback( '\xBB' );
+	    }
+	    else if ( c != std::char_traits<char>::eof() )
+	    {
+		is.unget();
+	    }
+	    is.putback( '\xEF' );
+	}
+	else if ( c != std::char_traits<char>::eof() )
+	{
+	    is.unget(); // Not BOM.  Process as usual.
+	}
     }
 
-    ~cached_input_stream_adapter() override
-    {
-        // clear stream flags
-        is.clear();
-        // We initially read a lot of characters into the buffer, and we may
-        // not have processed all of them. Therefore, we need to "rewind" the
-        // stream after the last processed char.
-        is.seekg(start_position);
-        is.ignore(static_cast<std::streamsize>(processed_chars));
-        // clear stream flags
-        is.clear();
-    }
+    ~input_stream_adapter() override {}
 
     int get_character() override
     {
-        // check if refilling is necessary and possible
-        if (buffer_pos == fill_size and not eof)
-        {
-            fill_buffer();
-
-            // check and remember that filling did not yield new input
-            if (fill_size == 0)
-            {
-                eof = true;
-                return std::char_traits<char>::eof();
-            }
-
-            // the buffer is ready
-            buffer_pos = 0;
-        }
-
-        ++processed_chars;
-        assert(buffer_pos < buffer.size());
-        return buffer[buffer_pos++] & 0xFF;
-    }
-
-    std::string read(std::size_t offset, std::size_t length) override
-    {
-        // create buffer
-        std::string result(length, '\0');
-
-        // save stream position
-        const auto current_pos = is.tellg();
-        // save stream flags
-        const auto flags = is.rdstate();
-
-        // clear stream flags
-        is.clear();
-        // set stream position
-        is.seekg(static_cast<std::streamoff>(offset));
-        // read bytes
-        is.read(&result[0], static_cast<std::streamsize>(length));
-
-        // reset stream position
-        is.seekg(current_pos);
-        // reset stream flags
-        is.setstate(flags);
-
-        return result;
+	int c = is.get();
+	return c  == std::char_traits<char>::eof() ? c : ( c & 0xFF );
     }
 
   private:
-    void fill_buffer()
-    {
-        // fill
-        is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-        // store number of bytes in the buffer
-        fill_size = static_cast<size_t>(is.gcount());
-    }
 
     /// the associated input stream
     std::istream& is;
-
-    /// chars returned via get_character()
-    std::size_t processed_chars = 0;
-    /// chars processed in the current buffer
-    std::size_t buffer_pos = 0;
-
-    /// whether stream reached eof
-    bool eof = false;
-    /// how many chars have been copied to the buffer by last (re)fill
-    std::size_t fill_size = 0;
-
-    /// position of the stream when we started
-    const std::streampos start_position;
-
-    /// internal buffer
-    std::array<char, BufferSize> buffer{{}};
 };
 
 /// input adapter for buffer input
@@ -1541,13 +1482,6 @@ class input_buffer_adapter : public input_adapter_protocol
         return std::char_traits<char>::eof();
     }
 
-    std::string read(std::size_t offset, std::size_t length) override
-    {
-        // avoid reading too many characters
-        const auto max_length = static_cast<size_t>(limit - start);
-        return std::string(start + offset, (std::min)(length, max_length - offset));
-    }
-
   private:
     /// pointer to the current character
     const char* cursor;
@@ -1564,11 +1498,11 @@ class input_adapter
 
     /// input adapter for input stream
     input_adapter(std::istream& i)
-        : ia(std::make_shared<cached_input_stream_adapter<16384>>(i)) {}
+        : ia(std::make_shared<input_stream_adapter>(i)) {}
 
     /// input adapter for input stream
     input_adapter(std::istream&& i)
-        : ia(std::make_shared<cached_input_stream_adapter<16384>>(i)) {}
+        : ia(std::make_shared<input_stream_adapter>(i)) {}
 
     /// input adapter for buffer
     template<typename CharT,
@@ -2624,8 +2558,7 @@ scan_number_any2:
 scan_number_done:
         // unget the character after the number (we only read it to know that
         // we are done scanning a number)
-        --chars_read;
-        next_unget = true;
+	unget();
 
         // terminate token
         add('\0');
@@ -2702,21 +2635,33 @@ scan_number_done:
     // input management
     /////////////////////
 
-    /// reset yytext
+    /// reset yytext; current character is beginning of token
     void reset() noexcept
     {
         yylen = 0;
         start_pos = chars_read - 1;
+	token_string = static_cast<char>( current );
     }
 
     /// get a character from the input
     int get()
     {
         ++chars_read;
-        return next_unget ? (next_unget = false, current)
-               : (current = ia->get_character());
+	int c = next_unget ? (next_unget = false, current)
+	    : (current = ia->get_character());
+	token_string += static_cast<char>( c );
+	return c;
     }
 
+    /// unget current character (return it again on next get)
+    void unget()
+    {
+        --chars_read;
+        next_unget = true;
+	if (token_string.size() > 0)
+	    token_string.resize( token_string.size() - 1 );
+    }
+	
     /// add a character to yytext
     void add(int c)
     {
@@ -2774,19 +2719,14 @@ scan_number_done:
     /// return the last read token (for errors only)
     std::string get_token_string() const
     {
-        // get the raw byte sequence of the last token
-        std::string s = ia->read(start_pos, chars_read - start_pos);
-
         // escape control characters
         std::string result;
-        for (auto c : s)
+        for (auto c : token_string)
         {
-            if (c == '\0' or c == std::char_traits<char>::eof())
-            {
-                // ignore EOF
-                continue;
-            }
-            else if ('\x00' <= c and c <= '\x1f')
+	    if ( c == std::char_traits<char>::eof() ) {
+		continue;
+	    }
+	    else if ('\x00' <= c and c <= '\x1f')
             {
                 // escape control characters
                 std::stringstream ss;
@@ -2892,6 +2832,8 @@ scan_number_done:
     std::size_t chars_read = 0;
     /// the start position of the current token
     std::size_t start_pos = 0;
+    /// raw input token string (for error messages)
+    std::string token_string = "";
 
     /// buffer for variable-length tokens (numbers, strings)
     std::vector<char> yytext = std::vector<char>(1024, '\0');
