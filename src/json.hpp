@@ -1410,48 +1410,51 @@ using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
 class input_stream_adapter : public input_adapter_protocol
 {
   public:
+    ~input_stream_adapter() override
+    {
+        // clear stream flags; we use underlying streambuf I/O, do not maintain ifstream flags
+        is.clear();
+    }
     explicit input_stream_adapter(std::istream& i)
         : is(i)
     {
-	// Ignore Byte Order Mark at start of input
-	int c;
-	if (( c = get_character() ) == 0xEF )
-	{
-	    if (( c = get_character() ) == 0xBB )
-	    {
-		if (( c = get_character() ) == 0xBF )
-		{
-		    return; // Ignore BOM
-		}
-		else if ( c != std::char_traits<char>::eof() )
-		{
-		    is.unget();
-		}
-		is.putback( '\xBB' );
-	    }
-	    else if ( c != std::char_traits<char>::eof() )
-	    {
-		is.unget();
-	    }
-	    is.putback( '\xEF' );
-	}
-	else if ( c != std::char_traits<char>::eof() )
-	{
-	    is.unget(); // Not BOM.  Process as usual.
-	}
+        // Ignore Byte Order Mark at start of input
+        int c;
+        if (( c = get_character() ) == 0xEF )
+        {
+            if (( c = get_character() ) == 0xBB )
+            {
+                if (( c = get_character() ) == 0xBF )
+                {
+                    return; // Ignore BOM
+                }
+                else if ( c != std::char_traits<char>::eof() )
+                {
+                    is.unget();
+                }
+                is.putback( '\xBB' );
+            }
+            else if ( c != std::char_traits<char>::eof() )
+            {
+                is.unget();
+            }
+            is.putback( '\xEF' );
+        }
+        else if ( c != std::char_traits<char>::eof() )
+        {
+            is.unget(); // Not BOM.  Process as usual.
+        }
     }
-
-    ~input_stream_adapter() override {}
 
     int get_character() override
     {
-	int c = is.get();
-	return c  == std::char_traits<char>::eof() ? c : ( c & 0xFF );
+        int c = is.rdbuf()->sbumpc(); // Avoided for performance: int c = is.get();
+        return c  == std::char_traits<char>::eof() ? c : ( c & 0xFF );
     }
 
     void unget_character() override
     {
-	is.unget();
+        is.rdbuf()->sungetc(); // Avoided for performance: is.unget();
     }
   private:
 
@@ -1489,10 +1492,10 @@ class input_buffer_adapter : public input_adapter_protocol
 
     void unget_character() noexcept override
     {
-	if (JSON_LIKELY(cursor > 0))
-	{
-	    --cursor;
-	}
+        if (JSON_LIKELY(cursor > start))
+        {
+            --cursor;
+        }
     }
 
   private:
@@ -2571,7 +2574,7 @@ scan_number_any2:
 scan_number_done:
         // unget the character after the number (we only read it to know that
         // we are done scanning a number)
-	unget();
+        unget();
 
         // terminate token
         add('\0');
@@ -2652,29 +2655,31 @@ scan_number_done:
     void reset() noexcept
     {
         yylen = 0;
-        start_pos = chars_read - 1;
-	token_string = static_cast<char>( current );
+        token_string.clear();
+        token_string.push_back(static_cast<char>(current));
     }
 
     /// get a character from the input
     int get()
     {
         ++chars_read;
-
-	int c = current = ia->get_character();
-	token_string += static_cast<char>( c );
-	return c;
+        int c = current = ia->get_character();
+        token_string.push_back(static_cast<char>(c));
+        return c;
     }
 
     /// unget current character (return it again on next get)
     void unget()
     {
         --chars_read;
-
-	if (token_string.size() > 0)
-	    token_string.resize( token_string.size() - 1 );
+        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
+        {
+            ia->unget_character();
+        }
+        if (! token_string.empty())
+            token_string.pop_back();
     }
-	
+        
     /// add a character to yytext
     void add(int c)
     {
@@ -2736,10 +2741,12 @@ scan_number_done:
         std::string result;
         for (auto c : token_string)
         {
-	    if ( c == std::char_traits<char>::eof() ) {
-		continue;
-	    }
-	    else if ('\x00' <= c and c <= '\x1f')
+            if (c == '\0' or c == std::char_traits<char>::eof())
+            {
+                // ignore EOF
+                continue;
+            }
+            else if ('\x00' <= c and c <= '\x1f')
             {
                 // escape control characters
                 std::stringstream ss;
@@ -2840,10 +2847,8 @@ scan_number_done:
 
     /// the number of characters read
     std::size_t chars_read = 0;
-    /// the start position of the current token
-    std::size_t start_pos = 0;
     /// raw input token string (for error messages)
-    std::string token_string = "";
+    std::vector<char> token_string = std::vector<char>();
 
     /// buffer for variable-length tokens (numbers, strings)
     std::vector<char> yytext = std::vector<char>(1024, '\0');
