@@ -1398,6 +1398,7 @@ constexpr T static_const<T>::value;
 struct input_adapter_protocol
 {
     virtual int get_character() = 0;
+    virtual void unget_character() = 0;
     virtual ~input_adapter_protocol() = default;
 };
 
@@ -1448,6 +1449,10 @@ class input_stream_adapter : public input_adapter_protocol
 	return c  == std::char_traits<char>::eof() ? c : ( c & 0xFF );
     }
 
+    void unget_character() override
+    {
+	is.unget();
+    }
   private:
 
     /// the associated input stream
@@ -1480,6 +1485,14 @@ class input_buffer_adapter : public input_adapter_protocol
         }
 
         return std::char_traits<char>::eof();
+    }
+
+    void unget_character() noexcept override
+    {
+	if (JSON_LIKELY(cursor > 0))
+	{
+	    --cursor;
+	}
     }
 
   private:
@@ -2647,8 +2660,8 @@ scan_number_done:
     int get()
     {
         ++chars_read;
-	int c = next_unget ? (next_unget = false, current)
-	    : (current = ia->get_character());
+
+	int c = current = ia->get_character();
 	token_string += static_cast<char>( c );
 	return c;
     }
@@ -2657,7 +2670,7 @@ scan_number_done:
     void unget()
     {
         --chars_read;
-        next_unget = true;
+
 	if (token_string.size() > 0)
 	    token_string.resize( token_string.size() - 1 );
     }
@@ -2824,9 +2837,6 @@ scan_number_done:
 
     /// the current character
     int current = std::char_traits<char>::eof();
-
-    /// whether get() should return the last character again
-    bool next_unget = false;
 
     /// the number of characters read
     std::size_t chars_read = 0;
