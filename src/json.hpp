@@ -6659,16 +6659,15 @@ class serializer
         const bool is_negative = std::is_same<NumberType, number_integer_t>::value and (x < 0);
         std::size_t i = 0;
 
-        // spare 1 byte for '\0'
-        while (x != 0 and i < number_buffer.size() - 1)
+        while (x != 0)
         {
+            // spare 1 byte for '\0'
+            assert(i < number_buffer.size() - 1);
+
             const auto digit = std::labs(static_cast<long>(x % 10));
             number_buffer[i++] = static_cast<char>('0' + digit);
             x /= 10;
         }
-
-        // make sure the number has been processed completely
-        assert(x == 0);
 
         if (is_negative)
         {
@@ -6695,20 +6694,6 @@ class serializer
         if (not std::isfinite(x) or std::isnan(x))
         {
             o->write_characters("null", 4);
-            return;
-        }
-
-        // special case for 0.0 and -0.0
-        if (x == 0)
-        {
-            if (std::signbit(x))
-            {
-                o->write_characters("-0.0", 4);
-            }
-            else
-            {
-                o->write_characters("0.0", 3);
-            }
             return;
         }
 
