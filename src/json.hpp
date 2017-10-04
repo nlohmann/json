@@ -2702,8 +2702,8 @@ scan_number_done:
         return value_float;
     }
 
-    /// return string value
-    std::string get_string()
+    /// return current string value (implicitly resets the token; useful only once)
+    std::string move_string()
     {
         return std::move( yytext );
     }
@@ -3004,7 +3004,7 @@ class parser
                     {
                         return;
                     }
-                    key = m_lexer.get_string();
+                    key = m_lexer.move_string();
 
                     bool keep_tag = false;
                     if (keep)
@@ -3142,7 +3142,7 @@ class parser
             case token_type::value_string:
             {
                 result.m_type = value_t::string;
-                result.m_value = m_lexer.get_string();
+                result.m_value = m_lexer.move_string();
                 break;
             }
 
