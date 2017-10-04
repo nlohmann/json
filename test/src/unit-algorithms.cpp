@@ -256,6 +256,7 @@ TEST_CASE("algorithms")
 
     SECTION("set operations")
     {
+        /*
         SECTION("std::merge")
         {
             {
@@ -267,6 +268,7 @@ TEST_CASE("algorithms")
                 CHECK(j3 == json({1, 2, 2, 3, 4, 5, 6, 7, 8}));
             }
         }
+        */
 
         SECTION("std::set_difference")
         {
@@ -288,6 +290,7 @@ TEST_CASE("algorithms")
             CHECK(j3 == json({1, 2, 3, 5, 7}));
         }
 
+        /*
         SECTION("std::set_union")
         {
             json j1 = {2, 4, 6, 8};
@@ -307,6 +310,7 @@ TEST_CASE("algorithms")
             std::set_symmetric_difference(j1.begin(), j1.end(), j2.begin(), j2.end(), std::back_inserter(j3));
             CHECK(j3 == json({1, 3, 4, 5, 6, 7, 8}));
         }
+        */
     }
 
     SECTION("heap operations")

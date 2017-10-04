@@ -29,34 +29,28 @@ matrix:
   include:
 
   # Valgrind
-
   - os: linux
     compiler: gcc
     env:
       - COMPILER=g++-4.9
-      - SPECIAL=valgrind
+      - CMAKE_OPTIONS=-DJSON_Valgrind=ON
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: [g++-4.9, valgrind]
-    after_success:
-      - make check TEST_PREFIX="valgrind --error-exitcode=1 --leak-check=full " TEST_PATTERN=""
+        packages: ['g++-4.9', 'valgrind', 'ninja-build']
 
   # clang sanitizer
   - os: linux
     compiler: clang
     env:
       - COMPILER=clang++-5.0
-      - SPECIAL=sanitizer
+      - CMAKE_OPTIONS=-DJSON_Sanitizer=ON
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
-        packages: ['g++-6', 'clang-5.0']
-    after_success:
-      - make clang_sanitize -j4
+        packages: ['g++-6', 'clang-5.0', 'ninja-build']
 
   # cppcheck
-
   - os: linux
     compiler: gcc
     env:
@@ -65,24 +59,20 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: [g++-4.9, cppcheck]
+        packages: ['g++-4.9', 'cppcheck', 'ninja-build']
     after_success:
       - make cppcheck
 
   # no exceptions
-
   - os: linux
     compiler: gcc
     env:
       - COMPILER=g++-4.9
-      - SPECIAL=no_exceptions
+      - CMAKE_OPTIONS=-DJSON_NoExceptions=ON
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: [g++-4.9, cppcheck]
-    after_success:
-      - make clean
-      - CPPFLAGS="-DJSON_NOEXCEPTION" make check TEST_PATTERN="-e \"*\""
+        packages: ['g++-4.9', 'ninja-build']
 
   # Coveralls (http://gronlier.fr/blog/2015/01/adding-code-coverage-to-your-c-project/)
 
@@ -91,7 +81,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'ruby']
+        packages: ['g++-4.9', 'ruby', 'ninja-build']
     before_script:
       - wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
       - tar xf lcov_1.11.orig.tar.gz
@@ -119,7 +109,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
-        packages: ['g++-6', 'clang-3.6']
+        packages: ['g++-6', 'clang-3.6', 'ninja-build']
       coverity_scan:
         project:
           name: "nlohmann/json"
@@ -163,7 +153,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: g++-4.9
+        packages: ['g++-4.9', 'ninja-build']
 
   - os: linux
     compiler: gcc
@@ -171,7 +161,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: g++-5
+        packages: ['g++-5', 'ninja-build']
 
   - os: linux
     compiler: gcc
@@ -179,7 +169,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: g++-6
+        packages: ['g++-6', 'ninja-build']
 
   - os: linux
     compiler: gcc
@@ -187,7 +177,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: g++-7
+        packages: ['g++-7', 'ninja-build']
 
   - os: linux
     compiler: gcc
@@ -197,7 +187,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: g++-7
+        packages: ['g++-7', 'ninja-build']
 
   # Linux / Clang
 
@@ -207,7 +197,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
-        packages: ['g++-6', 'clang-3.5']
+        packages: ['g++-6', 'clang-3.5', 'ninja-build']
 
   - os: linux
     compiler: clang
@@ -215,7 +205,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
-        packages: ['g++-6', 'clang-3.6']
+        packages: ['g++-6', 'clang-3.6', 'ninja-build']
 
   - os: linux
     compiler: clang
@@ -223,7 +213,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
-        packages: ['g++-6', 'clang-3.7']
+        packages: ['g++-6', 'clang-3.7', 'ninja-build']
 
   - os: linux
     compiler: clang
@@ -231,7 +221,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-6', 'clang-3.8']
+        packages: ['g++-6', 'clang-3.8', 'ninja-build']
 
   - os: linux
     compiler: clang
@@ -239,7 +229,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-6', 'clang-3.9']
+        packages: ['g++-6', 'clang-3.9', 'ninja-build']
 
   - os: linux
     compiler: clang
@@ -247,7 +237,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
-        packages: ['g++-6', 'clang-4.0']
+        packages: ['g++-6', 'clang-4.0', 'ninja-build']
 
   - os: linux
     compiler: clang
@@ -255,7 +245,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
-        packages: ['g++-6', 'clang-5.0']
+        packages: ['g++-6', 'clang-5.0', 'ninja-build']
 
   - os: linux
     compiler: clang
@@ -265,7 +255,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
-        packages: ['g++-6', 'clang-5.0']
+        packages: ['g++-6', 'clang-5.0', 'ninja-build']
 
 ################
 # build script #
@@ -274,9 +264,9 @@ matrix:
 script:
   # get CMake (only for systems with brew - macOS)
   - |
-     if [[ !(-x $(which cmake)) && (-x $(which brew)) ]]; then
+     if [[ (-x $(which brew)) ]]; then
        brew update
-       brew install cmake
+       brew install cmake ninja
        cmake --version
      fi
 
@@ -289,7 +279,7 @@ script:
 
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - cmake .. && cmake --build . --config Release -- -j4
+  - cmake .. ${CMAKE_OPTIONS} -GNinja && cmake --build . --config Release
   - ctest -C Release -V
   - cd ..
 
