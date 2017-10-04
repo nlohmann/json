@@ -1397,8 +1397,8 @@ constexpr T static_const<T>::value;
 /// abstract input adapter interface
 struct input_adapter_protocol
 {
-    virtual int get_character() = 0;
-    virtual void unget_character() = 0;
+    virtual int get_character() = 0; // returns characters in range [0,255], or eof() (a -'ve value)
+    virtual void unget_character() = 0; // restore the last non-eof() character to input
     virtual ~input_adapter_protocol() = default;
 };
 
@@ -1449,7 +1449,7 @@ class input_stream_adapter : public input_adapter_protocol
     int get_character() override
     {
         int c = is.rdbuf()->sbumpc(); // Avoided for performance: int c = is.get();
-        return c  == std::char_traits<char>::eof() ? c : ( c & 0xFF );
+        return c < 0 ? c : ( c & 0xFF ); // faster than == std::char_traits<char>::eof()
     }
 
     void unget_character() override
@@ -2652,12 +2652,24 @@ scan_number_done:
         token_string.push_back(static_cast<char>(current));
     }
 
-    /// get a character from the input
+    /*
+    @brief get next character from the input
+
+    This function provides the interface to the used input adapter. It does
+    not throw in case the input reached EOF, but returns a -'ve valued
+    `std::char_traits<char>::eof()` in that case.  Stores the scanned characters
+    for use in error messages.
+
+    @return character read from the input
+    */
     int get()
     {
         ++chars_read;
         current = ia->get_character();
-        token_string.push_back(static_cast<char>(current));
+        if (JSON_LIKELY(current >= 0)) // faster than: != std::char_traits<char>::eof()))
+        {
+            token_string.push_back(static_cast<char>(current));
+        }
         return current;
     }
 
@@ -2665,12 +2677,12 @@ scan_number_done:
     void unget()
     {
         --chars_read;
-        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
+        if (JSON_LIKELY(current >= 0)) // faster than: != std::char_traits<char>::eof()))
         {
             ia->unget_character();
-        }
-        if (! token_string.empty())
+            assert(token_string.size() != 0);
             token_string.pop_back();
+        }
     }
         
     /// add a character to yytext
@@ -2718,19 +2730,16 @@ scan_number_done:
         return chars_read;
     }
 
-    /// return the last read token (for errors only)
+    /// return the last read token (for errors only).  Will never contain EOF
+    /// (a -'ve value), because 255 may legitimately occur.  May contain NUL, which
+    /// should be escaped.
     std::string get_token_string() const
     {
         // escape control characters
         std::string result;
         for (auto c : token_string)
         {
-            if (c == '\0' or c == std::char_traits<char>::eof())
-            {
-                // ignore EOF
-                continue;
-            }
-            else if ('\x00' <= c and c <= '\x1f')
+            if ('\x00' <= c and c <= '\x1f')
             {
                 // escape control characters
                 std::stringstream ss;
@@ -5144,7 +5153,7 @@ class binary_reader
     @brief get next character from the input
 
     This function provides the interface to the used input adapter. It does
-    not throw in case the input reached EOF, but returns
+    not throw in case the input reached EOF, but returns a -'ve valued
     `std::char_traits<char>::eof()` in that case.
 
     @return character read from the input
@@ -5448,14 +5457,14 @@ class binary_reader
     {
         if (expect_eof)
         {
-            if (JSON_UNLIKELY(current != std::char_traits<char>::eof()))
+            if (JSON_UNLIKELY(current >= 0 )) // faster than: != std::char_traits<char>::eof()))
             {
                 JSON_THROW(parse_error::create(110, chars_read, "expected end of input"));
             }
         }
         else
         {
-            if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
+            if (JSON_UNLIKELY(current < 0)) // faster than: == std::char_traits<char>::eof()))
             {
                 JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
             }

@@ -215,7 +215,7 @@ TEST_CASE("parser class")
                     std::string s = "\"1\"";
                     s[1] = '\0';
                     CHECK_THROWS_AS(json::parse(s.begin(), s.end()), json::parse_error&);
-                    CHECK_THROWS_WITH(json::parse(s.begin(), s.end()), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"'");
+                    CHECK_THROWS_WITH(json::parse(s.begin(), s.end()), "[json.exception.parse_error.101] parse error at 2: syntax error - invalid string: control character must be escaped; last read: '\"<U+0000>'");
                 }
             }
 
