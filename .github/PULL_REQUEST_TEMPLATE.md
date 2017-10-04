@@ -9,9 +9,13 @@ There are currently two files which need to be edited:
 
    If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled and executed with
 
-   ```sh
-   make check
-   ```
+    ```sh
+    $ mkdir build
+    $ cd build
+    $ cmake ..
+    $ make
+    $ ctest
+    ```
 
    The test cases are also executed with several different compilers on [Travis](https://travis-ci.org/nlohmann/json) once you open a pull request.
 

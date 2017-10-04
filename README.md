@@ -26,6 +26,7 @@
   - [Binary formats (CBOR and MessagePack)](#binary-formats-cbor-and-messagepack)
 - [Supported compilers](#supported-compilers)
 - [License](#license)
+- [Contact](#contact)
 - [Thanks](#thanks)
 - [Used third-party tools](#used-third-party-tools)
 - [Projects using JSON for Modern C++](#projects-using-json-for-modern-c)
@@ -718,6 +719,7 @@ Though it's 2016 already, the support for C++11 is still a bit sparse. Currently
 
 - GCC 4.9 - 7.1 (and possibly later)
 - Clang 3.4 - 5.0 (and possibly later)
+- Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.1.548.43366 (and possibly later)
 
@@ -776,6 +778,13 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+## Contact
+
+If you have questions regarding the library, I would like to invite you to [open an issue at Github](https://github.com/nlohmann/json/issues/new). Please describe your request, problem, or question as detailed as possible, and also mention the version of the library you are using as well as the version of your compiler and operating system. Opening an issue at Github allows other users and contributors to this library to collaborate. For instance, I have little experience with MSVC, and most issues in this regard have been solved by a growing community. If you have a look at the [closed issues](https://github.com/nlohmann/json/issues?q=is%3Aissue+is%3Aclosed), you will see that we react quite timely in most cases.
+
+Only if your request would contain confidential information, please [send me an email](mailto:mail@nlohmann.me).
 
 
 ## Thanks
@@ -864,6 +873,8 @@ I deeply appreciate the help of the following people.
 - [kbthomp1](https://github.com/kbthomp1) fixed an issue related to the Intel OSX compiler.
 - [Markus Werle](https://github.com/daixtrose) fixed a typo.
 - [WebProdPP](https://github.com/WebProdPP) fixed a subtle error in a precondition check.
+- [Alex](https://github.com/leha-bot) noted an error in a code sample.
+- [Tom de Geus](https://github.com/tdegeus) reported some warnings with ICC and helped fixing them.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
@@ -881,7 +892,6 @@ The library itself contains of a single header file licensed under the MIT licen
 - [**Clang**](http://clang.llvm.org) for compilation with code sanitizers
 - [**Cmake**](https://cmake.org) for build automation
 - [**Codacity**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
-- [**cotire**](https://github.com/sakra/cotire) to speed of compilation
 - [**Coveralls**](https://coveralls.io) to measure [code coverage](https://coveralls.io/github/nlohmann/json)
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
 - [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
@@ -920,16 +930,6 @@ The library is currently used in Apple macOS Sierra and iOS 10. I am not sure wh
 ## Execute unit tests
 
 To compile and run the tests, you need to execute
-
-```sh
-$ make json_unit -Ctest
-$ ./test/json_unit "*"
-
-===============================================================================
-All tests passed (14504461 assertions in 48 test cases)
-```
-
-Alternatively, you can use [CMake](https://cmake.org) and run
 
 ```sh
 $ mkdir build

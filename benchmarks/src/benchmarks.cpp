@@ -104,15 +104,15 @@ static void bench(benchpress::context& ctx,
         bench(*ctx, (in_path), (mode));             \
     })
 
-BENCHMARK_I(EMode::input, "parse jeopardy.json",              "benchmarks/files/jeopardy/jeopardy.json");
-BENCHMARK_I(EMode::input, "parse canada.json",                "benchmarks/files/nativejson-benchmark/canada.json");
-BENCHMARK_I(EMode::input, "parse citm_catalog.json",          "benchmarks/files/nativejson-benchmark/citm_catalog.json");
-BENCHMARK_I(EMode::input, "parse twitter.json",               "benchmarks/files/nativejson-benchmark/twitter.json");
-BENCHMARK_I(EMode::input, "parse numbers/floats.json",        "benchmarks/files/numbers/floats.json");
-BENCHMARK_I(EMode::input, "parse numbers/signed_ints.json",   "benchmarks/files/numbers/signed_ints.json");
-BENCHMARK_I(EMode::input, "parse numbers/unsigned_ints.json", "benchmarks/files/numbers/unsigned_ints.json");
+BENCHMARK_I(EMode::input, "parse jeopardy.json",              "files/jeopardy/jeopardy.json");
+BENCHMARK_I(EMode::input, "parse canada.json",                "files/nativejson-benchmark/canada.json");
+BENCHMARK_I(EMode::input, "parse citm_catalog.json",          "files/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_I(EMode::input, "parse twitter.json",               "files/nativejson-benchmark/twitter.json");
+BENCHMARK_I(EMode::input, "parse numbers/floats.json",        "files/numbers/floats.json");
+BENCHMARK_I(EMode::input, "parse numbers/signed_ints.json",   "files/numbers/signed_ints.json");
+BENCHMARK_I(EMode::input, "parse numbers/unsigned_ints.json", "files/numbers/unsigned_ints.json");
 
-BENCHMARK_I(EMode::output_no_indent,   "dump jeopardy.json",             "benchmarks/files/jeopardy/jeopardy.json");
-BENCHMARK_I(EMode::output_with_indent, "dump jeopardy.json with indent", "benchmarks/files/jeopardy/jeopardy.json");
-BENCHMARK_I(EMode::output_no_indent,   "dump numbers/floats.json",       "benchmarks/files/numbers/floats.json");
-BENCHMARK_I(EMode::output_no_indent,   "dump numbers/signed_ints.json",  "benchmarks/files/numbers/signed_ints.json");
+BENCHMARK_I(EMode::output_no_indent,   "dump jeopardy.json",             "files/jeopardy/jeopardy.json");
+BENCHMARK_I(EMode::output_with_indent, "dump jeopardy.json with indent", "files/jeopardy/jeopardy.json");
+BENCHMARK_I(EMode::output_no_indent,   "dump numbers/floats.json",       "files/numbers/floats.json");
+BENCHMARK_I(EMode::output_no_indent,   "dump numbers/signed_ints.json",  "files/numbers/signed_ints.json");
