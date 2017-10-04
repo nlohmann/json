@@ -1828,9 +1828,6 @@ class lexer
                 // closing quote
                 case '\"':
                 {
-                    // terminate yytext
-                    add('\0');
-                    --yylen;
                     return token_type::value_string;
                 }
 
@@ -2575,10 +2572,6 @@ scan_number_done:
         // unget the character after the number (we only read it to know that
         // we are done scanning a number)
         unget();
-
-        // terminate token
-        add('\0');
-        --yylen;
 
         char* endptr = nullptr;
         errno = 0;
