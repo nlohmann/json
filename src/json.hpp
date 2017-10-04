@@ -1795,9 +1795,9 @@ class lexer
     @brief scan a string literal
 
     This function scans a string according to Sect. 7 of RFC 7159. While
-    scanning, bytes are escaped and copied into buffer yytext. Then the
-    function returns successfully, yytext is null-terminated and yylen
-    contains the number of bytes in the string.
+    scanning, bytes are escaped and copied into buffer yytext. Then the function
+    returns successfully, yytext is *not* null-terminated (as it may contain \0
+    bytes), and yytext.size() is the number of bytes in the string.
 
     @return token_type::value_string if string could be successfully scanned,
             token_type::parse_error otherwise
@@ -2582,7 +2582,7 @@ scan_number_done:
             const auto x = std::strtoull(yytext.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == yytext.data() + yylen);
+            assert(endptr == yytext.data() + yytext.size());
 
             if (errno == 0)
             {
@@ -2598,7 +2598,7 @@ scan_number_done:
             const auto x = std::strtoll(yytext.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == yytext.data() + yylen);
+            assert(endptr == yytext.data() + yytext.size());
 
             if (errno == 0)
             {
@@ -2615,7 +2615,7 @@ scan_number_done:
         strtof(value_float, yytext.data(), &endptr);
 
         // we checked the number format before
-        assert(endptr == yytext.data() + yylen);
+        assert(endptr == yytext.data() + yytext.size());
 
         return token_type::value_float;
     }
@@ -2647,7 +2647,7 @@ scan_number_done:
     /// reset yytext; current character is beginning of token
     void reset() noexcept
     {
-        yylen = 0;
+        yytext.clear();
         token_string.clear();
         token_string.push_back(static_cast<char>(current));
     }
@@ -2676,14 +2676,7 @@ scan_number_done:
     /// add a character to yytext
     void add(int c)
     {
-        // resize yytext if necessary; this condition is deemed unlikely,
-        // because we start with a 1024-byte buffer
-        if (JSON_UNLIKELY((yylen + 1 > yytext.capacity())))
-        {
-            yytext.resize(2 * yytext.capacity(), '\0');
-        }
-        assert(yylen < yytext.size());
-        yytext[yylen++] = static_cast<char>(c);
+        yytext.push_back(static_cast<char>(c));
     }
 
   public:
@@ -2712,9 +2705,7 @@ scan_number_done:
     /// return string value
     const std::string get_string()
     {
-        // yytext cannot be returned as char*, because it may contain a null
-        // byte (parsed as "\u0000")
-        return std::string(yytext.data(), yylen);
+        return std::move( yytext );
     }
 
     /////////////////////
@@ -2844,9 +2835,7 @@ scan_number_done:
     std::vector<char> token_string = std::vector<char>();
 
     /// buffer for variable-length tokens (numbers, strings)
-    std::vector<char> yytext = std::vector<char>(1024, '\0');
-    /// current index in yytext
-    std::size_t yylen = 0;
+    std::string yytext = "";
 
     /// a description of occurred lexer errors
     const char* error_message = "";
