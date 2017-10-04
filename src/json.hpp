@@ -2656,9 +2656,9 @@ scan_number_done:
     int get()
     {
         ++chars_read;
-        int c = current = ia->get_character();
-        token_string.push_back(static_cast<char>(c));
-        return c;
+        current = ia->get_character();
+        token_string.push_back(static_cast<char>(current));
+        return current;
     }
 
     /// unget current character (return it again on next get)
@@ -2703,7 +2703,7 @@ scan_number_done:
     }
 
     /// return string value
-    const std::string get_string()
+    std::string get_string()
     {
         return std::move( yytext );
     }
