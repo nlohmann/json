@@ -112,7 +112,6 @@ pedantic_gcc:
 		-Wdouble-promotion \
 		-Wduplicated-branches \
 		-Wduplicated-cond \
-		-Weffc++ \
 		-Wformat-overflow=2 \
 		-Wformat-signedness \
 		-Wformat-truncation=2 \
