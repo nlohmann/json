@@ -105,8 +105,8 @@ matrix:
           name: "nlohmann/json"
           description: "Build submitted via Travis CI"
         notification_email: niels.lohmann@gmail.com
-        build_command_prepend: "make clean"
-        build_command: "make"
+        build_command_prepend: "mkdir coverity_build ; cd coverity_build ; cmake .. ; cd .."
+        build_command: "make -C coverity_build"
         branch_pattern: coverity_scan
     env:
       - SPECIAL=coverity
@@ -252,7 +252,7 @@ matrix:
 ################
 
 script:
-  # get CMake (only for systems with brew - macOS)
+  # get CMake and Ninja (only for systems with brew - macOS)
   - |
      if [[ (-x $(which brew)) ]]; then
        brew update
