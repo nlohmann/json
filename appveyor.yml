@@ -24,4 +24,4 @@ build_script:
   - cmake --build . --config Release
 
 test_script:
-  - ctest -C Release -V
+  - ctest -C Release -V -j
