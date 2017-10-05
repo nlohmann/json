@@ -1417,6 +1417,7 @@ class input_stream_adapter : public input_adapter_protocol
     }
     explicit input_stream_adapter(std::istream& i)
         : is(i)
+        , sb(i.rdbuf())
     {
         // Ignore Byte Order Mark at start of input
         int c;
@@ -1448,18 +1449,19 @@ class input_stream_adapter : public input_adapter_protocol
 
     int get_character() override
     {
-        int c = is.rdbuf()->sbumpc(); // Avoided for performance: int c = is.get();
+        int c = sb->sbumpc(); // Avoided for performance: int c = is.get();
         return c < 0 ? c : ( c & 0xFF ); // faster than == std::char_traits<char>::eof()
     }
 
     void unget_character() override
     {
-        is.rdbuf()->sungetc(); // Avoided for performance: is.unget();
+        sb->sungetc(); // Avoided for performance: is.unget();
     }
   private:
 
     /// the associated input stream
     std::istream& is;
+    std::streambuf *sb;
 };
 
 /// input adapter for buffer input
