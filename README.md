@@ -935,7 +935,7 @@ To compile and run the tests, you need to execute
 $ mkdir build
 $ cd build
 $ cmake ..
-$ make
+$ cmake --build .
 $ ctest
 ```
 
