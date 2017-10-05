@@ -5,6 +5,7 @@ all:
 	@echo "check - compile and execute test suite"
 	@echo "check-fast - compile and execute test suite (skip long-running tests)"
 	@echo "clean - remove built files"
+	@echo "coverage - create coverage information with lcov"
 	@echo "cppcheck - analyze code with cppcheck"
 	@echo "doctest - compile example files and check their output"
 	@echo "fuzz_testing - prepare fuzz testing of the JSON parser"
@@ -35,9 +36,23 @@ check-fast:
 clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM
 	rm -fr benchmarks/files/numbers/*.json
+	rm -fr build_coverage
 	$(MAKE) clean -Cdoc
 	$(MAKE) clean -Ctest
 	$(MAKE) clean -Cbenchmarks
+
+
+##########################################################################
+# coverage
+##########################################################################
+
+coverage:
+	mkdir build_coverage
+	cd build_coverage ; CXX=g++-5 cmake .. -GNinja -DJSON_Coverage=ON
+	cd build_coverage ; ninja
+	cd build_coverage ; ctest
+	cd build_coverage ; ninja lcov_html
+	open build_coverage/test/html/index.html
 
 
 ##########################################################################
