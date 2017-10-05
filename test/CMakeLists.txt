@@ -41,10 +41,12 @@ if(JSON_Coverage)
     find_program(GCOV_BIN NAMES gcov-${GCC_VERSION} gcov HINTS ${COMPILER_PATH})
 
     # add target to collect coverage information and generate HTML file
+    # (filter script from https://stackoverflow.com/a/43726240/266378)
     add_custom_target(lcov_html
         COMMAND lcov --directory . --capture --output-file json.info --gcov-tool ${GCOV_BIN} --rc lcov_branch_coverage=1
         COMMAND lcov -e json.info ${CMAKE_SOURCE_DIR}/src/json.hpp --output-file json.info.filtered --rc lcov_branch_coverage=1
-        COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered
+        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
+        COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
         COMMENT "Generating HTML report test/html/index.html"
     )
 endif()
