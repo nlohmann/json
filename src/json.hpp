@@ -1397,7 +1397,7 @@ constexpr T static_const<T>::value;
 /// abstract input adapter interface
 struct input_adapter_protocol
 {
-    virtual int get_character() = 0; // returns characters in range [0,255], or eof() (a -'ve value)
+    virtual int get_character() = 0; // returns characters in range [0,255], or eof()
     virtual void unget_character() = 0; // restore the last non-eof() character to input
     virtual ~input_adapter_protocol() = default;
 };
@@ -1447,10 +1447,13 @@ class input_stream_adapter : public input_adapter_protocol
         }
     }
 
+    // delete because of pointer members
+    input_stream_adapter(const input_stream_adapter&) = delete;
+    input_stream_adapter& operator=(input_stream_adapter&) = delete;
+
     int get_character() override
     {
-        int c = sb->sbumpc(); // Avoided for performance: int c = is.get();
-        return c < 0 ? c : ( c & 0xFF ); // faster than == std::char_traits<char>::eof()
+        return reinterpret_cast<int>( sb->sbumpc() );
     }
 
     void unget_character() override
@@ -1486,10 +1489,10 @@ class input_buffer_adapter : public input_adapter_protocol
     {
         if (JSON_LIKELY(cursor < limit))
         {
-            return *(cursor++) & 0xFF;
+            return reinterpret_cast<int>(std::char_traits<char>::to_int_type(*(cursor++)));
         }
 
-        return std::char_traits<char>::eof();
+        return reinterpret_cast<int>(std::char_traits<char>::eof());
     }
 
     void unget_character() noexcept override
@@ -2668,9 +2671,9 @@ scan_number_done:
     {
         ++chars_read;
         current = ia->get_character();
-        if (JSON_LIKELY(current >= 0)) // faster than: != std::char_traits<char>::eof()))
+        if (JSON_LIKELY( current != std::char_traits<char>::eof()))
         {
-            token_string.push_back(static_cast<char>(current));
+            token_string.push_back(std::char_traits<char>::to_char_type(current));
         }
         return current;
     }
@@ -2679,7 +2682,7 @@ scan_number_done:
     void unget()
     {
         --chars_read;
-        if (JSON_LIKELY(current >= 0)) // faster than: != std::char_traits<char>::eof()))
+        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
             ia->unget_character();
             assert(token_string.size() != 0);
@@ -2690,7 +2693,7 @@ scan_number_done:
     /// add a character to yytext
     void add(int c)
     {
-        yytext.push_back(static_cast<char>(c));
+        yytext.push_back(std::char_traits<char>::to_char_type(c));
     }
 
   public:
@@ -5460,14 +5463,14 @@ class binary_reader
     {
         if (expect_eof)
         {
-            if (JSON_UNLIKELY(current >= 0 )) // faster than: != std::char_traits<char>::eof()))
+            if (JSON_UNLIKELY(current != std::char_traits<char>::eof()))
             {
                 JSON_THROW(parse_error::create(110, chars_read, "expected end of input"));
             }
         }
         else
         {
-            if (JSON_UNLIKELY(current < 0)) // faster than: == std::char_traits<char>::eof()))
+            if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
             {
                 JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
             }
