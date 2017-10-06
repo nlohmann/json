@@ -2841,13 +2841,13 @@ scan_number_done:
 
   private:
     /// input adapter
-    detail::input_adapter_t ia { nullptr };
+    detail::input_adapter_t ia = nullptr;
 
     /// the current character
-    int current { std::char_traits<char>::eof() };
+    int current = std::char_traits<char>::eof();
 
     /// the number of characters read
-    std::size_t chars_read { 0 };
+    std::size_t chars_read = 0;
 
     /// raw input token string (for error messages)
     std::vector<char> token_string { };
@@ -2856,15 +2856,15 @@ scan_number_done:
     std::string yytext { };
 
     /// a description of occurred lexer errors
-    const char* error_message { "" };
+    const char* error_message = "";
 
     // number values
-    number_integer_t value_integer { 0 };
-    number_unsigned_t value_unsigned { 0 };
-    number_float_t value_float { 0 };
+    number_integer_t value_integer = 0;
+    number_unsigned_t value_unsigned = 0;
+    number_float_t value_float = 0;
 
     /// the decimal point
-    const char decimal_point_char { '.' };
+    const char decimal_point_char = '.';
 };
 
 /*!
