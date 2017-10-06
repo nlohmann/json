@@ -1451,9 +1451,12 @@ class input_stream_adapter : public input_adapter_protocol
     input_stream_adapter(const input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
 
+    // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
+    // ensure that std::char_traits<char>::eof() and the character 0xff do not
+    // end up as the same value, eg. 0xffffffff.
     int get_character() override
     {
-        return reinterpret_cast<int>( sb->sbumpc() );
+        return sb->sbumpc();
     }
 
     void unget_character() override
@@ -1489,10 +1492,10 @@ class input_buffer_adapter : public input_adapter_protocol
     {
         if (JSON_LIKELY(cursor < limit))
         {
-            return reinterpret_cast<int>(std::char_traits<char>::to_int_type(*(cursor++)));
+            return std::char_traits<char>::to_int_type(*(cursor++));
         }
 
-        return reinterpret_cast<int>(std::char_traits<char>::eof());
+        return std::char_traits<char>::eof();
     }
 
     void unget_character() noexcept override
