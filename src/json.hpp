@@ -1394,10 +1394,22 @@ constexpr T static_const<T>::value;
 // input adapters //
 ////////////////////
 
-/// abstract input adapter interface
+/*!
+@brief abstract input adapter interface
+
+Produces a stream of std::char_traits<char>::int_type characters from a
+std::istream, a buffer, or some other input type.  Accepts the return of exactly
+one non-EOF character for future input.  The int_type characters returned
+consist of all valid char values as positive values (typically unsigned char),
+plus an EOF value outside that range, specified by the value of the function
+std::char_traits<char>::eof().  This value is typically -1, but could be any
+arbitrary value which is not a valid char value.
+
+@return Typically [0,255] plus std::char_traits<char>::eof().
+*/
 struct input_adapter_protocol
 {
-    virtual int get_character() = 0; // returns characters in range [0,255], or eof()
+    virtual std::char_traits<char>::int_type get_character() = 0;
     virtual void unget_character() = 0; // restore the last non-eof() character to input
     virtual ~input_adapter_protocol() = default;
 };
@@ -1405,8 +1417,13 @@ struct input_adapter_protocol
 /// a type to simplify interfaces
 using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
 
-
-/// input adapter for a (caching) istream.  Ignores a UFT Byte Order Mark at beginning of input.
+/// input adapter for a (caching) istream.  Ignores a UFT Byte Order Mark at
+/// beginning of input.  Does not support changing the underlying std::streambuf
+/// in mid-input.  Maintains underlying std::istream and std::streambuf to
+/// support subsequent use of standard std::istream operations to process any
+/// input characters following those used in parsing the JSON input.  Clears the
+/// std::istream flags; any input errors (eg. EOF) will be detected by the first
+/// subsequent call for input from the std::istream.
 class input_stream_adapter : public input_adapter_protocol
 {
   public:
@@ -1417,10 +1434,10 @@ class input_stream_adapter : public input_adapter_protocol
     }
     explicit input_stream_adapter(std::istream& i)
         : is(i)
-        , sb(i.rdbuf())
+        , sb(*i.rdbuf())
     {
         // Ignore Byte Order Mark at start of input
-        int c;
+        std::char_traits<char>::int_type c;
         if (( c = get_character() ) == 0xEF )
         {
             if (( c = get_character() ) == 0xBB )
@@ -1454,20 +1471,20 @@ class input_stream_adapter : public input_adapter_protocol
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xff do not
     // end up as the same value, eg. 0xffffffff.
-    int get_character() override
+    std::char_traits<char>::int_type get_character() override
     {
-        return sb->sbumpc();
+        return sb.sbumpc();
     }
 
     void unget_character() override
     {
-        sb->sungetc(); // Avoided for performance: is.unget();
+        sb.sungetc(); // Avoided for performance: is.unget();
     }
   private:
 
     /// the associated input stream
     std::istream& is;
-    std::streambuf *sb;
+    std::streambuf &sb;
 };
 
 /// input adapter for buffer input
@@ -1488,7 +1505,7 @@ class input_buffer_adapter : public input_adapter_protocol
     input_buffer_adapter(const input_buffer_adapter&) = delete;
     input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
 
-    int get_character() noexcept override
+    std::char_traits<char>::int_type get_character() noexcept override
     {
         if (JSON_LIKELY(cursor < limit))
         {
@@ -2664,13 +2681,13 @@ scan_number_done:
     @brief get next character from the input
 
     This function provides the interface to the used input adapter. It does
-    not throw in case the input reached EOF, but returns a -'ve valued
+    not throw in case the input reached EOF, but returns a
     `std::char_traits<char>::eof()` in that case.  Stores the scanned characters
     for use in error messages.
 
     @return character read from the input
     */
-    int get()
+    std::char_traits<char>::int_type get()
     {
         ++chars_read;
         current = ia->get_character();
@@ -2739,8 +2756,8 @@ scan_number_done:
     }
 
     /// return the last read token (for errors only).  Will never contain EOF
-    /// (a -'ve value), because 255 may legitimately occur.  May contain NUL, which
-    /// should be escaped.
+    /// (an arbitrary value that is not a valid char value, often -1), because
+    /// 255 may legitimately occur.  May contain NUL, which should be escaped.
     std::string get_token_string() const
     {
         // escape control characters
@@ -2844,7 +2861,7 @@ scan_number_done:
     detail::input_adapter_t ia = nullptr;
 
     /// the current character
-    int current = std::char_traits<char>::eof();
+    std::char_traits<char>::int_type current = std::char_traits<char>::eof();
 
     /// the number of characters read
     std::size_t chars_read = 0;
