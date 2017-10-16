@@ -201,7 +201,7 @@ void from_json(const BasicJsonType& j, country& c)
     {
         {u8"中华人民共和国", country::china},
         {"France", country::france},
-        {"Российская Федерация", country::russia}
+        {u8"Российская Федерация", country::russia}
     };
 
     const auto it = m.find(str);
