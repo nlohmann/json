@@ -3034,11 +3034,19 @@ class parser
         {
             case token_type::begin_object:
             {
-                if (keep and (not callback or ((keep = callback(depth++, parse_event_t::object_start, result)))))
+                if (keep)
                 {
-                    // explicitly set result to object to cope with {}
-                    result.m_type = value_t::object;
-                    result.m_value = value_t::object;
+                    if (callback)
+                    {
+                        keep = callback(depth++, parse_event_t::object_start, result);
+                    }
+
+                    if (not callback or keep)
+                    {
+                        // explicitly set result to object to cope with {}
+                        result.m_type = value_t::object;
+                        result.m_value = value_t::object;
+                    }
                 }
 
                 // read next token
@@ -3130,11 +3138,19 @@ class parser
 
             case token_type::begin_array:
             {
-                if (keep and (not callback or ((keep = callback(depth++, parse_event_t::array_start, result)))))
+                if (keep)
                 {
-                    // explicitly set result to object to cope with []
-                    result.m_type = value_t::array;
-                    result.m_value = value_t::array;
+                    if (callback)
+                    {
+                        keep = callback(depth++, parse_event_t::array_start, result);
+                    }
+
+                    if (not callback or keep)
+                    {
+                        // explicitly set result to array to cope with []
+                        result.m_type = value_t::array;
+                        result.m_value = value_t::array;
+                    }
                 }
 
                 // read next token
