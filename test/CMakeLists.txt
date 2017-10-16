@@ -91,6 +91,16 @@ foreach(file ${files})
         set_target_properties(${testcase} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-float-equal")
     endif()
 
+    # https://stackoverflow.com/questions/2368811/how-to-set-warning-level-in-cmake
+    if(MSVC)
+        # Force to always compile with W4
+        if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+            string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+        else()
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+        endif()
+    endif()
+
     add_test(NAME "${testcase}_default"
       COMMAND ${testcase} ${CATCH_TEST_FILTER}
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
