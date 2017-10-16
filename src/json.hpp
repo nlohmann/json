@@ -2674,7 +2674,7 @@ scan_number_done:
     {
         yytext.clear();
         token_string.clear();
-        token_string.push_back(static_cast<char>(current));
+        token_string.push_back(std::char_traits<char>::to_char_type(current));
     }
 
     /*
