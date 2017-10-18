@@ -5292,7 +5292,7 @@ class binary_reader
         {
             get();
             check_eof();
-            return current;
+            return static_cast<char>(current);
         });
         return result;
     }

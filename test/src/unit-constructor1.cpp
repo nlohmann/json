@@ -242,7 +242,7 @@ TEST_CASE("constructors")
 
         SECTION("std::pair")
         {
-            std::pair<float, std::string> p{1.0, "string"};
+            std::pair<float, std::string> p{1.0f, "string"};
             json j(p);
 
             CHECK(j.type() == json::value_t::array);
