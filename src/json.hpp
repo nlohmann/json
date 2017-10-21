@@ -110,11 +110,11 @@ SOFTWARE.
 #endif
 
 // string_view support
-#if defined(_MSC_VER) && defined(_HAS_CXX17) && _HAS_CXX17 == 1
-	#define JSON_USE_STRING_VIEW
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
+	#define JSON_HAS_STRING_VIEW
 #endif
 
-#if defined(JSON_USE_STRING_VIEW)
+#if defined(JSON_HAS_STRING_VIEW)
 	#include <string_view>
 #endif
 
@@ -7600,7 +7600,7 @@ class basic_json
     specified "unordered" nature of JSON objects.
     */
 
-#if defined(JSON_USE_STRING_VIEW)
+#if defined(JSON_HAS_STRING_VIEW)
 	// if std::string_view is to be used the object_t must
 	// be declared with a transparent comparator
 	// https://stackoverflow.com/questions/35525777/use-of-string-view-for-map-lookup
@@ -9868,7 +9868,7 @@ class basic_json
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSC_VER) && _MSC_VER >1900 && defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
+#if defined(JSON_HAS_STRING_VIEW)
                    and not std::is_same<ValueType, typename std::string_view>::value
 #endif
                    , int >::type = 0 >
