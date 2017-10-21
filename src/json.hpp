@@ -1544,7 +1544,7 @@ class input_buffer_adapter : public input_adapter_protocol
     std::string read(std::size_t offset, std::size_t length) override
     {
         // avoid reading too many characters
-        const auto max_length = static_cast<size_t>(limit - start);
+        const auto max_length = static_cast<std::size_t>(limit - start);
         return std::string(start + offset, (std::min)(length, max_length - offset));
     }
 
