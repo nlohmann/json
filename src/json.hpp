@@ -109,6 +109,16 @@ SOFTWARE.
     #define JSON_UNLIKELY(x)    x
 #endif
 
+// string_view support
+#if defined(_MSC_VER) && defined(_HAS_CXX17)
+	#define JSON_USE_STRING_VIEW
+#endif
+
+#if defined(JSON_USE_STRING_VIEW)
+	#include <string_view>
+#endif
+
+
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann
@@ -7589,11 +7599,27 @@ class basic_json
     7159](http://rfc7159.net/rfc7159), because any order implements the
     specified "unordered" nature of JSON objects.
     */
-    using object_t = ObjectType<StringType,
-          basic_json,
-          std::less<StringType>,
-          AllocatorType<std::pair<const StringType,
-          basic_json>>>;
+
+#if defined(JSON_USE_STRING_VIEW)
+	// if std::string_view is to be used the object_t must
+	// be declared with a transparent comparator
+	// https://stackoverflow.com/questions/35525777/use-of-string-view-for-map-lookup
+	using object_t = ObjectType<StringType,
+		basic_json,
+		std::less<>,
+		AllocatorType<std::pair<const StringType,
+		basic_json>>>;
+
+	using object_comparator_key_t = std::string_view;
+#else
+	using object_t = ObjectType<StringType,
+		basic_json,
+		std::less<StringType>,
+		AllocatorType<std::pair<const StringType,
+		basic_json>>>;
+
+	using object_comparator_key_t = typename object_t::key_type;
+#endif
 
     /*!
     @brief a type for an array
@@ -10880,7 +10906,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    iterator find(typename object_t::key_type key)
+    iterator find(object_comparator_key_t key)
     {
         auto result = end();
 
@@ -10894,9 +10920,9 @@ class basic_json
 
     /*!
     @brief find an element in a JSON object
-    @copydoc find(typename object_t::key_type)
+    @copydoc find(object_transparent_comparator_key_t)
     */
-    const_iterator find(typename object_t::key_type key) const
+    const_iterator find(object_comparator_key_t key) const
     {
         auto result = cend();
 
@@ -10929,7 +10955,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    size_type count(typename object_t::key_type key) const
+    size_type count(object_comparator_key_t key) const
     {
         // return 0 for all nonobject types
         return is_object() ? m_value.object->count(key) : 0;
