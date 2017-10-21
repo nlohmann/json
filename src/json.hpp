@@ -110,7 +110,7 @@ SOFTWARE.
 #endif
 
 // string_view support
-#if defined(_MSC_VER) && defined(_HAS_CXX17)
+#if defined(_MSC_VER) && defined(_HAS_CXX17) && _HAS_CXX17 == 1
 	#define JSON_USE_STRING_VIEW
 #endif
 
