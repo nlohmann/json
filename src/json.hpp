@@ -11969,7 +11969,7 @@ class basic_json
             JSON_THROW(invalid_iterator::create(210, "iterators do not fit"));
         }
 
-        if (JSON_UNLIKELY(first.m_object == this or last.m_object == this))
+        if (JSON_UNLIKELY(first.m_object == this))
         {
             JSON_THROW(invalid_iterator::create(211, "passed iterators may not belong to container"));
         }
@@ -12065,8 +12065,7 @@ class basic_json
         }
 
         // passed iterators must belong to objects
-        if (JSON_UNLIKELY(not first.m_object->is_object()
-                          or not last.m_object->is_object()))
+        if (JSON_UNLIKELY(not first.m_object->is_object()))
         {
             JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects"));
         }
