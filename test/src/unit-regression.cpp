@@ -1253,4 +1253,31 @@ TEST_CASE("regression tests")
             CHECK( i3 == 3 );
         }
     }
+
+    SECTION("issue #714 - throw std::ios_base::failure exception when failbit set to true")
+    {
+        {
+            std::ifstream is;
+            is.exceptions(
+                is.exceptions()
+                | std::ios_base::failbit
+                | std::ios_base::badbit
+            ); // handle different exceptions as 'file not found', 'permission denied'
+
+            is.open("test/data/regression/working_file.json");
+            CHECK_NOTHROW(nlohmann::json::parse(is));
+        }
+
+        {
+            std::ifstream is;
+            is.exceptions(
+                is.exceptions()
+                | std::ios_base::failbit
+                | std::ios_base::badbit
+            ); // handle different exceptions as 'file not found', 'permission denied'
+
+            is.open("test/data/json_nlohmann_tests/all_unicode.json.cbor");
+            CHECK_NOTHROW(nlohmann::json::from_cbor(is));
+        }
+    }
 }
