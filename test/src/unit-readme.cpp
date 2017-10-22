@@ -39,8 +39,8 @@ using nlohmann::json;
 #include <iostream>
 
 #if defined(_MSC_VER)
-#pragma warning (push)
-#pragma warning (disable : 4189) // local variable is initialized but not referenced
+    #pragma warning (push)
+    #pragma warning (disable : 4189) // local variable is initialized but not referenced
 #endif
 
 TEST_CASE("README", "[hide]")
@@ -305,5 +305,5 @@ TEST_CASE("README", "[hide]")
 }
 
 #if defined(_MSC_VER)
-#pragma warning (pop)
+    #pragma warning (pop)
 #endif

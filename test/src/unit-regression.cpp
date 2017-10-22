@@ -1236,21 +1236,21 @@ TEST_CASE("regression tests")
 
     SECTION("issue #367 - Behavior of operator>> should more closely resemble that of built-in overloads.")
     {
-	SECTION("example 1")
-	{
-	    std::istringstream i1_2_3( "{\"first\": \"one\" }{\"second\": \"two\"}3" );
-	    json j1, j2, j3;
-	    i1_2_3 >> j1;
-	    i1_2_3 >> j2;
-	    i1_2_3 >> j3;
+        SECTION("example 1")
+        {
+            std::istringstream i1_2_3( "{\"first\": \"one\" }{\"second\": \"two\"}3" );
+            json j1, j2, j3;
+            i1_2_3 >> j1;
+            i1_2_3 >> j2;
+            i1_2_3 >> j3;
 
-	    std::map<std::string,std::string> m1 = j1;
-	    std::map<std::string,std::string> m2 = j2;
-	    int i3 = j3;
+            std::map<std::string, std::string> m1 = j1;
+            std::map<std::string, std::string> m2 = j2;
+            int i3 = j3;
 
-	    CHECK( m1 == ( std::map<std::string,std::string> {{ "first",  "one" }} ));
-	    CHECK( m2 == ( std::map<std::string,std::string> {{ "second", "two" }} ));
-	    CHECK( i3 == 3 );
-	}
+            CHECK( m1 == ( std::map<std::string, std::string> {{ "first",  "one" }} ));
+            CHECK( m2 == ( std::map<std::string, std::string> {{ "second", "two" }} ));
+            CHECK( i3 == 3 );
+        }
     }
 }

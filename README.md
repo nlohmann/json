@@ -875,7 +875,12 @@ I deeply appreciate the help of the following people.
 - [WebProdPP](https://github.com/WebProdPP) fixed a subtle error in a precondition check.
 - [Alex](https://github.com/leha-bot) noted an error in a code sample.
 - [Tom de Geus](https://github.com/tdegeus) reported some warnings with ICC and helped fixing them.
-
+- [Perry Kundert](https://github.com/pjkundert) simplified reading from input streams.
+- [Sonu Lohani](https://github.com/sonulohani) fixed a small compilation error.
+- [Jamie Seward](https://github.com/jseward) fixed all MSVC warnings.
+- [Nate Vargas](https://github.com/eld00d) added a Doxygen tag file.
+- [pvleuven](https://github.com/pvleuven) helped fixing a warning in ICC.
+- [Pavel](https://github.com/crea7or) helped fixing some warnings in MSVC.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

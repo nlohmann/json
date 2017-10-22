@@ -1404,63 +1404,66 @@ consist of all valid char values as positive values (typically unsigned char),
 plus an EOF value outside that range, specified by the value of the function
 std::char_traits<char>::eof().  This value is typically -1, but could be any
 arbitrary value which is not a valid char value.
-
-@return Typically [0,255] plus std::char_traits<char>::eof().
 */
 struct input_adapter_protocol
 {
+    /// get a character [0,255] or std::char_traits<char>::eof().
     virtual std::char_traits<char>::int_type get_character() = 0;
-    virtual void unget_character() = 0; // restore the last non-eof() character to input
+    /// restore the last non-eof() character to input
+    virtual void unget_character() = 0;
     virtual ~input_adapter_protocol() = default;
 };
 
 /// a type to simplify interfaces
 using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
 
-/// input adapter for a (caching) istream.  Ignores a UFT Byte Order Mark at
-/// beginning of input.  Does not support changing the underlying std::streambuf
-/// in mid-input.  Maintains underlying std::istream and std::streambuf to
-/// support subsequent use of standard std::istream operations to process any
-/// input characters following those used in parsing the JSON input.  Clears the
-/// std::istream flags; any input errors (eg. EOF) will be detected by the first
-/// subsequent call for input from the std::istream.
+/*!
+Input adapter for a (caching) istream. Ignores a UFT Byte Order Mark at
+beginning of input. Does not support changing the underlying std::streambuf
+in mid-input. Maintains underlying std::istream and std::streambuf to support
+subsequent use of standard std::istream operations to process any input
+characters following those used in parsing the JSON input.  Clears the
+std::istream flags; any input errors (e.g., EOF) will be detected by the first
+subsequent call for input from the std::istream.
+*/
 class input_stream_adapter : public input_adapter_protocol
 {
   public:
     ~input_stream_adapter() override
     {
-        // clear stream flags; we use underlying streambuf I/O, do not maintain ifstream flags
+        // clear stream flags; we use underlying streambuf I/O, do not
+        // maintain ifstream flags
         is.clear();
     }
+
     explicit input_stream_adapter(std::istream& i)
-        : is(i)
-        , sb(*i.rdbuf())
+        : is(i), sb(*i.rdbuf())
     {
-        // Ignore Byte Order Mark at start of input
+        // ignore Byte Order Mark at start of input
         std::char_traits<char>::int_type c;
-        if (( c = get_character() ) == 0xEF )
+        if ((c = get_character()) == 0xEF)
         {
-            if (( c = get_character() ) == 0xBB )
+            if ((c = get_character()) == 0xBB)
             {
-                if (( c = get_character() ) == 0xBF )
+                if ((c = get_character()) == 0xBF)
                 {
                     return; // Ignore BOM
                 }
-                else if ( c != std::char_traits<char>::eof() )
+                else if (c != std::char_traits<char>::eof())
                 {
                     is.unget();
                 }
-                is.putback( '\xBB' );
+                is.putback('\xBB');
             }
-            else if ( c != std::char_traits<char>::eof() )
+            else if (c != std::char_traits<char>::eof())
             {
                 is.unget();
             }
-            is.putback( '\xEF' );
+            is.putback('\xEF');
         }
-        else if ( c != std::char_traits<char>::eof() )
+        else if (c != std::char_traits<char>::eof())
         {
-            is.unget(); // Not BOM.  Process as usual.
+            is.unget(); // Not BOM. Process as usual.
         }
     }
 
@@ -1478,13 +1481,13 @@ class input_stream_adapter : public input_adapter_protocol
 
     void unget_character() override
     {
-        sb.sungetc(); // Avoided for performance: is.unget();
+        sb.sungetc();  // is.unget() avoided for performance
     }
-  private:
 
+  private:
     /// the associated input stream
     std::istream& is;
-    std::streambuf &sb;
+    std::streambuf& sb;
 };
 
 /// input adapter for buffer input
@@ -2691,7 +2694,7 @@ scan_number_done:
     {
         ++chars_read;
         current = ia->get_character();
-        if (JSON_LIKELY( current != std::char_traits<char>::eof()))
+        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
             token_string.push_back(std::char_traits<char>::to_char_type(current));
         }
@@ -2709,7 +2712,7 @@ scan_number_done:
             token_string.pop_back();
         }
     }
-        
+
     /// add a character to yytext
     void add(int c)
     {
@@ -2742,7 +2745,7 @@ scan_number_done:
     /// return current string value (implicitly resets the token; useful only once)
     std::string move_string()
     {
-        return std::move( yytext );
+        return std::move(yytext);
     }
 
     /////////////////////
