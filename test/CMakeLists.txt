@@ -66,6 +66,22 @@ set_target_properties(catch_main PROPERTIES
 )
 target_include_directories(catch_main PRIVATE "thirdparty/catch")
 
+# https://stackoverflow.com/questions/2368811/how-to-set-warning-level-in-cmake
+if(MSVC)
+    # Force to always compile with W4
+    if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+        string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+    endif()
+
+    # Disable warning C4389: '==': signed/unsigned mismatch
+	# Disable warning C4309: 'static_cast': truncation of constant value
+	# Disable warning C4566: character represented by universal-character-name '\uFF01' cannot be represented in the current code page (1252)
+	# Disable warning C4996: 'nlohmann::basic_json<std::map,std::vector,std::string,bool,int64_t,uint64_t,double,std::allocator,nlohmann::adl_serializer>::operator <<': was declared deprecated
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4389 /wd4309 /wd4566 /wd4996")
+endif()
+
 #############################################################################
 # one executable for each unit test file
 #############################################################################
