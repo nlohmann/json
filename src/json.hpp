@@ -3019,7 +3019,7 @@ class parser
         result.assert_invariant();
 
         // in strict mode, input must be completely read
-        if (strict)
+        if (!errored && strict)
         {
             get_token();
             expect(token_type::end_of_input, ex);
@@ -3309,6 +3309,7 @@ class parser
                 if (JSON_UNLIKELY(not std::isfinite(result.m_value.number_float)))
                 {
                     ex = std::make_unique<out_of_range>(406, "number overflow parsing '" + m_lexer.get_token_string() + "'");
+                    errored = true;
                     return;
                 }
                 break;
