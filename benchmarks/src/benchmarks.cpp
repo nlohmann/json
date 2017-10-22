@@ -34,6 +34,19 @@ static void bench(benchpress::context& ctx,
 {
     // using string streams for benchmarking to factor-out cold-cache disk
     // access.
+#if defined( FROMFILE )
+    std::ifstream istr;
+    {
+        istr.open( in_path, std::ifstream::in );
+
+        // read the stream once
+        json j;
+        istr >> j;
+        // clear flags and rewind
+        istr.clear();
+        istr.seekg(0);
+    }
+#else
     std::stringstream istr;
     {
         // read file into string stream
@@ -43,11 +56,12 @@ static void bench(benchpress::context& ctx,
 
         // read the stream once
         json j;
-        j << istr;
+        istr >> j;
         // clear flags and rewind
         istr.clear();
         istr.seekg(0);
     }
+#endif
 
     switch (mode)
     {
@@ -62,7 +76,7 @@ static void bench(benchpress::context& ctx,
                 istr.clear();
                 istr.seekg(0);
                 json j;
-                j << istr;
+                istr >> j;
             }
 
             break;
@@ -74,7 +88,7 @@ static void bench(benchpress::context& ctx,
         {
             // create JSON value from input
             json j;
-            j << istr;
+            istr >> j;
             std::stringstream ostr;
 
             ctx.reset_timer();

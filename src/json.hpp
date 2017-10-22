@@ -1394,123 +1394,97 @@ constexpr T static_const<T>::value;
 // input adapters //
 ////////////////////
 
-/// abstract input adapter interface
+/*!
+@brief abstract input adapter interface
+
+Produces a stream of std::char_traits<char>::int_type characters from a
+std::istream, a buffer, or some other input type.  Accepts the return of exactly
+one non-EOF character for future input.  The int_type characters returned
+consist of all valid char values as positive values (typically unsigned char),
+plus an EOF value outside that range, specified by the value of the function
+std::char_traits<char>::eof().  This value is typically -1, but could be any
+arbitrary value which is not a valid char value.
+
+@return Typically [0,255] plus std::char_traits<char>::eof().
+*/
 struct input_adapter_protocol
 {
-    virtual int get_character() = 0;
-    virtual std::string read(std::size_t offset, std::size_t length) = 0;
+    virtual std::char_traits<char>::int_type get_character() = 0;
+    virtual void unget_character() = 0; // restore the last non-eof() character to input
     virtual ~input_adapter_protocol() = default;
 };
 
 /// a type to simplify interfaces
 using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
 
-/// input adapter for cached stream input
-template<std::size_t BufferSize>
-class cached_input_stream_adapter : public input_adapter_protocol
+/// input adapter for a (caching) istream.  Ignores a UFT Byte Order Mark at
+/// beginning of input.  Does not support changing the underlying std::streambuf
+/// in mid-input.  Maintains underlying std::istream and std::streambuf to
+/// support subsequent use of standard std::istream operations to process any
+/// input characters following those used in parsing the JSON input.  Clears the
+/// std::istream flags; any input errors (eg. EOF) will be detected by the first
+/// subsequent call for input from the std::istream.
+class input_stream_adapter : public input_adapter_protocol
 {
   public:
-    explicit cached_input_stream_adapter(std::istream& i)
-        : is(i), start_position(is.tellg())
+    ~input_stream_adapter() override
     {
-        fill_buffer();
-
-        // skip byte order mark
-        if (fill_size >= 3 and buffer[0] == '\xEF' and buffer[1] == '\xBB' and buffer[2] == '\xBF')
-        {
-            buffer_pos += 3;
-            processed_chars += 3;
-        }
-    }
-
-    ~cached_input_stream_adapter() override
-    {
-        // clear stream flags
-        is.clear();
-        // We initially read a lot of characters into the buffer, and we may
-        // not have processed all of them. Therefore, we need to "rewind" the
-        // stream after the last processed char.
-        is.seekg(start_position);
-        is.ignore(static_cast<std::streamsize>(processed_chars));
-        // clear stream flags
+        // clear stream flags; we use underlying streambuf I/O, do not maintain ifstream flags
         is.clear();
     }
-
-    int get_character() override
+    explicit input_stream_adapter(std::istream& i)
+        : is(i)
+        , sb(*i.rdbuf())
     {
-        // check if refilling is necessary and possible
-        if (buffer_pos == fill_size and not eof)
+        // Ignore Byte Order Mark at start of input
+        std::char_traits<char>::int_type c;
+        if (( c = get_character() ) == 0xEF )
         {
-            fill_buffer();
-
-            // check and remember that filling did not yield new input
-            if (fill_size == 0)
+            if (( c = get_character() ) == 0xBB )
             {
-                eof = true;
-                return std::char_traits<char>::eof();
+                if (( c = get_character() ) == 0xBF )
+                {
+                    return; // Ignore BOM
+                }
+                else if ( c != std::char_traits<char>::eof() )
+                {
+                    is.unget();
+                }
+                is.putback( '\xBB' );
             }
-
-            // the buffer is ready
-            buffer_pos = 0;
+            else if ( c != std::char_traits<char>::eof() )
+            {
+                is.unget();
+            }
+            is.putback( '\xEF' );
         }
-
-        ++processed_chars;
-        assert(buffer_pos < buffer.size());
-        return buffer[buffer_pos++] & 0xFF;
+        else if ( c != std::char_traits<char>::eof() )
+        {
+            is.unget(); // Not BOM.  Process as usual.
+        }
     }
 
-    std::string read(std::size_t offset, std::size_t length) override
+    // delete because of pointer members
+    input_stream_adapter(const input_stream_adapter&) = delete;
+    input_stream_adapter& operator=(input_stream_adapter&) = delete;
+
+    // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
+    // ensure that std::char_traits<char>::eof() and the character 0xff do not
+    // end up as the same value, eg. 0xffffffff.
+    std::char_traits<char>::int_type get_character() override
     {
-        // create buffer
-        std::string result(length, '\0');
-
-        // save stream position
-        const auto current_pos = is.tellg();
-        // save stream flags
-        const auto flags = is.rdstate();
-
-        // clear stream flags
-        is.clear();
-        // set stream position
-        is.seekg(static_cast<std::streamoff>(offset));
-        // read bytes
-        is.read(&result[0], static_cast<std::streamsize>(length));
-
-        // reset stream position
-        is.seekg(current_pos);
-        // reset stream flags
-        is.setstate(flags);
-
-        return result;
+        return sb.sbumpc();
     }
 
+    void unget_character() override
+    {
+        sb.sungetc(); // Avoided for performance: is.unget();
+    }
   private:
-    void fill_buffer()
-    {
-        // fill
-        is.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-        // store number of bytes in the buffer
-        fill_size = static_cast<size_t>(is.gcount());
-    }
 
     /// the associated input stream
     std::istream& is;
-
-    /// chars returned via get_character()
-    std::size_t processed_chars = 0;
-    /// chars processed in the current buffer
-    std::size_t buffer_pos = 0;
-
-    /// whether stream reached eof
-    bool eof = false;
-    /// how many chars have been copied to the buffer by last (re)fill
-    std::size_t fill_size = 0;
-
-    /// position of the stream when we started
-    const std::streampos start_position;
-
-    /// internal buffer
-    std::array<char, BufferSize> buffer{{}};
+    std::streambuf &sb;
 };
 
 /// input adapter for buffer input
@@ -1531,21 +1505,22 @@ class input_buffer_adapter : public input_adapter_protocol
     input_buffer_adapter(const input_buffer_adapter&) = delete;
     input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
 
-    int get_character() noexcept override
+    std::char_traits<char>::int_type get_character() noexcept override
     {
         if (JSON_LIKELY(cursor < limit))
         {
-            return *(cursor++) & 0xFF;
+            return std::char_traits<char>::to_int_type(*(cursor++));
         }
 
         return std::char_traits<char>::eof();
     }
 
-    std::string read(std::size_t offset, std::size_t length) override
+    void unget_character() noexcept override
     {
-        // avoid reading too many characters
-        const auto max_length = static_cast<size_t>(limit - start);
-        return std::string(start + offset, (std::min)(length, max_length - offset));
+        if (JSON_LIKELY(cursor > start))
+        {
+            --cursor;
+        }
     }
 
   private:
@@ -1564,11 +1539,11 @@ class input_adapter
 
     /// input adapter for input stream
     input_adapter(std::istream& i)
-        : ia(std::make_shared<cached_input_stream_adapter<16384>>(i)) {}
+        : ia(std::make_shared<input_stream_adapter>(i)) {}
 
     /// input adapter for input stream
     input_adapter(std::istream&& i)
-        : ia(std::make_shared<cached_input_stream_adapter<16384>>(i)) {}
+        : ia(std::make_shared<input_stream_adapter>(i)) {}
 
     /// input adapter for buffer
     template<typename CharT,
@@ -1845,9 +1820,9 @@ class lexer
     @brief scan a string literal
 
     This function scans a string according to Sect. 7 of RFC 7159. While
-    scanning, bytes are escaped and copied into buffer yytext. Then the
-    function returns successfully, yytext is null-terminated and yylen
-    contains the number of bytes in the string.
+    scanning, bytes are escaped and copied into buffer yytext. Then the function
+    returns successfully, yytext is *not* null-terminated (as it may contain \0
+    bytes), and yytext.size() is the number of bytes in the string.
 
     @return token_type::value_string if string could be successfully scanned,
             token_type::parse_error otherwise
@@ -1878,9 +1853,6 @@ class lexer
                 // closing quote
                 case '\"':
                 {
-                    // terminate yytext
-                    add('\0');
-                    --yylen;
                     return token_type::value_string;
                 }
 
@@ -2624,12 +2596,7 @@ scan_number_any2:
 scan_number_done:
         // unget the character after the number (we only read it to know that
         // we are done scanning a number)
-        --chars_read;
-        next_unget = true;
-
-        // terminate token
-        add('\0');
-        --yylen;
+        unget();
 
         char* endptr = nullptr;
         errno = 0;
@@ -2640,7 +2607,7 @@ scan_number_done:
             const auto x = std::strtoull(yytext.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == yytext.data() + yylen);
+            assert(endptr == yytext.data() + yytext.size());
 
             if (errno == 0)
             {
@@ -2656,7 +2623,7 @@ scan_number_done:
             const auto x = std::strtoll(yytext.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == yytext.data() + yylen);
+            assert(endptr == yytext.data() + yytext.size());
 
             if (errno == 0)
             {
@@ -2673,7 +2640,7 @@ scan_number_done:
         strtof(value_float, yytext.data(), &endptr);
 
         // we checked the number format before
-        assert(endptr == yytext.data() + yylen);
+        assert(endptr == yytext.data() + yytext.size());
 
         return token_type::value_float;
     }
@@ -2702,32 +2669,51 @@ scan_number_done:
     // input management
     /////////////////////
 
-    /// reset yytext
+    /// reset yytext; current character is beginning of token
     void reset() noexcept
     {
-        yylen = 0;
-        start_pos = chars_read - 1;
+        yytext.clear();
+        token_string.clear();
+        token_string.push_back(std::char_traits<char>::to_char_type(current));
     }
 
-    /// get a character from the input
-    int get()
+    /*
+    @brief get next character from the input
+
+    This function provides the interface to the used input adapter. It does
+    not throw in case the input reached EOF, but returns a
+    `std::char_traits<char>::eof()` in that case.  Stores the scanned characters
+    for use in error messages.
+
+    @return character read from the input
+    */
+    std::char_traits<char>::int_type get()
     {
         ++chars_read;
-        return next_unget ? (next_unget = false, current)
-               : (current = ia->get_character());
+        current = ia->get_character();
+        if (JSON_LIKELY( current != std::char_traits<char>::eof()))
+        {
+            token_string.push_back(std::char_traits<char>::to_char_type(current));
+        }
+        return current;
     }
 
+    /// unget current character (return it again on next get)
+    void unget()
+    {
+        --chars_read;
+        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
+        {
+            ia->unget_character();
+            assert(token_string.size() != 0);
+            token_string.pop_back();
+        }
+    }
+        
     /// add a character to yytext
     void add(int c)
     {
-        // resize yytext if necessary; this condition is deemed unlikely,
-        // because we start with a 1024-byte buffer
-        if (JSON_UNLIKELY((yylen + 1 > yytext.capacity())))
-        {
-            yytext.resize(2 * yytext.capacity(), '\0');
-        }
-        assert(yylen < yytext.size());
-        yytext[yylen++] = static_cast<char>(c);
+        yytext.push_back(std::char_traits<char>::to_char_type(c));
     }
 
   public:
@@ -2753,12 +2739,10 @@ scan_number_done:
         return value_float;
     }
 
-    /// return string value
-    const std::string get_string()
+    /// return current string value (implicitly resets the token; useful only once)
+    std::string move_string()
     {
-        // yytext cannot be returned as char*, because it may contain a null
-        // byte (parsed as "\u0000")
-        return std::string(yytext.data(), yylen);
+        return std::move( yytext );
     }
 
     /////////////////////
@@ -2771,22 +2755,16 @@ scan_number_done:
         return chars_read;
     }
 
-    /// return the last read token (for errors only)
+    /// return the last read token (for errors only).  Will never contain EOF
+    /// (an arbitrary value that is not a valid char value, often -1), because
+    /// 255 may legitimately occur.  May contain NUL, which should be escaped.
     std::string get_token_string() const
     {
-        // get the raw byte sequence of the last token
-        std::string s = ia->read(start_pos, chars_read - start_pos);
-
         // escape control characters
         std::string result;
-        for (auto c : s)
+        for (auto c : token_string)
         {
-            if (c == '\0' or c == std::char_traits<char>::eof())
-            {
-                // ignore EOF
-                continue;
-            }
-            else if ('\x00' <= c and c <= '\x1f')
+            if ('\x00' <= c and c <= '\x1f')
             {
                 // escape control characters
                 std::stringstream ss;
@@ -2883,20 +2861,16 @@ scan_number_done:
     detail::input_adapter_t ia = nullptr;
 
     /// the current character
-    int current = std::char_traits<char>::eof();
-
-    /// whether get() should return the last character again
-    bool next_unget = false;
+    std::char_traits<char>::int_type current = std::char_traits<char>::eof();
 
     /// the number of characters read
     std::size_t chars_read = 0;
-    /// the start position of the current token
-    std::size_t start_pos = 0;
+
+    /// raw input token string (for error messages)
+    std::vector<char> token_string { };
 
     /// buffer for variable-length tokens (numbers, strings)
-    std::vector<char> yytext = std::vector<char>(1024, '\0');
-    /// current index in yytext
-    std::size_t yylen = 0;
+    std::string yytext { };
 
     /// a description of occurred lexer errors
     const char* error_message = "";
@@ -3034,11 +3008,19 @@ class parser
         {
             case token_type::begin_object:
             {
-                if (keep and (not callback or ((keep = callback(depth++, parse_event_t::object_start, result)))))
+                if (keep)
                 {
-                    // explicitly set result to object to cope with {}
-                    result.m_type = value_t::object;
-                    result.m_value = value_t::object;
+                    if (callback)
+                    {
+                        keep = callback(depth++, parse_event_t::object_start, result);
+                    }
+
+                    if (not callback or keep)
+                    {
+                        // explicitly set result to object to cope with {}
+                        result.m_type = value_t::object;
+                        result.m_value = value_t::object;
+                    }
                 }
 
                 // read next token
@@ -3065,7 +3047,7 @@ class parser
                     {
                         return;
                     }
-                    key = m_lexer.get_string();
+                    key = m_lexer.move_string();
 
                     bool keep_tag = false;
                     if (keep)
@@ -3130,11 +3112,19 @@ class parser
 
             case token_type::begin_array:
             {
-                if (keep and (not callback or ((keep = callback(depth++, parse_event_t::array_start, result)))))
+                if (keep)
                 {
-                    // explicitly set result to object to cope with []
-                    result.m_type = value_t::array;
-                    result.m_value = value_t::array;
+                    if (callback)
+                    {
+                        keep = callback(depth++, parse_event_t::array_start, result);
+                    }
+
+                    if (not callback or keep)
+                    {
+                        // explicitly set result to array to cope with []
+                        result.m_type = value_t::array;
+                        result.m_value = value_t::array;
+                    }
                 }
 
                 // read next token
@@ -3203,7 +3193,7 @@ class parser
             case token_type::value_string:
             {
                 result.m_type = value_t::string;
-                result.m_value = m_lexer.get_string();
+                result.m_value = m_lexer.move_string();
                 break;
             }
 
@@ -5205,7 +5195,7 @@ class binary_reader
     @brief get next character from the input
 
     This function provides the interface to the used input adapter. It does
-    not throw in case the input reached EOF, but returns
+    not throw in case the input reached EOF, but returns a -'ve valued
     `std::char_traits<char>::eof()` in that case.
 
     @return character read from the input
@@ -5276,7 +5266,7 @@ class binary_reader
         {
             get();
             check_eof();
-            return current;
+            return static_cast<char>(current);
         });
         return result;
     }
