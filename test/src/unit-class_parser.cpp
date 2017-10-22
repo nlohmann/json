@@ -45,7 +45,8 @@ json parser_helper(const std::string& s)
     // if this line was reached, no exception ocurred
     // -> check if result is the same without exceptions
     json j_nothrow;
-    CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j_nothrow));
+    std::unique_ptr<json::exception> ex;
+    CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr).parse(true, j_nothrow, ex));
     CHECK(j_nothrow == j);
 
     return j;
@@ -55,7 +56,8 @@ bool accept_helper(const std::string& s)
 {
     // 1. parse s without exceptions
     json j;
-    CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j));
+    std::unique_ptr<json::exception> ex;
+    CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s)).parse(true, j, ex));
     const bool ok_noexcept = not j.is_discarded();
 
     // 2. accept s
