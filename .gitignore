@@ -1,5 +1,6 @@
 json_unit
 json_benchmarks
+json_benchmarks_simple
 fuzz-testing
 
 *.dSYM
