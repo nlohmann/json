@@ -47,5 +47,10 @@ TEST_CASE("version information")
             {"minor", 1},
             {"patch", 1}
         }));
+
+        CHECK(j.find("platform") != j.end());
+        CHECK(j.at("compiler").find("family") != j.at("compiler").end());
+        CHECK(j.at("compiler").find("version") != j.at("compiler").end());
+        CHECK(j.at("compiler").find("c++") != j.at("compiler").end());
     }
 }

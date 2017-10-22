@@ -88,7 +88,7 @@ TEST_CASE("lexicographical comparison operators")
         json j_values =
         {
             nullptr, nullptr,
-            17, 42,
+            -17, 42,
             8u, 13u,
             3.14159, 23.42,
             "foo", "bar",
@@ -125,6 +125,8 @@ TEST_CASE("lexicographical comparison operators")
                 {
                     CAPTURE(i);
                     CAPTURE(j);
+                    CAPTURE(j_values[i]);
+                    CAPTURE(j_values[j]);
                     // check precomputed values
                     CHECK( (j_values[i] == j_values[j]) == expected[i][j] );
                 }
@@ -172,11 +174,11 @@ TEST_CASE("lexicographical comparison operators")
             {
                 {false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
                 {false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-                {false, false, false, true, false, false, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, true, true, true, true, true, true, true, false, false, true, true, true, true},
                 {false, false, false, false, false, false, false, false, true, true, false, false, true, true, true, true},
-                {false, false, true, true, false, true, false, true, true, true, false, false, true, true, true, true},
-                {false, false, true, true, false, false, false, true, true, true, false, false, true, true, true, true},
-                {false, false, true, true, true, true, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, true, false, true, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, true, false, false, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, true, true, true, false, true, true, true, false, false, true, true, true, true},
                 {false, false, false, true, false, false, false, false, true, true, false, false, true, true, true, true},
                 {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
                 {false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false},
@@ -194,6 +196,8 @@ TEST_CASE("lexicographical comparison operators")
                 {
                     CAPTURE(i);
                     CAPTURE(j);
+                    CAPTURE(j_values[i]);
+                    CAPTURE(j_values[j]);
                     // check precomputed values
                     CHECK( (j_values[i] < j_values[j]) == expected[i][j] );
                 }

@@ -77,6 +77,7 @@ TEST_CASE("constructors")
             auto t = json::value_t::boolean;
             json j(t);
             CHECK(j.type() == t);
+            CHECK(j == false);
         }
 
         SECTION("string")
@@ -84,6 +85,7 @@ TEST_CASE("constructors")
             auto t = json::value_t::string;
             json j(t);
             CHECK(j.type() == t);
+            CHECK(j == "");
         }
 
         SECTION("number_integer")
@@ -91,6 +93,7 @@ TEST_CASE("constructors")
             auto t = json::value_t::number_integer;
             json j(t);
             CHECK(j.type() == t);
+            CHECK(j == 0);
         }
 
         SECTION("number_unsigned")
@@ -98,6 +101,7 @@ TEST_CASE("constructors")
             auto t = json::value_t::number_unsigned;
             json j(t);
             CHECK(j.type() == t);
+            CHECK(j == 0);
         }
 
         SECTION("number_float")
@@ -105,6 +109,7 @@ TEST_CASE("constructors")
             auto t = json::value_t::number_float;
             json j(t);
             CHECK(j.type() == t);
+            CHECK(j == 0.0);
         }
     }
 

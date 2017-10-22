@@ -271,9 +271,13 @@ TEST_CASE("modifiers")
                 j.push_back({"key2", "bar"});
                 CHECK(j == json({{"key1", 1}, {"key2", "bar"}}));
 
-                json k = {{"key1", 1}};
-                CHECK_THROWS_AS(k.push_back({1, 2, 3, 4}), json::type_error&);
-                CHECK_THROWS_WITH(k.push_back({1, 2, 3, 4}), "[json.exception.type_error.308] cannot use push_back() with object");
+                // invalid values (no string/val pair)
+                CHECK_THROWS_AS(j.push_back({1}), json::type_error&);
+                CHECK_THROWS_WITH(j.push_back({1}), "[json.exception.type_error.308] cannot use push_back() with object");
+                CHECK_THROWS_AS(j.push_back({1,2}), json::type_error&);
+                CHECK_THROWS_WITH(j.push_back({1, 2}), "[json.exception.type_error.308] cannot use push_back() with object");
+                CHECK_THROWS_AS(j.push_back({1, 2, 3, 4}), json::type_error&);
+                CHECK_THROWS_WITH(j.push_back({1, 2, 3, 4}), "[json.exception.type_error.308] cannot use push_back() with object");
             }
         }
     }
