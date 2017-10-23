@@ -82,7 +82,7 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4389 /wd4309 /wd4566 /wd4996")
 
     if(MSVC_VERSION GREATER_EQUAL 1910)
-        # Enable c++17 support in Visual Studio 2017 (for testing string_view support)
+        # Enable c++17 support in Visual Studio 2017 (for testing perfect forwarding and transparent comparator in find() / count())
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
     endif()
 endif()

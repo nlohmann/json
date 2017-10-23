@@ -109,15 +109,13 @@ SOFTWARE.
     #define JSON_UNLIKELY(x)    x
 #endif
 
-// string_view support
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
-	#define JSON_HAS_STRING_VIEW
+// cpp language standard detection
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
+	#define JSON_HAS_CPP_17
+	#define JSON_HAS_CPP_14
+#elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
+	#define JSON_HAS_CPP_14
 #endif
-
-#if defined(JSON_HAS_STRING_VIEW)
-	#include <string_view>
-#endif
-
 
 /*!
 @brief namespace for Niels Lohmann
@@ -7600,26 +7598,18 @@ class basic_json
     specified "unordered" nature of JSON objects.
     */
 
-#if defined(JSON_HAS_STRING_VIEW)
-	// if std::string_view is to be used the object_t must
-	// be declared with a transparent comparator
-	// https://stackoverflow.com/questions/35525777/use-of-string-view-for-map-lookup
-	using object_t = ObjectType<StringType,
-		basic_json,
-		std::less<>,
-		AllocatorType<std::pair<const StringType,
-		basic_json>>>;
-
-	using object_comparator_key_t = std::string_view;
+#if defined(JSON_HAS_CPP_14)
+    // Use transparent comparator if possible, combined with perfect forwarding
+    // on find() and count() calls prevents unnecessary string construction.
+    using object_comparator_t = std::less<>;
 #else
-	using object_t = ObjectType<StringType,
-		basic_json,
-		std::less<StringType>,
-		AllocatorType<std::pair<const StringType,
-		basic_json>>>;
-
-	using object_comparator_key_t = typename object_t::key_type;
+    using object_comparator_t = std::less<StringType>;
 #endif
+    using object_t = ObjectType<StringType,
+        basic_json,
+        object_comparator_t,
+        AllocatorType<std::pair<const StringType,
+        basic_json>>>;
 
     /*!
     @brief a type for an array
@@ -9868,7 +9858,7 @@ class basic_json
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
-#if defined(JSON_HAS_STRING_VIEW)
+#if defined(JSON_HAS_CPP_17)
                    and not std::is_same<ValueType, typename std::string_view>::value
 #endif
                    , int >::type = 0 >
@@ -10906,7 +10896,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    iterator find(object_comparator_key_t key)
+    iterator find(typename object_t::key_type key)
     {
         auto result = end();
 
@@ -10920,9 +10910,9 @@ class basic_json
 
     /*!
     @brief find an element in a JSON object
-    @copydoc find(object_transparent_comparator_key_t)
+    @copydoc find(typename object_t::key_type)
     */
-    const_iterator find(object_comparator_key_t key) const
+    const_iterator find(typename object_t::key_type key) const
     {
         auto result = cend();
 
@@ -10933,6 +10923,42 @@ class basic_json
 
         return result;
     }
+
+#ifdef JSON_HAS_CPP_14
+    /*!
+    @brief find an element in a JSON object
+    @copydoc find(typename object_t::key_type)
+    */
+    template<typename KeyT>
+    iterator find(KeyT&& key)
+    {
+        auto result = end();
+
+        if (is_object())
+        {
+            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+        }
+
+        return result;
+    }
+
+    /*!
+    @brief find an element in a JSON object
+    @copydoc find(typename object_t::key_type)
+    */
+    template<typename KeyT>
+    const_iterator find(KeyT&& key) const
+    {
+        auto result = cend();
+
+        if (is_object())
+        {
+            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+        }
+
+        return result;
+    }
+#endif
 
     /*!
     @brief returns the number of occurrences of a key in a JSON object
@@ -10955,12 +10981,24 @@ class basic_json
 
     @since version 1.0.0
     */
-    size_type count(object_comparator_key_t key) const
+    size_type count(typename object_t::key_type key) const
     {
         // return 0 for all nonobject types
         return is_object() ? m_value.object->count(key) : 0;
     }
 
+#ifdef JSON_HAS_CPP_14
+    /*!
+    @brief returns the number of occurrences of a key in a JSON object
+    @copydoc count(typename object_t::key_type)
+    */
+    template<typename KeyT>
+    size_type count(KeyT&& key) const
+    {
+        // return 0 for all nonobject types
+        return is_object() ? m_value.object->count(std::forward<KeyT>(key)) : 0;
+    }
+#endif
     /// @}
 
 
