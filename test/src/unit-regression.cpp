@@ -1254,6 +1254,7 @@ TEST_CASE("regression tests")
         }
     }
 
+/*
     SECTION("issue #714 - throw std::ios_base::failure exception when failbit set to true")
     {
         {
@@ -1280,4 +1281,5 @@ TEST_CASE("regression tests")
             CHECK_NOTHROW(nlohmann::json::from_cbor(is));
         }
     }
+*/
 }
