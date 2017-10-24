@@ -10884,7 +10884,7 @@ class basic_json
     @note This method always returns @ref end() when executed on a JSON type
           that is not an object.
 
-    @param[in] key key value of the element to search for
+    @param[in] key key value of the element to search for.
 
     @return Iterator to an element with key equivalent to @a key. If no such
     element is found or the JSON value is not an object, past-the-end (see
@@ -10895,39 +10895,6 @@ class basic_json
     @liveexample{The example shows how `find()` is used.,find__key_type}
 
     @since version 1.0.0
-    */
-    iterator find(typename object_t::key_type key)
-    {
-        auto result = end();
-
-        if (is_object())
-        {
-            result.m_it.object_iterator = m_value.object->find(key);
-        }
-
-        return result;
-    }
-
-    /*!
-    @brief find an element in a JSON object
-    @copydoc find(typename object_t::key_type)
-    */
-    const_iterator find(typename object_t::key_type key) const
-    {
-        auto result = cend();
-
-        if (is_object())
-        {
-            result.m_it.object_iterator = m_value.object->find(key);
-        }
-
-        return result;
-    }
-
-#ifdef JSON_HAS_CPP_14
-    /*!
-    @brief find an element in a JSON object
-    @copydoc find(typename object_t::key_type)
     */
     template<typename KeyT>
     iterator find(KeyT&& key)
@@ -10944,7 +10911,7 @@ class basic_json
 
     /*!
     @brief find an element in a JSON object
-    @copydoc find(typename object_t::key_type)
+    @copydoc find(KeyT&&)
     */
     template<typename KeyT>
     const_iterator find(KeyT&& key) const
@@ -10958,7 +10925,6 @@ class basic_json
 
         return result;
     }
-#endif
 
     /*!
     @brief returns the number of occurrences of a key in a JSON object
@@ -10981,24 +10947,13 @@ class basic_json
 
     @since version 1.0.0
     */
-    size_type count(typename object_t::key_type key) const
-    {
-        // return 0 for all nonobject types
-        return is_object() ? m_value.object->count(key) : 0;
-    }
-
-#ifdef JSON_HAS_CPP_14
-    /*!
-    @brief returns the number of occurrences of a key in a JSON object
-    @copydoc count(typename object_t::key_type)
-    */
     template<typename KeyT>
     size_type count(KeyT&& key) const
     {
         // return 0 for all nonobject types
         return is_object() ? m_value.object->count(std::forward<KeyT>(key)) : 0;
     }
-#endif
+
     /// @}
 
 
