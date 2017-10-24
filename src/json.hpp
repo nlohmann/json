@@ -506,11 +506,18 @@ class other_error : public exception
 template<class Exception>
 void try_throw_exception(exception* ex)
 {
+#ifdef JSON_EXCEPTIONS_ENABLED
+	// Only use RTTI if necessary (exceptions are enabled). This way
+	// can be compiled with no RTTI.
     Exception* down = dynamic_cast<Exception*>(ex);
     if(down != nullptr)
     {
         JSON_THROW(*down);
     }
+#else
+    ex = ex; // suppress unreferenced formal parameter warnings
+	std::abort();
+#endif
 }
 
 /*!
