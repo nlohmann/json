@@ -7606,10 +7606,10 @@ class basic_json
     using object_comparator_t = std::less<StringType>;
 #endif
     using object_t = ObjectType<StringType,
-        basic_json,
-        object_comparator_t,
-        AllocatorType<std::pair<const StringType,
-        basic_json>>>;
+      basic_json,
+      object_comparator_t,
+      AllocatorType<std::pair<const StringType,
+      basic_json>>>;
 
     /*!
     @brief a type for an array
