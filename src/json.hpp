@@ -91,10 +91,10 @@ SOFTWARE.
 
 // allow to disable exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && not defined(JSON_NOEXCEPTION)
+    #define JSON_EXCEPTIONS_ENABLED
     #define JSON_THROW(exception) throw exception
     #define JSON_TRY try
     #define JSON_CATCH(exception) catch(exception)
-    #define JSON_USE_RUNTIME_ERROR_STORAGE
 #else
     #define JSON_THROW(exception) std::abort()
     #define JSON_TRY if(true)
@@ -203,8 +203,8 @@ caught.,exception}
 class exception : public std::exception
 {
   public:
-    /// returns the explanatory string
-#if defined(JSON_USE_RUNTIME_ERROR_STORAGE)
+    /// returns the explanatory string.
+#if defined(JSON_EXCEPTIONS_ENABLED)
     const char* what() const noexcept override
     {
         return m.what();
@@ -228,10 +228,14 @@ class exception : public std::exception
     }
 
   private:
+#if defined(JSON_EXCEPTIONS_ENABLED)
     /// an exception object as storage for error messages
-#if defined(JSON_USE_RUNTIME_ERROR_STORAGE)
     std::runtime_error m;
 #else
+    /// if exceptions are disabled then std::runtime_error is not
+    /// guaranteed to contain storage for the string. Use std::string
+    /// instead because we aren't actually throwing this object. Just
+    /// passing it back as an out param.
     std::string m;
 #endif
 };
@@ -14809,10 +14813,10 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #endif
 
 // clean up
+#undef JSON_EXCEPTIONS_DISABLED
 #undef JSON_CATCH
 #undef JSON_THROW
 #undef JSON_TRY
-#undef JSON_USE_RUNTIME_ERROR_STORAGE
 #undef JSON_LIKELY
 #undef JSON_UNLIKELY
 #undef JSON_DEPRECATED
