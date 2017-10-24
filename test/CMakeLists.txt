@@ -80,11 +80,6 @@ if(MSVC)
 	# Disable warning C4566: character represented by universal-character-name '\uFF01' cannot be represented in the current code page (1252)
 	# Disable warning C4996: 'nlohmann::basic_json<std::map,std::vector,std::string,bool,int64_t,uint64_t,double,std::allocator,nlohmann::adl_serializer>::operator <<': was declared deprecated
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4389 /wd4309 /wd4566 /wd4996")
-
-    if(MSVC_VERSION GREATER_EQUAL 1910)
-        # Enable c++17 support in Visual Studio 2017 (for testing perfect forwarding and transparent comparator in find() / count())
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
-    endif()
 endif()
 
 #############################################################################
