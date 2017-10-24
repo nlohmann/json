@@ -94,6 +94,7 @@ SOFTWARE.
     #define JSON_THROW(exception) throw exception
     #define JSON_TRY try
     #define JSON_CATCH(exception) catch(exception)
+    #define JSON_USE_RUNTIME_ERROR_STORAGE
 #else
     #define JSON_THROW(exception) std::abort()
     #define JSON_TRY if(true)
@@ -203,10 +204,17 @@ class exception : public std::exception
 {
   public:
     /// returns the explanatory string
+#if defined(JSON_USE_RUNTIME_ERROR_STORAGE)
     const char* what() const noexcept override
     {
         return m.what();
     }
+#else
+    const char* what() const noexcept override
+    {
+        return m.c_str();
+    }
+#endif
 
     /// the id of the exception
     const int id;
@@ -221,7 +229,11 @@ class exception : public std::exception
 
   private:
     /// an exception object as storage for error messages
+#if defined(JSON_USE_RUNTIME_ERROR_STORAGE)
     std::runtime_error m;
+#else
+    std::string m;
+#endif
 };
 
 /*!
@@ -14800,6 +14812,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_CATCH
 #undef JSON_THROW
 #undef JSON_TRY
+#undef JSON_USE_RUNTIME_ERROR_STORAGE
 #undef JSON_LIKELY
 #undef JSON_UNLIKELY
 #undef JSON_DEPRECATED
