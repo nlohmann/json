@@ -3334,7 +3334,7 @@ class parser
                 // throw in case of infinity or NAN
                 if (JSON_UNLIKELY(not std::isfinite(result.m_value.number_float)))
                 {
-                    ex = std::make_unique<out_of_range>(406, "number overflow parsing '" + m_lexer.get_token_string() + "'");
+                    ex = std::unique_ptr<exception>(new out_of_range(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
                     errored = true;
                     return;
                 }
@@ -3521,7 +3521,7 @@ class parser
             error_msg += "; expected " + std::string(lexer_t::token_type_name(expected));
         }
 
-        return std::make_unique<parse_error>(101, m_lexer.get_position(), error_msg);
+        return std::unique_ptr<exception>(new parse_error(101, m_lexer.get_position(), error_msg));
     }
 
   private:
