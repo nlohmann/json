@@ -501,24 +501,27 @@ class other_error : public exception
 };
 
 /*!
-@brief helper function to throw the a downcasted exception.
+@brief helper function to throw a downcasted exception.
 */
+#ifdef JSON_EXCEPTIONS_ENABLED
 template<class Exception>
 void try_throw_exception(exception* ex)
 {
-#ifdef JSON_EXCEPTIONS_ENABLED
-    // Only use RTTI if necessary (exceptions are enabled). This way
-    // can be compiled with no RTTI.
+	// Only use RTTI if necessary (exceptions are enabled). This way
+	// can be compiled with no RTTI.
     Exception* down = dynamic_cast<Exception*>(ex);
     if(down != nullptr)
     {
         JSON_THROW(*down);
     }
-#else
-    ex = ex; // suppress unreferenced formal parameter warnings
-    std::abort();
-#endif
 }
+#else
+template<class Exception>
+void try_throw_exception(exception* /*unused*/)
+{
+	std::abort();
+}
+#endif
 
 /*!
 @brief helper function to throw the correct downcasted exception.
