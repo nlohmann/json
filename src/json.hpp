@@ -534,7 +534,7 @@ void try_throw_any_exception(exception* ex)
         try_throw_exception<invalid_iterator>(ex);
         try_throw_exception<type_error>(ex);
         try_throw_exception<out_of_range>(ex);
-        try_throw_exception<other_error>(ex);
+        try_throw_exception<other_error>(ex); // LCOV_EXCL_LINE
         assert(false); // LCOV_EXCL_LINE
     }
 }
