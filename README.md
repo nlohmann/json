@@ -881,6 +881,7 @@ I deeply appreciate the help of the following people.
 - [Nate Vargas](https://github.com/eld00d) added a Doxygen tag file.
 - [pvleuven](https://github.com/pvleuven) helped fixing a warning in ICC.
 - [Pavel](https://github.com/crea7or) helped fixing some warnings in MSVC.
+- [Jamie Seward](https://github.com/jseward) avoided unneccessary string copies in `find()` and `count()`.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
