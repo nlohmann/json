@@ -8160,13 +8160,11 @@ class basic_json
     @brief per-element parser callback type
 
     With a parser callback function, the result of parsing a JSON text can be
-    influenced. When passed to @ref parse(std::istream&, const
-    parser_callback_t) or @ref parse(const CharT, const parser_callback_t),
-    it is called on certain events (passed as @ref parse_event_t via parameter
-    @a event) with a set recursion depth @a depth and context JSON value
-    @a parsed. The return value of the callback function is a boolean
-    indicating whether the element that emitted the callback shall be kept or
-    not.
+    influenced. When passed to @ref parse, it is called on certain events
+    (passed as @ref parse_event_t via parameter @a event) with a set recursion
+    depth @a depth and context JSON value @a parsed. The return value of the
+    callback function is a boolean indicating whether the element that emitted
+    the callback shall be kept or not.
 
     We distinguish six scenarios (determined by the event type) in which the
     callback function can be called. The following table describes the values
@@ -8203,8 +8201,7 @@ class basic_json
     should be kept (`true`) or not (`false`). In the latter case, it is either
     skipped completely or replaced by an empty discarded object.
 
-    @sa @ref parse(std::istream&, parser_callback_t) or
-    @ref parse(const CharT, const parser_callback_t) for examples
+    @sa @ref parse for examples
 
     @since version 1.0.0
     */
@@ -12948,6 +12945,8 @@ class basic_json
     @param[in] cb  a parser callback function of type @ref parser_callback_t
     which is used to control the deserialization by filtering unwanted values
     (optional)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
 
     @return result of the deserialization
 
