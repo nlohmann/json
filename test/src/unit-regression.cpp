@@ -36,6 +36,22 @@ using nlohmann::json;
 #include <list>
 #include <cstdio>
 
+namespace
+{
+  struct nocopy
+  {
+    nocopy() = default;
+    nocopy(const nocopy &) = delete;
+
+    int val = 0;
+
+    friend void to_json(json& j, const nocopy& n)
+    {
+      j = {{"val", n.val}};
+    }
+  };
+}
+
 TEST_CASE("regression tests")
 {
     SECTION("issue #60 - Double quotation mark is not parsed correctly")
@@ -1282,4 +1298,12 @@ TEST_CASE("regression tests")
             }
         }
     */
+
+    SECTION("issue #805 - copy constructor is used with std::initializer_list constructor.")
+    {
+      nocopy n;
+      json j;
+      j = {{"nocopy", n}};
+      CHECK(j["nocopy"]["val"] == 0);
+    }
 }
