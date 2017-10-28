@@ -3599,7 +3599,7 @@ template<typename BasicJsonType> struct internal_iterator
 template<typename IteratorType> class iteration_proxy;
 
 /*!
-@brief a template for a random access iterator for the @ref basic_json class
+@brief a template for a bidirectional iterator for the @ref basic_json class
 
 This class implements a both iterators (iterator and const_iterator) for the
 @ref basic_json class.
@@ -3611,14 +3611,15 @@ This class implements a both iterators (iterator and const_iterator) for the
 
 @requirement The class satisfies the following concept requirements:
 -
-[RandomAccessIterator](http://en.cppreference.com/w/cpp/concept/RandomAccessIterator):
-  The iterator that can be moved to point (forward and backward) to any
-  element in constant time.
+[BidirectionalIterator](http://en.cppreference.com/w/cpp/concept/BidirectionalIterator):
+  The iterator that can be moved can be moved in both directions (i.e.
+  incremented and decremented).
 
-@since version 1.0.0, simplified in version 2.0.9
+@since version 1.0.0, simplified in version 2.0.9, change to bidirectional
+       iterators in version 3.0.0 (see https://github.com/nlohmann/json/issues/593)
 */
 template<typename BasicJsonType>
-class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJsonType>
+class iter_impl : public std::iterator<std::bidirectional_iterator_tag, BasicJsonType>
 {
     /// allow basic_json to access private members
     friend iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
@@ -3645,8 +3646,6 @@ class iter_impl : public std::iterator<std::random_access_iterator_tag, BasicJso
         typename std::conditional<std::is_const<BasicJsonType>::value,
         typename BasicJsonType::const_reference,
         typename BasicJsonType::reference>::type;
-    /// the category of the iterator
-    using iterator_category = std::bidirectional_iterator_tag;
 
     /// default constructor
     iter_impl() = default;
@@ -4279,9 +4278,9 @@ create @ref const_reverse_iterator).
 
 @requirement The class satisfies the following concept requirements:
 -
-[RandomAccessIterator](http://en.cppreference.com/w/cpp/concept/RandomAccessIterator):
-  The iterator that can be moved to point (forward and backward) to any
-  element in constant time.
+[BidirectionalIterator](http://en.cppreference.com/w/cpp/concept/BidirectionalIterator):
+  The iterator that can be moved can be moved in both directions (i.e.
+  incremented and decremented).
 - [OutputIterator](http://en.cppreference.com/w/cpp/concept/OutputIterator):
   It is possible to write to the pointed-to element (only if @a Base is
   @ref iterator).
