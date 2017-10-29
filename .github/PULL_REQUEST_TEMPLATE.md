@@ -1,28 +1,12 @@
+[Describe your pull request here. Please read the text below the line, and make sure you follow the checklist.]
 
-## Files to change
+* * *
 
-There are currently two files which need to be edited:
+## Pull request checklist
 
-1. [`src/json.hpp`](https://github.com/nlohmann/json/blob/master/src/json.hpp)
-
-2. [`test/src/unit.cpp`](https://github.com/nlohmann/json/blob/master/test/unit.cpp) - This contains the [Catch](https://github.com/philsquared/Catch) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
-
-   If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled and executed with
-
-    ```sh
-    $ mkdir build
-    $ cd build
-    $ cmake ..
-    $ make
-    $ ctest
-    ```
-
-   The test cases are also executed with several different compilers on [Travis](https://travis-ci.org/nlohmann/json) once you open a pull request.
-
-
-## Note
-
-- If you open a pull request, the code will be automatically tested with [Valgrind](http://valgrind.org)'s Memcheck tool to detect memory leaks. Please be aware that the execution with Valgrind _may_ in rare cases yield different behavior than running the code directly. This can result in failing unit tests which run successfully without Valgrind.
+- [ ]  Changes are described in the pull request, or an [existing issue is referenced](https://github.com/nlohmann/json/issues).
+- [ ]  The test suite [compiles and runs](https://github.com/nlohmann/json/blob/develop/README.md#execute-unit-tests) without error.
+- [ ]  [Code coverage](https://coveralls.io/github/nlohmann/json) is 100%. Test cases can be added by editing the [test suite](https://github.com/nlohmann/json/tree/develop/test/src).
 
 ## Please don't
 

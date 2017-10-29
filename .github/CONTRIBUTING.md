@@ -22,18 +22,24 @@ Clearly describe the issue:
 - If you propose a change or addition, try to give an **example** how the improved code could look like or how to use it.
 - If you found a compilation error, please tell us which **compiler** (version and operating system) you used and paste the (relevant part of) the error messages to the ticket.
 
+Please stick to the [issue template](https://github.com/nlohmann/json/blob/develop/.github/ISSUE_TEMPLATE.md) if possible.
+
 ## Files to change
 
 There are currently two files which need to be edited:
 
 1. [`src/json.hpp`](https://github.com/nlohmann/json/blob/master/src/json.hpp)
 
-2. [`test/src/unit.cpp`](https://github.com/nlohmann/json/blob/master/test/unit.cpp) - This contains the [Catch](https://github.com/philsquared/Catch) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
+2. [`test/src/unit-*.cpp`](https://github.com/nlohmann/json/tree/develop/test/src) - These files contain the [Catch](https://github.com/philsquared/Catch) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
 
    If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled and executed with
 
    ```sh
-   make check
+   $ mkdir build
+   $ cd build
+   $ cmake ..
+   $ cmake --build .
+   $ ctest
    ```
 
    The test cases are also executed with several different compilers on [Travis](https://travis-ci.org/nlohmann/json) once you open a pull request.
