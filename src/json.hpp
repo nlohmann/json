@@ -6789,7 +6789,7 @@ class json_ref
     {}
 
     template <class... Args>
-    json_ref(Args&&... args)
+    json_ref(Args&& ... args)
         : owned_value(std::forward<Args>(args)...),
           value_ref(&owned_value),
           is_rvalue(true)
