@@ -116,6 +116,21 @@ SOFTWARE.
 #elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
     #define JSON_HAS_CPP_14
 #endif
+/*
+In Visual Studio 2017 there are warnings on min
+and max in this header having not enough args.
+This is because in C min and max take args and
+wll are not needed anyway so we undefine them
+first to silence these annoying warnings!!!
+*/
+#if (_MSC_VER >= 1911)
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+#endif
 
 /*!
 @brief namespace for Niels Lohmann
