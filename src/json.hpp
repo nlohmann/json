@@ -120,16 +120,14 @@ SOFTWARE.
 In Visual Studio 2017 there are warnings on min
 and max in this header having not enough args.
 This is because in C min and max take args and
-wll are not needed anyway so we undefine them
+well are not needed anyway so we undefine them
 first to silence these annoying warnings!!!
 */
-#if (_MSC_VER >= 1911)
 #ifdef min
 #undef min
 #endif
 #ifdef max
 #undef max
-#endif
 #endif
 
 /*!
