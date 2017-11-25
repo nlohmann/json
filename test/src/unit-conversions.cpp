@@ -1009,6 +1009,30 @@ TEST_CASE("value conversion")
                 auto m5 = j5.get<std::forward_list<std::string>>();
             }
 
+            SECTION("std::array")
+            {
+                auto m1 = j1.get<std::array<int, 4>>();
+                auto m2 = j2.get<std::array<unsigned int, 3>>();
+                auto m3 = j3.get<std::array<double, 4>>();
+                auto m4 = j4.get<std::array<bool, 3>>();
+                auto m5 = j5.get<std::array<std::string, 3>>();
+
+                SECTION("std::array is larger than JSON")
+                {
+                    std::array<int, 6> arr6 = {1, 2, 3, 4, 5, 6};
+                    CHECK_THROWS_AS(arr6 = j1, json::out_of_range);
+                    CHECK_THROWS_WITH(arr6 = j1, "[json.exception.out_of_range.401] array index 4 is out of range");
+                }
+
+                SECTION("std::array is smaller than JSON")
+                {
+                    std::array<int, 2> arr2 = {8, 9};
+                    arr2 = j1;
+                    CHECK(arr2[0] == 1);
+                    CHECK(arr2[1] == 2);
+                }
+            }
+
             SECTION("std::valarray")
             {
                 auto m1 = j1.get<std::valarray<int>>();
