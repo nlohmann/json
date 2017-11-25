@@ -1305,4 +1305,12 @@ TEST_CASE("regression tests")
         j = {{"nocopy", n}};
         CHECK(j["nocopy"]["val"] == 0);
     }
+
+    SECTION("issue #843 - converting to array not working")
+    {
+        json j;
+        std::array<int, 4> ar = {1, 1, 1, 1};
+        j = ar;
+        ar = j;
+    }
 }

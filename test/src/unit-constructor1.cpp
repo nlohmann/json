@@ -295,9 +295,12 @@ TEST_CASE("constructors")
         {
             json j{1};
 
-            CHECK_THROWS((j.get<std::pair<int, int>>()));
-            CHECK_THROWS((j.get<std::tuple<int, int>>()));
-            CHECK_THROWS((j.get<std::array<int, 3>>()));
+            CHECK_THROWS_AS((j.get<std::pair<int, int>>()), json::out_of_range);
+            CHECK_THROWS_WITH((j.get<std::pair<int, int>>()), "[json.exception.out_of_range.401] array index 1 is out of range");
+            CHECK_THROWS_AS((j.get<std::tuple<int, int>>()), json::out_of_range);
+            CHECK_THROWS_WITH((j.get<std::tuple<int, int>>()), "[json.exception.out_of_range.401] array index 1 is out of range");
+            CHECK_THROWS_AS((j.get<std::array<int, 3>>()), json::out_of_range);
+            CHECK_THROWS_WITH((j.get<std::array<int, 3>>()), "[json.exception.out_of_range.401] array index 1 is out of range");
         }
 
         SECTION("std::forward_list<json>")
