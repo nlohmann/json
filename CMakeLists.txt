@@ -35,7 +35,14 @@ target_include_directories(
     ${NLOHMANN_JSON_TARGET_NAME}
     INTERFACE $<INSTALL_INTERFACE:include/>
 )
-            
+
+target_sources(
+    ${NLOHMANN_JSON_TARGET_NAME} 
+    INTERFACE 
+        $<INSTALL_INTERFACE:include/json.natvis>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NLOHMANN_JSON_SOURCE_DIR}/json.natvis>  
+)
+           
 ##
 ## TESTS
 ## create and configure the unit test target
