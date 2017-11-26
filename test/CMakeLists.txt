@@ -101,7 +101,7 @@ foreach(file ${files})
 
     target_compile_definitions(${testcase} PRIVATE CATCH_CONFIG_FAST_COMPILE)
     target_include_directories(${testcase} PRIVATE "thirdparty/catch")
-    target_link_libraries(${testcase} ${JSON_TARGET_NAME})
+    target_link_libraries(${testcase} ${NLOHMANN_JSON_TARGET_NAME})
 
     if(NOT MSVC)
         set_target_properties(${testcase} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-float-equal")
