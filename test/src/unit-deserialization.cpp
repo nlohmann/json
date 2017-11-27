@@ -103,7 +103,8 @@ TEST_CASE("deserialization")
             CHECK(not json::accept(ss3));
 
             json j_error;
-            CHECK_NOTHROW(j_error = json::parse(ss1, nullptr, false));
+            std::unique_ptr<json::exception> ex;
+            CHECK_NOTHROW(j_error = json::parse(ss1, ex));
             CHECK(j_error.is_discarded());
         }
 
@@ -116,7 +117,8 @@ TEST_CASE("deserialization")
             CHECK(not json::accept(s));
 
             json j_error;
-            CHECK_NOTHROW(j_error = json::parse(s, nullptr, false));
+            std::unique_ptr<json::exception> ex;
+            CHECK_NOTHROW(j_error = json::parse(s, ex));
             CHECK(j_error.is_discarded());
         }
 
@@ -272,7 +274,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -283,7 +286,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -294,7 +298,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -305,7 +310,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -316,7 +322,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -329,7 +336,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -340,7 +348,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -351,7 +360,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -362,7 +372,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -373,7 +384,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -384,7 +396,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -395,7 +408,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -406,7 +420,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -417,7 +432,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -428,7 +444,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
 
@@ -439,7 +456,8 @@ TEST_CASE("deserialization")
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
-                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), nullptr, false));
+                std::unique_ptr<json::exception> ex;
+                CHECK_NOTHROW(j_error = json::parse(std::begin(v), std::end(v), ex));
                 CHECK(j_error.is_discarded());
             }
         }
