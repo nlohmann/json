@@ -36,15 +36,15 @@ target_include_directories(
     INTERFACE $<INSTALL_INTERFACE:include/>
 )
 
-##
-## add debug view defintion file for msvc
-##
+## add debug view defintion file for msvc (natvis) [cmake <= 3.2.2 does not support export of source files]
 if (MSVC AND CMAKE_VERSION VERSION_GREATER "3.2.2")
+    set(NLOHMANN_ADD_NATVIS TRUE)
+    set(NLOHMANN_NATVIS_FILE "nlohmann_json.natvis")
     target_sources(
         ${NLOHMANN_JSON_TARGET_NAME} 
         INTERFACE 
-            $<INSTALL_INTERFACE:include/json.natvis>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NLOHMANN_JSON_SOURCE_DIR}/json.natvis>  
+            $<INSTALL_INTERFACE:${NLOHMANN_NATVIS_FILE}>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NLOHMANN_NATVIS_FILE}>  
     )
 endif()
            
@@ -79,6 +79,12 @@ install(
     FILES ${NLOHMANN_JSON_CMAKE_PROJECT_CONFIG_FILE} ${NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE}
     DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
 )
+if (NLOHMANN_ADD_NATVIS)
+    install(
+        FILES ${NLOHMANN_NATVIS_FILE}
+        DESTINATION .
+)
+endif()
 install(
     TARGETS ${NLOHMANN_JSON_TARGET_NAME}
     EXPORT ${NLOHMANN_JSON_TARGETS_EXPORT_NAME}
