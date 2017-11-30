@@ -13659,6 +13659,59 @@ class basic_json
     }
 
     /*!
+    @brief execute a provided function once for each item in a container
+
+    Iterates over a list of elements, yielding each in turn to an iteratee function. The iteratee is bound to the context object, if one is passed. Each invocation of iteratee is called with three arguments: (element, index, list). If list is a JavaScript object, iteratee's arguments will be (value, key, list). Returns the list for chaining.
+
+    @param iteratee  Callable object accepting 3 arguments
+    @param iteratee.value The value of the current item
+    @param iteratee.key The key/index of the current item
+    @param iteratee.object The JSON container being iterated
+
+    @throw type_error.302 if not is_object() or not is_array()
+
+    @complexity Linear in the size the JSON container.
+
+    @example j["list"].each([](auto key, auto value, auto& object){ object[key] = std::to_string(value); });
+
+    @since never
+    */
+    template <typename Function>
+    void each(Function function)
+    {
+        basic_json& value = *this;
+        switch (value.m_type)
+        {
+            case detail::value_t::array:
+            {
+                // iterate array and use index as reference string
+                for (std::size_t i = 0; i < value.m_value.array->size(); ++i)
+                {
+                    function(value.m_value.array->operator[](i), i, value);
+                }
+            }
+            break;
+
+            case detail::value_t::object:
+            {
+                // iterate object and use keys as reference string
+                for (const auto& element : *value.m_value.object)
+                {
+                    function(element.second, element.first, value);
+                }
+                break;
+            }
+
+            default:
+            {
+                // maybe throw an error
+                JSON_THROW(type_error::create(302, "type must be array or object, but is " + std::string(value.type_name())));
+                break;
+            }
+        }
+    }
+
+    /*!
     @brief return flattened JSON value
 
     The function creates a JSON object whose keys are JSON pointers (see [RFC
