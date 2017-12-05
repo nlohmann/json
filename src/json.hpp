@@ -1351,6 +1351,13 @@ struct to_json_fn
     {
         static_assert(sizeof(BasicJsonType) == 0,
                       "could not find to_json() method in T's namespace");
+
+#ifdef _MSC_VER
+	// Visual Studio does not show a stacktrace for the above assert.
+	using decayed = uncvref_t<T>;
+        static_assert(sizeof(typename decayed::force_msvc_stacktrace) == 0,
+                      "forcing msvc stacktrace to show which T we're talking about.");
+#endif
     }
 
   public:
@@ -1378,6 +1385,12 @@ struct from_json_fn
     {
         static_assert(sizeof(BasicJsonType) == 0,
                       "could not find from_json() method in T's namespace");
+#ifdef _MSC_VER
+	// Visual Studio does not show a stacktrace for the above assert.
+	using decayed = uncvref_t<T>;
+        static_assert(sizeof(typename decayed::force_msvc_stacktrace) == 0,
+                      "forcing msvc stacktrace to show which T we're talking about.");
+#endif
     }
 
   public:
