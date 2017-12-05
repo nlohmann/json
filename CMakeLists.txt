@@ -33,7 +33,9 @@ add_library(${NLOHMANN_JSON_TARGET_NAME} INTERFACE)
 
 target_include_directories(
     ${NLOHMANN_JSON_TARGET_NAME}
-    INTERFACE $<INSTALL_INTERFACE:include/>
+    INTERFACE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+    $<INSTALL_INTERFACE:include>
 )
 
 ## add debug view defintion file for msvc (natvis) [cmake <= 3.2.2 does not support export of source files]
