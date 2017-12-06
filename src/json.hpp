@@ -1353,8 +1353,8 @@ struct to_json_fn
                       "could not find to_json() method in T's namespace");
 
 #ifdef _MSC_VER
-	// Visual Studio does not show a stacktrace for the above assert.
-	using decayed = uncvref_t<T>;
+        // Visual Studio does not show a stacktrace for the above assert.
+        using decayed = uncvref_t<T>;
         static_assert(sizeof(typename decayed::force_msvc_stacktrace) == 0,
                       "forcing msvc stacktrace to show which T we're talking about.");
 #endif
@@ -1386,8 +1386,8 @@ struct from_json_fn
         static_assert(sizeof(BasicJsonType) == 0,
                       "could not find from_json() method in T's namespace");
 #ifdef _MSC_VER
-	// Visual Studio does not show a stacktrace for the above assert.
-	using decayed = uncvref_t<T>;
+        // Visual Studio does not show a stacktrace for the above assert.
+        using decayed = uncvref_t<T>;
         static_assert(sizeof(typename decayed::force_msvc_stacktrace) == 0,
                       "forcing msvc stacktrace to show which T we're talking about.");
 #endif
@@ -7945,14 +7945,14 @@ class basic_json
     {
         AllocatorType<T> alloc;
 
-		using AllocatorTraits = std::allocator_traits<AllocatorType<T>>;
+        using AllocatorTraits = std::allocator_traits<AllocatorType<T>>;
 
         auto deleter = [&](T * object)
         {
-			AllocatorTraits::deallocate(alloc, object, 1);
+            AllocatorTraits::deallocate(alloc, object, 1);
         };
         std::unique_ptr<T, decltype(deleter)> object(AllocatorTraits::allocate(alloc, 1), deleter);
-		AllocatorTraits::construct(alloc, object.get(), std::forward<Args>(args)...);
+        AllocatorTraits::construct(alloc, object.get(), std::forward<Args>(args)...);
         assert(object != nullptr);
         return object.release();
     }
@@ -8115,37 +8115,37 @@ class basic_json
 
         void destroy(value_t t)
         {
-			switch (t)
-			{
-				case value_t::object:
-				{
-					AllocatorType<object_t> alloc;
-					std::allocator_traits<decltype(alloc)>::destroy(alloc, object);
-					std::allocator_traits<decltype(alloc)>::deallocate(alloc, object, 1);
-					break;
-				}
+            switch (t)
+            {
+                case value_t::object:
+                {
+                    AllocatorType<object_t> alloc;
+                    std::allocator_traits<decltype(alloc)>::destroy(alloc, object);
+                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, object, 1);
+                    break;
+                }
 
-				case value_t::array:
-				{
-					AllocatorType<array_t> alloc;
-					std::allocator_traits<decltype(alloc)>::destroy(alloc, array);
-					std::allocator_traits<decltype(alloc)>::deallocate(alloc, array, 1);
-					break;
-				}
+                case value_t::array:
+                {
+                    AllocatorType<array_t> alloc;
+                    std::allocator_traits<decltype(alloc)>::destroy(alloc, array);
+                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, array, 1);
+                    break;
+                }
 
-				case value_t::string:
-				{
-					AllocatorType<string_t> alloc;
-					std::allocator_traits<decltype(alloc)>::destroy(alloc, string);
-					std::allocator_traits<decltype(alloc)>::deallocate(alloc, string, 1);
-					break;
-				}
+                case value_t::string:
+                {
+                    AllocatorType<string_t> alloc;
+                    std::allocator_traits<decltype(alloc)>::destroy(alloc, string);
+                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, string, 1);
+                    break;
+                }
 
-				default:
-				{
-					break;
-				}
-			}
+                default:
+                {
+                    break;
+                }
+            }
         }
     };
 
