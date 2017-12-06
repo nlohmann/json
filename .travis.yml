@@ -134,6 +134,12 @@ matrix:
   - os: osx
     osx_image: xcode9
 
+  - os: osx
+    osx_image: xcode9.1
+
+  - os: osx
+    osx_image: xcode9.2
+
   # Linux / GCC
 
   - os: linux
