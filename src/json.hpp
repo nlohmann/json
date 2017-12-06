@@ -8115,37 +8115,37 @@ class basic_json
 
         void destroy(value_t t)
         {
-            switch (t)
-            {
-                case value_t::object:
-                {
-                    AllocatorType<object_t> alloc;
-                    alloc.destroy(object);
-                    alloc.deallocate(object, 1);
-                    break;
-                }
+			switch (t)
+			{
+				case value_t::object:
+				{
+					AllocatorType<object_t> alloc;
+					std::allocator_traits<decltype(alloc)>::destroy(alloc, object);
+					std::allocator_traits<decltype(alloc)>::deallocate(alloc, object, 1);
+					break;
+				}
 
-                case value_t::array:
-                {
-                    AllocatorType<array_t> alloc;
-                    alloc.destroy(array);
-                    alloc.deallocate(array, 1);
-                    break;
-                }
+				case value_t::array:
+				{
+					AllocatorType<array_t> alloc;
+					std::allocator_traits<decltype(alloc)>::destroy(alloc, array);
+					std::allocator_traits<decltype(alloc)>::deallocate(alloc, array, 1);
+					break;
+				}
 
-                case value_t::string:
-                {
-                    AllocatorType<string_t> alloc;
-                    alloc.destroy(string);
-                    alloc.deallocate(string, 1);
-                    break;
-                }
+				case value_t::string:
+				{
+					AllocatorType<string_t> alloc;
+					std::allocator_traits<decltype(alloc)>::destroy(alloc, string);
+					std::allocator_traits<decltype(alloc)>::deallocate(alloc, string, 1);
+					break;
+				}
 
-                default:
-                {
-                    break;
-                }
-            }
+				default:
+				{
+					break;
+				}
+			}
         }
     };
 
@@ -8940,39 +8940,6 @@ class basic_json
     ~basic_json()
     {
         assert_invariant();
-
-        switch (m_type)
-        {
-            case value_t::object:
-            {
-                AllocatorType<object_t> alloc;
-				std::allocator_traits<decltype(alloc)>::destroy(alloc, m_value.object);
-				std::allocator_traits<decltype(alloc)>::deallocate(alloc, m_value.object, 1);
-                break;
-            }
-
-            case value_t::array:
-            {
-                AllocatorType<array_t> alloc;
-				std::allocator_traits<decltype(alloc)>::destroy(alloc, m_value.array);
-				std::allocator_traits<decltype(alloc)>::deallocate(alloc, m_value.array, 1);
-                break;
-            }
-
-            case value_t::string:
-            {
-                AllocatorType<string_t> alloc;
-				std::allocator_traits<decltype(alloc)>::destroy(alloc, m_value.string);
-				std::allocator_traits<decltype(alloc)>::deallocate(alloc, m_value.string, 1);
-                break;
-            }
-
-            default:
-            {
-                // all other types need no specific destructor
-                break;
-            }
-        }
         m_value.destroy(m_type);
     }
 
