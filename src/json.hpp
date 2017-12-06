@@ -7944,12 +7944,15 @@ class basic_json
     static T* create(Args&& ... args)
     {
         AllocatorType<T> alloc;
+
+		using AllocatorTraits = std::allocator_traits<AllocatorType<T>>;
+
         auto deleter = [&](T * object)
         {
-            alloc.deallocate(object, 1);
+			AllocatorTraits::deallocate(alloc, object, 1);
         };
-        std::unique_ptr<T, decltype(deleter)> object(alloc.allocate(1), deleter);
-        alloc.construct(object.get(), std::forward<Args>(args)...);
+        std::unique_ptr<T, decltype(deleter)> object(AllocatorTraits::allocate(alloc, 1), deleter);
+		AllocatorTraits::construct(alloc, object.get(), std::forward<Args>(args)...);
         assert(object != nullptr);
         return object.release();
     }
@@ -8112,37 +8115,37 @@ class basic_json
 
         void destroy(value_t t)
         {
-            switch (t)
-            {
-                case value_t::object:
-                {
-                    AllocatorType<object_t> alloc;
-                    alloc.destroy(object);
-                    alloc.deallocate(object, 1);
-                    break;
-                }
+			switch (t)
+			{
+				case value_t::object:
+				{
+					AllocatorType<object_t> alloc;
+					std::allocator_traits<decltype(alloc)>::destroy(alloc, object);
+					std::allocator_traits<decltype(alloc)>::deallocate(alloc, object, 1);
+					break;
+				}
 
-                case value_t::array:
-                {
-                    AllocatorType<array_t> alloc;
-                    alloc.destroy(array);
-                    alloc.deallocate(array, 1);
-                    break;
-                }
+				case value_t::array:
+				{
+					AllocatorType<array_t> alloc;
+					std::allocator_traits<decltype(alloc)>::destroy(alloc, array);
+					std::allocator_traits<decltype(alloc)>::deallocate(alloc, array, 1);
+					break;
+				}
 
-                case value_t::string:
-                {
-                    AllocatorType<string_t> alloc;
-                    alloc.destroy(string);
-                    alloc.deallocate(string, 1);
-                    break;
-                }
+				case value_t::string:
+				{
+					AllocatorType<string_t> alloc;
+					std::allocator_traits<decltype(alloc)>::destroy(alloc, string);
+					std::allocator_traits<decltype(alloc)>::deallocate(alloc, string, 1);
+					break;
+				}
 
-                default:
-                {
-                    break;
-                }
-            }
+				default:
+				{
+					break;
+				}
+			}
         }
     };
 
