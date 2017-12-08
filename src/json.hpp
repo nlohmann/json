@@ -3631,7 +3631,7 @@ This class implements a both iterators (iterator and const_iterator) for the
        iterators in version 3.0.0 (see https://github.com/nlohmann/json/issues/593)
 */
 template<typename BasicJsonType>
-class iter_impl : public std::iterator<std::bidirectional_iterator_tag, BasicJsonType>
+class iter_impl
 {
     /// allow basic_json to access private members
     friend iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
@@ -3645,6 +3645,14 @@ class iter_impl : public std::iterator<std::bidirectional_iterator_tag, BasicJso
                   "iter_impl only accepts (const) basic_json");
 
   public:
+
+	/// The std::iterator class template (used as a base class to provide typedefs) is deprecated in C++17. 
+	/// The C++ Standard has never required user-defined iterators to derive from std::iterator. 
+	/// A user-defined iterator should provide publicly accessible typedefs named 
+	/// iterator_category, value_type, difference_type, pointer, and reference. 
+	/// Note that value_type is required to be non-const, even for constant iterators.
+	using iterator_category = std::bidirectional_iterator_tag;
+
     /// the type of the values when the iterator is dereferenced
     using value_type = typename BasicJsonType::value_type;
     /// a type to represent differences between iterators
