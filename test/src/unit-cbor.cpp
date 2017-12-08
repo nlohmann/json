@@ -1967,3 +1967,28 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         CHECK(json::parse("{\"Fun\": true, \"Amt\": -2}") == json::from_cbor(std::vector<uint8_t>({0xbf, 0x63, 0x46, 0x75, 0x6e, 0xf5, 0x63, 0x41, 0x6d, 0x74, 0x21, 0xff})));
     }
 }
+
+TEST_CASE("binary_data") {
+    json obj;
+    obj.emplace("age", 12);
+    obj.emplace("name", "Bob");
+    obj.emplace("secret", json::binary_t{'h', 'e', 'l', 'l', 'o'});
+
+    std::vector<uint8_t> cbor_value = json::to_cbor(obj);
+
+    std::vector<uint8_t> expected_value{
+            0b10100011, // map with 3 pairs
+            0b01100011, 'a', 'g', 'e', // "age" key
+            0b00001100, // 12 value
+            0b01100100, 'n', 'a', 'm', 'e', // "name" key
+            0b01100011, 'B', 'o', 'b', // "Bob" value
+            0b01100110, 's', 'e', 'c', 'r', 'e', 't', // "secret" key
+            0b01000101, 'h', 'e', 'l', 'l', 'o' // binary value
+    };
+
+    CHECK(cbor_value == expected_value);
+
+    json obj_parsed = json::from_cbor(cbor_value);
+
+    CHECK(obj == obj_parsed);
+}
