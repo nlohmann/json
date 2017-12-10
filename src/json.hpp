@@ -227,7 +227,7 @@ class exception : public std::exception
 /*!
 @brief exception indicating a parse error
 
-This excpetion is thrown by the library when a parse error occurs. Parse errors
+This exception is thrown by the library when a parse error occurs. Parse errors
 can occur during the deserialization of JSON text, CBOR, MessagePack, as well
 as when using JSON Patch.
 
@@ -243,7 +243,7 @@ json.exception.parse_error.102 | parse error at 14: missing or wrong low surroga
 json.exception.parse_error.103 | parse error: code points above 0x10FFFF are invalid | Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
 json.exception.parse_error.104 | parse error: JSON patch must be an array of objects | [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON document that represents an array of objects.
 json.exception.parse_error.105 | parse error: operation must have string member 'op' | An operation of a JSON Patch document must contain exactly one "op" member, whose value indicates the operation to perform. Its value must be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
-json.exception.parse_error.106 | parse error: array index '01' must not begin with '0' | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number wihtout a leading `0`.
+json.exception.parse_error.106 | parse error: array index '01' must not begin with '0' | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number without a leading `0`.
 json.exception.parse_error.107 | parse error: JSON pointer must be empty or begin with '/' - was: 'foo' | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
 json.exception.parse_error.108 | parse error: escape character '~' must be followed with '0' or '1' | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
 json.exception.parse_error.109 | parse error: array index 'one' is not a number | A JSON Pointer array index must be a number.
@@ -3294,7 +3294,7 @@ class parser
     }
 
     /*!
-    @brief the acutal acceptor
+    @brief the actual acceptor
 
     @invariant 1. The last token is not yet processed. Therefore, the caller
                   of this function must make sure a token has been read.
@@ -4312,7 +4312,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 {
   public:
     using difference_type = std::ptrdiff_t;
-    /// shortcut to the reverse iterator adaptor
+    /// shortcut to the reverse iterator adapter
     using base_iterator = std::reverse_iterator<Base>;
     /// the reference type for the pointed-to element
     using reference = typename Base::reference;
@@ -8304,7 +8304,7 @@ class basic_json
     @brief create a JSON value
 
     This is a "catch all" constructor for all compatible JSON types; that is,
-    types for which a `to_json()` method exsits. The constructor forwards the
+    types for which a `to_json()` method exists. The constructor forwards the
     parameter @a val to that method (to `json_serializer<U>::to_json` method
     with `U = uncvref_t<CompatibleType>`, to be exact).
 
@@ -9027,7 +9027,7 @@ class basic_json
             string                    | value_t::string
             number (integer)          | value_t::number_integer
             number (unsigned integer) | value_t::number_unsigned
-            number (foating-point)    | value_t::number_float
+            number (floating-point)   | value_t::number_float
             object                    | value_t::object
             array                     | value_t::array
             discarded                 | value_t::discarded
@@ -10366,7 +10366,7 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
-    @throw type_error.306 if the JSON value is not an objec; in that cases,
+    @throw type_error.306 if the JSON value is not an object; in that cases,
     using `value()` with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
