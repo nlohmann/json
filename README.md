@@ -160,7 +160,7 @@ json empty_object_implicit = json({});
 json empty_object_explicit = json::object();
 
 // a way to express an _array_ of key/value pairs [["currency", "USD"], ["value", 42.99]]
-json array_not_object = { json::array({"currency", "USD"}), json::array({"value", 42.99}) };
+json array_not_object = json::array({ {"currency", "USD"}, {"value", 42.99} });
 ```
 
 

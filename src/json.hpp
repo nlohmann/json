@@ -3646,12 +3646,12 @@ class iter_impl
 
   public:
 
-	/// The std::iterator class template (used as a base class to provide typedefs) is deprecated in C++17. 
-	/// The C++ Standard has never required user-defined iterators to derive from std::iterator. 
-	/// A user-defined iterator should provide publicly accessible typedefs named 
-	/// iterator_category, value_type, difference_type, pointer, and reference. 
-	/// Note that value_type is required to be non-const, even for constant iterators.
-	using iterator_category = std::bidirectional_iterator_tag;
+    /// The std::iterator class template (used as a base class to provide typedefs) is deprecated in C++17.
+    /// The C++ Standard has never required user-defined iterators to derive from std::iterator.
+    /// A user-defined iterator should provide publicly accessible typedefs named
+    /// iterator_category, value_type, difference_type, pointer, and reference.
+    /// Note that value_type is required to be non-const, even for constant iterators.
+    using iterator_category = std::bidirectional_iterator_tag;
 
     /// the type of the values when the iterator is dereferenced
     using value_type = typename BasicJsonType::value_type;
