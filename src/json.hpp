@@ -378,6 +378,7 @@ json.exception.type_error.312 | cannot use update() with string | The @ref updat
 json.exception.type_error.313 | invalid value to unflatten | The @ref unflatten function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well defined.
 json.exception.type_error.314 | only objects can be unflattened | The @ref unflatten function only works for an object whose keys are JSON Pointers.
 json.exception.type_error.315 | values in object must be primitive | The @ref unflatten function only works for an object whose keys are JSON Pointers and whose values are primitive.
+json.exception.type_error.316 | invalid UTF-8 byte at index 10: 0x7E | The @ref dump function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded. |
 
 @liveexample{The following code shows how a `type_error` exception can be
 caught.,type_error}
@@ -4890,7 +4891,7 @@ class binary_reader
             default: // anything else (0xFF is handled inside the other types)
             {
                 std::stringstream ss;
-                ss << std::setw(2) << std::setfill('0') << std::hex << current;
+                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
                 JSON_THROW(parse_error::create(112, chars_read, "error reading CBOR; last byte: 0x" + ss.str()));
             }
         }
@@ -5214,7 +5215,7 @@ class binary_reader
             default: // anything else
             {
                 std::stringstream ss;
-                ss << std::setw(2) << std::setfill('0') << std::hex << current;
+                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
                 JSON_THROW(parse_error::create(112, chars_read,
                                                "error reading MessagePack; last byte: 0x" + ss.str()));
             }
@@ -5382,7 +5383,7 @@ class binary_reader
             default:
             {
                 std::stringstream ss;
-                ss << std::setw(2) << std::setfill('0') << std::hex << current;
+                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
                 JSON_THROW(parse_error::create(113, chars_read, "expected a CBOR string; last byte: 0x" + ss.str()));
             }
         }
@@ -5487,7 +5488,7 @@ class binary_reader
             default:
             {
                 std::stringstream ss;
-                ss << std::setw(2) << std::setfill('0') << std::hex << current;
+                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
                 JSON_THROW(parse_error::create(113, chars_read,
                                                "expected a MessagePack string; last byte: 0x" + ss.str()));
             }
@@ -6513,6 +6514,8 @@ class serializer
     */
     void dump_escaped(const string_t& s, const bool ensure_ascii) const
     {
+        throw_if_invalid_utf8(s);
+
         const auto space = extra_space(s, ensure_ascii);
         if (space == 0)
         {
@@ -6761,6 +6764,87 @@ class serializer
         if (value_is_int_like)
         {
             o->write_characters(".0", 2);
+        }
+    }
+
+    /*!
+    @brief check whether a string is UTF-8 encoded
+
+    The function checks each byte of a string whether it is UTF-8 encoded. The
+    result of the check is stored in the @a state parameter. The function must
+    be called initially with state 0 (accept). State 1 means the string must
+    be rejected, because the current byte is not allowed. If the string is
+    completely processed, but the state is non-zero, the string ended
+    prematurely; that is, the last byte indicated more bytes should have
+    followed.
+
+    @param[in,out] state  the state of the decoding
+    @param[in] byte       next byte to decode
+
+    @note The function has been edited: a std::array is used and the code
+          point is not calculated.
+
+    @copyright Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+    @sa http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+    */
+    static void decode(uint8_t& state, const uint8_t byte)
+    {
+        static const std::array<uint8_t, 400> utf8d =
+        {
+            {
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 00..1f
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 20..3f
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 40..5f
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 60..7f
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, // 80..9f
+                7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, // a0..bf
+                8, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // c0..df
+                0xa, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x4, 0x3, 0x3, // e0..ef
+                0xb, 0x6, 0x6, 0x6, 0x5, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, // f0..ff
+                0x0, 0x1, 0x2, 0x3, 0x5, 0x8, 0x7, 0x1, 0x1, 0x1, 0x4, 0x6, 0x1, 0x1, 0x1, 0x1, // s0..s0
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, // s1..s2
+                1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, // s3..s4
+                1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, // s5..s6
+                1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 // s7..s8
+            }
+        };
+
+        const uint8_t type = utf8d[byte];
+        state = utf8d[256 + state * 16 + type];
+    }
+
+    /*!
+    @brief throw an exception if a string is not UTF-8 encoded
+
+    @param[in] str  UTF-8 string to check
+    @throw type_error.316 if passed string is not UTF-8 encoded
+
+    @since version 3.0.0
+    */
+    static void throw_if_invalid_utf8(const std::string& str)
+    {
+        // start with state 0 (= accept)
+        uint8_t state = 0;
+
+        for (size_t i = 0; i < str.size(); ++i)
+        {
+            const auto byte = static_cast<uint8_t>(str[i]);
+            decode(state, byte);
+            if (state == 1)
+            {
+                // state 1 means reject
+                std::stringstream ss;
+                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(byte);
+                JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + ss.str()));
+            }
+        }
+
+        if (state != 0)
+        {
+            // we finish reading, but do not accept: string was incomplete
+            std::stringstream ss;
+            ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(static_cast<uint8_t>(str.back()));
+            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + ss.str()));
         }
     }
 

@@ -975,7 +975,7 @@ TEST_CASE("regression tests")
         };
         CHECK_THROWS_AS(json::from_cbor(vec1), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec1),
-                          "[json.exception.parse_error.113] parse error at 13: expected a CBOR string; last byte: 0xb4");
+                          "[json.exception.parse_error.113] parse error at 13: expected a CBOR string; last byte: 0xB4");
 
         // related test case: double-precision
         std::vector<uint8_t> vec2
@@ -989,7 +989,7 @@ TEST_CASE("regression tests")
         };
         CHECK_THROWS_AS(json::from_cbor(vec2), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec2),
-                          "[json.exception.parse_error.113] parse error at 13: expected a CBOR string; last byte: 0xb4");
+                          "[json.exception.parse_error.113] parse error at 13: expected a CBOR string; last byte: 0xB4");
     }
 
     SECTION("issue #452 - Heap-buffer-overflow (OSS-Fuzz issue 585)")
@@ -1304,6 +1304,15 @@ TEST_CASE("regression tests")
         json j;
         j = {{"nocopy", n}};
         CHECK(j["nocopy"]["val"] == 0);
+    }
+
+    SECTION("issue #838 - incorrect parse error with binary data in keys")
+    {
+        uint8_t key1[] = { 103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127 };
+        std::string key1_str(key1, key1 + sizeof(key1)/sizeof(key1[0]));
+        json j = key1_str;
+        CHECK_THROWS_AS(j.dump(), json::type_error);
+        CHECK_THROWS_WITH(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 10: 0x7E");
     }
 
     SECTION("issue #843 - converting to array not working")

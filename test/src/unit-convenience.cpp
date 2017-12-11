@@ -32,7 +32,7 @@ SOFTWARE.
 #include "json.hpp"
 using nlohmann::json;
 
-void check_escaped(const char* original, const char* escaped, const bool ensure_ascii = false);
+void check_escaped(const char* original, const char* escaped = "", const bool ensure_ascii = false);
 void check_escaped(const char* original, const char* escaped, const bool ensure_ascii)
 {
     std::stringstream ss;
@@ -99,7 +99,12 @@ TEST_CASE("convenience functions")
         check_escaped("\x1f", "\\u001f");
 
         // invalid UTF-8 characters
-        check_escaped("ä\xA9ü", "ä\xA9ü");
-        check_escaped("ä\xA9ü", "\\u00e4\xA9\\u00fc", true);
+        CHECK_THROWS_AS(check_escaped("ä\xA9ü"), json::type_error);
+        CHECK_THROWS_WITH(check_escaped("ä\xA9ü"),
+            "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9");
+
+        CHECK_THROWS_AS(check_escaped("\xC2"), json::type_error);
+        CHECK_THROWS_WITH(check_escaped("\xC2"),
+            "[json.exception.type_error.316] incomplete UTF-8 string; last byte: 0xC2");
     }
 }
