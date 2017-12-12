@@ -1309,7 +1309,7 @@ TEST_CASE("regression tests")
     SECTION("issue #838 - incorrect parse error with binary data in keys")
     {
         uint8_t key1[] = { 103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127 };
-        std::string key1_str(key1, key1 + sizeof(key1)/sizeof(key1[0]));
+        std::string key1_str(key1, key1 + sizeof(key1) / sizeof(key1[0]));
         json j = key1_str;
         CHECK_THROWS_AS(j.dump(), json::type_error);
         CHECK_THROWS_WITH(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 10: 0x7E");

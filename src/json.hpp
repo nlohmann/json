@@ -6415,12 +6415,8 @@ class serializer
                     if (ensure_ascii and (s[i] & 0x80 or s[i] == 0x7F))
                     {
                         const auto bytes = bytes_following(static_cast<uint8_t>(s[i]));
-                        if (bytes == std::string::npos)
-                        {
-                            // invalid characters are treated as is, so no
-                            // additional space will be used
-                            break;
-                        }
+                        // invalid characters will be detected by throw_if_invalid_utf8
+                        assert (bytes != std::string::npos);
 
                         if (bytes == 3)
                         {
@@ -6588,12 +6584,8 @@ class serializer
                             (ensure_ascii and (s[i] & 0x80 or s[i] == 0x7F)))
                     {
                         const auto bytes = bytes_following(static_cast<uint8_t>(s[i]));
-                        if (bytes == std::string::npos)
-                        {
-                            // copy invalid character as is
-                            result[pos++] = s[i];
-                            break;
-                        }
+                        // invalid characters will be detected by throw_if_invalid_utf8
+                        assert (bytes != std::string::npos);
 
                         // check that the additional bytes are present
                         assert(i + bytes < s.size());
