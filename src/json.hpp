@@ -8028,7 +8028,6 @@ class basic_json
     static T* create(Args&& ... args)
     {
         AllocatorType<T> alloc;
-
         using AllocatorTraits = std::allocator_traits<AllocatorType<T>>;
 
         auto deleter = [&](T * object)
@@ -10719,8 +10718,8 @@ class basic_json
                 if (is_string())
                 {
                     AllocatorType<string_t> alloc;
-                    alloc.destroy(m_value.string);
-                    alloc.deallocate(m_value.string, 1);
+                    std::allocator_traits<decltype(alloc)>::destroy(alloc, m_value.string);
+                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, m_value.string, 1);
                     m_value.string = nullptr;
                 }
 
@@ -10825,8 +10824,8 @@ class basic_json
                 if (is_string())
                 {
                     AllocatorType<string_t> alloc;
-                    alloc.destroy(m_value.string);
-                    alloc.deallocate(m_value.string, 1);
+                    std::allocator_traits<decltype(alloc)>::destroy(alloc, m_value.string);
+                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, m_value.string, 1);
                     m_value.string = nullptr;
                 }
 
