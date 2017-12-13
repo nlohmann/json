@@ -1077,10 +1077,10 @@ TEST_CASE("MessagePack")
             {
                 CHECK_THROWS_AS(json::from_msgpack(std::vector<uint8_t>({0xc1})), json::parse_error&);
                 CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xc1})),
-                                  "[json.exception.parse_error.112] parse error at 1: error reading MessagePack; last byte: 0xc1");
+                                  "[json.exception.parse_error.112] parse error at 1: error reading MessagePack; last byte: 0xC1");
                 CHECK_THROWS_AS(json::from_msgpack(std::vector<uint8_t>({0xc6})), json::parse_error&);
                 CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xc6})),
-                                  "[json.exception.parse_error.112] parse error at 1: error reading MessagePack; last byte: 0xc6");
+                                  "[json.exception.parse_error.112] parse error at 1: error reading MessagePack; last byte: 0xC6");
             }
 
             SECTION("all unsupported bytes")
@@ -1106,7 +1106,7 @@ TEST_CASE("MessagePack")
         {
             CHECK_THROWS_AS(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})), json::parse_error&);
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})),
-                              "[json.exception.parse_error.113] parse error at 2: expected a MessagePack string; last byte: 0xff");
+                              "[json.exception.parse_error.113] parse error at 2: expected a MessagePack string; last byte: 0xFF");
         }
 
         SECTION("strict mode")
