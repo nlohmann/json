@@ -147,7 +147,7 @@ TEST_CASE("const_iterator class")
             {
                 json j(json::value_t::null);
                 json::const_iterator it = j.cbegin();
-                CHECK_THROWS_AS(*it, json::invalid_iterator&);
+                CHECK_THROWS_AS(*it, json::invalid_iterator);
                 CHECK_THROWS_WITH(*it, "[json.exception.invalid_iterator.214] cannot get value");
             }
 
@@ -157,7 +157,7 @@ TEST_CASE("const_iterator class")
                 json::const_iterator it = j.cbegin();
                 CHECK(*it == json(17));
                 it = j.cend();
-                CHECK_THROWS_AS(*it, json::invalid_iterator&);
+                CHECK_THROWS_AS(*it, json::invalid_iterator);
                 CHECK_THROWS_WITH(*it, "[json.exception.invalid_iterator.214] cannot get value");
             }
 
@@ -182,7 +182,7 @@ TEST_CASE("const_iterator class")
             {
                 json j(json::value_t::null);
                 json::const_iterator it = j.cbegin();
-                CHECK_THROWS_AS(std::string(it->type_name()), json::invalid_iterator&);
+                CHECK_THROWS_AS(std::string(it->type_name()), json::invalid_iterator);
                 CHECK_THROWS_WITH(std::string(it->type_name()), "[json.exception.invalid_iterator.214] cannot get value");
             }
 
@@ -192,7 +192,7 @@ TEST_CASE("const_iterator class")
                 json::const_iterator it = j.cbegin();
                 CHECK(std::string(it->type_name()) == "number");
                 it = j.cend();
-                CHECK_THROWS_AS(std::string(it->type_name()), json::invalid_iterator&);
+                CHECK_THROWS_AS(std::string(it->type_name()), json::invalid_iterator);
                 CHECK_THROWS_WITH(std::string(it->type_name()), "[json.exception.invalid_iterator.214] cannot get value");
             }
 
