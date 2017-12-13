@@ -813,7 +813,7 @@ The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed und
 
 If you have questions regarding the library, I would like to invite you to [open an issue at Github](https://github.com/nlohmann/json/issues/new). Please describe your request, problem, or question as detailed as possible, and also mention the version of the library you are using as well as the version of your compiler and operating system. Opening an issue at Github allows other users and contributors to this library to collaborate. For instance, I have little experience with MSVC, and most issues in this regard have been solved by a growing community. If you have a look at the [closed issues](https://github.com/nlohmann/json/issues?q=is%3Aissue+is%3Aclosed), you will see that we react quite timely in most cases.
 
-Only if your request would contain confidential information, please [send me an email](mailto:mail@nlohmann.me). For encrypted messages, please usse [this key](https://keybase.io/nlohmann/pgp_keys.asc).
+Only if your request would contain confidential information, please [send me an email](mailto:mail@nlohmann.me). For encrypted messages, please use [this key](https://keybase.io/nlohmann/pgp_keys.asc).
 
 
 ## Thanks

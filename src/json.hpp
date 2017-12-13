@@ -997,10 +997,9 @@ void to_json(BasicJsonType& j, const std::vector<bool>& e)
 }
 
 template<typename BasicJsonType, typename CompatibleArrayType,
-         enable_if_t <
-             is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value or
-             std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value,
-             int> = 0>
+         enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value or
+                     std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value,
+                     int> = 0>
 void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
     external_constructor<value_t::array>::construct(j, arr);
@@ -1611,11 +1610,9 @@ class input_adapter
 
     /// input adapter for contiguous container
     template<class ContiguousContainer, typename
-             std::enable_if <
-                 not std::is_pointer<ContiguousContainer>::value and
-                 std::is_base_of<std::random_access_iterator_tag,
-                                 typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
-                 int>::type = 0>
+             std::enable_if<not std::is_pointer<ContiguousContainer>::value and
+                            std::is_base_of<std::random_access_iterator_tag, typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
+                            int>::type = 0>
     input_adapter(const ContiguousContainer& c)
         : input_adapter(std::begin(c), std::end(c)) {}
 
