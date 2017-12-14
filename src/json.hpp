@@ -29,6 +29,10 @@ SOFTWARE.
 #ifndef NLOHMANN_JSON_HPP
 #define NLOHMANN_JSON_HPP
 
+
+#include "json_forward.hpp" // Some forward declarations are re-used here.
+
+
 #include <algorithm> // all_of, copy, fill, find, for_each, generate_n, none_of, remove, reverse, transform
 #include <array> // array
 #include <cassert> // assert
@@ -124,21 +128,6 @@ SOFTWARE.
 */
 namespace nlohmann
 {
-template<typename = void, typename = void>
-struct adl_serializer;
-
-// forward declaration of basic_json (required to split the class)
-template<template<typename U, typename V, typename... Args> class ObjectType =
-         std::map,
-         template<typename U, typename... Args> class ArrayType = std::vector,
-         class StringType = std::string, class BooleanType = bool,
-         class NumberIntegerType = std::int64_t,
-         class NumberUnsignedType = std::uint64_t,
-         class NumberFloatType = double,
-         template<typename U> class AllocatorType = std::allocator,
-         template<typename T, typename SFINAE = void> class JSONSerializer =
-         adl_serializer>
-class basic_json;
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json
 // This is only temporary and will be removed in 3.0
