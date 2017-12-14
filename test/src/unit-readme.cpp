@@ -31,7 +31,6 @@ SOFTWARE.
 #include "json.hpp"
 using nlohmann::json;
 
-#include <set>
 #include <deque>
 #include <forward_list>
 #include <list>
