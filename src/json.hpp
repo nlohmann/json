@@ -109,7 +109,7 @@ SOFTWARE.
     #define JSON_UNLIKELY(x)    x
 #endif
 
-// cpp language standard detection
+// C++ language standard detection
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
     #define JSON_HAS_CPP_17
     #define JSON_HAS_CPP_14
@@ -128,20 +128,18 @@ template<typename = void, typename = void>
 struct adl_serializer;
 
 // forward declaration of basic_json (required to split the class)
-template<template<typename U, typename V, typename... Args> class ObjectType =
-         std::map,
-         template<typename U, typename... Args> class ArrayType = std::vector,
+template<template<typename, typename, typename...> class ObjectType = std::map,
+         template<typename, typename...> class ArrayType = std::vector,
          class StringType = std::string, class BooleanType = bool,
          class NumberIntegerType = std::int64_t,
          class NumberUnsignedType = std::uint64_t,
          class NumberFloatType = double,
-         template<typename U> class AllocatorType = std::allocator,
-         template<typename T, typename SFINAE = void> class JSONSerializer =
-         adl_serializer>
+         template<typename> class AllocatorType = std::allocator,
+         template<typename, typename = void> class JSONSerializer = adl_serializer>
 class basic_json;
 
-// Ugly macros to avoid uglier copy-paste when specializing basic_json
-// This is only temporary and will be removed in 3.0
+// Ugly macros to avoid uglier copy-paste when specializing basic_json. They
+// may be removed in the future once the class is split.
 
 #define NLOHMANN_BASIC_JSON_TPL_DECLARATION                                \
     template<template<typename, typename, typename...> class ObjectType,   \
@@ -248,7 +246,7 @@ json.exception.parse_error.107 | parse error: JSON pointer must be empty or begi
 json.exception.parse_error.108 | parse error: escape character '~' must be followed with '0' or '1' | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
 json.exception.parse_error.109 | parse error: array index 'one' is not a number | A JSON Pointer array index must be a number.
 json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
-json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xf8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
+json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xF8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
 json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last byte: 0x98 | While parsing a map key, a value that is not a string has been read.
 
 @note For an input with n bytes, 1 is the index of the first character and n+1
@@ -541,20 +539,14 @@ Returns an ordering that is similar to Python:
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 {
     static constexpr std::array<uint8_t, 8> order = {{
-            0, // null
-            3, // object
-            4, // array
-            5, // string
-            1, // boolean
-            2, // integer
-            2, // unsigned
-            2, // float
+            0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */,
+            1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */
         }
     };
 
     const auto l_index = static_cast<std::size_t>(lhs);
     const auto r_index = static_cast<std::size_t>(rhs);
-    return (l_index < order.size() and r_index < order.size() and order[l_index] < order[r_index]);
+    return l_index < order.size() and r_index < order.size() and order[l_index] < order[r_index];
 }
 
 
@@ -592,17 +584,15 @@ struct merge_and_renumber;
 
 template<std::size_t... I1, std::size_t... I2>
 struct merge_and_renumber<index_sequence<I1...>, index_sequence<I2...>>
-        : index_sequence < I1..., (sizeof...(I1) + I2)... >
-          {};
+        : index_sequence < I1..., (sizeof...(I1) + I2)... > {};
 
 template<std::size_t N>
 struct make_index_sequence
     : merge_and_renumber < typename make_index_sequence < N / 2 >::type,
-      typename make_index_sequence < N - N / 2 >::type >
-{};
+      typename make_index_sequence < N - N / 2 >::type > {};
 
-template<> struct make_index_sequence<0> : index_sequence<> { };
-template<> struct make_index_sequence<1> : index_sequence<0> { };
+template<> struct make_index_sequence<0> : index_sequence<> {};
+template<> struct make_index_sequence<1> : index_sequence<0> {};
 
 template<typename... Ts>
 using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
@@ -625,7 +615,7 @@ template<class B1> struct conjunction<B1> : B1 {};
 template<class B1, class... Bn>
 struct conjunction<B1, Bn...> : std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
 
-template<class B> struct negation : std::integral_constant < bool, !B::value > {};
+template<class B> struct negation : std::integral_constant<bool, not B::value> {};
 
 // dispatch utility (taken from ranges-v3)
 template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
@@ -726,8 +716,7 @@ struct external_constructor<value_t::array>
     }
 
     template<typename BasicJsonType, typename CompatibleArrayType,
-             enable_if_t<not std::is_same<CompatibleArrayType,
-                                          typename BasicJsonType::array_t>::value,
+             enable_if_t<not std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value,
                          int> = 0>
     static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
     {
@@ -783,8 +772,7 @@ struct external_constructor<value_t::object>
     }
 
     template<typename BasicJsonType, typename CompatibleObjectType,
-             enable_if_t<not std::is_same<CompatibleObjectType,
-                                          typename BasicJsonType::object_t>::value, int> = 0>
+             enable_if_t<not std::is_same<CompatibleObjectType, typename BasicJsonType::object_t>::value, int> = 0>
     static void construct(BasicJsonType& j, const CompatibleObjectType& obj)
     {
         using std::begin;
@@ -897,7 +885,7 @@ struct is_compatible_integer_type
         is_compatible_integer_type_impl <
         std::is_integral<CompatibleNumberIntegerType>::value and
         not std::is_same<bool, CompatibleNumberIntegerType>::value,
-        RealIntegerType, CompatibleNumberIntegerType > ::value;
+        RealIntegerType, CompatibleNumberIntegerType >::value;
 };
 
 
@@ -923,10 +911,8 @@ template<typename BasicJsonType, typename T>
 struct has_non_default_from_json
 {
   private:
-    template <
-        typename U,
-        typename = enable_if_t<std::is_same<
-                                   T, decltype(uncvref_t<U>::from_json(std::declval<BasicJsonType>()))>::value >>
+    template<typename U, typename =
+             enable_if_t<std::is_same<T, decltype(uncvref_t<U>::from_json(std::declval<BasicJsonType>()))>::value>>
     static int detect(U&&);
     static void detect(...);
 
@@ -955,22 +941,21 @@ struct has_to_json
 // to_json //
 /////////////
 
-template<typename BasicJsonType, typename T, enable_if_t<
-             std::is_same<T, typename BasicJsonType::boolean_t>::value, int> = 0>
+template<typename BasicJsonType, typename T,
+         enable_if_t<std::is_same<T, typename BasicJsonType::boolean_t>::value, int> = 0>
 void to_json(BasicJsonType& j, T b) noexcept
 {
     external_constructor<value_t::boolean>::construct(j, b);
 }
 
 template<typename BasicJsonType, typename CompatibleString,
-         enable_if_t<std::is_constructible<typename BasicJsonType::string_t,
-                     CompatibleString>::value, int> = 0>
+         enable_if_t<std::is_constructible<typename BasicJsonType::string_t, CompatibleString>::value, int> = 0>
 void to_json(BasicJsonType& j, const CompatibleString& s)
 {
     external_constructor<value_t::string>::construct(j, s);
 }
 
-template <typename BasicJsonType>
+template<typename BasicJsonType>
 void to_json(BasicJsonType& j, typename BasicJsonType::string_t&& s)
 {
     external_constructor<value_t::string>::construct(j, std::move(s));
@@ -983,19 +968,15 @@ void to_json(BasicJsonType& j, FloatType val) noexcept
     external_constructor<value_t::number_float>::construct(j, static_cast<typename BasicJsonType::number_float_t>(val));
 }
 
-template <
-    typename BasicJsonType, typename CompatibleNumberUnsignedType,
-    enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_unsigned_t,
-                CompatibleNumberUnsignedType>::value, int> = 0 >
+template<typename BasicJsonType, typename CompatibleNumberUnsignedType,
+         enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_unsigned_t, CompatibleNumberUnsignedType>::value, int> = 0>
 void to_json(BasicJsonType& j, CompatibleNumberUnsignedType val) noexcept
 {
     external_constructor<value_t::number_unsigned>::construct(j, static_cast<typename BasicJsonType::number_unsigned_t>(val));
 }
 
-template <
-    typename BasicJsonType, typename CompatibleNumberIntegerType,
-    enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_integer_t,
-                CompatibleNumberIntegerType>::value, int> = 0 >
+template<typename BasicJsonType, typename CompatibleNumberIntegerType,
+         enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType>::value, int> = 0>
 void to_json(BasicJsonType& j, CompatibleNumberIntegerType val) noexcept
 {
     external_constructor<value_t::number_integer>::construct(j, static_cast<typename BasicJsonType::number_integer_t>(val));
@@ -1015,49 +996,43 @@ void to_json(BasicJsonType& j, const std::vector<bool>& e)
     external_constructor<value_t::array>::construct(j, e);
 }
 
-template <
-    typename BasicJsonType, typename CompatibleArrayType,
-    enable_if_t <
-        is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value or
-        std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value,
-        int > = 0 >
+template<typename BasicJsonType, typename CompatibleArrayType,
+         enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value or
+                     std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value,
+                     int> = 0>
 void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
     external_constructor<value_t::array>::construct(j, arr);
 }
 
-template <typename BasicJsonType, typename T,
-          enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
+template<typename BasicJsonType, typename T,
+         enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
 void to_json(BasicJsonType& j, std::valarray<T> arr)
 {
     external_constructor<value_t::array>::construct(j, std::move(arr));
 }
 
-template <typename BasicJsonType>
+template<typename BasicJsonType>
 void to_json(BasicJsonType& j, typename BasicJsonType::array_t&& arr)
 {
     external_constructor<value_t::array>::construct(j, std::move(arr));
 }
 
-template <
-    typename BasicJsonType, typename CompatibleObjectType,
-    enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value,
-                int> = 0 >
+template<typename BasicJsonType, typename CompatibleObjectType,
+         enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value, int> = 0>
 void to_json(BasicJsonType& j, const CompatibleObjectType& obj)
 {
     external_constructor<value_t::object>::construct(j, obj);
 }
 
-template <typename BasicJsonType>
+template<typename BasicJsonType>
 void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
 {
     external_constructor<value_t::object>::construct(j, std::move(obj));
 }
 
 template<typename BasicJsonType, typename T, std::size_t N,
-         enable_if_t<not std::is_constructible<
-                         typename BasicJsonType::string_t, T (&)[N]>::value,
-                     int> = 0>
+         enable_if_t<not std::is_constructible<typename BasicJsonType::string_t, T (&)[N]>::value, int> = 0>
 void to_json(BasicJsonType& j, T (&arr)[N])
 {
     external_constructor<value_t::array>::construct(j, arr);
@@ -1088,8 +1063,7 @@ void to_json(BasicJsonType& j, const std::tuple<Args...>& t)
 // overloads for basic_json template parameters
 template<typename BasicJsonType, typename ArithmeticType,
          enable_if_t<std::is_arithmetic<ArithmeticType>::value and
-                     not std::is_same<ArithmeticType,
-                                      typename BasicJsonType::boolean_t>::value,
+                     not std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
                      int> = 0>
 void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
 {
@@ -1354,10 +1328,10 @@ struct to_json_fn
                       "could not find to_json() method in T's namespace");
 
 #ifdef _MSC_VER
-        // Visual Studio does not show a stacktrace for the above assert.
+        // MSVC does not show a stacktrace for the above assert
         using decayed = uncvref_t<T>;
         static_assert(sizeof(typename decayed::force_msvc_stacktrace) == 0,
-                      "forcing msvc stacktrace to show which T we're talking about.");
+                      "forcing MSVC stacktrace to show which T we're talking about.");
 #endif
     }
 
@@ -1387,10 +1361,10 @@ struct from_json_fn
         static_assert(sizeof(BasicJsonType) == 0,
                       "could not find from_json() method in T's namespace");
 #ifdef _MSC_VER
-        // Visual Studio does not show a stacktrace for the above assert.
+        // MSVC does not show a stacktrace for the above assert
         using decayed = uncvref_t<T>;
         static_assert(sizeof(typename decayed::force_msvc_stacktrace) == 0,
-                      "forcing msvc stacktrace to show which T we're talking about.");
+                      "forcing MSVC stacktrace to show which T we're talking about.");
 #endif
     }
 
@@ -1462,7 +1436,7 @@ class input_stream_adapter : public input_adapter_protocol
     explicit input_stream_adapter(std::istream& i)
         : is(i), sb(*i.rdbuf())
     {
-        // ignore Byte Order Mark at start of input
+        // skip byte order mark
         std::char_traits<char>::int_type c;
         if ((c = get_character()) == 0xEF)
         {
@@ -1486,7 +1460,7 @@ class input_stream_adapter : public input_adapter_protocol
         }
         else if (c != std::char_traits<char>::eof())
         {
-            is.unget(); // Not BOM. Process as usual.
+            is.unget(); // no byte order mark; process as usual
         }
     }
 
@@ -1495,8 +1469,8 @@ class input_stream_adapter : public input_adapter_protocol
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
 
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
-    // ensure that std::char_traits<char>::eof() and the character 0xff do not
-    // end up as the same value, eg. 0xffffffff.
+    // ensure that std::char_traits<char>::eof() and the character 0xFF do not
+    // end up as the same value, eg. 0xFFFFFFFF.
     std::char_traits<char>::int_type get_character() override
     {
         return sb.sbumpc();
@@ -1575,8 +1549,7 @@ class input_adapter
     template<typename CharT,
              typename std::enable_if<
                  std::is_pointer<CharT>::value and
-                 std::is_integral<
-                     typename std::remove_pointer<CharT>::type>::value and
+                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
                  sizeof(typename std::remove_pointer<CharT>::type) == 1,
                  int>::type = 0>
     input_adapter(CharT b, std::size_t l)
@@ -1588,8 +1561,7 @@ class input_adapter
     template<typename CharT,
              typename std::enable_if<
                  std::is_pointer<CharT>::value and
-                 std::is_integral<
-                     typename std::remove_pointer<CharT>::type>::value and
+                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
                  sizeof(typename std::remove_pointer<CharT>::type) == 1,
                  int>::type = 0>
     input_adapter(CharT b)
@@ -1599,8 +1571,7 @@ class input_adapter
     /// input adapter for iterator range with contiguous storage
     template<class IteratorType,
              typename std::enable_if<
-                 std::is_same<typename std::iterator_traits<IteratorType>::iterator_category,
-                              std::random_access_iterator_tag>::value,
+                 std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value,
                  int>::type = 0>
     input_adapter(IteratorType first, IteratorType last)
     {
@@ -1638,13 +1609,10 @@ class input_adapter
         : input_adapter(std::begin(array), std::end(array)) {}
 
     /// input adapter for contiguous container
-    template <
-        class ContiguousContainer,
-        typename std::enable_if <
-            not std::is_pointer<ContiguousContainer>::value and
-            std::is_base_of<std::random_access_iterator_tag,
-                            typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
-            int >::type = 0 >
+    template<class ContiguousContainer, typename
+             std::enable_if<not std::is_pointer<ContiguousContainer>::value and
+                            std::is_base_of<std::random_access_iterator_tag, typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
+                            int>::type = 0>
     input_adapter(const ContiguousContainer& c)
         : input_adapter(std::begin(c), std::end(c)) {}
 
@@ -1818,6 +1786,12 @@ class lexer
     checks if it is inside the range. If a violation was detected, set up an
     error message and return false. Otherwise, return true.
 
+    @param[in] ranges  list of integers; interpreted as list of pairs of
+                       inclusive lower and upper bound, respectively
+
+    @pre The passed list @a ranges must have 2, 4, or 6 elements; that is,
+         1, 2, or 3 pairs. This precondition is enforced by an assertion.
+
     @return true if and only if no range violation was detected
     */
     bool next_byte_in_range(std::initializer_list<int> ranges)
@@ -1984,19 +1958,19 @@ class lexer
                             // result of the above calculation yields a proper codepoint
                             assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
 
-                            // translate code point to bytes
+                            // translate codepoint into bytes
                             if (codepoint < 0x80)
                             {
                                 // 1-byte characters: 0xxxxxxx (ASCII)
                                 add(codepoint);
                             }
-                            else if (codepoint <= 0x7ff)
+                            else if (codepoint <= 0x7FF)
                             {
                                 // 2-byte characters: 110xxxxx 10xxxxxx
                                 add(0xC0 | (codepoint >> 6));
                                 add(0x80 | (codepoint & 0x3F));
                             }
-                            else if (codepoint <= 0xffff)
+                            else if (codepoint <= 0xFFFF)
                             {
                                 // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
                                 add(0xE0 | (codepoint >> 12));
@@ -2035,12 +2009,12 @@ class lexer
                 case 0x07:
                 case 0x08:
                 case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0c:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
+                case 0x0A:
+                case 0x0B:
+                case 0x0C:
+                case 0x0D:
+                case 0x0E:
+                case 0x0F:
                 case 0x10:
                 case 0x11:
                 case 0x12:
@@ -2051,12 +2025,12 @@ class lexer
                 case 0x17:
                 case 0x18:
                 case 0x19:
-                case 0x1a:
-                case 0x1b:
-                case 0x1c:
-                case 0x1d:
-                case 0x1e:
-                case 0x1f:
+                case 0x1A:
+                case 0x1B:
+                case 0x1C:
+                case 0x1D:
+                case 0x1E:
+                case 0x1F:
                 {
                     error_message = "invalid string: control character must be escaped";
                     return token_type::parse_error;
@@ -2072,12 +2046,12 @@ class lexer
                 case 0x27:
                 case 0x28:
                 case 0x29:
-                case 0x2a:
-                case 0x2b:
-                case 0x2c:
-                case 0x2d:
-                case 0x2e:
-                case 0x2f:
+                case 0x2A:
+                case 0x2B:
+                case 0x2C:
+                case 0x2D:
+                case 0x2E:
+                case 0x2F:
                 case 0x30:
                 case 0x31:
                 case 0x32:
@@ -2088,12 +2062,12 @@ class lexer
                 case 0x37:
                 case 0x38:
                 case 0x39:
-                case 0x3a:
-                case 0x3b:
-                case 0x3c:
-                case 0x3d:
-                case 0x3e:
-                case 0x3f:
+                case 0x3A:
+                case 0x3B:
+                case 0x3C:
+                case 0x3D:
+                case 0x3E:
+                case 0x3F:
                 case 0x40:
                 case 0x41:
                 case 0x42:
@@ -2104,12 +2078,12 @@ class lexer
                 case 0x47:
                 case 0x48:
                 case 0x49:
-                case 0x4a:
-                case 0x4b:
-                case 0x4c:
-                case 0x4d:
-                case 0x4e:
-                case 0x4f:
+                case 0x4A:
+                case 0x4B:
+                case 0x4C:
+                case 0x4D:
+                case 0x4E:
+                case 0x4F:
                 case 0x50:
                 case 0x51:
                 case 0x52:
@@ -2120,11 +2094,11 @@ class lexer
                 case 0x57:
                 case 0x58:
                 case 0x59:
-                case 0x5a:
-                case 0x5b:
-                case 0x5d:
-                case 0x5e:
-                case 0x5f:
+                case 0x5A:
+                case 0x5B:
+                case 0x5D:
+                case 0x5E:
+                case 0x5F:
                 case 0x60:
                 case 0x61:
                 case 0x62:
@@ -2135,12 +2109,12 @@ class lexer
                 case 0x67:
                 case 0x68:
                 case 0x69:
-                case 0x6a:
-                case 0x6b:
-                case 0x6c:
-                case 0x6d:
-                case 0x6e:
-                case 0x6f:
+                case 0x6A:
+                case 0x6B:
+                case 0x6C:
+                case 0x6D:
+                case 0x6E:
+                case 0x6F:
                 case 0x70:
                 case 0x71:
                 case 0x72:
@@ -2151,48 +2125,48 @@ class lexer
                 case 0x77:
                 case 0x78:
                 case 0x79:
-                case 0x7a:
-                case 0x7b:
-                case 0x7c:
-                case 0x7d:
-                case 0x7e:
-                case 0x7f:
+                case 0x7A:
+                case 0x7B:
+                case 0x7C:
+                case 0x7D:
+                case 0x7E:
+                case 0x7F:
                 {
                     add(current);
                     break;
                 }
 
                 // U+0080..U+07FF: bytes C2..DF 80..BF
-                case 0xc2:
-                case 0xc3:
-                case 0xc4:
-                case 0xc5:
-                case 0xc6:
-                case 0xc7:
-                case 0xc8:
-                case 0xc9:
-                case 0xca:
-                case 0xcb:
-                case 0xcc:
-                case 0xcd:
-                case 0xce:
-                case 0xcf:
-                case 0xd0:
-                case 0xd1:
-                case 0xd2:
-                case 0xd3:
-                case 0xd4:
-                case 0xd5:
-                case 0xd6:
-                case 0xd7:
-                case 0xd8:
-                case 0xd9:
-                case 0xda:
-                case 0xdb:
-                case 0xdc:
-                case 0xdd:
-                case 0xde:
-                case 0xdf:
+                case 0xC2:
+                case 0xC3:
+                case 0xC4:
+                case 0xC5:
+                case 0xC6:
+                case 0xC7:
+                case 0xC8:
+                case 0xC9:
+                case 0xCA:
+                case 0xCB:
+                case 0xCC:
+                case 0xCD:
+                case 0xCE:
+                case 0xCF:
+                case 0xD0:
+                case 0xD1:
+                case 0xD2:
+                case 0xD3:
+                case 0xD4:
+                case 0xD5:
+                case 0xD6:
+                case 0xD7:
+                case 0xD8:
+                case 0xD9:
+                case 0xDA:
+                case 0xDB:
+                case 0xDC:
+                case 0xDD:
+                case 0xDE:
+                case 0xDF:
                 {
                     if (JSON_UNLIKELY(not next_byte_in_range({0x80, 0xBF})))
                     {
@@ -2202,7 +2176,7 @@ class lexer
                 }
 
                 // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
-                case 0xe0:
+                case 0xE0:
                 {
                     if (JSON_UNLIKELY(not (next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
                     {
@@ -2213,20 +2187,20 @@ class lexer
 
                 // U+1000..U+CFFF: bytes E1..EC 80..BF 80..BF
                 // U+E000..U+FFFF: bytes EE..EF 80..BF 80..BF
-                case 0xe1:
-                case 0xe2:
-                case 0xe3:
-                case 0xe4:
-                case 0xe5:
-                case 0xe6:
-                case 0xe7:
-                case 0xe8:
-                case 0xe9:
-                case 0xea:
-                case 0xeb:
-                case 0xec:
-                case 0xee:
-                case 0xef:
+                case 0xE1:
+                case 0xE2:
+                case 0xE3:
+                case 0xE4:
+                case 0xE5:
+                case 0xE6:
+                case 0xE7:
+                case 0xE8:
+                case 0xE9:
+                case 0xEA:
+                case 0xEB:
+                case 0xEC:
+                case 0xEE:
+                case 0xEF:
                 {
                     if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
                     {
@@ -2236,7 +2210,7 @@ class lexer
                 }
 
                 // U+D000..U+D7FF: bytes ED 80..9F 80..BF
-                case 0xed:
+                case 0xED:
                 {
                     if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
                     {
@@ -2246,7 +2220,7 @@ class lexer
                 }
 
                 // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
-                case 0xf0:
+                case 0xF0:
                 {
                     if (JSON_UNLIKELY(not (next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
@@ -2256,9 +2230,9 @@ class lexer
                 }
 
                 // U+40000..U+FFFFF F1..F3 80..BF 80..BF 80..BF
-                case 0xf1:
-                case 0xf2:
-                case 0xf3:
+                case 0xF1:
+                case 0xF2:
+                case 0xF3:
                 {
                     if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
@@ -2268,7 +2242,7 @@ class lexer
                 }
 
                 // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
-                case 0xf4:
+                case 0xF4:
                 {
                     if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
@@ -2788,7 +2762,7 @@ scan_number_done:
         std::string result;
         for (auto c : token_string)
         {
-            if ('\x00' <= c and c <= '\x1f')
+            if ('\x00' <= c and c <= '\x1F')
             {
                 // escape control characters
                 std::stringstream ss;
@@ -2891,10 +2865,10 @@ scan_number_done:
     std::size_t chars_read = 0;
 
     /// raw input token string (for error messages)
-    std::vector<char> token_string { };
+    std::vector<char> token_string {};
 
     /// buffer for variable-length tokens (numbers, strings)
-    std::string yytext { };
+    std::string yytext {};
 
     /// a description of occurred lexer errors
     const char* error_message = "";
@@ -4598,12 +4572,12 @@ class binary_reader
             case 0x07:
             case 0x08:
             case 0x09:
-            case 0x0a:
-            case 0x0b:
-            case 0x0c:
-            case 0x0d:
-            case 0x0e:
-            case 0x0f:
+            case 0x0A:
+            case 0x0B:
+            case 0x0C:
+            case 0x0D:
+            case 0x0E:
+            case 0x0F:
             case 0x10:
             case 0x11:
             case 0x12:
@@ -4620,10 +4594,10 @@ class binary_reader
             case 0x19: // Unsigned integer (two-byte uint16_t follows)
                 return get_number<uint16_t>();
 
-            case 0x1a: // Unsigned integer (four-byte uint32_t follows)
+            case 0x1A: // Unsigned integer (four-byte uint32_t follows)
                 return get_number<uint32_t>();
 
-            case 0x1b: // Unsigned integer (eight-byte uint64_t follows)
+            case 0x1B: // Unsigned integer (eight-byte uint64_t follows)
                 return get_number<uint64_t>();
 
             // Negative integer -1-0x00..-1-0x17 (-1..-24)
@@ -4637,12 +4611,12 @@ class binary_reader
             case 0x27:
             case 0x28:
             case 0x29:
-            case 0x2a:
-            case 0x2b:
-            case 0x2c:
-            case 0x2d:
-            case 0x2e:
-            case 0x2f:
+            case 0x2A:
+            case 0x2B:
+            case 0x2C:
+            case 0x2D:
+            case 0x2E:
+            case 0x2F:
             case 0x30:
             case 0x31:
             case 0x32:
@@ -4664,12 +4638,12 @@ class binary_reader
                 return static_cast<number_integer_t>(-1) - get_number<uint16_t>();
             }
 
-            case 0x3a: // Negative integer -1-n (four-byte uint32_t follows)
+            case 0x3A: // Negative integer -1-n (four-byte uint32_t follows)
             {
                 return static_cast<number_integer_t>(-1) - get_number<uint32_t>();
             }
 
-            case 0x3b: // Negative integer -1-n (eight-byte uint64_t follows)
+            case 0x3B: // Negative integer -1-n (eight-byte uint64_t follows)
             {
                 return static_cast<number_integer_t>(-1) -
                        static_cast<number_integer_t>(get_number<uint64_t>());
@@ -4686,12 +4660,12 @@ class binary_reader
             case 0x67:
             case 0x68:
             case 0x69:
-            case 0x6a:
-            case 0x6b:
-            case 0x6c:
-            case 0x6d:
-            case 0x6e:
-            case 0x6f:
+            case 0x6A:
+            case 0x6B:
+            case 0x6C:
+            case 0x6D:
+            case 0x6E:
+            case 0x6F:
             case 0x70:
             case 0x71:
             case 0x72:
@@ -4702,9 +4676,9 @@ class binary_reader
             case 0x77:
             case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
             case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
-            case 0x7a: // UTF-8 string (four-byte uint32_t for n follow)
-            case 0x7b: // UTF-8 string (eight-byte uint64_t for n follow)
-            case 0x7f: // UTF-8 string (indefinite length)
+            case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
+            case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
+            case 0x7F: // UTF-8 string (indefinite length)
             {
                 return get_cbor_string();
             }
@@ -4720,12 +4694,12 @@ class binary_reader
             case 0x87:
             case 0x88:
             case 0x89:
-            case 0x8a:
-            case 0x8b:
-            case 0x8c:
-            case 0x8d:
-            case 0x8e:
-            case 0x8f:
+            case 0x8A:
+            case 0x8B:
+            case 0x8C:
+            case 0x8D:
+            case 0x8E:
+            case 0x8F:
             case 0x90:
             case 0x91:
             case 0x92:
@@ -4735,7 +4709,7 @@ class binary_reader
             case 0x96:
             case 0x97:
             {
-                return get_cbor_array(current & 0x1f);
+                return get_cbor_array(current & 0x1F);
             }
 
             case 0x98: // array (one-byte uint8_t for n follows)
@@ -4748,20 +4722,20 @@ class binary_reader
                 return get_cbor_array(get_number<uint16_t>());
             }
 
-            case 0x9a: // array (four-byte uint32_t for n follow)
+            case 0x9A: // array (four-byte uint32_t for n follow)
             {
                 return get_cbor_array(get_number<uint32_t>());
             }
 
-            case 0x9b: // array (eight-byte uint64_t for n follow)
+            case 0x9B: // array (eight-byte uint64_t for n follow)
             {
                 return get_cbor_array(get_number<uint64_t>());
             }
 
-            case 0x9f: // array (indefinite length)
+            case 0x9F: // array (indefinite length)
             {
                 BasicJsonType result = value_t::array;
-                while (get() != 0xff)
+                while (get() != 0xFF)
                 {
                     result.push_back(parse_cbor_internal(false));
                 }
@@ -4769,58 +4743,58 @@ class binary_reader
             }
 
             // map (0x00..0x17 pairs of data items follow)
-            case 0xa0:
-            case 0xa1:
-            case 0xa2:
-            case 0xa3:
-            case 0xa4:
-            case 0xa5:
-            case 0xa6:
-            case 0xa7:
-            case 0xa8:
-            case 0xa9:
-            case 0xaa:
-            case 0xab:
-            case 0xac:
-            case 0xad:
-            case 0xae:
-            case 0xaf:
-            case 0xb0:
-            case 0xb1:
-            case 0xb2:
-            case 0xb3:
-            case 0xb4:
-            case 0xb5:
-            case 0xb6:
-            case 0xb7:
+            case 0xA0:
+            case 0xA1:
+            case 0xA2:
+            case 0xA3:
+            case 0xA4:
+            case 0xA5:
+            case 0xA6:
+            case 0xA7:
+            case 0xA8:
+            case 0xA9:
+            case 0xAA:
+            case 0xAB:
+            case 0xAC:
+            case 0xAD:
+            case 0xAE:
+            case 0xAF:
+            case 0xB0:
+            case 0xB1:
+            case 0xB2:
+            case 0xB3:
+            case 0xB4:
+            case 0xB5:
+            case 0xB6:
+            case 0xB7:
             {
-                return get_cbor_object(current & 0x1f);
+                return get_cbor_object(current & 0x1F);
             }
 
-            case 0xb8: // map (one-byte uint8_t for n follows)
+            case 0xB8: // map (one-byte uint8_t for n follows)
             {
                 return get_cbor_object(get_number<uint8_t>());
             }
 
-            case 0xb9: // map (two-byte uint16_t for n follow)
+            case 0xB9: // map (two-byte uint16_t for n follow)
             {
                 return get_cbor_object(get_number<uint16_t>());
             }
 
-            case 0xba: // map (four-byte uint32_t for n follow)
+            case 0xBA: // map (four-byte uint32_t for n follow)
             {
                 return get_cbor_object(get_number<uint32_t>());
             }
 
-            case 0xbb: // map (eight-byte uint64_t for n follow)
+            case 0xBB: // map (eight-byte uint64_t for n follow)
             {
                 return get_cbor_object(get_number<uint64_t>());
             }
 
-            case 0xbf: // map (indefinite length)
+            case 0xBF: // map (indefinite length)
             {
                 BasicJsonType result = value_t::object;
-                while (get() != 0xff)
+                while (get() != 0xFF)
                 {
                     auto key = get_cbor_string();
                     result[key] = parse_cbor_internal();
@@ -4828,22 +4802,22 @@ class binary_reader
                 return result;
             }
 
-            case 0xf4: // false
+            case 0xF4: // false
             {
                 return false;
             }
 
-            case 0xf5: // true
+            case 0xF5: // true
             {
                 return true;
             }
 
-            case 0xf6: // null
+            case 0xF6: // null
             {
                 return value_t::null;
             }
 
-            case 0xf9: // Half-Precision Float (two-byte IEEE 754)
+            case 0xF9: // Half-Precision Float (two-byte IEEE 754)
             {
                 const int byte1 = get();
                 check_eof();
@@ -4859,8 +4833,8 @@ class binary_reader
                 // half-precision floating-point numbers in the C language
                 // is shown in Fig. 3.
                 const int half = (byte1 << 8) + byte2;
-                const int exp = (half >> 10) & 0x1f;
-                const int mant = half & 0x3ff;
+                const int exp = (half >> 10) & 0x1F;
+                const int mant = half & 0x3FF;
                 double val;
                 if (exp == 0)
                 {
@@ -4878,12 +4852,12 @@ class binary_reader
                 return (half & 0x8000) != 0 ? -val : val;
             }
 
-            case 0xfa: // Single-Precision Float (four-byte IEEE 754)
+            case 0xFA: // Single-Precision Float (four-byte IEEE 754)
             {
                 return get_number<float>();
             }
 
-            case 0xfb: // Double-Precision Float (eight-byte IEEE 754)
+            case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
             {
                 return get_number<double>();
             }
@@ -4916,12 +4890,12 @@ class binary_reader
             case 0x07:
             case 0x08:
             case 0x09:
-            case 0x0a:
-            case 0x0b:
-            case 0x0c:
-            case 0x0d:
-            case 0x0e:
-            case 0x0f:
+            case 0x0A:
+            case 0x0B:
+            case 0x0C:
+            case 0x0D:
+            case 0x0E:
+            case 0x0F:
             case 0x10:
             case 0x11:
             case 0x12:
@@ -4932,12 +4906,12 @@ class binary_reader
             case 0x17:
             case 0x18:
             case 0x19:
-            case 0x1a:
-            case 0x1b:
-            case 0x1c:
-            case 0x1d:
-            case 0x1e:
-            case 0x1f:
+            case 0x1A:
+            case 0x1B:
+            case 0x1C:
+            case 0x1D:
+            case 0x1E:
+            case 0x1F:
             case 0x20:
             case 0x21:
             case 0x22:
@@ -4948,12 +4922,12 @@ class binary_reader
             case 0x27:
             case 0x28:
             case 0x29:
-            case 0x2a:
-            case 0x2b:
-            case 0x2c:
-            case 0x2d:
-            case 0x2e:
-            case 0x2f:
+            case 0x2A:
+            case 0x2B:
+            case 0x2C:
+            case 0x2D:
+            case 0x2E:
+            case 0x2F:
             case 0x30:
             case 0x31:
             case 0x32:
@@ -4964,12 +4938,12 @@ class binary_reader
             case 0x37:
             case 0x38:
             case 0x39:
-            case 0x3a:
-            case 0x3b:
-            case 0x3c:
-            case 0x3d:
-            case 0x3e:
-            case 0x3f:
+            case 0x3A:
+            case 0x3B:
+            case 0x3C:
+            case 0x3D:
+            case 0x3E:
+            case 0x3F:
             case 0x40:
             case 0x41:
             case 0x42:
@@ -4980,12 +4954,12 @@ class binary_reader
             case 0x47:
             case 0x48:
             case 0x49:
-            case 0x4a:
-            case 0x4b:
-            case 0x4c:
-            case 0x4d:
-            case 0x4e:
-            case 0x4f:
+            case 0x4A:
+            case 0x4B:
+            case 0x4C:
+            case 0x4D:
+            case 0x4E:
+            case 0x4F:
             case 0x50:
             case 0x51:
             case 0x52:
@@ -4996,12 +4970,12 @@ class binary_reader
             case 0x57:
             case 0x58:
             case 0x59:
-            case 0x5a:
-            case 0x5b:
-            case 0x5c:
-            case 0x5d:
-            case 0x5e:
-            case 0x5f:
+            case 0x5A:
+            case 0x5B:
+            case 0x5C:
+            case 0x5D:
+            case 0x5E:
+            case 0x5F:
             case 0x60:
             case 0x61:
             case 0x62:
@@ -5012,12 +4986,12 @@ class binary_reader
             case 0x67:
             case 0x68:
             case 0x69:
-            case 0x6a:
-            case 0x6b:
-            case 0x6c:
-            case 0x6d:
-            case 0x6e:
-            case 0x6f:
+            case 0x6A:
+            case 0x6B:
+            case 0x6C:
+            case 0x6D:
+            case 0x6E:
+            case 0x6F:
             case 0x70:
             case 0x71:
             case 0x72:
@@ -5028,12 +5002,12 @@ class binary_reader
             case 0x77:
             case 0x78:
             case 0x79:
-            case 0x7a:
-            case 0x7b:
-            case 0x7c:
-            case 0x7d:
-            case 0x7e:
-            case 0x7f:
+            case 0x7A:
+            case 0x7B:
+            case 0x7C:
+            case 0x7D:
+            case 0x7E:
+            case 0x7F:
                 return static_cast<number_unsigned_t>(current);
 
             // fixmap
@@ -5047,14 +5021,14 @@ class binary_reader
             case 0x87:
             case 0x88:
             case 0x89:
-            case 0x8a:
-            case 0x8b:
-            case 0x8c:
-            case 0x8d:
-            case 0x8e:
-            case 0x8f:
+            case 0x8A:
+            case 0x8B:
+            case 0x8C:
+            case 0x8D:
+            case 0x8E:
+            case 0x8F:
             {
-                return get_msgpack_object(current & 0x0f);
+                return get_msgpack_object(current & 0x0F);
             }
 
             // fixarray
@@ -5068,148 +5042,148 @@ class binary_reader
             case 0x97:
             case 0x98:
             case 0x99:
-            case 0x9a:
-            case 0x9b:
-            case 0x9c:
-            case 0x9d:
-            case 0x9e:
-            case 0x9f:
+            case 0x9A:
+            case 0x9B:
+            case 0x9C:
+            case 0x9D:
+            case 0x9E:
+            case 0x9F:
             {
-                return get_msgpack_array(current & 0x0f);
+                return get_msgpack_array(current & 0x0F);
             }
 
             // fixstr
-            case 0xa0:
-            case 0xa1:
-            case 0xa2:
-            case 0xa3:
-            case 0xa4:
-            case 0xa5:
-            case 0xa6:
-            case 0xa7:
-            case 0xa8:
-            case 0xa9:
-            case 0xaa:
-            case 0xab:
-            case 0xac:
-            case 0xad:
-            case 0xae:
-            case 0xaf:
-            case 0xb0:
-            case 0xb1:
-            case 0xb2:
-            case 0xb3:
-            case 0xb4:
-            case 0xb5:
-            case 0xb6:
-            case 0xb7:
-            case 0xb8:
-            case 0xb9:
-            case 0xba:
-            case 0xbb:
-            case 0xbc:
-            case 0xbd:
-            case 0xbe:
-            case 0xbf:
+            case 0xA0:
+            case 0xA1:
+            case 0xA2:
+            case 0xA3:
+            case 0xA4:
+            case 0xA5:
+            case 0xA6:
+            case 0xA7:
+            case 0xA8:
+            case 0xA9:
+            case 0xAA:
+            case 0xAB:
+            case 0xAC:
+            case 0xAD:
+            case 0xAE:
+            case 0xAF:
+            case 0xB0:
+            case 0xB1:
+            case 0xB2:
+            case 0xB3:
+            case 0xB4:
+            case 0xB5:
+            case 0xB6:
+            case 0xB7:
+            case 0xB8:
+            case 0xB9:
+            case 0xBA:
+            case 0xBB:
+            case 0xBC:
+            case 0xBD:
+            case 0xBE:
+            case 0xBF:
                 return get_msgpack_string();
 
-            case 0xc0: // nil
+            case 0xC0: // nil
                 return value_t::null;
 
-            case 0xc2: // false
+            case 0xC2: // false
                 return false;
 
-            case 0xc3: // true
+            case 0xC3: // true
                 return true;
 
-            case 0xca: // float 32
+            case 0xCA: // float 32
                 return get_number<float>();
 
-            case 0xcb: // float 64
+            case 0xCB: // float 64
                 return get_number<double>();
 
-            case 0xcc: // uint 8
+            case 0xCC: // uint 8
                 return get_number<uint8_t>();
 
-            case 0xcd: // uint 16
+            case 0xCD: // uint 16
                 return get_number<uint16_t>();
 
-            case 0xce: // uint 32
+            case 0xCE: // uint 32
                 return get_number<uint32_t>();
 
-            case 0xcf: // uint 64
+            case 0xCF: // uint 64
                 return get_number<uint64_t>();
 
-            case 0xd0: // int 8
+            case 0xD0: // int 8
                 return get_number<int8_t>();
 
-            case 0xd1: // int 16
+            case 0xD1: // int 16
                 return get_number<int16_t>();
 
-            case 0xd2: // int 32
+            case 0xD2: // int 32
                 return get_number<int32_t>();
 
-            case 0xd3: // int 64
+            case 0xD3: // int 64
                 return get_number<int64_t>();
 
-            case 0xd9: // str 8
-            case 0xda: // str 16
-            case 0xdb: // str 32
+            case 0xD9: // str 8
+            case 0xDA: // str 16
+            case 0xDB: // str 32
                 return get_msgpack_string();
 
-            case 0xdc: // array 16
+            case 0xDC: // array 16
             {
                 return get_msgpack_array(get_number<uint16_t>());
             }
 
-            case 0xdd: // array 32
+            case 0xDD: // array 32
             {
                 return get_msgpack_array(get_number<uint32_t>());
             }
 
-            case 0xde: // map 16
+            case 0xDE: // map 16
             {
                 return get_msgpack_object(get_number<uint16_t>());
             }
 
-            case 0xdf: // map 32
+            case 0xDF: // map 32
             {
                 return get_msgpack_object(get_number<uint32_t>());
             }
 
             // positive fixint
-            case 0xe0:
-            case 0xe1:
-            case 0xe2:
-            case 0xe3:
-            case 0xe4:
-            case 0xe5:
-            case 0xe6:
-            case 0xe7:
-            case 0xe8:
-            case 0xe9:
-            case 0xea:
-            case 0xeb:
-            case 0xec:
-            case 0xed:
-            case 0xee:
-            case 0xef:
-            case 0xf0:
-            case 0xf1:
-            case 0xf2:
-            case 0xf3:
-            case 0xf4:
-            case 0xf5:
-            case 0xf6:
-            case 0xf7:
-            case 0xf8:
-            case 0xf9:
-            case 0xfa:
-            case 0xfb:
-            case 0xfc:
-            case 0xfd:
-            case 0xfe:
-            case 0xff:
+            case 0xE0:
+            case 0xE1:
+            case 0xE2:
+            case 0xE3:
+            case 0xE4:
+            case 0xE5:
+            case 0xE6:
+            case 0xE7:
+            case 0xE8:
+            case 0xE9:
+            case 0xEA:
+            case 0xEB:
+            case 0xEC:
+            case 0xED:
+            case 0xEE:
+            case 0xEF:
+            case 0xF0:
+            case 0xF1:
+            case 0xF2:
+            case 0xF3:
+            case 0xF4:
+            case 0xF5:
+            case 0xF6:
+            case 0xF7:
+            case 0xF8:
+            case 0xF9:
+            case 0xFA:
+            case 0xFB:
+            case 0xFC:
+            case 0xFD:
+            case 0xFE:
+            case 0xFF:
                 return static_cast<int8_t>(current);
 
             default: // anything else
@@ -5331,12 +5305,12 @@ class binary_reader
             case 0x67:
             case 0x68:
             case 0x69:
-            case 0x6a:
-            case 0x6b:
-            case 0x6c:
-            case 0x6d:
-            case 0x6e:
-            case 0x6f:
+            case 0x6A:
+            case 0x6B:
+            case 0x6C:
+            case 0x6D:
+            case 0x6E:
+            case 0x6F:
             case 0x70:
             case 0x71:
             case 0x72:
@@ -5346,7 +5320,7 @@ class binary_reader
             case 0x76:
             case 0x77:
             {
-                return get_string(current & 0x1f);
+                return get_string(current & 0x1F);
             }
 
             case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
@@ -5359,20 +5333,20 @@ class binary_reader
                 return get_string(get_number<uint16_t>());
             }
 
-            case 0x7a: // UTF-8 string (four-byte uint32_t for n follow)
+            case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
             {
                 return get_string(get_number<uint32_t>());
             }
 
-            case 0x7b: // UTF-8 string (eight-byte uint64_t for n follow)
+            case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
             {
                 return get_string(get_number<uint64_t>());
             }
 
-            case 0x7f: // UTF-8 string (indefinite length)
+            case 0x7F: // UTF-8 string (indefinite length)
             {
                 std::string result;
-                while (get() != 0xff)
+                while (get() != 0xFF)
                 {
                     check_eof();
                     result.push_back(static_cast<char>(current));
@@ -5434,53 +5408,53 @@ class binary_reader
         switch (current)
         {
             // fixstr
-            case 0xa0:
-            case 0xa1:
-            case 0xa2:
-            case 0xa3:
-            case 0xa4:
-            case 0xa5:
-            case 0xa6:
-            case 0xa7:
-            case 0xa8:
-            case 0xa9:
-            case 0xaa:
-            case 0xab:
-            case 0xac:
-            case 0xad:
-            case 0xae:
-            case 0xaf:
-            case 0xb0:
-            case 0xb1:
-            case 0xb2:
-            case 0xb3:
-            case 0xb4:
-            case 0xb5:
-            case 0xb6:
-            case 0xb7:
-            case 0xb8:
-            case 0xb9:
-            case 0xba:
-            case 0xbb:
-            case 0xbc:
-            case 0xbd:
-            case 0xbe:
-            case 0xbf:
+            case 0xA0:
+            case 0xA1:
+            case 0xA2:
+            case 0xA3:
+            case 0xA4:
+            case 0xA5:
+            case 0xA6:
+            case 0xA7:
+            case 0xA8:
+            case 0xA9:
+            case 0xAA:
+            case 0xAB:
+            case 0xAC:
+            case 0xAD:
+            case 0xAE:
+            case 0xAF:
+            case 0xB0:
+            case 0xB1:
+            case 0xB2:
+            case 0xB3:
+            case 0xB4:
+            case 0xB5:
+            case 0xB6:
+            case 0xB7:
+            case 0xB8:
+            case 0xB9:
+            case 0xBA:
+            case 0xBB:
+            case 0xBC:
+            case 0xBD:
+            case 0xBE:
+            case 0xBF:
             {
-                return get_string(current & 0x1f);
+                return get_string(current & 0x1F);
             }
 
-            case 0xd9: // str 8
+            case 0xD9: // str 8
             {
                 return get_string(get_number<uint8_t>());
             }
 
-            case 0xda: // str 16
+            case 0xDA: // str 16
             {
                 return get_string(get_number<uint16_t>());
             }
 
-            case 0xdb: // str 32
+            case 0xDB: // str 32
             {
                 return get_string(get_number<uint32_t>());
             }
@@ -5584,15 +5558,15 @@ class binary_writer
         {
             case value_t::null:
             {
-                oa->write_character(static_cast<CharType>(0xf6));
+                oa->write_character(static_cast<CharType>(0xF6));
                 break;
             }
 
             case value_t::boolean:
             {
                 oa->write_character(j.m_value.boolean
-                                    ? static_cast<CharType>(0xf5)
-                                    : static_cast<CharType>(0xf4));
+                                    ? static_cast<CharType>(0xF5)
+                                    : static_cast<CharType>(0xF4));
                 break;
             }
 
@@ -5619,12 +5593,12 @@ class binary_writer
                     }
                     else if (j.m_value.number_integer <= (std::numeric_limits<uint32_t>::max)())
                     {
-                        oa->write_character(static_cast<CharType>(0x1a));
+                        oa->write_character(static_cast<CharType>(0x1A));
                         write_number(static_cast<uint32_t>(j.m_value.number_integer));
                     }
                     else
                     {
-                        oa->write_character(static_cast<CharType>(0x1b));
+                        oa->write_character(static_cast<CharType>(0x1B));
                         write_number(static_cast<uint64_t>(j.m_value.number_integer));
                     }
                 }
@@ -5649,12 +5623,12 @@ class binary_writer
                     }
                     else if (positive_number <= (std::numeric_limits<uint32_t>::max)())
                     {
-                        oa->write_character(static_cast<CharType>(0x3a));
+                        oa->write_character(static_cast<CharType>(0x3A));
                         write_number(static_cast<uint32_t>(positive_number));
                     }
                     else
                     {
-                        oa->write_character(static_cast<CharType>(0x3b));
+                        oa->write_character(static_cast<CharType>(0x3B));
                         write_number(static_cast<uint64_t>(positive_number));
                     }
                 }
@@ -5679,12 +5653,12 @@ class binary_writer
                 }
                 else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
                 {
-                    oa->write_character(static_cast<CharType>(0x1a));
+                    oa->write_character(static_cast<CharType>(0x1A));
                     write_number(static_cast<uint32_t>(j.m_value.number_unsigned));
                 }
                 else
                 {
-                    oa->write_character(static_cast<CharType>(0x1b));
+                    oa->write_character(static_cast<CharType>(0x1B));
                     write_number(static_cast<uint64_t>(j.m_value.number_unsigned));
                 }
                 break;
@@ -5692,7 +5666,7 @@ class binary_writer
 
             case value_t::number_float: // Double-Precision Float
             {
-                oa->write_character(static_cast<CharType>(0xfb));
+                oa->write_character(static_cast<CharType>(0xFB));
                 write_number(j.m_value.number_float);
                 break;
             }
@@ -5705,25 +5679,25 @@ class binary_writer
                 {
                     write_number(static_cast<uint8_t>(0x60 + N));
                 }
-                else if (N <= 0xff)
+                else if (N <= 0xFF)
                 {
                     oa->write_character(static_cast<CharType>(0x78));
                     write_number(static_cast<uint8_t>(N));
                 }
-                else if (N <= 0xffff)
+                else if (N <= 0xFFFF)
                 {
                     oa->write_character(static_cast<CharType>(0x79));
                     write_number(static_cast<uint16_t>(N));
                 }
-                else if (N <= 0xffffffff)
+                else if (N <= 0xFFFFFFFF)
                 {
-                    oa->write_character(static_cast<CharType>(0x7a));
+                    oa->write_character(static_cast<CharType>(0x7A));
                     write_number(static_cast<uint32_t>(N));
                 }
                 // LCOV_EXCL_START
-                else if (N <= 0xffffffffffffffff)
+                else if (N <= 0xFFFFFFFFFFFFFFFF)
                 {
-                    oa->write_character(static_cast<CharType>(0x7b));
+                    oa->write_character(static_cast<CharType>(0x7B));
                     write_number(static_cast<uint64_t>(N));
                 }
                 // LCOV_EXCL_STOP
@@ -5743,25 +5717,25 @@ class binary_writer
                 {
                     write_number(static_cast<uint8_t>(0x80 + N));
                 }
-                else if (N <= 0xff)
+                else if (N <= 0xFF)
                 {
                     oa->write_character(static_cast<CharType>(0x98));
                     write_number(static_cast<uint8_t>(N));
                 }
-                else if (N <= 0xffff)
+                else if (N <= 0xFFFF)
                 {
                     oa->write_character(static_cast<CharType>(0x99));
                     write_number(static_cast<uint16_t>(N));
                 }
-                else if (N <= 0xffffffff)
+                else if (N <= 0xFFFFFFFF)
                 {
-                    oa->write_character(static_cast<CharType>(0x9a));
+                    oa->write_character(static_cast<CharType>(0x9A));
                     write_number(static_cast<uint32_t>(N));
                 }
                 // LCOV_EXCL_START
-                else if (N <= 0xffffffffffffffff)
+                else if (N <= 0xFFFFFFFFFFFFFFFF)
                 {
-                    oa->write_character(static_cast<CharType>(0x9b));
+                    oa->write_character(static_cast<CharType>(0x9B));
                     write_number(static_cast<uint64_t>(N));
                 }
                 // LCOV_EXCL_STOP
@@ -5780,27 +5754,27 @@ class binary_writer
                 const auto N = j.m_value.object->size();
                 if (N <= 0x17)
                 {
-                    write_number(static_cast<uint8_t>(0xa0 + N));
+                    write_number(static_cast<uint8_t>(0xA0 + N));
                 }
-                else if (N <= 0xff)
+                else if (N <= 0xFF)
                 {
-                    oa->write_character(static_cast<CharType>(0xb8));
+                    oa->write_character(static_cast<CharType>(0xB8));
                     write_number(static_cast<uint8_t>(N));
                 }
-                else if (N <= 0xffff)
+                else if (N <= 0xFFFF)
                 {
-                    oa->write_character(static_cast<CharType>(0xb9));
+                    oa->write_character(static_cast<CharType>(0xB9));
                     write_number(static_cast<uint16_t>(N));
                 }
-                else if (N <= 0xffffffff)
+                else if (N <= 0xFFFFFFFF)
                 {
-                    oa->write_character(static_cast<CharType>(0xba));
+                    oa->write_character(static_cast<CharType>(0xBA));
                     write_number(static_cast<uint32_t>(N));
                 }
                 // LCOV_EXCL_START
-                else if (N <= 0xffffffffffffffff)
+                else if (N <= 0xFFFFFFFFFFFFFFFF)
                 {
-                    oa->write_character(static_cast<CharType>(0xbb));
+                    oa->write_character(static_cast<CharType>(0xBB));
                     write_number(static_cast<uint64_t>(N));
                 }
                 // LCOV_EXCL_STOP
@@ -5828,15 +5802,15 @@ class binary_writer
         {
             case value_t::null: // nil
             {
-                oa->write_character(static_cast<CharType>(0xc0));
+                oa->write_character(static_cast<CharType>(0xC0));
                 break;
             }
 
             case value_t::boolean: // true and false
             {
                 oa->write_character(j.m_value.boolean
-                                    ? static_cast<CharType>(0xc3)
-                                    : static_cast<CharType>(0xc2));
+                                    ? static_cast<CharType>(0xC3)
+                                    : static_cast<CharType>(0xC2));
                 break;
             }
 
@@ -5855,25 +5829,25 @@ class binary_writer
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                     {
                         // uint 8
-                        oa->write_character(static_cast<CharType>(0xcc));
+                        oa->write_character(static_cast<CharType>(0xCC));
                         write_number(static_cast<uint8_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
                     {
                         // uint 16
-                        oa->write_character(static_cast<CharType>(0xcd));
+                        oa->write_character(static_cast<CharType>(0xCD));
                         write_number(static_cast<uint16_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
                     {
                         // uint 32
-                        oa->write_character(static_cast<CharType>(0xce));
+                        oa->write_character(static_cast<CharType>(0xCE));
                         write_number(static_cast<uint32_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
                     {
                         // uint 64
-                        oa->write_character(static_cast<CharType>(0xcf));
+                        oa->write_character(static_cast<CharType>(0xCF));
                         write_number(static_cast<uint64_t>(j.m_value.number_integer));
                     }
                 }
@@ -5888,28 +5862,28 @@ class binary_writer
                              j.m_value.number_integer <= (std::numeric_limits<int8_t>::max)())
                     {
                         // int 8
-                        oa->write_character(static_cast<CharType>(0xd0));
+                        oa->write_character(static_cast<CharType>(0xD0));
                         write_number(static_cast<int8_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_integer >= (std::numeric_limits<int16_t>::min)() and
                              j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
                     {
                         // int 16
-                        oa->write_character(static_cast<CharType>(0xd1));
+                        oa->write_character(static_cast<CharType>(0xD1));
                         write_number(static_cast<int16_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_integer >= (std::numeric_limits<int32_t>::min)() and
                              j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
                     {
                         // int 32
-                        oa->write_character(static_cast<CharType>(0xd2));
+                        oa->write_character(static_cast<CharType>(0xD2));
                         write_number(static_cast<int32_t>(j.m_value.number_integer));
                     }
                     else if (j.m_value.number_integer >= (std::numeric_limits<int64_t>::min)() and
                              j.m_value.number_integer <= (std::numeric_limits<int64_t>::max)())
                     {
                         // int 64
-                        oa->write_character(static_cast<CharType>(0xd3));
+                        oa->write_character(static_cast<CharType>(0xD3));
                         write_number(static_cast<int64_t>(j.m_value.number_integer));
                     }
                 }
@@ -5926,25 +5900,25 @@ class binary_writer
                 else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                 {
                     // uint 8
-                    oa->write_character(static_cast<CharType>(0xcc));
+                    oa->write_character(static_cast<CharType>(0xCC));
                     write_number(static_cast<uint8_t>(j.m_value.number_integer));
                 }
                 else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
                 {
                     // uint 16
-                    oa->write_character(static_cast<CharType>(0xcd));
+                    oa->write_character(static_cast<CharType>(0xCD));
                     write_number(static_cast<uint16_t>(j.m_value.number_integer));
                 }
                 else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
                 {
                     // uint 32
-                    oa->write_character(static_cast<CharType>(0xce));
+                    oa->write_character(static_cast<CharType>(0xCE));
                     write_number(static_cast<uint32_t>(j.m_value.number_integer));
                 }
                 else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
                 {
                     // uint 64
-                    oa->write_character(static_cast<CharType>(0xcf));
+                    oa->write_character(static_cast<CharType>(0xCF));
                     write_number(static_cast<uint64_t>(j.m_value.number_integer));
                 }
                 break;
@@ -5952,7 +5926,7 @@ class binary_writer
 
             case value_t::number_float: // float 64
             {
-                oa->write_character(static_cast<CharType>(0xcb));
+                oa->write_character(static_cast<CharType>(0xCB));
                 write_number(j.m_value.number_float);
                 break;
             }
@@ -5964,24 +5938,24 @@ class binary_writer
                 if (N <= 31)
                 {
                     // fixstr
-                    write_number(static_cast<uint8_t>(0xa0 | N));
+                    write_number(static_cast<uint8_t>(0xA0 | N));
                 }
                 else if (N <= 255)
                 {
                     // str 8
-                    oa->write_character(static_cast<CharType>(0xd9));
+                    oa->write_character(static_cast<CharType>(0xD9));
                     write_number(static_cast<uint8_t>(N));
                 }
                 else if (N <= 65535)
                 {
                     // str 16
-                    oa->write_character(static_cast<CharType>(0xda));
+                    oa->write_character(static_cast<CharType>(0xDA));
                     write_number(static_cast<uint16_t>(N));
                 }
                 else if (N <= 4294967295)
                 {
                     // str 32
-                    oa->write_character(static_cast<CharType>(0xdb));
+                    oa->write_character(static_cast<CharType>(0xDB));
                     write_number(static_cast<uint32_t>(N));
                 }
 
@@ -6001,16 +5975,16 @@ class binary_writer
                     // fixarray
                     write_number(static_cast<uint8_t>(0x90 | N));
                 }
-                else if (N <= 0xffff)
+                else if (N <= 0xFFFF)
                 {
                     // array 16
-                    oa->write_character(static_cast<CharType>(0xdc));
+                    oa->write_character(static_cast<CharType>(0xDC));
                     write_number(static_cast<uint16_t>(N));
                 }
-                else if (N <= 0xffffffff)
+                else if (N <= 0xFFFFFFFF)
                 {
                     // array 32
-                    oa->write_character(static_cast<CharType>(0xdd));
+                    oa->write_character(static_cast<CharType>(0xDD));
                     write_number(static_cast<uint32_t>(N));
                 }
 
@@ -6029,18 +6003,18 @@ class binary_writer
                 if (N <= 15)
                 {
                     // fixmap
-                    write_number(static_cast<uint8_t>(0x80 | (N & 0xf)));
+                    write_number(static_cast<uint8_t>(0x80 | (N & 0xF)));
                 }
                 else if (N <= 65535)
                 {
                     // map 16
-                    oa->write_character(static_cast<CharType>(0xde));
+                    oa->write_character(static_cast<CharType>(0xDE));
                     write_number(static_cast<uint16_t>(N));
                 }
                 else if (N <= 4294967295)
                 {
                     // map 32
-                    oa->write_character(static_cast<CharType>(0xdf));
+                    oa->write_character(static_cast<CharType>(0xDF));
                     write_number(static_cast<uint32_t>(N));
                 }
 
@@ -6385,9 +6359,9 @@ class serializer
                 case 0x05:
                 case 0x06:
                 case 0x07:
-                case 0x0b:
-                case 0x0e:
-                case 0x0f:
+                case 0x0B:
+                case 0x0E:
+                case 0x0F:
                 case 0x10:
                 case 0x11:
                 case 0x12:
@@ -6398,12 +6372,12 @@ class serializer
                 case 0x17:
                 case 0x18:
                 case 0x19:
-                case 0x1a:
-                case 0x1b:
-                case 0x1c:
-                case 0x1d:
-                case 0x1e:
-                case 0x1f:
+                case 0x1A:
+                case 0x1B:
+                case 0x1C:
+                case 0x1D:
+                case 0x1E:
+                case 0x1F:
                 {
                     // from c (1 byte) to \uxxxx (6 bytes)
                     res += 5;
@@ -6534,7 +6508,7 @@ class serializer
                     break;
                 }
 
-                case '\\': // reverse solidus (0x5c)
+                case '\\': // reverse solidus (0x5C)
                 {
                     // nothing to change
                     pos += 2;
@@ -6548,21 +6522,21 @@ class serializer
                     break;
                 }
 
-                case '\f': // formfeed (0x0c)
+                case '\f': // formfeed (0x0C)
                 {
                     result[pos + 1] = 'f';
                     pos += 2;
                     break;
                 }
 
-                case '\n': // newline (0x0a)
+                case '\n': // newline (0x0A)
                 {
                     result[pos + 1] = 'n';
                     pos += 2;
                     break;
                 }
 
-                case '\r': // carriage return (0x0d)
+                case '\r': // carriage return (0x0D)
                 {
                     result[pos + 1] = 'r';
                     pos += 2;
@@ -6657,11 +6631,10 @@ class serializer
     @param[in] x  integer number (signed or unsigned) to dump
     @tparam NumberType either @a number_integer_t or @a number_unsigned_t
     */
-    template <
-        typename NumberType,
-        detail::enable_if_t<std::is_same<NumberType, number_unsigned_t>::value or
-                            std::is_same<NumberType, number_integer_t>::value,
-                            int> = 0 >
+    template<typename NumberType, detail::enable_if_t<
+                 std::is_same<NumberType, number_unsigned_t>::value or
+                 std::is_same<NumberType, number_integer_t>::value,
+                 int> = 0>
     void dump_integer(NumberType x)
     {
         // special case for "0"
@@ -6784,15 +6757,15 @@ class serializer
         static const std::array<uint8_t, 400> utf8d =
         {
             {
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 00..1f
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 20..3f
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 40..5f
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 60..7f
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, // 80..9f
-                7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, // a0..bf
-                8, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // c0..df
-                0xa, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x4, 0x3, 0x3, // e0..ef
-                0xb, 0x6, 0x6, 0x6, 0x5, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, // f0..ff
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 00..1F
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 20..3F
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 40..5F
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 60..7F
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, // 80..9F
+                7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, // A0..BF
+                8, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // C0..DF
+                0xA, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x4, 0x3, 0x3, // E0..EF
+                0xB, 0x6, 0x6, 0x6, 0x5, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, // F0..FF
                 0x0, 0x1, 0x2, 0x3, 0x5, 0x8, 0x7, 0x1, 0x1, 0x1, 0x4, 0x6, 0x1, 0x1, 0x1, 0x1, // s0..s0
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, // s1..s2
                 1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, // s3..s4
@@ -6868,27 +6841,20 @@ class json_ref
     using value_type = BasicJsonType;
 
     json_ref(value_type&& value)
-        : owned_value(std::move(value)),
-          value_ref(&owned_value),
-          is_rvalue(true)
+        : owned_value(std::move(value)), value_ref(&owned_value), is_rvalue(true)
     {}
 
     json_ref(const value_type& value)
-        : value_ref(const_cast<value_type*>(&value)),
-          is_rvalue(false)
+        : value_ref(const_cast<value_type*>(&value)), is_rvalue(false)
     {}
 
     json_ref(std::initializer_list<json_ref> init)
-        : owned_value(init),
-          value_ref(&owned_value),
-          is_rvalue(true)
+        : owned_value(init), value_ref(&owned_value), is_rvalue(true)
     {}
 
-    template <class... Args>
+    template<class... Args>
     json_ref(Args&& ... args)
-        : owned_value(std::forward<Args>(args)...),
-          value_ref(&owned_value),
-          is_rvalue(true)
+        : owned_value(std::forward<Args>(args)...), value_ref(&owned_value), is_rvalue(true)
     {}
 
     // class should be movable only
@@ -7417,11 +7383,11 @@ class basic_json
 
   public:
     using value_t = detail::value_t;
-    // forward declarations
+    /// @copydoc nlohmann::json_pointer
     using json_pointer = ::nlohmann::json_pointer;
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
-
+    /// helper type for initializer lists of basic_json values
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
 
     ////////////////
@@ -7586,6 +7552,14 @@ class basic_json
     /// the template arguments passed to class @ref basic_json.
     /// @{
 
+#if defined(JSON_HAS_CPP_14)
+    // Use transparent comparator if possible, combined with perfect forwarding
+    // on find() and count() calls prevents unnecessary string construction.
+    using object_comparator_t = std::less<>;
+#else
+    using object_comparator_t = std::less<StringType>;
+#endif
+
     /*!
     @brief a type for an object
 
@@ -7669,14 +7643,6 @@ class basic_json
     7159](http://rfc7159.net/rfc7159), because any order implements the
     specified "unordered" nature of JSON objects.
     */
-
-#if defined(JSON_HAS_CPP_14)
-    // Use transparent comparator if possible, combined with perfect forwarding
-    // on find() and count() calls prevents unnecessary string construction.
-    using object_comparator_t = std::less<>;
-#else
-    using object_comparator_t = std::less<StringType>;
-#endif
     using object_t = ObjectType<StringType,
           basic_json,
           object_comparator_t,
@@ -8253,6 +8219,21 @@ class basic_json
     // JSON parser callback //
     //////////////////////////
 
+    /*!
+    @brief parser event types
+
+    The parser callback distinguishes the following events:
+    - `object_start`: the parser read `{` and started to process a JSON object
+    - `key`: the parser read a key of a value in an object
+    - `object_end`: the parser read `}` and finished processing a JSON object
+    - `array_start`: the parser read `[` and started to process a JSON array
+    - `array_end`: the parser read `]` and finished processing a JSON array
+    - `value`: the parser finished reading a JSON value
+
+    @image html callback_events.png "Example when certain parse events are triggered"
+
+    @sa @ref parser_callback_t for more information and examples
+    */
     using parse_event_t = typename parser::parse_event_t;
 
     /*!
@@ -9051,10 +9032,13 @@ class basic_json
     @param[in] indent_char The character to use for indentation if @a indent is
     greater than `0`. The default is ` ` (space).
     @param[in] ensure_ascii If @a ensure_ascii is true, all non-ASCII characters
-    in the output are escaped with \uXXXX sequences, and the result consists
+    in the output are escaped with `\uXXXX` sequences, and the result consists
     of ASCII characters only.
 
     @return string containing the serialization of the JSON value
+
+    @throw type_error.316 if a string stored inside the JSON value is not
+                          UTF-8 encoded
 
     @complexity Linear.
 
@@ -9068,7 +9052,7 @@ class basic_json
     @see https://docs.python.org/2/library/json.html#json.dump
 
     @since version 1.0.0; indentation character @a indent_char and option
-           @a ensure_ascii added in version 3.0.0
+           @a ensure_ascii and exceptions added in version 3.0.0
     */
     string_t dump(const int indent = -1, const char indent_char = ' ',
                   const bool ensure_ascii = false) const
@@ -9606,11 +9590,9 @@ class basic_json
 
     @since version 2.1.0
     */
-    template <
-        typename BasicJsonType,
-        detail::enable_if_t<std::is_same<typename std::remove_const<BasicJsonType>::type,
-                                         basic_json_t>::value,
-                            int> = 0 >
+    template<typename BasicJsonType, detail::enable_if_t<
+                 std::is_same<typename std::remove_const<BasicJsonType>::type, basic_json_t>::value,
+                 int> = 0>
     basic_json get() const
     {
         return *this;
@@ -9655,14 +9637,12 @@ class basic_json
 
     @since version 2.1.0
     */
-    template <
-        typename ValueTypeCV,
-        typename ValueType = detail::uncvref_t<ValueTypeCV>,
-        detail::enable_if_t <
-            not std::is_same<basic_json_t, ValueType>::value and
-            detail::has_from_json<basic_json_t, ValueType>::value and
-            not detail::has_non_default_from_json<basic_json_t, ValueType>::value,
-            int > = 0 >
+    template<typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
+             detail::enable_if_t <
+                 not std::is_same<basic_json_t, ValueType>::value and
+                 detail::has_from_json<basic_json_t, ValueType>::value and
+                 not detail::has_non_default_from_json<basic_json_t, ValueType>::value,
+                 int> = 0>
     ValueType get() const noexcept(noexcept(
                                        JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
     {
@@ -9710,12 +9690,10 @@ class basic_json
 
     @since version 2.1.0
     */
-    template <
-        typename ValueTypeCV,
-        typename ValueType = detail::uncvref_t<ValueTypeCV>,
-        detail::enable_if_t<not std::is_same<basic_json_t, ValueType>::value and
-                            detail::has_non_default_from_json<basic_json_t,
-                                    ValueType>::value, int> = 0 >
+    template<typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
+             detail::enable_if_t<not std::is_same<basic_json_t, ValueType>::value and
+                                 detail::has_non_default_from_json<basic_json_t, ValueType>::value,
+                                 int> = 0>
     ValueType get() const noexcept(noexcept(
                                        JSONSerializer<ValueTypeCV>::from_json(std::declval<const basic_json_t&>())))
     {
@@ -10209,7 +10187,7 @@ class basic_json
 
     @return const reference to the element at index @a idx
 
-    @throw type_error.305 if the JSON value is not an array; in that cases,
+    @throw type_error.305 if the JSON value is not an array; in that case,
     using the [] operator with an index makes no sense.
 
     @complexity Constant.
@@ -10292,7 +10270,7 @@ class basic_json
     @pre The element with key @a key must exist. **This precondition is
          enforced with an assertion.**
 
-    @throw type_error.305 if the JSON value is not an object; in that cases,
+    @throw type_error.305 if the JSON value is not an object; in that case,
     using the [] operator with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
@@ -10381,7 +10359,7 @@ class basic_json
     @pre The element with key @a key must exist. **This precondition is
          enforced with an assertion.**
 
-    @throw type_error.305 if the JSON value is not an object; in that cases,
+    @throw type_error.305 if the JSON value is not an object; in that case,
     using the [] operator with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
@@ -10441,7 +10419,7 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
-    @throw type_error.306 if the JSON value is not an object; in that cases,
+    @throw type_error.306 if the JSON value is not an object; in that case,
     using `value()` with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
@@ -10514,7 +10492,7 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
-    @throw type_error.306 if the JSON value is not an objec; in that cases,
+    @throw type_error.306 if the JSON value is not an objec; in that case,
     using `value()` with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
@@ -12440,7 +12418,7 @@ class basic_json
     [comparison function](https://github.com/mariokonrad/marnav/blob/master/src/marnav/math/floatingpoint.hpp#L34-#L39)
     could be used, for instance
     @code {.cpp}
-    template <typename T, typename = typename std::enable_if<std::is_floating_point<T>::value, T>::type>
+    template<typename T, typename = typename std::enable_if<std::is_floating_point<T>::value, T>::type>
     inline bool is_same(T a, T b, T epsilon = std::numeric_limits<T>::epsilon()) noexcept
     {
         return std::abs(a - b) <= epsilon;
@@ -12878,6 +12856,9 @@ class basic_json
 
     @return the stream @a o
 
+    @throw type_error.316 if a string stored inside the JSON value is not
+                          UTF-8 encoded
+
     @complexity Linear.
 
     @liveexample{The example below shows the serialization with different
@@ -13223,40 +13204,40 @@ class basic_json
 
     JSON value type | value/range                                | CBOR type                          | first byte
     --------------- | ------------------------------------------ | ---------------------------------- | ---------------
-    null            | `null`                                     | Null                               | 0xf6
-    boolean         | `true`                                     | True                               | 0xf5
-    boolean         | `false`                                    | False                              | 0xf4
-    number_integer  | -9223372036854775808..-2147483649          | Negative integer (8 bytes follow)  | 0x3b
-    number_integer  | -2147483648..-32769                        | Negative integer (4 bytes follow)  | 0x3a
+    null            | `null`                                     | Null                               | 0xF6
+    boolean         | `true`                                     | True                               | 0xF5
+    boolean         | `false`                                    | False                              | 0xF4
+    number_integer  | -9223372036854775808..-2147483649          | Negative integer (8 bytes follow)  | 0x3B
+    number_integer  | -2147483648..-32769                        | Negative integer (4 bytes follow)  | 0x3A
     number_integer  | -32768..-129                               | Negative integer (2 bytes follow)  | 0x39
     number_integer  | -128..-25                                  | Negative integer (1 byte follow)   | 0x38
     number_integer  | -24..-1                                    | Negative integer                   | 0x20..0x37
     number_integer  | 0..23                                      | Integer                            | 0x00..0x17
     number_integer  | 24..255                                    | Unsigned integer (1 byte follow)   | 0x18
     number_integer  | 256..65535                                 | Unsigned integer (2 bytes follow)  | 0x19
-    number_integer  | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1a
-    number_integer  | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1b
+    number_integer  | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1A
+    number_integer  | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1B
     number_unsigned | 0..23                                      | Integer                            | 0x00..0x17
     number_unsigned | 24..255                                    | Unsigned integer (1 byte follow)   | 0x18
     number_unsigned | 256..65535                                 | Unsigned integer (2 bytes follow)  | 0x19
-    number_unsigned | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1a
-    number_unsigned | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1b
-    number_float    | *any value*                                | Double-Precision Float             | 0xfb
+    number_unsigned | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1A
+    number_unsigned | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1B
+    number_float    | *any value*                                | Double-Precision Float             | 0xFB
     string          | *length*: 0..23                            | UTF-8 string                       | 0x60..0x77
     string          | *length*: 23..255                          | UTF-8 string (1 byte follow)       | 0x78
     string          | *length*: 256..65535                       | UTF-8 string (2 bytes follow)      | 0x79
-    string          | *length*: 65536..4294967295                | UTF-8 string (4 bytes follow)      | 0x7a
-    string          | *length*: 4294967296..18446744073709551615 | UTF-8 string (8 bytes follow)      | 0x7b
+    string          | *length*: 65536..4294967295                | UTF-8 string (4 bytes follow)      | 0x7A
+    string          | *length*: 4294967296..18446744073709551615 | UTF-8 string (8 bytes follow)      | 0x7B
     array           | *size*: 0..23                              | array                              | 0x80..0x97
     array           | *size*: 23..255                            | array (1 byte follow)              | 0x98
     array           | *size*: 256..65535                         | array (2 bytes follow)             | 0x99
-    array           | *size*: 65536..4294967295                  | array (4 bytes follow)             | 0x9a
-    array           | *size*: 4294967296..18446744073709551615   | array (8 bytes follow)             | 0x9b
-    object          | *size*: 0..23                              | map                                | 0xa0..0xb7
-    object          | *size*: 23..255                            | map (1 byte follow)                | 0xb8
-    object          | *size*: 256..65535                         | map (2 bytes follow)               | 0xb9
-    object          | *size*: 65536..4294967295                  | map (4 bytes follow)               | 0xba
-    object          | *size*: 4294967296..18446744073709551615   | map (8 bytes follow)               | 0xbb
+    array           | *size*: 65536..4294967295                  | array (4 bytes follow)             | 0x9A
+    array           | *size*: 4294967296..18446744073709551615   | array (8 bytes follow)             | 0x9B
+    object          | *size*: 0..23                              | map                                | 0xA0..0xB7
+    object          | *size*: 23..255                            | map (1 byte follow)                | 0xB8
+    object          | *size*: 256..65535                         | map (2 bytes follow)               | 0xB9
+    object          | *size*: 65536..4294967295                  | map (4 bytes follow)               | 0xBA
+    object          | *size*: 4294967296..18446744073709551615   | map (8 bytes follow)               | 0xBB
 
     @note The mapping is **complete** in the sense that any JSON value type
           can be converted to a CBOR value.
@@ -13266,20 +13247,20 @@ class basic_json
           function which serializes NaN or Infinity to `null`.
 
     @note The following CBOR types are not used in the conversion:
-          - byte strings (0x40..0x5f)
-          - UTF-8 strings terminated by "break" (0x7f)
-          - arrays terminated by "break" (0x9f)
-          - maps terminated by "break" (0xbf)
-          - date/time (0xc0..0xc1)
-          - bignum (0xc2..0xc3)
-          - decimal fraction (0xc4)
-          - bigfloat (0xc5)
-          - tagged items (0xc6..0xd4, 0xd8..0xdb)
-          - expected conversions (0xd5..0xd7)
-          - simple values (0xe0..0xf3, 0xf8)
-          - undefined (0xf7)
-          - half and single-precision floats (0xf9-0xfa)
-          - break (0xff)
+          - byte strings (0x40..0x5F)
+          - UTF-8 strings terminated by "break" (0x7F)
+          - arrays terminated by "break" (0x9F)
+          - maps terminated by "break" (0xBF)
+          - date/time (0xC0..0xC1)
+          - bignum (0xC2..0xC3)
+          - decimal fraction (0xC4)
+          - bigfloat (0xC5)
+          - tagged items (0xC6..0xD4, 0xD8..0xDB)
+          - expected conversions (0xD5..0xD7)
+          - simple values (0xE0..0xF3, 0xF8)
+          - undefined (0xF7)
+          - half and single-precision floats (0xF9-0xFA)
+          - break (0xFF)
 
     @param[in] j  JSON value to serialize
     @return MessagePack serialization as byte vector
@@ -13325,35 +13306,35 @@ class basic_json
 
     JSON value type | value/range                       | MessagePack type | first byte
     --------------- | --------------------------------- | ---------------- | ----------
-    null            | `null`                            | nil              | 0xc0
-    boolean         | `true`                            | true             | 0xc3
-    boolean         | `false`                           | false            | 0xc2
-    number_integer  | -9223372036854775808..-2147483649 | int64            | 0xd3
-    number_integer  | -2147483648..-32769               | int32            | 0xd2
-    number_integer  | -32768..-129                      | int16            | 0xd1
-    number_integer  | -128..-33                         | int8             | 0xd0
-    number_integer  | -32..-1                           | negative fixint  | 0xe0..0xff
-    number_integer  | 0..127                            | positive fixint  | 0x00..0x7f
-    number_integer  | 128..255                          | uint 8           | 0xcc
-    number_integer  | 256..65535                        | uint 16          | 0xcd
-    number_integer  | 65536..4294967295                 | uint 32          | 0xce
-    number_integer  | 4294967296..18446744073709551615  | uint 64          | 0xcf
-    number_unsigned | 0..127                            | positive fixint  | 0x00..0x7f
-    number_unsigned | 128..255                          | uint 8           | 0xcc
-    number_unsigned | 256..65535                        | uint 16          | 0xcd
-    number_unsigned | 65536..4294967295                 | uint 32          | 0xce
-    number_unsigned | 4294967296..18446744073709551615  | uint 64          | 0xcf
-    number_float    | *any value*                       | float 64         | 0xcb
-    string          | *length*: 0..31                   | fixstr           | 0xa0..0xbf
-    string          | *length*: 32..255                 | str 8            | 0xd9
-    string          | *length*: 256..65535              | str 16           | 0xda
-    string          | *length*: 65536..4294967295       | str 32           | 0xdb
-    array           | *size*: 0..15                     | fixarray         | 0x90..0x9f
-    array           | *size*: 16..65535                 | array 16         | 0xdc
-    array           | *size*: 65536..4294967295         | array 32         | 0xdd
-    object          | *size*: 0..15                     | fix map          | 0x80..0x8f
-    object          | *size*: 16..65535                 | map 16           | 0xde
-    object          | *size*: 65536..4294967295         | map 32           | 0xdf
+    null            | `null`                            | nil              | 0xC0
+    boolean         | `true`                            | true             | 0xC3
+    boolean         | `false`                           | false            | 0xC2
+    number_integer  | -9223372036854775808..-2147483649 | int64            | 0xD3
+    number_integer  | -2147483648..-32769               | int32            | 0xD2
+    number_integer  | -32768..-129                      | int16            | 0xD1
+    number_integer  | -128..-33                         | int8             | 0xD0
+    number_integer  | -32..-1                           | negative fixint  | 0xE0..0xFF
+    number_integer  | 0..127                            | positive fixint  | 0x00..0x7F
+    number_integer  | 128..255                          | uint 8           | 0xCC
+    number_integer  | 256..65535                        | uint 16          | 0xCD
+    number_integer  | 65536..4294967295                 | uint 32          | 0xCE
+    number_integer  | 4294967296..18446744073709551615  | uint 64          | 0xCF
+    number_unsigned | 0..127                            | positive fixint  | 0x00..0x7F
+    number_unsigned | 128..255                          | uint 8           | 0xCC
+    number_unsigned | 256..65535                        | uint 16          | 0xCD
+    number_unsigned | 65536..4294967295                 | uint 32          | 0xCE
+    number_unsigned | 4294967296..18446744073709551615  | uint 64          | 0xCF
+    number_float    | *any value*                       | float 64         | 0xCB
+    string          | *length*: 0..31                   | fixstr           | 0xA0..0xBF
+    string          | *length*: 32..255                 | str 8            | 0xD9
+    string          | *length*: 256..65535              | str 16           | 0xDA
+    string          | *length*: 65536..4294967295       | str 32           | 0xDB
+    array           | *size*: 0..15                     | fixarray         | 0x90..0x9F
+    array           | *size*: 16..65535                 | array 16         | 0xDC
+    array           | *size*: 65536..4294967295         | array 32         | 0xDD
+    object          | *size*: 0..15                     | fix map          | 0x80..0x8F
+    object          | *size*: 16..65535                 | map 16           | 0xDE
+    object          | *size*: 65536..4294967295         | map 32           | 0xDF
 
     @note The mapping is **complete** in the sense that any JSON value type
           can be converted to a MessagePack value.
@@ -13364,10 +13345,10 @@ class basic_json
           - objects with more than 4294967295 elements
 
     @note The following MessagePack types are not used in the conversion:
-          - bin 8 - bin 32 (0xc4..0xc6)
-          - ext 8 - ext 32 (0xc7..0xc9)
-          - float 32 (0xca)
-          - fixext 1 - fixext 16 (0xd4..0xd8)
+          - bin 8 - bin 32 (0xC4..0xC6)
+          - ext 8 - ext 32 (0xC7..0xC9)
+          - float 32 (0xCA)
+          - fixext 1 - fixext 16 (0xD4..0xD8)
 
     @note Any MessagePack output created @ref to_msgpack can be successfully
           parsed by @ref from_msgpack.
@@ -13421,51 +13402,51 @@ class basic_json
     Integer                | number_unsigned | 0x00..0x17
     Unsigned integer       | number_unsigned | 0x18
     Unsigned integer       | number_unsigned | 0x19
-    Unsigned integer       | number_unsigned | 0x1a
-    Unsigned integer       | number_unsigned | 0x1b
+    Unsigned integer       | number_unsigned | 0x1A
+    Unsigned integer       | number_unsigned | 0x1B
     Negative integer       | number_integer  | 0x20..0x37
     Negative integer       | number_integer  | 0x38
     Negative integer       | number_integer  | 0x39
-    Negative integer       | number_integer  | 0x3a
-    Negative integer       | number_integer  | 0x3b
+    Negative integer       | number_integer  | 0x3A
+    Negative integer       | number_integer  | 0x3B
     Negative integer       | number_integer  | 0x40..0x57
     UTF-8 string           | string          | 0x60..0x77
     UTF-8 string           | string          | 0x78
     UTF-8 string           | string          | 0x79
-    UTF-8 string           | string          | 0x7a
-    UTF-8 string           | string          | 0x7b
-    UTF-8 string           | string          | 0x7f
+    UTF-8 string           | string          | 0x7A
+    UTF-8 string           | string          | 0x7B
+    UTF-8 string           | string          | 0x7F
     array                  | array           | 0x80..0x97
     array                  | array           | 0x98
     array                  | array           | 0x99
-    array                  | array           | 0x9a
-    array                  | array           | 0x9b
-    array                  | array           | 0x9f
-    map                    | object          | 0xa0..0xb7
-    map                    | object          | 0xb8
-    map                    | object          | 0xb9
-    map                    | object          | 0xba
-    map                    | object          | 0xbb
-    map                    | object          | 0xbf
-    False                  | `false`         | 0xf4
-    True                   | `true`          | 0xf5
-    Nill                   | `null`          | 0xf6
-    Half-Precision Float   | number_float    | 0xf9
-    Single-Precision Float | number_float    | 0xfa
-    Double-Precision Float | number_float    | 0xfb
+    array                  | array           | 0x9A
+    array                  | array           | 0x9B
+    array                  | array           | 0x9F
+    map                    | object          | 0xA0..0xB7
+    map                    | object          | 0xB8
+    map                    | object          | 0xB9
+    map                    | object          | 0xBA
+    map                    | object          | 0xBB
+    map                    | object          | 0xBF
+    False                  | `false`         | 0xF4
+    True                   | `true`          | 0xF5
+    Nill                   | `null`          | 0xF6
+    Half-Precision Float   | number_float    | 0xF9
+    Single-Precision Float | number_float    | 0xFA
+    Double-Precision Float | number_float    | 0xFB
 
     @warning The mapping is **incomplete** in the sense that not all CBOR
              types can be converted to a JSON value. The following CBOR types
              are not supported and will yield parse errors (parse_error.112):
-             - byte strings (0x40..0x5f)
-             - date/time (0xc0..0xc1)
-             - bignum (0xc2..0xc3)
-             - decimal fraction (0xc4)
-             - bigfloat (0xc5)
-             - tagged items (0xc6..0xd4, 0xd8..0xdb)
-             - expected conversions (0xd5..0xd7)
-             - simple values (0xe0..0xf3, 0xf8)
-             - undefined (0xf7)
+             - byte strings (0x40..0x5F)
+             - date/time (0xC0..0xC1)
+             - bignum (0xC2..0xC3)
+             - decimal fraction (0xC4)
+             - bigfloat (0xC5)
+             - tagged items (0xC6..0xD4, 0xD8..0xDB)
+             - expected conversions (0xD5..0xD7)
+             - simple values (0xE0..0xF3, 0xF8)
+             - undefined (0xF7)
 
     @warning CBOR allows map keys of any type, whereas JSON only allows
              strings as keys in object values. Therefore, CBOR maps with keys
@@ -13525,38 +13506,38 @@ class basic_json
 
     MessagePack type | JSON value type | first byte
     ---------------- | --------------- | ----------
-    positive fixint  | number_unsigned | 0x00..0x7f
-    fixmap           | object          | 0x80..0x8f
-    fixarray         | array           | 0x90..0x9f
-    fixstr           | string          | 0xa0..0xbf
-    nil              | `null`          | 0xc0
-    false            | `false`         | 0xc2
-    true             | `true`          | 0xc3
-    float 32         | number_float    | 0xca
-    float 64         | number_float    | 0xcb
-    uint 8           | number_unsigned | 0xcc
-    uint 16          | number_unsigned | 0xcd
-    uint 32          | number_unsigned | 0xce
-    uint 64          | number_unsigned | 0xcf
-    int 8            | number_integer  | 0xd0
-    int 16           | number_integer  | 0xd1
-    int 32           | number_integer  | 0xd2
-    int 64           | number_integer  | 0xd3
-    str 8            | string          | 0xd9
-    str 16           | string          | 0xda
-    str 32           | string          | 0xdb
-    array 16         | array           | 0xdc
-    array 32         | array           | 0xdd
-    map 16           | object          | 0xde
-    map 32           | object          | 0xdf
-    negative fixint  | number_integer  | 0xe0-0xff
+    positive fixint  | number_unsigned | 0x00..0x7F
+    fixmap           | object          | 0x80..0x8F
+    fixarray         | array           | 0x90..0x9F
+    fixstr           | string          | 0xA0..0xBF
+    nil              | `null`          | 0xC0
+    false            | `false`         | 0xC2
+    true             | `true`          | 0xC3
+    float 32         | number_float    | 0xCA
+    float 64         | number_float    | 0xCB
+    uint 8           | number_unsigned | 0xCC
+    uint 16          | number_unsigned | 0xCD
+    uint 32          | number_unsigned | 0xCE
+    uint 64          | number_unsigned | 0xCF
+    int 8            | number_integer  | 0xD0
+    int 16           | number_integer  | 0xD1
+    int 32           | number_integer  | 0xD2
+    int 64           | number_integer  | 0xD3
+    str 8            | string          | 0xD9
+    str 16           | string          | 0xDA
+    str 32           | string          | 0xDB
+    array 16         | array           | 0xDC
+    array 32         | array           | 0xDD
+    map 16           | object          | 0xDE
+    map 32           | object          | 0xDF
+    negative fixint  | number_integer  | 0xE0-0xFF
 
     @warning The mapping is **incomplete** in the sense that not all
              MessagePack types can be converted to a JSON value. The following
              MessagePack types are not supported and will yield parse errors:
-              - bin 8 - bin 32 (0xc4..0xc6)
-              - ext 8 - ext 32 (0xc7..0xc9)
-              - fixext 1 - fixext 16 (0xd4..0xd8)
+              - bin 8 - bin 32 (0xC4..0xC6)
+              - ext 8 - ext 32 (0xC7..0xC9)
+              - fixext 1 - fixext 16 (0xD4..0xD8)
 
     @note Any MessagePack output created @ref to_msgpack can be successfully
           parsed by @ref from_msgpack.

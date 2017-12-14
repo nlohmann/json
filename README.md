@@ -741,11 +741,11 @@ json j_from_msgpack = json::from_msgpack(v_msgpack);
 
 Though it's 2016 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.9 - 7.1 (and possibly later)
+- GCC 4.9 - 7.2 (and possibly later)
 - Clang 3.4 - 5.0 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
-- Microsoft Visual C++ 2017 / Build Tools 15.1.548.43366 (and possibly later)
+- Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
 
 I would be happy to learn about other compilers/versions.
 
@@ -785,9 +785,11 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 8.1 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
 | Clang Xcode 8.2 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
 | Clang Xcode 8.3 | Darwin Kernel Version 16.5.0 (macOS 10.12.4) | Apple LLVM version 8.1.0 (clang-802.0.38) |
-| Clang Xcode 9 beta | Darwin Kernel Version 16.6.0 (macOS 10.12.5) | Apple LLVM version 9.0.0 (clang-900.0.26) |
-| Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1 | 
-| Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.1.1012.6693 |
+| Clang Xcode 9.0 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.37) |
+| Clang Xcode 9.1 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.38) |
+| Clang Xcode 9.2 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 8.1.0 (clang-900.0.39.2) |
+| Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 | 
+| Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.5.180.51428, MSVC 19.12.25830.2 |
 
 ## License
 
@@ -805,18 +807,20 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 * * *
 
-The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Bjoern Hoehrmann](http://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
+The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](http://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
 
 ## Contact
 
 If you have questions regarding the library, I would like to invite you to [open an issue at Github](https://github.com/nlohmann/json/issues/new). Please describe your request, problem, or question as detailed as possible, and also mention the version of the library you are using as well as the version of your compiler and operating system. Opening an issue at Github allows other users and contributors to this library to collaborate. For instance, I have little experience with MSVC, and most issues in this regard have been solved by a growing community. If you have a look at the [closed issues](https://github.com/nlohmann/json/issues?q=is%3Aissue+is%3Aclosed), you will see that we react quite timely in most cases.
 
-Only if your request would contain confidential information, please [send me an email](mailto:mail@nlohmann.me).
+Only if your request would contain confidential information, please [send me an email](mailto:mail@nlohmann.me). For encrypted messages, please use [this key](https://keybase.io/nlohmann/pgp_keys.asc).
 
 
 ## Thanks
 
 I deeply appreciate the help of the following people.
+
+![Contributors](https://raw.githubusercontent.com/nlohmann/json/develop/doc/avatars.png)
 
 - [Teemperor](https://github.com/Teemperor) implemented CMake support and lcov integration, realized escape and Unicode handling in the string parser, and fixed the JSON serialization.
 - [elliotgoodrich](https://github.com/elliotgoodrich) fixed an issue with double deletion in the iterator classes.
@@ -910,6 +914,9 @@ I deeply appreciate the help of the following people.
 - [Pavel](https://github.com/crea7or) helped fixing some warnings in MSVC.
 - [Jamie Seward](https://github.com/jseward) avoided unneccessary string copies in `find()` and `count()`.
 - [Mitja](https://github.com/Itja) fixed some typos.
+- [Jorrit Wronski](https://github.com/jowr) updated the Hunter package links.
+- [Matthias Möller](https://github.com/TinyTinni) added a `.natvis` for the MSVC debug view.
+- [bogemic](https://github.com/bogemic) fixed some C++17 deprecation warnings.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
@@ -954,7 +961,7 @@ The library is currently used in Apple macOS Sierra and iOS 10. I am not sure wh
 - As the exact type of a number is not defined in the [JSON specification](http://rfc7159.net/rfc7159), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
 - The library supports **Unicode input** as follows:
   - Only **UTF-8** encoded input is supported which is the default encoding for JSON according to [RFC 7159](http://rfc7159.net/rfc7159#rfc.section.8.1).
-  - Other encodings such as Latin-1, UTF-16, or UTF-32 are not supported and will yield parse errors.
+  - Other encodings such as Latin-1, UTF-16, or UTF-32 are not supported and will yield parse or serialization errors.
   - [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1) will not be replaced by the library.
   - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
   - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
