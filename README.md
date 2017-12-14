@@ -820,6 +820,8 @@ Only if your request would contain confidential information, please [send me an 
 
 I deeply appreciate the help of the following people.
 
+![Contributors](https://raw.githubusercontent.com/nlohmann/json/develop/doc/avatars.png)
+
 - [Teemperor](https://github.com/Teemperor) implemented CMake support and lcov integration, realized escape and Unicode handling in the string parser, and fixed the JSON serialization.
 - [elliotgoodrich](https://github.com/elliotgoodrich) fixed an issue with double deletion in the iterator classes.
 - [kirkshoop](https://github.com/kirkshoop) made the iterators of the class composable to other libraries.
