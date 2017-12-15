@@ -739,7 +739,7 @@ json j_from_msgpack = json::from_msgpack(v_msgpack);
 
 ## Supported compilers
 
-Though it's 2016 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2017 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
 - GCC 4.9 - 7.2 (and possibly later)
 - Clang 3.4 - 5.0 (and possibly later)
