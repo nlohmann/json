@@ -11297,22 +11297,62 @@ class basic_json
     reference to the JSON values is returned, so there is no access to the
     underlying iterator.
 
+    For loop without iterator_wrapper:
+
+    @code{cpp}
+    for (auto it = j_object.begin(); it != j_object.end(); ++it)
+    {
+        std::cout << "key: " << it.key() << ", value:" << it.value() << '\n';
+    }
+    @endcode
+
+    Range-based for loop without iterator proxy:
+
+    @code{cpp}
+    for (auto it : j_object)
+    {
+        // "it" is of type json::reference and has no key() member
+        std::cout << "value: " << it << '\n';
+    }
+    @endcode
+
+    Range-based for loop with iterator proxy:
+
+    @code{cpp}
+    for (auto it : json::iterator_wrapper(j_object))
+    {
+        std::cout << "key: " << it.key() << ", value:" << it.value() << '\n';
+    }
+    @endcode
+
+    @note When iterating over an array, `key()` will return the index of the
+          element as string (see example).
+
+    @param[in] ref  reference to a JSON value
+    @return iteration proxy object wrapping @a ref with an interface to use in
+            range-based for loops
+
     @liveexample{The following code shows how the wrapper is used,iterator_wrapper}
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes in the JSON value.
+
+    @complexity Constant.
 
     @note The name of this function is not yet final and may change in the
     future.
     */
-    static iteration_proxy<iterator> iterator_wrapper(reference cont)
+    static iteration_proxy<iterator> iterator_wrapper(reference ref)
     {
-        return iteration_proxy<iterator>(cont);
+        return iteration_proxy<iterator>(ref);
     }
 
     /*!
     @copydoc iterator_wrapper(reference)
     */
-    static iteration_proxy<const_iterator> iterator_wrapper(const_reference cont)
+    static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref)
     {
-        return iteration_proxy<const_iterator>(cont);
+        return iteration_proxy<const_iterator>(ref);
     }
 
     /// @}
