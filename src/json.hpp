@@ -9051,7 +9051,7 @@ class basic_json
 
     @see https://docs.python.org/2/library/json.html#json.dump
 
-    @since version 1.0.0; indentation character @a indent_char and option
+    @since version 1.0.0; indentation character @a indent_char, option
            @a ensure_ascii and exceptions added in version 3.0.0
     */
     string_t dump(const int indent = -1, const char indent_char = ' ',
@@ -12846,7 +12846,7 @@ class basic_json
       `std::setw(4)` on @a o sets the indentation level to `4` and the
       serialization result is the same as calling `dump(4)`.
 
-    - The indentation characrer can be controlled with the member variable
+    - The indentation character can be controlled with the member variable
       `fill` of the output stream @a o. For instance, the manipulator
       `std::setfill('\\t')` sets indentation to use a tab character rather than
       the default space character.
@@ -12864,7 +12864,7 @@ class basic_json
     @liveexample{The example below shows the serialization with different
     parameters to `width` to adjust the indentation level.,operator_serialize}
 
-    @since version 1.0.0; indentaction character added in version 3.0.0
+    @since version 1.0.0; indentation character added in version 3.0.0
     */
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
     {
