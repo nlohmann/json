@@ -95,7 +95,7 @@ pedantic_clang:
 
 # calling GCC with most warnings
 pedantic_gcc:
-	$(MAKE) json_unit CXX=g++ CXXFLAGS="\
+	$(MAKE) json_unit CXXFLAGS="\
 		-std=c++11 \
 		-Wno-deprecated-declarations \
 		-Werror \

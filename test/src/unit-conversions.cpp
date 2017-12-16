@@ -939,40 +939,40 @@ TEST_CASE("value conversion")
 
             SECTION("std::map")
             {
-                auto m1 = j1.get<std::map<std::string, int>>();
-                auto m2 = j2.get<std::map<std::string, unsigned int>>();
-                auto m3 = j3.get<std::map<std::string, double>>();
-                auto m4 = j4.get<std::map<std::string, bool>>();
-                //auto m5 = j5.get<std::map<std::string, std::string>>();
+                j1.get<std::map<std::string, int>>();
+                j2.get<std::map<std::string, unsigned int>>();
+                j3.get<std::map<std::string, double>>();
+                j4.get<std::map<std::string, bool>>();
+                j5.get<std::map<std::string, std::string>>();
             }
 
             SECTION("std::unordered_map")
             {
-                auto m1 = j1.get<std::unordered_map<std::string, int>>();
-                auto m2 = j2.get<std::unordered_map<std::string, unsigned int>>();
-                auto m3 = j3.get<std::unordered_map<std::string, double>>();
-                auto m4 = j4.get<std::unordered_map<std::string, bool>>();
-                //auto m5 = j5.get<std::unordered_map<std::string, std::string>>();
+                j1.get<std::unordered_map<std::string, int>>();
+                j2.get<std::unordered_map<std::string, unsigned int>>();
+                j3.get<std::unordered_map<std::string, double>>();
+                j4.get<std::unordered_map<std::string, bool>>();
+                j5.get<std::unordered_map<std::string, std::string>>();
                 //CHECK(m5["one"] == "eins");
             }
 
             SECTION("std::multimap")
             {
-                auto m1 = j1.get<std::multimap<std::string, int>>();
-                auto m2 = j2.get<std::multimap<std::string, unsigned int>>();
-                auto m3 = j3.get<std::multimap<std::string, double>>();
-                auto m4 = j4.get<std::multimap<std::string, bool>>();
-                //auto m5 = j5.get<std::multimap<std::string, std::string>>();
+                j1.get<std::multimap<std::string, int>>();
+                j2.get<std::multimap<std::string, unsigned int>>();
+                j3.get<std::multimap<std::string, double>>();
+                j4.get<std::multimap<std::string, bool>>();
+                j5.get<std::multimap<std::string, std::string>>();
                 //CHECK(m5["one"] == "eins");
             }
 
             SECTION("std::unordered_multimap")
             {
-                auto m1 = j1.get<std::unordered_multimap<std::string, int>>();
-                auto m2 = j2.get<std::unordered_multimap<std::string, unsigned int>>();
-                auto m3 = j3.get<std::unordered_multimap<std::string, double>>();
-                auto m4 = j4.get<std::unordered_multimap<std::string, bool>>();
-                //auto m5 = j5.get<std::unordered_multimap<std::string, std::string>>();
+                j1.get<std::unordered_multimap<std::string, int>>();
+                j2.get<std::unordered_multimap<std::string, unsigned int>>();
+                j3.get<std::unordered_multimap<std::string, double>>();
+                j4.get<std::unordered_multimap<std::string, bool>>();
+                j5.get<std::unordered_multimap<std::string, std::string>>();
                 //CHECK(m5["one"] == "eins");
             }
 
@@ -993,29 +993,29 @@ TEST_CASE("value conversion")
 
             SECTION("std::list")
             {
-                auto m1 = j1.get<std::list<int>>();
-                auto m2 = j2.get<std::list<unsigned int>>();
-                auto m3 = j3.get<std::list<double>>();
-                auto m4 = j4.get<std::list<bool>>();
-                auto m5 = j5.get<std::list<std::string>>();
+                j1.get<std::list<int>>();
+                j2.get<std::list<unsigned int>>();
+                j3.get<std::list<double>>();
+                j4.get<std::list<bool>>();
+                j5.get<std::list<std::string>>();
             }
 
             SECTION("std::forward_list")
             {
-                auto m1 = j1.get<std::forward_list<int>>();
-                auto m2 = j2.get<std::forward_list<unsigned int>>();
-                auto m3 = j3.get<std::forward_list<double>>();
-                auto m4 = j4.get<std::forward_list<bool>>();
-                auto m5 = j5.get<std::forward_list<std::string>>();
+                j1.get<std::forward_list<int>>();
+                j2.get<std::forward_list<unsigned int>>();
+                j3.get<std::forward_list<double>>();
+                j4.get<std::forward_list<bool>>();
+                j5.get<std::forward_list<std::string>>();
             }
 
             SECTION("std::array")
             {
-                auto m1 = j1.get<std::array<int, 4>>();
-                auto m2 = j2.get<std::array<unsigned int, 3>>();
-                auto m3 = j3.get<std::array<double, 4>>();
-                auto m4 = j4.get<std::array<bool, 3>>();
-                auto m5 = j5.get<std::array<std::string, 3>>();
+                j1.get<std::array<int, 4>>();
+                j2.get<std::array<unsigned int, 3>>();
+                j3.get<std::array<double, 4>>();
+                j4.get<std::array<bool, 3>>();
+                j5.get<std::array<std::string, 3>>();
 
                 SECTION("std::array is larger than JSON")
                 {
@@ -1035,47 +1035,47 @@ TEST_CASE("value conversion")
 
             SECTION("std::valarray")
             {
-                auto m1 = j1.get<std::valarray<int>>();
-                auto m2 = j2.get<std::valarray<unsigned int>>();
-                auto m3 = j3.get<std::valarray<double>>();
-                auto m4 = j4.get<std::valarray<bool>>();
-                auto m5 = j5.get<std::valarray<std::string>>();
+                j1.get<std::valarray<int>>();
+                j2.get<std::valarray<unsigned int>>();
+                j3.get<std::valarray<double>>();
+                j4.get<std::valarray<bool>>();
+                j5.get<std::valarray<std::string>>();
             }
 
             SECTION("std::vector")
             {
-                auto m1 = j1.get<std::vector<int>>();
-                auto m2 = j2.get<std::vector<unsigned int>>();
-                auto m3 = j3.get<std::vector<double>>();
-                auto m4 = j4.get<std::vector<bool>>();
-                auto m5 = j5.get<std::vector<std::string>>();
+                j1.get<std::vector<int>>();
+                j2.get<std::vector<unsigned int>>();
+                j3.get<std::vector<double>>();
+                j4.get<std::vector<bool>>();
+                j5.get<std::vector<std::string>>();
             }
 
             SECTION("std::deque")
             {
-                auto m1 = j1.get<std::deque<int>>();
-                auto m2 = j2.get<std::deque<unsigned int>>();
-                auto m3 = j2.get<std::deque<double>>();
-                auto m4 = j4.get<std::deque<bool>>();
-                auto m5 = j5.get<std::deque<std::string>>();
+                j1.get<std::deque<int>>();
+                j2.get<std::deque<unsigned int>>();
+                j2.get<std::deque<double>>();
+                j4.get<std::deque<bool>>();
+                j5.get<std::deque<std::string>>();
             }
 
             SECTION("std::set")
             {
-                auto m1 = j1.get<std::set<int>>();
-                auto m2 = j2.get<std::set<unsigned int>>();
-                auto m3 = j3.get<std::set<double>>();
-                auto m4 = j4.get<std::set<bool>>();
-                auto m5 = j5.get<std::set<std::string>>();
+                j1.get<std::set<int>>();
+                j2.get<std::set<unsigned int>>();
+                j3.get<std::set<double>>();
+                j4.get<std::set<bool>>();
+                j5.get<std::set<std::string>>();
             }
 
             SECTION("std::unordered_set")
             {
-                auto m1 = j1.get<std::unordered_set<int>>();
-                auto m2 = j2.get<std::unordered_set<unsigned int>>();
-                auto m3 = j3.get<std::unordered_set<double>>();
-                auto m4 = j4.get<std::unordered_set<bool>>();
-                auto m5 = j5.get<std::unordered_set<std::string>>();
+                j1.get<std::unordered_set<int>>();
+                j2.get<std::unordered_set<unsigned int>>();
+                j3.get<std::unordered_set<double>>();
+                j4.get<std::unordered_set<bool>>();
+                j5.get<std::unordered_set<std::string>>();
             }
 
             SECTION("exception in case of a non-object type")

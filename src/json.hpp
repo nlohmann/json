@@ -6775,7 +6775,7 @@ class serializer
         };
 
         const uint8_t type = utf8d[byte];
-        state = utf8d[256 + state * 16 + type];
+        state = utf8d[256u + state * 16u + type];
     }
 
     /*!
