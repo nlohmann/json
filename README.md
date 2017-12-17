@@ -75,8 +75,6 @@ If you are using [hunter](https://github.com/ruslo/hunter/) on your project for 
 
 If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
 
-:warning: [Version 3.0.0](https://github.com/nlohmann/json/wiki/Road-toward-3.0.0) is currently under development. Branch `develop` is used for the ongoing work and is probably **unstable**. Please use the `master` branch for the last stable version 2.1.1.
-
 
 ## Examples
 
