@@ -1,221 +1,193 @@
-#!/usr/bin/env ruby
-# git update-ghpages user/repo -b gh-pages -p manual/ -i
+#!/usr/bin/env bash
+set -o errexit
 
-require 'fileutils'
-require 'tmpdir'
+copy_contents() {
+  local source="$1"
+  status "Copying contents from $source"
+  if [[ ! "$dryrun" == "1" ]]; then
+    (cd "$source" >/dev/null && tar c .) | tar xv
+  else
+    _ "(cd \"$source\" >/dev/null && tar c .) | tar xv"
+  fi
+}
 
-module Params
-  def extract(what)   i = index(what) and slice!(i, 2)[1] end;
-  def first_is(what)  shift  if what.include?(self.first); end
-  def self.[](*what)  what.extend Params; end
-  def ===(argv)       argv.first_is(self); end
-end
+# Sets git config
+set_config() {
+  if [ -n "$GIT_NAME" ]; then _ git config user.name "$GIT_NAME"; fi
+  if [ -n "$GIT_EMAIL" ]; then _ git config user.email "$GIT_EMAIL"; fi
+}
 
-# ============================================================================
+# Runs the deployment
+run() {
+  if [ ! -d "$source" ]; then
+    echo "Source is not a directory: $source"
+    exit 1
+  fi
 
-ARGV.extend Params
+  local tmpdir="$(mktemp -d)"
 
-class CLI
-  # CLI options
-  attr_reader :prefix    #=> "doc/"
-  attr_reader :input     #=> "/home/me/projects/foo"
-  attr_reader :message   #=> "Updated"
-  attr_reader :repo      #=> "git@github.com:me/project.git"
-  attr_reader :url       #=> "http://me.github.com/project"
-  attr_reader :branch    #=> "gh-pages"
+  if [[ "$force" == "1" ]]; then
+    _ cd "$tmpdir"
+    _ git init
+    _ git checkout -b "$branch"
+    copy_contents "$source"
+    if [[ "$useenv" == "1" ]]; then set_config; fi
+    _ git add -A .
+    git_commit
+    git_push --force
+  else
+    _ cd "$tmpdir"
+    _ git clone "$repo" . -b "$branch" || ( \
+      _ git init && \
+      _ git checkout -b "$branch")
+    if [[ "$keep" == "0" ]]; then _ rm -rf ./*; fi
+    copy_contents "$source"
+    if [[ "$useenv" == "1" ]]; then set_config; fi
+    _ git add -A .
+    git_commit || true
+    git_push
+  fi
+  _ rm -rf "$tmpdir"
+  status_ "Done"
+}
 
-  def verbose?() @verbose; end
-  def force?() @force; end
-  def simulate?() @simulate; end
+git_commit() {
+  if [ -z "$author" ]; then
+    _ git commit -m "$message"
+  else
+    _ git commit -m "$message" --author "$author"
+  fi
+}
 
-  def initialize
-    # Switches
-    @verbose  = !! (ARGV.extract('--verbose') || ARGV.delete('-v'))
-    @simulate = !! (ARGV.extract('--simulate') || ARGV.delete('-s'))
-    @force    = !! (ARGV.delete('--force') || ARGV.delete('-f'))
+git_push() {
+  if [ -z "$GITHUB_TOKEN" ]; then
+    _ git push "${repo}" "$branch" "$@"
+  else
+    status "Pushing via \$GITHUB_TOKEN $@"
+    _ git push "https://${GITHUB_TOKEN}@github.com/${repospec}.git" "$branch" "$@" \
+      --quiet >/dev/null 2>&1 || \
+      ( status_ "Failed to push"; exit 1 )
+  fi
+}
 
-    # Stuff
-    @prefix   = ARGV.extract('--prefix') || ARGV.extract('-p') || ''
-    @input    = File.expand_path(ARGV.extract('--input') || ARGV.extract('-i') || '.')
-    @message  = ARGV.extract('--message') || ARGV.extract('-m') || 'Update'
+status() {
+  echo -e "\n\033[34m==>\033[0;1m" "$@\033[0m"
+}
+status_() {
+  echo -e "\033[33;1m==>\033[0m" "$@"
+}
 
-    # Github info
-    branch = ARGV.extract('--branch') || ARGV.extract('-b') || nil
-    @repo, @url, @branch = get_github_info(ARGV.shift, branch)
-  end
+_() {
+  echo ""
+  status_ "$@"
+  if [[ ! "$dryrun" == "1" ]]; then "$@"; fi
+}
 
-  def git_current_branch
-    `git rev-parse --abbrev-ref HEAD`.strip
-  end
+help() {
+  local cmd="$(basename $0)"
+  echo 'Usage:'
+  echo "  $cmd <REPO> <SOURCE>"
+  echo ''
+  echo 'Parameters:'
+  echo "  REPO             repository to push to in 'user/repo' form"
+  echo "  SOURCE           path to upload to repository's gh-pages branch"
+  echo ''
+  echo 'Options:'
+  echo '  -h, --help       show help screen'
+  echo '  -f, --force      force push'
+  echo '  -n, --dry-run    run in simulation mode'
+  echo '  -e, --use-env    pick up arguments from environment variables'
+  echo '  -b, --branch     use this branch name (default: gh-pages)'
+  echo '  -a, --author     set the author'
+  echo '  -k, --keep       keep existing files in the repo'
+  echo ''
+  echo 'Env var options:'
+  echo '  GITHUB_TOKEN     if set, use this to push to the repo'
+  echo ''
+  echo 'Optional env vars:'
+  echo "  Run with '-e' to enable the use of these variables."
+  echo "  GIT_NAME         set this as the repos user.name"
+  echo '  GIT_EMAIL        set this as the repos user.email'
+  echo '  GITHUB_REPO      substitute as the REPO (1st argument)'
+  echo '  GIT_SOURCE       substitute as the SOURCE (2nd argument)'
+  echo '  GIT_BRANCH       use this branch name (--branch)'
+  echo ''
+  echo 'Example:'
+  echo "  $cmd rstacruz/myproject doc"
+  echo "    # pushes './doc' into the gh-pages branch of rstacruz/myproject"
+  echo ''
+  echo "  export GITHUB_REPO='xyz/abc'"
+  echo "  export GIT_SOURCE='docs'"
+  echo "  $cmd -e"
+  echo "    # pushes './doc' into the gh-pages branch of xyz/abc"
+}
 
-  def git_deploy
-    in_temp_path do |temppath|
-      status "Cloning repository"
-      system! "git clone #{repo} -b #{branch} #{temppath}"
+#
+# Defaults
+#
 
-      if git_current_branch != branch
-        status "Warning: No #{branch} branch found in repo, creating one."
-        return git_deploy_force
-      end
+force=0
+dryrun=0
+repospec=
+source=
+branch=
+message="Update"
+useenv=0
+author=""
+keep=0
 
-      copy_files input, File.join(temppath, prefix)
+#
+# Parse args
+#
 
-      status "Committing files"
-      system! "git add .; git add -u; git commit -m #{message.to_s.inspect}"
+while [[ "$1" =~ ^- && ! "$1" == '--' ]]; do case $1 in
+  -h | --help )
+    help
+    exit
+    ;;
+  -b | --branch )
+    shift
+    branch="$1"
+    ;;
+  -n | --dry-run )
+    dryrun=1
+    ;;
+  -e | --use-env )
+    useenv=1
+    ;;
+  -k | --keep )
+    keep=1
+    ;;
+  -a | --author)
+    shift
+    author="$1"
+    ;;
+  -f | --force )
+    force=1
+    ;;
+esac; shift; done
+if [[ "$1" == '--' ]]; then shift; fi
 
-      unless simulate?
-        status "Updating repo"
-        system! "git push origin #{branch}"
-      end
-      true
-    end
-  end
+if [[ "$useenv" == "1" ]] && [[ -n "$GIT_BRANCH" ]] && [[ -z "$branch" ]]; then
+  branch="$GIT_BRANCH"
+fi
 
-  def git_deploy_force
-    in_temp_path do |temppath|
-      status "Creating new repository"
-      system! "git init ."
-      system! "git checkout -b gh-pages"
+if [[ "$useenv" == "1" ]] && [[ -n "$GITHUB_REPO" ]] && [[ -n "$GIT_SOURCE" ]] && [[ -z "$2" ]]; then
+  repospec="$GITHUB_REPO"
+  source="$GIT_SOURCE"
+else
+  repospec="$1"
+  source="$2"
+fi
 
-      copy_files input, File.join(temppath, prefix)
+: ${branch:="gh-pages"}
 
-      status "Committing files"
-      system! "git add . && git commit -m #{message.to_s.inspect}"
+if [ -z "$source" ]; then
+  help
+  exit 1
+fi
 
-      unless simulate?
-        status "Updating repo"
-        system! "git push #{repo} gh-pages:#{branch} --force"
-      end
-      true
-    end
-  end
+source="`pwd -LP`/$source"
+repo="https://github.com/${repospec}.git"
 
-  def get_github_info(repo, branch=nil, prefix=nil)
-    if github_format?(repo)
-      user, repo_name = repo.split('/')
-      r = "git@github.com:#{repo}.git"
-
-      # User page or project page?
-      if repo_name =~ /\.github\.com/
-        [r, "http://#{repo_name}/#{prefix}", branch || 'master' ]
-      else
-        [r, "http://#{user}.github.com/#{repo_name}/#{prefix}", branch || 'gh-pages' ]
-      end
-    else
-      [repo, nil, branch]
-    end
-  end
-
-  def run!
-    unless repo
-      print_help
-      exit 128
-    end
-
-    status "Deploying to #{repo} (branch #{branch})"
-    msg "NOTE: Running in simulation mode." if simulate?
-    msg "WARNING: If the repository has gh-pages history, it with be overriden." if force? && !simulate?
-
-    result = force? ? git_deploy_force : git_deploy
-
-    if result
-      puts ""
-      status "Done."
-      msg "See: #{url}" if url && !simulate?
-    else
-      tip "Failed."
-      exit 1
-    end
-  end
-
-  def status(str)
-    puts "#{c('===>',34)} #{c(str, 32)}"
-  end
-
-  def msg(str)
-    puts "     #{c(str, 32)}"
-  end
-
-  def c(str, color)
-    "\033[#{color}m#{str}\033[0m"
-  end
-
-  def print_help
-    tip \
-    %{Usage: git update-ghpages username/repository [options]
-
-      Flags:
-        -f,        --force       Force an update (WARNING: kills the history!)
-        -s,        --simulate    Creates the repository, but doesn't push.
-        -v,        --verbose     Verbose mode
-
-      Options:
-        -p PATH,   --prefix      The prefix
-        -i PATH,   --input       Input (defaults to current directory)
-        -b BRANCH, --branch      The branch to deploy to (defaults to gh-pages)
-        -m MSG,    --message     Commit message (defaults to 'Update')
-
-      Examples:
-
-      Update the repo 'coffee' of github user 'james' with the files from the
-      current directory. The files will be in http://james.github.com/coffee.
-
-        $ git update-ghpages james/coffee
-
-      Same as above, but take the files from 'doc/'.
-
-        $ git update-ghpages james/coffee -i doc
-
-      Same as the first, but the files will instead be in
-      http://james.github.com/coffee/manual.
-
-        $ git update-ghpages james/coffee -i doc -p manual
-    }.gsub(/^ {4}/, '')
-  end
-
-private # Helpers
-
-  def tip(msg)
-    $stderr.write "#{msg}\n"
-  end
-
-  def github_format?(str)
-    str =~ /^([A-Za-z0-9\-_]+)\/([A-Za-z0-9\-_\.]+)$/
-  end
-
-  # Performs actions inside a temp path.
-  def in_temp_path(&blk)
-    require 'tmpdir'
-    Dir.mktmpdir do |dir|
-      Dir.chdir(dir) { yield dir }
-    end
-  end
-
-  def system!(str)
-    puts `#{str} 2>&1`.strip.gsub(/^/, "     ")
-    raise "Failed with exit code #{$?.to_i}" unless $?.to_i == 0
-  end
-
-  # Returns the current branch name
-  def git_branch
-    `git symbolic-ref HEAD`.strip.split('/').last
-  end
-
-  # Copy files from source folder to another
-  def copy_files(from, to)
-    status "Copying files #{from} => #{to}..."  if verbose?
-
-    Dir["#{from}/**/*"].each do |f|
-      next  unless File.file?(f)
-
-      target = File.join(to, f.gsub(/^#{Regexp.escape from}/, ''))
-
-      FileUtils.mkdir_p File.dirname(target)
-      msg "%20s => %-20s" % [f, target]  if verbose?
-      FileUtils.cp f, target
-    end
-  end
-
-end
-
-CLI.new.run!
+run
