@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 2.1.1
+|  |  |__   |  |  | | | |  version 3.0.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -7499,7 +7499,7 @@ class basic_json
         result["url"] = "https://github.com/nlohmann/json";
         result["version"] =
         {
-            {"string", "2.1.1"}, {"major", 2}, {"minor", 1}, {"patch", 1}
+            {"string", "3.0.0"}, {"major", 3}, {"minor", 0}, {"patch", 0}
         };
 
 #ifdef _WIN32
@@ -8119,7 +8119,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 2.1.1")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.0.0")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
