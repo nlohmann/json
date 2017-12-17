@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.1
+|  |  |__   |  |  | | | |  version 3.0.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "catch.hpp"
 
+#include <fstream>
 #include "json.hpp"
 using nlohmann::json;
 
@@ -207,10 +208,28 @@ TEST_CASE("object inspection")
                   "{\n\"array\": [\n1,\n2,\n3,\n4\n],\n\"boolean\": false,\n\"null\": null,\n\"number\": 42,\n\"object\": {},\n\"string\": \"Hello world\"\n}");
         }
 
+        SECTION("indent=1, space='\t'")
+        {
+            CHECK(j.dump(1, '\t') ==
+                  "{\n\t\"array\": [\n\t\t1,\n\t\t2,\n\t\t3,\n\t\t4\n\t],\n\t\"boolean\": false,\n\t\"null\": null,\n\t\"number\": 42,\n\t\"object\": {},\n\t\"string\": \"Hello world\"\n}");
+        }
+
         SECTION("indent=4")
         {
             CHECK(j.dump(4) ==
                   "{\n    \"array\": [\n        1,\n        2,\n        3,\n        4\n    ],\n    \"boolean\": false,\n    \"null\": null,\n    \"number\": 42,\n    \"object\": {},\n    \"string\": \"Hello world\"\n}");
+        }
+
+        SECTION("indent=x")
+        {
+            CHECK(j.dump().size() == 94);
+            CHECK(j.dump(1).size() == 127);
+            CHECK(j.dump(2).size() == 142);
+            CHECK(j.dump(512).size() == 7792);
+
+            // important test, because it yields a resize of the indent_string
+            // inside the dump() function
+            CHECK(j.dump(1024).size() == 15472);
         }
 
         SECTION("dump and floating-point numbers")
@@ -230,6 +249,39 @@ TEST_CASE("object inspection")
             CHECK(json("ä").dump() == "\"ä\"");
             CHECK(json("Ö").dump() == "\"Ö\"");
             CHECK(json("❤️").dump() == "\"❤️\"");
+        }
+
+        SECTION("dump with ensure_ascii and non-ASCII characters")
+        {
+            CHECK(json("ä").dump(-1, ' ', true) == "\"\\u00e4\"");
+            CHECK(json("Ö").dump(-1, ' ', true) == "\"\\u00d6\"");
+            CHECK(json("❤️").dump(-1, ' ', true) == "\"\\u2764\\ufe0f\"");
+        }
+
+        SECTION("full Unicode escaping to ASCII")
+        {
+            SECTION("parsing yields the same JSON value")
+            {
+                std::ifstream f_escaped("test/data/json_nlohmann_tests/all_unicode_ascii.json");
+                std::ifstream f_unescaped("test/data/json_nlohmann_tests/all_unicode.json");
+
+                json j1 = json::parse(f_escaped);
+                json j2 = json::parse(f_unescaped);
+                CHECK(j1 == j2);
+            }
+
+            SECTION("dumping yields the same JSON text")
+            {
+                std::ifstream f_escaped("test/data/json_nlohmann_tests/all_unicode_ascii.json");
+                std::ifstream f_unescaped("test/data/json_nlohmann_tests/all_unicode.json");
+
+                json value = json::parse(f_unescaped);
+                std::string text = value.dump(4, ' ', true);
+
+                std::string expected((std::istreambuf_iterator<char>(f_escaped)),
+                                     std::istreambuf_iterator<char>());
+                CHECK(text == expected);
+            }
         }
 
         SECTION("serialization of discarded element")

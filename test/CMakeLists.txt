@@ -1,88 +1,130 @@
+option(JSON_Sanitizer "Build test suite with Clang sanitizer" OFF)
+option(JSON_Valgrind "Execute test suite with Valgrind" OFF)
+option(JSON_NoExceptions "Build test suite without exceptions" OFF)
+option(JSON_Coverage "Build test suite with coverage information" OFF)
+
+if(JSON_Sanitizer)
+    message(STATUS "Building test suite with Clang sanitizer")
+    if(NOT MSVC)
+        set(CMAKE_CXX_FLAGS "-std=c++11 -g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
+    endif()
+endif()
+
+if(JSON_Valgrind)
+    find_program(CMAKE_MEMORYCHECK_COMMAND valgrind)
+    message(STATUS "Executing test suite with Valgrind (${CMAKE_MEMORYCHECK_COMMAND})")
+    set(MEMORYCHECK_COMMAND_OPTIONS "--error-exitcode=1 --leak-check=full")
+    set(memcheck_command "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS}")
+    separate_arguments(memcheck_command)
+endif()
+
+if(JSON_NoExceptions)
+    message(STATUS "Building test suite without exceptions")
+    if(NOT MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJSON_NOEXCEPTION")
+    endif()
+    set(CATCH_TEST_FILTER -e)
+endif()
+
+if(JSON_Coverage)
+    message(STATUS "Building test suite with coverage information")
+    if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        message(FATAL_ERROR "JSON_Coverage requires GCC.")
+    endif()
+
+    # enable profiling
+    set(CMAKE_CXX_FLAGS "--coverage -g -O0 -fprofile-arcs -ftest-coverage")
+
+    # from https://github.com/RWTH-HPC/CMake-codecov/blob/master/cmake/FindGcov.cmake
+    get_filename_component(COMPILER_PATH "${CMAKE_CXX_COMPILER}" PATH)
+    string(REGEX MATCH "^[0-9]+" GCC_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
+    find_program(GCOV_BIN NAMES gcov-${GCC_VERSION} gcov HINTS ${COMPILER_PATH})
+
+    # add target to collect coverage information and generate HTML file
+    # (filter script from https://stackoverflow.com/a/43726240/266378)
+    add_custom_target(lcov_html
+        COMMAND lcov --directory . --capture --output-file json.info --gcov-tool ${GCOV_BIN} --rc lcov_branch_coverage=1
+        COMMAND lcov -e json.info ${CMAKE_SOURCE_DIR}/src/json.hpp --output-file json.info.filtered --rc lcov_branch_coverage=1
+        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
+        COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
+        COMMENT "Generating HTML report test/html/index.html"
+    )
+endif()
+
+#############################################################################
+# Catch library with the main function to speed up build
+#############################################################################
+
 add_library(catch_main OBJECT
     "src/unit.cpp"
 )
 set_target_properties(catch_main PROPERTIES
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
+    COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
+    COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
 )
 target_include_directories(catch_main PRIVATE "thirdparty/catch")
 
-# The unit test executable.
-set(JSON_UNITTEST_TARGET_NAME "json_unit")
-add_executable(${JSON_UNITTEST_TARGET_NAME}
-    $<TARGET_OBJECTS:catch_main>
-    "src/unit-algorithms.cpp"
-    "src/unit-allocator.cpp"
-    "src/unit-capacity.cpp"
-    "src/unit-cbor.cpp"
-    "src/unit-class_const_iterator.cpp"
-    "src/unit-class_iterator.cpp"
-    "src/unit-class_lexer.cpp"
-    "src/unit-class_parser.cpp"
-    "src/unit-comparison.cpp"
-    "src/unit-concepts.cpp"
-    "src/unit-constructor1.cpp"
-    "src/unit-constructor2.cpp"
-    "src/unit-convenience.cpp"
-    "src/unit-conversions.cpp"
-    "src/unit-deserialization.cpp"
-    "src/unit-element_access1.cpp"
-    "src/unit-element_access2.cpp"
-    "src/unit-inspection.cpp"
-    "src/unit-iterator_wrapper.cpp"
-    "src/unit-iterators1.cpp"
-    "src/unit-iterators2.cpp"
-    "src/unit-json_patch.cpp"
-    "src/unit-json_pointer.cpp"
-    "src/unit-meta.cpp"
-    "src/unit-modifiers.cpp"
-    "src/unit-msgpack.cpp"
-    "src/unit-noexcept.cpp"
-    "src/unit-pointer_access.cpp"
-    "src/unit-readme.cpp"
-    "src/unit-reference_access.cpp"
-    "src/unit-regression.cpp"
-    "src/unit-serialization.cpp"
-    "src/unit-testsuites.cpp"
-    "src/unit-udt.cpp"
-    "src/unit-unicode.cpp"
-)
-
-set_target_properties(${JSON_UNITTEST_TARGET_NAME} PROPERTIES
-    CXX_STANDARD 11
-    CXX_STANDARD_REQUIRED ON
-)
-
+# https://stackoverflow.com/questions/2368811/how-to-set-warning-level-in-cmake
 if(MSVC)
-    set_target_properties(${JSON_UNITTEST_TARGET_NAME} PROPERTIES
-        COMPILE_DEFINITIONS "_SCL_SECURE_NO_WARNINGS"
-        COMPILE_OPTIONS "/EHsc;$<$<CONFIG:Release>:/Od>"
-    )
-endif()
-
-target_include_directories(${JSON_UNITTEST_TARGET_NAME} PRIVATE "src" "thirdparty/catch")
-target_link_libraries(${JSON_UNITTEST_TARGET_NAME} ${JSON_TARGET_NAME})
-
-include(cotire OPTIONAL)
-
-if(COMMAND cotire)
-    set_target_properties(${JSON_UNITTEST_TARGET_NAME} PROPERTIES
-        COTIRE_ADD_UNITY_BUILD FALSE
-        COTIRE_CXX_PREFIX_HEADER_INIT "src/prefix.hpp"
-    )
-    # HACK - CMAKE_INCLUDE_SYSTEM_FLAG_CXX has a trailing space, which Cotire doesn't strip
-    # Technically, this fix should go in cotire.cmake. TODO - submit a pull request upstream.
-    if (CMAKE_INCLUDE_SYSTEM_FLAG_CXX)
-		string (STRIP "${CMAKE_INCLUDE_SYSTEM_FLAG_CXX}" CMAKE_INCLUDE_SYSTEM_FLAG_CXX)
+    # Force to always compile with W4
+    if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+        string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
     endif()
-    cotire(${JSON_UNITTEST_TARGET_NAME})
+
+    # Disable warning C4389: '==': signed/unsigned mismatch
+	# Disable warning C4309: 'static_cast': truncation of constant value
+	# Disable warning C4566: character represented by universal-character-name '\uFF01' cannot be represented in the current code page (1252)
+	# Disable warning C4996: 'nlohmann::basic_json<std::map,std::vector,std::string,bool,int64_t,uint64_t,double,std::allocator,nlohmann::adl_serializer>::operator <<': was declared deprecated
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4389 /wd4309 /wd4566 /wd4996")
 endif()
 
-add_test(NAME "${JSON_UNITTEST_TARGET_NAME}_default"
-	COMMAND ${JSON_UNITTEST_TARGET_NAME}
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-add_test(NAME "${JSON_UNITTEST_TARGET_NAME}_all"
-	COMMAND ${JSON_UNITTEST_TARGET_NAME} "*"
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+#############################################################################
+# one executable for each unit test file
+#############################################################################
+
+file(GLOB files "src/unit-*.cpp")
+foreach(file ${files})
+    get_filename_component(file_basename ${file} NAME_WE)
+    string(REGEX REPLACE "unit-([^$]+)" "test-\\1" testcase ${file_basename})
+
+    add_executable(${testcase} $<TARGET_OBJECTS:catch_main> ${file})
+    set_target_properties(${testcase} PROPERTIES
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED ON
+        COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
+        COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
+    )
+
+    target_compile_definitions(${testcase} PRIVATE CATCH_CONFIG_FAST_COMPILE)
+    target_include_directories(${testcase} PRIVATE "thirdparty/catch")
+    target_link_libraries(${testcase} ${NLOHMANN_JSON_TARGET_NAME})
+
+    if(NOT MSVC)
+        set_target_properties(${testcase} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-float-equal")
+    endif()
+
+    add_test(NAME "${testcase}_default"
+      COMMAND ${testcase} ${CATCH_TEST_FILTER}
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+    set_tests_properties("${testcase}_default" PROPERTIES LABELS "default")
+
+    add_test(NAME "${testcase}_all"
+      COMMAND ${testcase} ${CATCH_TEST_FILTER} "*"
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+    set_tests_properties("${testcase}_all" PROPERTIES LABELS "all")
+
+    if(JSON_Valgrind)
+        add_test(NAME "${testcase}_valgrind"
+          COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${CATCH_TEST_FILTER}
+          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        )
+        set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
+    endif()
+
+endforeach()

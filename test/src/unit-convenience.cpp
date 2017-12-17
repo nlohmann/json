@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.1
+|  |  |__   |  |  | | | |  version 3.0.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -32,61 +32,79 @@ SOFTWARE.
 #include "json.hpp"
 using nlohmann::json;
 
+void check_escaped(const char* original, const char* escaped = "", const bool ensure_ascii = false);
+void check_escaped(const char* original, const char* escaped, const bool ensure_ascii)
+{
+    std::stringstream ss;
+    json::serializer s(nlohmann::detail::output_adapter<char>(ss), ' ');
+    s.dump_escaped(original, ensure_ascii);
+    CHECK(ss.str() == escaped);
+}
+
 TEST_CASE("convenience functions")
 {
     SECTION("type name as string")
     {
-        CHECK(json(json::value_t::null).type_name() == "null");
-        CHECK(json(json::value_t::object).type_name() == "object");
-        CHECK(json(json::value_t::array).type_name() == "array");
-        CHECK(json(json::value_t::number_integer).type_name() == "number");
-        CHECK(json(json::value_t::number_unsigned).type_name() == "number");
-        CHECK(json(json::value_t::number_float).type_name() == "number");
-        CHECK(json(json::value_t::boolean).type_name() == "boolean");
-        CHECK(json(json::value_t::string).type_name() == "string");
-        CHECK(json(json::value_t::discarded).type_name() == "discarded");
+        CHECK(std::string(json(json::value_t::null).type_name()) == "null");
+        CHECK(std::string(json(json::value_t::object).type_name()) == "object");
+        CHECK(std::string(json(json::value_t::array).type_name()) == "array");
+        CHECK(std::string(json(json::value_t::number_integer).type_name()) == "number");
+        CHECK(std::string(json(json::value_t::number_unsigned).type_name()) == "number");
+        CHECK(std::string(json(json::value_t::number_float).type_name()) == "number");
+        CHECK(std::string(json(json::value_t::boolean).type_name()) == "boolean");
+        CHECK(std::string(json(json::value_t::string).type_name()) == "string");
+        CHECK(std::string(json(json::value_t::discarded).type_name()) == "discarded");
     }
 
     SECTION("string escape")
     {
-        CHECK(json::escape_string("\"") == "\\\"");
-        CHECK(json::escape_string("\\") == "\\\\");
-        CHECK(json::escape_string("\b") == "\\b");
-        CHECK(json::escape_string("\f") == "\\f");
-        CHECK(json::escape_string("\n") == "\\n");
-        CHECK(json::escape_string("\r") == "\\r");
-        CHECK(json::escape_string("\t") == "\\t");
+        check_escaped("\"", "\\\"");
+        check_escaped("\\", "\\\\");
+        check_escaped("\b", "\\b");
+        check_escaped("\f", "\\f");
+        check_escaped("\n", "\\n");
+        check_escaped("\r", "\\r");
+        check_escaped("\t", "\\t");
 
-        CHECK(json::escape_string("\x01") == "\\u0001");
-        CHECK(json::escape_string("\x02") == "\\u0002");
-        CHECK(json::escape_string("\x03") == "\\u0003");
-        CHECK(json::escape_string("\x04") == "\\u0004");
-        CHECK(json::escape_string("\x05") == "\\u0005");
-        CHECK(json::escape_string("\x06") == "\\u0006");
-        CHECK(json::escape_string("\x07") == "\\u0007");
-        CHECK(json::escape_string("\x08") == "\\b");
-        CHECK(json::escape_string("\x09") == "\\t");
-        CHECK(json::escape_string("\x0a") == "\\n");
-        CHECK(json::escape_string("\x0b") == "\\u000b");
-        CHECK(json::escape_string("\x0c") == "\\f");
-        CHECK(json::escape_string("\x0d") == "\\r");
-        CHECK(json::escape_string("\x0e") == "\\u000e");
-        CHECK(json::escape_string("\x0f") == "\\u000f");
-        CHECK(json::escape_string("\x10") == "\\u0010");
-        CHECK(json::escape_string("\x11") == "\\u0011");
-        CHECK(json::escape_string("\x12") == "\\u0012");
-        CHECK(json::escape_string("\x13") == "\\u0013");
-        CHECK(json::escape_string("\x14") == "\\u0014");
-        CHECK(json::escape_string("\x15") == "\\u0015");
-        CHECK(json::escape_string("\x16") == "\\u0016");
-        CHECK(json::escape_string("\x17") == "\\u0017");
-        CHECK(json::escape_string("\x18") == "\\u0018");
-        CHECK(json::escape_string("\x19") == "\\u0019");
-        CHECK(json::escape_string("\x1a") == "\\u001a");
-        CHECK(json::escape_string("\x1b") == "\\u001b");
-        CHECK(json::escape_string("\x1c") == "\\u001c");
-        CHECK(json::escape_string("\x1d") == "\\u001d");
-        CHECK(json::escape_string("\x1e") == "\\u001e");
-        CHECK(json::escape_string("\x1f") == "\\u001f");
+        check_escaped("\x01", "\\u0001");
+        check_escaped("\x02", "\\u0002");
+        check_escaped("\x03", "\\u0003");
+        check_escaped("\x04", "\\u0004");
+        check_escaped("\x05", "\\u0005");
+        check_escaped("\x06", "\\u0006");
+        check_escaped("\x07", "\\u0007");
+        check_escaped("\x08", "\\b");
+        check_escaped("\x09", "\\t");
+        check_escaped("\x0a", "\\n");
+        check_escaped("\x0b", "\\u000b");
+        check_escaped("\x0c", "\\f");
+        check_escaped("\x0d", "\\r");
+        check_escaped("\x0e", "\\u000e");
+        check_escaped("\x0f", "\\u000f");
+        check_escaped("\x10", "\\u0010");
+        check_escaped("\x11", "\\u0011");
+        check_escaped("\x12", "\\u0012");
+        check_escaped("\x13", "\\u0013");
+        check_escaped("\x14", "\\u0014");
+        check_escaped("\x15", "\\u0015");
+        check_escaped("\x16", "\\u0016");
+        check_escaped("\x17", "\\u0017");
+        check_escaped("\x18", "\\u0018");
+        check_escaped("\x19", "\\u0019");
+        check_escaped("\x1a", "\\u001a");
+        check_escaped("\x1b", "\\u001b");
+        check_escaped("\x1c", "\\u001c");
+        check_escaped("\x1d", "\\u001d");
+        check_escaped("\x1e", "\\u001e");
+        check_escaped("\x1f", "\\u001f");
+
+        // invalid UTF-8 characters
+        CHECK_THROWS_AS(check_escaped("ä\xA9ü"), json::type_error);
+        CHECK_THROWS_WITH(check_escaped("ä\xA9ü"),
+                          "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9");
+
+        CHECK_THROWS_AS(check_escaped("\xC2"), json::type_error);
+        CHECK_THROWS_WITH(check_escaped("\xC2"),
+                          "[json.exception.type_error.316] incomplete UTF-8 string; last byte: 0xC2");
     }
 }

@@ -1,19 +1,20 @@
 .PHONY: pretty clean ChangeLog.md
 
-# used programs
-RE2C = re2c
-SED = sed
-
-# main target
 all:
-	$(MAKE) -C test
-
-# clean up
-clean:
-	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM
-	rm -fr benchmarks/files/numbers/*.json
-	$(MAKE) clean -Cdoc
-	$(MAKE) clean -Ctest
+	@echo "ChangeLog.md - generate ChangeLog file"
+	@echo "check - compile and execute test suite"
+	@echo "check-fast - compile and execute test suite (skip long-running tests)"
+	@echo "clean - remove built files"
+	@echo "coverage - create coverage information with lcov"
+	@echo "cppcheck - analyze code with cppcheck"
+	@echo "doctest - compile example files and check their output"
+	@echo "fuzz_testing - prepare fuzz testing of the JSON parser"
+	@echo "fuzz_testing_cbor - prepare fuzz testing of the CBOR parser"
+	@echo "fuzz_testing_msgpack - prepare fuzz testing of the MessagePack parser"
+	@echo "json_unit - create single-file test executable"
+	@echo "pedantic_clang - run Clang with maximal warning flags"
+	@echo "pedantic_gcc - run GCC with maximal warning flags"
+	@echo "pretty - beautify code with Artistic Style"
 
 
 ##########################################################################
@@ -30,6 +31,28 @@ check:
 
 check-fast:
 	$(MAKE) check -C test TEST_PATTERN=""
+
+# clean up
+clean:
+	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM
+	rm -fr benchmarks/files/numbers/*.json
+	rm -fr build_coverage
+	$(MAKE) clean -Cdoc
+	$(MAKE) clean -Ctest
+	$(MAKE) clean -Cbenchmarks
+
+
+##########################################################################
+# coverage
+##########################################################################
+
+coverage:
+	mkdir build_coverage
+	cd build_coverage ; CXX=g++-5 cmake .. -GNinja -DJSON_Coverage=ON
+	cd build_coverage ; ninja
+	cd build_coverage ; ctest
+	cd build_coverage ; ninja lcov_html
+	open build_coverage/test/html/index.html
 
 
 ##########################################################################
@@ -49,19 +72,88 @@ doctest:
 # -Wno-documentation-unknown-command: code uses user-defined commands like @complexity
 # -Wno-exit-time-destructors: warning in Catch code
 # -Wno-keyword-macro: unit-tests use "#define private public"
-# -Wno-deprecated-declarations: some functions are deprecated until 3.0.0
-# -Wno-range-loop-analysis: iterator_wrapper tests tests "for(const auto i...)"
-pedantic:
+# -Wno-deprecated-declarations: the library deprecated some functions
+# -Wno-weak-vtables: exception class is defined inline, but has virtual method
+# -Wno-range-loop-analysis: iterator_wrapper tests "for(const auto i...)"
+# -Wno-float-equal: not all comparisons in the tests can be replaced by Approx
+# -Wno-switch-enum -Wno-covered-switch-default: pedantic/contradicting warnings about switches
+# -Wno-padded: padding is nothing to warn about
+pedantic_clang:
 	$(MAKE) json_unit CXXFLAGS="\
-		-std=c++11 \
+		-std=c++11 -Wno-c++98-compat -Wno-c++98-compat-pedantic \
 		-Werror \
 		-Weverything \
 		-Wno-documentation-unknown-command \
 		-Wno-exit-time-destructors \
 		-Wno-keyword-macro \
 		-Wno-deprecated-declarations \
-		-Wno-range-loop-analysis"
+		-Wno-weak-vtables \
+		-Wno-range-loop-analysis \
+		-Wno-float-equal \
+		-Wno-switch-enum -Wno-covered-switch-default \
+		-Wno-padded"
 
+# calling GCC with most warnings
+pedantic_gcc:
+	$(MAKE) json_unit CXXFLAGS="\
+		-std=c++11 \
+		-Wno-deprecated-declarations \
+		-Werror \
+		-Wall -Wpedantic -Wextra \
+		-Walloca \
+		-Warray-bounds=2 \
+		-Wcast-qual -Wcast-align \
+		-Wchar-subscripts \
+		-Wconditionally-supported \
+		-Wconversion \
+		-Wdate-time \
+		-Wdeprecated \
+		-Wdisabled-optimization \
+		-Wdouble-promotion \
+		-Wduplicated-branches \
+		-Wduplicated-cond \
+		-Wformat-overflow=2 \
+		-Wformat-signedness \
+		-Wformat-truncation=2 \
+		-Wformat=2 \
+		-Wno-ignored-qualifiers \
+		-Wimplicit-fallthrough=5 \
+		-Wlogical-op \
+		-Wmissing-declarations \
+		-Wmissing-format-attribute \
+		-Wmissing-include-dirs \
+		-Wnoexcept \
+		-Wnonnull \
+		-Wnull-dereference \
+		-Wold-style-cast \
+		-Woverloaded-virtual \
+		-Wparentheses \
+		-Wplacement-new=2 \
+		-Wredundant-decls \
+		-Wreorder \
+		-Wrestrict \
+		-Wshadow=global \
+		-Wshift-overflow=2 \
+		-Wsign-conversion \
+		-Wsign-promo \
+		-Wsized-deallocation \
+		-Wstrict-overflow=5 \
+		-Wsuggest-attribute=const \
+		-Wsuggest-attribute=format \
+		-Wsuggest-attribute=noreturn \
+		-Wsuggest-attribute=pure \
+		-Wsuggest-final-methods \
+		-Wsuggest-final-types \
+		-Wsuggest-override \
+		-Wtrigraphs \
+		-Wundef \
+		-Wuninitialized -Wunknown-pragmas \
+		-Wunused \
+		-Wunused-const-variable=2 \
+		-Wunused-macros \
+		-Wunused-parameter \
+		-Wuseless-cast \
+		-Wvariadic-macros"
 
 ##########################################################################
 # fuzzing
@@ -114,18 +206,10 @@ fuzzing-stop:
 cppcheck:
 	cppcheck --enable=warning --inconclusive --force --std=c++11 src/json.hpp --error-exitcode=1
 
-# run clang sanitize (we are overrding the CXXFLAGS provided by travis in order to use gcc's libstdc++)
-clang_sanitize: clean
-	CXX=clang++ CXXFLAGS="-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer" $(MAKE) check
-
 
 ##########################################################################
 # maintainer targets
 ##########################################################################
-
-# create scanner with re2c
-re2c: src/json.hpp.re2c
-	$(RE2C) -W --utf-8 --encoding-policy fail --bit-vectors --nested-ifs --no-debug-info $< | $(SED) '1d' > src/json.hpp
 
 # pretty printer
 pretty:
@@ -134,19 +218,8 @@ pretty:
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none --formatted \
-	   src/json.hpp src/json.hpp.re2c test/src/*.cpp \
-	   benchmarks/benchmarks.cpp doc/examples/*.cpp
-
-
-##########################################################################
-# benchmarks
-##########################################################################
-
-# benchmarks
-json_benchmarks: benchmarks/benchmarks.cpp benchmarks/benchpress.hpp benchmarks/cxxopts.hpp src/json.hpp
-	cd benchmarks/files/numbers ; python generate.py
-	$(CXX) -std=c++11 -pthread $(CXXFLAGS) -DNDEBUG -O3 -flto -I src -I benchmarks $< $(LDFLAGS) -o $@
-	./json_benchmarks
+	   src/json.hpp test/src/*.cpp \
+	   benchmarks/src/benchmarks.cpp doc/examples/*.cpp
 
 
 ##########################################################################

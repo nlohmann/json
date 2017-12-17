@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.1
+|  |  |__   |  |  | | | |  version 3.0.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -49,16 +49,19 @@ enum class country
 struct age
 {
     int m_val;
+    age(int rhs = 0) : m_val(rhs) {}
 };
 
 struct name
 {
     std::string m_val;
+    name(const std::string rhs = "") : m_val(rhs) {}
 };
 
 struct address
 {
     std::string m_val;
+    address(const std::string rhs = "") : m_val(rhs) {}
 };
 
 struct person
@@ -66,18 +69,24 @@ struct person
     age m_age;
     name m_name;
     country m_country;
+    person() : m_age(), m_name(), m_country() {}
+    person(const age& a, const name& n, const country& c) : m_age(a), m_name(n), m_country(c) {}
 };
 
 struct contact
 {
     person m_person;
     address m_address;
+    contact() : m_person(), m_address() {}
+    contact(const person& p, const address& a) : m_person(p), m_address(a) {}
 };
 
 struct contact_book
 {
     name m_book_name;
     std::vector<contact> m_contacts;
+    contact_book() : m_book_name(), m_contacts() {}
+    contact_book(const name& n, const std::vector<contact>& c) : m_book_name(n), m_contacts(c) {}
 };
 }
 
@@ -192,7 +201,7 @@ void from_json(const BasicJsonType& j, country& c)
     {
         {u8"中华人民共和国", country::china},
         {"France", country::france},
-        {"Российская Федерация", country::russia}
+        {u8"Российская Федерация", country::russia}
     };
 
     const auto it = m.find(str);
@@ -319,6 +328,8 @@ namespace udt
 struct legacy_type
 {
     std::string number;
+    legacy_type() : number() {}
+    legacy_type(const std::string& n) : number(n) {}
 };
 }
 
@@ -593,6 +604,8 @@ struct small_pod
 struct non_pod
 {
     std::string s;
+    non_pod() : s() {}
+    non_pod(const std::string& S) : s(S) {}
 };
 
 template <typename BasicJsonType>

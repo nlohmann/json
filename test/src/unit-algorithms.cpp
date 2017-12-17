@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.1
+|  |  |__   |  |  | | | |  version 3.0.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -240,8 +240,9 @@ TEST_CASE("algorithms")
             SECTION("sorting an object")
             {
                 json j({{"one", 1}, {"two", 2}});
-                CHECK_THROWS_AS(std::sort(j.begin(), j.end()), std::domain_error);
-                CHECK_THROWS_WITH(std::sort(j.begin(), j.end()), "cannot use offsets with object iterators");
+                CHECK_THROWS_AS(std::sort(j.begin(), j.end()), json::invalid_iterator&);
+                CHECK_THROWS_WITH(std::sort(j.begin(), j.end()),
+                                  "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
             }
         }
 

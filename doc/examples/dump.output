@@ -1,3 +1,4 @@
+objects:
 {"one":1,"two":2}
 
 {"one":1,"two":2}
@@ -12,6 +13,12 @@
     "two": 2
 }
 
+{
+	"one": 1,
+	"two": 2
+}
+
+arrays:
 [1,2,4,8,16]
 
 [1,2,4,8,16]
@@ -32,3 +39,15 @@
     16
 ]
 
+[
+	1,
+	2,
+	4,
+	8,
+	16
+]
+
+strings:
+"Hellö 😀!"
+"Hell\u00f6 \ud83d\ude00!"
+[json.exception.type_error.316] invalid UTF-8 byte at index 3: 0xC0

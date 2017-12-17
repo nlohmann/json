@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.1
+|  |  |__   |  |  | | | |  version 3.0.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -36,6 +36,12 @@ using nlohmann::json;
 #include <list>
 #include <unordered_map>
 #include <unordered_set>
+#include <iostream>
+
+#if defined(_MSC_VER)
+    #pragma warning (push)
+    #pragma warning (disable : 4189) // local variable is initialized but not referenced
+#endif
 
 TEST_CASE("README", "[hide]")
 {
@@ -94,13 +100,20 @@ TEST_CASE("README", "[hide]")
         {
             // ways to express the empty array []
             json empty_array_implicit = {{}};
+            CHECK(empty_array_implicit.is_array());
             json empty_array_explicit = json::array();
+            CHECK(empty_array_explicit.is_array());
 
             // a way to express the empty object {}
             json empty_object_explicit = json::object();
+            CHECK(empty_object_explicit.is_object());
 
             // a way to express an _array_ of key/value pairs [["currency", "USD"], ["value", 42.99]]
-            json array_not_object = { json::array({"currency", "USD"}), json::array({"value", 42.99}) };
+            json array_not_object = json::array({ {"currency", "USD"}, {"value", 42.99} });
+            CHECK(array_not_object.is_array());
+            CHECK(array_not_object.size() == 2);
+            CHECK(array_not_object[0].is_array());
+            CHECK(array_not_object[1].is_array());
         }
 
         {
@@ -297,3 +310,7 @@ TEST_CASE("README", "[hide]")
         std::cout.rdbuf(old_cout_buffer);
     }
 }
+
+#if defined(_MSC_VER)
+    #pragma warning (pop)
+#endif

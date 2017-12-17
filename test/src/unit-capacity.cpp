@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.1
+|  |  |__   |  |  | | | |  version 3.0.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -38,7 +38,7 @@ TEST_CASE("capacity")
         SECTION("boolean")
         {
             json j = true;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of empty")
             {
@@ -56,7 +56,7 @@ TEST_CASE("capacity")
         SECTION("string")
         {
             json j = "hello world";
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of empty")
             {
@@ -76,7 +76,7 @@ TEST_CASE("capacity")
             SECTION("empty array")
             {
                 json j = json::array();
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of empty")
                 {
@@ -94,7 +94,7 @@ TEST_CASE("capacity")
             SECTION("filled array")
             {
                 json j = {1, 2, 3};
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of empty")
                 {
@@ -115,7 +115,7 @@ TEST_CASE("capacity")
             SECTION("empty object")
             {
                 json j = json::object();
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of empty")
                 {
@@ -133,7 +133,7 @@ TEST_CASE("capacity")
             SECTION("filled object")
             {
                 json j = {{"one", 1}, {"two", 2}, {"three", 3}};
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of empty")
                 {
@@ -151,8 +151,8 @@ TEST_CASE("capacity")
 
         SECTION("number (integer)")
         {
-            json j = 23;
-            json j_const(j);
+            json j = -23;
+            const json j_const(j);
 
             SECTION("result of empty")
             {
@@ -170,7 +170,7 @@ TEST_CASE("capacity")
         SECTION("number (unsigned)")
         {
             json j = 23u;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of empty")
             {
@@ -188,7 +188,7 @@ TEST_CASE("capacity")
         SECTION("number (float)")
         {
             json j = 23.42;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of empty")
             {
@@ -206,7 +206,7 @@ TEST_CASE("capacity")
         SECTION("null")
         {
             json j = nullptr;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of empty")
             {
@@ -227,7 +227,7 @@ TEST_CASE("capacity")
         SECTION("boolean")
         {
             json j = true;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of size")
             {
@@ -247,7 +247,7 @@ TEST_CASE("capacity")
         SECTION("string")
         {
             json j = "hello world";
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of size")
             {
@@ -269,7 +269,7 @@ TEST_CASE("capacity")
             SECTION("empty array")
             {
                 json j = json::array();
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of size")
                 {
@@ -289,7 +289,7 @@ TEST_CASE("capacity")
             SECTION("filled array")
             {
                 json j = {1, 2, 3};
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of size")
                 {
@@ -312,7 +312,7 @@ TEST_CASE("capacity")
             SECTION("empty object")
             {
                 json j = json::object();
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of size")
                 {
@@ -332,7 +332,7 @@ TEST_CASE("capacity")
             SECTION("filled object")
             {
                 json j = {{"one", 1}, {"two", 2}, {"three", 3}};
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of size")
                 {
@@ -352,8 +352,8 @@ TEST_CASE("capacity")
 
         SECTION("number (integer)")
         {
-            json j = 23;
-            json j_const(j);
+            json j = -23;
+            const json j_const(j);
 
             SECTION("result of size")
             {
@@ -373,7 +373,7 @@ TEST_CASE("capacity")
         SECTION("number (unsigned)")
         {
             json j = 23u;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of size")
             {
@@ -393,7 +393,7 @@ TEST_CASE("capacity")
         SECTION("number (float)")
         {
             json j = 23.42;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of size")
             {
@@ -413,7 +413,7 @@ TEST_CASE("capacity")
         SECTION("null")
         {
             json j = nullptr;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of size")
             {
@@ -436,7 +436,7 @@ TEST_CASE("capacity")
         SECTION("boolean")
         {
             json j = true;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of max_size")
             {
@@ -448,7 +448,7 @@ TEST_CASE("capacity")
         SECTION("string")
         {
             json j = "hello world";
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of max_size")
             {
@@ -462,7 +462,7 @@ TEST_CASE("capacity")
             SECTION("empty array")
             {
                 json j = json::array();
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of max_size")
                 {
@@ -474,7 +474,7 @@ TEST_CASE("capacity")
             SECTION("filled array")
             {
                 json j = {1, 2, 3};
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of max_size")
                 {
@@ -489,7 +489,7 @@ TEST_CASE("capacity")
             SECTION("empty object")
             {
                 json j = json::object();
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of max_size")
                 {
@@ -501,7 +501,7 @@ TEST_CASE("capacity")
             SECTION("filled object")
             {
                 json j = {{"one", 1}, {"two", 2}, {"three", 3}};
-                json j_const(j);
+                const json j_const(j);
 
                 SECTION("result of max_size")
                 {
@@ -513,8 +513,8 @@ TEST_CASE("capacity")
 
         SECTION("number (integer)")
         {
-            json j = 23;
-            json j_const(j);
+            json j = -23;
+            const json j_const(j);
 
             SECTION("result of max_size")
             {
@@ -526,7 +526,7 @@ TEST_CASE("capacity")
         SECTION("number (unsigned)")
         {
             json j = 23u;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of max_size")
             {
@@ -538,7 +538,7 @@ TEST_CASE("capacity")
         SECTION("number (float)")
         {
             json j = 23.42;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of max_size")
             {
@@ -550,7 +550,7 @@ TEST_CASE("capacity")
         SECTION("null")
         {
             json j = nullptr;
-            json j_const(j);
+            const json j_const(j);
 
             SECTION("result of max_size")
             {

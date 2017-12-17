@@ -1,4 +1,5 @@
-#include <json.hpp>
+#include <iostream>
+#include "json.hpp"
 
 using json = nlohmann::json;
 
@@ -19,9 +20,9 @@ int main()
     {
         json::json_pointer p9("foo");
     }
-    catch (std::domain_error& e)
+    catch (json::parse_error& e)
     {
-        std::cout << "domain_error: " << e.what() << '\n';
+        std::cout << e.what() << '\n';
     }
 
     // error: JSON pointer uses escape symbol ~ not followed by 0 or 1
@@ -29,9 +30,9 @@ int main()
     {
         json::json_pointer p10("/foo/~");
     }
-    catch (std::domain_error& e)
+    catch (json::parse_error& e)
     {
-        std::cout << "domain_error: " << e.what() << '\n';
+        std::cout << e.what() << '\n';
     }
 
     // error: JSON pointer uses escape symbol ~ not followed by 0 or 1
@@ -39,8 +40,8 @@ int main()
     {
         json::json_pointer p11("/foo/~3");
     }
-    catch (std::domain_error& e)
+    catch (json::parse_error& e)
     {
-        std::cout << "domain_error: " << e.what() << '\n';
+        std::cout << e.what() << '\n';
     }
 }

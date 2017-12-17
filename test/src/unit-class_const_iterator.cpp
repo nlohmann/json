@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.1
+|  |  |__   |  |  | | | |  version 3.0.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -147,8 +147,8 @@ TEST_CASE("const_iterator class")
             {
                 json j(json::value_t::null);
                 json::const_iterator it = j.cbegin();
-                CHECK_THROWS_AS(*it, std::out_of_range);
-                CHECK_THROWS_WITH(*it, "cannot get value");
+                CHECK_THROWS_AS(*it, json::invalid_iterator&);
+                CHECK_THROWS_WITH(*it, "[json.exception.invalid_iterator.214] cannot get value");
             }
 
             SECTION("number")
@@ -157,8 +157,8 @@ TEST_CASE("const_iterator class")
                 json::const_iterator it = j.cbegin();
                 CHECK(*it == json(17));
                 it = j.cend();
-                CHECK_THROWS_AS(*it, std::out_of_range);
-                CHECK_THROWS_WITH(*it, "cannot get value");
+                CHECK_THROWS_AS(*it, json::invalid_iterator&);
+                CHECK_THROWS_WITH(*it, "[json.exception.invalid_iterator.214] cannot get value");
             }
 
             SECTION("object")
@@ -182,32 +182,32 @@ TEST_CASE("const_iterator class")
             {
                 json j(json::value_t::null);
                 json::const_iterator it = j.cbegin();
-                CHECK_THROWS_AS(it->type_name(), std::out_of_range);
-                CHECK_THROWS_WITH(it->type_name(), "cannot get value");
+                CHECK_THROWS_AS(std::string(it->type_name()), json::invalid_iterator&);
+                CHECK_THROWS_WITH(std::string(it->type_name()), "[json.exception.invalid_iterator.214] cannot get value");
             }
 
             SECTION("number")
             {
                 json j(17);
                 json::const_iterator it = j.cbegin();
-                CHECK(it->type_name() == "number");
+                CHECK(std::string(it->type_name()) == "number");
                 it = j.cend();
-                CHECK_THROWS_AS(it->type_name(), std::out_of_range);
-                CHECK_THROWS_WITH(it->type_name(), "cannot get value");
+                CHECK_THROWS_AS(std::string(it->type_name()), json::invalid_iterator&);
+                CHECK_THROWS_WITH(std::string(it->type_name()), "[json.exception.invalid_iterator.214] cannot get value");
             }
 
             SECTION("object")
             {
                 json j({{"foo", "bar"}});
                 json::const_iterator it = j.cbegin();
-                CHECK(it->type_name() == "string");
+                CHECK(std::string(it->type_name()) == "string");
             }
 
             SECTION("array")
             {
                 json j({1, 2, 3, 4});
                 json::const_iterator it = j.cbegin();
-                CHECK(it->type_name() == "number");
+                CHECK(std::string(it->type_name()) == "number");
             }
         }
     }

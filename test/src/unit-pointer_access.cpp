@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.1
+|  |  |__   |  |  | | | |  version 3.0.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -257,11 +257,11 @@ TEST_CASE("pointer access")
 
         const test_type* p2 = value.get_ptr<const test_type*>();
         CHECK(p1 == value.get_ptr<const test_type*>());
-        //CHECK(*p2 == value.get<test_type>());
+        CHECK(*p2 == value.get<test_type>());
 
         const test_type* const p3 = value.get_ptr<const test_type* const>();
         CHECK(p1 == value.get_ptr<const test_type* const>());
-        //CHECK(*p3 == value.get<test_type>());
+        CHECK(*p3 == value.get<test_type>());
 
         // check if null pointers are returned correctly
         CHECK(value.get_ptr<const json::object_t*>() == nullptr);

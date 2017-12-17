@@ -1,5 +1,6 @@
-#include <json.hpp>
+#include <iostream>
 #include <unordered_map>
+#include "json.hpp"
 
 using json = nlohmann::json;
 
@@ -45,5 +46,15 @@ int main()
     for (auto i : v8)
     {
         std::cout << i.first << ": " << i.second << '\n';
+    }
+
+    // example for an exception
+    try
+    {
+        bool v1 = json_types["string"];
+    }
+    catch (json::type_error& e)
+    {
+        std::cout << e.what() << '\n';
     }
 }

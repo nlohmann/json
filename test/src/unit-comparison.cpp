@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 2.1.1
+|  |  |__   |  |  | | | |  version 3.0.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -30,6 +30,14 @@ SOFTWARE.
 
 #include "json.hpp"
 using nlohmann::json;
+
+// helper function to check std::less<json::value_t>
+// see http://en.cppreference.com/w/cpp/utility/functional/less
+template <typename A, typename B, typename U = std::less<json::value_t>>
+bool f(A a, B b, U u = U())
+{
+    return u(a, b);
+}
 
 TEST_CASE("lexicographical comparison operators")
 {
@@ -69,6 +77,7 @@ TEST_CASE("lexicographical comparison operators")
                     CAPTURE(j);
                     // check precomputed values
                     CHECK(operator<(j_types[i], j_types[j]) == expected[i][j]);
+                    CHECK(f(j_types[i], j_types[j]) == expected[i][j]);
                 }
             }
         }
@@ -79,7 +88,7 @@ TEST_CASE("lexicographical comparison operators")
         json j_values =
         {
             nullptr, nullptr,
-            17, 42,
+            -17, 42,
             8u, 13u,
             3.14159, 23.42,
             "foo", "bar",
@@ -116,6 +125,8 @@ TEST_CASE("lexicographical comparison operators")
                 {
                     CAPTURE(i);
                     CAPTURE(j);
+                    CAPTURE(j_values[i]);
+                    CAPTURE(j_values[j]);
                     // check precomputed values
                     CHECK( (j_values[i] == j_values[j]) == expected[i][j] );
                 }
@@ -163,11 +174,11 @@ TEST_CASE("lexicographical comparison operators")
             {
                 {false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
                 {false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-                {false, false, false, true, false, false, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, true, true, true, true, true, true, true, false, false, true, true, true, true},
                 {false, false, false, false, false, false, false, false, true, true, false, false, true, true, true, true},
-                {false, false, true, true, false, true, false, true, true, true, false, false, true, true, true, true},
-                {false, false, true, true, false, false, false, true, true, true, false, false, true, true, true, true},
-                {false, false, true, true, true, true, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, true, false, true, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, true, false, false, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, true, true, true, false, true, true, true, false, false, true, true, true, true},
                 {false, false, false, true, false, false, false, false, true, true, false, false, true, true, true, true},
                 {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
                 {false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false},
@@ -185,6 +196,8 @@ TEST_CASE("lexicographical comparison operators")
                 {
                     CAPTURE(i);
                     CAPTURE(j);
+                    CAPTURE(j_values[i]);
+                    CAPTURE(j_values[j]);
                     // check precomputed values
                     CHECK( (j_values[i] < j_values[j]) == expected[i][j] );
                 }

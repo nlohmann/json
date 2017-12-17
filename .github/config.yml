@@ -1,0 +1,19 @@
+# Configuration for sentiment-bot - https://github.com/behaviorbot/sentiment-bot
+
+# *Required* toxicity threshold between 0 and .99 with the higher numbers being the most toxic
+# Anything higher than this threshold will be marked as toxic and commented on
+sentimentBotToxicityThreshold: .7
+
+# *Required* Comment to reply with
+sentimentBotReplyComment: >
+  Please be sure to review the [code of conduct](https://github.com/nlohmann/json/blob/develop/CODE_OF_CONDUCT.md) and be respectful of other users. cc/ @nlohmann
+
+
+# Configuration for request-info - https://github.com/behaviorbot/request-info
+
+# *Required* Comment to reply with
+requestInfoReplyComment: >
+  We would appreciate it if you could provide us with more info about this issue or pull request! Please check the [issue template](https://github.com/nlohmann/json/blob/develop/.github/ISSUE_TEMPLATE.md) and the [pull request template](https://github.com/nlohmann/json/blob/develop/.github/PULL_REQUEST_TEMPLATE.md).
+
+# *OPTIONAL* Label to be added to Issues and Pull Requests with insufficient information given
+requestInfoLabelToAdd: "state: needs more info"
