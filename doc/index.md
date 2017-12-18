@@ -45,6 +45,8 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
 
 The container functions known from STL have been extended to support the different value types from JSON. However, not all functions can be applied to all value types. Note that the signature of some functions differ between the types; for instance, `at` may be called with either a string to address a key in an object or with an integer to address a value in an array.
 
+Note that this table only lists those exceptions thrown due to the type. For instance, the @link nlohmann::basic_json::at(const typename object_t::key_type & key) `at` @endlink function will always throw a @link nlohmann::basic_json::type_error `json::type_error` @endlink exception when called for a string type. When called for an array, it *may* throw an @link nlohmann::basic_json::out_of_range `json::out_of_range` @endlink exception if the passed index is invalid.
+
 <table>
   <tr>
     <th rowspan="2">group</td>
@@ -137,18 +139,18 @@ The container functions known from STL have been extended to support the differe
     <td>`at`</td>
     <td class="ok_green">@link nlohmann::basic_json::at(const typename object_t::key_type & key) `at` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::at(size_type) `at` @endlink</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (304)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (304)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (304)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (304)</td>
   </tr>
   <tr>
     <td>`operator[]`</td>
     <td class="ok_green">@link nlohmann::basic_json::operator[](const typename object_t::key_type &key) `operator[]` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::operator[](size_type) `operator[]` @endlink</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (305)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (305)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (305)</td>
     <td class="ok_green">@link nlohmann::basic_json::operator[](const typename object_t::key_type & key) `operator[]` @endlink (creates object)<br>@link nlohmann::basic_json::operator[](size_type) `operator[]` @endlink (creates array)</td>
   </tr>
   <tr>
@@ -158,7 +160,7 @@ The container functions known from STL have been extended to support the differe
     <td class="ok_green">@link nlohmann::basic_json::front `front` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::front `front` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::front `front` @endlink</td>
-    <td class="nok_throws">throws `std::out_of_range`</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::invalid_iterator `json::invalid_iterator` @endlink (214)</td>
   </tr>
   <tr>
     <td>`back`</td>
@@ -167,7 +169,7 @@ The container functions known from STL have been extended to support the differe
     <td class="ok_green">@link nlohmann::basic_json::back `back` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::back `back` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::back `back` @endlink</td>
-    <td class="nok_throws">throws `std::out_of_range`</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::invalid_iterator `json::invalid_iterator` @endlink (214)</td>
   </tr>
   <tr>
     <td rowspan="3">capacity</td>
@@ -198,7 +200,7 @@ The container functions known from STL have been extended to support the differe
     <td class="ok_green">@link nlohmann::basic_json::max_size `max_size` @endlink (returns `0`)</td>
   </tr>
   <tr>
-    <td rowspan="6">modifiers</td>
+    <td rowspan="7">modifiers</td>
     <td>`clear`</td>
     <td class="ok_green">@link nlohmann::basic_json::clear `clear` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::clear `clear` @endlink</td>
@@ -209,12 +211,12 @@ The container functions known from STL have been extended to support the differe
   </tr>
   <tr>
     <td>`insert`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (309)</td>
     <td class="ok_green">@link nlohmann::basic_json::insert `insert` @endlink</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (309)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (309)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (309)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (309)</td>
   </tr>
   <tr>
     <td>`erase`</td>
@@ -223,25 +225,34 @@ The container functions known from STL have been extended to support the differe
     <td class="ok_green">@link nlohmann::basic_json::erase `erase` @endlink (converts to null)</td>
     <td class="ok_green">@link nlohmann::basic_json::erase `erase` @endlink (converts to null)</td>
     <td class="ok_green">@link nlohmann::basic_json::erase `erase` @endlink (converts to null)</td>
-    <td class="nok_throws">throws</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (307)</td>
   </tr>
   <tr>
     <td>`push_back`</td>
     <td class="ok_green">@link nlohmann::basic_json::push_back(const typename object_t::value_type & val) `push_back` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::push_back(const nlohmann::basic_json &) `push_back` @endlink</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (308)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (308)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (308)</td>
     <td class="ok_green">@link nlohmann::basic_json::push_back(const typename object_t::value_type & val) `push_back` @endlink (creates object)<br>@link nlohmann::basic_json::push_back(const nlohmann::basic_json &) `push_back` @endlink (creates array)</td>
   </tr>
   <tr>
     <td>`emplace` / `emplace_back`</td>
     <td class="ok_green">@link nlohmann::basic_json::emplace() `emplace` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::emplace_back() `emplace_back` @endlink</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
-    <td class="nok_throws">throws `std::domain_error`</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (311)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (311)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (311)</td>
     <td class="ok_green">@link nlohmann::basic_json::emplace() `emplace` @endlink (creates object)<br>@link nlohmann::basic_json::emplace_back() `emplace_back` @endlink (creates array)</td>
+  </tr>
+  <tr>
+    <td>`update`</td>
+    <td class="ok_green">@link nlohmann::basic_json::update() `update` @endlink</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (312)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (312)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (312)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (312)</td>
+    <td class="nok_throws">throws @link nlohmann::basic_json::type_error `json::type_error` @endlink (312)</td>
   </tr>
   <tr>
     <td>`swap`</td>
