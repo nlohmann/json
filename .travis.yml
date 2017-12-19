@@ -285,3 +285,4 @@ script:
     brew install nlohmann_json --HEAD ;
     brew test nlohmann_json ;
     fi
+
