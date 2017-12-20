@@ -9,7 +9,7 @@ project(nlohmann_json VERSION 3.0.0 LANGUAGES CXX)
 ##
 ## OPTIONS
 ##
-option(JSON_BuildTests "Build the unit tests" ON)
+option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
 
 ##
 ## CONFIGURATION
@@ -54,7 +54,9 @@ endif()
 ## TESTS
 ## create and configure the unit test target
 ##
-if(JSON_BuildTests)
+include(CTest) #adds option BUILD_TESTING (default ON)
+
+if(BUILD_TESTING AND JSON_BuildTests)
     enable_testing()
     include_directories(${NLOHMANN_JSON_SOURCE_DIR})
     add_subdirectory(test)
