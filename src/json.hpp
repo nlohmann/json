@@ -3251,6 +3251,20 @@ class parser
                 break; // LCOV_EXCL_LINE
             }
 
+            case token_type::uninitialized:
+
+            case token_type::end_array:
+            
+            case token_type::end_object:
+            
+            case token_type::name_separator:
+            
+            case token_type::value_separator:
+            
+            case token_type::end_of_input:
+            
+            case token_type::literal_or_value:
+            
             default:
             {
                 // the last token was unexpected; we expected a value
@@ -6564,7 +6578,7 @@ class serializer
                         // check that the additional bytes are present
                         assert(i + bytes < s.size());
 
-                        // to use \uxxxx escaping, we first need to calculate
+                        // to use \uxxxx escaping, we first need to caluclate
                         // the codepoint from the UTF-8 bytes
                         int codepoint = 0;
 
@@ -8114,6 +8128,8 @@ class basic_json
                     break;
                 }
 
+                case value_t::discarded:
+
                 default:
                 {
                     object = nullptr;  // silence warning, see #821
@@ -8189,6 +8205,18 @@ class basic_json
                     std::allocator_traits<decltype(alloc)>::deallocate(alloc, string, 1);
                     break;
                 }
+
+                case value_t::null:
+
+                case value_t::boolean:
+
+                case value_t::number_integer:
+
+                case value_t::number_unsigned:
+
+                case value_t::number_float:
+
+                case value_t::discarded:
 
                 default:
                 {
