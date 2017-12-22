@@ -6313,6 +6313,11 @@ class serializer
                 o->write_characters("null", 4);
                 return;
             }
+
+            default:
+            {
+                return;
+            }
         }
     }
 
