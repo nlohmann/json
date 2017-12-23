@@ -456,7 +456,6 @@ Exceptions have ids 5xx.
 name / id                      | example message | description
 ------------------------------ | --------------- | -------------------------
 json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "value":"bar"} | A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
-json.exception.other_error.502 | invalid object size for conversion | Some conversions to user-defined types impose constraints on the object size (e.g. std::pair)
 
 @sa @ref exception for the base class of the library exceptions
 @sa @ref parse_error for exceptions indicating a parse error
@@ -13721,6 +13720,9 @@ class basic_json
     pointer @a ptr. As `at` provides checked access (and no elements are
     implicitly inserted), the index '-' is always invalid. See example below.
 
+    @throw out_of_range.403 if the JSON pointer describes a key of an object
+    which cannot be found. See example below.
+
     @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved.
     See example below.
 
@@ -13760,6 +13762,9 @@ class basic_json
     @throw out_of_range.402 if the array index '-' is used in the passed JSON
     pointer @a ptr. As `at` provides checked access (and no elements are
     implicitly inserted), the index '-' is always invalid. See example below.
+
+    @throw out_of_range.403 if the JSON pointer describes a key of an object
+    which cannot be found. See example below.
 
     @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved.
     See example below.

@@ -55,6 +55,17 @@ int main()
         std::cout << e.what() << '\n';
     }
 
+    // out_of_range.403
+    try
+    {
+        // try to use a JSON pointer to an nonexistent object key
+        json::const_reference ref = j.at("/foo"_json_pointer);
+    }
+    catch (json::out_of_range& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
     // out_of_range.404
     try
     {

@@ -28,6 +28,12 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
     - @link nlohmann::basic_json::get_ref get_ref @endlink -- get a value reference
     - @link nlohmann::basic_json::operator ValueType() const operator ValueType @endlink -- get a value (implicit conversion)
     - @link nlohmann::basic_json::value value @endlink -- get a value from an object and return default value if key is not present
+  - exceptions
+    - @link nlohmann::basic_json::parse_error parse_error @endlink for exceptions indicating a parse error
+    - @link nlohmann::basic_json::invalid_iterator invalid_iterator @endlink for exceptions indicating errors with iterators
+    - @link nlohmann::basic_json::type_error type_error @endlink for exceptions indicating executing a member function with a wrong type
+    - @link nlohmann::basic_json::out_of_range out_of_range @endlink for exceptions indicating access out of the defined range
+    - @link nlohmann::basic_json::other_error other_error @endlink for exceptions indicating other library errors
   - lexicographical comparison operators
   - serialization
   - deserialization
