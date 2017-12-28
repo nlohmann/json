@@ -1322,4 +1322,32 @@ TEST_CASE("regression tests")
         j = ar;
         ar = j;
     }
+
+    SECTION("issue #894 - invalid RFC6902 copy operation succeeds")
+    {
+        auto model = R"({
+            "one": {
+                "two": {
+                    "three": "hello",
+                    "four": 42
+                }
+            }
+        })"_json;
+
+        CHECK_THROWS_AS(model.patch(R"([{"op": "move",
+                         "from": "/one/two/three",
+                         "path": "/a/b/c"}])"_json), json::out_of_range);
+        CHECK_THROWS_WITH(model.patch(R"([{"op": "move",
+                         "from": "/one/two/three",
+                         "path": "/a/b/c"}])"_json),
+                          "[json.exception.out_of_range.403] key 'a' not found");
+
+        CHECK_THROWS_AS(model.patch(R"([{"op": "copy",
+                                 "from": "/one/two/three",
+                                 "path": "/a/b/c"}])"_json), json::out_of_range);
+        CHECK_THROWS_WITH(model.patch(R"([{"op": "copy",
+                                 "from": "/one/two/three",
+                                 "path": "/a/b/c"}])"_json),
+                          "[json.exception.out_of_range.403] key 'a' not found");
+    }
 }

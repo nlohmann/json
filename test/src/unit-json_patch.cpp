@@ -31,6 +31,8 @@ SOFTWARE.
 #include "json.hpp"
 using nlohmann::json;
 
+#include <fstream>
+
 TEST_CASE("JSON patch")
 {
     SECTION("examples from RFC 6902")
@@ -1248,6 +1250,44 @@ TEST_CASE("JSON patch")
         {
             CHECK_NOTHROW(R"( {"foo": "bar"} )"_json.patch(
                               R"( [{"op": "test", "path": "/foo", "value": "bar"}] )"_json));
+        }
+    }
+
+    SECTION("Tests from github.com/json-patch/json-patch-tests")
+    {
+        for (auto filename :
+                {"test/data/json-patch-tests/spec_tests.json",
+                 "test/data/json-patch-tests/tests.json"
+                })
+        {
+            CAPTURE(filename);
+            std::ifstream f(filename);
+            json suite = json::parse(f);
+
+            for (const auto& test : suite)
+            {
+                CAPTURE(test.value("comment", ""))
+
+                // skip tests marked as disabled
+                if (test.value("disabled", false))
+                {
+                    continue;
+                }
+
+                const auto& doc = test["doc"];
+                const auto& patch = test["patch"];
+
+                if (test.count("error") == 0)
+                {
+                    // if an expected value is given, use it; use doc otherwise
+                    const auto& expected = test.value("expected", doc);
+                    CHECK(doc.patch(patch) == expected);
+                }
+                else
+                {
+                    CHECK_THROWS(doc.patch(patch));
+                }
+            }
         }
     }
 }
