@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.0.0
+|  |  |__   |  |  | | | |  version 3.0.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -456,7 +456,6 @@ Exceptions have ids 5xx.
 name / id                      | example message | description
 ------------------------------ | --------------- | -------------------------
 json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "value":"bar"} | A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
-json.exception.other_error.502 | invalid object size for conversion | Some conversions to user-defined types impose constraints on the object size (e.g. std::pair)
 
 @sa @ref exception for the base class of the library exceptions
 @sa @ref parse_error for exceptions indicating a parse error
@@ -733,7 +732,7 @@ struct external_constructor<value_t::array>
         j.m_type = value_t::array;
         j.m_value = value_t::array;
         j.m_value.array->reserve(arr.size());
-        for (bool x : arr)
+        for (const bool x : arr)
         {
             j.m_value.array->push_back(x);
         }
@@ -2760,7 +2759,7 @@ scan_number_done:
     {
         // escape control characters
         std::string result;
-        for (auto c : token_string)
+        for (const auto c : token_string)
         {
             if ('\x00' <= c and c <= '\x1F')
             {
@@ -3527,7 +3526,7 @@ class primitive_iterator_t
         return *this;
     }
 
-    primitive_iterator_t operator++(int)
+    primitive_iterator_t const operator++(int)
     {
         auto result = *this;
         m_it++;
@@ -3540,7 +3539,7 @@ class primitive_iterator_t
         return *this;
     }
 
-    primitive_iterator_t operator--(int)
+    primitive_iterator_t const operator--(int)
     {
         auto result = *this;
         m_it--;
@@ -3851,7 +3850,7 @@ class iter_impl
     @brief post-increment (it++)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl operator++(int)
+    iter_impl const operator++(int)
     {
         auto result = *this;
         ++(*this);
@@ -3894,7 +3893,7 @@ class iter_impl
     @brief post-decrement (it--)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl operator--(int)
+    iter_impl const operator--(int)
     {
         auto result = *this;
         --(*this);
@@ -4300,7 +4299,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     json_reverse_iterator(const base_iterator& it) noexcept : base_iterator(it) {}
 
     /// post-increment (it++)
-    json_reverse_iterator operator++(int)
+    json_reverse_iterator const operator++(int)
     {
         return static_cast<json_reverse_iterator>(base_iterator::operator++(1));
     }
@@ -4312,7 +4311,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     }
 
     /// post-decrement (it--)
-    json_reverse_iterator operator--(int)
+    json_reverse_iterator const operator--(int)
     {
         return static_cast<json_reverse_iterator>(base_iterator::operator--(1));
     }
@@ -6564,11 +6563,12 @@ class serializer
                         // check that the additional bytes are present
                         assert(i + bytes < s.size());
 
-                        // to use \uxxxx escaping, we first need to caluclate
+                        // to use \uxxxx escaping, we first need to calculate
                         // the codepoint from the UTF-8 bytes
                         int codepoint = 0;
 
-                        assert(0 <= bytes and bytes <= 3);
+                        // bytes is unsigned type:
+                        assert(bytes <= 3);
                         switch (bytes)
                         {
                             case 0:
@@ -7012,6 +7012,27 @@ class json_pointer
         return to_string();
     }
 
+    /*!
+    @param[in] s  reference token to be converted into an array index
+
+    @return integer representation of @a s
+
+    @throw out_of_range.404 if string @a s could not be converted to an integer
+    */
+    static int array_index(const std::string& s)
+    {
+        size_t processed_chars = 0;
+        const int res = std::stoi(s, &processed_chars);
+
+        // check if the string was completely read
+        if (JSON_UNLIKELY(processed_chars != s.size()))
+        {
+            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'"));
+        }
+
+        return res;
+    }
+
   private:
     /*!
     @brief remove and return last reference pointer
@@ -7046,7 +7067,6 @@ class json_pointer
         result.reference_tokens = {reference_tokens[0]};
         return result;
     }
-
 
     /*!
     @brief create and return a reference to the pointed to value
@@ -7499,7 +7519,7 @@ class basic_json
         result["url"] = "https://github.com/nlohmann/json";
         result["version"] =
         {
-            {"string", "3.0.0"}, {"major", 3}, {"minor", 0}, {"patch", 0}
+            {"string", "3.0.1"}, {"major", 3}, {"minor", 0}, {"patch", 1}
         };
 
 #ifdef _WIN32
@@ -8119,7 +8139,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.0.0")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.0.1")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -12237,7 +12257,7 @@ class basic_json
             JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(j.type_name())));
         }
 
-        for (auto it = j.begin(); it != j.end(); ++it)
+        for (auto it = j.cbegin(); it != j.cend(); ++it)
         {
             m_value.object->operator[](it.key()) = it.value();
         }
@@ -13721,6 +13741,9 @@ class basic_json
     pointer @a ptr. As `at` provides checked access (and no elements are
     implicitly inserted), the index '-' is always invalid. See example below.
 
+    @throw out_of_range.403 if the JSON pointer describes a key of an object
+    which cannot be found. See example below.
+
     @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved.
     See example below.
 
@@ -13760,6 +13783,9 @@ class basic_json
     @throw out_of_range.402 if the array index '-' is used in the passed JSON
     pointer @a ptr. As `at` provides checked access (and no elements are
     implicitly inserted), the index '-' is always invalid. See example below.
+
+    @throw out_of_range.403 if the JSON pointer describes a key of an object
+    which cannot be found. See example below.
 
     @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved.
     See example below.
@@ -13976,7 +14002,7 @@ class basic_json
                         }
                         else
                         {
-                            const auto idx = std::stoi(last_path);
+                            const auto idx = json_pointer::array_index(last_path);
                             if (JSON_UNLIKELY(static_cast<size_type>(idx) > parent.size()))
                             {
                                 // avoid undefined behavior
@@ -14024,7 +14050,7 @@ class basic_json
             else if (parent.is_array())
             {
                 // note erase performs range check
-                parent.erase(static_cast<size_type>(std::stoi(last_path)));
+                parent.erase(static_cast<size_type>(json_pointer::array_index(last_path)));
             }
         };
 
@@ -14119,7 +14145,12 @@ class basic_json
                     const json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
-                    result[ptr] = result.at(from_ptr);
+                    basic_json v = result.at(from_ptr);
+
+                    // The copy is functionally identical to an "add"
+                    // operation at the target location using the value
+                    // specified in the "from" member.
+                    operation_add(ptr, v);
                     break;
                 }
 
@@ -14261,7 +14292,7 @@ class basic_json
                 case value_t::object:
                 {
                     // first pass: traverse this object's elements
-                    for (auto it = source.begin(); it != source.end(); ++it)
+                    for (auto it = source.cbegin(); it != source.cend(); ++it)
                     {
                         // escape the key name to be used in a JSON patch
                         const auto key = json_pointer::escape(it.key());
@@ -14283,7 +14314,7 @@ class basic_json
                     }
 
                     // second pass: traverse other object's elements
-                    for (auto it = target.begin(); it != target.end(); ++it)
+                    for (auto it = target.cbegin(); it != target.cend(); ++it)
                     {
                         if (source.find(it.key()) == source.end())
                         {
@@ -14376,7 +14407,7 @@ json_pointer::get_and_create(NLOHMANN_BASIC_JSON_TPL& j) const
                 // create an entry in the array
                 JSON_TRY
                 {
-                    result = &result->operator[](static_cast<size_type>(std::stoi(reference_token)));
+                    result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
                 }
                 JSON_CATCH(std::invalid_argument&)
                 {
@@ -14453,7 +14484,7 @@ json_pointer::get_unchecked(NLOHMANN_BASIC_JSON_TPL* ptr) const
                     JSON_TRY
                     {
                         ptr = &ptr->operator[](
-                            static_cast<size_type>(std::stoi(reference_token)));
+                            static_cast<size_type>(array_index(reference_token)));
                     }
                     JSON_CATCH(std::invalid_argument&)
                     {
@@ -14508,7 +14539,7 @@ json_pointer::get_checked(NLOHMANN_BASIC_JSON_TPL* ptr) const
                 // note: at performs range check
                 JSON_TRY
                 {
-                    ptr = &ptr->at(static_cast<size_type>(std::stoi(reference_token)));
+                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
                 }
                 JSON_CATCH(std::invalid_argument&)
                 {
@@ -14563,7 +14594,7 @@ json_pointer::get_unchecked(const NLOHMANN_BASIC_JSON_TPL* ptr) const
                 JSON_TRY
                 {
                     ptr = &ptr->operator[](
-                        static_cast<size_type>(std::stoi(reference_token)));
+                        static_cast<size_type>(array_index(reference_token)));
                 }
                 JSON_CATCH(std::invalid_argument&)
                 {
@@ -14617,7 +14648,7 @@ json_pointer::get_checked(const NLOHMANN_BASIC_JSON_TPL* ptr) const
                 // note: at performs range check
                 JSON_TRY
                 {
-                    ptr = &ptr->at(static_cast<size_type>(std::stoi(reference_token)));
+                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
                 }
                 JSON_CATCH(std::invalid_argument&)
                 {
