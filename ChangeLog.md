@@ -1,6 +1,29 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v3.0.1](https://github.com/nlohmann/json/releases/tag/v3.0.1) (2017-12-29)
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.0.0...v3.0.1)
+
+- Problem parsing array to global vector [\#896](https://github.com/nlohmann/json/issues/896)
+- Invalid RFC6902 copy operation succeeds [\#894](https://github.com/nlohmann/json/issues/894)
+- How to rename a key during looping? [\#893](https://github.com/nlohmann/json/issues/893)
+- clang++-6.0 \(6.0.0-svn321357-1\) warning [\#892](https://github.com/nlohmann/json/issues/892)
+- Make json.hpp aware of the modules TS? [\#891](https://github.com/nlohmann/json/issues/891)
+- All enum values not handled in switch cases. \( -Wswitch-enum \) [\#889](https://github.com/nlohmann/json/issues/889)
+- JSON Pointer resolve failure resulting in incorrect exception code [\#888](https://github.com/nlohmann/json/issues/888)
+- Unexpected nested arrays from std::vector [\#886](https://github.com/nlohmann/json/issues/886)
+- erase multiple elements from a json object [\#884](https://github.com/nlohmann/json/issues/884)
+- Container function overview in Doxygen is not updated [\#883](https://github.com/nlohmann/json/issues/883)
+- How to use this for binary file uploads [\#881](https://github.com/nlohmann/json/issues/881)
+- Allow setting JSON\_BuildTests=OFF from parent CMakeLists.txt [\#846](https://github.com/nlohmann/json/issues/846)
+- Unit test fails for local-independent str-to-num [\#845](https://github.com/nlohmann/json/issues/845)
+- Another idea about type support [\#774](https://github.com/nlohmann/json/issues/774)
+
+- Includes CTest module/adds BUILD\_TESTING option [\#885](https://github.com/nlohmann/json/pull/885) ([TinyTinni](https://github.com/TinyTinni))
+- Fix MSVC warning C4819 [\#882](https://github.com/nlohmann/json/pull/882) ([erengy](https://github.com/erengy))
+- Merge branch 'develop' into coverity\_scan [\#880](https://github.com/nlohmann/json/pull/880) ([nlohmann](https://github.com/nlohmann))
+- :wrench: Fix up a few more effc++ items [\#858](https://github.com/nlohmann/json/pull/858) ([mattismyname](https://github.com/mattismyname))
+
 ## [v3.0.0](https://github.com/nlohmann/json/releases/tag/v3.0.0) (2017-12-17)
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.1.1...v3.0.0)
 
