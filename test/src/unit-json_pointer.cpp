@@ -55,6 +55,15 @@ TEST_CASE("JSON pointers")
         CHECK_THROWS_AS(p.pop_back(), json::out_of_range&);
         CHECK_THROWS_WITH(p.pop_back(),
                           "[json.exception.out_of_range.405] JSON pointer has no parent");
+
+        SECTION("array index error")
+        {
+            json v = {1, 2, 3, 4};
+            json::json_pointer ptr("/10e");
+            CHECK_THROWS_AS(v[ptr], json::out_of_range);
+            CHECK_THROWS_WITH(v[ptr],
+                              "[json.exception.out_of_range.404] unresolved reference token '10e'");
+        }
     }
 
     SECTION("examples from RFC 6901")
