@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.0.0
+|  |  |__   |  |  | | | |  version 3.0.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -7519,7 +7519,7 @@ class basic_json
         result["url"] = "https://github.com/nlohmann/json";
         result["version"] =
         {
-            {"string", "3.0.0"}, {"major", 3}, {"minor", 0}, {"patch", 0}
+            {"string", "3.0.1"}, {"major", 3}, {"minor", 0}, {"patch", 1}
         };
 
 #ifdef _WIN32
@@ -8139,7 +8139,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.0.0")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.0.1")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -14141,17 +14141,17 @@ class basic_json
 
                 case patch_operations::copy:
                 {
-                  const std::string from_path = get_value("copy", "from", true);
-                  const json_pointer from_ptr(from_path);
+                    const std::string from_path = get_value("copy", "from", true);
+                    const json_pointer from_ptr(from_path);
 
-                  // the "from" location must exist - use at()
-                  basic_json v = result.at(from_ptr);
+                    // the "from" location must exist - use at()
+                    basic_json v = result.at(from_ptr);
 
-                  // The copy is functionally identical to an "add"
-                  // operation at the target location using the value
-                  // specified in the "from" member.
-                  operation_add(ptr, v);
-                  break;
+                    // The copy is functionally identical to an "add"
+                    // operation at the target location using the value
+                    // specified in the "from" member.
+                    operation_add(ptr, v);
+                    break;
                 }
 
                 case patch_operations::test:
