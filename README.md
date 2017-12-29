@@ -915,6 +915,7 @@ I deeply appreciate the help of the following people.
 - [Jorrit Wronski](https://github.com/jowr) updated the Hunter package links.
 - [Matthias Möller](https://github.com/TinyTinni) added a `.natvis` for the MSVC debug view.
 - [bogemic](https://github.com/bogemic) fixed some C++17 deprecation warnings.
+- [Eren Okka](https://github.com/erengy) fixed some MSVC warnings.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
@@ -977,7 +978,7 @@ $ mkdir build
 $ cd build
 $ cmake ..
 $ cmake --build .
-$ ctest
+$ ctest --output-on-failure
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
