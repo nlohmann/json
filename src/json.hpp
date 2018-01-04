@@ -127,10 +127,15 @@ namespace nlohmann
 template<typename = void, typename = void>
 struct adl_serializer;
 
+// TODO: Probably some wrapper around std::string
+class SomeBinaryType;
+
 // forward declaration of basic_json (required to split the class)
 template<template<typename, typename, typename...> class ObjectType = std::map,
          template<typename, typename...> class ArrayType = std::vector,
-         class StringType = std::string, class BooleanType = bool,
+         class StringType = std::string,
+         class BinaryType = SomeBinaryType,
+         class BooleanType = bool,
          class NumberIntegerType = std::int64_t,
          class NumberUnsignedType = std::uint64_t,
          class NumberFloatType = double,
@@ -144,13 +149,14 @@ class basic_json;
 #define NLOHMANN_BASIC_JSON_TPL_DECLARATION                                \
     template<template<typename, typename, typename...> class ObjectType,   \
              template<typename, typename...> class ArrayType,              \
-             class StringType, class BooleanType, class NumberIntegerType, \
-             class NumberUnsignedType, class NumberFloatType,              \
+             class StringType, class BinaryType, class BooleanType,        \
+             class NumberIntegerType, class NumberUnsignedType,            \
+             class NumberFloatType,                                        \
              template<typename> class AllocatorType,                       \
              template<typename, typename = void> class JSONSerializer>
 
 #define NLOHMANN_BASIC_JSON_TPL                                            \
-    basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
+    basic_json<ObjectType, ArrayType, StringType, BinaryType, BooleanType, \
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
     AllocatorType, JSONSerializer>
 
@@ -518,6 +524,7 @@ enum class value_t : uint8_t
     object,           ///< object (unordered set of name/value pairs)
     array,            ///< array (ordered collection of values)
     string,           ///< string value
+    binary,           ///< binary value
     boolean,          ///< boolean value
     number_integer,   ///< number value (signed integer)
     number_unsigned,  ///< number value (unsigned integer)
@@ -8042,6 +8049,7 @@ class basic_json
     object    | object          | pointer to @ref object_t
     array     | array           | pointer to @ref array_t
     string    | string          | pointer to @ref string_t
+    binary    | binary          | pointer to @ref binary_t
     boolean   | boolean         | @ref boolean_t
     number    | number_integer  | @ref number_integer_t
     number    | number_unsigned | @ref number_unsigned_t
@@ -8062,6 +8070,8 @@ class basic_json
         array_t* array;
         /// string (stored with pointer to save storage)
         string_t* string;
+        /// binary (stored with pointer to save storage)
+        binary_t* binary;
         /// boolean
         boolean_t boolean;
         /// number (integer)
