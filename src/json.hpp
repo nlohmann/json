@@ -11375,6 +11375,68 @@ class basic_json
         return iteration_proxy<const_iterator>(ref);
     }
 
+    /*!
+    @brief helper to access iterator member functions in range-based for
+
+    This function allows to access @ref iterator::key() and @ref
+    iterator::value() during range-based for loops. In these loops, a
+    reference to the JSON values is returned, so there is no access to the
+    underlying iterator.
+
+    For loop without `items()` function:
+
+    @code{cpp}
+    for (auto it = j_object.begin(); it != j_object.end(); ++it)
+    {
+        std::cout << "key: " << it.key() << ", value:" << it.value() << '\n';
+    }
+    @endcode
+
+    Range-based for loop without `items()` function:
+
+    @code{cpp}
+    for (auto it : j_object)
+    {
+        // "it" is of type json::reference and has no key() member
+        std::cout << "value: " << it << '\n';
+    }
+    @endcode
+
+    Range-based for loop with `items()` function:
+
+    @code{cpp}
+    for (auto it : j_object.items())
+    {
+        std::cout << "key: " << it.key() << ", value:" << it.value() << '\n';
+    }
+    @endcode
+
+    @note When iterating over an array, `key()` will return the index of the
+          element as string (see example).
+
+    @return iteration proxy object wrapping @a ref with an interface to use in
+            range-based for loops
+
+    @liveexample{The following code shows how the function is used.,items}
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes in the JSON value.
+
+    @complexity Constant.
+    */
+    iteration_proxy<iterator> items()
+    {
+        return iteration_proxy<iterator>(*this);
+    }
+
+    /*!
+    @copydoc items()
+    */
+    iteration_proxy<const_iterator> items() const
+    {
+        return iteration_proxy<const_iterator>(*this);
+    }
+
     /// @}
 
 
