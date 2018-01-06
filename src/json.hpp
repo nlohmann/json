@@ -9680,6 +9680,59 @@ class basic_json
     }
 
     /*!
+    @brief get a value and store it into an existing value
+
+    Explicit type conversion between the JSON value and a compatible value.
+    Because the function takes a reference as parameter, the value type doesn't have to be
+    [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible) nor
+    [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible).
+    The value is converted by calling the @ref json_serializer<ValueType>
+    `from_json()` method.
+
+    The function is equivalent to executing
+    @code {.cpp}
+    ValueType my_value;
+    JSONSerializer<ValueType>::from_json(*this, my_value);
+    @endcode
+
+    @tparam ValueTypeCV the provided value type
+    @tparam ValueType the returned value type
+
+    @return same reference as the one passed in parameter
+
+    @throw what @ref json_serializer<ValueType> `from_json()` method throws
+
+    @liveexample{The example below shows several conversions from JSON values
+    to other types. There a few things to note: (1) Floating-point numbers can
+    be converted to integers\, (2) A JSON array can be converted to a standard
+    `std::vector<short>`\, (3) A JSON object can be converted to C++
+    associative containers such as `std::unordered_map<std::string\,
+    json>`.,get__ValueType_const}
+
+    @since version 2.1.0
+    */
+    template <
+        typename ValueTypeCV,
+        typename ValueType = detail::uncvref_t<ValueTypeCV>,
+        detail::enable_if_t <
+            not std::is_same<basic_json_t, ValueType>::value and
+            detail::has_from_json<basic_json_t, ValueType>::value and
+            not detail::has_non_default_from_json<basic_json_t, ValueType>::value,
+            int > = 0 >
+    ValueType & get_to(ValueType & target) const noexcept(noexcept(
+                                       JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
+    {
+        // we cannot static_assert on ValueTypeCV being non-const, because
+        // there is support for get<const basic_json_t>(), which is why we
+        // still need the uncvref
+        static_assert(not std::is_reference<ValueTypeCV>::value,
+                      "get() cannot be used with reference types, you might want to use get_ref()");
+
+        JSONSerializer<ValueType>::from_json(*this, target);
+        return target;
+    }
+    
+    /*!
     @brief get a value (explicit); special case
 
     Explicit type conversion between the JSON value and a compatible value
