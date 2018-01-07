@@ -1,0 +1,357 @@
+Universal Binary JSON Java Library
+http://ubjson.org
+
+
+About this project...
+---------------------
+This code base is actively under development and implements the latest 
+specification of Universal Binary JSON (Draft 8).
+
+I/O is handled through the following core classes:
+
+	* UBJOutputStream
+	* UBJInputStream
+	* UBJInputStreamParser
+	
+Additionally, if you are working with Java's NIO and need byte[]-based
+results, you can wrap any of the above I/O classes around one of the highly
+optimized custom byte[]-stream impls:
+
+	* ByteArrayInputStream	(optimized for reuse, not from JDK)
+	* ByteArrayOutputStream (optimized for reuse, not from JDK)
+	
+If you are working with NIO and want maximum performance by using (and reusing)
+direct ByteBuffers along with the UBJSON stream impls, take a look at the:
+
+	* ByteBufferInputStream
+	* ByteBufferOutputStream
+	
+classes. You can wrap any ByteBuffer source or destination with this stream type,
+then wrap that stream type with a UBJSON stream impl and utilize the full
+potential of Java's NIO with Universal Binary JSON without giving yourself an
+ulcer.
+
+This allows you to re-use the streams over and over again in a pool of reusable
+streams for high-performance I/O with no object creation and garbage collection
+overhead; a perfect match for high frequency NIO-based communication.
+
+All of the core I/O classes have been stable for a while, with tweaks to make the
+performance tighter and the error messages more informative over the last few
+months.
+
+More Java-convenient reflection-based I/O classes are available in the
+org.ubjson.io.reflect package, but they are under active development.
+
+There are other efforts (like utilities) in other sub portions of the source
+tree. This project intends to eventually contain a multitude of UBJSON 
+abstraction layers, I/O methods and utilities.
+
+
+Changelog
+---------
+02-10-12
+	* Added ByteBuffer input and output stream impls as compliments to the
+	re-usable byte[] stream impls.
+	
+	Provides a fast translation layer between standard Java stream-IO and the
+	new Buffer-based I/O in NIO (including transparent support for using
+	ultra-fast direct ByteBuffers).
+	
+	* Optimized some of the read/write methods by removing unnecessary bounds
+	checks that are done by subsequent Input or Output stream impls themselves.
+
+02-09-12
+	* Fixed bug with readHugeAsBigInteger returning an invalid value and not
+	treating the underlying bytes as a string-encoded value.
+	
+	* Removed implicit buffer.flip() at the end of StreamDecoder; there is no 
+	way	to know what the caller had planned for the buffer before reading all 
+	the data back out. Also the flip was in the wrong place and in the case of 
+	an empty decode request (length=0) the flip would not have been performed, 
+	providing the caller with a "full" buffer of nothing.
+	
+	* Rewrote all readHugeXXX method impls; now huge's can be read in as a 
+	simple Number (BigInteger or BigDecimal) as well as raw bytes and even
+	decoded chars. Additionally the methods can even accept and use existing
+	buffers to write into to allow for tighter optimizations.
+	
+	* Rewrote all readStringXXX methods using the same optimizations and
+	flexibility that readHuge methods now use.
+
+02-07-12
+	More Memory and CPU optimizations across all the I/O impls.
+	
+	* StreamDecoder was rewritten to no longer create a ByteBuffer on every
+	invocation and instead re-use the same one to decode from on every single call.
+	
+	* StreamDecoder now requires the call to pass in a CharBuffer instance to hold
+	the result of the decode operation. This avoids the creation of a CharBuffer
+	and allows for large-scale optimization by re-using existing buffers between
+	calls.
+	
+	* StreamEncoder was rewritten to no longer create a ByteBuffer on every
+	invocation either and now re-uses the same single instance over and over
+	again.
+	
+	* UBJOutputStream writeHuge and writeString series of methods were all
+	rewritten to accept a CharBuffer in the rawest form (no longer char[]) to stop
+	hiding the fact that the underlying encode operation required one.
+	
+	This gives the caller an opportunity to cache and re-use CharBuffers over 
+	and over again if they can; otherwise this just pushes the CharBuffer.wrap() 
+	call up to the caller instead of hiding it secretly in the method impl under 
+	the guise of accepting a raw char[] (that it couldn't use directly).
+	
+	For callers that can re-use buffers, this will lead to big performance gains
+	now that were previously impossible.
+	
+	* UBJInputStream added readHuge and readString methods that accept an existing
+	CharBuffer argument to make use of the optimizations made in the Stream encoder
+	and decoder impls.
+
+01-15-12
+	Huge performance boost for deserialization!
+	
+	StreamDecoder previously used separate read and write buffers for decoding 
+	bytes to chars including the resulting char[] that was returned to the caller. 
+	This design required at least 1 full array copy before returning a result in 
+	the best case and 2x full array copies before returning the result in the 
+	worst case.
+	
+	The rewrite removed the need for a write buffer entire as well as ALL array
+	copies; in the best OR worse case they never occur anymore.
+	
+	Raw performance boost of roughly 25% in all UBJ I/O classes as a result. 
+
+12-01-11 through 01-24-12
+	A large amount of work has continued on the core I/O classes (stream impls)
+	to help make them not only faster and more robust, but also more helpful.
+	When errors are encountered in the streams, they are reported along with the
+	stream positions. This is critical for debugging problems with corrupt 
+	formats.
+	
+	Also provided ByteArray I/O stream classes that have the potential to provide
+	HUGE performance boosts for high frequency systems.
+	
+	Both these classes (ByteArrayInputStream and ByteArrayOutputStream) are
+	reusable and when wrapped by a UBJInputStream or UBJOutputStream, the top
+	level UBJ streams implicitly become reusable as well.
+	
+	Reusing the streams not only saves on object creation/GC cleanup but also
+	allows the caller to re-use the temporary byte[] used to translate to and
+	from the UBJ format, avoiding object churn entirely!
+	
+	This optimized design was chosen to be intentionally performant when combined
+	with NIO implementations as the ByteBuffer's can be used to wrap() existing
+	outbound buffers (avoiding the most expensive part of a buffer) or use
+	array() to get access to the underlying buffer that needs to be written to
+	the stream.
+	
+	In the case of direct ByteBuffers, there is no additional overhead added
+	because the calls to get or put are required anyway to pull or push the 
+	values from the native memory location.
+	
+	This approach allows the fastest implementation of Universal Binary JSON
+	I/O possible in the JVM whether you are using the standard IO (stream) 
+	classes or the NIO (ByteBuffer) classes in the JDK.
+	
+	Some ancillary work on UBJ-based command line utilities (viewers, converters,
+	etc.) has begun as well.
+
+11-28-11
+	* Fixed UBJInputStreamParser implementation; nextType correctly implements
+	logic to skip existing element (if called back to back) as well as validate
+	the marker type it encounters before returning it to the caller.
+	
+	* Modified IObjectReader contract; a Parser implementation is required to 
+	make traversing the UBJ stream possible without knowing what type of element
+	is next.
+	
+11-27-11
+	* Streamlined ByteArrayOutputStream implementation to ensure the capacity
+	of the underlying byte[] is never grown unless absolutely necessary.
+	
+	* Rewrote class Javadoc for ByteArrayOutputStream to include a code snippet
+	on how to use it.
+
+11-26-11
+	* Fixed major bug in how 16, 32 and 64-bit integers are re-assembled when
+	read back from binary representations.
+	
+	* Added a numeric test to specifically catch this error if it ever pops up
+	again.
+	
+	* Optimized reading and writing of numeric values in Input and Output
+	stream implementations.
+	
+	* Optimized ObjectWriter implementation by streamlining the numeric read/write
+	logic and removing the sub-optimal force-compression of on-disk storage.
+	
+	* Fixed ObjectWriter to match exactly with the output written by 
+	UBJOutputStream.
+	
+	* Normalized all testing between I/O classes so they use the same classes
+	to ensure parity.
+
+11-10-11
+	* DRAFT 8 Spec Support Added.
+
+	* Added support for the END marker (readEnd) to the InputStreams which is
+	required for proper unbounded-container support.
+	
+	* Added support for the END marker (writeEnd) to UBJOutputStream.
+	
+	UBJInputStreamParser must be used for properly support unbounded-containers
+	because you never know when the 'E' will be encountered marking the end;
+	so the caller needs to pay attention to the type marker that nextType()
+	returns and respond accordingly.
+	
+	* Added readHugeAsBytes to InputStream implementations, allowing the bytes
+	used to represent a HUGE to be read in their raw form with no decoding.
+	
+	This can save on processing as BigInteger and BigDecimal do their own decoding
+	of byte[] directly.
+	
+	* Added readHugeAsChars to InputStream implementations, allowing a HUGE 
+	value to be read in as a raw char[] without trying to decode it to a 
+	BigInteger or BigDecimal.
+	
+	* Added writeHuge(char[]) to support writing out HUGE values directly from
+	their raw char[] form without trying to decode from a BigInteger or
+	BigDecimal.
+	
+	* readArrayLength and readObjectLenght were modified to return -1 when an 
+	unbounded container length is encountered (255).
+
+	* Fixed UBJInputStreamParser.nextType to correctly skip past any NOOP
+	markers found in the underlying stream before returning a valid next type.
+	
+	* Normalized all reading of "next byte" to the singular
+	UBJInputStream.nextMarker method -- correctly skips over NOOP until end of 
+	stream OR until the next valid marker byte, then returns it.
+
+	* Modified readNull behavior to have no return type. It is already designed
+	to throw an exception when 'NULL' isn't found, no need for the additional
+	return type.
+	
+	* Began work on a simple abstract representation of the UBJ data types as
+	objects that can be assembled into maps and lists and written/read easily
+	using the IO package.
+	
+	This is intended to be a higher level of abstraction than the IO streams,
+	but lower level (and faster) than the reflection-based work that inspects
+	user-provided classes.
+	
+	* Refactored StreamDecoder and StreamEncoder into the core IO package, 
+	because they are part of core IO.
+	
+	* Refactored StreamParser into the io.parser package to more clearly denote
+	its relationship to the core IO classes. It is a slightly higher level
+	abstraction ontop of the core IO, having it along side the core IO classes
+	while .reflect was a subpackage was confusing and suggested that 
+	StreamParser was somehow intended as a swapable replacement for 
+	UBJInputStream which is not how it is intended to be used.
+	
+	* Refactored org.ubjson.reflect to org.ubjson.io.reflect to more correctly
+	communicate the relationship -- the reflection-based classes are built on
+	the core IO classes and are just a higher abstraction to interact with UBJSON
+	with.
+	
+	* Renamed IDataType to IMarkerType to follow the naming convention for the
+	marker bytes set forth by the spec doc.
+
+
+10-14-11
+	* ObjectWriter rewritten and works correctly. Tested with the example test
+	data and wrote out the compressed and uncompressed formats files correctly
+	from their original object representation.
+	
+	* Added support for reading and writing huge values as BigInteger as well
+	as BigDecimal.
+	
+	* Added automatic numeric storage compression support to ObjectWriter - based
+	on the numeric value (regardless of type) the value will be stored as the
+	smallest possible representation in the UBJ format if requested.
+	
+	* Added mapping support for BigDecimal, BigInteger, AtomicInteger and 
+	AtomicLong to ObjectWriter.
+	
+	* Added readNull and readBoolean to the UBJInputStream and 
+	UBJInputStreamParser implementations to make the API feel complete and feel
+	more natural to use.
+
+10-10-11
+	* com.ubjson.io AND com.ubjson.io.charset are finalized against the 
+	Draft 8 specification.
+	
+	* The lowest level UBJInput/OuputStream classes were tightened up to run as 
+	fast as possible showing an 800ns-per-op improvement in speed.
+	
+	* Profiled core UBJInput/OuputStream classes using HPROF for a few million
+	iterations and found no memory leaks and no performance traps; everything at
+	that low level is as tight as it can be.
+	
+	* Stream-parsing facilities were moved out of the overloaded UBJInputStream
+	class and into their own subclass called UBJInputStreamParser which operates
+	exactly like a pull-parsing scenario (calling nextType then switching on the
+	value and pulling the appropriate value out of the stream).
+	
+	* More example testing/benchmarking data checked into /test/java/com/ubjson/data
+	
+	Will begin reworking the Reflection based Object mapping in the 
+	org.ubjson.reflect package now that the core IO classes are finalized.
+	
+	* Removed all old scratch test files from the org.ubjson package, this was
+	confusing.
+
+09-27-11
+	* Initial check-in of core IO classes to read/write spec.
+
+
+Status
+------
+Using the standard UBJInputStream, UBJInputStreamParser and UBJOutputStream
+implementations to manually read/write UBJ objects is stable and tuned for
+optimal performance.
+
+Automatic mapping of objects to/from UBJ format via the reflection-based 
+implementation is not tuned yet. Writing is implemented, but not tuned for
+optimal performance and reading still has to be written.
+
+	* org.ubjson.io - STABLE
+	* org.ubjson.io.parser - STABLE
+	* org.ubjson.io.reflect - ALPHA
+	* org.ubjson.model - BETA
+
+
+License
+-------
+This library is released under the Apache 2 License. See LICENSE.
+
+
+Description
+-----------
+This project represents (the official?) Java implementations of the 
+Universal Binary JSON specification: http://ubjson.org
+
+
+Example
+-------
+Comming soon...
+
+
+Performance
+-----------
+Comming soon...
+
+
+Reference
+---------
+Universal Binary JSON Specification - http://ubjson.org
+JSON Specification - http://json.org
+
+
+Contact
+-------
+If you have questions, comments or bug reports for this software please contact
+us at: software@thebuzzmedia.com
