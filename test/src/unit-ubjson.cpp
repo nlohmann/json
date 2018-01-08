@@ -99,9 +99,12 @@ TEST_CASE("UBJSON")
                     numbers.push_back(-100000000000l);
                     numbers.push_back(-10000000000l);
                     numbers.push_back(-2147483649l);
+                    size_t index = 0;
                     for (auto i : numbers)
                     {
                         CAPTURE(i);
+                        CAPTURE(index);
+                        ++index;
 
                         // create JSON value with integer number
                         json j = i;
