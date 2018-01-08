@@ -89,16 +89,16 @@ TEST_CASE("UBJSON")
                 {
                     std::vector<int64_t> numbers;
                     numbers.push_back((std::numeric_limits<int64_t>::min)());
-                    numbers.push_back(-1000000000000000000);
-                    numbers.push_back(-100000000000000000);
-                    numbers.push_back(-10000000000000000);
-                    numbers.push_back(-1000000000000000);
-                    numbers.push_back(-100000000000000);
-                    numbers.push_back(-10000000000000);
-                    numbers.push_back(-1000000000000);
-                    numbers.push_back(-100000000000);
-                    numbers.push_back(-10000000000);
-                    numbers.push_back(-2147483649);
+                    numbers.push_back(-1000000000000000000l);
+                    numbers.push_back(-100000000000000000l);
+                    numbers.push_back(-10000000000000000l);
+                    numbers.push_back(-1000000000000000l);
+                    numbers.push_back(-100000000000000l);
+                    numbers.push_back(-10000000000000l);
+                    numbers.push_back(-1000000000000l);
+                    numbers.push_back(-100000000000l);
+                    numbers.push_back(-10000000000l);
+                    numbers.push_back(-2147483649l);
                     for (auto i : numbers)
                     {
                         CAPTURE(i);
