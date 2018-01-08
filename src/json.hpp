@@ -6377,7 +6377,7 @@ class binary_writer
                 oa->write_character(static_cast<CharType>('I'));  // int16
                 write_number(static_cast<int16_t>(n));
             }
-            else if (-(std::numeric_limits<int32_t>::min)() <= n and n <= (std::numeric_limits<int32_t>::max)())
+            else if ((std::numeric_limits<int32_t>::min)() <= n and n <= (std::numeric_limits<int32_t>::max)())
             {
                 oa->write_character(static_cast<CharType>('l'));  // int32
                 write_number(static_cast<int32_t>(n));
@@ -6419,7 +6419,7 @@ class binary_writer
                 {
                     return 'I';
                 }
-                else if (-(std::numeric_limits<int32_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
+                else if ((std::numeric_limits<int32_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
                 {
                     return 'l';
                 }
@@ -6444,7 +6444,7 @@ class binary_writer
                 {
                     return 'I';
                 }
-                else if (-(std::numeric_limits<int32_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<int32_t>::max)())
+                else if ((std::numeric_limits<int32_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<int32_t>::max)())
                 {
                     return 'l';
                 }
