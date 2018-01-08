@@ -88,7 +88,7 @@ TEST_CASE("UBJSON")
                 SECTION("-9223372036854775808..-2147483649 (int64)")
                 {
                     std::vector<int64_t> numbers;
-                    numbers.push_back(INT64_MIN);
+                    numbers.push_back((std::numeric_limits<int64_t>::min)());
                     numbers.push_back(-1000000000000000000);
                     numbers.push_back(-100000000000000000);
                     numbers.push_back(-10000000000000000);
@@ -128,14 +128,14 @@ TEST_CASE("UBJSON")
 
                         // check individual bytes
                         CHECK(result[0] == 'L');
-                        uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
-                                            (static_cast<uint64_t>(result[2]) << 060) +
-                                            (static_cast<uint64_t>(result[3]) << 050) +
-                                            (static_cast<uint64_t>(result[4]) << 040) +
-                                            (static_cast<uint64_t>(result[5]) << 030) +
-                                            (static_cast<uint64_t>(result[6]) << 020) +
-                                            (static_cast<uint64_t>(result[7]) << 010) +
-                                            static_cast<uint64_t>(result[8]);
+                        int64_t restored = (static_cast<int64_t>(result[1]) << 070) +
+                                            (static_cast<int64_t>(result[2]) << 060) +
+                                            (static_cast<int64_t>(result[3]) << 050) +
+                                            (static_cast<int64_t>(result[4]) << 040) +
+                                            (static_cast<int64_t>(result[5]) << 030) +
+                                            (static_cast<int64_t>(result[6]) << 020) +
+                                            (static_cast<int64_t>(result[7]) << 010) +
+                                            static_cast<int64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -145,7 +145,7 @@ TEST_CASE("UBJSON")
 
                 SECTION("-2147483648..-32769 (int32)")
                 {
-                    std::vector<int64_t> numbers;
+                    std::vector<int32_t> numbers;
                     numbers.push_back(-32769);
                     numbers.push_back(-100000);
                     numbers.push_back(-1000000);
