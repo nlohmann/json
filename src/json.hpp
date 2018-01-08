@@ -6395,6 +6395,85 @@ class binary_writer
         }
     }
 
+    char ubjson_prefix(const BasicJsonType& j)
+    {
+        switch (j.type())
+        {
+            case value_t::null:
+                return 'Z';
+
+            case value_t::boolean:
+                return j.m_value.boolean ? 'T' : 'F';
+
+            case value_t::number_integer:
+            {
+                if ((std::numeric_limits<int8_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int8_t>::max)())
+                {
+                    return 'i';
+                }
+                else if ((std::numeric_limits<uint8_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
+                {
+                    return 'U';
+                }
+                else if ((std::numeric_limits<int16_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
+                {
+                    return 'I';
+                }
+                else if (-(std::numeric_limits<int32_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
+                {
+                    return 'l';
+                }
+                else if ((std::numeric_limits<int64_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int64_t>::max)())
+                {
+                    return 'L';
+                }
+                break;
+            }
+
+            case value_t::number_unsigned:
+            {
+                if ((std::numeric_limits<int8_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<int8_t>::max)())
+                {
+                    return 'i';
+                }
+                else if ((std::numeric_limits<uint8_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
+                {
+                    return 'U';
+                }
+                else if ((std::numeric_limits<int16_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<int16_t>::max)())
+                {
+                    return 'I';
+                }
+                else if (-(std::numeric_limits<int32_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<int32_t>::max)())
+                {
+                    return 'l';
+                }
+                else if ((std::numeric_limits<int64_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<int64_t>::max)())
+                {
+                    return 'L';
+                }
+                break;
+            }
+
+            case value_t::number_float:
+                return 'D';
+
+            case value_t::string:
+                return 'S';
+
+            case value_t::array:
+                return '[';
+
+            case value_t::object:
+                return '{';
+
+            default:
+                break;
+        }
+
+        return '\0';
+    }
+
   private:
     /// whether we can assume little endianess
     const bool is_little_endian = binary_reader<BasicJsonType>::little_endianess();

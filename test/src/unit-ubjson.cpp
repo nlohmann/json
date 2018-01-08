@@ -414,10 +414,8 @@ TEST_CASE("UBJSON")
 
                 SECTION("2147483648..9223372036854775807 (int64)")
                 {
-                    for (uint64_t i :
-                            {
-                                2147483648ul, 9223372036854775807ul
-                            })
+                    std::vector<uint64_t> v = {2147483648ul, 9223372036854775807ul};
+                    for (uint64_t i : v)
                     {
                         CAPTURE(i);
 
@@ -605,10 +603,8 @@ TEST_CASE("UBJSON")
 
                 SECTION("2147483648..9223372036854775807 (int64)")
                 {
-                    for (uint64_t i :
-                            {
-                                2147483648ul, 9223372036854775807ul
-                            })
+                    std::vector<uint64_t> v = {2147483648ul, 9223372036854775807ul};
+                    for (uint64_t i : v)
                     {
                         CAPTURE(i);
 
