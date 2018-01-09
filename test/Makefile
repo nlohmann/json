@@ -77,7 +77,7 @@ test-%: src/unit-%.o src/unit.o ../src/json.hpp thirdparty/catch/catch.hpp
 
 TEST_PATTERN ?= "*"
 TEST_PREFIX = ""
-check: $(TESTCASES)
+check: $(OBJECTS) $(TESTCASES)
 	@cd .. ; for testcase in $(TESTCASES); do echo "Executing $$testcase..."; $(TEST_PREFIX)test/$$testcase $(TEST_PATTERN) || exit 1; done
 
 
