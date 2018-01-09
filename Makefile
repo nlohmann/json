@@ -1,30 +1,28 @@
 .PHONY: pretty clean ChangeLog.md
 
-SRCDIR = ./src
-DEVDIR = ./develop
-SRCS = $(SRCDIR)/json.hpp \
-       $(DEVDIR)/json_fwd.hpp \
-       $(DEVDIR)/detail/macro_scope.hpp \
-       $(DEVDIR)/detail/macro_unscope.hpp \
-       $(DEVDIR)/detail/meta.hpp \
-       $(DEVDIR)/detail/exceptions.hpp \
-       $(DEVDIR)/detail/value_t.hpp \
-       $(DEVDIR)/detail/conversions/from_json.hpp \
-       $(DEVDIR)/detail/conversions/to_json.hpp \
-       $(DEVDIR)/detail/parsing/input_adapters.hpp \
-       $(DEVDIR)/detail/parsing/lexer.hpp \
-       $(DEVDIR)/detail/parsing/parser.hpp \
-       $(DEVDIR)/detail/iterators/primitive_iterator.hpp \
-       $(DEVDIR)/detail/iterators/internal_iterator.hpp \
-       $(DEVDIR)/detail/iterators/iter_impl.hpp \
-       $(DEVDIR)/detail/iterators/iteration_proxy.hpp \
-       $(DEVDIR)/detail/iterators/json_reverse_iterator.hpp \
-       $(DEVDIR)/detail/parsing/output_adapters.hpp \
-       $(DEVDIR)/detail/parsing/binary_reader.hpp \
-       $(DEVDIR)/detail/parsing/binary_writer.hpp \
-       $(DEVDIR)/detail/serializer.hpp \
-       $(DEVDIR)/detail/json_ref.hpp \
-       $(DEVDIR)/adl_serializer.hpp
+SRCS = develop/json.hpp \
+       develop/json_fwd.hpp \
+       develop/detail/macro_scope.hpp \
+       develop/detail/macro_unscope.hpp \
+       develop/detail/meta.hpp \
+       develop/detail/exceptions.hpp \
+       develop/detail/value_t.hpp \
+       develop/detail/conversions/from_json.hpp \
+       develop/detail/conversions/to_json.hpp \
+       develop/detail/parsing/input_adapters.hpp \
+       develop/detail/parsing/lexer.hpp \
+       develop/detail/parsing/parser.hpp \
+       develop/detail/iterators/primitive_iterator.hpp \
+       develop/detail/iterators/internal_iterator.hpp \
+       develop/detail/iterators/iter_impl.hpp \
+       develop/detail/iterators/iteration_proxy.hpp \
+       develop/detail/iterators/json_reverse_iterator.hpp \
+       develop/detail/parsing/output_adapters.hpp \
+       develop/detail/parsing/binary_reader.hpp \
+       develop/detail/parsing/binary_writer.hpp \
+       develop/detail/serializer.hpp \
+       develop/detail/json_ref.hpp \
+       develop/adl_serializer.hpp
 
 UNAME = $(shell uname)
 CXX=clang++
@@ -247,8 +245,15 @@ pretty:
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none --formatted \
-	   $(SRCS) test/src/*.cpp \
+	   $(SRCS) src/json.hpp test/src/*.cpp \
 	   benchmarks/src/benchmarks.cpp doc/examples/*.cpp
+
+# create single header file
+amalgamate: src/json.hpp
+
+src/json.hpp: $(SRCS)
+	develop/amalgamate/amalgamate.py -c develop/amalgamate/config.json -s develop --verbose=yes
+	$(MAKE) pretty
 
 
 ##########################################################################

@@ -41,8 +41,7 @@ SOFTWARE.
 #include <string> // string, stoi, to_string
 #include <utility> // declval, forward, move, pair, swap
 
-
-/*** Start of inlined file: json_fwd.hpp ***/
+// #include "json_fwd.hpp"
 #ifndef NLOHMANN_JSON_FWD_HPP
 #define NLOHMANN_JSON_FWD_HPP
 
@@ -107,10 +106,7 @@ using json = basic_json<>;
 
 #endif
 
-/*** End of inlined file: json_fwd.hpp ***/
-
-
-/*** Start of inlined file: macro_scope.hpp ***/
+// #include "detail/macro_scope.hpp"
 #ifndef NLOHMANN_JSON_MACRO_SCOPE_HPP
 #define NLOHMANN_JSON_MACRO_SCOPE_HPP
 
@@ -218,10 +214,7 @@ contains a `mapped_type`, whereas `std::vector` fails the test.
 
 #endif
 
-/*** End of inlined file: macro_scope.hpp ***/
-
-
-/*** Start of inlined file: meta.hpp ***/
+// #include "detail/meta.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_META_HPP
 #define NLOHMANN_JSON_DETAIL_META_HPP
 
@@ -231,184 +224,10 @@ contains a `mapped_type`, whereas `std::vector` fails the test.
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 #include <utility> // declval
 
+// #include "json_fwd.hpp"
 
-/*** Start of inlined file: json_fwd.hpp ***/
-#ifndef NLOHMANN_JSON_FWD_HPP
-#define NLOHMANN_JSON_FWD_HPP
+// #include "detail/macro_scope.hpp"
 
-#include <cstdint> // int64_t, uint64_t
-#include <map> // map
-#include <memory> // allocator
-#include <string> // string
-#include <vector> // vector
-
-/*!
-@brief namespace for Niels Lohmann
-@see https://github.com/nlohmann
-@since version 1.0.0
-*/
-namespace nlohmann
-{
-/*!
-@brief default JSONSerializer template argument
-
-This serializer ignores the template arguments and uses ADL
-([argument-dependent lookup](http://en.cppreference.com/w/cpp/language/adl))
-for serialization.
-*/
-template<typename = void, typename = void>
-struct adl_serializer;
-
-template<template<typename U, typename V, typename... Args> class ObjectType =
-         std::map,
-         template<typename U, typename... Args> class ArrayType = std::vector,
-         class StringType = std::string, class BooleanType = bool,
-         class NumberIntegerType = std::int64_t,
-         class NumberUnsignedType = std::uint64_t,
-         class NumberFloatType = double,
-         template<typename U> class AllocatorType = std::allocator,
-         template<typename T, typename SFINAE = void> class JSONSerializer =
-         adl_serializer>
-class basic_json;
-
-/*!
-@brief JSON Pointer
-
-A JSON pointer defines a string syntax for identifying a specific value
-within a JSON document. It can be used with functions `at` and
-`operator[]`. Furthermore, JSON pointers are the base for JSON patches.
-
-@sa [RFC 6901](https://tools.ietf.org/html/rfc6901)
-
-@since version 2.0.0
-*/
-class json_pointer;
-
-/*!
-@brief default JSON class
-
-This type is the default specialization of the @ref basic_json class which
-uses the standard template types.
-
-@since version 1.0.0
-*/
-using json = basic_json<>;
-}
-
-#endif
-
-/*** End of inlined file: json_fwd.hpp ***/
-
-
-/*** Start of inlined file: macro_scope.hpp ***/
-#ifndef NLOHMANN_JSON_MACRO_SCOPE_HPP
-#define NLOHMANN_JSON_MACRO_SCOPE_HPP
-
-#include <ciso646> // not
-
-// This file contains all internal macro definitions
-// You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
-
-// exclude unsupported compilers
-#if defined(__clang__)
-    #if (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__) < 30400
-        #error "unsupported Clang version - see https://github.com/nlohmann/json#supported-compilers"
-    #endif
-#elif defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
-    #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
-        #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
-    #endif
-#endif
-
-// disable float-equal warnings on GCC/clang
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-
-// disable documentation warnings on clang
-#if defined(__clang__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdocumentation"
-#endif
-
-// allow for portable deprecation warnings
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    #define JSON_DEPRECATED __attribute__((deprecated))
-#elif defined(_MSC_VER)
-    #define JSON_DEPRECATED __declspec(deprecated)
-#else
-    #define JSON_DEPRECATED
-#endif
-
-// allow to disable exceptions
-#if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && not defined(JSON_NOEXCEPTION)
-    #define JSON_THROW(exception) throw exception
-    #define JSON_TRY try
-    #define JSON_CATCH(exception) catch(exception)
-#else
-    #define JSON_THROW(exception) std::abort()
-    #define JSON_TRY if(true)
-    #define JSON_CATCH(exception) if(false)
-#endif
-
-// manual branch prediction
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    #define JSON_LIKELY(x)      __builtin_expect(!!(x), 1)
-    #define JSON_UNLIKELY(x)    __builtin_expect(!!(x), 0)
-#else
-    #define JSON_LIKELY(x)      x
-    #define JSON_UNLIKELY(x)    x
-#endif
-
-// C++ language standard detection
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
-    #define JSON_HAS_CPP_17
-    #define JSON_HAS_CPP_14
-#elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
-    #define JSON_HAS_CPP_14
-#endif
-
-// Ugly macros to avoid uglier copy-paste when specializing basic_json. They
-// may be removed in the future once the class is split.
-
-#define NLOHMANN_BASIC_JSON_TPL_DECLARATION                                \
-    template<template<typename, typename, typename...> class ObjectType,   \
-             template<typename, typename...> class ArrayType,              \
-             class StringType, class BooleanType, class NumberIntegerType, \
-             class NumberUnsignedType, class NumberFloatType,              \
-             template<typename> class AllocatorType,                       \
-             template<typename, typename = void> class JSONSerializer>
-
-#define NLOHMANN_BASIC_JSON_TPL                                            \
-    basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
-    NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
-    AllocatorType, JSONSerializer>
-
-/*!
-@brief Helper to determine whether there's a key_type for T.
-
-This helper is used to tell associative containers apart from other containers
-such as sequence containers. For instance, `std::map` passes the test as it
-contains a `mapped_type`, whereas `std::vector` fails the test.
-
-@sa http://stackoverflow.com/a/7728728/266378
-@since version 1.0.0, overworked in version 2.0.6
-*/
-#define NLOHMANN_JSON_HAS_HELPER(type)                                        \
-    template<typename T> struct has_##type {                                  \
-    private:                                                                  \
-        template<typename U, typename = typename U::type>                     \
-        static int detect(U &&);                                              \
-        static void detect(...);                                              \
-    public:                                                                   \
-        static constexpr bool value =                                         \
-                std::is_integral<decltype(detect(std::declval<T>()))>::value; \
-    }
-
-#endif
-
-/*** End of inlined file: macro_scope.hpp ***/
 
 namespace nlohmann
 {
@@ -572,6 +391,7 @@ struct is_compatible_integer_type
         RealIntegerType, CompatibleNumberIntegerType > ::value;
 };
 
+
 // trait checking if JSONSerializer<T>::from_json(json const&, udt&) exists
 template<typename BasicJsonType, typename T>
 struct has_from_json
@@ -635,10 +455,7 @@ constexpr T static_const<T>::value;
 
 #endif
 
-/*** End of inlined file: meta.hpp ***/
-
-
-/*** Start of inlined file: exceptions.hpp ***/
+// #include "detail/exceptions.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_EXCEPTIONS_HPP
 #define NLOHMANN_JSON_DETAIL_EXCEPTIONS_HPP
 
@@ -971,10 +788,7 @@ class other_error : public exception
 
 #endif
 
-/*** End of inlined file: exceptions.hpp ***/
-
-
-/*** Start of inlined file: value_t.hpp ***/
+// #include "detail/value_t.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_VALUE_T_HPP
 #define NLOHMANN_JSON_DETAIL_VALUE_T_HPP
 
@@ -1055,10 +869,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 
 #endif
 
-/*** End of inlined file: value_t.hpp ***/
-
-
-/*** Start of inlined file: from_json.hpp ***/
+// #include "detail/conversions/from_json.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_CONVERSIONS_FROM_JSON_HPP
 #define NLOHMANN_JSON_DETAIL_CONVERSIONS_FROM_JSON_HPP
 
@@ -1073,663 +884,14 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
+// #include "detail/exceptions.hpp"
 
-/*** Start of inlined file: exceptions.hpp ***/
-#ifndef NLOHMANN_JSON_DETAIL_EXCEPTIONS_HPP
-#define NLOHMANN_JSON_DETAIL_EXCEPTIONS_HPP
+// #include "detail/macro_scope.hpp"
 
-#include <exception> // exception
-#include <stdexcept> // runtime_error
-#include <string> // to_string
+// #include "detail/meta.hpp"
 
-namespace nlohmann
-{
-namespace detail
-{
-////////////////
-// exceptions //
-////////////////
+// #include "detail/value_t.hpp"
 
-/*!
-@brief general exception of the @ref basic_json class
-
-This class is an extension of `std::exception` objects with a member @a id for
-exception ids. It is used as the base class for all exceptions thrown by the
-@ref basic_json class. This class can hence be used as "wildcard" to catch
-exceptions.
-
-Subclasses:
-- @ref parse_error for exceptions indicating a parse error
-- @ref invalid_iterator for exceptions indicating errors with iterators
-- @ref type_error for exceptions indicating executing a member function with
-                  a wrong type
-- @ref out_of_range for exceptions indicating access out of the defined range
-- @ref other_error for exceptions indicating other library errors
-
-@internal
-@note To have nothrow-copy-constructible exceptions, we internally use
-      `std::runtime_error` which can cope with arbitrary-length error messages.
-      Intermediate strings are built with static functions and then passed to
-      the actual constructor.
-@endinternal
-
-@liveexample{The following code shows how arbitrary library exceptions can be
-caught.,exception}
-
-@since version 3.0.0
-*/
-class exception : public std::exception
-{
-  public:
-    /// returns the explanatory string
-    const char* what() const noexcept override
-    {
-        return m.what();
-    }
-
-    /// the id of the exception
-    const int id;
-
-  protected:
-    exception(int id_, const char* what_arg) : id(id_), m(what_arg) {}
-
-    static std::string name(const std::string& ename, int id_)
-    {
-        return "[json.exception." + ename + "." + std::to_string(id_) + "] ";
-    }
-
-  private:
-    /// an exception object as storage for error messages
-    std::runtime_error m;
-};
-
-/*!
-@brief exception indicating a parse error
-
-This exception is thrown by the library when a parse error occurs. Parse errors
-can occur during the deserialization of JSON text, CBOR, MessagePack, as well
-as when using JSON Patch.
-
-Member @a byte holds the byte index of the last read character in the input
-file.
-
-Exceptions have ids 1xx.
-
-name / id                      | example message | description
------------------------------- | --------------- | -------------------------
-json.exception.parse_error.101 | parse error at 2: unexpected end of input; expected string literal | This error indicates a syntax error while deserializing a JSON text. The error message describes that an unexpected token (character) was encountered, and the member @a byte indicates the error position.
-json.exception.parse_error.102 | parse error at 14: missing or wrong low surrogate | JSON uses the `\uxxxx` format to describe Unicode characters. Code points above above 0xFFFF are split into two `\uxxxx` entries ("surrogate pairs"). This error indicates that the surrogate pair is incomplete or contains an invalid code point.
-json.exception.parse_error.103 | parse error: code points above 0x10FFFF are invalid | Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
-json.exception.parse_error.104 | parse error: JSON patch must be an array of objects | [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON document that represents an array of objects.
-json.exception.parse_error.105 | parse error: operation must have string member 'op' | An operation of a JSON Patch document must contain exactly one "op" member, whose value indicates the operation to perform. Its value must be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
-json.exception.parse_error.106 | parse error: array index '01' must not begin with '0' | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number without a leading `0`.
-json.exception.parse_error.107 | parse error: JSON pointer must be empty or begin with '/' - was: 'foo' | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
-json.exception.parse_error.108 | parse error: escape character '~' must be followed with '0' or '1' | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
-json.exception.parse_error.109 | parse error: array index 'one' is not a number | A JSON Pointer array index must be a number.
-json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
-json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xF8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
-json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last byte: 0x98 | While parsing a map key, a value that is not a string has been read.
-
-@note For an input with n bytes, 1 is the index of the first character and n+1
-      is the index of the terminating null byte or the end of file. This also
-      holds true when reading a byte vector (CBOR or MessagePack).
-
-@liveexample{The following code shows how a `parse_error` exception can be
-caught.,parse_error}
-
-@sa @ref exception for the base class of the library exceptions
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref type_error for exceptions indicating executing a member function with
-                    a wrong type
-@sa @ref out_of_range for exceptions indicating access out of the defined range
-@sa @ref other_error for exceptions indicating other library errors
-
-@since version 3.0.0
-*/
-class parse_error : public exception
-{
-  public:
-    /*!
-    @brief create a parse error exception
-    @param[in] id_       the id of the exception
-    @param[in] byte_     the byte index where the error occurred (or 0 if the
-                         position cannot be determined)
-    @param[in] what_arg  the explanatory string
-    @return parse_error object
-    */
-    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg)
-    {
-        std::string w = exception::name("parse_error", id_) + "parse error" +
-                        (byte_ != 0 ? (" at " + std::to_string(byte_)) : "") +
-                        ": " + what_arg;
-        return parse_error(id_, byte_, w.c_str());
-    }
-
-    /*!
-    @brief byte index of the parse error
-
-    The byte index of the last read character in the input file.
-
-    @note For an input with n bytes, 1 is the index of the first character and
-          n+1 is the index of the terminating null byte or the end of file.
-          This also holds true when reading a byte vector (CBOR or MessagePack).
-    */
-    const std::size_t byte;
-
-  private:
-    parse_error(int id_, std::size_t byte_, const char* what_arg)
-        : exception(id_, what_arg), byte(byte_) {}
-};
-
-/*!
-@brief exception indicating errors with iterators
-
-This exception is thrown if iterators passed to a library function do not match
-the expected semantics.
-
-Exceptions have ids 2xx.
-
-name / id                           | example message | description
------------------------------------ | --------------- | -------------------------
-json.exception.invalid_iterator.201 | iterators are not compatible | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
-json.exception.invalid_iterator.202 | iterator does not fit current value | In an erase or insert function, the passed iterator @a pos does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
-json.exception.invalid_iterator.203 | iterators do not fit current value | Either iterator passed to function @ref erase(IteratorType first, IteratorType last) does not belong to the JSON value from which values shall be erased. It hence does not define a valid range to delete values from.
-json.exception.invalid_iterator.204 | iterators out of range | When an iterator range for a primitive type (number, boolean, or string) is passed to a constructor or an erase function, this range has to be exactly (@ref begin(), @ref end()), because this is the only way the single stored value is expressed. All other ranges are invalid.
-json.exception.invalid_iterator.205 | iterator out of range | When an iterator for a primitive type (number, boolean, or string) is passed to an erase function, the iterator has to be the @ref begin() iterator, because it is the only way to address the stored value. All other iterators are invalid.
-json.exception.invalid_iterator.206 | cannot construct with iterators from null | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) belong to a JSON null value and hence to not define a valid range.
-json.exception.invalid_iterator.207 | cannot use key() for non-object iterators | The key() member function can only be used on iterators belonging to a JSON object, because other types do not have a concept of a key.
-json.exception.invalid_iterator.208 | cannot use operator[] for object iterators | The operator[] to specify a concrete offset cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
-json.exception.invalid_iterator.209 | cannot use offsets with object iterators | The offset operators (+, -, +=, -=) cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
-json.exception.invalid_iterator.210 | iterators do not fit | The iterator range passed to the insert function are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
-json.exception.invalid_iterator.211 | passed iterators may not belong to container | The iterator range passed to the insert function must not be a subrange of the container to insert to.
-json.exception.invalid_iterator.212 | cannot compare iterators of different containers | When two iterators are compared, they must belong to the same container.
-json.exception.invalid_iterator.213 | cannot compare order of object iterators | The order of object iterators cannot be compared, because JSON objects are unordered.
-json.exception.invalid_iterator.214 | cannot get value | Cannot get value for iterator: Either the iterator belongs to a null value or it is an iterator to a primitive type (number, boolean, or string), but the iterator is different to @ref begin().
-
-@liveexample{The following code shows how an `invalid_iterator` exception can be
-caught.,invalid_iterator}
-
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref type_error for exceptions indicating executing a member function with
-                    a wrong type
-@sa @ref out_of_range for exceptions indicating access out of the defined range
-@sa @ref other_error for exceptions indicating other library errors
-
-@since version 3.0.0
-*/
-class invalid_iterator : public exception
-{
-  public:
-    static invalid_iterator create(int id_, const std::string& what_arg)
-    {
-        std::string w = exception::name("invalid_iterator", id_) + what_arg;
-        return invalid_iterator(id_, w.c_str());
-    }
-
-  private:
-    invalid_iterator(int id_, const char* what_arg)
-        : exception(id_, what_arg) {}
-};
-
-/*!
-@brief exception indicating executing a member function with a wrong type
-
-This exception is thrown in case of a type error; that is, a library function is
-executed on a JSON value whose type does not match the expected semantics.
-
-Exceptions have ids 3xx.
-
-name / id                     | example message | description
------------------------------ | --------------- | -------------------------
-json.exception.type_error.301 | cannot create object from initializer list | To create an object from an initializer list, the initializer list must consist only of a list of pairs whose first element is a string. When this constraint is violated, an array is created instead.
-json.exception.type_error.302 | type must be object, but is array | During implicit or explicit value conversion, the JSON type must be compatible to the target type. For instance, a JSON string can only be converted into string types, but not into numbers or boolean types.
-json.exception.type_error.303 | incompatible ReferenceType for get_ref, actual type is object | To retrieve a reference to a value stored in a @ref basic_json object with @ref get_ref, the type of the reference must match the value type. For instance, for a JSON array, the @a ReferenceType must be @ref array_t&.
-json.exception.type_error.304 | cannot use at() with string | The @ref at() member functions can only be executed for certain JSON types.
-json.exception.type_error.305 | cannot use operator[] with string | The @ref operator[] member functions can only be executed for certain JSON types.
-json.exception.type_error.306 | cannot use value() with string | The @ref value() member functions can only be executed for certain JSON types.
-json.exception.type_error.307 | cannot use erase() with string | The @ref erase() member functions can only be executed for certain JSON types.
-json.exception.type_error.308 | cannot use push_back() with string | The @ref push_back() and @ref operator+= member functions can only be executed for certain JSON types.
-json.exception.type_error.309 | cannot use insert() with | The @ref insert() member functions can only be executed for certain JSON types.
-json.exception.type_error.310 | cannot use swap() with number | The @ref swap() member functions can only be executed for certain JSON types.
-json.exception.type_error.311 | cannot use emplace_back() with string | The @ref emplace_back() member function can only be executed for certain JSON types.
-json.exception.type_error.312 | cannot use update() with string | The @ref update() member functions can only be executed for certain JSON types.
-json.exception.type_error.313 | invalid value to unflatten | The @ref unflatten function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well defined.
-json.exception.type_error.314 | only objects can be unflattened | The @ref unflatten function only works for an object whose keys are JSON Pointers.
-json.exception.type_error.315 | values in object must be primitive | The @ref unflatten function only works for an object whose keys are JSON Pointers and whose values are primitive.
-json.exception.type_error.316 | invalid UTF-8 byte at index 10: 0x7E | The @ref dump function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded. |
-
-@liveexample{The following code shows how a `type_error` exception can be
-caught.,type_error}
-
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref out_of_range for exceptions indicating access out of the defined range
-@sa @ref other_error for exceptions indicating other library errors
-
-@since version 3.0.0
-*/
-class type_error : public exception
-{
-  public:
-    static type_error create(int id_, const std::string& what_arg)
-    {
-        std::string w = exception::name("type_error", id_) + what_arg;
-        return type_error(id_, w.c_str());
-    }
-
-  private:
-    type_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
-};
-
-/*!
-@brief exception indicating access out of the defined range
-
-This exception is thrown in case a library function is called on an input
-parameter that exceeds the expected range, for instance in case of array
-indices or nonexisting object keys.
-
-Exceptions have ids 4xx.
-
-name / id                       | example message | description
-------------------------------- | --------------- | -------------------------
-json.exception.out_of_range.401 | array index 3 is out of range | The provided array index @a i is larger than @a size-1.
-json.exception.out_of_range.402 | array index '-' (3) is out of range | The special array index `-` in a JSON Pointer never describes a valid element of the array, but the index past the end. That is, it can only be used to add elements at this position, but not to read it.
-json.exception.out_of_range.403 | key 'foo' not found | The provided key was not found in the JSON object.
-json.exception.out_of_range.404 | unresolved reference token 'foo' | A reference token in a JSON Pointer could not be resolved.
-json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
-json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed number could not be stored as without changing it to NaN or INF.
-
-@liveexample{The following code shows how an `out_of_range` exception can be
-caught.,out_of_range}
-
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref type_error for exceptions indicating executing a member function with
-                    a wrong type
-@sa @ref other_error for exceptions indicating other library errors
-
-@since version 3.0.0
-*/
-class out_of_range : public exception
-{
-  public:
-    static out_of_range create(int id_, const std::string& what_arg)
-    {
-        std::string w = exception::name("out_of_range", id_) + what_arg;
-        return out_of_range(id_, w.c_str());
-    }
-
-  private:
-    out_of_range(int id_, const char* what_arg) : exception(id_, what_arg) {}
-};
-
-/*!
-@brief exception indicating other library errors
-
-This exception is thrown in case of errors that cannot be classified with the
-other exception types.
-
-Exceptions have ids 5xx.
-
-name / id                      | example message | description
------------------------------- | --------------- | -------------------------
-json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "value":"bar"} | A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
-
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref type_error for exceptions indicating executing a member function with
-                    a wrong type
-@sa @ref out_of_range for exceptions indicating access out of the defined range
-
-@liveexample{The following code shows how an `other_error` exception can be
-caught.,other_error}
-
-@since version 3.0.0
-*/
-class other_error : public exception
-{
-  public:
-    static other_error create(int id_, const std::string& what_arg)
-    {
-        std::string w = exception::name("other_error", id_) + what_arg;
-        return other_error(id_, w.c_str());
-    }
-
-  private:
-    other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
-};
-}
-}
-
-#endif
-
-/*** End of inlined file: exceptions.hpp ***/
-
-
-/*** Start of inlined file: meta.hpp ***/
-#ifndef NLOHMANN_JSON_DETAIL_META_HPP
-#define NLOHMANN_JSON_DETAIL_META_HPP
-
-#include <ciso646> // not
-#include <cstddef> // size_t
-#include <limits> // numeric_limits
-#include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
-#include <utility> // declval
-
-namespace nlohmann
-{
-/*!
-@brief detail namespace with internal helper functions
-
-This namespace collects functions that should not be exposed,
-implementations of some @ref basic_json methods, and meta-programming helpers.
-
-@since version 2.1.0
-*/
-namespace detail
-{
-/////////////
-// helpers //
-/////////////
-
-template<typename> struct is_basic_json : std::false_type {};
-
-NLOHMANN_BASIC_JSON_TPL_DECLARATION
-struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
-
-// alias templates to reduce boilerplate
-template<bool B, typename T = void>
-using enable_if_t = typename std::enable_if<B, T>::type;
-
-template<typename T>
-using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
-
-// implementation of C++14 index_sequence and affiliates
-// source: https://stackoverflow.com/a/32223343
-template<std::size_t... Ints>
-struct index_sequence
-{
-    using type = index_sequence;
-    using value_type = std::size_t;
-    static constexpr std::size_t size() noexcept
-    {
-        return sizeof...(Ints);
-    }
-};
-
-template<class Sequence1, class Sequence2>
-struct merge_and_renumber;
-
-template<std::size_t... I1, std::size_t... I2>
-struct merge_and_renumber<index_sequence<I1...>, index_sequence<I2...>>
-        : index_sequence < I1..., (sizeof...(I1) + I2)... > {};
-
-template<std::size_t N>
-struct make_index_sequence
-    : merge_and_renumber < typename make_index_sequence < N / 2 >::type,
-      typename make_index_sequence < N - N / 2 >::type > {};
-
-template<> struct make_index_sequence<0> : index_sequence<> {};
-template<> struct make_index_sequence<1> : index_sequence<0> {};
-
-template<typename... Ts>
-using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
-
-/*
-Implementation of two C++17 constructs: conjunction, negation. This is needed
-to avoid evaluating all the traits in a condition
-
-For example: not std::is_same<void, T>::value and has_value_type<T>::value
-will not compile when T = void (on MSVC at least). Whereas
-conjunction<negation<std::is_same<void, T>>, has_value_type<T>>::value will
-stop evaluating if negation<...>::value == false
-
-Please note that those constructs must be used with caution, since symbols can
-become very long quickly (which can slow down compilation and cause MSVC
-internal compiler errors). Only use it when you have to (see example ahead).
-*/
-template<class...> struct conjunction : std::true_type {};
-template<class B1> struct conjunction<B1> : B1 {};
-template<class B1, class... Bn>
-struct conjunction<B1, Bn...> : std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
-
-template<class B> struct negation : std::integral_constant<bool, not B::value> {};
-
-// dispatch utility (taken from ranges-v3)
-template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
-template<> struct priority_tag<0> {};
-
-////////////////////////
-// has_/is_ functions //
-////////////////////////
-
-NLOHMANN_JSON_HAS_HELPER(mapped_type);
-NLOHMANN_JSON_HAS_HELPER(key_type);
-NLOHMANN_JSON_HAS_HELPER(value_type);
-NLOHMANN_JSON_HAS_HELPER(iterator);
-
-template<bool B, class RealType, class CompatibleObjectType>
-struct is_compatible_object_type_impl : std::false_type {};
-
-template<class RealType, class CompatibleObjectType>
-struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
-{
-    static constexpr auto value =
-        std::is_constructible<typename RealType::key_type, typename CompatibleObjectType::key_type>::value and
-        std::is_constructible<typename RealType::mapped_type, typename CompatibleObjectType::mapped_type>::value;
-};
-
-template<class BasicJsonType, class CompatibleObjectType>
-struct is_compatible_object_type
-{
-    static auto constexpr value = is_compatible_object_type_impl <
-                                  conjunction<negation<std::is_same<void, CompatibleObjectType>>,
-                                  has_mapped_type<CompatibleObjectType>,
-                                  has_key_type<CompatibleObjectType>>::value,
-                                  typename BasicJsonType::object_t, CompatibleObjectType >::value;
-};
-
-template<typename BasicJsonType, typename T>
-struct is_basic_json_nested_type
-{
-    static auto constexpr value = std::is_same<T, typename BasicJsonType::iterator>::value or
-                                  std::is_same<T, typename BasicJsonType::const_iterator>::value or
-                                  std::is_same<T, typename BasicJsonType::reverse_iterator>::value or
-                                  std::is_same<T, typename BasicJsonType::const_reverse_iterator>::value;
-};
-
-template<class BasicJsonType, class CompatibleArrayType>
-struct is_compatible_array_type
-{
-    static auto constexpr value =
-        conjunction<negation<std::is_same<void, CompatibleArrayType>>,
-        negation<is_compatible_object_type<
-        BasicJsonType, CompatibleArrayType>>,
-        negation<std::is_constructible<typename BasicJsonType::string_t,
-        CompatibleArrayType>>,
-        negation<is_basic_json_nested_type<BasicJsonType, CompatibleArrayType>>,
-        has_value_type<CompatibleArrayType>,
-        has_iterator<CompatibleArrayType>>::value;
-};
-
-template<bool, typename, typename>
-struct is_compatible_integer_type_impl : std::false_type {};
-
-template<typename RealIntegerType, typename CompatibleNumberIntegerType>
-struct is_compatible_integer_type_impl<true, RealIntegerType, CompatibleNumberIntegerType>
-{
-    // is there an assert somewhere on overflows?
-    using RealLimits = std::numeric_limits<RealIntegerType>;
-    using CompatibleLimits = std::numeric_limits<CompatibleNumberIntegerType>;
-
-    static constexpr auto value =
-        std::is_constructible<RealIntegerType, CompatibleNumberIntegerType>::value and
-        CompatibleLimits::is_integer and
-        RealLimits::is_signed == CompatibleLimits::is_signed;
-};
-
-template<typename RealIntegerType, typename CompatibleNumberIntegerType>
-struct is_compatible_integer_type
-{
-    static constexpr auto value =
-        is_compatible_integer_type_impl <
-        std::is_integral<CompatibleNumberIntegerType>::value and
-        not std::is_same<bool, CompatibleNumberIntegerType>::value,
-        RealIntegerType, CompatibleNumberIntegerType > ::value;
-};
-
-// trait checking if JSONSerializer<T>::from_json(json const&, udt&) exists
-template<typename BasicJsonType, typename T>
-struct has_from_json
-{
-  private:
-    // also check the return type of from_json
-    template<typename U, typename = enable_if_t<std::is_same<void, decltype(uncvref_t<U>::from_json(
-                 std::declval<BasicJsonType>(), std::declval<T&>()))>::value>>
-    static int detect(U&&);
-    static void detect(...);
-
-  public:
-    static constexpr bool value = std::is_integral<decltype(
-                                      detect(std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
-};
-
-// This trait checks if JSONSerializer<T>::from_json(json const&) exists
-// this overload is used for non-default-constructible user-defined-types
-template<typename BasicJsonType, typename T>
-struct has_non_default_from_json
-{
-  private:
-    template <
-        typename U,
-        typename = enable_if_t<std::is_same<
-                                   T, decltype(uncvref_t<U>::from_json(std::declval<BasicJsonType>()))>::value >>
-    static int detect(U&&);
-    static void detect(...);
-
-  public:
-    static constexpr bool value = std::is_integral<decltype(detect(
-                                      std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
-};
-
-// This trait checks if BasicJsonType::json_serializer<T>::to_json exists
-template<typename BasicJsonType, typename T>
-struct has_to_json
-{
-  private:
-    template<typename U, typename = decltype(uncvref_t<U>::to_json(
-                 std::declval<BasicJsonType&>(), std::declval<T>()))>
-    static int detect(U&&);
-    static void detect(...);
-
-  public:
-    static constexpr bool value = std::is_integral<decltype(detect(
-                                      std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
-};
-
-// taken from ranges-v3
-template<typename T>
-struct static_const
-{
-    static constexpr T value{};
-};
-
-template<typename T>
-constexpr T static_const<T>::value;
-}
-}
-
-#endif
-
-/*** End of inlined file: meta.hpp ***/
-
-
-/*** Start of inlined file: value_t.hpp ***/
-#ifndef NLOHMANN_JSON_DETAIL_VALUE_T_HPP
-#define NLOHMANN_JSON_DETAIL_VALUE_T_HPP
-
-#include <array> // array
-#include <ciso646> // and
-#include <cstddef> // size_t
-#include <cstdint> // uint8_t
-
-namespace nlohmann
-{
-namespace detail
-{
-///////////////////////////
-// JSON type enumeration //
-///////////////////////////
-
-/*!
-@brief the JSON type enumeration
-
-This enumeration collects the different JSON types. It is internally used to
-distinguish the stored values, and the functions @ref basic_json::is_null(),
-@ref basic_json::is_object(), @ref basic_json::is_array(),
-@ref basic_json::is_string(), @ref basic_json::is_boolean(),
-@ref basic_json::is_number() (with @ref basic_json::is_number_integer(),
-@ref basic_json::is_number_unsigned(), and @ref basic_json::is_number_float()),
-@ref basic_json::is_discarded(), @ref basic_json::is_primitive(), and
-@ref basic_json::is_structured() rely on it.
-
-@note There are three enumeration entries (number_integer, number_unsigned, and
-number_float), because the library distinguishes these three types for numbers:
-@ref basic_json::number_unsigned_t is used for unsigned integers,
-@ref basic_json::number_integer_t is used for signed integers, and
-@ref basic_json::number_float_t is used for floating-point numbers or to
-approximate integers which do not fit in the limits of their respective type.
-
-@sa @ref basic_json::basic_json(const value_t value_type) -- create a JSON
-value with the default value for a given type
-
-@since version 1.0.0
-*/
-enum class value_t : std::uint8_t
-{
-    null,             ///< null value
-    object,           ///< object (unordered set of name/value pairs)
-    array,            ///< array (ordered collection of values)
-    string,           ///< string value
-    boolean,          ///< boolean value
-    number_integer,   ///< number value (signed integer)
-    number_unsigned,  ///< number value (unsigned integer)
-    number_float,     ///< number value (floating-point)
-    discarded         ///< discarded by the the parser callback function
-};
-
-/*!
-@brief comparison operator for JSON types
-
-Returns an ordering that is similar to Python:
-- order: null < boolean < number < object < array < string
-- furthermore, each type is not smaller than itself
-- discarded values are not comparable
-
-@since version 1.0.0
-*/
-inline bool operator<(const value_t lhs, const value_t rhs) noexcept
-{
-    static constexpr std::array<std::uint8_t, 8> order = {{
-            0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */,
-            1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */
-        }
-    };
-
-    const auto l_index = static_cast<std::size_t>(lhs);
-    const auto r_index = static_cast<std::size_t>(rhs);
-    return l_index < order.size() and r_index < order.size() and order[l_index] < order[r_index];
-}
-}
-}
-
-#endif
-
-/*** End of inlined file: value_t.hpp ***/
 
 namespace nlohmann
 {
@@ -2031,10 +1193,7 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 
 #endif
 
-/*** End of inlined file: from_json.hpp ***/
-
-
-/*** Start of inlined file: to_json.hpp ***/
+// #include "detail/conversions/to_json.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_CONVERSIONS_TO_JSON_HPP
 #define NLOHMANN_JSON_DETAIL_CONVERSIONS_TO_JSON_HPP
 
@@ -2045,6 +1204,11 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <utility> // move, forward, declval, pair
 #include <valarray> // valarray
 #include <vector> // vector
+
+// #include "detail/meta.hpp"
+
+// #include "detail/value_t.hpp"
+
 
 namespace nlohmann
 {
@@ -2374,10 +1538,7 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 
 #endif
 
-/*** End of inlined file: to_json.hpp ***/
-
-
-/*** Start of inlined file: input_adapters.hpp ***/
+// #include "detail/parsing/input_adapters.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_PARSING_INPUT_ADAPTERS_HPP
 #define NLOHMANN_JSON_DETAIL_PARSING_INPUT_ADAPTERS_HPP
 
@@ -2394,6 +1555,9 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
+
+// #include "detail/macro_scope.hpp"
+
 
 namespace nlohmann
 {
@@ -2642,10 +1806,7 @@ class input_adapter
 
 #endif
 
-/*** End of inlined file: input_adapters.hpp ***/
-
-
-/*** Start of inlined file: lexer.hpp ***/
+// #include "detail/parsing/lexer.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_PARSING_LEXER_HPP
 #define NLOHMANN_JSON_DETAIL_PARSING_LEXER_HPP
 
@@ -2659,273 +1820,10 @@ class input_adapter
 #include <string> // char_traits, string
 #include <vector> // vector
 
+// #include "detail/macro_scope.hpp"
 
-/*** Start of inlined file: input_adapters.hpp ***/
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_INPUT_ADAPTERS_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_INPUT_ADAPTERS_HPP
+// #include "detail/parsing/input_adapters.hpp"
 
-#include <algorithm> // min
-#include <array> // array
-#include <cassert> // assert
-#include <cstddef> // size_t
-#include <cstring> // strlen
-#include <ios> // streamsize, streamoff, streampos
-#include <istream> // istream
-#include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
-#include <memory> // shared_ptr, make_shared, addressof
-#include <numeric> // accumulate
-#include <string> // string, char_traits
-#include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
-#include <utility> // pair, declval
-
-namespace nlohmann
-{
-namespace detail
-{
-////////////////////
-// input adapters //
-////////////////////
-
-/*!
-@brief abstract input adapter interface
-
-Produces a stream of std::char_traits<char>::int_type characters from a
-std::istream, a buffer, or some other input type.  Accepts the return of exactly
-one non-EOF character for future input.  The int_type characters returned
-consist of all valid char values as positive values (typically unsigned char),
-plus an EOF value outside that range, specified by the value of the function
-std::char_traits<char>::eof().  This value is typically -1, but could be any
-arbitrary value which is not a valid char value.
-*/
-struct input_adapter_protocol
-{
-    /// get a character [0,255] or std::char_traits<char>::eof().
-    virtual std::char_traits<char>::int_type get_character() = 0;
-    /// restore the last non-eof() character to input
-    virtual void unget_character() = 0;
-    virtual ~input_adapter_protocol() = default;
-};
-
-/// a type to simplify interfaces
-using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
-
-/*!
-Input adapter for a (caching) istream. Ignores a UFT Byte Order Mark at
-beginning of input. Does not support changing the underlying std::streambuf
-in mid-input. Maintains underlying std::istream and std::streambuf to support
-subsequent use of standard std::istream operations to process any input
-characters following those used in parsing the JSON input.  Clears the
-std::istream flags; any input errors (e.g., EOF) will be detected by the first
-subsequent call for input from the std::istream.
-*/
-class input_stream_adapter : public input_adapter_protocol
-{
-  public:
-    ~input_stream_adapter() override
-    {
-        // clear stream flags; we use underlying streambuf I/O, do not
-        // maintain ifstream flags
-        is.clear();
-    }
-
-    explicit input_stream_adapter(std::istream& i)
-        : is(i), sb(*i.rdbuf())
-    {
-        // skip byte order mark
-        std::char_traits<char>::int_type c;
-        if ((c = get_character()) == 0xEF)
-        {
-            if ((c = get_character()) == 0xBB)
-            {
-                if ((c = get_character()) == 0xBF)
-                {
-                    return; // Ignore BOM
-                }
-                else if (c != std::char_traits<char>::eof())
-                {
-                    is.unget();
-                }
-                is.putback('\xBB');
-            }
-            else if (c != std::char_traits<char>::eof())
-            {
-                is.unget();
-            }
-            is.putback('\xEF');
-        }
-        else if (c != std::char_traits<char>::eof())
-        {
-            is.unget(); // no byte order mark; process as usual
-        }
-    }
-
-    // delete because of pointer members
-    input_stream_adapter(const input_stream_adapter&) = delete;
-    input_stream_adapter& operator=(input_stream_adapter&) = delete;
-
-    // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
-    // ensure that std::char_traits<char>::eof() and the character 0xFF do not
-    // end up as the same value, eg. 0xFFFFFFFF.
-    std::char_traits<char>::int_type get_character() override
-    {
-        return sb.sbumpc();
-    }
-
-    void unget_character() override
-    {
-        sb.sungetc();  // is.unget() avoided for performance
-    }
-
-  private:
-    /// the associated input stream
-    std::istream& is;
-    std::streambuf& sb;
-};
-
-/// input adapter for buffer input
-class input_buffer_adapter : public input_adapter_protocol
-{
-  public:
-    input_buffer_adapter(const char* b, const std::size_t l)
-        : cursor(b), limit(b + l), start(b)
-    {
-        // skip byte order mark
-        if (l >= 3 and b[0] == '\xEF' and b[1] == '\xBB' and b[2] == '\xBF')
-        {
-            cursor += 3;
-        }
-    }
-
-    // delete because of pointer members
-    input_buffer_adapter(const input_buffer_adapter&) = delete;
-    input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
-
-    std::char_traits<char>::int_type get_character() noexcept override
-    {
-        if (JSON_LIKELY(cursor < limit))
-        {
-            return std::char_traits<char>::to_int_type(*(cursor++));
-        }
-
-        return std::char_traits<char>::eof();
-    }
-
-    void unget_character() noexcept override
-    {
-        if (JSON_LIKELY(cursor > start))
-        {
-            --cursor;
-        }
-    }
-
-  private:
-    /// pointer to the current character
-    const char* cursor;
-    /// pointer past the last character
-    const char* limit;
-    /// pointer to the first character
-    const char* start;
-};
-
-class input_adapter
-{
-  public:
-    // native support
-
-    /// input adapter for input stream
-    input_adapter(std::istream& i)
-        : ia(std::make_shared<input_stream_adapter>(i)) {}
-
-    /// input adapter for input stream
-    input_adapter(std::istream&& i)
-        : ia(std::make_shared<input_stream_adapter>(i)) {}
-
-    /// input adapter for buffer
-    template<typename CharT,
-             typename std::enable_if<
-                 std::is_pointer<CharT>::value and
-                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-                 sizeof(typename std::remove_pointer<CharT>::type) == 1,
-                 int>::type = 0>
-    input_adapter(CharT b, std::size_t l)
-        : ia(std::make_shared<input_buffer_adapter>(reinterpret_cast<const char*>(b), l)) {}
-
-    // derived support
-
-    /// input adapter for string literal
-    template<typename CharT,
-             typename std::enable_if<
-                 std::is_pointer<CharT>::value and
-                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-                 sizeof(typename std::remove_pointer<CharT>::type) == 1,
-                 int>::type = 0>
-    input_adapter(CharT b)
-        : input_adapter(reinterpret_cast<const char*>(b),
-                        std::strlen(reinterpret_cast<const char*>(b))) {}
-
-    /// input adapter for iterator range with contiguous storage
-    template<class IteratorType,
-             typename std::enable_if<
-                 std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value,
-                 int>::type = 0>
-    input_adapter(IteratorType first, IteratorType last)
-    {
-        // assertion to check that the iterator range is indeed contiguous,
-        // see http://stackoverflow.com/a/35008842/266378 for more discussion
-        assert(std::accumulate(
-                   first, last, std::pair<bool, int>(true, 0),
-                   [&first](std::pair<bool, int> res, decltype(*first) val)
-        {
-            res.first &= (val == *(std::next(std::addressof(*first), res.second++)));
-            return res;
-        }).first);
-
-        // assertion to check that each element is 1 byte long
-        static_assert(
-            sizeof(typename std::iterator_traits<IteratorType>::value_type) == 1,
-            "each element in the iterator range must have the size of 1 byte");
-
-        const auto len = static_cast<size_t>(std::distance(first, last));
-        if (JSON_LIKELY(len > 0))
-        {
-            // there is at least one element: use the address of first
-            ia = std::make_shared<input_buffer_adapter>(reinterpret_cast<const char*>(&(*first)), len);
-        }
-        else
-        {
-            // the address of first cannot be used: use nullptr
-            ia = std::make_shared<input_buffer_adapter>(nullptr, len);
-        }
-    }
-
-    /// input adapter for array
-    template<class T, std::size_t N>
-    input_adapter(T (&array)[N])
-        : input_adapter(std::begin(array), std::end(array)) {}
-
-    /// input adapter for contiguous container
-    template<class ContiguousContainer, typename
-             std::enable_if<not std::is_pointer<ContiguousContainer>::value and
-                            std::is_base_of<std::random_access_iterator_tag, typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
-                            int>::type = 0>
-    input_adapter(const ContiguousContainer& c)
-        : input_adapter(std::begin(c), std::end(c)) {}
-
-    operator input_adapter_t()
-    {
-        return ia;
-    }
-
-  private:
-    /// the actual adapter
-    input_adapter_t ia = nullptr;
-};
-}
-}
-
-#endif
-
-/*** End of inlined file: input_adapters.hpp ***/
 
 namespace nlohmann
 {
@@ -4191,10 +3089,7 @@ scan_number_done:
 
 #endif
 
-/*** End of inlined file: lexer.hpp ***/
-
-
-/*** Start of inlined file: parser.hpp ***/
+// #include "detail/parsing/parser.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_PARSING_PARSER_HPP
 #define NLOHMANN_JSON_DETAIL_PARSING_PARSER_HPP
 
@@ -4205,1286 +3100,16 @@ scan_number_done:
 #include <string> // string
 #include <utility> // move
 
+// #include "detail/exceptions.hpp"
 
-/*** Start of inlined file: lexer.hpp ***/
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_LEXER_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_LEXER_HPP
+// #include "detail/macro_scope.hpp"
 
-#include <clocale> // localeconv
-#include <cstddef> // size_t
-#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
-#include <initializer_list> // initializer_list
-#include <ios> // hex, uppercase
-#include <iomanip> // setw, setfill
-#include <sstream> // stringstream
-#include <string> // char_traits, string
-#include <vector> // vector
+// #include "detail/parsing/input_adapters.hpp"
 
-namespace nlohmann
-{
-namespace detail
-{
-///////////
-// lexer //
-///////////
+// #include "detail/parsing/lexer.hpp"
 
-/*!
-@brief lexical analysis
+// #include "detail/value_t.hpp"
 
-This class organizes the lexical analysis during JSON deserialization.
-*/
-template<typename BasicJsonType>
-class lexer
-{
-    using number_integer_t = typename BasicJsonType::number_integer_t;
-    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    using number_float_t = typename BasicJsonType::number_float_t;
-
-  public:
-    /// token types for the parser
-    enum class token_type
-    {
-        uninitialized,    ///< indicating the scanner is uninitialized
-        literal_true,     ///< the `true` literal
-        literal_false,    ///< the `false` literal
-        literal_null,     ///< the `null` literal
-        value_string,     ///< a string -- use get_string() for actual value
-        value_unsigned,   ///< an unsigned integer -- use get_number_unsigned() for actual value
-        value_integer,    ///< a signed integer -- use get_number_integer() for actual value
-        value_float,      ///< an floating point number -- use get_number_float() for actual value
-        begin_array,      ///< the character for array begin `[`
-        begin_object,     ///< the character for object begin `{`
-        end_array,        ///< the character for array end `]`
-        end_object,       ///< the character for object end `}`
-        name_separator,   ///< the name separator `:`
-        value_separator,  ///< the value separator `,`
-        parse_error,      ///< indicating a parse error
-        end_of_input,     ///< indicating the end of the input buffer
-        literal_or_value  ///< a literal or the begin of a value (only for diagnostics)
-    };
-
-    /// return name of values of type token_type (only used for errors)
-    static const char* token_type_name(const token_type t) noexcept
-    {
-        switch (t)
-        {
-            case token_type::uninitialized:
-                return "<uninitialized>";
-            case token_type::literal_true:
-                return "true literal";
-            case token_type::literal_false:
-                return "false literal";
-            case token_type::literal_null:
-                return "null literal";
-            case token_type::value_string:
-                return "string literal";
-            case lexer::token_type::value_unsigned:
-            case lexer::token_type::value_integer:
-            case lexer::token_type::value_float:
-                return "number literal";
-            case token_type::begin_array:
-                return "'['";
-            case token_type::begin_object:
-                return "'{'";
-            case token_type::end_array:
-                return "']'";
-            case token_type::end_object:
-                return "'}'";
-            case token_type::name_separator:
-                return "':'";
-            case token_type::value_separator:
-                return "','";
-            case token_type::parse_error:
-                return "<parse error>";
-            case token_type::end_of_input:
-                return "end of input";
-            case token_type::literal_or_value:
-                return "'[', '{', or a literal";
-            default: // catch non-enum values
-                return "unknown token"; // LCOV_EXCL_LINE
-        }
-    }
-
-    explicit lexer(detail::input_adapter_t adapter)
-        : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
-
-    // delete because of pointer members
-    lexer(const lexer&) = delete;
-    lexer& operator=(lexer&) = delete;
-
-  private:
-    /////////////////////
-    // locales
-    /////////////////////
-
-    /// return the locale-dependent decimal point
-    static char get_decimal_point() noexcept
-    {
-        const auto loc = localeconv();
-        assert(loc != nullptr);
-        return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
-    }
-
-    /////////////////////
-    // scan functions
-    /////////////////////
-
-    /*!
-    @brief get codepoint from 4 hex characters following `\u`
-
-    For input "\u c1 c2 c3 c4" the codepoint is:
-      (c1 * 0x1000) + (c2 * 0x0100) + (c3 * 0x0010) + c4
-    = (c1 << 12) + (c2 << 8) + (c3 << 4) + (c4 << 0)
-
-    Furthermore, the possible characters '0'..'9', 'A'..'F', and 'a'..'f'
-    must be converted to the integers 0x0..0x9, 0xA..0xF, 0xA..0xF, resp. The
-    conversion is done by subtracting the offset (0x30, 0x37, and 0x57)
-    between the ASCII value of the character and the desired integer value.
-
-    @return codepoint (0x0000..0xFFFF) or -1 in case of an error (e.g. EOF or
-            non-hex character)
-    */
-    int get_codepoint()
-    {
-        // this function only makes sense after reading `\u`
-        assert(current == 'u');
-        int codepoint = 0;
-
-        const auto factors = { 12, 8, 4, 0 };
-        for (const auto factor : factors)
-        {
-            get();
-
-            if (current >= '0' and current <= '9')
-            {
-                codepoint += ((current - 0x30) << factor);
-            }
-            else if (current >= 'A' and current <= 'F')
-            {
-                codepoint += ((current - 0x37) << factor);
-            }
-            else if (current >= 'a' and current <= 'f')
-            {
-                codepoint += ((current - 0x57) << factor);
-            }
-            else
-            {
-                return -1;
-            }
-        }
-
-        assert(0x0000 <= codepoint and codepoint <= 0xFFFF);
-        return codepoint;
-    }
-
-    /*!
-    @brief check if the next byte(s) are inside a given range
-
-    Adds the current byte and, for each passed range, reads a new byte and
-    checks if it is inside the range. If a violation was detected, set up an
-    error message and return false. Otherwise, return true.
-
-    @param[in] ranges  list of integers; interpreted as list of pairs of
-                       inclusive lower and upper bound, respectively
-
-    @pre The passed list @a ranges must have 2, 4, or 6 elements; that is,
-         1, 2, or 3 pairs. This precondition is enforced by an assertion.
-
-    @return true if and only if no range violation was detected
-    */
-    bool next_byte_in_range(std::initializer_list<int> ranges)
-    {
-        assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
-        add(current);
-
-        for (auto range = ranges.begin(); range != ranges.end(); ++range)
-        {
-            get();
-            if (JSON_LIKELY(*range <= current and current <= *(++range)))
-            {
-                add(current);
-            }
-            else
-            {
-                error_message = "invalid string: ill-formed UTF-8 byte";
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /*!
-    @brief scan a string literal
-
-    This function scans a string according to Sect. 7 of RFC 7159. While
-    scanning, bytes are escaped and copied into buffer yytext. Then the function
-    returns successfully, yytext is *not* null-terminated (as it may contain \0
-    bytes), and yytext.size() is the number of bytes in the string.
-
-    @return token_type::value_string if string could be successfully scanned,
-            token_type::parse_error otherwise
-
-    @note In case of errors, variable error_message contains a textual
-          description.
-    */
-    token_type scan_string()
-    {
-        // reset yytext (ignore opening quote)
-        reset();
-
-        // we entered the function by reading an open quote
-        assert(current == '\"');
-
-        while (true)
-        {
-            // get next character
-            switch (get())
-            {
-                // end of file while parsing string
-                case std::char_traits<char>::eof():
-                {
-                    error_message = "invalid string: missing closing quote";
-                    return token_type::parse_error;
-                }
-
-                // closing quote
-                case '\"':
-                {
-                    return token_type::value_string;
-                }
-
-                // escapes
-                case '\\':
-                {
-                    switch (get())
-                    {
-                        // quotation mark
-                        case '\"':
-                            add('\"');
-                            break;
-                        // reverse solidus
-                        case '\\':
-                            add('\\');
-                            break;
-                        // solidus
-                        case '/':
-                            add('/');
-                            break;
-                        // backspace
-                        case 'b':
-                            add('\b');
-                            break;
-                        // form feed
-                        case 'f':
-                            add('\f');
-                            break;
-                        // line feed
-                        case 'n':
-                            add('\n');
-                            break;
-                        // carriage return
-                        case 'r':
-                            add('\r');
-                            break;
-                        // tab
-                        case 't':
-                            add('\t');
-                            break;
-
-                        // unicode escapes
-                        case 'u':
-                        {
-                            const int codepoint1 = get_codepoint();
-                            int codepoint = codepoint1; // start with codepoint1
-
-                            if (JSON_UNLIKELY(codepoint1 == -1))
-                            {
-                                error_message = "invalid string: '\\u' must be followed by 4 hex digits";
-                                return token_type::parse_error;
-                            }
-
-                            // check if code point is a high surrogate
-                            if (0xD800 <= codepoint1 and codepoint1 <= 0xDBFF)
-                            {
-                                // expect next \uxxxx entry
-                                if (JSON_LIKELY(get() == '\\' and get() == 'u'))
-                                {
-                                    const int codepoint2 = get_codepoint();
-
-                                    if (JSON_UNLIKELY(codepoint2 == -1))
-                                    {
-                                        error_message = "invalid string: '\\u' must be followed by 4 hex digits";
-                                        return token_type::parse_error;
-                                    }
-
-                                    // check if codepoint2 is a low surrogate
-                                    if (JSON_LIKELY(0xDC00 <= codepoint2 and codepoint2 <= 0xDFFF))
-                                    {
-                                        // overwrite codepoint
-                                        codepoint =
-                                            // high surrogate occupies the most significant 22 bits
-                                            (codepoint1 << 10)
-                                            // low surrogate occupies the least significant 15 bits
-                                            + codepoint2
-                                            // there is still the 0xD800, 0xDC00 and 0x10000 noise
-                                            // in the result so we have to subtract with:
-                                            // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
-                                            - 0x35FDC00;
-                                    }
-                                    else
-                                    {
-                                        error_message = "invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF";
-                                        return token_type::parse_error;
-                                    }
-                                }
-                                else
-                                {
-                                    error_message = "invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF";
-                                    return token_type::parse_error;
-                                }
-                            }
-                            else
-                            {
-                                if (JSON_UNLIKELY(0xDC00 <= codepoint1 and codepoint1 <= 0xDFFF))
-                                {
-                                    error_message = "invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF";
-                                    return token_type::parse_error;
-                                }
-                            }
-
-                            // result of the above calculation yields a proper codepoint
-                            assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
-
-                            // translate codepoint into bytes
-                            if (codepoint < 0x80)
-                            {
-                                // 1-byte characters: 0xxxxxxx (ASCII)
-                                add(codepoint);
-                            }
-                            else if (codepoint <= 0x7FF)
-                            {
-                                // 2-byte characters: 110xxxxx 10xxxxxx
-                                add(0xC0 | (codepoint >> 6));
-                                add(0x80 | (codepoint & 0x3F));
-                            }
-                            else if (codepoint <= 0xFFFF)
-                            {
-                                // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                                add(0xE0 | (codepoint >> 12));
-                                add(0x80 | ((codepoint >> 6) & 0x3F));
-                                add(0x80 | (codepoint & 0x3F));
-                            }
-                            else
-                            {
-                                // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                                add(0xF0 | (codepoint >> 18));
-                                add(0x80 | ((codepoint >> 12) & 0x3F));
-                                add(0x80 | ((codepoint >> 6) & 0x3F));
-                                add(0x80 | (codepoint & 0x3F));
-                            }
-
-                            break;
-                        }
-
-                        // other characters after escape
-                        default:
-                            error_message = "invalid string: forbidden character after backslash";
-                            return token_type::parse_error;
-                    }
-
-                    break;
-                }
-
-                // invalid control characters
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x04:
-                case 0x05:
-                case 0x06:
-                case 0x07:
-                case 0x08:
-                case 0x09:
-                case 0x0A:
-                case 0x0B:
-                case 0x0C:
-                case 0x0D:
-                case 0x0E:
-                case 0x0F:
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x14:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                case 0x18:
-                case 0x19:
-                case 0x1A:
-                case 0x1B:
-                case 0x1C:
-                case 0x1D:
-                case 0x1E:
-                case 0x1F:
-                {
-                    error_message = "invalid string: control character must be escaped";
-                    return token_type::parse_error;
-                }
-
-                // U+0020..U+007F (except U+0022 (quote) and U+005C (backspace))
-                case 0x20:
-                case 0x21:
-                case 0x23:
-                case 0x24:
-                case 0x25:
-                case 0x26:
-                case 0x27:
-                case 0x28:
-                case 0x29:
-                case 0x2A:
-                case 0x2B:
-                case 0x2C:
-                case 0x2D:
-                case 0x2E:
-                case 0x2F:
-                case 0x30:
-                case 0x31:
-                case 0x32:
-                case 0x33:
-                case 0x34:
-                case 0x35:
-                case 0x36:
-                case 0x37:
-                case 0x38:
-                case 0x39:
-                case 0x3A:
-                case 0x3B:
-                case 0x3C:
-                case 0x3D:
-                case 0x3E:
-                case 0x3F:
-                case 0x40:
-                case 0x41:
-                case 0x42:
-                case 0x43:
-                case 0x44:
-                case 0x45:
-                case 0x46:
-                case 0x47:
-                case 0x48:
-                case 0x49:
-                case 0x4A:
-                case 0x4B:
-                case 0x4C:
-                case 0x4D:
-                case 0x4E:
-                case 0x4F:
-                case 0x50:
-                case 0x51:
-                case 0x52:
-                case 0x53:
-                case 0x54:
-                case 0x55:
-                case 0x56:
-                case 0x57:
-                case 0x58:
-                case 0x59:
-                case 0x5A:
-                case 0x5B:
-                case 0x5D:
-                case 0x5E:
-                case 0x5F:
-                case 0x60:
-                case 0x61:
-                case 0x62:
-                case 0x63:
-                case 0x64:
-                case 0x65:
-                case 0x66:
-                case 0x67:
-                case 0x68:
-                case 0x69:
-                case 0x6A:
-                case 0x6B:
-                case 0x6C:
-                case 0x6D:
-                case 0x6E:
-                case 0x6F:
-                case 0x70:
-                case 0x71:
-                case 0x72:
-                case 0x73:
-                case 0x74:
-                case 0x75:
-                case 0x76:
-                case 0x77:
-                case 0x78:
-                case 0x79:
-                case 0x7A:
-                case 0x7B:
-                case 0x7C:
-                case 0x7D:
-                case 0x7E:
-                case 0x7F:
-                {
-                    add(current);
-                    break;
-                }
-
-                // U+0080..U+07FF: bytes C2..DF 80..BF
-                case 0xC2:
-                case 0xC3:
-                case 0xC4:
-                case 0xC5:
-                case 0xC6:
-                case 0xC7:
-                case 0xC8:
-                case 0xC9:
-                case 0xCA:
-                case 0xCB:
-                case 0xCC:
-                case 0xCD:
-                case 0xCE:
-                case 0xCF:
-                case 0xD0:
-                case 0xD1:
-                case 0xD2:
-                case 0xD3:
-                case 0xD4:
-                case 0xD5:
-                case 0xD6:
-                case 0xD7:
-                case 0xD8:
-                case 0xD9:
-                case 0xDA:
-                case 0xDB:
-                case 0xDC:
-                case 0xDD:
-                case 0xDE:
-                case 0xDF:
-                {
-                    if (JSON_UNLIKELY(not next_byte_in_range({0x80, 0xBF})))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
-                case 0xE0:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+1000..U+CFFF: bytes E1..EC 80..BF 80..BF
-                // U+E000..U+FFFF: bytes EE..EF 80..BF 80..BF
-                case 0xE1:
-                case 0xE2:
-                case 0xE3:
-                case 0xE4:
-                case 0xE5:
-                case 0xE6:
-                case 0xE7:
-                case 0xE8:
-                case 0xE9:
-                case 0xEA:
-                case 0xEB:
-                case 0xEC:
-                case 0xEE:
-                case 0xEF:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+D000..U+D7FF: bytes ED 80..9F 80..BF
-                case 0xED:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
-                case 0xF0:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+40000..U+FFFFF F1..F3 80..BF 80..BF 80..BF
-                case 0xF1:
-                case 0xF2:
-                case 0xF3:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
-                case 0xF4:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // remaining bytes (80..C1 and F5..FF) are ill-formed
-                default:
-                {
-                    error_message = "invalid string: ill-formed UTF-8 byte";
-                    return token_type::parse_error;
-                }
-            }
-        }
-    }
-
-    static void strtof(float& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtof(str, endptr);
-    }
-
-    static void strtof(double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtod(str, endptr);
-    }
-
-    static void strtof(long double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtold(str, endptr);
-    }
-
-    /*!
-    @brief scan a number literal
-
-    This function scans a string according to Sect. 6 of RFC 7159.
-
-    The function is realized with a deterministic finite state machine derived
-    from the grammar described in RFC 7159. Starting in state "init", the
-    input is read and used to determined the next state. Only state "done"
-    accepts the number. State "error" is a trap state to model errors. In the
-    table below, "anything" means any character but the ones listed before.
-
-    state    | 0        | 1-9      | e E      | +       | -       | .        | anything
-    ---------|----------|----------|----------|---------|---------|----------|-----------
-    init     | zero     | any1     | [error]  | [error] | minus   | [error]  | [error]
-    minus    | zero     | any1     | [error]  | [error] | [error] | [error]  | [error]
-    zero     | done     | done     | exponent | done    | done    | decimal1 | done
-    any1     | any1     | any1     | exponent | done    | done    | decimal1 | done
-    decimal1 | decimal2 | [error]  | [error]  | [error] | [error] | [error]  | [error]
-    decimal2 | decimal2 | decimal2 | exponent | done    | done    | done     | done
-    exponent | any2     | any2     | [error]  | sign    | sign    | [error]  | [error]
-    sign     | any2     | any2     | [error]  | [error] | [error] | [error]  | [error]
-    any2     | any2     | any2     | done     | done    | done    | done     | done
-
-    The state machine is realized with one label per state (prefixed with
-    "scan_number_") and `goto` statements between them. The state machine
-    contains cycles, but any cycle can be left when EOF is read. Therefore,
-    the function is guaranteed to terminate.
-
-    During scanning, the read bytes are stored in yytext. This string is
-    then converted to a signed integer, an unsigned integer, or a
-    floating-point number.
-
-    @return token_type::value_unsigned, token_type::value_integer, or
-            token_type::value_float if number could be successfully scanned,
-            token_type::parse_error otherwise
-
-    @note The scanner is independent of the current locale. Internally, the
-          locale's decimal point is used instead of `.` to work with the
-          locale-dependent converters.
-    */
-    token_type scan_number()
-    {
-        // reset yytext to store the number's bytes
-        reset();
-
-        // the type of the parsed number; initially set to unsigned; will be
-        // changed if minus sign, decimal point or exponent is read
-        token_type number_type = token_type::value_unsigned;
-
-        // state (init): we just found out we need to scan a number
-        switch (current)
-        {
-            case '-':
-            {
-                add(current);
-                goto scan_number_minus;
-            }
-
-            case '0':
-            {
-                add(current);
-                goto scan_number_zero;
-            }
-
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any1;
-            }
-
-            default:
-            {
-                // all other characters are rejected outside scan_number()
-                assert(false); // LCOV_EXCL_LINE
-            }
-        }
-
-scan_number_minus:
-        // state: we just parsed a leading minus sign
-        number_type = token_type::value_integer;
-        switch (get())
-        {
-            case '0':
-            {
-                add(current);
-                goto scan_number_zero;
-            }
-
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any1;
-            }
-
-            default:
-            {
-                error_message = "invalid number; expected digit after '-'";
-                return token_type::parse_error;
-            }
-        }
-
-scan_number_zero:
-        // state: we just parse a zero (maybe with a leading minus sign)
-        switch (get())
-        {
-            case '.':
-            {
-                add(decimal_point_char);
-                goto scan_number_decimal1;
-            }
-
-            case 'e':
-            case 'E':
-            {
-                add(current);
-                goto scan_number_exponent;
-            }
-
-            default:
-                goto scan_number_done;
-        }
-
-scan_number_any1:
-        // state: we just parsed a number 0-9 (maybe with a leading minus sign)
-        switch (get())
-        {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any1;
-            }
-
-            case '.':
-            {
-                add(decimal_point_char);
-                goto scan_number_decimal1;
-            }
-
-            case 'e':
-            case 'E':
-            {
-                add(current);
-                goto scan_number_exponent;
-            }
-
-            default:
-                goto scan_number_done;
-        }
-
-scan_number_decimal1:
-        // state: we just parsed a decimal point
-        number_type = token_type::value_float;
-        switch (get())
-        {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_decimal2;
-            }
-
-            default:
-            {
-                error_message = "invalid number; expected digit after '.'";
-                return token_type::parse_error;
-            }
-        }
-
-scan_number_decimal2:
-        // we just parsed at least one number after a decimal point
-        switch (get())
-        {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_decimal2;
-            }
-
-            case 'e':
-            case 'E':
-            {
-                add(current);
-                goto scan_number_exponent;
-            }
-
-            default:
-                goto scan_number_done;
-        }
-
-scan_number_exponent:
-        // we just parsed an exponent
-        number_type = token_type::value_float;
-        switch (get())
-        {
-            case '+':
-            case '-':
-            {
-                add(current);
-                goto scan_number_sign;
-            }
-
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any2;
-            }
-
-            default:
-            {
-                error_message =
-                    "invalid number; expected '+', '-', or digit after exponent";
-                return token_type::parse_error;
-            }
-        }
-
-scan_number_sign:
-        // we just parsed an exponent sign
-        switch (get())
-        {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any2;
-            }
-
-            default:
-            {
-                error_message = "invalid number; expected digit after exponent sign";
-                return token_type::parse_error;
-            }
-        }
-
-scan_number_any2:
-        // we just parsed a number after the exponent or exponent sign
-        switch (get())
-        {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any2;
-            }
-
-            default:
-                goto scan_number_done;
-        }
-
-scan_number_done:
-        // unget the character after the number (we only read it to know that
-        // we are done scanning a number)
-        unget();
-
-        char* endptr = nullptr;
-        errno = 0;
-
-        // try to parse integers first and fall back to floats
-        if (number_type == token_type::value_unsigned)
-        {
-            const auto x = std::strtoull(yytext.data(), &endptr, 10);
-
-            // we checked the number format before
-            assert(endptr == yytext.data() + yytext.size());
-
-            if (errno == 0)
-            {
-                value_unsigned = static_cast<number_unsigned_t>(x);
-                if (value_unsigned == x)
-                {
-                    return token_type::value_unsigned;
-                }
-            }
-        }
-        else if (number_type == token_type::value_integer)
-        {
-            const auto x = std::strtoll(yytext.data(), &endptr, 10);
-
-            // we checked the number format before
-            assert(endptr == yytext.data() + yytext.size());
-
-            if (errno == 0)
-            {
-                value_integer = static_cast<number_integer_t>(x);
-                if (value_integer == x)
-                {
-                    return token_type::value_integer;
-                }
-            }
-        }
-
-        // this code is reached if we parse a floating-point number or if an
-        // integer conversion above failed
-        strtof(value_float, yytext.data(), &endptr);
-
-        // we checked the number format before
-        assert(endptr == yytext.data() + yytext.size());
-
-        return token_type::value_float;
-    }
-
-    /*!
-    @param[in] literal_text  the literal text to expect
-    @param[in] length        the length of the passed literal text
-    @param[in] return_type   the token type to return on success
-    */
-    token_type scan_literal(const char* literal_text, const std::size_t length,
-                            token_type return_type)
-    {
-        assert(current == literal_text[0]);
-        for (std::size_t i = 1; i < length; ++i)
-        {
-            if (JSON_UNLIKELY(get() != literal_text[i]))
-            {
-                error_message = "invalid literal";
-                return token_type::parse_error;
-            }
-        }
-        return return_type;
-    }
-
-    /////////////////////
-    // input management
-    /////////////////////
-
-    /// reset yytext; current character is beginning of token
-    void reset() noexcept
-    {
-        yytext.clear();
-        token_string.clear();
-        token_string.push_back(std::char_traits<char>::to_char_type(current));
-    }
-
-    /*
-    @brief get next character from the input
-
-    This function provides the interface to the used input adapter. It does
-    not throw in case the input reached EOF, but returns a
-    `std::char_traits<char>::eof()` in that case.  Stores the scanned characters
-    for use in error messages.
-
-    @return character read from the input
-    */
-    std::char_traits<char>::int_type get()
-    {
-        ++chars_read;
-        current = ia->get_character();
-        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
-        {
-            token_string.push_back(std::char_traits<char>::to_char_type(current));
-        }
-        return current;
-    }
-
-    /// unget current character (return it again on next get)
-    void unget()
-    {
-        --chars_read;
-        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
-        {
-            ia->unget_character();
-            assert(token_string.size() != 0);
-            token_string.pop_back();
-        }
-    }
-
-    /// add a character to yytext
-    void add(int c)
-    {
-        yytext.push_back(std::char_traits<char>::to_char_type(c));
-    }
-
-  public:
-    /////////////////////
-    // value getters
-    /////////////////////
-
-    /// return integer value
-    constexpr number_integer_t get_number_integer() const noexcept
-    {
-        return value_integer;
-    }
-
-    /// return unsigned integer value
-    constexpr number_unsigned_t get_number_unsigned() const noexcept
-    {
-        return value_unsigned;
-    }
-
-    /// return floating-point value
-    constexpr number_float_t get_number_float() const noexcept
-    {
-        return value_float;
-    }
-
-    /// return current string value (implicitly resets the token; useful only once)
-    std::string move_string()
-    {
-        return std::move(yytext);
-    }
-
-    /////////////////////
-    // diagnostics
-    /////////////////////
-
-    /// return position of last read token
-    constexpr std::size_t get_position() const noexcept
-    {
-        return chars_read;
-    }
-
-    /// return the last read token (for errors only).  Will never contain EOF
-    /// (an arbitrary value that is not a valid char value, often -1), because
-    /// 255 may legitimately occur.  May contain NUL, which should be escaped.
-    std::string get_token_string() const
-    {
-        // escape control characters
-        std::string result;
-        for (const auto c : token_string)
-        {
-            if ('\x00' <= c and c <= '\x1F')
-            {
-                // escape control characters
-                std::stringstream ss;
-                ss << "<U+" << std::setw(4) << std::uppercase << std::setfill('0')
-                   << std::hex << static_cast<int>(c) << ">";
-                result += ss.str();
-            }
-            else
-            {
-                // add character as is
-                result.push_back(c);
-            }
-        }
-
-        return result;
-    }
-
-    /// return syntax error message
-    constexpr const char* get_error_message() const noexcept
-    {
-        return error_message;
-    }
-
-    /////////////////////
-    // actual scanner
-    /////////////////////
-
-    token_type scan()
-    {
-        // read next character and ignore whitespace
-        do
-        {
-            get();
-        }
-        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
-
-        switch (current)
-        {
-            // structural characters
-            case '[':
-                return token_type::begin_array;
-            case ']':
-                return token_type::end_array;
-            case '{':
-                return token_type::begin_object;
-            case '}':
-                return token_type::end_object;
-            case ':':
-                return token_type::name_separator;
-            case ',':
-                return token_type::value_separator;
-
-            // literals
-            case 't':
-                return scan_literal("true", 4, token_type::literal_true);
-            case 'f':
-                return scan_literal("false", 5, token_type::literal_false);
-            case 'n':
-                return scan_literal("null", 4, token_type::literal_null);
-
-            // string
-            case '\"':
-                return scan_string();
-
-            // number
-            case '-':
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                return scan_number();
-
-            // end of input (the null byte is needed when parsing from
-            // string literals)
-            case '\0':
-            case std::char_traits<char>::eof():
-                return token_type::end_of_input;
-
-            // error
-            default:
-                error_message = "invalid literal";
-                return token_type::parse_error;
-        }
-    }
-
-  private:
-    /// input adapter
-    detail::input_adapter_t ia = nullptr;
-
-    /// the current character
-    std::char_traits<char>::int_type current = std::char_traits<char>::eof();
-
-    /// the number of characters read
-    std::size_t chars_read = 0;
-
-    /// raw input token string (for error messages)
-    std::vector<char> token_string {};
-
-    /// buffer for variable-length tokens (numbers, strings)
-    std::string yytext {};
-
-    /// a description of occurred lexer errors
-    const char* error_message = "";
-
-    // number values
-    number_integer_t value_integer = 0;
-    number_unsigned_t value_unsigned = 0;
-    number_float_t value_float = 0;
-
-    /// the decimal point
-    const char decimal_point_char = '.';
-};
-}
-}
-
-#endif
-
-/*** End of inlined file: lexer.hpp ***/
 
 namespace nlohmann
 {
@@ -6063,10 +3688,7 @@ class parser
 
 #endif
 
-/*** End of inlined file: parser.hpp ***/
-
-
-/*** Start of inlined file: primitive_iterator.hpp ***/
+// #include "detail/iterators/primitive_iterator.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
 #define NLOHMANN_JSON_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
 
@@ -6199,148 +3821,12 @@ class primitive_iterator_t
 
 #endif
 
-/*** End of inlined file: primitive_iterator.hpp ***/
-
-
-/*** Start of inlined file: internal_iterator.hpp ***/
+// #include "detail/iterators/internal_iterator.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
 #define NLOHMANN_JSON_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
 
+// #include "detail/iterators/primitive_iterator.hpp"
 
-/*** Start of inlined file: primitive_iterator.hpp ***/
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
-
-#include <ciso646> // not
-#include <cstddef> // ptrdiff_t
-#include <limits>  // numeric_limits
-#include <ostream> // ostream
-
-namespace nlohmann
-{
-namespace detail
-{
-/*
-@brief an iterator for primitive JSON types
-
-This class models an iterator for primitive JSON types (boolean, number,
-string). It's only purpose is to allow the iterator/const_iterator classes
-to "iterate" over primitive values. Internally, the iterator is modeled by
-a `difference_type` variable. Value begin_value (`0`) models the begin,
-end_value (`1`) models past the end.
-*/
-class primitive_iterator_t
-{
-  public:
-    using difference_type = std::ptrdiff_t;
-
-    constexpr difference_type get_value() const noexcept
-    {
-        return m_it;
-    }
-
-    /// set iterator to a defined beginning
-    void set_begin() noexcept
-    {
-        m_it = begin_value;
-    }
-
-    /// set iterator to a defined past the end
-    void set_end() noexcept
-    {
-        m_it = end_value;
-    }
-
-    /// return whether the iterator can be dereferenced
-    constexpr bool is_begin() const noexcept
-    {
-        return m_it == begin_value;
-    }
-
-    /// return whether the iterator is at end
-    constexpr bool is_end() const noexcept
-    {
-        return m_it == end_value;
-    }
-
-    friend constexpr bool operator==(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
-    {
-        return lhs.m_it == rhs.m_it;
-    }
-
-    friend constexpr bool operator<(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
-    {
-        return lhs.m_it < rhs.m_it;
-    }
-
-    primitive_iterator_t operator+(difference_type i)
-    {
-        auto result = *this;
-        result += i;
-        return result;
-    }
-
-    friend constexpr difference_type operator-(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
-    {
-        return lhs.m_it - rhs.m_it;
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, primitive_iterator_t it)
-    {
-        return os << it.m_it;
-    }
-
-    primitive_iterator_t& operator++()
-    {
-        ++m_it;
-        return *this;
-    }
-
-    primitive_iterator_t const operator++(int)
-    {
-        auto result = *this;
-        m_it++;
-        return result;
-    }
-
-    primitive_iterator_t& operator--()
-    {
-        --m_it;
-        return *this;
-    }
-
-    primitive_iterator_t const operator--(int)
-    {
-        auto result = *this;
-        m_it--;
-        return result;
-    }
-
-    primitive_iterator_t& operator+=(difference_type n)
-    {
-        m_it += n;
-        return *this;
-    }
-
-    primitive_iterator_t& operator-=(difference_type n)
-    {
-        m_it -= n;
-        return *this;
-    }
-
-  private:
-    static constexpr difference_type begin_value = 0;
-    static constexpr difference_type end_value = begin_value + 1;
-
-    /// iterator as signed integer type
-    difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
-};
-}
-}
-
-#endif
-
-/*** End of inlined file: primitive_iterator.hpp ***/
 
 namespace nlohmann
 {
@@ -6366,10 +3852,7 @@ template<typename BasicJsonType> struct internal_iterator
 
 #endif
 
-/*** End of inlined file: internal_iterator.hpp ***/
-
-
-/*** Start of inlined file: iter_impl.hpp ***/
+// #include "detail/iterators/iter_impl.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_ITERATORS_ITER_IMPL_HPP
 #define NLOHMANN_JSON_DETAIL_ITERATORS_ITER_IMPL_HPP
 
@@ -6377,36 +3860,18 @@ template<typename BasicJsonType> struct internal_iterator
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
 
+// #include "detail/exceptions.hpp"
 
-/*** Start of inlined file: internal_iterator.hpp ***/
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
+// #include "detail/iterators/internal_iterator.hpp"
 
-namespace nlohmann
-{
-namespace detail
-{
-/*!
-@brief an iterator value
+// #include "detail/iterators/primitive_iterator.hpp"
 
-@note This structure could easily be a union, but MSVC currently does not allow
-unions members with complex constructors, see https://github.com/nlohmann/json/pull/105.
-*/
-template<typename BasicJsonType> struct internal_iterator
-{
-    /// iterator for JSON objects
-    typename BasicJsonType::object_t::iterator object_iterator {};
-    /// iterator for JSON arrays
-    typename BasicJsonType::array_t::iterator array_iterator {};
-    /// generic iterator for all other types
-    primitive_iterator_t primitive_iterator {};
-};
-}
-}
+// #include "detail/macro_scope.hpp"
 
-#endif
+// #include "detail/meta.hpp"
 
-/*** End of inlined file: internal_iterator.hpp ***/
+// #include "detail/value_t.hpp"
+
 
 namespace nlohmann
 {
@@ -7012,15 +4477,15 @@ class iter_impl
 
 #endif
 
-/*** End of inlined file: iter_impl.hpp ***/
-
-
-/*** Start of inlined file: iteration_proxy.hpp ***/
+// #include "detail/iterators/iteration_proxy.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_ITERATORS_ITERATION_PROXY_HPP
 #define NLOHMANN_JSON_DETAIL_ITERATORS_ITERATION_PROXY_HPP
 
 #include <cstddef> // size_t
 #include <string> // string, to_string
+
+// #include "detail/value_t.hpp"
+
 
 namespace nlohmann
 {
@@ -7116,10 +4581,7 @@ template<typename IteratorType> class iteration_proxy
 
 #endif
 
-/*** End of inlined file: iteration_proxy.hpp ***/
-
-
-/*** Start of inlined file: json_reverse_iterator.hpp ***/
+// #include "detail/iterators/json_reverse_iterator.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
 #define NLOHMANN_JSON_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
 
@@ -7243,10 +4705,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 
 #endif
 
-/*** End of inlined file: json_reverse_iterator.hpp ***/
-
-
-/*** Start of inlined file: output_adapters.hpp ***/
+// #include "detail/parsing/output_adapters.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_PARSING_OUTPUT_ADAPTERS_HPP
 #define NLOHMANN_JSON_DETAIL_PARSING_OUTPUT_ADAPTERS_HPP
 
@@ -7364,10 +4823,7 @@ class output_adapter
 
 #endif
 
-/*** End of inlined file: output_adapters.hpp ***/
-
-
-/*** Start of inlined file: binary_reader.hpp ***/
+// #include "detail/parsing/binary_reader.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_PARSING_BINARY_READER_HPP
 #define NLOHMANN_JSON_DETAIL_PARSING_BINARY_READER_HPP
 
@@ -7385,6 +4841,15 @@ class output_adapter
 #include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
+
+// #include "detail/exceptions.hpp"
+
+// #include "detail/macro_scope.hpp"
+
+// #include "detail/parsing/input_adapters.hpp"
+
+// #include "detail/value_t.hpp"
+
 
 namespace nlohmann
 {
@@ -8457,10 +5922,7 @@ class binary_reader
 
 #endif
 
-/*** End of inlined file: binary_reader.hpp ***/
-
-
-/*** Start of inlined file: binary_writer.hpp ***/
+// #include "detail/parsing/binary_writer.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_PARSING_BINARY_WRITER_HPP
 #define NLOHMANN_JSON_DETAIL_PARSING_BINARY_WRITER_HPP
 
@@ -8470,1219 +5932,10 @@ class binary_reader
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 
+// #include "detail/parsing/binary_reader.hpp"
 
-/*** Start of inlined file: binary_reader.hpp ***/
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_BINARY_READER_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_BINARY_READER_HPP
+// #include "detail/parsing/output_adapters.hpp"
 
-#include <algorithm> // generate_n
-#include <array> // array
-#include <cassert> // assert
-#include <cmath> // ldexp
-#include <cstddef> // size_t
-#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
-#include <cstring> // memcpy
-#include <iomanip> // setw, setfill
-#include <ios> // hex
-#include <iterator> // back_inserter
-#include <limits> // numeric_limits
-#include <sstream> // stringstream
-#include <string> // char_traits, string
-#include <utility> // make_pair, move
-
-namespace nlohmann
-{
-namespace detail
-{
-///////////////////
-// binary reader //
-///////////////////
-
-/*!
-@brief deserialization of CBOR and MessagePack values
-*/
-template<typename BasicJsonType>
-class binary_reader
-{
-    using number_integer_t = typename BasicJsonType::number_integer_t;
-    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-
-  public:
-    /*!
-    @brief create a binary reader
-
-    @param[in] adapter  input adapter to read from
-    */
-    explicit binary_reader(input_adapter_t adapter) : ia(std::move(adapter))
-    {
-        assert(ia);
-    }
-
-    /*!
-    @brief create a JSON value from CBOR input
-
-    @param[in] strict  whether to expect the input to be consumed completed
-    @return JSON value created from CBOR input
-
-    @throw parse_error.110 if input ended unexpectedly or the end of file was
-                           not reached when @a strict was set to true
-    @throw parse_error.112 if unsupported byte was read
-    */
-    BasicJsonType parse_cbor(const bool strict)
-    {
-        const auto res = parse_cbor_internal();
-        if (strict)
-        {
-            get();
-            check_eof(true);
-        }
-        return res;
-    }
-
-    /*!
-    @brief create a JSON value from MessagePack input
-
-    @param[in] strict  whether to expect the input to be consumed completed
-    @return JSON value created from MessagePack input
-
-    @throw parse_error.110 if input ended unexpectedly or the end of file was
-                           not reached when @a strict was set to true
-    @throw parse_error.112 if unsupported byte was read
-    */
-    BasicJsonType parse_msgpack(const bool strict)
-    {
-        const auto res = parse_msgpack_internal();
-        if (strict)
-        {
-            get();
-            check_eof(true);
-        }
-        return res;
-    }
-
-    /*!
-    @brief determine system byte order
-
-    @return true if and only if system's byte order is little endian
-
-    @note from http://stackoverflow.com/a/1001328/266378
-    */
-    static constexpr bool little_endianess(int num = 1) noexcept
-    {
-        return (*reinterpret_cast<char*>(&num) == 1);
-    }
-
-  private:
-    /*!
-    @param[in] get_char  whether a new character should be retrieved from the
-                         input (true, default) or whether the last read
-                         character should be considered instead
-    */
-    BasicJsonType parse_cbor_internal(const bool get_char = true)
-    {
-        switch (get_char ? get() : current)
-        {
-            // EOF
-            case std::char_traits<char>::eof():
-                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
-
-            // Integer 0x00..0x17 (0..23)
-            case 0x00:
-            case 0x01:
-            case 0x02:
-            case 0x03:
-            case 0x04:
-            case 0x05:
-            case 0x06:
-            case 0x07:
-            case 0x08:
-            case 0x09:
-            case 0x0A:
-            case 0x0B:
-            case 0x0C:
-            case 0x0D:
-            case 0x0E:
-            case 0x0F:
-            case 0x10:
-            case 0x11:
-            case 0x12:
-            case 0x13:
-            case 0x14:
-            case 0x15:
-            case 0x16:
-            case 0x17:
-                return static_cast<number_unsigned_t>(current);
-
-            case 0x18: // Unsigned integer (one-byte uint8_t follows)
-                return get_number<uint8_t>();
-
-            case 0x19: // Unsigned integer (two-byte uint16_t follows)
-                return get_number<uint16_t>();
-
-            case 0x1A: // Unsigned integer (four-byte uint32_t follows)
-                return get_number<uint32_t>();
-
-            case 0x1B: // Unsigned integer (eight-byte uint64_t follows)
-                return get_number<uint64_t>();
-
-            // Negative integer -1-0x00..-1-0x17 (-1..-24)
-            case 0x20:
-            case 0x21:
-            case 0x22:
-            case 0x23:
-            case 0x24:
-            case 0x25:
-            case 0x26:
-            case 0x27:
-            case 0x28:
-            case 0x29:
-            case 0x2A:
-            case 0x2B:
-            case 0x2C:
-            case 0x2D:
-            case 0x2E:
-            case 0x2F:
-            case 0x30:
-            case 0x31:
-            case 0x32:
-            case 0x33:
-            case 0x34:
-            case 0x35:
-            case 0x36:
-            case 0x37:
-                return static_cast<int8_t>(0x20 - 1 - current);
-
-            case 0x38: // Negative integer (one-byte uint8_t follows)
-            {
-                // must be uint8_t !
-                return static_cast<number_integer_t>(-1) - get_number<uint8_t>();
-            }
-
-            case 0x39: // Negative integer -1-n (two-byte uint16_t follows)
-            {
-                return static_cast<number_integer_t>(-1) - get_number<uint16_t>();
-            }
-
-            case 0x3A: // Negative integer -1-n (four-byte uint32_t follows)
-            {
-                return static_cast<number_integer_t>(-1) - get_number<uint32_t>();
-            }
-
-            case 0x3B: // Negative integer -1-n (eight-byte uint64_t follows)
-            {
-                return static_cast<number_integer_t>(-1) -
-                       static_cast<number_integer_t>(get_number<uint64_t>());
-            }
-
-            // UTF-8 string (0x00..0x17 bytes follow)
-            case 0x60:
-            case 0x61:
-            case 0x62:
-            case 0x63:
-            case 0x64:
-            case 0x65:
-            case 0x66:
-            case 0x67:
-            case 0x68:
-            case 0x69:
-            case 0x6A:
-            case 0x6B:
-            case 0x6C:
-            case 0x6D:
-            case 0x6E:
-            case 0x6F:
-            case 0x70:
-            case 0x71:
-            case 0x72:
-            case 0x73:
-            case 0x74:
-            case 0x75:
-            case 0x76:
-            case 0x77:
-            case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
-            case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
-            case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
-            case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
-            case 0x7F: // UTF-8 string (indefinite length)
-            {
-                return get_cbor_string();
-            }
-
-            // array (0x00..0x17 data items follow)
-            case 0x80:
-            case 0x81:
-            case 0x82:
-            case 0x83:
-            case 0x84:
-            case 0x85:
-            case 0x86:
-            case 0x87:
-            case 0x88:
-            case 0x89:
-            case 0x8A:
-            case 0x8B:
-            case 0x8C:
-            case 0x8D:
-            case 0x8E:
-            case 0x8F:
-            case 0x90:
-            case 0x91:
-            case 0x92:
-            case 0x93:
-            case 0x94:
-            case 0x95:
-            case 0x96:
-            case 0x97:
-            {
-                return get_cbor_array(current & 0x1F);
-            }
-
-            case 0x98: // array (one-byte uint8_t for n follows)
-            {
-                return get_cbor_array(get_number<uint8_t>());
-            }
-
-            case 0x99: // array (two-byte uint16_t for n follow)
-            {
-                return get_cbor_array(get_number<uint16_t>());
-            }
-
-            case 0x9A: // array (four-byte uint32_t for n follow)
-            {
-                return get_cbor_array(get_number<uint32_t>());
-            }
-
-            case 0x9B: // array (eight-byte uint64_t for n follow)
-            {
-                return get_cbor_array(get_number<uint64_t>());
-            }
-
-            case 0x9F: // array (indefinite length)
-            {
-                BasicJsonType result = value_t::array;
-                while (get() != 0xFF)
-                {
-                    result.push_back(parse_cbor_internal(false));
-                }
-                return result;
-            }
-
-            // map (0x00..0x17 pairs of data items follow)
-            case 0xA0:
-            case 0xA1:
-            case 0xA2:
-            case 0xA3:
-            case 0xA4:
-            case 0xA5:
-            case 0xA6:
-            case 0xA7:
-            case 0xA8:
-            case 0xA9:
-            case 0xAA:
-            case 0xAB:
-            case 0xAC:
-            case 0xAD:
-            case 0xAE:
-            case 0xAF:
-            case 0xB0:
-            case 0xB1:
-            case 0xB2:
-            case 0xB3:
-            case 0xB4:
-            case 0xB5:
-            case 0xB6:
-            case 0xB7:
-            {
-                return get_cbor_object(current & 0x1F);
-            }
-
-            case 0xB8: // map (one-byte uint8_t for n follows)
-            {
-                return get_cbor_object(get_number<uint8_t>());
-            }
-
-            case 0xB9: // map (two-byte uint16_t for n follow)
-            {
-                return get_cbor_object(get_number<uint16_t>());
-            }
-
-            case 0xBA: // map (four-byte uint32_t for n follow)
-            {
-                return get_cbor_object(get_number<uint32_t>());
-            }
-
-            case 0xBB: // map (eight-byte uint64_t for n follow)
-            {
-                return get_cbor_object(get_number<uint64_t>());
-            }
-
-            case 0xBF: // map (indefinite length)
-            {
-                BasicJsonType result = value_t::object;
-                while (get() != 0xFF)
-                {
-                    auto key = get_cbor_string();
-                    result[key] = parse_cbor_internal();
-                }
-                return result;
-            }
-
-            case 0xF4: // false
-            {
-                return false;
-            }
-
-            case 0xF5: // true
-            {
-                return true;
-            }
-
-            case 0xF6: // null
-            {
-                return value_t::null;
-            }
-
-            case 0xF9: // Half-Precision Float (two-byte IEEE 754)
-            {
-                const int byte1 = get();
-                check_eof();
-                const int byte2 = get();
-                check_eof();
-
-                // code from RFC 7049, Appendix D, Figure 3:
-                // As half-precision floating-point numbers were only added
-                // to IEEE 754 in 2008, today's programming platforms often
-                // still only have limited support for them. It is very
-                // easy to include at least decoding support for them even
-                // without such support. An example of a small decoder for
-                // half-precision floating-point numbers in the C language
-                // is shown in Fig. 3.
-                const int half = (byte1 << 8) + byte2;
-                const int exp = (half >> 10) & 0x1F;
-                const int mant = half & 0x3FF;
-                double val;
-                if (exp == 0)
-                {
-                    val = std::ldexp(mant, -24);
-                }
-                else if (exp != 31)
-                {
-                    val = std::ldexp(mant + 1024, exp - 25);
-                }
-                else
-                {
-                    val = (mant == 0) ? std::numeric_limits<double>::infinity()
-                          : std::numeric_limits<double>::quiet_NaN();
-                }
-                return (half & 0x8000) != 0 ? -val : val;
-            }
-
-            case 0xFA: // Single-Precision Float (four-byte IEEE 754)
-            {
-                return get_number<float>();
-            }
-
-            case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
-            {
-                return get_number<double>();
-            }
-
-            default: // anything else (0xFF is handled inside the other types)
-            {
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(112, chars_read, "error reading CBOR; last byte: 0x" + ss.str()));
-            }
-        }
-    }
-
-    BasicJsonType parse_msgpack_internal()
-    {
-        switch (get())
-        {
-            // EOF
-            case std::char_traits<char>::eof():
-                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
-
-            // positive fixint
-            case 0x00:
-            case 0x01:
-            case 0x02:
-            case 0x03:
-            case 0x04:
-            case 0x05:
-            case 0x06:
-            case 0x07:
-            case 0x08:
-            case 0x09:
-            case 0x0A:
-            case 0x0B:
-            case 0x0C:
-            case 0x0D:
-            case 0x0E:
-            case 0x0F:
-            case 0x10:
-            case 0x11:
-            case 0x12:
-            case 0x13:
-            case 0x14:
-            case 0x15:
-            case 0x16:
-            case 0x17:
-            case 0x18:
-            case 0x19:
-            case 0x1A:
-            case 0x1B:
-            case 0x1C:
-            case 0x1D:
-            case 0x1E:
-            case 0x1F:
-            case 0x20:
-            case 0x21:
-            case 0x22:
-            case 0x23:
-            case 0x24:
-            case 0x25:
-            case 0x26:
-            case 0x27:
-            case 0x28:
-            case 0x29:
-            case 0x2A:
-            case 0x2B:
-            case 0x2C:
-            case 0x2D:
-            case 0x2E:
-            case 0x2F:
-            case 0x30:
-            case 0x31:
-            case 0x32:
-            case 0x33:
-            case 0x34:
-            case 0x35:
-            case 0x36:
-            case 0x37:
-            case 0x38:
-            case 0x39:
-            case 0x3A:
-            case 0x3B:
-            case 0x3C:
-            case 0x3D:
-            case 0x3E:
-            case 0x3F:
-            case 0x40:
-            case 0x41:
-            case 0x42:
-            case 0x43:
-            case 0x44:
-            case 0x45:
-            case 0x46:
-            case 0x47:
-            case 0x48:
-            case 0x49:
-            case 0x4A:
-            case 0x4B:
-            case 0x4C:
-            case 0x4D:
-            case 0x4E:
-            case 0x4F:
-            case 0x50:
-            case 0x51:
-            case 0x52:
-            case 0x53:
-            case 0x54:
-            case 0x55:
-            case 0x56:
-            case 0x57:
-            case 0x58:
-            case 0x59:
-            case 0x5A:
-            case 0x5B:
-            case 0x5C:
-            case 0x5D:
-            case 0x5E:
-            case 0x5F:
-            case 0x60:
-            case 0x61:
-            case 0x62:
-            case 0x63:
-            case 0x64:
-            case 0x65:
-            case 0x66:
-            case 0x67:
-            case 0x68:
-            case 0x69:
-            case 0x6A:
-            case 0x6B:
-            case 0x6C:
-            case 0x6D:
-            case 0x6E:
-            case 0x6F:
-            case 0x70:
-            case 0x71:
-            case 0x72:
-            case 0x73:
-            case 0x74:
-            case 0x75:
-            case 0x76:
-            case 0x77:
-            case 0x78:
-            case 0x79:
-            case 0x7A:
-            case 0x7B:
-            case 0x7C:
-            case 0x7D:
-            case 0x7E:
-            case 0x7F:
-                return static_cast<number_unsigned_t>(current);
-
-            // fixmap
-            case 0x80:
-            case 0x81:
-            case 0x82:
-            case 0x83:
-            case 0x84:
-            case 0x85:
-            case 0x86:
-            case 0x87:
-            case 0x88:
-            case 0x89:
-            case 0x8A:
-            case 0x8B:
-            case 0x8C:
-            case 0x8D:
-            case 0x8E:
-            case 0x8F:
-            {
-                return get_msgpack_object(current & 0x0F);
-            }
-
-            // fixarray
-            case 0x90:
-            case 0x91:
-            case 0x92:
-            case 0x93:
-            case 0x94:
-            case 0x95:
-            case 0x96:
-            case 0x97:
-            case 0x98:
-            case 0x99:
-            case 0x9A:
-            case 0x9B:
-            case 0x9C:
-            case 0x9D:
-            case 0x9E:
-            case 0x9F:
-            {
-                return get_msgpack_array(current & 0x0F);
-            }
-
-            // fixstr
-            case 0xA0:
-            case 0xA1:
-            case 0xA2:
-            case 0xA3:
-            case 0xA4:
-            case 0xA5:
-            case 0xA6:
-            case 0xA7:
-            case 0xA8:
-            case 0xA9:
-            case 0xAA:
-            case 0xAB:
-            case 0xAC:
-            case 0xAD:
-            case 0xAE:
-            case 0xAF:
-            case 0xB0:
-            case 0xB1:
-            case 0xB2:
-            case 0xB3:
-            case 0xB4:
-            case 0xB5:
-            case 0xB6:
-            case 0xB7:
-            case 0xB8:
-            case 0xB9:
-            case 0xBA:
-            case 0xBB:
-            case 0xBC:
-            case 0xBD:
-            case 0xBE:
-            case 0xBF:
-                return get_msgpack_string();
-
-            case 0xC0: // nil
-                return value_t::null;
-
-            case 0xC2: // false
-                return false;
-
-            case 0xC3: // true
-                return true;
-
-            case 0xCA: // float 32
-                return get_number<float>();
-
-            case 0xCB: // float 64
-                return get_number<double>();
-
-            case 0xCC: // uint 8
-                return get_number<uint8_t>();
-
-            case 0xCD: // uint 16
-                return get_number<uint16_t>();
-
-            case 0xCE: // uint 32
-                return get_number<uint32_t>();
-
-            case 0xCF: // uint 64
-                return get_number<uint64_t>();
-
-            case 0xD0: // int 8
-                return get_number<int8_t>();
-
-            case 0xD1: // int 16
-                return get_number<int16_t>();
-
-            case 0xD2: // int 32
-                return get_number<int32_t>();
-
-            case 0xD3: // int 64
-                return get_number<int64_t>();
-
-            case 0xD9: // str 8
-            case 0xDA: // str 16
-            case 0xDB: // str 32
-                return get_msgpack_string();
-
-            case 0xDC: // array 16
-            {
-                return get_msgpack_array(get_number<uint16_t>());
-            }
-
-            case 0xDD: // array 32
-            {
-                return get_msgpack_array(get_number<uint32_t>());
-            }
-
-            case 0xDE: // map 16
-            {
-                return get_msgpack_object(get_number<uint16_t>());
-            }
-
-            case 0xDF: // map 32
-            {
-                return get_msgpack_object(get_number<uint32_t>());
-            }
-
-            // positive fixint
-            case 0xE0:
-            case 0xE1:
-            case 0xE2:
-            case 0xE3:
-            case 0xE4:
-            case 0xE5:
-            case 0xE6:
-            case 0xE7:
-            case 0xE8:
-            case 0xE9:
-            case 0xEA:
-            case 0xEB:
-            case 0xEC:
-            case 0xED:
-            case 0xEE:
-            case 0xEF:
-            case 0xF0:
-            case 0xF1:
-            case 0xF2:
-            case 0xF3:
-            case 0xF4:
-            case 0xF5:
-            case 0xF6:
-            case 0xF7:
-            case 0xF8:
-            case 0xF9:
-            case 0xFA:
-            case 0xFB:
-            case 0xFC:
-            case 0xFD:
-            case 0xFE:
-            case 0xFF:
-                return static_cast<int8_t>(current);
-
-            default: // anything else
-            {
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(112, chars_read,
-                                               "error reading MessagePack; last byte: 0x" + ss.str()));
-            }
-        }
-    }
-
-    /*!
-    @brief get next character from the input
-
-    This function provides the interface to the used input adapter. It does
-    not throw in case the input reached EOF, but returns a -'ve valued
-    `std::char_traits<char>::eof()` in that case.
-
-    @return character read from the input
-    */
-    int get()
-    {
-        ++chars_read;
-        return (current = ia->get_character());
-    }
-
-    /*
-    @brief read a number from the input
-
-    @tparam NumberType the type of the number
-
-    @return number of type @a NumberType
-
-    @note This function needs to respect the system's endianess, because
-          bytes in CBOR and MessagePack are stored in network order (big
-          endian) and therefore need reordering on little endian systems.
-
-    @throw parse_error.110 if input has less than `sizeof(NumberType)` bytes
-    */
-    template<typename NumberType> NumberType get_number()
-    {
-        // step 1: read input into array with system's byte order
-        std::array<uint8_t, sizeof(NumberType)> vec;
-        for (std::size_t i = 0; i < sizeof(NumberType); ++i)
-        {
-            get();
-            check_eof();
-
-            // reverse byte order prior to conversion if necessary
-            if (is_little_endian)
-            {
-                vec[sizeof(NumberType) - i - 1] = static_cast<uint8_t>(current);
-            }
-            else
-            {
-                vec[i] = static_cast<uint8_t>(current); // LCOV_EXCL_LINE
-            }
-        }
-
-        // step 2: convert array into number of type T and return
-        NumberType result;
-        std::memcpy(&result, vec.data(), sizeof(NumberType));
-        return result;
-    }
-
-    /*!
-    @brief create a string by reading characters from the input
-
-    @param[in] len number of bytes to read
-
-    @note We can not reserve @a len bytes for the result, because @a len
-          may be too large. Usually, @ref check_eof() detects the end of
-          the input before we run out of string memory.
-
-    @return string created by reading @a len bytes
-
-    @throw parse_error.110 if input has less than @a len bytes
-    */
-    template<typename NumberType>
-    std::string get_string(const NumberType len)
-    {
-        std::string result;
-        std::generate_n(std::back_inserter(result), len, [this]()
-        {
-            get();
-            check_eof();
-            return static_cast<char>(current);
-        });
-        return result;
-    }
-
-    /*!
-    @brief reads a CBOR string
-
-    This function first reads starting bytes to determine the expected
-    string length and then copies this number of bytes into a string.
-    Additionally, CBOR's strings with indefinite lengths are supported.
-
-    @return string
-
-    @throw parse_error.110 if input ended
-    @throw parse_error.113 if an unexpected byte is read
-    */
-    std::string get_cbor_string()
-    {
-        check_eof();
-
-        switch (current)
-        {
-            // UTF-8 string (0x00..0x17 bytes follow)
-            case 0x60:
-            case 0x61:
-            case 0x62:
-            case 0x63:
-            case 0x64:
-            case 0x65:
-            case 0x66:
-            case 0x67:
-            case 0x68:
-            case 0x69:
-            case 0x6A:
-            case 0x6B:
-            case 0x6C:
-            case 0x6D:
-            case 0x6E:
-            case 0x6F:
-            case 0x70:
-            case 0x71:
-            case 0x72:
-            case 0x73:
-            case 0x74:
-            case 0x75:
-            case 0x76:
-            case 0x77:
-            {
-                return get_string(current & 0x1F);
-            }
-
-            case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
-            {
-                return get_string(get_number<uint8_t>());
-            }
-
-            case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
-            {
-                return get_string(get_number<uint16_t>());
-            }
-
-            case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
-            {
-                return get_string(get_number<uint32_t>());
-            }
-
-            case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
-            {
-                return get_string(get_number<uint64_t>());
-            }
-
-            case 0x7F: // UTF-8 string (indefinite length)
-            {
-                std::string result;
-                while (get() != 0xFF)
-                {
-                    check_eof();
-                    result.push_back(static_cast<char>(current));
-                }
-                return result;
-            }
-
-            default:
-            {
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(113, chars_read, "expected a CBOR string; last byte: 0x" + ss.str()));
-            }
-        }
-    }
-
-    template<typename NumberType>
-    BasicJsonType get_cbor_array(const NumberType len)
-    {
-        BasicJsonType result = value_t::array;
-        std::generate_n(std::back_inserter(*result.m_value.array), len, [this]()
-        {
-            return parse_cbor_internal();
-        });
-        return result;
-    }
-
-    template<typename NumberType>
-    BasicJsonType get_cbor_object(const NumberType len)
-    {
-        BasicJsonType result = value_t::object;
-        std::generate_n(std::inserter(*result.m_value.object,
-                                      result.m_value.object->end()),
-                        len, [this]()
-        {
-            get();
-            auto key = get_cbor_string();
-            auto val = parse_cbor_internal();
-            return std::make_pair(std::move(key), std::move(val));
-        });
-        return result;
-    }
-
-    /*!
-    @brief reads a MessagePack string
-
-    This function first reads starting bytes to determine the expected
-    string length and then copies this number of bytes into a string.
-
-    @return string
-
-    @throw parse_error.110 if input ended
-    @throw parse_error.113 if an unexpected byte is read
-    */
-    std::string get_msgpack_string()
-    {
-        check_eof();
-
-        switch (current)
-        {
-            // fixstr
-            case 0xA0:
-            case 0xA1:
-            case 0xA2:
-            case 0xA3:
-            case 0xA4:
-            case 0xA5:
-            case 0xA6:
-            case 0xA7:
-            case 0xA8:
-            case 0xA9:
-            case 0xAA:
-            case 0xAB:
-            case 0xAC:
-            case 0xAD:
-            case 0xAE:
-            case 0xAF:
-            case 0xB0:
-            case 0xB1:
-            case 0xB2:
-            case 0xB3:
-            case 0xB4:
-            case 0xB5:
-            case 0xB6:
-            case 0xB7:
-            case 0xB8:
-            case 0xB9:
-            case 0xBA:
-            case 0xBB:
-            case 0xBC:
-            case 0xBD:
-            case 0xBE:
-            case 0xBF:
-            {
-                return get_string(current & 0x1F);
-            }
-
-            case 0xD9: // str 8
-            {
-                return get_string(get_number<uint8_t>());
-            }
-
-            case 0xDA: // str 16
-            {
-                return get_string(get_number<uint16_t>());
-            }
-
-            case 0xDB: // str 32
-            {
-                return get_string(get_number<uint32_t>());
-            }
-
-            default:
-            {
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(113, chars_read,
-                                               "expected a MessagePack string; last byte: 0x" + ss.str()));
-            }
-        }
-    }
-
-    template<typename NumberType>
-    BasicJsonType get_msgpack_array(const NumberType len)
-    {
-        BasicJsonType result = value_t::array;
-        std::generate_n(std::back_inserter(*result.m_value.array), len, [this]()
-        {
-            return parse_msgpack_internal();
-        });
-        return result;
-    }
-
-    template<typename NumberType>
-    BasicJsonType get_msgpack_object(const NumberType len)
-    {
-        BasicJsonType result = value_t::object;
-        std::generate_n(std::inserter(*result.m_value.object,
-                                      result.m_value.object->end()),
-                        len, [this]()
-        {
-            get();
-            auto key = get_msgpack_string();
-            auto val = parse_msgpack_internal();
-            return std::make_pair(std::move(key), std::move(val));
-        });
-        return result;
-    }
-
-    /*!
-    @brief check if input ended
-    @throw parse_error.110 if input ended
-    */
-    void check_eof(const bool expect_eof = false) const
-    {
-        if (expect_eof)
-        {
-            if (JSON_UNLIKELY(current != std::char_traits<char>::eof()))
-            {
-                JSON_THROW(parse_error::create(110, chars_read, "expected end of input"));
-            }
-        }
-        else
-        {
-            if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
-            {
-                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
-            }
-        }
-    }
-
-  private:
-    /// input adapter
-    input_adapter_t ia = nullptr;
-
-    /// the current character
-    int current = std::char_traits<char>::eof();
-
-    /// the number of characters read
-    std::size_t chars_read = 0;
-
-    /// whether we can assume little endianess
-    const bool is_little_endian = little_endianess();
-};
-}
-}
-
-#endif
-
-/*** End of inlined file: binary_reader.hpp ***/
-
-
-/*** Start of inlined file: output_adapters.hpp ***/
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_OUTPUT_ADAPTERS_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_OUTPUT_ADAPTERS_HPP
-
-#include <algorithm> // copy
-#include <cstddef> // size_t
-#include <ios> // streamsize
-#include <iterator> // back_inserter
-#include <memory> // shared_ptr, make_shared
-#include <ostream> // basic_ostream
-#include <string> // basic_string
-#include <vector> // vector
-
-namespace nlohmann
-{
-namespace detail
-{
-/// abstract output adapter interface
-template<typename CharType> struct output_adapter_protocol
-{
-    virtual void write_character(CharType c) = 0;
-    virtual void write_characters(const CharType* s, std::size_t length) = 0;
-    virtual ~output_adapter_protocol() = default;
-};
-
-/// a type to simplify interfaces
-template<typename CharType>
-using output_adapter_t = std::shared_ptr<output_adapter_protocol<CharType>>;
-
-/// output adapter for byte vectors
-template<typename CharType>
-class output_vector_adapter : public output_adapter_protocol<CharType>
-{
-  public:
-    explicit output_vector_adapter(std::vector<CharType>& vec) : v(vec) {}
-
-    void write_character(CharType c) override
-    {
-        v.push_back(c);
-    }
-
-    void write_characters(const CharType* s, std::size_t length) override
-    {
-        std::copy(s, s + length, std::back_inserter(v));
-    }
-
-  private:
-    std::vector<CharType>& v;
-};
-
-/// output adapter for output streams
-template<typename CharType>
-class output_stream_adapter : public output_adapter_protocol<CharType>
-{
-  public:
-    explicit output_stream_adapter(std::basic_ostream<CharType>& s) : stream(s) {}
-
-    void write_character(CharType c) override
-    {
-        stream.put(c);
-    }
-
-    void write_characters(const CharType* s, std::size_t length) override
-    {
-        stream.write(s, static_cast<std::streamsize>(length));
-    }
-
-  private:
-    std::basic_ostream<CharType>& stream;
-};
-
-/// output adapter for basic_string
-template<typename CharType>
-class output_string_adapter : public output_adapter_protocol<CharType>
-{
-  public:
-    explicit output_string_adapter(std::basic_string<CharType>& s) : str(s) {}
-
-    void write_character(CharType c) override
-    {
-        str.push_back(c);
-    }
-
-    void write_characters(const CharType* s, std::size_t length) override
-    {
-        str.append(s, length);
-    }
-
-  private:
-    std::basic_string<CharType>& str;
-};
-
-template<typename CharType>
-class output_adapter
-{
-  public:
-    output_adapter(std::vector<CharType>& vec)
-        : oa(std::make_shared<output_vector_adapter<CharType>>(vec)) {}
-
-    output_adapter(std::basic_ostream<CharType>& s)
-        : oa(std::make_shared<output_stream_adapter<CharType>>(s)) {}
-
-    output_adapter(std::basic_string<CharType>& s)
-        : oa(std::make_shared<output_string_adapter<CharType>>(s)) {}
-
-    operator output_adapter_t<CharType>()
-    {
-        return oa;
-    }
-
-  private:
-    output_adapter_t<CharType> oa = nullptr;
-};
-}
-}
-
-#endif
-
-/*** End of inlined file: output_adapters.hpp ***/
 
 namespace nlohmann
 {
@@ -10231,10 +6484,7 @@ class binary_writer
 
 #endif
 
-/*** End of inlined file: binary_writer.hpp ***/
-
-
-/*** Start of inlined file: serializer.hpp ***/
+// #include "detail/serializer.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_SERIALIZER_HPP
 #define NLOHMANN_JSON_DETAIL_SERIALIZER_HPP
 
@@ -10251,6 +6501,15 @@ class binary_writer
 #include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // is_same
+
+// #include "detail/macro_scope.hpp"
+
+// #include "detail/meta.hpp"
+
+// #include "detail/parsing/output_adapters.hpp"
+
+// #include "detail/value_t.hpp"
+
 
 namespace nlohmann
 {
@@ -11028,10 +7287,7 @@ class serializer
 
 #endif
 
-/*** End of inlined file: serializer.hpp ***/
-
-
-/*** Start of inlined file: json_ref.hpp ***/
+// #include "detail/json_ref.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_JSON_REF_HPP
 #define NLOHMANN_JSON_DETAIL_JSON_REF_HPP
 
@@ -11099,14 +7355,16 @@ class json_ref
 
 #endif
 
-/*** End of inlined file: json_ref.hpp ***/
-
-
-/*** Start of inlined file: adl_serializer.hpp ***/
+// #include "adl_serializer.hpp"
 #ifndef NLOHMANN_JSON_ADL_SERIALIZER_HPP
 #define NLOHMANN_JSON_ADL_SERIALIZER_HPP
 
 #include <utility>
+
+// #include "detail/conversions/from_json.hpp"
+
+// #include "detail/conversions/to_json.hpp"
+
 
 namespace nlohmann
 {
@@ -11149,7 +7407,6 @@ struct adl_serializer
 
 #endif
 
-/*** End of inlined file: adl_serializer.hpp ***/
 
 /*!
 @brief namespace for Niels Lohmann
@@ -11640,6 +7897,7 @@ class basic_json
 
     /// @}
 
+
     /////////////////////
     // container types //
     /////////////////////
@@ -11680,6 +7938,7 @@ class basic_json
     using const_reverse_iterator = json_reverse_iterator<typename basic_json::const_iterator>;
 
     /// @}
+
 
     /*!
     @brief returns the allocator associated with the container
@@ -11766,6 +8025,7 @@ class basic_json
 #endif
         return result;
     }
+
 
     ///////////////////////////
     // JSON value data types //
@@ -12511,6 +8771,7 @@ class basic_json
     */
     using parser_callback_t = typename parser::parser_callback_t;
 
+
     //////////////////
     // constructors //
     //////////////////
@@ -13035,6 +9296,7 @@ class basic_json
 
         assert_invariant();
     }
+
 
     ///////////////////////////////////////
     // other constructors and destructor //
@@ -14143,6 +10405,7 @@ class basic_json
 
     /// @}
 
+
     ////////////////////
     // element access //
     ////////////////////
@@ -15138,6 +11401,7 @@ class basic_json
 
     /// @}
 
+
     ////////////
     // lookup //
     ////////////
@@ -15226,6 +11490,7 @@ class basic_json
     }
 
     /// @}
+
 
     ///////////////
     // iterators //
@@ -15638,6 +11903,7 @@ class basic_json
 
     /// @}
 
+
     //////////////
     // capacity //
     //////////////
@@ -15853,6 +12119,7 @@ class basic_json
     }
 
     /// @}
+
 
     ///////////////
     // modifiers //
@@ -17216,6 +13483,7 @@ class basic_json
 
     /// @}
 
+
     /////////////////////
     // deserialization //
     /////////////////////
@@ -17488,6 +13756,7 @@ class basic_json
             }
         }
     }
+
 
   private:
     //////////////////////
@@ -19095,8 +15364,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
     return nlohmann::json::json_pointer(std::string(s, n));
 }
 
-
-/*** Start of inlined file: macro_unscope.hpp ***/
+// #include "detail/macro_unscope.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_MACRO_UNSCOPE_HPP
     #define NLOHMANN_JSON_DETAIL_MACRO_UNSCOPE_HPP
 
@@ -19123,7 +15391,5 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 
 #endif
 
-/*** End of inlined file: macro_unscope.hpp ***/
 
 #endif
-
