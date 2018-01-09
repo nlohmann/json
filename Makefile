@@ -1,29 +1,30 @@
 .PHONY: pretty clean ChangeLog.md
 
 SRCDIR = ./src
+DEVDIR = ./develop
 SRCS = $(SRCDIR)/json.hpp \
-			 $(SRCDIR)/json_fwd.hpp \
-			 $(SRCDIR)/detail/macro_scope.hpp \
-			 $(SRCDIR)/detail/macro_unscope.hpp \
-			 $(SRCDIR)/detail/meta.hpp \
-			 $(SRCDIR)/detail/exceptions.hpp \
-			 $(SRCDIR)/detail/value_t.hpp \
-			 $(SRCDIR)/detail/conversions/from_json.hpp \
-			 $(SRCDIR)/detail/conversions/to_json.hpp \
-			 $(SRCDIR)/detail/parsing/input_adapters.hpp \
-			 $(SRCDIR)/detail/parsing/lexer.hpp \
-			 $(SRCDIR)/detail/parsing/parser.hpp \
-			 $(SRCDIR)/detail/iterators/primitive_iterator.hpp \
-			 $(SRCDIR)/detail/iterators/internal_iterator.hpp \
-			 $(SRCDIR)/detail/iterators/iter_impl.hpp \
-			 $(SRCDIR)/detail/iterators/iteration_proxy.hpp \
-			 $(SRCDIR)/detail/iterators/json_reverse_iterator.hpp \
-			 $(SRCDIR)/detail/parsing/output_adapters.hpp \
-			 $(SRCDIR)/detail/parsing/binary_reader.hpp \
-			 $(SRCDIR)/detail/parsing/binary_writer.hpp \
-			 $(SRCDIR)/detail/serializer.hpp \
-			 $(SRCDIR)/detail/json_ref.hpp \
-			 $(SRCDIR)/adl_serializer.hpp
+       $(DEVDIR)/json_fwd.hpp \
+       $(DEVDIR)/detail/macro_scope.hpp \
+       $(DEVDIR)/detail/macro_unscope.hpp \
+       $(DEVDIR)/detail/meta.hpp \
+       $(DEVDIR)/detail/exceptions.hpp \
+       $(DEVDIR)/detail/value_t.hpp \
+       $(DEVDIR)/detail/conversions/from_json.hpp \
+       $(DEVDIR)/detail/conversions/to_json.hpp \
+       $(DEVDIR)/detail/parsing/input_adapters.hpp \
+       $(DEVDIR)/detail/parsing/lexer.hpp \
+       $(DEVDIR)/detail/parsing/parser.hpp \
+       $(DEVDIR)/detail/iterators/primitive_iterator.hpp \
+       $(DEVDIR)/detail/iterators/internal_iterator.hpp \
+       $(DEVDIR)/detail/iterators/iter_impl.hpp \
+       $(DEVDIR)/detail/iterators/iteration_proxy.hpp \
+       $(DEVDIR)/detail/iterators/json_reverse_iterator.hpp \
+       $(DEVDIR)/detail/parsing/output_adapters.hpp \
+       $(DEVDIR)/detail/parsing/binary_reader.hpp \
+       $(DEVDIR)/detail/parsing/binary_writer.hpp \
+       $(DEVDIR)/detail/serializer.hpp \
+       $(DEVDIR)/detail/json_ref.hpp \
+       $(DEVDIR)/adl_serializer.hpp
 
 UNAME = $(shell uname)
 CXX=clang++

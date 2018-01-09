@@ -68,18 +68,26 @@ if(BUILD_TESTING AND JSON_BuildTests)
     add_subdirectory(test)
 endif()
 
-ExternalProject_Add(amalgamate
-  GIT_REPOSITORY "https://github.com/theodelrieu/Amalgamate"
-  CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
-)
+##
+## AMALGAMATION
+## create a single header file
+##
+option(JSON_Amalgamate "Build and use amalgamation" OFF)
 
-# There is no way to tell amalgamate to force-write the output file even if it already exists...
-add_custom_target(single_header ALL rm -f "${CMAKE_SOURCE_DIR}/single_header/json.hpp"
-  COMMENT "Amalgamating json.hpp..."
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${NLOHMANN_JSON_SOURCE_DIR}
-  DEPENDS amalgamate
-  COMMAND "${CMAKE_BINARY_DIR}/bin/amalgamate" -w '*.hpp' -i . json.hpp "${CMAKE_SOURCE_DIR}/single_header/json.hpp"
-)
+if(JSON_Amalgamate)
+    ExternalProject_Add(amalgamate
+      GIT_REPOSITORY "https://github.com/theodelrieu/Amalgamate"
+      CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
+    )
+
+    # There is no way to tell amalgamate to force-write the output file even if it already exists...
+    add_custom_target(single_header ALL rm -f "${CMAKE_SOURCE_DIR}/${NLOHMANN_JSON_SOURCE_DIR}/json.hpp"
+      COMMENT "Amalgamating json.hpp..."
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/develop
+      DEPENDS amalgamate
+      COMMAND "${CMAKE_BINARY_DIR}/bin/amalgamate" -w '*.hpp' -i . json.hpp "${CMAKE_SOURCE_DIR}/${NLOHMANN_JSON_SOURCE_DIR}/json.hpp"
+    )
+endif()
 
 ##
 ## INSTALL
