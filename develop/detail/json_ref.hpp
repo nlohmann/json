@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_JSON_REF_HPP
-#define NLOHMANN_JSON_DETAIL_JSON_REF_HPP
+#pragma once
 
 #include <initializer_list>
 #include <utility>
@@ -62,5 +61,3 @@ class json_ref
 };
 }
 }
-
-#endif

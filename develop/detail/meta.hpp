@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_META_HPP
-#define NLOHMANN_JSON_DETAIL_META_HPP
+#pragma once
 
 #include <ciso646> // not
 #include <cstddef> // size_t
@@ -233,5 +232,3 @@ template<typename T>
 constexpr T static_const<T>::value;
 }
 }
-
-#endif

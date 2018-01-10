@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_ITER_IMPL_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_ITER_IMPL_HPP
+#pragma once
 
 #include <ciso646> // not
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
@@ -613,5 +612,3 @@ class iter_impl
 };
 }
 }
-
-#endif

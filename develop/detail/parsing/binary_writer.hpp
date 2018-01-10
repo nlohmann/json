@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_BINARY_WRITER_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_BINARY_WRITER_HPP
+#pragma once
 
 #include <algorithm> // reverse
 #include <array> // array
@@ -554,5 +553,3 @@ class binary_writer
 };
 }
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_ADL_SERIALIZER_HPP
-#define NLOHMANN_JSON_ADL_SERIALIZER_HPP
+#pragma once
 
 #include <utility>
 
@@ -44,5 +43,3 @@ struct adl_serializer
     }
 };
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
+#pragma once
 
 #include <ciso646> // not
 #include <cstddef> // ptrdiff_t
@@ -127,5 +126,3 @@ class primitive_iterator_t
 };
 }
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
+#pragma once
 
 #include "detail/iterators/primitive_iterator.hpp"
 
@@ -24,5 +23,3 @@ template<typename BasicJsonType> struct internal_iterator
 };
 }
 }
-
-#endif

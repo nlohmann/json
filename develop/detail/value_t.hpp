@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_VALUE_T_HPP
-#define NLOHMANN_JSON_DETAIL_VALUE_T_HPP
+#pragma once
 
 #include <array> // array
 #include <ciso646> // and
@@ -75,5 +74,3 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 }
 }
 }
-
-#endif

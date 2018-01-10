@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_BINARY_READER_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_BINARY_READER_HPP
+#pragma once
 
 #include <algorithm> // generate_n
 #include <array> // array
@@ -1089,5 +1088,3 @@ class binary_reader
 };
 }
 }
-
-#endif

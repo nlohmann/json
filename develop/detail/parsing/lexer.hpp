@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_LEXER_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_LEXER_HPP
+#pragma once
 
 #include <clocale> // localeconv
 #include <cstddef> // size_t
@@ -1275,5 +1274,3 @@ scan_number_done:
 };
 }
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_CONVERSIONS_FROM_JSON_HPP
-#define NLOHMANN_JSON_DETAIL_CONVERSIONS_FROM_JSON_HPP
+#pragma once
 
 #include <algorithm> // transform
 #include <array> // array
@@ -314,5 +313,3 @@ namespace
 constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::value;
 }
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_SERIALIZER_HPP
-#define NLOHMANN_JSON_DETAIL_SERIALIZER_HPP
+#pragma once
 
 #include <algorithm> // reverse, remove, fill, find, none_of
 #include <array> // array
@@ -793,5 +792,3 @@ class serializer
 };
 }
 }
-
-#endif

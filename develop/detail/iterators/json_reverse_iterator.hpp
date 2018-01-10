@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
+#pragma once
 
 #include <cstddef> // ptrdiff_t
 #include <iterator> // reverse_iterator
@@ -118,5 +117,3 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 };
 }
 }
-
-#endif

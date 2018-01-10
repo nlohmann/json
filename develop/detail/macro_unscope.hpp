@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_MACRO_UNSCOPE_HPP
-#define NLOHMANN_JSON_DETAIL_MACRO_UNSCOPE_HPP
+#pragma once
 
 // restore GCC/clang diagnostic settings
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
@@ -21,5 +20,3 @@
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
 #undef NLOHMANN_BASIC_JSON_TPL
 #undef NLOHMANN_JSON_HAS_HELPER
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_ITERATION_PROXY_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_ITERATION_PROXY_HPP
+#pragma once
 
 #include <cstddef> // size_t
 #include <string> // string, to_string
@@ -97,5 +96,3 @@ template<typename IteratorType> class iteration_proxy
 };
 }
 }
-
-#endif

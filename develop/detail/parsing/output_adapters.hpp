@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_OUTPUT_ADAPTERS_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_OUTPUT_ADAPTERS_HPP
+#pragma once
 
 #include <algorithm> // copy
 #include <cstddef> // size_t
@@ -112,5 +111,3 @@ class output_adapter
 };
 }
 }
-
-#endif

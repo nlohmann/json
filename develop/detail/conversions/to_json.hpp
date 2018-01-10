@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_CONVERSIONS_TO_JSON_HPP
-#define NLOHMANN_JSON_DETAIL_CONVERSIONS_TO_JSON_HPP
+#pragma once
 
 #include <ciso646> // or, and, not
 #include <iterator> // begin, end
@@ -337,5 +336,3 @@ namespace
 constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 }
 }
-
-#endif

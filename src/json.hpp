@@ -107,8 +107,7 @@ using json = basic_json<>;
 #endif
 
 // #include "detail/macro_scope.hpp"
-#ifndef NLOHMANN_JSON_MACRO_SCOPE_HPP
-#define NLOHMANN_JSON_MACRO_SCOPE_HPP
+
 
 #include <ciso646> // not
 
@@ -212,11 +211,8 @@ contains a `mapped_type`, whereas `std::vector` fails the test.
                 std::is_integral<decltype(detect(std::declval<T>()))>::value; \
     }
 
-#endif
-
 // #include "detail/meta.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_META_HPP
-#define NLOHMANN_JSON_DETAIL_META_HPP
+
 
 #include <ciso646> // not
 #include <cstddef> // size_t
@@ -452,8 +448,6 @@ template<typename T>
 constexpr T static_const<T>::value;
 }
 }
-
-#endif
 
 // #include "detail/exceptions.hpp"
 #ifndef NLOHMANN_JSON_DETAIL_EXCEPTIONS_HPP
@@ -789,8 +783,7 @@ class other_error : public exception
 #endif
 
 // #include "detail/value_t.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_VALUE_T_HPP
-#define NLOHMANN_JSON_DETAIL_VALUE_T_HPP
+
 
 #include <array> // array
 #include <ciso646> // and
@@ -867,11 +860,8 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 }
 }
 
-#endif
-
 // #include "detail/conversions/from_json.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_CONVERSIONS_FROM_JSON_HPP
-#define NLOHMANN_JSON_DETAIL_CONVERSIONS_FROM_JSON_HPP
+
 
 #include <algorithm> // transform
 #include <array> // array
@@ -1191,11 +1181,8 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 }
 }
 
-#endif
-
 // #include "detail/conversions/to_json.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_CONVERSIONS_TO_JSON_HPP
-#define NLOHMANN_JSON_DETAIL_CONVERSIONS_TO_JSON_HPP
+
 
 #include <ciso646> // or, and, not
 #include <iterator> // begin, end
@@ -1536,11 +1523,8 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 }
 }
 
-#endif
-
 // #include "detail/parsing/input_adapters.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_INPUT_ADAPTERS_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_INPUT_ADAPTERS_HPP
+
 
 #include <algorithm> // min
 #include <array> // array
@@ -1804,11 +1788,8 @@ class input_adapter
 }
 }
 
-#endif
-
 // #include "detail/parsing/lexer.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_LEXER_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_LEXER_HPP
+
 
 #include <clocale> // localeconv
 #include <cstddef> // size_t
@@ -3087,11 +3068,8 @@ scan_number_done:
 }
 }
 
-#endif
-
 // #include "detail/parsing/parser.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_PARSER_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_PARSER_HPP
+
 
 #include <cassert> // assert
 #include <cmath> // isfinite
@@ -3686,11 +3664,8 @@ class parser
 }
 }
 
-#endif
-
 // #include "detail/iterators/primitive_iterator.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
+
 
 #include <ciso646> // not
 #include <cstddef> // ptrdiff_t
@@ -3819,11 +3794,8 @@ class primitive_iterator_t
 }
 }
 
-#endif
-
 // #include "detail/iterators/internal_iterator.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
+
 
 // #include "detail/iterators/primitive_iterator.hpp"
 
@@ -3850,11 +3822,8 @@ template<typename BasicJsonType> struct internal_iterator
 }
 }
 
-#endif
-
 // #include "detail/iterators/iter_impl.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_ITER_IMPL_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_ITER_IMPL_HPP
+
 
 #include <ciso646> // not
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
@@ -4475,11 +4444,8 @@ class iter_impl
 }
 }
 
-#endif
-
 // #include "detail/iterators/iteration_proxy.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_ITERATION_PROXY_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_ITERATION_PROXY_HPP
+
 
 #include <cstddef> // size_t
 #include <string> // string, to_string
@@ -4579,11 +4545,8 @@ template<typename IteratorType> class iteration_proxy
 }
 }
 
-#endif
-
 // #include "detail/iterators/json_reverse_iterator.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
-#define NLOHMANN_JSON_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
+
 
 #include <cstddef> // ptrdiff_t
 #include <iterator> // reverse_iterator
@@ -4703,11 +4666,8 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 }
 }
 
-#endif
-
 // #include "detail/parsing/output_adapters.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_OUTPUT_ADAPTERS_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_OUTPUT_ADAPTERS_HPP
+
 
 #include <algorithm> // copy
 #include <cstddef> // size_t
@@ -4821,11 +4781,8 @@ class output_adapter
 }
 }
 
-#endif
-
 // #include "detail/parsing/binary_reader.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_BINARY_READER_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_BINARY_READER_HPP
+
 
 #include <algorithm> // generate_n
 #include <array> // array
@@ -5920,11 +5877,8 @@ class binary_reader
 }
 }
 
-#endif
-
 // #include "detail/parsing/binary_writer.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_BINARY_WRITER_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_BINARY_WRITER_HPP
+
 
 #include <algorithm> // reverse
 #include <array> // array
@@ -6482,11 +6436,8 @@ class binary_writer
 }
 }
 
-#endif
-
 // #include "detail/serializer.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_SERIALIZER_HPP
-#define NLOHMANN_JSON_DETAIL_SERIALIZER_HPP
+
 
 #include <algorithm> // reverse, remove, fill, find, none_of
 #include <array> // array
@@ -7285,11 +7236,8 @@ class serializer
 }
 }
 
-#endif
-
 // #include "detail/json_ref.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_JSON_REF_HPP
-#define NLOHMANN_JSON_DETAIL_JSON_REF_HPP
+
 
 #include <initializer_list>
 #include <utility>
@@ -7353,11 +7301,8 @@ class json_ref
 }
 }
 
-#endif
-
 // #include "adl_serializer.hpp"
-#ifndef NLOHMANN_JSON_ADL_SERIALIZER_HPP
-#define NLOHMANN_JSON_ADL_SERIALIZER_HPP
+
 
 #include <utility>
 
@@ -7404,8 +7349,6 @@ struct adl_serializer
     }
 };
 }
-
-#endif
 
 
 /*!
@@ -15365,31 +15308,28 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 }
 
 // #include "detail/macro_unscope.hpp"
-#ifndef NLOHMANN_JSON_DETAIL_MACRO_UNSCOPE_HPP
-    #define NLOHMANN_JSON_DETAIL_MACRO_UNSCOPE_HPP
 
-    // restore GCC/clang diagnostic settings
-    #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-        #pragma GCC diagnostic pop
-    #endif
-    #if defined(__clang__)
-        #pragma GCC diagnostic pop
-    #endif
 
-    // clean up
-    #undef JSON_CATCH
-    #undef JSON_THROW
-    #undef JSON_TRY
-    #undef JSON_LIKELY
-    #undef JSON_UNLIKELY
-    #undef JSON_DEPRECATED
-    #undef JSON_HAS_CPP_14
-    #undef JSON_HAS_CPP_17
-    #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
-    #undef NLOHMANN_BASIC_JSON_TPL
-    #undef NLOHMANN_JSON_HAS_HELPER
-
+// restore GCC/clang diagnostic settings
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+    #pragma GCC diagnostic pop
 #endif
+#if defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
+
+// clean up
+#undef JSON_CATCH
+#undef JSON_THROW
+#undef JSON_TRY
+#undef JSON_LIKELY
+#undef JSON_UNLIKELY
+#undef JSON_DEPRECATED
+#undef JSON_HAS_CPP_14
+#undef JSON_HAS_CPP_17
+#undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
+#undef NLOHMANN_BASIC_JSON_TPL
+#undef NLOHMANN_JSON_HAS_HELPER
 
 
 #endif

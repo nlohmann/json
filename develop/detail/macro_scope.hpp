@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_MACRO_SCOPE_HPP
-#define NLOHMANN_JSON_MACRO_SCOPE_HPP
+#pragma once
 
 #include <ciso646> // not
 
@@ -102,5 +101,3 @@ contains a `mapped_type`, whereas `std::vector` fails the test.
         static constexpr bool value =                                         \
                 std::is_integral<decltype(detect(std::declval<T>()))>::value; \
     }
-
-#endif

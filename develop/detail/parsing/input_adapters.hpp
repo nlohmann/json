@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_INPUT_ADAPTERS_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_INPUT_ADAPTERS_HPP
+#pragma once
 
 #include <algorithm> // min
 #include <array> // array
@@ -261,5 +260,3 @@ class input_adapter
 };
 }
 }
-
-#endif

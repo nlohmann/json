@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_PARSING_PARSER_HPP
-#define NLOHMANN_JSON_DETAIL_PARSING_PARSER_HPP
+#pragma once
 
 #include <cassert> // assert
 #include <cmath> // isfinite
@@ -588,5 +587,3 @@ class parser
 };
 }
 }
-
-#endif
