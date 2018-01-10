@@ -129,13 +129,13 @@ TEST_CASE("UBJSON")
                         // check individual bytes
                         CHECK(result[0] == 'L');
                         int64_t restored = (static_cast<int64_t>(result[1]) << 070) +
-                                            (static_cast<int64_t>(result[2]) << 060) +
-                                            (static_cast<int64_t>(result[3]) << 050) +
-                                            (static_cast<int64_t>(result[4]) << 040) +
-                                            (static_cast<int64_t>(result[5]) << 030) +
-                                            (static_cast<int64_t>(result[6]) << 020) +
-                                            (static_cast<int64_t>(result[7]) << 010) +
-                                            static_cast<int64_t>(result[8]);
+                                           (static_cast<int64_t>(result[2]) << 060) +
+                                           (static_cast<int64_t>(result[3]) << 050) +
+                                           (static_cast<int64_t>(result[4]) << 040) +
+                                           (static_cast<int64_t>(result[5]) << 030) +
+                                           (static_cast<int64_t>(result[6]) << 020) +
+                                           (static_cast<int64_t>(result[7]) << 010) +
+                                           static_cast<int64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip
