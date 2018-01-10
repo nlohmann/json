@@ -4549,7 +4549,7 @@ class binary_reader
         const auto res = parse_ubjson_internal();
         if (strict)
         {
-            get();
+            get_ignore_noop();
             check_eof(true);
         }
         return res;
@@ -5591,35 +5591,25 @@ class binary_reader
 
         get_ignore_noop();
 
-        switch (current)
+        if (current == '$')
         {
-            case '$':
+            get();  // must not ignore 'N', because 'N' maybe the type
+            check_eof();
+            tc = current;
+
+            get_ignore_noop();
+            if (current != '#')
             {
-                get_ignore_noop();
-                check_eof();
-                tc = current;
-
-                get_ignore_noop();
-                if (current != '#')
-                {
-                    assert(false);
-                }
-                sz = parse_ubjson_internal();
-                break;
+                assert(false);
             }
-
-            case '#':
-            {
-                sz = parse_ubjson_internal();
-                break;
-            }
-
-            default:
-                break;
+            sz = parse_ubjson_internal();
+        }
+        else if (current == '#')
+        {
+            sz = parse_ubjson_internal();
         }
 
         return std::make_pair(sz, tc);
-
     }
 
     BasicJsonType get_ubjson_value(const int prefix)
@@ -5656,6 +5646,7 @@ class binary_reader
             {
                 get();
                 check_eof();
+                assert(0 <= current and current <= 127);
                 return std::string(1, static_cast<char>(current));
             }
 
@@ -5683,16 +5674,22 @@ class binary_reader
 
         if (size_and_type.first != std::string::npos)
         {
-            for (std::size_t i = 0; i < size_and_type.first; ++i)
+            if (size_and_type.second != 0)
             {
-                if (size_and_type.second != 0)
+                if (size_and_type.second != 'N')
+                    std::generate_n(std::back_inserter(*result.m_value.array),
+                                    size_and_type.first, [this, size_and_type]()
                 {
-                    result.push_back(get_ubjson_value(size_and_type.second));
-                }
-                else
+                    return get_ubjson_value(size_and_type.second);
+                });
+            }
+            else
+            {
+                std::generate_n(std::back_inserter(*result.m_value.array),
+                                size_and_type.first, [this]()
                 {
-                    result.push_back(parse_ubjson_internal());
-                }
+                    return parse_ubjson_internal();
+                });
             }
         }
         else
@@ -5714,17 +5711,28 @@ class binary_reader
 
         if (size_and_type.first != std::string::npos)
         {
-            for (std::size_t i = 0; i < size_and_type.first; ++i)
+            if (size_and_type.second != 0)
             {
-                auto key = get_ubjson_string();
-                if (size_and_type.second != 0)
+                if (size_and_type.second != 'N')
+                    std::generate_n(std::inserter(*result.m_value.object,
+                                                  result.m_value.object->end()),
+                                    size_and_type.first, [this, size_and_type]()
                 {
-                    result[std::move(key)] = get_ubjson_value(size_and_type.second);
-                }
-                else
+                    auto key = get_ubjson_string();
+                    auto val = get_ubjson_value(size_and_type.second);
+                    return std::make_pair(std::move(key), std::move(val));
+                });
+            }
+            else
+            {
+                std::generate_n(std::inserter(*result.m_value.object,
+                                              result.m_value.object->end()),
+                                size_and_type.first, [this]()
                 {
-                    result[std::move(key)] = parse_ubjson_internal();
-                }
+                    auto key = get_ubjson_string();
+                    auto val = parse_ubjson_internal();
+                    return std::make_pair(std::move(key), std::move(val));
+                });
             }
         }
         else
@@ -6282,10 +6290,8 @@ class binary_writer
     @param[in] use_type    whether to use '$' prefixes (optimized format)
     @param[in] add_prefix  whether prefixes need to be used for this value
     */
-    void write_ubjson(const BasicJsonType& j,
-                      const bool use_count = false,
-                      const bool use_type = false,
-                      const bool add_prefix = true)
+    void write_ubjson(const BasicJsonType& j, const bool use_count,
+                      const bool use_type, const bool add_prefix = true)
     {
         switch (j.type())
         {
@@ -6348,6 +6354,7 @@ class binary_writer
                 bool prefix_required = true;
                 if (use_type and not j.m_value.array->empty())
                 {
+                    assert(use_count);
                     const char first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
@@ -6392,6 +6399,7 @@ class binary_writer
                 bool prefix_required = true;
                 if (use_type and not j.m_value.object->empty())
                 {
+                    assert(use_count);
                     const char first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin(), j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
@@ -6463,13 +6471,14 @@ class binary_writer
     }
 
     template<typename NumberType>
-    void write_number_with_ubjson_prefix(const NumberType n, const bool add_prefix)
+    void write_number_with_ubjson_prefix(const NumberType n,
+                                         const bool add_prefix)
     {
         if (std::is_floating_point<NumberType>::value)
         {
             if (add_prefix)
             {
-                oa->write_character(static_cast<CharType>('D'));    // float64
+                oa->write_character(static_cast<CharType>('D'));  // float64
             }
             write_number(n);
         }
@@ -6479,7 +6488,7 @@ class binary_writer
             {
                 if (add_prefix)
                 {
-                    oa->write_character(static_cast<CharType>('i'));    // uint8
+                    oa->write_character(static_cast<CharType>('i'));  // uint8
                 }
                 write_number(static_cast<uint8_t>(n));
             }
@@ -6487,7 +6496,7 @@ class binary_writer
             {
                 if (add_prefix)
                 {
-                    oa->write_character(static_cast<CharType>('U'));    // uint8
+                    oa->write_character(static_cast<CharType>('U'));  // uint8
                 }
                 write_number(static_cast<uint8_t>(n));
             }
@@ -6495,7 +6504,7 @@ class binary_writer
             {
                 if (add_prefix)
                 {
-                    oa->write_character(static_cast<CharType>('I'));    // int16
+                    oa->write_character(static_cast<CharType>('I'));  // int16
                 }
                 write_number(static_cast<int16_t>(n));
             }
@@ -6503,7 +6512,7 @@ class binary_writer
             {
                 if (add_prefix)
                 {
-                    oa->write_character(static_cast<CharType>('l'));    // int32
+                    oa->write_character(static_cast<CharType>('l'));  // int32
                 }
                 write_number(static_cast<int32_t>(n));
             }
@@ -6511,7 +6520,7 @@ class binary_writer
             {
                 if (add_prefix)
                 {
-                    oa->write_character(static_cast<CharType>('L'));    // int64
+                    oa->write_character(static_cast<CharType>('L'));  // int64
                 }
                 write_number(static_cast<int64_t>(n));
             }
@@ -6527,7 +6536,7 @@ class binary_writer
             {
                 if (add_prefix)
                 {
-                    oa->write_character(static_cast<CharType>('i'));    // int8
+                    oa->write_character(static_cast<CharType>('i'));  // int8
                 }
                 write_number(static_cast<int8_t>(n));
             }
@@ -6535,7 +6544,7 @@ class binary_writer
             {
                 if (add_prefix)
                 {
-                    oa->write_character(static_cast<CharType>('U'));    // uint8
+                    oa->write_character(static_cast<CharType>('U'));  // uint8
                 }
                 write_number(static_cast<uint8_t>(n));
             }
@@ -6543,7 +6552,7 @@ class binary_writer
             {
                 if (add_prefix)
                 {
-                    oa->write_character(static_cast<CharType>('I'));    // int16
+                    oa->write_character(static_cast<CharType>('I'));  // int16
                 }
                 write_number(static_cast<int16_t>(n));
             }
@@ -6551,7 +6560,7 @@ class binary_writer
             {
                 if (add_prefix)
                 {
-                    oa->write_character(static_cast<CharType>('l'));    // int32
+                    oa->write_character(static_cast<CharType>('l'));  // int32
                 }
                 write_number(static_cast<int32_t>(n));
             }
@@ -6559,7 +6568,7 @@ class binary_writer
             {
                 if (add_prefix)
                 {
-                    oa->write_character(static_cast<CharType>('L'));    // int64
+                    oa->write_character(static_cast<CharType>('L'));  // int64
                 }
                 write_number(static_cast<int64_t>(n));
             }
@@ -6608,23 +6617,23 @@ class binary_writer
 
             case value_t::number_unsigned:
             {
-                if ((std::numeric_limits<int8_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<int8_t>::max)())
+                if (j.m_value.number_unsigned <= (std::numeric_limits<int8_t>::max)())
                 {
                     return 'i';
                 }
-                else if ((std::numeric_limits<uint8_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                 {
                     return 'U';
                 }
-                else if ((std::numeric_limits<int16_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<int16_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<int16_t>::max)())
                 {
                     return 'I';
                 }
-                else if ((std::numeric_limits<int32_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<int32_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<int32_t>::max)())
                 {
                     return 'l';
                 }
-                else if ((std::numeric_limits<int64_t>::min)() <= j.m_value.number_unsigned and j.m_value.number_unsigned <= (std::numeric_limits<int64_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<int64_t>::max)())
                 {
                     return 'L';
                 }
@@ -14103,21 +14112,24 @@ class basic_json
         binary_writer<char>(o).write_msgpack(j);
     }
 
-    static std::vector<uint8_t> to_ubjson(const basic_json& j)
+    static std::vector<uint8_t> to_ubjson(const basic_json& j,
+                                          const bool use_size = false, const bool use_type = false)
     {
         std::vector<uint8_t> result;
-        to_ubjson(j, result);
+        to_ubjson(j, result, use_size, use_type);
         return result;
     }
 
-    static void to_ubjson(const basic_json& j, detail::output_adapter<uint8_t> o)
+    static void to_ubjson(const basic_json& j, detail::output_adapter<uint8_t> o,
+                          const bool use_size = false, const bool use_type = false)
     {
-        binary_writer<uint8_t>(o).write_ubjson(j);
+        binary_writer<uint8_t>(o).write_ubjson(j, use_size, use_type);
     }
 
-    static void to_ubjson(const basic_json& j, detail::output_adapter<char> o)
+    static void to_ubjson(const basic_json& j, detail::output_adapter<char> o,
+                          const bool use_size = false, const bool use_type = false)
     {
-        binary_writer<char>(o).write_ubjson(j);
+        binary_writer<char>(o).write_ubjson(j, use_size, use_type);
     }
 
     /*!
