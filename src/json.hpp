@@ -5543,8 +5543,9 @@ class binary_reader
     /*!
     @brief reads a UBJSON string
 
-    This function first reads starting bytes to determine the expected
-    string length and then copies this number of bytes into a string.
+    This function is either called after reading the 'S' byte explicitly
+    indicating a string, or in case of an object key where the 'S' byte can be
+    left out.
 
     @param[in] get_char  whether a new character should be retrieved from the
                          input (true, default) or whether the last read
@@ -5559,7 +5560,7 @@ class binary_reader
     {
         if (get_char)
         {
-            get();
+            get();  // TODO: may we ignore N here?
         }
 
         check_eof();
@@ -5584,6 +5585,14 @@ class binary_reader
         }
     }
 
+    /*!
+    @brief determine the type and size for a container
+
+    In the optimized UBJSON format, a type and a size can be provided to allow
+    for a more compact representation.
+
+    @return pair of the size and the type
+    */
     std::pair<std::size_t, int> get_ubjson_size_type()
     {
         std::size_t sz = std::string::npos;
@@ -5593,14 +5602,16 @@ class binary_reader
 
         if (current == '$')
         {
-            get();  // must not ignore 'N', because 'N' maybe the type
+            tc = get();  // must not ignore 'N', because 'N' maybe the type
             check_eof();
-            tc = current;
 
             get_ignore_noop();
             if (current != '#')
             {
-                assert(false);
+                std::stringstream ss;
+                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
+                JSON_THROW(parse_error::create(112, chars_read,
+                                               "expected '#' after UBJSON type information; last byte: 0x" + ss.str()));
             }
             sz = parse_ubjson_internal();
         }
@@ -5646,7 +5657,13 @@ class binary_reader
             {
                 get();
                 check_eof();
-                assert(0 <= current and current <= 127);
+                if (JSON_UNLIKELY(not(0 <= current and current <= 127)))
+                {
+                    std::stringstream ss;
+                    ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
+                    JSON_THROW(parse_error::create(113, chars_read,
+                                                   "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + ss.str()));
+                }
                 return std::string(1, static_cast<char>(current));
             }
 
