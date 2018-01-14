@@ -1,5 +1,4 @@
 #include <iostream>
-#include <iomanip> // for std::setw
 #include "json.hpp"
 
 using json = nlohmann::json;

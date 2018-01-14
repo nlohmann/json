@@ -5,7 +5,7 @@
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f3732b3327e34358a0e9d1fe9f661f08)](https://www.codacy.com/app/nlohmann/json?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/yCTCvQi0ZVxGuL3L)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/Op57X0V7fTf2tdwl)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
@@ -75,12 +75,10 @@ If you are using [hunter](https://github.com/ruslo/hunter/) on your project for 
 
 If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
 
-:warning: [Version 3.0.0](https://github.com/nlohmann/json/wiki/Road-toward-3.0.0) is currently under development. Branch `develop` is used for the ongoing work and is probably **unstable**. Please use the `master` branch for the last stable version 2.1.1.
-
 
 ## Examples
 
-Beside the examples below, you may want to check the [documentation](https://nlohmann.github.io/json/) where each function contains a separate code example (e.g., check out [`emplace()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a602f275f0359ab181221384989810604.html#a602f275f0359ab181221384989810604)). All [example files](https://github.com/nlohmann/json/tree/develop/doc/examples) can be compiled and executed on their own (e.g., file [emplace.cpp](https://github.com/nlohmann/json/blob/develop/doc/examples/emplace.cpp)).
+Beside the examples below, you may want to check the [documentation](https://nlohmann.github.io/json/) where each function contains a separate code example (e.g., check out [`emplace()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a5338e282d1d02bed389d852dd670d98d.html#a5338e282d1d02bed389d852dd670d98d)). All [example files](https://github.com/nlohmann/json/tree/develop/doc/examples) can be compiled and executed on their own (e.g., file [emplace.cpp](https://github.com/nlohmann/json/blob/develop/doc/examples/emplace.cpp)).
 
 ### JSON as first-class data type
 
@@ -739,13 +737,13 @@ json j_from_msgpack = json::from_msgpack(v_msgpack);
 
 ## Supported compilers
 
-Though it's 2016 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2017 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.9 - 7.1 (and possibly later)
+- GCC 4.9 - 7.2 (and possibly later)
 - Clang 3.4 - 5.0 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
-- Microsoft Visual C++ 2017 / Build Tools 15.1.548.43366 (and possibly later)
+- Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
 
 I would be happy to learn about other compilers/versions.
 
@@ -785,9 +783,11 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 8.1 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
 | Clang Xcode 8.2 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
 | Clang Xcode 8.3 | Darwin Kernel Version 16.5.0 (macOS 10.12.4) | Apple LLVM version 8.1.0 (clang-802.0.38) |
-| Clang Xcode 9 beta | Darwin Kernel Version 16.6.0 (macOS 10.12.5) | Apple LLVM version 9.0.0 (clang-900.0.26) |
-| Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1 | 
-| Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.1.1012.6693 |
+| Clang Xcode 9.0 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.37) |
+| Clang Xcode 9.1 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.38) |
+| Clang Xcode 9.2 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 8.1.0 (clang-900.0.39.2) |
+| Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 | 
+| Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.5.180.51428, MSVC 19.12.25830.2 |
 
 ## License
 
@@ -805,18 +805,20 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 * * *
 
-The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Bjoern Hoehrmann](http://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
+The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](http://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
 
 ## Contact
 
 If you have questions regarding the library, I would like to invite you to [open an issue at Github](https://github.com/nlohmann/json/issues/new). Please describe your request, problem, or question as detailed as possible, and also mention the version of the library you are using as well as the version of your compiler and operating system. Opening an issue at Github allows other users and contributors to this library to collaborate. For instance, I have little experience with MSVC, and most issues in this regard have been solved by a growing community. If you have a look at the [closed issues](https://github.com/nlohmann/json/issues?q=is%3Aissue+is%3Aclosed), you will see that we react quite timely in most cases.
 
-Only if your request would contain confidential information, please [send me an email](mailto:mail@nlohmann.me).
+Only if your request would contain confidential information, please [send me an email](mailto:mail@nlohmann.me). For encrypted messages, please use [this key](https://keybase.io/nlohmann/pgp_keys.asc).
 
 
 ## Thanks
 
 I deeply appreciate the help of the following people.
+
+![Contributors](https://raw.githubusercontent.com/nlohmann/json/develop/doc/avatars.png)
 
 - [Teemperor](https://github.com/Teemperor) implemented CMake support and lcov integration, realized escape and Unicode handling in the string parser, and fixed the JSON serialization.
 - [elliotgoodrich](https://github.com/elliotgoodrich) fixed an issue with double deletion in the iterator classes.
@@ -910,6 +912,10 @@ I deeply appreciate the help of the following people.
 - [Pavel](https://github.com/crea7or) helped fixing some warnings in MSVC.
 - [Jamie Seward](https://github.com/jseward) avoided unneccessary string copies in `find()` and `count()`.
 - [Mitja](https://github.com/Itja) fixed some typos.
+- [Jorrit Wronski](https://github.com/jowr) updated the Hunter package links.
+- [Matthias Möller](https://github.com/TinyTinni) added a `.natvis` for the MSVC debug view.
+- [bogemic](https://github.com/bogemic) fixed some C++17 deprecation warnings.
+- [Eren Okka](https://github.com/erengy) fixed some MSVC warnings.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
@@ -940,7 +946,7 @@ The library itself contains of a single header file licensed under the MIT licen
 - [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](http://melpon.org/wandbox)
 - [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
 - [**Valgrind**](http://valgrind.org) to check for correct memory management
-- [**Wandbox**](http://melpon.org/wandbox) for [online examples](https://wandbox.org/permlink/yCTCvQi0ZVxGuL3L)
+- [**Wandbox**](http://melpon.org/wandbox) for [online examples](https://wandbox.org/permlink/Op57X0V7fTf2tdwl)
 
 
 ## Projects using JSON for Modern C++
@@ -954,7 +960,7 @@ The library is currently used in Apple macOS Sierra and iOS 10. I am not sure wh
 - As the exact type of a number is not defined in the [JSON specification](http://rfc7159.net/rfc7159), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
 - The library supports **Unicode input** as follows:
   - Only **UTF-8** encoded input is supported which is the default encoding for JSON according to [RFC 7159](http://rfc7159.net/rfc7159#rfc.section.8.1).
-  - Other encodings such as Latin-1, UTF-16, or UTF-32 are not supported and will yield parse errors.
+  - Other encodings such as Latin-1, UTF-16, or UTF-32 are not supported and will yield parse or serialization errors.
   - [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1) will not be replaced by the library.
   - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
   - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
@@ -972,7 +978,7 @@ $ mkdir build
 $ cd build
 $ cmake ..
 $ cmake --build .
-$ ctest
+$ ctest --output-on-failure
 ```
 
 For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).

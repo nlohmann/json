@@ -28,4 +28,15 @@ int main()
     std::cout << "strings:" << '\n'
               << j_string.dump() << '\n'
               << j_string.dump(-1, ' ', true) << '\n';
+
+    // create JSON value with invalid UTF-8 byte sequence
+    json j_invalid = "\xF0\xA4\xAD\xC0";
+    try
+    {
+        std::cout << j_invalid.dump() << std::endl;
+    }
+    catch (json::type_error& e)
+    {
+        std::cout << e.what() << std::endl;
+    }
 }

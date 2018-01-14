@@ -4,18 +4,24 @@ cmake_minimum_required(VERSION 3.0.0)
 ## PROJECT
 ## name and version
 ##
-project(nlohmann_json VERSION 2.1.1 LANGUAGES CXX)
+project(nlohmann_json VERSION 3.0.1 LANGUAGES CXX)
+
+##
+## INCLUDE
+##
+##
+include(ExternalProject)
 
 ##
 ## OPTIONS
 ##
-option(JSON_BuildTests "Build the unit tests" ON)
+option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
 
 ##
 ## CONFIGURATION
 ##
 set(NLOHMANN_JSON_TARGET_NAME               ${PROJECT_NAME})
-set(NLOHMANN_JSON_SOURCE_DIR                "src/")
+set(NLOHMANN_JSON_SOURCE_DIR                "src")
 set(NLOHMANN_JSON_CONFIG_INSTALL_DIR        "lib/cmake/${PROJECT_NAME}")
 set(NLOHMANN_JSON_INCLUDE_INSTALL_DIR       "include")
 set(NLOHMANN_JSON_HEADER_INSTALL_DIR        "${NLOHMANN_JSON_INCLUDE_INSTALL_DIR}/nlohmann")
@@ -54,7 +60,9 @@ endif()
 ## TESTS
 ## create and configure the unit test target
 ##
-if(JSON_BuildTests)
+include(CTest) #adds option BUILD_TESTING (default ON)
+
+if(BUILD_TESTING AND JSON_BuildTests)
     enable_testing()
     include_directories(${NLOHMANN_JSON_SOURCE_DIR})
     add_subdirectory(test)
