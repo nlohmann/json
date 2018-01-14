@@ -16,12 +16,12 @@ include(ExternalProject)
 ## OPTIONS
 ##
 option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
+option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
 
 ##
 ## CONFIGURATION
 ##
 set(NLOHMANN_JSON_TARGET_NAME               ${PROJECT_NAME})
-set(NLOHMANN_JSON_SOURCE_DIR                "src")
 set(NLOHMANN_JSON_CONFIG_INSTALL_DIR        "lib/cmake/${PROJECT_NAME}")
 set(NLOHMANN_JSON_INCLUDE_INSTALL_DIR       "include")
 set(NLOHMANN_JSON_HEADER_INSTALL_DIR        "${NLOHMANN_JSON_INCLUDE_INSTALL_DIR}/nlohmann")
@@ -30,6 +30,12 @@ set(NLOHMANN_JSON_CMAKE_CONFIG_TEMPLATE     "cmake/config.cmake.in")
 set(NLOHMANN_JSON_CMAKE_CONFIG_DIR          "${CMAKE_CURRENT_BINARY_DIR}/cmake_config")
 set(NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
 set(NLOHMANN_JSON_CMAKE_PROJECT_CONFIG_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Config.cmake")
+
+if (JSON_MultipleHeaders)
+    set(NLOHMANN_JSON_SOURCE_DIR "develop/")
+else()
+    set(NLOHMANN_JSON_SOURCE_DIR "src/")
+endif()
 
 ##
 ## TARGET
@@ -40,7 +46,7 @@ add_library(${NLOHMANN_JSON_TARGET_NAME} INTERFACE)
 target_include_directories(
     ${NLOHMANN_JSON_TARGET_NAME}
     INTERFACE
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/${NLOHMANN_JSON_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 

@@ -254,7 +254,7 @@ pretty:
 amalgamate: src/json.hpp
 
 src/json.hpp: $(SRCS)
-	develop/amalgamate/amalgamate.py -c develop/amalgamate/config.json -s develop --verbose=yes
+	third_party/amalgamate/amalgamate.py -c third_party/amalgamate/config.json -s develop --verbose=yes
 	$(MAKE) pretty
 
 # check if src/json.hpp has been amalgamated from the develop sources
