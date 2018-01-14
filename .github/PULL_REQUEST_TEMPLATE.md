@@ -4,9 +4,12 @@
 
 ## Pull request checklist
 
+Read the [Contribution Guidelines](https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md) for detailed information.
+
 - [ ]  Changes are described in the pull request, or an [existing issue is referenced](https://github.com/nlohmann/json/issues).
 - [ ]  The test suite [compiles and runs](https://github.com/nlohmann/json/blob/develop/README.md#execute-unit-tests) without error.
 - [ ]  [Code coverage](https://coveralls.io/github/nlohmann/json) is 100%. Test cases can be added by editing the [test suite](https://github.com/nlohmann/json/tree/develop/test/src).
+- [ ]  The source code is amalgamated; that is, after making changes to the sources in the `develop` directory, run `make amalgamate` to create the single-header file `src/json.hpp`. The whole process is described [here](https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md#files-to-change).
 
 ## Please don't
 
