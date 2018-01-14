@@ -715,6 +715,7 @@ json.exception.out_of_range.403 | key 'foo' not found | The provided key was not
 json.exception.out_of_range.404 | unresolved reference token 'foo' | A reference token in a JSON Pointer could not be resolved.
 json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
 json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed number could not be stored as without changing it to NaN or INF.
+json.exception.out_of_range.407 | number overflow serializing '9223372036854775808' | UBJSON only supports integers numbers up to 9223372036854775807. |
 
 @liveexample{The following code shows how an `out_of_range` exception can be
 caught.,out_of_range}
@@ -6001,7 +6002,7 @@ class binary_reader
             {
                 get();
                 check_eof();
-                if (JSON_UNLIKELY(not(0 <= current and current <= 127)))
+                if (JSON_UNLIKELY(current > 127))
                 {
                     std::stringstream ss;
                     ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
@@ -6074,10 +6075,9 @@ class binary_reader
         {
             if (size_and_type.second != 0)
             {
-                if (size_and_type.second != 'N')
-                    std::generate_n(std::inserter(*result.m_value.object,
-                                                  result.m_value.object->end()),
-                                    size_and_type.first, [this, size_and_type]()
+                std::generate_n(std::inserter(*result.m_value.object,
+                                              result.m_value.object->end()),
+                                size_and_type.first, [this, size_and_type]()
                 {
                     auto key = get_ubjson_string();
                     auto val = get_ubjson_value(size_and_type.second);
@@ -6911,8 +6911,7 @@ class binary_writer
             }
             else
             {
-                // TODO: replace by exception
-                assert(false);
+                JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
             }
         }
         else
@@ -6957,11 +6956,12 @@ class binary_writer
                 }
                 write_number(static_cast<int64_t>(n));
             }
+            // LCOV_EXCL_START
             else
             {
-                // TODO: replace by exception
-                assert(false);
+                JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
             }
+            // LCOV_EXCL_STOP
         }
     }
 

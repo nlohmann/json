@@ -1172,94 +1172,289 @@ TEST_CASE("UBJSON")
                               "[json.exception.parse_error.110] parse error at 1: unexpected end of input");
         }
 
-        SECTION("too short byte vector")
-        {
-        }
-
-        SECTION("unsupported bytes")
-        {
-            SECTION("concrete examples")
-            {
-                CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x1c})), json::parse_error&);
-                CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x1c})),
-                                  "[json.exception.parse_error.112] parse error at 1: error reading CBOR; last byte: 0x1C");
-                CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0xf8})), json::parse_error&);
-                CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0xf8})),
-                                  "[json.exception.parse_error.112] parse error at 1: error reading CBOR; last byte: 0xF8");
-            }
-
-            SECTION("all unsupported bytes")
-            {
-                for (auto byte :
-                        {
-                            // ?
-                            0x1c, 0x1d, 0x1e, 0x1f,
-                            // ?
-                            0x3c, 0x3d, 0x3e, 0x3f,
-                            // byte strings
-                            0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
-                            // byte strings
-                            0x58, 0x59, 0x5a, 0x5b,
-                            // ?
-                            0x5c, 0x5d, 0x5e,
-                            // byte string
-                            0x5f,
-                            // ?
-                            0x7c, 0x7d, 0x7e,
-                            // ?
-                            0x9c, 0x9d, 0x9e,
-                            // ?
-                            0xbc, 0xbd, 0xbe,
-                            // date/time
-                            0xc0, 0xc1,
-                            // bignum
-                            0xc2, 0xc3,
-                            // fraction
-                            0xc4,
-                            // bigfloat
-                            0xc5,
-                            // tagged item
-                            0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4,
-                            // expected conversion
-                            0xd5, 0xd6, 0xd7,
-                            // more tagged items
-                            0xd8, 0xd9, 0xda, 0xdb,
-                            // ?
-                            0xdc, 0xdd, 0xde, 0xdf,
-                            // (simple value)
-                            0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf0, 0xf1, 0xf2, 0xf3,
-                            // undefined
-                            0xf7,
-                            // simple value
-                            0xf8
-                        })
-                {
-                    CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({static_cast<uint8_t>(byte)})), json::parse_error&);
-                }
-            }
-        }
-
-        SECTION("invalid string in map")
-        {
-            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01})), json::parse_error&);
-            CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01})),
-                              "[json.exception.parse_error.113] parse error at 2: expected a CBOR string; last byte: 0xFF");
-        }
-
         SECTION("strict mode")
         {
-            std::vector<uint8_t> vec = {0xf6, 0xf6};
+            std::vector<uint8_t> vec = {'Z', 'Z'};
             SECTION("non-strict mode")
             {
-                const auto result = json::from_cbor(vec, false);
+                const auto result = json::from_ubjson(vec, false);
                 CHECK(result == json());
             }
 
             SECTION("strict mode")
             {
-                CHECK_THROWS_AS(json::from_cbor(vec), json::parse_error&);
-                CHECK_THROWS_WITH(json::from_cbor(vec),
+                CHECK_THROWS_AS(json::from_ubjson(vec), json::parse_error&);
+                CHECK_THROWS_WITH(json::from_ubjson(vec),
                                   "[json.exception.parse_error.110] parse error at 2: expected end of input");
+            }
+        }
+
+        SECTION("number out of range")
+        {
+            // larger than max int64
+            json j = 9223372036854775808llu;
+            CHECK_THROWS_AS(json::to_ubjson(j), json::out_of_range);
+            CHECK_THROWS_WITH(json::to_ubjson(j), "[json.exception.out_of_range.407] number overflow serializing 9223372036854775808");
+        }
+    }
+
+    SECTION("parsing values")
+    {
+        SECTION("strings")
+        {
+            // create a single-character string for all number types
+            std::vector<uint8_t> s_i = {'S', 'i', 1, 'a'};
+            std::vector<uint8_t> s_U = {'S', 'U', 1, 'a'};
+            std::vector<uint8_t> s_I = {'S', 'I', 0, 1, 'a'};
+            std::vector<uint8_t> s_l = {'S', 'l', 0, 0, 0, 1, 'a'};
+            std::vector<uint8_t> s_L = {'S', 'L', 0, 0, 0, 0, 0, 0, 0, 1, 'a'};
+
+            // check if string is parsed correctly to "a"
+            CHECK(json::from_ubjson(s_i) == "a");
+            CHECK(json::from_ubjson(s_U) == "a");
+            CHECK(json::from_ubjson(s_I) == "a");
+            CHECK(json::from_ubjson(s_l) == "a");
+            CHECK(json::from_ubjson(s_L) == "a");
+
+            // roundtrip: output should be optimized
+            CHECK(json::to_ubjson(json::from_ubjson(s_i)) == s_i);
+            CHECK(json::to_ubjson(json::from_ubjson(s_U)) == s_i);
+            CHECK(json::to_ubjson(json::from_ubjson(s_I)) == s_i);
+            CHECK(json::to_ubjson(json::from_ubjson(s_l)) == s_i);
+            CHECK(json::to_ubjson(json::from_ubjson(s_L)) == s_i);
+        }
+
+        SECTION("number")
+        {
+            SECTION("float")
+            {
+                // float32
+                std::vector<uint8_t> v_d = {'d', 0x40, 0x49, 0x0f, 0xd0};
+                CHECK(json::from_ubjson(v_d) == 3.14159f);
+
+                // float64
+                std::vector<uint8_t> v_D = {'D', 0x40, 0x09, 0x21, 0xf9, 0xf0, 0x1b, 0x86, 0x6e};
+                CHECK(json::from_ubjson(v_D) == 3.14159);
+
+                // float32 is serialized as float64 as the library does not support float32
+                CHECK(json::to_ubjson(json::from_ubjson(v_d)) == json::to_ubjson(3.14159f));
+            }
+        }
+
+        SECTION("array")
+        {
+            SECTION("optimized version (length only)")
+            {
+                // create vector with two elements of the same type
+                std::vector<uint8_t> v_T = {'[', '#', 'i', 2, 'T', 'T'};
+                std::vector<uint8_t> v_F = {'[', '#', 'i', 2, 'F', 'F'};
+                std::vector<uint8_t> v_Z = {'[', '#', 'i', 2, 'Z', 'Z'};
+                std::vector<uint8_t> v_i = {'[', '#', 'i', 2, 'i', 0x7F, 'i', 0x7F};
+                std::vector<uint8_t> v_U = {'[', '#', 'i', 2, 'U', 0xFF, 'U', 0xFF};
+                std::vector<uint8_t> v_I = {'[', '#', 'i', 2, 'I', 0x7F, 0xFF, 'I', 0x7F, 0xFF};
+                std::vector<uint8_t> v_l = {'[', '#', 'i', 2, 'l', 0x7F, 0xFF, 0xFF, 0xFF, 'l', 0x7F, 0xFF, 0xFF, 0xFF};
+                std::vector<uint8_t> v_L = {'[', '#', 'i', 2, 'L', 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 'L', 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                std::vector<uint8_t> v_D = {'[', '#', 'i', 2, 'D', 0x40, 0x09, 0x21, 0xfb, 0x4d, 0x12, 0xd8, 0x4a, 'D', 0x40, 0x09, 0x21, 0xfb, 0x4d, 0x12, 0xd8, 0x4a};
+                std::vector<uint8_t> v_S = {'[', '#', 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
+                std::vector<uint8_t> v_C = {'[', '#', 'i', 2, 'C', 'a', 'C', 'a'};
+
+                // check if vector is parsed correctly
+                CHECK(json::from_ubjson(v_T) == json({true, true}));
+                CHECK(json::from_ubjson(v_F) == json({false, false}));
+                CHECK(json::from_ubjson(v_Z) == json({nullptr, nullptr}));
+                CHECK(json::from_ubjson(v_i) == json({127, 127}));
+                CHECK(json::from_ubjson(v_U) == json({255, 255}));
+                CHECK(json::from_ubjson(v_I) == json({32767, 32767}));
+                CHECK(json::from_ubjson(v_l) == json({2147483647, 2147483647}));
+                CHECK(json::from_ubjson(v_L) == json({9223372036854775807, 9223372036854775807}));
+                CHECK(json::from_ubjson(v_D) == json({3.1415926, 3.1415926}));
+                CHECK(json::from_ubjson(v_S) == json({"a", "a"}));
+                CHECK(json::from_ubjson(v_C) == json({"a", "a"}));
+
+                // roundtrip: output should be optimized
+                CHECK(json::to_ubjson(json::from_ubjson(v_T), true) == v_T);
+                CHECK(json::to_ubjson(json::from_ubjson(v_F), true) == v_F);
+                CHECK(json::to_ubjson(json::from_ubjson(v_Z), true) == v_Z);
+                CHECK(json::to_ubjson(json::from_ubjson(v_i), true) == v_i);
+                CHECK(json::to_ubjson(json::from_ubjson(v_U), true) == v_U);
+                CHECK(json::to_ubjson(json::from_ubjson(v_I), true) == v_I);
+                CHECK(json::to_ubjson(json::from_ubjson(v_l), true) == v_l);
+                CHECK(json::to_ubjson(json::from_ubjson(v_L), true) == v_L);
+                CHECK(json::to_ubjson(json::from_ubjson(v_D), true) == v_D);
+                CHECK(json::to_ubjson(json::from_ubjson(v_S), true) == v_S);
+                CHECK(json::to_ubjson(json::from_ubjson(v_C), true) == v_S); // char is serialized to string
+            }
+
+            SECTION("optimized version (type and length)")
+            {
+                // create vector with two elements of the same type
+                std::vector<uint8_t> v_N = {'[', '$', 'N', '#', 'i', 2};
+                std::vector<uint8_t> v_T = {'[', '$', 'T', '#', 'i', 2};
+                std::vector<uint8_t> v_F = {'[', '$', 'F', '#', 'i', 2};
+                std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', 'i', 2};
+                std::vector<uint8_t> v_i = {'[', '$', 'i', '#', 'i', 2, 0x7F, 0x7F};
+                std::vector<uint8_t> v_U = {'[', '$', 'U', '#', 'i', 2, 0xFF, 0xFF};
+                std::vector<uint8_t> v_I = {'[', '$', 'I', '#', 'i', 2, 0x7F, 0xFF, 0x7F, 0xFF};
+                std::vector<uint8_t> v_l = {'[', '$', 'l', '#', 'i', 2, 0x7F, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF};
+                std::vector<uint8_t> v_L = {'[', '$', 'L', '#', 'i', 2, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                std::vector<uint8_t> v_D = {'[', '$', 'D', '#', 'i', 2, 0x40, 0x09, 0x21, 0xfb, 0x4d, 0x12, 0xd8, 0x4a, 0x40, 0x09, 0x21, 0xfb, 0x4d, 0x12, 0xd8, 0x4a};
+                std::vector<uint8_t> v_S = {'[', '$', 'S', '#', 'i', 2, 'i', 1, 'a', 'i', 1, 'a'};
+                std::vector<uint8_t> v_C = {'[', '$', 'C', '#', 'i', 2, 'a', 'a'};
+
+                // check if vector is parsed correctly
+                CHECK(json::from_ubjson(v_N) == json::array());
+                CHECK(json::from_ubjson(v_T) == json({true, true}));
+                CHECK(json::from_ubjson(v_F) == json({false, false}));
+                CHECK(json::from_ubjson(v_Z) == json({nullptr, nullptr}));
+                CHECK(json::from_ubjson(v_i) == json({127, 127}));
+                CHECK(json::from_ubjson(v_U) == json({255, 255}));
+                CHECK(json::from_ubjson(v_I) == json({32767, 32767}));
+                CHECK(json::from_ubjson(v_l) == json({2147483647, 2147483647}));
+                CHECK(json::from_ubjson(v_L) == json({9223372036854775807, 9223372036854775807}));
+                CHECK(json::from_ubjson(v_D) == json({3.1415926, 3.1415926}));
+                CHECK(json::from_ubjson(v_S) == json({"a", "a"}));
+                CHECK(json::from_ubjson(v_C) == json({"a", "a"}));
+
+                // roundtrip: output should be optimized
+                std::vector<uint8_t> v_empty = {'[', '#', 'i', 0};
+                CHECK(json::to_ubjson(json::from_ubjson(v_N), true, true) == v_empty);
+                CHECK(json::to_ubjson(json::from_ubjson(v_T), true, true) == v_T);
+                CHECK(json::to_ubjson(json::from_ubjson(v_F), true, true) == v_F);
+                CHECK(json::to_ubjson(json::from_ubjson(v_Z), true, true) == v_Z);
+                CHECK(json::to_ubjson(json::from_ubjson(v_i), true, true) == v_i);
+                CHECK(json::to_ubjson(json::from_ubjson(v_U), true, true) == v_U);
+                CHECK(json::to_ubjson(json::from_ubjson(v_I), true, true) == v_I);
+                CHECK(json::to_ubjson(json::from_ubjson(v_l), true, true) == v_l);
+                CHECK(json::to_ubjson(json::from_ubjson(v_L), true, true) == v_L);
+                CHECK(json::to_ubjson(json::from_ubjson(v_D), true, true) == v_D);
+                CHECK(json::to_ubjson(json::from_ubjson(v_S), true, true) == v_S);
+                CHECK(json::to_ubjson(json::from_ubjson(v_C), true, true) == v_S); // char is serialized to string
+            }
+        }
+    }
+
+    SECTION("parse errors")
+    {
+        SECTION("char")
+        {
+            SECTION("eof after C byte")
+            {
+                std::vector<uint8_t> v = {'C'};
+                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error);
+                CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
+            }
+
+            SECTION("byte out of range")
+            {
+                std::vector<uint8_t> v = {'C', 130};
+                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error);
+                CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.113] parse error at 2: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82");
+            }
+        }
+
+        SECTION("strings")
+        {
+            SECTION("eof after S byte")
+            {
+                std::vector<uint8_t> v = {'S'};
+                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error);
+                CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
+            }
+
+            SECTION("invalid byte")
+            {
+                std::vector<uint8_t> v = {'S', '1', 'a'};
+                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error);
+                CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.113] parse error at 2: expected a UBJSON string; last byte: 0x31");
+            }
+        }
+
+        SECTION("array")
+        {
+            SECTION("optimized array: no size following type")
+            {
+                std::vector<uint8_t> v = {'[', '$', 'i', 2};
+                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error);
+                CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.112] parse error at 4: expected '#' after UBJSON type information; last byte: 0x02");
+            }
+        }
+    }
+
+    SECTION("writing optimized values")
+    {
+        SECTION("integer")
+        {
+            SECTION("array of i")
+            {
+                json j = {1, 2};
+                std::vector<uint8_t> expected = {'[', '$', 'i', '#', 'i', 2, 1, 2};
+                CHECK(json::to_ubjson(j, true, true) == expected);
+            }
+
+            SECTION("array of U")
+            {
+                json j = {200, 201};
+                std::vector<uint8_t> expected = {'[', '$', 'U', '#', 'i', 2, 0xC8, 0xC9};
+                CHECK(json::to_ubjson(j, true, true) == expected);
+            }
+
+            SECTION("array of I")
+            {
+                json j = {30000, 30001};
+                std::vector<uint8_t> expected = {'[', '$', 'I', '#', 'i', 2, 0x75, 0x30, 0x75, 0x31};
+                CHECK(json::to_ubjson(j, true, true) == expected);
+            }
+
+            SECTION("array of l")
+            {
+                json j = {70000, 70001};
+                std::vector<uint8_t> expected = {'[', '$', 'l', '#', 'i', 2, 0x00, 0x01, 0x11, 0x70, 0x00, 0x01, 0x11, 0x71};
+                CHECK(json::to_ubjson(j, true, true) == expected);
+            }
+
+            SECTION("array of L")
+            {
+                json j = {5000000000, 5000000001};
+                std::vector<uint8_t> expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0x00, 0x00, 0x01, 0x2A, 0x05, 0xF2, 0x00, 0x00, 0x00, 0x00, 0x01, 0x2A, 0x05, 0xF2, 0x01};
+                CHECK(json::to_ubjson(j, true, true) == expected);
+            }
+        }
+
+        SECTION("unsigned integer")
+        {
+            SECTION("array of i")
+            {
+                json j = {1u, 2u};
+                std::vector<uint8_t> expected = {'[', '$', 'i', '#', 'i', 2, 1, 2};
+                CHECK(json::to_ubjson(j, true, true) == expected);
+            }
+
+            SECTION("array of U")
+            {
+                json j = {200u, 201u};
+                std::vector<uint8_t> expected = {'[', '$', 'U', '#', 'i', 2, 0xC8, 0xC9};
+                CHECK(json::to_ubjson(j, true, true) == expected);
+            }
+
+            SECTION("array of I")
+            {
+                json j = {30000u, 30001u};
+                std::vector<uint8_t> expected = {'[', '$', 'I', '#', 'i', 2, 0x75, 0x30, 0x75, 0x31};
+                CHECK(json::to_ubjson(j, true, true) == expected);
+            }
+
+            SECTION("array of l")
+            {
+                json j = {70000u, 70001u};
+                std::vector<uint8_t> expected = {'[', '$', 'l', '#', 'i', 2, 0x00, 0x01, 0x11, 0x70, 0x00, 0x01, 0x11, 0x71};
+                CHECK(json::to_ubjson(j, true, true) == expected);
+            }
+
+            SECTION("array of L")
+            {
+                json j = {5000000000u, 5000000001u};
+                std::vector<uint8_t> expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0x00, 0x00, 0x01, 0x2A, 0x05, 0xF2, 0x00, 0x00, 0x00, 0x00, 0x01, 0x2A, 0x05, 0xF2, 0x01};
+                CHECK(json::to_ubjson(j, true, true) == expected);
             }
         }
     }
@@ -1871,73 +2066,29 @@ TEST_CASE("Universal Binary JSON Specification Examples 2")
 */
 
 
-/*
 TEST_CASE("all first bytes", "[!throws]")
 {
     // these bytes will fail immediately with exception parse_error.112
-    std::set<uint8_t> unsupported =
+    std::set<uint8_t> supported =
     {
-        //// types not supported by this library
-
-        // byte strings
-        0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
-        0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
-        0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
-        // byte strings
-        0x58, 0x59, 0x5a, 0x5b, 0x5f,
-        // date/time
-        0xc0, 0xc1,
-        // bignum
-        0xc2, 0xc3,
-        // decimal fracion
-        0xc4,
-        // bigfloat
-        0xc5,
-        // tagged item
-        0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd,
-        0xce, 0xcf, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd8,
-        0xd9, 0xda, 0xdb,
-        // expected conversion
-        0xd5, 0xd6, 0xd7,
-        // simple value
-        0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7,
-        0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xef, 0xf0,
-        0xf1, 0xf2, 0xf3,
-        0xf8,
-        // undefined
-        0xf7,
-
-        //// bytes not specified by CBOR
-
-        0x1c, 0x1d, 0x1e, 0x1f,
-        0x3c, 0x3d, 0x3e, 0x3f,
-        0x5c, 0x5d, 0x5e,
-        0x7c, 0x7d, 0x7e,
-        0x9c, 0x9d, 0x9e,
-        0xbc, 0xbd, 0xbe,
-        0xdc, 0xdd, 0xde, 0xdf,
-        0xee,
-        0xfc, 0xfe, 0xfd,
-
-        /// break cannot be the first byte
-
-        0xff
+        'T', 'F', 'Z', 'U', 'i', 'I', 'l', 'L', 'd', 'D', 'C', 'S', '[', '{', 'N'
     };
 
     for (auto i = 0; i < 256; ++i)
     {
         const auto byte = static_cast<uint8_t>(i);
+        CAPTURE(byte);
 
         try
         {
-            json::from_cbor(std::vector<uint8_t>(1, byte));
+            json::from_ubjson(std::vector<uint8_t>(1, byte));
         }
         catch (const json::parse_error& e)
         {
             // check that parse_error.112 is only thrown if the
-            // first byte is in the unsupported set
+            // first byte is not in the supported set
             CAPTURE(e.what());
-            if (std::find(unsupported.begin(), unsupported.end(), byte) != unsupported.end())
+            if (std::find(supported.begin(), supported.end(), byte) == supported.end())
             {
                 CHECK(e.id == 112);
             }
@@ -1948,4 +2099,4 @@ TEST_CASE("all first bytes", "[!throws]")
         }
     }
 }
-*/
+

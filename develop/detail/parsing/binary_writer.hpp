@@ -759,8 +759,7 @@ class binary_writer
             }
             else
             {
-                // TODO: replace by exception
-                assert(false);
+                JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
             }
         }
         else
@@ -805,11 +804,12 @@ class binary_writer
                 }
                 write_number(static_cast<int64_t>(n));
             }
+            // LCOV_EXCL_START
             else
             {
-                // TODO: replace by exception
-                assert(false);
+                JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
             }
+            // LCOV_EXCL_STOP
         }
     }
 

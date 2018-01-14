@@ -1213,7 +1213,7 @@ class binary_reader
             {
                 get();
                 check_eof();
-                if (JSON_UNLIKELY(not(0 <= current and current <= 127)))
+                if (JSON_UNLIKELY(current > 127))
                 {
                     std::stringstream ss;
                     ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
@@ -1286,10 +1286,9 @@ class binary_reader
         {
             if (size_and_type.second != 0)
             {
-                if (size_and_type.second != 'N')
-                    std::generate_n(std::inserter(*result.m_value.object,
-                                                  result.m_value.object->end()),
-                                    size_and_type.first, [this, size_and_type]()
+                std::generate_n(std::inserter(*result.m_value.object,
+                                              result.m_value.object->end()),
+                                size_and_type.first, [this, size_and_type]()
                 {
                     auto key = get_ubjson_string();
                     auto val = get_ubjson_value(size_and_type.second);

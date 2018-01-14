@@ -278,11 +278,6 @@ script:
   - ctest -C Release -V -j
   - cd ..
 
-  # check if header was correctly amalgamated
-  - if [ `which python` ]; then
-    make check-amalgamation ;
-    fi
-
   # check if homebrew works (only checks develop branch)
   - if [ `which brew` ]; then
     brew update ;
