@@ -1386,8 +1386,8 @@ TEST_CASE("UBJSON")
         {
             SECTION("array of i")
             {
-                json j = {1, 2};
-                std::vector<uint8_t> expected = {'[', '$', 'i', '#', 'i', 2, 1, 2};
+                json j = {1, -1};
+                std::vector<uint8_t> expected = {'[', '$', 'i', '#', 'i', 2, 1, 0xff};
                 CHECK(json::to_ubjson(j, true, true) == expected);
             }
 
@@ -1400,22 +1400,22 @@ TEST_CASE("UBJSON")
 
             SECTION("array of I")
             {
-                json j = {30000, 30001};
-                std::vector<uint8_t> expected = {'[', '$', 'I', '#', 'i', 2, 0x75, 0x30, 0x75, 0x31};
+                json j = {30000, -30000};
+                std::vector<uint8_t> expected = {'[', '$', 'I', '#', 'i', 2, 0x75, 0x30, 0x8a, 0xd0};
                 CHECK(json::to_ubjson(j, true, true) == expected);
             }
 
             SECTION("array of l")
             {
-                json j = {70000, 70001};
-                std::vector<uint8_t> expected = {'[', '$', 'l', '#', 'i', 2, 0x00, 0x01, 0x11, 0x70, 0x00, 0x01, 0x11, 0x71};
+                json j = {70000, -70000};
+                std::vector<uint8_t> expected = {'[', '$', 'l', '#', 'i', 2, 0x00, 0x01, 0x11, 0x70, 0xFF, 0xFE, 0xEE, 0x90};
                 CHECK(json::to_ubjson(j, true, true) == expected);
             }
 
             SECTION("array of L")
             {
-                json j = {5000000000, 5000000001};
-                std::vector<uint8_t> expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0x00, 0x00, 0x01, 0x2A, 0x05, 0xF2, 0x00, 0x00, 0x00, 0x00, 0x01, 0x2A, 0x05, 0xF2, 0x01};
+                json j = {5000000000, -5000000000};
+                std::vector<uint8_t> expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0x00, 0x00, 0x01, 0x2A, 0x05, 0xF2, 0x00, 0xFF, 0xFF, 0xFF, 0xFE, 0xD5, 0xFA, 0x0E, 0x00};
                 CHECK(json::to_ubjson(j, true, true) == expected);
             }
         }
@@ -1426,36 +1426,53 @@ TEST_CASE("UBJSON")
             {
                 json j = {1u, 2u};
                 std::vector<uint8_t> expected = {'[', '$', 'i', '#', 'i', 2, 1, 2};
+                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'i', 1, 'i', 2};
                 CHECK(json::to_ubjson(j, true, true) == expected);
+                CHECK(json::to_ubjson(j, true) == expected_size);
             }
 
             SECTION("array of U")
             {
                 json j = {200u, 201u};
                 std::vector<uint8_t> expected = {'[', '$', 'U', '#', 'i', 2, 0xC8, 0xC9};
+                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'U', 0xC8, 'U', 0xC9};
                 CHECK(json::to_ubjson(j, true, true) == expected);
+                CHECK(json::to_ubjson(j, true) == expected_size);
             }
 
             SECTION("array of I")
             {
                 json j = {30000u, 30001u};
                 std::vector<uint8_t> expected = {'[', '$', 'I', '#', 'i', 2, 0x75, 0x30, 0x75, 0x31};
+                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'I', 0x75, 0x30, 'I', 0x75, 0x31};
                 CHECK(json::to_ubjson(j, true, true) == expected);
+                CHECK(json::to_ubjson(j, true) == expected_size);
             }
 
             SECTION("array of l")
             {
                 json j = {70000u, 70001u};
                 std::vector<uint8_t> expected = {'[', '$', 'l', '#', 'i', 2, 0x00, 0x01, 0x11, 0x70, 0x00, 0x01, 0x11, 0x71};
+                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'l', 0x00, 0x01, 0x11, 0x70, 'l', 0x00, 0x01, 0x11, 0x71};
                 CHECK(json::to_ubjson(j, true, true) == expected);
+                CHECK(json::to_ubjson(j, true) == expected_size);
             }
 
             SECTION("array of L")
             {
                 json j = {5000000000u, 5000000001u};
                 std::vector<uint8_t> expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0x00, 0x00, 0x01, 0x2A, 0x05, 0xF2, 0x00, 0x00, 0x00, 0x00, 0x01, 0x2A, 0x05, 0xF2, 0x01};
+                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'L', 0x00, 0x00, 0x00, 0x01, 0x2A, 0x05, 0xF2, 0x00, 'L', 0x00, 0x00, 0x00, 0x01, 0x2A, 0x05, 0xF2, 0x01};
                 CHECK(json::to_ubjson(j, true, true) == expected);
+                CHECK(json::to_ubjson(j, true) == expected_size);
             }
+        }
+
+        SECTION("discarded")
+        {
+            json j = {json::value_t::discarded, json::value_t::discarded};
+            std::vector<uint8_t> expected = {'[', '$', 'N', '#', 'i', 2};
+            CHECK(json::to_ubjson(j, true, true) == expected);
         }
     }
 }

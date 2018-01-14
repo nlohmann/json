@@ -6965,7 +6965,16 @@ class binary_writer
         }
     }
 
-    char ubjson_prefix(const BasicJsonType& j)
+    /*!
+    @brief determine the type prefix of container values
+
+    @note This function does not need to be 100% accurate when it comes to
+          integer limits. In case a number exceeds the limits of int64_t,
+          this will be detected by a later call to function
+          write_number_with_ubjson_prefix. Therefore, we return 'L' for any
+          value that does not fit the previous limits.
+    */
+    char ubjson_prefix(const BasicJsonType& j) const noexcept
     {
         switch (j.type())
         {
@@ -6993,11 +7002,10 @@ class binary_writer
                 {
                     return 'l';
                 }
-                else if ((std::numeric_limits<int64_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int64_t>::max)())
+                else  // no check and assume int64_t (see note above)
                 {
                     return 'L';
                 }
-                break;
             }
 
             case value_t::number_unsigned:
@@ -7018,11 +7026,10 @@ class binary_writer
                 {
                     return 'l';
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<int64_t>::max)())
+                else  // no check and assume int64_t (see note above)
                 {
                     return 'L';
                 }
-                break;
             }
 
             case value_t::number_float:
@@ -7037,11 +7044,9 @@ class binary_writer
             case value_t::object:
                 return '{';
 
-            default:
-                break;
+            default:  // discarded values
+                return 'N';
         }
-
-        return '\0';
     }
 
   private:
