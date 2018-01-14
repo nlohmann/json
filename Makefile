@@ -29,8 +29,10 @@ CXX=clang++
 
 # main target
 all:
+	@echo "amalgamate - amalgamate file src/json.hpp from the develop sources"
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check - compile and execute test suite"
+	@echo "check-amalagamation - check whether sources have been amalgamated"
 	@echo "check-fast - compile and execute test suite (skip long-running tests)"
 	@echo "clean - remove built files"
 	@echo "coverage - create coverage information with lcov"
@@ -254,6 +256,13 @@ amalgamate: src/json.hpp
 src/json.hpp: $(SRCS)
 	develop/amalgamate/amalgamate.py -c develop/amalgamate/config.json -s develop --verbose=yes
 	$(MAKE) pretty
+
+# check if src/json.hpp has been amalgamated from the develop sources
+check-amalagamation:
+	@mv src/json.hpp src/json.hpp~
+	@$(MAKE) amalgamate
+	@diff src/json.hpp src/json.hpp~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv src/json.hpp~ src/json.hpp ; false)
+	@mv src/json.hpp~ src/json.hpp
 
 
 ##########################################################################
