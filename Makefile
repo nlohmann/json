@@ -1,8 +1,38 @@
 .PHONY: pretty clean ChangeLog.md
 
+SRCS = develop/json.hpp \
+       develop/json_fwd.hpp \
+       develop/detail/macro_scope.hpp \
+       develop/detail/macro_unscope.hpp \
+       develop/detail/meta.hpp \
+       develop/detail/exceptions.hpp \
+       develop/detail/value_t.hpp \
+       develop/detail/conversions/from_json.hpp \
+       develop/detail/conversions/to_json.hpp \
+       develop/detail/parsing/input_adapters.hpp \
+       develop/detail/parsing/lexer.hpp \
+       develop/detail/parsing/parser.hpp \
+       develop/detail/iterators/primitive_iterator.hpp \
+       develop/detail/iterators/internal_iterator.hpp \
+       develop/detail/iterators/iter_impl.hpp \
+       develop/detail/iterators/iteration_proxy.hpp \
+       develop/detail/iterators/json_reverse_iterator.hpp \
+       develop/detail/parsing/output_adapters.hpp \
+       develop/detail/parsing/binary_reader.hpp \
+       develop/detail/parsing/binary_writer.hpp \
+       develop/detail/serializer.hpp \
+       develop/detail/json_ref.hpp \
+       develop/adl_serializer.hpp
+
+UNAME = $(shell uname)
+CXX=clang++
+
+# main target
 all:
+	@echo "amalgamate - amalgamate file src/json.hpp from the develop sources"
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check - compile and execute test suite"
+	@echo "check-amalagamation - check whether sources have been amalgamated"
 	@echo "check-fast - compile and execute test suite (skip long-running tests)"
 	@echo "clean - remove built files"
 	@echo "coverage - create coverage information with lcov"
@@ -15,7 +45,6 @@ all:
 	@echo "pedantic_clang - run Clang with maximal warning flags"
 	@echo "pedantic_gcc - run GCC with maximal warning flags"
 	@echo "pretty - beautify code with Artistic Style"
-
 
 ##########################################################################
 # unit tests
@@ -218,8 +247,22 @@ pretty:
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none --formatted \
-	   src/json.hpp test/src/*.cpp \
+	   $(SRCS) src/json.hpp test/src/*.cpp \
 	   benchmarks/src/benchmarks.cpp doc/examples/*.cpp
+
+# create single header file
+amalgamate: src/json.hpp
+
+src/json.hpp: $(SRCS)
+	develop/amalgamate/amalgamate.py -c develop/amalgamate/config.json -s develop --verbose=yes
+	$(MAKE) pretty
+
+# check if src/json.hpp has been amalgamated from the develop sources
+check-amalagamation:
+	@mv src/json.hpp src/json.hpp~
+	@$(MAKE) amalgamate
+	@diff src/json.hpp src/json.hpp~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv src/json.hpp~ src/json.hpp ; false)
+	@mv src/json.hpp~ src/json.hpp
 
 
 ##########################################################################

@@ -21,3 +21,4 @@ benchmarks/files/numbers/*.json
 cmake-build-debug
 
 test/test-*
+third_party/Amalgamate

@@ -1,0 +1,8 @@
+{
+	"project": "JSON for Modern C++",
+	"target": "src/json.hpp",
+	"sources": [
+		"json.hpp"
+	],
+	"include_paths": ["."]
+}
