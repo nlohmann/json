@@ -307,15 +307,15 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     "test/data/json_roundtrip/roundtrip21.json",
                     "test/data/json_roundtrip/roundtrip22.json",
                     "test/data/json_roundtrip/roundtrip23.json",
-                    //"test/data/json_roundtrip/roundtrip24.json", // roundtrip error
-                    //"test/data/json_roundtrip/roundtrip25.json", // roundtrip error
-                    //"test/data/json_roundtrip/roundtrip26.json", // roundtrip error
-                    //"test/data/json_roundtrip/roundtrip27.json", // roundtrip error
-                    //"test/data/json_roundtrip/roundtrip28.json", // roundtrip error
+                    "test/data/json_roundtrip/roundtrip24.json",
+                    "test/data/json_roundtrip/roundtrip25.json",
+                    "test/data/json_roundtrip/roundtrip26.json",
+                    "test/data/json_roundtrip/roundtrip27.json",
+                    //"test/data/json_roundtrip/roundtrip28.json", // incompatible with roundtrip24
                     "test/data/json_roundtrip/roundtrip29.json",
-                    //"test/data/json_roundtrip/roundtrip30.json", // roundtrip error
-                    //"test/data/json_roundtrip/roundtrip31.json", // roundtrip error
-                    "test/data/json_roundtrip/roundtrip32.json"
+                    "test/data/json_roundtrip/roundtrip30.json",
+                    "test/data/json_roundtrip/roundtrip31.json"
+                    //"test/data/json_roundtrip/roundtrip32.json" // same as roundtrip31
                 })
         {
             CAPTURE(filename);
