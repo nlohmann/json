@@ -14,6 +14,7 @@
 #include <string> // string
 #include <type_traits> // is_same
 
+#include "detail/conversions/to_chars.hpp"
 #include "detail/macro_scope.hpp"
 #include "detail/meta.hpp"
 #include "detail/parsing/output_adapters.hpp"
@@ -636,12 +637,34 @@ class serializer
     void dump_float(number_float_t x)
     {
         // NaN / inf
-        if (not std::isfinite(x) or std::isnan(x))
+        if (not std::isfinite(x))
         {
             o->write_characters("null", 4);
             return;
         }
 
+        // If number_float_t is an IEEE-754 single or double precision number,
+        // use the Grisu2 algorithm to produce short numbers which are guaranteed
+        // to round-trip, using strtof and strtod, resp.
+        //
+        // NB: The test below works if <long double> == <double>.
+        static constexpr bool is_ieee_single_or_double
+            = (std::numeric_limits<number_float_t>::is_iec559 and std::numeric_limits<number_float_t>::digits == 24 and std::numeric_limits<number_float_t>::max_exponent == 128) or
+              (std::numeric_limits<number_float_t>::is_iec559 and std::numeric_limits<number_float_t>::digits == 53 and std::numeric_limits<number_float_t>::max_exponent == 1024);
+
+        dump_float(x, std::integral_constant<bool, is_ieee_single_or_double>());
+    }
+
+    void dump_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
+    {
+        char* begin = number_buffer.data();
+        char* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
+
+        o->write_characters(begin, static_cast<size_t>(end - begin));
+    }
+
+    void dump_float(number_float_t x, std::false_type /*is_ieee_single_or_double*/)
+    {
         // get number of digits for a text -> float -> text round-trip
         static constexpr auto d = std::numeric_limits<number_float_t>::digits10;
 
