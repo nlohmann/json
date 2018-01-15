@@ -1165,13 +1165,6 @@ TEST_CASE("UBJSON")
 
     SECTION("errors")
     {
-        SECTION("empty byte vector")
-        {
-            CHECK_THROWS_AS(json::from_ubjson(std::vector<uint8_t>()), json::parse_error&);
-            CHECK_THROWS_WITH(json::from_ubjson(std::vector<uint8_t>()),
-                              "[json.exception.parse_error.110] parse error at 1: unexpected end of input");
-        }
-
         SECTION("strict mode")
         {
             std::vector<uint8_t> vec = {'Z', 'Z'};
@@ -1335,6 +1328,13 @@ TEST_CASE("UBJSON")
 
     SECTION("parse errors")
     {
+        SECTION("empty byte vector")
+        {
+            CHECK_THROWS_AS(json::from_ubjson(std::vector<uint8_t>()), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(std::vector<uint8_t>()),
+                              "[json.exception.parse_error.110] parse error at 1: unexpected end of input");
+        }
+
         SECTION("char")
         {
             SECTION("eof after C byte")
@@ -1477,8 +1477,9 @@ TEST_CASE("UBJSON")
     }
 }
 
+/*
 // use this testcase outside [hide] to run it with Valgrind
-TEST_CASE("single CBOR roundtrip")
+TEST_CASE("single UBJSON roundtrip")
 {
     SECTION("sample.json")
     {
@@ -1489,11 +1490,11 @@ TEST_CASE("single CBOR roundtrip")
         json j1 = json::parse(f_json);
 
         // parse MessagePack file
-        std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
-        std::vector<uint8_t> packed((std::istreambuf_iterator<char>(f_cbor)),
+        std::ifstream f_ubjson(filename + ".ubj", std::ios::binary);
+        std::vector<uint8_t> packed((std::istreambuf_iterator<char>(f_ubjson)),
                                     std::istreambuf_iterator<char>());
         json j2;
-        CHECK_NOTHROW(j2 = json::from_cbor(packed));
+        CHECK_NOTHROW(j2 = json::from_ubjson(packed));
 
         // compare parsed JSON values
         CHECK(j1 == j2);
@@ -1503,29 +1504,31 @@ TEST_CASE("single CBOR roundtrip")
             SECTION("std::ostringstream")
             {
                 std::ostringstream ss;
-                json::to_cbor(j1, ss);
-                json j3 = json::from_cbor(ss.str());
+                json::to_ubjson(j1, ss);
+                json j3 = json::from_ubjson(ss.str());
                 CHECK(j1 == j3);
             }
 
             SECTION("std::string")
             {
                 std::string s;
-                json::to_cbor(j1, s);
-                json j3 = json::from_cbor(s);
+                json::to_ubjson(j1, s);
+                json j3 = json::from_ubjson(s);
                 CHECK(j1 == j3);
             }
         }
 
         // check with different start index
-        packed.insert(packed.begin(), 5, 0xff);
-        CHECK(j1 == json::from_cbor(packed.begin() + 5, packed.end()));
+        // packed.insert(packed.begin(), 5, 0xff);
+        // CHECK(j1 == json::from_ubjson(packed.begin() + 5, packed.end()));
     }
 }
+*/
 
-TEST_CASE("CBOR roundtrips", "[hide]")
+/*
+TEST_CASE("UBJSON roundtrips", "[hide]")
 {
-    SECTION("input from flynn")
+    SECTION("input from py-ubjson")
     {
         for (std::string filename :
                 {
@@ -1684,13 +1687,13 @@ TEST_CASE("CBOR roundtrips", "[hide]")
 
             SECTION("std::vector<uint8_t>")
             {
-                // parse CBOR file
-                std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
+                // parse UBJSON file
+                std::ifstream f_ubjson(filename + ".ubj", std::ios::binary);
                 std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_cbor)),
+                    (std::istreambuf_iterator<char>(f_ubjson)),
                     std::istreambuf_iterator<char>());
                 json j2;
-                CHECK_NOTHROW(j2 = json::from_cbor(packed));
+                CHECK_NOTHROW(j2 = json::from_ubjson(packed));
 
                 // compare parsed JSON values
                 CHECK(j1 == j2);
@@ -1698,10 +1701,10 @@ TEST_CASE("CBOR roundtrips", "[hide]")
 
             SECTION("std::ifstream")
             {
-                // parse CBOR file
-                std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
+                // parse UBJSON file
+                std::ifstream f_ubjson(filename + ".ubj", std::ios::binary);
                 json j2;
-                CHECK_NOTHROW(j2 = json::from_cbor(f_cbor));
+                CHECK_NOTHROW(j2 = json::from_ubjson(f_ubjson));
 
                 // compare parsed JSON values
                 CHECK(j1 == j2);
@@ -1709,36 +1712,21 @@ TEST_CASE("CBOR roundtrips", "[hide]")
 
             SECTION("uint8_t* and size")
             {
-                // parse CBOR file
-                std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
+                // parse UBJSON file
+                std::ifstream f_ubjson(filename + ".ubj", std::ios::binary);
                 std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_cbor)),
+                    (std::istreambuf_iterator<char>(f_ubjson)),
                     std::istreambuf_iterator<char>());
                 json j2;
-                CHECK_NOTHROW(j2 = json::from_cbor({packed.data(), packed.size()}));
+                CHECK_NOTHROW(j2 = json::from_ubjson({packed.data(), packed.size()}));
 
                 // compare parsed JSON values
                 CHECK(j1 == j2);
             }
-
-            SECTION("output to output adapters")
-            {
-                // parse CBOR file
-                std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_cbor)),
-                    std::istreambuf_iterator<char>());
-
-                SECTION("std::vector<uint8_t>")
-                {
-                    std::vector<uint8_t> vec;
-                    json::to_cbor(j1, vec);
-                    CHECK(vec == packed);
-                }
-            }
         }
     }
 }
+*/
 
 TEST_CASE("Universal Binary JSON Specification Examples 1")
 {
