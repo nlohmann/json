@@ -1,9 +1,7 @@
 #pragma once
 
-#include <ciso646> // not
 #include <cstddef> // ptrdiff_t
 #include <limits>  // numeric_limits
-#include <ostream> // ostream
 
 namespace nlohmann
 {
@@ -20,9 +18,15 @@ end_value (`1`) models past the end.
 */
 class primitive_iterator_t
 {
-  public:
+  private:
     using difference_type = std::ptrdiff_t;
+    static constexpr difference_type begin_value = 0;
+    static constexpr difference_type end_value = begin_value + 1;
 
+    /// iterator as signed integer type
+    difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
+
+  public:
     constexpr difference_type get_value() const noexcept
     {
         return m_it;
@@ -62,10 +66,10 @@ class primitive_iterator_t
         return lhs.m_it < rhs.m_it;
     }
 
-    primitive_iterator_t operator+(difference_type i)
+    primitive_iterator_t operator+(difference_type n) noexcept
     {
         auto result = *this;
-        result += i;
+        result += n;
         return result;
     }
 
@@ -74,55 +78,43 @@ class primitive_iterator_t
         return lhs.m_it - rhs.m_it;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, primitive_iterator_t it)
-    {
-        return os << it.m_it;
-    }
-
-    primitive_iterator_t& operator++()
+    primitive_iterator_t& operator++() noexcept
     {
         ++m_it;
         return *this;
     }
 
-    primitive_iterator_t const operator++(int)
+    primitive_iterator_t const operator++(int) noexcept
     {
         auto result = *this;
         m_it++;
         return result;
     }
 
-    primitive_iterator_t& operator--()
+    primitive_iterator_t& operator--() noexcept
     {
         --m_it;
         return *this;
     }
 
-    primitive_iterator_t const operator--(int)
+    primitive_iterator_t const operator--(int) noexcept
     {
         auto result = *this;
         m_it--;
         return result;
     }
 
-    primitive_iterator_t& operator+=(difference_type n)
+    primitive_iterator_t& operator+=(difference_type n) noexcept
     {
         m_it += n;
         return *this;
     }
 
-    primitive_iterator_t& operator-=(difference_type n)
+    primitive_iterator_t& operator-=(difference_type n) noexcept
     {
         m_it -= n;
         return *this;
     }
-
-  private:
-    static constexpr difference_type begin_value = 0;
-    static constexpr difference_type end_value = begin_value + 1;
-
-    /// iterator as signed integer type
-    difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
 };
 }
 }

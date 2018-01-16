@@ -79,7 +79,7 @@ template<typename IteratorType> class iteration_proxy
 
   public:
     /// construct iteration proxy from a container
-    explicit iteration_proxy(typename IteratorType::reference cont)
+    explicit iteration_proxy(typename IteratorType::reference cont) noexcept
         : container(cont) {}
 
     /// return iterator begin (needed for range-based for)
