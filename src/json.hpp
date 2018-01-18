@@ -14685,6 +14685,7 @@ class basic_json
     diff for two JSON values.,diff}
 
     @sa @ref patch -- apply a JSON patch
+    @sa @ref merge_patch -- apply a JSON Merge Patch
 
     @sa [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
 
@@ -14813,6 +14814,83 @@ class basic_json
         }
 
         return result;
+    }
+
+    /// @}
+
+    ////////////////////////////////
+    // JSON Merge Patch functions //
+    ////////////////////////////////
+
+    /// @name JSON Merge Patch functions
+    /// @{
+
+    /*!
+    @brief applies a JSON Merge Patch
+
+    The merge patch format is primarily intended for use with the HTTP PATCH
+    method as a means of describing a set of modifications to a target
+    resource's content. This function applies a merge patch to the current
+    JSON value.
+
+    The function implements the following algorithm from Section 2 of
+    [RFC 7396 (JSON Merge Patch)](https://tools.ietf.org/html/rfc7396):
+
+    ```
+    define MergePatch(Target, Patch):
+      if Patch is an Object:
+        if Target is not an Object:
+          Target = {} // Ignore the contents and set it to an empty Object
+        for each Name/Value pair in Patch:
+          if Value is null:
+            if Name exists in Target:
+              remove the Name/Value pair from Target
+          else:
+            Target[Name] = MergePatch(Target[Name], Value)
+        return Target
+      else:
+        return Patch
+    ```
+
+    Thereby, `Target` is the current object; that is, the patch is applied to
+    the current value.
+
+    @param[in] patch  the patch to apply
+
+    @complexity Linear in the lengths of @a patch.
+
+    @liveexample{The following code shows how a JSON Merge Patch is applied to
+    a JSON document.,merge_patch}
+
+    @sa @ref patch -- apply a JSON patch
+    @sa [RFC 7396 (JSON Merge Patch)](https://tools.ietf.org/html/rfc7396)
+
+    @since version 3.0.0
+    */
+    void merge_patch(const basic_json& patch)
+    {
+        if (patch.is_object())
+        {
+            if (not is_object())
+            {
+                *this = object();
+            }
+            for (auto it = patch.begin(); it != patch.end(); ++it)
+            {
+                if (it.value().is_null())
+                {
+                    erase(it.key());
+                }
+                else
+                {
+                    operator[](it.key()).merge_patch(it.value());
+                }
+            }
+        }
+        else
+        {
+            *this = patch;
+        }
     }
 
     /// @}
