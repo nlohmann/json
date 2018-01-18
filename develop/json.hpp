@@ -7247,7 +7247,7 @@ class basic_json
             // wrapper to get a value for an operation
             const auto get_value = [&val](const std::string & op,
                                           const std::string & member,
-                                          bool string_type) -> basic_json&
+                                          bool string_type) -> basic_json &
             {
                 // find value
                 auto it = val.m_value.object->find(member);
