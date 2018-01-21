@@ -8,6 +8,7 @@ SRCS = develop/json.hpp \
        develop/detail/exceptions.hpp \
        develop/detail/value_t.hpp \
        develop/detail/conversions/from_json.hpp \
+       develop/detail/conversions/to_chars.hpp \
        develop/detail/conversions/to_json.hpp \
        develop/detail/parsing/input_adapters.hpp \
        develop/detail/parsing/lexer.hpp \

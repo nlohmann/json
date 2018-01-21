@@ -60,26 +60,28 @@ static float make_float(uint64_t f, int e)
     constexpr int      kDenormalExponent        = 1 -    kExponentBias;
     constexpr int      kMaxExponent             = 0xFF - kExponentBias;
 
-    while (f > kHiddenBit + kSignificandMask) {
+    while (f > kHiddenBit + kSignificandMask)
+    {
         f >>= 1;
         e++;
     }
-    if (e >= kMaxExponent) {
+    if (e >= kMaxExponent)
+    {
         return std::numeric_limits<float>::infinity();
     }
-    if (e < kDenormalExponent) {
+    if (e < kDenormalExponent)
+    {
         return 0.0;
     }
-    while (e > kDenormalExponent && (f & kHiddenBit) == 0) {
+    while (e > kDenormalExponent && (f & kHiddenBit) == 0)
+    {
         f <<= 1;
         e--;
     }
 
-    uint64_t biased_exponent;
-    if (e == kDenormalExponent && (f & kHiddenBit) == 0)
-        biased_exponent = 0;
-    else
-        biased_exponent = static_cast<uint64_t>(e + kExponentBias);
+    uint64_t biased_exponent = (e == kDenormalExponent && (f & kHiddenBit) == 0)
+        ? 0
+        : static_cast<uint64_t>(e + kExponentBias);
 
     uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
     return reinterpret_bits<float>(static_cast<uint32_t>(bits));
@@ -110,26 +112,28 @@ static double make_double(uint64_t f, int e)
     constexpr int      kDenormalExponent        = 1     - kExponentBias;
     constexpr int      kMaxExponent             = 0x7FF - kExponentBias;
 
-    while (f > kHiddenBit + kSignificandMask) {
+    while (f > kHiddenBit + kSignificandMask)
+    {
         f >>= 1;
         e++;
     }
-    if (e >= kMaxExponent) {
+    if (e >= kMaxExponent)
+    {
         return std::numeric_limits<double>::infinity();
     }
-    if (e < kDenormalExponent) {
+    if (e < kDenormalExponent)
+    {
         return 0.0;
     }
-    while (e > kDenormalExponent && (f & kHiddenBit) == 0) {
+    while (e > kDenormalExponent && (f & kHiddenBit) == 0)
+    {
         f <<= 1;
         e--;
     }
 
-    uint64_t biased_exponent;
-    if (e == kDenormalExponent && (f & kHiddenBit) == 0)
-        biased_exponent = 0;
-    else
-        biased_exponent = static_cast<uint64_t>(e + kExponentBias);
+    uint64_t biased_exponent = (e == kDenormalExponent && (f & kHiddenBit) == 0)
+        ? 0
+        : static_cast<uint64_t>(e + kExponentBias);
 
     uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
     return reinterpret_bits<double>(bits);
@@ -139,7 +143,7 @@ TEST_CASE("digit gen")
 {
     SECTION("single precision")
     {
-        auto check_float = [](float number, const std::string& digits, int expected_exponent)
+        auto check_float = [](float number, const std::string & digits, int expected_exponent)
         {
             CAPTURE(number);
             CAPTURE(digits);
@@ -203,7 +207,7 @@ TEST_CASE("digit gen")
 
     SECTION("double precision")
     {
-        auto check_double = [](double number, const std::string& digits, int expected_exponent)
+        auto check_double = [](double number, const std::string & digits, int expected_exponent)
         {
             CAPTURE(number);
             CAPTURE(digits);
@@ -349,7 +353,7 @@ TEST_CASE("formatting")
 {
     SECTION("single precision")
     {
-        auto check_float = [](float number, const std::string& expected)
+        auto check_float = [](float number, const std::string & expected)
         {
             char buf[32];
             char* end = nlohmann::detail::to_chars(buf, buf + 32, number);
@@ -357,7 +361,7 @@ TEST_CASE("formatting")
 
             CHECK(actual == expected);
         };
-                                                     // %.9g
+        // %.9g
         check_float( -1.2345e-22f, "-1.2345e-22"  ); // -1.23450004e-22
         check_float( -1.2345e-21f, "-1.2345e-21"  ); // -1.23450002e-21
         check_float( -1.2345e-20f, "-1.2345e-20"  ); // -1.23450002e-20
@@ -409,7 +413,7 @@ TEST_CASE("formatting")
 
     SECTION("double precision")
     {
-        auto check_double = [](double number, const std::string& expected)
+        auto check_double = [](double number, const std::string & expected)
         {
             char buf[32];
             char* end = nlohmann::detail::to_chars(buf, buf + 32, number);

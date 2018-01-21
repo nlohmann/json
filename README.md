@@ -821,8 +821,6 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](http://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
 
-* * *
-
 The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](http://florian.loitsch.com/)
 
 ## Contact
@@ -934,6 +932,7 @@ I deeply appreciate the help of the following people.
 - [Matthias Möller](https://github.com/TinyTinni) added a `.natvis` for the MSVC debug view.
 - [bogemic](https://github.com/bogemic) fixed some C++17 deprecation warnings.
 - [Eren Okka](https://github.com/erengy) fixed some MSVC warnings.
+- [abolz](https://github.com/abolz) integrated the Grisu2 algorithm for proper floating-point formatting, allowing more roundtrip checks to succeed.
 
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.

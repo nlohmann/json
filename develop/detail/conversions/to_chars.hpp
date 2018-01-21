@@ -11,24 +11,30 @@ namespace nlohmann
 namespace detail
 {
 
-// Implements the Grisu2 algorithm for binary to decimal floating-point conversion.
-//
-// This implementation is a slightly modified version of the reference implementation which may be
-// obtained from http://florian.loitsch.com/publications (bench.tar.gz).
-//
-// The code is distributed under the MIT license, Copyright (c) 2009 Florian Loitsch.
-//
-// For a detailed description of the algorithm see:
-//
-// [1]  Loitsch, "Printing Floating-Point Numbers Quickly and Accurately with Integers",
-//      Proceedings of the ACM SIGPLAN 2010 Conference on Programming Language Design and Implementation, PLDI 2010
-// [2]  Burger, Dybvig, "Printing Floating-Point Numbers Quickly and Accurately",
-//      Proceedings of the ACM SIGPLAN 1996 Conference on Programming Language Design and Implementation, PLDI 1996
+/*!
+@brief implements the Grisu2 algorithm for binary to decimal floating-point
+conversion.
+
+This implementation is a slightly modified version of the reference
+implementation which may be obtained from
+http://florian.loitsch.com/publications (bench.tar.gz).
+
+The code is distributed under the MIT license, Copyright (c) 2009 Florian Loitsch.
+
+For a detailed description of the algorithm see:
+
+[1] Loitsch, "Printing Floating-Point Numbers Quickly and Accurately with
+    Integers", Proceedings of the ACM SIGPLAN 2010 Conference on Programming
+    Language Design and Implementation, PLDI 2010
+[2] Burger, Dybvig, "Printing Floating-Point Numbers Quickly and Accurately",
+    Proceedings of the ACM SIGPLAN 1996 Conference on Programming Language
+    Design and Implementation, PLDI 1996
+*/
 namespace dtoa_impl
 {
 
 template <typename Target, typename Source>
-Target reinterpret_bits(Source source)
+Target reinterpret_bits(const Source source)
 {
     static_assert(sizeof(Target) == sizeof(Source), "size mismatch");
 
@@ -44,117 +50,117 @@ struct diyfp // f * 2^e
     uint64_t f;
     int e;
 
-    constexpr diyfp() : f(0), e(0) {}
-    constexpr diyfp(uint64_t f_, int e_) : f(f_), e(e_) {}
+    constexpr diyfp() noexcept : f(0), e(0) {}
+    constexpr diyfp(uint64_t f_, int e_) noexcept : f(f_), e(e_) {}
 
-    // Returns x - y.
-    // PRE: x.e == y.e and x.f >= y.f
-    static diyfp sub(diyfp x, diyfp y);
-
-    // Returns x * y.
-    // The result is rounded. (Only the upper q bits are returned.)
-    static diyfp mul(diyfp x, diyfp y);
-
-    // Normalize x such that the significand is >= 2^(q-1).
-    // PRE: x.f != 0
-    static diyfp normalize(diyfp x);
-
-    // Normalize x such that the result has the exponent E.
-    // PRE: e >= x.e and the upper e - x.e bits of x.f must be zero.
-    static diyfp normalize_to(diyfp x, int e);
-};
-
-inline diyfp diyfp::sub(diyfp x, diyfp y)
-{
-    assert(x.e == y.e);
-    assert(x.f >= y.f);
-
-    return diyfp(x.f - y.f, x.e);
-}
-
-inline diyfp diyfp::mul(diyfp x, diyfp y)
-{
-    static_assert(kPrecision == 64, "internal error");
-
-    // Computes:
-    //  f = round((x.f * y.f) / 2^q)
-    //  e = x.e + y.e + q
-
-    // Emulate the 64-bit * 64-bit multiplication:
-    //
-    // p = u * v
-    //   = (u_lo + 2^32 u_hi) (v_lo + 2^32 v_hi)
-    //   = (u_lo v_lo         ) + 2^32 ((u_lo v_hi         ) + (u_hi v_lo         )) + 2^64 (u_hi v_hi         )
-    //   = (p0                ) + 2^32 ((p1                ) + (p2                )) + 2^64 (p3                )
-    //   = (p0_lo + 2^32 p0_hi) + 2^32 ((p1_lo + 2^32 p1_hi) + (p2_lo + 2^32 p2_hi)) + 2^64 (p3                )
-    //   = (p0_lo             ) + 2^32 (p0_hi + p1_lo + p2_lo                      ) + 2^64 (p1_hi + p2_hi + p3)
-    //   = (p0_lo             ) + 2^32 (Q                                          ) + 2^64 (H                 )
-    //   = (p0_lo             ) + 2^32 (Q_lo + 2^32 Q_hi                           ) + 2^64 (H                 )
-    //
-    // (Since Q might be larger than 2^32 - 1)
-    //
-    //   = (p0_lo + 2^32 Q_lo) + 2^64 (Q_hi + H)
-    //
-    // (Q_hi + H does not overflow a 64-bit int)
-    //
-    //   = p_lo + 2^64 p_hi
-
-    const uint64_t u_lo = x.f & 0xFFFFFFFF;
-    const uint64_t u_hi = x.f >> 32;
-    const uint64_t v_lo = y.f & 0xFFFFFFFF;
-    const uint64_t v_hi = y.f >> 32;
-
-    const uint64_t p0 = u_lo * v_lo;
-    const uint64_t p1 = u_lo * v_hi;
-    const uint64_t p2 = u_hi * v_lo;
-    const uint64_t p3 = u_hi * v_hi;
-
-    const uint64_t p0_hi = p0 >> 32;
-    const uint64_t p1_lo = p1 & 0xFFFFFFFF;
-    const uint64_t p1_hi = p1 >> 32;
-    const uint64_t p2_lo = p2 & 0xFFFFFFFF;
-    const uint64_t p2_hi = p2 >> 32;
-
-    uint64_t Q = p0_hi + p1_lo + p2_lo;
-
-    // The full product might now be computed as
-    //
-    // p_hi = p3 + p2_hi + p1_hi + (Q >> 32)
-    // p_lo = p0_lo + (Q << 32)
-    //
-    // But in this particular case here, the full p_lo is not required.
-    // Effectively we only need to add the highest bit in p_lo to p_hi (and
-    // Q_hi + 1 does not overflow).
-
-    Q += uint64_t{1} << (64 - 32 - 1); // round, ties up
-
-    const uint64_t h = p3 + p2_hi + p1_hi + (Q >> 32);
-
-    return diyfp(h, x.e + y.e + 64);
-}
-
-inline diyfp diyfp::normalize(diyfp x)
-{
-    assert(x.f != 0);
-
-    while ((x.f >> 63) == 0)
+    /*!
+    @brief returns x - y
+    @pre x.e == y.e and x.f >= y.f
+    */
+    static diyfp sub(const diyfp& x, const diyfp& y) noexcept
     {
-        x.f <<= 1;
-        x.e--;
+        assert(x.e == y.e);
+        assert(x.f >= y.f);
+
+        return diyfp(x.f - y.f, x.e);
     }
 
-    return x;
-}
+    /*!
+    @brief returns x * y
+    @note The result is rounded. (Only the upper q bits are returned.)
+    */
+    static diyfp mul(const diyfp& x, const diyfp& y) noexcept
+    {
+        static_assert(kPrecision == 64, "internal error");
 
-inline diyfp diyfp::normalize_to(diyfp x, int target_exponent)
-{
-    const int delta = x.e - target_exponent;
+        // Computes:
+        //  f = round((x.f * y.f) / 2^q)
+        //  e = x.e + y.e + q
 
-    assert(delta >= 0);
-    assert(((x.f << delta) >> delta) == x.f);
+        // Emulate the 64-bit * 64-bit multiplication:
+        //
+        // p = u * v
+        //   = (u_lo + 2^32 u_hi) (v_lo + 2^32 v_hi)
+        //   = (u_lo v_lo         ) + 2^32 ((u_lo v_hi         ) + (u_hi v_lo         )) + 2^64 (u_hi v_hi         )
+        //   = (p0                ) + 2^32 ((p1                ) + (p2                )) + 2^64 (p3                )
+        //   = (p0_lo + 2^32 p0_hi) + 2^32 ((p1_lo + 2^32 p1_hi) + (p2_lo + 2^32 p2_hi)) + 2^64 (p3                )
+        //   = (p0_lo             ) + 2^32 (p0_hi + p1_lo + p2_lo                      ) + 2^64 (p1_hi + p2_hi + p3)
+        //   = (p0_lo             ) + 2^32 (Q                                          ) + 2^64 (H                 )
+        //   = (p0_lo             ) + 2^32 (Q_lo + 2^32 Q_hi                           ) + 2^64 (H                 )
+        //
+        // (Since Q might be larger than 2^32 - 1)
+        //
+        //   = (p0_lo + 2^32 Q_lo) + 2^64 (Q_hi + H)
+        //
+        // (Q_hi + H does not overflow a 64-bit int)
+        //
+        //   = p_lo + 2^64 p_hi
 
-    return diyfp(x.f << delta, target_exponent);
-}
+        const uint64_t u_lo = x.f & 0xFFFFFFFF;
+        const uint64_t u_hi = x.f >> 32;
+        const uint64_t v_lo = y.f & 0xFFFFFFFF;
+        const uint64_t v_hi = y.f >> 32;
+
+        const uint64_t p0 = u_lo * v_lo;
+        const uint64_t p1 = u_lo * v_hi;
+        const uint64_t p2 = u_hi * v_lo;
+        const uint64_t p3 = u_hi * v_hi;
+
+        const uint64_t p0_hi = p0 >> 32;
+        const uint64_t p1_lo = p1 & 0xFFFFFFFF;
+        const uint64_t p1_hi = p1 >> 32;
+        const uint64_t p2_lo = p2 & 0xFFFFFFFF;
+        const uint64_t p2_hi = p2 >> 32;
+
+        uint64_t Q = p0_hi + p1_lo + p2_lo;
+
+        // The full product might now be computed as
+        //
+        // p_hi = p3 + p2_hi + p1_hi + (Q >> 32)
+        // p_lo = p0_lo + (Q << 32)
+        //
+        // But in this particular case here, the full p_lo is not required.
+        // Effectively we only need to add the highest bit in p_lo to p_hi (and
+        // Q_hi + 1 does not overflow).
+
+        Q += uint64_t{1} << (64 - 32 - 1); // round, ties up
+
+        const uint64_t h = p3 + p2_hi + p1_hi + (Q >> 32);
+
+        return diyfp(h, x.e + y.e + 64);
+    }
+
+    /*!
+    @brief normalize x such that the significand is >= 2^(q-1)
+    @pre x.f != 0
+    */
+    static diyfp normalize(diyfp x) noexcept
+    {
+        assert(x.f != 0);
+
+        while ((x.f >> 63) == 0)
+        {
+            x.f <<= 1;
+            x.e--;
+        }
+
+        return x;
+    }
+
+    /*!
+    @brief normalize x such that the result has the exponent E
+    @pre e >= x.e and the upper e - x.e bits of x.f must be zero.
+    */
+    static diyfp normalize_to(const diyfp& x, const int target_exponent) noexcept
+    {
+        const int delta = x.e - target_exponent;
+
+        assert(delta >= 0);
+        assert(((x.f << delta) >> delta) == x.f);
+
+        return diyfp(x.f << delta, target_exponent);
+    }
+};
 
 struct boundaries
 {
@@ -163,8 +169,12 @@ struct boundaries
     diyfp plus;
 };
 
-// Compute the (normalized) diyfp representing the input number 'value' and its boundaries.
-// PRE: value must be finite and positive
+/*!
+Compute the (normalized) diyfp representing the input number 'value' and its
+boundaries.
+
+@pre value must be finite and positive
+*/
 template <typename FloatType>
 boundaries compute_boundaries(FloatType value)
 {
@@ -193,11 +203,9 @@ boundaries compute_boundaries(FloatType value)
     const uint64_t F = bits & (kHiddenBit - 1);
 
     const bool is_denormal = (E == 0);
-
-    const diyfp v
-        = is_denormal
-            ? diyfp(F, 1 - kBias)
-            : diyfp(F + kHiddenBit, static_cast<int>(E) - kBias);
+    const diyfp v = is_denormal
+                    ? diyfp(F, 1 - kBias)
+                    : diyfp(F + kHiddenBit, static_cast<int>(E) - kBias);
 
     // Compute the boundaries m- and m+ of the floating-point value
     // v = f * 2^e.
@@ -221,12 +229,10 @@ boundaries compute_boundaries(FloatType value)
     //                       v-     m-     v             m+            v+
 
     const bool lower_boundary_is_closer = (F == 0 and E > 1);
-
     const diyfp m_plus = diyfp(2 * v.f + 1, v.e - 1);
-    const diyfp m_minus
-        = lower_boundary_is_closer
-            ? diyfp(4 * v.f - 1, v.e - 2)  // (B)
-            : diyfp(2 * v.f - 1, v.e - 1); // (A)
+    const diyfp m_minus = lower_boundary_is_closer
+                          ? diyfp(4 * v.f - 1, v.e - 2)  // (B)
+                          : diyfp(2 * v.f - 1, v.e - 1); // (A)
 
     // Determine the normalized w+ = m+.
     const diyfp w_plus = diyfp::normalize(m_plus);
@@ -302,12 +308,13 @@ struct cached_power // c = f * 2^e ~= 10^k
     int k;
 };
 
-// For a normalized diyfp w = f * 2^e, this function returns a (normalized)
-// cached power-of-ten c = f_c * 2^e_c, such that the exponent of the product
-// w * c satisfies (Definition 3.2 from [1])
-//
-//      alpha <= e_c + e + q <= gamma.
-//
+/*!
+For a normalized diyfp w = f * 2^e, this function returns a (normalized) cached
+power-of-ten c = f_c * 2^e_c, such that the exponent of the product w * c
+satisfies (Definition 3.2 from [1])
+
+     alpha <= e_c + e + q <= gamma.
+*/
 inline cached_power get_cached_power_for_binary_exponent(int e)
 {
     // Now
@@ -468,24 +475,66 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     return cached;
 }
 
-// For n != 0, returns k, such that pow10 := 10^(k-1) <= n < 10^k.
-// For n == 0, returns 1 and sets pow10 := 1.
-inline int find_largest_pow10(uint32_t n, uint32_t& pow10)
+/*!
+For n != 0, returns k, such that pow10 := 10^(k-1) <= n < 10^k.
+For n == 0, returns 1 and sets pow10 := 1.
+*/
+inline int find_largest_pow10(const uint32_t n, uint32_t& pow10)
 {
-    if (n >= 1000000000) { pow10 = 1000000000; return 10; }
-    if (n >=  100000000) { pow10 =  100000000; return  9; }
-    if (n >=   10000000) { pow10 =   10000000; return  8; }
-    if (n >=    1000000) { pow10 =    1000000; return  7; }
-    if (n >=     100000) { pow10 =     100000; return  6; }
-    if (n >=      10000) { pow10 =      10000; return  5; }
-    if (n >=       1000) { pow10 =       1000; return  4; }
-    if (n >=        100) { pow10 =        100; return  3; }
-    if (n >=         10) { pow10 =         10; return  2; }
-
-    pow10 = 1; return 1;
+    if (n >= 1000000000)
+    {
+        pow10 = 1000000000;
+        return 10;
+    }
+    else if (n >= 100000000)
+    {
+        pow10 = 100000000;
+        return  9;
+    }
+    else if (n >= 10000000)
+    {
+        pow10 = 10000000;
+        return  8;
+    }
+    else if (n >= 1000000)
+    {
+        pow10 = 1000000;
+        return  7;
+    }
+    else if (n >= 100000)
+    {
+        pow10 = 100000;
+        return  6;
+    }
+    else if (n >= 10000)
+    {
+        pow10 = 10000;
+        return  5;
+    }
+    else if (n >= 1000)
+    {
+        pow10 = 1000;
+        return  4;
+    }
+    else if (n >= 100)
+    {
+        pow10 = 100;
+        return  3;
+    }
+    else if (n >= 10)
+    {
+        pow10 = 10;
+        return  2;
+    }
+    else
+    {
+        pow10 = 1;
+        return 1;
+    }
 }
 
-inline void grisu2_round(char* buf, int len, uint64_t dist, uint64_t delta, uint64_t rest, uint64_t ten_k)
+inline void grisu2_round(char* buf, int len, uint64_t dist, uint64_t delta,
+                         uint64_t rest, uint64_t ten_k)
 {
     assert(len >= 1);
     assert(dist <= delta);
@@ -521,9 +570,12 @@ inline void grisu2_round(char* buf, int len, uint64_t dist, uint64_t delta, uint
     }
 }
 
-// Generates V = buffer * 10^decimal_exponent, such that M- <= V <= M+.
-// M- and M+ must be normalized and share the same exponent -60 <= e <= -32.
-inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent, diyfp M_minus, diyfp w, diyfp M_plus)
+/*!
+Generates V = buffer * 10^decimal_exponent, such that M- <= V <= M+.
+M- and M+ must be normalized and share the same exponent -60 <= e <= -32.
+*/
+inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
+                             diyfp M_minus, diyfp w, diyfp M_plus)
 {
     static_assert(kAlpha >= -60, "internal error");
     static_assert(kGamma <= -32, "internal error");
@@ -757,10 +809,13 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent, d
     //      N = 9  for p = 24 (IEEE single precision)
 }
 
-// v = buf * 10^decimal_exponent
-// len is the length of the buffer (number of decimal digits)
-// The buffer must be large enough, i.e. >= max_digits10.
-inline void grisu2(char* buf, int& len, int& decimal_exponent, diyfp m_minus, diyfp v, diyfp m_plus)
+/*!
+v = buf * 10^decimal_exponent
+len is the length of the buffer (number of decimal digits)
+The buffer must be large enough, i.e. >= max_digits10.
+*/
+inline void grisu2(char* buf, int& len, int& decimal_exponent,
+                   diyfp m_minus, diyfp v, diyfp m_plus)
 {
     assert(m_plus.e == m_minus.e);
     assert(m_plus.e == v.e);
@@ -812,9 +867,11 @@ inline void grisu2(char* buf, int& len, int& decimal_exponent, diyfp m_minus, di
     grisu2_digit_gen(buf, len, decimal_exponent, M_minus, w, M_plus);
 }
 
-// v = buf * 10^decimal_exponent
-// len is the length of the buffer (number of decimal digits)
-// The buffer must be large enough, i.e. >= max_digits10.
+/*!
+v = buf * 10^decimal_exponent
+len is the length of the buffer (number of decimal digits)
+The buffer must be large enough, i.e. >= max_digits10.
+*/
 template <typename FloatType>
 void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
 {
@@ -849,9 +906,11 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
     grisu2(buf, len, decimal_exponent, w.minus, w.w, w.plus);
 }
 
-// Appends a decimal representation of e to buf.
-// Returns a pointer to the element following the exponent.
-// PRE: -1000 < e < 1000
+/*!
+@brief appends a decimal representation of e to buf
+@return a pointer to the element following the exponent.
+@pre -1000 < e < 1000
+*/
 inline char* append_exponent(char* buf, int e)
 {
     assert(e > -1000);
@@ -893,12 +952,17 @@ inline char* append_exponent(char* buf, int e)
     return buf;
 }
 
-// Prettify v = buf * 10^decimal_exponent
-// If v is in the range [10^min_exp, 10^max_exp) it will be printed in fixed-point notation.
-// Otherwise it will be printed in exponential notation.
-// PRE: min_exp < 0
-// PRE: max_exp > 0
-inline char* format_buffer(char* buf, int len, int decimal_exponent, int min_exp, int max_exp)
+/*!
+@brief prettify v = buf * 10^decimal_exponent
+
+If v is in the range [10^min_exp, 10^max_exp) it will be printed in fixed-point
+notation. Otherwise it will be printed in exponential notation.
+
+@pre min_exp < 0
+@pre max_exp > 0
+*/
+inline char* format_buffer(char* buf, int len, int decimal_exponent,
+                           int min_exp, int max_exp)
 {
     assert(min_exp < 0);
     assert(max_exp > 0);
@@ -969,14 +1033,16 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent, int min_exp
 
 } // namespace dtoa_impl
 
-// Generates a decimal representation of the floating-point number value in [first, last).
-//
-// The format of the resulting decimal representation is similar to printf's %g format.
-// Returns an iterator pointing past-the-end of the decimal representation.
-//
-// Note: The input number must be finite, i.e. NaN's and Inf's are not supported.
-// Note: The buffer must be large enough.
-// Note: The result is NOT null-terminated.
+/*!
+@brief generates a decimal representation of the floating-point number value in [first, last).
+
+The format of the resulting decimal representation is similar to printf's %g
+format. Returns an iterator pointing past-the-end of the decimal representation.
+
+@note The input number must be finite, i.e. NaN's and Inf's are not supported.
+@note The buffer must be large enough.
+@note The result is NOT null-terminated.
+*/
 template <typename FloatType>
 char* to_chars(char* first, char* last, FloatType value)
 {
