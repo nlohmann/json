@@ -40,6 +40,7 @@ SOURCES = src/unit.cpp \
           src/unit-regression.cpp \
           src/unit-serialization.cpp \
           src/unit-testsuites.cpp \
+          src/unit-ubjson.cpp \
           src/unit-unicode.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)

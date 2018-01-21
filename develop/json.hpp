@@ -6633,6 +6633,26 @@ class basic_json
         binary_writer<char>(o).write_msgpack(j);
     }
 
+    static std::vector<uint8_t> to_ubjson(const basic_json& j,
+                                          const bool use_size = false, const bool use_type = false)
+    {
+        std::vector<uint8_t> result;
+        to_ubjson(j, result, use_size, use_type);
+        return result;
+    }
+
+    static void to_ubjson(const basic_json& j, detail::output_adapter<uint8_t> o,
+                          const bool use_size = false, const bool use_type = false)
+    {
+        binary_writer<uint8_t>(o).write_ubjson(j, use_size, use_type);
+    }
+
+    static void to_ubjson(const basic_json& j, detail::output_adapter<char> o,
+                          const bool use_size = false, const bool use_type = false)
+    {
+        binary_writer<char>(o).write_ubjson(j, use_size, use_type);
+    }
+
     /*!
     @brief create a JSON value from an input in CBOR format
 
@@ -6825,6 +6845,19 @@ class basic_json
     static basic_json from_msgpack(A1 && a1, A2 && a2, const bool strict = true)
     {
         return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_msgpack(strict);
+    }
+
+    static basic_json from_ubjson(detail::input_adapter i,
+                                  const bool strict = true)
+    {
+        return binary_reader(i).parse_ubjson(strict);
+    }
+
+    template<typename A1, typename A2,
+             detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+    static basic_json from_ubjson(A1 && a1, A2 && a2, const bool strict = true)
+    {
+        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_ubjson(strict);
     }
 
     /// @}

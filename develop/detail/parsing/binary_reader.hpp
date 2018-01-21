@@ -91,6 +91,27 @@ class binary_reader
     }
 
     /*!
+    @brief create a JSON value from UBJSON input
+
+    @param[in] strict  whether to expect the input to be consumed completed
+    @return JSON value created from UBJSON input
+
+    @throw parse_error.110 if input ended unexpectedly or the end of file was
+                           not reached when @a strict was set to true
+    @throw parse_error.112 if unsupported byte was read
+    */
+    BasicJsonType parse_ubjson(const bool strict)
+    {
+        const auto res = parse_ubjson_internal();
+        if (strict)
+        {
+            get_ignore_noop();
+            check_eof(true);
+        }
+        return res;
+    }
+
+    /*!
     @brief determine system byte order
 
     @return true if and only if system's byte order is little endian
@@ -752,6 +773,16 @@ class binary_reader
     }
 
     /*!
+    @param[in] get_char  whether a new character should be retrieved from the
+                         input (true, default) or whether the last read
+                         character should be considered instead
+    */
+    BasicJsonType parse_ubjson_internal(const bool get_char = true)
+    {
+        return get_ubjson_value(get_char ? get_ignore_noop() : current);
+    }
+
+    /*!
     @brief get next character from the input
 
     This function provides the interface to the used input adapter. It does
@@ -764,6 +795,20 @@ class binary_reader
     {
         ++chars_read;
         return (current = ia->get_character());
+    }
+
+    /*!
+    @return character read from the input after ignoring all 'N' entries
+    */
+    int get_ignore_noop()
+    {
+        do
+        {
+            get();
+        }
+        while (current == 'N');
+
+        return current;
     }
 
     /*
@@ -1048,6 +1093,230 @@ class binary_reader
             auto val = parse_msgpack_internal();
             return std::make_pair(std::move(key), std::move(val));
         });
+        return result;
+    }
+
+    /*!
+    @brief reads a UBJSON string
+
+    This function is either called after reading the 'S' byte explicitly
+    indicating a string, or in case of an object key where the 'S' byte can be
+    left out.
+
+    @param[in] get_char  whether a new character should be retrieved from the
+                         input (true, default) or whether the last read
+                         character should be considered instead
+
+    @return string
+
+    @throw parse_error.110 if input ended
+    @throw parse_error.113 if an unexpected byte is read
+    */
+    std::string get_ubjson_string(const bool get_char = true)
+    {
+        if (get_char)
+        {
+            get();  // TODO: may we ignore N here?
+        }
+
+        check_eof();
+
+        switch (current)
+        {
+            case 'U':
+                return get_string(get_number<uint8_t>());
+            case 'i':
+                return get_string(get_number<int8_t>());
+            case 'I':
+                return get_string(get_number<int16_t>());
+            case 'l':
+                return get_string(get_number<int32_t>());
+            case 'L':
+                return get_string(get_number<int64_t>());
+            default:
+                std::stringstream ss;
+                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
+                JSON_THROW(parse_error::create(113, chars_read,
+                                               "expected a UBJSON string; last byte: 0x" + ss.str()));
+        }
+    }
+
+    /*!
+    @brief determine the type and size for a container
+
+    In the optimized UBJSON format, a type and a size can be provided to allow
+    for a more compact representation.
+
+    @return pair of the size and the type
+    */
+    std::pair<std::size_t, int> get_ubjson_size_type()
+    {
+        std::size_t sz = std::string::npos;
+        int tc = 0;
+
+        get_ignore_noop();
+
+        if (current == '$')
+        {
+            tc = get();  // must not ignore 'N', because 'N' maybe the type
+            check_eof();
+
+            get_ignore_noop();
+            if (current != '#')
+            {
+                std::stringstream ss;
+                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
+                JSON_THROW(parse_error::create(112, chars_read,
+                                               "expected '#' after UBJSON type information; last byte: 0x" + ss.str()));
+            }
+            sz = parse_ubjson_internal();
+        }
+        else if (current == '#')
+        {
+            sz = parse_ubjson_internal();
+        }
+
+        return std::make_pair(sz, tc);
+    }
+
+    BasicJsonType get_ubjson_value(const int prefix)
+    {
+        switch (prefix)
+        {
+            case std::char_traits<char>::eof():  // EOF
+                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
+
+            case 'T':  // true
+                return true;
+            case 'F':  // false
+                return false;
+
+            case 'Z':  // null
+                return nullptr;
+
+            case 'U':
+                return get_number<uint8_t>();
+            case 'i':
+                return get_number<int8_t>();
+            case 'I':
+                return get_number<int16_t>();
+            case 'l':
+                return get_number<int32_t>();
+            case 'L':
+                return get_number<int64_t>();
+            case 'd':
+                return get_number<float>();
+            case 'D':
+                return get_number<double>();
+
+            case 'C':  // char
+            {
+                get();
+                check_eof();
+                if (JSON_UNLIKELY(current > 127))
+                {
+                    std::stringstream ss;
+                    ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
+                    JSON_THROW(parse_error::create(113, chars_read,
+                                                   "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + ss.str()));
+                }
+                return std::string(1, static_cast<char>(current));
+            }
+
+            case 'S':  // string
+                return get_ubjson_string();
+
+            case '[':  // array
+                return get_ubjson_array();
+
+            case '{':  // object
+                return get_ubjson_object();
+
+            default: // anything else
+                std::stringstream ss;
+                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
+                JSON_THROW(parse_error::create(112, chars_read,
+                                               "error reading UBJSON; last byte: 0x" + ss.str()));
+        }
+    }
+
+    BasicJsonType get_ubjson_array()
+    {
+        BasicJsonType result = value_t::array;
+        const auto size_and_type = get_ubjson_size_type();
+
+        if (size_and_type.first != std::string::npos)
+        {
+            if (size_and_type.second != 0)
+            {
+                if (size_and_type.second != 'N')
+                    std::generate_n(std::back_inserter(*result.m_value.array),
+                                    size_and_type.first, [this, size_and_type]()
+                {
+                    return get_ubjson_value(size_and_type.second);
+                });
+            }
+            else
+            {
+                std::generate_n(std::back_inserter(*result.m_value.array),
+                                size_and_type.first, [this]()
+                {
+                    return parse_ubjson_internal();
+                });
+            }
+        }
+        else
+        {
+            while (current != ']')
+            {
+                result.push_back(parse_ubjson_internal(false));
+                get_ignore_noop();
+            }
+        }
+
+        return result;
+    }
+
+    BasicJsonType get_ubjson_object()
+    {
+        BasicJsonType result = value_t::object;
+        const auto size_and_type = get_ubjson_size_type();
+
+        if (size_and_type.first != std::string::npos)
+        {
+            if (size_and_type.second != 0)
+            {
+                std::generate_n(std::inserter(*result.m_value.object,
+                                              result.m_value.object->end()),
+                                size_and_type.first, [this, size_and_type]()
+                {
+                    auto key = get_ubjson_string();
+                    auto val = get_ubjson_value(size_and_type.second);
+                    return std::make_pair(std::move(key), std::move(val));
+                });
+            }
+            else
+            {
+                std::generate_n(std::inserter(*result.m_value.object,
+                                              result.m_value.object->end()),
+                                size_and_type.first, [this]()
+                {
+                    auto key = get_ubjson_string();
+                    auto val = parse_ubjson_internal();
+                    return std::make_pair(std::move(key), std::move(val));
+                });
+            }
+        }
+        else
+        {
+            while (current != '}')
+            {
+                auto key = get_ubjson_string(false);
+                result[std::move(key)] = parse_ubjson_internal();
+                get_ignore_noop();
+            }
+        }
+
         return result;
     }
 
