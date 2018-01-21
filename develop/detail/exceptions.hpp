@@ -1,5 +1,4 @@
-#ifndef NLOHMANN_JSON_DETAIL_EXCEPTIONS_HPP
-#define NLOHMANN_JSON_DETAIL_EXCEPTIONS_HPP
+#pragma once
 
 #include <exception> // exception
 #include <stdexcept> // runtime_error
@@ -327,5 +326,3 @@ class other_error : public exception
 };
 }
 }
-
-#endif

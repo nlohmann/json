@@ -1301,7 +1301,7 @@ class basic_json
             array = create<array_t>(std::move(value));
         }
 
-        void destroy(value_t t)
+        void destroy(value_t t) noexcept
         {
             switch (t)
             {
@@ -1346,7 +1346,7 @@ class basic_json
     value is changed, because the invariant expresses a relationship between
     @a m_type and @a m_value.
     */
-    void assert_invariant() const
+    void assert_invariant() const noexcept
     {
         assert(m_type != value_t::object or m_value.object != nullptr);
         assert(m_type != value_t::array or m_value.array != nullptr);
@@ -2140,7 +2140,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    ~basic_json()
+    ~basic_json() noexcept
     {
         assert_invariant();
         m_value.destroy(m_type);
@@ -4481,7 +4481,7 @@ class basic_json
     @note The name of this function is not yet final and may change in the
     future.
     */
-    static iteration_proxy<iterator> iterator_wrapper(reference ref)
+    static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept
     {
         return iteration_proxy<iterator>(ref);
     }
@@ -4489,7 +4489,7 @@ class basic_json
     /*!
     @copydoc iterator_wrapper(reference)
     */
-    static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref)
+    static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept
     {
         return iteration_proxy<const_iterator>(ref);
     }
@@ -4531,7 +4531,8 @@ class basic_json
     @endcode
 
     @note When iterating over an array, `key()` will return the index of the
-          element as string (see example).
+          element as string (see example). For primitive types (e.g., numbers),
+          `key()` returns an empty string.
 
     @return iteration proxy object wrapping @a ref with an interface to use in
             range-based for loops
@@ -4542,8 +4543,10 @@ class basic_json
     changes in the JSON value.
 
     @complexity Constant.
+
+    @since version 3.x.x.
     */
-    iteration_proxy<iterator> items()
+    iteration_proxy<iterator> items() noexcept
     {
         return iteration_proxy<iterator>(*this);
     }
@@ -4551,7 +4554,7 @@ class basic_json
     /*!
     @copydoc items()
     */
-    iteration_proxy<const_iterator> items() const
+    iteration_proxy<const_iterator> items() const noexcept
     {
         return iteration_proxy<const_iterator>(*this);
     }

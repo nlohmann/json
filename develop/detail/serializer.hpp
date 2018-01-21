@@ -34,6 +34,9 @@ class serializer
     using number_float_t = typename BasicJsonType::number_float_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    static constexpr uint8_t UTF8_ACCEPT = 0;
+    static constexpr uint8_t UTF8_REJECT = 1;
+
   public:
     /*!
     @param[in] s  output stream to serialize to
@@ -43,7 +46,8 @@ class serializer
         : o(std::move(s)), loc(std::localeconv()),
           thousands_sep(loc->thousands_sep == nullptr ? '\0' : * (loc->thousands_sep)),
           decimal_point(loc->decimal_point == nullptr ? '\0' : * (loc->decimal_point)),
-          indent_char(ichar), indent_string(512, indent_char) {}
+          indent_char(ichar), indent_string(512, indent_char)
+    {}
 
     // delete because of pointer members
     serializer(const serializer&) = delete;
@@ -260,171 +264,6 @@ class serializer
 
   private:
     /*!
-    @brief returns the number of expected bytes following in UTF-8 string
-
-    @param[in]  u  the first byte of a UTF-8 string
-    @return  the number of expected bytes following
-    */
-    static constexpr std::size_t bytes_following(const uint8_t u)
-    {
-        return ((u <= 127) ? 0
-                : ((192 <= u and u <= 223) ? 1
-                   : ((224 <= u and u <= 239) ? 2
-                      : ((240 <= u and u <= 247) ? 3 : std::string::npos))));
-    }
-
-    /*!
-    @brief calculates the extra space to escape a JSON string
-
-    @param[in] s  the string to escape
-    @param[in] ensure_ascii  whether to escape non-ASCII characters with
-                             \uXXXX sequences
-    @return the number of characters required to escape string @a s
-
-    @complexity Linear in the length of string @a s.
-    */
-    static std::size_t extra_space(const string_t& s,
-                                   const bool ensure_ascii) noexcept
-    {
-        std::size_t res = 0;
-
-        for (std::size_t i = 0; i < s.size(); ++i)
-        {
-            switch (s[i])
-            {
-                // control characters that can be escaped with a backslash
-                case '"':
-                case '\\':
-                case '\b':
-                case '\f':
-                case '\n':
-                case '\r':
-                case '\t':
-                {
-                    // from c (1 byte) to \x (2 bytes)
-                    res += 1;
-                    break;
-                }
-
-                // control characters that need \uxxxx escaping
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x04:
-                case 0x05:
-                case 0x06:
-                case 0x07:
-                case 0x0B:
-                case 0x0E:
-                case 0x0F:
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x14:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                case 0x18:
-                case 0x19:
-                case 0x1A:
-                case 0x1B:
-                case 0x1C:
-                case 0x1D:
-                case 0x1E:
-                case 0x1F:
-                {
-                    // from c (1 byte) to \uxxxx (6 bytes)
-                    res += 5;
-                    break;
-                }
-
-                default:
-                {
-                    if (ensure_ascii and (s[i] & 0x80 or s[i] == 0x7F))
-                    {
-                        const auto bytes = bytes_following(static_cast<uint8_t>(s[i]));
-                        // invalid characters will be detected by throw_if_invalid_utf8
-                        assert (bytes != std::string::npos);
-
-                        if (bytes == 3)
-                        {
-                            // codepoints that need 4 bytes (i.e., 3 additional
-                            // bytes) in UTF-8 need a surrogate pair when \u
-                            // escaping is used: from 4 bytes to \uxxxx\uxxxx
-                            // (12 bytes)
-                            res += (12 - bytes - 1);
-                        }
-                        else
-                        {
-                            // from x bytes to \uxxxx (6 bytes)
-                            res += (6 - bytes - 1);
-                        }
-
-                        // skip the additional bytes
-                        i += bytes;
-                    }
-                    break;
-                }
-            }
-        }
-
-        return res;
-    }
-
-    static void escape_codepoint(int codepoint, string_t& result, std::size_t& pos)
-    {
-        // expecting a proper codepoint
-        assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
-
-        // the last written character was the backslash before the 'u'
-        assert(result[pos] == '\\');
-
-        // write the 'u'
-        result[++pos] = 'u';
-
-        // convert a number 0..15 to its hex representation (0..f)
-        static const std::array<char, 16> hexify =
-        {
-            {
-                '0', '1', '2', '3', '4', '5', '6', '7',
-                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-            }
-        };
-
-        if (codepoint < 0x10000)
-        {
-            // codepoints U+0000..U+FFFF can be represented as \uxxxx.
-            result[++pos] = hexify[(codepoint >> 12) & 0x0F];
-            result[++pos] = hexify[(codepoint >> 8) & 0x0F];
-            result[++pos] = hexify[(codepoint >> 4) & 0x0F];
-            result[++pos] = hexify[codepoint & 0x0F];
-        }
-        else
-        {
-            // codepoints U+10000..U+10FFFF need a surrogate pair to be
-            // represented as \uxxxx\uxxxx.
-            // http://www.unicode.org/faq/utf_bom.html#utf16-4
-            codepoint -= 0x10000;
-            const int high_surrogate = 0xD800 | ((codepoint >> 10) & 0x3FF);
-            const int low_surrogate = 0xDC00 | (codepoint & 0x3FF);
-            result[++pos] = hexify[(high_surrogate >> 12) & 0x0F];
-            result[++pos] = hexify[(high_surrogate >> 8) & 0x0F];
-            result[++pos] = hexify[(high_surrogate >> 4) & 0x0F];
-            result[++pos] = hexify[high_surrogate & 0x0F];
-            ++pos;  // backslash is already in output
-            result[++pos] = 'u';
-            result[++pos] = hexify[(low_surrogate >> 12) & 0x0F];
-            result[++pos] = hexify[(low_surrogate >> 8) & 0x0F];
-            result[++pos] = hexify[(low_surrogate >> 4) & 0x0F];
-            result[++pos] = hexify[low_surrogate & 0x0F];
-        }
-
-        ++pos;
-    }
-
-    /*!
     @brief dump escaped string
 
     Escape a string by replacing certain special characters by a sequence of an
@@ -438,145 +277,145 @@ class serializer
 
     @complexity Linear in the length of string @a s.
     */
-    void dump_escaped(const string_t& s, const bool ensure_ascii) const
+    void dump_escaped(const string_t& s, const bool ensure_ascii)
     {
-        throw_if_invalid_utf8(s);
-
-        const auto space = extra_space(s, ensure_ascii);
-        if (space == 0)
-        {
-            o->write_characters(s.c_str(), s.size());
-            return;
-        }
-
-        // create a result string of necessary size
-        string_t result(s.size() + space, '\\');
-        std::size_t pos = 0;
+        uint32_t codepoint;
+        uint8_t state = UTF8_ACCEPT;
+        std::size_t bytes = 0;  // number of bytes written to string_buffer
 
         for (std::size_t i = 0; i < s.size(); ++i)
         {
-            switch (s[i])
+            const auto byte = static_cast<uint8_t>(s[i]);
+
+            switch (decode(state, codepoint, byte))
             {
-                case '"': // quotation mark (0x22)
+                case UTF8_ACCEPT:  // decode found a new code point
                 {
-                    result[pos + 1] = '"';
-                    pos += 2;
-                    break;
-                }
-
-                case '\\': // reverse solidus (0x5C)
-                {
-                    // nothing to change
-                    pos += 2;
-                    break;
-                }
-
-                case '\b': // backspace (0x08)
-                {
-                    result[pos + 1] = 'b';
-                    pos += 2;
-                    break;
-                }
-
-                case '\f': // formfeed (0x0C)
-                {
-                    result[pos + 1] = 'f';
-                    pos += 2;
-                    break;
-                }
-
-                case '\n': // newline (0x0A)
-                {
-                    result[pos + 1] = 'n';
-                    pos += 2;
-                    break;
-                }
-
-                case '\r': // carriage return (0x0D)
-                {
-                    result[pos + 1] = 'r';
-                    pos += 2;
-                    break;
-                }
-
-                case '\t': // horizontal tab (0x09)
-                {
-                    result[pos + 1] = 't';
-                    pos += 2;
-                    break;
-                }
-
-                default:
-                {
-                    // escape control characters (0x00..0x1F) or, if
-                    // ensure_ascii parameter is used, non-ASCII characters
-                    if ((0x00 <= s[i] and s[i] <= 0x1F) or
-                            (ensure_ascii and (s[i] & 0x80 or s[i] == 0x7F)))
+                    switch (codepoint)
                     {
-                        const auto bytes = bytes_following(static_cast<uint8_t>(s[i]));
-                        // invalid characters will be detected by throw_if_invalid_utf8
-                        assert (bytes != std::string::npos);
-
-                        // check that the additional bytes are present
-                        assert(i + bytes < s.size());
-
-                        // to use \uxxxx escaping, we first need to calculate
-                        // the codepoint from the UTF-8 bytes
-                        int codepoint = 0;
-
-                        // bytes is unsigned type:
-                        assert(bytes <= 3);
-                        switch (bytes)
+                        case 0x08: // backspace
                         {
-                            case 0:
-                            {
-                                codepoint = s[i] & 0xFF;
-                                break;
-                            }
-
-                            case 1:
-                            {
-                                codepoint = ((s[i] & 0x3F) << 6)
-                                            + (s[i + 1] & 0x7F);
-                                break;
-                            }
-
-                            case 2:
-                            {
-                                codepoint = ((s[i] & 0x1F) << 12)
-                                            + ((s[i + 1] & 0x7F) << 6)
-                                            + (s[i + 2] & 0x7F);
-                                break;
-                            }
-
-                            case 3:
-                            {
-                                codepoint = ((s[i] & 0xF) << 18)
-                                            + ((s[i + 1] & 0x7F) << 12)
-                                            + ((s[i + 2] & 0x7F) << 6)
-                                            + (s[i + 3] & 0x7F);
-                                break;
-                            }
-
-                            default:
-                                break;  // LCOV_EXCL_LINE
+                            string_buffer[bytes++] = '\\';
+                            string_buffer[bytes++] = 'b';
+                            break;
                         }
 
-                        escape_codepoint(codepoint, result, pos);
-                        i += bytes;
+                        case 0x09: // horizontal tab
+                        {
+                            string_buffer[bytes++] = '\\';
+                            string_buffer[bytes++] = 't';
+                            break;
+                        }
+
+                        case 0x0A: // newline
+                        {
+                            string_buffer[bytes++] = '\\';
+                            string_buffer[bytes++] = 'n';
+                            break;
+                        }
+
+                        case 0x0C: // formfeed
+                        {
+                            string_buffer[bytes++] = '\\';
+                            string_buffer[bytes++] = 'f';
+                            break;
+                        }
+
+                        case 0x0D: // carriage return
+                        {
+                            string_buffer[bytes++] = '\\';
+                            string_buffer[bytes++] = 'r';
+                            break;
+                        }
+
+                        case 0x22: // quotation mark
+                        {
+                            string_buffer[bytes++] = '\\';
+                            string_buffer[bytes++] = '\"';
+                            break;
+                        }
+
+                        case 0x5C: // reverse solidus
+                        {
+                            string_buffer[bytes++] = '\\';
+                            string_buffer[bytes++] = '\\';
+                            break;
+                        }
+
+                        default:
+                        {
+                            // escape control characters (0x00..0x1F) or, if
+                            // ensure_ascii parameter is used, non-ASCII characters
+                            if ((codepoint <= 0x1F) or (ensure_ascii and (codepoint >= 0x7F)))
+                            {
+                                if (codepoint <= 0xFFFF)
+                                {
+                                    std::snprintf(string_buffer.data() + bytes, 7, "\\u%04x", codepoint);
+                                    bytes += 6;
+                                }
+                                else
+                                {
+                                    std::snprintf(string_buffer.data() + bytes, 13, "\\u%04x\\u%04x",
+                                                  (0xD7C0 + (codepoint >> 10)),
+                                                  (0xDC00 + (codepoint & 0x3FF)));
+                                    bytes += 12;
+                                }
+                            }
+                            else
+                            {
+                                // copy byte to buffer (all previous bytes
+                                // been copied have in default case above)
+                                string_buffer[bytes++] = s[i];
+                            }
+                            break;
+                        }
                     }
-                    else
+
+                    // write buffer and reset index; there must be 13 bytes
+                    // left, as this is the maximal number of bytes to be
+                    // written ("\uxxxx\uxxxx\0") for one code point
+                    if (string_buffer.size() - bytes < 13)
                     {
-                        // all other characters are added as-is
-                        result[pos++] = s[i];
+                        o->write_characters(string_buffer.data(), bytes);
+                        bytes = 0;
+                    }
+                    break;
+                }
+
+                case UTF8_REJECT:  // decode found invalid UTF-8 byte
+                {
+                    std::stringstream ss;
+                    ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(byte);
+                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + ss.str()));
+                }
+
+                default:  // decode found yet incomplete multi-byte code point
+                {
+                    if (not ensure_ascii)
+                    {
+                        // code point will not be escaped - copy byte to buffer
+                        string_buffer[bytes++] = s[i];
                     }
                     break;
                 }
             }
         }
 
-        assert(pos == result.size());
-        o->write_characters(result.c_str(), result.size());
+        if (JSON_LIKELY(state == UTF8_ACCEPT))
+        {
+            // write buffer
+            if (bytes > 0)
+            {
+                o->write_characters(string_buffer.data(), bytes);
+            }
+        }
+        else
+        {
+            // we finish reading, but do not accept: string was incomplete
+            std::stringstream ss;
+            ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(static_cast<uint8_t>(s.back()));
+            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + ss.str()));
+        }
     }
 
     /*!
@@ -701,15 +540,16 @@ class serializer
     followed.
 
     @param[in,out] state  the state of the decoding
+    @param[in,out] codep  codepoint (valid only if resulting state is UTF8_ACCEPT)
     @param[in] byte       next byte to decode
+    @return               new state
 
-    @note The function has been edited: a std::array is used and the code
-          point is not calculated.
+    @note The function has been edited: a std::array is used.
 
     @copyright Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
     @sa http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
     */
-    static void decode(uint8_t& state, const uint8_t byte)
+    static uint8_t decode(uint8_t& state, uint32_t& codep, const uint8_t byte) noexcept
     {
         static const std::array<uint8_t, 400> utf8d =
         {
@@ -732,42 +572,13 @@ class serializer
         };
 
         const uint8_t type = utf8d[byte];
+
+        codep = (state != UTF8_ACCEPT)
+                ? (byte & 0x3fu) | (codep << 6)
+                : (0xff >> type) & (byte);
+
         state = utf8d[256u + state * 16u + type];
-    }
-
-    /*!
-    @brief throw an exception if a string is not UTF-8 encoded
-
-    @param[in] str  UTF-8 string to check
-    @throw type_error.316 if passed string is not UTF-8 encoded
-
-    @since version 3.0.0
-    */
-    static void throw_if_invalid_utf8(const std::string& str)
-    {
-        // start with state 0 (= accept)
-        uint8_t state = 0;
-
-        for (size_t i = 0; i < str.size(); ++i)
-        {
-            const auto byte = static_cast<uint8_t>(str[i]);
-            decode(state, byte);
-            if (state == 1)
-            {
-                // state 1 means reject
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(byte);
-                JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + ss.str()));
-            }
-        }
-
-        if (state != 0)
-        {
-            // we finish reading, but do not accept: string was incomplete
-            std::stringstream ss;
-            ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(static_cast<uint8_t>(str.back()));
-            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + ss.str()));
-        }
+        return state;
     }
 
   private:
@@ -784,9 +595,11 @@ class serializer
     /// the locale's decimal point character
     const char decimal_point = '\0';
 
+    /// string buffer
+    std::array<char, 512> string_buffer{{}};
+
     /// the indentation character
     const char indent_char;
-
     /// the indentation string
     string_t indent_string;
 };
