@@ -593,6 +593,64 @@ TEST_CASE("regression tests")
                           "[json.exception.out_of_range.406] number overflow parsing '22e2222'");
     }
 
+    SECTION("issue #360 - Loss of precision when serializing <double>")
+    {
+        auto check_roundtrip = [](double number)
+        {
+            CAPTURE(number);
+
+            json j = number;
+            CHECK(j.is_number_float());
+
+            std::stringstream ss;
+            ss << j;
+
+            CHECK_NOTHROW(ss >> j);
+            CHECK(j.is_number_float());
+            CHECK(j.get<json::number_float_t>() == number);
+        };
+
+        check_roundtrip(100000000000.1236);
+        check_roundtrip(std::numeric_limits<json::number_float_t>::max());
+
+        // Some more numbers which fail to roundtrip when serialized with digits10 significand digits (instead of max_digits10)
+        check_roundtrip(1.541888611948064e-17);
+        check_roundtrip(5.418771028591015e-16);
+        check_roundtrip(9.398685592608595e-15);
+        check_roundtrip(8.826843952762347e-14);
+        check_roundtrip(8.143291313475335e-13);
+        check_roundtrip(4.851328172762508e-12);
+        check_roundtrip(6.677850998084358e-11);
+        check_roundtrip(3.995398518174525e-10);
+        check_roundtrip(1.960452605645124e-9);
+        check_roundtrip(3.551812586302883e-8);
+        check_roundtrip(2.947988411689261e-7);
+        check_roundtrip(8.210166748056192e-6);
+        check_roundtrip(6.104889704266753e-5);
+        check_roundtrip(0.0008629954631330876);
+        check_roundtrip(0.004936993881051611);
+        check_roundtrip(0.08309725102608073);
+        check_roundtrip(0.5210494268499783);
+        check_roundtrip(6.382927930939767);
+        check_roundtrip(59.94947245358671);
+        check_roundtrip(361.0838651266122);
+        check_roundtrip(4678.354596181877);
+        check_roundtrip(61412.17658956043);
+        check_roundtrip(725696.0799057782);
+        check_roundtrip(2811732.583399828);
+        check_roundtrip(30178351.07533605);
+        check_roundtrip(689684880.3235844);
+        check_roundtrip(5714887673.555147);
+        check_roundtrip(84652038821.18808);
+        check_roundtrip(156510583431.7721);
+        check_roundtrip(5938450569021.732);
+        check_roundtrip(83623297654460.33);
+        check_roundtrip(701466573254773.6);
+        check_roundtrip(1369013370304513);
+        check_roundtrip(96963648023094720);
+        check_roundtrip(3.478237409280108e+17);
+    }
+
     SECTION("issue #366 - json::parse on failed stream gets stuck")
     {
         std::ifstream f("file_not_found.json");
@@ -785,7 +843,7 @@ TEST_CASE("regression tests")
     {
         json j = json::parse("166020696663385964490");
         CHECK(j.is_number_float());
-        CHECK(j.dump() == "1.66020696663386e+20");
+        CHECK(j.get<json::number_float_t>() == static_cast<json::number_float_t>(166020696663385964490.0));
     }
 
     SECTION("issue #405 - Heap-buffer-overflow (OSS-Fuzz issue 342)")
