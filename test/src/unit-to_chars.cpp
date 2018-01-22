@@ -80,8 +80,8 @@ static float make_float(uint64_t f, int e)
     }
 
     uint64_t biased_exponent = (e == kDenormalExponent && (f & kHiddenBit) == 0)
-        ? 0
-        : static_cast<uint64_t>(e + kExponentBias);
+                               ? 0
+                               : static_cast<uint64_t>(e + kExponentBias);
 
     uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
     return reinterpret_bits<float>(static_cast<uint32_t>(bits));
@@ -132,8 +132,8 @@ static double make_double(uint64_t f, int e)
     }
 
     uint64_t biased_exponent = (e == kDenormalExponent && (f & kHiddenBit) == 0)
-        ? 0
-        : static_cast<uint64_t>(e + kExponentBias);
+                               ? 0
+                               : static_cast<uint64_t>(e + kExponentBias);
 
     uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
     return reinterpret_bits<double>(bits);

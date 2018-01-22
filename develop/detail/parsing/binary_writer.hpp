@@ -721,7 +721,7 @@ class binary_writer
             {
                 if (add_prefix)
                 {
-                    oa->write_character(static_cast<CharType>('i'));  // uint8
+                    oa->write_character(static_cast<CharType>('i'));  // int8
                 }
                 write_number(static_cast<uint8_t>(n));
             }
