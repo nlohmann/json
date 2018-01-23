@@ -74,6 +74,20 @@ matrix:
         sources: ['ubuntu-toolchain-r-test']
         packages: ['g++-4.9', 'ninja-build']
 
+  # check amalgamation
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-4.9
+      - SPECIAL=amalgamation
+      - CMAKE_OPTIONS=-DJSON_MultipleHeader=ON
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-4.9', 'astyle', 'ninja-build']
+    after_success:
+      - make check-amalgamation
+
   # Coveralls (http://gronlier.fr/blog/2015/01/adding-code-coverage-to-your-c-project/)
 
   - os: linux
