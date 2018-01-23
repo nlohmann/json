@@ -104,7 +104,7 @@ doctest:
 # -Wno-keyword-macro: unit-tests use "#define private public"
 # -Wno-deprecated-declarations: the library deprecated some functions
 # -Wno-weak-vtables: exception class is defined inline, but has virtual method
-# -Wno-range-loop-analysis: iterator_wrapper tests "for(const auto i...)"
+# -Wno-range-loop-analysis: items tests "for(const auto i...)"
 # -Wno-float-equal: not all comparisons in the tests can be replaced by Approx
 # -Wno-switch-enum -Wno-covered-switch-default: pedantic/contradicting warnings about switches
 # -Wno-padded: padding is nothing to warn about

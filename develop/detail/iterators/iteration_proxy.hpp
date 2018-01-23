@@ -9,7 +9,7 @@ namespace nlohmann
 {
 namespace detail
 {
-/// proxy class for the iterator_wrapper functions
+/// proxy class for the items() function
 template<typename IteratorType> class iteration_proxy
 {
   private:

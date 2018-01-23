@@ -4480,18 +4480,24 @@ class basic_json
 
     @note The name of this function is not yet final and may change in the
     future.
+
+    @deprecated This stream operator is deprecated and will be removed in
+                future 4.0.0 of the library. Please use @ref items() instead;
+                that is, replace `json::iterator_wrapper(j)` with `j.items()`.
     */
+    JSON_DEPRECATED
     static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept
     {
-        return iteration_proxy<iterator>(ref);
+        return ref.items();
     }
 
     /*!
     @copydoc iterator_wrapper(reference)
     */
+    JSON_DEPRECATED
     static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept
     {
-        return iteration_proxy<const_iterator>(ref);
+        return ref.items();
     }
 
     /*!
@@ -6127,8 +6133,8 @@ class basic_json
 
     /*!
     @brief serialize to stream
-    @deprecated This stream operator is deprecated and will be removed in a
-                future version of the library. Please use
+    @deprecated This stream operator is deprecated and will be removed in
+                future 4.0.0 of the library. Please use
                 @ref operator<<(std::ostream&, const basic_json&)
                 instead; that is, replace calls like `j >> o;` with `o << j;`.
     @since version 1.0.0; deprecated since version 3.0.0
@@ -6313,8 +6319,8 @@ class basic_json
 
     /*!
     @brief deserialize from stream
-    @deprecated This stream operator is deprecated and will be removed in a
-                future version of the library. Please use
+    @deprecated This stream operator is deprecated and will be removed in
+                version 4.0.0 of the library. Please use
                 @ref operator>>(std::istream&, basic_json&)
                 instead; that is, replace calls like `j << i;` with `i >> j;`.
     @since version 1.0.0; deprecated since version 3.0.0

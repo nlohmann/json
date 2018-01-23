@@ -843,7 +843,7 @@ TEST_CASE("regression tests")
     {
         json j = json::parse("166020696663385964490");
         CHECK(j.is_number_float());
-        CHECK(j.get<json::number_float_t>() == static_cast<json::number_float_t>(166020696663385964490.0));
+        CHECK(j.get<json::number_float_t>() == 166020696663385964490.0);
     }
 
     SECTION("issue #405 - Heap-buffer-overflow (OSS-Fuzz issue 342)")

@@ -4445,7 +4445,7 @@ namespace nlohmann
 {
 namespace detail
 {
-/// proxy class for the iterator_wrapper functions
+/// proxy class for the items() function
 template<typename IteratorType> class iteration_proxy
 {
   private:
@@ -8498,14 +8498,15 @@ class serializer
                             {
                                 if (codepoint <= 0xFFFF)
                                 {
-                                    std::snprintf(string_buffer.data() + bytes, 7, "\\u%04x", codepoint);
+                                    std::snprintf(string_buffer.data() + bytes, 7, "\\u%04x",
+                                                  static_cast<uint16_t>(codepoint));
                                     bytes += 6;
                                 }
                                 else
                                 {
                                     std::snprintf(string_buffer.data() + bytes, 13, "\\u%04x\\u%04x",
-                                                  (0xD7C0 + (codepoint >> 10)),
-                                                  (0xDC00 + (codepoint & 0x3FF)));
+                                                  static_cast<uint16_t>(0xD7C0 + (codepoint >> 10)),
+                                                  static_cast<uint16_t>(0xDC00 + (codepoint & 0x3FF)));
                                     bytes += 12;
                                 }
                             }
@@ -8745,7 +8746,7 @@ class serializer
 
         codep = (state != UTF8_ACCEPT)
                 ? (byte & 0x3fu) | (codep << 6)
-                : (0xff >> type) & (byte);
+                : static_cast<uint32_t>(0xff >> type) & (byte);
 
         state = utf8d[256u + state * 16u + type];
         return state;
@@ -13308,18 +13309,24 @@ class basic_json
 
     @note The name of this function is not yet final and may change in the
     future.
+
+    @deprecated This stream operator is deprecated and will be removed in
+                future 4.0.0 of the library. Please use @ref items() instead;
+                that is, replace `json::iterator_wrapper(j)` with `j.items()`.
     */
+    JSON_DEPRECATED
     static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept
     {
-        return iteration_proxy<iterator>(ref);
+        return ref.items();
     }
 
     /*!
     @copydoc iterator_wrapper(reference)
     */
+    JSON_DEPRECATED
     static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept
     {
-        return iteration_proxy<const_iterator>(ref);
+        return ref.items();
     }
 
     /*!
@@ -14955,8 +14962,8 @@ class basic_json
 
     /*!
     @brief serialize to stream
-    @deprecated This stream operator is deprecated and will be removed in a
-                future version of the library. Please use
+    @deprecated This stream operator is deprecated and will be removed in
+                future 4.0.0 of the library. Please use
                 @ref operator<<(std::ostream&, const basic_json&)
                 instead; that is, replace calls like `j >> o;` with `o << j;`.
     @since version 1.0.0; deprecated since version 3.0.0
@@ -15141,8 +15148,8 @@ class basic_json
 
     /*!
     @brief deserialize from stream
-    @deprecated This stream operator is deprecated and will be removed in a
-                future version of the library. Please use
+    @deprecated This stream operator is deprecated and will be removed in
+                version 4.0.0 of the library. Please use
                 @ref operator>>(std::istream&, basic_json&)
                 instead; that is, replace calls like `j << i;` with `i >> j;`.
     @since version 1.0.0; deprecated since version 3.0.0

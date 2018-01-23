@@ -351,14 +351,15 @@ class serializer
                             {
                                 if (codepoint <= 0xFFFF)
                                 {
-                                    std::snprintf(string_buffer.data() + bytes, 7, "\\u%04x", codepoint);
+                                    std::snprintf(string_buffer.data() + bytes, 7, "\\u%04x",
+                                                  static_cast<uint16_t>(codepoint));
                                     bytes += 6;
                                 }
                                 else
                                 {
                                     std::snprintf(string_buffer.data() + bytes, 13, "\\u%04x\\u%04x",
-                                                  (0xD7C0 + (codepoint >> 10)),
-                                                  (0xDC00 + (codepoint & 0x3FF)));
+                                                  static_cast<uint16_t>(0xD7C0 + (codepoint >> 10)),
+                                                  static_cast<uint16_t>(0xDC00 + (codepoint & 0x3FF)));
                                     bytes += 12;
                                 }
                             }
@@ -598,7 +599,7 @@ class serializer
 
         codep = (state != UTF8_ACCEPT)
                 ? (byte & 0x3fu) | (codep << 6)
-                : (0xff >> type) & (byte);
+                : static_cast<uint32_t>(0xff >> type) & (byte);
 
         state = utf8d[256u + state * 16u + type];
         return state;
