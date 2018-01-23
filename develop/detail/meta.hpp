@@ -96,6 +96,14 @@ template<> struct priority_tag<0> {};
 // has_/is_ functions //
 ////////////////////////
 
+// source: https://stackoverflow.com/a/37193089/4116453
+
+template <typename T, typename = void>
+struct is_complete_type : std::false_type {};
+
+template <typename T>
+struct is_complete_type<T, decltype(void(sizeof(T)))> : std::true_type {};
+
 NLOHMANN_JSON_HAS_HELPER(mapped_type);
 NLOHMANN_JSON_HAS_HELPER(key_type);
 NLOHMANN_JSON_HAS_HELPER(value_type);
@@ -171,7 +179,6 @@ struct is_compatible_integer_type
         RealIntegerType, CompatibleNumberIntegerType > ::value;
 };
 
-
 // trait checking if JSONSerializer<T>::from_json(json const&, udt&) exists
 template<typename BasicJsonType, typename T>
 struct has_from_json
@@ -219,6 +226,23 @@ struct has_to_json
   public:
     static constexpr bool value = std::is_integral<decltype(detect(
                                       std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
+};
+
+template <typename BasicJsonType, typename CompatibleCompleteType>
+struct is_compatible_complete_type
+{
+    static constexpr bool value =
+        not std::is_base_of<std::istream, CompatibleCompleteType>::value and
+        not std::is_same<BasicJsonType, CompatibleCompleteType>::value and
+        not is_basic_json_nested_type<BasicJsonType, CompatibleCompleteType>::value and
+        has_to_json<BasicJsonType, CompatibleCompleteType>::value;
+};
+
+template <typename BasicJsonType, typename CompatibleType>
+struct is_compatible_type
+    : conjunction<is_complete_type<CompatibleType>,
+      is_compatible_complete_type<BasicJsonType, CompatibleType>>
+{
 };
 
 // taken from ranges-v3
