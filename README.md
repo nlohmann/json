@@ -956,7 +956,7 @@ The library itself contains of a single header file licensed under the MIT licen
 - [**Doxygen**](http://www.stack.nl/~dimitri/doxygen/) to generate [documentation](https://nlohmann.github.io/json/)
 - [**git-update-ghpages**](https://github.com/rstacruz/git-update-ghpages) to upload the documentation to gh-pages
 - [**GitHub Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
-- [**Google Benchmark**]https://github.com/google/benchmark) to implement the benchmarks
+- [**Google Benchmark**](https://github.com/google/benchmark) to implement the benchmarks
 - [**libFuzzer**](http://llvm.org/docs/LibFuzzer.html) to implement fuzz testing for OSS-Fuzz
 - [**OSS-Fuzz**](https://github.com/google/oss-fuzz) for continuous fuzz testing of the library
 - [**Probot**](https://probot.github.io) for automating maintainer tasks such as closing stale issues, requesting missing information, or detecting toxic comments.

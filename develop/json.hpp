@@ -1551,15 +1551,13 @@ class basic_json
 
     @since version 2.1.0
     */
-    template<typename CompatibleType, typename U = detail::uncvref_t<CompatibleType>,
-             detail::enable_if_t<not std::is_base_of<std::istream, U>::value and
-                                 not std::is_same<U, basic_json_t>::value and
-                                 not detail::is_basic_json_nested_type<
-                                     basic_json_t, U>::value and
-                                 detail::has_to_json<basic_json, U>::value,
-                                 int> = 0>
-    basic_json(CompatibleType && val) noexcept(noexcept(JSONSerializer<U>::to_json(
-                std::declval<basic_json_t&>(), std::forward<CompatibleType>(val))))
+    template <typename CompatibleType,
+              typename U = detail::uncvref_t<CompatibleType>,
+              detail::enable_if_t<
+                  detail::is_compatible_type<basic_json_t, U>::value, int> = 0>
+    basic_json(CompatibleType && val) noexcept(noexcept(
+                JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
+                                           std::forward<CompatibleType>(val))))
     {
         JSONSerializer<U>::to_json(*this, std::forward<CompatibleType>(val));
         assert_invariant();
