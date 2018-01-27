@@ -934,6 +934,7 @@ I deeply appreciate the help of the following people.
 - [Eren Okka](https://github.com/erengy) fixed some MSVC warnings.
 - [abolz](https://github.com/abolz) integrated the Grisu2 algorithm for proper floating-point formatting, allowing more roundtrip checks to succeed.
 - [Vadim Evard](https://github.com/Pipeliner) fixed a Markdown issue in the README.
+- [zerodefect](https://github.com/zerodefect) fixed a compiler warning.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

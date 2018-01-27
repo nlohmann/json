@@ -7294,7 +7294,7 @@ boundaries compute_boundaries(FloatType value)
 
     const bool is_denormal = (E == 0);
     const diyfp v = is_denormal
-                    ? diyfp(F, 1 - kBias)
+                    ? diyfp(F, kMinExp)
                     : diyfp(F + kHiddenBit, static_cast<int>(E) - kBias);
 
     // Compute the boundaries m- and m+ of the floating-point value
