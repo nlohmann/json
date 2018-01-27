@@ -2111,6 +2111,12 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
     {
         for (std::string filename :
                 {
+                    "test/data/json_nlohmann_tests/all_unicode.json",
+                    "test/data/json.org/1.json",
+                    "test/data/json.org/2.json",
+                    "test/data/json.org/3.json",
+                    "test/data/json.org/4.json",
+                    "test/data/json.org/5.json",
                     "test/data/json_roundtrip/roundtrip01.json",
                     "test/data/json_roundtrip/roundtrip02.json",
                     "test/data/json_roundtrip/roundtrip03.json",
@@ -2142,7 +2148,11 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
                     "test/data/json_roundtrip/roundtrip29.json",
                     "test/data/json_roundtrip/roundtrip30.json",
                     "test/data/json_roundtrip/roundtrip31.json",
-                    "test/data/json_roundtrip/roundtrip32.json"
+                    "test/data/json_roundtrip/roundtrip32.json",
+                    "test/data/json_testsuite/sample.json",
+                    "test/data/json_tests/pass1.json",
+                    "test/data/json_tests/pass2.json",
+                    "test/data/json_tests/pass3.json"
                 })
         {
             CAPTURE(filename);
