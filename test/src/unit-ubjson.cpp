@@ -2105,3 +2105,106 @@ TEST_CASE("all first bytes", "[!throws]")
     }
 }
 
+TEST_CASE("UBJSON roundtrips", "[hide]")
+{
+    SECTION("input from self-generated UBJSON files")
+    {
+        for (std::string filename :
+                {
+                    "test/data/json_roundtrip/roundtrip01.json",
+                    "test/data/json_roundtrip/roundtrip02.json",
+                    "test/data/json_roundtrip/roundtrip03.json",
+                    "test/data/json_roundtrip/roundtrip04.json",
+                    "test/data/json_roundtrip/roundtrip05.json",
+                    "test/data/json_roundtrip/roundtrip06.json",
+                    "test/data/json_roundtrip/roundtrip07.json",
+                    "test/data/json_roundtrip/roundtrip08.json",
+                    "test/data/json_roundtrip/roundtrip09.json",
+                    "test/data/json_roundtrip/roundtrip10.json",
+                    "test/data/json_roundtrip/roundtrip11.json",
+                    "test/data/json_roundtrip/roundtrip12.json",
+                    "test/data/json_roundtrip/roundtrip13.json",
+                    "test/data/json_roundtrip/roundtrip14.json",
+                    "test/data/json_roundtrip/roundtrip15.json",
+                    "test/data/json_roundtrip/roundtrip16.json",
+                    "test/data/json_roundtrip/roundtrip17.json",
+                    "test/data/json_roundtrip/roundtrip18.json",
+                    "test/data/json_roundtrip/roundtrip19.json",
+                    "test/data/json_roundtrip/roundtrip20.json",
+                    "test/data/json_roundtrip/roundtrip21.json",
+                    "test/data/json_roundtrip/roundtrip22.json",
+                    "test/data/json_roundtrip/roundtrip23.json",
+                    "test/data/json_roundtrip/roundtrip24.json",
+                    "test/data/json_roundtrip/roundtrip25.json",
+                    "test/data/json_roundtrip/roundtrip26.json",
+                    "test/data/json_roundtrip/roundtrip27.json",
+                    "test/data/json_roundtrip/roundtrip28.json",
+                    "test/data/json_roundtrip/roundtrip29.json",
+                    "test/data/json_roundtrip/roundtrip30.json",
+                    "test/data/json_roundtrip/roundtrip31.json",
+                    "test/data/json_roundtrip/roundtrip32.json"
+                })
+        {
+            CAPTURE(filename);
+
+            // parse JSON file
+            std::ifstream f_json(filename);
+            json j1 = json::parse(f_json);
+
+            SECTION("std::vector<uint8_t>")
+            {
+                // parse MessagePack file
+                std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_ubjson)),
+                    std::istreambuf_iterator<char>());
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_ubjson(packed));
+
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION("std::ifstream")
+            {
+                // parse MessagePack file
+                std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_ubjson(f_ubjson));
+
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION("uint8_t* and size")
+            {
+                // parse MessagePack file
+                std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_ubjson)),
+                    std::istreambuf_iterator<char>());
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_ubjson({packed.data(), packed.size()}));
+
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION("output to output adapters")
+            {
+                // parse MessagePack file
+                std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_ubjson)),
+                    std::istreambuf_iterator<char>());
+
+                SECTION("std::vector<uint8_t>")
+                {
+                    std::vector<uint8_t> vec;
+                    json::to_ubjson(j1, vec);
+                    CHECK(vec == packed);
+                }
+            }
+        }
+    }
+}
