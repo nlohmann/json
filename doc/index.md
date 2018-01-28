@@ -36,7 +36,16 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
     - @link nlohmann::basic_json::other_error other_error @endlink for exceptions indicating other library errors
   - lexicographical comparison operators
   - serialization
-  - deserialization
+    - @link nlohmann::basic_json::dump dump @endlink serialize to string
+    - @link nlohmann::basic_json::operator<<(std::ostream&, const basic_json &) operator<< @endlink serialize to stream
+  - deserialization / parsing
+    - @link nlohmann::basic_json::parse parse @endlink parse from string
+    - @link nlohmann::basic_json::operator>>(std::istream&, basic_json&) operator>> @endlink parse from stream
+    - @link nlohmann::basic_json::accept accept @endlink check for syntax errors without parsing
+  - binary formats:
+    - CBOR: @link nlohmann::basic_json::from_cbor from_cbor @endlink / @link nlohmann::basic_json::to_cbor to_cbor @endlink
+    - MessagePack: @link nlohmann::basic_json::from_msgpack from_msgpack @endlink / @link nlohmann::basic_json::to_msgpack to_msgpack @endlink
+    - UBJSON: @link nlohmann::basic_json::from_ubjson from_ubjson @endlink / @link nlohmann::basic_json::to_ubjson to_ubjson @endlink
 - Types
   - @link nlohmann::basic_json::array_t arrays @endlink
   - @link nlohmann::basic_json::object_t objects @endlink
