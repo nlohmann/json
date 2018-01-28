@@ -7578,11 +7578,13 @@ For n == 0, returns 1 and sets pow10 := 1.
 */
 inline int find_largest_pow10(const uint32_t n, uint32_t& pow10)
 {
+    // LCOV_EXCL_START
     if (n >= 1000000000)
     {
         pow10 = 1000000000;
         return 10;
     }
+    // LCOV_EXCL_STOP
     else if (n >= 100000000)
     {
         pow10 = 100000000;
