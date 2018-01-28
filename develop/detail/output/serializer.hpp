@@ -9,11 +9,14 @@
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t
 #include <cstdio> // snprintf
+#include <iomanip> // setfill
 #include <iterator> // next
 #include <limits> // numeric_limits
 #include <string> // string
+#include <sstream> // stringstream
 #include <type_traits> // is_same
 
+#include "detail/exceptions.hpp"
 #include "detail/conversions/to_chars.hpp"
 #include "detail/macro_scope.hpp"
 #include "detail/meta.hpp"

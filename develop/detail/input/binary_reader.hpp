@@ -15,6 +15,7 @@
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 
+#include "detail/input/input_adapters.hpp"
 #include "detail/exceptions.hpp"
 #include "detail/macro_scope.hpp"
 #include "detail/value_t.hpp"

@@ -47,6 +47,7 @@ within a JSON document. It can be used with functions `at` and
 
 @since version 2.0.0
 */
+template<typename BasicJsonType>
 class json_pointer;
 
 /*!

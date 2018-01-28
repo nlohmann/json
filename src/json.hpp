@@ -91,6 +91,7 @@ within a JSON document. It can be used with functions `at` and
 
 @since version 2.0.0
 */
+template<typename BasicJsonType>
 class json_pointer;
 
 /*!
@@ -4811,6 +4812,8 @@ class output_adapter
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 
+// #include "detail/input/input_adapters.hpp"
+
 // #include "detail/exceptions.hpp"
 
 // #include "detail/macro_scope.hpp"
@@ -7082,10 +7085,14 @@ class binary_writer
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t
 #include <cstdio> // snprintf
+#include <iomanip> // setfill
 #include <iterator> // next
 #include <limits> // numeric_limits
 #include <string> // string
+#include <sstream> // stringstream
 #include <type_traits> // is_same
+
+// #include "detail/exceptions.hpp"
 
 // #include "detail/conversions/to_chars.hpp"
 
@@ -8866,66 +8873,27 @@ class json_ref
 }
 }
 
-// #include "adl_serializer.hpp"
+// #include "detail/json_pointer.hpp"
 
 
-#include <utility>
+#include <cassert> // assert
+#include <numeric> // accumulate
+#include <string> // string
+#include <vector> // vector
 
-// #include "detail/conversions/from_json.hpp"
+// #include "detail/macro_scope.hpp"
 
-// #include "detail/conversions/to_json.hpp"
+// #include "detail/exceptions.hpp"
+
+// #include "detail/value_t.hpp"
 
 
 namespace nlohmann
 {
-template<typename, typename>
-struct adl_serializer
-{
-    /*!
-    @brief convert a JSON value to any value type
-
-    This function is usually called by the `get()` function of the
-    @ref basic_json class (either explicit or via conversion operators).
-
-    @param[in] j         JSON value to read from
-    @param[in,out] val  value to write to
-    */
-    template<typename BasicJsonType, typename ValueType>
-    static void from_json(BasicJsonType&& j, ValueType& val) noexcept(
-        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
-    {
-        ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
-    }
-
-    /*!
-    @brief convert any value type to a JSON value
-
-    This function is usually called by the constructors of the @ref basic_json
-    class.
-
-    @param[in,out] j  JSON value to write to
-    @param[in] val     value to read from
-    */
-    template<typename BasicJsonType, typename ValueType>
-    static void to_json(BasicJsonType& j, ValueType&& val) noexcept(
-        noexcept(::nlohmann::to_json(j, std::forward<ValueType>(val))))
-    {
-        ::nlohmann::to_json(j, std::forward<ValueType>(val));
-    }
-};
-}
-
-
-/*!
-@brief namespace for Niels Lohmann
-@see https://github.com/nlohmann
-@since version 1.0.0
-*/
-namespace nlohmann
-{
+template<typename BasicJsonType>
 class json_pointer
 {
-    /// allow basic_json to access private members
+    // allow basic_json to access private members
     NLOHMANN_BASIC_JSON_TPL_DECLARATION
     friend class basic_json;
 
@@ -8939,19 +8907,21 @@ class json_pointer
     @param[in] s  string representing the JSON pointer; if omitted, the empty
                   string is assumed which references the whole JSON value
 
-    @throw parse_error.107 if the given JSON pointer @a s is nonempty and
-    does not begin with a slash (`/`); see example below
+    @throw parse_error.107 if the given JSON pointer @a s is nonempty and does
+                           not begin with a slash (`/`); see example below
 
-    @throw parse_error.108 if a tilde (`~`) in the given JSON pointer @a s
-    is not followed by `0` (representing `~`) or `1` (representing `/`);
-    see example below
+    @throw parse_error.108 if a tilde (`~`) in the given JSON pointer @a s is
+    not followed by `0` (representing `~`) or `1` (representing `/`); see
+    example below
 
-    @liveexample{The example shows the construction several valid JSON
-    pointers as well as the exceptional behavior.,json_pointer}
+    @liveexample{The example shows the construction several valid JSON pointers
+    as well as the exceptional behavior.,json_pointer}
 
     @since version 2.0.0
     */
-    explicit json_pointer(const std::string& s = "") : reference_tokens(split(s)) {}
+    explicit json_pointer(const std::string& s = "")
+        : reference_tokens(split(s))
+    {}
 
     /*!
     @brief return a string representation of the JSON pointer
@@ -9048,8 +9018,66 @@ class json_pointer
     @throw parse_error.109 if array index is not a number
     @throw type_error.313 if value cannot be unflattened
     */
-    NLOHMANN_BASIC_JSON_TPL_DECLARATION
-    NLOHMANN_BASIC_JSON_TPL& get_and_create(NLOHMANN_BASIC_JSON_TPL& j) const;
+    BasicJsonType& get_and_create(BasicJsonType& j) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        auto result = &j;
+
+        // in case no reference tokens exist, return a reference to the JSON value
+        // j which will be overwritten by a primitive value
+        for (const auto& reference_token : reference_tokens)
+        {
+            switch (result->m_type)
+            {
+                case detail::value_t::null:
+                {
+                    if (reference_token == "0")
+                    {
+                        // start a new array if reference token is 0
+                        result = &result->operator[](0);
+                    }
+                    else
+                    {
+                        // start a new object otherwise
+                        result = &result->operator[](reference_token);
+                    }
+                    break;
+                }
+
+                case detail::value_t::object:
+                {
+                    // create an entry in the object
+                    result = &result->operator[](reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    // create an entry in the array
+                    JSON_TRY
+                    {
+                        result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
+                    }
+                    JSON_CATCH(std::invalid_argument&)
+                    {
+                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                    }
+                    break;
+                }
+
+                /*
+                The following code is only reached if there exists a reference
+                token _and_ the current value is primitive. In this case, we have
+                an error situation, because primitive values may only occur as
+                single value; that is, with an empty list of reference tokens.
+                */
+                default:
+                    JSON_THROW(detail::type_error::create(313, "invalid value to unflatten"));
+            }
+        }
+
+        return *result;
+    }
 
     /*!
     @brief return a reference to the pointed to value
@@ -9070,8 +9098,75 @@ class json_pointer
     @throw parse_error.109   if an array index was not a number
     @throw out_of_range.404  if the JSON pointer can not be resolved
     */
-    NLOHMANN_BASIC_JSON_TPL_DECLARATION
-    NLOHMANN_BASIC_JSON_TPL& get_unchecked(NLOHMANN_BASIC_JSON_TPL* ptr) const;
+    BasicJsonType& get_unchecked(BasicJsonType* ptr) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        for (const auto& reference_token : reference_tokens)
+        {
+            // convert null values to arrays or objects before continuing
+            if (ptr->m_type == detail::value_t::null)
+            {
+                // check if reference token is a number
+                const bool nums =
+                    std::all_of(reference_token.begin(), reference_token.end(),
+                                [](const char x)
+                {
+                    return (x >= '0' and x <= '9');
+                });
+
+                // change value to array for numbers or "-" or to object otherwise
+                *ptr = (nums or reference_token == "-")
+                       ? detail::value_t::array
+                       : detail::value_t::object;
+            }
+
+            switch (ptr->m_type)
+            {
+                case detail::value_t::object:
+                {
+                    // use unchecked object access
+                    ptr = &ptr->operator[](reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    // error condition (cf. RFC 6901, Sect. 4)
+                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    {
+                        JSON_THROW(detail::parse_error::create(106, 0,
+                                                               "array index '" + reference_token +
+                                                               "' must not begin with '0'"));
+                    }
+
+                    if (reference_token == "-")
+                    {
+                        // explicitly treat "-" as index beyond the end
+                        ptr = &ptr->operator[](ptr->m_value.array->size());
+                    }
+                    else
+                    {
+                        // convert array index to number; unchecked access
+                        JSON_TRY
+                        {
+                            ptr = &ptr->operator[](
+                                static_cast<size_type>(array_index(reference_token)));
+                        }
+                        JSON_CATCH(std::invalid_argument&)
+                        {
+                            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                        }
+                    }
+                    break;
+                }
+
+                default:
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+            }
+        }
+
+        return *ptr;
+    }
 
     /*!
     @throw parse_error.106   if an array index begins with '0'
@@ -9079,8 +9174,57 @@ class json_pointer
     @throw out_of_range.402  if the array index '-' is used
     @throw out_of_range.404  if the JSON pointer can not be resolved
     */
-    NLOHMANN_BASIC_JSON_TPL_DECLARATION
-    NLOHMANN_BASIC_JSON_TPL& get_checked(NLOHMANN_BASIC_JSON_TPL* ptr) const;
+    BasicJsonType& get_checked(BasicJsonType* ptr) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        for (const auto& reference_token : reference_tokens)
+        {
+            switch (ptr->m_type)
+            {
+                case detail::value_t::object:
+                {
+                    // note: at performs range check
+                    ptr = &ptr->at(reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    if (JSON_UNLIKELY(reference_token == "-"))
+                    {
+                        // "-" always fails the range check
+                        JSON_THROW(detail::out_of_range::create(402,
+                                                                "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
+                                                                ") is out of range"));
+                    }
+
+                    // error condition (cf. RFC 6901, Sect. 4)
+                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    {
+                        JSON_THROW(detail::parse_error::create(106, 0,
+                                                               "array index '" + reference_token +
+                                                               "' must not begin with '0'"));
+                    }
+
+                    // note: at performs range check
+                    JSON_TRY
+                    {
+                        ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
+                    }
+                    JSON_CATCH(std::invalid_argument&)
+                    {
+                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                    }
+                    break;
+                }
+
+                default:
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+            }
+        }
+
+        return *ptr;
+    }
 
     /*!
     @brief return a const reference to the pointed to value
@@ -9095,8 +9239,58 @@ class json_pointer
     @throw out_of_range.402  if the array index '-' is used
     @throw out_of_range.404  if the JSON pointer can not be resolved
     */
-    NLOHMANN_BASIC_JSON_TPL_DECLARATION
-    const NLOHMANN_BASIC_JSON_TPL& get_unchecked(const NLOHMANN_BASIC_JSON_TPL* ptr) const;
+    const BasicJsonType& get_unchecked(const BasicJsonType* ptr) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        for (const auto& reference_token : reference_tokens)
+        {
+            switch (ptr->m_type)
+            {
+                case detail::value_t::object:
+                {
+                    // use unchecked object access
+                    ptr = &ptr->operator[](reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    if (JSON_UNLIKELY(reference_token == "-"))
+                    {
+                        // "-" cannot be used for const access
+                        JSON_THROW(detail::out_of_range::create(402,
+                                                                "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
+                                                                ") is out of range"));
+                    }
+
+                    // error condition (cf. RFC 6901, Sect. 4)
+                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    {
+                        JSON_THROW(detail::parse_error::create(106, 0,
+                                                               "array index '" + reference_token +
+                                                               "' must not begin with '0'"));
+                    }
+
+                    // use unchecked array access
+                    JSON_TRY
+                    {
+                        ptr = &ptr->operator[](
+                            static_cast<size_type>(array_index(reference_token)));
+                    }
+                    JSON_CATCH(std::invalid_argument&)
+                    {
+                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                    }
+                    break;
+                }
+
+                default:
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+            }
+        }
+
+        return *ptr;
+    }
 
     /*!
     @throw parse_error.106   if an array index begins with '0'
@@ -9104,8 +9298,57 @@ class json_pointer
     @throw out_of_range.402  if the array index '-' is used
     @throw out_of_range.404  if the JSON pointer can not be resolved
     */
-    NLOHMANN_BASIC_JSON_TPL_DECLARATION
-    const NLOHMANN_BASIC_JSON_TPL& get_checked(const NLOHMANN_BASIC_JSON_TPL* ptr) const;
+    const BasicJsonType& get_checked(const BasicJsonType* ptr) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        for (const auto& reference_token : reference_tokens)
+        {
+            switch (ptr->m_type)
+            {
+                case detail::value_t::object:
+                {
+                    // note: at performs range check
+                    ptr = &ptr->at(reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    if (JSON_UNLIKELY(reference_token == "-"))
+                    {
+                        // "-" always fails the range check
+                        JSON_THROW(detail::out_of_range::create(402,
+                                                                "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
+                                                                ") is out of range"));
+                    }
+
+                    // error condition (cf. RFC 6901, Sect. 4)
+                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    {
+                        JSON_THROW(detail::parse_error::create(106, 0,
+                                                               "array index '" + reference_token +
+                                                               "' must not begin with '0'"));
+                    }
+
+                    // note: at performs range check
+                    JSON_TRY
+                    {
+                        ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
+                    }
+                    JSON_CATCH(std::invalid_argument&)
+                    {
+                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                    }
+                    break;
+                }
+
+                default:
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+            }
+        }
+
+        return *ptr;
+    }
 
     /*!
     @brief split the string input to reference tokens
@@ -9224,10 +9467,57 @@ class json_pointer
 
     @note Empty objects or arrays are flattened to `null`.
     */
-    NLOHMANN_BASIC_JSON_TPL_DECLARATION
     static void flatten(const std::string& reference_string,
-                        const NLOHMANN_BASIC_JSON_TPL& value,
-                        NLOHMANN_BASIC_JSON_TPL& result);
+                        const BasicJsonType& value,
+                        BasicJsonType& result)
+    {
+        switch (value.m_type)
+        {
+            case detail::value_t::array:
+            {
+                if (value.m_value.array->empty())
+                {
+                    // flatten empty array as null
+                    result[reference_string] = nullptr;
+                }
+                else
+                {
+                    // iterate array and use index as reference string
+                    for (std::size_t i = 0; i < value.m_value.array->size(); ++i)
+                    {
+                        flatten(reference_string + "/" + std::to_string(i),
+                                value.m_value.array->operator[](i), result);
+                    }
+                }
+                break;
+            }
+
+            case detail::value_t::object:
+            {
+                if (value.m_value.object->empty())
+                {
+                    // flatten empty object as null
+                    result[reference_string] = nullptr;
+                }
+                else
+                {
+                    // iterate object and use keys as reference string
+                    for (const auto& element : *value.m_value.object)
+                    {
+                        flatten(reference_string + "/" + escape(element.first), element.second, result);
+                    }
+                }
+                break;
+            }
+
+            default:
+            {
+                // add primitive value with its reference string
+                result[reference_string] = value;
+                break;
+            }
+        }
+    }
 
     /*!
     @param[in] value  flattened JSON
@@ -9239,19 +9529,108 @@ class json_pointer
     @throw type_error.315  if object values are not primitive
     @throw type_error.313  if value cannot be unflattened
     */
-    NLOHMANN_BASIC_JSON_TPL_DECLARATION
-    static NLOHMANN_BASIC_JSON_TPL
-    unflatten(const NLOHMANN_BASIC_JSON_TPL& value);
+    static BasicJsonType
+    unflatten(const BasicJsonType& value)
+    {
+        if (JSON_UNLIKELY(not value.is_object()))
+        {
+            JSON_THROW(detail::type_error::create(314, "only objects can be unflattened"));
+        }
+
+        BasicJsonType result;
+
+        // iterate the JSON object values
+        for (const auto& element : *value.m_value.object)
+        {
+            if (JSON_UNLIKELY(not element.second.is_primitive()))
+            {
+                JSON_THROW(detail::type_error::create(315, "values in object must be primitive"));
+            }
+
+            // assign value to reference pointed to by JSON pointer; Note that if
+            // the JSON pointer is "" (i.e., points to the whole value), function
+            // get_and_create returns a reference to result itself. An assignment
+            // will then create a primitive value.
+            json_pointer(element.first).get_and_create(result) = element.second;
+        }
+
+        return result;
+    }
 
     friend bool operator==(json_pointer const& lhs,
-                           json_pointer const& rhs) noexcept;
+                           json_pointer const& rhs) noexcept
+    {
+        return (lhs.reference_tokens == rhs.reference_tokens);
+    }
 
     friend bool operator!=(json_pointer const& lhs,
-                           json_pointer const& rhs) noexcept;
+                           json_pointer const& rhs) noexcept
+    {
+        return not (lhs == rhs);
+    }
 
     /// the reference tokens
     std::vector<std::string> reference_tokens;
 };
+}
+
+// #include "adl_serializer.hpp"
+
+
+#include <utility>
+
+// #include "detail/conversions/from_json.hpp"
+
+// #include "detail/conversions/to_json.hpp"
+
+
+namespace nlohmann
+{
+template<typename, typename>
+struct adl_serializer
+{
+    /*!
+    @brief convert a JSON value to any value type
+
+    This function is usually called by the `get()` function of the
+    @ref basic_json class (either explicit or via conversion operators).
+
+    @param[in] j         JSON value to read from
+    @param[in,out] val  value to write to
+    */
+    template<typename BasicJsonType, typename ValueType>
+    static void from_json(BasicJsonType&& j, ValueType& val) noexcept(
+        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
+    {
+        ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
+    }
+
+    /*!
+    @brief convert any value type to a JSON value
+
+    This function is usually called by the constructors of the @ref basic_json
+    class.
+
+    @param[in,out] j  JSON value to write to
+    @param[in] val     value to read from
+    */
+    template<typename BasicJsonType, typename ValueType>
+    static void to_json(BasicJsonType& j, ValueType&& val) noexcept(
+        noexcept(::nlohmann::to_json(j, std::forward<ValueType>(val))))
+    {
+        ::nlohmann::to_json(j, std::forward<ValueType>(val));
+    }
+};
+}
+
+
+/*!
+@brief namespace for Niels Lohmann
+@see https://github.com/nlohmann
+@since version 1.0.0
+*/
+namespace nlohmann
+{
 
 /*!
 @brief a class to store JSON values
@@ -9339,7 +9718,7 @@ class basic_json
 {
   private:
     template<detail::value_t> friend struct detail::external_constructor;
-    friend ::nlohmann::json_pointer;
+    friend ::nlohmann::json_pointer<basic_json>;
     friend ::nlohmann::detail::parser<basic_json>;
     friend ::nlohmann::detail::serializer<basic_json>;
     template<typename BasicJsonType>
@@ -9376,7 +9755,7 @@ class basic_json
   public:
     using value_t = detail::value_t;
     /// @copydoc nlohmann::json_pointer
-    using json_pointer = ::nlohmann::json_pointer;
+    using json_pointer = ::nlohmann::json_pointer<basic_json>;
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// helper type for initializer lists of basic_json values
@@ -16642,400 +17021,6 @@ class basic_json
 
     /// @}
 };
-
-//////////////////
-// json_pointer //
-//////////////////
-
-NLOHMANN_BASIC_JSON_TPL_DECLARATION
-NLOHMANN_BASIC_JSON_TPL&
-json_pointer::get_and_create(NLOHMANN_BASIC_JSON_TPL& j) const
-{
-    using size_type = typename NLOHMANN_BASIC_JSON_TPL::size_type;
-    auto result = &j;
-
-    // in case no reference tokens exist, return a reference to the JSON value
-    // j which will be overwritten by a primitive value
-    for (const auto& reference_token : reference_tokens)
-    {
-        switch (result->m_type)
-        {
-            case detail::value_t::null:
-            {
-                if (reference_token == "0")
-                {
-                    // start a new array if reference token is 0
-                    result = &result->operator[](0);
-                }
-                else
-                {
-                    // start a new object otherwise
-                    result = &result->operator[](reference_token);
-                }
-                break;
-            }
-
-            case detail::value_t::object:
-            {
-                // create an entry in the object
-                result = &result->operator[](reference_token);
-                break;
-            }
-
-            case detail::value_t::array:
-            {
-                // create an entry in the array
-                JSON_TRY
-                {
-                    result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
-                }
-                JSON_CATCH(std::invalid_argument&)
-                {
-                    JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                }
-                break;
-            }
-
-            /*
-            The following code is only reached if there exists a reference
-            token _and_ the current value is primitive. In this case, we have
-            an error situation, because primitive values may only occur as
-            single value; that is, with an empty list of reference tokens.
-            */
-            default:
-                JSON_THROW(detail::type_error::create(313, "invalid value to unflatten"));
-        }
-    }
-
-    return *result;
-}
-
-NLOHMANN_BASIC_JSON_TPL_DECLARATION
-NLOHMANN_BASIC_JSON_TPL&
-json_pointer::get_unchecked(NLOHMANN_BASIC_JSON_TPL* ptr) const
-{
-    using size_type = typename NLOHMANN_BASIC_JSON_TPL::size_type;
-    for (const auto& reference_token : reference_tokens)
-    {
-        // convert null values to arrays or objects before continuing
-        if (ptr->m_type == detail::value_t::null)
-        {
-            // check if reference token is a number
-            const bool nums =
-                std::all_of(reference_token.begin(), reference_token.end(),
-                            [](const char x)
-            {
-                return (x >= '0' and x <= '9');
-            });
-
-            // change value to array for numbers or "-" or to object otherwise
-            *ptr = (nums or reference_token == "-")
-                   ? detail::value_t::array
-                   : detail::value_t::object;
-        }
-
-        switch (ptr->m_type)
-        {
-            case detail::value_t::object:
-            {
-                // use unchecked object access
-                ptr = &ptr->operator[](reference_token);
-                break;
-            }
-
-            case detail::value_t::array:
-            {
-                // error condition (cf. RFC 6901, Sect. 4)
-                if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                {
-                    JSON_THROW(detail::parse_error::create(106, 0,
-                                                           "array index '" + reference_token +
-                                                           "' must not begin with '0'"));
-                }
-
-                if (reference_token == "-")
-                {
-                    // explicitly treat "-" as index beyond the end
-                    ptr = &ptr->operator[](ptr->m_value.array->size());
-                }
-                else
-                {
-                    // convert array index to number; unchecked access
-                    JSON_TRY
-                    {
-                        ptr = &ptr->operator[](
-                            static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
-                }
-                break;
-            }
-
-            default:
-                JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-        }
-    }
-
-    return *ptr;
-}
-
-NLOHMANN_BASIC_JSON_TPL_DECLARATION
-NLOHMANN_BASIC_JSON_TPL&
-json_pointer::get_checked(NLOHMANN_BASIC_JSON_TPL* ptr) const
-{
-    using size_type = typename NLOHMANN_BASIC_JSON_TPL::size_type;
-    for (const auto& reference_token : reference_tokens)
-    {
-        switch (ptr->m_type)
-        {
-            case detail::value_t::object:
-            {
-                // note: at performs range check
-                ptr = &ptr->at(reference_token);
-                break;
-            }
-
-            case detail::value_t::array:
-            {
-                if (JSON_UNLIKELY(reference_token == "-"))
-                {
-                    // "-" always fails the range check
-                    JSON_THROW(detail::out_of_range::create(402,
-                                                            "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
-                                                            ") is out of range"));
-                }
-
-                // error condition (cf. RFC 6901, Sect. 4)
-                if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                {
-                    JSON_THROW(detail::parse_error::create(106, 0,
-                                                           "array index '" + reference_token +
-                                                           "' must not begin with '0'"));
-                }
-
-                // note: at performs range check
-                JSON_TRY
-                {
-                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
-                }
-                JSON_CATCH(std::invalid_argument&)
-                {
-                    JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                }
-                break;
-            }
-
-            default:
-                JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-        }
-    }
-
-    return *ptr;
-}
-
-NLOHMANN_BASIC_JSON_TPL_DECLARATION
-const NLOHMANN_BASIC_JSON_TPL&
-json_pointer::get_unchecked(const NLOHMANN_BASIC_JSON_TPL* ptr) const
-{
-    using size_type = typename NLOHMANN_BASIC_JSON_TPL::size_type;
-    for (const auto& reference_token : reference_tokens)
-    {
-        switch (ptr->m_type)
-        {
-            case detail::value_t::object:
-            {
-                // use unchecked object access
-                ptr = &ptr->operator[](reference_token);
-                break;
-            }
-
-            case detail::value_t::array:
-            {
-                if (JSON_UNLIKELY(reference_token == "-"))
-                {
-                    // "-" cannot be used for const access
-                    JSON_THROW(detail::out_of_range::create(402,
-                                                            "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
-                                                            ") is out of range"));
-                }
-
-                // error condition (cf. RFC 6901, Sect. 4)
-                if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                {
-                    JSON_THROW(detail::parse_error::create(106, 0,
-                                                           "array index '" + reference_token +
-                                                           "' must not begin with '0'"));
-                }
-
-                // use unchecked array access
-                JSON_TRY
-                {
-                    ptr = &ptr->operator[](
-                        static_cast<size_type>(array_index(reference_token)));
-                }
-                JSON_CATCH(std::invalid_argument&)
-                {
-                    JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                }
-                break;
-            }
-
-            default:
-                JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-        }
-    }
-
-    return *ptr;
-}
-
-NLOHMANN_BASIC_JSON_TPL_DECLARATION
-const NLOHMANN_BASIC_JSON_TPL&
-json_pointer::get_checked(const NLOHMANN_BASIC_JSON_TPL* ptr) const
-{
-    using size_type = typename NLOHMANN_BASIC_JSON_TPL::size_type;
-    for (const auto& reference_token : reference_tokens)
-    {
-        switch (ptr->m_type)
-        {
-            case detail::value_t::object:
-            {
-                // note: at performs range check
-                ptr = &ptr->at(reference_token);
-                break;
-            }
-
-            case detail::value_t::array:
-            {
-                if (JSON_UNLIKELY(reference_token == "-"))
-                {
-                    // "-" always fails the range check
-                    JSON_THROW(detail::out_of_range::create(402,
-                                                            "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
-                                                            ") is out of range"));
-                }
-
-                // error condition (cf. RFC 6901, Sect. 4)
-                if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                {
-                    JSON_THROW(detail::parse_error::create(106, 0,
-                                                           "array index '" + reference_token +
-                                                           "' must not begin with '0'"));
-                }
-
-                // note: at performs range check
-                JSON_TRY
-                {
-                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
-                }
-                JSON_CATCH(std::invalid_argument&)
-                {
-                    JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                }
-                break;
-            }
-
-            default:
-                JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-        }
-    }
-
-    return *ptr;
-}
-
-NLOHMANN_BASIC_JSON_TPL_DECLARATION
-void json_pointer::flatten(const std::string& reference_string,
-                           const NLOHMANN_BASIC_JSON_TPL& value,
-                           NLOHMANN_BASIC_JSON_TPL& result)
-{
-    switch (value.m_type)
-    {
-        case detail::value_t::array:
-        {
-            if (value.m_value.array->empty())
-            {
-                // flatten empty array as null
-                result[reference_string] = nullptr;
-            }
-            else
-            {
-                // iterate array and use index as reference string
-                for (std::size_t i = 0; i < value.m_value.array->size(); ++i)
-                {
-                    flatten(reference_string + "/" + std::to_string(i),
-                            value.m_value.array->operator[](i), result);
-                }
-            }
-            break;
-        }
-
-        case detail::value_t::object:
-        {
-            if (value.m_value.object->empty())
-            {
-                // flatten empty object as null
-                result[reference_string] = nullptr;
-            }
-            else
-            {
-                // iterate object and use keys as reference string
-                for (const auto& element : *value.m_value.object)
-                {
-                    flatten(reference_string + "/" + escape(element.first), element.second, result);
-                }
-            }
-            break;
-        }
-
-        default:
-        {
-            // add primitive value with its reference string
-            result[reference_string] = value;
-            break;
-        }
-    }
-}
-
-NLOHMANN_BASIC_JSON_TPL_DECLARATION
-NLOHMANN_BASIC_JSON_TPL
-json_pointer::unflatten(const NLOHMANN_BASIC_JSON_TPL& value)
-{
-    if (JSON_UNLIKELY(not value.is_object()))
-    {
-        JSON_THROW(detail::type_error::create(314, "only objects can be unflattened"));
-    }
-
-    NLOHMANN_BASIC_JSON_TPL result;
-
-    // iterate the JSON object values
-    for (const auto& element : *value.m_value.object)
-    {
-        if (JSON_UNLIKELY(not element.second.is_primitive()))
-        {
-            JSON_THROW(detail::type_error::create(315, "values in object must be primitive"));
-        }
-
-        // assign value to reference pointed to by JSON pointer; Note that if
-        // the JSON pointer is "" (i.e., points to the whole value), function
-        // get_and_create returns a reference to result itself. An assignment
-        // will then create a primitive value.
-        json_pointer(element.first).get_and_create(result) = element.second;
-    }
-
-    return result;
-}
-
-inline bool operator==(json_pointer const& lhs, json_pointer const& rhs) noexcept
-{
-    return (lhs.reference_tokens == rhs.reference_tokens);
-}
-
-inline bool operator!=(json_pointer const& lhs, json_pointer const& rhs) noexcept
-{
-    return not (lhs == rhs);
-}
 } // namespace nlohmann
 
 ///////////////////////

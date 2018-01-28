@@ -16,6 +16,7 @@ SRCS = develop/json.hpp \
        develop/detail/iterators/iteration_proxy.hpp \
        develop/detail/iterators/json_reverse_iterator.hpp \
        develop/detail/iterators/primitive_iterator.hpp \
+       develop/detail/json_pointer.hpp \
        develop/detail/json_ref.hpp \
        develop/detail/macro_scope.hpp \
        develop/detail/macro_unscope.hpp \
@@ -273,6 +274,14 @@ check-amalgamation:
 	@diff src/json.hpp src/json.hpp~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv src/json.hpp~ src/json.hpp ; false)
 	@mv src/json.hpp~ src/json.hpp
 
+# check if every header in develop includes sufficient headers to be compiled
+# individually
+check-single-includes:
+	for x in $(SRCS); do \
+	  echo "#include \"$$x\"\nint main() {}\n" | sed 's|develop/||' > single_include_test.cpp; \
+	  $(CXX) $(CXXFLAGS) -Idevelop -std=c++11 single_include_test.cpp -o single_include_test; \
+	  rm single_include_test.cpp single_include_test; \
+	done
 
 ##########################################################################
 # changelog
