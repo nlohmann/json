@@ -156,6 +156,20 @@ using json = basic_json<>;
     #define JSON_CATCH(exception) if(false)
 #endif
 
+// override exception macros
+#if defined(JSON_THROW_USER)
+    #undef JSON_THROW
+    #define JSON_THROW JSON_THROW_USER
+#endif
+#if defined(JSON_TRY_USER)
+    #undef JSON_TRY
+    #define JSON_TRY JSON_TRY_USER
+#endif
+#if defined(JSON_CATCH_USER)
+    #undef JSON_CATCH
+    #define JSON_CATCH JSON_CATCH_USER
+#endif
+
 // manual branch prediction
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
     #define JSON_LIKELY(x)      __builtin_expect(!!(x), 1)
