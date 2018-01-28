@@ -17,7 +17,7 @@
 #include "detail/conversions/to_chars.hpp"
 #include "detail/macro_scope.hpp"
 #include "detail/meta.hpp"
-#include "detail/parsing/output_adapters.hpp"
+#include "detail/output/output_adapters.hpp"
 #include "detail/value_t.hpp"
 
 namespace nlohmann

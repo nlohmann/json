@@ -17,7 +17,6 @@
 
 #include "detail/exceptions.hpp"
 #include "detail/macro_scope.hpp"
-#include "detail/parsing/input_adapters.hpp"
 #include "detail/value_t.hpp"
 
 namespace nlohmann
@@ -64,7 +63,7 @@ class binary_reader
         if (strict)
         {
             get();
-            check_eof(true);
+            expect_eof();
         }
         return res;
     }
@@ -85,7 +84,7 @@ class binary_reader
         if (strict)
         {
             get();
-            check_eof(true);
+            expect_eof();
         }
         return res;
     }
@@ -106,7 +105,7 @@ class binary_reader
         if (strict)
         {
             get_ignore_noop();
-            check_eof(true);
+            expect_eof();
         }
         return res;
     }
@@ -205,7 +204,6 @@ class binary_reader
 
             case 0x38: // Negative integer (one-byte uint8_t follows)
             {
-                // must be uint8_t !
                 return static_cast<number_integer_t>(-1) - get_number<uint8_t>();
             }
 
@@ -396,9 +394,9 @@ class binary_reader
             case 0xF9: // Half-Precision Float (two-byte IEEE 754)
             {
                 const int byte1 = get();
-                check_eof();
+                unexpect_eof();
                 const int byte2 = get();
-                check_eof();
+                unexpect_eof();
 
                 // code from RFC 7049, Appendix D, Figure 3:
                 // As half-precision floating-point numbers were only added
@@ -831,7 +829,7 @@ class binary_reader
         for (std::size_t i = 0; i < sizeof(NumberType); ++i)
         {
             get();
-            check_eof();
+            unexpect_eof();
 
             // reverse byte order prior to conversion if necessary
             if (is_little_endian)
@@ -856,7 +854,7 @@ class binary_reader
     @param[in] len number of bytes to read
 
     @note We can not reserve @a len bytes for the result, because @a len
-          may be too large. Usually, @ref check_eof() detects the end of
+          may be too large. Usually, @ref unexpect_eof() detects the end of
           the input before we run out of string memory.
 
     @return string created by reading @a len bytes
@@ -870,7 +868,7 @@ class binary_reader
         std::generate_n(std::back_inserter(result), len, [this]()
         {
             get();
-            check_eof();
+            unexpect_eof();
             return static_cast<char>(current);
         });
         return result;
@@ -890,7 +888,7 @@ class binary_reader
     */
     std::string get_cbor_string()
     {
-        check_eof();
+        unexpect_eof();
 
         switch (current)
         {
@@ -948,7 +946,7 @@ class binary_reader
                 std::string result;
                 while (get() != 0xFF)
                 {
-                    check_eof();
+                    unexpect_eof();
                     result.push_back(static_cast<char>(current));
                 }
                 return result;
@@ -1003,7 +1001,7 @@ class binary_reader
     */
     std::string get_msgpack_string()
     {
-        check_eof();
+        unexpect_eof();
 
         switch (current)
         {
@@ -1119,7 +1117,7 @@ class binary_reader
             get();  // TODO: may we ignore N here?
         }
 
-        check_eof();
+        unexpect_eof();
 
         switch (current)
         {
@@ -1159,7 +1157,7 @@ class binary_reader
         if (current == '$')
         {
             tc = get();  // must not ignore 'N', because 'N' maybe the type
-            check_eof();
+            unexpect_eof();
 
             get_ignore_noop();
             if (current != '#')
@@ -1212,7 +1210,7 @@ class binary_reader
             case 'C':  // char
             {
                 get();
-                check_eof();
+                unexpect_eof();
                 if (JSON_UNLIKELY(current > 127))
                 {
                     std::stringstream ss;
@@ -1321,24 +1319,26 @@ class binary_reader
     }
 
     /*!
-    @brief check if input ended
+    @brief throw if end of input is not reached
+    @throw parse_error.110 if input not ended
+    */
+    void expect_eof() const
+    {
+        if (JSON_UNLIKELY(current != std::char_traits<char>::eof()))
+        {
+            JSON_THROW(parse_error::create(110, chars_read, "expected end of input"));
+        }
+    }
+
+    /*!
+    @briefthrow if end of input is reached
     @throw parse_error.110 if input ended
     */
-    void check_eof(const bool expect_eof = false) const
+    void unexpect_eof() const
     {
-        if (expect_eof)
+        if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
         {
-            if (JSON_UNLIKELY(current != std::char_traits<char>::eof()))
-            {
-                JSON_THROW(parse_error::create(110, chars_read, "expected end of input"));
-            }
-        }
-        else
-        {
-            if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
-            {
-                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
-            }
+            JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
         }
     }
 

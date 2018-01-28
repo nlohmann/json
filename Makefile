@@ -2,28 +2,28 @@
 
 SRCS = develop/json.hpp \
        develop/json_fwd.hpp \
-       develop/detail/macro_scope.hpp \
-       develop/detail/macro_unscope.hpp \
-       develop/detail/meta.hpp \
-       develop/detail/exceptions.hpp \
-       develop/detail/value_t.hpp \
+       develop/adl_serializer.hpp \
        develop/detail/conversions/from_json.hpp \
        develop/detail/conversions/to_chars.hpp \
        develop/detail/conversions/to_json.hpp \
-       develop/detail/parsing/input_adapters.hpp \
-       develop/detail/parsing/lexer.hpp \
-       develop/detail/parsing/parser.hpp \
-       develop/detail/iterators/primitive_iterator.hpp \
+       develop/detail/exceptions.hpp \
+       develop/detail/input/binary_reader.hpp \
+       develop/detail/input/input_adapters.hpp \
+       develop/detail/input/lexer.hpp \
+       develop/detail/input/parser.hpp \
        develop/detail/iterators/internal_iterator.hpp \
        develop/detail/iterators/iter_impl.hpp \
        develop/detail/iterators/iteration_proxy.hpp \
        develop/detail/iterators/json_reverse_iterator.hpp \
-       develop/detail/parsing/output_adapters.hpp \
-       develop/detail/parsing/binary_reader.hpp \
-       develop/detail/parsing/binary_writer.hpp \
-       develop/detail/serializer.hpp \
+       develop/detail/iterators/primitive_iterator.hpp \
        develop/detail/json_ref.hpp \
-       develop/adl_serializer.hpp
+       develop/detail/macro_scope.hpp \
+       develop/detail/macro_unscope.hpp \
+       develop/detail/meta.hpp \
+       develop/detail/output/binary_writer.hpp \
+       develop/detail/output/output_adapters.hpp \
+       develop/detail/output/serializer.hpp \
+       develop/detail/value_t.hpp
 
 UNAME = $(shell uname)
 CXX=clang++

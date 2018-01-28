@@ -6,8 +6,8 @@
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 
-#include "detail/parsing/binary_reader.hpp"
-#include "detail/parsing/output_adapters.hpp"
+#include "detail/input/binary_reader.hpp"
+#include "detail/output/output_adapters.hpp"
 
 namespace nlohmann
 {

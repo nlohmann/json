@@ -9,8 +9,8 @@
 
 #include "detail/exceptions.hpp"
 #include "detail/macro_scope.hpp"
-#include "detail/parsing/input_adapters.hpp"
-#include "detail/parsing/lexer.hpp"
+#include "detail/input/input_adapters.hpp"
+#include "detail/input/lexer.hpp"
 #include "detail/value_t.hpp"
 
 namespace nlohmann

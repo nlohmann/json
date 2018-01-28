@@ -11,7 +11,7 @@
 #include <vector> // vector
 
 #include "detail/macro_scope.hpp"
-#include "detail/parsing/input_adapters.hpp"
+#include "detail/input/input_adapters.hpp"
 
 namespace nlohmann
 {

@@ -48,18 +48,18 @@ SOFTWARE.
 #include "detail/value_t.hpp"
 #include "detail/conversions/from_json.hpp"
 #include "detail/conversions/to_json.hpp"
-#include "detail/parsing/input_adapters.hpp"
-#include "detail/parsing/lexer.hpp"
-#include "detail/parsing/parser.hpp"
+#include "detail/input/input_adapters.hpp"
+#include "detail/input/lexer.hpp"
+#include "detail/input/parser.hpp"
 #include "detail/iterators/primitive_iterator.hpp"
 #include "detail/iterators/internal_iterator.hpp"
 #include "detail/iterators/iter_impl.hpp"
 #include "detail/iterators/iteration_proxy.hpp"
 #include "detail/iterators/json_reverse_iterator.hpp"
-#include "detail/parsing/output_adapters.hpp"
-#include "detail/parsing/binary_reader.hpp"
-#include "detail/parsing/binary_writer.hpp"
-#include "detail/serializer.hpp"
+#include "detail/output/output_adapters.hpp"
+#include "detail/input/binary_reader.hpp"
+#include "detail/output/binary_writer.hpp"
+#include "detail/output/serializer.hpp"
 #include "detail/json_ref.hpp"
 #include "adl_serializer.hpp"
 
@@ -140,7 +140,7 @@ class json_pointer
     */
     static int array_index(const std::string& s)
     {
-        size_t processed_chars = 0;
+        std::size_t processed_chars = 0;
         const int res = std::stoi(s, &processed_chars);
 
         // check if the string was completely read
