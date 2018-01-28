@@ -6846,10 +6846,11 @@ class binary_writer
     @tparam NumberType the type of the number
 
     @note This function needs to respect the system's endianess, because bytes
-          in CBOR and MessagePack are stored in network order (big endian) and
-          therefore need reordering on little endian systems.
+          in CBOR, MessagePack, and UBJSON are stored in network order (big
+          endian) and therefore need reordering on little endian systems.
     */
-    template<typename NumberType> void write_number(NumberType n)
+    template<typename NumberType>
+    void write_number(const NumberType n)
     {
         // step 1: write number to array of length NumberType
         std::array<CharType, sizeof(NumberType)> vec;

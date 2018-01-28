@@ -2071,7 +2071,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 2")
 */
 
 
-TEST_CASE("all first bytes", "[!throws]")
+TEST_CASE("all UBJSON first bytes", "[!throws]")
 {
     // these bytes will fail immediately with exception parse_error.112
     std::set<uint8_t> supported =

@@ -1703,7 +1703,7 @@ TEST_CASE("CBOR roundtrips", "[hide]")
     }
 }
 
-TEST_CASE("all first bytes", "[!throws]")
+TEST_CASE("all CBOR first bytes", "[!throws]")
 {
     // these bytes will fail immediately with exception parse_error.112
     std::set<uint8_t> unsupported =
