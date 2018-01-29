@@ -29,7 +29,7 @@ SOFTWARE.
 #include "catch.hpp"
 
 #include <fstream>
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 using nlohmann::json;
 
 TEST_CASE("object inspection")
@@ -316,8 +316,8 @@ TEST_CASE("object inspection")
     SECTION("round trips")
     {
         for (const auto& s :
-                {"3.141592653589793", "1000000000000000010E5"
-                })
+    {"3.141592653589793", "1000000000000000010E5"
+    })
         {
             json j1 = json::parse(s);
             std::string s1 = j1.dump();

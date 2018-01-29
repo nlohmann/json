@@ -11,10 +11,10 @@
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
-#include "detail/exceptions.hpp"
-#include "detail/macro_scope.hpp"
-#include "detail/meta.hpp"
-#include "detail/value_t.hpp"
+#include <nlohmann/detail/exceptions.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta.hpp>
+#include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
 {

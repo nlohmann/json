@@ -4,7 +4,7 @@
 
 # additional flags
 CXXFLAGS += -std=c++11 -Wall -Wextra -pedantic -Wcast-align -Wcast-qual -Wno-ctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overflow=5 -Wswitch -Wundef -Wno-unused -Wnon-virtual-dtor -Wreorder -Wdeprecated -Wno-float-equal
-CPPFLAGS += -I ../src -I . -I thirdparty/catch -DCATCH_CONFIG_FAST_COMPILE
+CPPFLAGS += -I ../single_include -I . -I thirdparty/catch -DCATCH_CONFIG_FAST_COMPILE
 
 SOURCES = src/unit.cpp \
           src/unit-algorithms.cpp \
@@ -60,11 +60,11 @@ clean:
 # single test file
 ##############################################################################
 
-json_unit: $(OBJECTS) ../src/json.hpp thirdparty/catch/catch.hpp
+json_unit: $(OBJECTS) ../single_include/nlohmann/json.hpp thirdparty/catch/catch.hpp
 	@echo "[CXXLD] $@"
 	@$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) -o $@
 
-%.o: %.cpp ../src/json.hpp thirdparty/catch/catch.hpp
+%.o: %.cpp ../single_include/nlohmann/json.hpp thirdparty/catch/catch.hpp
 	@echo "[CXX]   $@"
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
@@ -73,7 +73,7 @@ json_unit: $(OBJECTS) ../src/json.hpp thirdparty/catch/catch.hpp
 # individual test cases
 ##############################################################################
 
-test-%: src/unit-%.o src/unit.o ../src/json.hpp thirdparty/catch/catch.hpp
+test-%: src/unit-%.o src/unit.o ../single_include/nlohmann/json.hpp thirdparty/catch/catch.hpp
 	@echo "[CXXLD] $@"
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $< src/unit.o -o $@
 

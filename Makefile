@@ -1,37 +1,39 @@
 .PHONY: pretty clean ChangeLog.md
 
-SRCS = develop/json.hpp \
-       develop/json_fwd.hpp \
-       develop/adl_serializer.hpp \
-       develop/detail/conversions/from_json.hpp \
-       develop/detail/conversions/to_chars.hpp \
-       develop/detail/conversions/to_json.hpp \
-       develop/detail/exceptions.hpp \
-       develop/detail/input/binary_reader.hpp \
-       develop/detail/input/input_adapters.hpp \
-       develop/detail/input/lexer.hpp \
-       develop/detail/input/parser.hpp \
-       develop/detail/iterators/internal_iterator.hpp \
-       develop/detail/iterators/iter_impl.hpp \
-       develop/detail/iterators/iteration_proxy.hpp \
-       develop/detail/iterators/json_reverse_iterator.hpp \
-       develop/detail/iterators/primitive_iterator.hpp \
-       develop/detail/json_pointer.hpp \
-       develop/detail/json_ref.hpp \
-       develop/detail/macro_scope.hpp \
-       develop/detail/macro_unscope.hpp \
-       develop/detail/meta.hpp \
-       develop/detail/output/binary_writer.hpp \
-       develop/detail/output/output_adapters.hpp \
-       develop/detail/output/serializer.hpp \
-       develop/detail/value_t.hpp
+SRCS = include/nlohmann/json.hpp \
+       include/nlohmann/json_fwd.hpp \
+       include/nlohmann/adl_serializer.hpp \
+       include/nlohmann/detail/conversions/from_json.hpp \
+       include/nlohmann/detail/conversions/to_chars.hpp \
+       include/nlohmann/detail/conversions/to_json.hpp \
+       include/nlohmann/detail/exceptions.hpp \
+       include/nlohmann/detail/input/binary_reader.hpp \
+       include/nlohmann/detail/input/input_adapters.hpp \
+       include/nlohmann/detail/input/lexer.hpp \
+       include/nlohmann/detail/input/parser.hpp \
+       include/nlohmann/detail/iterators/internal_iterator.hpp \
+       include/nlohmann/detail/iterators/iter_impl.hpp \
+       include/nlohmann/detail/iterators/iteration_proxy.hpp \
+       include/nlohmann/detail/iterators/json_reverse_iterator.hpp \
+       include/nlohmann/detail/iterators/primitive_iterator.hpp \
+       include/nlohmann/detail/json_pointer.hpp \
+       include/nlohmann/detail/json_ref.hpp \
+       include/nlohmann/detail/macro_scope.hpp \
+       include/nlohmann/detail/macro_unscope.hpp \
+       include/nlohmann/detail/meta.hpp \
+       include/nlohmann/detail/output/binary_writer.hpp \
+       include/nlohmann/detail/output/output_adapters.hpp \
+       include/nlohmann/detail/output/serializer.hpp \
+       include/nlohmann/detail/value_t.hpp
 
 UNAME = $(shell uname)
 CXX=clang++
 
+AMALGAMATED_FILE=single_include/nlohmann/json.hpp
+
 # main target
 all:
-	@echo "amalgamate - amalgamate file src/json.hpp from the develop sources"
+	@echo "amalgamate - amalgamate file single_include/nlohmann/json.hpp from the include/nlohmann sources"
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check - compile and execute test suite"
 	@echo "check-amalgamation - check whether sources have been amalgamated"
@@ -243,7 +245,7 @@ fuzzing-stop:
 
 # call cppcheck on the main header file
 cppcheck:
-	cppcheck --enable=warning --inconclusive --force --std=c++11 src/json.hpp --error-exitcode=1
+	cppcheck --enable=warning --inconclusive --force --std=c++11 $(AMALGAMATED_FILE) --error-exitcode=1
 
 
 ##########################################################################
@@ -257,29 +259,29 @@ pretty:
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
 	   --align-reference=type --add-brackets --convert-tabs --close-templates \
 	   --lineend=linux --preserve-date --suffix=none --formatted \
-	   $(SRCS) src/json.hpp test/src/*.cpp \
+	   $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp \
 	   benchmarks/src/benchmarks.cpp doc/examples/*.cpp
 
 # create single header file
-amalgamate: src/json.hpp
+amalgamate: $(AMALGAMATED_FILE)
 
-src/json.hpp: $(SRCS)
-	third_party/amalgamate/amalgamate.py -c third_party/amalgamate/config.json -s develop --verbose=yes
+$(AMALGAMATED_FILE): $(SRCS)
+	third_party/amalgamate/amalgamate.py -c third_party/amalgamate/config.json -s . --verbose=yes
 	$(MAKE) pretty
 
-# check if src/json.hpp has been amalgamated from the develop sources
+# check if single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources
 check-amalgamation:
-	@mv src/json.hpp src/json.hpp~
+	@mv $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~
 	@$(MAKE) amalgamate
-	@diff src/json.hpp src/json.hpp~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv src/json.hpp~ src/json.hpp ; false)
-	@mv src/json.hpp~ src/json.hpp
+	@diff $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv $(AMALGAMATED_FILE)~ $(AMALGAMATED_FILE) ; false)
+	@mv $(AMALGAMATED_FILE)~ $(AMALGAMATED_FILE)
 
-# check if every header in develop includes sufficient headers to be compiled
+# check if every header in nlohmann includes sufficient headers to be compiled
 # individually
 check-single-includes:
 	for x in $(SRCS); do \
-	  echo "#include \"$$x\"\nint main() {}\n" | sed 's|develop/||' > single_include_test.cpp; \
-	  $(CXX) $(CXXFLAGS) -Idevelop -std=c++11 single_include_test.cpp -o single_include_test; \
+	  echo "#include <$$x>\nint main() {}\n" | sed 's|include/||' > single_include_test.cpp; \
+	  $(CXX) $(CXXFLAGS) -Iinclude -std=c++11 single_include_test.cpp -o single_include_test; \
 	  rm single_include_test.cpp single_include_test; \
 	done
 

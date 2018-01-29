@@ -32,7 +32,7 @@ SOFTWARE.
 
 #include "catch.hpp"
 
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 using nlohmann::detail::dtoa_impl::reinterpret_bits;
 
 static float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t significand)

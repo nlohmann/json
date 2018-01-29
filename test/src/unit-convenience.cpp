@@ -29,7 +29,7 @@ SOFTWARE.
 #include "catch.hpp"
 
 #define private public
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 using nlohmann::json;
 
 void check_escaped(const char* original, const char* escaped = "", const bool ensure_ascii = false);

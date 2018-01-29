@@ -7,11 +7,11 @@
 #include <string> // string
 #include <utility> // move
 
-#include "detail/exceptions.hpp"
-#include "detail/macro_scope.hpp"
-#include "detail/input/input_adapters.hpp"
-#include "detail/input/lexer.hpp"
-#include "detail/value_t.hpp"
+#include <nlohmann/detail/exceptions.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/input/input_adapters.hpp>
+#include <nlohmann/detail/input/lexer.hpp>
+#include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
 {
