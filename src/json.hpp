@@ -2025,9 +2025,10 @@ class lexer
     @brief scan a string literal
 
     This function scans a string according to Sect. 7 of RFC 7159. While
-    scanning, bytes are escaped and copied into buffer yytext. Then the function
-    returns successfully, yytext is *not* null-terminated (as it may contain \0
-    bytes), and yytext.size() is the number of bytes in the string.
+    scanning, bytes are escaped and copied into buffer token_buffer. Then the
+    function returns successfully, token_buffer is *not* null-terminated (as it
+    may contain \0 bytes), and token_buffer.size() is the number of bytes in the
+    string.
 
     @return token_type::value_string if string could be successfully scanned,
             token_type::parse_error otherwise
@@ -2037,7 +2038,7 @@ class lexer
     */
     token_type scan_string()
     {
-        // reset yytext (ignore opening quote)
+        // reset token_buffer (ignore opening quote)
         reset();
 
         // we entered the function by reading an open quote
@@ -2509,7 +2510,7 @@ class lexer
     contains cycles, but any cycle can be left when EOF is read. Therefore,
     the function is guaranteed to terminate.
 
-    During scanning, the read bytes are stored in yytext. This string is
+    During scanning, the read bytes are stored in token_buffer. This string is
     then converted to a signed integer, an unsigned integer, or a
     floating-point number.
 
@@ -2523,7 +2524,7 @@ class lexer
     */
     token_type scan_number()
     {
-        // reset yytext to store the number's bytes
+        // reset token_buffer to store the number's bytes
         reset();
 
         // the type of the parsed number; initially set to unsigned; will be
@@ -2807,10 +2808,10 @@ scan_number_done:
         // try to parse integers first and fall back to floats
         if (number_type == token_type::value_unsigned)
         {
-            const auto x = std::strtoull(yytext.data(), &endptr, 10);
+            const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == yytext.data() + yytext.size());
+            assert(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -2823,10 +2824,10 @@ scan_number_done:
         }
         else if (number_type == token_type::value_integer)
         {
-            const auto x = std::strtoll(yytext.data(), &endptr, 10);
+            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == yytext.data() + yytext.size());
+            assert(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -2840,10 +2841,10 @@ scan_number_done:
 
         // this code is reached if we parse a floating-point number or if an
         // integer conversion above failed
-        strtof(value_float, yytext.data(), &endptr);
+        strtof(value_float, token_buffer.data(), &endptr);
 
         // we checked the number format before
-        assert(endptr == yytext.data() + yytext.size());
+        assert(endptr == token_buffer.data() + token_buffer.size());
 
         return token_type::value_float;
     }
@@ -2872,10 +2873,10 @@ scan_number_done:
     // input management
     /////////////////////
 
-    /// reset yytext; current character is beginning of token
+    /// reset token_buffer; current character is beginning of token
     void reset() noexcept
     {
-        yytext.clear();
+        token_buffer.clear();
         token_string.clear();
         token_string.push_back(std::char_traits<char>::to_char_type(current));
     }
@@ -2913,10 +2914,10 @@ scan_number_done:
         }
     }
 
-    /// add a character to yytext
+    /// add a character to token_buffer
     void add(int c)
     {
-        yytext.push_back(std::char_traits<char>::to_char_type(c));
+        token_buffer.push_back(std::char_traits<char>::to_char_type(c));
     }
 
   public:
@@ -2945,7 +2946,7 @@ scan_number_done:
     /// return current string value (implicitly resets the token; useful only once)
     std::string move_string()
     {
-        return std::move(yytext);
+        return std::move(token_buffer);
     }
 
     /////////////////////
@@ -3073,7 +3074,7 @@ scan_number_done:
     std::vector<char> token_string {};
 
     /// buffer for variable-length tokens (numbers, strings)
-    std::string yytext {};
+    std::string token_buffer {};
 
     /// a description of occurred lexer errors
     const char* error_message = "";
