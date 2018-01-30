@@ -1020,7 +1020,7 @@ TEST_CASE("value conversion")
                 SECTION("std::array is larger than JSON")
                 {
                     std::array<int, 6> arr6 = {{1, 2, 3, 4, 5, 6}};
-                    CHECK_THROWS_AS(arr6 = j1, json::out_of_range);
+                    CHECK_THROWS_AS(arr6 = j1, json::out_of_range&);
                     CHECK_THROWS_WITH(arr6 = j1, "[json.exception.out_of_range.401] array index 4 is out of range");
                 }
 

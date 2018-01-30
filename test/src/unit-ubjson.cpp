@@ -1186,7 +1186,7 @@ TEST_CASE("UBJSON")
         {
             // larger than max int64
             json j = 9223372036854775808llu;
-            CHECK_THROWS_AS(json::to_ubjson(j), json::out_of_range);
+            CHECK_THROWS_AS(json::to_ubjson(j), json::out_of_range&);
             CHECK_THROWS_WITH(json::to_ubjson(j), "[json.exception.out_of_range.407] number overflow serializing 9223372036854775808");
         }
     }
@@ -1340,14 +1340,14 @@ TEST_CASE("UBJSON")
             SECTION("eof after C byte")
             {
                 std::vector<uint8_t> v = {'C'};
-                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error);
+                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error&);
                 CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
             }
 
             SECTION("byte out of range")
             {
                 std::vector<uint8_t> v = {'C', 130};
-                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error);
+                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error&);
                 CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.113] parse error at 2: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82");
             }
         }
@@ -1357,14 +1357,14 @@ TEST_CASE("UBJSON")
             SECTION("eof after S byte")
             {
                 std::vector<uint8_t> v = {'S'};
-                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error);
+                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error&);
                 CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
             }
 
             SECTION("invalid byte")
             {
                 std::vector<uint8_t> v = {'S', '1', 'a'};
-                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error);
+                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error&);
                 CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.113] parse error at 2: expected a UBJSON string; last byte: 0x31");
             }
         }
@@ -1374,7 +1374,7 @@ TEST_CASE("UBJSON")
             SECTION("optimized array: no size following type")
             {
                 std::vector<uint8_t> v = {'[', '$', 'i', 2};
-                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error);
+                CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error&);
                 CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.112] parse error at 4: expected '#' after UBJSON type information; last byte: 0x02");
             }
         }
