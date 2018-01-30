@@ -109,7 +109,8 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 INPUT                  = ../src/json.hpp \
                          index.md \
-                         faq.md
+                         faq.md \
+                         binary_formats.md
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
 RECURSIVE              = NO

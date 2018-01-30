@@ -42,7 +42,7 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
     - @link nlohmann::basic_json::parse parse @endlink parse from string
     - @link nlohmann::basic_json::operator>>(std::istream&, basic_json&) operator>> @endlink parse from stream
     - @link nlohmann::basic_json::accept accept @endlink check for syntax errors without parsing
-  - binary formats:
+  - [binary formats](binary_formats.md):
     - CBOR: @link nlohmann::basic_json::from_cbor from_cbor @endlink / @link nlohmann::basic_json::to_cbor to_cbor @endlink
     - MessagePack: @link nlohmann::basic_json::from_msgpack from_msgpack @endlink / @link nlohmann::basic_json::to_msgpack to_msgpack @endlink
     - UBJSON: @link nlohmann::basic_json::from_ubjson from_ubjson @endlink / @link nlohmann::basic_json::to_ubjson to_ubjson @endlink
