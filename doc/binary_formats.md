@@ -157,16 +157,15 @@ The optimized formats for containers are supported: Parameter `use_size` adds si
 
 ## Size comparison examples
 
-The following table shows the size (in bytes) of different files in the `test/data` directory for the different formats.
+The following table shows the size compared to the original JSON value for different files from the repository for the different formats.
 
-| format                  | sample.json | floats.json | all_unicode.json |
-| ----------------------- | -----------:| -----------:| ----------------:|
-| JSON                    | 687491      | 22670390    | 13279259         |
-| CBOR                    | **147095**  | 9000005     | **5494662**      |
-| MsgPack                 | 148395      | 9000005     | **5494662**      |
-| UBJSON unoptimized      | 148695      | 9000002     | 7718787          |
-| UBJSON size-optimized   | 150569      | 9000007     | 7718792          |
-| UBJSON format-optimized | 150883      | **8000009** | 7718792          |
+| format                  | sample.json | all_unicode.json | floats.json | signed_ints.json | jeopardy.json | canada.json |
+| ----------------------- | -----------:| ----------------:| -----------:| ----------------:| -------------:| -----------:|
+| JSON                    |    100.00 % |         100.00 % |    100.00 % |         100.00 % |      100.00 % |    100.00 % |
+| CBOR                    |     87.21 % |          71.18 % |     48.20 % |          44.16 % |       87.96 % |     50.53 % |
+| MessagePack             |     87.16 % |          71.18 % |     48.20 % |          44.16 % |       87.91 % |     50.56 % |
+| UBJSON unoptimized      |     88.15 % |         100.00 % |     48.20 % |          44.16 % |       96.58 % |     53.20 % |
+| UBJSON size-optimized   |     89.26 % |         100.00 % |     48.20 % |          44.16 % |       97.40 % |     58.56 % |
+| UBJSON format-optimized |     89.45 % |         100.00 % |     42.85 % |          39.26 % |       94.96 % |     55.93 % |
 
 The results show that there does not exist a "best" encoding. Furthermore, it is not always worthwhile to use UBJSON's optimizations.
-
