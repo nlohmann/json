@@ -63,7 +63,7 @@ std::vector<uint8_t> v;
 json j3 = json::from_cbor(v);                         // 1
 
 const char* buff;
-ize_t buff_size;
+std::size_t buff_size;
 json j4 = json::from_cbor(buff, buff_size);           // 2
 ```
 
