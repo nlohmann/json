@@ -608,7 +608,7 @@ class iter_impl
     /// associated JSON instance
     pointer m_object = nullptr;
     /// the actual iterator of the associated instance
-    internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it = {};
+    internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it;
 };
 }
 }
