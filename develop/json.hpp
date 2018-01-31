@@ -29,6 +29,10 @@ SOFTWARE.
 #ifndef NLOHMANN_JSON_HPP
 #define NLOHMANN_JSON_HPP
 
+#define NLOHMANN_JSON_VERSION_MAJOR 3
+#define NLOHMANN_JSON_VERSION_MINOR 0
+#define NLOHMANN_JSON_VERSION_PATCH 1
+
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
 #include <ciso646> // and, not, or
@@ -308,10 +312,13 @@ class basic_json
         result["copyright"] = "(C) 2013-2017 Niels Lohmann";
         result["name"] = "JSON for Modern C++";
         result["url"] = "https://github.com/nlohmann/json";
-        result["version"] =
-        {
-            {"string", "3.0.1"}, {"major", 3}, {"minor", 0}, {"patch", 1}
-        };
+        result["version"]["string"] =
+            std::to_string(NLOHMANN_JSON_VERSION_MAJOR) + "." +
+            std::to_string(NLOHMANN_JSON_VERSION_MINOR) + "." +
+            std::to_string(NLOHMANN_JSON_VERSION_PATCH);
+        result["version"]["major"] = NLOHMANN_JSON_VERSION_MAJOR;
+        result["version"]["minor"] = NLOHMANN_JSON_VERSION_MINOR;
+        result["version"]["patch"] = NLOHMANN_JSON_VERSION_PATCH;
 
 #ifdef _WIN32
         result["platform"] = "win32";
