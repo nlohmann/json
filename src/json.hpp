@@ -17124,6 +17124,18 @@ inline nlohmann::json operator "" _json(const char* s, std::size_t n)
 }
 
 /*!
+@brief user-defined to_string function for JSON values
+
+This function implements a user-defined to_string  for JSON objects. 
+
+@param[in] j  a JSON object
+@return a std::string object
+*/
+inline std::string to_string(const nlohmann::json& j) {
+  return j.dump();
+}
+
+/*!
 @brief user-defined string literal for JSON pointer
 
 This operator implements a user-defined string literal for JSON Pointers. It
