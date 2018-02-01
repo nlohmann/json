@@ -26,11 +26,11 @@ Please stick to the [issue template](https://github.com/nlohmann/json/blob/devel
 
 ## Files to change
 
-:exclamation: Before you make any changes, note the single-header file [`src/json.hpp`](https://github.com/nlohmann/json/blob/develop/src/json.hpp) is **generated** from the source files in the [`develop` directory](https://github.com/nlohmann/json/tree/develop/develop). Please **do not** edit file `src/json.hpp` directly, but change the `develop` sources and regenerate file `src/json.hpp` by executing `make amalgamate`.
+:exclamation: Before you make any changes, note the single-header file [`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) is **generated** from the source files in the [`include/nlohmann` directory](https://github.com/nlohmann/json/tree/develop/include/nlohmann). Please **do not** edit file `single_include/nlohmann/json.hpp` directly, but change the `include/nlohmann` sources and regenerate file `single_include/nlohmann/json.hpp` by executing `make amalgamate`.
 
 To make changes, you need to edit the following files:
 
-1. [`develop/*`](https://github.com/nlohmann/json/tree/develop/develop) - These files are the sources of the library. Before testing or creating a pull request, execute `make amalgamate` to regenerate `src/json.hpp`.
+1. [`include/nlohmann/*`](https://github.com/nlohmann/json/tree/develop/include/nlohmann) - These files are the sources of the library. Before testing or creating a pull request, execute `make amalgamate` to regenerate `single_include/nlohmann/json.hpp`.
 
 2. [`test/src/unit-*.cpp`](https://github.com/nlohmann/json/tree/develop/test/src) - These files contain the [Catch](https://github.com/philsquared/Catch) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
 

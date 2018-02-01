@@ -1,4 +1,4 @@
-SRCDIR = ../src
+SRCDIR = ../single_include
 SED:=$(shell command -v gsed || which sed)
 
 all: doxygen
@@ -28,7 +28,7 @@ EXAMPLES = $(wildcard examples/*.cpp)
 %.link: %.cpp
 	rm -fr tmp
 	mkdir tmp
-	cp $(SRCDIR)/json.hpp tmp
+	cp -r $(SRCDIR)/nlohmann tmp
 	scripts/send_to_wandbox.py tmp $< > $@.tmp
 	/bin/echo -n "<a target=\"_blank\" href=\"`cat $@.tmp`\"><b>online</b></a>" > $@
 	rm -fr tmp $@.tmp

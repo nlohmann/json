@@ -1,11 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.0.1
+|  |  |__   |  |  | | | |  version 3.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2013-2017 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -316,8 +316,8 @@ TEST_CASE("object inspection")
     SECTION("round trips")
     {
         for (const auto& s :
-    {"3.141592653589793", "1000000000000000010E5"
-    })
+                {"3.141592653589793", "1000000000000000010E5"
+                })
         {
             json j1 = json::parse(s);
             std::string s1 = j1.dump();

@@ -296,6 +296,6 @@ script:
   - if [ `which brew` ]; then
     brew update ;
     brew tap nlohmann/json ;
-    brew install nlohmann_json --HEAD ;
-    brew test nlohmann_json ;
+    #brew install nlohmann_json --HEAD ;
+    #brew test nlohmann_json ;
     fi

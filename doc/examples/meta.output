@@ -10,8 +10,8 @@
     "url": "https://github.com/nlohmann/json",
     "version": {
         "major": 3,
-        "minor": 0,
-        "patch": 1,
-        "string": "3.0.1"
+        "minor": 1,
+        "patch": 0,
+        "string": "3.1.0"
     }
 }
