@@ -1,11 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.0.1
+|  |  |__   |  |  | | | |  version 3.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2013-2016 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include "catch.hpp"
 
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 
 using nlohmann::json;
 
@@ -691,4 +691,23 @@ TEST_CASE("custom serializer that does adl by default", "[udt]")
 
     CHECK(me == j.get<udt::person>());
     CHECK(me == cj.get<udt::person>());
+}
+
+namespace
+{
+struct incomplete;
+
+// std::is_constructible is broken on macOS' libc++
+// use the cppreference implementation
+
+template <typename T, typename = void>
+struct is_constructible_patched : std::false_type {};
+
+template <typename T>
+struct is_constructible_patched<T, decltype(void(json(std::declval<T>())))> : std::true_type {};
+}
+
+TEST_CASE("an incomplete type does not trigger a compiler error in non-evaluated context", "[udt]")
+{
+    static_assert(not is_constructible_patched<json, incomplete>::value, "");
 }

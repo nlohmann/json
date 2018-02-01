@@ -1,11 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.0.1
+|  |  |__   |  |  | | | |  version 3.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2013-2017 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ SOFTWARE.
 #include "catch.hpp"
 
 #define private public
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 using nlohmann::json;
 
 void check_escaped(const char* original, const char* escaped = "", const bool ensure_ascii = false);
@@ -99,11 +99,11 @@ TEST_CASE("convenience functions")
         check_escaped("\x1f", "\\u001f");
 
         // invalid UTF-8 characters
-        CHECK_THROWS_AS(check_escaped("ä\xA9ü"), json::type_error);
+        CHECK_THROWS_AS(check_escaped("ä\xA9ü"), json::type_error&);
         CHECK_THROWS_WITH(check_escaped("ä\xA9ü"),
                           "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9");
 
-        CHECK_THROWS_AS(check_escaped("\xC2"), json::type_error);
+        CHECK_THROWS_AS(check_escaped("\xC2"), json::type_error&);
         CHECK_THROWS_WITH(check_escaped("\xC2"),
                           "[json.exception.type_error.316] incomplete UTF-8 string; last byte: 0xC2");
     }

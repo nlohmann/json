@@ -8,7 +8,7 @@ To make it as easy as possible for you to contribute and for me to keep an overv
 
 ## Private reports
 
-Usually, all issues are tracked publicly on [Github](https://github.com/nlohmann/json/issues). If you want to make a private report (e.g., for a vulnerability or to attach an example that is not meant to be publisheed), please send an email to <mail@nlohmann.me>.
+Usually, all issues are tracked publicly on [GitHub](https://github.com/nlohmann/json/issues). If you want to make a private report (e.g., for a vulnerability or to attach an example that is not meant to be published), please send an email to <mail@nlohmann.me>.
 
 ## Prerequisites
 
@@ -26,9 +26,11 @@ Please stick to the [issue template](https://github.com/nlohmann/json/blob/devel
 
 ## Files to change
 
-There are currently two files which need to be edited:
+:exclamation: Before you make any changes, note the single-header file [`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) is **generated** from the source files in the [`include/nlohmann` directory](https://github.com/nlohmann/json/tree/develop/include/nlohmann). Please **do not** edit file `single_include/nlohmann/json.hpp` directly, but change the `include/nlohmann` sources and regenerate file `single_include/nlohmann/json.hpp` by executing `make amalgamate`.
 
-1. [`src/json.hpp`](https://github.com/nlohmann/json/blob/master/src/json.hpp)
+To make changes, you need to edit the following files:
+
+1. [`include/nlohmann/*`](https://github.com/nlohmann/json/tree/develop/include/nlohmann) - These files are the sources of the library. Before testing or creating a pull request, execute `make amalgamate` to regenerate `single_include/nlohmann/json.hpp`.
 
 2. [`test/src/unit-*.cpp`](https://github.com/nlohmann/json/tree/develop/test/src) - These files contain the [Catch](https://github.com/philsquared/Catch) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
 

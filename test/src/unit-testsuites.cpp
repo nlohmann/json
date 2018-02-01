@@ -1,11 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.0.1
+|  |  |__   |  |  | | | |  version 3.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2013-2017 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include "catch.hpp"
 
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 using nlohmann::json;
 
 #include <fstream>
@@ -307,15 +307,15 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     "test/data/json_roundtrip/roundtrip21.json",
                     "test/data/json_roundtrip/roundtrip22.json",
                     "test/data/json_roundtrip/roundtrip23.json",
-                    //"test/data/json_roundtrip/roundtrip24.json", // roundtrip error
-                    //"test/data/json_roundtrip/roundtrip25.json", // roundtrip error
-                    //"test/data/json_roundtrip/roundtrip26.json", // roundtrip error
-                    //"test/data/json_roundtrip/roundtrip27.json", // roundtrip error
-                    //"test/data/json_roundtrip/roundtrip28.json", // roundtrip error
+                    "test/data/json_roundtrip/roundtrip24.json",
+                    "test/data/json_roundtrip/roundtrip25.json",
+                    "test/data/json_roundtrip/roundtrip26.json",
+                    "test/data/json_roundtrip/roundtrip27.json",
+                    //"test/data/json_roundtrip/roundtrip28.json", // incompatible with roundtrip24
                     "test/data/json_roundtrip/roundtrip29.json",
-                    //"test/data/json_roundtrip/roundtrip30.json", // roundtrip error
-                    //"test/data/json_roundtrip/roundtrip31.json", // roundtrip error
-                    "test/data/json_roundtrip/roundtrip32.json"
+                    "test/data/json_roundtrip/roundtrip30.json",
+                    "test/data/json_roundtrip/roundtrip31.json"
+                    //"test/data/json_roundtrip/roundtrip32.json" // same as roundtrip31
                 })
         {
             CAPTURE(filename);

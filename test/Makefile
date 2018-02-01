@@ -4,7 +4,7 @@
 
 # additional flags
 CXXFLAGS += -std=c++11 -Wall -Wextra -pedantic -Wcast-align -Wcast-qual -Wno-ctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overflow=5 -Wswitch -Wundef -Wno-unused -Wnon-virtual-dtor -Wreorder -Wdeprecated -Wno-float-equal
-CPPFLAGS += -I ../src -I . -I thirdparty/catch -DCATCH_CONFIG_FAST_COMPILE
+CPPFLAGS += -I ../single_include -I . -I thirdparty/catch -DCATCH_CONFIG_FAST_COMPILE
 
 SOURCES = src/unit.cpp \
           src/unit-algorithms.cpp \
@@ -25,9 +25,10 @@ SOURCES = src/unit.cpp \
           src/unit-element_access1.cpp \
           src/unit-element_access2.cpp \
           src/unit-inspection.cpp \
-          src/unit-iterator_wrapper.cpp \
+          src/unit-items.cpp \
           src/unit-iterators1.cpp \
           src/unit-iterators2.cpp \
+          src/unit-merge_patch.cpp \
           src/unit-json_patch.cpp \
           src/unit-json_pointer.cpp \
           src/unit-meta.cpp \
@@ -39,6 +40,7 @@ SOURCES = src/unit.cpp \
           src/unit-regression.cpp \
           src/unit-serialization.cpp \
           src/unit-testsuites.cpp \
+          src/unit-ubjson.cpp \
           src/unit-unicode.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -52,17 +54,17 @@ TESTCASES = $(patsubst src/unit-%.cpp,test-%,$(wildcard src/unit-*.cpp))
 all: $(TESTCASES)
 
 clean:
-	rm -fr json_unit $(OBJECTS) $(SOURCES:.cpp=.gcno) $(SOURCES:.cpp=.gcda) $(TESTCASES) parse_afl_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer
+	rm -fr json_unit $(OBJECTS) $(SOURCES:.cpp=.gcno) $(SOURCES:.cpp=.gcda) $(TESTCASES) $(FUZZERS)
 
 ##############################################################################
 # single test file
 ##############################################################################
 
-json_unit: $(OBJECTS) ../src/json.hpp thirdparty/catch/catch.hpp
+json_unit: $(OBJECTS) ../single_include/nlohmann/json.hpp thirdparty/catch/catch.hpp
 	@echo "[CXXLD] $@"
 	@$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) -o $@
 
-%.o: %.cpp ../src/json.hpp thirdparty/catch/catch.hpp
+%.o: %.cpp ../single_include/nlohmann/json.hpp thirdparty/catch/catch.hpp
 	@echo "[CXX]   $@"
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
@@ -71,13 +73,13 @@ json_unit: $(OBJECTS) ../src/json.hpp thirdparty/catch/catch.hpp
 # individual test cases
 ##############################################################################
 
-test-%: src/unit-%.o src/unit.o ../src/json.hpp thirdparty/catch/catch.hpp
+test-%: src/unit-%.o src/unit.o ../single_include/nlohmann/json.hpp thirdparty/catch/catch.hpp
 	@echo "[CXXLD] $@"
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $< src/unit.o -o $@
 
 TEST_PATTERN ?= "*"
 TEST_PREFIX = ""
-check: $(TESTCASES)
+check: $(OBJECTS) $(TESTCASES)
 	@cd .. ; for testcase in $(TESTCASES); do echo "Executing $$testcase..."; $(TEST_PREFIX)test/$$testcase $(TEST_PATTERN) || exit 1; done
 
 
@@ -86,7 +88,8 @@ check: $(TESTCASES)
 ##############################################################################
 
 FUZZER_ENGINE = src/fuzzer-driver_afl.cpp
-fuzzers: parse_afl_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer
+FUZZERS = parse_afl_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer parse_ubjson_fuzzer
+fuzzers: $(FUZZERS)
 
 parse_afl_fuzzer:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_json.cpp -o $@
@@ -96,3 +99,6 @@ parse_cbor_fuzzer:
 
 parse_msgpack_fuzzer:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_msgpack.cpp -o $@
+
+parse_ubjson_fuzzer:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_ubjson.cpp -o $@

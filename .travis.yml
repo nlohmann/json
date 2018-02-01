@@ -74,6 +74,20 @@ matrix:
         sources: ['ubuntu-toolchain-r-test']
         packages: ['g++-4.9', 'ninja-build']
 
+  # check amalgamation
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-4.9
+      - SPECIAL=amalgamation
+      - CMAKE_OPTIONS=-DJSON_MultipleHeader=ON
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-4.9', 'astyle', 'ninja-build']
+    after_success:
+      - make check-amalgamation
+
   # Coveralls (http://gronlier.fr/blog/2015/01/adding-code-coverage-to-your-c-project/)
 
   - os: linux
@@ -277,11 +291,3 @@ script:
   - cmake .. ${CMAKE_OPTIONS} -GNinja && cmake --build . --config Release
   - ctest -C Release -V -j
   - cd ..
-
-  # check if homebrew works (only checks develop branch)
-  - if [ `which brew` ]; then
-    brew update ;
-    brew tap nlohmann/json ;
-    brew install nlohmann_json --HEAD ;
-    brew test nlohmann_json ;
-    fi

@@ -1,11 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.0.1
+|  |  |__   |  |  | | | |  version 3.1.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2013-2017 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ SOFTWARE.
 #include "catch.hpp"
 
 #define private public
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 using nlohmann::json;
 
 #include <deque>
@@ -1020,7 +1020,7 @@ TEST_CASE("value conversion")
                 SECTION("std::array is larger than JSON")
                 {
                     std::array<int, 6> arr6 = {{1, 2, 3, 4, 5, 6}};
-                    CHECK_THROWS_AS(arr6 = j1, json::out_of_range);
+                    CHECK_THROWS_AS(arr6 = j1, json::out_of_range&);
                     CHECK_THROWS_WITH(arr6 = j1, "[json.exception.out_of_range.401] array index 4 is out of range");
                 }
 

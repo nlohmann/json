@@ -1,0 +1,8 @@
+{
+	"project": "JSON for Modern C++",
+	"target": "single_include/nlohmann/json.hpp",
+	"sources": [
+		"include/nlohmann/json.hpp"
+	],
+	"include_paths": ["include"]
+}

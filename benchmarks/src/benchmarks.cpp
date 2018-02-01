@@ -1,132 +1,106 @@
-#define BENCHPRESS_CONFIG_MAIN
-
+#include "benchmark/benchmark.h"
+#include <nlohmann/json.hpp>
 #include <fstream>
-#include <sstream>
-#include <benchpress.hpp>
-#include <json.hpp>
-#include <pthread.h>
-#include <thread>
 
 using json = nlohmann::json;
 
-struct StartUp
+//////////////////////////////////////////////////////////////////////////////
+// parse JSON from file
+//////////////////////////////////////////////////////////////////////////////
+
+static void ParseFile(benchmark::State& state, const char* filename)
 {
-    StartUp()
+    while (state.KeepRunning())
     {
-#ifndef __llvm__
-        // pin thread to a single CPU
-        cpu_set_t cpuset;
-        pthread_t thread;
-        thread = pthread_self();
-        CPU_ZERO(&cpuset);
-        CPU_SET(std::thread::hardware_concurrency() - 1, &cpuset);
-        pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
-#endif
+        state.PauseTiming();
+        auto* f = new std::ifstream(filename);
+        auto* j = new json();
+        state.ResumeTiming();
+
+        *j = json::parse(*f);
+
+        state.PauseTiming();
+        delete f;
+        delete j;
+        state.ResumeTiming();
     }
-};
-StartUp startup;
 
-enum class EMode { input, output_no_indent, output_with_indent };
-
-static void bench(benchpress::context& ctx,
-                  const std::string& in_path,
-                  const EMode mode)
-{
-    // using string streams for benchmarking to factor-out cold-cache disk
-    // access.
-#if defined( FROMFILE )
-    std::ifstream istr;
-    {
-        istr.open( in_path, std::ifstream::in );
-
-        // read the stream once
-        json j;
-        istr >> j;
-        // clear flags and rewind
-        istr.clear();
-        istr.seekg(0);
-    }
-#else
-    std::stringstream istr;
-    {
-        // read file into string stream
-        std::ifstream input_file(in_path);
-        istr << input_file.rdbuf();
-        input_file.close();
-
-        // read the stream once
-        json j;
-        istr >> j;
-        // clear flags and rewind
-        istr.clear();
-        istr.seekg(0);
-    }
-#endif
-
-    switch (mode)
-    {
-        // benchmarking input
-        case EMode::input:
-        {
-            ctx.reset_timer();
-
-            for (size_t i = 0; i < ctx.num_iterations(); ++i)
-            {
-                // clear flags and rewind
-                istr.clear();
-                istr.seekg(0);
-                json j;
-                istr >> j;
-            }
-
-            break;
-        }
-
-        // benchmarking output
-        case EMode::output_no_indent:
-        case EMode::output_with_indent:
-        {
-            // create JSON value from input
-            json j;
-            istr >> j;
-            std::stringstream ostr;
-
-            ctx.reset_timer();
-            for (size_t i = 0; i < ctx.num_iterations(); ++i)
-            {
-                if (mode == EMode::output_no_indent)
-                {
-                    ostr << j;
-                }
-                else
-                {
-                    ostr << std::setw(4) << j;
-                }
-
-                // reset data
-                ostr.str(std::string());
-            }
-
-            break;
-        }
-    }
+    std::ifstream file(filename, std::ios::binary | std::ios::ate);
+    state.SetBytesProcessed(state.iterations() * file.tellg());
 }
+BENCHMARK_CAPTURE(ParseFile, jeopardy,      "data/jeopardy/jeopardy.json");
+BENCHMARK_CAPTURE(ParseFile, canada,        "data/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(ParseFile, citm_catalog,  "data/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(ParseFile, twitter,       "data/nativejson-benchmark/twitter.json");
+BENCHMARK_CAPTURE(ParseFile, floats,        "data/numbers/floats.json");
+BENCHMARK_CAPTURE(ParseFile, signed_ints,   "data/numbers/signed_ints.json");
+BENCHMARK_CAPTURE(ParseFile, unsigned_ints, "data/numbers/unsigned_ints.json");
 
-#define BENCHMARK_I(mode, title, in_path)           \
-    BENCHMARK((title), [](benchpress::context* ctx) \
-    {                                               \
-        bench(*ctx, (in_path), (mode));             \
-    })
 
-BENCHMARK_I(EMode::input, "parse jeopardy.json",              "files/jeopardy/jeopardy.json");
-BENCHMARK_I(EMode::input, "parse canada.json",                "files/nativejson-benchmark/canada.json");
-BENCHMARK_I(EMode::input, "parse citm_catalog.json",          "files/nativejson-benchmark/citm_catalog.json");
-BENCHMARK_I(EMode::input, "parse twitter.json",               "files/nativejson-benchmark/twitter.json");
-BENCHMARK_I(EMode::input, "parse numbers/floats.json",        "files/numbers/floats.json");
-BENCHMARK_I(EMode::input, "parse numbers/signed_ints.json",   "files/numbers/signed_ints.json");
-BENCHMARK_I(EMode::input, "parse numbers/unsigned_ints.json", "files/numbers/unsigned_ints.json");
+//////////////////////////////////////////////////////////////////////////////
+// parse JSON from string
+//////////////////////////////////////////////////////////////////////////////
 
-BENCHMARK_I(EMode::output_no_indent,   "dump jeopardy.json",             "files/jeopardy/jeopardy.json");
-BENCHMARK_I(EMode::output_with_indent, "dump jeopardy.json with indent", "files/jeopardy/jeopardy.json");
-BENCHMARK_I(EMode::output_no_indent,   "dump numbers/floats.json",       "files/numbers/floats.json");
-BENCHMARK_I(EMode::output_no_indent,   "dump numbers/signed_ints.json",  "files/numbers/signed_ints.json");
+static void ParseString(benchmark::State& state, const char* filename)
+{
+    std::ifstream f(filename);
+    std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+
+    while (state.KeepRunning())
+    {
+        state.PauseTiming();
+        auto* j = new json();
+        state.ResumeTiming();
+
+        *j = json::parse(str);
+
+        state.PauseTiming();
+        delete j;
+        state.ResumeTiming();
+    }
+
+    state.SetBytesProcessed(state.iterations() * str.size());
+}
+BENCHMARK_CAPTURE(ParseString, jeopardy,      "data/jeopardy/jeopardy.json");
+BENCHMARK_CAPTURE(ParseString, canada,        "data/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(ParseString, citm_catalog,  "data/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(ParseString, twitter,       "data/nativejson-benchmark/twitter.json");
+BENCHMARK_CAPTURE(ParseString, floats,        "data/numbers/floats.json");
+BENCHMARK_CAPTURE(ParseString, signed_ints,   "data/numbers/signed_ints.json");
+BENCHMARK_CAPTURE(ParseString, unsigned_ints, "data/numbers/unsigned_ints.json");
+
+
+//////////////////////////////////////////////////////////////////////////////
+// serialize JSON
+//////////////////////////////////////////////////////////////////////////////
+
+static void Dump(benchmark::State& state, const char* filename, int indent)
+{
+    std::ifstream f(filename);
+    std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    json j = json::parse(str);
+
+    while (state.KeepRunning())
+    {
+        j.dump(indent);
+    }
+
+    state.SetBytesProcessed(state.iterations() * j.dump(indent).size());
+}
+BENCHMARK_CAPTURE(Dump, jeopardy / -,      "data/jeopardy/jeopardy.json",                 -1);
+BENCHMARK_CAPTURE(Dump, jeopardy / 4,      "data/jeopardy/jeopardy.json",                 4);
+BENCHMARK_CAPTURE(Dump, canada / -,        "data/nativejson-benchmark/canada.json",       -1);
+BENCHMARK_CAPTURE(Dump, canada / 4,        "data/nativejson-benchmark/canada.json",       4);
+BENCHMARK_CAPTURE(Dump, citm_catalog / -,  "data/nativejson-benchmark/citm_catalog.json", -1);
+BENCHMARK_CAPTURE(Dump, citm_catalog / 4,  "data/nativejson-benchmark/citm_catalog.json", 4);
+BENCHMARK_CAPTURE(Dump, twitter / -,       "data/nativejson-benchmark/twitter.json",      -1);
+BENCHMARK_CAPTURE(Dump, twitter / 4,       "data/nativejson-benchmark/twitter.json",      4);
+BENCHMARK_CAPTURE(Dump, floats / -,        "data/numbers/floats.json",                    -1);
+BENCHMARK_CAPTURE(Dump, floats / 4,        "data/numbers/floats.json",                    4);
+BENCHMARK_CAPTURE(Dump, signed_ints / -,   "data/numbers/signed_ints.json",               -1);
+BENCHMARK_CAPTURE(Dump, signed_ints / 4,   "data/numbers/signed_ints.json",               4);
+BENCHMARK_CAPTURE(Dump, unsigned_ints / -, "data/numbers/unsigned_ints.json",             -1);
+BENCHMARK_CAPTURE(Dump, unsigned_ints / 4, "data/numbers/unsigned_ints.json",             4);
+
+
+BENCHMARK_MAIN();

@@ -5,11 +5,11 @@
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f3732b3327e34358a0e9d1fe9f661f08)](https://www.codacy.com/app/nlohmann/json?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/Op57X0V7fTf2tdwl)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/VHpbaZBOnrZcbn7j)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
-[![Github Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
-[![Github Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
+[![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
+[![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/nlohmann/json.svg)](http://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
 
@@ -21,9 +21,10 @@
   - [STL-like access](#stl-like-access)
   - [Conversion from STL containers](#conversion-from-stl-containers)
   - [JSON Pointer and JSON Patch](#json-pointer-and-json-patch)
+  - [JSON Merge Patch](#json-merge-patch)
   - [Implicit conversions](#implicit-conversions)
   - [Conversions to/from arbitrary types](#arbitrary-types-conversions)
-  - [Binary formats (CBOR and MessagePack)](#binary-formats-cbor-and-messagepack)
+  - [Binary formats (CBOR, MessagePack, and UBJSON)](#binary-formats-cbor-messagepack-and-ubjson)
 - [Supported compilers](#supported-compilers)
 - [License](#license)
 - [Contact](#contact)
@@ -39,7 +40,7 @@ There are myriads of [JSON](http://json.org) libraries out there, and each may e
 
 - **Intuitive syntax**. In languages such as Python, JSON feels like a first class data type. We used all the operator magic of modern C++ to achieve the same feeling in your code. Check out the [examples below](#examples) and you'll know what I mean.
 
-- **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/src/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+- **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
 - **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/blob/master/test/src/unit.cpp) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) that there are no memory leaks. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
 
@@ -54,7 +55,7 @@ See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.
 
 ## Integration
 
-The single required source, file `json.hpp` is in the `src` directory or [released here](https://github.com/nlohmann/json/releases). All you need to do is add
+The single required source, file `json.hpp` is in the `single_include/nlohmann` directory or [released here](https://github.com/nlohmann/json/releases). All you need to do is add
 
 ```cpp
 #include "json.hpp"
@@ -65,20 +66,26 @@ using json = nlohmann::json;
 
 to the files you want to use JSON objects. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 
+You can further use file [`include/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/develop/json_fwd.hpp) for forward-declarations. The installation of json_fwd.hpp (as part of cmake's install step), can be achieved by setting `-DJSON_MultipleHeaders=ON`:
+
+### Package Managers
+
 :beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann_json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann_json --HEAD`.
 
-If you are using the [Meson Build System](http://mesonbuild.com), then you can wrap this repo as a subproject.
+If you are using the [Meson Build System](http://mesonbuild.com), then you can wrap this repository as a subproject.
 
 If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `jsonformoderncpp/x.y.z@vthiery/stable` to your `conanfile.py`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/vthiery/conan-jsonformoderncpp/issues) if you experience problems with the packages.
 
 If you are using [hunter](https://github.com/ruslo/hunter/) on your project for external dependencies, then you can use the [nlohmann_json package](https://docs.hunter.sh/en/latest/packages/pkg/nlohmann_json.html). Please see the hunter project for any issues regarding the packaging.
+
+If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo install nlohmann/json`. Please file issues [here](https://github.com/LoopPerfect/buckaroo-recipes/issues/new?title=nlohmann/nlohmann/json).
 
 If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
 
 
 ## Examples
 
-Beside the examples below, you may want to check the [documentation](https://nlohmann.github.io/json/) where each function contains a separate code example (e.g., check out [`emplace()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a602f275f0359ab181221384989810604.html#a602f275f0359ab181221384989810604)). All [example files](https://github.com/nlohmann/json/tree/develop/doc/examples) can be compiled and executed on their own (e.g., file [emplace.cpp](https://github.com/nlohmann/json/blob/develop/doc/examples/emplace.cpp)).
+Beside the examples below, you may want to check the [documentation](https://nlohmann.github.io/json/) where each function contains a separate code example (e.g., check out [`emplace()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a5338e282d1d02bed389d852dd670d98d.html#a5338e282d1d02bed389d852dd670d98d)). All [example files](https://github.com/nlohmann/json/tree/develop/doc/examples) can be compiled and executed on their own (e.g., file [emplace.cpp](https://github.com/nlohmann/json/blob/develop/doc/examples/emplace.cpp)).
 
 ### JSON as first-class data type
 
@@ -450,6 +457,37 @@ json::diff(j_result, j_original);
 // ]
 ```
 
+### JSON Merge Patch
+
+The library supports **JSON Merge Patch** ([RFC 7386](https://tools.ietf.org/html/rfc7386)) as a patch format. Instead of using JSON Pointer (see above) to specify values to be manipulated, it describes the changes using a syntax that closely mimics the document being modified.
+
+```cpp
+// a JSON value
+json j_document = R"({
+  "a": "b",
+  "c": {
+    "d": "e",
+    "f": "g"
+  }
+})"_json;
+
+// a patch
+json j_patch = R"({
+  "a":"z",
+  "c": {
+    "f": null
+  }
+})"_json;
+
+// apply the patch
+j_original.merge_patch(j_patch);
+// {
+//  "a": "z",
+//  "c": {
+//    "d": "e"
+//  }
+// }
+```
 
 ### Implicit conversions
 
@@ -709,9 +747,9 @@ struct bad_serializer
 };
 ```
 
-### Binary formats (CBOR and MessagePack)
+### Binary formats (CBOR, MessagePack, and UBJSON)
 
-Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [CBOR](http://cbor.io) (Concise Binary Object Representation) and [MessagePack](http://msgpack.org) to efficiently encode JSON values to byte vectors and to decode such vectors.
+Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [CBOR](http://cbor.io) (Concise Binary Object Representation), [MessagePack](http://msgpack.org), and [UBJSON](http://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
 
 ```cpp
 // create a JSON value
@@ -720,7 +758,7 @@ json j = R"({"compact": true, "schema": 0})"_json;
 // serialize to CBOR
 std::vector<std::uint8_t> v_cbor = json::to_cbor(j);
 
-// 0xa2, 0x67, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74, 0xf5, 0x66, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x00
+// 0xA2, 0x67, 0x63, 0x6F, 0x6D, 0x70, 0x61, 0x63, 0x74, 0xF5, 0x66, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x00
 
 // roundtrip
 json j_from_cbor = json::from_cbor(v_cbor);
@@ -728,16 +766,24 @@ json j_from_cbor = json::from_cbor(v_cbor);
 // serialize to MessagePack
 std::vector<std::uint8_t> v_msgpack = json::to_msgpack(j);
 
-// 0x82, 0xa7, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74, 0xc3, 0xa6, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x00
+// 0x82, 0xA7, 0x63, 0x6F, 0x6D, 0x70, 0x61, 0x63, 0x74, 0xC3, 0xA6, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x00
 
 // roundtrip
 json j_from_msgpack = json::from_msgpack(v_msgpack);
+
+// serialize to UBJSON
+std::vector<std::uint8_t> v_ubjson = json::to_ubjson(j);
+
+// 0x7B, 0x69, 0x07, 0x63, 0x6F, 0x6D, 0x70, 0x61, 0x63, 0x74, 0x54, 0x69, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x69, 0x00, 0x7D
+
+// roundtrip
+json j_from_ubjson = json::from_ubjson(v_ubjson);
 ```
 
 
 ## Supported compilers
 
-Though it's 2017 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2018 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
 - GCC 4.9 - 7.2 (and possibly later)
 - Clang 3.4 - 5.0 (and possibly later)
@@ -795,7 +841,7 @@ The following compilers are currently used in continuous integration at [Travis]
 
 The class is licensed under the [MIT License](http://opensource.org/licenses/MIT):
 
-Copyright &copy; 2013-2017 [Niels Lohmann](http://nlohmann.me)
+Copyright &copy; 2013-2018 [Niels Lohmann](http://nlohmann.me)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -807,9 +853,11 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](http://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
 
+The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](http://florian.loitsch.com/)
+
 ## Contact
 
-If you have questions regarding the library, I would like to invite you to [open an issue at Github](https://github.com/nlohmann/json/issues/new). Please describe your request, problem, or question as detailed as possible, and also mention the version of the library you are using as well as the version of your compiler and operating system. Opening an issue at Github allows other users and contributors to this library to collaborate. For instance, I have little experience with MSVC, and most issues in this regard have been solved by a growing community. If you have a look at the [closed issues](https://github.com/nlohmann/json/issues?q=is%3Aissue+is%3Aclosed), you will see that we react quite timely in most cases.
+If you have questions regarding the library, I would like to invite you to [open an issue at GitHub](https://github.com/nlohmann/json/issues/new). Please describe your request, problem, or question as detailed as possible, and also mention the version of the library you are using as well as the version of your compiler and operating system. Opening an issue at GitHub allows other users and contributors to this library to collaborate. For instance, I have little experience with MSVC, and most issues in this regard have been solved by a growing community. If you have a look at the [closed issues](https://github.com/nlohmann/json/issues?q=is%3Aissue+is%3Aclosed), you will see that we react quite timely in most cases.
 
 Only if your request would contain confidential information, please [send me an email](mailto:mail@nlohmann.me). For encrypted messages, please use [this key](https://keybase.io/nlohmann/pgp_keys.asc).
 
@@ -847,7 +895,7 @@ I deeply appreciate the help of the following people.
 - [Corbin Hughes](https://github.com/nibroc) fixed some typos in the contribution guidelines.
 - [twelsby](https://github.com/twelsby) fixed the array subscript operator, an issue that failed the MSVC build, and floating-point parsing/dumping. He further added support for unsigned integer numbers and implemented better roundtrip support for parsed numbers.
 - [Volker Diels-Grabsch](https://github.com/vog) fixed a link in the README file.
-- [msm-](https://github.com/msm-) added support for american fuzzy lop. 
+- [msm-](https://github.com/msm-) added support for American Fuzzy Lop. 
 - [Annihil](https://github.com/Annihil) fixed an example in the README file.
 - [Themercee](https://github.com/Themercee) noted a wrong URL in the README file.
 - [Lv Zheng](https://github.com/lv-zheng) fixed a namespace issue with `int64_t` and `uint64_t`.
@@ -860,7 +908,7 @@ I deeply appreciate the help of the following people.
 - [duncanwerner](https://github.com/duncanwerner) found a really embarrassing performance regression in the 2.0.0 release.
 - [Damien](https://github.com/dtoma) fixed one of the last conversion warnings.
 - [Thomas Braun](https://github.com/t-b) fixed a warning in a test case.
-- [Théo DELRIEU](https://github.com/theodelrieu) patiently and constructively oversaw the long way toward [iterator-range parsing](https://github.com/nlohmann/json/issues/290). He also implemented the magic behind the serialization/deserialization of user-defined types.
+- [Théo DELRIEU](https://github.com/theodelrieu) patiently and constructively oversaw the long way toward [iterator-range parsing](https://github.com/nlohmann/json/issues/290). He also implemented the magic behind the serialization/deserialization of user-defined types and split the single header file into smaller chunks.
 - [Stefan](https://github.com/5tefan) fixed a minor issue in the documentation.
 - [Vasil Dimov](https://github.com/vasild) fixed the documentation regarding conversions from `std::multiset`.
 - [ChristophJud](https://github.com/ChristophJud) overworked the CMake files to ease project inclusion.
@@ -893,7 +941,7 @@ I deeply appreciate the help of the following people.
 - [Vincent Thiery](https://github.com/vthiery) maintains a package for the Conan package manager.
 - [Steffen](https://github.com/koemeet) fixed a potential issue with MSVC and `std::min`.
 - [Mike Tzou](https://github.com/Chocobo1) fixed some typos.
-- [amrcode](https://github.com/amrcode) noted a missleading documentation about comparison of floats.
+- [amrcode](https://github.com/amrcode) noted a misleading documentation about comparison of floats.
 - [Oleg Endo](https://github.com/olegendo) reduced the memory consumption by replacing `<iostream>` with `<iosfwd>`.
 - [dan-42](https://github.com/dan-42) cleaned up the CMake files to simplify including/reusing of the library.
 - [Nikita Ofitserov](https://github.com/himikof) allowed for moving values from initializer lists.
@@ -910,13 +958,17 @@ I deeply appreciate the help of the following people.
 - [Nate Vargas](https://github.com/eld00d) added a Doxygen tag file.
 - [pvleuven](https://github.com/pvleuven) helped fixing a warning in ICC.
 - [Pavel](https://github.com/crea7or) helped fixing some warnings in MSVC.
-- [Jamie Seward](https://github.com/jseward) avoided unneccessary string copies in `find()` and `count()`.
+- [Jamie Seward](https://github.com/jseward) avoided unnecessary string copies in `find()` and `count()`.
 - [Mitja](https://github.com/Itja) fixed some typos.
 - [Jorrit Wronski](https://github.com/jowr) updated the Hunter package links.
 - [Matthias Möller](https://github.com/TinyTinni) added a `.natvis` for the MSVC debug view.
 - [bogemic](https://github.com/bogemic) fixed some C++17 deprecation warnings.
 - [Eren Okka](https://github.com/erengy) fixed some MSVC warnings.
-
+- [abolz](https://github.com/abolz) integrated the Grisu2 algorithm for proper floating-point formatting, allowing more roundtrip checks to succeed.
+- [Vadim Evard](https://github.com/Pipeliner) fixed a Markdown issue in the README.
+- [zerodefect](https://github.com/zerodefect) fixed a compiler warning.
+- [Kert](https://github.com/kaidokert) allowed to template the string type in the serialization and added the possibility to override the exceptional behavior.
+- [mark-99](https://github.com/mark-99) helped fixing an ICC error.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -925,10 +977,10 @@ Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I
 
 The library itself contains of a single header file licensed under the MIT license. However, it is built, tested, documented, and whatnot using a lot of third-party tools and services. Thanks a lot!
 
+- [**amalgamate.py - Amalgamate C source and header files**](https://github.com/edlund/amalgamate) to create a single header file
 - [**American fuzzy lop**](http://lcamtuf.coredump.cx/afl/) for fuzz testing
 - [**AppVeyor**](https://www.appveyor.com) for [continuous integration](https://ci.appveyor.com/project/nlohmann/json) on Windows
 - [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code identation
-- [**benchpress**](https://github.com/sbs-ableton/benchpress) to benchmark the code
 - [**Catch**](https://github.com/philsquared/Catch) for the unit tests
 - [**Clang**](http://clang.llvm.org) for compilation with code sanitizers
 - [**Cmake**](https://cmake.org) for build automation
@@ -936,17 +988,17 @@ The library itself contains of a single header file licensed under the MIT licen
 - [**Coveralls**](https://coveralls.io) to measure [code coverage](https://coveralls.io/github/nlohmann/json)
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
 - [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
-- [**cxxopts**](https://github.com/jarro2783/cxxopts) to let benchpress parse command-line parameters
 - [**Doxygen**](http://www.stack.nl/~dimitri/doxygen/) to generate [documentation](https://nlohmann.github.io/json/)
 - [**git-update-ghpages**](https://github.com/rstacruz/git-update-ghpages) to upload the documentation to gh-pages
-- [**Github Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
+- [**GitHub Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
+- [**Google Benchmark**](https://github.com/google/benchmark) to implement the benchmarks
 - [**libFuzzer**](http://llvm.org/docs/LibFuzzer.html) to implement fuzz testing for OSS-Fuzz
-- [**OSS-Fuzz**](https://github.com/google/oss-fuzz) for continuous fuzz testing of the library
+- [**OSS-Fuzz**](https://github.com/google/oss-fuzz) for continuous fuzz testing of the library ([project repository](https://github.com/google/oss-fuzz/tree/master/projects/json))
 - [**Probot**](https://probot.github.io) for automating maintainer tasks such as closing stale issues, requesting missing information, or detecting toxic comments.
 - [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](http://melpon.org/wandbox)
 - [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
 - [**Valgrind**](http://valgrind.org) to check for correct memory management
-- [**Wandbox**](http://melpon.org/wandbox) for [online examples](https://wandbox.org/permlink/Op57X0V7fTf2tdwl)
+- [**Wandbox**](http://melpon.org/wandbox) for [online examples](https://wandbox.org/permlink/VHpbaZBOnrZcbn7j)
 
 
 ## Projects using JSON for Modern C++
