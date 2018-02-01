@@ -291,3 +291,11 @@ script:
   - cmake .. ${CMAKE_OPTIONS} -GNinja && cmake --build . --config Release
   - ctest -C Release -V -j
   - cd ..
+
+  # check if homebrew works (only checks develop branch)   
+  - if [ `which brew` ]; then   
+    brew update ;   
+    brew tap nlohmann/json ;    
+    brew install nlohmann_json --HEAD ;    
+    brew test nlohmann_json ;    
+    fi
