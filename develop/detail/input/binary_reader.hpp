@@ -36,6 +36,7 @@ class binary_reader
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using string_t = typename BasicJsonType::string_t;
 
   public:
     /*!
@@ -863,9 +864,9 @@ class binary_reader
     @throw parse_error.110 if input has less than @a len bytes
     */
     template<typename NumberType>
-    std::string get_string(const NumberType len)
+    string_t get_string(const NumberType len)
     {
-        std::string result;
+        string_t result;
         std::generate_n(std::back_inserter(result), len, [this]()
         {
             get();
@@ -887,7 +888,7 @@ class binary_reader
     @throw parse_error.110 if input ended
     @throw parse_error.113 if an unexpected byte is read
     */
-    std::string get_cbor_string()
+    string_t get_cbor_string()
     {
         unexpect_eof();
 
@@ -944,7 +945,7 @@ class binary_reader
 
             case 0x7F: // UTF-8 string (indefinite length)
             {
-                std::string result;
+                string_t result;
                 while (get() != 0xFF)
                 {
                     unexpect_eof();
@@ -1000,7 +1001,7 @@ class binary_reader
     @throw parse_error.110 if input ended
     @throw parse_error.113 if an unexpected byte is read
     */
-    std::string get_msgpack_string()
+    string_t get_msgpack_string()
     {
         unexpect_eof();
 
@@ -1111,7 +1112,7 @@ class binary_reader
     @throw parse_error.110 if input ended
     @throw parse_error.113 if an unexpected byte is read
     */
-    std::string get_ubjson_string(const bool get_char = true)
+    string_t get_ubjson_string(const bool get_char = true)
     {
         if (get_char)
         {
@@ -1150,7 +1151,7 @@ class binary_reader
     */
     std::pair<std::size_t, int> get_ubjson_size_type()
     {
-        std::size_t sz = std::string::npos;
+        std::size_t sz = string_t::npos;
         int tc = 0;
 
         get_ignore_noop();
@@ -1219,7 +1220,7 @@ class binary_reader
                     JSON_THROW(parse_error::create(113, chars_read,
                                                    "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + ss.str()));
                 }
-                return std::string(1, static_cast<char>(current));
+                return string_t(1, static_cast<char>(current));
             }
 
             case 'S':  // string
@@ -1244,7 +1245,7 @@ class binary_reader
         BasicJsonType result = value_t::array;
         const auto size_and_type = get_ubjson_size_type();
 
-        if (size_and_type.first != std::string::npos)
+        if (size_and_type.first != string_t::npos)
         {
             if (size_and_type.second != 0)
             {
@@ -1281,7 +1282,7 @@ class binary_reader
         BasicJsonType result = value_t::object;
         const auto size_and_type = get_ubjson_size_type();
 
-        if (size_and_type.first != std::string::npos)
+        if (size_and_type.first != string_t::npos)
         {
             if (size_and_type.second != 0)
             {
