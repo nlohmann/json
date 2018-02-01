@@ -45,7 +45,7 @@ SOFTWARE.
 #include <string> // string, stoi, to_string
 #include <utility> // declval, forward, move, pair, swap
 
-// #include "json_fwd.hpp"
+// #include <nlohmann/json_fwd.hpp>
 #ifndef NLOHMANN_JSON_FWD_HPP
 #define NLOHMANN_JSON_FWD_HPP
 
@@ -111,7 +111,7 @@ using json = basic_json<>;
 
 #endif
 
-// #include "detail/macro_scope.hpp"
+// #include <nlohmann/detail/macro_scope.hpp>
 
 
 // This file contains all internal macro definitions
@@ -228,7 +228,7 @@ contains a `mapped_type`, whereas `std::vector` fails the test.
                 std::is_integral<decltype(detect(std::declval<T>()))>::value; \
     }
 
-// #include "detail/meta.hpp"
+// #include <nlohmann/detail/meta.hpp>
 
 
 #include <ciso646> // not
@@ -237,9 +237,9 @@ contains a `mapped_type`, whereas `std::vector` fails the test.
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 #include <utility> // declval
 
-// #include "json_fwd.hpp"
+// #include <nlohmann/json_fwd.hpp>
 
-// #include "detail/macro_scope.hpp"
+// #include <nlohmann/detail/macro_scope.hpp>
 
 
 namespace nlohmann
@@ -490,7 +490,7 @@ constexpr T static_const<T>::value;
 }
 }
 
-// #include "detail/exceptions.hpp"
+// #include <nlohmann/detail/exceptions.hpp>
 
 
 #include <exception> // exception
@@ -821,7 +821,7 @@ class other_error : public exception
 }
 }
 
-// #include "detail/value_t.hpp"
+// #include <nlohmann/detail/value_t.hpp>
 
 
 #include <array> // array
@@ -899,7 +899,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 }
 }
 
-// #include "detail/conversions/from_json.hpp"
+// #include <nlohmann/detail/conversions/from_json.hpp>
 
 
 #include <algorithm> // transform
@@ -913,13 +913,13 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
-// #include "detail/exceptions.hpp"
+// #include <nlohmann/detail/exceptions.hpp>
 
-// #include "detail/macro_scope.hpp"
+// #include <nlohmann/detail/macro_scope.hpp>
 
-// #include "detail/meta.hpp"
+// #include <nlohmann/detail/meta.hpp>
 
-// #include "detail/value_t.hpp"
+// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -1220,7 +1220,7 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 }
 }
 
-// #include "detail/conversions/to_json.hpp"
+// #include <nlohmann/detail/conversions/to_json.hpp>
 
 
 #include <ciso646> // or, and, not
@@ -1231,9 +1231,9 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <valarray> // valarray
 #include <vector> // vector
 
-// #include "detail/meta.hpp"
+// #include <nlohmann/detail/meta.hpp>
 
-// #include "detail/value_t.hpp"
+// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -1562,7 +1562,7 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 }
 }
 
-// #include "detail/input/input_adapters.hpp"
+// #include <nlohmann/detail/input/input_adapters.hpp>
 
 
 #include <algorithm> // min
@@ -1579,7 +1579,7 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
 
-// #include "detail/macro_scope.hpp"
+// #include <nlohmann/detail/macro_scope.hpp>
 
 
 namespace nlohmann
@@ -1827,7 +1827,7 @@ class input_adapter
 }
 }
 
-// #include "detail/input/lexer.hpp"
+// #include <nlohmann/detail/input/lexer.hpp>
 
 
 #include <clocale> // localeconv
@@ -1840,9 +1840,9 @@ class input_adapter
 #include <string> // char_traits, string
 #include <vector> // vector
 
-// #include "detail/macro_scope.hpp"
+// #include <nlohmann/detail/macro_scope.hpp>
 
-// #include "detail/input/input_adapters.hpp"
+// #include <nlohmann/detail/input/input_adapters.hpp>
 
 
 namespace nlohmann
@@ -3108,7 +3108,7 @@ scan_number_done:
 }
 }
 
-// #include "detail/input/parser.hpp"
+// #include <nlohmann/detail/input/parser.hpp>
 
 
 #include <cassert> // assert
@@ -3118,15 +3118,15 @@ scan_number_done:
 #include <string> // string
 #include <utility> // move
 
-// #include "detail/exceptions.hpp"
+// #include <nlohmann/detail/exceptions.hpp>
 
-// #include "detail/macro_scope.hpp"
+// #include <nlohmann/detail/macro_scope.hpp>
 
-// #include "detail/input/input_adapters.hpp"
+// #include <nlohmann/detail/input/input_adapters.hpp>
 
-// #include "detail/input/lexer.hpp"
+// #include <nlohmann/detail/input/lexer.hpp>
 
-// #include "detail/value_t.hpp"
+// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -3704,7 +3704,7 @@ class parser
 }
 }
 
-// #include "detail/iterators/primitive_iterator.hpp"
+// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 
 
 #include <cstddef> // ptrdiff_t
@@ -3826,10 +3826,10 @@ class primitive_iterator_t
 }
 }
 
-// #include "detail/iterators/internal_iterator.hpp"
+// #include <nlohmann/detail/iterators/internal_iterator.hpp>
 
 
-// #include "detail/iterators/primitive_iterator.hpp"
+// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 
 
 namespace nlohmann
@@ -3854,24 +3854,24 @@ template<typename BasicJsonType> struct internal_iterator
 }
 }
 
-// #include "detail/iterators/iter_impl.hpp"
+// #include <nlohmann/detail/iterators/iter_impl.hpp>
 
 
 #include <ciso646> // not
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
 
-// #include "detail/exceptions.hpp"
+// #include <nlohmann/detail/exceptions.hpp>
 
-// #include "detail/iterators/internal_iterator.hpp"
+// #include <nlohmann/detail/iterators/internal_iterator.hpp>
 
-// #include "detail/iterators/primitive_iterator.hpp"
+// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 
-// #include "detail/macro_scope.hpp"
+// #include <nlohmann/detail/macro_scope.hpp>
 
-// #include "detail/meta.hpp"
+// #include <nlohmann/detail/meta.hpp>
 
-// #include "detail/value_t.hpp"
+// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -4476,13 +4476,13 @@ class iter_impl
 }
 }
 
-// #include "detail/iterators/iteration_proxy.hpp"
+// #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
 
 #include <cstddef> // size_t
 #include <string> // string, to_string
 
-// #include "detail/value_t.hpp"
+// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -4577,7 +4577,7 @@ template<typename IteratorType> class iteration_proxy
 }
 }
 
-// #include "detail/iterators/json_reverse_iterator.hpp"
+// #include <nlohmann/detail/iterators/json_reverse_iterator.hpp>
 
 
 #include <cstddef> // ptrdiff_t
@@ -4698,7 +4698,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 }
 }
 
-// #include "detail/output/output_adapters.hpp"
+// #include <nlohmann/detail/output/output_adapters.hpp>
 
 
 #include <algorithm> // copy
@@ -4813,7 +4813,7 @@ class output_adapter
 }
 }
 
-// #include "detail/input/binary_reader.hpp"
+// #include <nlohmann/detail/input/binary_reader.hpp>
 
 
 #include <algorithm> // generate_n
@@ -4831,13 +4831,13 @@ class output_adapter
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 
-// #include "detail/input/input_adapters.hpp"
+// #include <nlohmann/detail/input/input_adapters.hpp>
 
-// #include "detail/exceptions.hpp"
+// #include <nlohmann/detail/exceptions.hpp>
 
-// #include "detail/macro_scope.hpp"
+// #include <nlohmann/detail/macro_scope.hpp>
 
-// #include "detail/value_t.hpp"
+// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -6180,7 +6180,7 @@ class binary_reader
 }
 }
 
-// #include "detail/output/binary_writer.hpp"
+// #include <nlohmann/detail/output/binary_writer.hpp>
 
 
 #include <algorithm> // reverse
@@ -6189,9 +6189,9 @@ class binary_reader
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 
-// #include "detail/input/binary_reader.hpp"
+// #include <nlohmann/detail/input/binary_reader.hpp>
 
-// #include "detail/output/output_adapters.hpp"
+// #include <nlohmann/detail/output/output_adapters.hpp>
 
 
 namespace nlohmann
@@ -7093,7 +7093,7 @@ class binary_writer
 }
 }
 
-// #include "detail/output/serializer.hpp"
+// #include <nlohmann/detail/output/serializer.hpp>
 
 
 #include <algorithm> // reverse, remove, fill, find, none_of
@@ -7112,9 +7112,9 @@ class binary_writer
 #include <sstream> // stringstream
 #include <type_traits> // is_same
 
-// #include "detail/exceptions.hpp"
+// #include <nlohmann/detail/exceptions.hpp>
 
-// #include "detail/conversions/to_chars.hpp"
+// #include <nlohmann/detail/conversions/to_chars.hpp>
 
 
 #include <cassert> // assert
@@ -8211,13 +8211,13 @@ char* to_chars(char* first, char* last, FloatType value)
 } // namespace detail
 } // namespace nlohmann
 
-// #include "detail/macro_scope.hpp"
+// #include <nlohmann/detail/macro_scope.hpp>
 
-// #include "detail/meta.hpp"
+// #include <nlohmann/detail/meta.hpp>
 
-// #include "detail/output/output_adapters.hpp"
+// #include <nlohmann/detail/output/output_adapters.hpp>
 
-// #include "detail/value_t.hpp"
+// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -8830,7 +8830,7 @@ class serializer
 }
 }
 
-// #include "detail/json_ref.hpp"
+// #include <nlohmann/detail/json_ref.hpp>
 
 
 #include <initializer_list>
@@ -8895,7 +8895,7 @@ class json_ref
 }
 }
 
-// #include "detail/json_pointer.hpp"
+// #include <nlohmann/detail/json_pointer.hpp>
 
 
 #include <cassert> // assert
@@ -8903,11 +8903,11 @@ class json_ref
 #include <string> // string
 #include <vector> // vector
 
-// #include "detail/macro_scope.hpp"
+// #include <nlohmann/detail/macro_scope.hpp>
 
-// #include "detail/exceptions.hpp"
+// #include <nlohmann/detail/exceptions.hpp>
 
-// #include "detail/value_t.hpp"
+// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -9596,14 +9596,14 @@ class json_pointer
 };
 }
 
-// #include "adl_serializer.hpp"
+// #include <nlohmann/adl_serializer.hpp>
 
 
 #include <utility>
 
-// #include "detail/conversions/from_json.hpp"
+// #include <nlohmann/detail/conversions/from_json.hpp>
 
-// #include "detail/conversions/to_json.hpp"
+// #include <nlohmann/detail/conversions/to_json.hpp>
 
 
 namespace nlohmann
@@ -17142,7 +17142,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
     return nlohmann::json::json_pointer(std::string(s, n));
 }
 
-// #include "detail/macro_unscope.hpp"
+// #include <nlohmann/detail/macro_unscope.hpp>
 
 
 // restore GCC/clang diagnostic settings

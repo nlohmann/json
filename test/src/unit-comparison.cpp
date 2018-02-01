@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include "catch.hpp"
 
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 using nlohmann::json;
 
 // helper function to check std::less<json::value_t>

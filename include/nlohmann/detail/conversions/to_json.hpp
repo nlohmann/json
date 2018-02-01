@@ -8,8 +8,8 @@
 #include <valarray> // valarray
 #include <vector> // vector
 
-#include "detail/meta.hpp"
-#include "detail/value_t.hpp"
+#include <nlohmann/detail/meta.hpp>
+#include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
 {

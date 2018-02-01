@@ -27,7 +27,7 @@ SOFTWARE.
 */
 
 #include "catch.hpp"
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 
 using nlohmann::json;
 

@@ -3,7 +3,7 @@
 #include <cstddef> // size_t
 #include <string> // string, to_string
 
-#include "detail/value_t.hpp"
+#include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
 {
