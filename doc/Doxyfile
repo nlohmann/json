@@ -5,7 +5,7 @@
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "JSON for Modern C++"
-PROJECT_NUMBER         = 3.0.1
+PROJECT_NUMBER         = 3.1.0
 PROJECT_BRIEF          =
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = .
@@ -29,7 +29,7 @@ INHERIT_DOCS           = YES
 SEPARATE_MEMBER_PAGES  = YES
 TAB_SIZE               = 4
 ALIASES                = "complexity=@par Complexity^^" \
-                         "liveexample{2}=@par Example^^ \1 ^^ @includelineno \2.cpp \n Output (play with this example @htmlinclude \2.link):^^ @verbinclude \2.output ^^ The <a href= https://github.com/nlohmann/json/blob/develop/doc/examples/\2.cpp>example code</a> above can be translated with @verbatim g++ -std=c++11 -Isrc doc/examples/\2.cpp -o \2 @endverbatim" \
+                         "liveexample{2}=@par Example^^ \1 ^^ @includelineno \2.cpp \n Output (play with this example @htmlinclude \2.link):^^ @verbinclude \2.output ^^ The <a href= https://github.com/nlohmann/json/blob/develop/doc/examples/\2.cpp>example code</a> above can be translated with @verbatim g++ -std=c++11 -Isingle_include doc/examples/\2.cpp -o \2 @endverbatim" \
                          "requirement=@par Requirements^^" \
                          "exceptionsafety=@par Exception safety^^" \
                          "iterators=@par Iterator validity^^"
@@ -107,7 +107,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ../src/json.hpp \
+INPUT                  = ../single_include/nlohmann/json.hpp \
                          index.md \
                          faq.md \
                          binary_formats.md

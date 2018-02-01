@@ -12,7 +12,7 @@ add_subdirectory(thirdparty/benchmark)
 
 # header directories
 include_directories(thirdparty)
-include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${CMAKE_SOURCE_DIR}/../single_include)
 
 # copy test files to build folder
 file(COPY ${CMAKE_SOURCE_DIR}/data DESTINATION .)

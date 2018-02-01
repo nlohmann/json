@@ -299,9 +299,9 @@ Note that this table only lists those exceptions thrown due to the type. For ins
   </tr>
 </table>
 
-@copyright Copyright &copy; 2013-2017 Niels Lohmann. The code is licensed under the [MIT License](http://opensource.org/licenses/MIT).
+@copyright Copyright &copy; 2013-2018 Niels Lohmann. The code is licensed under the [MIT License](http://opensource.org/licenses/MIT).
 
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 3.0.1
+@version 3.1.0

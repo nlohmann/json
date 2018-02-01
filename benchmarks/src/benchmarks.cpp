@@ -1,5 +1,5 @@
 #include "benchmark/benchmark.h"
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 #include <fstream>
 
 using json = nlohmann::json;
