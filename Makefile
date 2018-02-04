@@ -295,3 +295,12 @@ ChangeLog.md:
 	github_changelog_generator -o ChangeLog.md --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s --future-release $(NEXT_VERSION)
 	gsed -i 's|https://github.com/nlohmann/json/releases/tag/HEAD|https://github.com/nlohmann/json/tree/HEAD|' ChangeLog.md
 	gsed -i '2i All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).' ChangeLog.md
+
+
+##########################################################################
+# release
+##########################################################################
+
+release:
+	zip -9 -r include.zip include/*
+	gpg --armor --detach-sig include.zip
