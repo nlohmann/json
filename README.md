@@ -969,6 +969,8 @@ I deeply appreciate the help of the following people.
 - [zerodefect](https://github.com/zerodefect) fixed a compiler warning.
 - [Kert](https://github.com/kaidokert) allowed to template the string type in the serialization and added the possibility to override the exceptional behavior.
 - [mark-99](https://github.com/mark-99) helped fixing an ICC error.
+- [Patrik Huber](https://github.com/patrikhuber) fixed links in the README file.
+- [johnfb](https://github.com/johnfb) found a bug in the implementation of CBOR's indefinite length strings.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

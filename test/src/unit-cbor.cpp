@@ -1381,7 +1381,7 @@ TEST_CASE("single CBOR roundtrip")
         std::ifstream f_json(filename);
         json j1 = json::parse(f_json);
 
-        // parse MessagePack file
+        // parse CBOR file
         std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
         std::vector<uint8_t> packed((std::istreambuf_iterator<char>(f_cbor)),
                                     std::istreambuf_iterator<char>());
@@ -1921,7 +1921,7 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         CHECK(json::parse("\"\\ud800\\udd51\"") == json::from_cbor(std::vector<uint8_t>({0x64, 0xf0, 0x90, 0x85, 0x91})));
 
         // indefinite length strings
-        CHECK(json::parse("\"streaming\"") == json::from_cbor(std::vector<uint8_t>({0x7f, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x69, 0x6e, 0x67, 0xff})));
+        CHECK(json::parse("\"streaming\"") == json::from_cbor(std::vector<uint8_t>({0x7f, 0x65, 0x73, 0x74, 0x72, 0x65, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x67, 0xff})));
     }
 
     SECTION("arrays")

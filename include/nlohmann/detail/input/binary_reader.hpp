@@ -948,8 +948,7 @@ class binary_reader
                 string_t result;
                 while (get() != 0xFF)
                 {
-                    unexpect_eof();
-                    result.push_back(static_cast<char>(current));
+                    result.append(get_cbor_string());
                 }
                 return result;
             }

@@ -1408,4 +1408,19 @@ TEST_CASE("regression tests")
                                  "path": "/a/b/c"}])"_json),
                           "[json.exception.out_of_range.403] key 'a' not found");
     }
+
+    SECTION("issue #961 - incorrect parsing of indefinite length CBOR strings")
+    {
+        std::vector<uint8_t> v_cbor =
+        {
+            0x7F,
+            0x64,
+            'a', 'b', 'c', 'd',
+            0x63,
+            '1', '2', '3',
+            0xFF
+        };
+        json j = json::from_cbor(v_cbor);
+        CHECK(j == "abcd123");
+    }
 }
