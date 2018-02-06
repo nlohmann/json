@@ -58,7 +58,7 @@ See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.
 The single required source, file `json.hpp` is in the `single_include/nlohmann` directory or [released here](https://github.com/nlohmann/json/releases). All you need to do is add
 
 ```cpp
-#include "nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
 // for convenience
 using json = nlohmann::json;
