@@ -1423,4 +1423,17 @@ TEST_CASE("regression tests")
         json j = json::from_cbor(v_cbor);
         CHECK(j == "abcd123");
     }
+
+    SECTION("issue #962 - Timeout (OSS-Fuzz 6034)")
+    {
+        std::vector<uint8_t> v_ubjson = {0x5b, 0x24, 0x5a, 0x23, 0x4c, 0x78, 0x28, 0x00, 0x68, 0x28, 0x69, 0x69, 0x17};
+        CHECK_THROWS_AS(json::from_ubjson(v_ubjson), json::out_of_range&);
+        CHECK_THROWS_WITH(json::from_ubjson(v_ubjson),
+                          "[json.exception.out_of_range.408] excessive array size: 8658170730974374167");
+
+        v_ubjson[0] = '{';
+        CHECK_THROWS_AS(json::from_ubjson(v_ubjson), json::out_of_range&);
+        CHECK_THROWS_WITH(json::from_ubjson(v_ubjson),
+                          "[json.exception.out_of_range.408] excessive object size: 8658170730974374167");
+    }
 }

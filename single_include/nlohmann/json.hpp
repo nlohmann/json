@@ -756,6 +756,7 @@ json.exception.out_of_range.404 | unresolved reference token 'foo' | A reference
 json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
 json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed number could not be stored as without changing it to NaN or INF.
 json.exception.out_of_range.407 | number overflow serializing '9223372036854775808' | UBJSON only supports integers numbers up to 9223372036854775807. |
+json.exception.out_of_range.408 | excessive array size: 8658170730974374167 | The size (following `#`) of an UBJSON array or object exceeds the maximal capacity. |
 
 @liveexample{The following code shows how an `out_of_range` exception can be
 caught.,out_of_range}
@@ -6066,14 +6067,22 @@ class binary_reader
 
         if (size_and_type.first != string_t::npos)
         {
+            if (JSON_UNLIKELY(size_and_type.first > result.max_size()))
+            {
+                JSON_THROW(out_of_range::create(408,
+                                                "excessive array size: " + std::to_string(size_and_type.first)));
+            }
+
             if (size_and_type.second != 0)
             {
                 if (size_and_type.second != 'N')
+                {
                     std::generate_n(std::back_inserter(*result.m_value.array),
                                     size_and_type.first, [this, size_and_type]()
-                {
-                    return get_ubjson_value(size_and_type.second);
-                });
+                    {
+                        return get_ubjson_value(size_and_type.second);
+                    });
+                }
             }
             else
             {
@@ -6103,6 +6112,12 @@ class binary_reader
 
         if (size_and_type.first != string_t::npos)
         {
+            if (JSON_UNLIKELY(size_and_type.first > result.max_size()))
+            {
+                JSON_THROW(out_of_range::create(408,
+                                                "excessive object size: " + std::to_string(size_and_type.first)));
+            }
+
             if (size_and_type.second != 0)
             {
                 std::generate_n(std::inserter(*result.m_value.object,
