@@ -971,6 +971,7 @@ I deeply appreciate the help of the following people.
 - [mark-99](https://github.com/mark-99) helped fixing an ICC error.
 - [Patrik Huber](https://github.com/patrikhuber) fixed links in the README file.
 - [johnfb](https://github.com/johnfb) found a bug in the implementation of CBOR's indefinite length strings.
+- [Paul Fultz II](https://github.com/pfultz2) added a note on the cget package manager.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
