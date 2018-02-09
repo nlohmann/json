@@ -102,7 +102,7 @@ matrix:
       - coveralls --build-root test --include include/nlohmann --gcov 'gcov-4.9' --gcov-options '\-lp'
     env:
       - COMPILER=g++-4.9
-      - CMAKE_OPTIONS=-DJSON_Coverage=ON -DJSON_MultipleHeader=ON
+      - CMAKE_OPTIONS="-DJSON_Coverage=ON -DJSON_MultipleHeader=ON"
 
   # Coverity (only for branch coverity_scan)
 
