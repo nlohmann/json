@@ -82,7 +82,7 @@ If you are using [Buckaroo](https://buckaroo.pm), you can install this library's
 
 If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
 
-If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install the latest with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag(ie `cget install nlohmann/json -DJSON_MultipleHeaders=ON`). 
+If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install the latest version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag(i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`). 
 
 ## Examples
 
