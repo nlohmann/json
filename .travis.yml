@@ -80,7 +80,7 @@ matrix:
     env:
       - COMPILER=g++-4.9
       - SPECIAL=amalgamation
-      - CMAKE_OPTIONS=-DJSON_MultipleHeader=ON
+      - MULTIPLE_HEADERS=ON
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
@@ -99,10 +99,11 @@ matrix:
     before_script:
       - pip install --user cpp-coveralls
     after_success:
-      - coveralls --build-root test --include single_include/nlohmann --gcov 'gcov-4.9' --gcov-options '\-lp'
+      - coveralls --build-root test --include include/nlohmann --gcov 'gcov-4.9' --gcov-options '\-lp'
     env:
       - COMPILER=g++-4.9
       - CMAKE_OPTIONS=-DJSON_Coverage=ON
+      - MULTIPLE_HEADERS=ON
 
   # Coverity (only for branch coverity_scan)
 
@@ -281,6 +282,8 @@ script:
 
   # make sure CXX is correctly set
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
+  # by default, use the single-header version
+  - if [[ "${MULTIPLE_HEADERS}" == "" ]]; then export MULTIPLE_HEADERS=OFF; fi
 
   # show OS/compiler version
   - uname -a
@@ -288,7 +291,7 @@ script:
 
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - cmake .. ${CMAKE_OPTIONS} -GNinja && cmake --build . --config Release
+  - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -GNinja && cmake --build . --config Release
   - ctest -C Release -V -j
   - cd ..
 
