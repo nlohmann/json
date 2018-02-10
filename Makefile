@@ -50,6 +50,7 @@ all:
 	@echo "pedantic_clang - run Clang with maximal warning flags"
 	@echo "pedantic_gcc - run GCC with maximal warning flags"
 	@echo "pretty - beautify code with Artistic Style"
+	@echo "run_benchmarks - build and run benchmarks"
 
 ##########################################################################
 # unit tests
@@ -70,7 +71,7 @@ check-fast:
 clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM
 	rm -fr benchmarks/files/numbers/*.json
-	rm -fr build_coverage
+	rm -fr build_coverage build_benchmarks
 	$(MAKE) clean -Cdoc
 	$(MAKE) clean -Ctest
 
@@ -187,6 +188,16 @@ pedantic_gcc:
 		-Wunused-parameter \
 		-Wuseless-cast \
 		-Wvariadic-macros"
+
+##########################################################################
+# benchmarks
+##########################################################################
+
+run_benchmarks:
+	mkdir build_benchmarks
+	cd build_benchmarks ; cmake ../benchmarks
+	cd build_benchmarks ; make
+	cd build_benchmarks ; ./json_benchmarks
 
 ##########################################################################
 # fuzzing
