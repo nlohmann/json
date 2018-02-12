@@ -177,15 +177,21 @@ void from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr, priorit
     }
 }
 
-template<typename BasicJsonType, typename CompatibleArrayType,
-         enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
-                     std::is_convertible<BasicJsonType, typename CompatibleArrayType::value_type>::value and
-                     not std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value, int> = 0>
+template <
+    typename BasicJsonType, typename CompatibleArrayType,
+    enable_if_t <
+        is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
+        not std::is_same<typename BasicJsonType::array_t,
+                         CompatibleArrayType>::value and
+        std::is_constructible <
+            BasicJsonType, typename CompatibleArrayType::value_type >::value,
+        int > = 0 >
 void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
 {
     if (JSON_UNLIKELY(not j.is_array()))
     {
-        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be array, but is " +
+                                      std::string(j.type_name())));
     }
 
     from_json_array_impl(j, arr, priority_tag<2> {});
