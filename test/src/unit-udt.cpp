@@ -711,3 +711,25 @@ TEST_CASE("an incomplete type does not trigger a compiler error in non-evaluated
 {
     static_assert(not is_constructible_patched<json, incomplete>::value, "");
 }
+
+namespace
+{
+class Evil
+{
+  public:
+    Evil() = default;
+    template <typename T>
+    Evil(T) {}
+};
+
+void from_json(const json&, Evil&) {}
+}
+
+TEST_CASE("Issue #924")
+{
+    // Prevent get<std::vector<Evil>>() to throw
+    auto j = json::array();
+
+    (void) j.get<Evil>();
+    (void) j.get<std::vector<Evil>>();
+}
