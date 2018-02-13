@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.1.0
+|  |  |__   |  |  | | | |  version 3.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -1407,5 +1407,33 @@ TEST_CASE("regression tests")
                                  "from": "/one/two/three",
                                  "path": "/a/b/c"}])"_json),
                           "[json.exception.out_of_range.403] key 'a' not found");
+    }
+
+    SECTION("issue #961 - incorrect parsing of indefinite length CBOR strings")
+    {
+        std::vector<uint8_t> v_cbor =
+        {
+            0x7F,
+            0x64,
+            'a', 'b', 'c', 'd',
+            0x63,
+            '1', '2', '3',
+            0xFF
+        };
+        json j = json::from_cbor(v_cbor);
+        CHECK(j == "abcd123");
+    }
+
+    SECTION("issue #962 - Timeout (OSS-Fuzz 6034)")
+    {
+        std::vector<uint8_t> v_ubjson = {'[', '$', 'Z', '#', 'L', 0x78, 0x28, 0x00, 0x68, 0x28, 0x69, 0x69, 0x17};
+        CHECK_THROWS_AS(json::from_ubjson(v_ubjson), json::out_of_range&);
+        //CHECK_THROWS_WITH(json::from_ubjson(v_ubjson),
+        //                  "[json.exception.out_of_range.408] excessive array size: 8658170730974374167");
+
+        v_ubjson[0] = '{';
+        CHECK_THROWS_AS(json::from_ubjson(v_ubjson), json::out_of_range&);
+        //CHECK_THROWS_WITH(json::from_ubjson(v_ubjson),
+        //                  "[json.exception.out_of_range.408] excessive object size: 8658170730974374167");
     }
 }

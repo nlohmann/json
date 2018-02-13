@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.1.0
+|  |  |__   |  |  | | | |  version 3.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -42,10 +42,10 @@ TEST_CASE("version information")
         CHECK(j["url"] == "https://github.com/nlohmann/json");
         CHECK(j["version"] == json(
         {
-            {"string", "3.1.0"},
+            {"string", "3.1.1"},
             {"major", 3},
             {"minor", 1},
-            {"patch", 0}
+            {"patch", 1}
         }));
 
         CHECK(j.find("platform") != j.end());

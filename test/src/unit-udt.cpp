@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.1.0
+|  |  |__   |  |  | | | |  version 3.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -710,4 +710,26 @@ struct is_constructible_patched<T, decltype(void(json(std::declval<T>())))> : st
 TEST_CASE("an incomplete type does not trigger a compiler error in non-evaluated context", "[udt]")
 {
     static_assert(not is_constructible_patched<json, incomplete>::value, "");
+}
+
+namespace
+{
+class Evil
+{
+  public:
+    Evil() = default;
+    template <typename T>
+    Evil(T) {}
+};
+
+void from_json(const json&, Evil&) {}
+}
+
+TEST_CASE("Issue #924")
+{
+    // Prevent get<std::vector<Evil>>() to throw
+    auto j = json::array();
+
+    (void) j.get<Evil>();
+    (void) j.get<std::vector<Evil>>();
 }

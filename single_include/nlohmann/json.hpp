@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.1.0
+|  |  |__   |  |  | | | |  version 3.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -31,7 +31,7 @@ SOFTWARE.
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
 #define NLOHMANN_JSON_VERSION_MINOR 1
-#define NLOHMANN_JSON_VERSION_PATCH 0
+#define NLOHMANN_JSON_VERSION_PATCH 1
 
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
@@ -756,6 +756,7 @@ json.exception.out_of_range.404 | unresolved reference token 'foo' | A reference
 json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
 json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed number could not be stored as without changing it to NaN or INF.
 json.exception.out_of_range.407 | number overflow serializing '9223372036854775808' | UBJSON only supports integers numbers up to 9223372036854775807. |
+json.exception.out_of_range.408 | excessive array size: 8658170730974374167 | The size (following `#`) of an UBJSON array or object exceeds the maximal capacity. |
 
 @liveexample{The following code shows how an `out_of_range` exception can be
 caught.,out_of_range}
@@ -1083,15 +1084,21 @@ void from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr, priorit
     }
 }
 
-template<typename BasicJsonType, typename CompatibleArrayType,
-         enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
-                     std::is_convertible<BasicJsonType, typename CompatibleArrayType::value_type>::value and
-                     not std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value, int> = 0>
+template <
+    typename BasicJsonType, typename CompatibleArrayType,
+    enable_if_t <
+        is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
+        not std::is_same<typename BasicJsonType::array_t,
+                         CompatibleArrayType>::value and
+        std::is_constructible <
+            BasicJsonType, typename CompatibleArrayType::value_type >::value,
+        int > = 0 >
 void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
 {
     if (JSON_UNLIKELY(not j.is_array()))
     {
-        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be array, but is " +
+                                      std::string(j.type_name())));
     }
 
     from_json_array_impl(j, arr, priority_tag<2> {});
@@ -5768,8 +5775,7 @@ class binary_reader
                 string_t result;
                 while (get() != 0xFF)
                 {
-                    unexpect_eof();
-                    result.push_back(static_cast<char>(current));
+                    result.append(get_cbor_string());
                 }
                 return result;
             }
@@ -6067,14 +6073,22 @@ class binary_reader
 
         if (size_and_type.first != string_t::npos)
         {
+            if (JSON_UNLIKELY(size_and_type.first > result.max_size()))
+            {
+                JSON_THROW(out_of_range::create(408,
+                                                "excessive array size: " + std::to_string(size_and_type.first)));
+            }
+
             if (size_and_type.second != 0)
             {
                 if (size_and_type.second != 'N')
+                {
                     std::generate_n(std::back_inserter(*result.m_value.array),
                                     size_and_type.first, [this, size_and_type]()
-                {
-                    return get_ubjson_value(size_and_type.second);
-                });
+                    {
+                        return get_ubjson_value(size_and_type.second);
+                    });
+                }
             }
             else
             {
@@ -6104,6 +6118,12 @@ class binary_reader
 
         if (size_and_type.first != string_t::npos)
         {
+            if (JSON_UNLIKELY(size_and_type.first > result.max_size()))
+            {
+                JSON_THROW(out_of_range::create(408,
+                                                "excessive object size: " + std::to_string(size_and_type.first)));
+            }
+
             if (size_and_type.second != 0)
             {
                 std::generate_n(std::inserter(*result.m_value.object,
@@ -9998,10 +10018,10 @@ class basic_json
     - When all names are unique, objects will be interoperable in the sense
       that all software implementations receiving that object will agree on
       the name-value mappings.
-    - When the names within an object are not unique, later stored name/value
-      pairs overwrite previously stored name/value pairs, leaving the used
-      names unique. For instance, `{"key": 1}` and `{"key": 2, "key": 1}` will
-      be treated as equal and both stored as `{"key": 1}`.
+    - When the names within an object are not unique, it is unspecified which
+      one of the values for a given key will be chosen. For instance,
+      `{"key": 2, "key": 1}` could be equal to either `{"key": 1}` or
+      `{"key": 2}`.
     - Internally, name/value pairs are stored in lexicographical order of the
       names. Objects will also be serialized (see @ref dump) in this order.
       For instance, `{"b": 1, "a": 2}` and `{"a": 2, "b": 1}` will be stored
@@ -10515,7 +10535,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.1.0")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.1.1")); // LCOV_EXCL_LINE
                     }
                     break;
                 }

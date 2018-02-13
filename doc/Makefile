@@ -29,7 +29,7 @@ EXAMPLES = $(wildcard examples/*.cpp)
 	rm -fr tmp
 	mkdir tmp
 	cp -r $(SRCDIR)/nlohmann tmp
-	scripts/send_to_wandbox.py tmp $< > $@.tmp
+	python2 scripts/send_to_wandbox.py tmp $< > $@.tmp
 	/bin/echo -n "<a target=\"_blank\" href=\"`cat $@.tmp`\"><b>online</b></a>" > $@
 	rm -fr tmp $@.tmp
 

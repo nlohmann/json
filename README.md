@@ -5,7 +5,7 @@
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f3732b3327e34358a0e9d1fe9f661f08)](https://www.codacy.com/app/nlohmann/json?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/VHpbaZBOnrZcbn7j)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/DfWUb7e2q2USw0Q6)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
@@ -40,7 +40,7 @@ There are myriads of [JSON](http://json.org) libraries out there, and each may e
 
 - **Intuitive syntax**. In languages such as Python, JSON feels like a first class data type. We used all the operator magic of modern C++ to achieve the same feeling in your code. Check out the [examples below](#examples) and you'll know what I mean.
 
-- **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+- **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
 - **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/blob/master/test/src/unit.cpp) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) that there are no memory leaks. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
 
@@ -58,7 +58,7 @@ See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.
 The single required source, file `json.hpp` is in the `single_include/nlohmann` directory or [released here](https://github.com/nlohmann/json/releases). All you need to do is add
 
 ```cpp
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 
 // for convenience
 using json = nlohmann::json;
@@ -66,7 +66,7 @@ using json = nlohmann::json;
 
 to the files you want to use JSON objects. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 
-You can further use file [`include/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/develop/json_fwd.hpp) for forward-declarations. The installation of json_fwd.hpp (as part of cmake's install step), can be achieved by setting `-DJSON_MultipleHeaders=ON`:
+You can further use file [`include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_fwd.hpp) for forward-declarations. The installation of json_fwd.hpp (as part of cmake's install step), can be achieved by setting `-DJSON_MultipleHeaders=ON`:
 
 ### Package Managers
 
@@ -82,6 +82,7 @@ If you are using [Buckaroo](https://buckaroo.pm), you can install this library's
 
 If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
 
+If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`). 
 
 ## Examples
 
@@ -969,6 +970,9 @@ I deeply appreciate the help of the following people.
 - [zerodefect](https://github.com/zerodefect) fixed a compiler warning.
 - [Kert](https://github.com/kaidokert) allowed to template the string type in the serialization and added the possibility to override the exceptional behavior.
 - [mark-99](https://github.com/mark-99) helped fixing an ICC error.
+- [Patrik Huber](https://github.com/patrikhuber) fixed links in the README file.
+- [johnfb](https://github.com/johnfb) found a bug in the implementation of CBOR's indefinite length strings.
+- [Paul Fultz II](https://github.com/pfultz2) added a note on the cget package manager.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -998,7 +1002,7 @@ The library itself contains of a single header file licensed under the MIT licen
 - [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](http://melpon.org/wandbox)
 - [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
 - [**Valgrind**](http://valgrind.org) to check for correct memory management
-- [**Wandbox**](http://melpon.org/wandbox) for [online examples](https://wandbox.org/permlink/VHpbaZBOnrZcbn7j)
+- [**Wandbox**](http://melpon.org/wandbox) for [online examples](https://wandbox.org/permlink/DfWUb7e2q2USw0Q6)
 
 
 ## Projects using JSON for Modern C++

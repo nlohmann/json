@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.1.0
+|  |  |__   |  |  | | | |  version 3.1.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -31,7 +31,7 @@ SOFTWARE.
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
 #define NLOHMANN_JSON_VERSION_MINOR 1
-#define NLOHMANN_JSON_VERSION_PATCH 0
+#define NLOHMANN_JSON_VERSION_PATCH 1
 
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
@@ -420,10 +420,10 @@ class basic_json
     - When all names are unique, objects will be interoperable in the sense
       that all software implementations receiving that object will agree on
       the name-value mappings.
-    - When the names within an object are not unique, later stored name/value
-      pairs overwrite previously stored name/value pairs, leaving the used
-      names unique. For instance, `{"key": 1}` and `{"key": 2, "key": 1}` will
-      be treated as equal and both stored as `{"key": 1}`.
+    - When the names within an object are not unique, it is unspecified which
+      one of the values for a given key will be chosen. For instance,
+      `{"key": 2, "key": 1}` could be equal to either `{"key": 1}` or
+      `{"key": 2}`.
     - Internally, name/value pairs are stored in lexicographical order of the
       names. Objects will also be serialized (see @ref dump) in this order.
       For instance, `{"b": 1, "a": 2}` and `{"a": 2, "b": 1}` will be stored
@@ -937,7 +937,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.1.0")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.1.1")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
