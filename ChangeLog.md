@@ -1,9 +1,33 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v3.1.1](https://github.com/nlohmann/json/releases/tag/v3.1.1) (2018-02-12)
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.1.0...v3.1.1)
+
+- Updation of child object isn't reflected in parent Object [\#968](https://github.com/nlohmann/json/issues/968)
+- How to add user defined C++ path to sublime text  [\#966](https://github.com/nlohmann/json/issues/966)
+- fast number parsing [\#965](https://github.com/nlohmann/json/issues/965)
+- With non-unique keys, later stored entries are not taken into account anymore [\#963](https://github.com/nlohmann/json/issues/963)
+- Timeout \(OSS-Fuzz 6034\) [\#962](https://github.com/nlohmann/json/issues/962)
+- Incorrect parsing of indefinite length CBOR strings. [\#961](https://github.com/nlohmann/json/issues/961)
+- Reload a json file at runtime without emptying my std::ifstream [\#959](https://github.com/nlohmann/json/issues/959)
+- Split headers should be part of the release [\#956](https://github.com/nlohmann/json/issues/956)
+- Coveralls shows no coverage data [\#953](https://github.com/nlohmann/json/issues/953)
+- Feature request: Implicit conversion to bool [\#951](https://github.com/nlohmann/json/issues/951)
+- converting json to vector of type with templated constructor [\#924](https://github.com/nlohmann/json/issues/924)
+- No structured bindings support? [\#901](https://github.com/nlohmann/json/issues/901)
+- \[Request\] Macro generating from\_json\(\) and to\_json\(\) [\#895](https://github.com/nlohmann/json/issues/895)
+- basic\_json::value throws exception instead of returning default value [\#871](https://github.com/nlohmann/json/issues/871)
+
+- Fix constraints on from\_json\(CompatibleArrayType\) [\#969](https://github.com/nlohmann/json/pull/969) ([theodelrieu](https://github.com/theodelrieu))
+- Make coveralls watch the include folder [\#957](https://github.com/nlohmann/json/pull/957) ([theodelrieu](https://github.com/theodelrieu))
+- Fix links in README.md [\#955](https://github.com/nlohmann/json/pull/955) ([patrikhuber](https://github.com/patrikhuber))
+- Add a note about installing the library with cget [\#954](https://github.com/nlohmann/json/pull/954) ([pfultz2](https://github.com/pfultz2))
+
 ## [v3.1.0](https://github.com/nlohmann/json/releases/tag/v3.1.0) (2018-02-01)
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.0.1...v3.1.0)
 
+- Order of the elements in JSON object [\#952](https://github.com/nlohmann/json/issues/952)
 - I have a proposal [\#949](https://github.com/nlohmann/json/issues/949)
 - VERSION define\(s\) [\#948](https://github.com/nlohmann/json/issues/948)
 - v3.0.1 compile error in icc 16.0.4 [\#947](https://github.com/nlohmann/json/issues/947)
@@ -16,7 +40,6 @@ All notable changes to this project will be documented in this file. This projec
 - Allow overriding JSON\_THROW to something else than abort\(\) [\#938](https://github.com/nlohmann/json/issues/938)
 - Handle invalid string in Json file [\#937](https://github.com/nlohmann/json/issues/937)
 - Unused variable 'kMinExp' [\#935](https://github.com/nlohmann/json/issues/935)
-- test [\#934](https://github.com/nlohmann/json/issues/934)
 - yytext is already defined [\#933](https://github.com/nlohmann/json/issues/933)
 - Equality operator fails [\#931](https://github.com/nlohmann/json/issues/931)
 - use in visual studio 2015 [\#929](https://github.com/nlohmann/json/issues/929)
@@ -112,7 +135,6 @@ All notable changes to this project will be documented in this file. This projec
 - using dump\(\) when std::wstring is StringType with VS2017 [\#836](https://github.com/nlohmann/json/issues/836)
 - Show the path of the currently parsed value when an error occurs [\#835](https://github.com/nlohmann/json/issues/835)
 - Repetitive data type while reading [\#833](https://github.com/nlohmann/json/issues/833)
-- Stack-overflow \(OSS-Fuzz 4234\) [\#832](https://github.com/nlohmann/json/issues/832)
 - Storing multiple types inside map [\#831](https://github.com/nlohmann/json/issues/831)
 - Application terminating [\#830](https://github.com/nlohmann/json/issues/830)
 - Missing CMake hunter package? [\#828](https://github.com/nlohmann/json/issues/828)
