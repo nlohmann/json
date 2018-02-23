@@ -55,7 +55,7 @@ See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.
 
 ## Integration
 
-The single required source, file `json.hpp` is in the `single_include/nlohmann` directory or [released here](https://github.com/nlohmann/json/releases). All you need to do is add
+`json.hpp` is the single required file in `single_include/nlohmann` or [released here](https://github.com/nlohmann/json/releases). You need to add
 
 ```cpp
 #include <nlohmann/json.hpp>
@@ -64,9 +64,9 @@ The single required source, file `json.hpp` is in the `single_include/nlohmann` 
 using json = nlohmann::json;
 ```
 
-to the files you want to use JSON objects. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
+to the files you want to process JSON and set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 
-You can further use file [`include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_fwd.hpp) for forward-declarations. The installation of json_fwd.hpp (as part of cmake's install step), can be achieved by setting `-DJSON_MultipleHeaders=ON`:
+You can further use file [`include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_fwd.hpp) for forward-declarations. The installation of json_fwd.hpp (as part of cmake's install step), can be achieved by setting `-DJSON_MultipleHeaders=ON`.
 
 ### Package Managers
 
@@ -82,7 +82,7 @@ If you are using [Buckaroo](https://buckaroo.pm), you can install this library's
 
 If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
 
-If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`). 
+If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
 
 ## Examples
 
@@ -651,7 +651,7 @@ namespace nlohmann {
             if (j.is_null()) {
                 opt = boost::none;
             } else {
-                opt = j.get<T>(); // same as above, but with 
+                opt = j.get<T>(); // same as above, but with
                                   // adl_serializer<T>::from_json
             }
         }
@@ -669,7 +669,7 @@ struct move_only_type {
     move_only_type(int ii): i(ii) {}
     move_only_type(const move_only_type&) = delete;
     move_only_type(move_only_type&&) = default;
-    
+
     int i;
 };
 
@@ -681,7 +681,7 @@ namespace nlohmann {
         static move_only_type from_json(const json& j) {
             return {j.get<int>()};
         }
-        
+
         // Here's the catch! You must provide a to_json method! Otherwise you
         // will not be able to convert move_only_type to json, since you fully
         // specialized adl_serializer on that type
@@ -716,7 +716,7 @@ struct less_than_32_serializer {
                                  // this is where the magic happens
         to_json(j, value);
     }
-    
+
     template <typename BasicJsonType>
     static void from_json(const BasicJsonType& j, T& value) {
         // same thing here
@@ -738,7 +738,7 @@ struct bad_serializer
       // if BasicJsonType::json_serializer == bad_serializer ... oops!
       j = value;
     }
-    
+
     template <typename BasicJsonType>
     static void to_json(const BasicJsonType& j, T& value) {
       // this calls BasicJsonType::json_serializer<T>::from_json(j, value);
@@ -798,13 +798,13 @@ Please note:
 
 - GCC 4.8 does not work because of two bugs ([55817](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55817) and [57824](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57824)) in the C++11 support. Note there is a [pull request](https://github.com/nlohmann/json/pull/212) to fix some of the issues.
 - Android defaults to using very old compilers and C++ libraries. To fix this, add the following to your `Application.mk`. This will switch to the LLVM C++ library, the Clang compiler, and enable C++11 and other features disabled by default.
- 
+
     ```
     APP_STL := c++_shared
     NDK_TOOLCHAIN_VERSION := clang3.6
     APP_CPPFLAGS += -frtti -fexceptions
     ```
- 
+
     The code compiles successfully with [Android NDK](https://developer.android.com/ndk/index.html?hl=ml), Revision 9 - 11 (and possibly later) and [CrystaX's Android NDK](https://www.crystax.net/en/android/ndk) version 10.
 
 - For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).
@@ -833,7 +833,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 9.0 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.37) |
 | Clang Xcode 9.1 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.38) |
 | Clang Xcode 9.2 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 8.1.0 (clang-900.0.39.2) |
-| Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 | 
+| Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 |
 | Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.5.180.51428, MSVC 19.12.25830.2 |
 
 ## License
@@ -896,7 +896,7 @@ I deeply appreciate the help of the following people.
 - [Corbin Hughes](https://github.com/nibroc) fixed some typos in the contribution guidelines.
 - [twelsby](https://github.com/twelsby) fixed the array subscript operator, an issue that failed the MSVC build, and floating-point parsing/dumping. He further added support for unsigned integer numbers and implemented better roundtrip support for parsed numbers.
 - [Volker Diels-Grabsch](https://github.com/vog) fixed a link in the README file.
-- [msm-](https://github.com/msm-) added support for American Fuzzy Lop. 
+- [msm-](https://github.com/msm-) added support for American Fuzzy Lop.
 - [Annihil](https://github.com/Annihil) fixed an example in the README file.
 - [Themercee](https://github.com/Themercee) noted a wrong URL in the README file.
 - [Lv Zheng](https://github.com/lv-zheng) fixed a namespace issue with `int64_t` and `uint64_t`.
