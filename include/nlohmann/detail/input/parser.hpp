@@ -52,6 +52,53 @@ class parser
         value
     };
 
+    struct SAX
+    {
+        /// a null value was read
+        virtual bool null() = 0;
+
+        /// a boolean value was read
+        virtual bool boolean(bool) = 0;
+
+        /// an integer number was read
+        virtual bool number_integer(number_integer_t) = 0;
+
+        /// an unsigned integer number was read
+        virtual bool number_unsigned(number_unsigned_t) = 0;
+
+        /// a floating-point number was read
+        /// the string parameter contains the raw number value
+        virtual bool number_float(number_float_t, const std::string&) = 0;
+
+        /// a string value was read
+        virtual bool string(const std::string&) = 0;
+
+        /// the beginning of an object was read
+        /// binary formats may report the number of elements
+        virtual bool start_object(std::size_t elements) = 0;
+
+        /// an object key was read
+        virtual bool key(const std::string&) = 0;
+
+        /// the end of an object was read
+        virtual bool end_object() = 0;
+
+        /// the beginning of an array was read
+        /// binary formats may report the number of elements
+        virtual bool start_array(std::size_t elements) = 0;
+
+        /// the end of an array was read
+        virtual bool end_array() = 0;
+
+        /// a binary value was read
+        /// examples are CBOR type 2 strings, MessagePack bin, and maybe UBJSON array<uint8t>
+        virtual bool binary(const std::vector<uint8_t>& vec) = 0;
+
+        /// a parse error occurred
+        /// the byte position and the last token are reported
+        virtual bool parse_error(int position, const std::string& last_token) = 0;
+    };
+
     using parser_callback_t =
         std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
 
@@ -60,6 +107,10 @@ class parser
                     const parser_callback_t cb = nullptr,
                     const bool allow_exceptions_ = true)
         : callback(cb), m_lexer(adapter), allow_exceptions(allow_exceptions_)
+    {}
+
+    parser(detail::input_adapter_t adapter, SAX* s)
+        : m_lexer(adapter), sax(s)
     {}
 
     /*!
@@ -120,6 +171,14 @@ class parser
 
         // strict => last token must be EOF
         return not strict or (get_token() == token_type::end_of_input);
+    }
+
+    bool sax_parse()
+    {
+        // read first token
+        get_token();
+
+        return sax_parse_internal();
     }
 
   private:
@@ -520,6 +579,168 @@ class parser
         }
     }
 
+    bool sax_parse_internal()
+    {
+        switch (last_token)
+        {
+            case token_type::begin_object:
+            {
+                if (not sax->start_object(-1))
+                {
+                    return false;
+                }
+
+                // read next token
+                get_token();
+
+                // closing } -> we are done
+                if (last_token == token_type::end_object)
+                {
+                    return sax->end_object();
+                }
+
+                // parse values
+                while (true)
+                {
+                    // parse key
+                    if (last_token != token_type::value_string)
+                    {
+                        if (not sax->key(m_lexer.move_string()))
+                        {
+                            return false;
+                        }
+                    }
+
+                    // parse separator (:)
+                    get_token();
+                    if (last_token != token_type::name_separator)
+                    {
+                        return sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string());
+                    }
+
+                    // parse value
+                    get_token();
+                    if (not sax_parse_internal())
+                    {
+                        return false;
+                    }
+
+                    // comma -> next value
+                    get_token();
+                    if (last_token == token_type::value_separator)
+                    {
+                        get_token();
+                        continue;
+                    }
+
+                    // closing }
+                    if (last_token == token_type::end_object)
+                    {
+                        return sax->end_object();
+                    }
+                    else
+                    {
+                        return sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string());
+                    }
+                }
+            }
+
+            case token_type::begin_array:
+            {
+                if (not sax->start_array(-1))
+                {
+                    return false;
+                }
+
+                // read next token
+                get_token();
+
+                // closing ] -> we are done
+                if (last_token == token_type::end_array)
+                {
+                    return sax->end_array();
+                }
+
+                // parse values
+                while (true)
+                {
+                    // parse value
+                    if (not sax_parse_internal())
+                    {
+                        return false;
+                    }
+
+                    // comma -> next value
+                    get_token();
+                    if (last_token == token_type::value_separator)
+                    {
+                        get_token();
+                        continue;
+                    }
+
+                    // closing ]
+                    if (last_token == token_type::end_array)
+                    {
+                        return sax->end_array();
+                    }
+                    else
+                    {
+                        return sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string());
+                    }
+                }
+            }
+
+            case token_type::value_float:
+            {
+                const auto res = m_lexer.get_number_float();
+
+                if (JSON_UNLIKELY(not std::isfinite(res)))
+                {
+                    return sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string());
+                }
+                else
+                {
+                    return sax->number_float(res, m_lexer.move_string());
+                }
+            }
+
+            case token_type::literal_false:
+            {
+                return sax->boolean(false);
+            }
+
+            case token_type::literal_null:
+            {
+                return sax->null();
+            }
+
+            case token_type::literal_true:
+            {
+                return sax->boolean(true);
+            }
+
+            case token_type::value_integer:
+            {
+                return sax->number_integer(m_lexer.get_number_integer());
+            }
+
+            case token_type::value_string:
+            {
+                return sax->string(m_lexer.move_string());
+            }
+
+            case token_type::value_unsigned:
+            {
+                return sax->number_unsigned(m_lexer.get_number_unsigned());
+            }
+
+            default: // the last token was unexpected
+            {
+                return sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string());
+            }
+        }
+    }
+
     /// get next token from lexer
     token_type get_token()
     {
@@ -584,6 +805,8 @@ class parser
     token_type expected = token_type::uninitialized;
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
+    /// associated SAX parse event receiver
+    SAX* sax = nullptr;
 };
 }
 }

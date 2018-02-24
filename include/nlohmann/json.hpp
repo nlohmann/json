@@ -1054,6 +1054,8 @@ class basic_json
     */
     using parse_event_t = typename parser::parse_event_t;
 
+    using SAX = typename parser::SAX;
+
     /*!
     @brief per-element parser callback type
 
@@ -5925,6 +5927,16 @@ class basic_json
         return parser(i).accept(true);
     }
 
+    static bool sax_parse(detail::input_adapter i, SAX* sax)
+    {
+        return parser(i, sax).sax_parse();
+    }
+
+    static bool sax_parse(detail::input_adapter& i, SAX* sax)
+    {
+        return parser(i, sax).sax_parse();
+    }
+
     /*!
     @brief deserialize from an iterator range with contiguous storage
 
@@ -5992,6 +6004,15 @@ class basic_json
     static bool accept(IteratorType first, IteratorType last)
     {
         return parser(detail::input_adapter(first, last)).accept(true);
+    }
+
+    template<class IteratorType, typename std::enable_if<
+                 std::is_base_of<
+                     std::random_access_iterator_tag,
+                     typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
+    static bool sax_parse(IteratorType first, IteratorType last, SAX* sax)
+    {
+        return parser(detail::input_adapter(first, last), sax).sax_parse();
     }
 
     /*!
