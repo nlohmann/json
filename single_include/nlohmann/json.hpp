@@ -3717,7 +3717,7 @@ class parser
                 get_token();
 
                 // closing } -> we are done
-                if (last_token == token_type::end_object)
+                if (JSON_UNLIKELY(last_token == token_type::end_object))
                 {
                     return sax->end_object();
                 }
@@ -3726,7 +3726,12 @@ class parser
                 while (true)
                 {
                     // parse key
-                    if (last_token != token_type::value_string)
+                    if (JSON_UNLIKELY(last_token != token_type::value_string))
+                    {
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string());
+                    }
+                    else
                     {
                         if (not sax->key(m_lexer.move_string()))
                         {
@@ -3736,9 +3741,10 @@ class parser
 
                     // parse separator (:)
                     get_token();
-                    if (last_token != token_type::name_separator)
+                    if (JSON_UNLIKELY(last_token != token_type::name_separator))
                     {
-                        return sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string());
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string());
                     }
 
                     // parse value
@@ -3757,13 +3763,14 @@ class parser
                     }
 
                     // closing }
-                    if (last_token == token_type::end_object)
+                    if (JSON_LIKELY(last_token == token_type::end_object))
                     {
                         return sax->end_object();
                     }
                     else
                     {
-                        return sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string());
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string());
                     }
                 }
             }
@@ -3802,13 +3809,14 @@ class parser
                     }
 
                     // closing ]
-                    if (last_token == token_type::end_array)
+                    if (JSON_LIKELY(last_token == token_type::end_array))
                     {
                         return sax->end_array();
                     }
                     else
                     {
-                        return sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string());
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string());
                     }
                 }
             }
@@ -3819,7 +3827,8 @@ class parser
 
                 if (JSON_UNLIKELY(not std::isfinite(res)))
                 {
-                    return sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string());
+                    return sax->parse_error(m_lexer.get_position(),
+                                            m_lexer.get_token_string());
                 }
                 else
                 {
@@ -3859,7 +3868,8 @@ class parser
 
             default: // the last token was unexpected
             {
-                return sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string());
+                return sax->parse_error(m_lexer.get_position(),
+                                        m_lexer.get_token_string());
             }
         }
     }
@@ -10875,8 +10885,6 @@ class basic_json
     */
     using parse_event_t = typename parser::parse_event_t;
 
-    using SAX = typename parser::SAX;
-
     /*!
     @brief per-element parser callback type
 
@@ -10928,6 +10936,7 @@ class basic_json
     */
     using parser_callback_t = typename parser::parser_callback_t;
 
+    using SAX = typename parser::SAX;
 
     //////////////////
     // constructors //

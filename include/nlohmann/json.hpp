@@ -1054,8 +1054,6 @@ class basic_json
     */
     using parse_event_t = typename parser::parse_event_t;
 
-    using SAX = typename parser::SAX;
-
     /*!
     @brief per-element parser callback type
 
@@ -1107,6 +1105,7 @@ class basic_json
     */
     using parser_callback_t = typename parser::parser_callback_t;
 
+    using SAX = typename parser::SAX;
 
     //////////////////
     // constructors //
