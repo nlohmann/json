@@ -75,7 +75,14 @@ class SaxEventLogger : public nlohmann::json::SAX
 
     bool start_object(std::size_t elements) override
     {
-        events.push_back("start_object(" + std::to_string(elements) + ")");
+        if (elements == -1)
+        {
+            events.push_back("start_object()");
+        }
+        else
+        {
+            events.push_back("start_object(" + std::to_string(elements) + ")");
+        }
         return true;
     }
 
@@ -93,7 +100,14 @@ class SaxEventLogger : public nlohmann::json::SAX
 
     bool start_array(std::size_t elements) override
     {
-        events.push_back("start_array(" + std::to_string(elements) + ")");
+        if (elements == -1)
+        {
+            events.push_back("start_array()");
+        }
+        else
+        {
+            events.push_back("start_array(" + std::to_string(elements) + ")");
+        }
         return true;
     }
 
@@ -137,9 +151,9 @@ TEST_CASE("deserialization")
             CHECK(l.events.size() == 10);
             CHECK(l.events == std::vector<std::string>(
             {
-                "start_array(18446744073709551615)", "string(foo)",
+                "start_array()", "string(foo)",
                 "number_unsigned(1)", "number_unsigned(2)", "number_unsigned(3)",
-                "boolean(false)", "start_object(18446744073709551615)",
+                "boolean(false)", "start_object()",
                 "number_unsigned(1)", "end_object()", "end_array()"
             }));
         }
@@ -156,9 +170,9 @@ TEST_CASE("deserialization")
             CHECK(l.events.size() == 10);
             CHECK(l.events == std::vector<std::string>(
             {
-                "start_array(18446744073709551615)", "string(foo)",
+                "start_array()", "string(foo)",
                 "number_unsigned(1)", "number_unsigned(2)", "number_unsigned(3)",
-                "boolean(false)", "start_object(18446744073709551615)",
+                "boolean(false)", "start_object()",
                 "number_unsigned(1)", "end_object()", "end_array()"
             }));
         }
@@ -175,9 +189,9 @@ TEST_CASE("deserialization")
             CHECK(l.events.size() == 10);
             CHECK(l.events == std::vector<std::string>(
             {
-                "start_array(18446744073709551615)", "string(foo)",
+                "start_array()", "string(foo)",
                 "number_unsigned(1)", "number_unsigned(2)", "number_unsigned(3)",
-                "boolean(false)", "start_object(18446744073709551615)",
+                "boolean(false)", "start_object()",
                 "number_unsigned(1)", "end_object()", "end_array()"
             }));
         }
@@ -230,9 +244,9 @@ TEST_CASE("deserialization")
             CHECK(l.events.size() == 10);
             CHECK(l.events == std::vector<std::string>(
             {
-                "start_array(18446744073709551615)", "string(foo)",
+                "start_array()", "string(foo)",
                 "number_unsigned(1)", "number_unsigned(2)", "number_unsigned(3)",
-                "boolean(false)", "start_object(18446744073709551615)",
+                "boolean(false)", "start_object()",
                 "number_unsigned(1)", "end_object()", "parse_error(29)"
             }));
         }
@@ -254,9 +268,9 @@ TEST_CASE("deserialization")
             CHECK(l.events.size() == 10);
             CHECK(l.events == std::vector<std::string>(
             {
-                "start_array(18446744073709551615)", "string(foo)",
+                "start_array()", "string(foo)",
                 "number_unsigned(1)", "number_unsigned(2)", "number_unsigned(3)",
-                "boolean(false)", "start_object(18446744073709551615)",
+                "boolean(false)", "start_object()",
                 "number_unsigned(1)", "end_object()", "parse_error(29)"
             }));
         }
@@ -735,7 +749,7 @@ TEST_CASE("deserialization")
                 CHECK(l.events.size() == 3);
                 CHECK(l.events == std::vector<std::string>(
                 {
-                    "start_object(18446744073709551615)", "number_unsigned(11)",
+                    "start_object()", "number_unsigned(11)",
                     "parse_error(7)"
                 }));
             }
