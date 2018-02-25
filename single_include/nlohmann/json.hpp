@@ -3219,7 +3219,9 @@ class parser
 
         /// a parse error occurred
         /// the byte position and the last token are reported
-        virtual bool parse_error(int position, const std::string& last_token) = 0;
+        virtual bool parse_error(std::size_t position, const std::string& last_token) = 0;
+
+        virtual ~SAX() = default;
     };
 
     using parser_callback_t =
@@ -3708,7 +3710,7 @@ class parser
         {
             case token_type::begin_object:
             {
-                if (not sax->start_object(-1))
+                if (not sax->start_object(std::size_t(-1)))
                 {
                     return false;
                 }
@@ -3777,7 +3779,7 @@ class parser
 
             case token_type::begin_array:
             {
-                if (not sax->start_array(-1))
+                if (not sax->start_array(std::size_t(-1)))
                 {
                     return false;
                 }

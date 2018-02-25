@@ -61,7 +61,7 @@ class SaxEventLogger : public nlohmann::json::SAX
         return true;
     }
 
-    bool number_float(json::number_float_t val, const std::string& s) override
+    bool number_float(json::number_float_t, const std::string& s) override
     {
         events.push_back("number_float(" + s + ")");
         return true;
@@ -75,7 +75,7 @@ class SaxEventLogger : public nlohmann::json::SAX
 
     bool start_object(std::size_t elements) override
     {
-        if (elements == -1)
+        if (elements == std::size_t(-1))
         {
             events.push_back("start_object()");
         }
@@ -100,7 +100,7 @@ class SaxEventLogger : public nlohmann::json::SAX
 
     bool start_array(std::size_t elements) override
     {
-        if (elements == -1)
+        if (elements == std::size_t(-1))
         {
             events.push_back("start_array()");
         }
@@ -117,13 +117,13 @@ class SaxEventLogger : public nlohmann::json::SAX
         return true;
     }
 
-    bool binary(const std::vector<uint8_t>& vec) override
+    bool binary(const std::vector<uint8_t>&) override
     {
         events.push_back("binary()");
         return true;
     }
 
-    bool parse_error(int position, const std::string& last_token) override
+    bool parse_error(std::size_t position, const std::string&) override
     {
         errored = true;
         events.push_back("parse_error(" + std::to_string(position) + ")");
