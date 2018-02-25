@@ -34,6 +34,106 @@ using nlohmann::json;
 
 #include <valarray>
 
+class SaxEventLogger : public nlohmann::json::SAX
+{
+  public:
+    bool null() override
+    {
+        events.push_back("null()");
+        return true;
+    }
+
+    bool boolean(bool val) override
+    {
+        events.push_back(val ? "boolean(true)" : "boolean(false)");
+        return true;
+    }
+
+    bool number_integer(json::number_integer_t val) override
+    {
+        events.push_back("number_integer(" + std::to_string(val) + ")");
+        return true;
+    }
+
+    bool number_unsigned(json::number_unsigned_t val) override
+    {
+        events.push_back("number_unsigned(" + std::to_string(val) + ")");
+        return true;
+    }
+
+    bool number_float(json::number_float_t val, const std::string& s) override
+    {
+        events.push_back("number_float(" + s + ")");
+        return true;
+    }
+
+    bool string(const std::string& val) override
+    {
+        events.push_back("string(" + val + ")");
+        return true;
+    }
+
+    bool start_object(std::size_t elements) override
+    {
+        if (elements == -1)
+        {
+            events.push_back("start_object()");
+        }
+        else
+        {
+            events.push_back("start_object(" + std::to_string(elements) + ")");
+        }
+        return true;
+    }
+
+    bool key(const std::string& val) override
+    {
+        events.push_back("key(" + val + ")");
+        return true;
+    }
+
+    bool end_object()override
+    {
+        events.push_back("end_object()");
+        return true;
+    }
+
+    bool start_array(std::size_t elements) override
+    {
+        if (elements == -1)
+        {
+            events.push_back("start_array()");
+        }
+        else
+        {
+            events.push_back("start_array(" + std::to_string(elements) + ")");
+        }
+        return true;
+    }
+
+    bool end_array() override
+    {
+        events.push_back("end_array()");
+        return true;
+    }
+
+    bool binary(const std::vector<uint8_t>& vec) override
+    {
+        events.push_back("binary()");
+        return true;
+    }
+
+    bool parse_error(int position, const std::string& last_token) override
+    {
+        errored = true;
+        events.push_back("parse_error(" + std::to_string(position) + ")");
+        return false;
+    }
+
+    std::vector<std::string> events;
+    bool errored = false;
+};
+
 json parser_helper(const std::string& s);
 bool accept_helper(const std::string& s);
 
@@ -53,6 +153,8 @@ json parser_helper(const std::string& s)
 
 bool accept_helper(const std::string& s)
 {
+    CAPTURE(s);
+
     // 1. parse s without exceptions
     json j;
     CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j));
@@ -64,7 +166,12 @@ bool accept_helper(const std::string& s)
     // 3. check if both approaches come to the same result
     CHECK(ok_noexcept == ok_accept);
 
-    // 4. return result
+    // 4. parse with SAX (compare with relaxed accept result)
+    SaxEventLogger el;
+    CHECK_NOTHROW(json::sax_parse(s, &el));
+    CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == not el.errored);
+
+    // 5. return result
     return ok_accept;
 }
 
