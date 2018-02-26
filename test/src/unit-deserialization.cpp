@@ -34,7 +34,7 @@ using nlohmann::json;
 #include <iostream>
 #include <valarray>
 
-struct SaxEventLogger : public nlohmann::json::SAX
+struct SaxEventLogger : public nlohmann::json::json_sax
 {
     bool null() override
     {

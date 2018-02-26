@@ -3131,6 +3131,128 @@ scan_number_done:
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
+// #include <nlohmann/detail/input/json_sax.hpp>
+
+
+#include <cstddef>
+#include <string>
+#include <vector>
+
+namespace nlohmann
+{
+
+/*!
+@brief SAX interface
+*/
+template<typename BasicJsonType>
+struct json_sax
+{
+    /// type for (signed) integers
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    /// type for unsigned integers
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    /// type for floating-point numbers
+    using number_float_t = typename BasicJsonType::number_float_t;
+
+    /*!
+    @brief a null value was read
+    @return whether parsing should proceed
+    */
+    virtual bool null() = 0;
+
+    /*!
+    @brief a boolean value was read
+    @param[in] val  boolean value
+    @return whether parsing should proceed
+    */
+    virtual bool boolean(bool val) = 0;
+
+    /*!
+    @brief an integer number was read
+    @param[in] val  integer value
+    @return whether parsing should proceed
+    */
+    virtual bool number_integer(number_integer_t val) = 0;
+
+    /*!
+    @brief an unsigned integer number was read
+    @param[in] val  unsigned integer value
+    @return whether parsing should proceed
+    */
+    virtual bool number_unsigned(number_unsigned_t val) = 0;
+
+    /*!
+    @brief an floating-point number was read
+    @param[in] val  floating-point value
+    @param[in] s    raw token value
+    @return whether parsing should proceed
+    */
+    virtual bool number_float(number_float_t val, const std::string& s) = 0;
+
+    /*!
+    @brief a string was read
+    @param[in] val  string value
+    @return whether parsing should proceed
+    */
+    virtual bool string(const std::string& val) = 0;
+
+    /*!
+    @brief the beginning of an object was read
+    @param[in] elements  number of object elements or -1 if unknown
+    @return whether parsing should proceed
+    @note binary formats may report the number of elements
+    */
+    virtual bool start_object(std::size_t elements) = 0;
+
+    /*!
+    @brief an object key was read
+    @param[in] val  object key
+    @return whether parsing should proceed
+    */
+    virtual bool key(const std::string& val) = 0;
+
+    /*!
+    @brief the end of an object was read
+    @return whether parsing should proceed
+    */
+    virtual bool end_object() = 0;
+
+    /*!
+    @brief the beginning of an array was read
+    @param[in] elements  number of array elements or -1 if unknown
+    @return whether parsing should proceed
+    @note binary formats may report the number of elements
+    */
+    virtual bool start_array(std::size_t elements) = 0;
+
+    /*!
+    @brief the end of an array was read
+    @return whether parsing should proceed
+    */
+    virtual bool end_array() = 0;
+
+    /*!
+    @brief a binary value was read
+    @param[in] val  byte vector
+    @return whether parsing should proceed
+    @note examples are CBOR type 2 strings, MessagePack bin, and maybe UBJSON
+          array<uint8t>
+    */
+    virtual bool binary(const std::vector<uint8_t>& val) = 0;
+
+    /*!
+    @brief a parse error occurred
+    @param[in] position    the position in the input where the error occurs
+    @param[in] last_token  the last read token
+    @return whether parsing should proceed
+    */
+    virtual bool parse_error(std::size_t position, const std::string& last_token) = 0;
+
+    virtual ~json_sax() = default;
+};
+}
+
+
 // #include <nlohmann/detail/input/lexer.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
@@ -3175,54 +3297,7 @@ class parser
         value
     };
 
-    struct SAX
-    {
-        /// a null value was read
-        virtual bool null() = 0;
-
-        /// a boolean value was read
-        virtual bool boolean(bool) = 0;
-
-        /// an integer number was read
-        virtual bool number_integer(number_integer_t) = 0;
-
-        /// an unsigned integer number was read
-        virtual bool number_unsigned(number_unsigned_t) = 0;
-
-        /// a floating-point number was read
-        /// the string parameter contains the raw number value
-        virtual bool number_float(number_float_t, const std::string&) = 0;
-
-        /// a string value was read
-        virtual bool string(const std::string&) = 0;
-
-        /// the beginning of an object was read
-        /// binary formats may report the number of elements
-        virtual bool start_object(std::size_t elements) = 0;
-
-        /// an object key was read
-        virtual bool key(const std::string&) = 0;
-
-        /// the end of an object was read
-        virtual bool end_object() = 0;
-
-        /// the beginning of an array was read
-        /// binary formats may report the number of elements
-        virtual bool start_array(std::size_t elements) = 0;
-
-        /// the end of an array was read
-        virtual bool end_array() = 0;
-
-        /// a binary value was read
-        /// examples are CBOR type 2 strings, MessagePack bin, and maybe UBJSON array<uint8t>
-        virtual bool binary(const std::vector<uint8_t>& vec) = 0;
-
-        /// a parse error occurred
-        /// the byte position and the last token are reported
-        virtual bool parse_error(std::size_t position, const std::string& last_token) = 0;
-
-        virtual ~SAX() = default;
-    };
+    using json_sax = json_sax<BasicJsonType>;
 
     using parser_callback_t =
         std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
@@ -3234,7 +3309,7 @@ class parser
         : callback(cb), m_lexer(adapter), allow_exceptions(allow_exceptions_)
     {}
 
-    parser(detail::input_adapter_t adapter, SAX* s)
+    parser(detail::input_adapter_t adapter, json_sax* s)
         : m_lexer(adapter), sax(s)
     {}
 
@@ -3941,7 +4016,7 @@ class parser
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
     /// associated SAX parse event receiver
-    SAX* sax = nullptr;
+    json_sax* sax = nullptr;
 };
 }
 }
@@ -10938,7 +11013,7 @@ class basic_json
     */
     using parser_callback_t = typename parser::parser_callback_t;
 
-    using SAX = typename parser::SAX;
+    using json_sax = typename parser::json_sax;
 
     //////////////////
     // constructors //
@@ -15759,12 +15834,12 @@ class basic_json
         return parser(i).accept(true);
     }
 
-    static bool sax_parse(detail::input_adapter i, SAX* sax)
+    static bool sax_parse(detail::input_adapter i, json_sax* sax)
     {
         return parser(i, sax).sax_parse();
     }
 
-    static bool sax_parse(detail::input_adapter& i, SAX* sax)
+    static bool sax_parse(detail::input_adapter& i, json_sax* sax)
     {
         return parser(i, sax).sax_parse();
     }
@@ -15842,7 +15917,7 @@ class basic_json
                  std::is_base_of<
                      std::random_access_iterator_tag,
                      typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
-    static bool sax_parse(IteratorType first, IteratorType last, SAX* sax)
+    static bool sax_parse(IteratorType first, IteratorType last, json_sax* sax)
     {
         return parser(detail::input_adapter(first, last), sax).sax_parse();
     }

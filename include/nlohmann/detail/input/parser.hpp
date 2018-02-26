@@ -10,6 +10,7 @@
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
+#include <nlohmann/detail/input/json_sax.hpp>
 #include <nlohmann/detail/input/lexer.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
@@ -52,54 +53,7 @@ class parser
         value
     };
 
-    struct SAX
-    {
-        /// a null value was read
-        virtual bool null() = 0;
-
-        /// a boolean value was read
-        virtual bool boolean(bool) = 0;
-
-        /// an integer number was read
-        virtual bool number_integer(number_integer_t) = 0;
-
-        /// an unsigned integer number was read
-        virtual bool number_unsigned(number_unsigned_t) = 0;
-
-        /// a floating-point number was read
-        /// the string parameter contains the raw number value
-        virtual bool number_float(number_float_t, const std::string&) = 0;
-
-        /// a string value was read
-        virtual bool string(const std::string&) = 0;
-
-        /// the beginning of an object was read
-        /// binary formats may report the number of elements
-        virtual bool start_object(std::size_t elements) = 0;
-
-        /// an object key was read
-        virtual bool key(const std::string&) = 0;
-
-        /// the end of an object was read
-        virtual bool end_object() = 0;
-
-        /// the beginning of an array was read
-        /// binary formats may report the number of elements
-        virtual bool start_array(std::size_t elements) = 0;
-
-        /// the end of an array was read
-        virtual bool end_array() = 0;
-
-        /// a binary value was read
-        /// examples are CBOR type 2 strings, MessagePack bin, and maybe UBJSON array<uint8t>
-        virtual bool binary(const std::vector<uint8_t>& vec) = 0;
-
-        /// a parse error occurred
-        /// the byte position and the last token are reported
-        virtual bool parse_error(std::size_t position, const std::string& last_token) = 0;
-
-        virtual ~SAX() = default;
-    };
+    using json_sax = json_sax<BasicJsonType>;
 
     using parser_callback_t =
         std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
@@ -111,7 +65,7 @@ class parser
         : callback(cb), m_lexer(adapter), allow_exceptions(allow_exceptions_)
     {}
 
-    parser(detail::input_adapter_t adapter, SAX* s)
+    parser(detail::input_adapter_t adapter, json_sax* s)
         : m_lexer(adapter), sax(s)
     {}
 
@@ -818,7 +772,7 @@ class parser
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
     /// associated SAX parse event receiver
-    SAX* sax = nullptr;
+    json_sax* sax = nullptr;
 };
 }
 }

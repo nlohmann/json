@@ -34,7 +34,7 @@ using nlohmann::json;
 
 #include <valarray>
 
-class SaxEventLogger : public nlohmann::json::SAX
+class SaxEventLogger : public nlohmann::json::json_sax
 {
   public:
     bool null() override
