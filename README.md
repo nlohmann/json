@@ -42,7 +42,7 @@ There are myriads of [JSON](http://json.org) libraries out there, and each may e
 
 - **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
-- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/blob/master/test/src/unit.cpp) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) that there are no memory leaks. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
+- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/test/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests agains all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
 
 Other aspects were not so important to us:
 
@@ -55,7 +55,7 @@ See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.
 
 ## Integration
 
-`json.hpp` is the single required file in `single_include/nlohmann` or [released here](https://github.com/nlohmann/json/releases). You need to add
+[`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) is the single required file in `single_include/nlohmann` or [released here](https://github.com/nlohmann/json/releases). You need to add
 
 ```cpp
 #include <nlohmann/json.hpp>
@@ -111,7 +111,7 @@ Assume you want to create the JSON object
 }
 ```
 
-With the JSON class, you could write:
+With this library, you could write:
 
 ```cpp
 // create an empty structure (null)
@@ -155,7 +155,7 @@ json j2 = {
 };
 ```
 
-Note that in all these cases, you never need to "tell" the compiler which JSON value you want to use. If you want to be explicit or express some edge cases, the functions `json::array` and `json::object` will help:
+Note that in all these cases, you never need to "tell" the compiler which JSON value type you want to use. If you want to be explicit or express some edge cases, the functions [`json::array`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_aa80485befaffcadaa39965494e0b4d2e.html#aa80485befaffcadaa39965494e0b4d2e) and [`json::object`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_aa13f7c0615867542ce80337cbcf13ada.html#aa13f7c0615867542ce80337cbcf13ada) will help:
 
 ```cpp
 // a way to express the empty array []
@@ -174,7 +174,7 @@ json array_not_object = json::array({ {"currency", "USD"}, {"value", 42.99} });
 
 #### To/from strings
 
-You can create an object (deserialization) by appending `_json` to a string literal:
+You can create a JSON value (deserialization) by appending `_json` to a string literal:
 
 ```cpp
 // create object from string literal
@@ -191,14 +191,14 @@ auto j2 = R"(
 
 Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string `"{ "happy": true, "pi": 3.141 }"` rather than parsing the actual object.
 
-The above example can also be expressed explicitly using `json::parse()`:
+The above example can also be expressed explicitly using [`json::parse()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_aa9676414f2e36383c4b181fe856aa3c0.html#aa9676414f2e36383c4b181fe856aa3c0):
 
 ```cpp
 // parse explicitly
 auto j3 = json::parse("{ \"happy\": true, \"pi\": 3.141 }");
 ```
 
-You can also get a string representation (serialize):
+You can also get a string representation of a JSON value (serialize):
 
 ```cpp
 // explicit conversion to string
@@ -233,7 +233,7 @@ std::cout << cpp_string << " == " << cpp_string2 << " == " << j_string.get<std::
 std::cout << j_string << " == " << serialized_string << std::endl;
 ```
 
-`.dump()` always returns the serialized value, and `.get<std::string>()` returns the originally stored string value.
+[`.dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a5adea76fedba9898d404fef8598aa663.html#a5adea76fedba9898d404fef8598aa663) always returns the serialized value, and [`.get<std::string>()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a16f9445f7629f634221a42b967cdcd43.html#a16f9445f7629f634221a42b967cdcd43) returns the originally stored string value.
 
 
 #### To/from streams (e.g. files, string streams)
@@ -269,7 +269,7 @@ Please note that setting the exception bit for `failbit` is inappropriate for th
 
 #### Read from iterator range
 
-You can also read JSON from an iterator range; that is, from any container accessible by iterators whose content is stored as contiguous byte sequence, for instance a `std::vector<std::uint8_t>`:
+You can also parse JSON from an iterator range; that is, from any container accessible by iterators whose content is stored as contiguous byte sequence, for instance a `std::vector<std::uint8_t>`:
 
 ```cpp
 std::vector<std::uint8_t> v = {'t', 'r', 'u', 'e'};
@@ -360,7 +360,7 @@ o.erase("foo");
 
 ### Conversion from STL containers
 
-Any sequence container (`std::array`, `std::vector`, `std::deque`, `std::forward_list`, `std::list`) whose values can be used to construct JSON types (e.g., integers, floating point numbers, Booleans, string types, or again STL containers described in this section) can be used to create a JSON array. The same holds for similar associative containers (`std::set`, `std::multiset`, `std::unordered_set`, `std::unordered_multiset`), but in these cases the order of the elements of the array depends on how the elements are ordered in the respective STL container.
+Any sequence container (`std::array`, `std::vector`, `std::deque`, `std::forward_list`, `std::list`) whose values can be used to construct JSON values (e.g., integers, floating point numbers, Booleans, string types, or again STL containers described in this section) can be used to create a JSON array. The same holds for similar associative containers (`std::set`, `std::multiset`, `std::unordered_set`, `std::unordered_multiset`), but in these cases the order of the elements of the array depends on how the elements are ordered in the respective STL container.
 
 ```cpp
 std::vector<int> c_vector {1, 2, 3, 4};
@@ -400,7 +400,7 @@ json j_umset(c_umset); // both entries for "one" are used
 // maybe ["one", "two", "one", "four"]
 ```
 
-Likewise, any associative key-value containers (`std::map`, `std::multimap`, `std::unordered_map`, `std::unordered_multimap`) whose keys can construct an `std::string` and whose values can be used to construct JSON types (see examples above) can be used to create a JSON object. Note that in case of multimaps only one key is used in the JSON object and the value depends on the internal order of the STL container.
+Likewise, any associative key-value containers (`std::map`, `std::multimap`, `std::unordered_map`, `std::unordered_multimap`) whose keys can construct an `std::string` and whose values can be used to construct JSON values (see examples above) can be used to create a JSON object. Note that in case of multimaps only one key is used in the JSON object and the value depends on the internal order of the STL container.
 
 ```cpp
 std::map<std::string, int> c_map { {"one", 1}, {"two", 2}, {"three", 3} };
@@ -525,7 +525,7 @@ int vi = jn.get<int>();
 
 ### Arbitrary types conversions
 
-Every type can be serialized in JSON, not just STL-containers and scalar types. Usually, you would do something along those lines:
+Every type can be serialized in JSON, not just STL containers and scalar types. Usually, you would do something along those lines:
 
 ```cpp
 namespace ns {
@@ -629,7 +629,7 @@ struct adl_serializer {
 };
 ```
 
-This serializer works fine when you have control over the type's namespace. However, what about `boost::optional`, or `std::filesystem::path` (C++17)? Hijacking the `boost` namespace is pretty bad, and it's illegal to add something other than template specializations to `std`...
+This serializer works fine when you have control over the type's namespace. However, what about `boost::optional` or `std::filesystem::path` (C++17)? Hijacking the `boost` namespace is pretty bad, and it's illegal to add something other than template specializations to `std`...
 
 To solve this, you need to add a specialization of `adl_serializer` to the `nlohmann` namespace, here's an example:
 
@@ -698,9 +698,9 @@ Yes. You might want to take a look at [`unit-udt.cpp`](https://github.com/nlohma
 
 If you write your own serializer, you'll need to do a few things:
 
-* use a different `basic_json` alias than `nlohmann::json` (the last template parameter of `basic_json` is the `JSONSerializer`)
-* use your `basic_json` alias (or a template parameter) in all your `to_json`/`from_json` methods
-* use `nlohmann::to_json` and `nlohmann::from_json` when you need ADL
+- use a different `basic_json` alias than `nlohmann::json` (the last template parameter of `basic_json` is the `JSONSerializer`)
+- use your `basic_json` alias (or a template parameter) in all your `to_json`/`from_json` methods
+- use `nlohmann::to_json` and `nlohmann::from_json` when you need ADL
 
 Here is an example, without simplifications, that only accepts types with a size <= 32, and uses ADL.
 
@@ -973,6 +973,7 @@ I deeply appreciate the help of the following people.
 - [Patrik Huber](https://github.com/patrikhuber) fixed links in the README file.
 - [johnfb](https://github.com/johnfb) found a bug in the implementation of CBOR's indefinite length strings.
 - [Paul Fultz II](https://github.com/pfultz2) added a note on the cget package manager.
+- [Wilson Lin](https://github.com/wla80) made the integration section of the README more concise.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
