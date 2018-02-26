@@ -2969,7 +2969,7 @@ scan_number_done:
     }
 
     /// return current string value (implicitly resets the token; useful only once)
-    std::string move_string()
+    std::string&& move_string()
     {
         return std::move(token_buffer);
     }
@@ -3154,6 +3154,9 @@ struct json_sax
     /// type for floating-point numbers
     using number_float_t = typename BasicJsonType::number_float_t;
 
+    /// constant to indicate that no size limit is given for array or object
+    static constexpr auto no_limit = std::size_t(-1);
+
     /*!
     @brief a null value was read
     @return whether parsing should proceed
@@ -3194,22 +3197,22 @@ struct json_sax
     @param[in] val  string value
     @return whether parsing should proceed
     */
-    virtual bool string(const std::string& val) = 0;
+    virtual bool string(std::string&& val) = 0;
 
     /*!
     @brief the beginning of an object was read
-    @param[in] elements  number of object elements or -1 if unknown
+    @param[in] elements  number of object elements or no_limit if unknown
     @return whether parsing should proceed
     @note binary formats may report the number of elements
     */
-    virtual bool start_object(std::size_t elements) = 0;
+    virtual bool start_object(std::size_t elements = no_limit) = 0;
 
     /*!
     @brief an object key was read
     @param[in] val  object key
     @return whether parsing should proceed
     */
-    virtual bool key(const std::string& val) = 0;
+    virtual bool key(std::string&& val) = 0;
 
     /*!
     @brief the end of an object was read
@@ -3219,11 +3222,11 @@ struct json_sax
 
     /*!
     @brief the beginning of an array was read
-    @param[in] elements  number of array elements or -1 if unknown
+    @param[in] elements  number of array elements or no_limit if unknown
     @return whether parsing should proceed
     @note binary formats may report the number of elements
     */
-    virtual bool start_array(std::size_t elements) = 0;
+    virtual bool start_array(std::size_t elements = no_limit) = 0;
 
     /*!
     @brief the end of an array was read
@@ -3297,7 +3300,7 @@ class parser
         value
     };
 
-    using json_sax = json_sax<BasicJsonType>;
+    using json_sax_t = json_sax<BasicJsonType>;
 
     using parser_callback_t =
         std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
@@ -3309,7 +3312,7 @@ class parser
         : callback(cb), m_lexer(adapter), allow_exceptions(allow_exceptions_)
     {}
 
-    parser(detail::input_adapter_t adapter, json_sax* s)
+    parser(detail::input_adapter_t adapter, json_sax_t* s)
         : m_lexer(adapter), sax(s)
     {}
 
@@ -3785,7 +3788,7 @@ class parser
         {
             case token_type::begin_object:
             {
-                if (not sax->start_object(std::size_t(-1)))
+                if (not sax->start_object())
                 {
                     return false;
                 }
@@ -3854,7 +3857,7 @@ class parser
 
             case token_type::begin_array:
             {
-                if (not sax->start_array(std::size_t(-1)))
+                if (not sax->start_array())
                 {
                     return false;
                 }
@@ -4016,7 +4019,7 @@ class parser
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
     /// associated SAX parse event receiver
-    json_sax* sax = nullptr;
+    json_sax_t* sax = nullptr;
 };
 }
 }
@@ -11013,7 +11016,7 @@ class basic_json
     */
     using parser_callback_t = typename parser::parser_callback_t;
 
-    using json_sax = typename parser::json_sax;
+    using json_sax_t = typename parser::json_sax_t;
 
     //////////////////
     // constructors //
@@ -15834,12 +15837,12 @@ class basic_json
         return parser(i).accept(true);
     }
 
-    static bool sax_parse(detail::input_adapter i, json_sax* sax)
+    static bool sax_parse(detail::input_adapter i, json_sax_t* sax)
     {
         return parser(i, sax).sax_parse();
     }
 
-    static bool sax_parse(detail::input_adapter& i, json_sax* sax)
+    static bool sax_parse(detail::input_adapter& i, json_sax_t* sax)
     {
         return parser(i, sax).sax_parse();
     }
@@ -15917,7 +15920,7 @@ class basic_json
                  std::is_base_of<
                      std::random_access_iterator_tag,
                      typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
-    static bool sax_parse(IteratorType first, IteratorType last, json_sax* sax)
+    static bool sax_parse(IteratorType first, IteratorType last, json_sax_t* sax)
     {
         return parser(detail::input_adapter(first, last), sax).sax_parse();
     }

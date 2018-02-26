@@ -53,7 +53,7 @@ class parser
         value
     };
 
-    using json_sax = json_sax<BasicJsonType>;
+    using json_sax_t = json_sax<BasicJsonType>;
 
     using parser_callback_t =
         std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
@@ -65,7 +65,7 @@ class parser
         : callback(cb), m_lexer(adapter), allow_exceptions(allow_exceptions_)
     {}
 
-    parser(detail::input_adapter_t adapter, json_sax* s)
+    parser(detail::input_adapter_t adapter, json_sax_t* s)
         : m_lexer(adapter), sax(s)
     {}
 
@@ -541,7 +541,7 @@ class parser
         {
             case token_type::begin_object:
             {
-                if (not sax->start_object(std::size_t(-1)))
+                if (not sax->start_object())
                 {
                     return false;
                 }
@@ -610,7 +610,7 @@ class parser
 
             case token_type::begin_array:
             {
-                if (not sax->start_array(std::size_t(-1)))
+                if (not sax->start_array())
                 {
                     return false;
                 }
@@ -772,7 +772,7 @@ class parser
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
     /// associated SAX parse event receiver
-    json_sax* sax = nullptr;
+    json_sax_t* sax = nullptr;
 };
 }
 }

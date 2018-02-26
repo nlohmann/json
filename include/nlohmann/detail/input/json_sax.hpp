@@ -20,6 +20,9 @@ struct json_sax
     /// type for floating-point numbers
     using number_float_t = typename BasicJsonType::number_float_t;
 
+    /// constant to indicate that no size limit is given for array or object
+    static constexpr auto no_limit = std::size_t(-1);
+
     /*!
     @brief a null value was read
     @return whether parsing should proceed
@@ -60,22 +63,22 @@ struct json_sax
     @param[in] val  string value
     @return whether parsing should proceed
     */
-    virtual bool string(const std::string& val) = 0;
+    virtual bool string(std::string&& val) = 0;
 
     /*!
     @brief the beginning of an object was read
-    @param[in] elements  number of object elements or -1 if unknown
+    @param[in] elements  number of object elements or no_limit if unknown
     @return whether parsing should proceed
     @note binary formats may report the number of elements
     */
-    virtual bool start_object(std::size_t elements) = 0;
+    virtual bool start_object(std::size_t elements = no_limit) = 0;
 
     /*!
     @brief an object key was read
     @param[in] val  object key
     @return whether parsing should proceed
     */
-    virtual bool key(const std::string& val) = 0;
+    virtual bool key(std::string&& val) = 0;
 
     /*!
     @brief the end of an object was read
@@ -85,11 +88,11 @@ struct json_sax
 
     /*!
     @brief the beginning of an array was read
-    @param[in] elements  number of array elements or -1 if unknown
+    @param[in] elements  number of array elements or no_limit if unknown
     @return whether parsing should proceed
     @note binary formats may report the number of elements
     */
-    virtual bool start_array(std::size_t elements) = 0;
+    virtual bool start_array(std::size_t elements = no_limit) = 0;
 
     /*!
     @brief the end of an array was read

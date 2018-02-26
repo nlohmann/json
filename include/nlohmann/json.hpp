@@ -1105,7 +1105,7 @@ class basic_json
     */
     using parser_callback_t = typename parser::parser_callback_t;
 
-    using json_sax = typename parser::json_sax;
+    using json_sax_t = typename parser::json_sax_t;
 
     //////////////////
     // constructors //
@@ -5926,12 +5926,12 @@ class basic_json
         return parser(i).accept(true);
     }
 
-    static bool sax_parse(detail::input_adapter i, json_sax* sax)
+    static bool sax_parse(detail::input_adapter i, json_sax_t* sax)
     {
         return parser(i, sax).sax_parse();
     }
 
-    static bool sax_parse(detail::input_adapter& i, json_sax* sax)
+    static bool sax_parse(detail::input_adapter& i, json_sax_t* sax)
     {
         return parser(i, sax).sax_parse();
     }
@@ -6009,7 +6009,7 @@ class basic_json
                  std::is_base_of<
                      std::random_access_iterator_tag,
                      typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
-    static bool sax_parse(IteratorType first, IteratorType last, json_sax* sax)
+    static bool sax_parse(IteratorType first, IteratorType last, json_sax_t* sax)
     {
         return parser(detail::input_adapter(first, last), sax).sax_parse();
     }

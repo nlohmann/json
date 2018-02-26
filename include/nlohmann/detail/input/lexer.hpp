@@ -1130,7 +1130,7 @@ scan_number_done:
     }
 
     /// return current string value (implicitly resets the token; useful only once)
-    std::string move_string()
+    std::string&& move_string()
     {
         return std::move(token_buffer);
     }
