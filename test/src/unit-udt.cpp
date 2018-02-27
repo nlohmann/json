@@ -730,6 +730,6 @@ TEST_CASE("Issue #924")
     // Prevent get<std::vector<Evil>>() to throw
     auto j = json::array();
 
-    (void) j.get<Evil>();
-    (void) j.get<std::vector<Evil>>();
+    CHECK_NOTHROW(j.get<Evil>());
+    CHECK_NOTHROW(j.get<std::vector<Evil>>());
 }
