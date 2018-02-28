@@ -168,6 +168,7 @@ TEST_CASE("README", "[hide]")
             const std::string tmp = j[0];
             j[1] = 42;
             bool foo = j.at(2);
+            CHECK(foo == true);
 
             // other stuff
             j.size();     // 3 entries
@@ -177,6 +178,7 @@ TEST_CASE("README", "[hide]")
 
             // comparison
             bool x = (j == "[\"foo\", 1, true]"_json);  // true
+            CHECK(x == true);
 
             // create an object
             json o;
@@ -257,17 +259,21 @@ TEST_CASE("README", "[hide]")
             bool b1 = true;
             json jb = b1;
             bool b2 = jb;
+            CHECK(b2 == true);
 
             // numbers
             int i = 42;
             json jn = i;
             double f = jn;
+            CHECK(f == 42);
 
             // etc.
 
             std::string vs = js.get<std::string>();
             bool vb = jb.get<bool>();
+            CHECK(vb == true);
             int vi = jn.get<int>();
+            CHECK(vi == 42);
 
             // etc.
         }
