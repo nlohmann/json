@@ -1,4 +1,5 @@
 [![JSON for Modern C++](https://raw.githubusercontent.com/nlohmann/json/master/doc/json.gif)](https://github.com/nlohmann/json/releases)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fnlohmann%2Fjson.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fnlohmann%2Fjson?ref=badge_shield)
 
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
@@ -855,6 +856,9 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](http://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
 
 The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](http://florian.loitsch.com/)
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fnlohmann%2Fjson.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fnlohmann%2Fjson?ref=badge_large)
 
 ## Contact
 
