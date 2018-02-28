@@ -152,6 +152,10 @@ TEST_CASE("README", "[hide]")
             j.push_back(1);
             j.push_back(true);
 
+            // comparison
+            bool x = (j == "[\"foo\", 1, true]"_json);  // true
+            CHECK(x == true);
+
             // iterate the array
             for (json::iterator it = j.begin(); it != j.end(); ++it)
             {
@@ -175,10 +179,6 @@ TEST_CASE("README", "[hide]")
             j.empty();    // false
             j.type();     // json::value_t::array
             j.clear();    // the array is empty again
-
-            // comparison
-            bool x = (j == "[\"foo\", 1, true]"_json);  // true
-            CHECK(x == true);
 
             // create an object
             json o;
