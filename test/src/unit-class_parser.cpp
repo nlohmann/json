@@ -134,129 +134,6 @@ class SaxEventLogger : public nlohmann::json::json_sax_t
     bool errored = false;
 };
 
-class SaxDomParser : public nlohmann::json::json_sax_t
-{
-  public:
-    bool null() override
-    {
-        handle_value(nullptr);
-        return true;
-    }
-
-    bool boolean(bool val) override
-    {
-        handle_value(val);
-        return true;
-    }
-
-    bool number_integer(json::number_integer_t val) override
-    {
-        handle_value(val);
-        return true;
-    }
-
-    bool number_unsigned(json::number_unsigned_t val) override
-    {
-        handle_value(val);
-        return true;
-    }
-
-    bool number_float(json::number_float_t val, const std::string&) override
-    {
-        handle_value(val);
-        return true;
-    }
-
-    bool string(std::string&& val) override
-    {
-        handle_value(val);
-        return true;
-    }
-
-    bool start_object(std::size_t) override
-    {
-        ref_stack.push_back(handle_value(json::value_t::object));
-        return true;
-    }
-
-    bool key(std::string&& val) override
-    {
-        last_key = val;
-        return true;
-    }
-
-    bool end_object() override
-    {
-        ref_stack.pop_back();
-        return true;
-    }
-
-    bool start_array(std::size_t) override
-    {
-        ref_stack.push_back(handle_value(json::value_t::array));
-        return true;
-    }
-
-    bool end_array() override
-    {
-        ref_stack.pop_back();
-        return true;
-    }
-
-    bool binary(const std::vector<uint8_t>&) override
-    {
-        return true;
-    }
-
-    bool parse_error(std::size_t position, const std::string&, const std::string&) override
-    {
-        return false;
-    }
-
-    json& get_value()
-    {
-        return root;
-    }
-
-  private:
-    /// the parsed JSON value
-    json root;
-    /// stack to model hierarchy of values
-    std::vector<json*> ref_stack;
-    /// helper variable for object keys
-    std::string last_key;
-
-    /*!
-    @invariant If the ref stack is empty, then the passed value will be the new
-               root.
-    @invariant If the ref stack contains a value, then it is an array or an
-               object to which we can add elements
-    */
-    json* handle_value(json&& j)
-    {
-        if (ref_stack.empty())
-        {
-            assert(root.is_null());
-            root = j;
-            return &root;
-        }
-        else
-        {
-            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
-            if (ref_stack.back()->is_array())
-            {
-                ref_stack.back()->push_back(j);
-                return &(ref_stack.back()->back());
-            }
-            else
-            {
-                json& r = ref_stack.back()->operator[](last_key) = j;
-                return &r;
-            }
-        }
-    }
-};
-
 json parser_helper(const std::string& s);
 bool accept_helper(const std::string& s);
 
@@ -271,7 +148,7 @@ json parser_helper(const std::string& s)
     CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j_nothrow));
     CHECK(j_nothrow == j);
 
-    SaxDomParser sdp;
+    nlohmann::json_sax_dom_parser<json> sdp;
     json::sax_parse(s, &sdp);
     CHECK(sdp.get_value() == j);
 

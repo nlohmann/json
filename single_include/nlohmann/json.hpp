@@ -3256,6 +3256,138 @@ struct json_sax
 
     virtual ~json_sax() = default;
 };
+
+
+template<typename BasicJsonType>
+class json_sax_dom_parser : public json_sax<BasicJsonType>
+{
+  public:
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+
+    bool null() override
+    {
+        handle_value(nullptr);
+        return true;
+    }
+
+    bool boolean(bool val) override
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_integer(number_integer_t val) override
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_unsigned(number_unsigned_t val) override
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_float(number_float_t val, const std::string&) override
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool string(std::string&& val) override
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool start_object(std::size_t) override
+    {
+        ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
+        return true;
+    }
+
+    bool key(std::string&& val) override
+    {
+        last_key = val;
+        return true;
+    }
+
+    bool end_object() override
+    {
+        ref_stack.pop_back();
+        return true;
+    }
+
+    bool start_array(std::size_t) override
+    {
+        ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
+        return true;
+    }
+
+    bool end_array() override
+    {
+        ref_stack.pop_back();
+        return true;
+    }
+
+    bool binary(const std::vector<uint8_t>&) override
+    {
+        return true;
+    }
+
+    bool parse_error(std::size_t position, const std::string&, const std::string& error_msg) override
+    {
+        JSON_THROW(BasicJsonType::parse_error::create(101, position, error_msg));
+        return false;
+    }
+
+    BasicJsonType& get_value()
+    {
+        return root;
+    }
+
+  private:
+    /// the parsed JSON value
+    BasicJsonType root;
+    /// stack to model hierarchy of values
+    std::vector<BasicJsonType*> ref_stack;
+    /// helper variable for object keys
+    std::string last_key;
+
+    /*!
+    @invariant If the ref stack is empty, then the passed value will be the new
+               root.
+    @invariant If the ref stack contains a value, then it is an array or an
+               object to which we can add elements
+    */
+    template<typename Value>
+    BasicJsonType* handle_value(Value&& v)
+    {
+        if (ref_stack.empty())
+        {
+            assert(root.is_null());
+            root = BasicJsonType(std::forward<Value>(v));
+            return &root;
+        }
+        else
+        {
+            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+            if (ref_stack.back()->is_array())
+            {
+                ref_stack.back()->m_value.array->push_back(BasicJsonType(std::forward<Value>(v)));
+                return &(ref_stack.back()->m_value.array->back());
+            }
+            else
+            {
+                BasicJsonType& r = ref_stack.back()->m_value.object->operator[](last_key) = BasicJsonType(std::forward<Value>(v));
+                return &r;
+            }
+        }
+    }
+};
+
 }
 
 
@@ -10096,6 +10228,8 @@ class basic_json
     friend class ::nlohmann::detail::binary_writer;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::binary_reader;
+    template<typename BasicJsonType>
+    friend class ::nlohmann::json_sax_dom_parser;
 
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;

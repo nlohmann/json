@@ -37,6 +37,35 @@ BENCHMARK_CAPTURE(ParseFile, signed_ints,   "data/numbers/signed_ints.json");
 BENCHMARK_CAPTURE(ParseFile, unsigned_ints, "data/numbers/unsigned_ints.json");
 
 
+static void ParseFileSax(benchmark::State& state, const char* filename)
+{
+    while (state.KeepRunning())
+    {
+        state.PauseTiming();
+        auto* f = new std::ifstream(filename);
+        auto* sdp = new nlohmann::json_sax_dom_parser<json>();
+        state.ResumeTiming();
+
+        json::sax_parse(*f, sdp);
+
+        state.PauseTiming();
+        delete f;
+        delete sdp;
+        state.ResumeTiming();
+    }
+
+    std::ifstream file(filename, std::ios::binary | std::ios::ate);
+    state.SetBytesProcessed(state.iterations() * file.tellg());
+}
+BENCHMARK_CAPTURE(ParseFileSax, jeopardy,      "data/jeopardy/jeopardy.json");
+BENCHMARK_CAPTURE(ParseFileSax, canada,        "data/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(ParseFileSax, citm_catalog,  "data/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(ParseFileSax, twitter,       "data/nativejson-benchmark/twitter.json");
+BENCHMARK_CAPTURE(ParseFileSax, floats,        "data/numbers/floats.json");
+BENCHMARK_CAPTURE(ParseFileSax, signed_ints,   "data/numbers/signed_ints.json");
+BENCHMARK_CAPTURE(ParseFileSax, unsigned_ints, "data/numbers/unsigned_ints.json");
+
+
 //////////////////////////////////////////////////////////////////////////////
 // parse JSON from string
 //////////////////////////////////////////////////////////////////////////////
@@ -69,6 +98,33 @@ BENCHMARK_CAPTURE(ParseString, floats,        "data/numbers/floats.json");
 BENCHMARK_CAPTURE(ParseString, signed_ints,   "data/numbers/signed_ints.json");
 BENCHMARK_CAPTURE(ParseString, unsigned_ints, "data/numbers/unsigned_ints.json");
 
+static void ParseStringSax(benchmark::State& state, const char* filename)
+{
+    std::ifstream f(filename);
+    std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+
+    while (state.KeepRunning())
+    {
+        state.PauseTiming();
+        auto* sdp = new nlohmann::json_sax_dom_parser<json>();
+        state.ResumeTiming();
+
+        json::sax_parse(str, sdp);
+
+        state.PauseTiming();
+        delete sdp;
+        state.ResumeTiming();
+    }
+
+    state.SetBytesProcessed(state.iterations() * str.size());
+}
+BENCHMARK_CAPTURE(ParseStringSax, jeopardy,      "data/jeopardy/jeopardy.json");
+BENCHMARK_CAPTURE(ParseStringSax, canada,        "data/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(ParseStringSax, citm_catalog,  "data/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(ParseStringSax, twitter,       "data/nativejson-benchmark/twitter.json");
+BENCHMARK_CAPTURE(ParseStringSax, floats,        "data/numbers/floats.json");
+BENCHMARK_CAPTURE(ParseStringSax, signed_ints,   "data/numbers/signed_ints.json");
+BENCHMARK_CAPTURE(ParseStringSax, unsigned_ints, "data/numbers/unsigned_ints.json");
 
 //////////////////////////////////////////////////////////////////////////////
 // serialize JSON
