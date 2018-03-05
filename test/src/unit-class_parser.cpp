@@ -123,7 +123,7 @@ class SaxEventLogger : public nlohmann::json::json_sax_t
         return true;
     }
 
-    bool parse_error(std::size_t position, const std::string&) override
+    bool parse_error(std::size_t position, const std::string&, const std::string&) override
     {
         errored = true;
         events.push_back("parse_error(" + std::to_string(position) + ")");
@@ -208,7 +208,7 @@ class SaxDomParser : public nlohmann::json::json_sax_t
         return true;
     }
 
-    bool parse_error(std::size_t position, const std::string&) override
+    bool parse_error(std::size_t position, const std::string&, const std::string&) override
     {
         return false;
     }

@@ -113,9 +113,12 @@ struct json_sax
     @brief a parse error occurred
     @param[in] position    the position in the input where the error occurs
     @param[in] last_token  the last read token
+    @param[in] error_msg   a detailed error message
     @return whether parsing should proceed
     */
-    virtual bool parse_error(std::size_t position, const std::string& last_token) = 0;
+    virtual bool parse_error(std::size_t position,
+                             const std::string& last_token,
+                             const std::string& error_msg) = 0;
 
     virtual ~json_sax() = default;
 };

@@ -562,7 +562,8 @@ class parser
                     if (JSON_UNLIKELY(last_token != token_type::value_string))
                     {
                         return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string());
+                                                m_lexer.get_token_string(),
+                                                exception_message(token_type::value_string));
                     }
                     else
                     {
@@ -577,7 +578,8 @@ class parser
                     if (JSON_UNLIKELY(last_token != token_type::name_separator))
                     {
                         return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string());
+                                                m_lexer.get_token_string(),
+                                                exception_message(token_type::name_separator));
                     }
 
                     // parse value
@@ -603,7 +605,8 @@ class parser
                     else
                     {
                         return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string());
+                                                m_lexer.get_token_string(),
+                                                exception_message(token_type::end_object));
                     }
                 }
             }
@@ -649,7 +652,8 @@ class parser
                     else
                     {
                         return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string());
+                                                m_lexer.get_token_string(),
+                                                exception_message(token_type::end_array));
                     }
                 }
             }
@@ -661,7 +665,8 @@ class parser
                 if (JSON_UNLIKELY(not std::isfinite(res)))
                 {
                     return sax->parse_error(m_lexer.get_position(),
-                                            m_lexer.get_token_string());
+                                            m_lexer.get_token_string(),
+                                            "number overflow");
                 }
                 else
                 {
@@ -699,10 +704,19 @@ class parser
                 return sax->number_unsigned(m_lexer.get_number_unsigned());
             }
 
+            case token_type::parse_error:
+            {
+                // using "uninitialized" to avoid "expected" message
+                return sax->parse_error(m_lexer.get_position(),
+                                        m_lexer.get_token_string(),
+                                        exception_message(token_type::uninitialized));
+            }
+
             default: // the last token was unexpected
             {
                 return sax->parse_error(m_lexer.get_position(),
-                                        m_lexer.get_token_string());
+                                        m_lexer.get_token_string(),
+                                        exception_message(token_type::literal_or_value));
             }
         }
     }
@@ -721,10 +735,9 @@ class parser
         if (JSON_UNLIKELY(t != last_token))
         {
             errored = true;
-            expected = t;
             if (allow_exceptions)
             {
-                throw_exception();
+                JSON_THROW(parse_error::create(101, m_lexer.get_position(), exception_message(t)));
             }
             else
             {
@@ -735,7 +748,7 @@ class parser
         return true;
     }
 
-    [[noreturn]] void throw_exception() const
+    std::string exception_message(const token_type expected)
     {
         std::string error_msg = "syntax error - ";
         if (last_token == token_type::parse_error)
@@ -753,7 +766,7 @@ class parser
             error_msg += "; expected " + std::string(lexer_t::token_type_name(expected));
         }
 
-        JSON_THROW(parse_error::create(101, m_lexer.get_position(), error_msg));
+        return error_msg;
     }
 
   private:
@@ -767,8 +780,6 @@ class parser
     lexer_t m_lexer;
     /// whether a syntax error occurred
     bool errored = false;
-    /// possible reason for the syntax error
-    token_type expected = token_type::uninitialized;
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
     /// associated SAX parse event receiver
