@@ -132,6 +132,10 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
 
+    json_sax_dom_parser(BasicJsonType& r, const bool allow_exceptions_ = true)
+        : root(r), allow_exceptions(allow_exceptions_)
+    {}
+
     bool null() override
     {
         handle_value(nullptr);
@@ -204,25 +208,30 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool parse_error(std::size_t position, const std::string&, const std::string& error_msg) override
+    bool parse_error(std::size_t position, const std::string& token,
+                     const std::string& error_msg) override
     {
-        JSON_THROW(BasicJsonType::parse_error::create(101, position, error_msg));
+        errored = true;
+        if (allow_exceptions)
+        {
+            if (error_msg == "number overflow")
+            {
+                JSON_THROW(BasicJsonType::out_of_range::create(406, "number overflow parsing '" + token + "'"));
+            }
+            else
+            {
+                JSON_THROW(BasicJsonType::parse_error::create(101, position, error_msg));
+            }
+        }
         return false;
     }
 
-    BasicJsonType& get_value()
+    bool is_errored() const
     {
-        return root;
+        return errored;
     }
 
   private:
-    /// the parsed JSON value
-    BasicJsonType root;
-    /// stack to model hierarchy of values
-    std::vector<BasicJsonType*> ref_stack;
-    /// helper to hold the reference for the next object element
-    BasicJsonType* object_element = nullptr;
-
     /*!
     @invariant If the ref stack is empty, then the passed value will be the new
                root.
@@ -234,7 +243,6 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
     {
         if (ref_stack.empty())
         {
-            assert(root.is_null());
             root = BasicJsonType(std::forward<Value>(v));
             return &root;
         }
@@ -254,6 +262,17 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
             }
         }
     }
+
+    /// the parsed JSON value
+    BasicJsonType& root;
+    /// stack to model hierarchy of values
+    std::vector<BasicJsonType*> ref_stack;
+    /// helper to hold the reference for the next object element
+    BasicJsonType* object_element = nullptr;
+    /// whether a syntax error occurred
+    bool errored = false;
+    /// whether to throw exceptions in case of errors
+    const bool allow_exceptions = true;
 };
 
 }

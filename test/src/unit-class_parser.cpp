@@ -148,9 +148,10 @@ json parser_helper(const std::string& s)
     CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j_nothrow));
     CHECK(j_nothrow == j);
 
-    nlohmann::json_sax_dom_parser<json> sdp;
+    json j_sax;
+    nlohmann::json_sax_dom_parser<json> sdp(j_sax);
     json::sax_parse(s, &sdp);
-    CHECK(sdp.get_value() == j);
+    CHECK(j_sax == j);
 
     return j;
 }

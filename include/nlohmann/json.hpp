@@ -5930,12 +5930,12 @@ class basic_json
 
     static bool sax_parse(detail::input_adapter i, json_sax_t* sax)
     {
-        return parser(i, sax).sax_parse();
+        return parser(i).sax_parse(sax);
     }
 
     static bool sax_parse(detail::input_adapter& i, json_sax_t* sax)
     {
-        return parser(i, sax).sax_parse();
+        return parser(i).sax_parse(sax);
     }
 
     /*!
@@ -6013,7 +6013,7 @@ class basic_json
                      typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
     static bool sax_parse(IteratorType first, IteratorType last, json_sax_t* sax)
     {
-        return parser(detail::input_adapter(first, last), sax).sax_parse();
+        return parser(detail::input_adapter(first, last)).sax_parse(sax);
     }
 
     /*!

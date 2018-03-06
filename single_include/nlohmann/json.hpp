@@ -3266,6 +3266,10 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
 
+    json_sax_dom_parser(BasicJsonType& r, const bool allow_exceptions_ = true)
+        : root(r), allow_exceptions(allow_exceptions_)
+    {}
+
     bool null() override
     {
         handle_value(nullptr);
@@ -3338,25 +3342,30 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool parse_error(std::size_t position, const std::string&, const std::string& error_msg) override
+    bool parse_error(std::size_t position, const std::string& token,
+                     const std::string& error_msg) override
     {
-        JSON_THROW(BasicJsonType::parse_error::create(101, position, error_msg));
+        errored = true;
+        if (allow_exceptions)
+        {
+            if (error_msg == "number overflow")
+            {
+                JSON_THROW(BasicJsonType::out_of_range::create(406, "number overflow parsing '" + token + "'"));
+            }
+            else
+            {
+                JSON_THROW(BasicJsonType::parse_error::create(101, position, error_msg));
+            }
+        }
         return false;
     }
 
-    BasicJsonType& get_value()
+    bool is_errored() const
     {
-        return root;
+        return errored;
     }
 
   private:
-    /// the parsed JSON value
-    BasicJsonType root;
-    /// stack to model hierarchy of values
-    std::vector<BasicJsonType*> ref_stack;
-    /// helper to hold the reference for the next object element
-    BasicJsonType* object_element = nullptr;
-
     /*!
     @invariant If the ref stack is empty, then the passed value will be the new
                root.
@@ -3368,7 +3377,6 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
     {
         if (ref_stack.empty())
         {
-            assert(root.is_null());
             root = BasicJsonType(std::forward<Value>(v));
             return &root;
         }
@@ -3388,6 +3396,17 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
             }
         }
     }
+
+    /// the parsed JSON value
+    BasicJsonType& root;
+    /// stack to model hierarchy of values
+    std::vector<BasicJsonType*> ref_stack;
+    /// helper to hold the reference for the next object element
+    BasicJsonType* object_element = nullptr;
+    /// whether a syntax error occurred
+    bool errored = false;
+    /// whether to throw exceptions in case of errors
+    const bool allow_exceptions = true;
 };
 
 }
@@ -3447,11 +3466,10 @@ class parser
                     const parser_callback_t cb = nullptr,
                     const bool allow_exceptions_ = true)
         : callback(cb), m_lexer(adapter), allow_exceptions(allow_exceptions_)
-    {}
-
-    parser(detail::input_adapter_t adapter, json_sax_t* s)
-        : m_lexer(adapter), sax(s)
-    {}
+    {
+        // read first token
+        get_token();
+    }
 
     /*!
     @brief public parser interface
@@ -3465,31 +3483,52 @@ class parser
     */
     void parse(const bool strict, BasicJsonType& result)
     {
-        // read first token
-        get_token();
-
-        parse_internal(true, result);
-        result.assert_invariant();
-
-        // in strict mode, input must be completely read
-        if (strict)
+        if (callback)
         {
-            get_token();
-            expect(token_type::end_of_input);
+            parse_internal(true, result);
+            result.assert_invariant();
+
+            // in strict mode, input must be completely read
+            if (strict)
+            {
+                get_token();
+                expect(token_type::end_of_input);
+            }
+
+            // in case of an error, return discarded value
+            if (errored)
+            {
+                result = value_t::discarded;
+                return;
+            }
+
+            // set top-level value to null if it was discarded by the callback
+            // function
+            if (result.is_discarded())
+            {
+                result = nullptr;
+            }
         }
-
-        // in case of an error, return discarded value
-        if (errored)
+        else
         {
-            result = value_t::discarded;
-            return;
-        }
+            json_sax_dom_parser<BasicJsonType> sdp(result, allow_exceptions);
+            sax_parse_internal(&sdp);
+            result.assert_invariant();
 
-        // set top-level value to null if it was discarded by the callback
-        // function
-        if (result.is_discarded())
-        {
-            result = nullptr;
+            // in strict mode, input must be completely read
+            if (strict and (get_token() != token_type::end_of_input))
+            {
+                sdp.parse_error(m_lexer.get_position(),
+                                m_lexer.get_token_string(),
+                                exception_message(token_type::end_of_input));
+            }
+
+            // in case of an error, return discarded value
+            if (sdp.is_errored())
+            {
+                result = value_t::discarded;
+                return;
+            }
         }
     }
 
@@ -3501,9 +3540,6 @@ class parser
     */
     bool accept(const bool strict = true)
     {
-        // read first token
-        get_token();
-
         if (not accept_internal())
         {
             return false;
@@ -3513,12 +3549,9 @@ class parser
         return not strict or (get_token() == token_type::end_of_input);
     }
 
-    bool sax_parse()
+    bool sax_parse(json_sax_t* sax)
     {
-        // read first token
-        get_token();
-
-        return sax_parse_internal();
+        return sax_parse_internal(sax);
     }
 
   private:
@@ -3919,7 +3952,7 @@ class parser
         }
     }
 
-    bool sax_parse_internal()
+    bool sax_parse_internal(json_sax_t* sax)
     {
         switch (last_token)
         {
@@ -3968,7 +4001,7 @@ class parser
 
                     // parse value
                     get_token();
-                    if (not sax_parse_internal())
+                    if (not sax_parse_internal(sax))
                     {
                         return false;
                     }
@@ -4015,7 +4048,7 @@ class parser
                 while (true)
                 {
                     // parse value
-                    if (not sax_parse_internal())
+                    if (not sax_parse_internal(sax))
                     {
                         return false;
                     }
@@ -4166,8 +4199,6 @@ class parser
     bool errored = false;
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
-    /// associated SAX parse event receiver
-    json_sax_t* sax = nullptr;
 };
 }
 }
@@ -15989,12 +16020,12 @@ class basic_json
 
     static bool sax_parse(detail::input_adapter i, json_sax_t* sax)
     {
-        return parser(i, sax).sax_parse();
+        return parser(i).sax_parse(sax);
     }
 
     static bool sax_parse(detail::input_adapter& i, json_sax_t* sax)
     {
-        return parser(i, sax).sax_parse();
+        return parser(i).sax_parse(sax);
     }
 
     /*!
@@ -16072,7 +16103,7 @@ class basic_json
                      typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
     static bool sax_parse(IteratorType first, IteratorType last, json_sax_t* sax)
     {
-        return parser(detail::input_adapter(first, last), sax).sax_parse();
+        return parser(detail::input_adapter(first, last)).sax_parse(sax);
     }
 
     /*!

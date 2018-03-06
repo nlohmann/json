@@ -63,11 +63,10 @@ class parser
                     const parser_callback_t cb = nullptr,
                     const bool allow_exceptions_ = true)
         : callback(cb), m_lexer(adapter), allow_exceptions(allow_exceptions_)
-    {}
-
-    parser(detail::input_adapter_t adapter, json_sax_t* s)
-        : m_lexer(adapter), sax(s)
-    {}
+    {
+        // read first token
+        get_token();
+    }
 
     /*!
     @brief public parser interface
@@ -81,31 +80,52 @@ class parser
     */
     void parse(const bool strict, BasicJsonType& result)
     {
-        // read first token
-        get_token();
-
-        parse_internal(true, result);
-        result.assert_invariant();
-
-        // in strict mode, input must be completely read
-        if (strict)
+        if (callback)
         {
-            get_token();
-            expect(token_type::end_of_input);
+            parse_internal(true, result);
+            result.assert_invariant();
+
+            // in strict mode, input must be completely read
+            if (strict)
+            {
+                get_token();
+                expect(token_type::end_of_input);
+            }
+
+            // in case of an error, return discarded value
+            if (errored)
+            {
+                result = value_t::discarded;
+                return;
+            }
+
+            // set top-level value to null if it was discarded by the callback
+            // function
+            if (result.is_discarded())
+            {
+                result = nullptr;
+            }
         }
-
-        // in case of an error, return discarded value
-        if (errored)
+        else
         {
-            result = value_t::discarded;
-            return;
-        }
+            json_sax_dom_parser<BasicJsonType> sdp(result, allow_exceptions);
+            sax_parse_internal(&sdp);
+            result.assert_invariant();
 
-        // set top-level value to null if it was discarded by the callback
-        // function
-        if (result.is_discarded())
-        {
-            result = nullptr;
+            // in strict mode, input must be completely read
+            if (strict and (get_token() != token_type::end_of_input))
+            {
+                sdp.parse_error(m_lexer.get_position(),
+                                m_lexer.get_token_string(),
+                                exception_message(token_type::end_of_input));
+            }
+
+            // in case of an error, return discarded value
+            if (sdp.is_errored())
+            {
+                result = value_t::discarded;
+                return;
+            }
         }
     }
 
@@ -117,9 +137,6 @@ class parser
     */
     bool accept(const bool strict = true)
     {
-        // read first token
-        get_token();
-
         if (not accept_internal())
         {
             return false;
@@ -129,12 +146,9 @@ class parser
         return not strict or (get_token() == token_type::end_of_input);
     }
 
-    bool sax_parse()
+    bool sax_parse(json_sax_t* sax)
     {
-        // read first token
-        get_token();
-
-        return sax_parse_internal();
+        return sax_parse_internal(sax);
     }
 
   private:
@@ -535,7 +549,7 @@ class parser
         }
     }
 
-    bool sax_parse_internal()
+    bool sax_parse_internal(json_sax_t* sax)
     {
         switch (last_token)
         {
@@ -584,7 +598,7 @@ class parser
 
                     // parse value
                     get_token();
-                    if (not sax_parse_internal())
+                    if (not sax_parse_internal(sax))
                     {
                         return false;
                     }
@@ -631,7 +645,7 @@ class parser
                 while (true)
                 {
                     // parse value
-                    if (not sax_parse_internal())
+                    if (not sax_parse_internal(sax))
                     {
                         return false;
                     }
@@ -782,8 +796,6 @@ class parser
     bool errored = false;
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
-    /// associated SAX parse event receiver
-    json_sax_t* sax = nullptr;
 };
 }
 }
