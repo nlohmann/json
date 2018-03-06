@@ -10845,7 +10845,8 @@ class basic_json
     @brief create a JSON value from an existing one
 
     This is a constructor for existing @ref basic_json types.
-    It does not hijack copy/move constructors, since the parameter has different template arguments than the current ones.
+    It does not hijack copy/move constructors, since the parameter has different
+    template arguments than the current ones.
 
     The constructor tries to convert the internal @ref m_value of the parameter.
 
@@ -12087,7 +12088,8 @@ class basic_json
     /*!
     @brief get special-case overload
 
-    This overloads converts the current @ref basic_json in a different @ref basic_json type
+    This overloads converts the current @ref basic_json in a different
+    @ref basic_json type
 
     @tparam BasicJsonType == @ref basic_json
 
@@ -12100,14 +12102,11 @@ class basic_json
     */
     template<typename BasicJsonType, detail::enable_if_t<
                  not std::is_same<BasicJsonType, basic_json>::value and
-                 detail::is_basic_json<BasicJsonType>::value
-                 ,
-                 int> = 0>
+                 detail::is_basic_json<BasicJsonType>::value, int> = 0>
     BasicJsonType get() const
     {
         return *this;
     }
-
 
     /*!
     @brief get a value (explicit)
