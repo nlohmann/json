@@ -693,6 +693,83 @@ TEST_CASE("custom serializer that does adl by default", "[udt]")
     CHECK(me == cj.get<udt::person>());
 }
 
+TEST_CASE("different basic_json types conversions")
+{
+    using json = nlohmann::json;
+
+    SECTION("null")
+    {
+        json j;
+        custom_json cj = j;
+        CHECK(cj == nullptr);
+    }
+
+    SECTION("boolean")
+    {
+        json j = true;
+        custom_json cj = j;
+        CHECK(cj == true);
+    }
+
+    SECTION("discarded")
+    {
+        json j(json::value_t::discarded);
+        custom_json cj;
+        CHECK_NOTHROW(cj = j);
+        CHECK(cj.type() == custom_json::value_t::discarded);
+    }
+
+    SECTION("array")
+    {
+        json j = {1, 2, 3};
+        custom_json cj = j;
+        CHECK((cj == std::vector<int> {1, 2, 3}));
+    }
+
+    SECTION("integer")
+    {
+        json j = 42;
+        custom_json cj = j;
+        CHECK(cj == 42);
+    }
+
+    SECTION("float")
+    {
+        json j = 42.0;
+        custom_json cj = j;
+        CHECK(cj == 42.0);
+    }
+
+    SECTION("unsigned")
+    {
+        json j = 42u;
+        custom_json cj = j;
+        CHECK(cj == 42u);
+    }
+
+    SECTION("string")
+    {
+        json j = "forty-two";
+        custom_json cj = j;
+        CHECK(cj == "forty-two");
+    }
+
+    SECTION("object")
+    {
+        json j = {{"forty", "two"}};
+        custom_json cj = j;
+        auto m = j.get<std::map<std::string, std::string>>();
+        CHECK(cj == m);
+    }
+
+    SECTION("get<custom_json>")
+    {
+        json j = 42;
+        custom_json cj = j.get<custom_json>();
+        CHECK(cj == 42);
+    }
+}
+
 namespace
 {
 struct incomplete;
@@ -730,6 +807,6 @@ TEST_CASE("Issue #924")
     // Prevent get<std::vector<Evil>>() to throw
     auto j = json::array();
 
-    (void) j.get<Evil>();
-    (void) j.get<std::vector<Evil>>();
+    CHECK_NOTHROW(j.get<Evil>());
+    CHECK_NOTHROW(j.get<std::vector<Evil>>());
 }
