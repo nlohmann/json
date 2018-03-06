@@ -176,7 +176,8 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
 
     bool key(std::string&& val) override
     {
-        last_key = val;
+        // add null at given key and store the reference for later
+        object_element = &(ref_stack.back()->m_value.object->operator[](val));
         return true;
     }
 
@@ -219,8 +220,8 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
     BasicJsonType root;
     /// stack to model hierarchy of values
     std::vector<BasicJsonType*> ref_stack;
-    /// helper variable for object keys
-    std::string last_key;
+    /// helper to hold the reference for the next object element
+    BasicJsonType* object_element = nullptr;
 
     /*!
     @invariant If the ref stack is empty, then the passed value will be the new
@@ -247,8 +248,9 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
             }
             else
             {
-                BasicJsonType& r = ref_stack.back()->m_value.object->operator[](last_key) = BasicJsonType(std::forward<Value>(v));
-                return &r;
+                assert(object_element);
+                *object_element = BasicJsonType(std::forward<Value>(v));
+                return object_element;
             }
         }
     }
