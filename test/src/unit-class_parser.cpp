@@ -1453,7 +1453,7 @@ TEST_CASE("parser class")
                    ]
                  })";
 
-            json::parser_callback_t cb = [&](int depth, json::parse_event_t event, json & parsed)
+            json::parser_callback_t cb = [&](int, json::parse_event_t event, json & parsed)
             {
                 // skip uninteresting events
                 if (event == json::parse_event_t::value and !parsed.is_primitive())
