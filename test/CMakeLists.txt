@@ -104,6 +104,7 @@ foreach(file ${files})
 
     target_compile_definitions(${testcase} PRIVATE CATCH_CONFIG_FAST_COMPILE)
     target_include_directories(${testcase} PRIVATE "thirdparty/catch")
+    target_include_directories(${testcase} PRIVATE "thirdparty/fifo_map")
     target_include_directories(${testcase} PRIVATE ${NLOHMANN_JSON_INCLUDE_BUILD_DIR})
     target_link_libraries(${testcase} ${NLOHMANN_JSON_TARGET_NAME})
 

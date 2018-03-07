@@ -466,7 +466,7 @@ struct is_compatible_complete_type
 {
     static constexpr bool value =
         not std::is_base_of<std::istream, CompatibleCompleteType>::value and
-        not std::is_same<BasicJsonType, CompatibleCompleteType>::value and
+        not is_basic_json<CompatibleCompleteType>::value and
         not is_basic_json_nested_type<BasicJsonType, CompatibleCompleteType>::value and
         has_to_json<BasicJsonType, CompatibleCompleteType>::value;
 };
@@ -7401,114 +7401,124 @@ class binary_writer
         oa->write_characters(vec.data(), sizeof(NumberType));
     }
 
-    template<typename NumberType>
+    // UBJSON: write number (floating point)
+    template<typename NumberType, typename std::enable_if<
+                 std::is_floating_point<NumberType>::value, int>::type = 0>
     void write_number_with_ubjson_prefix(const NumberType n,
                                          const bool add_prefix)
     {
-        if (std::is_floating_point<NumberType>::value)
+        if (add_prefix)
+        {
+            oa->write_character(static_cast<CharType>('D'));  // float64
+        }
+        write_number(n);
+    }
+
+    // UBJSON: write number (unsigned integer)
+    template<typename NumberType, typename std::enable_if<
+                 std::is_unsigned<NumberType>::value, int>::type = 0>
+    void write_number_with_ubjson_prefix(const NumberType n,
+                                         const bool add_prefix)
+    {
+        if (n <= static_cast<uint64_t>((std::numeric_limits<int8_t>::max)()))
         {
             if (add_prefix)
             {
-                oa->write_character(static_cast<CharType>('D'));  // float64
+                oa->write_character(static_cast<CharType>('i'));  // int8
             }
-            write_number(n);
+            write_number(static_cast<uint8_t>(n));
         }
-        else if (std::is_unsigned<NumberType>::value)
+        else if (n <= (std::numeric_limits<uint8_t>::max)())
         {
-            if (n <= (std::numeric_limits<int8_t>::max)())
+            if (add_prefix)
             {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('i'));  // int8
-                }
-                write_number(static_cast<uint8_t>(n));
+                oa->write_character(static_cast<CharType>('U'));  // uint8
             }
-            else if (n <= (std::numeric_limits<uint8_t>::max)())
+            write_number(static_cast<uint8_t>(n));
+        }
+        else if (n <= static_cast<uint64_t>((std::numeric_limits<int16_t>::max)()))
+        {
+            if (add_prefix)
             {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('U'));  // uint8
-                }
-                write_number(static_cast<uint8_t>(n));
+                oa->write_character(static_cast<CharType>('I'));  // int16
             }
-            else if (n <= (std::numeric_limits<int16_t>::max)())
+            write_number(static_cast<int16_t>(n));
+        }
+        else if (n <= static_cast<uint64_t>((std::numeric_limits<int32_t>::max)()))
+        {
+            if (add_prefix)
             {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('I'));  // int16
-                }
-                write_number(static_cast<int16_t>(n));
+                oa->write_character(static_cast<CharType>('l'));  // int32
             }
-            else if (n <= (std::numeric_limits<int32_t>::max)())
+            write_number(static_cast<int32_t>(n));
+        }
+        else if (n <= static_cast<uint64_t>((std::numeric_limits<int64_t>::max)()))
+        {
+            if (add_prefix)
             {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('l'));  // int32
-                }
-                write_number(static_cast<int32_t>(n));
+                oa->write_character(static_cast<CharType>('L'));  // int64
             }
-            else if (n <= (std::numeric_limits<int64_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('L'));  // int64
-                }
-                write_number(static_cast<int64_t>(n));
-            }
-            else
-            {
-                JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
-            }
+            write_number(static_cast<int64_t>(n));
         }
         else
         {
-            if ((std::numeric_limits<int8_t>::min)() <= n and n <= (std::numeric_limits<int8_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('i'));  // int8
-                }
-                write_number(static_cast<int8_t>(n));
-            }
-            else if ((std::numeric_limits<uint8_t>::min)() <= n and n <= (std::numeric_limits<uint8_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('U'));  // uint8
-                }
-                write_number(static_cast<uint8_t>(n));
-            }
-            else if ((std::numeric_limits<int16_t>::min)() <= n and n <= (std::numeric_limits<int16_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('I'));  // int16
-                }
-                write_number(static_cast<int16_t>(n));
-            }
-            else if ((std::numeric_limits<int32_t>::min)() <= n and n <= (std::numeric_limits<int32_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('l'));  // int32
-                }
-                write_number(static_cast<int32_t>(n));
-            }
-            else if ((std::numeric_limits<int64_t>::min)() <= n and n <= (std::numeric_limits<int64_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('L'));  // int64
-                }
-                write_number(static_cast<int64_t>(n));
-            }
-            // LCOV_EXCL_START
-            else
-            {
-                JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
-            }
-            // LCOV_EXCL_STOP
+            JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
         }
+    }
+
+    // UBJSON: write number (signed integer)
+    template<typename NumberType, typename std::enable_if<
+                 std::is_signed<NumberType>::value and
+                 not std::is_floating_point<NumberType>::value, int>::type = 0>
+    void write_number_with_ubjson_prefix(const NumberType n,
+                                         const bool add_prefix)
+    {
+        if ((std::numeric_limits<int8_t>::min)() <= n and n <= (std::numeric_limits<int8_t>::max)())
+        {
+            if (add_prefix)
+            {
+                oa->write_character(static_cast<CharType>('i'));  // int8
+            }
+            write_number(static_cast<int8_t>(n));
+        }
+        else if (static_cast<int64_t>((std::numeric_limits<uint8_t>::min)()) <= n and n <= static_cast<int64_t>((std::numeric_limits<uint8_t>::max)()))
+        {
+            if (add_prefix)
+            {
+                oa->write_character(static_cast<CharType>('U'));  // uint8
+            }
+            write_number(static_cast<uint8_t>(n));
+        }
+        else if ((std::numeric_limits<int16_t>::min)() <= n and n <= (std::numeric_limits<int16_t>::max)())
+        {
+            if (add_prefix)
+            {
+                oa->write_character(static_cast<CharType>('I'));  // int16
+            }
+            write_number(static_cast<int16_t>(n));
+        }
+        else if ((std::numeric_limits<int32_t>::min)() <= n and n <= (std::numeric_limits<int32_t>::max)())
+        {
+            if (add_prefix)
+            {
+                oa->write_character(static_cast<CharType>('l'));  // int32
+            }
+            write_number(static_cast<int32_t>(n));
+        }
+        else if ((std::numeric_limits<int64_t>::min)() <= n and n <= (std::numeric_limits<int64_t>::max)())
+        {
+            if (add_prefix)
+            {
+                oa->write_character(static_cast<CharType>('L'));  // int64
+            }
+            write_number(static_cast<int64_t>(n));
+        }
+        // LCOV_EXCL_START
+        else
+        {
+            JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
+        }
+        // LCOV_EXCL_STOP
     }
 
     /*!
@@ -11300,6 +11310,7 @@ class basic_json
     - @a CompatibleType is not derived from `std::istream`,
     - @a CompatibleType is not @ref basic_json (to avoid hijacking copy/move
          constructors),
+    - @a CompatibleType is not a different @ref basic_json type (i.e. with different template arguments)
     - @a CompatibleType is not a @ref basic_json nested type (e.g.,
          @ref json_pointer, @ref iterator, etc ...)
     - @ref @ref json_serializer<U> has a
@@ -11332,6 +11343,78 @@ class basic_json
                                            std::forward<CompatibleType>(val))))
     {
         JSONSerializer<U>::to_json(*this, std::forward<CompatibleType>(val));
+        assert_invariant();
+    }
+
+    /*!
+    @brief create a JSON value from an existing one
+
+    This is a constructor for existing @ref basic_json types.
+    It does not hijack copy/move constructors, since the parameter has different
+    template arguments than the current ones.
+
+    The constructor tries to convert the internal @ref m_value of the parameter.
+
+    @tparam BasicJsonType a type such that:
+    - @a BasicJsonType is a @ref basic_json type.
+    - @a BasicJsonType has different template arguments than @ref basic_json_t.
+
+    @param[in] val the @ref basic_json value to be converted.
+
+    @complexity Usually linear in the size of the passed @a val, also
+                depending on the implementation of the called `to_json()`
+                method.
+
+    @exceptionsafety Depends on the called constructor. For types directly
+    supported by the library (i.e., all types for which no `to_json()` function
+    was provided), strong guarantee holds: if an exception is thrown, there are
+    no changes to any JSON value.
+
+    @since version 3.1.2
+    */
+    template <typename BasicJsonType,
+              detail::enable_if_t<
+                  detail::is_basic_json<BasicJsonType>::value and not std::is_same<basic_json, BasicJsonType>::value, int> = 0>
+    basic_json(const BasicJsonType& val)
+    {
+        using other_boolean_t = typename BasicJsonType::boolean_t;
+        using other_number_float_t = typename BasicJsonType::number_float_t;
+        using other_number_integer_t = typename BasicJsonType::number_integer_t;
+        using other_number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+        using other_string_t = typename BasicJsonType::string_t;
+        using other_object_t = typename BasicJsonType::object_t;
+        using other_array_t = typename BasicJsonType::array_t;
+
+        switch (val.type())
+        {
+            case value_t::boolean:
+                JSONSerializer<other_boolean_t>::to_json(*this, val.template get<other_boolean_t>());
+                break;
+            case value_t::number_float:
+                JSONSerializer<other_number_float_t>::to_json(*this, val.template get<other_number_float_t>());
+                break;
+            case value_t::number_integer:
+                JSONSerializer<other_number_integer_t>::to_json(*this, val.template get<other_number_integer_t>());
+                break;
+            case value_t::number_unsigned:
+                JSONSerializer<other_number_unsigned_t>::to_json(*this, val.template get<other_number_unsigned_t>());
+                break;
+            case value_t::string:
+                JSONSerializer<other_string_t>::to_json(*this, val.template get_ref<const other_string_t&>());
+                break;
+            case value_t::object:
+                JSONSerializer<other_object_t>::to_json(*this, val.template get_ref<const other_object_t&>());
+                break;
+            case value_t::array:
+                JSONSerializer<other_array_t>::to_json(*this, val.template get_ref<const other_array_t&>());
+                break;
+            case value_t::null:
+                *this = nullptr;
+                break;
+            case value_t::discarded:
+                m_type = value_t::discarded;
+                break;
+        }
         assert_invariant();
     }
 
@@ -12508,6 +12591,29 @@ class basic_json
     }
 
     /*!
+    @brief get special-case overload
+
+    This overloads converts the current @ref basic_json in a different
+    @ref basic_json type
+
+    @tparam BasicJsonType == @ref basic_json
+
+    @return a copy of *this, converted into @tparam BasicJsonType
+
+    @complexity Depending on the implementation of the called `from_json()`
+                method.
+
+    @since version 3.1.2
+    */
+    template<typename BasicJsonType, detail::enable_if_t<
+                 not std::is_same<BasicJsonType, basic_json>::value and
+                 detail::is_basic_json<BasicJsonType>::value, int> = 0>
+    BasicJsonType get() const
+    {
+        return *this;
+    }
+
+    /*!
     @brief get a value (explicit)
 
     Explicit type conversion between the JSON value and a compatible value
@@ -12548,7 +12654,7 @@ class basic_json
     */
     template<typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
              detail::enable_if_t <
-                 not std::is_same<basic_json_t, ValueType>::value and
+                 not detail::is_basic_json<ValueType>::value and
                  detail::has_from_json<basic_json_t, ValueType>::value and
                  not detail::has_non_default_from_json<basic_json_t, ValueType>::value,
                  int> = 0>
@@ -12814,7 +12920,8 @@ class basic_json
     template < typename ValueType, typename std::enable_if <
                    not std::is_pointer<ValueType>::value and
                    not std::is_same<ValueType, detail::json_ref<basic_json>>::value and
-                   not std::is_same<ValueType, typename string_t::value_type>::value
+                   not std::is_same<ValueType, typename string_t::value_type>::value and
+                   not detail::is_basic_json<ValueType>::value
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif

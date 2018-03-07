@@ -32,9 +32,71 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include "fifo_map.hpp"
+
 #include <fstream>
 #include <list>
 #include <cstdio>
+
+/////////////////////////////////////////////////////////////////////
+// for #972
+/////////////////////////////////////////////////////////////////////
+
+template<class K, class V, class dummy_compare, class A>
+using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
+using my_json = nlohmann::basic_json<my_workaround_fifo_map>;
+
+/////////////////////////////////////////////////////////////////////
+// for #977
+/////////////////////////////////////////////////////////////////////
+
+namespace ns
+{
+struct foo
+{
+    int x;
+};
+
+template <typename, typename SFINAE = void>
+struct foo_serializer;
+
+template<typename T>
+struct foo_serializer<T, typename std::enable_if<std::is_same<foo, T>::value>::type>
+{
+    template <typename BasicJsonType>
+    static void to_json(BasicJsonType& j, const T& value)
+    {
+        j = BasicJsonType{{"x", value.x}};
+    }
+    template <typename BasicJsonType>
+    static void from_json(const BasicJsonType& j, T& value)     // !!!
+    {
+        nlohmann::from_json(j.at("x"), value.x);
+    }
+};
+
+template<typename T>
+struct foo_serializer < T, typename std::enable_if < !std::is_same<foo, T>::value >::type >
+{
+    template <typename BasicJsonType>
+    static void to_json(BasicJsonType& j, const T& value) noexcept
+    {
+        ::nlohmann::to_json(j, value);
+    }
+    template <typename BasicJsonType>
+    static void from_json(const BasicJsonType& j, T& value)   //!!!
+    {
+        ::nlohmann::from_json(j, value);
+    }
+};
+}
+
+using foo_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t,
+      std::uint64_t, double, std::allocator, ns::foo_serializer>;
+
+/////////////////////////////////////////////////////////////////////
+// for #805
+/////////////////////////////////////////////////////////////////////
 
 namespace
 {
@@ -1435,5 +1497,21 @@ TEST_CASE("regression tests")
         CHECK_THROWS_AS(json::from_ubjson(v_ubjson), json::out_of_range&);
         //CHECK_THROWS_WITH(json::from_ubjson(v_ubjson),
         //                  "[json.exception.out_of_range.408] excessive object size: 8658170730974374167");
+    }
+
+    SECTION("issue #972 - Segmentation fault on G++ when trying to assign json string literal to custom json type")
+    {
+        my_json foo = R"([1, 2, 3])"_json;
+    }
+
+    SECTION("issue #977 - Assigning between different json types")
+    {
+        foo_json lj = ns::foo{3};
+        ns::foo ff = lj;
+        CHECK(lj.is_object());
+        CHECK(lj.size() == 1);
+        CHECK(lj["x"] == 3);
+        CHECK(ff.x == 3);
+        nlohmann::json nj = lj;                // This line works as expected
     }
 }
