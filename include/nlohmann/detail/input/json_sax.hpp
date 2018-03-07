@@ -275,5 +275,79 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
     const bool allow_exceptions = true;
 };
 
+template<typename BasicJsonType>
+class json_sax_acceptor : public json_sax<BasicJsonType>
+{
+  public:
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+
+    bool null() override
+    {
+        return true;
+    }
+
+    bool boolean(bool) override
+    {
+        return true;
+    }
+
+    bool number_integer(number_integer_t) override
+    {
+        return true;
+    }
+
+    bool number_unsigned(number_unsigned_t) override
+    {
+        return true;
+    }
+
+    bool number_float(number_float_t, const std::string&) override
+    {
+        return true;
+    }
+
+    bool string(std::string&&) override
+    {
+        return true;
+    }
+
+    bool start_object(std::size_t) override
+    {
+        return true;
+    }
+
+    bool key(std::string&&) override
+    {
+        return true;
+    }
+
+    bool end_object() override
+    {
+        return true;
+    }
+
+    bool start_array(std::size_t) override
+    {
+        return true;
+    }
+
+    bool end_array() override
+    {
+        return true;
+    }
+
+    bool binary(const std::vector<uint8_t>&) override
+    {
+        return true;
+    }
+
+    bool parse_error(std::size_t, const std::string&, const std::string&) override
+    {
+        return false;
+    }
+};
+
 }
 

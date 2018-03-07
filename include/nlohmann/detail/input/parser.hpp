@@ -137,7 +137,9 @@ class parser
     */
     bool accept(const bool strict = true)
     {
-        if (not accept_internal())
+        json_sax_acceptor<BasicJsonType> sax_acceptor;
+
+        if (not sax_parse_internal(&sax_acceptor))
         {
             return false;
         }
@@ -433,119 +435,6 @@ class parser
         if (keep and callback and not callback(depth, parse_event_t::value, result))
         {
             result.m_type = value_t::discarded;
-        }
-    }
-
-    /*!
-    @brief the actual acceptor
-
-    @invariant 1. The last token is not yet processed. Therefore, the caller
-                  of this function must make sure a token has been read.
-               2. When this function returns, the last token is processed.
-                  That is, the last read character was already considered.
-
-    This invariant makes sure that no token needs to be "unput".
-    */
-    bool accept_internal()
-    {
-        switch (last_token)
-        {
-            case token_type::begin_object:
-            {
-                // read next token
-                get_token();
-
-                // closing } -> we are done
-                if (last_token == token_type::end_object)
-                {
-                    return true;
-                }
-
-                // parse values
-                while (true)
-                {
-                    // parse key
-                    if (last_token != token_type::value_string)
-                    {
-                        return false;
-                    }
-
-                    // parse separator (:)
-                    get_token();
-                    if (last_token != token_type::name_separator)
-                    {
-                        return false;
-                    }
-
-                    // parse value
-                    get_token();
-                    if (not accept_internal())
-                    {
-                        return false;
-                    }
-
-                    // comma -> next value
-                    get_token();
-                    if (last_token == token_type::value_separator)
-                    {
-                        get_token();
-                        continue;
-                    }
-
-                    // closing }
-                    return (last_token == token_type::end_object);
-                }
-            }
-
-            case token_type::begin_array:
-            {
-                // read next token
-                get_token();
-
-                // closing ] -> we are done
-                if (last_token == token_type::end_array)
-                {
-                    return true;
-                }
-
-                // parse values
-                while (true)
-                {
-                    // parse value
-                    if (not accept_internal())
-                    {
-                        return false;
-                    }
-
-                    // comma -> next value
-                    get_token();
-                    if (last_token == token_type::value_separator)
-                    {
-                        get_token();
-                        continue;
-                    }
-
-                    // closing ]
-                    return (last_token == token_type::end_array);
-                }
-            }
-
-            case token_type::value_float:
-            {
-                // reject infinity or NAN
-                return std::isfinite(m_lexer.get_number_float());
-            }
-
-            case token_type::literal_false:
-            case token_type::literal_null:
-            case token_type::literal_true:
-            case token_type::value_integer:
-            case token_type::value_string:
-            case token_type::value_unsigned:
-                return true;
-
-            default: // the last token was unexpected
-                return false;
         }
     }
 
