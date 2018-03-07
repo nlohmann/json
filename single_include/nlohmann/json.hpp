@@ -6909,114 +6909,124 @@ class binary_writer
         oa->write_characters(vec.data(), sizeof(NumberType));
     }
 
-    template<typename NumberType>
+    // UBJSON: write number (floating point)
+    template<typename NumberType, typename std::enable_if<
+                 std::is_floating_point<NumberType>::value, int>::type = 0>
     void write_number_with_ubjson_prefix(const NumberType n,
                                          const bool add_prefix)
     {
-        if (std::is_floating_point<NumberType>::value)
+        if (add_prefix)
+        {
+            oa->write_character(static_cast<CharType>('D'));  // float64
+        }
+        write_number(n);
+    }
+
+    // UBJSON: write number (unsigned integer)
+    template<typename NumberType, typename std::enable_if<
+                 std::is_unsigned<NumberType>::value, int>::type = 0>
+    void write_number_with_ubjson_prefix(const NumberType n,
+                                         const bool add_prefix)
+    {
+        if (n <= static_cast<uint64_t>((std::numeric_limits<int8_t>::max)()))
         {
             if (add_prefix)
             {
-                oa->write_character(static_cast<CharType>('D'));  // float64
+                oa->write_character(static_cast<CharType>('i'));  // int8
             }
-            write_number(n);
+            write_number(static_cast<uint8_t>(n));
         }
-        else if (std::is_unsigned<NumberType>::value)
+        else if (n <= (std::numeric_limits<uint8_t>::max)())
         {
-            if (n <= (std::numeric_limits<int8_t>::max)())
+            if (add_prefix)
             {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('i'));  // int8
-                }
-                write_number(static_cast<uint8_t>(n));
+                oa->write_character(static_cast<CharType>('U'));  // uint8
             }
-            else if (n <= (std::numeric_limits<uint8_t>::max)())
+            write_number(static_cast<uint8_t>(n));
+        }
+        else if (n <= static_cast<uint64_t>((std::numeric_limits<int16_t>::max)()))
+        {
+            if (add_prefix)
             {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('U'));  // uint8
-                }
-                write_number(static_cast<uint8_t>(n));
+                oa->write_character(static_cast<CharType>('I'));  // int16
             }
-            else if (n <= (std::numeric_limits<int16_t>::max)())
+            write_number(static_cast<int16_t>(n));
+        }
+        else if (n <= static_cast<uint64_t>((std::numeric_limits<int32_t>::max)()))
+        {
+            if (add_prefix)
             {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('I'));  // int16
-                }
-                write_number(static_cast<int16_t>(n));
+                oa->write_character(static_cast<CharType>('l'));  // int32
             }
-            else if (n <= (std::numeric_limits<int32_t>::max)())
+            write_number(static_cast<int32_t>(n));
+        }
+        else if (n <= static_cast<uint64_t>((std::numeric_limits<int64_t>::max)()))
+        {
+            if (add_prefix)
             {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('l'));  // int32
-                }
-                write_number(static_cast<int32_t>(n));
+                oa->write_character(static_cast<CharType>('L'));  // int64
             }
-            else if (n <= (std::numeric_limits<int64_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('L'));  // int64
-                }
-                write_number(static_cast<int64_t>(n));
-            }
-            else
-            {
-                JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
-            }
+            write_number(static_cast<int64_t>(n));
         }
         else
         {
-            if ((std::numeric_limits<int8_t>::min)() <= n and n <= (std::numeric_limits<int8_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('i'));  // int8
-                }
-                write_number(static_cast<int8_t>(n));
-            }
-            else if ((std::numeric_limits<uint8_t>::min)() <= n and n <= (std::numeric_limits<uint8_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('U'));  // uint8
-                }
-                write_number(static_cast<uint8_t>(n));
-            }
-            else if ((std::numeric_limits<int16_t>::min)() <= n and n <= (std::numeric_limits<int16_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('I'));  // int16
-                }
-                write_number(static_cast<int16_t>(n));
-            }
-            else if ((std::numeric_limits<int32_t>::min)() <= n and n <= (std::numeric_limits<int32_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('l'));  // int32
-                }
-                write_number(static_cast<int32_t>(n));
-            }
-            else if ((std::numeric_limits<int64_t>::min)() <= n and n <= (std::numeric_limits<int64_t>::max)())
-            {
-                if (add_prefix)
-                {
-                    oa->write_character(static_cast<CharType>('L'));  // int64
-                }
-                write_number(static_cast<int64_t>(n));
-            }
-            // LCOV_EXCL_START
-            else
-            {
-                JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
-            }
-            // LCOV_EXCL_STOP
+            JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
         }
+    }
+
+    // UBJSON: write number (signed integer)
+    template<typename NumberType, typename std::enable_if<
+                 std::is_signed<NumberType>::value and
+                 not std::is_floating_point<NumberType>::value, int>::type = 0>
+    void write_number_with_ubjson_prefix(const NumberType n,
+                                         const bool add_prefix)
+    {
+        if ((std::numeric_limits<int8_t>::min)() <= n and n <= (std::numeric_limits<int8_t>::max)())
+        {
+            if (add_prefix)
+            {
+                oa->write_character(static_cast<CharType>('i'));  // int8
+            }
+            write_number(static_cast<int8_t>(n));
+        }
+        else if (static_cast<int64_t>((std::numeric_limits<uint8_t>::min)()) <= n and n <= static_cast<int64_t>((std::numeric_limits<uint8_t>::max)()))
+        {
+            if (add_prefix)
+            {
+                oa->write_character(static_cast<CharType>('U'));  // uint8
+            }
+            write_number(static_cast<uint8_t>(n));
+        }
+        else if ((std::numeric_limits<int16_t>::min)() <= n and n <= (std::numeric_limits<int16_t>::max)())
+        {
+            if (add_prefix)
+            {
+                oa->write_character(static_cast<CharType>('I'));  // int16
+            }
+            write_number(static_cast<int16_t>(n));
+        }
+        else if ((std::numeric_limits<int32_t>::min)() <= n and n <= (std::numeric_limits<int32_t>::max)())
+        {
+            if (add_prefix)
+            {
+                oa->write_character(static_cast<CharType>('l'));  // int32
+            }
+            write_number(static_cast<int32_t>(n));
+        }
+        else if ((std::numeric_limits<int64_t>::min)() <= n and n <= (std::numeric_limits<int64_t>::max)())
+        {
+            if (add_prefix)
+            {
+                oa->write_character(static_cast<CharType>('L'));  // int64
+            }
+            write_number(static_cast<int64_t>(n));
+        }
+        // LCOV_EXCL_START
+        else
+        {
+            JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
+        }
+        // LCOV_EXCL_STOP
     }
 
     /*!
