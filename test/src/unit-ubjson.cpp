@@ -152,7 +152,7 @@ TEST_CASE("UBJSON")
                     numbers.push_back(-10000000);
                     numbers.push_back(-100000000);
                     numbers.push_back(-1000000000);
-                    numbers.push_back(-2147483648);
+                    numbers.push_back(-2147483648L);
                     for (auto i : numbers)
                     {
                         CAPTURE(i);
