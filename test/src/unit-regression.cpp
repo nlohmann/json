@@ -1514,4 +1514,87 @@ TEST_CASE("regression tests")
         CHECK(ff.x == 3);
         nlohmann::json nj = lj;                // This line works as expected
     }
+
+    SECTION("issue #1001 - Fix memory leak during parser callback")
+    {
+        auto geojsonExample = R"(
+          { "type": "FeatureCollection",
+            "features": [
+              { "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+                "properties": {"prop0": "value0"}
+                },
+              { "type": "Feature",
+                "geometry": {
+                  "type": "LineString",
+                  "coordinates": [
+                    [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+                    ]
+                  },
+                "properties": {
+                  "prop0": "value0",
+                  "prop1": 0.0
+                  }
+                },
+              { "type": "Feature",
+                 "geometry": {
+                   "type": "Polygon",
+                   "coordinates": [
+                     [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
+                       [100.0, 1.0], [100.0, 0.0] ]
+                     ]
+                 },
+                 "properties": {
+                   "prop0": "value0",
+                   "prop1": {"this": "that"}
+                   }
+                 }
+               ]
+             })";
+
+        json::parser_callback_t cb = [&](int, json::parse_event_t event, json & parsed)
+        {
+            // skip uninteresting events
+            if (event == json::parse_event_t::value and !parsed.is_primitive())
+            {
+                return false;
+            }
+
+            switch (event)
+            {
+                case json::parse_event_t::key:
+                {
+                    return true;
+                }
+                case json::parse_event_t::value:
+                {
+                    return false;
+                }
+                case json::parse_event_t::object_start:
+                {
+                    return true;
+                }
+                case json::parse_event_t::object_end:
+                {
+                    return false;
+                }
+                case json::parse_event_t::array_start:
+                {
+                    return true;
+                }
+                case json::parse_event_t::array_end:
+                {
+                    return false;
+                }
+
+                default:
+                {
+                    return true;
+                }
+            }
+        };
+
+        auto j = json::parse(geojsonExample, cb, true);
+        CHECK(j == json());
+    }
 }

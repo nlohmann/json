@@ -974,6 +974,7 @@ I deeply appreciate the help of the following people.
 - [johnfb](https://github.com/johnfb) found a bug in the implementation of CBOR's indefinite length strings.
 - [Paul Fultz II](https://github.com/pfultz2) added a note on the cget package manager.
 - [Wilson Lin](https://github.com/wla80) made the integration section of the README more concise.
+- [RalfBielig](https://github.com/ralfbielig) detected and fixed a memory leak in the parser callback.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

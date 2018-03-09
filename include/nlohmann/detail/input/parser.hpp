@@ -434,6 +434,7 @@ class parser
 
         if (keep and callback and not callback(depth, parse_event_t::value, result))
         {
+            result.m_value.destroy(result.m_type);
             result.m_type = value_t::discarded;
         }
     }
