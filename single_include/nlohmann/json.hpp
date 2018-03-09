@@ -2969,7 +2969,7 @@ scan_number_done:
     }
 
     /// return current string value (implicitly resets the token; useful only once)
-    std::string move_string()
+    std::string&& move_string()
     {
         return std::move(token_buffer);
     }
@@ -3526,6 +3526,7 @@ class parser
 
         if (keep and callback and not callback(depth, parse_event_t::value, result))
         {
+            result.m_value.destroy(result.m_type);
             result.m_type = value_t::discarded;
         }
     }
@@ -10561,7 +10562,7 @@ class basic_json
         /// constructor for rvalue strings
         json_value(string_t&& value)
         {
-            string = create<string_t>(std::move(value));
+            string = create<string_t>(std::forward < string_t&& > (value));
         }
 
         /// constructor for objects
@@ -10573,7 +10574,7 @@ class basic_json
         /// constructor for rvalue objects
         json_value(object_t&& value)
         {
-            object = create<object_t>(std::move(value));
+            object = create<object_t>(std::forward < object_t&& > (value));
         }
 
         /// constructor for arrays
@@ -10585,7 +10586,7 @@ class basic_json
         /// constructor for rvalue arrays
         json_value(array_t&& value)
         {
-            array = create<array_t>(std::move(value));
+            array = create<array_t>(std::forward < array_t&& > (value));
         }
 
         void destroy(value_t t) noexcept
