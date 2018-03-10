@@ -10562,7 +10562,7 @@ class basic_json
         /// constructor for rvalue strings
         json_value(string_t&& value)
         {
-            string = create<string_t>(std::forward < string_t&& > (value));
+            string = create<string_t>(std::move(value));
         }
 
         /// constructor for objects
@@ -10574,7 +10574,7 @@ class basic_json
         /// constructor for rvalue objects
         json_value(object_t&& value)
         {
-            object = create<object_t>(std::forward < object_t&& > (value));
+            object = create<object_t>(std::move(value));
         }
 
         /// constructor for arrays
@@ -10586,7 +10586,7 @@ class basic_json
         /// constructor for rvalue arrays
         json_value(array_t&& value)
         {
-            array = create<array_t>(std::forward < array_t&& > (value));
+            array = create<array_t>(std::move(value));
         }
 
         void destroy(value_t t) noexcept
