@@ -143,23 +143,53 @@ TEST_CASE("alternative string type")
 {
     SECTION("dump")
     {
-        alt_json doc;
-        doc["pi"] = 3.141;
-        doc["happy"] = true;
-        doc["name"] = "I'm Batman";
-        doc["nothing"] = nullptr;
-        doc["answer"]["everything"] = 42;
-        doc["list"] = { 1, 0, 2 };
-        doc["object"] = { {"currency", "USD"}, {"value", 42.99} };
+        {
+            alt_json doc;
+            doc["pi"] = 3.141;
+            alt_string dump = doc.dump();
+            CHECK(dump == R"({"pi":3.141})");
+        }
 
-        alt_string dump = doc.dump();
+        {
+            alt_json doc;
+            doc["happy"] = true;
+            alt_string dump = doc.dump();
+            CHECK(dump == R"({"happy":true})");
+        }
 
-        const char* const expect_str =
-            R"({"answer":{"everything":42},)"
-            R"("happy":true,"list":[1,0,2],)"
-            R"("name":"I'm Batman","nothing":null,)"
-            R"("object":{"currency":"USD","value":42.99},)"
-            R"("pi":3.141})";
-        CHECK(dump == expect_str);
+        {
+            alt_json doc;
+            doc["name"] = "I'm Batman";
+            alt_string dump = doc.dump();
+            CHECK(dump == R"({"name":"I'm Batman"})");
+        }
+
+        {
+            alt_json doc;
+            doc["nothing"] = nullptr;
+            alt_string dump = doc.dump();
+            CHECK(dump == R"({"nothing":null})");
+        }
+
+        {
+            alt_json doc;
+            doc["answer"]["everything"] = 42;
+            alt_string dump = doc.dump();
+            CHECK(dump == R"({"answer":{"everything":42}})");
+        }
+
+        {
+            alt_json doc;
+            doc["list"] = { 1, 0, 2 };
+            alt_string dump = doc.dump();
+            CHECK(dump == R"({"list":[1,0,2]})");
+        }
+
+        {
+            alt_json doc;
+            doc["list"] = { 1, 0, 2 };
+            alt_string dump = doc.dump();
+            CHECK(dump == R"({"list":[1,0,2]})");
+        }
     }
 }
