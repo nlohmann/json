@@ -68,11 +68,11 @@ class output_stream_adapter : public output_adapter_protocol<CharType>
 };
 
 /// output adapter for basic_string
-template<typename CharType>
+template<typename CharType, typename StringType = std::basic_string<CharType>>
 class output_string_adapter : public output_adapter_protocol<CharType>
 {
   public:
-    explicit output_string_adapter(std::basic_string<CharType>& s) : str(s) {}
+    explicit output_string_adapter(StringType& s) : str(s) {}
 
     void write_character(CharType c) override
     {
@@ -85,10 +85,10 @@ class output_string_adapter : public output_adapter_protocol<CharType>
     }
 
   private:
-    std::basic_string<CharType>& str;
+    StringType& str;
 };
 
-template<typename CharType>
+template<typename CharType, typename StringType = std::basic_string<CharType>>
 class output_adapter
 {
   public:
@@ -98,7 +98,7 @@ class output_adapter
     output_adapter(std::basic_ostream<CharType>& s)
         : oa(std::make_shared<output_stream_adapter<CharType>>(s)) {}
 
-    output_adapter(std::basic_string<CharType>& s)
+    output_adapter(StringType& s)
         : oa(std::make_shared<output_string_adapter<CharType>>(s)) {}
 
     operator output_adapter_t<CharType>()
