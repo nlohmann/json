@@ -176,7 +176,18 @@ bool accept_helper(const std::string& s)
     CHECK_NOTHROW(json::sax_parse(s, &el));
     CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == not el.errored);
 
-    // 5. return result
+    // 5. parse with simple callback
+    json::parser_callback_t cb = [](int, json::parse_event_t, json&)
+    {
+        return true;
+    };
+    json j_cb = json::parse(s, cb, false);
+    const bool ok_noexcept_cb = not j_cb.is_discarded();
+
+    // 6. check if this approach came to the same result
+    CHECK(ok_noexcept == ok_noexcept_cb);
+
+    // 7. return result
     return ok_accept;
 }
 

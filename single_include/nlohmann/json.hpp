@@ -3641,6 +3641,8 @@ class parser
     {
         // never parse after a parse error was detected
         assert(not errored);
+        // this function is only called when a callback is given
+        assert(callback);
 
         // start with a discarded value
         if (not result.is_discarded())
@@ -3655,12 +3657,9 @@ class parser
             {
                 if (keep)
                 {
-                    if (callback)
-                    {
-                        keep = callback(depth++, parse_event_t::object_start, result);
-                    }
+                    keep = callback(depth++, parse_event_t::object_start, result);
 
-                    if (not callback or keep)
+                    if (keep)
                     {
                         // explicitly set result to object to cope with {}
                         result.m_type = value_t::object;
@@ -3674,7 +3673,7 @@ class parser
                 // closing } -> we are done
                 if (last_token == token_type::end_object)
                 {
-                    if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
+                    if (keep and not callback(--depth, parse_event_t::object_end, result))
                     {
                         result.m_value.destroy(result.m_type);
                         result.m_type = value_t::discarded;
@@ -3697,15 +3696,8 @@ class parser
                     bool keep_tag = false;
                     if (keep)
                     {
-                        if (callback)
-                        {
-                            BasicJsonType k(key);
-                            keep_tag = callback(depth, parse_event_t::key, k);
-                        }
-                        else
-                        {
-                            keep_tag = true;
-                        }
+                        BasicJsonType k(key);
+                        keep_tag = callback(depth, parse_event_t::key, k);
                     }
 
                     // parse separator (:)
@@ -3747,7 +3739,7 @@ class parser
                     break;
                 }
 
-                if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
+                if (keep and not callback(--depth, parse_event_t::object_end, result))
                 {
                     result.m_value.destroy(result.m_type);
                     result.m_type = value_t::discarded;
@@ -3759,12 +3751,9 @@ class parser
             {
                 if (keep)
                 {
-                    if (callback)
-                    {
-                        keep = callback(depth++, parse_event_t::array_start, result);
-                    }
+                    keep = callback(depth++, parse_event_t::array_start, result);
 
-                    if (not callback or keep)
+                    if (keep)
                     {
                         // explicitly set result to array to cope with []
                         result.m_type = value_t::array;
@@ -3778,7 +3767,7 @@ class parser
                 // closing ] -> we are done
                 if (last_token == token_type::end_array)
                 {
-                    if (callback and not callback(--depth, parse_event_t::array_end, result))
+                    if (not callback(--depth, parse_event_t::array_end, result))
                     {
                         result.m_value.destroy(result.m_type);
                         result.m_type = value_t::discarded;
@@ -3821,7 +3810,7 @@ class parser
                     break;
                 }
 
-                if (keep and callback and not callback(--depth, parse_event_t::array_end, result))
+                if (keep and not callback(--depth, parse_event_t::array_end, result))
                 {
                     result.m_value.destroy(result.m_type);
                     result.m_type = value_t::discarded;
@@ -3909,7 +3898,7 @@ class parser
             }
         }
 
-        if (keep and callback and not callback(depth, parse_event_t::value, result))
+        if (keep and not callback(depth, parse_event_t::value, result))
         {
             result.m_value.destroy(result.m_type);
             result.m_type = value_t::discarded;
