@@ -4808,7 +4808,7 @@ class output_adapter
         : oa(std::make_shared<output_stream_adapter<CharType>>(s)) {}
 
     output_adapter(StringType& s)
-        : oa(std::make_shared<output_string_adapter<CharType>>(s)) {}
+        : oa(std::make_shared<output_string_adapter<CharType, StringType>>(s)) {}
 
     operator output_adapter_t<CharType>()
     {
