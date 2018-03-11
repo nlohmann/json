@@ -124,6 +124,8 @@ struct json_sax
 };
 
 
+namespace detail
+{
 template<typename BasicJsonType>
 class json_sax_dom_parser : public json_sax<BasicJsonType>
 {
@@ -172,9 +174,16 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool start_object(std::size_t) override
+    bool start_object(std::size_t len) override
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
+
+        if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+        {
+            JSON_THROW(out_of_range::create(408,
+                                            "excessive object size: " + std::to_string(len)));
+        }
+
         return true;
     }
 
@@ -191,9 +200,16 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool start_array(std::size_t) override
+    bool start_array(std::size_t len) override
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
+
+        if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+        {
+            JSON_THROW(out_of_range::create(408,
+                                            "excessive array size: " + std::to_string(len)));
+        }
+
         return true;
     }
 
@@ -348,6 +364,7 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
         return false;
     }
 };
+}
 
 }
 
