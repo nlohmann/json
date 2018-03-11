@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <nlohmann/detail/exceptions.hpp>
+
 namespace nlohmann
 {
 
@@ -118,7 +120,7 @@ struct json_sax
     */
     virtual bool parse_error(std::size_t position,
                              const std::string& last_token,
-                             const std::string& error_msg) = 0;
+                             const detail::exception& ex) = 0;
 
     virtual ~json_sax() = default;
 };
@@ -224,19 +226,27 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool parse_error(std::size_t position, const std::string& token,
-                     const std::string& error_msg) override
+    bool parse_error(std::size_t, const std::string&,
+                     const detail::exception& ex) override
     {
         errored = true;
         if (allow_exceptions)
         {
-            if (error_msg == "number overflow")
+            // determine the proper exception type from the id
+            switch ((ex.id / 100) % 100)
             {
-                JSON_THROW(BasicJsonType::out_of_range::create(406, "number overflow parsing '" + token + "'"));
-            }
-            else
-            {
-                JSON_THROW(BasicJsonType::parse_error::create(101, position, error_msg));
+                case 1:
+                    JSON_THROW(*reinterpret_cast<const detail::parse_error*>(&ex));
+                case 2:
+                    JSON_THROW(*reinterpret_cast<const detail::invalid_iterator*>(&ex));
+                case 3:
+                    JSON_THROW(*reinterpret_cast<const detail::type_error*>(&ex));
+                case 4:
+                    JSON_THROW(*reinterpret_cast<const detail::out_of_range*>(&ex));
+                case 5:
+                    JSON_THROW(*reinterpret_cast<const detail::other_error*>(&ex));
+                default:
+                    assert(false);  // LCOV_EXCL_LINE
             }
         }
         return false;
@@ -359,7 +369,7 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&, const std::string&) override
+    bool parse_error(std::size_t, const std::string&, const detail::exception&) override
     {
         return false;
     }

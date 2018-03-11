@@ -117,7 +117,7 @@ class parser
             {
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
-                                exception_message(token_type::end_of_input));
+                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input)));
             }
 
             // in case of an error, return discarded value
@@ -456,7 +456,7 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                exception_message(token_type::value_string));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
                     }
                     else
                     {
@@ -472,7 +472,7 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                exception_message(token_type::name_separator));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
                     }
 
                     // parse value
@@ -499,7 +499,8 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                exception_message(token_type::end_object));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object)));
+
                     }
                 }
             }
@@ -546,7 +547,7 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                exception_message(token_type::end_array));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array)));
                     }
                 }
             }
@@ -559,7 +560,7 @@ class parser
                 {
                     return sax->parse_error(m_lexer.get_position(),
                                             m_lexer.get_token_string(),
-                                            "number overflow");
+                                            out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
                 }
                 else
                 {
@@ -602,14 +603,14 @@ class parser
                 // using "uninitialized" to avoid "expected" message
                 return sax->parse_error(m_lexer.get_position(),
                                         m_lexer.get_token_string(),
-                                        exception_message(token_type::uninitialized));
+                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized)));
             }
 
             default: // the last token was unexpected
             {
                 return sax->parse_error(m_lexer.get_position(),
                                         m_lexer.get_token_string(),
-                                        exception_message(token_type::literal_or_value));
+                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value)));
             }
         }
     }

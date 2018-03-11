@@ -147,8 +147,7 @@ class binary_reader
         {
             // EOF
             case std::char_traits<char>::eof():
-                unexpect_eof();
-                return sax->parse_error(chars_read, "<end of file>", "unexpected end of input");
+                return sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, "unexpected end of input"));
 
             // Integer 0x00..0x17 (0..23)
             case 0x00:
@@ -399,7 +398,7 @@ class binary_reader
             {
                 std::stringstream ss;
                 ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(112, chars_read, "error reading CBOR; last byte: 0x" + ss.str()));
+                return sax->parse_error(chars_read, ss.str(), parse_error::create(112, chars_read, "error reading CBOR; last byte: 0x" + ss.str()));
             }
         }
     }
@@ -410,8 +409,7 @@ class binary_reader
         {
             // EOF
             case std::char_traits<char>::eof():
-                unexpect_eof();
-                return sax->parse_error(chars_read, "<end of file>", "unexpected end of input");
+                return sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, "unexpected end of input"));
 
             // positive fixint
             case 0x00:
@@ -712,8 +710,7 @@ class binary_reader
             {
                 std::stringstream ss;
                 ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(112, chars_read,
-                                               "error reading MessagePack; last byte: 0x" + ss.str()));
+                return sax->parse_error(chars_read, ss.str(), parse_error::create(112, chars_read, "error reading MessagePack; last byte: 0x" + ss.str()));
             }
         }
     }
@@ -1189,8 +1186,7 @@ class binary_reader
         switch (prefix)
         {
             case std::char_traits<char>::eof():  // EOF
-                unexpect_eof();
-                return sax->parse_error(chars_read, "<end of file>", "unexpected end of input");
+                return sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, "unexpected end of input"));
 
             case 'T':  // true
                 return sax->boolean(true);
@@ -1223,8 +1219,7 @@ class binary_reader
                 {
                     std::stringstream ss;
                     ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                    JSON_THROW(parse_error::create(113, chars_read,
-                                                   "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + ss.str()));
+                    return sax->parse_error(chars_read, ss.str(), parse_error::create(113, chars_read, "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + ss.str()));
                 }
                 return sax->string(string_t(1, static_cast<char>(current)));
             }

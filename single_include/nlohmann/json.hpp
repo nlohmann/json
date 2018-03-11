@@ -3138,6 +3138,9 @@ scan_number_done:
 #include <string>
 #include <vector>
 
+// #include <nlohmann/detail/exceptions.hpp>
+
+
 namespace nlohmann
 {
 
@@ -3252,7 +3255,7 @@ struct json_sax
     */
     virtual bool parse_error(std::size_t position,
                              const std::string& last_token,
-                             const std::string& error_msg) = 0;
+                             const detail::exception& ex) = 0;
 
     virtual ~json_sax() = default;
 };
@@ -3358,19 +3361,27 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool parse_error(std::size_t position, const std::string& token,
-                     const std::string& error_msg) override
+    bool parse_error(std::size_t, const std::string&,
+                     const detail::exception& ex) override
     {
         errored = true;
         if (allow_exceptions)
         {
-            if (error_msg == "number overflow")
+            // determine the proper exception type from the id
+            switch ((ex.id / 100) % 100)
             {
-                JSON_THROW(BasicJsonType::out_of_range::create(406, "number overflow parsing '" + token + "'"));
-            }
-            else
-            {
-                JSON_THROW(BasicJsonType::parse_error::create(101, position, error_msg));
+                case 1:
+                    JSON_THROW(*reinterpret_cast<const detail::parse_error*>(&ex));
+                case 2:
+                    JSON_THROW(*reinterpret_cast<const detail::invalid_iterator*>(&ex));
+                case 3:
+                    JSON_THROW(*reinterpret_cast<const detail::type_error*>(&ex));
+                case 4:
+                    JSON_THROW(*reinterpret_cast<const detail::out_of_range*>(&ex));
+                case 5:
+                    JSON_THROW(*reinterpret_cast<const detail::other_error*>(&ex));
+                default:
+                    assert(false);  // LCOV_EXCL_LINE
             }
         }
         return false;
@@ -3493,7 +3504,7 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&, const std::string&) override
+    bool parse_error(std::size_t, const std::string&, const detail::exception&) override
     {
         return false;
     }
@@ -3611,7 +3622,7 @@ class parser
             {
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
-                                exception_message(token_type::end_of_input));
+                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input)));
             }
 
             // in case of an error, return discarded value
@@ -3950,7 +3961,7 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                exception_message(token_type::value_string));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
                     }
                     else
                     {
@@ -3966,7 +3977,7 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                exception_message(token_type::name_separator));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
                     }
 
                     // parse value
@@ -3993,7 +4004,8 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                exception_message(token_type::end_object));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object)));
+
                     }
                 }
             }
@@ -4040,7 +4052,7 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                exception_message(token_type::end_array));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array)));
                     }
                 }
             }
@@ -4053,7 +4065,7 @@ class parser
                 {
                     return sax->parse_error(m_lexer.get_position(),
                                             m_lexer.get_token_string(),
-                                            "number overflow");
+                                            out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
                 }
                 else
                 {
@@ -4096,14 +4108,14 @@ class parser
                 // using "uninitialized" to avoid "expected" message
                 return sax->parse_error(m_lexer.get_position(),
                                         m_lexer.get_token_string(),
-                                        exception_message(token_type::uninitialized));
+                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized)));
             }
 
             default: // the last token was unexpected
             {
                 return sax->parse_error(m_lexer.get_position(),
                                         m_lexer.get_token_string(),
-                                        exception_message(token_type::literal_or_value));
+                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value)));
             }
         }
     }
@@ -5437,8 +5449,7 @@ class binary_reader
         {
             // EOF
             case std::char_traits<char>::eof():
-                unexpect_eof();
-                return sax->parse_error(chars_read, "<end of file>", "unexpected end of input");
+                return sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, "unexpected end of input"));
 
             // Integer 0x00..0x17 (0..23)
             case 0x00:
@@ -5689,7 +5700,7 @@ class binary_reader
             {
                 std::stringstream ss;
                 ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(112, chars_read, "error reading CBOR; last byte: 0x" + ss.str()));
+                return sax->parse_error(chars_read, ss.str(), parse_error::create(112, chars_read, "error reading CBOR; last byte: 0x" + ss.str()));
             }
         }
     }
@@ -5700,8 +5711,7 @@ class binary_reader
         {
             // EOF
             case std::char_traits<char>::eof():
-                unexpect_eof();
-                return sax->parse_error(chars_read, "<end of file>", "unexpected end of input");
+                return sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, "unexpected end of input"));
 
             // positive fixint
             case 0x00:
@@ -6002,8 +6012,7 @@ class binary_reader
             {
                 std::stringstream ss;
                 ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(112, chars_read,
-                                               "error reading MessagePack; last byte: 0x" + ss.str()));
+                return sax->parse_error(chars_read, ss.str(), parse_error::create(112, chars_read, "error reading MessagePack; last byte: 0x" + ss.str()));
             }
         }
     }
@@ -6479,8 +6488,7 @@ class binary_reader
         switch (prefix)
         {
             case std::char_traits<char>::eof():  // EOF
-                unexpect_eof();
-                return sax->parse_error(chars_read, "<end of file>", "unexpected end of input");
+                return sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, "unexpected end of input"));
 
             case 'T':  // true
                 return sax->boolean(true);
@@ -6513,8 +6521,7 @@ class binary_reader
                 {
                     std::stringstream ss;
                     ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                    JSON_THROW(parse_error::create(113, chars_read,
-                                                   "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + ss.str()));
+                    return sax->parse_error(chars_read, ss.str(), parse_error::create(113, chars_read, "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + ss.str()));
                 }
                 return sax->string(string_t(1, static_cast<char>(current)));
             }
