@@ -1621,76 +1621,67 @@ struct input_adapter_protocol
 using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
 
 /*!
-Input adapter for a (caching) istream. Ignores a UFT Byte Order Mark at
-beginning of input. Does not support changing the underlying std::streambuf
-in mid-input. Maintains underlying std::istream and std::streambuf to support
-subsequent use of standard std::istream operations to process any input
-characters following those used in parsing the JSON input.  Clears the
-std::istream flags; any input errors (e.g., EOF) will be detected by the first
-subsequent call for input from the std::istream.
+Input adapter for a (caching) istream.
+Ignores a UTF Byte Order Mark at beginning of input.
+
+Does not support changing the underlying std::streambuf in mid-input.
 */
 class input_stream_adapter : public input_adapter_protocol
 {
   public:
-    ~input_stream_adapter() override
-    {
-        // clear stream flags; we use underlying streambuf I/O, do not
-        // maintain ifstream flags
-        is.clear();
-    }
+    using traits_type = std::char_traits<char>;
 
     explicit input_stream_adapter(std::istream& i)
-        : is(i), sb(*i.rdbuf())
+        : is(i)
     {
-        // skip byte order mark
-        std::char_traits<char>::int_type c;
-        if ((c = get_character()) == 0xEF)
+        // Skip byte order mark
+        if (is.peek() == 0xEF)
         {
-            if ((c = get_character()) == 0xBB)
+            is.ignore();
+            if (is.peek() == 0xBB)
             {
-                if ((c = get_character()) == 0xBF)
+                is.ignore();
+                if (is.peek() == 0xBF)
                 {
-                    return; // Ignore BOM
+                    is.ignore();
+                    return; // Found a complete BOM.
                 }
-                else if (c != std::char_traits<char>::eof())
-                {
-                    is.unget();
-                }
-                is.putback('\xBB');
-            }
-            else if (c != std::char_traits<char>::eof())
-            {
+
                 is.unget();
             }
-            is.putback('\xEF');
-        }
-        else if (c != std::char_traits<char>::eof())
-        {
-            is.unget(); // no byte order mark; process as usual
+
+            is.unget();
         }
     }
 
-    // delete because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
-    input_stream_adapter& operator=(input_stream_adapter&) = delete;
+    input_stream_adapter& operator=(const input_stream_adapter&) = delete;
 
-    // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
-    // ensure that std::char_traits<char>::eof() and the character 0xFF do not
-    // end up as the same value, eg. 0xFFFFFFFF.
-    std::char_traits<char>::int_type get_character() override
+    traits_type::int_type get_character() override
     {
-        return sb.sbumpc();
+        // Only try to get a character if the stream is good!
+        if (is.good())
+        {
+            const auto ch = is.peek();
+            // If peek() returns EOF, the following call to ignore() will set
+            // the failbit, but we do not want to set the failbit here.
+            if (ch != traits_type::eof())
+            {
+                is.ignore();
+                return ch;
+            }
+        }
+
+        return traits_type::eof();
     }
 
     void unget_character() override
     {
-        sb.sungetc();  // is.unget() avoided for performance
+        is.unget();
     }
 
   private:
-    /// the associated input stream
     std::istream& is;
-    std::streambuf& sb;
 };
 
 /// input adapter for buffer input

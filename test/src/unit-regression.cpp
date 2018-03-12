@@ -1504,6 +1504,29 @@ TEST_CASE("regression tests")
         my_json foo = R"([1, 2, 3])"_json;
     }
 
+    SECTION("issue #976 - istream >> json --- 1st character skipped in stream")
+    {
+        json j;
+
+        std::istringstream iss;
+
+        iss.clear();
+        iss.str("10");
+        iss.setstate(std::ios_base::failbit);
+
+        CHECK_THROWS_WITH(iss >> j,
+            "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+        CHECK(iss.fail());
+
+        iss.clear();
+        iss.str("10");
+        iss.setstate(std::ios_base::failbit);
+
+        CHECK_THROWS_WITH(json::parse(iss),
+            "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+        CHECK(iss.fail());
+    }
+
     SECTION("issue #977 - Assigning between different json types")
     {
         foo_json lj = ns::foo{3};
