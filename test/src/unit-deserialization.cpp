@@ -447,7 +447,7 @@ TEST_CASE("deserialization")
 
     SECTION("ignoring byte-order marks")
     {
-        std::string bom = "\xEF\xBB\xBF";
+        const std::string bom = "\xEF\xBB\xBF";
 
         SECTION("BOM only")
         {
@@ -468,24 +468,28 @@ TEST_CASE("deserialization")
 
         SECTION("2 byte of BOM")
         {
-            CHECK_THROWS_AS(json::parse(bom.substr(0, 2)), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(bom),
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+            const std::string bom2 = bom.substr(0, 2);
 
-            CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 2))), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+            CHECK_THROWS_AS(json::parse(bom2), json::parse_error&);
+            CHECK_THROWS_WITH(json::parse(bom2),
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - invalid literal; last read: '\xEF'");
+
+            CHECK_THROWS_AS(json::parse(std::istringstream(bom2)), json::parse_error&);
+            CHECK_THROWS_WITH(json::parse(std::istringstream(bom2)),
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - invalid literal; last read: '\xEF'");
         }
 
         SECTION("1 byte of BOM")
         {
-            CHECK_THROWS_AS(json::parse(bom.substr(0, 1)), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(bom),
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+            const std::string bom1 = bom.substr(0, 1);
 
-            CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 1))), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+            CHECK_THROWS_AS(json::parse(bom1), json::parse_error&);
+            CHECK_THROWS_WITH(json::parse(bom1),
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - invalid literal; last read: '\xEF'");
+
+            CHECK_THROWS_AS(json::parse(std::istringstream(bom1)), json::parse_error&);
+            CHECK_THROWS_WITH(json::parse(std::istringstream(bom1)),
+                              "[json.exception.parse_error.101] parse error at 1: syntax error - invalid literal; last read: '\xEF'");
         }
 
         SECTION("variations")
