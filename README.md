@@ -975,6 +975,7 @@ I deeply appreciate the help of the following people.
 - [Paul Fultz II](https://github.com/pfultz2) added a note on the cget package manager.
 - [Wilson Lin](https://github.com/wla80) made the integration section of the README more concise.
 - [RalfBielig](https://github.com/ralfbielig) detected and fixed a memory leak in the parser callback.
+- [agrianius](https://github.com/agrianius) allowed to dump JSON to an alternative string type
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

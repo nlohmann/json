@@ -9,6 +9,7 @@ CPPFLAGS += -I ../single_include -I . -I thirdparty/catch -I thirdparty/fifo_map
 SOURCES = src/unit.cpp \
           src/unit-algorithms.cpp \
           src/unit-allocator.cpp \
+          src/unit-alt-string.cpp \
           src/unit-capacity.cpp \
           src/unit-cbor.cpp \
           src/unit-class_const_iterator.cpp \
