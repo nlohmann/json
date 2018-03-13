@@ -42,7 +42,7 @@ class alt_string
     using value_type = std::string::value_type;
 
     alt_string(const char* str): str_impl(str) {}
-    alt_string(const char* str, size_t count): str_impl(str, count) {}
+    alt_string(const char* str, std::size_t count): str_impl(str, count) {}
     alt_string(size_t count, char chr): str_impl(count, chr) {}
     alt_string() = default;
 
@@ -70,17 +70,17 @@ class alt_string
         return str_impl != op;
     }
 
-    size_t size() const noexcept
+    std::size_t size() const noexcept
     {
         return str_impl.size();
     }
 
-    void resize (size_t n)
+    void resize (std::size_t n)
     {
         str_impl.resize(n);
     }
 
-    void resize (size_t n, char c)
+    void resize (std::size_t n, char c)
     {
         str_impl.resize(n, c);
     }
@@ -101,12 +101,12 @@ class alt_string
         return str_impl.c_str();
     }
 
-    char& operator[](int index)
+    char& operator[](std::size_t index)
     {
         return str_impl[index];
     }
 
-    const char& operator[](int index) const
+    const char& operator[](std::size_t index) const
     {
         return str_impl[index];
     }
@@ -119,6 +119,16 @@ class alt_string
     const char& back() const
     {
         return str_impl.back();
+    }
+
+    void clear()
+    {
+        str_impl.clear();
+    }
+
+    const value_type* data()
+    {
+        return str_impl.data();
     }
 
   private:
@@ -191,5 +201,12 @@ TEST_CASE("alternative string type")
             alt_string dump = doc.dump();
             CHECK(dump == R"({"list":[1,0,2]})");
         }
+    }
+
+    SECTION("parse")
+    {
+        auto doc = alt_json::parse("{\"foo\": \"bar\"}");
+        alt_string dump = doc.dump();
+        CHECK(dump == R"({"foo":"bar"})");
     }
 }
