@@ -21,6 +21,8 @@ struct json_sax
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     /// type for floating-point numbers
     using number_float_t = typename BasicJsonType::number_float_t;
+    /// type for strings
+    using string_t = typename BasicJsonType::string_t;
 
     /// constant to indicate that no size limit is given for array or object
     static constexpr auto no_limit = std::size_t(-1);
@@ -58,14 +60,14 @@ struct json_sax
     @param[in] s    raw token value
     @return whether parsing should proceed
     */
-    virtual bool number_float(number_float_t val, const std::string& s) = 0;
+    virtual bool number_float(number_float_t val, const string_t& s) = 0;
 
     /*!
     @brief a string was read
     @param[in] val  string value
     @return whether parsing should proceed
     */
-    virtual bool string(std::string&& val) = 0;
+    virtual bool string(string_t&& val) = 0;
 
     /*!
     @brief the beginning of an object was read
@@ -80,7 +82,7 @@ struct json_sax
     @param[in] val  object key
     @return whether parsing should proceed
     */
-    virtual bool key(std::string&& val) = 0;
+    virtual bool key(string_t&& val) = 0;
 
     /*!
     @brief the end of an object was read
@@ -135,6 +137,7 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
 
     json_sax_dom_parser(BasicJsonType& r, const bool allow_exceptions_ = true)
         : root(r), allow_exceptions(allow_exceptions_)
@@ -164,13 +167,13 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool number_float(number_float_t val, const std::string&) override
+    bool number_float(number_float_t val, const string_t&) override
     {
         handle_value(val);
         return true;
     }
 
-    bool string(std::string&& val) override
+    bool string(string_t&& val) override
     {
         handle_value(val);
         return true;
@@ -189,7 +192,7 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool key(std::string&& val) override
+    bool key(string_t&& val) override
     {
         // add null at given key and store the reference for later
         object_element = &(ref_stack.back()->m_value.object->operator[](val));
@@ -308,6 +311,7 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
 
     bool null() override
     {
@@ -329,12 +333,12 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool number_float(number_float_t, const std::string&) override
+    bool number_float(number_float_t, const string_t&) override
     {
         return true;
     }
 
-    bool string(std::string&&) override
+    bool string(string_t&&) override
     {
         return true;
     }
@@ -344,7 +348,7 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool key(std::string&&) override
+    bool key(string_t&&) override
     {
         return true;
     }
