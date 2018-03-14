@@ -10,6 +10,7 @@ fuzz-testing
 
 build
 build_coverage
+clang_analyze_build
 
 doc/xml
 doc/html

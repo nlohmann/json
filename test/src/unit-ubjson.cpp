@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.1.1
+|  |  |__   |  |  | | | |  version 3.1.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -152,7 +152,7 @@ TEST_CASE("UBJSON")
                     numbers.push_back(-10000000);
                     numbers.push_back(-100000000);
                     numbers.push_back(-1000000000);
-                    numbers.push_back(-2147483648);
+                    numbers.push_back(-2147483648L);
                     for (auto i : numbers)
                     {
                         CAPTURE(i);

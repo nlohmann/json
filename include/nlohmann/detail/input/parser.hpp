@@ -32,6 +32,7 @@ class parser
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
     using lexer_t = lexer<BasicJsonType>;
     using token_type = typename lexer_t::token_type;
 
@@ -175,7 +176,7 @@ class parser
                 }
 
                 // parse values
-                std::string key;
+                string_t key;
                 BasicJsonType value;
                 while (true)
                 {
@@ -403,6 +404,7 @@ class parser
 
         if (keep and callback and not callback(depth, parse_event_t::value, result))
         {
+            result.m_value.destroy(result.m_type);
             result.m_type = value_t::discarded;
         }
     }

@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.1.1
+|  |  |__   |  |  | | | |  version 3.1.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -31,7 +31,7 @@ SOFTWARE.
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
 #define NLOHMANN_JSON_VERSION_MINOR 1
-#define NLOHMANN_JSON_VERSION_PATCH 1
+#define NLOHMANN_JSON_VERSION_PATCH 2
 
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
@@ -937,7 +937,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.1.1")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.1.2")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -1207,6 +1207,7 @@ class basic_json
     - @a CompatibleType is not derived from `std::istream`,
     - @a CompatibleType is not @ref basic_json (to avoid hijacking copy/move
          constructors),
+    - @a CompatibleType is not a different @ref basic_json type (i.e. with different template arguments)
     - @a CompatibleType is not a @ref basic_json nested type (e.g.,
          @ref json_pointer, @ref iterator, etc ...)
     - @ref @ref json_serializer<U> has a
@@ -1239,6 +1240,78 @@ class basic_json
                                            std::forward<CompatibleType>(val))))
     {
         JSONSerializer<U>::to_json(*this, std::forward<CompatibleType>(val));
+        assert_invariant();
+    }
+
+    /*!
+    @brief create a JSON value from an existing one
+
+    This is a constructor for existing @ref basic_json types.
+    It does not hijack copy/move constructors, since the parameter has different
+    template arguments than the current ones.
+
+    The constructor tries to convert the internal @ref m_value of the parameter.
+
+    @tparam BasicJsonType a type such that:
+    - @a BasicJsonType is a @ref basic_json type.
+    - @a BasicJsonType has different template arguments than @ref basic_json_t.
+
+    @param[in] val the @ref basic_json value to be converted.
+
+    @complexity Usually linear in the size of the passed @a val, also
+                depending on the implementation of the called `to_json()`
+                method.
+
+    @exceptionsafety Depends on the called constructor. For types directly
+    supported by the library (i.e., all types for which no `to_json()` function
+    was provided), strong guarantee holds: if an exception is thrown, there are
+    no changes to any JSON value.
+
+    @since version 3.1.2
+    */
+    template <typename BasicJsonType,
+              detail::enable_if_t<
+                  detail::is_basic_json<BasicJsonType>::value and not std::is_same<basic_json, BasicJsonType>::value, int> = 0>
+    basic_json(const BasicJsonType& val)
+    {
+        using other_boolean_t = typename BasicJsonType::boolean_t;
+        using other_number_float_t = typename BasicJsonType::number_float_t;
+        using other_number_integer_t = typename BasicJsonType::number_integer_t;
+        using other_number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+        using other_string_t = typename BasicJsonType::string_t;
+        using other_object_t = typename BasicJsonType::object_t;
+        using other_array_t = typename BasicJsonType::array_t;
+
+        switch (val.type())
+        {
+            case value_t::boolean:
+                JSONSerializer<other_boolean_t>::to_json(*this, val.template get<other_boolean_t>());
+                break;
+            case value_t::number_float:
+                JSONSerializer<other_number_float_t>::to_json(*this, val.template get<other_number_float_t>());
+                break;
+            case value_t::number_integer:
+                JSONSerializer<other_number_integer_t>::to_json(*this, val.template get<other_number_integer_t>());
+                break;
+            case value_t::number_unsigned:
+                JSONSerializer<other_number_unsigned_t>::to_json(*this, val.template get<other_number_unsigned_t>());
+                break;
+            case value_t::string:
+                JSONSerializer<other_string_t>::to_json(*this, val.template get_ref<const other_string_t&>());
+                break;
+            case value_t::object:
+                JSONSerializer<other_object_t>::to_json(*this, val.template get_ref<const other_object_t&>());
+                break;
+            case value_t::array:
+                JSONSerializer<other_array_t>::to_json(*this, val.template get_ref<const other_array_t&>());
+                break;
+            case value_t::null:
+                *this = nullptr;
+                break;
+            case value_t::discarded:
+                m_type = value_t::discarded;
+                break;
+        }
         assert_invariant();
     }
 
@@ -1874,7 +1947,7 @@ class basic_json
                   const bool ensure_ascii = false) const
     {
         string_t result;
-        serializer s(detail::output_adapter<char>(result), indent_char);
+        serializer s(detail::output_adapter<char, string_t>(result), indent_char);
 
         if (indent >= 0)
         {
@@ -2415,6 +2488,29 @@ class basic_json
     }
 
     /*!
+    @brief get special-case overload
+
+    This overloads converts the current @ref basic_json in a different
+    @ref basic_json type
+
+    @tparam BasicJsonType == @ref basic_json
+
+    @return a copy of *this, converted into @tparam BasicJsonType
+
+    @complexity Depending on the implementation of the called `from_json()`
+                method.
+
+    @since version 3.1.2
+    */
+    template<typename BasicJsonType, detail::enable_if_t<
+                 not std::is_same<BasicJsonType, basic_json>::value and
+                 detail::is_basic_json<BasicJsonType>::value, int> = 0>
+    BasicJsonType get() const
+    {
+        return *this;
+    }
+
+    /*!
     @brief get a value (explicit)
 
     Explicit type conversion between the JSON value and a compatible value
@@ -2455,7 +2551,7 @@ class basic_json
     */
     template<typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
              detail::enable_if_t <
-                 not std::is_same<basic_json_t, ValueType>::value and
+                 not detail::is_basic_json<ValueType>::value and
                  detail::has_from_json<basic_json_t, ValueType>::value and
                  not detail::has_non_default_from_json<basic_json_t, ValueType>::value,
                  int> = 0>
@@ -2721,7 +2817,8 @@ class basic_json
     template < typename ValueType, typename std::enable_if <
                    not std::is_pointer<ValueType>::value and
                    not std::is_same<ValueType, detail::json_ref<basic_json>>::value and
-                   not std::is_same<ValueType, typename string_t::value_type>::value
+                   not std::is_same<ValueType, typename string_t::value_type>::value and
+                   not detail::is_basic_json<ValueType>::value
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
@@ -5179,7 +5276,7 @@ class basic_json
 
         // passed iterators must belong to objects
         if (JSON_UNLIKELY(not first.m_object->is_object()
-                          or not first.m_object->is_object()))
+                          or not last.m_object->is_object()))
         {
             JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects"));
         }

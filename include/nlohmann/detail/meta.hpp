@@ -233,7 +233,7 @@ struct is_compatible_complete_type
 {
     static constexpr bool value =
         not std::is_base_of<std::istream, CompatibleCompleteType>::value and
-        not std::is_same<BasicJsonType, CompatibleCompleteType>::value and
+        not is_basic_json<CompatibleCompleteType>::value and
         not is_basic_json_nested_type<BasicJsonType, CompatibleCompleteType>::value and
         has_to_json<BasicJsonType, CompatibleCompleteType>::value;
 };

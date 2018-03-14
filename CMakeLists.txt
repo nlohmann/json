@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.0.0)
 ## PROJECT
 ## name and version
 ##
-project(nlohmann_json VERSION 3.1.1 LANGUAGES CXX)
+project(nlohmann_json VERSION 3.1.2 LANGUAGES CXX)
 
 ##
 ## INCLUDE

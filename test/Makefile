@@ -4,11 +4,12 @@
 
 # additional flags
 CXXFLAGS += -std=c++11 -Wall -Wextra -pedantic -Wcast-align -Wcast-qual -Wno-ctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overflow=5 -Wswitch -Wundef -Wno-unused -Wnon-virtual-dtor -Wreorder -Wdeprecated -Wno-float-equal
-CPPFLAGS += -I ../single_include -I . -I thirdparty/catch -DCATCH_CONFIG_FAST_COMPILE
+CPPFLAGS += -I ../single_include -I . -I thirdparty/catch -I thirdparty/fifo_map -DCATCH_CONFIG_FAST_COMPILE
 
 SOURCES = src/unit.cpp \
           src/unit-algorithms.cpp \
           src/unit-allocator.cpp \
+          src/unit-alt-string.cpp \
           src/unit-capacity.cpp \
           src/unit-cbor.cpp \
           src/unit-class_const_iterator.cpp \

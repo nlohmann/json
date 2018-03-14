@@ -258,6 +258,12 @@ fuzzing-stop:
 cppcheck:
 	cppcheck --enable=warning --inconclusive --force --std=c++11 $(AMALGAMATED_FILE) --error-exitcode=1
 
+# compile and check with Clang Static Analyzer
+clang_analyze:
+	rm -fr clang_analyze_build
+	mkdir clang_analyze_build
+	cd clang_analyze_build ; CCC_CXX=/Users/niels/Documents/projects/llvm-clang/local/bin/clang++ /Users/niels/Documents/projects/llvm-clang/local/bin/scan-build cmake ..
+	/Users/niels/Documents/projects/llvm-clang/local/bin/scan-build -enable-checker alpha.core.DynamicTypeChecker,alpha.core.PointerArithm,alpha.core.PointerSub,alpha.cplusplus.DeleteWithNonVirtualDtor,alpha.cplusplus.IteratorRange,alpha.cplusplus.MisusedMovedObject,alpha.security.ArrayBoundV2,alpha.core.Conversion --use-c++=/Users/niels/Documents/projects/llvm-clang/local/bin/clang++ --view -analyze-headers -o clang_analyze_build/report.html make -j10 -C clang_analyze_build
 
 ##########################################################################
 # maintainer targets
