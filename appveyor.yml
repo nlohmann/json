@@ -6,8 +6,8 @@ os:
 
 environment:
   matrix:
-  - additional_flags: ""
-  - additional_flags: "/permissive- /std:c++latest /utf-8"
+  - additional_flags: "/Wall"
+  - additional_flags: "/permissive- /std:c++latest /utf-8 /Wall"
 
 matrix:
   exclude:
