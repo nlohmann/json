@@ -70,6 +70,25 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
     s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
 }
 
+template <
+    typename BasicJsonType, typename CompatibleStringType,
+    enable_if_t <
+        is_compatible_string_type<BasicJsonType, CompatibleStringType>::value and
+        not std::is_same<typename BasicJsonType::string_t,
+                         CompatibleStringType>::value and
+        std::is_constructible <
+            BasicJsonType, typename CompatibleStringType::value_type >::value,
+        int > = 0 >
+void from_json(const BasicJsonType& j, CompatibleStringType& s)
+{
+    if (JSON_UNLIKELY(not j.is_string()))
+    {
+        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name())));
+    }
+
+    s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
+}
+
 template<typename BasicJsonType>
 void from_json(const BasicJsonType& j, typename BasicJsonType::number_float_t& val)
 {
