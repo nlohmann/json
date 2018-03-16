@@ -353,6 +353,16 @@ struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
         std::is_constructible<typename RealType::mapped_type, typename CompatibleObjectType::mapped_type>::value;
 };
 
+template<bool B, class RealType, class CompatibleStringType>
+struct is_compatible_string_type_impl : std::false_type {};
+
+template<class RealType, class CompatibleStringType>
+struct is_compatible_string_type_impl<true, RealType, CompatibleStringType>
+{
+    static constexpr auto value =
+        std::is_same<typename RealType::value_type, typename CompatibleStringType::value_type>::value;
+};
+
 template<class BasicJsonType, class CompatibleObjectType>
 struct is_compatible_object_type
 {
@@ -361,6 +371,15 @@ struct is_compatible_object_type
                                   has_mapped_type<CompatibleObjectType>,
                                   has_key_type<CompatibleObjectType>>::value,
                                   typename BasicJsonType::object_t, CompatibleObjectType >::value;
+};
+
+template<class BasicJsonType, class CompatibleStringType>
+struct is_compatible_string_type
+{
+    static auto constexpr value = is_compatible_string_type_impl <
+                                  conjunction<negation<std::is_same<void, CompatibleStringType>>,
+                                  has_value_type<CompatibleStringType>>::value,
+                                  typename BasicJsonType::string_t, CompatibleStringType >::value;
 };
 
 template<typename BasicJsonType, typename T>
@@ -974,6 +993,25 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
     {
         JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name())));
     }
+    s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
+}
+
+template <
+    typename BasicJsonType, typename CompatibleStringType,
+    enable_if_t <
+        is_compatible_string_type<BasicJsonType, CompatibleStringType>::value and
+        not std::is_same<typename BasicJsonType::string_t,
+                         CompatibleStringType>::value and
+        std::is_constructible <
+            BasicJsonType, typename CompatibleStringType::value_type >::value,
+        int > = 0 >
+void from_json(const BasicJsonType& j, CompatibleStringType& s)
+{
+    if (JSON_UNLIKELY(not j.is_string()))
+    {
+        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name())));
+    }
+
     s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
 }
 
