@@ -3941,187 +3941,299 @@ class parser
 
     bool sax_parse_internal(json_sax_t* sax)
     {
-        switch (last_token)
+        // two values for the structured values
+        enum class parse_state_t { array_value, object_value };
+        // stack to remember the hieararchy of structured values we are parsing
+        std::vector<parse_state_t> states;
+        // value to avoid a goto (see comment where set to true)
+        bool skip_to_tail = false;
+
+        while (true)
         {
-            case token_type::begin_object:
+            if (not skip_to_tail)
             {
-                if (not sax->start_object())
+                // invariant: get_token() was called before each iteration
+                switch (last_token)
                 {
-                    return false;
-                }
-
-                // read next token
-                get_token();
-
-                // closing } -> we are done
-                if (JSON_UNLIKELY(last_token == token_type::end_object))
-                {
-                    return sax->end_object();
-                }
-
-                // parse values
-                while (true)
-                {
-                    // parse key
-                    if (JSON_UNLIKELY(last_token != token_type::value_string))
+                    case token_type::begin_object:
                     {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
-                    }
-                    else
-                    {
-                        if (not sax->key(m_lexer.move_string()))
+                        if (not sax->start_object())
                         {
                             return false;
                         }
-                    }
 
-                    // parse separator (:)
-                    get_token();
-                    if (JSON_UNLIKELY(last_token != token_type::name_separator))
-                    {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
-                    }
-
-                    // parse value
-                    get_token();
-                    if (not sax_parse_internal(sax))
-                    {
-                        return false;
-                    }
-
-                    // comma -> next value
-                    get_token();
-                    if (last_token == token_type::value_separator)
-                    {
+                        // read next token
                         get_token();
+
+                        // closing } -> we are done
+                        if (last_token == token_type::end_object)
+                        {
+                            if (not sax->end_object())
+                            {
+                                return false;
+                            }
+                            break;
+                        }
+
+                        // parse key
+                        if (JSON_UNLIKELY(last_token != token_type::value_string))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
+                        }
+                        else
+                        {
+                            if (not sax->key(m_lexer.move_string()))
+                            {
+                                return false;
+                            }
+                        }
+
+                        // parse separator (:)
+                        get_token();
+                        if (JSON_UNLIKELY(last_token != token_type::name_separator))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
+                        }
+
+                        // parse values
+                        get_token();
+                        states.push_back(parse_state_t::object_value);
                         continue;
                     }
 
-                    // closing }
-                    if (JSON_LIKELY(last_token == token_type::end_object))
+                    case token_type::begin_array:
                     {
-                        return sax->end_object();
+                        if (not sax->start_array())
+                        {
+                            return false;
+                        }
+
+                        // read next token
+                        get_token();
+
+                        // closing ] -> we are done
+                        if (last_token == token_type::end_array)
+                        {
+                            if (not sax->end_array())
+                            {
+                                return false;
+                            }
+                            break;
+                        }
+
+                        // parse values (no need to call get_token)
+                        states.push_back(parse_state_t::array_value);
+                        continue;
                     }
-                    else
+
+                    case token_type::value_float:
+                    {
+                        const auto res = m_lexer.get_number_float();
+
+                        if (JSON_UNLIKELY(not std::isfinite(res)))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
+                        }
+                        else
+                        {
+                            if (not sax->number_float(res, m_lexer.move_string()))
+                            {
+                                return false;
+                            }
+                            break;
+                        }
+                    }
+
+                    case token_type::literal_false:
+                    {
+                        if (not sax->boolean(false))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::literal_null:
+                    {
+                        if (not sax->null())
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::literal_true:
+                    {
+                        if (not sax->boolean(true))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::value_integer:
+                    {
+                        if (not sax->number_integer(m_lexer.get_number_integer()))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::value_string:
+                    {
+                        if (not  sax->string(m_lexer.move_string()))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::value_unsigned:
+                    {
+                        if (not  sax->number_unsigned(m_lexer.get_number_unsigned()))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::parse_error:
+                    {
+                        // using "uninitialized" to avoid "expected" message
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized)));
+                    }
+
+                    default: // the last token was unexpected
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object)));
-
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value)));
                     }
                 }
             }
-
-            case token_type::begin_array:
+            else
             {
-                if (not sax->start_array())
-                {
-                    return false;
-                }
+                skip_to_tail = false;
+            }
 
-                // read next token
+            // we reached this line after we successfully parsed a value
+            if (states.empty())
+            {
+                // empty stack: we reached the end of the hieararchy: done
+                return true;
+            }
+            else
+            {
                 get_token();
-
-                // closing ] -> we are done
-                if (last_token == token_type::end_array)
+                switch (states.back())
                 {
-                    return sax->end_array();
-                }
-
-                // parse values
-                while (true)
-                {
-                    // parse value
-                    if (not sax_parse_internal(sax))
+                    case parse_state_t::array_value:
                     {
-                        return false;
+                        // comma -> next value
+                        if (last_token == token_type::value_separator)
+                        {
+                            // parse a new value
+                            get_token();
+                            continue;
+                        }
+
+                        // closing ]
+                        if (JSON_LIKELY(last_token == token_type::end_array))
+                        {
+                            if (not sax->end_array())
+                            {
+                                return false;
+                            }
+
+                            // We are done with this array. Before we can parse
+                            // a new value, we need to evaluate the new state
+                            // first. By setting skip_to_tail to false, we are
+                            // effectively jumping to the beginning of this
+                            // switch.
+                            assert(not states.empty());
+                            states.pop_back();
+                            skip_to_tail = true;
+                            continue;
+                        }
+                        else
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array)));
+                        }
                     }
 
-                    // comma -> next value
-                    get_token();
-                    if (last_token == token_type::value_separator)
+                    case parse_state_t::object_value:
                     {
-                        get_token();
-                        continue;
-                    }
+                        // comma -> next value
+                        if (last_token == token_type::value_separator)
+                        {
+                            get_token();
 
-                    // closing ]
-                    if (JSON_LIKELY(last_token == token_type::end_array))
-                    {
-                        return sax->end_array();
-                    }
-                    else
-                    {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array)));
+                            // parse key
+                            if (JSON_UNLIKELY(last_token != token_type::value_string))
+                            {
+                                return sax->parse_error(m_lexer.get_position(),
+                                                        m_lexer.get_token_string(),
+                                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
+                            }
+                            else
+                            {
+                                if (not sax->key(m_lexer.move_string()))
+                                {
+                                    return false;
+                                }
+                            }
+
+                            // parse separator (:)
+                            get_token();
+                            if (JSON_UNLIKELY(last_token != token_type::name_separator))
+                            {
+                                return sax->parse_error(m_lexer.get_position(),
+                                                        m_lexer.get_token_string(),
+                                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
+                            }
+
+                            // parse values
+                            get_token();
+                            continue;
+                        }
+
+                        // closing }
+                        if (JSON_LIKELY(last_token == token_type::end_object))
+                        {
+                            if (not sax->end_object())
+                            {
+                                return false;
+                            }
+
+                            // We are done with this object. Before we can
+                            // parse a new value, we need to evaluate the new
+                            // state first. By setting skip_to_tail to false,
+                            // we are effectively jumping to the beginning of
+                            // this switch.
+                            assert(not states.empty());
+                            states.pop_back();
+                            skip_to_tail = true;
+                            continue;
+                        }
+                        else
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object)));
+                        }
                     }
                 }
-            }
-
-            case token_type::value_float:
-            {
-                const auto res = m_lexer.get_number_float();
-
-                if (JSON_UNLIKELY(not std::isfinite(res)))
-                {
-                    return sax->parse_error(m_lexer.get_position(),
-                                            m_lexer.get_token_string(),
-                                            out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
-                }
-                else
-                {
-                    return sax->number_float(res, m_lexer.move_string());
-                }
-            }
-
-            case token_type::literal_false:
-            {
-                return sax->boolean(false);
-            }
-
-            case token_type::literal_null:
-            {
-                return sax->null();
-            }
-
-            case token_type::literal_true:
-            {
-                return sax->boolean(true);
-            }
-
-            case token_type::value_integer:
-            {
-                return sax->number_integer(m_lexer.get_number_integer());
-            }
-
-            case token_type::value_string:
-            {
-                return sax->string(m_lexer.move_string());
-            }
-
-            case token_type::value_unsigned:
-            {
-                return sax->number_unsigned(m_lexer.get_number_unsigned());
-            }
-
-            case token_type::parse_error:
-            {
-                // using "uninitialized" to avoid "expected" message
-                return sax->parse_error(m_lexer.get_position(),
-                                        m_lexer.get_token_string(),
-                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized)));
-            }
-
-            default: // the last token was unexpected
-            {
-                return sax->parse_error(m_lexer.get_position(),
-                                        m_lexer.get_token_string(),
-                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value)));
             }
         }
     }
