@@ -241,13 +241,13 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
                 case 1:
                     JSON_THROW(*reinterpret_cast<const detail::parse_error*>(&ex));
                 case 2:
-                    JSON_THROW(*reinterpret_cast<const detail::invalid_iterator*>(&ex));
+                    JSON_THROW(*reinterpret_cast<const detail::invalid_iterator*>(&ex));  // LCOV_EXCL_LINE
                 case 3:
-                    JSON_THROW(*reinterpret_cast<const detail::type_error*>(&ex));
+                    JSON_THROW(*reinterpret_cast<const detail::type_error*>(&ex));  // LCOV_EXCL_LINE
                 case 4:
                     JSON_THROW(*reinterpret_cast<const detail::out_of_range*>(&ex));
                 case 5:
-                    JSON_THROW(*reinterpret_cast<const detail::other_error*>(&ex));
+                    JSON_THROW(*reinterpret_cast<const detail::other_error*>(&ex));  // LCOV_EXCL_LINE
                 default:
                     assert(false);  // LCOV_EXCL_LINE
             }

@@ -134,6 +134,81 @@ class SaxEventLogger : public nlohmann::json::json_sax_t
     bool errored = false;
 };
 
+class SaxCountdown : public nlohmann::json::json_sax_t
+{
+  public:
+    explicit SaxCountdown(const int count) : events_left(count)
+    {}
+
+    bool null() override
+    {
+        return events_left-- > 0;
+    }
+
+    bool boolean(bool) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_integer(json::number_integer_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_unsigned(json::number_unsigned_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_float(json::number_float_t, const std::string&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool string(std::string&&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_object(std::size_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool key(std::string&&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_object() override
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_array(std::size_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_array() override
+    {
+        return events_left-- > 0;
+    }
+
+    bool binary(const std::vector<uint8_t>&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool parse_error(std::size_t, const std::string&, const json::exception&) override
+    {
+        return false;
+    }
+
+  private:
+    int events_left = 0;
+};
+
 json parser_helper(const std::string& s);
 bool accept_helper(const std::string& s);
 
@@ -1593,6 +1668,102 @@ TEST_CASE("parser class")
             json j;
             json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
+        }
+    }
+
+    SECTION("improve test coverage")
+    {
+        SECTION("parser with callback")
+        {
+            json::parser_callback_t cb = [](int, json::parse_event_t, json&)
+            {
+                return true;
+            };
+
+            CHECK(json::parse("{\"foo\": true:", cb, false).is_discarded());
+
+            CHECK_THROWS_AS(json::parse("{\"foo\": true:", cb), json::parse_error&);
+            CHECK_THROWS_WITH(json::parse("{\"foo\": true:", cb),
+                              "[json.exception.parse_error.101] parse error at 13: syntax error - unexpected ':'; expected '}'");
+
+            CHECK_THROWS_AS(json::parse("1.18973e+4932", cb), json::out_of_range&);
+            CHECK_THROWS_WITH(json::parse("1.18973e+4932", cb),
+                              "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'");
+        }
+
+        SECTION("SAX parser")
+        {
+            SECTION("} without value")
+            {
+                SaxCountdown s(1);
+                CHECK(json::sax_parse("{}", &s) == false);
+            }
+
+            SECTION("} with value")
+            {
+                SaxCountdown s(3);
+                CHECK(json::sax_parse("{\"k1\": true}", &s) == false);
+            }
+
+            SECTION("second key")
+            {
+                SaxCountdown s(3);
+                CHECK(json::sax_parse("{\"k1\": true, \"k2\": false}", &s) == false);
+            }
+
+            SECTION("] without value")
+            {
+                SaxCountdown s(1);
+                CHECK(json::sax_parse("[]", &s) == false);
+            }
+
+            SECTION("] with value")
+            {
+                SaxCountdown s(2);
+                CHECK(json::sax_parse("[1]", &s) == false);
+            }
+
+            SECTION("float")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("3.14", &s) == false);
+            }
+
+            SECTION("false")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("false", &s) == false);
+            }
+
+            SECTION("null")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("null", &s) == false);
+            }
+
+            SECTION("true")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("true", &s) == false);
+            }
+
+            SECTION("unsigned")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("12", &s) == false);
+            }
+
+            SECTION("integer")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("-12", &s) == false);
+            }
+
+            SECTION("string")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("\"foo\"", &s) == false);
+            }
         }
     }
 }

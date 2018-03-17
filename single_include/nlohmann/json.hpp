@@ -3377,13 +3377,13 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
                 case 1:
                     JSON_THROW(*reinterpret_cast<const detail::parse_error*>(&ex));
                 case 2:
-                    JSON_THROW(*reinterpret_cast<const detail::invalid_iterator*>(&ex));
+                    JSON_THROW(*reinterpret_cast<const detail::invalid_iterator*>(&ex));  // LCOV_EXCL_LINE
                 case 3:
-                    JSON_THROW(*reinterpret_cast<const detail::type_error*>(&ex));
+                    JSON_THROW(*reinterpret_cast<const detail::type_error*>(&ex));  // LCOV_EXCL_LINE
                 case 4:
                     JSON_THROW(*reinterpret_cast<const detail::out_of_range*>(&ex));
                 case 5:
-                    JSON_THROW(*reinterpret_cast<const detail::other_error*>(&ex));
+                    JSON_THROW(*reinterpret_cast<const detail::other_error*>(&ex));  // LCOV_EXCL_LINE
                 default:
                     assert(false);  // LCOV_EXCL_LINE
             }
@@ -3946,11 +3946,11 @@ class parser
         // stack to remember the hieararchy of structured values we are parsing
         std::vector<parse_state_t> states;
         // value to avoid a goto (see comment where set to true)
-        bool skip_to_tail = false;
+        bool skip_to_state_evaluation = false;
 
         while (true)
         {
-            if (not skip_to_tail)
+            if (not skip_to_state_evaluation)
             {
                 // invariant: get_token() was called before each iteration
                 switch (last_token)
@@ -3999,9 +3999,11 @@ class parser
                                                     parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
                         }
 
+                        // remember we are now inside an object
+                        states.push_back(parse_state_t::object_value);
+
                         // parse values
                         get_token();
-                        states.push_back(parse_state_t::object_value);
                         continue;
                     }
 
@@ -4025,8 +4027,10 @@ class parser
                             break;
                         }
 
-                        // parse values (no need to call get_token)
+                        // remember we are now inside an array
                         states.push_back(parse_state_t::array_value);
+
+                        // parse values (no need to call get_token)
                         continue;
                     }
 
@@ -4122,7 +4126,7 @@ class parser
             }
             else
             {
-                skip_to_tail = false;
+                skip_to_state_evaluation = false;
             }
 
             // we reached this line after we successfully parsed a value
@@ -4156,12 +4160,12 @@ class parser
 
                             // We are done with this array. Before we can parse
                             // a new value, we need to evaluate the new state
-                            // first. By setting skip_to_tail to false, we are
-                            // effectively jumping to the beginning of this
-                            // switch.
+                            // first. By setting skip_to_state_evaluation to
+                            // false, we are effectively jumping to the
+                            // beginning of this switch.
                             assert(not states.empty());
                             states.pop_back();
-                            skip_to_tail = true;
+                            skip_to_state_evaluation = true;
                             continue;
                         }
                         else
@@ -4218,12 +4222,12 @@ class parser
 
                             // We are done with this object. Before we can
                             // parse a new value, we need to evaluate the new
-                            // state first. By setting skip_to_tail to false,
-                            // we are effectively jumping to the beginning of
-                            // this switch.
+                            // state first. By setting skip_to_state_evaluation
+                            // to false, we are effectively jumping to the
+                            // beginning of this switch.
                             assert(not states.empty());
                             states.pop_back();
-                            skip_to_tail = true;
+                            skip_to_state_evaluation = true;
                             continue;
                         }
                         else
