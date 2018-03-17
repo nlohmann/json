@@ -277,17 +277,23 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         }
         else
         {
-            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
-            if (ref_stack.back()->is_array())
+            switch (ref_stack.back()->m_type)
             {
-                ref_stack.back()->m_value.array->push_back(BasicJsonType(std::forward<Value>(v)));
-                return &(ref_stack.back()->m_value.array->back());
-            }
-            else
-            {
-                assert(object_element);
-                *object_element = BasicJsonType(std::forward<Value>(v));
-                return object_element;
+                case value_t::array:
+                {
+                    ref_stack.back()->m_value.array->push_back(BasicJsonType(std::forward<Value>(v)));
+                    return &(ref_stack.back()->m_value.array->back());
+                }
+
+                case value_t::object:
+                {
+                    assert(object_element);
+                    *object_element = BasicJsonType(std::forward<Value>(v));
+                    return object_element;
+                }
+
+                default:
+                    assert(false);  // LCOV_EXCL_LINE
             }
         }
     }
