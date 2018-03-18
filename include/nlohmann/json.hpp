@@ -173,6 +173,8 @@ class basic_json
     friend class ::nlohmann::detail::binary_reader;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::json_sax_dom_parser;
+    template<typename BasicJsonType>
+    friend class ::nlohmann::detail::json_sax_dom_callback_parser;
 
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;

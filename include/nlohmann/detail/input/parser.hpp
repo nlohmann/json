@@ -83,6 +83,27 @@ class parser
     {
         if (callback)
         {
+            /*
+            json_sax_dom_callback_parser<BasicJsonType> sdp(result, callback, allow_exceptions);
+            sax_parse_internal(&sdp);
+            result.assert_invariant();
+
+            // in strict mode, input must be completely read
+            if (strict and (get_token() != token_type::end_of_input))
+            {
+                sdp.parse_error(m_lexer.get_position(),
+                                m_lexer.get_token_string(),
+                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input)));
+            }
+
+            // in case of an error, return discarded value
+            if (sdp.is_errored())
+            {
+                result = value_t::discarded;
+                return;
+            }
+            */
+
             parse_internal(true, result);
             result.assert_invariant();
 
