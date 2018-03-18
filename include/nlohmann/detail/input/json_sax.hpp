@@ -278,23 +278,17 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         }
         else
         {
-            switch (ref_stack.back()->m_type)
+            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+            if (ref_stack.back()->is_array())
             {
-                case value_t::array:
-                {
-                    ref_stack.back()->m_value.array->push_back(BasicJsonType(std::forward<Value>(v)));
-                    return &(ref_stack.back()->m_value.array->back());
-                }
-
-                case value_t::object:
-                {
-                    assert(object_element);
-                    *object_element = BasicJsonType(std::forward<Value>(v));
-                    return object_element;
-                }
-
-                default:
-                    assert(false);  // LCOV_EXCL_LINE
+                ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
+                return &(ref_stack.back()->m_value.array->back());
+            }
+            else
+            {
+                assert(object_element);
+                *object_element = BasicJsonType(std::forward<Value>(v));
+                return object_element;
             }
         }
     }
@@ -397,6 +391,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         const bool keep = callback(ref_stack.size() - 1, parse_event_t::object_end, *ref_stack.back());
         if (not keep)
         {
+            // discard object
             *ref_stack.back() = discarded;
         }
 
@@ -426,6 +421,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         const bool keep = callback(ref_stack.size() - 1, parse_event_t::array_end, *ref_stack.back());
         if (not keep)
         {
+            // discard array
             *ref_stack.back() = discarded;
         }
 
@@ -487,23 +483,17 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         }
         else
         {
-            switch (ref_stack.back()->m_type)
+            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+            if (ref_stack.back()->is_array())
             {
-                case value_t::array:
-                {
-                    ref_stack.back()->m_value.array->push_back(BasicJsonType(std::forward<Value>(v)));
-                    return &(ref_stack.back()->m_value.array->back());
-                }
-
-                case value_t::object:
-                {
-                    assert(object_element);
-                    *object_element = BasicJsonType(std::forward<Value>(v));
-                    return object_element;
-                }
-
-                default:
-                    assert(false);  // LCOV_EXCL_LINE
+                ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
+                return &(ref_stack.back()->m_value.array->back());
+            }
+            else
+            {
+                assert(object_element);
+                *object_element = BasicJsonType(std::forward<Value>(v));
+                return object_element;
             }
         }
     }

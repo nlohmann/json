@@ -3415,23 +3415,17 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         }
         else
         {
-            switch (ref_stack.back()->m_type)
+            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+            if (ref_stack.back()->is_array())
             {
-                case value_t::array:
-                {
-                    ref_stack.back()->m_value.array->push_back(BasicJsonType(std::forward<Value>(v)));
-                    return &(ref_stack.back()->m_value.array->back());
-                }
-
-                case value_t::object:
-                {
-                    assert(object_element);
-                    *object_element = BasicJsonType(std::forward<Value>(v));
-                    return object_element;
-                }
-
-                default:
-                    assert(false);  // LCOV_EXCL_LINE
+                ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
+                return &(ref_stack.back()->m_value.array->back());
+            }
+            else
+            {
+                assert(object_element);
+                *object_element = BasicJsonType(std::forward<Value>(v));
+                return object_element;
             }
         }
     }
@@ -3534,6 +3528,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         const bool keep = callback(ref_stack.size() - 1, parse_event_t::object_end, *ref_stack.back());
         if (not keep)
         {
+            // discard object
             *ref_stack.back() = discarded;
         }
 
@@ -3563,6 +3558,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         const bool keep = callback(ref_stack.size() - 1, parse_event_t::array_end, *ref_stack.back());
         if (not keep)
         {
+            // discard array
             *ref_stack.back() = discarded;
         }
 
@@ -3624,23 +3620,17 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         }
         else
         {
-            switch (ref_stack.back()->m_type)
+            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+            if (ref_stack.back()->is_array())
             {
-                case value_t::array:
-                {
-                    ref_stack.back()->m_value.array->push_back(BasicJsonType(std::forward<Value>(v)));
-                    return &(ref_stack.back()->m_value.array->back());
-                }
-
-                case value_t::object:
-                {
-                    assert(object_element);
-                    *object_element = BasicJsonType(std::forward<Value>(v));
-                    return object_element;
-                }
-
-                default:
-                    assert(false);  // LCOV_EXCL_LINE
+                ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
+                return &(ref_stack.back()->m_value.array->back());
+            }
+            else
+            {
+                assert(object_element);
+                *object_element = BasicJsonType(std::forward<Value>(v));
+                return object_element;
             }
         }
     }
@@ -4201,7 +4191,7 @@ class parser
                 {
                     case token_type::begin_object:
                     {
-                        if (not sax->start_object())
+                        if (JSON_UNLIKELY(not sax->start_object()))
                         {
                             return false;
                         }
@@ -4212,7 +4202,7 @@ class parser
                         // closing } -> we are done
                         if (last_token == token_type::end_object)
                         {
-                            if (not sax->end_object())
+                            if (JSON_UNLIKELY(not sax->end_object()))
                             {
                                 return false;
                             }
@@ -4228,7 +4218,7 @@ class parser
                         }
                         else
                         {
-                            if (not sax->key(m_lexer.move_string()))
+                            if (JSON_UNLIKELY(not sax->key(m_lexer.move_string())))
                             {
                                 return false;
                             }
@@ -4253,7 +4243,7 @@ class parser
 
                     case token_type::begin_array:
                     {
-                        if (not sax->start_array())
+                        if (JSON_UNLIKELY(not sax->start_array()))
                         {
                             return false;
                         }
@@ -4264,7 +4254,7 @@ class parser
                         // closing ] -> we are done
                         if (last_token == token_type::end_array)
                         {
-                            if (not sax->end_array())
+                            if (JSON_UNLIKELY(not sax->end_array()))
                             {
                                 return false;
                             }
@@ -4290,7 +4280,7 @@ class parser
                         }
                         else
                         {
-                            if (not sax->number_float(res, m_lexer.move_string()))
+                            if (JSON_UNLIKELY(not sax->number_float(res, m_lexer.move_string())))
                             {
                                 return false;
                             }
@@ -4300,7 +4290,7 @@ class parser
 
                     case token_type::literal_false:
                     {
-                        if (not sax->boolean(false))
+                        if (JSON_UNLIKELY(not sax->boolean(false)))
                         {
                             return false;
                         }
@@ -4309,7 +4299,7 @@ class parser
 
                     case token_type::literal_null:
                     {
-                        if (not sax->null())
+                        if (JSON_UNLIKELY(not sax->null()))
                         {
                             return false;
                         }
@@ -4318,7 +4308,7 @@ class parser
 
                     case token_type::literal_true:
                     {
-                        if (not sax->boolean(true))
+                        if (JSON_UNLIKELY(not sax->boolean(true)))
                         {
                             return false;
                         }
@@ -4327,7 +4317,7 @@ class parser
 
                     case token_type::value_integer:
                     {
-                        if (not sax->number_integer(m_lexer.get_number_integer()))
+                        if (JSON_UNLIKELY(not sax->number_integer(m_lexer.get_number_integer())))
                         {
                             return false;
                         }
@@ -4336,7 +4326,7 @@ class parser
 
                     case token_type::value_string:
                     {
-                        if (not  sax->string(m_lexer.move_string()))
+                        if (JSON_UNLIKELY(not sax->string(m_lexer.move_string())))
                         {
                             return false;
                         }
@@ -4345,7 +4335,7 @@ class parser
 
                     case token_type::value_unsigned:
                     {
-                        if (not  sax->number_unsigned(m_lexer.get_number_unsigned()))
+                        if (JSON_UNLIKELY(not sax->number_unsigned(m_lexer.get_number_unsigned())))
                         {
                             return false;
                         }
@@ -4397,7 +4387,7 @@ class parser
                         // closing ]
                         if (JSON_LIKELY(last_token == token_type::end_array))
                         {
-                            if (not sax->end_array())
+                            if (JSON_UNLIKELY(not sax->end_array()))
                             {
                                 return false;
                             }
@@ -4436,7 +4426,7 @@ class parser
                             }
                             else
                             {
-                                if (not sax->key(m_lexer.move_string()))
+                                if (JSON_UNLIKELY(not sax->key(m_lexer.move_string())))
                                 {
                                     return false;
                                 }
@@ -4459,7 +4449,7 @@ class parser
                         // closing }
                         if (JSON_LIKELY(last_token == token_type::end_object))
                         {
-                            if (not sax->end_object())
+                            if (JSON_UNLIKELY(not sax->end_object()))
                             {
                                 return false;
                             }
