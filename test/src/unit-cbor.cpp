@@ -1292,6 +1292,10 @@ TEST_CASE("CBOR")
             CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x62, 0x60})), json::parse_error&);
             CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x7F})), json::parse_error&);
             CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x7F, 0x60})), json::parse_error&);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x82, 0x01})), json::parse_error&);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0x9F, 0x01})), json::parse_error&);
+            CHECK_THROWS_AS(json::from_cbor(std::vector<uint8_t>({0xBF, 0x61, 0x61, 0xF5})), json::parse_error&);
+
 
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x18})),
                               "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
@@ -1331,6 +1335,12 @@ TEST_CASE("CBOR")
                               "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
             CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x7F, 0x60})),
                               "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
+            CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x82, 0x01})),
+                              "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
+            CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0x9F, 0x01})),
+                              "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
+            CHECK_THROWS_WITH(json::from_cbor(std::vector<uint8_t>({0xBF, 0x61, 0x61, 0xF5})),
+                              "[json.exception.parse_error.110] parse error at 5: unexpected end of input");
 
             CHECK(json::from_cbor(std::vector<uint8_t>({0x18}), true, false).is_discarded());
             CHECK(json::from_cbor(std::vector<uint8_t>({0x19}), true, false).is_discarded());
@@ -1351,6 +1361,9 @@ TEST_CASE("CBOR")
             CHECK(json::from_cbor(std::vector<uint8_t>({0x62, 0x60}), true, false).is_discarded());
             CHECK(json::from_cbor(std::vector<uint8_t>({0x7F}), true, false).is_discarded());
             CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0x60}), true, false).is_discarded());
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x82, 0x01}), true, false).is_discarded());
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x9F, 0x01}), true, false).is_discarded());
+            CHECK(json::from_cbor(std::vector<uint8_t>({0xBF, 0x61, 0x61, 0xF5}), true, false).is_discarded());
         }
 
         SECTION("unsupported bytes")

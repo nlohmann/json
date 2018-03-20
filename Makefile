@@ -85,7 +85,7 @@ coverage:
 	mkdir build_coverage
 	cd build_coverage ; CXX=g++-5 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
 	cd build_coverage ; ninja
-	cd build_coverage ; ctest -j10
+	cd build_coverage ; ctest -E '.*_default' -j10
 	cd build_coverage ; ninja lcov_html
 	open build_coverage/test/html/index.html
 

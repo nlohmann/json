@@ -1359,8 +1359,8 @@ class binary_reader
 
             default:
             {
-                result = std::size_t(-1);
-                return true;
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, "byte after '#' must denote a number type; last byte: 0x" + last_token));
             }
         }
     }
@@ -1393,6 +1393,10 @@ class binary_reader
             get_ignore_noop();
             if (JSON_UNLIKELY(current != '#'))
             {
+                if (JSON_UNLIKELY(not unexpect_eof()))
+                {
+                    return false;
+                }
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, "expected '#' after UBJSON type information; last byte: 0x" + last_token));
             }
