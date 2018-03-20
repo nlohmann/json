@@ -1664,6 +1664,16 @@ TEST_CASE("UBJSON")
             CHECK_THROWS_AS(json::from_ubjson(v3), json::parse_error&);
             CHECK_THROWS_WITH(json::from_ubjson(v3), "[json.exception.parse_error.110] parse error at 5: unexpected end of input");
             CHECK(json::from_ubjson(v3, true, false).is_discarded());
+
+            std::vector<uint8_t> vST1 = {'{', '$', 'd', '#', 'i', 2, 'i', 1, 'a'};
+            CHECK_THROWS_AS(json::from_ubjson(vST1), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vST1), "[json.exception.parse_error.110] parse error at 10: unexpected end of input");
+            CHECK(json::from_ubjson(vST1, true, false).is_discarded());            
+
+            std::vector<uint8_t> vST2 = {'{', '#', 'i', 2, 'i', 1, 'a'};
+            CHECK_THROWS_AS(json::from_ubjson(vST2), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vST2), "[json.exception.parse_error.110] parse error at 8: unexpected end of input");
+            CHECK(json::from_ubjson(vST2, true, false).is_discarded());            
         }
     }
 
