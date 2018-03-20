@@ -41,9 +41,6 @@ class binary_reader
     using json_sax_t = json_sax<BasicJsonType>;
 
   public:
-    /// the supported binary input formats
-    enum class binary_format_t { cbor, msgpack, ubjson };
-
     /*!
     @brief create a binary reader
 
@@ -61,30 +58,35 @@ class binary_reader
 
     @return
     */
-    bool sax_parse(const binary_format_t format, json_sax_t* sax_, const bool strict)
+    bool sax_parse(const input_format_t format,
+                   json_sax_t* sax_,
+                   const bool strict = true)
     {
         sax = sax_;
         bool result;
 
         switch (format)
         {
-            case binary_format_t::cbor:
+            case input_format_t::cbor:
                 result = parse_cbor_internal();
                 break;
 
-            case binary_format_t::msgpack:
+            case input_format_t::msgpack:
                 result = parse_msgpack_internal();
                 break;
 
-            case binary_format_t::ubjson:
+            case input_format_t::ubjson:
                 result = parse_ubjson_internal();
                 break;
+
+            default:
+                assert(false);  // LCOV_EXCL_LINE
         }
 
         // strict mode: next byte must be EOF
         if (result and strict)
         {
-            if (format == binary_format_t::ubjson)
+            if (format == input_format_t::ubjson)
             {
                 get_ignore_noop();
             }

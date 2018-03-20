@@ -117,12 +117,6 @@ class SaxEventLogger : public nlohmann::json::json_sax_t
         return true;
     }
 
-    bool binary(const std::vector<uint8_t>&) override
-    {
-        events.push_back("binary()");
-        return true;
-    }
-
     bool parse_error(std::size_t position, const std::string&, const json::exception&) override
     {
         errored = true;
@@ -195,11 +189,6 @@ class SaxCountdown : public nlohmann::json::json_sax_t
         return events_left-- > 0;
     }
 
-    bool binary(const std::vector<uint8_t>&) override
-    {
-        return events_left-- > 0;
-    }
-
     bool parse_error(std::size_t, const std::string&, const json::exception&) override
     {
         return false;
@@ -248,7 +237,7 @@ bool accept_helper(const std::string& s)
 
     // 4. parse with SAX (compare with relaxed accept result)
     SaxEventLogger el;
-    CHECK_NOTHROW(json::sax_parse(s, &el));
+    CHECK_NOTHROW(json::sax_parse(s, &el, json::input_format_t::json, false));
     CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == not el.errored);
 
     // 5. parse with simple callback

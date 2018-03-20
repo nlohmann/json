@@ -116,12 +116,6 @@ struct SaxEventLogger : public nlohmann::json::json_sax_t
         return true;
     }
 
-    bool binary(const std::vector<uint8_t>&) override
-    {
-        events.push_back("binary()");
-        return true;
-    }
-
     bool parse_error(std::size_t position, const std::string&, const json::exception&) override
     {
         events.push_back("parse_error(" + std::to_string(position) + ")");

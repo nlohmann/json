@@ -33,6 +33,76 @@ using nlohmann::json;
 
 #include <fstream>
 
+class SaxCountdown : public nlohmann::json::json_sax_t
+{
+  public:
+    explicit SaxCountdown(const int count) : events_left(count)
+    {}
+
+    bool null() override
+    {
+        return events_left-- > 0;
+    }
+
+    bool boolean(bool) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_integer(json::number_integer_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_unsigned(json::number_unsigned_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_float(json::number_float_t, const std::string&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool string(std::string&&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_object(std::size_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool key(std::string&&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_object() override
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_array(std::size_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_array() override
+    {
+        return events_left-- > 0;
+    }
+
+    bool parse_error(std::size_t, const std::string&, const json::exception&) override
+    {
+        return false;
+    }
+
+  private:
+    int events_left = 0;
+};
+
 TEST_CASE("UBJSON")
 {
     SECTION("individual values")
@@ -1238,6 +1308,51 @@ TEST_CASE("UBJSON")
             json j = 9223372036854775808llu;
             CHECK_THROWS_AS(json::to_ubjson(j), json::out_of_range&);
             CHECK_THROWS_WITH(json::to_ubjson(j), "[json.exception.out_of_range.407] number overflow serializing 9223372036854775808");
+        }
+    }
+
+    SECTION("SAX aborts")
+    {
+        SECTION("start_array()")
+        {
+            std::vector<uint8_t> v = {'[', 'T', 'F', ']'};
+            SaxCountdown scp(0);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+        }
+
+        SECTION("start_object()")
+        {
+            std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
+            SaxCountdown scp(0);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+        }
+
+        SECTION("key() in object")
+        {
+            std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
+            SaxCountdown scp(1);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+        }
+
+        SECTION("start_array(len)")
+        {
+            std::vector<uint8_t> v = {'[', '#', 'i', '2', 'T', 'F'};
+            SaxCountdown scp(0);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+        }
+
+        SECTION("start_object(len)")
+        {
+            std::vector<uint8_t> v = {'{', '#', 'i', '1', 3, 'f', 'o', 'o', 'F'};
+            SaxCountdown scp(0);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+        }
+
+        SECTION("key() in object with length")
+        {
+            std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
+            SaxCountdown scp(1);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
         }
     }
 

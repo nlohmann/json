@@ -1593,6 +1593,9 @@ namespace nlohmann
 {
 namespace detail
 {
+/// the supported input formats
+enum class input_format_t { json, cbor, msgpack, ubjson };
+
 ////////////////////
 // input adapters //
 ////////////////////
@@ -1938,7 +1941,7 @@ class lexer
         }
     }
 
-    explicit lexer(detail::input_adapter_t adapter)
+    explicit lexer(detail::input_adapter_t&& adapter)
         : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
 
     // delete because of pointer members
@@ -3243,20 +3246,11 @@ struct json_sax
     virtual bool end_array() = 0;
 
     /*!
-    @brief a binary value was read
-    @param[in] val  byte vector
-    @return whether parsing should proceed
-    @note examples are CBOR type 2 strings, MessagePack bin, and maybe UBJSON
-          array<uint8t>
-    */
-    virtual bool binary(const std::vector<uint8_t>& val) = 0;
-
-    /*!
     @brief a parse error occurred
     @param[in] position    the position in the input where the error occurs
     @param[in] last_token  the last read token
     @param[in] error_msg   a detailed error message
-    @return whether parsing should proceed
+    @return whether parsing should proceed (must return false)
     */
     virtual bool parse_error(std::size_t position,
                              const std::string& last_token,
@@ -3359,11 +3353,6 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
     bool end_array() override
     {
         ref_stack.pop_back();
-        return true;
-    }
-
-    bool binary(const std::vector<uint8_t>&) override
-    {
         return true;
     }
 
@@ -3567,11 +3556,6 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool binary(const std::vector<uint8_t>&) override
-    {
-        return true;
-    }
-
     bool parse_error(std::size_t, const std::string&,
                      const detail::exception& ex) override
     {
@@ -3717,11 +3701,6 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool binary(const std::vector<uint8_t>&) override
-    {
-        return true;
-    }
-
     bool parse_error(std::size_t, const std::string&, const detail::exception&) override
     {
         return false;
@@ -3783,10 +3762,10 @@ class parser
         std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
 
     /// a parser reading from an input adapter
-    explicit parser(detail::input_adapter_t adapter,
+    explicit parser(detail::input_adapter_t&& adapter,
                     const parser_callback_t cb = nullptr,
                     const bool allow_exceptions_ = true)
-        : callback(cb), m_lexer(adapter), allow_exceptions(allow_exceptions_)
+        : callback(cb), m_lexer(std::move(adapter)), allow_exceptions(allow_exceptions_)
     {
         // read first token
         get_token();
@@ -3883,19 +3862,22 @@ class parser
     bool accept(const bool strict = true)
     {
         json_sax_acceptor<BasicJsonType> sax_acceptor;
-
-        if (not sax_parse_internal(&sax_acceptor))
-        {
-            return false;
-        }
-
-        // strict => last token must be EOF
-        return not strict or (get_token() == token_type::end_of_input);
+        return sax_parse(&sax_acceptor, strict);
     }
 
-    bool sax_parse(json_sax_t* sax)
+    bool sax_parse(json_sax_t* sax, const bool strict = true)
     {
-        return sax_parse_internal(sax);
+        const bool result = sax_parse_internal(sax);
+
+        // strict mode: next byte must be EOF
+        if (result and strict and (get_token() != token_type::end_of_input))
+        {
+            return sax->parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input)));
+        }
+
+        return result;
     }
 
   private:
@@ -5699,9 +5681,6 @@ class binary_reader
     using json_sax_t = json_sax<BasicJsonType>;
 
   public:
-    /// the supported binary input formats
-    enum class binary_format_t { cbor, msgpack, ubjson };
-
     /*!
     @brief create a binary reader
 
@@ -5719,30 +5698,35 @@ class binary_reader
 
     @return
     */
-    bool sax_parse(const binary_format_t format, json_sax_t* sax_, const bool strict)
+    bool sax_parse(const input_format_t format,
+                   json_sax_t* sax_,
+                   const bool strict = true)
     {
         sax = sax_;
         bool result;
 
         switch (format)
         {
-            case binary_format_t::cbor:
+            case input_format_t::cbor:
                 result = parse_cbor_internal();
                 break;
 
-            case binary_format_t::msgpack:
+            case input_format_t::msgpack:
                 result = parse_msgpack_internal();
                 break;
 
-            case binary_format_t::ubjson:
+            case input_format_t::ubjson:
                 result = parse_ubjson_internal();
                 break;
+
+            default:
+                assert(false);  // LCOV_EXCL_LINE
         }
 
         // strict mode: next byte must be EOF
         if (result and strict)
         {
-            if (format == binary_format_t::ubjson)
+            if (format == input_format_t::ubjson)
             {
                 get_ignore_noop();
             }
@@ -10957,6 +10941,8 @@ class basic_json
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// helper type for initializer lists of basic_json values
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
+
+    using input_format_t = detail::input_format_t;
 
     ////////////////
     // exceptions //
@@ -16745,7 +16731,7 @@ class basic_json
 
     @since version 2.0.3 (contiguous containers)
     */
-    static basic_json parse(detail::input_adapter i,
+    static basic_json parse(detail::input_adapter&& i,
                             const parser_callback_t cb = nullptr,
                             const bool allow_exceptions = true)
     {
@@ -16754,36 +16740,23 @@ class basic_json
         return result;
     }
 
-    /*!
-    @copydoc basic_json parse(detail::input_adapter, const parser_callback_t)
-    */
-    static basic_json parse(detail::input_adapter& i,
-                            const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
-    {
-        basic_json result;
-        parser(i, cb, allow_exceptions).parse(true, result);
-        return result;
-    }
-
-    static bool accept(detail::input_adapter i)
+    static bool accept(detail::input_adapter&& i)
     {
         return parser(i).accept(true);
     }
 
-    static bool accept(detail::input_adapter& i)
+    static bool sax_parse(detail::input_adapter&& i, json_sax_t* sax,
+                          input_format_t format = input_format_t::json,
+                          const bool strict = true)
     {
-        return parser(i).accept(true);
-    }
-
-    static bool sax_parse(detail::input_adapter i, json_sax_t* sax)
-    {
-        return parser(i).sax_parse(sax);
-    }
-
-    static bool sax_parse(detail::input_adapter& i, json_sax_t* sax)
-    {
-        return parser(i).sax_parse(sax);
+        assert(sax);
+        switch (format)
+        {
+            case input_format_t::json:
+                return parser(std::move(i)).sax_parse(sax, strict);
+            default:
+                return binary_reader(std::move(i)).sax_parse(format, sax, strict);
+        }
     }
 
     /*!
@@ -17388,13 +17361,13 @@ class basic_json
            @a strict parameter since 3.0.0; added @allow_exceptions parameter
            since 3.2.0
     */
-    static basic_json from_cbor(detail::input_adapter i,
+    static basic_json from_cbor(detail::input_adapter&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(binary_reader::binary_format_t::cbor, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::cbor, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -17409,7 +17382,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(binary_reader::binary_format_t::cbor, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::cbor, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -17491,13 +17464,13 @@ class basic_json
            @a strict parameter since 3.0.0; added @allow_exceptions parameter
            since 3.2.0
     */
-    static basic_json from_msgpack(detail::input_adapter i,
+    static basic_json from_msgpack(detail::input_adapter&& i,
                                    const bool strict = true,
                                    const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(binary_reader::binary_format_t::msgpack, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -17512,7 +17485,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(binary_reader::binary_format_t::msgpack, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -17573,13 +17546,13 @@ class basic_json
 
     @since version 3.1.0; added @allow_exceptions parameter since 3.2.0
     */
-    static basic_json from_ubjson(detail::input_adapter i,
+    static basic_json from_ubjson(detail::input_adapter&& i,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(binary_reader::binary_format_t::ubjson, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -17594,7 +17567,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(binary_reader::binary_format_t::ubjson, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 

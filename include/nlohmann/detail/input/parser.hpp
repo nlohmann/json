@@ -60,10 +60,10 @@ class parser
         std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
 
     /// a parser reading from an input adapter
-    explicit parser(detail::input_adapter_t adapter,
+    explicit parser(detail::input_adapter_t&& adapter,
                     const parser_callback_t cb = nullptr,
                     const bool allow_exceptions_ = true)
-        : callback(cb), m_lexer(adapter), allow_exceptions(allow_exceptions_)
+        : callback(cb), m_lexer(std::move(adapter)), allow_exceptions(allow_exceptions_)
     {
         // read first token
         get_token();
@@ -160,19 +160,22 @@ class parser
     bool accept(const bool strict = true)
     {
         json_sax_acceptor<BasicJsonType> sax_acceptor;
-
-        if (not sax_parse_internal(&sax_acceptor))
-        {
-            return false;
-        }
-
-        // strict => last token must be EOF
-        return not strict or (get_token() == token_type::end_of_input);
+        return sax_parse(&sax_acceptor, strict);
     }
 
-    bool sax_parse(json_sax_t* sax)
+    bool sax_parse(json_sax_t* sax, const bool strict = true)
     {
-        return sax_parse_internal(sax);
+        const bool result = sax_parse_internal(sax);
+
+        // strict mode: next byte must be EOF
+        if (result and strict and (get_token() != token_type::end_of_input))
+        {
+            return sax->parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input)));
+        }
+
+        return result;
     }
 
   private:

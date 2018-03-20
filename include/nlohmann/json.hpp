@@ -209,6 +209,8 @@ class basic_json
     /// helper type for initializer lists of basic_json values
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
 
+    using input_format_t = detail::input_format_t;
+
     ////////////////
     // exceptions //
     ////////////////
@@ -5996,7 +5998,7 @@ class basic_json
 
     @since version 2.0.3 (contiguous containers)
     */
-    static basic_json parse(detail::input_adapter i,
+    static basic_json parse(detail::input_adapter&& i,
                             const parser_callback_t cb = nullptr,
                             const bool allow_exceptions = true)
     {
@@ -6005,36 +6007,23 @@ class basic_json
         return result;
     }
 
-    /*!
-    @copydoc basic_json parse(detail::input_adapter, const parser_callback_t)
-    */
-    static basic_json parse(detail::input_adapter& i,
-                            const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
-    {
-        basic_json result;
-        parser(i, cb, allow_exceptions).parse(true, result);
-        return result;
-    }
-
-    static bool accept(detail::input_adapter i)
+    static bool accept(detail::input_adapter&& i)
     {
         return parser(i).accept(true);
     }
 
-    static bool accept(detail::input_adapter& i)
+    static bool sax_parse(detail::input_adapter&& i, json_sax_t* sax,
+                          input_format_t format = input_format_t::json,
+                          const bool strict = true)
     {
-        return parser(i).accept(true);
-    }
-
-    static bool sax_parse(detail::input_adapter i, json_sax_t* sax)
-    {
-        return parser(i).sax_parse(sax);
-    }
-
-    static bool sax_parse(detail::input_adapter& i, json_sax_t* sax)
-    {
-        return parser(i).sax_parse(sax);
+        assert(sax);
+        switch (format)
+        {
+            case input_format_t::json:
+                return parser(std::move(i)).sax_parse(sax, strict);
+            default:
+                return binary_reader(std::move(i)).sax_parse(format, sax, strict);
+        }
     }
 
     /*!
@@ -6639,13 +6628,13 @@ class basic_json
            @a strict parameter since 3.0.0; added @allow_exceptions parameter
            since 3.2.0
     */
-    static basic_json from_cbor(detail::input_adapter i,
+    static basic_json from_cbor(detail::input_adapter&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(binary_reader::binary_format_t::cbor, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::cbor, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -6660,7 +6649,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(binary_reader::binary_format_t::cbor, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::cbor, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -6742,13 +6731,13 @@ class basic_json
            @a strict parameter since 3.0.0; added @allow_exceptions parameter
            since 3.2.0
     */
-    static basic_json from_msgpack(detail::input_adapter i,
+    static basic_json from_msgpack(detail::input_adapter&& i,
                                    const bool strict = true,
                                    const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(binary_reader::binary_format_t::msgpack, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -6763,7 +6752,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(binary_reader::binary_format_t::msgpack, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -6824,13 +6813,13 @@ class basic_json
 
     @since version 3.1.0; added @allow_exceptions parameter since 3.2.0
     */
-    static basic_json from_ubjson(detail::input_adapter i,
+    static basic_json from_ubjson(detail::input_adapter&& i,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(binary_reader::binary_format_t::ubjson, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -6845,7 +6834,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(binary_reader::binary_format_t::ubjson, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 

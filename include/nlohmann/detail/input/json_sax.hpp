@@ -106,20 +106,11 @@ struct json_sax
     virtual bool end_array() = 0;
 
     /*!
-    @brief a binary value was read
-    @param[in] val  byte vector
-    @return whether parsing should proceed
-    @note examples are CBOR type 2 strings, MessagePack bin, and maybe UBJSON
-          array<uint8t>
-    */
-    virtual bool binary(const std::vector<uint8_t>& val) = 0;
-
-    /*!
     @brief a parse error occurred
     @param[in] position    the position in the input where the error occurs
     @param[in] last_token  the last read token
     @param[in] error_msg   a detailed error message
-    @return whether parsing should proceed
+    @return whether parsing should proceed (must return false)
     */
     virtual bool parse_error(std::size_t position,
                              const std::string& last_token,
@@ -222,11 +213,6 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
     bool end_array() override
     {
         ref_stack.pop_back();
-        return true;
-    }
-
-    bool binary(const std::vector<uint8_t>&) override
-    {
         return true;
     }
 
@@ -430,11 +416,6 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool binary(const std::vector<uint8_t>&) override
-    {
-        return true;
-    }
-
     bool parse_error(std::size_t, const std::string&,
                      const detail::exception& ex) override
     {
@@ -576,11 +557,6 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
     }
 
     bool end_array() override
-    {
-        return true;
-    }
-
-    bool binary(const std::vector<uint8_t>&) override
     {
         return true;
     }
