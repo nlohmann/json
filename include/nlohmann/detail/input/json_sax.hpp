@@ -68,7 +68,7 @@ struct json_sax
     @param[in] val  string value
     @return whether parsing should proceed
     */
-    virtual bool string(string_t&& val) = 0;
+    virtual bool string(string_t& val) = 0;
 
     /*!
     @brief the beginning of an object was read
@@ -83,7 +83,7 @@ struct json_sax
     @param[in] val  object key
     @return whether parsing should proceed
     */
-    virtual bool key(string_t&& val) = 0;
+    virtual bool key(string_t& val) = 0;
 
     /*!
     @brief the end of an object was read
@@ -165,7 +165,7 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool string(string_t&& val) override
+    bool string(string_t& val) override
     {
         handle_value(val);
         return true;
@@ -184,7 +184,7 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool key(string_t&& val) override
+    bool key(string_t& val) override
     {
         // add null at given key and store the reference for later
         object_element = &(ref_stack.back()->m_value.object->operator[](val));
@@ -340,7 +340,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool string(string_t&& val) override
+    bool string(string_t& val) override
     {
         handle_value(val);
         return true;
@@ -362,9 +362,9 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool key(string_t&& val) override
+    bool key(string_t& val) override
     {
-        BasicJsonType k = BasicJsonType(std::forward < string_t&& > (val));
+        BasicJsonType k = BasicJsonType(val);
         const bool keep = callback(ref_stack.size(), parse_event_t::key, k);
 
         // add null at given key and store the reference for later
@@ -531,7 +531,7 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool string(string_t&&) override
+    bool string(string_t&) override
     {
         return true;
     }
@@ -541,7 +541,7 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool key(string_t&&) override
+    bool key(string_t&) override
     {
         return true;
     }

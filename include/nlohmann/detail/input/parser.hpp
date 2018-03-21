@@ -239,7 +239,7 @@ class parser
                     {
                         return;
                     }
-                    key = m_lexer.move_string();
+                    key = m_lexer.get_string();
 
                     bool keep_tag = false;
                     if (keep)
@@ -375,7 +375,7 @@ class parser
             case token_type::value_string:
             {
                 result.m_type = value_t::string;
-                result.m_value = m_lexer.move_string();
+                result.m_value = m_lexer.get_string();
                 break;
             }
 
@@ -498,7 +498,7 @@ class parser
                         }
                         else
                         {
-                            if (JSON_UNLIKELY(not sax->key(m_lexer.move_string())))
+                            if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
                             {
                                 return false;
                             }
@@ -560,7 +560,7 @@ class parser
                         }
                         else
                         {
-                            if (JSON_UNLIKELY(not sax->number_float(res, m_lexer.move_string())))
+                            if (JSON_UNLIKELY(not sax->number_float(res, m_lexer.get_string())))
                             {
                                 return false;
                             }
@@ -606,7 +606,7 @@ class parser
 
                     case token_type::value_string:
                     {
-                        if (JSON_UNLIKELY(not sax->string(m_lexer.move_string())))
+                        if (JSON_UNLIKELY(not sax->string(m_lexer.get_string())))
                         {
                             return false;
                         }
@@ -706,7 +706,7 @@ class parser
                             }
                             else
                             {
-                                if (JSON_UNLIKELY(not sax->key(m_lexer.move_string())))
+                                if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
                                 {
                                     return false;
                                 }

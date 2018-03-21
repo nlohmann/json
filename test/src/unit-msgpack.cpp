@@ -64,7 +64,7 @@ class SaxCountdown : public nlohmann::json::json_sax_t
         return events_left-- > 0;
     }
 
-    bool string(std::string&&) override
+    bool string(std::string&) override
     {
         return events_left-- > 0;
     }
@@ -74,7 +74,7 @@ class SaxCountdown : public nlohmann::json::json_sax_t
         return events_left-- > 0;
     }
 
-    bool key(std::string&&) override
+    bool key(std::string&) override
     {
         return events_left-- > 0;
     }

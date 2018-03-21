@@ -2973,9 +2973,9 @@ scan_number_done:
     }
 
     /// return current string value (implicitly resets the token; useful only once)
-    string_t&& move_string()
+    string_t& get_string()
     {
-        return std::move(token_buffer);
+        return token_buffer;
     }
 
     /////////////////////
@@ -3208,7 +3208,7 @@ struct json_sax
     @param[in] val  string value
     @return whether parsing should proceed
     */
-    virtual bool string(string_t&& val) = 0;
+    virtual bool string(string_t& val) = 0;
 
     /*!
     @brief the beginning of an object was read
@@ -3223,7 +3223,7 @@ struct json_sax
     @param[in] val  object key
     @return whether parsing should proceed
     */
-    virtual bool key(string_t&& val) = 0;
+    virtual bool key(string_t& val) = 0;
 
     /*!
     @brief the end of an object was read
@@ -3305,7 +3305,7 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool string(string_t&& val) override
+    bool string(string_t& val) override
     {
         handle_value(val);
         return true;
@@ -3324,7 +3324,7 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool key(string_t&& val) override
+    bool key(string_t& val) override
     {
         // add null at given key and store the reference for later
         object_element = &(ref_stack.back()->m_value.object->operator[](val));
@@ -3480,7 +3480,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool string(string_t&& val) override
+    bool string(string_t& val) override
     {
         handle_value(val);
         return true;
@@ -3502,9 +3502,9 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool key(string_t&& val) override
+    bool key(string_t& val) override
     {
-        BasicJsonType k = BasicJsonType(std::forward < string_t&& > (val));
+        BasicJsonType k = BasicJsonType(val);
         const bool keep = callback(ref_stack.size(), parse_event_t::key, k);
 
         // add null at given key and store the reference for later
@@ -3671,7 +3671,7 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool string(string_t&&) override
+    bool string(string_t&) override
     {
         return true;
     }
@@ -3681,7 +3681,7 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool key(string_t&&) override
+    bool key(string_t&) override
     {
         return true;
     }
@@ -3941,7 +3941,7 @@ class parser
                     {
                         return;
                     }
-                    key = m_lexer.move_string();
+                    key = m_lexer.get_string();
 
                     bool keep_tag = false;
                     if (keep)
@@ -4077,7 +4077,7 @@ class parser
             case token_type::value_string:
             {
                 result.m_type = value_t::string;
-                result.m_value = m_lexer.move_string();
+                result.m_value = m_lexer.get_string();
                 break;
             }
 
@@ -4200,7 +4200,7 @@ class parser
                         }
                         else
                         {
-                            if (JSON_UNLIKELY(not sax->key(m_lexer.move_string())))
+                            if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
                             {
                                 return false;
                             }
@@ -4262,7 +4262,7 @@ class parser
                         }
                         else
                         {
-                            if (JSON_UNLIKELY(not sax->number_float(res, m_lexer.move_string())))
+                            if (JSON_UNLIKELY(not sax->number_float(res, m_lexer.get_string())))
                             {
                                 return false;
                             }
@@ -4308,7 +4308,7 @@ class parser
 
                     case token_type::value_string:
                     {
-                        if (JSON_UNLIKELY(not sax->string(m_lexer.move_string())))
+                        if (JSON_UNLIKELY(not sax->string(m_lexer.get_string())))
                         {
                             return false;
                         }
@@ -4408,7 +4408,7 @@ class parser
                             }
                             else
                             {
-                                if (JSON_UNLIKELY(not sax->key(m_lexer.move_string())))
+                                if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
                                 {
                                     return false;
                                 }
@@ -5907,7 +5907,7 @@ class binary_reader
             case 0x7F: // UTF-8 string (indefinite length)
             {
                 string_t s;
-                return get_cbor_string(s) and sax->string(std::move(s));
+                return get_cbor_string(s) and sax->string(s);
             }
 
             // array (0x00..0x17 data items follow)
@@ -6303,7 +6303,7 @@ class binary_reader
             case 0xBF:
             {
                 string_t s;
-                return get_msgpack_string(s) and sax->string(std::move(s));
+                return get_msgpack_string(s) and sax->string(s);
             }
 
             case 0xC0: // nil
@@ -6380,7 +6380,7 @@ class binary_reader
             case 0xDB: // str 32
             {
                 string_t s;
-                return get_msgpack_string(s) and sax->string(std::move(s));
+                return get_msgpack_string(s) and sax->string(s);
             }
 
             case 0xDC: // array 16
@@ -6702,13 +6702,13 @@ class binary_reader
             return false;
         }
 
+        string_t key;
         if (len != json_sax_t::no_limit)
         {
             for (std::size_t i = 0; i < len; ++i)
             {
                 get();
-                string_t key;
-                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(std::move(key))))
+                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
                 {
                     return false;
                 }
@@ -6717,14 +6717,14 @@ class binary_reader
                 {
                     return false;
                 }
+                key.clear();
             }
         }
         else
         {
             while (get() != 0xFF)
             {
-                string_t key;
-                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(std::move(key))))
+                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
                 {
                     return false;
                 }
@@ -6733,6 +6733,7 @@ class binary_reader
                 {
                     return false;
                 }
+                key.clear();
             }
         }
 
@@ -6854,11 +6855,11 @@ class binary_reader
             return false;
         }
 
+        string_t key;
         for (std::size_t i = 0; i < len; ++i)
         {
             get();
-            string_t key;
-            if (JSON_UNLIKELY(not get_msgpack_string(key) or not sax->key(std::move(key))))
+            if (JSON_UNLIKELY(not get_msgpack_string(key) or not sax->key(key)))
             {
                 return false;
             }
@@ -6867,6 +6868,7 @@ class binary_reader
             {
                 return false;
             }
+            key.clear();
         }
 
         return sax->end_object();
@@ -7125,13 +7127,14 @@ class binary_reader
                     auto last_token = get_token_string();
                     return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + last_token));
                 }
-                return sax->string(string_t(1, static_cast<char>(current)));
+                string_t s(1, static_cast<char>(current));
+                return sax->string(s);
             }
 
             case 'S':  // string
             {
                 string_t s;
-                return get_ubjson_string(s) and sax->string(std::move(s));
+                return get_ubjson_string(s) and sax->string(s);
             }
 
             case '[':  // array
@@ -7221,6 +7224,7 @@ class binary_reader
             return false;
         }
 
+        string_t key;
         if (size_and_type.first != string_t::npos)
         {
             if (JSON_UNLIKELY(not sax->start_object(size_and_type.first)))
@@ -7232,8 +7236,7 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    string_t key;
-                    if (JSON_UNLIKELY(not get_ubjson_string(key) or not sax->key(std::move(key))))
+                    if (JSON_UNLIKELY(not get_ubjson_string(key) or not sax->key(key)))
                     {
                         return false;
                     }
@@ -7241,14 +7244,14 @@ class binary_reader
                     {
                         return false;
                     }
+                    key.clear();
                 }
             }
             else
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    string_t key;
-                    if (JSON_UNLIKELY(not get_ubjson_string(key) or not sax->key(std::move(key))))
+                    if (JSON_UNLIKELY(not get_ubjson_string(key) or not sax->key(key)))
                     {
                         return false;
                     }
@@ -7256,6 +7259,7 @@ class binary_reader
                     {
                         return false;
                     }
+                    key.clear();
                 }
             }
         }
@@ -7268,8 +7272,7 @@ class binary_reader
 
             while (current != '}')
             {
-                string_t key;
-                if (JSON_UNLIKELY(not get_ubjson_string(key, false) or not sax->key(std::move(key))))
+                if (JSON_UNLIKELY(not get_ubjson_string(key, false) or not sax->key(key)))
                 {
                     return false;
                 }
@@ -7278,6 +7281,7 @@ class binary_reader
                     return false;
                 }
                 get_ignore_noop();
+                key.clear();
             }
         }
 

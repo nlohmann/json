@@ -267,7 +267,7 @@ class binary_reader
             case 0x7F: // UTF-8 string (indefinite length)
             {
                 string_t s;
-                return get_cbor_string(s) and sax->string(std::move(s));
+                return get_cbor_string(s) and sax->string(s);
             }
 
             // array (0x00..0x17 data items follow)
@@ -663,7 +663,7 @@ class binary_reader
             case 0xBF:
             {
                 string_t s;
-                return get_msgpack_string(s) and sax->string(std::move(s));
+                return get_msgpack_string(s) and sax->string(s);
             }
 
             case 0xC0: // nil
@@ -740,7 +740,7 @@ class binary_reader
             case 0xDB: // str 32
             {
                 string_t s;
-                return get_msgpack_string(s) and sax->string(std::move(s));
+                return get_msgpack_string(s) and sax->string(s);
             }
 
             case 0xDC: // array 16
@@ -1062,13 +1062,13 @@ class binary_reader
             return false;
         }
 
+        string_t key;
         if (len != json_sax_t::no_limit)
         {
             for (std::size_t i = 0; i < len; ++i)
             {
                 get();
-                string_t key;
-                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(std::move(key))))
+                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
                 {
                     return false;
                 }
@@ -1077,14 +1077,14 @@ class binary_reader
                 {
                     return false;
                 }
+                key.clear();
             }
         }
         else
         {
             while (get() != 0xFF)
             {
-                string_t key;
-                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(std::move(key))))
+                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
                 {
                     return false;
                 }
@@ -1093,6 +1093,7 @@ class binary_reader
                 {
                     return false;
                 }
+                key.clear();
             }
         }
 
@@ -1214,11 +1215,11 @@ class binary_reader
             return false;
         }
 
+        string_t key;
         for (std::size_t i = 0; i < len; ++i)
         {
             get();
-            string_t key;
-            if (JSON_UNLIKELY(not get_msgpack_string(key) or not sax->key(std::move(key))))
+            if (JSON_UNLIKELY(not get_msgpack_string(key) or not sax->key(key)))
             {
                 return false;
             }
@@ -1227,6 +1228,7 @@ class binary_reader
             {
                 return false;
             }
+            key.clear();
         }
 
         return sax->end_object();
@@ -1485,13 +1487,14 @@ class binary_reader
                     auto last_token = get_token_string();
                     return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + last_token));
                 }
-                return sax->string(string_t(1, static_cast<char>(current)));
+                string_t s(1, static_cast<char>(current));
+                return sax->string(s);
             }
 
             case 'S':  // string
             {
                 string_t s;
-                return get_ubjson_string(s) and sax->string(std::move(s));
+                return get_ubjson_string(s) and sax->string(s);
             }
 
             case '[':  // array
@@ -1581,6 +1584,7 @@ class binary_reader
             return false;
         }
 
+        string_t key;
         if (size_and_type.first != string_t::npos)
         {
             if (JSON_UNLIKELY(not sax->start_object(size_and_type.first)))
@@ -1592,8 +1596,7 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    string_t key;
-                    if (JSON_UNLIKELY(not get_ubjson_string(key) or not sax->key(std::move(key))))
+                    if (JSON_UNLIKELY(not get_ubjson_string(key) or not sax->key(key)))
                     {
                         return false;
                     }
@@ -1601,14 +1604,14 @@ class binary_reader
                     {
                         return false;
                     }
+                    key.clear();
                 }
             }
             else
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    string_t key;
-                    if (JSON_UNLIKELY(not get_ubjson_string(key) or not sax->key(std::move(key))))
+                    if (JSON_UNLIKELY(not get_ubjson_string(key) or not sax->key(key)))
                     {
                         return false;
                     }
@@ -1616,6 +1619,7 @@ class binary_reader
                     {
                         return false;
                     }
+                    key.clear();
                 }
             }
         }
@@ -1628,8 +1632,7 @@ class binary_reader
 
             while (current != '}')
             {
-                string_t key;
-                if (JSON_UNLIKELY(not get_ubjson_string(key, false) or not sax->key(std::move(key))))
+                if (JSON_UNLIKELY(not get_ubjson_string(key, false) or not sax->key(key)))
                 {
                     return false;
                 }
@@ -1638,6 +1641,7 @@ class binary_reader
                     return false;
                 }
                 get_ignore_noop();
+                key.clear();
             }
         }
 

@@ -66,7 +66,7 @@ struct SaxEventLogger : public nlohmann::json::json_sax_t
         return true;
     }
 
-    bool string(std::string&& val) override
+    bool string(std::string& val) override
     {
         events.push_back("string(" + val + ")");
         return true;
@@ -85,7 +85,7 @@ struct SaxEventLogger : public nlohmann::json::json_sax_t
         return true;
     }
 
-    bool key(std::string&& val) override
+    bool key(std::string& val) override
     {
         events.push_back("key(" + val + ")");
         return true;
@@ -143,7 +143,7 @@ struct SaxEventLoggerExitAfterStartObject : public SaxEventLogger
 
 struct SaxEventLoggerExitAfterKey : public SaxEventLogger
 {
-    bool key(std::string&& val) override
+    bool key(std::string& val) override
     {
         events.push_back("key(" + val + ")");
         return false;
