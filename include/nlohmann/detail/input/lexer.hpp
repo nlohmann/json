@@ -1194,35 +1194,43 @@ scan_number_done:
         while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
 #else
         // skip white space and comments if comment stripping enabled
-        while(true) {
-          // first skip any whitespace
-          do {
-            get();
-          }
-          while (current == ' ' || current == '\t' || current == '\n' || current == '\r');
-
-          // next, skip any comment
-          if(current == '/') {
-            get();
-            // really a comment?
-            if (current == '/') {
-              // skip to the end of line/file
-              do {
+        while (true)
+        {
+            // first skip any whitespace
+            do
+            {
                 get();
-              } while (! (current == '\n' ||
-                          current == '\r' ||
-                          current == std::char_traits<char>::eof()));
             }
-            else {
-              // not a comment, leave it up to the rest of the code to deal with the '/'
-              unget();
-              break;
+            while (current == ' ' || current == '\t' || current == '\n' || current == '\r');
+
+            // next, skip any comment
+            if (current == '/')
+            {
+                get();
+                // really a comment?
+                if (current == '/')
+                {
+                    // skip to the end of line/file
+                    do
+                    {
+                        get();
+                    }
+                    while (! (current == '\n' ||
+                              current == '\r' ||
+                              current == std::char_traits<char>::eof()));
+                }
+                else
+                {
+                    // not a comment, leave it up to the rest of the code to deal with the '/'
+                    unget();
+                    break;
+                }
             }
-          }
-          else {
-            // not a comment at all, break out of the loop
-            break;
-          }
+            else
+            {
+                // not a comment at all, break out of the loop
+                break;
+            }
         }
 #endif
 
