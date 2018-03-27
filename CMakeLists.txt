@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.8)
 
 ##
 ## PROJECT
@@ -43,6 +43,8 @@ endif()
 ## create target and add include path
 ##
 add_library(${NLOHMANN_JSON_TARGET_NAME} INTERFACE)
+
+target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_std_11)
 
 target_include_directories(
     ${NLOHMANN_JSON_TARGET_NAME}
