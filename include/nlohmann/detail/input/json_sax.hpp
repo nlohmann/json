@@ -242,7 +242,7 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return false;
     }
 
-    bool is_errored() const
+    constexpr bool is_errored() const
     {
         return errored;
     }
@@ -303,7 +303,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
     using parse_event_t = typename BasicJsonType::parse_event_t;
 
     json_sax_dom_callback_parser(BasicJsonType& r,
-                                 const parser_callback_t cb = nullptr,
+                                 const parser_callback_t cb,
                                  const bool allow_exceptions_ = true)
         : root(r), callback(cb), allow_exceptions(allow_exceptions_)
     {
@@ -348,15 +348,21 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
 
     bool start_object(std::size_t len) override
     {
-        const bool keep = callback(ref_stack.size() + 1, parse_event_t::object_start, discarded);
+        // check callback for object start
+        const bool keep = callback(static_cast<int>(ref_stack.size()) + 1, parse_event_t::object_start, discarded);
         keep_stack.push_back(keep);
 
-        ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
+        auto val = handle_value(BasicJsonType::value_t::object);
+        ref_stack.push_back(val.second);
 
-        if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+        // check object limit
+        if (ref_stack.back())
         {
-            JSON_THROW(out_of_range::create(408,
-                                            "excessive object size: " + std::to_string(len)));
+            if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+            {
+                JSON_THROW(out_of_range::create(408,
+                                                "excessive object size: " + std::to_string(len)));
+            }
         }
 
         return true;
@@ -365,38 +371,73 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
     bool key(string_t& val) override
     {
         BasicJsonType k = BasicJsonType(val);
-        const bool keep = callback(ref_stack.size(), parse_event_t::key, k);
 
-        // add null at given key and store the reference for later
-        object_element = &(ref_stack.back()->m_value.object->operator[](val));
+        // check callback for key
+        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::key, k);
+        key_keep_stack.push_back(keep);
+
+        // add discarded value at given key and store the reference for later
+        if (keep and ref_stack.back())
+        {
+            object_element = &(ref_stack.back()->m_value.object->operator[](val) = discarded);
+        }
+
         return true;
     }
 
     bool end_object() override
     {
-        const bool keep = callback(ref_stack.size() - 1, parse_event_t::object_end, *ref_stack.back());
-        if (not keep)
+        bool keep = true;
+        if (ref_stack.back())
         {
-            // discard object
-            *ref_stack.back() = discarded;
+            keep = callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::object_end, *ref_stack.back());
+            if (not keep)
+            {
+                // discard object
+                *ref_stack.back() = discarded;
+            }
         }
 
+        assert(not ref_stack.empty());
+        assert(not keep_stack.empty());
         ref_stack.pop_back();
         keep_stack.pop_back();
+
+        if (not ref_stack.empty() and ref_stack.back())
+        {
+            // remove discarded value
+            if (ref_stack.back()->is_object())
+            {
+                for (auto it = ref_stack.back()->begin(); it != ref_stack.back()->end(); ++it)
+                {
+                    if (it->is_discarded())
+                    {
+                        ref_stack.back()->erase(it);
+                        break;
+                    }
+                }
+            }
+        }
+
         return true;
     }
 
     bool start_array(std::size_t len) override
     {
-        const bool keep = callback(ref_stack.size() + 1, parse_event_t::array_start, discarded);
+        const bool keep = callback(static_cast<int>(ref_stack.size()) + 1, parse_event_t::array_start, discarded);
         keep_stack.push_back(keep);
 
-        ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
+        auto val = handle_value(BasicJsonType::value_t::array);
+        ref_stack.push_back(val.second);
 
-        if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+        // check array limit
+        if (ref_stack.back())
         {
-            JSON_THROW(out_of_range::create(408,
-                                            "excessive array size: " + std::to_string(len)));
+            if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+            {
+                JSON_THROW(out_of_range::create(408,
+                                                "excessive array size: " + std::to_string(len)));
+            }
         }
 
         return true;
@@ -404,15 +445,32 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
 
     bool end_array() override
     {
-        const bool keep = callback(ref_stack.size() - 1, parse_event_t::array_end, *ref_stack.back());
-        if (not keep)
+        bool keep = true;
+
+        if (ref_stack.back())
         {
-            // discard array
-            *ref_stack.back() = discarded;
+            keep = callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::array_end, *ref_stack.back());
+            if (not keep)
+            {
+                // discard array
+                *ref_stack.back() = discarded;
+            }
         }
 
+        assert(not ref_stack.empty());
+        assert(not keep_stack.empty());
         ref_stack.pop_back();
         keep_stack.pop_back();
+
+        // remove discarded value
+        if (not keep and not ref_stack.empty())
+        {
+            if (ref_stack.back()->is_array())
+            {
+                ref_stack.back()->m_value.array->pop_back();
+            }
+        }
+
         return true;
     }
 
@@ -442,7 +500,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return false;
     }
 
-    bool is_errored() const
+    constexpr bool is_errored() const
     {
         return errored;
     }
@@ -453,28 +511,59 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
                root.
     @invariant If the ref stack contains a value, then it is an array or an
                object to which we can add elements
+    @return pair of boolean (whether value should be kept) and pointer (to the
+            passed value in the ref_stack hierarchy; nullptr if not kept)
     */
     template<typename Value>
-    BasicJsonType* handle_value(Value&& v)
+    std::pair<bool, BasicJsonType*> handle_value(Value&& v)
     {
+        assert(not keep_stack.empty());
+
+        // do not handle this value if we know it would be added to a discarded
+        // container
+        if (not keep_stack.back())
+        {
+            return {false, nullptr};
+        }
+
+        // create value and check callback
+        auto value = BasicJsonType(std::forward<Value>(v));
+        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::value, value);
+
+        // do not handle this value if we just learnt it shall be discarded
+        if (not keep)
+        {
+            return {false, nullptr};
+        }
+
         if (ref_stack.empty())
         {
-            root = BasicJsonType(std::forward<Value>(v));
-            return &root;
+            root = std::move(value);
+            return {true, &root};
         }
         else
         {
             assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
             if (ref_stack.back()->is_array())
             {
-                ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
-                return &(ref_stack.back()->m_value.array->back());
+                ref_stack.back()->m_value.array->push_back(std::move(value));
+                return {true, &(ref_stack.back()->m_value.array->back())};
             }
             else
             {
+                // check if we should store an element for the current key
+                assert(not key_keep_stack.empty());
+                const bool store_element = key_keep_stack.back();
+                key_keep_stack.pop_back();
+
+                if (not store_element)
+                {
+                    return {false, nullptr};
+                }
+
                 assert(object_element);
-                *object_element = BasicJsonType(std::forward<Value>(v));
-                return object_element;
+                *object_element = std::move(value);
+                return {true, object_element};
             }
         }
     }
@@ -485,6 +574,8 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
     std::vector<BasicJsonType*> ref_stack;
     /// stack to manage which values to keep
     std::vector<bool> keep_stack;
+    /// stack to manage which object keys to keep
+    std::vector<bool> key_keep_stack;
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether a syntax error occurred

@@ -3382,7 +3382,7 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return false;
     }
 
-    bool is_errored() const
+    constexpr bool is_errored() const
     {
         return errored;
     }
@@ -3443,7 +3443,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
     using parse_event_t = typename BasicJsonType::parse_event_t;
 
     json_sax_dom_callback_parser(BasicJsonType& r,
-                                 const parser_callback_t cb = nullptr,
+                                 const parser_callback_t cb,
                                  const bool allow_exceptions_ = true)
         : root(r), callback(cb), allow_exceptions(allow_exceptions_)
     {
@@ -3488,15 +3488,21 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
 
     bool start_object(std::size_t len) override
     {
-        const bool keep = callback(ref_stack.size() + 1, parse_event_t::object_start, discarded);
+        // check callback for object start
+        const bool keep = callback(static_cast<int>(ref_stack.size()) + 1, parse_event_t::object_start, discarded);
         keep_stack.push_back(keep);
 
-        ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
+        auto val = handle_value(BasicJsonType::value_t::object);
+        ref_stack.push_back(val.second);
 
-        if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+        // check object limit
+        if (ref_stack.back())
         {
-            JSON_THROW(out_of_range::create(408,
-                                            "excessive object size: " + std::to_string(len)));
+            if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+            {
+                JSON_THROW(out_of_range::create(408,
+                                                "excessive object size: " + std::to_string(len)));
+            }
         }
 
         return true;
@@ -3505,38 +3511,73 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
     bool key(string_t& val) override
     {
         BasicJsonType k = BasicJsonType(val);
-        const bool keep = callback(ref_stack.size(), parse_event_t::key, k);
 
-        // add null at given key and store the reference for later
-        object_element = &(ref_stack.back()->m_value.object->operator[](val));
+        // check callback for key
+        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::key, k);
+        key_keep_stack.push_back(keep);
+
+        // add discarded value at given key and store the reference for later
+        if (keep and ref_stack.back())
+        {
+            object_element = &(ref_stack.back()->m_value.object->operator[](val) = discarded);
+        }
+
         return true;
     }
 
     bool end_object() override
     {
-        const bool keep = callback(ref_stack.size() - 1, parse_event_t::object_end, *ref_stack.back());
-        if (not keep)
+        bool keep = true;
+        if (ref_stack.back())
         {
-            // discard object
-            *ref_stack.back() = discarded;
+            keep = callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::object_end, *ref_stack.back());
+            if (not keep)
+            {
+                // discard object
+                *ref_stack.back() = discarded;
+            }
         }
 
+        assert(not ref_stack.empty());
+        assert(not keep_stack.empty());
         ref_stack.pop_back();
         keep_stack.pop_back();
+
+        if (not ref_stack.empty() and ref_stack.back())
+        {
+            // remove discarded value
+            if (ref_stack.back()->is_object())
+            {
+                for (auto it = ref_stack.back()->begin(); it != ref_stack.back()->end(); ++it)
+                {
+                    if (it->is_discarded())
+                    {
+                        ref_stack.back()->erase(it);
+                        break;
+                    }
+                }
+            }
+        }
+
         return true;
     }
 
     bool start_array(std::size_t len) override
     {
-        const bool keep = callback(ref_stack.size() + 1, parse_event_t::array_start, discarded);
+        const bool keep = callback(static_cast<int>(ref_stack.size()) + 1, parse_event_t::array_start, discarded);
         keep_stack.push_back(keep);
 
-        ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
+        auto val = handle_value(BasicJsonType::value_t::array);
+        ref_stack.push_back(val.second);
 
-        if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+        // check array limit
+        if (ref_stack.back())
         {
-            JSON_THROW(out_of_range::create(408,
-                                            "excessive array size: " + std::to_string(len)));
+            if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+            {
+                JSON_THROW(out_of_range::create(408,
+                                                "excessive array size: " + std::to_string(len)));
+            }
         }
 
         return true;
@@ -3544,15 +3585,32 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
 
     bool end_array() override
     {
-        const bool keep = callback(ref_stack.size() - 1, parse_event_t::array_end, *ref_stack.back());
-        if (not keep)
+        bool keep = true;
+
+        if (ref_stack.back())
         {
-            // discard array
-            *ref_stack.back() = discarded;
+            keep = callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::array_end, *ref_stack.back());
+            if (not keep)
+            {
+                // discard array
+                *ref_stack.back() = discarded;
+            }
         }
 
+        assert(not ref_stack.empty());
+        assert(not keep_stack.empty());
         ref_stack.pop_back();
         keep_stack.pop_back();
+
+        // remove discarded value
+        if (not keep and not ref_stack.empty())
+        {
+            if (ref_stack.back()->is_array())
+            {
+                ref_stack.back()->m_value.array->pop_back();
+            }
+        }
+
         return true;
     }
 
@@ -3582,7 +3640,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return false;
     }
 
-    bool is_errored() const
+    constexpr bool is_errored() const
     {
         return errored;
     }
@@ -3593,28 +3651,59 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
                root.
     @invariant If the ref stack contains a value, then it is an array or an
                object to which we can add elements
+    @return pair of boolean (whether value should be kept) and pointer (to the
+            passed value in the ref_stack hierarchy; nullptr if not kept)
     */
     template<typename Value>
-    BasicJsonType* handle_value(Value&& v)
+    std::pair<bool, BasicJsonType*> handle_value(Value&& v)
     {
+        assert(not keep_stack.empty());
+
+        // do not handle this value if we know it would be added to a discarded
+        // container
+        if (not keep_stack.back())
+        {
+            return {false, nullptr};
+        }
+
+        // create value and check callback
+        auto value = BasicJsonType(std::forward<Value>(v));
+        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::value, value);
+
+        // do not handle this value if we just learnt it shall be discarded
+        if (not keep)
+        {
+            return {false, nullptr};
+        }
+
         if (ref_stack.empty())
         {
-            root = BasicJsonType(std::forward<Value>(v));
-            return &root;
+            root = std::move(value);
+            return {true, &root};
         }
         else
         {
             assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
             if (ref_stack.back()->is_array())
             {
-                ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
-                return &(ref_stack.back()->m_value.array->back());
+                ref_stack.back()->m_value.array->push_back(std::move(value));
+                return {true, &(ref_stack.back()->m_value.array->back())};
             }
             else
             {
+                // check if we should store an element for the current key
+                assert(not key_keep_stack.empty());
+                const bool store_element = key_keep_stack.back();
+                key_keep_stack.pop_back();
+
+                if (not store_element)
+                {
+                    return {false, nullptr};
+                }
+
                 assert(object_element);
-                *object_element = BasicJsonType(std::forward<Value>(v));
-                return object_element;
+                *object_element = std::move(value);
+                return {true, object_element};
             }
         }
     }
@@ -3625,6 +3714,8 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
     std::vector<BasicJsonType*> ref_stack;
     /// stack to manage which values to keep
     std::vector<bool> keep_stack;
+    /// stack to manage which object keys to keep
+    std::vector<bool> key_keep_stack;
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether a syntax error occurred
@@ -3785,7 +3876,6 @@ class parser
     {
         if (callback)
         {
-            /*
             json_sax_dom_callback_parser<BasicJsonType> sdp(result, callback, allow_exceptions);
             sax_parse_internal(&sdp);
             result.assert_invariant();
@@ -3800,24 +3890,6 @@ class parser
 
             // in case of an error, return discarded value
             if (sdp.is_errored())
-            {
-                result = value_t::discarded;
-                return;
-            }
-            */
-
-            parse_internal(true, result);
-            result.assert_invariant();
-
-            // in strict mode, input must be completely read
-            if (strict)
-            {
-                get_token();
-                expect(token_type::end_of_input);
-            }
-
-            // in case of an error, return discarded value
-            if (errored)
             {
                 result = value_t::discarded;
                 return;
@@ -3881,280 +3953,6 @@ class parser
     }
 
   private:
-    /*!
-    @brief the actual parser
-    @throw parse_error.101 in case of an unexpected token
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
-    */
-    void parse_internal(bool keep, BasicJsonType& result)
-    {
-        // never parse after a parse error was detected
-        assert(not errored);
-        // this function is only called when a callback is given
-        assert(callback);
-
-        // start with a discarded value
-        if (not result.is_discarded())
-        {
-            result.m_value.destroy(result.m_type);
-            result.m_type = value_t::discarded;
-        }
-
-        switch (last_token)
-        {
-            case token_type::begin_object:
-            {
-                if (keep)
-                {
-                    keep = callback(depth++, parse_event_t::object_start, result);
-
-                    if (keep)
-                    {
-                        // explicitly set result to object to cope with {}
-                        result.m_type = value_t::object;
-                        result.m_value = value_t::object;
-                    }
-                }
-
-                // read next token
-                get_token();
-
-                // closing } -> we are done
-                if (last_token == token_type::end_object)
-                {
-                    if (keep and not callback(--depth, parse_event_t::object_end, result))
-                    {
-                        result.m_value.destroy(result.m_type);
-                        result.m_type = value_t::discarded;
-                    }
-                    break;
-                }
-
-                // parse values
-                string_t key;
-                BasicJsonType value;
-                while (true)
-                {
-                    // store key
-                    if (not expect(token_type::value_string))
-                    {
-                        return;
-                    }
-                    key = m_lexer.get_string();
-
-                    bool keep_tag = false;
-                    if (keep)
-                    {
-                        BasicJsonType k(key);
-                        keep_tag = callback(depth, parse_event_t::key, k);
-                    }
-
-                    // parse separator (:)
-                    get_token();
-                    if (not expect(token_type::name_separator))
-                    {
-                        return;
-                    }
-
-                    // parse and add value
-                    get_token();
-                    value.m_value.destroy(value.m_type);
-                    value.m_type = value_t::discarded;
-                    parse_internal(keep, value);
-
-                    if (JSON_UNLIKELY(errored))
-                    {
-                        return;
-                    }
-
-                    if (keep and keep_tag and not value.is_discarded())
-                    {
-                        result.m_value.object->emplace(std::move(key), std::move(value));
-                    }
-
-                    // comma -> next value
-                    get_token();
-                    if (last_token == token_type::value_separator)
-                    {
-                        get_token();
-                        continue;
-                    }
-
-                    // closing }
-                    if (not expect(token_type::end_object))
-                    {
-                        return;
-                    }
-                    break;
-                }
-
-                if (keep and not callback(--depth, parse_event_t::object_end, result))
-                {
-                    result.m_value.destroy(result.m_type);
-                    result.m_type = value_t::discarded;
-                }
-                break;
-            }
-
-            case token_type::begin_array:
-            {
-                if (keep)
-                {
-                    keep = callback(depth++, parse_event_t::array_start, result);
-
-                    if (keep)
-                    {
-                        // explicitly set result to array to cope with []
-                        result.m_type = value_t::array;
-                        result.m_value = value_t::array;
-                    }
-                }
-
-                // read next token
-                get_token();
-
-                // closing ] -> we are done
-                if (last_token == token_type::end_array)
-                {
-                    if (not callback(--depth, parse_event_t::array_end, result))
-                    {
-                        result.m_value.destroy(result.m_type);
-                        result.m_type = value_t::discarded;
-                    }
-                    break;
-                }
-
-                // parse values
-                BasicJsonType value;
-                while (true)
-                {
-                    // parse value
-                    value.m_value.destroy(value.m_type);
-                    value.m_type = value_t::discarded;
-                    parse_internal(keep, value);
-
-                    if (JSON_UNLIKELY(errored))
-                    {
-                        return;
-                    }
-
-                    if (keep and not value.is_discarded())
-                    {
-                        result.m_value.array->push_back(std::move(value));
-                    }
-
-                    // comma -> next value
-                    get_token();
-                    if (last_token == token_type::value_separator)
-                    {
-                        get_token();
-                        continue;
-                    }
-
-                    // closing ]
-                    if (not expect(token_type::end_array))
-                    {
-                        return;
-                    }
-                    break;
-                }
-
-                if (keep and not callback(--depth, parse_event_t::array_end, result))
-                {
-                    result.m_value.destroy(result.m_type);
-                    result.m_type = value_t::discarded;
-                }
-                break;
-            }
-
-            case token_type::literal_null:
-            {
-                result.m_type = value_t::null;
-                break;
-            }
-
-            case token_type::value_string:
-            {
-                result.m_type = value_t::string;
-                result.m_value = m_lexer.get_string();
-                break;
-            }
-
-            case token_type::literal_true:
-            {
-                result.m_type = value_t::boolean;
-                result.m_value = true;
-                break;
-            }
-
-            case token_type::literal_false:
-            {
-                result.m_type = value_t::boolean;
-                result.m_value = false;
-                break;
-            }
-
-            case token_type::value_unsigned:
-            {
-                result.m_type = value_t::number_unsigned;
-                result.m_value = m_lexer.get_number_unsigned();
-                break;
-            }
-
-            case token_type::value_integer:
-            {
-                result.m_type = value_t::number_integer;
-                result.m_value = m_lexer.get_number_integer();
-                break;
-            }
-
-            case token_type::value_float:
-            {
-                result.m_type = value_t::number_float;
-                result.m_value = m_lexer.get_number_float();
-
-                // throw in case of infinity or NAN
-                if (JSON_UNLIKELY(not std::isfinite(result.m_value.number_float)))
-                {
-                    if (allow_exceptions)
-                    {
-                        JSON_THROW(out_of_range::create(406, "number overflow parsing '" +
-                                                        m_lexer.get_token_string() + "'"));
-                    }
-                    expect(token_type::uninitialized);
-                }
-                break;
-            }
-
-            case token_type::parse_error:
-            {
-                // using "uninitialized" to avoid "expected" message
-                if (not expect(token_type::uninitialized))
-                {
-                    return;
-                }
-                break; // LCOV_EXCL_LINE
-            }
-
-            default:
-            {
-                // the last token was unexpected; we expected a value
-                if (not expect(token_type::literal_or_value))
-                {
-                    return;
-                }
-                break; // LCOV_EXCL_LINE
-            }
-        }
-
-        if (keep and not callback(depth, parse_event_t::value, result))
-        {
-            result.m_value.destroy(result.m_type);
-            result.m_type = value_t::discarded;
-        }
-    }
-
     bool sax_parse_internal(json_sax_t* sax)
     {
         // two values for the structured values
@@ -4464,27 +4262,6 @@ class parser
         return (last_token = m_lexer.scan());
     }
 
-    /*!
-    @throw parse_error.101 if expected token did not occur
-    */
-    bool expect(token_type t)
-    {
-        if (JSON_UNLIKELY(t != last_token))
-        {
-            errored = true;
-            if (allow_exceptions)
-            {
-                JSON_THROW(parse_error::create(101, m_lexer.get_position(), exception_message(t)));
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     std::string exception_message(const token_type expected)
     {
         std::string error_msg = "syntax error - ";
@@ -4507,16 +4284,12 @@ class parser
     }
 
   private:
-    /// current level of recursion
-    int depth = 0;
     /// callback function
     const parser_callback_t callback = nullptr;
     /// the type of the last read token
     token_type last_token = token_type::uninitialized;
     /// the lexer
     lexer_t m_lexer;
-    /// whether a syntax error occurred
-    bool errored = false;
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
 };
