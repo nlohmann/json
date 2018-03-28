@@ -301,7 +301,6 @@ Exceptions have ids 5xx.
 name / id                      | example message | description
 ------------------------------ | --------------- | -------------------------
 json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "value":"bar"} | A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
-json.exception.other_error.502 | type for number_float_t is not supported | The template type for a number is not supported for the binary serialization in CBOR, MessagePack or UBJSON.
 
 @sa @ref exception for the base class of the library exceptions
 @sa @ref parse_error for exceptions indicating a parse error

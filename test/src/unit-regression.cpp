@@ -118,7 +118,7 @@ struct nocopy
 // for #1021
 /////////////////////////////////////////////////////////////////////
 
-using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int32_t, std::uint32_t, float>;
+using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
 
 
 TEST_CASE("regression tests")
