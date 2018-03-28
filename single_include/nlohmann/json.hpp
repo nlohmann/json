@@ -794,6 +794,7 @@ Exceptions have ids 5xx.
 name / id                      | example message | description
 ------------------------------ | --------------- | -------------------------
 json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "value":"bar"} | A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
+json.exception.other_error.502 | type for number_float_t is not supported | The template type for a number is not supported for the binary serialization in CBOR, MessagePack or UBJSON.
 
 @sa @ref exception for the base class of the library exceptions
 @sa @ref parse_error for exceptions indicating a parse error
@@ -6357,9 +6358,19 @@ class binary_writer
                 break;
             }
 
-            case value_t::number_float: // Double-Precision Float
+            case value_t::number_float:
             {
-                oa->write_character(static_cast<CharType>(0xFB));
+                switch (sizeof(typename BasicJsonType::number_float_t))
+                {
+                    case 4:  // Single-Precision Float
+                        oa->write_character(static_cast<CharType>(0xFA));
+                        break;
+                    case 8:  // Double-Precision Float
+                        oa->write_character(static_cast<CharType>(0xFB));
+                        break;
+                    default:
+                        JSON_THROW(other_error::create(502, "type for number_float_t is not supported"));
+                }
                 write_number(j.m_value.number_float);
                 break;
             }
@@ -6617,9 +6628,19 @@ class binary_writer
                 break;
             }
 
-            case value_t::number_float: // float 64
+            case value_t::number_float:
             {
-                oa->write_character(static_cast<CharType>(0xCB));
+                switch (sizeof(typename BasicJsonType::number_float_t))
+                {
+                    case 4:  // float 32
+                        oa->write_character(static_cast<CharType>(0xCA));
+                        break;
+                    case 8:  // float 64
+                        oa->write_character(static_cast<CharType>(0xCB));
+                        break;
+                    default:
+                        JSON_THROW(other_error::create(502, "type for number_float_t is not supported"));
+                }
                 write_number(j.m_value.number_float);
                 break;
             }
@@ -6920,7 +6941,17 @@ class binary_writer
     {
         if (add_prefix)
         {
-            oa->write_character(static_cast<CharType>('D'));  // float64
+            switch (sizeof(typename BasicJsonType::number_float_t))
+            {
+                case 4:  // float 32
+                    oa->write_character(static_cast<CharType>('d'));
+                    break;
+                case 8:  // float 64
+                    oa->write_character(static_cast<CharType>('D'));
+                    break;
+                default:
+                    JSON_THROW(other_error::create(502, "type for number_float_t is not supported"));
+            }
         }
         write_number(n);
     }
@@ -7100,7 +7131,15 @@ class binary_writer
             }
 
             case value_t::number_float:
-                return 'D';
+                switch (sizeof(typename BasicJsonType::number_float_t))
+                {
+                    case 4:  // float 32
+                        return 'd';
+                    case 8:  // float 64
+                        return 'D';
+                    default:
+                        JSON_THROW(other_error::create(502, "type for number_float_t is not supported"));
+                }
 
             case value_t::string:
                 return 'S';
