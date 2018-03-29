@@ -39,6 +39,10 @@ using nlohmann::json;
 #include <unordered_set>
 #include <valarray>
 
+#if defined(JSON_HAS_CPP_17)
+#include <string_view>
+#endif
+
 TEST_CASE("value conversion")
 {
     SECTION("get an object (explicit)")
@@ -292,6 +296,13 @@ TEST_CASE("value conversion")
             std::string s = j.get<std::string>();
             CHECK(json(s) == j);
         }
+#if defined(JSON_HAS_CPP_17)
+        SECTION("std::string_view")
+        {
+            std::string_view s = j.get<std::string_view>();
+            CHECK(json(s) == j);
+        }
+#endif
 
         SECTION("exception in case of a non-string type")
         {
@@ -330,6 +341,14 @@ TEST_CASE("value conversion")
             json::string_t s = j;
             CHECK(json(s) == j);
         }
+
+#if defined(JSON_HAS_CPP_17)
+        SECTION("std::string_view")
+        {
+            std::string_view s = j;
+            CHECK(json(s) == j);
+        }
+#endif
 
         SECTION("std::string")
         {
