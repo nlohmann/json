@@ -3975,11 +3975,8 @@ class parser
                             return false;
                         }
 
-                        // read next token
-                        get_token();
-
                         // closing } -> we are done
-                        if (last_token == token_type::end_object)
+                        if (get_token() == token_type::end_object)
                         {
                             if (JSON_UNLIKELY(not sax->end_object()))
                             {
@@ -4004,8 +4001,7 @@ class parser
                         }
 
                         // parse separator (:)
-                        get_token();
-                        if (JSON_UNLIKELY(last_token != token_type::name_separator))
+                        if (JSON_UNLIKELY(get_token() != token_type::name_separator))
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
@@ -4027,11 +4023,8 @@ class parser
                             return false;
                         }
 
-                        // read next token
-                        get_token();
-
                         // closing ] -> we are done
-                        if (last_token == token_type::end_array)
+                        if (get_token() == token_type::end_array)
                         {
                             if (JSON_UNLIKELY(not sax->end_array()))
                             {
@@ -4150,11 +4143,10 @@ class parser
             }
             else
             {
-                get_token();
                 if (states.back())  // array
                 {
                     // comma -> next value
-                    if (last_token == token_type::value_separator)
+                    if (get_token() == token_type::value_separator)
                     {
                         // parse a new value
                         get_token();
@@ -4188,12 +4180,10 @@ class parser
                 else  // object
                 {
                     // comma -> next value
-                    if (last_token == token_type::value_separator)
+                    if (get_token() == token_type::value_separator)
                     {
-                        get_token();
-
                         // parse key
-                        if (JSON_UNLIKELY(last_token != token_type::value_string))
+                        if (JSON_UNLIKELY(get_token() != token_type::value_string))
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
@@ -4208,8 +4198,7 @@ class parser
                         }
 
                         // parse separator (:)
-                        get_token();
-                        if (JSON_UNLIKELY(last_token != token_type::name_separator))
+                        if (JSON_UNLIKELY(get_token() != token_type::name_separator))
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
