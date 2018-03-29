@@ -162,10 +162,9 @@ class parser
   private:
     bool sax_parse_internal(json_sax_t* sax)
     {
-        // two values for the structured values
-        enum class parse_state_t { array_value, object_value };
         // stack to remember the hieararchy of structured values we are parsing
-        std::vector<parse_state_t> states;
+        // true = array; false = object
+        std::vector<bool> states;
         // value to avoid a goto (see comment where set to true)
         bool skip_to_state_evaluation = false;
 
@@ -221,7 +220,7 @@ class parser
                         }
 
                         // remember we are now inside an object
-                        states.push_back(parse_state_t::object_value);
+                        states.push_back(false);
 
                         // parse values
                         get_token();
@@ -249,7 +248,7 @@ class parser
                         }
 
                         // remember we are now inside an array
-                        states.push_back(parse_state_t::array_value);
+                        states.push_back(true);
 
                         // parse values (no need to call get_token)
                         continue;
@@ -359,104 +358,98 @@ class parser
             else
             {
                 get_token();
-                switch (states.back())
+                if (states.back())  // array
                 {
-                    case parse_state_t::array_value:
+                    // comma -> next value
+                    if (last_token == token_type::value_separator)
                     {
-                        // comma -> next value
-                        if (last_token == token_type::value_separator)
-                        {
-                            // parse a new value
-                            get_token();
-                            continue;
-                        }
-
-                        // closing ]
-                        if (JSON_LIKELY(last_token == token_type::end_array))
-                        {
-                            if (JSON_UNLIKELY(not sax->end_array()))
-                            {
-                                return false;
-                            }
-
-                            // We are done with this array. Before we can parse
-                            // a new value, we need to evaluate the new state
-                            // first. By setting skip_to_state_evaluation to
-                            // false, we are effectively jumping to the
-                            // beginning of this switch.
-                            assert(not states.empty());
-                            states.pop_back();
-                            skip_to_state_evaluation = true;
-                            continue;
-                        }
-                        else
-                        {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array)));
-                        }
+                        // parse a new value
+                        get_token();
+                        continue;
                     }
 
-                    case parse_state_t::object_value:
+                    // closing ]
+                    if (JSON_LIKELY(last_token == token_type::end_array))
                     {
-                        // comma -> next value
-                        if (last_token == token_type::value_separator)
+                        if (JSON_UNLIKELY(not sax->end_array()))
                         {
-                            get_token();
-
-                            // parse key
-                            if (JSON_UNLIKELY(last_token != token_type::value_string))
-                            {
-                                return sax->parse_error(m_lexer.get_position(),
-                                                        m_lexer.get_token_string(),
-                                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
-                            }
-                            else
-                            {
-                                if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
-                                {
-                                    return false;
-                                }
-                            }
-
-                            // parse separator (:)
-                            get_token();
-                            if (JSON_UNLIKELY(last_token != token_type::name_separator))
-                            {
-                                return sax->parse_error(m_lexer.get_position(),
-                                                        m_lexer.get_token_string(),
-                                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
-                            }
-
-                            // parse values
-                            get_token();
-                            continue;
+                            return false;
                         }
 
-                        // closing }
-                        if (JSON_LIKELY(last_token == token_type::end_object))
-                        {
-                            if (JSON_UNLIKELY(not sax->end_object()))
-                            {
-                                return false;
-                            }
+                        // We are done with this array. Before we can parse a
+                        // new value, we need to evaluate the new state first.
+                        // By setting skip_to_state_evaluation to false, we
+                        // are effectively jumping to the beginning of this if.
+                        assert(not states.empty());
+                        states.pop_back();
+                        skip_to_state_evaluation = true;
+                        continue;
+                    }
+                    else
+                    {
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array)));
+                    }
+                }
+                else  // object
+                {
+                    // comma -> next value
+                    if (last_token == token_type::value_separator)
+                    {
+                        get_token();
 
-                            // We are done with this object. Before we can
-                            // parse a new value, we need to evaluate the new
-                            // state first. By setting skip_to_state_evaluation
-                            // to false, we are effectively jumping to the
-                            // beginning of this switch.
-                            assert(not states.empty());
-                            states.pop_back();
-                            skip_to_state_evaluation = true;
-                            continue;
-                        }
-                        else
+                        // parse key
+                        if (JSON_UNLIKELY(last_token != token_type::value_string))
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object)));
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
                         }
+                        else
+                        {
+                            if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
+                            {
+                                return false;
+                            }
+                        }
+
+                        // parse separator (:)
+                        get_token();
+                        if (JSON_UNLIKELY(last_token != token_type::name_separator))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
+                        }
+
+                        // parse values
+                        get_token();
+                        continue;
+                    }
+
+                    // closing }
+                    if (JSON_LIKELY(last_token == token_type::end_object))
+                    {
+                        if (JSON_UNLIKELY(not sax->end_object()))
+                        {
+                            return false;
+                        }
+
+                        // We are done with this object. Before we can parse a
+                        // new value, we need to evaluate the new state first.
+                        // By setting skip_to_state_evaluation to false, we
+                        // are effectively jumping to the beginning of this if.
+                        assert(not states.empty());
+                        states.pop_back();
+                        skip_to_state_evaluation = true;
+                        continue;
+                    }
+                    else
+                    {
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object)));
                     }
                 }
             }
