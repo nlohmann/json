@@ -168,9 +168,6 @@ class input_buffer_adapter : public input_adapter_protocol
 template<typename WideStringType>
 class wide_string_input_adapter : public input_adapter_protocol
 {
-  private:
-    using char_t = typename WideStringType::value_type;
-
   public:
     wide_string_input_adapter(const WideStringType& w) : str(w) {}
 
@@ -186,7 +183,7 @@ class wide_string_input_adapter : public input_adapter_protocol
         // check if buffer needs to be filled
         if (utf8_bytes_index == utf8_bytes_filled)
         {
-            if (sizeof(char_t) == 2)
+            if (sizeof(typename WideStringType::value_type) == 2)
             {
                 fill_buffer_utf16();
             }
@@ -223,7 +220,7 @@ class wide_string_input_adapter : public input_adapter_protocol
         else
         {
             // get the current character
-            const char_t wc = str[current_wchar++];
+            const int wc = static_cast<int>(str[current_wchar++]);
 
             // UTF-16 to UTF-8 encoding
             if (wc < 0x80)
@@ -248,7 +245,7 @@ class wide_string_input_adapter : public input_adapter_protocol
             {
                 if (current_wchar < str.size())
                 {
-                    const char_t wc2 = str[current_wchar++];
+                    const int wc2 = static_cast<int>(str[current_wchar++]);
                     const int charcode = 0x10000 + (((wc & 0x3FF) << 10) | (wc2 & 0x3FF));
                     utf8_bytes[0] = 0xf0 | (charcode >> 18);
                     utf8_bytes[1] = 0x80 | ((charcode >> 12) & 0x3F);
@@ -279,7 +276,7 @@ class wide_string_input_adapter : public input_adapter_protocol
         else
         {
             // get the current character
-            const char_t wc = str[current_wchar++];
+            const int wc = static_cast<int>(str[current_wchar++]);
 
             // UTF-32 to UTF-8 encoding
             if (wc < 0x80)
