@@ -1572,7 +1572,6 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
 
-#include <array> // array
 #include <cassert> // assert
 #include <cstddef> // size_t
 #include <cstring> // strlen
@@ -1602,7 +1601,7 @@ enum class input_format_t { json, cbor, msgpack, ubjson };
 @brief abstract input adapter interface
 
 Produces a stream of std::char_traits<char>::int_type characters from a
-std::istream, a buffer, or some other input type.  Accepts the return of
+std::istream, a buffer, or some other input type. Accepts the return of
 exactly one non-EOF character for future input. The int_type characters
 returned consist of all valid char values as positive values (typically
 unsigned char), plus an EOF value outside that range, specified by the value
@@ -1684,7 +1683,7 @@ class input_buffer_adapter : public input_adapter_protocol
 
   private:
     /// pointer to the current character
-    const char* const cursor;
+    const char* cursor;
     /// pointer past the last character
     const char* const limit;
 };
@@ -3802,7 +3801,6 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
 }
 
 }
-
 
 // #include <nlohmann/detail/input/lexer.hpp>
 
