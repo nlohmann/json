@@ -32,27 +32,45 @@ SOFTWARE.
 
 using nlohmann::json;
 
+// from https://www.reddit.com/r/cpp/comments/75gohf/i_just_found_a_use_for_the_poop_emoji_in_c/
+constexpr bool compiler_supports_utf8();
+constexpr bool compiler_supports_utf8()
+{
+    return (static_cast<unsigned char>("💩"[0]) == 0xF0) and
+           (static_cast<unsigned char>("💩"[1]) == 0x9F) and
+           (static_cast<unsigned char>("💩"[2]) == 0x92) and
+           (static_cast<unsigned char>("💩"[3]) == 0xA9);
+}
 
 TEST_CASE("wide strings")
 {
     SECTION("std::wstring")
     {
-        std::wstring w = L"[12.2,\"Ⴥaäö💤🧢\"]";
-        json j = json::parse(w);
-        CHECK(j.dump() == "[12.2,\"Ⴥaäö💤🧢\"]");
+        if (compiler_supports_utf8())
+        {
+            std::wstring w = L"[12.2,\"Ⴥaäö💤🧢\"]";
+            json j = json::parse(w);
+            CHECK(j.dump() == "[12.2,\"Ⴥaäö💤🧢\"]");
+        }
     }
 
     SECTION("std::u16string")
     {
-        std::u16string w = u"[12.2,\"Ⴥaäö💤🧢\"]";
-        json j = json::parse(w);
-        CHECK(j.dump() == "[12.2,\"Ⴥaäö💤🧢\"]");
+        if (compiler_supports_utf8())
+        {
+            std::u16string w = u"[12.2,\"Ⴥaäö💤🧢\"]";
+            json j = json::parse(w);
+            CHECK(j.dump() == "[12.2,\"Ⴥaäö💤🧢\"]");
+        }
     }
 
     SECTION("std::u32string")
     {
-        std::u32string w = U"[12.2,\"Ⴥaäö💤🧢\"]";
-        json j = json::parse(w);
-        CHECK(j.dump() == "[12.2,\"Ⴥaäö💤🧢\"]");
+        if (compiler_supports_utf8())
+        {
+            std::u32string w = U"[12.2,\"Ⴥaäö💤🧢\"]";
+            json j = json::parse(w);
+            CHECK(j.dump() == "[12.2,\"Ⴥaäö💤🧢\"]");
+        }
     }
 }
