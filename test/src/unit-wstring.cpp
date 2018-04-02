@@ -32,21 +32,29 @@ SOFTWARE.
 
 using nlohmann::json;
 
-// from https://www.reddit.com/r/cpp/comments/75gohf/i_just_found_a_use_for_the_poop_emoji_in_c/
-constexpr bool compiler_supports_utf8();
-constexpr bool compiler_supports_utf8()
+bool wstring_is_utf16();
+bool wstring_is_utf16()
 {
-    return (static_cast<unsigned char>("💩"[0]) == 0xF0) and
-           (static_cast<unsigned char>("💩"[1]) == 0x9F) and
-           (static_cast<unsigned char>("💩"[2]) == 0x92) and
-           (static_cast<unsigned char>("💩"[3]) == 0xA9);
+    return (std::wstring(L"💩") == std::wstring(L"\U0001F4A9"));
+}
+
+bool u16string_is_utf16();
+bool u16string_is_utf16()
+{
+    return (std::u16string(u"💩") == std::u16string(u"\U0001F4A9"));
+}
+
+bool u32string_is_utf32();
+bool u32string_is_utf32()
+{
+    return (std::u32string(U"💩") == std::u32string(U"\U0001F4A9"));
 }
 
 TEST_CASE("wide strings")
 {
     SECTION("std::wstring")
     {
-        if (compiler_supports_utf8())
+        if (wstring_is_utf16())
         {
             std::wstring w = L"[12.2,\"Ⴥaäö💤🧢\"]";
             json j = json::parse(w);
@@ -56,7 +64,7 @@ TEST_CASE("wide strings")
 
     SECTION("std::u16string")
     {
-        if (compiler_supports_utf8())
+        if (u16string_is_utf16())
         {
             std::u16string w = u"[12.2,\"Ⴥaäö💤🧢\"]";
             json j = json::parse(w);
@@ -66,7 +74,7 @@ TEST_CASE("wide strings")
 
     SECTION("std::u32string")
     {
-        if (compiler_supports_utf8())
+        if (u32string_is_utf32())
         {
             std::u32string w = U"[12.2,\"Ⴥaäö💤🧢\"]";
             json j = json::parse(w);
