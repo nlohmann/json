@@ -798,18 +798,18 @@ TEST_CASE("deserialization")
         {
             CHECK_THROWS_AS(json::parse(bom), json::parse_error&);
             CHECK_THROWS_WITH(json::parse(bom),
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+                              "[json.exception.parse_error.101] parse error at 4: syntax error - unexpected end of input; expected '[', '{', or a literal");
 
             CHECK_THROWS_AS(json::parse(std::istringstream(bom)), json::parse_error&);
             CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+                              "[json.exception.parse_error.101] parse error at 4: syntax error - unexpected end of input; expected '[', '{', or a literal");
 
             SaxEventLogger l;
             CHECK(not json::sax_parse(bom, &l));
             CHECK(l.events.size() == 1);
             CHECK(l.events == std::vector<std::string>(
             {
-                "parse_error(1)"
+                "parse_error(4)"
             }));
         }
 
@@ -836,12 +836,12 @@ TEST_CASE("deserialization")
         SECTION("2 byte of BOM")
         {
             CHECK_THROWS_AS(json::parse(bom.substr(0, 2)), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(bom),
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+            CHECK_THROWS_WITH(json::parse(bom.substr(0, 2)),
+                              "[json.exception.parse_error.101] parse error at 3: syntax error - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF\xBB'");
 
             CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 2))), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+            CHECK_THROWS_WITH(json::parse(std::istringstream(bom.substr(0, 2))),
+                              "[json.exception.parse_error.101] parse error at 3: syntax error - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF\xBB'");
 
             SaxEventLogger l1, l2;
             CHECK(not json::sax_parse(std::istringstream(bom.substr(0, 2)), &l1));
@@ -849,24 +849,24 @@ TEST_CASE("deserialization")
             CHECK(l1.events.size() == 1);
             CHECK(l1.events == std::vector<std::string>(
             {
-                "parse_error(1)"
+                "parse_error(3)"
             }));
             CHECK(l2.events.size() == 1);
             CHECK(l2.events == std::vector<std::string>(
             {
-                "parse_error(1)"
+                "parse_error(3)"
             }));
         }
 
         SECTION("1 byte of BOM")
         {
             CHECK_THROWS_AS(json::parse(bom.substr(0, 1)), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(bom),
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+            CHECK_THROWS_WITH(json::parse(bom.substr(0, 1)),
+                              "[json.exception.parse_error.101] parse error at 2: syntax error - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF'");
 
             CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 1))), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
-                              "[json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal");
+            CHECK_THROWS_WITH(json::parse(std::istringstream(bom.substr(0, 1))),
+                              "[json.exception.parse_error.101] parse error at 2: syntax error - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF'");
 
             SaxEventLogger l1, l2;
             CHECK(not json::sax_parse(std::istringstream(bom.substr(0, 1)), &l1));
@@ -874,12 +874,12 @@ TEST_CASE("deserialization")
             CHECK(l1.events.size() == 1);
             CHECK(l1.events == std::vector<std::string>(
             {
-                "parse_error(1)"
+                "parse_error(2)"
             }));
             CHECK(l2.events.size() == 1);
             CHECK(l2.events == std::vector<std::string>(
             {
-                "parse_error(1)"
+                "parse_error(2)"
             }));
         }
 
@@ -926,10 +926,28 @@ TEST_CASE("deserialization")
                             SaxEventLogger l;
                             CHECK(not json::sax_parse(s + "null", &l));
                             CHECK(l.events.size() == 1);
-                            CHECK(l.events == std::vector<std::string>(
+
+                            if (i0 != 0)
                             {
-                                "parse_error(1)"
-                            }));
+                                CHECK(l.events == std::vector<std::string>(
+                                {
+                                    "parse_error(1)"
+                                }));
+                            }
+                            else if (i1 != 0)
+                            {
+                                CHECK(l.events == std::vector<std::string>(
+                                {
+                                    "parse_error(2)"
+                                }));
+                            }
+                            else
+                            {
+                                CHECK(l.events == std::vector<std::string>(
+                                {
+                                    "parse_error(3)"
+                                }));
+                            }
                         }
                     }
                 }

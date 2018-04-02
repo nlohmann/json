@@ -1604,19 +1604,17 @@ enum class input_format_t { json, cbor, msgpack, ubjson };
 @brief abstract input adapter interface
 
 Produces a stream of std::char_traits<char>::int_type characters from a
-std::istream, a buffer, or some other input type.  Accepts the return of exactly
-one non-EOF character for future input.  The int_type characters returned
-consist of all valid char values as positive values (typically unsigned char),
-plus an EOF value outside that range, specified by the value of the function
-std::char_traits<char>::eof().  This value is typically -1, but could be any
-arbitrary value which is not a valid char value.
+std::istream, a buffer, or some other input type.  Accepts the return of
+exactly one non-EOF character for future input. The int_type characters
+returned consist of all valid char values as positive values (typically
+unsigned char), plus an EOF value outside that range, specified by the value
+of the function std::char_traits<char>::eof(). This value is typically -1, but
+could be any arbitrary value which is not a valid char value.
 */
 struct input_adapter_protocol
 {
     /// get a character [0,255] or std::char_traits<char>::eof().
     virtual std::char_traits<char>::int_type get_character() = 0;
-    /// restore the last non-eof() character to input
-    virtual void unget_character() = 0;
     virtual ~input_adapter_protocol() = default;
 };
 
@@ -1644,34 +1642,7 @@ class input_stream_adapter : public input_adapter_protocol
 
     explicit input_stream_adapter(std::istream& i)
         : is(i), sb(*i.rdbuf())
-    {
-        // skip byte order mark
-        std::char_traits<char>::int_type c;
-        if ((c = get_character()) == 0xEF)
-        {
-            if ((c = get_character()) == 0xBB)
-            {
-                if ((c = get_character()) == 0xBF)
-                {
-                    return; // Ignore BOM
-                }
-                else if (c != std::char_traits<char>::eof())
-                {
-                    is.unget();
-                }
-                is.putback('\xBB');
-            }
-            else if (c != std::char_traits<char>::eof())
-            {
-                is.unget();
-            }
-            is.putback('\xEF');
-        }
-        else if (c != std::char_traits<char>::eof())
-        {
-            is.unget(); // no byte order mark; process as usual
-        }
-    }
+    {}
 
     // delete because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
@@ -1685,11 +1656,6 @@ class input_stream_adapter : public input_adapter_protocol
         return sb.sbumpc();
     }
 
-    void unget_character() override
-    {
-        sb.sungetc();  // is.unget() avoided for performance
-    }
-
   private:
     /// the associated input stream
     std::istream& is;
@@ -1701,14 +1667,8 @@ class input_buffer_adapter : public input_adapter_protocol
 {
   public:
     input_buffer_adapter(const char* b, const std::size_t l)
-        : cursor(b), limit(b + l), start(b)
-    {
-        // skip byte order mark
-        if (l >= 3 and b[0] == '\xEF' and b[1] == '\xBB' and b[2] == '\xBF')
-        {
-            cursor += 3;
-        }
-    }
+        : cursor(b), limit(b + l)
+    {}
 
     // delete because of pointer members
     input_buffer_adapter(const input_buffer_adapter&) = delete;
@@ -1724,21 +1684,11 @@ class input_buffer_adapter : public input_adapter_protocol
         return std::char_traits<char>::eof();
     }
 
-    void unget_character() noexcept override
-    {
-        if (JSON_LIKELY(cursor > start))
-        {
-            --cursor;
-        }
-    }
-
   private:
     /// pointer to the current character
     const char* cursor;
     /// pointer past the last character
     const char* limit;
-    /// pointer to the first character
-    const char* start;
 };
 
 class input_adapter
@@ -2923,7 +2873,16 @@ scan_number_done:
     std::char_traits<char>::int_type get()
     {
         ++chars_read;
-        current = ia->get_character();
+        if (next_unget)
+        {
+            // just reset the next_unget variable and work with current
+            next_unget = false;
+        }
+        else
+        {
+            current = ia->get_character();
+        }
+
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
             token_string.push_back(std::char_traits<char>::to_char_type(current));
@@ -2931,13 +2890,20 @@ scan_number_done:
         return current;
     }
 
-    /// unget current character (return it again on next get)
+    /*!
+    @brief unget current character (read it again on next get)
+
+    We implement unget by setting variable next_unget to true. The input is not
+    changed - we just simulate ungetting by modifying chars_read and
+    token_string. The next call to get() will behave as if the unget character
+    is read again.
+    */
     void unget()
     {
+        next_unget = true;
         --chars_read;
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
-            ia->unget_character();
             assert(token_string.size() != 0);
             token_string.pop_back();
         }
@@ -3025,8 +2991,43 @@ scan_number_done:
     // actual scanner
     /////////////////////
 
+    /*!
+    @brief skip the UTF-8 byte order mark
+    @return true iff there is no BOM or the correct BOM has been skipped
+    */
+    bool skip_bom()
+    {
+        if (get() == 0xEF)
+        {
+            if (get() == 0xBB and get() == 0xBF)
+            {
+                // we completely parsed the BOM
+                return true;
+            }
+            else
+            {
+                // after reading 0xEF, an unexpected character followed
+                return false;
+            }
+        }
+        else
+        {
+            // the first character is not the beginning of the BOM; unget it to
+            // process is later
+            unget();
+            return true;
+        }
+    }
+
     token_type scan()
     {
+        // initially, skip the BOM
+        if (chars_read == 0 and not skip_bom())
+        {
+            error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
+            return token_type::parse_error;
+        }
+
         // read next character and ignore whitespace
         do
         {
@@ -3095,6 +3096,9 @@ scan_number_done:
 
     /// the current character
     std::char_traits<char>::int_type current = std::char_traits<char>::eof();
+
+    /// whether the next get() call should just return current
+    bool next_unget = false;
 
     /// the number of characters read
     std::size_t chars_read = 0;
