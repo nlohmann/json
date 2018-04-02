@@ -62,6 +62,15 @@ TEST_CASE("wide strings")
         }
     }
 
+    SECTION("invalid std::wstring")
+    {
+        if (wstring_is_utf16())
+        {
+            std::wstring w = L"\"\xDBFF";
+            CHECK_THROWS_AS(json::parse(w), json::parse_error&);
+        }
+    }
+
     SECTION("std::u16string")
     {
         if (u16string_is_utf16())
@@ -72,6 +81,15 @@ TEST_CASE("wide strings")
         }
     }
 
+    SECTION("invalid std::u16string")
+    {
+        if (wstring_is_utf16())
+        {
+            std::u16string w = u"\"\xDBFF";
+            CHECK_THROWS_AS(json::parse(w), json::parse_error&);
+        }
+    }
+
     SECTION("std::u32string")
     {
         if (u32string_is_utf32())
@@ -79,6 +97,15 @@ TEST_CASE("wide strings")
             std::u32string w = U"[12.2,\"Ⴥaäö💤🧢\"]";
             json j = json::parse(w);
             CHECK(j.dump() == "[12.2,\"Ⴥaäö💤🧢\"]");
+        }
+    }
+
+    SECTION("invalid std::u32string")
+    {
+        if (u32string_is_utf32())
+        {
+            std::u32string w = U"\"\x110000";
+            CHECK_THROWS_AS(json::parse(w), json::parse_error&);
         }
     }
 }
