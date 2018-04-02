@@ -1572,12 +1572,10 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
 
-#include <algorithm> // min
 #include <array> // array
 #include <cassert> // assert
 #include <cstddef> // size_t
 #include <cstring> // strlen
-#include <ios> // streamsize, streamoff, streampos
 #include <istream> // istream
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <memory> // shared_ptr, make_shared, addressof
@@ -1686,9 +1684,9 @@ class input_buffer_adapter : public input_adapter_protocol
 
   private:
     /// pointer to the current character
-    const char* cursor;
+    const char* const cursor;
     /// pointer past the last character
-    const char* limit;
+    const char* const limit;
 };
 
 class input_adapter

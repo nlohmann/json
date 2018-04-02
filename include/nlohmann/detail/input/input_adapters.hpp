@@ -1,11 +1,8 @@
 #pragma once
 
-#include <algorithm> // min
-#include <array> // array
 #include <cassert> // assert
 #include <cstddef> // size_t
 #include <cstring> // strlen
-#include <ios> // streamsize, streamoff, streampos
 #include <istream> // istream
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <memory> // shared_ptr, make_shared, addressof
@@ -31,7 +28,7 @@ enum class input_format_t { json, cbor, msgpack, ubjson };
 @brief abstract input adapter interface
 
 Produces a stream of std::char_traits<char>::int_type characters from a
-std::istream, a buffer, or some other input type.  Accepts the return of
+std::istream, a buffer, or some other input type. Accepts the return of
 exactly one non-EOF character for future input. The int_type characters
 returned consist of all valid char values as positive values (typically
 unsigned char), plus an EOF value outside that range, specified by the value
@@ -115,7 +112,7 @@ class input_buffer_adapter : public input_adapter_protocol
     /// pointer to the current character
     const char* cursor;
     /// pointer past the last character
-    const char* limit;
+    const char* const limit;
 };
 
 class input_adapter

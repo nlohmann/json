@@ -660,4 +660,3 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
 }
 
 }
-
