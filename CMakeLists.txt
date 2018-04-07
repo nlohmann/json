@@ -53,8 +53,8 @@ target_include_directories(
     $<INSTALL_INTERFACE:include>
 )
 
-## add debug view defintion file for msvc (natvis) [cmake <= 3.2.2 does not support export of source files]
-if (MSVC AND CMAKE_VERSION VERSION_GREATER "3.2.2")
+## add debug view defintion file for msvc (natvis)
+if (MSVC)
     set(NLOHMANN_ADD_NATVIS TRUE)
     set(NLOHMANN_NATVIS_FILE "nlohmann_json.natvis")
     target_sources(
@@ -64,7 +64,7 @@ if (MSVC AND CMAKE_VERSION VERSION_GREATER "3.2.2")
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NLOHMANN_NATVIS_FILE}>  
     )
 endif()
-           
+
 ##
 ## TESTS
 ## create and configure the unit test target
