@@ -114,6 +114,13 @@ struct nocopy
 };
 }
 
+/////////////////////////////////////////////////////////////////////
+// for #1021
+/////////////////////////////////////////////////////////////////////
+
+using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+
+
 TEST_CASE("regression tests")
 {
     SECTION("issue #60 - Double quotation mark is not parsed correctly")
@@ -1596,5 +1603,16 @@ TEST_CASE("regression tests")
 
         auto j = json::parse(geojsonExample, cb, true);
         CHECK(j == json());
+    }
+
+    SECTION("issue #1021 - to/from_msgpack only works with standard typization")
+    {
+        float_json j = 1000.0;
+        CHECK(float_json::from_cbor(float_json::to_cbor(j)) == j);
+        CHECK(float_json::from_msgpack(float_json::to_msgpack(j)) == j);
+        CHECK(float_json::from_ubjson(float_json::to_ubjson(j)) == j);
+
+        float_json j2 = {1000.0, 2000.0, 3000.0};
+        CHECK(float_json::from_ubjson(float_json::to_ubjson(j2, true, true)) == j2);
     }
 }

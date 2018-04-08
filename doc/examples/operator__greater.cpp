@@ -17,8 +17,8 @@ int main()
 
     // output values and comparisons
     std::cout << std::boolalpha;
-    std::cout << array_1 << " == " << array_2 << " " << (array_1 > array_2) << '\n';
-    std::cout << object_1 << " == " << object_2 << " " << (object_1 > object_2) << '\n';
-    std::cout << number_1 << " == " << number_2 << " " << (number_1 > number_2) << '\n';
-    std::cout << string_1 << " == " << string_2 << " " << (string_1 > string_2) << '\n';
+    std::cout << array_1 << " > " << array_2 << " " << (array_1 > array_2) << '\n';
+    std::cout << object_1 << " > " << object_2 << " " << (object_1 > object_2) << '\n';
+    std::cout << number_1 << " > " << number_2 << " " << (number_1 > number_2) << '\n';
+    std::cout << string_1 << " > " << string_2 << " " << (string_1 > string_2) << '\n';
 }
