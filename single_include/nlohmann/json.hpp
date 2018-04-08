@@ -6357,9 +6357,9 @@ class binary_writer
                 break;
             }
 
-            case value_t::number_float: // Double-Precision Float
+            case value_t::number_float:
             {
-                oa->write_character(static_cast<CharType>(0xFB));
+                oa->write_character(get_cbor_float_prefix(j.m_value.number_float));
                 write_number(j.m_value.number_float);
                 break;
             }
@@ -6617,9 +6617,9 @@ class binary_writer
                 break;
             }
 
-            case value_t::number_float: // float 64
+            case value_t::number_float:
             {
-                oa->write_character(static_cast<CharType>(0xCB));
+                oa->write_character(get_msgpack_float_prefix(j.m_value.number_float));
                 write_number(j.m_value.number_float);
                 break;
             }
@@ -6796,7 +6796,7 @@ class binary_writer
                 if (use_type and not j.m_value.array->empty())
                 {
                     assert(use_count);
-                    const char first_prefix = ubjson_prefix(j.front());
+                    const CharType first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
                     {
@@ -6807,7 +6807,7 @@ class binary_writer
                     {
                         prefix_required = false;
                         oa->write_character(static_cast<CharType>('$'));
-                        oa->write_character(static_cast<CharType>(first_prefix));
+                        oa->write_character(first_prefix);
                     }
                 }
 
@@ -6841,7 +6841,7 @@ class binary_writer
                 if (use_type and not j.m_value.object->empty())
                 {
                     assert(use_count);
-                    const char first_prefix = ubjson_prefix(j.front());
+                    const CharType first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin(), j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
                     {
@@ -6852,7 +6852,7 @@ class binary_writer
                     {
                         prefix_required = false;
                         oa->write_character(static_cast<CharType>('$'));
-                        oa->write_character(static_cast<CharType>(first_prefix));
+                        oa->write_character(first_prefix);
                     }
                 }
 
@@ -6920,7 +6920,7 @@ class binary_writer
     {
         if (add_prefix)
         {
-            oa->write_character(static_cast<CharType>('D'));  // float64
+            oa->write_character(get_ubjson_float_prefix(n));
         }
         write_number(n);
     }
@@ -7041,7 +7041,7 @@ class binary_writer
           write_number_with_ubjson_prefix. Therefore, we return 'L' for any
           value that does not fit the previous limits.
     */
-    char ubjson_prefix(const BasicJsonType& j) const noexcept
+    CharType ubjson_prefix(const BasicJsonType& j) const noexcept
     {
         switch (j.type())
         {
@@ -7100,7 +7100,7 @@ class binary_writer
             }
 
             case value_t::number_float:
-                return 'D';
+                return get_ubjson_float_prefix(j.m_value.number_float);
 
             case value_t::string:
                 return 'S';
@@ -7114,6 +7114,36 @@ class binary_writer
             default:  // discarded values
                 return 'N';
         }
+    }
+
+    static constexpr CharType get_cbor_float_prefix(float)
+    {
+        return static_cast<CharType>(0xFA);  // Single-Precision Float
+    }
+
+    static constexpr CharType get_cbor_float_prefix(double)
+    {
+        return static_cast<CharType>(0xFB);  // Double-Precision Float
+    }
+
+    static constexpr CharType get_msgpack_float_prefix(float)
+    {
+        return static_cast<CharType>(0xCA);  // float 32
+    }
+
+    static constexpr CharType get_msgpack_float_prefix(double)
+    {
+        return static_cast<CharType>(0xCB);  // float 64
+    }
+
+    static constexpr CharType get_ubjson_float_prefix(float)
+    {
+        return 'd';  // float 32
+    }
+
+    static constexpr CharType get_ubjson_float_prefix(double)
+    {
+        return 'D';  // float 64
     }
 
   private:
