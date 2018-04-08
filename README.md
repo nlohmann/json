@@ -76,6 +76,8 @@ If you are using the [Meson Build System](http://mesonbuild.com), then you can w
 
 If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `jsonformoderncpp/x.y.z@vthiery/stable` to your `conanfile.py`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/vthiery/conan-jsonformoderncpp/issues) if you experience problems with the packages.
 
+If you are using [Spack](https://www.spack.io/) to manage your dependencies, you can use the `nlohmann_json` package. Please see the [spack project](https://github.com/spack/spack) for any issues regarding the packaging.
+
 If you are using [hunter](https://github.com/ruslo/hunter/) on your project for external dependencies, then you can use the [nlohmann_json package](https://docs.hunter.sh/en/latest/packages/pkg/nlohmann_json.html). Please see the hunter project for any issues regarding the packaging.
 
 If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo install nlohmann/json`. Please file issues [here](https://github.com/LoopPerfect/buckaroo-recipes/issues/new?title=nlohmann/nlohmann/json).
