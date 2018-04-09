@@ -329,6 +329,34 @@ TEST_CASE("value conversion")
             CHECK_THROWS_WITH(json(json::value_t::number_float).get<json::string_t>(),
                               "[json.exception.type_error.302] type must be string, but is number");
         }
+
+#if defined(JSON_HAS_CPP_17)
+        SECTION("exception in case of a non-string type using string_view")
+        {
+            CHECK_THROWS_AS(json(json::value_t::null).get<std::string_view>(), json::type_error&);
+            CHECK_THROWS_AS(json(json::value_t::object).get<std::string_view>(), json::type_error&);
+            CHECK_THROWS_AS(json(json::value_t::array).get<std::string_view>(), json::type_error&);
+            CHECK_THROWS_AS(json(json::value_t::boolean).get<std::string_view>(), json::type_error&);
+            CHECK_THROWS_AS(json(json::value_t::number_integer).get<std::string_view>(), json::type_error&);
+            CHECK_THROWS_AS(json(json::value_t::number_unsigned).get<std::string_view>(), json::type_error&);
+            CHECK_THROWS_AS(json(json::value_t::number_float).get<std::string_view>(), json::type_error&);
+
+            CHECK_THROWS_WITH(json(json::value_t::null).get<std::string_view>(),
+                              "[json.exception.type_error.302] type must be string, but is null");
+            CHECK_THROWS_WITH(json(json::value_t::object).get<std::string_view>(),
+                              "[json.exception.type_error.302] type must be string, but is object");
+            CHECK_THROWS_WITH(json(json::value_t::array).get<std::string_view>(),
+                              "[json.exception.type_error.302] type must be string, but is array");
+            CHECK_THROWS_WITH(json(json::value_t::boolean).get<std::string_view>(),
+                              "[json.exception.type_error.302] type must be string, but is boolean");
+            CHECK_THROWS_WITH(json(json::value_t::number_integer).get<std::string_view>(),
+                              "[json.exception.type_error.302] type must be string, but is number");
+            CHECK_THROWS_WITH(json(json::value_t::number_unsigned).get<std::string_view>(),
+                              "[json.exception.type_error.302] type must be string, but is number");
+            CHECK_THROWS_WITH(json(json::value_t::number_float).get<std::string_view>(),
+                              "[json.exception.type_error.302] type must be string, but is number");
+        }
+#endif
     }
 
     SECTION("get a string (implicit)")
