@@ -53,7 +53,7 @@ target_include_directories(
     $<INSTALL_INTERFACE:include>
 )
 
-## add debug view defintion file for msvc (natvis)
+## add debug view definition file for msvc (natvis)
 if (MSVC)
     set(NLOHMANN_ADD_NATVIS TRUE)
     set(NLOHMANN_NATVIS_FILE "nlohmann_json.natvis")
