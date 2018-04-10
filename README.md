@@ -835,6 +835,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 9.0 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.37) |
 | Clang Xcode 9.1 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.38) |
 | Clang Xcode 9.2 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.39.2) |
+| Clang Xcode 9.3 | Darwin Kernel Version 17.4.0 (macOS 10.13.0) | Apple LLVM version 9.1.0 (clang-902.0.39.1)
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 |
 | Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.5.180.51428, MSVC 19.12.25830.2 |
 
@@ -977,7 +978,12 @@ I deeply appreciate the help of the following people.
 - [Paul Fultz II](https://github.com/pfultz2) added a note on the cget package manager.
 - [Wilson Lin](https://github.com/wla80) made the integration section of the README more concise.
 - [RalfBielig](https://github.com/ralfbielig) detected and fixed a memory leak in the parser callback.
-- [agrianius](https://github.com/agrianius) allowed to dump JSON to an alternative string type
+- [agrianius](https://github.com/agrianius) allowed to dump JSON to an alternative string type.
+- [Kevin Tonon](https://github.com/ktonon) overworked the C++11 compiler checks in CMake.
+- [Axel Huebl](https://github.com/ax3l) simplified a CMake check and added support for the [Spack package manager](https://spack.io).
+- [Carlos O'Ryan](https://github.com/coryan) fixed a typo.
+- [James Upjohn](https://github.com/jammehcow) fixed a version number in the compilers section.
+- [Chuck Atkins](https://github.com/chuckatkins) adjusted the CMake files to the CMake packaging guidelines
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
