@@ -175,29 +175,6 @@ TEST_CASE("controlled bad_alloc")
             CHECK_THROWS_AS(my_json::json_value(v), std::bad_alloc&);
             next_construct_fails = false;
         }
-
-        /*
-                SECTION("json_value(const object_t&)")
-                {
-                    next_construct_fails = false;
-                    my_json::object_t v {{"foo", "bar"}};
-                    CHECK_NOTHROW(my_json::json_value j(v));
-                    next_construct_fails = true;
-                    CHECK_THROWS_AS(my_json::json_value j(v), std::bad_alloc&);
-                    next_construct_fails = false;
-                }
-        */
-        /*
-                SECTION("json_value(const array_t&)")
-                {
-                    next_construct_fails = false;
-                    my_json::array_t v = {"foo", "bar", "baz"};
-                    CHECK_NOTHROW(my_json::json_value j(v));
-                    next_construct_fails = true;
-                    CHECK_THROWS_AS(my_json::json_value j(v), std::bad_alloc&);
-                    next_construct_fails = false;
-                }
-        */
     }
 
     SECTION("class basic_json")
