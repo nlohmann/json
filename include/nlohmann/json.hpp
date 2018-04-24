@@ -5533,8 +5533,10 @@ class basic_json
     @brief comparison: equal
     @copydoc operator==(const_reference, const_reference)
     */
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    template < typename ScalarType, typename std::enable_if <
+                   std::is_scalar<ScalarType>::value, int >::type = 0,
+               typename std::enable_if <
+                   std::is_same<std::nullptr_t, std::remove_cv<ScalarType>>::value, int >::type = 0 >
     friend bool operator==(const_reference lhs, const ScalarType rhs) noexcept
     {
         return (lhs == basic_json(rhs));
@@ -5544,8 +5546,10 @@ class basic_json
     @brief comparison: equal
     @copydoc operator==(const_reference, const_reference)
     */
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
+    template < typename ScalarType, typename std::enable_if <
+                   std::is_scalar<ScalarType>::value, int >::type = 0,
+               typename std::enable_if <
+                   std::is_same<std::nullptr_t, std::remove_cv<ScalarType>>::value, int >::type = 0 >
     friend bool operator==(const ScalarType lhs, const_reference rhs) noexcept
     {
         return (basic_json(lhs) == rhs);
