@@ -136,19 +136,19 @@ TEST_CASE("regression tests")
 
     SECTION("issue #70 - Handle infinity and NaN cases")
     {
-        /*
+        // previously, NAN/INFINITY created a null value; now, the values are
+        // properly stored, but are dumped as "null"
         SECTION("NAN value")
         {
-            CHECK(json(NAN) == json());
-            CHECK(json(json::number_float_t(NAN)) == json());
+            CHECK(json(NAN).dump() == "null");
+            CHECK(json(json::number_float_t(NAN)).dump() == "null");
         }
 
         SECTION("infinity")
         {
-            CHECK(json(INFINITY) == json());
-            CHECK(json(json::number_float_t(INFINITY)) == json());
+            CHECK(json(INFINITY).dump() == "null");
+            CHECK(json(json::number_float_t(INFINITY)).dump() == "null");
         }
-        */
 
         // With 3.0.0, the semantics of this changed: NAN and infinity are
         // stored properly inside the JSON value (no exception or conversion
@@ -1212,41 +1212,6 @@ TEST_CASE("regression tests")
 
         CHECK(j["bool_vector"].dump() == "[false,true,false,false]");
     }
-
-    /* NOTE: m_line_buffer is not used any more
-    SECTION("issue #495 - fill_line_buffer incorrectly tests m_stream for eof but not fail or bad bits")
-    {
-        SECTION("setting failbit")
-        {
-            std::stringstream ss;
-            ss << "[1,2,3\n,4,5]";
-
-            json::lexer l(ss);
-
-            CHECK(l.m_line_buffer == "[1,2,3\n");
-
-            l.m_stream->setstate(std::ios_base::failbit);
-
-            CHECK_THROWS_AS(l.fill_line_buffer(), json::parse_error&);
-            CHECK_THROWS_WITH(l.fill_line_buffer(), "[json.exception.parse_error.111] parse error: bad input stream");
-        }
-
-        SECTION("setting badbit")
-        {
-            std::stringstream ss;
-            ss << "[1,2,3\n,4,5]";
-
-            json::lexer l(ss);
-
-            CHECK(l.m_line_buffer == "[1,2,3\n");
-
-            l.m_stream->setstate(std::ios_base::badbit);
-
-            CHECK_THROWS_AS(l.fill_line_buffer(), json::parse_error&);
-            CHECK_THROWS_WITH(l.fill_line_buffer(), "[json.exception.parse_error.111] parse error: bad input stream");
-        }
-    }
-     */
 
     SECTION("issue #504 - assertion error (OSS-Fuzz 856)")
     {

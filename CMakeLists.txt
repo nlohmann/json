@@ -22,13 +22,15 @@ option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
 ## CONFIGURATION
 ##
 set(NLOHMANN_JSON_TARGET_NAME               ${PROJECT_NAME})
-set(NLOHMANN_JSON_CONFIG_INSTALL_DIR        "lib/cmake/${PROJECT_NAME}")
+set(NLOHMANN_JSON_CONFIG_INSTALL_DIR        "lib/cmake/${PROJECT_NAME}"
+  CACHE INTERNAL "")
 set(NLOHMANN_JSON_INCLUDE_INSTALL_DIR       "include")
 set(NLOHMANN_JSON_TARGETS_EXPORT_NAME       "${PROJECT_NAME}Targets")
 set(NLOHMANN_JSON_CMAKE_CONFIG_TEMPLATE     "cmake/config.cmake.in")
-set(NLOHMANN_JSON_CMAKE_CONFIG_DIR          "${CMAKE_CURRENT_BINARY_DIR}/cmake_config")
+set(NLOHMANN_JSON_CMAKE_CONFIG_DIR          "${CMAKE_CURRENT_BINARY_DIR}")
 set(NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
 set(NLOHMANN_JSON_CMAKE_PROJECT_CONFIG_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Config.cmake")
+set(NLOHMANN_JSON_CMAKE_PROJECT_TARGETS_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Targets.cmake")
 
 if (JSON_MultipleHeaders)
     set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
@@ -43,7 +45,7 @@ endif()
 ## create target and add include path
 ##
 add_library(${NLOHMANN_JSON_TARGET_NAME} INTERFACE)
-
+add_library(${PROJECT_NAME}::${NLOHMANN_JSON_TARGET_NAME} ALIAS ${NLOHMANN_JSON_TARGET_NAME})
 target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_std_11)
 
 target_include_directories(
@@ -53,7 +55,7 @@ target_include_directories(
     $<INSTALL_INTERFACE:include>
 )
 
-## add debug view defintion file for msvc (natvis)
+## add debug view definition file for msvc (natvis)
 if (MSVC)
     set(NLOHMANN_ADD_NATVIS TRUE)
     set(NLOHMANN_NATVIS_FILE "nlohmann_json.natvis")
@@ -104,6 +106,11 @@ if (NLOHMANN_ADD_NATVIS)
         DESTINATION .
 )
 endif()
+export(
+    TARGETS ${NLOHMANN_JSON_TARGET_NAME}
+    NAMESPACE ${PROJECT_NAME}::
+    FILE ${NLOHMANN_JSON_CMAKE_PROJECT_TARGETS_FILE}
+)
 install(
     TARGETS ${NLOHMANN_JSON_TARGET_NAME}
     EXPORT ${NLOHMANN_JSON_TARGETS_EXPORT_NAME}
@@ -111,5 +118,6 @@ install(
 )
 install(
     EXPORT ${NLOHMANN_JSON_TARGETS_EXPORT_NAME}
+    NAMESPACE ${PROJECT_NAME}::
     DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
 )
