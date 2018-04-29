@@ -42,7 +42,8 @@ SOURCES = src/unit.cpp \
           src/unit-serialization.cpp \
           src/unit-testsuites.cpp \
           src/unit-ubjson.cpp \
-          src/unit-unicode.cpp
+          src/unit-unicode.cpp \
+          src/unit-wstring.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)
 
