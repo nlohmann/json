@@ -994,7 +994,7 @@ Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I
 
 ## Used third-party tools
 
-The library itself contains of a single header file licensed under the MIT license. However, it is built, tested, documented, and whatnot using a lot of third-party tools and services. Thanks a lot!
+The library itself consists of a single header file licensed under the MIT license. However, it is built, tested, documented, and whatnot using a lot of third-party tools and services. Thanks a lot!
 
 - [**amalgamate.py - Amalgamate C source and header files**](https://github.com/edlund/amalgamate) to create a single header file
 - [**American fuzzy lop**](http://lcamtuf.coredump.cx/afl/) for fuzz testing
