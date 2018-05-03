@@ -5,6 +5,7 @@
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
 Copyright (c) 2018 Vitaliy Manushkin <agri@akamo.info>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
