@@ -865,6 +865,10 @@ If you have questions regarding the library, I would like to invite you to [open
 
 Only if your request would contain confidential information, please [send me an email](mailto:mail@nlohmann.me). For encrypted messages, please use [this key](https://keybase.io/nlohmann/pgp_keys.asc).
 
+## Security
+
+[Commits by Niels Lohmann](https://github.com/nlohmann/json/commits) and [releases](https://github.com/nlohmann/json/releases) are signed with this [PGP Key](https://keybase.io/nlohmann/pgp_keys.asc?fingerprint=797167ae41c0a6d9232e48457f3cea63ae251b69).
+
 
 ## Thanks
 
