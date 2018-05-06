@@ -123,13 +123,6 @@ class wide_string_input_adapter : public input_adapter_protocol
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
-        // unget_character() was called previously: return the last character
-        if (next_unget)
-        {
-            next_unget = false;
-            return last_char;
-        }
-
         // check if buffer needs to be filled
         if (utf8_bytes_index == utf8_bytes_filled)
         {
@@ -149,12 +142,7 @@ class wide_string_input_adapter : public input_adapter_protocol
         // use buffer
         assert(utf8_bytes_filled > 0);
         assert(utf8_bytes_index < utf8_bytes_filled);
-        return (last_char = utf8_bytes[utf8_bytes_index++]);
-    }
-
-    void unget_character() noexcept override
-    {
-        next_unget = true;
+        return utf8_bytes[utf8_bytes_index++];
     }
 
   private:
@@ -278,11 +266,6 @@ class wide_string_input_adapter : public input_adapter_protocol
     std::size_t utf8_bytes_index = 0;
     /// number of valid bytes in the utf8_codes array
     std::size_t utf8_bytes_filled = 0;
-
-    /// the last character (returned after unget_character() is called)
-    std::char_traits<char>::int_type last_char = 0;
-    /// whether get_character() should return last_char
-    bool next_unget = false;
 };
 
 class input_adapter
