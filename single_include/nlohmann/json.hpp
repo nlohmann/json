@@ -1697,13 +1697,6 @@ class wide_string_input_adapter : public input_adapter_protocol
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
-        // unget_character() was called previously: return the last character
-        if (next_unget)
-        {
-            next_unget = false;
-            return last_char;
-        }
-
         // check if buffer needs to be filled
         if (utf8_bytes_index == utf8_bytes_filled)
         {
@@ -1723,12 +1716,7 @@ class wide_string_input_adapter : public input_adapter_protocol
         // use buffer
         assert(utf8_bytes_filled > 0);
         assert(utf8_bytes_index < utf8_bytes_filled);
-        return (last_char = utf8_bytes[utf8_bytes_index++]);
-    }
-
-    void unget_character() noexcept override
-    {
-        next_unget = true;
+        return utf8_bytes[utf8_bytes_index++];
     }
 
   private:
@@ -1852,11 +1840,6 @@ class wide_string_input_adapter : public input_adapter_protocol
     std::size_t utf8_bytes_index = 0;
     /// number of valid bytes in the utf8_codes array
     std::size_t utf8_bytes_filled = 0;
-
-    /// the last character (returned after unget_character() is called)
-    std::char_traits<char>::int_type last_char = 0;
-    /// whether get_character() should return last_char
-    bool next_unget = false;
 };
 
 class input_adapter
@@ -3670,10 +3653,10 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
     bool start_object(std::size_t len) override
     {
         // check callback for object start
-        const bool keep = callback(static_cast<int>(ref_stack.size()) + 1, parse_event_t::object_start, discarded);
+        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::object_start, discarded);
         keep_stack.push_back(keep);
 
-        auto val = handle_value(BasicJsonType::value_t::object);
+        auto val = handle_value(BasicJsonType::value_t::object, true);
         ref_stack.push_back(val.second);
 
         // check object limit
@@ -3745,10 +3728,10 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
 
     bool start_array(std::size_t len) override
     {
-        const bool keep = callback(static_cast<int>(ref_stack.size()) + 1, parse_event_t::array_start, discarded);
+        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::array_start, discarded);
         keep_stack.push_back(keep);
 
-        auto val = handle_value(BasicJsonType::value_t::array);
+        auto val = handle_value(BasicJsonType::value_t::array, true);
         ref_stack.push_back(val.second);
 
         // check array limit
@@ -3828,15 +3811,22 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
 
   private:
     /*!
+    @param[in] v  value to add to the JSON value we build during parsing
+    @param[in] skip_callback  whether we should skip calling the callback
+               function; this is required after start_array() and
+               start_object() SAX events, because otherwise we would call the
+               callback function with an empty array or object, respectively.
+
     @invariant If the ref stack is empty, then the passed value will be the new
                root.
     @invariant If the ref stack contains a value, then it is an array or an
                object to which we can add elements
+
     @return pair of boolean (whether value should be kept) and pointer (to the
             passed value in the ref_stack hierarchy; nullptr if not kept)
     */
     template<typename Value>
-    std::pair<bool, BasicJsonType*> handle_value(Value&& v)
+    std::pair<bool, BasicJsonType*> handle_value(Value&& v, const bool skip_callback = false)
     {
         assert(not keep_stack.empty());
 
@@ -3847,9 +3837,11 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
             return {false, nullptr};
         }
 
-        // create value and check callback
+        // create value
         auto value = BasicJsonType(std::forward<Value>(v));
-        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::value, value);
+
+        // check callback
+        const bool keep = skip_callback or callback(static_cast<int>(ref_stack.size()), parse_event_t::value, value);
 
         // do not handle this value if we just learnt it shall be discarded
         if (not keep)
