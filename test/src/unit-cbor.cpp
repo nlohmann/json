@@ -5,6 +5,7 @@
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
 Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
@@ -575,7 +576,6 @@ TEST_CASE("CBOR")
                     }
                 }
 
-                /*
                 SECTION("-32768..-129 (int 16)")
                 {
                     for (int16_t i = -32768; i <= -129; ++i)
@@ -601,14 +601,13 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0xd1);
-                        int16_t restored = (result[1] << 8) + result[2];
+                        int16_t restored = static_cast<int16_t>((result[1] << 8) + result[2]);
                         CHECK(restored == i);
 
                         // roundtrip
                         CHECK(json::from_msgpack(result) == j);
                     }
                 }
-                */
             }
 
             SECTION("unsigned")
@@ -1147,28 +1146,6 @@ TEST_CASE("CBOR")
                 CHECK(json::from_cbor(result) == j);
                 CHECK(json::from_cbor(result, true, false) == j);
             }
-
-            /*
-            SECTION("array with uint64_t elements")
-            {
-                json j(4294967296, nullptr);
-                std::vector<uint8_t> expected(j.size() + 9, 0xf6); // all null
-                expected[0] = 0x9b; // array 64 bit
-                expected[1] = 0x00; // size (0x0000000100000000), byte 0
-                expected[2] = 0x00; // size (0x0000000100000000), byte 1
-                expected[3] = 0x00; // size (0x0000000100000000), byte 2
-                expected[4] = 0x01; // size (0x0000000100000000), byte 3
-                expected[5] = 0x00; // size (0x0000000100000000), byte 4
-                expected[6] = 0x00; // size (0x0000000100000000), byte 5
-                expected[7] = 0x00; // size (0x0000000100000000), byte 6
-                expected[8] = 0x00; // size (0x0000000100000000), byte 7
-                const auto result = json::to_cbor(j);
-                CHECK(result == expected);
-
-                // roundtrip
-                CHECK(json::from_cbor(result) == j);
-            }
-            */
         }
 
         SECTION("object")
