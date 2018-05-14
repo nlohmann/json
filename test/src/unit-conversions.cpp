@@ -1079,6 +1079,26 @@ TEST_CASE("value conversion")
                 j5.get<std::unordered_set<std::string>>();
             }
 
+            SECTION("std::map (array of pairs)")
+            {
+                std::map<int, int> m{{0, 1}, {1, 2}, {2, 3}};
+                json j6 = m;
+
+                auto m2 = j6.get<std::map<int, int>>();
+                CHECK(m == m2);
+
+                json j7 = {0, 1, 2, 3};
+                CHECK_THROWS_AS((j7.get<std::map<int, int>>()), json::type_error&);
+                CHECK_THROWS_WITH((j7.get<std::map<int, int>>()), "[json.exception.type_error.302] type must be array, but is number");
+
+                SECTION("superfluous entries")
+                {
+                  json j8 = {{0, 1, 2}, {1, 2, 3}, {2, 3, 4}};
+                  m2 = j8.get<std::map<int, int>>();
+                  CHECK(m == m2);
+                }
+            }
+
             SECTION("exception in case of a non-object type")
             {
                 CHECK_THROWS_AS((json().get<std::list<int>>()), json::type_error&);
@@ -1094,6 +1114,7 @@ TEST_CASE("value conversion")
                 CHECK_THROWS_WITH((json().get<std::vector<json>>()), "[json.exception.type_error.302] type must be array, but is null");
                 CHECK_THROWS_WITH((json().get<std::list<json>>()), "[json.exception.type_error.302] type must be array, but is null");
                 CHECK_THROWS_WITH((json().get<std::valarray<int>>()), "[json.exception.type_error.302] type must be array, but is null");
+                CHECK_THROWS_WITH((json().get<std::map<int, int>>()), "[json.exception.type_error.302] type must be array, but is null");
             }
         }
     }
