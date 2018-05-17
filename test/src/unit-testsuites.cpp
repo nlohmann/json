@@ -1139,7 +1139,6 @@ TEST_CASE("nst's JSONTestSuite (2)")
                         "test/data/nst_json_testsuite2/test_parsing/n_string_unescaped_tab.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_string_unicode_CapitalU.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_string_with_trailing_garbage.json",
-                        //"test/data/nst_json_testsuite2/test_parsing/n_structure_100000_opening_arrays.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_U+2060_word_joined.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_UTF8_BOM_no_data.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_angle_bracket_..json",
@@ -1165,7 +1164,6 @@ TEST_CASE("nst's JSONTestSuite (2)")
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_object_with_trailing_garbage.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_open_array_apostrophe.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_open_array_comma.json",
-                        //"test/data/nst_json_testsuite2/test_parsing/n_structure_open_array_object.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_open_array_open_object.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_open_array_open_string.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_open_array_string.json",
@@ -1196,6 +1194,21 @@ TEST_CASE("nst's JSONTestSuite (2)")
                 CHECK_THROWS_AS(json::parse(f), json::parse_error);
                 std::ifstream f2(filename);
                 CHECK(not json::accept(f2));
+            }
+        }
+
+        SECTION("n (previously overflowed)")
+        {
+            for (auto filename :
+                    {
+                        "test/data/nst_json_testsuite2/test_parsing/n_structure_100000_opening_arrays.json",
+                        "test/data/nst_json_testsuite2/test_parsing/n_structure_open_array_object.json"
+                    }
+                )
+            {
+                CAPTURE(filename);
+                std::ifstream f(filename);
+                CHECK(not json::accept(f));
             }
         }
 
