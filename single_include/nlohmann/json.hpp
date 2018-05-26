@@ -4636,7 +4636,7 @@ class iter_impl
     @brief  return the key of an object iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    typename object_t::key_type key() const
+    const typename object_t::key_type& key() const
     {
         assert(m_object != nullptr);
 
@@ -4691,6 +4691,10 @@ template<typename IteratorType> class iteration_proxy
         IteratorType anchor;
         /// an index for arrays (used to create key names)
         std::size_t array_index = 0;
+        /// a string representation of the array index
+        std::string array_index_str = "0";
+        /// an empty string (to return a reference for primitive values)
+        const std::string empty_str = "";
 
       public:
         explicit iteration_proxy_internal(IteratorType it) noexcept : anchor(it) {}
@@ -4705,7 +4709,13 @@ template<typename IteratorType> class iteration_proxy
         iteration_proxy_internal& operator++()
         {
             ++anchor;
-            ++array_index;
+
+            assert(anchor.m_object != nullptr);
+            if (anchor.m_object->is_array())
+            {
+                // update array index and string representation
+                array_index_str = std::to_string(++array_index);
+            }
 
             return *this;
         }
@@ -4717,7 +4727,7 @@ template<typename IteratorType> class iteration_proxy
         }
 
         /// return key of the iterator
-        std::string key() const
+        const std::string& key() const
         {
             assert(anchor.m_object != nullptr);
 
@@ -4725,7 +4735,7 @@ template<typename IteratorType> class iteration_proxy
             {
                 // use integer array index as key
                 case value_t::array:
-                    return std::to_string(array_index);
+                    return array_index_str;
 
                 // use key from the object
                 case value_t::object:
@@ -4733,7 +4743,7 @@ template<typename IteratorType> class iteration_proxy
 
                 // use an empty key for all primitive types
                 default:
-                    return "";
+                    return empty_str;
             }
         }
 

@@ -583,7 +583,7 @@ class iter_impl
     @brief  return the key of an object iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    typename object_t::key_type key() const
+    const typename object_t::key_type& key() const
     {
         assert(m_object != nullptr);
 
