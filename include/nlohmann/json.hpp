@@ -172,6 +172,10 @@ class basic_json
     friend class ::nlohmann::detail::binary_writer;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::binary_reader;
+    template<typename BasicJsonType>
+    friend class ::nlohmann::detail::json_sax_dom_parser;
+    template<typename BasicJsonType>
+    friend class ::nlohmann::detail::json_sax_dom_callback_parser;
 
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
@@ -205,6 +209,8 @@ class basic_json
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// helper type for initializer lists of basic_json values
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
+
+    using input_format_t = detail::input_format_t;
 
     ////////////////
     // exceptions //
@@ -1106,6 +1112,7 @@ class basic_json
     */
     using parser_callback_t = typename parser::parser_callback_t;
 
+    using json_sax_t = typename parser::json_sax_t;
 
     //////////////////
     // constructors //
@@ -5992,7 +5999,7 @@ class basic_json
 
     @since version 2.0.3 (contiguous containers)
     */
-    static basic_json parse(detail::input_adapter i,
+    static basic_json parse(detail::input_adapter&& i,
                             const parser_callback_t cb = nullptr,
                             const bool allow_exceptions = true)
     {
@@ -6001,26 +6008,23 @@ class basic_json
         return result;
     }
 
-    /*!
-    @copydoc basic_json parse(detail::input_adapter, const parser_callback_t)
-    */
-    static basic_json parse(detail::input_adapter& i,
-                            const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
-    {
-        basic_json result;
-        parser(i, cb, allow_exceptions).parse(true, result);
-        return result;
-    }
-
-    static bool accept(detail::input_adapter i)
+    static bool accept(detail::input_adapter&& i)
     {
         return parser(i).accept(true);
     }
 
-    static bool accept(detail::input_adapter& i)
+    static bool sax_parse(detail::input_adapter&& i, json_sax_t* sax,
+                          input_format_t format = input_format_t::json,
+                          const bool strict = true)
     {
-        return parser(i).accept(true);
+        assert(sax);
+        switch (format)
+        {
+            case input_format_t::json:
+                return parser(std::move(i)).sax_parse(sax, strict);
+            default:
+                return binary_reader(std::move(i)).sax_parse(format, sax, strict);
+        }
     }
 
     /*!
@@ -6090,6 +6094,15 @@ class basic_json
     static bool accept(IteratorType first, IteratorType last)
     {
         return parser(detail::input_adapter(first, last)).accept(true);
+    }
+
+    template<class IteratorType, typename std::enable_if<
+                 std::is_base_of<
+                     std::random_access_iterator_tag,
+                     typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
+    static bool sax_parse(IteratorType first, IteratorType last, json_sax_t* sax)
+    {
+        return parser(detail::input_adapter(first, last)).sax_parse(sax);
     }
 
     /*!
@@ -6588,6 +6601,9 @@ class basic_json
     @param[in] i  an input in CBOR format convertible to an input adapter
     @param[in] strict  whether to expect the input to be consumed until EOF
                        (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
     @return deserialized JSON value
 
     @throw parse_error.110 if the given input ends prematurely or the end of
@@ -6603,29 +6619,39 @@ class basic_json
 
     @sa http://cbor.io
     @sa @ref to_cbor(const basic_json&) for the analogous serialization
-    @sa @ref from_msgpack(detail::input_adapter, const bool) for the
+    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for the
         related MessagePack format
-    @sa @ref from_ubjson(detail::input_adapter, const bool) for the related
-        UBJSON format
+    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for the
+        related UBJSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0
+           @a strict parameter since 3.0.0; added @allow_exceptions parameter
+           since 3.2.0
     */
-    static basic_json from_cbor(detail::input_adapter i,
-                                const bool strict = true)
+    static basic_json from_cbor(detail::input_adapter&& i,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
     {
-        return binary_reader(i).parse_cbor(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::cbor, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
-    @copydoc from_cbor(detail::input_adapter, const bool)
+    @copydoc from_cbor(detail::input_adapter, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_cbor(A1 && a1, A2 && a2, const bool strict = true)
+    static basic_json from_cbor(A1 && a1, A2 && a2,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
     {
-        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_cbor(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::cbor, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
@@ -6678,6 +6704,10 @@ class basic_json
                   adapter
     @param[in] strict  whether to expect the input to be consumed until EOF
                        (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
+    @return deserialized JSON value
 
     @throw parse_error.110 if the given input ends prematurely or the end of
     file was not reached when @a strict was set to true
@@ -6692,29 +6722,39 @@ class basic_json
 
     @sa http://msgpack.org
     @sa @ref to_msgpack(const basic_json&) for the analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool) for the related CBOR
-        format
-    @sa @ref from_ubjson(detail::input_adapter, const bool) for the related
-        UBJSON format
+    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+        related CBOR format
+    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for
+        the related UBJSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0
+           @a strict parameter since 3.0.0; added @allow_exceptions parameter
+           since 3.2.0
     */
-    static basic_json from_msgpack(detail::input_adapter i,
-                                   const bool strict = true)
+    static basic_json from_msgpack(detail::input_adapter&& i,
+                                   const bool strict = true,
+                                   const bool allow_exceptions = true)
     {
-        return binary_reader(i).parse_msgpack(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::msgpack, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
-    @copydoc from_msgpack(detail::input_adapter, const bool)
+    @copydoc from_msgpack(detail::input_adapter, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_msgpack(A1 && a1, A2 && a2, const bool strict = true)
+    static basic_json from_msgpack(A1 && a1, A2 && a2,
+                                   const bool strict = true,
+                                   const bool allow_exceptions = true)
     {
-        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_msgpack(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::msgpack, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
@@ -6749,6 +6789,10 @@ class basic_json
     @param[in] i  an input in UBJSON format convertible to an input adapter
     @param[in] strict  whether to expect the input to be consumed until EOF
                        (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
+    @return deserialized JSON value
 
     @throw parse_error.110 if the given input ends prematurely or the end of
     file was not reached when @a strict was set to true
@@ -6763,24 +6807,36 @@ class basic_json
     @sa http://ubjson.org
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
              analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool) for the related CBOR
-        format
-    @sa @ref from_msgpack(detail::input_adapter, const bool) for the related
-        MessagePack format
+    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+        related CBOR format
+    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
+        the related MessagePack format
 
-    @since version 3.1.0
+    @since version 3.1.0; added @allow_exceptions parameter since 3.2.0
     */
-    static basic_json from_ubjson(detail::input_adapter i,
-                                  const bool strict = true)
+    static basic_json from_ubjson(detail::input_adapter&& i,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
     {
-        return binary_reader(i).parse_ubjson(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::ubjson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
+    /*!
+    @copydoc from_ubjson(detail::input_adapter, const bool, const bool)
+    */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_ubjson(A1 && a1, A2 && a2, const bool strict = true)
+    static basic_json from_ubjson(A1 && a1, A2 && a2,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
     {
-        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_ubjson(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::ubjson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /// @}

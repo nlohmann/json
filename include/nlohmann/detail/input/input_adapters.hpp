@@ -1,11 +1,8 @@
 #pragma once
 
-#include <algorithm> // min
-#include <array> // array
 #include <cassert> // assert
 #include <cstddef> // size_t
 #include <cstring> // strlen
-#include <ios> // streamsize, streamoff, streampos
 #include <istream> // istream
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <memory> // shared_ptr, make_shared, addressof
@@ -20,6 +17,9 @@ namespace nlohmann
 {
 namespace detail
 {
+/// the supported input formats
+enum class input_format_t { json, cbor, msgpack, ubjson };
+
 ////////////////////
 // input adapters //
 ////////////////////
@@ -28,19 +28,17 @@ namespace detail
 @brief abstract input adapter interface
 
 Produces a stream of std::char_traits<char>::int_type characters from a
-std::istream, a buffer, or some other input type.  Accepts the return of exactly
-one non-EOF character for future input.  The int_type characters returned
-consist of all valid char values as positive values (typically unsigned char),
-plus an EOF value outside that range, specified by the value of the function
-std::char_traits<char>::eof().  This value is typically -1, but could be any
-arbitrary value which is not a valid char value.
+std::istream, a buffer, or some other input type. Accepts the return of
+exactly one non-EOF character for future input. The int_type characters
+returned consist of all valid char values as positive values (typically
+unsigned char), plus an EOF value outside that range, specified by the value
+of the function std::char_traits<char>::eof(). This value is typically -1, but
+could be any arbitrary value which is not a valid char value.
 */
 struct input_adapter_protocol
 {
     /// get a character [0,255] or std::char_traits<char>::eof().
     virtual std::char_traits<char>::int_type get_character() = 0;
-    /// restore the last non-eof() character to input
-    virtual void unget_character() = 0;
     virtual ~input_adapter_protocol() = default;
 };
 
@@ -68,34 +66,7 @@ class input_stream_adapter : public input_adapter_protocol
 
     explicit input_stream_adapter(std::istream& i)
         : is(i), sb(*i.rdbuf())
-    {
-        // skip byte order mark
-        std::char_traits<char>::int_type c;
-        if ((c = get_character()) == 0xEF)
-        {
-            if ((c = get_character()) == 0xBB)
-            {
-                if ((c = get_character()) == 0xBF)
-                {
-                    return; // Ignore BOM
-                }
-                else if (c != std::char_traits<char>::eof())
-                {
-                    is.unget();
-                }
-                is.putback('\xBB');
-            }
-            else if (c != std::char_traits<char>::eof())
-            {
-                is.unget();
-            }
-            is.putback('\xEF');
-        }
-        else if (c != std::char_traits<char>::eof())
-        {
-            is.unget(); // no byte order mark; process as usual
-        }
-    }
+    {}
 
     // delete because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
@@ -109,11 +80,6 @@ class input_stream_adapter : public input_adapter_protocol
         return sb.sbumpc();
     }
 
-    void unget_character() override
-    {
-        sb.sungetc();  // is.unget() avoided for performance
-    }
-
   private:
     /// the associated input stream
     std::istream& is;
@@ -125,14 +91,8 @@ class input_buffer_adapter : public input_adapter_protocol
 {
   public:
     input_buffer_adapter(const char* b, const std::size_t l)
-        : cursor(b), limit(b + l), start(b)
-    {
-        // skip byte order mark
-        if (l >= 3 and b[0] == '\xEF' and b[1] == '\xBB' and b[2] == '\xBF')
-        {
-            cursor += 3;
-        }
-    }
+        : cursor(b), limit(b + l)
+    {}
 
     // delete because of pointer members
     input_buffer_adapter(const input_buffer_adapter&) = delete;
@@ -148,21 +108,11 @@ class input_buffer_adapter : public input_adapter_protocol
         return std::char_traits<char>::eof();
     }
 
-    void unget_character() noexcept override
-    {
-        if (JSON_LIKELY(cursor > start))
-        {
-            --cursor;
-        }
-    }
-
   private:
     /// pointer to the current character
     const char* cursor;
     /// pointer past the last character
-    const char* limit;
-    /// pointer to the first character
-    const char* start;
+    const char* const limit;
 };
 
 template<typename WideStringType>
@@ -173,13 +123,6 @@ class wide_string_input_adapter : public input_adapter_protocol
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
-        // unget_character() was called previously: return the last character
-        if (next_unget)
-        {
-            next_unget = false;
-            return last_char;
-        }
-
         // check if buffer needs to be filled
         if (utf8_bytes_index == utf8_bytes_filled)
         {
@@ -199,12 +142,7 @@ class wide_string_input_adapter : public input_adapter_protocol
         // use buffer
         assert(utf8_bytes_filled > 0);
         assert(utf8_bytes_index < utf8_bytes_filled);
-        return (last_char = utf8_bytes[utf8_bytes_index++]);
-    }
-
-    void unget_character() noexcept override
-    {
-        next_unget = true;
+        return utf8_bytes[utf8_bytes_index++];
     }
 
   private:
@@ -328,11 +266,6 @@ class wide_string_input_adapter : public input_adapter_protocol
     std::size_t utf8_bytes_index = 0;
     /// number of valid bytes in the utf8_codes array
     std::size_t utf8_bytes_filled = 0;
-
-    /// the last character (returned after unget_character() is called)
-    std::char_traits<char>::int_type last_char = 0;
-    /// whether get_character() should return last_char
-    bool next_unget = false;
 };
 
 class input_adapter

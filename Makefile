@@ -9,6 +9,7 @@ SRCS = include/nlohmann/json.hpp \
        include/nlohmann/detail/exceptions.hpp \
        include/nlohmann/detail/input/binary_reader.hpp \
        include/nlohmann/detail/input/input_adapters.hpp \
+       include/nlohmann/detail/input/json_sax.hpp \
        include/nlohmann/detail/input/lexer.hpp \
        include/nlohmann/detail/input/parser.hpp \
        include/nlohmann/detail/iterators/internal_iterator.hpp \
@@ -84,7 +85,7 @@ coverage:
 	mkdir build_coverage
 	cd build_coverage ; CXX=g++-5 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
 	cd build_coverage ; ninja
-	cd build_coverage ; ctest -j10
+	cd build_coverage ; ctest -E '.*_default' -j10
 	cd build_coverage ; ninja lcov_html
 	open build_coverage/test/html/index.html
 
