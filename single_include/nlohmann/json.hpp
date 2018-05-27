@@ -3426,6 +3426,19 @@ struct json_sax
 
 namespace detail
 {
+/*!
+@brief SAX implementation to create a JSON value from SAX events
+
+This class implements the @ref json_sax interface and processes the SAX events
+to create a JSON value which makes it basically a DOM parser. The structure or
+hierarchy of the JSON value is managed by the stack `ref_stack` which contains
+a pointer to the respective array or object for each recursion depth.
+
+After successful parsing, the value that is passed by reference to the
+constructor contains the parsed value.
+
+@tparam BasicJsonType  the JSON type
+*/
 template<typename BasicJsonType>
 class json_sax_dom_parser : public json_sax<BasicJsonType>
 {
@@ -3435,6 +3448,11 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
 
+    /*!
+    @param[in, out] r  reference to a JSON value that is manipulated while
+                       parsing
+    @param[in] allow_exceptions_  whether parse errors yield exceptions
+    */
     json_sax_dom_parser(BasicJsonType& r, const bool allow_exceptions_ = true)
         : root(r), allow_exceptions(allow_exceptions_)
     {}
