@@ -5,6 +5,7 @@
 #include <ciso646> // and, not
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
+#include <map> // map
 #include <string> // string
 #include <tuple> // tuple, make_tuple
 #include <type_traits> // is_arithmetic, is_same, is_enum, underlying_type, is_convertible
@@ -275,6 +276,25 @@ template<typename BasicJsonType, typename... Args>
 void from_json(const BasicJsonType& j, std::tuple<Args...>& t)
 {
     from_json_tuple_impl(j, t, index_sequence_for<Args...> {});
+}
+
+template <typename BasicJsonType, typename Key, typename Value,
+          typename = enable_if_t<not std::is_constructible<
+                                     typename BasicJsonType::string_t, Key>::value>>
+void from_json(const BasicJsonType& j, std::map<Key, Value>& m)
+{
+    if (JSON_UNLIKELY(not j.is_array()))
+    {
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+    }
+    for (const auto& p : j)
+    {
+        if (JSON_UNLIKELY(not p.is_array()))
+        {
+            JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(p.type_name())));
+        }
+        m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
+    }
 }
 
 struct from_json_fn
