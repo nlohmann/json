@@ -6,7 +6,7 @@
 #include <cmath> // ldexp
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
-#include <cstdio> // snprinft
+#include <cstdio> // snprintf
 #include <cstring> // memcpy
 #include <iterator> // back_inserter
 #include <limits> // numeric_limits
