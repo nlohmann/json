@@ -415,7 +415,7 @@ class serializer
         {
             // we finish reading, but do not accept: string was incomplete
             std::string sn(3,'\0');
-            snprintf(&sn[0], sn.size(), "%.2X", s.back());
+            snprintf(&sn[0], sn.size(), "%.2X", static_cast<uint8_t>(s.back()));
             JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
         }
     }
