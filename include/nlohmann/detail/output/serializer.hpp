@@ -9,11 +9,8 @@
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t
 #include <cstdio> // snprintf
-#include <iomanip> // setfill
-#include <iterator> // next
 #include <limits> // numeric_limits
 #include <string> // string
-#include <sstream> // stringstream
 #include <type_traits> // is_same
 
 #include <nlohmann/detail/exceptions.hpp>
@@ -389,9 +386,9 @@ class serializer
 
                 case UTF8_REJECT:  // decode found invalid UTF-8 byte
                 {
-                    std::stringstream ss;
-                    ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(byte);
-                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + ss.str()));
+                    std::string sn(3, '\0');
+                    snprintf(&sn[0], sn.size(), "%.2X", byte);
+                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn));
                 }
 
                 default:  // decode found yet incomplete multi-byte code point
@@ -417,9 +414,9 @@ class serializer
         else
         {
             // we finish reading, but do not accept: string was incomplete
-            std::stringstream ss;
-            ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(static_cast<uint8_t>(s.back()));
-            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + ss.str()));
+            std::string sn(3,'\0');
+            snprintf(&sn[0], sn.size(), "%.2X", s.back());
+            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
         }
     }
 
