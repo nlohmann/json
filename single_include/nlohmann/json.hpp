@@ -1321,16 +1321,6 @@ struct external_constructor<value_t::string>
         j.m_value = std::move(s);
         j.assert_invariant();
     }
-
-    template<typename BasicJsonType, typename CompatibleStringType,
-             enable_if_t<not std::is_same<CompatibleStringType, typename BasicJsonType::string_t>::value,
-                         int> = 0>
-    static void construct(BasicJsonType& j, const CompatibleStringType& str)
-    {
-        j.m_type = value_t::string;
-        j.m_value.string = j.template create<typename BasicJsonType::string_t>(str);
-        j.assert_invariant();
-    }
 };
 
 template<>
@@ -12480,6 +12470,9 @@ class basic_json
                    not detail::is_basic_json<ValueType>::value
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
+#if defined(JSON_HAS_CPP_17) && _MSC_VER <= 1913
+                   and not std::is_same<ValueType, typename std::string_view>::value
+#endif
 #endif
                    , int >::type = 0 >
     operator ValueType() const

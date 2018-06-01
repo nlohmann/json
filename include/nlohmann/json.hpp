@@ -2821,9 +2821,9 @@ class basic_json
                    not detail::is_basic_json<ValueType>::value
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
-#endif
-#if defined(JSON_HAS_CPP_17)
+#if defined(JSON_HAS_CPP_17) && _MSC_VER <= 1913
                    and not std::is_same<ValueType, typename std::string_view>::value
+#endif
 #endif
                    , int >::type = 0 >
     operator ValueType() const
