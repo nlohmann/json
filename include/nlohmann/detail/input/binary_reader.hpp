@@ -6,12 +6,10 @@
 #include <cmath> // ldexp
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstdio> // snprintf
 #include <cstring> // memcpy
-#include <iomanip> // setw, setfill
-#include <ios> // hex
 #include <iterator> // back_inserter
 #include <limits> // numeric_limits
-#include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 
@@ -1665,9 +1663,9 @@ class binary_reader
     */
     std::string get_token_string() const
     {
-        std::stringstream ss;
-        ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-        return ss.str();
+        char cr[3];
+        snprintf(cr, 3, "%.2X", current);
+        return std::string{cr};
     }
 
   private:

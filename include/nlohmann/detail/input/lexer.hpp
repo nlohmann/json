@@ -3,10 +3,8 @@
 #include <clocale> // localeconv
 #include <cstddef> // size_t
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
+#include <cstdio> // snprintf
 #include <initializer_list> // initializer_list
-#include <ios> // hex, uppercase
-#include <iomanip> // setw, setfill
-#include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <vector> // vector
 
@@ -1174,10 +1172,9 @@ scan_number_done:
             if ('\x00' <= c and c <= '\x1F')
             {
                 // escape control characters
-                std::stringstream ss;
-                ss << "<U+" << std::setw(4) << std::uppercase << std::setfill('0')
-                   << std::hex << static_cast<int>(c) << ">";
-                result += ss.str();
+                char cs[9];
+                snprintf(cs, 9, "<U+%.4X>", c);
+                result += cs;
             }
             else
             {
