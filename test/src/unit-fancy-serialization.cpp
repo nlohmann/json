@@ -6,7 +6,7 @@
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2018 Evan Driscoll <evaned@gmail.com>
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -36,14 +36,46 @@ using nlohmann::fancy_dump;
 
 TEST_CASE("serialization")
 {
-    SECTION("operator<<")
+    SECTION("primitives")
     {
-        SECTION("no given width")
+        SECTION("null")
         {
             std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            json j;
             fancy_dump(ss, j);
-            CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
+            CHECK(ss.str() == "null");
+        }
+
+        SECTION("true")
+        {
+            std::stringstream ss;
+            json j = true;
+            fancy_dump(ss, j);
+            CHECK(ss.str() == "true");
+        }
+
+        SECTION("false")
+        {
+            std::stringstream ss;
+            json j = false;
+            fancy_dump(ss, j);
+            CHECK(ss.str() == "false");
+        }
+
+        SECTION("integer")
+        {
+            std::stringstream ss;
+            json j = 10;
+            fancy_dump(ss, j);
+            CHECK(ss.str() == "10");
+        }
+
+        SECTION("floating point")
+        {
+            std::stringstream ss;
+            json j = 7.5;
+            fancy_dump(ss, j);
+            CHECK(ss.str() == "7.5");
         }
     }
 }
