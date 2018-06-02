@@ -65,6 +65,7 @@ SOFTWARE.
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/output/binary_writer.hpp>
 #include <nlohmann/detail/output/serializer.hpp>
+#include <nlohmann/detail/output/fancy_serializer.hpp>
 #include <nlohmann/detail/json_ref.hpp>
 #include <nlohmann/detail/json_pointer.hpp>
 #include <nlohmann/adl_serializer.hpp>
@@ -166,6 +167,7 @@ class basic_json
     friend ::nlohmann::json_pointer<basic_json>;
     friend ::nlohmann::detail::parser<basic_json>;
     friend ::nlohmann::detail::serializer<basic_json>;
+    friend ::nlohmann::detail::fancy_serializer<basic_json>;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
