@@ -37,8 +37,10 @@ void check_escaped(const char* original, const char* escaped = "", const bool en
 void check_escaped(const char* original, const char* escaped, const bool ensure_ascii)
 {
     std::stringstream ss;
-    json::serializer s(nlohmann::detail::output_adapter<char>(ss), ' ');
-    s.dump_escaped(original, ensure_ascii);
+    nlohmann::detail::output_adapter<char> o(ss);
+    nlohmann::detail::output_adapter_t<char> oo = o;
+    nlohmann::detail::primitive_serializer<json> s;
+    s.dump_escaped(*oo, original, ensure_ascii);
     CHECK(ss.str() == escaped);
 }
 
