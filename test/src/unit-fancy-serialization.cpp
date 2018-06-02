@@ -77,6 +77,74 @@ TEST_CASE("serialization")
         }
     }
 
+    SECTION("strings")
+    {
+        SECTION("long strings usually print")
+        {
+            auto str = fancy_to_string(
+                           "The quick brown fox jumps over the lazy brown dog");
+            CHECK(str ==
+                  "\"The quick brown fox jumps over the lazy brown dog\"");
+        }
+
+        SECTION("long strings can be shortened")
+        {
+            fancy_serializer_style style;
+            style.strings_maximum_length = 10;
+
+            auto str = fancy_to_string(
+                           "The quick brown fox jumps over the lazy brown dog",
+                           style);
+            CHECK(str == "\"The qu...g\"");
+        }
+
+        SECTION("requesting extremely short strings limits what is included")
+        {
+            const char* const quick = "The quick brown fox jumps over the lazy brown dog";
+
+            std::pair<unsigned, const char*> tests[] =
+            {
+                {5, "\"T...g\""},
+                {4, "\"T...\""},
+                {3, "\"...\""},
+                {2, "\"..\""},
+                {1, "\".\""},
+            };
+
+            for (auto test : tests)
+            {
+                fancy_serializer_style style;
+                style.strings_maximum_length = test.first;
+                auto str = fancy_to_string(quick, style);
+                CHECK(str == test.second);
+            }
+        }
+
+        SECTION("But you cannot ask for a length of zero; that means unlimited")
+        {
+            fancy_serializer_style style;
+            style.strings_maximum_length = 0;
+
+            auto str = fancy_to_string(
+                           "The quick brown fox jumps over the lazy brown dog",
+                           style);
+            CHECK(str ==
+                  "\"The quick brown fox jumps over the lazy brown dog\"");
+        }
+
+        SECTION("\"Limiting\" to something long doesn't do anything")
+        {
+            fancy_serializer_style style;
+            style.strings_maximum_length = 100;
+
+            auto str = fancy_to_string(
+                           "The quick brown fox jumps over the lazy brown dog",
+                           style);
+            CHECK(str ==
+                  "\"The quick brown fox jumps over the lazy brown dog\"");
+        }
+    }
+
     SECTION("given width")
     {
         fancy_serializer_style style;
