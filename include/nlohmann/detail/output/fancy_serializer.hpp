@@ -278,11 +278,12 @@ class fancy_serializer
 }
 
 template<typename BasicJsonType>
-std::ostream& fancy_dump(std::ostream& o, const BasicJsonType& j)
+std::ostream& fancy_dump(std::ostream& o, const BasicJsonType& j,
+                         unsigned int indent_step, char indent_char)
 {
     // do the actual serialization
-    detail::fancy_serializer<BasicJsonType> s(detail::output_adapter<char>(o), o.fill());
-    s.dump(j, false, false, 0u);
+    detail::fancy_serializer<BasicJsonType> s(detail::output_adapter<char>(o), indent_char);
+    s.dump(j, indent_step > 0, false, indent_step);
     return o;
 }
 

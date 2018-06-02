@@ -34,48 +34,79 @@ SOFTWARE.
 using nlohmann::json;
 using nlohmann::fancy_dump;
 
+std::string fancy_to_string(json j, unsigned int indent_step = 0, char indent_char = ' ')
+{
+    std::stringstream ss;
+    fancy_dump(ss, j, indent_step, indent_char);
+    return ss.str();
+}
+
 TEST_CASE("serialization")
 {
     SECTION("primitives")
     {
         SECTION("null")
         {
-            std::stringstream ss;
-            json j;
-            fancy_dump(ss, j);
-            CHECK(ss.str() == "null");
+            auto str = fancy_to_string({});
+            CHECK(str == "null");
         }
 
         SECTION("true")
         {
-            std::stringstream ss;
-            json j = true;
-            fancy_dump(ss, j);
-            CHECK(ss.str() == "true");
+            auto str = fancy_to_string(true);
+            CHECK(str == "true");
         }
 
         SECTION("false")
         {
-            std::stringstream ss;
-            json j = false;
-            fancy_dump(ss, j);
-            CHECK(ss.str() == "false");
+            auto str = fancy_to_string(false);
+            CHECK(str == "false");
         }
 
         SECTION("integer")
         {
-            std::stringstream ss;
-            json j = 10;
-            fancy_dump(ss, j);
-            CHECK(ss.str() == "10");
+            auto str = fancy_to_string(10);
+            CHECK(str == "10");
         }
 
         SECTION("floating point")
         {
-            std::stringstream ss;
-            json j = 7.5;
-            fancy_dump(ss, j);
-            CHECK(ss.str() == "7.5");
+            auto str = fancy_to_string(7.5);
+            CHECK(str == "7.5");
         }
+    }
+
+    SECTION("given width")
+    {
+        auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, 4);
+        CHECK(str ==
+              "[\n"
+              "    \"foo\",\n"
+              "    1,\n"
+              "    2,\n"
+              "    3,\n"
+              "    false,\n"
+              "    {\n"
+              "        \"one\": 1\n"
+              "    }\n"
+              "]"
+             );
+    }
+
+    SECTION("given fill")
+    {
+        auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, 1, '\t');
+        CHECK(str ==
+              "[\n"
+              "\t\"foo\",\n"
+              "\t1,\n"
+              "\t2,\n"
+              "\t3,\n"
+              "\tfalse,\n"
+              "\t{\n"
+              "\t\t\"one\": 1\n"
+              "\t}\n"
+              "]"
+             );
     }
 }
