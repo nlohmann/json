@@ -33,11 +33,12 @@ SOFTWARE.
 
 using nlohmann::json;
 using nlohmann::fancy_dump;
+using nlohmann::fancy_serializer_style;
 
-std::string fancy_to_string(json j, unsigned int indent_step = 0, char indent_char = ' ')
+std::string fancy_to_string(json j, fancy_serializer_style style = fancy_serializer_style())
 {
     std::stringstream ss;
-    fancy_dump(ss, j, indent_step, indent_char);
+    fancy_dump(ss, j, style);
     return ss.str();
 }
 
@@ -78,7 +79,9 @@ TEST_CASE("serialization")
 
     SECTION("given width")
     {
-        auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, 4);
+        fancy_serializer_style style;
+        style.indent_step = 4;
+        auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str ==
               "[\n"
               "    \"foo\",\n"
@@ -95,7 +98,11 @@ TEST_CASE("serialization")
 
     SECTION("given fill")
     {
-        auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, 1, '\t');
+        fancy_serializer_style style;
+        style.indent_step = 1;
+        style.indent_char = '\t';
+
+        auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str ==
               "[\n"
               "\t\"foo\",\n"
