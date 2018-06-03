@@ -201,7 +201,6 @@ TEST_CASE("serialization")
             auto str_flat = fancy_to_string({1, {1}}, style);
             CHECK(str_flat == "[1,[...]]");
 
-            style.indent_step = 4;
             style.multiline = true;
             auto str_lines = fancy_to_string({1, {1}}, style);
             CHECK(str_lines == dedent(R"(
@@ -219,7 +218,6 @@ TEST_CASE("serialization")
             auto str_flat = fancy_to_string({1, {{"one", 1}}}, style);
             CHECK(str_flat == "[1,{...}]");
 
-            style.indent_step = 4;
             style.multiline = true;
             auto str_lines = fancy_to_string({1, {{"one", 1}}}, style);
             CHECK(str_lines == dedent(R"(
@@ -235,9 +233,7 @@ TEST_CASE("serialization")
         SECTION("can style objects of a key differently")
         {
             fancy_serializer_stylizer stylizer;
-            stylizer.get_default_style().indent_step = 4;
             stylizer.get_default_style().multiline = true;
-            stylizer.get_or_insert_style("one line").indent_step = 0;
             stylizer.get_or_insert_style("one line").multiline = false;
 
             auto str = fancy_to_string(
@@ -264,8 +260,7 @@ TEST_CASE("serialization")
         SECTION("changes propagate (unless overridden)")
         {
             fancy_serializer_stylizer stylizer;
-            stylizer.get_default_style().indent_step = 4;
-            stylizer.get_default_style().multiline = 4;
+            stylizer.get_default_style().multiline = true;
             stylizer.get_or_insert_style("one line").indent_step = 0;
 
             auto str = fancy_to_string(
@@ -286,8 +281,7 @@ TEST_CASE("serialization")
     SECTION("given width")
     {
         fancy_serializer_style style;
-        style.indent_step = 4;
-        style.multiline = 4;
+        style.multiline = true;
         auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str == dedent(R"(
               [

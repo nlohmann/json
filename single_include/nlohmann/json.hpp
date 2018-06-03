@@ -10097,7 +10097,7 @@ namespace nlohmann
 
 struct fancy_serializer_style
 {
-    unsigned int indent_step = 0;
+    unsigned int indent_step = 4;
     char indent_char = ' ';
 
     unsigned int depth_limit = std::numeric_limits<unsigned>::max();
@@ -10280,7 +10280,7 @@ class fancy_serializer
         Iterator i, bool ensure_ascii, unsigned int depth,
         const fancy_serializer_style* active_style)
     {
-        const auto new_indent = (depth + 1) * active_style->indent_step;
+        const auto new_indent = (depth + 1) * active_style->indent_step * active_style->multiline;
         const int newline_len = (active_style->indent_step > 0);
 
         o->write_characters(indent_string.c_str(), new_indent);
@@ -10308,8 +10308,8 @@ class fancy_serializer
         }
 
         // variable to hold indentation for recursive calls
-        const auto old_indent = depth * active_style->indent_step;
-        const auto new_indent = (depth + 1) * active_style->indent_step;
+        const auto old_indent = depth * active_style->indent_step * active_style->multiline;
+        const auto new_indent = (depth + 1) * active_style->indent_step * active_style->multiline;
         if (JSON_UNLIKELY(indent_string.size() < new_indent))
         {
             indent_string.resize(indent_string.size() * 2, active_style->indent_char);
@@ -10353,8 +10353,8 @@ class fancy_serializer
         }
 
         // variable to hold indentation for recursive calls
-        const auto old_indent = depth * active_style->indent_step;
-        const auto new_indent = (depth + 1) * active_style->indent_step;
+        const auto old_indent = depth * active_style->indent_step * active_style->multiline;;
+        const auto new_indent = (depth + 1) * active_style->indent_step * active_style->multiline;;
         if (JSON_UNLIKELY(indent_string.size() < new_indent))
         {
             indent_string.resize(indent_string.size() * 2, active_style->indent_char);
