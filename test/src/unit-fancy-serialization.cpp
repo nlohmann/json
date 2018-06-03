@@ -143,6 +143,9 @@ TEST_CASE("serialization")
             CHECK(str ==
                   "\"The quick brown fox jumps over the lazy brown dog\"");
         }
+
+        // TODO: Handle escape sequences. Figure out what we want the
+        // behavior to be, first. :-)
     }
 
     SECTION("given width")
