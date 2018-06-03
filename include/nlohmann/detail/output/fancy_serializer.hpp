@@ -12,6 +12,7 @@
 #include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // is_same
+#include <map>
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/conversions/to_chars.hpp>
@@ -34,6 +35,26 @@ struct fancy_serializer_style
     unsigned int strings_maximum_length = 0;
 };
 
+template<typename BasicJsonType>
+class fancy_serializer_stylizer
+{
+  public:
+    fancy_serializer_stylizer(fancy_serializer_style const& ds)
+        : default_style(ds)
+    {}
+
+    fancy_serializer_stylizer() = delete;
+
+  public:
+    const fancy_serializer_style& get_default_style() const
+    {
+        return default_style;
+    }
+
+  private:
+    fancy_serializer_style default_style;
+};
+
 namespace detail
 {
 ///////////////////
@@ -43,6 +64,7 @@ namespace detail
 template<typename BasicJsonType>
 class fancy_serializer
 {
+    using stylizer_t = fancy_serializer_stylizer<BasicJsonType>;
     using primitive_serializer_t = primitive_serializer<BasicJsonType>;
     using string_t = typename BasicJsonType::string_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -57,14 +79,21 @@ class fancy_serializer
     @param[in] ichar  indentation character to use
     */
     fancy_serializer(output_adapter_t<char> s,
-                     const fancy_serializer_style& st)
-        : o(std::move(s)), indent_string(512, st.indent_char), style(st)
+                     const stylizer_t& st)
+        : o(std::move(s)), stylizer(st),
+          indent_string(512, st.get_default_style().indent_char)
     {}
 
     // delete because of pointer members
     fancy_serializer(const fancy_serializer&) = delete;
     fancy_serializer& operator=(const fancy_serializer&) = delete;
 
+    void dump(const BasicJsonType& val, const bool ensure_ascii)
+    {
+        dump(val, ensure_ascii, 0, &stylizer.get_default_style());
+    }
+
+  private:
     /*!
     @brief internal implementation of the serialization function
 
@@ -83,25 +112,26 @@ class fancy_serializer
     */
     void dump(const BasicJsonType& val,
               const bool ensure_ascii,
-              const unsigned int depth = 0)
+              const unsigned int depth,
+              const fancy_serializer_style* active_style)
     {
         switch (val.m_type)
         {
             case value_t::object:
             {
-                dump_object(val, ensure_ascii, depth);
+                dump_object(val, ensure_ascii, depth, active_style);
                 return;
             }
 
             case value_t::array:
             {
-                dump_array(val, ensure_ascii, depth);
+                dump_array(val, ensure_ascii, depth, active_style);
                 return;
             }
 
             case value_t::string:
             {
-                dump_string(*val.m_value.string, ensure_ascii);
+                dump_string(*val.m_value.string, ensure_ascii, active_style);
                 return;
             }
 
@@ -151,27 +181,30 @@ class fancy_serializer
     }
 
   private:
-    void dump_object(const BasicJsonType& val, bool ensure_ascii, unsigned int depth)
+    void dump_object(const BasicJsonType& val,
+                     bool ensure_ascii,
+                     unsigned int depth,
+                     const fancy_serializer_style* active_style)
     {
         if (val.m_value.object->empty())
         {
             o->write_characters("{}", 2);
             return;
         }
-        else if (depth >= style.depth_limit)
+        else if (depth >= active_style->depth_limit)
         {
             o->write_characters("{...}", 5);
             return;
         }
 
         // variable to hold indentation for recursive calls
-        const auto old_indent = depth * style.indent_step;
-        const auto new_indent = (depth + 1) * style.indent_step;
+        const auto old_indent = depth * active_style->indent_step;
+        const auto new_indent = (depth + 1) * active_style->indent_step;
         if (JSON_UNLIKELY(indent_string.size() < new_indent))
         {
-            indent_string.resize(indent_string.size() * 2, style.indent_char);
+            indent_string.resize(indent_string.size() * 2, active_style->indent_char);
         }
-        const int newline_len = (style.indent_step > 0);
+        const int newline_len = (active_style->indent_step > 0);
 
         o->write_characters("{\n", 1 + newline_len);
 
@@ -183,7 +216,7 @@ class fancy_serializer
             o->write_character('\"');
             prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
             o->write_characters("\": ", 2 + newline_len);
-            dump(i->second, ensure_ascii, depth + 1);
+            dump(i->second, ensure_ascii, depth + 1, active_style);
             o->write_characters(",\n", 1 + newline_len);
         }
 
@@ -194,34 +227,37 @@ class fancy_serializer
         o->write_character('\"');
         prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
         o->write_characters("\": ", 2 + newline_len);
-        dump(i->second, ensure_ascii, depth + 1);
+        dump(i->second, ensure_ascii, depth + 1, active_style);
 
         o->write_characters("\n", newline_len);
         o->write_characters(indent_string.c_str(), old_indent);
         o->write_character('}');
     }
 
-    void dump_array(const BasicJsonType& val, bool ensure_ascii, unsigned int depth)
+    void dump_array(const BasicJsonType& val,
+                    bool ensure_ascii,
+                    unsigned int depth,
+                    const fancy_serializer_style* active_style)
     {
         if (val.m_value.array->empty())
         {
             o->write_characters("[]", 2);
             return;
         }
-        else if (depth >= style.depth_limit)
+        else if (depth >= active_style->depth_limit)
         {
             o->write_characters("[...]", 5);
             return;
         }
 
         // variable to hold indentation for recursive calls
-        const auto old_indent = depth * style.indent_step;
-        const auto new_indent = (depth + 1) * style.indent_step;
+        const auto old_indent = depth * active_style->indent_step;
+        const auto new_indent = (depth + 1) * active_style->indent_step;
         if (JSON_UNLIKELY(indent_string.size() < new_indent))
         {
-            indent_string.resize(indent_string.size() * 2, style.indent_char);
+            indent_string.resize(indent_string.size() * 2, active_style->indent_char);
         }
-        const int newline_len = (style.indent_step > 0);
+        const int newline_len = (active_style->indent_step > 0);
 
         o->write_characters("[\n", 1 + newline_len);
 
@@ -230,24 +266,25 @@ class fancy_serializer
                 i != val.m_value.array->cend() - 1; ++i)
         {
             o->write_characters(indent_string.c_str(), new_indent);
-            dump(*i, ensure_ascii, depth + 1);
+            dump(*i, ensure_ascii, depth + 1, active_style);
             o->write_characters(",\n", 1 + newline_len);
         }
 
         // last element
         assert(not val.m_value.array->empty());
         o->write_characters(indent_string.c_str(), new_indent);
-        dump(val.m_value.array->back(), ensure_ascii, depth + 1);
+        dump(val.m_value.array->back(), ensure_ascii, depth + 1, active_style);
 
         o->write_characters("\n", newline_len);
         o->write_characters(indent_string.c_str(), old_indent);
         o->write_character(']');
     }
 
-    void dump_string(const string_t& str, bool ensure_ascii)
+    void dump_string(const string_t& str, bool ensure_ascii,
+                     const fancy_serializer_style* active_style)
     {
         o->write_character('\"');
-        if (style.strings_maximum_length == 0)
+        if (active_style->strings_maximum_length == 0)
         {
             prim_serializer.dump_escaped(*o, str, ensure_ascii);
         }
@@ -259,7 +296,7 @@ class fancy_serializer
             prim_serializer.dump_escaped(*oo_string, str, ensure_ascii);
 
             std::string full_str = ss.str();
-            if (full_str.size() <= style.strings_maximum_length)
+            if (full_str.size() <= active_style->strings_maximum_length)
             {
                 o->write_characters(full_str.c_str(), full_str.size());
             }
@@ -287,15 +324,15 @@ class fancy_serializer
                         // and one for the last character.
                         return maxl - 4;
                     }
-                }(style.strings_maximum_length);
+                }(active_style->strings_maximum_length);
 
                 const unsigned end_len =
-                    style.strings_maximum_length >= 5 ? 1 : 0;
+                    active_style->strings_maximum_length >= 5 ? 1 : 0;
 
                 const unsigned ellipsis_length =
-                    style.strings_maximum_length >= 3
+                    active_style->strings_maximum_length >= 3
                     ? 3
-                    : style.strings_maximum_length;
+                    : active_style->strings_maximum_length;
 
                 o->write_characters(full_str.c_str(), start_len);
                 o->write_characters("...", ellipsis_length);
@@ -309,15 +346,15 @@ class fancy_serializer
     /// the output of the fancy_serializer
     output_adapter_t<char> o = nullptr;
 
-    /// the indentation string
-    string_t indent_string;
-
     /// Used for serializing "base" objects. Strings are sort of
     /// counted in this, but not completely.
     primitive_serializer_t prim_serializer;
 
+    /// the indentation string
+    string_t indent_string;
+
     /// Output style
-    fancy_serializer_style style;
+    const stylizer_t stylizer;
 };
 }
 
@@ -325,9 +362,10 @@ template<typename BasicJsonType>
 std::ostream& fancy_dump(std::ostream& o, const BasicJsonType& j,
                          fancy_serializer_style style)
 {
+    fancy_serializer_stylizer<BasicJsonType> stylizer(style);
     // do the actual serialization
-    detail::fancy_serializer<BasicJsonType> s(detail::output_adapter<char>(o), style);
-    s.dump(j, false, 0u);
+    detail::fancy_serializer<BasicJsonType> s(detail::output_adapter<char>(o), stylizer);
+    s.dump(j, false);
     return o;
 }
 
