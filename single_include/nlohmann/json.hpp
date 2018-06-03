@@ -10128,10 +10128,12 @@ class basic_fancy_serializer_stylizer
         return default_style;
     }
 
-    const fancy_serializer_style& get_style(const string_t& j) const
+    const fancy_serializer_style* get_new_style_or_active(
+        const string_t& j,
+        const fancy_serializer_style* active_style) const
     {
         auto iter = key_styles.find(j);
-        return iter == key_styles.end() ? default_style : iter->second;
+        return iter == key_styles.end() ? active_style : &iter->second;
     }
 
     fancy_serializer_style& get_or_insert_style(const string_t& j)
@@ -10306,7 +10308,7 @@ class fancy_serializer
             o->write_character('\"');
             prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
             o->write_characters("\": ", 2 + newline_len);
-            auto new_style = &stylizer.get_style(i->first);
+            auto new_style = stylizer.get_new_style_or_active(i->first, active_style);
             dump(i->second, ensure_ascii, depth + 1, new_style);
             o->write_characters(",\n", 1 + newline_len);
         }
@@ -10318,7 +10320,7 @@ class fancy_serializer
         o->write_character('\"');
         prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
         o->write_characters("\": ", 2 + newline_len);
-        auto new_style = &stylizer.get_style(i->first);
+        auto new_style = stylizer.get_new_style_or_active(i->first, active_style);
         dump(i->second, ensure_ascii, depth + 1, new_style);
 
         o->write_characters("\n", newline_len);

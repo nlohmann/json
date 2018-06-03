@@ -256,6 +256,26 @@ TEST_CASE("serialization")
                     ]
                 })"));
         }
+
+        SECTION("changes propagate (unless overridden)")
+        {
+            fancy_serializer_stylizer stylizer;
+            stylizer.get_default_style().indent_step = 4;
+            stylizer.get_or_insert_style("one line").indent_step = 0;
+
+            auto str = fancy_to_string(
+            {
+                {
+                    "one line", {{"still one line", {1, 2}}}
+                },
+            },
+            stylizer);
+
+            CHECK(str == dedent(R"(
+                {
+                    "one line": {"still one line":[1,2]}
+                })"));
+        }
     }
 
     SECTION("given width")
