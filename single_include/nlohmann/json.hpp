@@ -10104,7 +10104,14 @@ struct fancy_serializer_style
 
     unsigned int strings_maximum_length = 0;
 
+    bool space_after_colon = false;
+
     bool multiline = false;
+
+    void set_old_multiline()
+    {
+        space_after_colon = multiline = true;
+    }
 };
 
 template<typename BasicJsonType>
@@ -10281,7 +10288,7 @@ class fancy_serializer
         const fancy_serializer_style* active_style)
     {
         const auto new_indent = (depth + 1) * active_style->indent_step * active_style->multiline;
-        const int newline_len = (active_style->indent_step > 0);
+        const int newline_len = active_style->space_after_colon;
 
         o->write_characters(indent_string.c_str(), new_indent);
         o->write_character('\"');

@@ -201,7 +201,7 @@ TEST_CASE("serialization")
             auto str_flat = fancy_to_string({1, {1}}, style);
             CHECK(str_flat == "[1,[...]]");
 
-            style.multiline = true;
+            style.set_old_multiline();
             auto str_lines = fancy_to_string({1, {1}}, style);
             CHECK(str_lines == dedent(R"(
                   [
@@ -218,7 +218,7 @@ TEST_CASE("serialization")
             auto str_flat = fancy_to_string({1, {{"one", 1}}}, style);
             CHECK(str_flat == "[1,{...}]");
 
-            style.multiline = true;
+            style.set_old_multiline();
             auto str_lines = fancy_to_string({1, {{"one", 1}}}, style);
             CHECK(str_lines == dedent(R"(
                   [
@@ -233,7 +233,7 @@ TEST_CASE("serialization")
         SECTION("can style objects of a key differently")
         {
             fancy_serializer_stylizer stylizer;
-            stylizer.get_default_style().multiline = true;
+            stylizer.get_default_style().set_old_multiline();
             stylizer.get_or_insert_style("one line").multiline = false;
 
             auto str = fancy_to_string(
@@ -260,7 +260,7 @@ TEST_CASE("serialization")
         SECTION("changes propagate (unless overridden)")
         {
             fancy_serializer_stylizer stylizer;
-            stylizer.get_default_style().multiline = true;
+            stylizer.get_default_style().set_old_multiline();
             stylizer.get_or_insert_style("one line").indent_step = 0;
 
             auto str = fancy_to_string(
@@ -278,10 +278,34 @@ TEST_CASE("serialization")
         }
     }
 
+    SECTION("Spaces after commas are controllable separately from multiline")
+    {
+        SECTION("colons")
+        {
+            fancy_serializer_style style;
+            style.space_after_colon = true;
+            auto str = fancy_to_string({{"one", 1}}, style);
+            CHECK(str == "{\"one\": 1}");
+        }
+
+        SECTION("multiline can have no space")
+        {
+            fancy_serializer_style style;
+            style.set_old_multiline();
+            style.space_after_colon = false;
+            auto str = fancy_to_string({{"one", 1}}, style);
+            CHECK(str == dedent(R"(
+                {
+                    "one":1
+                })"));
+
+        }
+    }
+
     SECTION("given width")
     {
         fancy_serializer_style style;
-        style.multiline = true;
+        style.set_old_multiline();
         auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str == dedent(R"(
               [
@@ -301,7 +325,7 @@ TEST_CASE("serialization")
         fancy_serializer_style style;
         style.indent_step = 1;
         style.indent_char = '\t';
-        style.multiline = true;
+        style.set_old_multiline();
 
         auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str ==
@@ -323,7 +347,7 @@ TEST_CASE("serialization")
         fancy_serializer_style style;
         style.indent_step = 300;
         style.indent_char = 'X';
-        style.multiline = true;
+        style.set_old_multiline();
 
         auto str = fancy_to_string({1, {1}}, style);
 
@@ -342,7 +366,7 @@ TEST_CASE("serialization")
         fancy_serializer_style style;
         style.indent_step = 300;
         style.indent_char = 'X';
-        style.multiline = true;
+        style.set_old_multiline();
 
         auto str = fancy_to_string({{"key", {{"key", 1}}}}, style);
 
