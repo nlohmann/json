@@ -229,54 +229,34 @@ class fancy_serializer
             return;
         }
 
-        if (style.indent_step > 0)
+        // variable to hold indentation for recursive calls
+        const auto old_indent = depth * style.indent_step;
+        const auto new_indent = (depth + 1) * style.indent_step;
+        if (JSON_UNLIKELY(indent_string.size() < new_indent))
         {
-            o->write_characters("[\n", 2);
+            indent_string.resize(indent_string.size() * 2, ' ');
+        }
+        const int newline_len = (style.indent_step > 0);
 
-            // variable to hold indentation for recursive calls
-            const auto old_indent = depth * style.indent_step;
-            const auto new_indent = (depth + 1) * style.indent_step;
-            if (JSON_UNLIKELY(indent_string.size() < new_indent))
-            {
-                indent_string.resize(indent_string.size() * 2, ' ');
-            }
+        o->write_characters("[\n", 1 + newline_len);
 
-            // first n-1 elements
-            for (auto i = val.m_value.array->cbegin();
-                    i != val.m_value.array->cend() - 1; ++i)
-            {
-                o->write_characters(indent_string.c_str(), new_indent);
-                dump(*i, ensure_ascii, depth + 1);
-                o->write_characters(",\n", 2);
-            }
-
-            // last element
-            assert(not val.m_value.array->empty());
+        // first n-1 elements
+        for (auto i = val.m_value.array->cbegin();
+                i != val.m_value.array->cend() - 1; ++i)
+        {
             o->write_characters(indent_string.c_str(), new_indent);
-            dump(val.m_value.array->back(), ensure_ascii, depth + 1);
-
-            o->write_character('\n');
-            o->write_characters(indent_string.c_str(), old_indent);
-            o->write_character(']');
+            dump(*i, ensure_ascii, depth + 1);
+            o->write_characters(",\n", 1 + newline_len);
         }
-        else
-        {
-            o->write_character('[');
 
-            // first n-1 elements
-            for (auto i = val.m_value.array->cbegin();
-                    i != val.m_value.array->cend() - 1; ++i)
-            {
-                dump(*i, ensure_ascii, depth + 1);
-                o->write_character(',');
-            }
+        // last element
+        assert(not val.m_value.array->empty());
+        o->write_characters(indent_string.c_str(), new_indent);
+        dump(val.m_value.array->back(), ensure_ascii, depth + 1);
 
-            // last element
-            assert(not val.m_value.array->empty());
-            dump(val.m_value.array->back(), ensure_ascii, depth + 1);
-
-            o->write_character(']');
-        }
+        o->write_characters("\n", newline_len);
+        o->write_characters(indent_string.c_str(), old_indent);
+        o->write_character(']');
     }
 
     void dump_string(const string_t& str, bool ensure_ascii)
