@@ -157,68 +157,41 @@ class fancy_serializer
             return;
         }
 
-        if (style.indent_step > 0)
+        // variable to hold indentation for recursive calls
+        const auto old_indent = depth * style.indent_step;
+        const auto new_indent = (depth + 1) * style.indent_step;
+        if (JSON_UNLIKELY(indent_string.size() < new_indent))
         {
-            o->write_characters("{\n", 2);
+            indent_string.resize(indent_string.size() * 2, ' ');
+        }
+        const int newline_len = (style.indent_step > 0);
 
-            // variable to hold indentation for recursive calls
-            const auto old_indent = depth * style.indent_step;
-            const auto new_indent = (depth + 1) * style.indent_step;
-            if (JSON_UNLIKELY(indent_string.size() < new_indent))
-            {
-                indent_string.resize(indent_string.size() * 2, ' ');
-            }
+        o->write_characters("{\n", 1 + newline_len);
 
-            // first n-1 elements
-            auto i = val.m_value.object->cbegin();
-            for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
-            {
-                o->write_characters(indent_string.c_str(), new_indent);
-                o->write_character('\"');
-                prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
-                o->write_characters("\": ", 3);
-                dump(i->second, ensure_ascii, depth + 1);
-                o->write_characters(",\n", 2);
-            }
-
-            // last element
-            assert(i != val.m_value.object->cend());
-            assert(std::next(i) == val.m_value.object->cend());
+        // first n-1 elements
+        auto i = val.m_value.object->cbegin();
+        for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
+        {
             o->write_characters(indent_string.c_str(), new_indent);
             o->write_character('\"');
             prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
-            o->write_characters("\": ", 3);
+            o->write_characters("\": ", 2 + newline_len);
             dump(i->second, ensure_ascii, depth + 1);
-
-            o->write_character('\n');
-            o->write_characters(indent_string.c_str(), old_indent);
-            o->write_character('}');
+            o->write_characters(",\n", 1 + newline_len);
         }
-        else
-        {
-            o->write_character('{');
 
-            // first n-1 elements
-            auto i = val.m_value.object->cbegin();
-            for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
-            {
-                o->write_character('\"');
-                prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
-                o->write_characters("\":", 2);
-                dump(i->second, ensure_ascii, depth + 1);
-                o->write_character(',');
-            }
+        // last element
+        assert(i != val.m_value.object->cend());
+        assert(std::next(i) == val.m_value.object->cend());
+        o->write_characters(indent_string.c_str(), new_indent);
+        o->write_character('\"');
+        prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
+        o->write_characters("\": ", 2 + newline_len);
+        dump(i->second, ensure_ascii, depth + 1);
 
-            // last element
-            assert(i != val.m_value.object->cend());
-            assert(std::next(i) == val.m_value.object->cend());
-            o->write_character('\"');
-            prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
-            o->write_characters("\":", 2);
-            dump(i->second, ensure_ascii, depth + 1);
-
-            o->write_character('}');
-        }
+        o->write_characters("\n", newline_len);
+        o->write_characters(indent_string.c_str(), old_indent);
+        o->write_character('}');
     }
 
     void dump_array(const BasicJsonType& val, bool ensure_ascii, unsigned int depth)
