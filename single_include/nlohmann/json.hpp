@@ -9876,7 +9876,7 @@ class serializer
                     const auto new_indent = current_indent + indent_step;
                     if (JSON_UNLIKELY(indent_string.size() < new_indent))
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        indent_string.resize(indent_string.size() * 2, indent_char);
                     }
 
                     // first n-1 elements
@@ -9949,7 +9949,7 @@ class serializer
                     const auto new_indent = current_indent + indent_step;
                     if (JSON_UNLIKELY(indent_string.size() < new_indent))
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        indent_string.resize(indent_string.size() * 2, indent_char);
                     }
 
                     // first n-1 elements
@@ -10232,7 +10232,7 @@ class fancy_serializer
         const auto new_indent = (depth + 1) * style.indent_step;
         if (JSON_UNLIKELY(indent_string.size() < new_indent))
         {
-            indent_string.resize(indent_string.size() * 2, ' ');
+            indent_string.resize(indent_string.size() * 2, style.indent_char);
         }
         const int newline_len = (style.indent_step > 0);
 
@@ -10277,7 +10277,7 @@ class fancy_serializer
         const auto new_indent = (depth + 1) * style.indent_step;
         if (JSON_UNLIKELY(indent_string.size() < new_indent))
         {
-            indent_string.resize(indent_string.size() * 2, ' ');
+            indent_string.resize(indent_string.size() * 2, style.indent_char);
         }
         const int newline_len = (style.indent_step > 0);
 

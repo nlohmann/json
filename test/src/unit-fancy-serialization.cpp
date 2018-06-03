@@ -187,4 +187,39 @@ TEST_CASE("serialization")
               "]"
              );
     }
+
+    SECTION("indent_char is honored for deep indents in lists")
+    {
+        fancy_serializer_style style;
+        style.indent_step = 300;
+        style.indent_char = 'X';
+
+        auto str = fancy_to_string({1, {1}}, style);
+
+        std::string indent(300, 'X');
+        CHECK(str ==
+              "[\n" +
+              indent + "1,\n" +
+              indent + "[\n" +
+              indent + indent + "1\n" +
+              indent + "]\n" +
+              "]");
+    }
+
+    SECTION("indent_char is honored for deep indents in objects")
+    {
+        fancy_serializer_style style;
+        style.indent_step = 300;
+        style.indent_char = 'X';
+
+        auto str = fancy_to_string({{"key", {{"key", 1}}}}, style);
+
+        std::string indent(300, 'X');
+        CHECK(str ==
+              "{\n" +
+              indent + "\"key\": {\n" +
+              indent + indent + "\"key\": 1\n" +
+              indent + "}\n" +
+              "}");
+    }
 }
