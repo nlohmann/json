@@ -10103,6 +10103,8 @@ struct fancy_serializer_style
     unsigned int depth_limit = std::numeric_limits<unsigned>::max();
 
     unsigned int strings_maximum_length = 0;
+
+    bool multiline = false;
 };
 
 template<typename BasicJsonType>
@@ -10312,7 +10314,7 @@ class fancy_serializer
         {
             indent_string.resize(indent_string.size() * 2, active_style->indent_char);
         }
-        const int newline_len = (active_style->indent_step > 0);
+        const int newline_len = (active_style->multiline ? 1 : 0);
 
         o->write_characters("{\n", 1 + newline_len);
 
@@ -10357,7 +10359,7 @@ class fancy_serializer
         {
             indent_string.resize(indent_string.size() * 2, active_style->indent_char);
         }
-        const int newline_len = (active_style->indent_step > 0);
+        const int newline_len = (active_style->multiline ? 1 : 0);
 
         o->write_characters("[\n", 1 + newline_len);
 

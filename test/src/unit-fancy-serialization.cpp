@@ -202,6 +202,7 @@ TEST_CASE("serialization")
             CHECK(str_flat == "[1,[...]]");
 
             style.indent_step = 4;
+            style.multiline = true;
             auto str_lines = fancy_to_string({1, {1}}, style);
             CHECK(str_lines == dedent(R"(
                   [
@@ -219,6 +220,7 @@ TEST_CASE("serialization")
             CHECK(str_flat == "[1,{...}]");
 
             style.indent_step = 4;
+            style.multiline = true;
             auto str_lines = fancy_to_string({1, {{"one", 1}}}, style);
             CHECK(str_lines == dedent(R"(
                   [
@@ -234,7 +236,9 @@ TEST_CASE("serialization")
         {
             fancy_serializer_stylizer stylizer;
             stylizer.get_default_style().indent_step = 4;
+            stylizer.get_default_style().multiline = true;
             stylizer.get_or_insert_style("one line").indent_step = 0;
+            stylizer.get_or_insert_style("one line").multiline = false;
 
             auto str = fancy_to_string(
             {
@@ -261,6 +265,7 @@ TEST_CASE("serialization")
         {
             fancy_serializer_stylizer stylizer;
             stylizer.get_default_style().indent_step = 4;
+            stylizer.get_default_style().multiline = 4;
             stylizer.get_or_insert_style("one line").indent_step = 0;
 
             auto str = fancy_to_string(
@@ -282,6 +287,7 @@ TEST_CASE("serialization")
     {
         fancy_serializer_style style;
         style.indent_step = 4;
+        style.multiline = 4;
         auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str == dedent(R"(
               [
@@ -301,6 +307,7 @@ TEST_CASE("serialization")
         fancy_serializer_style style;
         style.indent_step = 1;
         style.indent_char = '\t';
+        style.multiline = true;
 
         auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str ==
@@ -322,6 +329,7 @@ TEST_CASE("serialization")
         fancy_serializer_style style;
         style.indent_step = 300;
         style.indent_char = 'X';
+        style.multiline = true;
 
         auto str = fancy_to_string({1, {1}}, style);
 
@@ -340,6 +348,7 @@ TEST_CASE("serialization")
         fancy_serializer_style style;
         style.indent_step = 300;
         style.indent_char = 'X';
+        style.multiline = true;
 
         auto str = fancy_to_string({{"key", {{"key", 1}}}}, style);
 
