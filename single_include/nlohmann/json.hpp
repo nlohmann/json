@@ -10099,6 +10099,8 @@ struct fancy_serializer_style
     unsigned int indent_step = 0;
     char indent_char = ' ';
 
+    unsigned int depth_limit = std::numeric_limits<unsigned>::max();
+
     unsigned int strings_maximum_length = 0;
 };
 
@@ -10226,6 +10228,11 @@ class fancy_serializer
             o->write_characters("{}", 2);
             return;
         }
+        else if (depth >= style.depth_limit)
+        {
+            o->write_characters("{...}", 5);
+            return;
+        }
 
         // variable to hold indentation for recursive calls
         const auto old_indent = depth * style.indent_step;
@@ -10269,6 +10276,11 @@ class fancy_serializer
         if (val.m_value.array->empty())
         {
             o->write_characters("[]", 2);
+            return;
+        }
+        else if (depth >= style.depth_limit)
+        {
+            o->write_characters("[...]", 5);
             return;
         }
 

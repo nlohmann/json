@@ -183,23 +183,59 @@ TEST_CASE("serialization")
         // behavior to be, first. :-)
     }
 
+    SECTION("maximum depth")
+    {
+        SECTION("recursing past the maximum depth with a list elides the subobjects")
+        {
+            fancy_serializer_style style;
+            style.depth_limit = 1;
+
+            auto str_flat = fancy_to_string({1, {1}}, style);
+            CHECK(str_flat == "[1,[...]]");
+
+            style.indent_step = 4;
+            auto str_lines = fancy_to_string({1, {1}}, style);
+            CHECK(str_lines == dedent(R"(
+                  [
+                      1,
+                      [...]
+                  ])"));
+        }
+
+        SECTION("recursing past the maximum depth with an object elides the subobjects")
+        {
+            fancy_serializer_style style;
+            style.depth_limit = 1;
+
+            auto str_flat = fancy_to_string({1, {{"one", 1}}}, style);
+            CHECK(str_flat == "[1,{...}]");
+
+            style.indent_step = 4;
+            auto str_lines = fancy_to_string({1, {{"one", 1}}}, style);
+            CHECK(str_lines == dedent(R"(
+                  [
+                      1,
+                      {...}
+                  ])"));
+        }
+    }
+
     SECTION("given width")
     {
         fancy_serializer_style style;
         style.indent_step = 4;
         auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
-        CHECK(str ==
-              dedent(R"(
-                  [
-                      "foo",
-                      1,
-                      2,
-                      3,
-                      false,
-                      {
-                          "one": 1
-                      }
-                  ])"));
+        CHECK(str == dedent(R"(
+              [
+                  "foo",
+                  1,
+                  2,
+                  3,
+                  false,
+                  {
+                      "one": 1
+                  }
+              ])"));
     }
 
     SECTION("given fill")
