@@ -10349,7 +10349,7 @@ class fancy_serializer
         }
     }
 
-    void dump_string(string_t const& str, bool ensure_ascii)
+    void dump_string(const string_t& str, bool ensure_ascii)
     {
         o->write_character('\"');
         if (style.strings_maximum_length == 0)
