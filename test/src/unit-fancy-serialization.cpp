@@ -35,6 +35,41 @@ using nlohmann::json;
 using nlohmann::fancy_dump;
 using nlohmann::fancy_serializer_style;
 
+// Chops off the first line (if empty, but if it *isn't* empty you're
+// probably using this wrong), measures the leading indent on the
+// *next* line, then chops that amount off of all subsequent lines.
+std::string dedent(const char* str)
+{
+    std::stringstream out;
+    std::stringstream ss(str);
+    std::string line;
+    bool first = true;
+    int indent = -1;
+
+    while (getline(ss, line))
+    {
+        if (first && line.empty())
+        {
+            first = false;
+            continue;
+        }
+        if (indent == -1)
+        {
+            indent = line.find_first_not_of(' ');
+            assert(indent != std::string::npos);
+        }
+        out << line.c_str() + indent << "\n";
+    }
+
+    std::string ans = out.str();
+    if (ans[ans.size() - 1] == '\n' and str[strlen(str) - 1] != '\n')
+    {
+        ans.resize(ans.size() - 1);
+    }
+
+    return ans;
+}
+
 std::string fancy_to_string(json j, fancy_serializer_style style = fancy_serializer_style())
 {
     std::stringstream ss;
@@ -154,17 +189,17 @@ TEST_CASE("serialization")
         style.indent_step = 4;
         auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str ==
-              "[\n"
-              "    \"foo\",\n"
-              "    1,\n"
-              "    2,\n"
-              "    3,\n"
-              "    false,\n"
-              "    {\n"
-              "        \"one\": 1\n"
-              "    }\n"
-              "]"
-             );
+              dedent(R"(
+                  [
+                      "foo",
+                      1,
+                      2,
+                      3,
+                      false,
+                      {
+                          "one": 1
+                      }
+                  ])"));
     }
 
     SECTION("given fill")
