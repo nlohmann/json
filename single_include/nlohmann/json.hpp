@@ -10105,12 +10105,13 @@ struct fancy_serializer_style
     unsigned int strings_maximum_length = 0;
 
     bool space_after_colon = false;
+    bool space_after_comma = false;
 
     bool multiline = false;
 
     void set_old_multiline()
     {
-        space_after_colon = multiline = true;
+        space_after_colon = space_after_comma = multiline = true;
     }
 };
 
@@ -10368,6 +10369,12 @@ class fancy_serializer
         }
         const int newline_len = (active_style->multiline ? 1 : 0);
 
+        using pair = std::pair<const char*, int>;
+        auto comma_string =
+            active_style->multiline         ? pair(",\n", 2) :
+            active_style->space_after_comma ? pair(", ", 2) :
+            pair(",", 1);
+
         o->write_characters("[\n", 1 + newline_len);
 
         // first n-1 elements
@@ -10376,7 +10383,7 @@ class fancy_serializer
         {
             o->write_characters(indent_string.c_str(), new_indent);
             dump(*i, ensure_ascii, depth + 1, active_style);
-            o->write_characters(",\n", 1 + newline_len);
+            o->write_characters(comma_string.first, comma_string.second);
         }
 
         // last element

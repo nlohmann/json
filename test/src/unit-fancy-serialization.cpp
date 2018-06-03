@@ -280,6 +280,14 @@ TEST_CASE("serialization")
 
     SECTION("Spaces after commas are controllable separately from multiline")
     {
+        SECTION("commas")
+        {
+            fancy_serializer_style style;
+            style.space_after_comma = true;
+            auto str = fancy_to_string({1, 2, 3}, style);
+            CHECK(str == "[1, 2, 3]");
+        }
+
         SECTION("colons")
         {
             fancy_serializer_style style;
