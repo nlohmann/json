@@ -36,14 +36,16 @@ struct fancy_serializer_style
 };
 
 template<typename BasicJsonType>
-class fancy_serializer_stylizer
+class basic_fancy_serializer_stylizer
 {
   public:
-    fancy_serializer_stylizer(fancy_serializer_style const& ds)
+    using string_t = typename BasicJsonType::string_t;
+
+    basic_fancy_serializer_stylizer(fancy_serializer_style const& ds)
         : default_style(ds)
     {}
 
-    fancy_serializer_stylizer() = delete;
+    basic_fancy_serializer_stylizer() = default;
 
   public:
     const fancy_serializer_style& get_default_style() const
@@ -51,8 +53,26 @@ class fancy_serializer_stylizer
         return default_style;
     }
 
+    fancy_serializer_style& get_default_style()
+    {
+        return default_style;
+    }
+
+    const fancy_serializer_style& get_style(const string_t& j) const
+    {
+        auto iter = key_styles.find(j);
+        return iter == key_styles.end() ? default_style : iter->second;
+    }
+
+    fancy_serializer_style& get_or_insert_style(const string_t& j)
+    {
+        return key_styles[j];
+    }
+
   private:
     fancy_serializer_style default_style;
+
+    std::map<string_t, fancy_serializer_style> key_styles;
 };
 
 namespace detail
@@ -64,7 +84,7 @@ namespace detail
 template<typename BasicJsonType>
 class fancy_serializer
 {
-    using stylizer_t = fancy_serializer_stylizer<BasicJsonType>;
+    using stylizer_t = basic_fancy_serializer_stylizer<BasicJsonType>;
     using primitive_serializer_t = primitive_serializer<BasicJsonType>;
     using string_t = typename BasicJsonType::string_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -216,7 +236,8 @@ class fancy_serializer
             o->write_character('\"');
             prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
             o->write_characters("\": ", 2 + newline_len);
-            dump(i->second, ensure_ascii, depth + 1, active_style);
+            auto new_style = &stylizer.get_style(i->first);
+            dump(i->second, ensure_ascii, depth + 1, new_style);
             o->write_characters(",\n", 1 + newline_len);
         }
 
@@ -227,7 +248,8 @@ class fancy_serializer
         o->write_character('\"');
         prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
         o->write_characters("\": ", 2 + newline_len);
-        dump(i->second, ensure_ascii, depth + 1, active_style);
+        auto new_style = &stylizer.get_style(i->first);
+        dump(i->second, ensure_ascii, depth + 1, new_style);
 
         o->write_characters("\n", newline_len);
         o->write_characters(indent_string.c_str(), old_indent);
@@ -360,13 +382,20 @@ class fancy_serializer
 
 template<typename BasicJsonType>
 std::ostream& fancy_dump(std::ostream& o, const BasicJsonType& j,
-                         fancy_serializer_style style)
+                         basic_fancy_serializer_stylizer<BasicJsonType> const& stylizer)
 {
-    fancy_serializer_stylizer<BasicJsonType> stylizer(style);
     // do the actual serialization
     detail::fancy_serializer<BasicJsonType> s(detail::output_adapter<char>(o), stylizer);
     s.dump(j, false);
     return o;
+}
+
+template<typename BasicJsonType>
+std::ostream& fancy_dump(std::ostream& o, const BasicJsonType& j,
+                         fancy_serializer_style style)
+{
+    basic_fancy_serializer_stylizer<BasicJsonType> stylizer(style);
+    return fancy_dump(o, j, stylizer);
 }
 
 }

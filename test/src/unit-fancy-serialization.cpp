@@ -34,6 +34,7 @@ SOFTWARE.
 using nlohmann::json;
 using nlohmann::fancy_dump;
 using nlohmann::fancy_serializer_style;
+using nlohmann::fancy_serializer_stylizer;
 
 // Chops off the first line (if empty, but if it *isn't* empty you're
 // probably using this wrong), measures the leading indent on the
@@ -74,6 +75,13 @@ std::string fancy_to_string(json j, fancy_serializer_style style = fancy_seriali
 {
     std::stringstream ss;
     fancy_dump(ss, j, style);
+    return ss.str();
+}
+
+std::string fancy_to_string(json j, fancy_serializer_stylizer stylizer)
+{
+    std::stringstream ss;
+    fancy_dump(ss, j, stylizer);
     return ss.str();
 }
 
@@ -217,6 +225,36 @@ TEST_CASE("serialization")
                       1,
                       {...}
                   ])"));
+        }
+    }
+
+    SECTION("changing styles")
+    {
+        SECTION("can style objects of a key differently")
+        {
+            fancy_serializer_stylizer stylizer;
+            stylizer.get_default_style().indent_step = 4;
+            stylizer.get_or_insert_style("one line").indent_step = 0;
+
+            auto str = fancy_to_string(
+            {
+                {
+                    "one line", {1, 2}
+                },
+                {
+                    "two lines", {1, 2}
+                }
+            },
+            stylizer);
+
+            CHECK(str == dedent(R"(
+                {
+                    "one line": [1,2],
+                    "two lines": [
+                        1,
+                        2
+                    ]
+                })"));
         }
     }
 
