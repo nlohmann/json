@@ -10290,63 +10290,7 @@ class fancy_serializer
 
             case value_t::string:
             {
-                o->write_character('\"');
-                if (style.strings_maximum_length == 0)
-                {
-                    prim_serializer.dump_escaped(*o, *val.m_value.string, ensure_ascii);
-                }
-                else
-                {
-                    std::stringstream ss;
-                    nlohmann::detail::output_adapter<char> o_string(ss);
-                    nlohmann::detail::output_adapter_t<char> oo_string = o_string;
-                    prim_serializer.dump_escaped(*oo_string, *val.m_value.string, ensure_ascii);
-
-                    std::string str = ss.str();
-                    if (str.size() <= style.strings_maximum_length)
-                    {
-                        o->write_characters(str.c_str(), str.size());
-                    }
-                    else
-                    {
-                        const unsigned start_len = [](unsigned int maxl)
-                        {
-                            if (maxl <= 3)
-                            {
-                                // There is only room for the ellipsis,
-                                // no characters from the string
-                                return 0u;
-                            }
-                            else if (maxl <= 5)
-                            {
-                                // With four allowed characters, we add in the
-                                // first from the string. With five, we add in
-                                // the *last* instead, so still just one at
-                                // the start.
-                                return 1u;
-                            }
-                            else
-                            {
-                                // We subtract three for the ellipsis
-                                // and one for the last character.
-                                return maxl - 4;
-                            }
-                        }(style.strings_maximum_length);
-
-                        const unsigned end_len =
-                            style.strings_maximum_length >= 5 ? 1 : 0;
-
-                        const unsigned ellipsis_length =
-                            style.strings_maximum_length >= 3
-                            ? 3
-                            : style.strings_maximum_length;
-
-                        o->write_characters(str.c_str(), start_len);
-                        o->write_characters("...", ellipsis_length);
-                        o->write_characters(str.c_str() + str.size() - end_len, end_len);
-                    }
-                }
-                o->write_character('\"');
+                dump_string(*val.m_value.string, ensure_ascii);
                 return;
             }
 
@@ -10393,6 +10337,68 @@ class fancy_serializer
                 return;
             }
         }
+    }
+
+  private:
+    void dump_string(string_t const& str, bool ensure_ascii)
+    {
+        o->write_character('\"');
+        if (style.strings_maximum_length == 0)
+        {
+            prim_serializer.dump_escaped(*o, str, ensure_ascii);
+        }
+        else
+        {
+            std::stringstream ss;
+            nlohmann::detail::output_adapter<char> o_string(ss);
+            nlohmann::detail::output_adapter_t<char> oo_string = o_string;
+            prim_serializer.dump_escaped(*oo_string, str, ensure_ascii);
+
+            std::string full_str = ss.str();
+            if (full_str.size() <= style.strings_maximum_length)
+            {
+                o->write_characters(full_str.c_str(), full_str.size());
+            }
+            else
+            {
+                const unsigned start_len = [](unsigned int maxl)
+                {
+                    if (maxl <= 3)
+                    {
+                        // There is only room for the ellipsis,
+                        // no characters from the string
+                        return 0u;
+                    }
+                    else if (maxl <= 5)
+                    {
+                        // With four allowed characters, we add in the
+                        // first from the string. With five, we add in
+                        // the *last* instead, so still just one at
+                        // the start.
+                        return 1u;
+                    }
+                    else
+                    {
+                        // We subtract three for the ellipsis
+                        // and one for the last character.
+                        return maxl - 4;
+                    }
+                }(style.strings_maximum_length);
+
+                const unsigned end_len =
+                    style.strings_maximum_length >= 5 ? 1 : 0;
+
+                const unsigned ellipsis_length =
+                    style.strings_maximum_length >= 3
+                    ? 3
+                    : style.strings_maximum_length;
+
+                o->write_characters(full_str.c_str(), start_len);
+                o->write_characters("...", ellipsis_length);
+                o->write_characters(full_str.c_str() + str.size() - end_len, end_len);
+            }
+        }
+        o->write_character('\"');
     }
 
   private:
