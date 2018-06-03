@@ -77,24 +77,23 @@ class fancy_serializer
 
     @param[in] val             value to serialize
     @param[in] pretty_print    whether the output shall be pretty-printed
-    @param[in] indent_step     the indent level
-    @param[in] current_indent  the current indent level (only used internally)
+    @param[in] depth           the current recursive depth
     */
     void dump(const BasicJsonType& val,
               const bool ensure_ascii,
-              const unsigned int current_indent = 0)
+              const unsigned int depth = 0)
     {
         switch (val.m_type)
         {
             case value_t::object:
             {
-                dump_object(val, ensure_ascii, current_indent);
+                dump_object(val, ensure_ascii, depth);
                 return;
             }
 
             case value_t::array:
             {
-                dump_array(val, ensure_ascii, current_indent);
+                dump_array(val, ensure_ascii, depth);
                 return;
             }
 
@@ -150,7 +149,7 @@ class fancy_serializer
     }
 
   private:
-    void dump_object(const BasicJsonType & val, bool ensure_ascii, unsigned int current_indent)
+    void dump_object(const BasicJsonType& val, bool ensure_ascii, unsigned int depth)
     {
         if (val.m_value.object->empty())
         {
@@ -163,7 +162,8 @@ class fancy_serializer
             o->write_characters("{\n", 2);
 
             // variable to hold indentation for recursive calls
-            const auto new_indent = current_indent + style.indent_step;
+            const auto old_indent = depth * style.indent_step;
+            const auto new_indent = (depth + 1) * style.indent_step;
             if (JSON_UNLIKELY(indent_string.size() < new_indent))
             {
                 indent_string.resize(indent_string.size() * 2, ' ');
@@ -177,7 +177,7 @@ class fancy_serializer
                 o->write_character('\"');
                 prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
                 o->write_characters("\": ", 3);
-                dump(i->second, ensure_ascii, new_indent);
+                dump(i->second, ensure_ascii, depth + 1);
                 o->write_characters(",\n", 2);
             }
 
@@ -188,10 +188,10 @@ class fancy_serializer
             o->write_character('\"');
             prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
             o->write_characters("\": ", 3);
-            dump(i->second, ensure_ascii, new_indent);
+            dump(i->second, ensure_ascii, depth + 1);
 
             o->write_character('\n');
-            o->write_characters(indent_string.c_str(), current_indent);
+            o->write_characters(indent_string.c_str(), old_indent);
             o->write_character('}');
         }
         else
@@ -205,7 +205,7 @@ class fancy_serializer
                 o->write_character('\"');
                 prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
                 o->write_characters("\":", 2);
-                dump(i->second, ensure_ascii, current_indent);
+                dump(i->second, ensure_ascii, depth + 1);
                 o->write_character(',');
             }
 
@@ -215,13 +215,13 @@ class fancy_serializer
             o->write_character('\"');
             prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
             o->write_characters("\":", 2);
-            dump(i->second, ensure_ascii, current_indent);
+            dump(i->second, ensure_ascii, depth + 1);
 
             o->write_character('}');
         }
     }
 
-    void dump_array(const BasicJsonType & val, bool ensure_ascii, unsigned int current_indent)
+    void dump_array(const BasicJsonType& val, bool ensure_ascii, unsigned int depth)
     {
         if (val.m_value.array->empty())
         {
@@ -234,7 +234,8 @@ class fancy_serializer
             o->write_characters("[\n", 2);
 
             // variable to hold indentation for recursive calls
-            const auto new_indent = current_indent + style.indent_step;
+            const auto old_indent = depth * style.indent_step;
+            const auto new_indent = (depth + 1) * style.indent_step;
             if (JSON_UNLIKELY(indent_string.size() < new_indent))
             {
                 indent_string.resize(indent_string.size() * 2, ' ');
@@ -242,20 +243,20 @@ class fancy_serializer
 
             // first n-1 elements
             for (auto i = val.m_value.array->cbegin();
-                 i != val.m_value.array->cend() - 1; ++i)
+                    i != val.m_value.array->cend() - 1; ++i)
             {
                 o->write_characters(indent_string.c_str(), new_indent);
-                dump(*i, ensure_ascii, new_indent);
+                dump(*i, ensure_ascii, depth + 1);
                 o->write_characters(",\n", 2);
             }
 
             // last element
             assert(not val.m_value.array->empty());
             o->write_characters(indent_string.c_str(), new_indent);
-            dump(val.m_value.array->back(), ensure_ascii, new_indent);
+            dump(val.m_value.array->back(), ensure_ascii, depth + 1);
 
             o->write_character('\n');
-            o->write_characters(indent_string.c_str(), current_indent);
+            o->write_characters(indent_string.c_str(), old_indent);
             o->write_character(']');
         }
         else
@@ -264,20 +265,20 @@ class fancy_serializer
 
             // first n-1 elements
             for (auto i = val.m_value.array->cbegin();
-                 i != val.m_value.array->cend() - 1; ++i)
+                    i != val.m_value.array->cend() - 1; ++i)
             {
-                dump(*i, ensure_ascii, current_indent);
+                dump(*i, ensure_ascii, depth + 1);
                 o->write_character(',');
             }
 
             // last element
             assert(not val.m_value.array->empty());
-            dump(val.m_value.array->back(), ensure_ascii, current_indent);
+            dump(val.m_value.array->back(), ensure_ascii, depth + 1);
 
             o->write_character(']');
         }
     }
-    
+
     void dump_string(string_t const& str, bool ensure_ascii)
     {
         o->write_character('\"');
