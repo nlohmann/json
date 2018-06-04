@@ -22,6 +22,7 @@
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/detail/output/primitive_serializer.hpp>
+#include <nlohmann/detail/json_pointer.hpp>
 
 namespace nlohmann
 {
@@ -103,6 +104,7 @@ class fancy_serializer
     using number_float_t = typename BasicJsonType::number_float_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using json_pointer_t = json_pointer<BasicJsonType>;
     static constexpr uint8_t UTF8_ACCEPT = 0;
     static constexpr uint8_t UTF8_REJECT = 1;
 
@@ -123,7 +125,7 @@ class fancy_serializer
 
     void dump(const BasicJsonType& val, const bool ensure_ascii)
     {
-        dump(val, ensure_ascii, 0, &stylizer.get_default_style());
+        dump(val, ensure_ascii, 0, &stylizer.get_default_style(), json_pointer_t());
     }
 
   private:
@@ -146,19 +148,25 @@ class fancy_serializer
     void dump(const BasicJsonType& val,
               const bool ensure_ascii,
               const unsigned int depth,
-              const fancy_serializer_style* active_style)
+              const fancy_serializer_style* active_style,
+              const json_pointer_t& context)
     {
+        if (context.cbegin() != context.cend())
+        {
+            active_style = stylizer.get_new_style_or_active(*context.crbegin(), active_style);
+        }
+
         switch (val.m_type)
         {
             case value_t::object:
             {
-                dump_object(val, ensure_ascii, depth, active_style);
+                dump_object(val, ensure_ascii, depth, active_style, context);
                 return;
             }
 
             case value_t::array:
             {
-                dump_array(val, ensure_ascii, depth, active_style);
+                dump_array(val, ensure_ascii, depth, active_style, context);
                 return;
             }
 
@@ -217,7 +225,8 @@ class fancy_serializer
     template <typename Iterator>
     void dump_object_key_value(
         Iterator i, bool ensure_ascii, unsigned int depth,
-        const fancy_serializer_style* active_style)
+        const fancy_serializer_style* active_style,
+        const json_pointer_t& context)
     {
         const auto new_indent = (depth + 1) * active_style->indent_step * active_style->multiline;
         const int newline_len = active_style->space_after_colon;
@@ -226,14 +235,14 @@ class fancy_serializer
         o->write_character('\"');
         prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
         o->write_characters("\": ", 2 + newline_len);
-        auto new_style = stylizer.get_new_style_or_active(i->first, active_style);
-        dump(i->second, ensure_ascii, depth + 1, new_style);
+        dump(i->second, ensure_ascii, depth + 1, active_style, context.appended(i->first));
     }
 
     void dump_object(const BasicJsonType& val,
                      bool ensure_ascii,
                      unsigned int depth,
-                     const fancy_serializer_style* active_style)
+                     const fancy_serializer_style* active_style,
+                     const json_pointer_t& context)
     {
         if (val.m_value.object->empty())
         {
@@ -261,14 +270,14 @@ class fancy_serializer
         auto i = val.m_value.object->cbegin();
         for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
         {
-            dump_object_key_value(i, ensure_ascii, depth, active_style);
+            dump_object_key_value(i, ensure_ascii, depth, active_style, context);
             o->write_characters(",\n", 1 + newline_len);
         }
 
         // last element
         assert(i != val.m_value.object->cend());
         assert(std::next(i) == val.m_value.object->cend());
-        dump_object_key_value(i, ensure_ascii, depth, active_style);
+        dump_object_key_value(i, ensure_ascii, depth, active_style, context);
 
         o->write_characters("\n", newline_len);
         o->write_characters(indent_string.c_str(), old_indent);
@@ -278,7 +287,8 @@ class fancy_serializer
     void dump_array(const BasicJsonType& val,
                     bool ensure_ascii,
                     unsigned int depth,
-                    const fancy_serializer_style* active_style)
+                    const fancy_serializer_style* active_style,
+                    const json_pointer_t& context)
     {
         if (val.m_value.array->empty())
         {
@@ -313,14 +323,16 @@ class fancy_serializer
                 i != val.m_value.array->cend() - 1; ++i)
         {
             o->write_characters(indent_string.c_str(), new_indent);
-            dump(*i, ensure_ascii, depth + 1, active_style);
+            dump(*i, ensure_ascii, depth + 1, active_style,
+                 context.appended(i - val.m_value.array->cbegin()));
             o->write_characters(comma_string.first, comma_string.second);
         }
 
         // last element
         assert(not val.m_value.array->empty());
         o->write_characters(indent_string.c_str(), new_indent);
-        dump(val.m_value.array->back(), ensure_ascii, depth + 1, active_style);
+        dump(val.m_value.array->back(), ensure_ascii, depth + 1, active_style,
+             context.appended(val.m_value.array->size()));
 
         o->write_characters("\n", newline_len);
         o->write_characters(indent_string.c_str(), old_indent);
