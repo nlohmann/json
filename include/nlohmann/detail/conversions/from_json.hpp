@@ -75,9 +75,7 @@ template <
     enable_if_t <
         is_compatible_string_type<BasicJsonType, CompatibleStringType>::value and
         not std::is_same<typename BasicJsonType::string_t,
-                         CompatibleStringType>::value and
-        std::is_constructible <
-            BasicJsonType, typename CompatibleStringType::value_type >::value,
+                         CompatibleStringType>::value,
         int > = 0 >
 void from_json(const BasicJsonType& j, CompatibleStringType& s)
 {

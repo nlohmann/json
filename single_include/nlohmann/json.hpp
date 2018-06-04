@@ -360,7 +360,8 @@ template<class RealType, class CompatibleStringType>
 struct is_compatible_string_type_impl<true, RealType, CompatibleStringType>
 {
     static constexpr auto value =
-        std::is_same<typename RealType::value_type, typename CompatibleStringType::value_type>::value;
+        std::is_same<typename RealType::value_type, typename CompatibleStringType::value_type>::value and
+        std::is_constructible<RealType, CompatibleStringType>::value;
 };
 
 template<class BasicJsonType, class CompatibleObjectType>
@@ -1001,9 +1002,7 @@ template <
     enable_if_t <
         is_compatible_string_type<BasicJsonType, CompatibleStringType>::value and
         not std::is_same<typename BasicJsonType::string_t,
-                         CompatibleStringType>::value and
-        std::is_constructible <
-            BasicJsonType, typename CompatibleStringType::value_type >::value,
+                         CompatibleStringType>::value,
         int > = 0 >
 void from_json(const BasicJsonType& j, CompatibleStringType& s)
 {

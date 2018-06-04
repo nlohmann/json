@@ -127,7 +127,8 @@ template<class RealType, class CompatibleStringType>
 struct is_compatible_string_type_impl<true, RealType, CompatibleStringType>
 {
     static constexpr auto value =
-        std::is_same<typename RealType::value_type, typename CompatibleStringType::value_type>::value;
+        std::is_same<typename RealType::value_type, typename CompatibleStringType::value_type>::value and
+        std::is_constructible<RealType, CompatibleStringType>::value;
 };
 
 template<class BasicJsonType, class CompatibleObjectType>
