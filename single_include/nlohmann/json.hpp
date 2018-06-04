@@ -1321,6 +1321,16 @@ struct external_constructor<value_t::string>
         j.m_value = std::move(s);
         j.assert_invariant();
     }
+
+    template<typename BasicJsonType, typename CompatibleStringType,
+             enable_if_t<not std::is_same<CompatibleStringType, typename BasicJsonType::string_t>::value,
+                         int> = 0>
+    static void construct(BasicJsonType& j, const CompatibleStringType& str)
+    {
+        j.m_type = value_t::string;
+        j.m_value.string = j.template create<typename BasicJsonType::string_t>(str);
+        j.assert_invariant();
+    }
 };
 
 template<>
