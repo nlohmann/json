@@ -10857,6 +10857,7 @@ class basic_fancy_serializer_stylizer
 {
   public:
     using string_t = typename BasicJsonType::string_t;
+    using json_pointer_t = json_pointer<BasicJsonType>;
 
     basic_fancy_serializer_stylizer(fancy_serializer_style const& ds)
         : default_style(ds)
@@ -10876,16 +10877,20 @@ class basic_fancy_serializer_stylizer
     }
 
     const fancy_serializer_style* get_new_style_or_active(
-        const string_t& j,
+        const json_pointer_t& pointer,
         const fancy_serializer_style* active_style) const
     {
-        auto iter = key_styles.find(j);
+        if (pointer.cbegin() == pointer.cend())
+        {
+            return &get_default_style();
+        }
+        auto iter = key_styles.find(*pointer.crbegin());
         return iter == key_styles.end() ? active_style : &iter->second;
     }
 
-    fancy_serializer_style& get_or_insert_style(const string_t& j)
+    fancy_serializer_style& get_or_insert_style(const string_t& key)
     {
-        return key_styles[j];
+        return key_styles[key];
     }
 
   private:
@@ -10930,7 +10935,7 @@ class fancy_serializer
 
     void dump(const BasicJsonType& val, const bool ensure_ascii)
     {
-        dump(val, ensure_ascii, 0, &stylizer.get_default_style(), json_pointer_t());
+        dump(val, ensure_ascii, 0, nullptr, json_pointer_t());
     }
 
   private:
@@ -10956,10 +10961,7 @@ class fancy_serializer
               const fancy_serializer_style* active_style,
               const json_pointer_t& context)
     {
-        if (context.cbegin() != context.cend())
-        {
-            active_style = stylizer.get_new_style_or_active(*context.crbegin(), active_style);
-        }
+        active_style = stylizer.get_new_style_or_active(context, active_style);
 
         switch (val.m_type)
         {
