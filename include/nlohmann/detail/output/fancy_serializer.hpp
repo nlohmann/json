@@ -14,6 +14,8 @@
 #include <type_traits> // is_same
 #include <map>
 #include <sstream>
+#include <functional>
+#include <vector>
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/conversions/to_chars.hpp>
@@ -53,6 +55,7 @@ class basic_fancy_serializer_stylizer
   public:
     using string_t = typename BasicJsonType::string_t;
     using json_pointer_t = json_pointer<BasicJsonType>;
+    using matcher_predicate = std::function<bool (const json_pointer_t&)>;
 
     basic_fancy_serializer_stylizer(fancy_serializer_style const& ds)
         : default_style(ds)
@@ -75,23 +78,44 @@ class basic_fancy_serializer_stylizer
         const json_pointer_t& pointer,
         const fancy_serializer_style* active_style) const
     {
-        if (pointer.cbegin() == pointer.cend())
+        for (auto const& pair : styles)
         {
-            return &get_default_style();
+            if (pair.first(pointer))
+            {
+                return &pair.second;
+            }
         }
-        auto iter = key_styles.find(*pointer.crbegin());
-        return iter == key_styles.end() ? active_style : &iter->second;
+        return active_style;
     }
 
-    fancy_serializer_style& get_or_insert_style(const string_t& key)
+    fancy_serializer_style& register_style(
+        matcher_predicate p,
+        fancy_serializer_style style = fancy_serializer_style())
     {
-        return key_styles[key];
+        styles.emplace_back(p, style);
+        return styles.back().second;
+    }
+
+    fancy_serializer_style& register_key_matcher_style(
+        string_t str,
+        fancy_serializer_style style = fancy_serializer_style())
+    {
+        return register_style([str](const json_pointer_t& pointer)
+        {
+            return (pointer.cbegin() != pointer.cend())
+                   && (*pointer.crbegin() == str);
+        },
+        style);
+    }
+
+    fancy_serializer_style& last_registered_style()
+    {
+        return styles.back().second;
     }
 
   private:
     fancy_serializer_style default_style;
-
-    std::map<string_t, fancy_serializer_style> key_styles;
+    std::vector<std::pair<matcher_predicate, fancy_serializer_style>> styles;
 };
 
 namespace detail
@@ -130,7 +154,7 @@ class fancy_serializer
 
     void dump(const BasicJsonType& val, const bool ensure_ascii)
     {
-        dump(val, ensure_ascii, 0, nullptr, json_pointer_t());
+        dump(val, ensure_ascii, 0, &stylizer.get_default_style(), json_pointer_t());
     }
 
   private:

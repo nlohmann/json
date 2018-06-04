@@ -234,7 +234,7 @@ TEST_CASE("serialization")
         {
             fancy_serializer_stylizer stylizer;
             stylizer.get_default_style().set_old_multiline();
-            stylizer.get_or_insert_style("one line").multiline = false;
+            stylizer.register_key_matcher_style("one line").multiline = false;
 
             auto str = fancy_to_string(
             {
@@ -261,7 +261,7 @@ TEST_CASE("serialization")
         {
             fancy_serializer_stylizer stylizer;
             stylizer.get_default_style().set_old_multiline();
-            stylizer.get_or_insert_style("one line").indent_step = 0;
+            stylizer.register_key_matcher_style("one line").indent_step = 0;
 
             auto str = fancy_to_string(
             {
