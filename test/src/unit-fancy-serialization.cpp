@@ -28,10 +28,12 @@ SOFTWARE.
 */
 
 #include "catch.hpp"
+#include <iostream>
 
 #include <nlohmann/json.hpp>
 
 using nlohmann::json;
+using nlohmann::json_pointer;
 using nlohmann::fancy_dump;
 using nlohmann::fancy_serializer_style;
 using nlohmann::fancy_serializer_stylizer;
@@ -274,6 +276,52 @@ TEST_CASE("serialization")
             CHECK(str == dedent(R"(
                 {
                     "one line": {"still one line":[1,2]}
+                })"));
+        }
+
+        SECTION("example of more sophisticated matcher")
+        {
+            fancy_serializer_stylizer stylizer;
+            stylizer.get_default_style().set_old_multiline();
+
+            stylizer.register_style(
+                [] (const json_pointer<json>& context)
+            {
+                // Matches if context[-2] is "each elem on one line"
+                return (context.cend() - context.cbegin() >= 2)
+                       && (*(context.cend() - 2) == "each elem on one line");
+            }
+            ).space_after_comma = true;
+
+            auto str = fancy_to_string(
+            {
+                {
+                    "each elem on one line", {
+                        {1, 2, 3, 4, 5},
+                        {1, 2, 3, 4, 5}
+                    },
+                },
+                {
+                    "fully multiline", {
+                        {1, 2, 3},
+                    }
+                }
+            },
+            stylizer);
+
+            CHECK(str == dedent(R"(
+                {
+                    "each elem on one line": [
+                        [1, 2, 3, 4, 5],
+                        [1, 2, 3, 4, 5]
+                    ],
+                    "fully multiline": [
+                        [
+                            1,
+                            2,
+                            3
+                        ]
+                    ]
                 })"));
         }
     }
