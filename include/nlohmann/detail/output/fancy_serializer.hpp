@@ -13,6 +13,7 @@
 #include <string> // string
 #include <type_traits> // is_same
 #include <map>
+#include <sstream>
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/conversions/to_chars.hpp>
