@@ -53,8 +53,8 @@ struct external_constructor<value_t::string>
     }
 
 	template<typename BasicJsonType, typename CompatibleStringType,
-		     enable_if_t<not std::is_same<CompatibleStringType, typename BasicJsonType::string_t>::value,
-		                 int> = 0>
+		 enable_if_t<not std::is_same<CompatibleStringType, typename BasicJsonType::string_t>::value,
+		             int> = 0>
 		static void construct(BasicJsonType& j, const CompatibleStringType& str)
 	{
 		j.m_type = value_t::string;
