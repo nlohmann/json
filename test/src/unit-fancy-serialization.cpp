@@ -283,18 +283,16 @@ TEST_CASE("serialization")
 
         SECTION("example of more sophisticated context matcher")
         {
-            using pred = fancy_serializer_stylizer::context_matcher_predicate;
-
             fancy_serializer_stylizer stylizer;
             stylizer.get_default_style() = fancy_serializer_style::preset_multiline;
 
-            stylizer.register_style(
-                pred([] (const json_pointer<json>& context)
+            stylizer.register_style_context_pred(
+                [] (const json_pointer<json>& context)
             {
                 // Matches if context[-2] is "each elem on one line"
                 return (context.cend() - context.cbegin() >= 2)
                        && (*(context.cend() - 2) == "each elem on one line");
-            })
+            }
             ).space_after_comma = true;
 
             auto str = fancy_to_string(
@@ -331,16 +329,14 @@ TEST_CASE("serialization")
 
         SECTION("example of more sophisticated json matcher")
         {
-            using pred = fancy_serializer_stylizer::json_matcher_predicate;
-
             fancy_serializer_stylizer stylizer;
             stylizer.get_default_style() = fancy_serializer_style::preset_multiline;
 
-            stylizer.register_style(
-                pred([] (const json & j)
+            stylizer.register_style_object_pred(
+                [] (const json & j)
             {
                 return j.type() == json::value_t::array;
-            })
+            }
             ) = fancy_serializer_style::preset_one_line;
 
             auto str = fancy_to_string(

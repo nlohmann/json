@@ -10914,8 +10914,9 @@ class basic_fancy_serializer_stylizer
         return styles.back().second;
     }
 
-    fancy_serializer_style& register_style(
-        json_matcher_predicate p,
+    template <typename Predicate>
+    fancy_serializer_style& register_style_object_pred(
+        Predicate p,
         fancy_serializer_style style = fancy_serializer_style())
     {
         auto wrapper = [p](const json_pointer_t&, const BasicJsonType & j)
@@ -10926,8 +10927,9 @@ class basic_fancy_serializer_stylizer
         return styles.back().second;
     }
 
-    fancy_serializer_style& register_style(
-        context_matcher_predicate p,
+    template <typename Predicate>
+    fancy_serializer_style& register_style_context_pred(
+        Predicate p,
         fancy_serializer_style style = fancy_serializer_style())
     {
         auto wrapper = [p](const json_pointer_t& c, const BasicJsonType&)
@@ -10942,12 +10944,11 @@ class basic_fancy_serializer_stylizer
         string_t str,
         fancy_serializer_style style = fancy_serializer_style())
     {
-        using pred = context_matcher_predicate;
-        return register_style(pred([str](const json_pointer_t& pointer)
+        return register_style_context_pred([str](const json_pointer_t& pointer)
         {
             return (pointer.cbegin() != pointer.cend())
                    && (*pointer.crbegin() == str);
-        }),
+        },
         style);
     }
 
