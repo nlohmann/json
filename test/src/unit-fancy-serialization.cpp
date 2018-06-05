@@ -203,7 +203,8 @@ TEST_CASE("serialization")
             auto str_flat = fancy_to_string({1, {1}}, style);
             CHECK(str_flat == "[1,[...]]");
 
-            style.set_old_multiline();
+            style = fancy_serializer_style::preset_multiline;
+            style.depth_limit = 1;
             auto str_lines = fancy_to_string({1, {1}}, style);
             CHECK(str_lines == dedent(R"(
                   [
@@ -220,7 +221,8 @@ TEST_CASE("serialization")
             auto str_flat = fancy_to_string({1, {{"one", 1}}}, style);
             CHECK(str_flat == "[1,{...}]");
 
-            style.set_old_multiline();
+            style = fancy_serializer_style::preset_multiline;
+            style.depth_limit = 1;
             auto str_lines = fancy_to_string({1, {{"one", 1}}}, style);
             CHECK(str_lines == dedent(R"(
                   [
@@ -235,8 +237,8 @@ TEST_CASE("serialization")
         SECTION("can style objects of a key differently")
         {
             fancy_serializer_stylizer stylizer;
-            stylizer.get_default_style().set_old_multiline();
-            stylizer.register_key_matcher_style("one line").multiline = false;
+            stylizer.get_default_style() = fancy_serializer_style::preset_multiline;
+            stylizer.register_key_matcher_style("one line");
 
             auto str = fancy_to_string(
             {
@@ -262,8 +264,8 @@ TEST_CASE("serialization")
         SECTION("changes propagate (unless overridden)")
         {
             fancy_serializer_stylizer stylizer;
-            stylizer.get_default_style().set_old_multiline();
-            stylizer.register_key_matcher_style("one line").indent_step = 0;
+            stylizer.get_default_style() = fancy_serializer_style::preset_multiline;
+            stylizer.register_key_matcher_style("one line");
 
             auto str = fancy_to_string(
             {
@@ -279,18 +281,20 @@ TEST_CASE("serialization")
                 })"));
         }
 
-        SECTION("example of more sophisticated matcher")
+        SECTION("example of more sophisticated context matcher")
         {
+            using pred = fancy_serializer_stylizer::context_matcher_predicate;
+
             fancy_serializer_stylizer stylizer;
-            stylizer.get_default_style().set_old_multiline();
+            stylizer.get_default_style() = fancy_serializer_style::preset_multiline;
 
             stylizer.register_style(
-                [] (const json_pointer<json>& context)
+                pred([] (const json_pointer<json>& context)
             {
                 // Matches if context[-2] is "each elem on one line"
                 return (context.cend() - context.cbegin() >= 2)
                        && (*(context.cend() - 2) == "each elem on one line");
-            }
+            })
             ).space_after_comma = true;
 
             auto str = fancy_to_string(
@@ -324,6 +328,40 @@ TEST_CASE("serialization")
                     ]
                 })"));
         }
+
+        SECTION("example of more sophisticated json matcher")
+        {
+            using pred = fancy_serializer_stylizer::json_matcher_predicate;
+
+            fancy_serializer_stylizer stylizer;
+            stylizer.get_default_style() = fancy_serializer_style::preset_multiline;
+
+            stylizer.register_style(
+                pred([] (const json & j)
+            {
+                return j.type() == json::value_t::array;
+            })
+            ) = fancy_serializer_style::preset_one_line;
+
+            auto str = fancy_to_string(
+            {
+                {
+                    "an array", {1, 2, 3}
+                },
+                {
+                    "an object", {{"key", "val"}}
+                }
+            },
+            stylizer);
+
+            CHECK(str == dedent(R"(
+                {
+                    "an array": [1, 2, 3],
+                    "an object": {
+                        "key": "val"
+                    }
+                })"));
+        }
     }
 
     SECTION("Spaces after commas are controllable separately from multiline")
@@ -346,8 +384,7 @@ TEST_CASE("serialization")
 
         SECTION("multiline can have no space")
         {
-            fancy_serializer_style style;
-            style.set_old_multiline();
+            fancy_serializer_style style = fancy_serializer_style::preset_multiline;
             style.space_after_colon = false;
             auto str = fancy_to_string({{"one", 1}}, style);
             CHECK(str == dedent(R"(
@@ -360,8 +397,7 @@ TEST_CASE("serialization")
 
     SECTION("given width")
     {
-        fancy_serializer_style style;
-        style.set_old_multiline();
+        fancy_serializer_style style = fancy_serializer_style::preset_multiline;
         auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str == dedent(R"(
               [
@@ -378,10 +414,9 @@ TEST_CASE("serialization")
 
     SECTION("given fill")
     {
-        fancy_serializer_style style;
+        fancy_serializer_style style = fancy_serializer_style::preset_multiline;
         style.indent_step = 1;
         style.indent_char = '\t';
-        style.set_old_multiline();
 
         auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str ==
@@ -400,10 +435,9 @@ TEST_CASE("serialization")
 
     SECTION("indent_char is honored for deep indents in lists")
     {
-        fancy_serializer_style style;
+        fancy_serializer_style style = fancy_serializer_style::preset_multiline;
         style.indent_step = 300;
         style.indent_char = 'X';
-        style.set_old_multiline();
 
         auto str = fancy_to_string({1, {1}}, style);
 
@@ -419,10 +453,9 @@ TEST_CASE("serialization")
 
     SECTION("indent_char is honored for deep indents in objects")
     {
-        fancy_serializer_style style;
+        fancy_serializer_style style = fancy_serializer_style::preset_multiline;
         style.indent_step = 300;
         style.indent_char = 'X';
-        style.set_old_multiline();
 
         auto str = fancy_to_string({{"key", {{"key", 1}}}}, style);
 

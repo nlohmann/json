@@ -43,11 +43,20 @@ struct fancy_serializer_style
 
     bool multiline = false;
 
-    void set_old_multiline()
-    {
-        space_after_colon = space_after_comma = multiline = true;
-    }
+    fancy_serializer_style() = default;
+
+    fancy_serializer_style(bool s_colon, bool s_comma, bool ml)
+        : space_after_colon(s_colon), space_after_comma(s_comma), multiline(ml)
+    {}
+
+    static const fancy_serializer_style preset_compact;
+    static const fancy_serializer_style preset_one_line;
+    static const fancy_serializer_style preset_multiline;
 };
+
+const fancy_serializer_style fancy_serializer_style::preset_compact(false, false, false);
+const fancy_serializer_style fancy_serializer_style::preset_one_line(true, true, false);
+const fancy_serializer_style fancy_serializer_style::preset_multiline(true, true, true);
 
 template<typename BasicJsonType>
 class basic_fancy_serializer_stylizer
@@ -55,7 +64,10 @@ class basic_fancy_serializer_stylizer
   public:
     using string_t = typename BasicJsonType::string_t;
     using json_pointer_t = json_pointer<BasicJsonType>;
-    using matcher_predicate = std::function<bool (const json_pointer_t&)>;
+
+    using json_matcher_predicate = std::function<bool (const BasicJsonType&)>;
+    using context_matcher_predicate = std::function<bool (const json_pointer_t&)>;
+    using matcher_predicate = std::function<bool (const json_pointer_t&, const BasicJsonType&)>;
 
     basic_fancy_serializer_stylizer(fancy_serializer_style const& ds)
         : default_style(ds)
@@ -76,11 +88,12 @@ class basic_fancy_serializer_stylizer
 
     const fancy_serializer_style* get_new_style_or_active(
         const json_pointer_t& pointer,
+        const json& j,
         const fancy_serializer_style* active_style) const
     {
         for (auto const& pair : styles)
         {
-            if (pair.first(pointer))
+            if (pair.first(pointer, j))
             {
                 return &pair.second;
             }
@@ -96,15 +109,40 @@ class basic_fancy_serializer_stylizer
         return styles.back().second;
     }
 
+    fancy_serializer_style& register_style(
+        json_matcher_predicate p,
+        fancy_serializer_style style = fancy_serializer_style())
+    {
+        auto wrapper = [p](const json_pointer_t&, const BasicJsonType & j)
+        {
+            return p(j);
+        };
+        styles.emplace_back(wrapper, style);
+        return styles.back().second;
+    }
+
+    fancy_serializer_style& register_style(
+        context_matcher_predicate p,
+        fancy_serializer_style style = fancy_serializer_style())
+    {
+        auto wrapper = [p](const json_pointer_t& c, const BasicJsonType&)
+        {
+            return p(c);
+        };
+        styles.emplace_back(wrapper, style);
+        return styles.back().second;
+    }
+
     fancy_serializer_style& register_key_matcher_style(
         string_t str,
         fancy_serializer_style style = fancy_serializer_style())
     {
-        return register_style([str](const json_pointer_t& pointer)
+        using pred = context_matcher_predicate;
+        return register_style(pred([str](const json_pointer_t& pointer)
         {
             return (pointer.cbegin() != pointer.cend())
                    && (*pointer.crbegin() == str);
-        },
+        }),
         style);
     }
 
@@ -180,7 +218,7 @@ class fancy_serializer
               const fancy_serializer_style* active_style,
               const json_pointer_t& context)
     {
-        active_style = stylizer.get_new_style_or_active(context, active_style);
+        active_style = stylizer.get_new_style_or_active(context, val, active_style);
 
         switch (val.m_type)
         {
