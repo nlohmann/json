@@ -7625,7 +7625,7 @@ class basic_json
     /// @}
 };
 
-using fancy_serializer_stylizer = basic_fancy_serializer_stylizer<json>;
+using print_stylizer = basic_print_stylizer<json>;
 } // namespace nlohmann
 
 ///////////////////////

@@ -10834,7 +10834,7 @@ class json_pointer
 namespace nlohmann
 {
 
-struct fancy_serializer_style
+struct print_style
 {
     unsigned int indent_step = 4;
     char indent_char = ' ';
@@ -10848,23 +10848,23 @@ struct fancy_serializer_style
 
     bool multiline = false;
 
-    fancy_serializer_style() = default;
+    print_style() = default;
 
-    fancy_serializer_style(bool s_colon, bool s_comma, bool ml)
+    print_style(bool s_colon, bool s_comma, bool ml)
         : space_after_colon(s_colon), space_after_comma(s_comma), multiline(ml)
     {}
 
-    static const fancy_serializer_style preset_compact;
-    static const fancy_serializer_style preset_one_line;
-    static const fancy_serializer_style preset_multiline;
+    static const print_style preset_compact;
+    static const print_style preset_one_line;
+    static const print_style preset_multiline;
 };
 
-const fancy_serializer_style fancy_serializer_style::preset_compact(false, false, false);
-const fancy_serializer_style fancy_serializer_style::preset_one_line(true, true, false);
-const fancy_serializer_style fancy_serializer_style::preset_multiline(true, true, true);
+const print_style print_style::preset_compact(false, false, false);
+const print_style print_style::preset_one_line(true, true, false);
+const print_style print_style::preset_multiline(true, true, true);
 
 template<typename BasicJsonType>
-class basic_fancy_serializer_stylizer
+class basic_print_stylizer
 {
   public:
     using string_t = typename BasicJsonType::string_t;
@@ -10874,27 +10874,27 @@ class basic_fancy_serializer_stylizer
     using context_matcher_predicate = std::function<bool (const json_pointer_t&)>;
     using matcher_predicate = std::function<bool (const json_pointer_t&, const BasicJsonType&)>;
 
-    basic_fancy_serializer_stylizer(fancy_serializer_style const& ds)
+    basic_print_stylizer(print_style const& ds)
         : default_style(ds)
     {}
 
-    basic_fancy_serializer_stylizer() = default;
+    basic_print_stylizer() = default;
 
   public:
-    const fancy_serializer_style& get_default_style() const
+    const print_style& get_default_style() const
     {
         return default_style;
     }
 
-    fancy_serializer_style& get_default_style()
+    print_style& get_default_style()
     {
         return default_style;
     }
 
-    const fancy_serializer_style* get_new_style_or_active(
+    const print_style* get_new_style_or_active(
         const json_pointer_t& pointer,
         const json& j,
-        const fancy_serializer_style* active_style) const
+        const print_style* active_style) const
     {
         for (auto const& pair : styles)
         {
@@ -10906,18 +10906,18 @@ class basic_fancy_serializer_stylizer
         return active_style;
     }
 
-    fancy_serializer_style& register_style(
+    print_style& register_style(
         matcher_predicate p,
-        fancy_serializer_style style = fancy_serializer_style())
+        print_style style = print_style())
     {
         styles.emplace_back(p, style);
         return styles.back().second;
     }
 
     template <typename Predicate>
-    fancy_serializer_style& register_style_object_pred(
+    print_style& register_style_object_pred(
         Predicate p,
-        fancy_serializer_style style = fancy_serializer_style())
+        print_style style = print_style())
     {
         auto wrapper = [p](const json_pointer_t&, const BasicJsonType & j)
         {
@@ -10928,9 +10928,9 @@ class basic_fancy_serializer_stylizer
     }
 
     template <typename Predicate>
-    fancy_serializer_style& register_style_context_pred(
+    print_style& register_style_context_pred(
         Predicate p,
-        fancy_serializer_style style = fancy_serializer_style())
+        print_style style = print_style())
     {
         auto wrapper = [p](const json_pointer_t& c, const BasicJsonType&)
         {
@@ -10940,9 +10940,9 @@ class basic_fancy_serializer_stylizer
         return styles.back().second;
     }
 
-    fancy_serializer_style& register_key_matcher_style(
+    print_style& register_key_matcher_style(
         string_t str,
-        fancy_serializer_style style = fancy_serializer_style())
+        print_style style = print_style())
     {
         return register_style_context_pred([str](const json_pointer_t& pointer)
         {
@@ -10952,14 +10952,14 @@ class basic_fancy_serializer_stylizer
         style);
     }
 
-    fancy_serializer_style& last_registered_style()
+    print_style& last_registered_style()
     {
         return styles.back().second;
     }
 
   private:
-    fancy_serializer_style default_style;
-    std::vector<std::pair<matcher_predicate, fancy_serializer_style>> styles;
+    print_style default_style;
+    std::vector<std::pair<matcher_predicate, print_style>> styles;
 };
 
 namespace detail
@@ -10971,7 +10971,7 @@ namespace detail
 template<typename BasicJsonType>
 class fancy_serializer
 {
-    using stylizer_t = basic_fancy_serializer_stylizer<BasicJsonType>;
+    using stylizer_t = basic_print_stylizer<BasicJsonType>;
     using primitive_serializer_t = primitive_serializer<BasicJsonType>;
     using string_t = typename BasicJsonType::string_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -11021,7 +11021,7 @@ class fancy_serializer
     void dump(const BasicJsonType& val,
               const bool ensure_ascii,
               const unsigned int depth,
-              const fancy_serializer_style* active_style,
+              const print_style* active_style,
               const json_pointer_t& context)
     {
         active_style = stylizer.get_new_style_or_active(context, val, active_style);
@@ -11095,7 +11095,7 @@ class fancy_serializer
     template <typename Iterator>
     void dump_object_key_value(
         Iterator i, bool ensure_ascii, unsigned int depth,
-        const fancy_serializer_style* active_style,
+        const print_style* active_style,
         const json_pointer_t& context)
     {
         const auto new_indent = (depth + 1) * active_style->indent_step * active_style->multiline;
@@ -11111,7 +11111,7 @@ class fancy_serializer
     void dump_object(const BasicJsonType& val,
                      bool ensure_ascii,
                      unsigned int depth,
-                     const fancy_serializer_style* active_style,
+                     const print_style* active_style,
                      const json_pointer_t& context)
     {
         if (val.m_value.object->empty())
@@ -11157,7 +11157,7 @@ class fancy_serializer
     void dump_array(const BasicJsonType& val,
                     bool ensure_ascii,
                     unsigned int depth,
-                    const fancy_serializer_style* active_style,
+                    const print_style* active_style,
                     const json_pointer_t& context)
     {
         if (val.m_value.array->empty())
@@ -11210,7 +11210,7 @@ class fancy_serializer
     }
 
     void dump_string(const string_t& str, bool ensure_ascii,
-                     const fancy_serializer_style* active_style)
+                     const print_style* active_style)
     {
         o->write_character('\"');
         if (active_style->strings_maximum_length == 0)
@@ -11289,7 +11289,7 @@ class fancy_serializer
 
 template<typename BasicJsonType>
 std::ostream& fancy_dump(std::ostream& o, const BasicJsonType& j,
-                         basic_fancy_serializer_stylizer<BasicJsonType> const& stylizer)
+                         basic_print_stylizer<BasicJsonType> const& stylizer)
 {
     // do the actual serialization
     detail::fancy_serializer<BasicJsonType> s(detail::output_adapter<char>(o), stylizer);
@@ -11298,10 +11298,9 @@ std::ostream& fancy_dump(std::ostream& o, const BasicJsonType& j,
 }
 
 template<typename BasicJsonType>
-std::ostream& fancy_dump(std::ostream& o, const BasicJsonType& j,
-                         fancy_serializer_style style)
+std::ostream& fancy_dump(std::ostream& o, const BasicJsonType& j, print_style style)
 {
-    basic_fancy_serializer_stylizer<BasicJsonType> stylizer(style);
+    basic_print_stylizer<BasicJsonType> stylizer(style);
     return fancy_dump(o, j, stylizer);
 }
 
@@ -18979,7 +18978,7 @@ class basic_json
     /// @}
 };
 
-using fancy_serializer_stylizer = basic_fancy_serializer_stylizer<json>;
+using print_stylizer = basic_print_stylizer<json>;
 } // namespace nlohmann
 
 ///////////////////////

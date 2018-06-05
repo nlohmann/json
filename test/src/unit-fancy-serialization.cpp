@@ -35,8 +35,8 @@ SOFTWARE.
 using nlohmann::json;
 using nlohmann::json_pointer;
 using nlohmann::fancy_dump;
-using nlohmann::fancy_serializer_style;
-using nlohmann::fancy_serializer_stylizer;
+using nlohmann::print_style;
+using nlohmann::print_stylizer;
 
 // Chops off the first line (if empty, but if it *isn't* empty you're
 // probably using this wrong), measures the leading indent on the
@@ -73,14 +73,14 @@ std::string dedent(const char* str)
     return ans;
 }
 
-std::string fancy_to_string(json j, fancy_serializer_style style = fancy_serializer_style())
+std::string fancy_to_string(json j, print_style style = print_style())
 {
     std::stringstream ss;
     fancy_dump(ss, j, style);
     return ss.str();
 }
 
-std::string fancy_to_string(json j, fancy_serializer_stylizer stylizer)
+std::string fancy_to_string(json j, print_stylizer stylizer)
 {
     std::stringstream ss;
     fancy_dump(ss, j, stylizer);
@@ -134,7 +134,7 @@ TEST_CASE("serialization")
 
         SECTION("long strings can be shortened")
         {
-            fancy_serializer_style style;
+            print_style style;
             style.strings_maximum_length = 10;
 
             auto str = fancy_to_string(
@@ -158,7 +158,7 @@ TEST_CASE("serialization")
 
             for (auto test : tests)
             {
-                fancy_serializer_style style;
+                print_style style;
                 style.strings_maximum_length = test.first;
                 auto str = fancy_to_string(quick, style);
                 CHECK(str == test.second);
@@ -167,7 +167,7 @@ TEST_CASE("serialization")
 
         SECTION("But you cannot ask for a length of zero; that means unlimited")
         {
-            fancy_serializer_style style;
+            print_style style;
             style.strings_maximum_length = 0;
 
             auto str = fancy_to_string(
@@ -179,7 +179,7 @@ TEST_CASE("serialization")
 
         SECTION("\"Limiting\" to something long doesn't do anything")
         {
-            fancy_serializer_style style;
+            print_style style;
             style.strings_maximum_length = 100;
 
             auto str = fancy_to_string(
@@ -197,13 +197,13 @@ TEST_CASE("serialization")
     {
         SECTION("recursing past the maximum depth with a list elides the subobjects")
         {
-            fancy_serializer_style style;
+            print_style style;
             style.depth_limit = 1;
 
             auto str_flat = fancy_to_string({1, {1}}, style);
             CHECK(str_flat == "[1,[...]]");
 
-            style = fancy_serializer_style::preset_multiline;
+            style = print_style::preset_multiline;
             style.depth_limit = 1;
             auto str_lines = fancy_to_string({1, {1}}, style);
             CHECK(str_lines == dedent(R"(
@@ -215,13 +215,13 @@ TEST_CASE("serialization")
 
         SECTION("recursing past the maximum depth with an object elides the subobjects")
         {
-            fancy_serializer_style style;
+            print_style style;
             style.depth_limit = 1;
 
             auto str_flat = fancy_to_string({1, {{"one", 1}}}, style);
             CHECK(str_flat == "[1,{...}]");
 
-            style = fancy_serializer_style::preset_multiline;
+            style = print_style::preset_multiline;
             style.depth_limit = 1;
             auto str_lines = fancy_to_string({1, {{"one", 1}}}, style);
             CHECK(str_lines == dedent(R"(
@@ -236,8 +236,8 @@ TEST_CASE("serialization")
     {
         SECTION("can style objects of a key differently")
         {
-            fancy_serializer_stylizer stylizer;
-            stylizer.get_default_style() = fancy_serializer_style::preset_multiline;
+            print_stylizer stylizer;
+            stylizer.get_default_style() = print_style::preset_multiline;
             stylizer.register_key_matcher_style("one line");
 
             auto str = fancy_to_string(
@@ -263,8 +263,8 @@ TEST_CASE("serialization")
 
         SECTION("changes propagate (unless overridden)")
         {
-            fancy_serializer_stylizer stylizer;
-            stylizer.get_default_style() = fancy_serializer_style::preset_multiline;
+            print_stylizer stylizer;
+            stylizer.get_default_style() = print_style::preset_multiline;
             stylizer.register_key_matcher_style("one line");
 
             auto str = fancy_to_string(
@@ -283,8 +283,8 @@ TEST_CASE("serialization")
 
         SECTION("example of more sophisticated context matcher")
         {
-            fancy_serializer_stylizer stylizer;
-            stylizer.get_default_style() = fancy_serializer_style::preset_multiline;
+            print_stylizer stylizer;
+            stylizer.get_default_style() = print_style::preset_multiline;
 
             stylizer.register_style_context_pred(
                 [] (const json_pointer<json>& context)
@@ -329,15 +329,15 @@ TEST_CASE("serialization")
 
         SECTION("example of more sophisticated json matcher")
         {
-            fancy_serializer_stylizer stylizer;
-            stylizer.get_default_style() = fancy_serializer_style::preset_multiline;
+            print_stylizer stylizer;
+            stylizer.get_default_style() = print_style::preset_multiline;
 
             stylizer.register_style_object_pred(
                 [] (const json & j)
             {
                 return j.type() == json::value_t::array;
             }
-            ) = fancy_serializer_style::preset_one_line;
+            ) = print_style::preset_one_line;
 
             auto str = fancy_to_string(
             {
@@ -364,7 +364,7 @@ TEST_CASE("serialization")
     {
         SECTION("commas")
         {
-            fancy_serializer_style style;
+            print_style style;
             style.space_after_comma = true;
             auto str = fancy_to_string({1, 2, 3}, style);
             CHECK(str == "[1, 2, 3]");
@@ -372,7 +372,7 @@ TEST_CASE("serialization")
 
         SECTION("colons")
         {
-            fancy_serializer_style style;
+            print_style style;
             style.space_after_colon = true;
             auto str = fancy_to_string({{"one", 1}}, style);
             CHECK(str == "{\"one\": 1}");
@@ -380,7 +380,7 @@ TEST_CASE("serialization")
 
         SECTION("multiline can have no space")
         {
-            fancy_serializer_style style = fancy_serializer_style::preset_multiline;
+            print_style style = print_style::preset_multiline;
             style.space_after_colon = false;
             auto str = fancy_to_string({{"one", 1}}, style);
             CHECK(str == dedent(R"(
@@ -393,7 +393,7 @@ TEST_CASE("serialization")
 
     SECTION("given width")
     {
-        fancy_serializer_style style = fancy_serializer_style::preset_multiline;
+        print_style style = print_style::preset_multiline;
         auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str == dedent(R"(
               [
@@ -410,7 +410,7 @@ TEST_CASE("serialization")
 
     SECTION("given fill")
     {
-        fancy_serializer_style style = fancy_serializer_style::preset_multiline;
+        print_style style = print_style::preset_multiline;
         style.indent_step = 1;
         style.indent_char = '\t';
 
@@ -431,7 +431,7 @@ TEST_CASE("serialization")
 
     SECTION("indent_char is honored for deep indents in lists")
     {
-        fancy_serializer_style style = fancy_serializer_style::preset_multiline;
+        print_style style = print_style::preset_multiline;
         style.indent_step = 300;
         style.indent_char = 'X';
 
@@ -449,7 +449,7 @@ TEST_CASE("serialization")
 
     SECTION("indent_char is honored for deep indents in objects")
     {
-        fancy_serializer_style style = fancy_serializer_style::preset_multiline;
+        print_style style = print_style::preset_multiline;
         style.indent_step = 300;
         style.indent_char = 'X';
 
