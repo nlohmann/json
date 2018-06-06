@@ -19,6 +19,9 @@ class json_pointer
     friend class basic_json;
 
   public:
+    typedef std::vector<std::string>::const_iterator const_iterator;
+    typedef std::vector<std::string>::const_reverse_iterator const_reverse_iterator;
+
     /*!
     @brief create JSON pointer
 
@@ -73,6 +76,38 @@ class json_pointer
     operator std::string() const
     {
         return to_string();
+    }
+
+    const_iterator cbegin() const
+    {
+        return reference_tokens.cbegin();
+    }
+
+    const_iterator cend() const
+    {
+        return reference_tokens.cend();
+    }
+
+    const_reverse_iterator crbegin() const
+    {
+        return reference_tokens.crbegin();
+    }
+
+    const_reverse_iterator crend() const
+    {
+        return reference_tokens.crend();
+    }
+
+    json_pointer appended(std::string const& next) const
+    {
+        json_pointer copy(*this);
+        copy.reference_tokens.push_back(next);
+        return copy;
+    }
+
+    json_pointer appended(size_t next) const
+    {
+        return appended(std::to_string(next));
     }
 
     /*!

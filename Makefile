@@ -25,6 +25,7 @@ SRCS = include/nlohmann/json.hpp \
        include/nlohmann/detail/output/binary_writer.hpp \
        include/nlohmann/detail/output/output_adapters.hpp \
        include/nlohmann/detail/output/serializer.hpp \
+       include/nlohmann/detail/output/fancy_serializer.hpp \
        include/nlohmann/detail/value_t.hpp
 
 UNAME = $(shell uname)

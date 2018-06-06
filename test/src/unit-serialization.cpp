@@ -63,6 +63,37 @@ TEST_CASE("serialization")
         }
     }
 
+    SECTION("indent_char is honored for deep indents in lists")
+    {
+        std::stringstream ss;
+        json j = {1, {1}};
+        ss << std::setw(300) << std::setfill('X') << j;
+
+        std::string indent(300, 'X');
+        CHECK(ss.str() ==
+              "[\n" +
+              indent + "1,\n" +
+              indent + "[\n" +
+              indent + indent + "1\n" +
+              indent + "]\n" +
+              "]");
+    }
+
+    SECTION("indent_char is honored for deep indents in objects")
+    {
+        std::stringstream ss;
+        json j = {{"key", {{"key", 1}}}};
+        ss << std::setw(300) << std::setfill('X') << j;
+
+        std::string indent(300, 'X');
+        CHECK(ss.str() ==
+              "{\n" +
+              indent + "\"key\": {\n" +
+              indent + indent + "\"key\": 1\n" +
+              indent + "}\n" +
+              "}");
+    }
+
     SECTION("operator>>")
     {
         SECTION("no given width")

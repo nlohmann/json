@@ -1973,10 +1973,8 @@ class input_adapter
 #include <clocale> // localeconv
 #include <cstddef> // size_t
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
+#include <cstdio> // snprintf
 #include <initializer_list> // initializer_list
-#include <ios> // hex, uppercase
-#include <iomanip> // setw, setfill
-#include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <vector> // vector
 
@@ -3146,10 +3144,9 @@ scan_number_done:
             if ('\x00' <= c and c <= '\x1F')
             {
                 // escape control characters
-                std::stringstream ss;
-                ss << "<U+" << std::setw(4) << std::uppercase << std::setfill('0')
-                   << std::hex << static_cast<int>(c) << ">";
-                result += ss.str();
+                char cs[9];
+                snprintf(cs, 9, "<U+%.4X>", c);
+                result += cs;
             }
             else
             {
@@ -5619,12 +5616,10 @@ class output_adapter
 #include <cmath> // ldexp
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstdio> // snprintf
 #include <cstring> // memcpy
-#include <iomanip> // setw, setfill
-#include <ios> // hex
 #include <iterator> // back_inserter
 #include <limits> // numeric_limits
-#include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 
@@ -7283,9 +7278,9 @@ class binary_reader
     */
     std::string get_token_string() const
     {
-        std::stringstream ss;
-        ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-        return ss.str();
+        char cr[3];
+        snprintf(cr, 3, "%.2X", current);
+        return std::string{cr};
     }
 
   private:
@@ -8272,11 +8267,8 @@ class binary_writer
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t
 #include <cstdio> // snprintf
-#include <iomanip> // setfill
-#include <iterator> // next
 #include <limits> // numeric_limits
 #include <string> // string
-#include <sstream> // stringstream
 #include <type_traits> // is_same
 
 // #include <nlohmann/detail/exceptions.hpp>
@@ -8480,7 +8472,7 @@ boundaries compute_boundaries(FloatType value)
     constexpr int      kMinExp    = 1 - kBias;
     constexpr uint64_t kHiddenBit = uint64_t{1} << (kPrecision - 1); // = 2^(p-1)
 
-    using bits_type = typename std::conditional< kPrecision == 24, uint32_t, uint64_t >::type;
+    using bits_type = typename std::conditional<kPrecision == 24, uint32_t, uint64_t>::type;
 
     const uint64_t bits = reinterpret_bits<bits_type>(value);
     const uint64_t E = bits >> (kPrecision - 1);
@@ -8891,7 +8883,10 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     //         = ((p1        ) * 2^-e + (p2        )) * 2^e
     //         = p1 + p2 * 2^e
 
-    const diyfp one(uint64_t{1} << -M_plus.e, M_plus.e);
+    const diyfp one(uint64_t
+    {
+        1
+    } << -M_plus.e, M_plus.e);
 
     uint32_t p1 = static_cast<uint32_t>(M_plus.f >> -one.e); // p1 = f div 2^-e (Since -e >= 32, p1 fits into a 32-bit int.)
     uint64_t p2 = M_plus.f & (one.f - 1);                    // p2 = f mod 2^-e
@@ -9384,6 +9379,32 @@ char* to_chars(char* first, char* last, FloatType value)
 
 // #include <nlohmann/detail/output/output_adapters.hpp>
 
+// #include <nlohmann/detail/output/primitive_serializer.hpp>
+
+
+#include <algorithm> // reverse, remove, fill, find, none_of
+#include <array> // array
+#include <cassert> // assert
+#include <ciso646> // and, or
+#include <clocale> // localeconv, lconv
+#include <cmath> // labs, isfinite, isnan, signbit
+#include <cstddef> // size_t, ptrdiff_t
+#include <cstdint> // uint8_t
+#include <cstdio> // snprintf
+#include <limits> // numeric_limits
+#include <string> // string
+#include <type_traits> // is_same
+
+// #include <nlohmann/detail/exceptions.hpp>
+
+// #include <nlohmann/detail/conversions/to_chars.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+// #include <nlohmann/detail/meta.hpp>
+
+// #include <nlohmann/detail/output/output_adapters.hpp>
+
 // #include <nlohmann/detail/value_t.hpp>
 
 
@@ -9396,7 +9417,7 @@ namespace detail
 ///////////////////
 
 template<typename BasicJsonType>
-class serializer
+class primitive_serializer
 {
     using string_t = typename BasicJsonType::string_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -9404,233 +9425,23 @@ class serializer
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     static constexpr uint8_t UTF8_ACCEPT = 0;
     static constexpr uint8_t UTF8_REJECT = 1;
+    using output_adapter_protocol_t = output_adapter_protocol<char>;
 
   public:
     /*!
     @param[in] s  output stream to serialize to
     @param[in] ichar  indentation character to use
     */
-    serializer(output_adapter_t<char> s, const char ichar)
-        : o(std::move(s)), loc(std::localeconv()),
+    primitive_serializer()
+        : loc(std::localeconv()),
           thousands_sep(loc->thousands_sep == nullptr ? '\0' : * (loc->thousands_sep)),
-          decimal_point(loc->decimal_point == nullptr ? '\0' : * (loc->decimal_point)),
-          indent_char(ichar), indent_string(512, indent_char)
+          decimal_point(loc->decimal_point == nullptr ? '\0' : * (loc->decimal_point))
     {}
 
     // delete because of pointer members
-    serializer(const serializer&) = delete;
-    serializer& operator=(const serializer&) = delete;
+    primitive_serializer(const primitive_serializer&) = delete;
+    primitive_serializer& operator=(const primitive_serializer&) = delete;
 
-    /*!
-    @brief internal implementation of the serialization function
-
-    This function is called by the public member function dump and organizes
-    the serialization internally. The indentation level is propagated as
-    additional parameter. In case of arrays and objects, the function is
-    called recursively.
-
-    - strings and object keys are escaped using `escape_string()`
-    - integer numbers are converted implicitly via `operator<<`
-    - floating-point numbers are converted to a string using `"%g"` format
-
-    @param[in] val             value to serialize
-    @param[in] pretty_print    whether the output shall be pretty-printed
-    @param[in] indent_step     the indent level
-    @param[in] current_indent  the current indent level (only used internally)
-    */
-    void dump(const BasicJsonType& val, const bool pretty_print,
-              const bool ensure_ascii,
-              const unsigned int indent_step,
-              const unsigned int current_indent = 0)
-    {
-        switch (val.m_type)
-        {
-            case value_t::object:
-            {
-                if (val.m_value.object->empty())
-                {
-                    o->write_characters("{}", 2);
-                    return;
-                }
-
-                if (pretty_print)
-                {
-                    o->write_characters("{\n", 2);
-
-                    // variable to hold indentation for recursive calls
-                    const auto new_indent = current_indent + indent_step;
-                    if (JSON_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize(indent_string.size() * 2, ' ');
-                    }
-
-                    // first n-1 elements
-                    auto i = val.m_value.object->cbegin();
-                    for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
-                    {
-                        o->write_characters(indent_string.c_str(), new_indent);
-                        o->write_character('\"');
-                        dump_escaped(i->first, ensure_ascii);
-                        o->write_characters("\": ", 3);
-                        dump(i->second, true, ensure_ascii, indent_step, new_indent);
-                        o->write_characters(",\n", 2);
-                    }
-
-                    // last element
-                    assert(i != val.m_value.object->cend());
-                    assert(std::next(i) == val.m_value.object->cend());
-                    o->write_characters(indent_string.c_str(), new_indent);
-                    o->write_character('\"');
-                    dump_escaped(i->first, ensure_ascii);
-                    o->write_characters("\": ", 3);
-                    dump(i->second, true, ensure_ascii, indent_step, new_indent);
-
-                    o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
-                    o->write_character('}');
-                }
-                else
-                {
-                    o->write_character('{');
-
-                    // first n-1 elements
-                    auto i = val.m_value.object->cbegin();
-                    for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
-                    {
-                        o->write_character('\"');
-                        dump_escaped(i->first, ensure_ascii);
-                        o->write_characters("\":", 2);
-                        dump(i->second, false, ensure_ascii, indent_step, current_indent);
-                        o->write_character(',');
-                    }
-
-                    // last element
-                    assert(i != val.m_value.object->cend());
-                    assert(std::next(i) == val.m_value.object->cend());
-                    o->write_character('\"');
-                    dump_escaped(i->first, ensure_ascii);
-                    o->write_characters("\":", 2);
-                    dump(i->second, false, ensure_ascii, indent_step, current_indent);
-
-                    o->write_character('}');
-                }
-
-                return;
-            }
-
-            case value_t::array:
-            {
-                if (val.m_value.array->empty())
-                {
-                    o->write_characters("[]", 2);
-                    return;
-                }
-
-                if (pretty_print)
-                {
-                    o->write_characters("[\n", 2);
-
-                    // variable to hold indentation for recursive calls
-                    const auto new_indent = current_indent + indent_step;
-                    if (JSON_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize(indent_string.size() * 2, ' ');
-                    }
-
-                    // first n-1 elements
-                    for (auto i = val.m_value.array->cbegin();
-                            i != val.m_value.array->cend() - 1; ++i)
-                    {
-                        o->write_characters(indent_string.c_str(), new_indent);
-                        dump(*i, true, ensure_ascii, indent_step, new_indent);
-                        o->write_characters(",\n", 2);
-                    }
-
-                    // last element
-                    assert(not val.m_value.array->empty());
-                    o->write_characters(indent_string.c_str(), new_indent);
-                    dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
-
-                    o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
-                    o->write_character(']');
-                }
-                else
-                {
-                    o->write_character('[');
-
-                    // first n-1 elements
-                    for (auto i = val.m_value.array->cbegin();
-                            i != val.m_value.array->cend() - 1; ++i)
-                    {
-                        dump(*i, false, ensure_ascii, indent_step, current_indent);
-                        o->write_character(',');
-                    }
-
-                    // last element
-                    assert(not val.m_value.array->empty());
-                    dump(val.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
-
-                    o->write_character(']');
-                }
-
-                return;
-            }
-
-            case value_t::string:
-            {
-                o->write_character('\"');
-                dump_escaped(*val.m_value.string, ensure_ascii);
-                o->write_character('\"');
-                return;
-            }
-
-            case value_t::boolean:
-            {
-                if (val.m_value.boolean)
-                {
-                    o->write_characters("true", 4);
-                }
-                else
-                {
-                    o->write_characters("false", 5);
-                }
-                return;
-            }
-
-            case value_t::number_integer:
-            {
-                dump_integer(val.m_value.number_integer);
-                return;
-            }
-
-            case value_t::number_unsigned:
-            {
-                dump_integer(val.m_value.number_unsigned);
-                return;
-            }
-
-            case value_t::number_float:
-            {
-                dump_float(val.m_value.number_float);
-                return;
-            }
-
-            case value_t::discarded:
-            {
-                o->write_characters("<discarded>", 11);
-                return;
-            }
-
-            case value_t::null:
-            {
-                o->write_characters("null", 4);
-                return;
-            }
-        }
-    }
-
-  private:
     /*!
     @brief dump escaped string
 
@@ -9645,7 +9456,7 @@ class serializer
 
     @complexity Linear in the length of string @a s.
     */
-    void dump_escaped(const string_t& s, const bool ensure_ascii)
+    void dump_escaped(output_adapter_protocol_t& o, const string_t& s, const bool ensure_ascii)
     {
         uint32_t codepoint;
         uint8_t state = UTF8_ACCEPT;
@@ -9745,7 +9556,7 @@ class serializer
                     // written ("\uxxxx\uxxxx\0") for one code point
                     if (string_buffer.size() - bytes < 13)
                     {
-                        o->write_characters(string_buffer.data(), bytes);
+                        o.write_characters(string_buffer.data(), bytes);
                         bytes = 0;
                     }
                     break;
@@ -9753,9 +9564,9 @@ class serializer
 
                 case UTF8_REJECT:  // decode found invalid UTF-8 byte
                 {
-                    std::stringstream ss;
-                    ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(byte);
-                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + ss.str()));
+                    std::string sn(3, '\0');
+                    snprintf(&sn[0], sn.size(), "%.2X", byte);
+                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn));
                 }
 
                 default:  // decode found yet incomplete multi-byte code point
@@ -9775,15 +9586,15 @@ class serializer
             // write buffer
             if (bytes > 0)
             {
-                o->write_characters(string_buffer.data(), bytes);
+                o.write_characters(string_buffer.data(), bytes);
             }
         }
         else
         {
             // we finish reading, but do not accept: string was incomplete
-            std::stringstream ss;
-            ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(static_cast<uint8_t>(s.back()));
-            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + ss.str()));
+            std::string sn(3, '\0');
+            snprintf(&sn[0], sn.size(), "%.2X", static_cast<uint8_t>(s.back()));
+            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
         }
     }
 
@@ -9800,12 +9611,12 @@ class serializer
                  std::is_same<NumberType, number_unsigned_t>::value or
                  std::is_same<NumberType, number_integer_t>::value,
                  int> = 0>
-    void dump_integer(NumberType x)
+    void dump_integer(output_adapter_protocol_t& o, NumberType x)
     {
         // special case for "0"
         if (x == 0)
         {
-            o->write_character('0');
+            o.write_character('0');
             return;
         }
 
@@ -9830,7 +9641,7 @@ class serializer
         }
 
         std::reverse(number_buffer.begin(), number_buffer.begin() + i);
-        o->write_characters(number_buffer.data(), i);
+        o.write_characters(number_buffer.data(), i);
     }
 
     /*!
@@ -9841,12 +9652,12 @@ class serializer
 
     @param[in] x  floating-point number to dump
     */
-    void dump_float(number_float_t x)
+    void dump_float(output_adapter_protocol_t& o, number_float_t x)
     {
         // NaN / inf
         if (not std::isfinite(x))
         {
-            o->write_characters("null", 4);
+            o.write_characters("null", 4);
             return;
         }
 
@@ -9859,18 +9670,19 @@ class serializer
             = (std::numeric_limits<number_float_t>::is_iec559 and std::numeric_limits<number_float_t>::digits == 24 and std::numeric_limits<number_float_t>::max_exponent == 128) or
               (std::numeric_limits<number_float_t>::is_iec559 and std::numeric_limits<number_float_t>::digits == 53 and std::numeric_limits<number_float_t>::max_exponent == 1024);
 
-        dump_float(x, std::integral_constant<bool, is_ieee_single_or_double>());
+        dump_float(o, x, std::integral_constant<bool, is_ieee_single_or_double>());
     }
 
-    void dump_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
+  private:
+    void dump_float(output_adapter_protocol_t& o, number_float_t x, std::true_type /*is_ieee_single_or_double*/)
     {
         char* begin = number_buffer.data();
         char* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
 
-        o->write_characters(begin, static_cast<size_t>(end - begin));
+        o.write_characters(begin, static_cast<size_t>(end - begin));
     }
 
-    void dump_float(number_float_t x, std::false_type /*is_ieee_single_or_double*/)
+    void dump_float(output_adapter_protocol_t& o, number_float_t x, std::false_type /*is_ieee_single_or_double*/)
     {
         // get number of digits for a float -> text -> float round-trip
         static constexpr auto d = std::numeric_limits<number_float_t>::max_digits10;
@@ -9903,7 +9715,7 @@ class serializer
             }
         }
 
-        o->write_characters(number_buffer.data(), static_cast<std::size_t>(len));
+        o.write_characters(number_buffer.data(), static_cast<std::size_t>(len));
 
         // determine if need to append ".0"
         const bool value_is_int_like =
@@ -9915,7 +9727,7 @@ class serializer
 
         if (value_is_int_like)
         {
-            o->write_characters(".0", 2);
+            o.write_characters(".0", 2);
         }
     }
 
@@ -9973,9 +9785,6 @@ class serializer
     }
 
   private:
-    /// the output of the serializer
-    output_adapter_t<char> o = nullptr;
-
     /// a (hopefully) large enough character buffer
     std::array<char, 64> number_buffer{{}};
 
@@ -9988,79 +9797,302 @@ class serializer
 
     /// string buffer
     std::array<char, 512> string_buffer{{}};
-
-    /// the indentation character
-    const char indent_char;
-    /// the indentation string
-    string_t indent_string;
 };
 }
 }
 
-// #include <nlohmann/detail/json_ref.hpp>
+// #include <nlohmann/detail/value_t.hpp>
 
-
-#include <initializer_list>
-#include <utility>
 
 namespace nlohmann
 {
 namespace detail
 {
+///////////////////
+// serialization //
+///////////////////
+
 template<typename BasicJsonType>
-class json_ref
+class serializer
 {
+    using primitive_serializer_t = primitive_serializer<BasicJsonType>;
+    using string_t = typename BasicJsonType::string_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    static constexpr uint8_t UTF8_ACCEPT = 0;
+    static constexpr uint8_t UTF8_REJECT = 1;
+
   public:
-    using value_type = BasicJsonType;
-
-    json_ref(value_type&& value)
-        : owned_value(std::move(value)), value_ref(&owned_value), is_rvalue(true)
+    /*!
+    @param[in] s  output stream to serialize to
+    @param[in] ichar  indentation character to use
+    */
+    serializer(output_adapter_t<char> s, const char ichar)
+        : o(std::move(s)), indent_char(ichar), indent_string(512, indent_char)
     {}
 
-    json_ref(const value_type& value)
-        : value_ref(const_cast<value_type*>(&value)), is_rvalue(false)
-    {}
+    // delete because of pointer members
+    serializer(const serializer&) = delete;
+    serializer& operator=(const serializer&) = delete;
 
-    json_ref(std::initializer_list<json_ref> init)
-        : owned_value(init), value_ref(&owned_value), is_rvalue(true)
-    {}
+    /*!
+    @brief internal implementation of the serialization function
 
-    template<class... Args>
-    json_ref(Args&& ... args)
-        : owned_value(std::forward<Args>(args)...), value_ref(&owned_value), is_rvalue(true)
-    {}
+    This function is called by the public member function dump and organizes
+    the serialization internally. The indentation level is propagated as
+    additional parameter. In case of arrays and objects, the function is
+    called recursively.
 
-    // class should be movable only
-    json_ref(json_ref&&) = default;
-    json_ref(const json_ref&) = delete;
-    json_ref& operator=(const json_ref&) = delete;
+    - strings and object keys are escaped using `escape_string()`
+    - integer numbers are converted implicitly via `operator<<`
+    - floating-point numbers are converted to a string using `"%g"` format
 
-    value_type moved_or_copied() const
+    @param[in] val             value to serialize
+    @param[in] pretty_print    whether the output shall be pretty-printed
+    @param[in] indent_step     the indent level
+    @param[in] current_indent  the current indent level (only used internally)
+    */
+    void dump(const BasicJsonType& val, const bool pretty_print,
+              const bool ensure_ascii,
+              const unsigned int indent_step,
+              const unsigned int current_indent = 0)
     {
-        if (is_rvalue)
+        switch (val.m_type)
         {
-            return std::move(*value_ref);
+            case value_t::object:
+            {
+                if (val.m_value.object->empty())
+                {
+                    o->write_characters("{}", 2);
+                    return;
+                }
+
+                if (pretty_print)
+                {
+                    o->write_characters("{\n", 2);
+
+                    // variable to hold indentation for recursive calls
+                    const auto new_indent = current_indent + indent_step;
+                    if (JSON_UNLIKELY(indent_string.size() < new_indent))
+                    {
+                        indent_string.resize(indent_string.size() * 2, indent_char);
+                    }
+
+                    // first n-1 elements
+                    auto i = val.m_value.object->cbegin();
+                    for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
+                    {
+                        o->write_characters(indent_string.c_str(), new_indent);
+                        o->write_character('\"');
+                        prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
+                        o->write_characters("\": ", 3);
+                        dump(i->second, true, ensure_ascii, indent_step, new_indent);
+                        o->write_characters(",\n", 2);
+                    }
+
+                    // last element
+                    assert(i != val.m_value.object->cend());
+                    assert(std::next(i) == val.m_value.object->cend());
+                    o->write_characters(indent_string.c_str(), new_indent);
+                    o->write_character('\"');
+                    prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
+                    o->write_characters("\": ", 3);
+                    dump(i->second, true, ensure_ascii, indent_step, new_indent);
+
+                    o->write_character('\n');
+                    o->write_characters(indent_string.c_str(), current_indent);
+                    o->write_character('}');
+                }
+                else
+                {
+                    o->write_character('{');
+
+                    // first n-1 elements
+                    auto i = val.m_value.object->cbegin();
+                    for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
+                    {
+                        o->write_character('\"');
+                        prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
+                        o->write_characters("\":", 2);
+                        dump(i->second, false, ensure_ascii, indent_step, current_indent);
+                        o->write_character(',');
+                    }
+
+                    // last element
+                    assert(i != val.m_value.object->cend());
+                    assert(std::next(i) == val.m_value.object->cend());
+                    o->write_character('\"');
+                    prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
+                    o->write_characters("\":", 2);
+                    dump(i->second, false, ensure_ascii, indent_step, current_indent);
+
+                    o->write_character('}');
+                }
+
+                return;
+            }
+
+            case value_t::array:
+            {
+                if (val.m_value.array->empty())
+                {
+                    o->write_characters("[]", 2);
+                    return;
+                }
+
+                if (pretty_print)
+                {
+                    o->write_characters("[\n", 2);
+
+                    // variable to hold indentation for recursive calls
+                    const auto new_indent = current_indent + indent_step;
+                    if (JSON_UNLIKELY(indent_string.size() < new_indent))
+                    {
+                        indent_string.resize(indent_string.size() * 2, indent_char);
+                    }
+
+                    // first n-1 elements
+                    for (auto i = val.m_value.array->cbegin();
+                            i != val.m_value.array->cend() - 1; ++i)
+                    {
+                        o->write_characters(indent_string.c_str(), new_indent);
+                        dump(*i, true, ensure_ascii, indent_step, new_indent);
+                        o->write_characters(",\n", 2);
+                    }
+
+                    // last element
+                    assert(not val.m_value.array->empty());
+                    o->write_characters(indent_string.c_str(), new_indent);
+                    dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
+
+                    o->write_character('\n');
+                    o->write_characters(indent_string.c_str(), current_indent);
+                    o->write_character(']');
+                }
+                else
+                {
+                    o->write_character('[');
+
+                    // first n-1 elements
+                    for (auto i = val.m_value.array->cbegin();
+                            i != val.m_value.array->cend() - 1; ++i)
+                    {
+                        dump(*i, false, ensure_ascii, indent_step, current_indent);
+                        o->write_character(',');
+                    }
+
+                    // last element
+                    assert(not val.m_value.array->empty());
+                    dump(val.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
+
+                    o->write_character(']');
+                }
+
+                return;
+            }
+
+            case value_t::string:
+            {
+                o->write_character('\"');
+                prim_serializer.dump_escaped(*o, *val.m_value.string, ensure_ascii);
+                o->write_character('\"');
+                return;
+            }
+
+            case value_t::boolean:
+            {
+                if (val.m_value.boolean)
+                {
+                    o->write_characters("true", 4);
+                }
+                else
+                {
+                    o->write_characters("false", 5);
+                }
+                return;
+            }
+
+            case value_t::number_integer:
+            {
+                prim_serializer.dump_integer(*o, val.m_value.number_integer);
+                return;
+            }
+
+            case value_t::number_unsigned:
+            {
+                prim_serializer.dump_integer(*o, val.m_value.number_unsigned);
+                return;
+            }
+
+            case value_t::number_float:
+            {
+                prim_serializer.dump_float(*o, val.m_value.number_float);
+                return;
+            }
+
+            case value_t::discarded:
+            {
+                o->write_characters("<discarded>", 11);
+                return;
+            }
+
+            case value_t::null:
+            {
+                o->write_characters("null", 4);
+                return;
+            }
         }
-        return *value_ref;
-    }
-
-    value_type const& operator*() const
-    {
-        return *static_cast<value_type const*>(value_ref);
-    }
-
-    value_type const* operator->() const
-    {
-        return static_cast<value_type const*>(value_ref);
     }
 
   private:
-    mutable value_type owned_value = nullptr;
-    value_type* value_ref = nullptr;
-    const bool is_rvalue;
+    /// the output of the serializer
+    output_adapter_t<char> o = nullptr;
+
+    /// the indentation character
+    const char indent_char;
+    /// the indentation string
+    string_t indent_string;
+
+    /// used for serializing non-object non-arrays
+    primitive_serializer_t prim_serializer;
 };
 }
 }
+
+// #include <nlohmann/detail/output/fancy_serializer.hpp>
+
+
+#include <algorithm> // reverse, remove, fill, find, none_of
+#include <array> // array
+#include <cassert> // assert
+#include <ciso646> // and, or
+#include <clocale> // localeconv, lconv
+#include <cmath> // labs, isfinite, isnan, signbit
+#include <cstddef> // size_t, ptrdiff_t
+#include <cstdint> // uint8_t
+#include <cstdio> // snprintf
+#include <limits> // numeric_limits
+#include <string> // string
+#include <type_traits> // is_same
+#include <map>
+#include <sstream>
+#include <functional>
+#include <vector>
+
+// #include <nlohmann/detail/exceptions.hpp>
+
+// #include <nlohmann/detail/conversions/to_chars.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+// #include <nlohmann/detail/meta.hpp>
+
+// #include <nlohmann/detail/output/output_adapters.hpp>
+
+// #include <nlohmann/detail/value_t.hpp>
+
+// #include <nlohmann/detail/output/primitive_serializer.hpp>
 
 // #include <nlohmann/detail/json_pointer.hpp>
 
@@ -10087,6 +10119,9 @@ class json_pointer
     friend class basic_json;
 
   public:
+    typedef std::vector<std::string>::const_iterator const_iterator;
+    typedef std::vector<std::string>::const_reverse_iterator const_reverse_iterator;
+
     /*!
     @brief create JSON pointer
 
@@ -10141,6 +10176,38 @@ class json_pointer
     operator std::string() const
     {
         return to_string();
+    }
+
+    const_iterator cbegin() const
+    {
+        return reference_tokens.cbegin();
+    }
+
+    const_iterator cend() const
+    {
+        return reference_tokens.cend();
+    }
+
+    const_reverse_iterator crbegin() const
+    {
+        return reference_tokens.crbegin();
+    }
+
+    const_reverse_iterator crend() const
+    {
+        return reference_tokens.crend();
+    }
+
+    json_pointer appended(std::string const& next) const
+    {
+        json_pointer copy(*this);
+        copy.reference_tokens.push_back(next);
+        return copy;
+    }
+
+    json_pointer appended(size_t next) const
+    {
+        return appended(std::to_string(next));
     }
 
     /*!
@@ -10763,6 +10830,599 @@ class json_pointer
 };
 }
 
+
+namespace nlohmann
+{
+
+namespace details
+{
+// Some metaprogramming stuff. The point here is to distinguish
+// functions and function objects that take 'json' and
+// 'json_pointer<json>' as the first argument. This can't be done
+// conventionally because there are implicit conversions in both
+// directions, so a function type that matches one will match the
+// other. (The conversion from json to json_pointer doesn't really
+// exist if you try to use it, but it does in the SFIANE context.)
+//
+// So we define takes_argument<Func, Arg> to see if Func(Arg) is
+// not only legal but without undergoing any conversions on
+// Arg. That's where 'metawrapper' comes into play. We actually
+// check if Func(metawrapper<Arg>) is legal. That takes up the one
+// implicit conversion that's allowed.
+//
+// See also the uses below.
+
+template<typename... Ts> struct make_void
+{
+    typedef void type;
+};
+template<typename... Ts> using void_t = typename make_void<Ts...>::type;
+
+template <typename T>
+struct metawrapper
+{
+    operator T const& ();
+};
+
+template <typename = void, typename F = void, typename ...Args>
+struct takes_arguments_impl : std::false_type { };
+
+template <typename F, typename ...Args>
+struct takes_arguments_impl<void_t<decltype(std::declval<F>()(metawrapper<Args>()...))>, F, Args...> : std::true_type { };
+
+template<typename F, typename ...Args>
+struct takes_arguments : takes_arguments_impl<void, F, Args...> { };
+}
+
+struct print_style
+{
+    unsigned int indent_step = 4;
+    char indent_char = ' ';
+
+    unsigned int depth_limit = std::numeric_limits<unsigned>::max();
+
+    unsigned int strings_maximum_length = 0;
+
+    bool space_after_colon = false;
+    bool space_after_comma = false;
+
+    bool multiline = false;
+
+    print_style() = default;
+
+    print_style(bool s_colon, bool s_comma, bool ml)
+        : space_after_colon(s_colon), space_after_comma(s_comma), multiline(ml)
+    {}
+
+    static const print_style preset_compact;
+    static const print_style preset_one_line;
+    static const print_style preset_multiline;
+};
+
+const print_style print_style::preset_compact(false, false, false);
+const print_style print_style::preset_one_line(true, true, false);
+const print_style print_style::preset_multiline(true, true, true);
+
+template<typename BasicJsonType>
+class basic_print_stylizer
+{
+  public:
+    using string_t = typename BasicJsonType::string_t;
+    using json_pointer_t = json_pointer<BasicJsonType>;
+
+    using json_matcher_predicate = std::function<bool (const BasicJsonType&)>;
+    using context_matcher_predicate = std::function<bool (const json_pointer_t&)>;
+    using matcher_predicate = std::function<bool (const json_pointer_t&, const BasicJsonType&)>;
+
+    basic_print_stylizer(print_style const& ds)
+        : default_style(ds)
+    {}
+
+    basic_print_stylizer() = default;
+
+  public:
+    const print_style& get_default_style() const
+    {
+        return default_style;
+    }
+
+    print_style& get_default_style()
+    {
+        return default_style;
+    }
+
+    const print_style* get_new_style_or_active(
+        const json_pointer_t& pointer,
+        const json& j,
+        const print_style* active_style) const
+    {
+        for (auto const& pair : styles)
+        {
+            if (pair.first(pointer, j))
+            {
+                return &pair.second;
+            }
+        }
+        return active_style;
+    }
+
+    print_style& register_style(
+        matcher_predicate p,
+        print_style style = print_style())
+    {
+        styles.emplace_back(p, style);
+        return styles.back().second;
+    }
+
+    // Predicate is conceptually 'bool (json)' here
+    template <typename Predicate>
+    auto register_style(
+        Predicate p,
+        print_style style = print_style())
+    -> typename std::enable_if<details::takes_arguments<Predicate, BasicJsonType>::value, print_style&>::type
+    {
+        auto wrapper = [p](const json_pointer_t&, const BasicJsonType & j)
+        {
+            return p(j);
+        };
+        styles.emplace_back(wrapper, style);
+        return styles.back().second;
+    }
+
+    // Predicate is conceptually 'bool (json_pointer)' here...
+    //
+    // ...But we have to 'json' instead (or rather, BasicJsonType)
+    // because json has an apparent (in the SFIANE context) implicit
+    // conversion from and two everything. Including
+    // 'metawrapper<json_pointer>'. So if you pass 'bool (json)', it
+    // will look like it can pass a metawrapper<json_pointer> to it
+    template <typename Predicate>
+    auto register_style(
+        Predicate p,
+        print_style style = print_style())
+    -> typename std::enable_if < !details::takes_arguments<Predicate, BasicJsonType>::value, print_style& >::type
+    {
+        auto wrapper = [p](const json_pointer_t& c, const BasicJsonType&)
+        {
+            return p(c);
+        };
+        styles.emplace_back(wrapper, style);
+        return styles.back().second;
+    }
+
+    print_style& register_key_matcher_style(
+        string_t str,
+        print_style style = print_style())
+    {
+        return register_style([str](const json_pointer_t& pointer)
+        {
+            return (pointer.cbegin() != pointer.cend())
+                   && (*pointer.crbegin() == str);
+        },
+        style);
+    }
+
+    print_style& last_registered_style()
+    {
+        return styles.back().second;
+    }
+
+  private:
+    print_style default_style;
+    std::vector<std::pair<matcher_predicate, print_style>> styles;
+};
+
+namespace detail
+{
+///////////////////
+// serialization //
+///////////////////
+
+template<typename BasicJsonType>
+class styled_serializer
+{
+    using stylizer_t = basic_print_stylizer<BasicJsonType>;
+    using primitive_serializer_t = primitive_serializer<BasicJsonType>;
+    using string_t = typename BasicJsonType::string_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using json_pointer_t = json_pointer<BasicJsonType>;
+    static constexpr uint8_t UTF8_ACCEPT = 0;
+    static constexpr uint8_t UTF8_REJECT = 1;
+
+  public:
+    /*!
+    @param[in] s  output stream to serialize to
+    @param[in] ichar  indentation character to use
+    */
+    styled_serializer(output_adapter_t<char> s,
+                      const stylizer_t& st)
+        : o(std::move(s)), stylizer(st),
+          indent_string(512, st.get_default_style().indent_char)
+    {}
+
+    // delete because of pointer members
+    styled_serializer(const styled_serializer&) = delete;
+    styled_serializer& operator=(const styled_serializer&) = delete;
+
+    void dump(const BasicJsonType& val, const bool ensure_ascii)
+    {
+        dump(val, ensure_ascii, 0, &stylizer.get_default_style(), json_pointer_t());
+    }
+
+  private:
+    /*!
+    @brief internal implementation of the serialization function
+
+    This function is called by the public member function dump and organizes
+    the serialization internally. The indentation level is propagated as
+    additional parameter. In case of arrays and objects, the function is
+    called recursively.
+
+    - strings and object keys are escaped using `escape_string()`
+    - integer numbers are converted implicitly via `operator<<`
+    - floating-point numbers are converted to a string using `"%g"` format
+
+    @param[in] val             value to serialize
+    @param[in] pretty_print    whether the output shall be pretty-printed
+    @param[in] depth           the current recursive depth
+    */
+    void dump(const BasicJsonType& val,
+              const bool ensure_ascii,
+              const unsigned int depth,
+              const print_style* active_style,
+              const json_pointer_t& context)
+    {
+        active_style = stylizer.get_new_style_or_active(context, val, active_style);
+
+        switch (val.m_type)
+        {
+            case value_t::object:
+            {
+                dump_object(val, ensure_ascii, depth, active_style, context);
+                return;
+            }
+
+            case value_t::array:
+            {
+                dump_array(val, ensure_ascii, depth, active_style, context);
+                return;
+            }
+
+            case value_t::string:
+            {
+                dump_string(*val.m_value.string, ensure_ascii, active_style);
+                return;
+            }
+
+            case value_t::boolean:
+            {
+                if (val.m_value.boolean)
+                {
+                    o->write_characters("true", 4);
+                }
+                else
+                {
+                    o->write_characters("false", 5);
+                }
+                return;
+            }
+
+            case value_t::number_integer:
+            {
+                prim_serializer.dump_integer(*o, val.m_value.number_integer);
+                return;
+            }
+
+            case value_t::number_unsigned:
+            {
+                prim_serializer.dump_integer(*o, val.m_value.number_unsigned);
+                return;
+            }
+
+            case value_t::number_float:
+            {
+                prim_serializer.dump_float(*o, val.m_value.number_float);
+                return;
+            }
+
+            case value_t::discarded:
+            {
+                o->write_characters("<discarded>", 11);
+                return;
+            }
+
+            case value_t::null:
+            {
+                o->write_characters("null", 4);
+                return;
+            }
+        }
+    }
+
+  private:
+    template <typename Iterator>
+    void dump_object_key_value(
+        Iterator i, bool ensure_ascii, unsigned int depth,
+        const print_style* active_style,
+        const json_pointer_t& context)
+    {
+        const auto new_indent = (depth + 1) * active_style->indent_step * active_style->multiline;
+        const int newline_len = active_style->space_after_colon;
+
+        o->write_characters(indent_string.c_str(), new_indent);
+        o->write_character('\"');
+        prim_serializer.dump_escaped(*o, i->first, ensure_ascii);
+        o->write_characters("\": ", 2 + newline_len);
+        dump(i->second, ensure_ascii, depth + 1, active_style, context.appended(i->first));
+    }
+
+    void dump_object(const BasicJsonType& val,
+                     bool ensure_ascii,
+                     unsigned int depth,
+                     const print_style* active_style,
+                     const json_pointer_t& context)
+    {
+        if (val.m_value.object->empty())
+        {
+            o->write_characters("{}", 2);
+            return;
+        }
+        else if (depth >= active_style->depth_limit)
+        {
+            o->write_characters("{...}", 5);
+            return;
+        }
+
+        // variable to hold indentation for recursive calls
+        const auto old_indent = depth * active_style->indent_step * active_style->multiline;
+        const auto new_indent = (depth + 1) * active_style->indent_step * active_style->multiline;
+        if (JSON_UNLIKELY(indent_string.size() < new_indent))
+        {
+            indent_string.resize(indent_string.size() * 2, active_style->indent_char);
+        }
+        const int newline_len = (active_style->multiline ? 1 : 0);
+
+        o->write_characters("{\n", 1 + newline_len);
+
+        // first n-1 elements
+        auto i = val.m_value.object->cbegin();
+        for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
+        {
+            dump_object_key_value(i, ensure_ascii, depth, active_style, context);
+            o->write_characters(",\n", 1 + newline_len);
+        }
+
+        // last element
+        assert(i != val.m_value.object->cend());
+        assert(std::next(i) == val.m_value.object->cend());
+        dump_object_key_value(i, ensure_ascii, depth, active_style, context);
+
+        o->write_characters("\n", newline_len);
+        o->write_characters(indent_string.c_str(), old_indent);
+        o->write_character('}');
+    }
+
+    void dump_array(const BasicJsonType& val,
+                    bool ensure_ascii,
+                    unsigned int depth,
+                    const print_style* active_style,
+                    const json_pointer_t& context)
+    {
+        if (val.m_value.array->empty())
+        {
+            o->write_characters("[]", 2);
+            return;
+        }
+        else if (depth >= active_style->depth_limit)
+        {
+            o->write_characters("[...]", 5);
+            return;
+        }
+
+        // variable to hold indentation for recursive calls
+        const auto old_indent = depth * active_style->indent_step * active_style->multiline;;
+        const auto new_indent = (depth + 1) * active_style->indent_step * active_style->multiline;;
+        if (JSON_UNLIKELY(indent_string.size() < new_indent))
+        {
+            indent_string.resize(indent_string.size() * 2, active_style->indent_char);
+        }
+        const int newline_len = (active_style->multiline ? 1 : 0);
+
+        using pair = std::pair<const char*, int>;
+        auto comma_string =
+            active_style->multiline         ? pair(",\n", 2) :
+            active_style->space_after_comma ? pair(", ", 2) :
+            pair(",", 1);
+
+        o->write_characters("[\n", 1 + newline_len);
+
+        // first n-1 elements
+        for (auto i = val.m_value.array->cbegin();
+                i != val.m_value.array->cend() - 1; ++i)
+        {
+            o->write_characters(indent_string.c_str(), new_indent);
+            dump(*i, ensure_ascii, depth + 1, active_style,
+                 context.appended(i - val.m_value.array->cbegin()));
+            o->write_characters(comma_string.first, comma_string.second);
+        }
+
+        // last element
+        assert(not val.m_value.array->empty());
+        o->write_characters(indent_string.c_str(), new_indent);
+        dump(val.m_value.array->back(), ensure_ascii, depth + 1, active_style,
+             context.appended(val.m_value.array->size()));
+
+        o->write_characters("\n", newline_len);
+        o->write_characters(indent_string.c_str(), old_indent);
+        o->write_character(']');
+    }
+
+    void dump_string(const string_t& str, bool ensure_ascii,
+                     const print_style* active_style)
+    {
+        o->write_character('\"');
+        if (active_style->strings_maximum_length == 0)
+        {
+            prim_serializer.dump_escaped(*o, str, ensure_ascii);
+        }
+        else
+        {
+            std::stringstream ss;
+            nlohmann::detail::output_adapter<char> o_string(ss);
+            nlohmann::detail::output_adapter_t<char> oo_string = o_string;
+            prim_serializer.dump_escaped(*oo_string, str, ensure_ascii);
+
+            std::string full_str = ss.str();
+            if (full_str.size() <= active_style->strings_maximum_length)
+            {
+                o->write_characters(full_str.c_str(), full_str.size());
+            }
+            else
+            {
+                const unsigned start_len = [](unsigned int maxl)
+                {
+                    if (maxl <= 3)
+                    {
+                        // There is only room for the ellipsis,
+                        // no characters from the string
+                        return 0u;
+                    }
+                    else if (maxl <= 5)
+                    {
+                        // With four allowed characters, we add in the
+                        // first from the string. With five, we add in
+                        // the *last* instead, so still just one at
+                        // the start.
+                        return 1u;
+                    }
+                    else
+                    {
+                        // We subtract three for the ellipsis
+                        // and one for the last character.
+                        return maxl - 4;
+                    }
+                }(active_style->strings_maximum_length);
+
+                const unsigned end_len =
+                    active_style->strings_maximum_length >= 5 ? 1 : 0;
+
+                const unsigned ellipsis_length =
+                    active_style->strings_maximum_length >= 3
+                    ? 3
+                    : active_style->strings_maximum_length;
+
+                o->write_characters(full_str.c_str(), start_len);
+                o->write_characters("...", ellipsis_length);
+                o->write_characters(full_str.c_str() + str.size() - end_len, end_len);
+            }
+        }
+        o->write_character('\"');
+    }
+
+  private:
+    /// the output of the styled_serializer
+    output_adapter_t<char> o = nullptr;
+
+    /// Used for serializing "base" objects. Strings are sort of
+    /// counted in this, but not completely.
+    primitive_serializer_t prim_serializer;
+
+    /// the indentation string
+    string_t indent_string;
+
+    /// Output style
+    const stylizer_t stylizer;
+};
+}
+
+template<typename BasicJsonType>
+std::ostream& styled_dump(std::ostream& o, const BasicJsonType& j,
+                          basic_print_stylizer<BasicJsonType> const& stylizer)
+{
+    // do the actual serialization
+    detail::styled_serializer<BasicJsonType> s(detail::output_adapter<char>(o), stylizer);
+    s.dump(j, false);
+    return o;
+}
+
+template<typename BasicJsonType>
+std::ostream& styled_dump(std::ostream& o, const BasicJsonType& j, print_style style)
+{
+    basic_print_stylizer<BasicJsonType> stylizer(style);
+    return styled_dump(o, j, stylizer);
+}
+
+}
+
+// #include <nlohmann/detail/json_ref.hpp>
+
+
+#include <initializer_list>
+#include <utility>
+
+namespace nlohmann
+{
+namespace detail
+{
+template<typename BasicJsonType>
+class json_ref
+{
+  public:
+    using value_type = BasicJsonType;
+
+    json_ref(value_type&& value)
+        : owned_value(std::move(value)), value_ref(&owned_value), is_rvalue(true)
+    {}
+
+    json_ref(const value_type& value)
+        : value_ref(const_cast<value_type*>(&value)), is_rvalue(false)
+    {}
+
+    json_ref(std::initializer_list<json_ref> init)
+        : owned_value(init), value_ref(&owned_value), is_rvalue(true)
+    {}
+
+    template<class... Args>
+    json_ref(Args&& ... args)
+        : owned_value(std::forward<Args>(args)...), value_ref(&owned_value), is_rvalue(true)
+    {}
+
+    // class should be movable only
+    json_ref(json_ref&&) = default;
+    json_ref(const json_ref&) = delete;
+    json_ref& operator=(const json_ref&) = delete;
+
+    value_type moved_or_copied() const
+    {
+        if (is_rvalue)
+        {
+            return std::move(*value_ref);
+        }
+        return *value_ref;
+    }
+
+    value_type const& operator*() const
+    {
+        return *static_cast<value_type const*>(value_ref);
+    }
+
+    value_type const* operator->() const
+    {
+        return static_cast<value_type const*>(value_ref);
+    }
+
+  private:
+    mutable value_type owned_value = nullptr;
+    value_type* value_ref = nullptr;
+    const bool is_rvalue;
+};
+}
+}
+
+// #include <nlohmann/detail/json_pointer.hpp>
+
 // #include <nlohmann/adl_serializer.hpp>
 
 
@@ -10910,6 +11570,7 @@ class basic_json
     friend ::nlohmann::json_pointer<basic_json>;
     friend ::nlohmann::detail::parser<basic_json>;
     friend ::nlohmann::detail::serializer<basic_json>;
+    friend ::nlohmann::detail::styled_serializer<basic_json>;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
@@ -18366,6 +19027,8 @@ class basic_json
 
     /// @}
 };
+
+using print_stylizer = basic_print_stylizer<json>;
 } // namespace nlohmann
 
 ///////////////////////
@@ -18411,7 +19074,7 @@ struct hash<nlohmann::json>
 /// @note: do not remove the space after '<',
 ///        see https://github.com/nlohmann/json/pull/679
 template<>
-struct less< ::nlohmann::detail::value_t>
+struct less<::nlohmann::detail::value_t>
 {
     /*!
     @brief compare two value_t enum values

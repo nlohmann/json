@@ -441,6 +441,47 @@ TEST_CASE("JSON pointers")
         }
     }
 
+    SECTION("iterator access")
+    {
+        SECTION("forward iterator access")
+        {
+            auto ptr = "/foo/bar/c%d"_json_pointer;
+            std::vector<std::string> components(ptr.cbegin(), ptr.cend());
+            CHECK(components.size() == 3u);
+            CHECK(components[0] == "foo");
+            CHECK(components[1] == "bar");
+            CHECK(components[2] == "c%d");
+        }
+
+        SECTION("reverse iterator access")
+        {
+            auto ptr = "/foo/bar/c%d"_json_pointer;
+            std::vector<std::string> rcomponents(ptr.crbegin(), ptr.crend());
+            CHECK(rcomponents.size() == 3u);
+            CHECK(rcomponents[2] == "foo");
+            CHECK(rcomponents[1] == "bar");
+            CHECK(rcomponents[0] == "c%d");
+        }
+    }
+
+    SECTION("appending")
+    {
+        SECTION("can append to empty string pointer")
+        {
+            auto ptr = ""_json_pointer;
+            CHECK(ptr.to_string() == "");
+
+            ptr = ptr.appended("foo");
+            CHECK(ptr.to_string() == "/foo");
+
+            ptr = ptr.appended("bar");
+            CHECK(ptr.to_string() == "/foo/bar");
+
+            ptr = ptr.appended(10);
+            CHECK(ptr.to_string() == "/foo/bar/10");
+        }
+    }
+
     SECTION("conversion")
     {
         SECTION("array")

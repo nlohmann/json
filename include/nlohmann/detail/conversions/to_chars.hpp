@@ -196,7 +196,7 @@ boundaries compute_boundaries(FloatType value)
     constexpr int      kMinExp    = 1 - kBias;
     constexpr uint64_t kHiddenBit = uint64_t{1} << (kPrecision - 1); // = 2^(p-1)
 
-    using bits_type = typename std::conditional< kPrecision == 24, uint32_t, uint64_t >::type;
+    using bits_type = typename std::conditional<kPrecision == 24, uint32_t, uint64_t>::type;
 
     const uint64_t bits = reinterpret_bits<bits_type>(value);
     const uint64_t E = bits >> (kPrecision - 1);
@@ -607,7 +607,10 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     //         = ((p1        ) * 2^-e + (p2        )) * 2^e
     //         = p1 + p2 * 2^e
 
-    const diyfp one(uint64_t{1} << -M_plus.e, M_plus.e);
+    const diyfp one(uint64_t
+    {
+        1
+    } << -M_plus.e, M_plus.e);
 
     uint32_t p1 = static_cast<uint32_t>(M_plus.f >> -one.e); // p1 = f div 2^-e (Since -e >= 32, p1 fits into a 32-bit int.)
     uint64_t p2 = M_plus.f & (one.f - 1);                    // p2 = f mod 2^-e
