@@ -167,7 +167,7 @@ class basic_json
     friend ::nlohmann::json_pointer<basic_json>;
     friend ::nlohmann::detail::parser<basic_json>;
     friend ::nlohmann::detail::serializer<basic_json>;
-    friend ::nlohmann::detail::fancy_serializer<basic_json>;
+    friend ::nlohmann::detail::styled_serializer<basic_json>;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>

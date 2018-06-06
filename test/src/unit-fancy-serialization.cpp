@@ -34,7 +34,7 @@ SOFTWARE.
 
 using nlohmann::json;
 using nlohmann::json_pointer;
-using nlohmann::fancy_dump;
+using nlohmann::styled_dump;
 using nlohmann::print_style;
 using nlohmann::print_stylizer;
 
@@ -73,17 +73,17 @@ std::string dedent(const char* str)
     return ans;
 }
 
-std::string fancy_to_string(json j, print_style style = print_style())
+std::string styled_to_string(json j, print_style style = print_style())
 {
     std::stringstream ss;
-    fancy_dump(ss, j, style);
+    styled_dump(ss, j, style);
     return ss.str();
 }
 
-std::string fancy_to_string(json j, print_stylizer stylizer)
+std::string styled_to_string(json j, print_stylizer stylizer)
 {
     std::stringstream ss;
-    fancy_dump(ss, j, stylizer);
+    styled_dump(ss, j, stylizer);
     return ss.str();
 }
 
@@ -93,31 +93,31 @@ TEST_CASE("serialization")
     {
         SECTION("null")
         {
-            auto str = fancy_to_string({});
+            auto str = styled_to_string({});
             CHECK(str == "null");
         }
 
         SECTION("true")
         {
-            auto str = fancy_to_string(true);
+            auto str = styled_to_string(true);
             CHECK(str == "true");
         }
 
         SECTION("false")
         {
-            auto str = fancy_to_string(false);
+            auto str = styled_to_string(false);
             CHECK(str == "false");
         }
 
         SECTION("integer")
         {
-            auto str = fancy_to_string(10);
+            auto str = styled_to_string(10);
             CHECK(str == "10");
         }
 
         SECTION("floating point")
         {
-            auto str = fancy_to_string(7.5);
+            auto str = styled_to_string(7.5);
             CHECK(str == "7.5");
         }
     }
@@ -126,7 +126,7 @@ TEST_CASE("serialization")
     {
         SECTION("long strings usually print")
         {
-            auto str = fancy_to_string(
+            auto str = styled_to_string(
                            "The quick brown fox jumps over the lazy brown dog");
             CHECK(str ==
                   "\"The quick brown fox jumps over the lazy brown dog\"");
@@ -137,7 +137,7 @@ TEST_CASE("serialization")
             print_style style;
             style.strings_maximum_length = 10;
 
-            auto str = fancy_to_string(
+            auto str = styled_to_string(
                            "The quick brown fox jumps over the lazy brown dog",
                            style);
             CHECK(str == "\"The qu...g\"");
@@ -160,7 +160,7 @@ TEST_CASE("serialization")
             {
                 print_style style;
                 style.strings_maximum_length = test.first;
-                auto str = fancy_to_string(quick, style);
+                auto str = styled_to_string(quick, style);
                 CHECK(str == test.second);
             }
         }
@@ -170,7 +170,7 @@ TEST_CASE("serialization")
             print_style style;
             style.strings_maximum_length = 0;
 
-            auto str = fancy_to_string(
+            auto str = styled_to_string(
                            "The quick brown fox jumps over the lazy brown dog",
                            style);
             CHECK(str ==
@@ -182,7 +182,7 @@ TEST_CASE("serialization")
             print_style style;
             style.strings_maximum_length = 100;
 
-            auto str = fancy_to_string(
+            auto str = styled_to_string(
                            "The quick brown fox jumps over the lazy brown dog",
                            style);
             CHECK(str ==
@@ -200,12 +200,12 @@ TEST_CASE("serialization")
             print_style style;
             style.depth_limit = 1;
 
-            auto str_flat = fancy_to_string({1, {1}}, style);
+            auto str_flat = styled_to_string({1, {1}}, style);
             CHECK(str_flat == "[1,[...]]");
 
             style = print_style::preset_multiline;
             style.depth_limit = 1;
-            auto str_lines = fancy_to_string({1, {1}}, style);
+            auto str_lines = styled_to_string({1, {1}}, style);
             CHECK(str_lines == dedent(R"(
                   [
                       1,
@@ -218,12 +218,12 @@ TEST_CASE("serialization")
             print_style style;
             style.depth_limit = 1;
 
-            auto str_flat = fancy_to_string({1, {{"one", 1}}}, style);
+            auto str_flat = styled_to_string({1, {{"one", 1}}}, style);
             CHECK(str_flat == "[1,{...}]");
 
             style = print_style::preset_multiline;
             style.depth_limit = 1;
-            auto str_lines = fancy_to_string({1, {{"one", 1}}}, style);
+            auto str_lines = styled_to_string({1, {{"one", 1}}}, style);
             CHECK(str_lines == dedent(R"(
                   [
                       1,
@@ -240,7 +240,7 @@ TEST_CASE("serialization")
             stylizer.get_default_style() = print_style::preset_multiline;
             stylizer.register_key_matcher_style("one line");
 
-            auto str = fancy_to_string(
+            auto str = styled_to_string(
             {
                 {
                     "one line", {1, 2}
@@ -267,7 +267,7 @@ TEST_CASE("serialization")
             stylizer.get_default_style() = print_style::preset_multiline;
             stylizer.register_key_matcher_style("one line");
 
-            auto str = fancy_to_string(
+            auto str = styled_to_string(
             {
                 {
                     "one line", {{"still one line", {1, 2}}}
@@ -295,7 +295,7 @@ TEST_CASE("serialization")
             }
             ).space_after_comma = true;
 
-            auto str = fancy_to_string(
+            auto str = styled_to_string(
             {
                 {
                     "each elem on one line", {
@@ -339,7 +339,7 @@ TEST_CASE("serialization")
             }
             ) = print_style::preset_one_line;
 
-            auto str = fancy_to_string(
+            auto str = styled_to_string(
             {
                 {
                     "an array", {1, 2, 3}
@@ -366,7 +366,7 @@ TEST_CASE("serialization")
         {
             print_style style;
             style.space_after_comma = true;
-            auto str = fancy_to_string({1, 2, 3}, style);
+            auto str = styled_to_string({1, 2, 3}, style);
             CHECK(str == "[1, 2, 3]");
         }
 
@@ -374,7 +374,7 @@ TEST_CASE("serialization")
         {
             print_style style;
             style.space_after_colon = true;
-            auto str = fancy_to_string({{"one", 1}}, style);
+            auto str = styled_to_string({{"one", 1}}, style);
             CHECK(str == "{\"one\": 1}");
         }
 
@@ -382,7 +382,7 @@ TEST_CASE("serialization")
         {
             print_style style = print_style::preset_multiline;
             style.space_after_colon = false;
-            auto str = fancy_to_string({{"one", 1}}, style);
+            auto str = styled_to_string({{"one", 1}}, style);
             CHECK(str == dedent(R"(
                 {
                     "one":1
@@ -394,7 +394,7 @@ TEST_CASE("serialization")
     SECTION("given width")
     {
         print_style style = print_style::preset_multiline;
-        auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
+        auto str = styled_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str == dedent(R"(
               [
                   "foo",
@@ -414,7 +414,7 @@ TEST_CASE("serialization")
         style.indent_step = 1;
         style.indent_char = '\t';
 
-        auto str = fancy_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
+        auto str = styled_to_string({"foo", 1, 2, 3, false, {{"one", 1}}}, style);
         CHECK(str ==
               "[\n"
               "\t\"foo\",\n"
@@ -435,7 +435,7 @@ TEST_CASE("serialization")
         style.indent_step = 300;
         style.indent_char = 'X';
 
-        auto str = fancy_to_string({1, {1}}, style);
+        auto str = styled_to_string({1, {1}}, style);
 
         std::string indent(300, 'X');
         CHECK(str ==
@@ -453,7 +453,7 @@ TEST_CASE("serialization")
         style.indent_step = 300;
         style.indent_char = 'X';
 
-        auto str = fancy_to_string({{"key", {{"key", 1}}}}, style);
+        auto str = styled_to_string({{"key", {{"key", 1}}}}, style);
 
         std::string indent(300, 'X');
         CHECK(str ==

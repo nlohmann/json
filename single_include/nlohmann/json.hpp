@@ -11019,7 +11019,7 @@ namespace detail
 ///////////////////
 
 template<typename BasicJsonType>
-class fancy_serializer
+class styled_serializer
 {
     using stylizer_t = basic_print_stylizer<BasicJsonType>;
     using primitive_serializer_t = primitive_serializer<BasicJsonType>;
@@ -11036,15 +11036,15 @@ class fancy_serializer
     @param[in] s  output stream to serialize to
     @param[in] ichar  indentation character to use
     */
-    fancy_serializer(output_adapter_t<char> s,
-                     const stylizer_t& st)
+    styled_serializer(output_adapter_t<char> s,
+                      const stylizer_t& st)
         : o(std::move(s)), stylizer(st),
           indent_string(512, st.get_default_style().indent_char)
     {}
 
     // delete because of pointer members
-    fancy_serializer(const fancy_serializer&) = delete;
-    fancy_serializer& operator=(const fancy_serializer&) = delete;
+    styled_serializer(const styled_serializer&) = delete;
+    styled_serializer& operator=(const styled_serializer&) = delete;
 
     void dump(const BasicJsonType& val, const bool ensure_ascii)
     {
@@ -11322,7 +11322,7 @@ class fancy_serializer
     }
 
   private:
-    /// the output of the fancy_serializer
+    /// the output of the styled_serializer
     output_adapter_t<char> o = nullptr;
 
     /// Used for serializing "base" objects. Strings are sort of
@@ -11338,20 +11338,20 @@ class fancy_serializer
 }
 
 template<typename BasicJsonType>
-std::ostream& fancy_dump(std::ostream& o, const BasicJsonType& j,
-                         basic_print_stylizer<BasicJsonType> const& stylizer)
+std::ostream& styled_dump(std::ostream& o, const BasicJsonType& j,
+                          basic_print_stylizer<BasicJsonType> const& stylizer)
 {
     // do the actual serialization
-    detail::fancy_serializer<BasicJsonType> s(detail::output_adapter<char>(o), stylizer);
+    detail::styled_serializer<BasicJsonType> s(detail::output_adapter<char>(o), stylizer);
     s.dump(j, false);
     return o;
 }
 
 template<typename BasicJsonType>
-std::ostream& fancy_dump(std::ostream& o, const BasicJsonType& j, print_style style)
+std::ostream& styled_dump(std::ostream& o, const BasicJsonType& j, print_style style)
 {
     basic_print_stylizer<BasicJsonType> stylizer(style);
-    return fancy_dump(o, j, stylizer);
+    return styled_dump(o, j, stylizer);
 }
 
 }
@@ -11570,7 +11570,7 @@ class basic_json
     friend ::nlohmann::json_pointer<basic_json>;
     friend ::nlohmann::detail::parser<basic_json>;
     friend ::nlohmann::detail::serializer<basic_json>;
-    friend ::nlohmann::detail::fancy_serializer<basic_json>;
+    friend ::nlohmann::detail::styled_serializer<basic_json>;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
