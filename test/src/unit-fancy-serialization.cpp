@@ -286,7 +286,7 @@ TEST_CASE("serialization")
             print_stylizer stylizer;
             stylizer.get_default_style() = print_style::preset_multiline;
 
-            stylizer.register_style_context_pred(
+            stylizer.register_style(
                 [] (const json_pointer<json>& context)
             {
                 // Matches if context[-2] is "each elem on one line"
@@ -332,7 +332,7 @@ TEST_CASE("serialization")
             print_stylizer stylizer;
             stylizer.get_default_style() = print_style::preset_multiline;
 
-            stylizer.register_style_object_pred(
+            stylizer.register_style(
                 [] (const json & j)
             {
                 return j.type() == json::value_t::array;

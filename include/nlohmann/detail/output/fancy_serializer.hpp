@@ -151,7 +151,7 @@ class basic_print_stylizer
 
     // Predicate is conceptually 'bool (json)' here
     template <typename Predicate>
-    auto register_style_object_pred(
+    auto register_style(
         Predicate p,
         print_style style = print_style())
     -> typename std::enable_if<details::takes_arguments<Predicate, BasicJsonType>::value, print_style&>::type
@@ -172,7 +172,7 @@ class basic_print_stylizer
     // 'metawrapper<json_pointer>'. So if you pass 'bool (json)', it
     // will look like it can pass a metawrapper<json_pointer> to it
     template <typename Predicate>
-    auto register_style_context_pred(
+    auto register_style(
         Predicate p,
         print_style style = print_style())
     -> typename std::enable_if < !details::takes_arguments<Predicate, BasicJsonType>::value, print_style& >::type
@@ -189,7 +189,7 @@ class basic_print_stylizer
         string_t str,
         print_style style = print_style())
     {
-        return register_style_context_pred([str](const json_pointer_t& pointer)
+        return register_style([str](const json_pointer_t& pointer)
         {
             return (pointer.cbegin() != pointer.cend())
                    && (*pointer.crbegin() == str);
