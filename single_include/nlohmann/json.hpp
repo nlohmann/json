@@ -10834,6 +10834,46 @@ class json_pointer
 namespace nlohmann
 {
 
+namespace details
+{
+// Some metaprogramming stuff. The point here is to distinguish
+// functions and function objects that take 'json' and
+// 'json_pointer<json>' as the first argument. This can't be done
+// conventionally because there are implicit conversions in both
+// directions, so a function type that matches one will match the
+// other. (The conversion from json to json_pointer doesn't really
+// exist if you try to use it, but it does in the SFIANE context.)
+//
+// So we define takes_argument<Func, Arg> to see if Func(Arg) is
+// not only legal but without undergoing any conversions on
+// Arg. That's where 'metawrapper' comes into play. We actually
+// check if Func(metawrapper<Arg>) is legal. That takes up the one
+// implicit conversion that's allowed.
+//
+// See also the uses below.
+
+template<typename... Ts> struct make_void
+{
+    typedef void type;
+};
+template<typename... Ts> using void_t = typename make_void<Ts...>::type;
+
+template <typename T>
+struct metawrapper
+{
+    operator T const& ();
+};
+
+template <typename = void, typename F = void, typename ...Args>
+struct takes_arguments_impl : std::false_type { };
+
+template <typename F, typename ...Args>
+struct takes_arguments_impl<void_t<decltype(std::declval<F>()(metawrapper<Args>()...))>, F, Args...> : std::true_type { };
+
+template<typename F, typename ...Args>
+struct takes_arguments : takes_arguments_impl<void, F, Args...> { };
+}
+
 struct print_style
 {
     unsigned int indent_step = 4;
@@ -10914,10 +10954,12 @@ class basic_print_stylizer
         return styles.back().second;
     }
 
+    // Predicate is conceptually 'bool (json)' here
     template <typename Predicate>
-    print_style& register_style_object_pred(
+    auto register_style_object_pred(
         Predicate p,
         print_style style = print_style())
+    -> typename std::enable_if<details::takes_arguments<Predicate, BasicJsonType>::value, print_style&>::type
     {
         auto wrapper = [p](const json_pointer_t&, const BasicJsonType & j)
         {
@@ -10927,10 +10969,18 @@ class basic_print_stylizer
         return styles.back().second;
     }
 
+    // Predicate is conceptually 'bool (json_pointer)' here...
+    //
+    // ...But we have to 'json' instead (or rather, BasicJsonType)
+    // because json has an apparent (in the SFIANE context) implicit
+    // conversion from and two everything. Including
+    // 'metawrapper<json_pointer>'. So if you pass 'bool (json)', it
+    // will look like it can pass a metawrapper<json_pointer> to it
     template <typename Predicate>
-    print_style& register_style_context_pred(
+    auto register_style_context_pred(
         Predicate p,
         print_style style = print_style())
+    -> typename std::enable_if < !details::takes_arguments<Predicate, BasicJsonType>::value, print_style& >::type
     {
         auto wrapper = [p](const json_pointer_t& c, const BasicJsonType&)
         {
