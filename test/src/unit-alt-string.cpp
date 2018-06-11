@@ -106,7 +106,12 @@ class alt_string
     }
 
     template <typename op_type>
-    bool operator<(op_type&& op) const
+    typename std::enable_if< // disable for alt_string
+                !std::is_same<  alt_string,
+                                typename std::remove_reference<op_type>::type
+                             >::value,
+                bool>::type
+    operator<(op_type&& op) const
     {
         return str_impl < op;
     }
@@ -153,6 +158,8 @@ class alt_string
 
   private:
     std::string str_impl;
+
+    friend bool ::operator<(const char*, const alt_string&);
 };
 
 
@@ -166,6 +173,11 @@ using alt_json = nlohmann::basic_json <
                  double,
                  std::allocator,
                  nlohmann::adl_serializer >;
+
+
+bool operator<(const char* op1, const alt_string& op2) {
+    return op1 < op2.str_impl;
+}
 
 
 
