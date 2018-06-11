@@ -33,6 +33,12 @@ SOFTWARE.
 #include <string>
 #include <utility>
 
+
+/* forward declarations */
+class alt_string;
+bool operator<(const char* op1, const alt_string& op2);
+
+
 /*
  * This is virtually a string class.
  * It covers std::string under the hood.
