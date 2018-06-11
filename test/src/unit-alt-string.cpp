@@ -60,15 +60,34 @@ class alt_string
     }
 
     template <typename op_type>
-    bool operator==(op_type&& op) const
+    typename std::enable_if< // disable for alt_string
+                !std::is_same<  alt_string,
+                                typename std::remove_reference<op_type>::type
+                             >::value,
+                bool>::type
+    operator==(op_type&& op) const
     {
         return str_impl == op;
     }
 
+    bool operator==(const alt_string& op) const
+    {
+        return str_impl == op.str_impl;
+    }
+
     template <typename op_type>
-    bool operator!=(op_type&& op) const
+    typename std::enable_if< // disable for alt_string
+                !std::is_same<  alt_string,
+                                typename std::remove_reference<op_type>::type
+                             >::value,
+                bool>::type
+    operator!=(op_type&& op) const
     {
         return str_impl != op;
+    }
+
+    bool operator!=(const alt_string& op) const {
+        return str_impl != op.str_impl;
     }
 
     std::size_t size() const noexcept
@@ -209,5 +228,27 @@ TEST_CASE("alternative string type")
         auto doc = alt_json::parse("{\"foo\": \"bar\"}");
         alt_string dump = doc.dump();
         CHECK(dump == R"({"foo":"bar"})");
+    }
+
+    SECTION("equality")
+    {
+        alt_json doc;
+        doc["Who are you?"] = "I'm Batman";
+
+        CHECK("I'm Batman" == doc["Who are you?"]);
+        CHECK(doc["Who are you?"]  == "I'm Batman");
+
+        CHECK("I'm Bruce Wayne" != doc["Who are you?"]);
+        CHECK(doc["Who are you?"]  != "I'm Bruce Wayne");
+
+        {
+            const alt_json& const_doc = doc;
+
+            CHECK("I'm Batman" == const_doc["Who are you?"]);
+            CHECK(const_doc["Who are you?"] == "I'm Batman");
+
+            CHECK("I'm Bruce Wayne" != const_doc["Who are you?"]);
+            CHECK(const_doc["Who are you?"] != "I'm Bruce Wayne");
+        }
     }
 }
