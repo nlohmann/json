@@ -256,7 +256,7 @@ fuzzing-stop:
 ##########################################################################
 
 # call cppcheck on the main header file
-cppcheck:
+cppcheck: $(AMALGAMATED_FILE)
 	cppcheck --enable=warning --inconclusive --force --std=c++11 $(AMALGAMATED_FILE) --error-exitcode=1
 
 # compile and check with Clang Static Analyzer

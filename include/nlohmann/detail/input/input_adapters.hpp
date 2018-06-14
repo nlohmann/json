@@ -105,7 +105,7 @@ class input_buffer_adapter : public input_adapter_protocol
             return std::char_traits<char>::to_int_type(*(cursor++));
         }
 
-        return std::char_traits<char>::eof();
+        return end_of_file;
     }
 
   private:
@@ -152,7 +152,7 @@ class wide_string_input_adapter : public input_adapter_protocol
 
         if (current_wchar == str.size())
         {
-            utf8_bytes[0] = std::char_traits<char>::eof();
+            utf8_bytes[0] = end_of_file;
             utf8_bytes_filled = 1;
         }
         else
@@ -208,7 +208,7 @@ class wide_string_input_adapter : public input_adapter_protocol
 
         if (current_wchar == str.size())
         {
-            utf8_bytes[0] = std::char_traits<char>::eof();
+            utf8_bytes[0] = end_of_file;
             utf8_bytes_filled = 1;
         }
         else
