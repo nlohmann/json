@@ -119,13 +119,15 @@ using json = basic_json<>;
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
 
 // exclude unsupported compilers
-#if defined(__clang__)
-    #if (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__) < 30400
-        #error "unsupported Clang version - see https://github.com/nlohmann/json#supported-compilers"
-    #endif
-#elif defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
-    #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
-        #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
+#ifndef NLOHMANN_JSON_SKIP_COMPILER_CHECK
+    #if defined(__clang__)
+        #if (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__) < 30400
+            #error "unsupported Clang version - see https://github.com/nlohmann/json#supported-compilers"
+        #endif
+    #elif defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
+        #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
+            #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
+        #endif
     #endif
 #endif
 
@@ -258,6 +260,8 @@ namespace detail
 /////////////
 // helpers //
 /////////////
+
+static constexpr std::char_traits<char>::int_type end_of_file = std::char_traits<char>::eof();
 
 template<typename> struct is_basic_json : std::false_type {};
 
@@ -1699,7 +1703,7 @@ class input_buffer_adapter : public input_adapter_protocol
             return std::char_traits<char>::to_int_type(*(cursor++));
         }
 
-        return std::char_traits<char>::eof();
+        return end_of_file;
     }
 
   private:
@@ -1746,7 +1750,7 @@ class wide_string_input_adapter : public input_adapter_protocol
 
         if (current_wchar == str.size())
         {
-            utf8_bytes[0] = std::char_traits<char>::eof();
+            utf8_bytes[0] = end_of_file;
             utf8_bytes_filled = 1;
         }
         else
@@ -1802,7 +1806,7 @@ class wide_string_input_adapter : public input_adapter_protocol
 
         if (current_wchar == str.size())
         {
-            utf8_bytes[0] = std::char_traits<char>::eof();
+            utf8_bytes[0] = end_of_file;
             utf8_bytes_filled = 1;
         }
         else
@@ -1973,10 +1977,8 @@ class input_adapter
 #include <clocale> // localeconv
 #include <cstddef> // size_t
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
+#include <cstdio> // snprintf
 #include <initializer_list> // initializer_list
-#include <ios> // hex, uppercase
-#include <iomanip> // setw, setfill
-#include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <vector> // vector
 
@@ -2209,7 +2211,7 @@ class lexer
             switch (get())
             {
                 // end of file while parsing string
-                case std::char_traits<char>::eof():
+                case end_of_file:
                 {
                     error_message = "invalid string: missing closing quote";
                     return token_type::parse_error;
@@ -3063,7 +3065,7 @@ scan_number_done:
             current = ia->get_character();
         }
 
-        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
+        if (JSON_LIKELY(current != end_of_file))
         {
             token_string.push_back(std::char_traits<char>::to_char_type(current));
         }
@@ -3082,7 +3084,7 @@ scan_number_done:
     {
         next_unget = true;
         --chars_read;
-        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
+        if (JSON_LIKELY(current != end_of_file))
         {
             assert(token_string.size() != 0);
             token_string.pop_back();
@@ -3146,10 +3148,9 @@ scan_number_done:
             if ('\x00' <= c and c <= '\x1F')
             {
                 // escape control characters
-                std::stringstream ss;
-                ss << "<U+" << std::setw(4) << std::uppercase << std::setfill('0')
-                   << std::hex << static_cast<int>(c) << ">";
-                result += ss.str();
+                char cs[9];
+                snprintf(cs, 9, "<U+%.4X>", c);
+                result += cs;
             }
             else
             {
@@ -3260,7 +3261,7 @@ scan_number_done:
             // end of input (the null byte is needed when parsing from
             // string literals)
             case '\0':
-            case std::char_traits<char>::eof():
+            case end_of_file:
                 return token_type::end_of_input;
 
             // error
@@ -3275,7 +3276,7 @@ scan_number_done:
     detail::input_adapter_t ia = nullptr;
 
     /// the current character
-    std::char_traits<char>::int_type current = std::char_traits<char>::eof();
+    std::char_traits<char>::int_type current = end_of_file;
 
     /// whether the next get() call should just return current
     bool next_unget = false;
@@ -5619,12 +5620,10 @@ class output_adapter
 #include <cmath> // ldexp
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstdio> // snprintf
 #include <cstring> // memcpy
-#include <iomanip> // setw, setfill
-#include <ios> // hex
 #include <iterator> // back_inserter
 #include <limits> // numeric_limits
-#include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 
@@ -5713,7 +5712,7 @@ class binary_reader
                 get();
             }
 
-            if (JSON_UNLIKELY(current != std::char_traits<char>::eof()))
+            if (JSON_UNLIKELY(current != end_of_file))
             {
                 return sax->parse_error(chars_read, get_token_string(), parse_error::create(110, chars_read, "expected end of input"));
             }
@@ -5746,8 +5745,7 @@ class binary_reader
     {
         switch (get_char ? get() : current)
         {
-            // EOF
-            case std::char_traits<char>::eof():
+            case end_of_file:
                 return unexpect_eof();
 
             // Integer 0x00..0x17 (0..23)
@@ -6073,8 +6071,7 @@ class binary_reader
     {
         switch (get())
         {
-            // EOF
-            case std::char_traits<char>::eof():
+            case end_of_file:
                 return unexpect_eof();
 
             // positive fixint
@@ -7040,7 +7037,7 @@ class binary_reader
     {
         switch (prefix)
         {
-            case std::char_traits<char>::eof():  // EOF
+            case end_of_file:
                 return unexpect_eof();
 
             case 'T':  // true
@@ -7271,7 +7268,7 @@ class binary_reader
     */
     bool unexpect_eof() const
     {
-        if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
+        if (JSON_UNLIKELY(current == end_of_file))
         {
             return sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, "unexpected end of input"));
         }
@@ -7283,9 +7280,9 @@ class binary_reader
     */
     std::string get_token_string() const
     {
-        std::stringstream ss;
-        ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-        return ss.str();
+        char cr[3];
+        snprintf(cr, 3, "%.2X", current);
+        return std::string{cr};
     }
 
   private:
@@ -7293,7 +7290,7 @@ class binary_reader
     input_adapter_t ia = nullptr;
 
     /// the current character
-    int current = std::char_traits<char>::eof();
+    int current = end_of_file;
 
     /// the number of characters read
     std::size_t chars_read = 0;
@@ -8272,11 +8269,8 @@ class binary_writer
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t
 #include <cstdio> // snprintf
-#include <iomanip> // setfill
-#include <iterator> // next
 #include <limits> // numeric_limits
 #include <string> // string
-#include <sstream> // stringstream
 #include <type_traits> // is_same
 
 // #include <nlohmann/detail/exceptions.hpp>
@@ -9753,9 +9747,9 @@ class serializer
 
                 case UTF8_REJECT:  // decode found invalid UTF-8 byte
                 {
-                    std::stringstream ss;
-                    ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(byte);
-                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + ss.str()));
+                    std::string sn(3, '\0');
+                    snprintf(&sn[0], sn.size(), "%.2X", byte);
+                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn));
                 }
 
                 default:  // decode found yet incomplete multi-byte code point
@@ -9781,9 +9775,9 @@ class serializer
         else
         {
             // we finish reading, but do not accept: string was incomplete
-            std::stringstream ss;
-            ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(static_cast<uint8_t>(s.back()));
-            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + ss.str()));
+            std::string sn(3, '\0');
+            snprintf(&sn[0], sn.size(), "%.2X", static_cast<uint8_t>(s.back()));
+            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
         }
     }
 
@@ -11060,7 +11054,7 @@ class basic_json
     {
         basic_json result;
 
-        result["copyright"] = "(C) 2013-2017 Niels Lohmann";
+        result["copyright"] = "(C) 2013-2018 Niels Lohmann";
         result["name"] = "JSON for Modern C++";
         result["url"] = "https://github.com/nlohmann/json";
         result["version"]["string"] =

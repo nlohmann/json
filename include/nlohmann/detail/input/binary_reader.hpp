@@ -93,7 +93,7 @@ class binary_reader
                 get();
             }
 
-            if (JSON_UNLIKELY(current != std::char_traits<char>::eof()))
+            if (JSON_UNLIKELY(current != end_of_file))
             {
                 return sax->parse_error(chars_read, get_token_string(), parse_error::create(110, chars_read, "expected end of input"));
             }
@@ -126,8 +126,7 @@ class binary_reader
     {
         switch (get_char ? get() : current)
         {
-            // EOF
-            case std::char_traits<char>::eof():
+            case end_of_file:
                 return unexpect_eof();
 
             // Integer 0x00..0x17 (0..23)
@@ -453,8 +452,7 @@ class binary_reader
     {
         switch (get())
         {
-            // EOF
-            case std::char_traits<char>::eof():
+            case end_of_file:
                 return unexpect_eof();
 
             // positive fixint
@@ -1420,7 +1418,7 @@ class binary_reader
     {
         switch (prefix)
         {
-            case std::char_traits<char>::eof():  // EOF
+            case end_of_file:
                 return unexpect_eof();
 
             case 'T':  // true
@@ -1651,7 +1649,7 @@ class binary_reader
     */
     bool unexpect_eof() const
     {
-        if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
+        if (JSON_UNLIKELY(current == end_of_file))
         {
             return sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, "unexpected end of input"));
         }
@@ -1673,7 +1671,7 @@ class binary_reader
     input_adapter_t ia = nullptr;
 
     /// the current character
-    int current = std::char_traits<char>::eof();
+    int current = end_of_file;
 
     /// the number of characters read
     std::size_t chars_read = 0;

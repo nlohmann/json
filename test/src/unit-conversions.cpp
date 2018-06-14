@@ -1093,9 +1093,9 @@ TEST_CASE("value conversion")
 
                 SECTION("superfluous entries")
                 {
-                  json j8 = {{0, 1, 2}, {1, 2, 3}, {2, 3, 4}};
-                  m2 = j8.get<std::map<int, int>>();
-                  CHECK(m == m2);
+                    json j8 = {{0, 1, 2}, {1, 2, 3}, {2, 3, 4}};
+                    m2 = j8.get<std::map<int, int>>();
+                    CHECK(m == m2);
                 }
             }
 

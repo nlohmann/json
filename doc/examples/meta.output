@@ -4,7 +4,7 @@
         "family": "clang",
         "version": "9.0.0 (clang-900.0.39.2)"
     },
-    "copyright": "(C) 2013-2017 Niels Lohmann",
+    "copyright": "(C) 2013-2018 Niels Lohmann",
     "name": "JSON for Modern C++",
     "platform": "apple",
     "url": "https://github.com/nlohmann/json",

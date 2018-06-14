@@ -235,7 +235,7 @@ class lexer
             switch (get())
             {
                 // end of file while parsing string
-                case std::char_traits<char>::eof():
+                case end_of_file:
                 {
                     error_message = "invalid string: missing closing quote";
                     return token_type::parse_error;
@@ -1089,7 +1089,7 @@ scan_number_done:
             current = ia->get_character();
         }
 
-        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
+        if (JSON_LIKELY(current != end_of_file))
         {
             token_string.push_back(std::char_traits<char>::to_char_type(current));
         }
@@ -1108,7 +1108,7 @@ scan_number_done:
     {
         next_unget = true;
         --chars_read;
-        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
+        if (JSON_LIKELY(current != end_of_file))
         {
             assert(token_string.size() != 0);
             token_string.pop_back();
@@ -1285,7 +1285,7 @@ scan_number_done:
             // end of input (the null byte is needed when parsing from
             // string literals)
             case '\0':
-            case std::char_traits<char>::eof():
+            case end_of_file:
                 return token_type::end_of_input;
 
             // error
@@ -1300,7 +1300,7 @@ scan_number_done:
     detail::input_adapter_t ia = nullptr;
 
     /// the current character
-    std::char_traits<char>::int_type current = std::char_traits<char>::eof();
+    std::char_traits<char>::int_type current = end_of_file;
 
     /// whether the next get() call should just return current
     bool next_unget = false;

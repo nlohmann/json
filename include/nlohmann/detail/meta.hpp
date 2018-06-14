@@ -25,6 +25,8 @@ namespace detail
 // helpers //
 /////////////
 
+static constexpr std::char_traits<char>::int_type end_of_file = std::char_traits<char>::eof();
+
 template<typename> struct is_basic_json : std::false_type {};
 
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
