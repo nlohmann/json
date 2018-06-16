@@ -284,6 +284,16 @@ void to_json(BasicJsonType& j, const std::pair<Args...>& p)
     j = {p.first, p.second};
 }
 
+template<typename IteratorType> class iteration_proxy; // TODO: Forward decl needed, maybe move somewhere else
+template<typename BasicJsonType, typename T,
+         enable_if_t<std::is_same<T, typename iteration_proxy<typename BasicJsonType::iterator>::iteration_proxy_internal>::value, int> = 0>
+void to_json(BasicJsonType& j, T b) noexcept
+{
+    typename BasicJsonType::object_t tmp_obj;
+    tmp_obj[b.key()] = b.value(); // TODO: maybe there is a better way?
+    external_constructor<value_t::object>::construct(j, std::move(tmp_obj));
+}
+
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
 void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...>)
 {

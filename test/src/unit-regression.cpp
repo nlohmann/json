@@ -1631,9 +1631,10 @@ TEST_CASE("regression tests")
             p2.begin(), p2.end(),
             std::inserter(diffs, diffs.end()), [&](const it_type & e1, const it_type & e2) -> bool
         {
-            return (e1.key() < e2.key()) and (e1.value() < e2.value());
+            using comper_pair = std::pair<std::string, decltype(e1.value())>; // Trying to avoid unneeded copy
+            return comper_pair(e1.key(), e1.value()) < comper_pair(e2.key(), e2.value()); // Using pair comper
         });
 
-        CHECK(diffs.size() == 2);
+        CHECK(diffs.size() == 1); // Note the change here, was 2
     }
 }
