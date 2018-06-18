@@ -40,6 +40,14 @@ using nlohmann::json;
 #include <unordered_set>
 #include <valarray>
 
+namespace
+{
+template <typename MapType>
+void map_type_conversion_checks()
+{
+}
+}
+
 TEST_CASE("value conversion")
 {
     SECTION("get an object (explicit)")
@@ -1088,14 +1096,48 @@ TEST_CASE("value conversion")
                 CHECK(m == m2);
 
                 json j7 = {0, 1, 2, 3};
+                json j8 = 2;
                 CHECK_THROWS_AS((j7.get<std::map<int, int>>()), json::type_error&);
-                CHECK_THROWS_WITH((j7.get<std::map<int, int>>()), "[json.exception.type_error.302] type must be array, but is number");
+                CHECK_THROWS_AS((j8.get<std::map<int, int>>()), json::type_error&);
+                CHECK_THROWS_WITH((j7.get<std::map<int, int>>()),
+                                  "[json.exception.type_error.302] type must be array, "
+                                  "but is number");
+                CHECK_THROWS_WITH((j8.get<std::map<int, int>>()),
+                                  "[json.exception.type_error.302] type must be array, "
+                                  "but is number");
 
                 SECTION("superfluous entries")
                 {
-                  json j8 = {{0, 1, 2}, {1, 2, 3}, {2, 3, 4}};
-                  m2 = j8.get<std::map<int, int>>();
-                  CHECK(m == m2);
+                    json j9 = {{0, 1, 2}, {1, 2, 3}, {2, 3, 4}};
+                    m2 = j9.get<std::map<int, int>>();
+                    CHECK(m == m2);
+                }
+            }
+
+            SECTION("std::unordered_map (array of pairs)")
+            {
+                std::unordered_map<int, int> m{{0, 1}, {1, 2}, {2, 3}};
+                json j6 = m;
+
+                auto m2 = j6.get<std::unordered_map<int, int>>();
+                CHECK(m == m2);
+
+                json j7 = {0, 1, 2, 3};
+                json j8 = 2;
+                CHECK_THROWS_AS((j7.get<std::unordered_map<int, int>>()), json::type_error&);
+                CHECK_THROWS_AS((j8.get<std::unordered_map<int, int>>()), json::type_error&);
+                CHECK_THROWS_WITH((j7.get<std::unordered_map<int, int>>()),
+                                  "[json.exception.type_error.302] type must be array, "
+                                  "but is number");
+                CHECK_THROWS_WITH((j8.get<std::unordered_map<int, int>>()),
+                                  "[json.exception.type_error.302] type must be array, "
+                                  "but is number");
+
+                SECTION("superfluous entries")
+                {
+                    json j9{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}};
+                    m2 = j9.get<std::unordered_map<int, int>>();
+                    CHECK(m == m2);
                 }
             }
 

@@ -9,6 +9,7 @@
 #include <string> // string
 #include <tuple> // tuple, make_tuple
 #include <type_traits> // is_arithmetic, is_same, is_enum, underlying_type, is_convertible
+#include <unordered_map> // unordered_map
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
@@ -282,6 +283,25 @@ template <typename BasicJsonType, typename Key, typename Value, typename Compare
           typename = enable_if_t<not std::is_constructible<
                                      typename BasicJsonType::string_t, Key>::value>>
 void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+{
+    if (JSON_UNLIKELY(not j.is_array()))
+    {
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+    }
+    for (const auto& p : j)
+    {
+        if (JSON_UNLIKELY(not p.is_array()))
+        {
+            JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(p.type_name())));
+        }
+        m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
+    }
+}
+
+template <typename BasicJsonType, typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator,
+          typename = enable_if_t<not std::is_constructible<
+                                     typename BasicJsonType::string_t, Key>::value>>
+void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
 {
     if (JSON_UNLIKELY(not j.is_array()))
     {
