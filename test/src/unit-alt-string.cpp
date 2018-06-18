@@ -82,7 +82,8 @@ class alt_string
         return str_impl != op;
     }
 
-    bool operator!=(const alt_string& op) const {
+    bool operator!=(const alt_string& op) const
+    {
         return str_impl != op.str_impl;
     }
 
@@ -166,7 +167,8 @@ using alt_json = nlohmann::basic_json <
                  nlohmann::adl_serializer >;
 
 
-bool operator<(const char* op1, const alt_string& op2) {
+bool operator<(const char* op1, const alt_string& op2)
+{
     return op1 < op2.str_impl;
 }
 
