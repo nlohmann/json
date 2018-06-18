@@ -278,10 +278,10 @@ void from_json(const BasicJsonType& j, std::tuple<Args...>& t)
     from_json_tuple_impl(j, t, index_sequence_for<Args...> {});
 }
 
-template <typename BasicJsonType, typename Key, typename Value,
+template <typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
           typename = enable_if_t<not std::is_constructible<
                                      typename BasicJsonType::string_t, Key>::value>>
-void from_json(const BasicJsonType& j, std::map<Key, Value>& m)
+void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
 {
     if (JSON_UNLIKELY(not j.is_array()))
     {
