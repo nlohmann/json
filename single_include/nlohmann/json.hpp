@@ -913,6 +913,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #include <string> // string
 #include <tuple> // tuple, make_tuple
 #include <type_traits> // is_arithmetic, is_same, is_enum, underlying_type, is_convertible
+#include <unordered_map> // unordered_map
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
@@ -1186,10 +1187,29 @@ void from_json(const BasicJsonType& j, std::tuple<Args...>& t)
     from_json_tuple_impl(j, t, index_sequence_for<Args...> {});
 }
 
-template <typename BasicJsonType, typename Key, typename Value,
+template <typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
           typename = enable_if_t<not std::is_constructible<
                                      typename BasicJsonType::string_t, Key>::value>>
-void from_json(const BasicJsonType& j, std::map<Key, Value>& m)
+void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+{
+    if (JSON_UNLIKELY(not j.is_array()))
+    {
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+    }
+    for (const auto& p : j)
+    {
+        if (JSON_UNLIKELY(not p.is_array()))
+        {
+            JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(p.type_name())));
+        }
+        m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
+    }
+}
+
+template <typename BasicJsonType, typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator,
+          typename = enable_if_t<not std::is_constructible<
+                                     typename BasicJsonType::string_t, Key>::value>>
+void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
 {
     if (JSON_UNLIKELY(not j.is_array()))
     {
@@ -1973,10 +1993,8 @@ class input_adapter
 #include <clocale> // localeconv
 #include <cstddef> // size_t
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
+#include <cstdio> // snprintf
 #include <initializer_list> // initializer_list
-#include <ios> // hex, uppercase
-#include <iomanip> // setw, setfill
-#include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <vector> // vector
 
@@ -3146,10 +3164,9 @@ scan_number_done:
             if ('\x00' <= c and c <= '\x1F')
             {
                 // escape control characters
-                std::stringstream ss;
-                ss << "<U+" << std::setw(4) << std::uppercase << std::setfill('0')
-                   << std::hex << static_cast<int>(c) << ">";
-                result += ss.str();
+                char cs[9];
+                snprintf(cs, 9, "<U+%.4X>", c);
+                result += cs;
             }
             else
             {
@@ -5619,12 +5636,10 @@ class output_adapter
 #include <cmath> // ldexp
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstdio> // snprintf
 #include <cstring> // memcpy
-#include <iomanip> // setw, setfill
-#include <ios> // hex
 #include <iterator> // back_inserter
 #include <limits> // numeric_limits
-#include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 
@@ -7283,9 +7298,9 @@ class binary_reader
     */
     std::string get_token_string() const
     {
-        std::stringstream ss;
-        ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-        return ss.str();
+        char cr[3];
+        snprintf(cr, 3, "%.2X", current);
+        return std::string{cr};
     }
 
   private:
@@ -8272,11 +8287,8 @@ class binary_writer
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t
 #include <cstdio> // snprintf
-#include <iomanip> // setfill
-#include <iterator> // next
 #include <limits> // numeric_limits
 #include <string> // string
-#include <sstream> // stringstream
 #include <type_traits> // is_same
 
 // #include <nlohmann/detail/exceptions.hpp>
@@ -9753,9 +9765,9 @@ class serializer
 
                 case UTF8_REJECT:  // decode found invalid UTF-8 byte
                 {
-                    std::stringstream ss;
-                    ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(byte);
-                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + ss.str()));
+                    std::string sn(3, '\0');
+                    snprintf(&sn[0], sn.size(), "%.2X", byte);
+                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn));
                 }
 
                 default:  // decode found yet incomplete multi-byte code point
@@ -9781,9 +9793,9 @@ class serializer
         else
         {
             // we finish reading, but do not accept: string was incomplete
-            std::stringstream ss;
-            ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(static_cast<uint8_t>(s.back()));
-            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + ss.str()));
+            std::string sn(3, '\0');
+            snprintf(&sn[0], sn.size(), "%.2X", static_cast<uint8_t>(s.back()));
+            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
         }
     }
 
