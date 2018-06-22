@@ -525,6 +525,14 @@ int vi = jn.get<int>();
 // etc.
 ```
 
+Note that `char` types are not automatically converted to JSON strings, but to integer numbers. A conversion to a string must be specified explicitly:
+
+```cpp
+char ch = 'A';                       // ASCII value 65
+json j_default = ch;                 // stores integer number 65
+json j_string = std::string(1, ch);  // stores string "A"
+```
+
 ### Arbitrary types conversions
 
 Every type can be serialized in JSON, not just STL containers and scalar types. Usually, you would do something along those lines:
