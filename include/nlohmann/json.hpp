@@ -4332,7 +4332,7 @@ class basic_json
 
     @complexity Constant.
 
-    @since version 3.x.x.
+    @since version 3.1.0.
     */
     iteration_proxy<iterator> items() noexcept
     {
