@@ -120,6 +120,17 @@ struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
         std::is_constructible<typename RealType::mapped_type, typename CompatibleObjectType::mapped_type>::value;
 };
 
+template<bool B, class RealType, class CompatibleStringType>
+struct is_compatible_string_type_impl : std::false_type {};
+
+template<class RealType, class CompatibleStringType>
+struct is_compatible_string_type_impl<true, RealType, CompatibleStringType>
+{
+    static constexpr auto value =
+        std::is_same<typename RealType::value_type, typename CompatibleStringType::value_type>::value and
+        std::is_constructible<RealType, CompatibleStringType>::value;
+};
+
 template<class BasicJsonType, class CompatibleObjectType>
 struct is_compatible_object_type
 {
@@ -128,6 +139,15 @@ struct is_compatible_object_type
                                   has_mapped_type<CompatibleObjectType>,
                                   has_key_type<CompatibleObjectType>>::value,
                                   typename BasicJsonType::object_t, CompatibleObjectType >::value;
+};
+
+template<class BasicJsonType, class CompatibleStringType>
+struct is_compatible_string_type
+{
+    static auto constexpr value = is_compatible_string_type_impl <
+                                  conjunction<negation<std::is_same<void, CompatibleStringType>>,
+                                  has_value_type<CompatibleStringType>>::value,
+                                  typename BasicJsonType::string_t, CompatibleStringType >::value;
 };
 
 template<typename BasicJsonType, typename T>
