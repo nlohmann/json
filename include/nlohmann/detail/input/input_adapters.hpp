@@ -119,7 +119,7 @@ template<typename WideStringType>
 class wide_string_input_adapter : public input_adapter_protocol
 {
   public:
-    wide_string_input_adapter(const WideStringType& w) : str(w) {}
+    explicit wide_string_input_adapter(const WideStringType& w) : str(w) {}
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
