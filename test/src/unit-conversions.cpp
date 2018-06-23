@@ -40,14 +40,6 @@ using nlohmann::json;
 #include <unordered_set>
 #include <valarray>
 
-namespace
-{
-template <typename MapType>
-void map_type_conversion_checks()
-{
-}
-}
-
 TEST_CASE("value conversion")
 {
     SECTION("get an object (explicit)")

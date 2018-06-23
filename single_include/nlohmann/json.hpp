@@ -3165,7 +3165,7 @@ scan_number_done:
             {
                 // escape control characters
                 char cs[9];
-                snprintf(cs, 9, "<U+%.4X>", c);
+                snprintf(cs, 9, "<U+%.4hhX>", c);
                 result += cs;
             }
             else
@@ -5670,6 +5670,7 @@ class binary_reader
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
     using json_sax_t = json_sax<BasicJsonType>;
 
@@ -6058,19 +6059,21 @@ class binary_reader
                     val = (mant == 0) ? std::numeric_limits<double>::infinity()
                           : std::numeric_limits<double>::quiet_NaN();
                 }
-                return sax->number_float((half & 0x8000) != 0 ? -val : val, "");
+                return sax->number_float((half & 0x8000) != 0
+                                         ? static_cast<number_float_t>(-val)
+                                         : static_cast<number_float_t>(val), "");
             }
 
             case 0xFA: // Single-Precision Float (four-byte IEEE 754)
             {
                 float number;
-                return get_number(number) and sax->number_float(static_cast<double>(number), "");
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
             {
                 double number;
-                return get_number(number) and sax->number_float(number, "");
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             default: // anything else (0xFF is handled inside the other types)
@@ -6311,13 +6314,13 @@ class binary_reader
             case 0xCA: // float 32
             {
                 float number;
-                return get_number(number) and sax->number_float(static_cast<double>(number), "");
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xCB: // float 64
             {
                 double number;
-                return get_number(number) and sax->number_float(number, "");
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xCC: // uint 8
@@ -7099,13 +7102,13 @@ class binary_reader
             case 'd':
             {
                 float number;
-                return get_number(number) and sax->number_float(static_cast<double>(number), "");
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 'D':
             {
                 double number;
-                return get_number(number) and sax->number_float(number, "");
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 'C':  // char
@@ -7299,7 +7302,7 @@ class binary_reader
     std::string get_token_string() const
     {
         char cr[3];
-        snprintf(cr, 3, "%.2X", current);
+        snprintf(cr, 3, "%.2hhX", static_cast<unsigned char>(current));
         return std::string{cr};
     }
 

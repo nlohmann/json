@@ -1173,7 +1173,7 @@ scan_number_done:
             {
                 // escape control characters
                 char cs[9];
-                snprintf(cs, 9, "<U+%.4X>", c);
+                snprintf(cs, 9, "<U+%.4hhX>", c);
                 result += cs;
             }
             else
