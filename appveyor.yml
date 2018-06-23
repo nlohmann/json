@@ -1,5 +1,9 @@
 version: '{build}'
 
+platform:
+  - x86
+  - x64
+
 os: 
   - Visual Studio 2015
   - Visual Studio 2017
