@@ -247,7 +247,7 @@ void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
-void to_json(BasicJsonType& j, std::valarray<T> arr)
+void to_json(BasicJsonType& j, const std::valarray<T>& arr)
 {
     external_constructor<value_t::array>::construct(j, std::move(arr));
 }

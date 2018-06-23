@@ -87,7 +87,7 @@ class primitive_iterator_t
     primitive_iterator_t const operator++(int) noexcept
     {
         auto result = *this;
-        m_it++;
+        ++m_it;
         return result;
     }
 
@@ -100,7 +100,7 @@ class primitive_iterator_t
     primitive_iterator_t const operator--(int) noexcept
     {
         auto result = *this;
-        m_it--;
+        --m_it;
         return result;
     }
 

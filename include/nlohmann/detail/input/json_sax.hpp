@@ -405,11 +405,9 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
 
     bool end_object() override
     {
-        bool keep = true;
         if (ref_stack.back())
         {
-            keep = callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::object_end, *ref_stack.back());
-            if (not keep)
+            if (not callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::object_end, *ref_stack.back()))
             {
                 // discard object
                 *ref_stack.back() = discarded;
