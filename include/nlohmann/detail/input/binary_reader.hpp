@@ -408,22 +408,24 @@ class binary_reader
                 // half-precision floating-point numbers in the C language
                 // is shown in Fig. 3.
                 const int half = (byte1 << 8) + byte2;
-                const int exp = (half >> 10) & 0x1F;
-                const int mant = half & 0x3FF;
-                double val;
-                if (exp == 0)
+                const double val = [&half]
                 {
-                    val = std::ldexp(mant, -24);
-                }
-                else if (exp != 31)
-                {
-                    val = std::ldexp(mant + 1024, exp - 25);
-                }
-                else
-                {
-                    val = (mant == 0) ? std::numeric_limits<double>::infinity()
-                          : std::numeric_limits<double>::quiet_NaN();
-                }
+                    const int exp = (half >> 10) & 0x1F;
+                    const int mant = half & 0x3FF;
+                    assert(0 <= exp and exp <= 32);
+                    assert(0 <= mant and mant <= 1024);
+                    switch (exp)
+                    {
+                        case 0:
+                            return std::ldexp(mant, -24);
+                        case 31:
+                            return (mant == 0)
+                            ? std::numeric_limits<double>::infinity()
+                            : std::numeric_limits<double>::quiet_NaN();
+                        default:
+                            return std::ldexp(mant + 1024, exp - 25);
+                    }
+                }();
                 return sax->number_float((half & 0x8000) != 0
                                          ? static_cast<number_float_t>(-val)
                                          : static_cast<number_float_t>(val), "");
