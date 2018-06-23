@@ -6091,8 +6091,8 @@ class binary_reader
                 const double val = [&half]
                 {
                     const int exp = (half >> 10) & 0x1F;
-                    assert(0 <= exp and exp <= 32);
                     const int mant = half & 0x3FF;
+                    assert(0 <= exp and exp <= 32);
                     assert(0 <= mant and mant <= 1024);
                     switch (exp)
                     {
