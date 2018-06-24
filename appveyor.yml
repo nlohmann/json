@@ -2,55 +2,52 @@ version: '{build}'
 
 environment:
   matrix:
-    - os: Visual Studio 2015
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       COMPILER: mingw
       platform: x86
       FLAGS: ""
       GENERATOR: Ninja
 
-    - os: Visual Studio 2015
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       platform: x86
       FLAGS: ""
       GENERATOR: Visual Studio 14 2015
 
-    - os: Visual Studio 2017
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       platform: x86
       FLAGS: ""
       GENERATOR: Visual Studio 15 2017
 
-    - os: Visual Studio 2017
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       platform: x86
       FLAGS: "/permissive- /std:c++latest /utf-8"
       GENERATOR: Visual Studio 15 2017
 
-    - os: Visual Studio 2015
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       platform: x64
       FLAGS: ""
       GENERATOR: Visual Studio 14 2015
 
-    - os: Visual Studio 2017
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       platform: x64
       FLAGS: ""
       GENERATOR: Visual Studio 15 2017
 
-    - os: Visual Studio 2017
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       platform: x64
       FLAGS: "/permissive- /std:c++latest /utf-8"
       GENERATOR: Visual Studio 15 2017
-
-matrix:
-  fast_finish: true
 
 init:
   - cmake --version
   - msbuild /version
 
 install:
-  - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-win.zip"
-  - appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
-  - 7z x ninja.zip -oC:\projects\deps\ninja > nul
-  - set PATH=C:\projects\deps\ninja;%PATH%
+  - if "%COMPILER%"=="mingw" appveyor DownloadFile https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-win.zip -FileName ninja.zip
+  - if "%COMPILER%"=="mingw" 7z x ninja.zip -oC:\projects\deps\ninja > nul
+  - if "%COMPILER%"=="mingw" set PATH=C:\projects\deps\ninja;%PATH%
   - if "%COMPILER%"=="mingw" set PATH=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin;%PATH%
+  - if "%COMPILER%"=="mingw" g++ --version
 
 before_build:
   - cmake . -G "%GENERATOR%" -DCMAKE_CXX_FLAGS="%FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin"

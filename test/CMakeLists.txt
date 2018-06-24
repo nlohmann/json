@@ -116,7 +116,7 @@ foreach(file ${files})
     set_tests_properties("${testcase}_default" PROPERTIES LABELS "default")
 
     add_test(NAME "${testcase}_all"
-      COMMAND ${testcase} ${CATCH_TEST_FILTER} "\\*"
+      COMMAND ${testcase} ${CATCH_TEST_FILTER} "*"
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
     set_tests_properties("${testcase}_all" PROPERTIES LABELS "all")
