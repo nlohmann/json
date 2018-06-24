@@ -2,6 +2,16 @@ version: '{build}'
 
 environment:
   matrix:
+    - COMPILER: mingw
+      platform: x86
+      FLAGS: ""
+      GENERATOR: MinGW Makefiles
+
+    - COMPILER: mingw
+      platform: x64
+      FLAGS: ""
+      GENERATOR: MinGW Makefiles
+
     - os: Visual Studio 2015
       platform: x86
       FLAGS: ""
@@ -32,15 +42,8 @@ environment:
       FLAGS: "/permissive- /std:c++latest /utf-8"
       GENERATOR: Visual Studio 15 2017
 
-    - COMPILER: mingw
-      platform: x86
-      FLAGS: ""
-      GENERATOR: MinGW Makefiles
-
-    - COMPILER: mingw
-      platform: x64
-      FLAGS: ""
-      GENERATOR: MinGW Makefiles
+matrix:
+  fast_finish: true
 
 init:
   - cmake --version
@@ -50,10 +53,10 @@ install:
   - if "%COMPILER%"=="mingw" set PATH=C:\MinGW\bin;%PATH%
 
 before_build:
-  - cmake . -G "%GENERATOR%" -DCMAKE_CXX_FLAGS="%FLAGS%" -DCMAKE_BUILD_TYPE=Release
+  - cmake . -G "%GENERATOR%" -DCMAKE_CXX_FLAGS="%FLAGS%"
 
 build_script:
-  - cmake --build .
+  - cmake --build . --config Release
 
 test_script:
   - ctest -C Release -V -j
