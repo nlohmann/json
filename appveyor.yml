@@ -46,7 +46,7 @@ init:
   - msbuild /version
 
 install:
-  - if "%COMPILER%"=="mingw" set PATH=C:\MinGW\bin
+  - if "%COMPILER%"=="mingw" set PATH=C:\MinGW\bin;%PATH%
 
 before_build:
   - cmake . -G "%GENERATOR%" -DCMAKE_CXX_FLAGS="%FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin"
