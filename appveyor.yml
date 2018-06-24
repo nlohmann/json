@@ -50,7 +50,7 @@ install:
   - if "%COMPILER%"=="mingw" set PATH=C:\MinGW\bin;%PATH%
 
 before_build:
-  - cmake . -G%GENERATOR% -DCMAKE_CXX_FLAGS="%FLAGS%" -DCMAKE_BUILD_TYPE=Release
+  - cmake . -G "%GENERATOR%" -DCMAKE_CXX_FLAGS="%FLAGS%" -DCMAKE_BUILD_TYPE=Release
 
 build_script:
   - cmake --build .
