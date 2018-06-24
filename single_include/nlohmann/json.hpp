@@ -67,7 +67,7 @@ namespace nlohmann
 @brief default JSONSerializer template argument
 
 This serializer ignores the template arguments and uses ADL
-([argument-dependent lookup](http://en.cppreference.com/w/cpp/language/adl))
+([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
 for serialization.
 */
 template<typename T = void, typename SFINAE = void>
@@ -4740,7 +4740,7 @@ This class implements a both iterators (iterator and const_iterator) for the
 
 @requirement The class satisfies the following concept requirements:
 -
-[BidirectionalIterator](http://en.cppreference.com/w/cpp/concept/BidirectionalIterator):
+[BidirectionalIterator](https://en.cppreference.com/w/cpp/concept/BidirectionalIterator):
   The iterator that can be moved can be moved in both directions (i.e.
   incremented and decremented).
 
@@ -5460,10 +5460,10 @@ create @ref const_reverse_iterator).
 
 @requirement The class satisfies the following concept requirements:
 -
-[BidirectionalIterator](http://en.cppreference.com/w/cpp/concept/BidirectionalIterator):
+[BidirectionalIterator](https://en.cppreference.com/w/cpp/concept/BidirectionalIterator):
   The iterator that can be moved can be moved in both directions (i.e.
   incremented and decremented).
-- [OutputIterator](http://en.cppreference.com/w/cpp/concept/OutputIterator):
+- [OutputIterator](https://en.cppreference.com/w/cpp/concept/OutputIterator):
   It is possible to write to the pointed-to element (only if @a Base is
   @ref iterator).
 
@@ -9233,7 +9233,7 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
     // numbers, all float's can be recovered using strtod (and strtof). However, the resulting
     // decimal representations are not exactly "short".
     //
-    // The documentation for 'std::to_chars' (http://en.cppreference.com/w/cpp/utility/to_chars)
+    // The documentation for 'std::to_chars' (https://en.cppreference.com/w/cpp/utility/to_chars)
     // says "value is converted to a string as if by std::sprintf in the default ("C") locale"
     // and since sprintf promotes float's to double's, I think this is exactly what 'std::to_chars'
     // does.
@@ -10907,42 +10907,42 @@ and `from_json()` (@ref adl_serializer by default)
 
 @requirement The class satisfies the following concept requirements:
 - Basic
- - [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible):
+ - [DefaultConstructible](https://en.cppreference.com/w/cpp/concept/DefaultConstructible):
    JSON values can be default constructed. The result will be a JSON null
    value.
- - [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible):
+ - [MoveConstructible](https://en.cppreference.com/w/cpp/concept/MoveConstructible):
    A JSON value can be constructed from an rvalue argument.
- - [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible):
+ - [CopyConstructible](https://en.cppreference.com/w/cpp/concept/CopyConstructible):
    A JSON value can be copy-constructed from an lvalue expression.
- - [MoveAssignable](http://en.cppreference.com/w/cpp/concept/MoveAssignable):
+ - [MoveAssignable](https://en.cppreference.com/w/cpp/concept/MoveAssignable):
    A JSON value van be assigned from an rvalue argument.
- - [CopyAssignable](http://en.cppreference.com/w/cpp/concept/CopyAssignable):
+ - [CopyAssignable](https://en.cppreference.com/w/cpp/concept/CopyAssignable):
    A JSON value can be copy-assigned from an lvalue expression.
- - [Destructible](http://en.cppreference.com/w/cpp/concept/Destructible):
+ - [Destructible](https://en.cppreference.com/w/cpp/concept/Destructible):
    JSON values can be destructed.
 - Layout
- - [StandardLayoutType](http://en.cppreference.com/w/cpp/concept/StandardLayoutType):
+ - [StandardLayoutType](https://en.cppreference.com/w/cpp/concept/StandardLayoutType):
    JSON values have
-   [standard layout](http://en.cppreference.com/w/cpp/language/data_members#Standard_layout):
+   [standard layout](https://en.cppreference.com/w/cpp/language/data_members#Standard_layout):
    All non-static data members are private and standard layout types, the
    class has no virtual functions or (virtual) base classes.
 - Library-wide
- - [EqualityComparable](http://en.cppreference.com/w/cpp/concept/EqualityComparable):
+ - [EqualityComparable](https://en.cppreference.com/w/cpp/concept/EqualityComparable):
    JSON values can be compared with `==`, see @ref
    operator==(const_reference,const_reference).
- - [LessThanComparable](http://en.cppreference.com/w/cpp/concept/LessThanComparable):
+ - [LessThanComparable](https://en.cppreference.com/w/cpp/concept/LessThanComparable):
    JSON values can be compared with `<`, see @ref
    operator<(const_reference,const_reference).
- - [Swappable](http://en.cppreference.com/w/cpp/concept/Swappable):
+ - [Swappable](https://en.cppreference.com/w/cpp/concept/Swappable):
    Any JSON lvalue or rvalue of can be swapped with any lvalue or rvalue of
    other compatible types, using unqualified function call @ref swap().
- - [NullablePointer](http://en.cppreference.com/w/cpp/concept/NullablePointer):
+ - [NullablePointer](https://en.cppreference.com/w/cpp/concept/NullablePointer):
    JSON values can be compared against `std::nullptr_t` objects which are used
    to model the `null` value.
 - Container
- - [Container](http://en.cppreference.com/w/cpp/concept/Container):
+ - [Container](https://en.cppreference.com/w/cpp/concept/Container):
    JSON values can be used like STL containers and provide iterator access.
- - [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer);
+ - [ReversibleContainer](https://en.cppreference.com/w/cpp/concept/ReversibleContainer);
    JSON values can be used like STL containers and provide reverse iterator
    access.
 
@@ -12401,7 +12401,7 @@ class basic_json
     @warning A precondition is enforced with a runtime assertion that will
              result in calling `std::abort` if this precondition is not met.
              Assertions can be disabled by defining `NDEBUG` at compile time.
-             See http://en.cppreference.com/w/cpp/error/assert for more
+             See https://en.cppreference.com/w/cpp/error/assert for more
              information.
 
     @throw invalid_iterator.201 if iterators @a first and @a last are not
@@ -12541,7 +12541,7 @@ class basic_json
     changes to any JSON value.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is linear.
     - As postcondition, it holds: `other == basic_json(other)`.
@@ -12626,7 +12626,7 @@ class basic_json
     exceptions.
 
     @requirement This function helps `basic_json` satisfying the
-    [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible)
+    [MoveConstructible](https://en.cppreference.com/w/cpp/concept/MoveConstructible)
     requirements.
 
     @liveexample{The code below shows the move constructor explicitly called
@@ -12660,7 +12660,7 @@ class basic_json
     @complexity Linear.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is linear.
 
@@ -12697,7 +12697,7 @@ class basic_json
     @complexity Linear.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is linear.
     - All stored elements are destroyed and all memory is freed.
@@ -13328,8 +13328,8 @@ class basic_json
     @brief get a value (explicit)
 
     Explicit type conversion between the JSON value and a compatible value
-    which is [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible)
-    and [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible).
+    which is [CopyConstructible](https://en.cppreference.com/w/cpp/concept/CopyConstructible)
+    and [DefaultConstructible](https://en.cppreference.com/w/cpp/concept/DefaultConstructible).
     The value is converted by calling the @ref json_serializer<ValueType>
     `from_json()` method.
 
@@ -13389,8 +13389,8 @@ class basic_json
     @brief get a value (explicit); special case
 
     Explicit type conversion between the JSON value and a compatible value
-    which is **not** [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible)
-    and **not** [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible).
+    which is **not** [CopyConstructible](https://en.cppreference.com/w/cpp/concept/CopyConstructible)
+    and **not** [DefaultConstructible](https://en.cppreference.com/w/cpp/concept/DefaultConstructible).
     The value is converted by calling the @ref json_serializer<ValueType>
     `from_json()` method.
 
@@ -14754,7 +14754,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is constant.
 
@@ -14793,7 +14793,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).begin()`.
@@ -14825,7 +14825,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is constant.
 
@@ -14864,7 +14864,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).end()`.
@@ -14894,7 +14894,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/concept/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `reverse_iterator(end())`.
@@ -14931,7 +14931,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/concept/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `reverse_iterator(begin())`.
@@ -14968,7 +14968,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/concept/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).rbegin()`.
@@ -14997,7 +14997,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/concept/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).rend()`.
@@ -15195,7 +15195,7 @@ class basic_json
     false in the case of a string.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `begin() == end()`.
@@ -15266,7 +15266,7 @@ class basic_json
     the case of a string.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `std::distance(begin(), end())`.
@@ -15336,7 +15336,7 @@ class basic_json
     @exceptionsafety No-throw guarantee: this function never throws exceptions.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/concept/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of returning `b.size()` where `b` is the largest

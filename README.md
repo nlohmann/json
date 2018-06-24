@@ -288,7 +288,7 @@ json j = json::parse(v);
 
 ### STL-like access
 
-We designed the JSON class to behave just like an STL container. In fact, it satisfies the [**ReversibleContainer**](http://en.cppreference.com/w/cpp/concept/ReversibleContainer) requirement.
+We designed the JSON class to behave just like an STL container. In fact, it satisfies the [**ReversibleContainer**](https://en.cppreference.com/w/cpp/concept/ReversibleContainer) requirement.
 
 ```cpp
 // create an array using push_back
@@ -611,7 +611,7 @@ Some important things:
 
 * Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
 * Those methods **MUST** be available (e.g., properly headers must be included) everywhere you use the implicit conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
-* When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible). (There is a way to bypass this requirement described later.)
+* When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/concept/DefaultConstructible). (There is a way to bypass this requirement described later.)
 * In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 * In case your type contains several `operator=` definitions, code like `your_variable = your_json;` [may not compile](https://github.com/nlohmann/json/issues/667). You need to write `your_variable = your_json.get<decltype your_variable>();` instead.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
@@ -623,7 +623,7 @@ Some important things:
 This requires a bit more advanced technique. But first, let's see how this conversion mechanism works:
 
 The library uses **JSON Serializers** to convert types to json.
-The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](http://en.cppreference.com/w/cpp/language/adl)).
+The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](https://en.cppreference.com/w/cpp/language/adl)).
 
 It is implemented like this (simplified):
 
@@ -672,7 +672,7 @@ namespace nlohmann {
 
 #### How can I use `get()` for non-default constructible/non-copyable types?
 
-There is a way, if your type is [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible). You will need to specialize the `adl_serializer` as well, but with a special `from_json` overload:
+There is a way, if your type is [MoveConstructible](https://en.cppreference.com/w/cpp/concept/MoveConstructible). You will need to specialize the `adl_serializer` as well, but with a special `from_json` overload:
 
 ```cpp
 struct move_only_type {
@@ -933,7 +933,7 @@ I deeply appreciate the help of the following people.
 - [Vladimir Petrigo](https://github.com/vpetrigo) made a SFINAE hack more readable and added Visual Studio 17 to the build matrix.
 - [Denis Andrejew](https://github.com/seeekr) fixed a grammar issue in the README file.
 - [Pierre-Antoine Lacaze](https://github.com/palacaze) found a subtle bug in the `dump()` function.
-- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](http://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser, improved the benchmarking code, and realized locale-independent number parsing and printing.
+- [TurpentineDistillery](https://github.com/TurpentineDistillery) pointed to [`std::locale::classic()`](https://en.cppreference.com/w/cpp/locale/locale/classic) to avoid too much locale joggling, found some nice performance improvements in the parser, improved the benchmarking code, and realized locale-independent number parsing and printing.
 - [cgzones](https://github.com/cgzones) had an idea how to fix the Coverity scan.
 - [Jared Grubb](https://github.com/jaredgrubb) silenced a nasty documentation warning.
 - [Yixin Zhang](https://github.com/qwename) fixed an integer overflow check.
@@ -1037,7 +1037,7 @@ The library is currently used in Apple macOS Sierra and iOS 10. I am not sure wh
 
 ## Notes
 
-- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](http://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a2e26bd0b0168abb61f67ad5bcd5b9fa1.html#a2e26bd0b0168abb61f67ad5bcd5b9fa1) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a674de1ee73e6bf4843fc5dc1351fb726.html#a674de1ee73e6bf4843fc5dc1351fb726).
+- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](https://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a2e26bd0b0168abb61f67ad5bcd5b9fa1.html#a2e26bd0b0168abb61f67ad5bcd5b9fa1) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a674de1ee73e6bf4843fc5dc1351fb726.html#a674de1ee73e6bf4843fc5dc1351fb726).
 - As the exact type of a number is not defined in the [JSON specification](http://rfc7159.net/rfc7159), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
 - The library supports **Unicode input** as follows:
   - Only **UTF-8** encoded input is supported which is the default encoding for JSON according to [RFC 7159](http://rfc7159.net/rfc7159#rfc.section.8.1).
