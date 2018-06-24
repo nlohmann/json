@@ -2,13 +2,9 @@ version: '{build}'
 
 environment:
   matrix:
-    - COMPILER: mingw
+    - os: Visual Studio 2015
+      COMPILER: mingw
       platform: x86
-      FLAGS: ""
-      GENERATOR: MinGW Makefiles
-
-    - COMPILER: mingw
-      platform: x64
       FLAGS: ""
       GENERATOR: MinGW Makefiles
 
@@ -50,10 +46,10 @@ init:
   - msbuild /version
 
 install:
-  - if "%COMPILER%"=="mingw" set PATH=C:\MinGW\bin;%PATH%
+  - if "%COMPILER%"=="mingw" set PATH=C:\MinGW\bin
 
 before_build:
-  - cmake . -G "%GENERATOR%" -DCMAKE_CXX_FLAGS="%FLAGS%"
+  - cmake . -G "%GENERATOR%" -DCMAKE_CXX_FLAGS="%FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin"
 
 build_script:
   - cmake --build . --config Release
