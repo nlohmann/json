@@ -828,6 +828,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | GCC 5.4.1       | Ubuntu 14.04.5 LTS           | g++-5 (Ubuntu 5.4.1-2ubuntu1~14.04) 5.4.1 20160904 |
 | GCC 6.3.0       | Ubuntu 14.04.5 LTS           | g++-6 (Ubuntu/Linaro 6.3.0-18ubuntu2~14.04) 6.3.0 20170519 |
 | GCC 7.1.0       | Ubuntu 14.04.5 LTS           | g++-7 (Ubuntu 7.1.0-5ubuntu2~14.04) 7.1.0
+| GCC 7.3.0       | Windows Server 2012 R2 (x64) | g++ (x86_64-posix-seh-rev0, Built by MinGW-W64 project) 7.3.0
 | Clang 3.5.0     | Ubuntu 14.04.5 LTS           | clang version 3.5.0-4ubuntu2~trusty2 (tags/RELEASE_350/final) |
 | Clang 3.6.2     | Ubuntu 14.04.5 LTS           | clang version 3.6.2-svn240577-1~exp1 (branches/release_36) |
 | Clang 3.7.1     | Ubuntu 14.04.5 LTS           | clang version 3.7.1-svn253571-1~exp1 (branches/release_37) |
