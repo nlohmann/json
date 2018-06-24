@@ -6,7 +6,7 @@ environment:
       COMPILER: mingw
       platform: x86
       FLAGS: ""
-      GENERATOR: MinGW Makefiles
+      GENERATOR: Ninja
 
     - os: Visual Studio 2015
       platform: x86
@@ -46,6 +46,10 @@ init:
   - msbuild /version
 
 install:
+  - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-win.zip"
+  - appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
+  - 7z x ninja.zip -oC:\projects\deps\ninja > nul
+  - set PATH=C:\projects\deps\ninja;%PATH%
   - if "%COMPILER%"=="mingw" set PATH=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin;%PATH%
 
 before_build:
