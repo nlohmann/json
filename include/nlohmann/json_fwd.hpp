@@ -18,7 +18,7 @@ namespace nlohmann
 @brief default JSONSerializer template argument
 
 This serializer ignores the template arguments and uses ADL
-([argument-dependent lookup](http://en.cppreference.com/w/cpp/language/adl))
+([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
 for serialization.
 */
 template<typename T = void, typename SFINAE = void>
