@@ -9,28 +9,19 @@
 Pod::Spec.new do |s|
 
   # ―――  Spec Metadata  ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
-  #
-  #  These will help people to find your library, and whilst it
-  #  can feel like a chore to fill in it's definitely to your advantage. The
-  #  summary should be tweet-length, and the description more in depth.
-  #
-
   s.name         = "nlohmann_json"
   s.version      = "3.1.2"
   s.summary      = "JSON reader & writer for C++ optimized for ease of use and modern C++14"
 
-  # This description is used to generate tags and improve search results.
-  #   * Think: What does it do? Why did you write it? What is the focus?
-  #   * Try to keep it short, snappy and to the point.
-  #   * Write the description between the DESC delimiters below.
-  #   * Finally, don't worry about the indent, CocoaPods strips it!
+
+  # CocoaPods strips indentation for description
   s.description  = <<-DESC
     JSON library for c++, it can read & write, uses C++14 features to have
     modern syntax.
                    DESC
 
   s.homepage     = "https://github.com/nlohmann/json"
-  # s.screenshots  = "www.example.com/screenshots_1.gif", "www.example.com/screenshots_2.gif"
+  s.screenshots  = "https://raw.githubusercontent.com/nlohmann/json/master/doc/json.gif"
 
 
   # ―――  Spec License  ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
@@ -40,7 +31,6 @@ Pod::Spec.new do |s|
   #  Popular ones are 'MIT', 'BSD' and 'Apache License, Version 2.0'.
   #
 
-  #s.license      = "MIT (example)"
   license_text = File.read("LICENSE.MIT")
   # cocoapods checks extension and expects it to be a txt. so instead
   # we read the file and pass it in as text.
@@ -61,7 +51,6 @@ Pod::Spec.new do |s|
   s.authors            = {
     "Niels Lohmann" => "nosend@respectmyprivacy.com"
   }
-  # s.social_media_url   = "http://twitter.com/todo"
 
   # ――― Platform Specifics ――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
   #
@@ -69,11 +58,10 @@ Pod::Spec.new do |s|
   #  the deployment target. You can optionally include the target after the platform.
   #
 
-  # s.platform     = :ios
   s.platform     = :ios, "8.0"
 
   #  When using multiple platforms
-  # s.ios.deployment_target = "5.0"
+  # s.ios.deployment_target = "8.0"
   # s.osx.deployment_target = "10.7"
   # s.watchos.deployment_target = "2.0"
   # s.tvos.deployment_target = "9.0"
@@ -98,18 +86,4 @@ Pod::Spec.new do |s|
 
   s.source_files  = "single_include/**/*.hpp"
   s.public_header_files = "single_include/nlohmann/json.hpp"
-
-
-  # ――― Resources ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
-  #
-  #  A list of resources included with the Pod. These are copied into the
-  #  target bundle with a build phase script. Anything else will be cleaned.
-  #  You can preserve files from being cleaned, please don't preserve
-  #  non-essential files like tests, examples and documentation.
-  #
-
-  # s.resource  = "icon.png"
-  # s.resources = "Resources/*.png"
-
-  # s.preserve_paths = "FilesToSave", "MoreFilesToSave"
 end
