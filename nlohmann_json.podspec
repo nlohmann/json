@@ -96,9 +96,7 @@ Pod::Spec.new do |s|
   #  Not including the public_header_files will make all headers public.
   #
 
-  s.source_files  = "cocoapods/**/*.{h,m,mm}", "single_include/**/*.hpp"
-  s.exclude_files = "Classes/Exclude"
-
+  s.source_files  = "single_include/**/*.hpp"
   s.public_header_files = "single_include/nlohmann/json.hpp"
 
 
