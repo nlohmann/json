@@ -1581,4 +1581,26 @@ TEST_CASE("regression tests")
         float_json j2 = {1000.0, 2000.0, 3000.0};
         CHECK(float_json::from_ubjson(float_json::to_ubjson(j2, true, true)) == j2);
     }
+
+    SECTION("issue #1045 - Using STL algorithms with JSON containers with expected results?")
+    {
+        json diffs = nlohmann::json::array();
+        json m1{{"key1", 42}};
+        json m2{{"key2", 42}};
+        auto p1 = m1.items();
+        auto p2 = m2.items();
+
+        using it_type = decltype(p1.begin());
+
+        std::set_difference(
+            p1.begin(), p1.end(),
+            p2.begin(), p2.end(),
+            std::inserter(diffs, diffs.end()), [&](const it_type & e1, const it_type & e2) -> bool
+        {
+            using comper_pair = std::pair<std::string, decltype(e1.value())>; // Trying to avoid unneeded copy
+            return comper_pair(e1.key(), e1.value()) < comper_pair(e2.key(), e2.value()); // Using pair comper
+        });
+
+        CHECK(diffs.size() == 1); // Note the change here, was 2
+    }
 }
