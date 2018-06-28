@@ -10,6 +10,7 @@
 
 #include <nlohmann/detail/meta.hpp>
 #include <nlohmann/detail/value_t.hpp>
+#include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
 namespace nlohmann
 {
@@ -294,14 +295,12 @@ void to_json(BasicJsonType& j, const std::pair<Args...>& p)
     j = {p.first, p.second};
 }
 
-template<typename IteratorType> class iteration_proxy; // TODO: Forward decl needed, maybe move somewhere else
+// for https://github.com/nlohmann/json/pull/1134
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_same<T, typename iteration_proxy<typename BasicJsonType::iterator>::iteration_proxy_internal>::value, int> = 0>
 void to_json(BasicJsonType& j, T b) noexcept
 {
-    typename BasicJsonType::object_t tmp_obj;
-    tmp_obj[b.key()] = b.value(); // TODO: maybe there is a better way?
-    external_constructor<value_t::object>::construct(j, std::move(tmp_obj));
+    j = {{b.key(), b.value()}};
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>

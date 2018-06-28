@@ -1322,6 +1322,137 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 
 // #include <nlohmann/detail/value_t.hpp>
 
+// #include <nlohmann/detail/iterators/iteration_proxy.hpp>
+
+
+#include <cstddef> // size_t
+#include <string> // string, to_string
+#include <iterator> // input_iterator_tag
+
+// #include <nlohmann/detail/value_t.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+/// proxy class for the items() function
+template<typename IteratorType> class iteration_proxy
+{
+  private:
+    /// helper class for iteration
+    class iteration_proxy_internal
+    {
+      public:
+        using difference_type = std::ptrdiff_t;
+        using value_type = iteration_proxy_internal;
+        using pointer = iteration_proxy_internal*;
+        using reference = iteration_proxy_internal&;
+        using iterator_category = std::input_iterator_tag;
+
+      private:
+        /// the iterator
+        IteratorType anchor;
+        /// an index for arrays (used to create key names)
+        std::size_t array_index = 0;
+        /// last stringified array index
+        mutable std::size_t array_index_last = 0;
+        /// a string representation of the array index
+        mutable std::string array_index_str = "0";
+        /// an empty string (to return a reference for primitive values)
+        const std::string empty_str = "";
+
+      public:
+        explicit iteration_proxy_internal(IteratorType it) noexcept : anchor(it) {}
+
+        iteration_proxy_internal(const iteration_proxy_internal&) = default;
+        iteration_proxy_internal& operator=(const iteration_proxy_internal&) = default;
+
+        /// dereference operator (needed for range-based for)
+        iteration_proxy_internal& operator*()
+        {
+            return *this;
+        }
+
+        /// increment operator (needed for range-based for)
+        iteration_proxy_internal& operator++()
+        {
+            ++anchor;
+            ++array_index;
+
+            return *this;
+        }
+
+        /// equality operator (needed for InputIterator)
+        bool operator==(const iteration_proxy_internal& o) const noexcept
+        {
+            return anchor == o.anchor;
+        }
+
+        /// inequality operator (needed for range-based for)
+        bool operator!=(const iteration_proxy_internal& o) const noexcept
+        {
+            return anchor != o.anchor;
+        }
+
+        /// return key of the iterator
+        const std::string& key() const
+        {
+            assert(anchor.m_object != nullptr);
+
+            switch (anchor.m_object->type())
+            {
+                // use integer array index as key
+                case value_t::array:
+                {
+                    if (array_index != array_index_last)
+                    {
+                        array_index_str = std::to_string(array_index);
+                        array_index_last = array_index;
+                    }
+                    return array_index_str;
+                }
+
+                // use key from the object
+                case value_t::object:
+                    return anchor.key();
+
+                // use an empty key for all primitive types
+                default:
+                    return empty_str;
+            }
+        }
+
+        /// return value of the iterator
+        typename IteratorType::reference value() const
+        {
+            return anchor.value();
+        }
+    };
+
+    /// the container to iterate
+    typename IteratorType::reference container;
+
+  public:
+    /// construct iteration proxy from a container
+    explicit iteration_proxy(typename IteratorType::reference cont) noexcept
+        : container(cont) {}
+
+    /// return iterator begin (needed for range-based for)
+    iteration_proxy_internal begin() noexcept
+    {
+        return iteration_proxy_internal(container.begin());
+    }
+
+    /// return iterator end (needed for range-based for)
+    iteration_proxy_internal end() noexcept
+    {
+        return iteration_proxy_internal(container.end());
+    }
+};
+}
+}
+
 
 namespace nlohmann
 {
@@ -1606,14 +1737,12 @@ void to_json(BasicJsonType& j, const std::pair<Args...>& p)
     j = {p.first, p.second};
 }
 
-template<typename IteratorType> class iteration_proxy; // TODO: Forward decl needed, maybe move somewhere else
+// for https://github.com/nlohmann/json/pull/1134
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_same<T, typename iteration_proxy<typename BasicJsonType::iterator>::iteration_proxy_internal>::value, int> = 0>
 void to_json(BasicJsonType& j, T b) noexcept
 {
-    typename BasicJsonType::object_t tmp_obj;
-    tmp_obj[b.key()] = b.value(); // TODO: maybe there is a better way?
-    external_constructor<value_t::object>::construct(j, std::move(tmp_obj));
+    j = {{b.key(), b.value()}};
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
@@ -5336,135 +5465,6 @@ class iter_impl
 
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
-
-#include <cstddef> // size_t
-#include <string> // string, to_string
-#include <iterator> // input_iterator_tag
-
-// #include <nlohmann/detail/value_t.hpp>
-
-
-namespace nlohmann
-{
-namespace detail
-{
-/// proxy class for the items() function
-template<typename IteratorType> class iteration_proxy
-{
-  private:
-    /// helper class for iteration
-    class iteration_proxy_internal
-    {
-      public:
-        using difference_type = std::ptrdiff_t;
-        using value_type = iteration_proxy_internal;
-        using pointer = iteration_proxy_internal*;
-        using reference = iteration_proxy_internal&;
-        using iterator_category = std::input_iterator_tag;
-
-      private:
-        /// the iterator
-        IteratorType anchor;
-        /// an index for arrays (used to create key names)
-        std::size_t array_index = 0;
-        /// last stringified array index
-        mutable std::size_t array_index_last = 0;
-        /// a string representation of the array index
-        mutable std::string array_index_str = "0";
-        /// an empty string (to return a reference for primitive values)
-        const std::string empty_str = "";
-
-      public:
-        explicit iteration_proxy_internal(IteratorType it) noexcept : anchor(it) {}
-
-        iteration_proxy_internal(const iteration_proxy_internal&) = default;
-        iteration_proxy_internal& operator=(const iteration_proxy_internal&) = default;
-
-        /// dereference operator (needed for range-based for)
-        iteration_proxy_internal& operator*()
-        {
-            return *this;
-        }
-
-        /// increment operator (needed for range-based for)
-        iteration_proxy_internal& operator++()
-        {
-            ++anchor;
-            ++array_index;
-
-            return *this;
-        }
-
-        /// equality operator (needed for InputIterator)
-        bool operator==(const iteration_proxy_internal& o) const noexcept
-        {
-            return anchor == o.anchor;
-        }
-
-        /// inequality operator (needed for range-based for)
-        bool operator!=(const iteration_proxy_internal& o) const noexcept
-        {
-            return anchor != o.anchor;
-        }
-
-        /// return key of the iterator
-        const std::string& key() const
-        {
-            assert(anchor.m_object != nullptr);
-
-            switch (anchor.m_object->type())
-            {
-                // use integer array index as key
-                case value_t::array:
-                {
-                    if (array_index != array_index_last)
-                    {
-                        array_index_str = std::to_string(array_index);
-                        array_index_last = array_index;
-                    }
-                    return array_index_str;
-                }
-
-                // use key from the object
-                case value_t::object:
-                    return anchor.key();
-
-                // use an empty key for all primitive types
-                default:
-                    return empty_str;
-            }
-        }
-
-        /// return value of the iterator
-        typename IteratorType::reference value() const
-        {
-            return anchor.value();
-        }
-    };
-
-    /// the container to iterate
-    typename IteratorType::reference container;
-
-  public:
-    /// construct iteration proxy from a container
-    explicit iteration_proxy(typename IteratorType::reference cont) noexcept
-        : container(cont) {}
-
-    /// return iterator begin (needed for range-based for)
-    iteration_proxy_internal begin() noexcept
-    {
-        return iteration_proxy_internal(container.begin());
-    }
-
-    /// return iterator end (needed for range-based for)
-    iteration_proxy_internal end() noexcept
-    {
-        return iteration_proxy_internal(container.end());
-    }
-};
-}
-}
-
 // #include <nlohmann/detail/iterators/json_reverse_iterator.hpp>
 
 
@@ -8571,7 +8571,7 @@ boundaries compute_boundaries(FloatType value)
     constexpr int      kMinExp    = 1 - kBias;
     constexpr uint64_t kHiddenBit = uint64_t{1} << (kPrecision - 1); // = 2^(p-1)
 
-    using bits_type = typename std::conditional<kPrecision == 24, uint32_t, uint64_t>::type;
+    using bits_type = typename std::conditional< kPrecision == 24, uint32_t, uint64_t >::type;
 
     const uint64_t bits = reinterpret_bits<bits_type>(value);
     const uint64_t E = bits >> (kPrecision - 1);
@@ -8982,10 +8982,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     //         = ((p1        ) * 2^-e + (p2        )) * 2^e
     //         = p1 + p2 * 2^e
 
-    const diyfp one(uint64_t
-    {
-        1
-    } << -M_plus.e, M_plus.e);
+    const diyfp one(uint64_t{1} << -M_plus.e, M_plus.e);
 
     uint32_t p1 = static_cast<uint32_t>(M_plus.f >> -one.e); // p1 = f div 2^-e (Since -e >= 32, p1 fits into a 32-bit int.)
     uint64_t p2 = M_plus.f & (one.f - 1);                    // p2 = f mod 2^-e
@@ -18505,7 +18502,7 @@ struct hash<nlohmann::json>
 /// @note: do not remove the space after '<',
 ///        see https://github.com/nlohmann/json/pull/679
 template<>
-struct less<::nlohmann::detail::value_t>
+struct less< ::nlohmann::detail::value_t>
 {
     /*!
     @brief compare two value_t enum values
