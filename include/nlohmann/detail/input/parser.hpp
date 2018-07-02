@@ -54,8 +54,6 @@ class parser
         value
     };
 
-    using json_sax_t = json_sax<BasicJsonType>;
-
     using parser_callback_t =
         std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
 
@@ -144,7 +142,8 @@ class parser
         return sax_parse(&sax_acceptor, strict);
     }
 
-    bool sax_parse(json_sax_t* sax, const bool strict = true)
+    template <typename SAX>
+    bool sax_parse(SAX* sax, const bool strict = true)
     {
         const bool result = sax_parse_internal(sax);
 
@@ -160,7 +159,8 @@ class parser
     }
 
   private:
-    bool sax_parse_internal(json_sax_t* sax)
+    template <typename SAX>
+    bool sax_parse_internal(SAX* sax)
     {
         // stack to remember the hieararchy of structured values we are parsing
         // true = array; false = object
@@ -177,7 +177,7 @@ class parser
                 {
                     case token_type::begin_object:
                     {
-                        if (JSON_UNLIKELY(not sax->start_object()))
+                        if (JSON_UNLIKELY(not sax->start_object(-1)))
                         {
                             return false;
                         }
@@ -225,7 +225,7 @@ class parser
 
                     case token_type::begin_array:
                     {
-                        if (JSON_UNLIKELY(not sax->start_array()))
+                        if (JSON_UNLIKELY(not sax->start_array(-1)))
                         {
                             return false;
                         }

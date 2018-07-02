@@ -30,14 +30,14 @@ namespace detail
 /*!
 @brief deserialization of CBOR, MessagePack, and UBJSON values
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, typename SAX = json_sax_dom_parser<BasicJsonType>>
 class binary_reader
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using json_sax_t = json_sax<BasicJsonType>;
+    using json_sax_t = SAX;
 
   public:
     /*!
@@ -321,7 +321,7 @@ class binary_reader
             }
 
             case 0x9F: // array (indefinite length)
-                return get_cbor_array(json_sax_t::no_limit);
+                return get_cbor_array(std::size_t(-1));
 
             // map (0x00..0x17 pairs of data items follow)
             case 0xA0:
@@ -375,7 +375,7 @@ class binary_reader
             }
 
             case 0xBF: // map (indefinite length)
-                return get_cbor_object(json_sax_t::no_limit);
+                return get_cbor_object(std::size_t(-1));
 
             case 0xF4: // false
                 return sax->boolean(false);
@@ -1020,7 +1020,7 @@ class binary_reader
     }
 
     /*!
-    @param[in] len  the length of the array or json_sax_t::no_limit for an
+    @param[in] len  the length of the array or std::size_t(-1) for an
                     array of indefinite size
     @return whether array creation completed
     */
@@ -1031,7 +1031,7 @@ class binary_reader
             return false;
         }
 
-        if (len != json_sax_t::no_limit)
+        if (len != std::size_t(-1))
             for (std::size_t i = 0; i < len; ++i)
             {
                 if (JSON_UNLIKELY(not parse_cbor_internal()))
@@ -1054,7 +1054,7 @@ class binary_reader
     }
 
     /*!
-    @param[in] len  the length of the object or json_sax_t::no_limit for an
+    @param[in] len  the length of the object or std::size_t(-1) for an
                     object of indefinite size
     @return whether object creation completed
     */
@@ -1066,7 +1066,7 @@ class binary_reader
         }
 
         string_t key;
-        if (len != json_sax_t::no_limit)
+        if (len != std::size_t(-1))
         {
             for (std::size_t i = 0; i < len; ++i)
             {
@@ -1558,7 +1558,7 @@ class binary_reader
         }
         else
         {
-            if (JSON_UNLIKELY(not sax->start_array()))
+            if (JSON_UNLIKELY(not sax->start_array(-1)))
             {
                 return false;
             }
@@ -1628,7 +1628,7 @@ class binary_reader
         }
         else
         {
-            if (JSON_UNLIKELY(not sax->start_object()))
+            if (JSON_UNLIKELY(not sax->start_object(-1)))
             {
                 return false;
             }

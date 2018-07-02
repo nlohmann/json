@@ -3700,7 +3700,7 @@ constructor contains the parsed value.
 @tparam BasicJsonType  the JSON type
 */
 template<typename BasicJsonType>
-class json_sax_dom_parser : public json_sax<BasicJsonType>
+class json_sax_dom_parser
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -3717,43 +3717,43 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         : root(r), allow_exceptions(allow_exceptions_)
     {}
 
-    bool null() override
+    bool null()
     {
         handle_value(nullptr);
         return true;
     }
 
-    bool boolean(bool val) override
+    bool boolean(bool val)
     {
         handle_value(val);
         return true;
     }
 
-    bool number_integer(number_integer_t val) override
+    bool number_integer(number_integer_t val)
     {
         handle_value(val);
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t val) override
+    bool number_unsigned(number_unsigned_t val)
     {
         handle_value(val);
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t&) override
+    bool number_float(number_float_t val, const string_t&)
     {
         handle_value(val);
         return true;
     }
 
-    bool string(string_t& val) override
+    bool string(string_t& val)
     {
         handle_value(val);
         return true;
     }
 
-    bool start_object(std::size_t len) override
+    bool start_object(std::size_t len = -1)
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
 
@@ -3766,20 +3766,20 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool key(string_t& val) override
+    bool key(string_t& val)
     {
         // add null at given key and store the reference for later
         object_element = &(ref_stack.back()->m_value.object->operator[](val));
         return true;
     }
 
-    bool end_object() override
+    bool end_object()
     {
         ref_stack.pop_back();
         return true;
     }
 
-    bool start_array(std::size_t len) override
+    bool start_array(std::size_t len = -1)
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
 
@@ -3792,14 +3792,14 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool end_array() override
+    bool end_array()
     {
         ref_stack.pop_back();
         return true;
     }
 
     bool parse_error(std::size_t, const std::string&,
-                     const detail::exception& ex) override
+                     const detail::exception& ex)
     {
         errored = true;
         if (allow_exceptions)
@@ -3874,7 +3874,7 @@ class json_sax_dom_parser : public json_sax<BasicJsonType>
 };
 
 template<typename BasicJsonType>
-class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
+class json_sax_dom_callback_parser
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -3892,43 +3892,43 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         keep_stack.push_back(true);
     }
 
-    bool null() override
+    bool null()
     {
         handle_value(nullptr);
         return true;
     }
 
-    bool boolean(bool val) override
+    bool boolean(bool val)
     {
         handle_value(val);
         return true;
     }
 
-    bool number_integer(number_integer_t val) override
+    bool number_integer(number_integer_t val)
     {
         handle_value(val);
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t val) override
+    bool number_unsigned(number_unsigned_t val)
     {
         handle_value(val);
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t&) override
+    bool number_float(number_float_t val, const string_t&)
     {
         handle_value(val);
         return true;
     }
 
-    bool string(string_t& val) override
+    bool string(string_t& val)
     {
         handle_value(val);
         return true;
     }
 
-    bool start_object(std::size_t len) override
+    bool start_object(std::size_t len = -1)
     {
         // check callback for object start
         const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::object_start, discarded);
@@ -3950,7 +3950,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool key(string_t& val) override
+    bool key(string_t& val)
     {
         BasicJsonType k = BasicJsonType(val);
 
@@ -3967,7 +3967,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool end_object() override
+    bool end_object()
     {
         if (ref_stack.back())
         {
@@ -4002,7 +4002,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool start_array(std::size_t len) override
+    bool start_array(std::size_t len = -1)
     {
         const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::array_start, discarded);
         keep_stack.push_back(keep);
@@ -4023,7 +4023,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
         return true;
     }
 
-    bool end_array() override
+    bool end_array()
     {
         bool keep = true;
 
@@ -4055,7 +4055,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
     }
 
     bool parse_error(std::size_t, const std::string&,
-                     const detail::exception& ex) override
+                     const detail::exception& ex)
     {
         errored = true;
         if (allow_exceptions)
@@ -4178,7 +4178,7 @@ class json_sax_dom_callback_parser : public json_sax<BasicJsonType>
 };
 
 template<typename BasicJsonType>
-class json_sax_acceptor : public json_sax<BasicJsonType>
+class json_sax_acceptor
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -4186,62 +4186,62 @@ class json_sax_acceptor : public json_sax<BasicJsonType>
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
 
-    bool null() override
+    bool null()
     {
         return true;
     }
 
-    bool boolean(bool) override
+    bool boolean(bool)
     {
         return true;
     }
 
-    bool number_integer(number_integer_t) override
+    bool number_integer(number_integer_t)
     {
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t) override
+    bool number_unsigned(number_unsigned_t)
     {
         return true;
     }
 
-    bool number_float(number_float_t, const string_t&) override
+    bool number_float(number_float_t, const string_t&)
     {
         return true;
     }
 
-    bool string(string_t&) override
+    bool string(string_t&)
     {
         return true;
     }
 
-    bool start_object(std::size_t) override
+    bool start_object(std::size_t = -1)
     {
         return true;
     }
 
-    bool key(string_t&) override
+    bool key(string_t&)
     {
         return true;
     }
 
-    bool end_object() override
+    bool end_object()
     {
         return true;
     }
 
-    bool start_array(std::size_t) override
+    bool start_array(std::size_t = -1)
     {
         return true;
     }
 
-    bool end_array() override
+    bool end_array()
     {
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&, const detail::exception&) override
+    bool parse_error(std::size_t, const std::string&, const detail::exception&)
     {
         return false;
     }
@@ -4294,8 +4294,6 @@ class parser
         /// the parser finished reading a JSON value
         value
     };
-
-    using json_sax_t = json_sax<BasicJsonType>;
 
     using parser_callback_t =
         std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
@@ -4385,7 +4383,8 @@ class parser
         return sax_parse(&sax_acceptor, strict);
     }
 
-    bool sax_parse(json_sax_t* sax, const bool strict = true)
+    template <typename SAX>
+    bool sax_parse(SAX* sax, const bool strict = true)
     {
         const bool result = sax_parse_internal(sax);
 
@@ -4401,7 +4400,8 @@ class parser
     }
 
   private:
-    bool sax_parse_internal(json_sax_t* sax)
+    template <typename SAX>
+    bool sax_parse_internal(SAX* sax)
     {
         // stack to remember the hieararchy of structured values we are parsing
         // true = array; false = object
@@ -4418,7 +4418,7 @@ class parser
                 {
                     case token_type::begin_object:
                     {
-                        if (JSON_UNLIKELY(not sax->start_object()))
+                        if (JSON_UNLIKELY(not sax->start_object(-1)))
                         {
                             return false;
                         }
@@ -4466,7 +4466,7 @@ class parser
 
                     case token_type::begin_array:
                     {
-                        if (JSON_UNLIKELY(not sax->start_array()))
+                        if (JSON_UNLIKELY(not sax->start_array(-1)))
                         {
                             return false;
                         }
@@ -5774,14 +5774,14 @@ namespace detail
 /*!
 @brief deserialization of CBOR, MessagePack, and UBJSON values
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, typename SAX = json_sax_dom_parser<BasicJsonType>>
 class binary_reader
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using json_sax_t = json_sax<BasicJsonType>;
+    using json_sax_t = SAX;
 
   public:
     /*!
@@ -6065,7 +6065,7 @@ class binary_reader
             }
 
             case 0x9F: // array (indefinite length)
-                return get_cbor_array(json_sax_t::no_limit);
+                return get_cbor_array(std::size_t(-1));
 
             // map (0x00..0x17 pairs of data items follow)
             case 0xA0:
@@ -6119,7 +6119,7 @@ class binary_reader
             }
 
             case 0xBF: // map (indefinite length)
-                return get_cbor_object(json_sax_t::no_limit);
+                return get_cbor_object(std::size_t(-1));
 
             case 0xF4: // false
                 return sax->boolean(false);
@@ -6764,7 +6764,7 @@ class binary_reader
     }
 
     /*!
-    @param[in] len  the length of the array or json_sax_t::no_limit for an
+    @param[in] len  the length of the array or std::size_t(-1) for an
                     array of indefinite size
     @return whether array creation completed
     */
@@ -6775,7 +6775,7 @@ class binary_reader
             return false;
         }
 
-        if (len != json_sax_t::no_limit)
+        if (len != std::size_t(-1))
             for (std::size_t i = 0; i < len; ++i)
             {
                 if (JSON_UNLIKELY(not parse_cbor_internal()))
@@ -6798,7 +6798,7 @@ class binary_reader
     }
 
     /*!
-    @param[in] len  the length of the object or json_sax_t::no_limit for an
+    @param[in] len  the length of the object or std::size_t(-1) for an
                     object of indefinite size
     @return whether object creation completed
     */
@@ -6810,7 +6810,7 @@ class binary_reader
         }
 
         string_t key;
-        if (len != json_sax_t::no_limit)
+        if (len != std::size_t(-1))
         {
             for (std::size_t i = 0; i < len; ++i)
             {
@@ -7302,7 +7302,7 @@ class binary_reader
         }
         else
         {
-            if (JSON_UNLIKELY(not sax->start_array()))
+            if (JSON_UNLIKELY(not sax->start_array(-1)))
             {
                 return false;
             }
@@ -7372,7 +7372,7 @@ class binary_reader
         }
         else
         {
-            if (JSON_UNLIKELY(not sax->start_object()))
+            if (JSON_UNLIKELY(not sax->start_object(-1)))
             {
                 return false;
             }
@@ -11040,7 +11040,7 @@ class basic_json
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
     friend class ::nlohmann::detail::binary_writer;
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, typename SAX>
     friend class ::nlohmann::detail::binary_reader;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::json_sax_dom_parser;
@@ -11981,8 +11981,6 @@ class basic_json
     @since version 1.0.0
     */
     using parser_callback_t = typename parser::parser_callback_t;
-
-    using json_sax_t = typename parser::json_sax_t;
 
     //////////////////
     // constructors //
@@ -16883,7 +16881,8 @@ class basic_json
         return parser(i).accept(true);
     }
 
-    static bool sax_parse(detail::input_adapter&& i, json_sax_t* sax,
+    template <typename SAX>
+    static bool sax_parse(detail::input_adapter&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
     {
@@ -16893,7 +16892,7 @@ class basic_json
             case input_format_t::json:
                 return parser(std::move(i)).sax_parse(sax, strict);
             default:
-                return binary_reader(std::move(i)).sax_parse(format, sax, strict);
+                return detail::binary_reader<basic_json, SAX>(std::move(i)).sax_parse(format, sax, strict);
         }
     }
 
@@ -16966,11 +16965,11 @@ class basic_json
         return parser(detail::input_adapter(first, last)).accept(true);
     }
 
-    template<class IteratorType, typename std::enable_if<
+    template<class IteratorType, class SAX, typename std::enable_if<
                  std::is_base_of<
                      std::random_access_iterator_tag,
                      typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
-    static bool sax_parse(IteratorType first, IteratorType last, json_sax_t* sax)
+    static bool sax_parse(IteratorType first, IteratorType last, SAX* sax)
     {
         return parser(detail::input_adapter(first, last)).sax_parse(sax);
     }
