@@ -40,6 +40,8 @@ else()
     message(STATUS "Using the single-header code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
 endif()
 
+message(STATUS "target name: ${NLOHMANN_JSON_TARGET_NAME}")
+
 ##
 ## TARGET
 ## create target and add include path
