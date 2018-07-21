@@ -438,7 +438,7 @@ TEST_CASE("value conversion")
         std::nullptr_t n;
         json j(n);
 
-        std::nullptr_t n2 = j;
+        std::nullptr_t n2 = (std::nullptr_t)j;
         CHECK(n2 == n);
     }
 
