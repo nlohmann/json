@@ -22,6 +22,16 @@ namespace nlohmann
 {
 namespace detail
 {
+template<typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
+{
+    if (JSON_UNLIKELY(not j.is_null()))
+    {
+        JSON_THROW(type_error::create(302, "type must be null, but is " + std::string(j.type_name())));
+    }
+    n = nullptr;
+}
+
 // overloads for basic_json template parameters
 template<typename BasicJsonType, typename ArithmeticType,
          enable_if_t<std::is_arithmetic<ArithmeticType>::value and

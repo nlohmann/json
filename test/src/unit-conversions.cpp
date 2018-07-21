@@ -433,6 +433,48 @@ TEST_CASE("value conversion")
 #endif
     }
 
+    SECTION("get null (implicit)")
+    {
+        std::nullptr_t n;
+        json j(n);
+
+        std::nullptr_t n2 = j;
+        CHECK(n2 == n);
+    }
+
+    SECTION("get null (explicit)")
+    {
+        std::nullptr_t n;
+        json j(n);
+
+        auto n2 = j.get<std::nullptr_t>();
+        CHECK(n2 == n);
+
+        CHECK_THROWS_AS(json(json::value_t::string).get<std::nullptr_t>(), json::type_error&);
+        CHECK_THROWS_AS(json(json::value_t::object).get<std::nullptr_t>(), json::type_error&);
+        CHECK_THROWS_AS(json(json::value_t::array).get<std::nullptr_t>(), json::type_error&);
+        CHECK_THROWS_AS(json(json::value_t::boolean).get<std::nullptr_t>(), json::type_error&);
+        CHECK_THROWS_AS(json(json::value_t::number_integer).get<std::nullptr_t>(), json::type_error&);
+        CHECK_THROWS_AS(json(json::value_t::number_unsigned).get<std::nullptr_t>(), json::type_error&);
+        CHECK_THROWS_AS(json(json::value_t::number_float).get<std::nullptr_t>(), json::type_error&);
+
+        CHECK_THROWS_WITH(json(json::value_t::string).get<std::nullptr_t>(),
+                          "[json.exception.type_error.302] type must be null, but is string");
+        CHECK_THROWS_WITH(json(json::value_t::object).get<std::nullptr_t>(),
+                          "[json.exception.type_error.302] type must be null, but is object");
+        CHECK_THROWS_WITH(json(json::value_t::array).get<std::nullptr_t>(),
+                          "[json.exception.type_error.302] type must be null, but is array");
+        CHECK_THROWS_WITH(json(json::value_t::boolean).get<std::nullptr_t>(),
+                          "[json.exception.type_error.302] type must be null, but is boolean");
+        CHECK_THROWS_WITH(json(json::value_t::number_integer).get<std::nullptr_t>(),
+                          "[json.exception.type_error.302] type must be null, but is number");
+        CHECK_THROWS_WITH(json(json::value_t::number_unsigned).get<std::nullptr_t>(),
+                          "[json.exception.type_error.302] type must be null, but is number");
+        CHECK_THROWS_WITH(json(json::value_t::number_float).get<std::nullptr_t>(),
+                          "[json.exception.type_error.302] type must be null, but is number");
+
+    }
+
     SECTION("get a string (implicit)")
     {
         json::string_t s_reference{"Hello world"};
