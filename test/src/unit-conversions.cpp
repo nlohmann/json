@@ -433,15 +433,6 @@ TEST_CASE("value conversion")
 #endif
     }
 
-    SECTION("get null (implicit)")
-    {
-        std::nullptr_t n;
-        json j(n);
-
-        std::nullptr_t n2 = (std::nullptr_t)j;
-        CHECK(n2 == n);
-    }
-
     SECTION("get null (explicit)")
     {
         std::nullptr_t n;
