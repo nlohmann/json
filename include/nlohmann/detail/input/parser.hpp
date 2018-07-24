@@ -9,6 +9,7 @@
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta/is_sax.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/json_sax.hpp>
 #include <nlohmann/detail/input/lexer.hpp>
@@ -145,6 +146,7 @@ class parser
     template <typename SAX>
     bool sax_parse(SAX* sax, const bool strict = true)
     {
+        (void)detail::is_sax_static_asserts<SAX, BasicJsonType>{};
         const bool result = sax_parse_internal(sax);
 
         // strict mode: next byte must be EOF

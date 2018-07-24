@@ -17,6 +17,7 @@
 #include <nlohmann/detail/input/json_sax.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta/is_sax.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
@@ -47,6 +48,7 @@ class binary_reader
     */
     explicit binary_reader(input_adapter_t adapter) : ia(std::move(adapter))
     {
+        (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
         assert(ia);
     }
 
