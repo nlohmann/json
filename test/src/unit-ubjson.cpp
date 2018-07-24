@@ -70,7 +70,7 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool start_object(std::size_t = -1)
+    bool start_object(std::size_t)
     {
         return events_left-- > 0;
     }
@@ -85,7 +85,7 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool start_array(std::size_t = -1)
+    bool start_array(std::size_t)
     {
         return events_left-- > 0;
     }

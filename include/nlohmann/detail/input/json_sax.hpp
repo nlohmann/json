@@ -25,9 +25,6 @@ struct json_sax
     /// type for strings
     using string_t = typename BasicJsonType::string_t;
 
-    /// constant to indicate that no size limit is given for array or object
-    static constexpr auto no_limit = std::size_t(-1);
-
     /*!
     @brief a null value was read
     @return whether parsing should proceed
@@ -72,11 +69,11 @@ struct json_sax
 
     /*!
     @brief the beginning of an object was read
-    @param[in] elements  number of object elements or no_limit if unknown
+    @param[in] elements  number of object elements or -1 if unknown
     @return whether parsing should proceed
     @note binary formats may report the number of elements
     */
-    virtual bool start_object(std::size_t elements = no_limit) = 0;
+    virtual bool start_object(std::size_t elements) = 0;
 
     /*!
     @brief an object key was read
@@ -93,11 +90,11 @@ struct json_sax
 
     /*!
     @brief the beginning of an array was read
-    @param[in] elements  number of array elements or no_limit if unknown
+    @param[in] elements  number of array elements or -1 if unknown
     @return whether parsing should proceed
     @note binary formats may report the number of elements
     */
-    virtual bool start_array(std::size_t elements = no_limit) = 0;
+    virtual bool start_array(std::size_t elements) = 0;
 
     /*!
     @brief the end of an array was read
@@ -189,11 +186,11 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool start_object(std::size_t len = -1)
+    bool start_object(std::size_t len)
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
 
-        if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+        if (JSON_UNLIKELY(len != -1 and len > ref_stack.back()->max_size()))
         {
             JSON_THROW(out_of_range::create(408,
                                             "excessive object size: " + std::to_string(len)));
@@ -215,11 +212,11 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool start_array(std::size_t len = -1)
+    bool start_array(std::size_t len)
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
 
-        if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+        if (JSON_UNLIKELY(len != -1 and len > ref_stack.back()->max_size()))
         {
             JSON_THROW(out_of_range::create(408,
                                             "excessive array size: " + std::to_string(len)));
@@ -364,7 +361,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool start_object(std::size_t len = -1)
+    bool start_object(std::size_t len)
     {
         // check callback for object start
         const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::object_start, discarded);
@@ -376,7 +373,7 @@ class json_sax_dom_callback_parser
         // check object limit
         if (ref_stack.back())
         {
-            if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+            if (JSON_UNLIKELY(len != -1 and len > ref_stack.back()->max_size()))
             {
                 JSON_THROW(out_of_range::create(408,
                                                 "excessive object size: " + std::to_string(len)));
@@ -438,7 +435,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool start_array(std::size_t len = -1)
+    bool start_array(std::size_t len)
     {
         const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::array_start, discarded);
         keep_stack.push_back(keep);
@@ -449,7 +446,7 @@ class json_sax_dom_callback_parser
         // check array limit
         if (ref_stack.back())
         {
-            if (JSON_UNLIKELY(len != json_sax<BasicJsonType>::no_limit and len > ref_stack.back()->max_size()))
+            if (JSON_UNLIKELY(len != -1 and len > ref_stack.back()->max_size()))
             {
                 JSON_THROW(out_of_range::create(408,
                                                 "excessive array size: " + std::to_string(len)));
