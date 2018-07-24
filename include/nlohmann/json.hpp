@@ -48,7 +48,8 @@ SOFTWARE.
 
 #include <nlohmann/json_fwd.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
-#include <nlohmann/detail/meta.hpp>
+#include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/detail/conversions/from_json.hpp>

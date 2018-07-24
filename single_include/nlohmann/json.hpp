@@ -238,41 +238,17 @@ contains a `mapped_type`, whereas `std::vector` fails the test.
                 std::is_integral<decltype(detect(std::declval<T>()))>::value; \
     }
 
-// #include <nlohmann/detail/meta.hpp>
+// #include <nlohmann/detail/meta/cpp_future.hpp>
 
 
 #include <ciso646> // not
 #include <cstddef> // size_t
-#include <limits> // numeric_limits
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
-#include <utility> // declval
-
-// #include <nlohmann/json_fwd.hpp>
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
 
 namespace nlohmann
 {
-/*!
-@brief detail namespace with internal helper functions
-
-This namespace collects functions that should not be exposed,
-implementations of some @ref basic_json methods, and meta-programming helpers.
-
-@since version 2.1.0
-*/
 namespace detail
 {
-/////////////
-// helpers //
-/////////////
-
-template<typename> struct is_basic_json : std::false_type {};
-
-NLOHMANN_BASIC_JSON_TPL_DECLARATION
-struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
-
 // alias templates to reduce boilerplate
 template<bool B, typename T = void>
 using enable_if_t = typename std::enable_if<B, T>::type;
@@ -334,6 +310,54 @@ template<class B> struct negation : std::integral_constant<bool, not B::value> {
 // dispatch utility (taken from ranges-v3)
 template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
 template<> struct priority_tag<0> {};
+
+// taken from ranges-v3
+template<typename T>
+struct static_const
+{
+    static constexpr T value{};
+};
+
+template<typename T>
+constexpr T static_const<T>::value;
+}
+}
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
+
+#include <ciso646> // not
+#include <limits> // numeric_limits
+#include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
+#include <utility> // declval
+
+// #include <nlohmann/json_fwd.hpp>
+
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
+namespace nlohmann
+{
+/*!
+@brief detail namespace with internal helper functions
+
+This namespace collects functions that should not be exposed,
+implementations of some @ref basic_json methods, and meta-programming helpers.
+
+@since version 2.1.0
+*/
+namespace detail
+{
+/////////////
+// helpers //
+/////////////
+
+template<typename> struct is_basic_json : std::false_type {};
+
+NLOHMANN_BASIC_JSON_TPL_DECLARATION
+struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
 
 ////////////////////////
 // has_/is_ functions //
@@ -507,16 +531,6 @@ struct is_compatible_type
       is_compatible_complete_type<BasicJsonType, CompatibleType>>
 {
 };
-
-// taken from ranges-v3
-template<typename T>
-struct static_const
-{
-    static constexpr T value{};
-};
-
-template<typename T>
-constexpr T static_const<T>::value;
 }
 }
 
@@ -950,7 +964,9 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta.hpp>
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
@@ -1335,7 +1351,9 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <valarray> // valarray
 #include <vector> // vector
 
-// #include <nlohmann/detail/meta.hpp>
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
@@ -4873,7 +4891,7 @@ template<typename BasicJsonType> struct internal_iterator
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta.hpp>
+// #include <nlohmann/detail/meta/cpp_future.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
@@ -9488,7 +9506,7 @@ char* to_chars(char* first, char* last, FloatType value)
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta.hpp>
+// #include <nlohmann/detail/meta/cpp_future.hpp>
 
 // #include <nlohmann/detail/output/output_adapters.hpp>
 
