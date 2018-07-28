@@ -1815,7 +1815,7 @@ TEST_CASE("CBOR roundtrips", "[hide]")
             std::ifstream f_json(filename);
             json j1 = json::parse(f_json);
 
-            SECTION("std::vector<uint8_t>")
+            SECTION(filename + ": std::vector<uint8_t>")
             {
                 // parse CBOR file
                 std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
@@ -1829,7 +1829,7 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("std::ifstream")
+            SECTION(filename + ": std::ifstream")
             {
                 // parse CBOR file
                 std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
@@ -1840,7 +1840,7 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("uint8_t* and size")
+            SECTION(filename + ": uint8_t* and size")
             {
                 // parse CBOR file
                 std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
@@ -1854,7 +1854,7 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("output to output adapters")
+            SECTION(filename + ": output to output adapters")
             {
                 // parse CBOR file
                 std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
@@ -1862,7 +1862,7 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                     (std::istreambuf_iterator<char>(f_cbor)),
                     std::istreambuf_iterator<char>());
 
-                SECTION("std::vector<uint8_t>")
+                SECTION(filename + ": output adapters: std::vector<uint8_t>")
                 {
                     std::vector<uint8_t> vec;
                     json::to_cbor(j1, vec);

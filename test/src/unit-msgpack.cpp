@@ -1504,7 +1504,7 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
             std::ifstream f_json(filename);
             json j1 = json::parse(f_json);
 
-            SECTION("std::vector<uint8_t>")
+            SECTION(filename + ": std::vector<uint8_t>")
             {
                 // parse MessagePack file
                 std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
@@ -1518,7 +1518,7 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("std::ifstream")
+            SECTION(filename + ": std::ifstream")
             {
                 // parse MessagePack file
                 std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
@@ -1529,7 +1529,7 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("uint8_t* and size")
+            SECTION(filename + ": uint8_t* and size")
             {
                 // parse MessagePack file
                 std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
@@ -1543,7 +1543,7 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("output to output adapters")
+            SECTION(filename + ": output to output adapters")
             {
                 // parse MessagePack file
                 std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
@@ -1551,7 +1551,7 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
                     (std::istreambuf_iterator<char>(f_msgpack)),
                     std::istreambuf_iterator<char>());
 
-                SECTION("std::vector<uint8_t>")
+                SECTION(filename + ": output adapters: std::vector<uint8_t>")
                 {
                     std::vector<uint8_t> vec;
                     json::to_msgpack(j1, vec);
