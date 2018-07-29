@@ -2199,12 +2199,12 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
         {
             CAPTURE(filename);
 
-            // parse JSON file
-            std::ifstream f_json(filename);
-            json j1 = json::parse(f_json);
-
             SECTION(filename + ": std::vector<uint8_t>")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse MessagePack file
                 std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
                 std::vector<uint8_t> packed(
@@ -2219,6 +2219,10 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
 
             SECTION(filename + ": std::ifstream")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse MessagePack file
                 std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
                 json j2;
@@ -2230,6 +2234,10 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
 
             SECTION(filename + ": uint8_t* and size")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse MessagePack file
                 std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
                 std::vector<uint8_t> packed(
@@ -2244,6 +2252,10 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
 
             SECTION(filename + ": output to output adapters")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse MessagePack file
                 std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
                 std::vector<uint8_t> packed(
