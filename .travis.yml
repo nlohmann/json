@@ -158,6 +158,9 @@ matrix:
   - os: osx
     osx_image: xcode9.3
 
+  - os: osx
+    osx_image: xcode9.4
+
   # Linux / GCC
 
   - os: linux
@@ -194,13 +197,21 @@ matrix:
 
   - os: linux
     compiler: gcc
+    env: COMPILER=g++-8
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-8', 'ninja-build']
+
+  - os: linux
+    compiler: gcc
     env:
-      - COMPILER=g++-7
+      - COMPILER=g++-8
       - CXXFLAGS=-std=c++17
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-7', 'ninja-build']
+        packages: ['g++-8', 'ninja-build']
 
   # Linux / Clang
 
