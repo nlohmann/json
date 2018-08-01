@@ -273,13 +273,21 @@ matrix:
 
   - os: linux
     compiler: clang
+    env: COMPILER=clang++-6.0
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+        packages: ['g++-6', 'clang-6.0', 'ninja-build']
+
+  - os: linux
+    compiler: clang
     env:
-      - COMPILER=clang++-5.0
+      - COMPILER=clang++-6.0
       - CXXFLAGS=-std=c++1z
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
-        packages: ['g++-6', 'clang-5.0', 'ninja-build']
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+        packages: ['g++-6', 'clang-6.0', 'ninja-build']
 
 ################
 # build script #
