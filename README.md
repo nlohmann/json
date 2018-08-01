@@ -828,30 +828,32 @@ The following compilers are currently used in continuous integration at [Travis]
 
 | Compiler        | Operating System             | Version String |
 |-----------------|------------------------------|----------------|
-| GCC 4.9.4       | Ubuntu 14.04.5 LTS           | g++-4.9 (Ubuntu 4.9.4-2ubuntu1~14.04.1) 4.9.4 |
-| GCC 5.4.1       | Ubuntu 14.04.5 LTS           | g++-5 (Ubuntu 5.4.1-2ubuntu1~14.04) 5.4.1 20160904 |
-| GCC 6.3.0       | Ubuntu 14.04.5 LTS           | g++-6 (Ubuntu/Linaro 6.3.0-18ubuntu2~14.04) 6.3.0 20170519 |
-| GCC 7.1.0       | Ubuntu 14.04.5 LTS           | g++-7 (Ubuntu 7.1.0-5ubuntu2~14.04) 7.1.0
-| GCC 7.3.0       | Windows Server 2012 R2 (x64) | g++ (x86_64-posix-seh-rev0, Built by MinGW-W64 project) 7.3.0
-| Clang 3.5.0     | Ubuntu 14.04.5 LTS           | clang version 3.5.0-4ubuntu2~trusty2 (tags/RELEASE_350/final) |
-| Clang 3.6.2     | Ubuntu 14.04.5 LTS           | clang version 3.6.2-svn240577-1~exp1 (branches/release_36) |
-| Clang 3.7.1     | Ubuntu 14.04.5 LTS           | clang version 3.7.1-svn253571-1~exp1 (branches/release_37) |
-| Clang 3.8.0     | Ubuntu 14.04.5 LTS           | clang version 3.8.0-2ubuntu3~trusty5 (tags/RELEASE_380/final) |
-| Clang 3.9.1     | Ubuntu 14.04.5 LTS           | clang version 3.9.1-4ubuntu3~14.04.2 (tags/RELEASE_391/rc2) |
-| Clang 4.0.1     | Ubuntu 14.04.5 LTS           | clang version 4.0.1-svn305264-1~exp1 (branches/release_40) |
-| Clang 5.0.0     | Ubuntu 14.04.5 LTS           | clang version 5.0.0-svn310902-1~exp1 (branches/release_50) |
-| Clang Xcode 6.4 | Darwin Kernel Version 14.3.0 (OSX 10.10.3) | Apple LLVM version 6.1.0 (clang-602.0.53) (based on LLVM 3.6.0svn) |
-| Clang Xcode 7.3 | Darwin Kernel Version 15.0.0 (OSX 10.10.5) | Apple LLVM version 7.3.0 (clang-703.0.29) |
-| Clang Xcode 8.0 | Darwin Kernel Version 15.6.0 | Apple LLVM version 8.0.0 (clang-800.0.38) |
-| Clang Xcode 8.1 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
-| Clang Xcode 8.2 | Darwin Kernel Version 16.1.0 (macOS 10.12.1) | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
-| Clang Xcode 8.3 | Darwin Kernel Version 16.5.0 (macOS 10.12.4) | Apple LLVM version 8.1.0 (clang-802.0.38) |
-| Clang Xcode 9.0 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.37) |
-| Clang Xcode 9.1 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.38) |
-| Clang Xcode 9.2 | Darwin Kernel Version 16.7.0 (macOS 10.12.6) | Apple LLVM version 9.0.0 (clang-900.0.39.2) |
-| Clang Xcode 9.3 | Darwin Kernel Version 17.4.0 (macOS 10.13.0) | Apple LLVM version 9.1.0 (clang-902.0.39.1)
+| GCC 4.9.4       | Ubuntu 14.04.1 LTS           | g++-4.9 (Ubuntu 4.9.4-2ubuntu1~14.04.1) 4.9.4 |
+| GCC 5.5.0       | Ubuntu 14.04.1 LTS           | g++-5 (Ubuntu 5.5.0-12ubuntu1~14.04) 5.5.0 20171010 |
+| GCC 6.4.0       | Ubuntu 14.04.1 LTS           | g++-6 (Ubuntu 6.4.0-17ubuntu1~14.04) 6.4.0 20180424 |
+| GCC 7.3.0       | Ubuntu 14.04.1 LTS           | g++-7 (Ubuntu 7.3.0-21ubuntu1~14.04) 7.3.0 |
+| GCC 7.3.0       | Windows Server 2012 R2 (x64) | g++ (x86_64-posix-seh-rev0, Built by MinGW-W64 project) 7.3.0 |
+| GCC 8.1.0       | Ubuntu 14.04.1 LTS           | g++-8 (Ubuntu 8.1.0-5ubuntu1~14.04) 8.1.0 |
+| Clang 3.5.0     | Ubuntu 14.04.1 LTS           | clang version 3.5.0-4ubuntu2~trusty2 (tags/RELEASE_350/final) (based on LLVM 3.5.0) |
+| Clang 3.6.2     | Ubuntu 14.04.1 LTS           | clang version 3.6.2-svn240577-1~exp1 (branches/release_36) (based on LLVM 3.6.2) |
+| Clang 3.7.1     | Ubuntu 14.04.1 LTS           | clang version 3.7.1-svn253571-1~exp1 (branches/release_37) (based on LLVM 3.7.1) |
+| Clang 3.8.0     | Ubuntu 14.04.1 LTS           | clang version 3.8.0-2ubuntu3~trusty5 (tags/RELEASE_380/final) |
+| Clang 3.9.1     | Ubuntu 14.04.1 LTS           | clang version 3.9.1-4ubuntu3~14.04.3 (tags/RELEASE_391/rc2) |
+| Clang 4.0.1     | Ubuntu 14.04.1 LTS           | clang version 4.0.1-svn305264-1~exp1 (branches/release_40) |
+| Clang 5.0.2     | Ubuntu 14.04.1 LTS           | clang version 5.0.2-svn328729-1~exp1~20180509123505.100 (branches/release_50) |
+| Clang 6.0.1     | Ubuntu 14.04.1 LTS           | clang version 6.0.1-svn334776-1~exp1~20180726133705.85 (branches/release_60) |
+| Clang Xcode 6.4 | OSX 10.10.5 | Apple LLVM version 6.1.0 (clang-602.0.53) (based on LLVM 3.6.0svn) |
+| Clang Xcode 7.3 | OSX 10.11.6 | Apple LLVM version 7.3.0 (clang-703.0.31) |
+| Clang Xcode 8.0 | OSX 10.11.6 | Apple LLVM version 8.0.0 (clang-800.0.38) |
+| Clang Xcode 8.1 | OSX 10.12.6 | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
+| Clang Xcode 8.2 | OSX 10.12.6 | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
+| Clang Xcode 8.3 | OSX 10.11.6 | Apple LLVM version 8.1.0 (clang-802.0.38) |
+| Clang Xcode 9.0 | OSX 10.12.6 | Apple LLVM version 9.0.0 (clang-900.0.37) |
+| Clang Xcode 9.1 | OSX 10.12.6 | Apple LLVM version 9.0.0 (clang-900.0.38) |
+| Clang Xcode 9.2 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.1) |
+| Clang Xcode 9.3 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.2) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 |
-| Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.5.180.51428, MSVC 19.12.25830.2 |
+| Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.7.180.61344, MSVC 19.14.26433.0 |
 
 ## License
 
