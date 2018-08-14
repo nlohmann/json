@@ -1350,21 +1350,22 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
     SECTION("input from msgpack-python")
     {
         // most of these are exluded due to differences in key order (not a real problem)
-        auto exclude_packed = std::set<std::string>{
-                    "test/data/json.org/1.json",
-                    "test/data/json.org/2.json",
-                    "test/data/json.org/3.json",
-                    "test/data/json.org/4.json",
-                    "test/data/json.org/5.json",
-                    "test/data/json_testsuite/sample.json", // kills AppVeyor
-                    "test/data/json_tests/pass1.json",
-                    "test/data/regression/working_file.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_basic.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_long_strings.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_simple.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_string_unicode.json",
+        auto exclude_packed = std::set<std::string>
+        {
+            "test/data/json.org/1.json",
+            "test/data/json.org/2.json",
+            "test/data/json.org/3.json",
+            "test/data/json.org/4.json",
+            "test/data/json.org/5.json",
+            "test/data/json_testsuite/sample.json", // kills AppVeyor
+            "test/data/json_tests/pass1.json",
+            "test/data/regression/working_file.json",
+            "test/data/nst_json_testsuite/test_parsing/y_object.json",
+            "test/data/nst_json_testsuite/test_parsing/y_object_basic.json",
+            "test/data/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
+            "test/data/nst_json_testsuite/test_parsing/y_object_long_strings.json",
+            "test/data/nst_json_testsuite/test_parsing/y_object_simple.json",
+            "test/data/nst_json_testsuite/test_parsing/y_object_string_unicode.json",
         };
 
         for (std::string filename :
