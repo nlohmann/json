@@ -1660,6 +1660,21 @@ TEST_CASE("CBOR roundtrips", "[hide]")
 {
     SECTION("input from flynn")
     {
+        // most of these are exluded due to differences in key order (not a real problem)
+        auto exclude_packed = std::set<std::string>{
+                    "test/data/json.org/1.json",
+                    "test/data/json.org/2.json",
+                    "test/data/json.org/3.json",
+                    "test/data/json.org/4.json",
+                    "test/data/json.org/5.json",
+                    "test/data/json_testsuite/sample.json", // kills AppVeyor
+                    "test/data/json_tests/pass1.json",
+                    "test/data/regression/working_file.json",
+                    "test/data/nst_json_testsuite/test_parsing/y_object.json",
+                    "test/data/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
+                    "test/data/nst_json_testsuite/test_parsing/y_object_long_strings.json",
+        };
+
         for (std::string filename :
                 {
                     "test/data/json_nlohmann_tests/all_unicode.json",
@@ -1811,12 +1826,12 @@ TEST_CASE("CBOR roundtrips", "[hide]")
         {
             CAPTURE(filename);
 
-            // parse JSON file
-            std::ifstream f_json(filename);
-            json j1 = json::parse(f_json);
-
-            SECTION("std::vector<uint8_t>")
+            SECTION(filename + ": std::vector<uint8_t>")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse CBOR file
                 std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
                 std::vector<uint8_t> packed(
@@ -1829,8 +1844,12 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("std::ifstream")
+            SECTION(filename + ": std::ifstream")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse CBOR file
                 std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
                 json j2;
@@ -1840,8 +1859,12 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("uint8_t* and size")
+            SECTION(filename + ": uint8_t* and size")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse CBOR file
                 std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
                 std::vector<uint8_t> packed(
@@ -1854,19 +1877,26 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("output to output adapters")
+            SECTION(filename + ": output to output adapters")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse CBOR file
                 std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
                 std::vector<uint8_t> packed(
                     (std::istreambuf_iterator<char>(f_cbor)),
                     std::istreambuf_iterator<char>());
 
-                SECTION("std::vector<uint8_t>")
+                if (!exclude_packed.count(filename))
                 {
-                    std::vector<uint8_t> vec;
-                    json::to_cbor(j1, vec);
-                    CHECK(vec == packed);
+                    SECTION(filename + ": output adapters: std::vector<uint8_t>")
+                    {
+                        std::vector<uint8_t> vec;
+                        json::to_cbor(j1, vec);
+                        CHECK(vec == packed);
+                    }
                 }
             }
         }
