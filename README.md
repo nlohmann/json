@@ -173,7 +173,6 @@ json empty_object_explicit = json::object();
 json array_not_object = json::array({ {"currency", "USD"}, {"value", 42.99} });
 ```
 
-
 ### Serialization / Deserialization
 
 #### To/from strings
@@ -239,6 +238,7 @@ std::cout << j_string << " == " << serialized_string << std::endl;
 
 [`.dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a5adea76fedba9898d404fef8598aa663.html#a5adea76fedba9898d404fef8598aa663) always returns the serialized value, and [`.get<std::string>()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a16f9445f7629f634221a42b967cdcd43.html#a16f9445f7629f634221a42b967cdcd43) returns the originally stored string value.
 
+Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a5adea76fedba9898d404fef8598aa663.html#a5adea76fedba9898d404fef8598aa663) may throw an exception.
 
 #### To/from streams (e.g. files, string streams)
 
@@ -286,6 +286,49 @@ You may leave the iterators for the range [begin, end):
 std::vector<std::uint8_t> v = {'t', 'r', 'u', 'e'};
 json j = json::parse(v);
 ```
+
+#### SAX interface
+
+The library uses a SAX-like interface with the following functions:
+
+```cpp
+// called when null is parsed
+bool null();
+
+// called when a boolean is parsed; value is passed
+bool boolean(bool val);
+
+// called when a signed or unsigned integer number is parsed; value is passed
+bool number_integer(number_integer_t val);
+bool number_unsigned(number_unsigned_t val);
+
+// called when a floating-point number is parsed; value and original string is passed
+bool number_float(number_float_t val, const string_t& s);
+
+// called when a string is parsed; value is passed and can be safely moved away
+bool string(string_t& val);
+
+// called when an object or array begins or ends, resp. The number of elements is passed (or -1 if not known)
+bool start_object(std::size_t elements);
+bool end_object();
+bool start_array(std::size_t elements);
+bool end_array();
+// called when an object key is parsed; value is passed and can be safely moved away
+bool key(string_t& val);
+
+// called when a parse error occurs; byte position, the last token, and an exception is passed
+bool parse_error(std::size_t position, const std::string& last_token, const detail::exception& ex);
+```
+
+The return value of each function determines whether parsing should proceed.
+
+To implement your own SAX handler, proceed as follows:
+
+1. Implement the SAX interface in a class. You can use class `nlohmann::json_sax<json>` as base class, but you can also use any class where the functions described above are implemented and public.
+2. Create an object of your SAX interface class, e.g. `my_sax`.
+3. Call `bool json::sax_parse(input, &my_sax)`; where the first parameter can be any input like a string or an input stream and the second parameter is a pointer to your SAX interface.
+
+Note the `sax_parse` function only returns a `bool` indicating the result of the last executed SAX event. It does not return a  `json` value - it is up to you to decide what to do with the SAX events. Furthermore, no exceptions are thrown in case of a parse error - it is up to you what to do with the exception object passed to your `parse_error` implementation. Internally, the SAX interface is used for the DOM parser (class `json_sax_dom_parser`) as well as the acceptor (`json_sax_acceptor`), see file [`json_sax.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/json_sax.hpp).
 
 
 ### STL-like access
@@ -799,8 +842,8 @@ json j_from_ubjson = json::from_ubjson(v_ubjson);
 
 Though it's 2018 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.9 - 7.2 (and possibly later)
-- Clang 3.4 - 5.0 (and possibly later)
+- GCC 4.9 - 8.2 (and possibly later)
+- Clang 3.4 - 6.1 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
@@ -884,7 +927,6 @@ Only if your request would contain confidential information, please [send me an 
 ## Security
 
 [Commits by Niels Lohmann](https://github.com/nlohmann/json/commits) and [releases](https://github.com/nlohmann/json/releases) are signed with this [PGP Key](https://keybase.io/nlohmann/pgp_keys.asc?fingerprint=797167ae41c0a6d9232e48457f3cea63ae251b69).
-
 
 ## Thanks
 

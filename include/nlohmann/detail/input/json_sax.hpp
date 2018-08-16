@@ -12,6 +12,11 @@ namespace nlohmann
 
 /*!
 @brief SAX interface
+
+This class describes the SAX interface used by @ref nlohmann::json::sax_parse.
+Each function is called in different situations while the input is parsed. The
+boolean return value informs the parser whether to continue processing the
+input.
 */
 template<typename BasicJsonType>
 struct json_sax
@@ -64,6 +69,7 @@ struct json_sax
     @brief a string was read
     @param[in] val  string value
     @return whether parsing should proceed
+    @note It is safe to move the passed string.
     */
     virtual bool string(string_t& val) = 0;
 
@@ -79,6 +85,7 @@ struct json_sax
     @brief an object key was read
     @param[in] val  object key
     @return whether parsing should proceed
+    @note It is safe to move the passed string.
     */
     virtual bool key(string_t& val) = 0;
 
@@ -146,7 +153,7 @@ class json_sax_dom_parser
                        parsing
     @param[in] allow_exceptions_  whether parse errors yield exceptions
     */
-    json_sax_dom_parser(BasicJsonType& r, const bool allow_exceptions_ = true)
+    explicit json_sax_dom_parser(BasicJsonType& r, const bool allow_exceptions_ = true)
         : root(r), allow_exceptions(allow_exceptions_)
     {}
 
