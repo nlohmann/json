@@ -212,6 +212,7 @@ class basic_json
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
 
     using input_format_t = detail::input_format_t;
+    using json_sax_t = json_sax<basic_json>;
 
     ////////////////
     // exceptions //
