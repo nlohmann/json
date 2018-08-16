@@ -1560,7 +1560,7 @@ class binary_reader
         }
         else
         {
-            if (JSON_UNLIKELY(not sax->start_array(-1)))
+            if (JSON_UNLIKELY(not sax->start_array(std::size_t(-1))))
             {
                 return false;
             }
@@ -1630,7 +1630,7 @@ class binary_reader
         }
         else
         {
-            if (JSON_UNLIKELY(not sax->start_object(-1)))
+            if (JSON_UNLIKELY(not sax->start_object(std::size_t(-1))))
             {
                 return false;
             }

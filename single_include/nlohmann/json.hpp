@@ -3966,7 +3966,7 @@ class json_sax_dom_parser
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
 
-        if (JSON_UNLIKELY(len != -1 and len > ref_stack.back()->max_size()))
+        if (JSON_UNLIKELY(len != std::size_t(-1) and len > ref_stack.back()->max_size()))
         {
             JSON_THROW(out_of_range::create(408,
                                             "excessive object size: " + std::to_string(len)));
@@ -3992,7 +3992,7 @@ class json_sax_dom_parser
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
 
-        if (JSON_UNLIKELY(len != -1 and len > ref_stack.back()->max_size()))
+        if (JSON_UNLIKELY(len != std::size_t(-1) and len > ref_stack.back()->max_size()))
         {
             JSON_THROW(out_of_range::create(408,
                                             "excessive array size: " + std::to_string(len)));
@@ -4149,7 +4149,7 @@ class json_sax_dom_callback_parser
         // check object limit
         if (ref_stack.back())
         {
-            if (JSON_UNLIKELY(len != -1 and len > ref_stack.back()->max_size()))
+            if (JSON_UNLIKELY(len != std::size_t(-1) and len > ref_stack.back()->max_size()))
             {
                 JSON_THROW(out_of_range::create(408,
                                                 "excessive object size: " + std::to_string(len)));
@@ -4222,7 +4222,7 @@ class json_sax_dom_callback_parser
         // check array limit
         if (ref_stack.back())
         {
-            if (JSON_UNLIKELY(len != -1 and len > ref_stack.back()->max_size()))
+            if (JSON_UNLIKELY(len != std::size_t(-1) and len > ref_stack.back()->max_size()))
             {
                 JSON_THROW(out_of_range::create(408,
                                                 "excessive array size: " + std::to_string(len)));
@@ -4425,7 +4425,7 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_object(std::size_t = -1)
+    bool start_object(std::size_t = std::size_t(-1))
     {
         return true;
     }
@@ -4440,7 +4440,7 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_array(std::size_t = -1)
+    bool start_array(std::size_t = std::size_t(-1))
     {
         return true;
     }
@@ -4595,7 +4595,7 @@ class parser
     template <typename SAX>
     bool sax_parse(SAX* sax, const bool strict = true)
     {
-        // (void)detail::is_sax_static_asserts<SAX, BasicJsonType>{};
+        (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
         const bool result = sax_parse_internal(sax);
 
         // strict mode: next byte must be EOF
@@ -4628,7 +4628,7 @@ class parser
                 {
                     case token_type::begin_object:
                     {
-                        if (JSON_UNLIKELY(not sax->start_object(-1)))
+                        if (JSON_UNLIKELY(not sax->start_object(std::size_t(-1))))
                         {
                             return false;
                         }
@@ -4676,7 +4676,7 @@ class parser
 
                     case token_type::begin_array:
                     {
-                        if (JSON_UNLIKELY(not sax->start_array(-1)))
+                        if (JSON_UNLIKELY(not sax->start_array(std::size_t(-1))))
                         {
                             return false;
                         }
@@ -7515,7 +7515,7 @@ class binary_reader
         }
         else
         {
-            if (JSON_UNLIKELY(not sax->start_array(-1)))
+            if (JSON_UNLIKELY(not sax->start_array(std::size_t(-1))))
             {
                 return false;
             }
@@ -7585,7 +7585,7 @@ class binary_reader
         }
         else
         {
-            if (JSON_UNLIKELY(not sax->start_object(-1)))
+            if (JSON_UNLIKELY(not sax->start_object(std::size_t(-1))))
             {
                 return false;
             }

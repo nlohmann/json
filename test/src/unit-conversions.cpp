@@ -435,7 +435,7 @@ TEST_CASE("value conversion")
 
     SECTION("get null (explicit)")
     {
-        std::nullptr_t n;
+        std::nullptr_t n = nullptr;
         json j(n);
 
         auto n2 = j.get<std::nullptr_t>();

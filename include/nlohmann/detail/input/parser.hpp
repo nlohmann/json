@@ -146,7 +146,7 @@ class parser
     template <typename SAX>
     bool sax_parse(SAX* sax, const bool strict = true)
     {
-        (void)detail::is_sax_static_asserts<SAX, BasicJsonType>{};
+        (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
         const bool result = sax_parse_internal(sax);
 
         // strict mode: next byte must be EOF
@@ -179,7 +179,7 @@ class parser
                 {
                     case token_type::begin_object:
                     {
-                        if (JSON_UNLIKELY(not sax->start_object(-1)))
+                        if (JSON_UNLIKELY(not sax->start_object(std::size_t(-1))))
                         {
                             return false;
                         }
@@ -227,7 +227,7 @@ class parser
 
                     case token_type::begin_array:
                     {
-                        if (JSON_UNLIKELY(not sax->start_array(-1)))
+                        if (JSON_UNLIKELY(not sax->start_array(std::size_t(-1))))
                         {
                             return false;
                         }
