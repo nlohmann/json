@@ -48,7 +48,8 @@ SOFTWARE.
 
 #include <nlohmann/json_fwd.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
-#include <nlohmann/detail/meta.hpp>
+#include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/detail/conversions/from_json.hpp>
@@ -170,7 +171,7 @@ class basic_json
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
     friend class ::nlohmann::detail::binary_writer;
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, typename SAX>
     friend class ::nlohmann::detail::binary_reader;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::json_sax_dom_parser;
@@ -211,6 +212,7 @@ class basic_json
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
 
     using input_format_t = detail::input_format_t;
+    using json_sax_t = json_sax<basic_json>;
 
     ////////////////
     // exceptions //
@@ -1111,8 +1113,6 @@ class basic_json
     @since version 1.0.0
     */
     using parser_callback_t = typename parser::parser_callback_t;
-
-    using json_sax_t = typename parser::json_sax_t;
 
     //////////////////
     // constructors //
@@ -6013,7 +6013,8 @@ class basic_json
         return parser(i).accept(true);
     }
 
-    static bool sax_parse(detail::input_adapter&& i, json_sax_t* sax,
+    template <typename SAX>
+    static bool sax_parse(detail::input_adapter&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
     {
@@ -6023,7 +6024,7 @@ class basic_json
             case input_format_t::json:
                 return parser(std::move(i)).sax_parse(sax, strict);
             default:
-                return binary_reader(std::move(i)).sax_parse(format, sax, strict);
+                return detail::binary_reader<basic_json, SAX>(std::move(i)).sax_parse(format, sax, strict);
         }
     }
 
@@ -6096,11 +6097,11 @@ class basic_json
         return parser(detail::input_adapter(first, last)).accept(true);
     }
 
-    template<class IteratorType, typename std::enable_if<
+    template<class IteratorType, class SAX, typename std::enable_if<
                  std::is_base_of<
                      std::random_access_iterator_tag,
                      typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
-    static bool sax_parse(IteratorType first, IteratorType last, json_sax_t* sax)
+    static bool sax_parse(IteratorType first, IteratorType last, SAX* sax)
     {
         return parser(detail::input_adapter(first, last)).sax_parse(sax);
     }

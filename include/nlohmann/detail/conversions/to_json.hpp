@@ -8,7 +8,8 @@
 #include <valarray> // valarray
 #include <vector> // vector
 
-#include <nlohmann/detail/meta.hpp>
+#include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 

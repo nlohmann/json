@@ -34,68 +34,68 @@ using nlohmann::json;
 
 #include <fstream>
 
-class SaxCountdown : public nlohmann::json::json_sax_t
+class SaxCountdown
 {
   public:
     explicit SaxCountdown(const int count) : events_left(count)
     {}
 
-    bool null() override
+    bool null()
     {
         return events_left-- > 0;
     }
 
-    bool boolean(bool) override
+    bool boolean(bool)
     {
         return events_left-- > 0;
     }
 
-    bool number_integer(json::number_integer_t) override
+    bool number_integer(json::number_integer_t)
     {
         return events_left-- > 0;
     }
 
-    bool number_unsigned(json::number_unsigned_t) override
+    bool number_unsigned(json::number_unsigned_t)
     {
         return events_left-- > 0;
     }
 
-    bool number_float(json::number_float_t, const std::string&) override
+    bool number_float(json::number_float_t, const std::string&)
     {
         return events_left-- > 0;
     }
 
-    bool string(std::string&) override
+    bool string(std::string&)
     {
         return events_left-- > 0;
     }
 
-    bool start_object(std::size_t) override
+    bool start_object(std::size_t)
     {
         return events_left-- > 0;
     }
 
-    bool key(std::string&) override
+    bool key(std::string&)
     {
         return events_left-- > 0;
     }
 
-    bool end_object() override
+    bool end_object()
     {
         return events_left-- > 0;
     }
 
-    bool start_array(std::size_t) override
+    bool start_array(std::size_t)
     {
         return events_left-- > 0;
     }
 
-    bool end_array() override
+    bool end_array()
     {
         return events_left-- > 0;
     }
 
-    bool parse_error(std::size_t, const std::string&, const json::exception&) override
+    bool parse_error(std::size_t, const std::string&, const json::exception&)
     {
         return false;
     }
