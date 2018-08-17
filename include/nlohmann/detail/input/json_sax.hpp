@@ -572,6 +572,13 @@ class json_sax_dom_callback_parser
         }
         else
         {
+            // skip this value if we already decided to skip the parent
+            // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
+            if (not ref_stack.back())
+            {
+                return {false, nullptr};
+            }
+
             assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
             if (ref_stack.back()->is_array())
             {

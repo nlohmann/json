@@ -1472,6 +1472,46 @@ TEST_CASE("regression tests")
         //                  "[json.exception.out_of_range.408] excessive object size: 8658170730974374167");
     }
 
+    SECTION("issue #971 - Add a SAX parser - late bug")
+    {
+        // a JSON text
+        auto text = R"(
+    {
+        "Image": {
+            "Width":  800,
+            "Height": 600,
+            "Title":  "View from 15th Floor",
+            "Thumbnail": {
+                "Url":    "http://www.example.com/image/481989943",
+                "Height": 125,
+                "Width":  100
+            },
+            "Animated" : false,
+            "IDs": [116, 943, 234, 38793]
+        }
+    }
+    )";
+
+        // define parser callback
+        json::parser_callback_t cb = [](int depth, json::parse_event_t event, json & parsed)
+        {
+            // skip object elements with key "Thumbnail"
+            if (event == json::parse_event_t::key and parsed == json("Thumbnail"))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        };
+
+        // parse (with callback) and serialize JSON
+        json j_filtered = json::parse(text, cb);
+
+        CHECK(j_filtered == R"({"Image":{"Animated":false,"Height":600,"IDs":[116,943,234,38793], "Title":"View from 15th Floor","Width":800}})"_json);
+    }
+
     SECTION("issue #972 - Segmentation fault on G++ when trying to assign json string literal to custom json type")
     {
         my_json foo = R"([1, 2, 3])"_json;
@@ -1536,34 +1576,34 @@ TEST_CASE("regression tests")
             switch (event)
             {
                 case json::parse_event_t::key:
-                {
-                    return true;
-                }
+                    {
+                        return true;
+                    }
                 case json::parse_event_t::value:
-                {
-                    return false;
-                }
+                    {
+                        return false;
+                    }
                 case json::parse_event_t::object_start:
-                {
-                    return true;
-                }
+                    {
+                        return true;
+                    }
                 case json::parse_event_t::object_end:
-                {
-                    return false;
-                }
+                    {
+                        return false;
+                    }
                 case json::parse_event_t::array_start:
-                {
-                    return true;
-                }
+                    {
+                        return true;
+                    }
                 case json::parse_event_t::array_end:
-                {
-                    return false;
-                }
+                    {
+                        return false;
+                    }
 
                 default:
-                {
-                    return true;
-                }
+                    {
+                        return true;
+                    }
             }
         };
 
