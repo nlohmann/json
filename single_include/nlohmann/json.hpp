@@ -17157,7 +17157,7 @@ class basic_json
     @param[in] format  the format to parse (JSON, CBOR, MessagePack, or UBJSON)
     @param[in] strict  whether the input has to be consumed completely
 
-    @return result of the deserialization
+    @return return value of the last processed SAX event
 
     @throw parse_error.101 if a parse error occurs; example: `""unexpected end
     of input; expected string literal""`
@@ -17169,6 +17169,9 @@ class basic_json
     a super-linear complexity.
 
     @note A UTF-8 byte order mark is silently ignored.
+
+    @liveexample{The example below demonstrates the `sax_parse()` function
+    reading from string.,sax_parse}
 
     @since version 3.2.0
     */

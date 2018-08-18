@@ -39,7 +39,8 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
     - @link nlohmann::basic_json::dump dump @endlink serialize to string
     - @link nlohmann::basic_json::operator<<(std::ostream&, const basic_json &) operator<< @endlink serialize to stream
   - deserialization / parsing
-    - @link nlohmann::basic_json::parse parse @endlink parse from string
+    - @link nlohmann::basic_json::parse parse @endlink parse from input (string, file, etc.) and return JSON value
+    - @link nlohmann::basic_json::sax_parse sax_parse @endlink parse from input (string, file, etc.) and generate SAX events
     - @link nlohmann::basic_json::operator>>(std::istream&, basic_json&) operator>> @endlink parse from stream
     - @link nlohmann::basic_json::accept accept @endlink check for syntax errors without parsing
     - @link nlohmann::json_sax SAX interface @endlink define a user-defined SAX event consumer
