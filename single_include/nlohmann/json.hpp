@@ -6033,7 +6033,7 @@ class binary_reader
                    const bool strict = true)
     {
         sax = sax_;
-        bool result;
+        bool result = false;
 
         switch (format)
         {
