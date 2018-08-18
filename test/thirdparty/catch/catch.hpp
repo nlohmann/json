@@ -1,6 +1,6 @@
 /*
- *  Catch v1.9.7
- *  Generated: 2017-08-10 23:49:15.233907
+ *  Catch v1.12.0
+ *  Generated: 2018-01-11 21:56:34.893972
  *  ----------------------------------------------------------
  *  This file has been merged from multiple headers. Please don't edit it directly
  *  Copyright (c) 2012 Two Blue Cubes Ltd. All rights reserved.
@@ -228,7 +228,12 @@
     ( defined __GNUC__  && ( __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3 )) ) || \
     ( defined __clang__ && __clang_major__ >= 3 )
 
-#define CATCH_INTERNAL_CONFIG_COUNTER
+// Use of __COUNTER__ is suppressed during code analysis in CLion/AppCode 2017.2.x and former,
+// because __COUNTER__ is not properly handled by it.
+// This does not affect compilation
+#if ( !defined __JETBRAINS_IDE__ || __JETBRAINS_IDE__ >= 20170300L )
+    #define CATCH_INTERNAL_CONFIG_COUNTER
+#endif
 
 #endif
 
@@ -309,10 +314,7 @@
 #if defined(CATCH_INTERNAL_CONFIG_CPP11_UNIQUE_PTR) && !defined(CATCH_CONFIG_CPP11_NO_UNIQUE_PTR) && !defined(CATCH_CONFIG_CPP11_UNIQUE_PTR) && !defined(CATCH_CONFIG_NO_CPP11)
 #   define CATCH_CONFIG_CPP11_UNIQUE_PTR
 #endif
-// Use of __COUNTER__ is suppressed if __JETBRAINS_IDE__ is #defined (meaning we're being parsed by a JetBrains IDE for
-// analytics) because, at time of writing, __COUNTER__ is not properly handled by it.
-// This does not affect compilation
-#if defined(CATCH_INTERNAL_CONFIG_COUNTER) && !defined(CATCH_CONFIG_NO_COUNTER) && !defined(CATCH_CONFIG_COUNTER) && !defined(__JETBRAINS_IDE__)
+#if defined(CATCH_INTERNAL_CONFIG_COUNTER) && !defined(CATCH_CONFIG_NO_COUNTER) && !defined(CATCH_CONFIG_COUNTER)
 #   define CATCH_CONFIG_COUNTER
 #endif
 #if defined(CATCH_INTERNAL_CONFIG_CPP11_SHUFFLE) && !defined(CATCH_CONFIG_CPP11_NO_SHUFFLE) && !defined(CATCH_CONFIG_CPP11_SHUFFLE) && !defined(CATCH_CONFIG_NO_CPP11)
@@ -1291,6 +1293,7 @@ namespace Catch {
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4389) // '==' : signed/unsigned mismatch
+#pragma warning(disable:4018) // more "signed/unsigned mismatch"
 #pragma warning(disable:4312) // Converting int to T* using reinterpret_cast (issue on x64 platform)
 #endif
 
@@ -2166,6 +2169,12 @@ namespace Catch {
     };
 }
 
+#if !defined(CATCH_CONFIG_DISABLE_STRINGIFICATION)
+# define CATCH_INTERNAL_STRINGIFY(expr) #expr
+#else
+# define CATCH_INTERNAL_STRINGIFY(expr) "Disabled by CATCH_CONFIG_DISABLE_STRINGIFICATION"
+#endif
+
 #if defined(CATCH_CONFIG_FAST_COMPILE)
 ///////////////////////////////////////////////////////////////////////////////
 // We can speedup compilation significantly by breaking into debugger lower in
@@ -2181,7 +2190,7 @@ namespace Catch {
 // the exception before it propagates back up to the runner.
 #define INTERNAL_CATCH_TEST_NO_TRY( macroName, resultDisposition, expr ) \
     do { \
-        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #expr, resultDisposition ); \
+        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(expr), resultDisposition ); \
         __catchResult.setExceptionGuard(); \
         CATCH_INTERNAL_SUPPRESS_PARENTHESES_WARNINGS \
         ( __catchResult <= expr ).endExpression(); \
@@ -2193,9 +2202,9 @@ namespace Catch {
 
 #define INTERNAL_CHECK_THAT_NO_TRY( macroName, matcher, resultDisposition, arg ) \
     do { \
-        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #arg ", " #matcher, resultDisposition ); \
+        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(arg) ", " CATCH_INTERNAL_STRINGIFY(matcher), resultDisposition ); \
         __catchResult.setExceptionGuard(); \
-        __catchResult.captureMatch( arg, matcher, #matcher ); \
+        __catchResult.captureMatch( arg, matcher, CATCH_INTERNAL_STRINGIFY(matcher) ); \
         __catchResult.unsetExceptionGuard(); \
         INTERNAL_CATCH_REACT( __catchResult ) \
     } while( Catch::alwaysFalse() )
@@ -2214,7 +2223,7 @@ namespace Catch {
 ///////////////////////////////////////////////////////////////////////////////
 #define INTERNAL_CATCH_TEST( macroName, resultDisposition, expr ) \
     do { \
-        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #expr, resultDisposition ); \
+        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(expr), resultDisposition ); \
         try { \
             CATCH_INTERNAL_SUPPRESS_PARENTHESES_WARNINGS \
             ( __catchResult <= expr ).endExpression(); \
@@ -2240,7 +2249,7 @@ namespace Catch {
 ///////////////////////////////////////////////////////////////////////////////
 #define INTERNAL_CATCH_NO_THROW( macroName, resultDisposition, expr ) \
     do { \
-        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #expr, resultDisposition ); \
+        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(expr), resultDisposition ); \
         try { \
             static_cast<void>(expr); \
             __catchResult.captureResult( Catch::ResultWas::Ok ); \
@@ -2254,7 +2263,7 @@ namespace Catch {
 ///////////////////////////////////////////////////////////////////////////////
 #define INTERNAL_CATCH_THROWS( macroName, resultDisposition, matcher, expr ) \
     do { \
-        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #expr, resultDisposition, #matcher ); \
+        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(expr), resultDisposition, CATCH_INTERNAL_STRINGIFY(matcher) ); \
         if( __catchResult.allowThrows() ) \
             try { \
                 static_cast<void>(expr); \
@@ -2271,7 +2280,7 @@ namespace Catch {
 ///////////////////////////////////////////////////////////////////////////////
 #define INTERNAL_CATCH_THROWS_AS( macroName, exceptionType, resultDisposition, expr ) \
     do { \
-        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #expr ", " #exceptionType, resultDisposition ); \
+        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(expr) ", " CATCH_INTERNAL_STRINGIFY(exceptionType), resultDisposition ); \
         if( __catchResult.allowThrows() ) \
             try { \
                 static_cast<void>(expr); \
@@ -2314,9 +2323,9 @@ namespace Catch {
 ///////////////////////////////////////////////////////////////////////////////
 #define INTERNAL_CHECK_THAT( macroName, matcher, resultDisposition, arg ) \
     do { \
-        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #arg ", " #matcher, resultDisposition ); \
+        Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(arg) ", " CATCH_INTERNAL_STRINGIFY(matcher), resultDisposition ); \
         try { \
-            __catchResult.captureMatch( arg, matcher, #matcher ); \
+            __catchResult.captureMatch( arg, matcher, CATCH_INTERNAL_STRINGIFY(matcher) ); \
         } catch( ... ) { \
             __catchResult.useActiveException( resultDisposition | Catch::ResultDisposition::ContinueOnFailure ); \
         } \
@@ -2822,7 +2831,8 @@ namespace Detail {
             if (relativeOK) {
                 return true;
             }
-            return std::fabs(lhs_v - rhs.m_value) < rhs.m_margin;
+
+            return std::fabs(lhs_v - rhs.m_value) <= rhs.m_margin;
         }
 
         template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
@@ -2894,7 +2904,7 @@ namespace Detail {
             if (relativeOK) {
                 return true;
             }
-            return std::fabs(lhs - rhs.m_value) < rhs.m_margin;
+            return std::fabs(lhs - rhs.m_value) <= rhs.m_margin;
         }
 
         friend bool operator == ( Approx const& lhs, double rhs ) {
@@ -3852,6 +3862,12 @@ namespace Catch {
         Yes,
         No
     }; };
+    struct WaitForKeypress { enum When {
+        Never,
+        BeforeStart = 1,
+        BeforeExit = 2,
+        BeforeStartAndExit = BeforeStart | BeforeExit
+    }; };
 
     class TestSpec;
 
@@ -3965,13 +3981,15 @@ namespace Catch {
             showHelp( false ),
             showInvisibles( false ),
             filenamesAsTags( false ),
+            libIdentify( false ),
             abortAfter( -1 ),
             rngSeed( 0 ),
             verbosity( Verbosity::Normal ),
             warnings( WarnAbout::Nothing ),
             showDurations( ShowDurations::DefaultForReporter ),
             runOrder( RunTests::InDeclarationOrder ),
-            useColour( UseColour::Auto )
+            useColour( UseColour::Auto ),
+            waitForKeypress( WaitForKeypress::Never )
         {}
 
         bool listTests;
@@ -3986,6 +4004,7 @@ namespace Catch {
         bool showHelp;
         bool showInvisibles;
         bool filenamesAsTags;
+        bool libIdentify;
 
         int abortAfter;
         unsigned int rngSeed;
@@ -3995,6 +4014,7 @@ namespace Catch {
         ShowDurations::OrNot showDurations;
         RunTests::InWhatOrder runOrder;
         UseColour::YesOrNo useColour;
+        WaitForKeypress::When waitForKeypress;
 
         std::string outputFilename;
         std::string name;
@@ -5188,6 +5208,18 @@ namespace Catch {
         else
             throw std::runtime_error( "colour mode must be one of: auto, yes or no" );
     }
+    inline void setWaitForKeypress( ConfigData& config, std::string const& keypress ) {
+        std::string keypressLc = toLower( keypress );
+        if( keypressLc == "start" )
+            config.waitForKeypress = WaitForKeypress::BeforeStart;
+        else if( keypressLc == "exit" )
+            config.waitForKeypress = WaitForKeypress::BeforeExit;
+        else if( keypressLc == "both" )
+            config.waitForKeypress = WaitForKeypress::BeforeStartAndExit;
+        else
+            throw std::runtime_error( "keypress argument must be one of: start, exit or both. '" + keypress + "' not recognised" );
+    };
+
     inline void forceColour( ConfigData& config ) {
         config.useColour = UseColour::Yes;
     }
@@ -5322,6 +5354,14 @@ namespace Catch {
         cli["--use-colour"]
             .describe( "should output be colourised" )
             .bind( &setUseColour, "yes|no" );
+
+        cli["--libidentify"]
+            .describe( "report name and version according to libidentify standard" )
+            .bind( &ConfigData::libIdentify );
+
+        cli["--wait-for-keypress"]
+                .describe( "waits for a keypress before exiting" )
+                .bind( &setWaitForKeypress, "start|exit|both" );
 
         return cli;
     }
@@ -6700,7 +6740,10 @@ namespace Catch {
                 m_totals.assertions.passed++;
             }
             else if( !result.isOk() ) {
-                m_totals.assertions.failed++;
+                if( m_activeTestCase->getTestCaseInfo().okToFail() )
+                    m_totals.assertions.failedButOk++;
+                else
+                    m_totals.assertions.failed++;
             }
 
             // We have no use for the return value (whether messages should be cleared), because messages were made scoped
@@ -6888,12 +6931,6 @@ namespace Catch {
 
             Counts assertions = m_totals.assertions - prevAssertions;
             bool missingAssertions = testForMissingAssertions( assertions );
-
-            if( testCaseInfo.okToFail() ) {
-                std::swap( assertions.failedButOk, assertions.failed );
-                m_totals.assertions.failed -= assertions.failedButOk;
-                m_totals.assertions.failedButOk += assertions.failedButOk;
-            }
 
             SectionStats testCaseSectionStats( testCaseSection, assertions, duration, missingAssertions );
             m_reporter->sectionEnded( testCaseSectionStats );
@@ -7101,6 +7138,13 @@ namespace Catch {
             m_cli.usage( Catch::cout(), processName );
             Catch::cout() << "For more detail usage please see the project docs\n" << std::endl;
         }
+        void libIdentify() {
+            Catch::cout()
+                    << std::left << std::setw(16) << "description: " << "A Catch test executable\n"
+                    << std::left << std::setw(16) << "category: " << "testframework\n"
+                    << std::left << std::setw(16) << "framework: " << "Catch Test\n"
+                    << std::left << std::setw(16) << "version: " << libraryVersion() << std::endl;
+        }
 
         int applyCommandLine( int argc, char const* const* const argv, OnUnusedOptions::DoWhat unusedOptionBehaviour = OnUnusedOptions::Fail ) {
             try {
@@ -7108,6 +7152,8 @@ namespace Catch {
                 m_unusedTokens = m_cli.parseInto( Clara::argsToVector( argc, argv ), m_configData );
                 if( m_configData.showHelp )
                     showHelp( m_configData.processName );
+                if( m_configData.libIdentify )
+                    libIdentify();
                 m_config.reset();
             }
             catch( std::exception& ex ) {
@@ -7164,7 +7210,36 @@ namespace Catch {
     #endif
 
         int run() {
-            if( m_configData.showHelp )
+            if( ( m_configData.waitForKeypress & WaitForKeypress::BeforeStart ) != 0 ) {
+                Catch::cout() << "...waiting for enter/ return before starting" << std::endl;
+                static_cast<void>(std::getchar());
+            }
+            int exitCode = runInternal();
+            if( ( m_configData.waitForKeypress & WaitForKeypress::BeforeExit ) != 0 ) {
+                Catch::cout() << "...waiting for enter/ return before exiting, with code: " << exitCode << std::endl;
+                static_cast<void>(std::getchar());
+            }
+            return exitCode;
+        }
+
+        Clara::CommandLine<ConfigData> const& cli() const {
+            return m_cli;
+        }
+        std::vector<Clara::Parser::Token> const& unusedTokens() const {
+            return m_unusedTokens;
+        }
+        ConfigData& configData() {
+            return m_configData;
+        }
+        Config& config() {
+            if( !m_config )
+                m_config = new Config( m_configData );
+            return *m_config;
+        }
+    private:
+
+        int runInternal() {
+            if( m_configData.showHelp || m_configData.libIdentify )
                 return 0;
 
             try
@@ -7188,21 +7263,6 @@ namespace Catch {
             }
         }
 
-        Clara::CommandLine<ConfigData> const& cli() const {
-            return m_cli;
-        }
-        std::vector<Clara::Parser::Token> const& unusedTokens() const {
-            return m_unusedTokens;
-        }
-        ConfigData& configData() {
-            return m_configData;
-        }
-        Config& config() {
-            if( !m_config )
-                m_config = new Config( m_configData );
-            return *m_config;
-        }
-    private:
         Clara::CommandLine<ConfigData> m_cli;
         std::vector<Clara::Parser::Token> m_unusedTokens;
         ConfigData m_configData;
@@ -7227,7 +7287,7 @@ namespace Catch {
 namespace Catch {
 
     struct RandomNumberGenerator {
-        typedef std::ptrdiff_t result_type;
+        typedef unsigned int result_type;
 
         result_type operator()( result_type n ) const { return std::rand() % n; }
 
@@ -8148,7 +8208,7 @@ namespace Catch {
 
     std::string AssertionResult::getExpression() const {
         if( isFalseTest( m_info.resultDisposition ) )
-            return '!' + capturedExpressionWithSecondArgument(m_info.capturedExpression, m_info.secondArg);
+            return "!(" + capturedExpressionWithSecondArgument(m_info.capturedExpression, m_info.secondArg) + ")";
         else
             return capturedExpressionWithSecondArgument(m_info.capturedExpression, m_info.secondArg);
     }
@@ -8406,7 +8466,7 @@ namespace Catch {
     }
 
     inline Version libraryVersion() {
-        static Version version( 1, 9, 7, "", 0 );
+        static Version version( 1, 12, 0, "", 0 );
         return version;
     }
 
@@ -10220,12 +10280,12 @@ namespace Catch {
 
             bool includeResults = m_config->includeSuccessfulResults() || !result.isOk();
 
-            if( includeResults ) {
+            if( includeResults || result.getResultType() == ResultWas::Warning ) {
                 // Print any info messages in <Info> tags.
                 for( std::vector<MessageInfo>::const_iterator it = assertionStats.infoMessages.begin(), itEnd = assertionStats.infoMessages.end();
                      it != itEnd;
                      ++it ) {
-                    if( it->type == ResultWas::Info ) {
+                    if( it->type == ResultWas::Info && includeResults ) {
                         m_xml.scopedElement( "Info" )
                                 .writeText( it->message );
                     } else if ( it->type == ResultWas::Warning ) {
