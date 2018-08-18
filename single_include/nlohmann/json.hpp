@@ -17171,7 +17171,8 @@ class basic_json
     @note A UTF-8 byte order mark is silently ignored.
 
     @liveexample{The example below demonstrates the `sax_parse()` function
-    reading from string.,sax_parse}
+    reading from string and processing the events with a user-defined SAX
+    event consumer.,sax_parse}
 
     @since version 3.2.0
     */
