@@ -80,8 +80,10 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
+            // LCOV_EXCL_START
             default:
-                assert(false);  // LCOV_EXCL_LINE
+                assert(false);
+                // LCOV_EXCL_STOP
         }
 
         // strict mode: next byte must be EOF

@@ -1046,6 +1046,16 @@ I deeply appreciate the help of the following people.
 - [Carlos O'Ryan](https://github.com/coryan) fixed a typo.
 - [James Upjohn](https://github.com/jammehcow) fixed a version number in the compilers section.
 - [Chuck Atkins](https://github.com/chuckatkins) adjusted the CMake files to the CMake packaging guidelines
+- [Jan Schöppach](https://github.com/dns13) fixed a typo.
+- [martin-mfg](https://github.com/martin-mfg) fixed a typo.
+- [Matthias Möller](https://github.com/TinyTinni) removed the dependency from `std::stringstream`.
+- [agrianius](https://github.com/agrianius) added code to use alternative string implementations.
+- [Daniel599](https://github.com/Daniel599) allowed to use more algorithms with the `items()` function.
+- [Julius Rakow](https://github.com/jrakow) fixed the Meson include directory and fixed the links to [cppreference.com](cppreference.com).
+- [Sonu Lohani](https://github.com/sonulohani) fixed the compilation with MSVC 2015 in debug mode.
+- [grembo](https://github.com/grembo) fixed the test suite and re-enabled several test cases.
+- [Hyeon Kim](https://github.com/simnalamburt) introduced the macro `JSON_INTERNAL_CATCH` to control the exception handling inside the library.
+- [thyu](https://github.com/thyu) fixed a compiler warning.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
