@@ -6,15 +6,14 @@ option(JSON_Coverage "Build test suite with coverage information" OFF)
 if(JSON_Sanitizer)
     message(STATUS "Building test suite with Clang sanitizer")
     if(NOT MSVC)
-        set(CMAKE_CXX_FLAGS "-std=c++11 -g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
+        set(CMAKE_CXX_FLAGS "-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
     endif()
 endif()
 
 if(JSON_Valgrind)
     find_program(CMAKE_MEMORYCHECK_COMMAND valgrind)
     message(STATUS "Executing test suite with Valgrind (${CMAKE_MEMORYCHECK_COMMAND})")
-    set(MEMORYCHECK_COMMAND_OPTIONS "--error-exitcode=1 --leak-check=full")
-    set(memcheck_command "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS}")
+    set(memcheck_command "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS} --error-exitcode=1 --leak-check=full")
     separate_arguments(memcheck_command)
 endif()
 
@@ -62,11 +61,10 @@ add_library(catch_main OBJECT
     "src/unit.cpp"
 )
 set_target_properties(catch_main PROPERTIES
-    CXX_STANDARD 11
-    CXX_STANDARD_REQUIRED ON
     COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
     COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
 )
+target_compile_features(catch_main PUBLIC cxx_std_11)
 target_include_directories(catch_main PRIVATE "thirdparty/catch")
 
 # https://stackoverflow.com/questions/2368811/how-to-set-warning-level-in-cmake
@@ -83,6 +81,9 @@ if(MSVC)
 	# Disable warning C4566: character represented by universal-character-name '\uFF01' cannot be represented in the current code page (1252)
 	# Disable warning C4996: 'nlohmann::basic_json<std::map,std::vector,std::string,bool,int64_t,uint64_t,double,std::allocator,nlohmann::adl_serializer>::operator <<': was declared deprecated
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4389 /wd4309 /wd4566 /wd4996")
+	
+	# https://github.com/nlohmann/json/issues/1114
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
 endif()
 
 #############################################################################
@@ -96,13 +97,12 @@ foreach(file ${files})
 
     add_executable(${testcase} $<TARGET_OBJECTS:catch_main> ${file})
     set_target_properties(${testcase} PROPERTIES
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED ON
         COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
         COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
     )
 
     target_compile_definitions(${testcase} PRIVATE CATCH_CONFIG_FAST_COMPILE)
+    target_compile_features(${testcase} PRIVATE cxx_std_11)
     target_include_directories(${testcase} PRIVATE "thirdparty/catch")
     target_include_directories(${testcase} PRIVATE "thirdparty/fifo_map")
     target_include_directories(${testcase} PRIVATE ${NLOHMANN_JSON_INCLUDE_BUILD_DIR})

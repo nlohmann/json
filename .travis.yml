@@ -155,6 +155,12 @@ matrix:
   - os: osx
     osx_image: xcode9.2
 
+  - os: osx
+    osx_image: xcode9.3
+
+  - os: osx
+    osx_image: xcode9.4
+
   # Linux / GCC
 
   - os: linux
@@ -191,13 +197,21 @@ matrix:
 
   - os: linux
     compiler: gcc
+    env: COMPILER=g++-8
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-8', 'ninja-build']
+
+  - os: linux
+    compiler: gcc
     env:
-      - COMPILER=g++-7
+      - COMPILER=g++-8
       - CXXFLAGS=-std=c++17
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-7', 'ninja-build']
+        packages: ['g++-8', 'ninja-build']
 
   # Linux / Clang
 
@@ -259,13 +273,21 @@ matrix:
 
   - os: linux
     compiler: clang
+    env: COMPILER=clang++-6.0
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+        packages: ['g++-6', 'clang-6.0', 'ninja-build']
+
+  - os: linux
+    compiler: clang
     env:
-      - COMPILER=clang++-5.0
+      - COMPILER=clang++-6.0
       - CXXFLAGS=-std=c++1z
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
-        packages: ['g++-6', 'clang-5.0', 'ninja-build']
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+        packages: ['g++-6', 'clang-6.0', 'ninja-build']
 
 ################
 # build script #
@@ -277,6 +299,7 @@ script:
      if [[ (-x $(which brew)) ]]; then
        brew update
        brew install cmake ninja
+       brew upgrade cmake
        cmake --version
      fi
 

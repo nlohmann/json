@@ -1,26 +1,58 @@
 version: '{build}'
 
-os: 
-  - Visual Studio 2015
-  - Visual Studio 2017
-
 environment:
   matrix:
-  - additional_flags: ""
-  - additional_flags: "/permissive- /std:c++latest /utf-8"
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      COMPILER: mingw
+      platform: x86
+      FLAGS: ""
+      GENERATOR: Ninja
 
-matrix:
-  exclude:
-    - additional_flags: "/permissive- /std:c++latest /utf-8"
-      os: Visual Studio 2015
-  
-init: []
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      platform: x86
+      FLAGS: ""
+      GENERATOR: Visual Studio 14 2015
 
-install: []
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      platform: x86
+      FLAGS: ""
+      GENERATOR: Visual Studio 15 2017
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      platform: x86
+      FLAGS: "/permissive- /std:c++latest /utf-8"
+      GENERATOR: Visual Studio 15 2017
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      platform: x64
+      FLAGS: ""
+      GENERATOR: Visual Studio 14 2015
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      platform: x64
+      FLAGS: ""
+      GENERATOR: Visual Studio 15 2017
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      platform: x64
+      FLAGS: "/permissive- /std:c++latest /utf-8"
+      GENERATOR: Visual Studio 15 2017
+
+init:
+  - cmake --version
+  - msbuild /version
+
+install:
+  - if "%COMPILER%"=="mingw" appveyor DownloadFile https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-win.zip -FileName ninja.zip
+  - if "%COMPILER%"=="mingw" 7z x ninja.zip -oC:\projects\deps\ninja > nul
+  - if "%COMPILER%"=="mingw" set PATH=C:\projects\deps\ninja;%PATH%
+  - if "%COMPILER%"=="mingw" set PATH=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin;%PATH%
+  - if "%COMPILER%"=="mingw" g++ --version
+
+before_build:
+  - cmake . -G "%GENERATOR%" -DCMAKE_CXX_FLAGS="%FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin"
 
 build_script:
-  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" ( SET GEN="Visual Studio 14 2015") ELSE (SET GEN="Visual Studio 15 2017")
-  - cmake . -G%GEN% -DCMAKE_CXX_FLAGS="%additional_flags%"
   - cmake --build . --config Release
 
 test_script:

@@ -1,10 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.1.2
+|  |  |__   |  |  | | | |  version 3.2.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
 Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
@@ -34,6 +35,170 @@ using nlohmann::json;
 
 #include <valarray>
 
+class SaxEventLogger
+{
+  public:
+    bool null()
+    {
+        events.push_back("null()");
+        return true;
+    }
+
+    bool boolean(bool val)
+    {
+        events.push_back(val ? "boolean(true)" : "boolean(false)");
+        return true;
+    }
+
+    bool number_integer(json::number_integer_t val)
+    {
+        events.push_back("number_integer(" + std::to_string(val) + ")");
+        return true;
+    }
+
+    bool number_unsigned(json::number_unsigned_t val)
+    {
+        events.push_back("number_unsigned(" + std::to_string(val) + ")");
+        return true;
+    }
+
+    bool number_float(json::number_float_t, const std::string& s)
+    {
+        events.push_back("number_float(" + s + ")");
+        return true;
+    }
+
+    bool string(std::string& val)
+    {
+        events.push_back("string(" + val + ")");
+        return true;
+    }
+
+    bool start_object(std::size_t elements)
+    {
+        if (elements == std::size_t(-1))
+        {
+            events.push_back("start_object()");
+        }
+        else
+        {
+            events.push_back("start_object(" + std::to_string(elements) + ")");
+        }
+        return true;
+    }
+
+    bool key(std::string& val)
+    {
+        events.push_back("key(" + val + ")");
+        return true;
+    }
+
+    bool end_object()
+    {
+        events.push_back("end_object()");
+        return true;
+    }
+
+    bool start_array(std::size_t elements)
+    {
+        if (elements == std::size_t(-1))
+        {
+            events.push_back("start_array()");
+        }
+        else
+        {
+            events.push_back("start_array(" + std::to_string(elements) + ")");
+        }
+        return true;
+    }
+
+    bool end_array()
+    {
+        events.push_back("end_array()");
+        return true;
+    }
+
+    bool parse_error(std::size_t position, const std::string&, const json::exception&)
+    {
+        errored = true;
+        events.push_back("parse_error(" + std::to_string(position) + ")");
+        return false;
+    }
+
+    std::vector<std::string> events;
+    bool errored = false;
+};
+
+class SaxCountdown : public nlohmann::json::json_sax_t
+{
+  public:
+    explicit SaxCountdown(const int count) : events_left(count)
+    {}
+
+    bool null() override
+    {
+        return events_left-- > 0;
+    }
+
+    bool boolean(bool) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_integer(json::number_integer_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_unsigned(json::number_unsigned_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_float(json::number_float_t, const std::string&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool string(std::string&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_object(std::size_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool key(std::string&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_object() override
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_array(std::size_t) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_array() override
+    {
+        return events_left-- > 0;
+    }
+
+    bool parse_error(std::size_t, const std::string&, const json::exception&) override
+    {
+        return false;
+    }
+
+  private:
+    int events_left = 0;
+};
+
 json parser_helper(const std::string& s);
 bool accept_helper(const std::string& s);
 
@@ -48,11 +213,18 @@ json parser_helper(const std::string& s)
     CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j_nothrow));
     CHECK(j_nothrow == j);
 
+    json j_sax;
+    nlohmann::detail::json_sax_dom_parser<json> sdp(j_sax);
+    json::sax_parse(s, &sdp);
+    CHECK(j_sax == j);
+
     return j;
 }
 
 bool accept_helper(const std::string& s)
 {
+    CAPTURE(s);
+
     // 1. parse s without exceptions
     json j;
     CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j));
@@ -64,7 +236,23 @@ bool accept_helper(const std::string& s)
     // 3. check if both approaches come to the same result
     CHECK(ok_noexcept == ok_accept);
 
-    // 4. return result
+    // 4. parse with SAX (compare with relaxed accept result)
+    SaxEventLogger el;
+    CHECK_NOTHROW(json::sax_parse(s, &el, json::input_format_t::json, false));
+    CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == not el.errored);
+
+    // 5. parse with simple callback
+    json::parser_callback_t cb = [](int, json::parse_event_t, json&)
+    {
+        return true;
+    };
+    json j_cb = json::parse(s, cb, false);
+    const bool ok_noexcept_cb = not j_cb.is_discarded();
+
+    // 6. check if this approach came to the same result
+    CHECK(ok_noexcept == ok_noexcept_cb);
+
+    // 7. return result
     return ok_accept;
 }
 
@@ -1470,6 +1658,102 @@ TEST_CASE("parser class")
             json j;
             json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
+        }
+    }
+
+    SECTION("improve test coverage")
+    {
+        SECTION("parser with callback")
+        {
+            json::parser_callback_t cb = [](int, json::parse_event_t, json&)
+            {
+                return true;
+            };
+
+            CHECK(json::parse("{\"foo\": true:", cb, false).is_discarded());
+
+            CHECK_THROWS_AS(json::parse("{\"foo\": true:", cb), json::parse_error&);
+            CHECK_THROWS_WITH(json::parse("{\"foo\": true:", cb),
+                              "[json.exception.parse_error.101] parse error at 13: syntax error - unexpected ':'; expected '}'");
+
+            CHECK_THROWS_AS(json::parse("1.18973e+4932", cb), json::out_of_range&);
+            CHECK_THROWS_WITH(json::parse("1.18973e+4932", cb),
+                              "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'");
+        }
+
+        SECTION("SAX parser")
+        {
+            SECTION("} without value")
+            {
+                SaxCountdown s(1);
+                CHECK(json::sax_parse("{}", &s) == false);
+            }
+
+            SECTION("} with value")
+            {
+                SaxCountdown s(3);
+                CHECK(json::sax_parse("{\"k1\": true}", &s) == false);
+            }
+
+            SECTION("second key")
+            {
+                SaxCountdown s(3);
+                CHECK(json::sax_parse("{\"k1\": true, \"k2\": false}", &s) == false);
+            }
+
+            SECTION("] without value")
+            {
+                SaxCountdown s(1);
+                CHECK(json::sax_parse("[]", &s) == false);
+            }
+
+            SECTION("] with value")
+            {
+                SaxCountdown s(2);
+                CHECK(json::sax_parse("[1]", &s) == false);
+            }
+
+            SECTION("float")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("3.14", &s) == false);
+            }
+
+            SECTION("false")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("false", &s) == false);
+            }
+
+            SECTION("null")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("null", &s) == false);
+            }
+
+            SECTION("true")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("true", &s) == false);
+            }
+
+            SECTION("unsigned")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("12", &s) == false);
+            }
+
+            SECTION("integer")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("-12", &s) == false);
+            }
+
+            SECTION("string")
+            {
+                SaxCountdown s(0);
+                CHECK(json::sax_parse("\"foo\"", &s) == false);
+            }
         }
     }
 }

@@ -1,10 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.1.2
+|  |  |__   |  |  | | | |  version 3.2.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
 Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy

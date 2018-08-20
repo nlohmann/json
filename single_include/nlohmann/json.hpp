@@ -1,10 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.1.2
+|  |  |__   |  |  | | | |  version 3.2.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
 Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
@@ -30,8 +31,8 @@ SOFTWARE.
 #define NLOHMANN_JSON_HPP
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
-#define NLOHMANN_JSON_VERSION_MINOR 1
-#define NLOHMANN_JSON_VERSION_PATCH 2
+#define NLOHMANN_JSON_VERSION_MINOR 2
+#define NLOHMANN_JSON_VERSION_PATCH 0
 
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
@@ -66,10 +67,10 @@ namespace nlohmann
 @brief default JSONSerializer template argument
 
 This serializer ignores the template arguments and uses ADL
-([argument-dependent lookup](http://en.cppreference.com/w/cpp/language/adl))
+([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
 for serialization.
 */
-template<typename = void, typename = void>
+template<typename T = void, typename SFINAE = void>
 struct adl_serializer;
 
 template<template<typename U, typename V, typename... Args> class ObjectType =
@@ -118,13 +119,15 @@ using json = basic_json<>;
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
 
 // exclude unsupported compilers
-#if defined(__clang__)
-    #if (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__) < 30400
-        #error "unsupported Clang version - see https://github.com/nlohmann/json#supported-compilers"
-    #endif
-#elif defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
-    #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
-        #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
+#if !defined(JSON_SKIP_UNSUPPORTED_COMPILER_CHECK)
+    #if defined(__clang__)
+        #if (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__) < 30400
+            #error "unsupported Clang version - see https://github.com/nlohmann/json#supported-compilers"
+        #endif
+    #elif defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
+        #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
+            #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
+        #endif
     #endif
 #endif
 
@@ -154,10 +157,12 @@ using json = basic_json<>;
     #define JSON_THROW(exception) throw exception
     #define JSON_TRY try
     #define JSON_CATCH(exception) catch(exception)
+    #define JSON_INTERNAL_CATCH(exception) catch(exception)
 #else
     #define JSON_THROW(exception) std::abort()
     #define JSON_TRY if(true)
     #define JSON_CATCH(exception) if(false)
+    #define JSON_INTERNAL_CATCH(exception) if(false)
 #endif
 
 // override exception macros
@@ -172,6 +177,11 @@ using json = basic_json<>;
 #if defined(JSON_CATCH_USER)
     #undef JSON_CATCH
     #define JSON_CATCH JSON_CATCH_USER
+    #define JSON_INTERNAL_CATCH JSON_CATCH_USER
+#endif
+#if defined(JSON_INTERNAL_CATCH_USER)
+    #undef JSON_INTERNAL_CATCH
+    #define JSON_INTERNAL_CATCH JSON_INTERNAL_CATCH_USER
 #endif
 
 // manual branch prediction
@@ -228,41 +238,17 @@ contains a `mapped_type`, whereas `std::vector` fails the test.
                 std::is_integral<decltype(detect(std::declval<T>()))>::value; \
     }
 
-// #include <nlohmann/detail/meta.hpp>
+// #include <nlohmann/detail/meta/cpp_future.hpp>
 
 
 #include <ciso646> // not
 #include <cstddef> // size_t
-#include <limits> // numeric_limits
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
-#include <utility> // declval
-
-// #include <nlohmann/json_fwd.hpp>
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
 
 namespace nlohmann
 {
-/*!
-@brief detail namespace with internal helper functions
-
-This namespace collects functions that should not be exposed,
-implementations of some @ref basic_json methods, and meta-programming helpers.
-
-@since version 2.1.0
-*/
 namespace detail
 {
-/////////////
-// helpers //
-/////////////
-
-template<typename> struct is_basic_json : std::false_type {};
-
-NLOHMANN_BASIC_JSON_TPL_DECLARATION
-struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
-
 // alias templates to reduce boilerplate
 template<bool B, typename T = void>
 using enable_if_t = typename std::enable_if<B, T>::type;
@@ -325,6 +311,54 @@ template<class B> struct negation : std::integral_constant<bool, not B::value> {
 template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
 template<> struct priority_tag<0> {};
 
+// taken from ranges-v3
+template<typename T>
+struct static_const
+{
+    static constexpr T value{};
+};
+
+template<typename T>
+constexpr T static_const<T>::value;
+}
+}
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
+
+#include <ciso646> // not
+#include <limits> // numeric_limits
+#include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
+#include <utility> // declval
+
+// #include <nlohmann/json_fwd.hpp>
+
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
+namespace nlohmann
+{
+/*!
+@brief detail namespace with internal helper functions
+
+This namespace collects functions that should not be exposed,
+implementations of some @ref basic_json methods, and meta-programming helpers.
+
+@since version 2.1.0
+*/
+namespace detail
+{
+/////////////
+// helpers //
+/////////////
+
+template<typename> struct is_basic_json : std::false_type {};
+
+NLOHMANN_BASIC_JSON_TPL_DECLARATION
+struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
+
 ////////////////////////
 // has_/is_ functions //
 ////////////////////////
@@ -353,6 +387,17 @@ struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
         std::is_constructible<typename RealType::mapped_type, typename CompatibleObjectType::mapped_type>::value;
 };
 
+template<bool B, class RealType, class CompatibleStringType>
+struct is_compatible_string_type_impl : std::false_type {};
+
+template<class RealType, class CompatibleStringType>
+struct is_compatible_string_type_impl<true, RealType, CompatibleStringType>
+{
+    static constexpr auto value =
+        std::is_same<typename RealType::value_type, typename CompatibleStringType::value_type>::value and
+        std::is_constructible<RealType, CompatibleStringType>::value;
+};
+
 template<class BasicJsonType, class CompatibleObjectType>
 struct is_compatible_object_type
 {
@@ -361,6 +406,15 @@ struct is_compatible_object_type
                                   has_mapped_type<CompatibleObjectType>,
                                   has_key_type<CompatibleObjectType>>::value,
                                   typename BasicJsonType::object_t, CompatibleObjectType >::value;
+};
+
+template<class BasicJsonType, class CompatibleStringType>
+struct is_compatible_string_type
+{
+    static auto constexpr value = is_compatible_string_type_impl <
+                                  conjunction<negation<std::is_same<void, CompatibleStringType>>,
+                                  has_value_type<CompatibleStringType>>::value,
+                                  typename BasicJsonType::string_t, CompatibleStringType >::value;
 };
 
 template<typename BasicJsonType, typename T>
@@ -477,16 +531,6 @@ struct is_compatible_type
       is_compatible_complete_type<BasicJsonType, CompatibleType>>
 {
 };
-
-// taken from ranges-v3
-template<typename T>
-struct static_const
-{
-    static constexpr T value{};
-};
-
-template<typename T>
-constexpr T static_const<T>::value;
 }
 }
 
@@ -908,9 +952,11 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #include <ciso646> // and, not
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
+#include <map> // map
 #include <string> // string
 #include <tuple> // tuple, make_tuple
 #include <type_traits> // is_arithmetic, is_same, is_enum, underlying_type, is_convertible
+#include <unordered_map> // unordered_map
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
@@ -918,7 +964,9 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta.hpp>
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
@@ -927,6 +975,16 @@ namespace nlohmann
 {
 namespace detail
 {
+template<typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
+{
+    if (JSON_UNLIKELY(not j.is_null()))
+    {
+        JSON_THROW(type_error::create(302, "type must be null, but is " + std::string(j.type_name())));
+    }
+    n = nullptr;
+}
+
 // overloads for basic_json template parameters
 template<typename BasicJsonType, typename ArithmeticType,
          enable_if_t<std::is_arithmetic<ArithmeticType>::value and
@@ -974,6 +1032,23 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
     {
         JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name())));
     }
+    s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
+}
+
+template <
+    typename BasicJsonType, typename CompatibleStringType,
+    enable_if_t <
+        is_compatible_string_type<BasicJsonType, CompatibleStringType>::value and
+        not std::is_same<typename BasicJsonType::string_t,
+                         CompatibleStringType>::value,
+        int > = 0 >
+void from_json(const BasicJsonType& j, CompatibleStringType& s)
+{
+    if (JSON_UNLIKELY(not j.is_string()))
+    {
+        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name())));
+    }
+
     s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
 }
 
@@ -1184,6 +1259,44 @@ void from_json(const BasicJsonType& j, std::tuple<Args...>& t)
     from_json_tuple_impl(j, t, index_sequence_for<Args...> {});
 }
 
+template <typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
+          typename = enable_if_t<not std::is_constructible<
+                                     typename BasicJsonType::string_t, Key>::value>>
+void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+{
+    if (JSON_UNLIKELY(not j.is_array()))
+    {
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+    }
+    for (const auto& p : j)
+    {
+        if (JSON_UNLIKELY(not p.is_array()))
+        {
+            JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(p.type_name())));
+        }
+        m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
+    }
+}
+
+template <typename BasicJsonType, typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator,
+          typename = enable_if_t<not std::is_constructible<
+                                     typename BasicJsonType::string_t, Key>::value>>
+void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
+{
+    if (JSON_UNLIKELY(not j.is_array()))
+    {
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+    }
+    for (const auto& p : j)
+    {
+        if (JSON_UNLIKELY(not p.is_array()))
+        {
+            JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(p.type_name())));
+        }
+        m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
+    }
+}
+
 struct from_json_fn
 {
   private:
@@ -1238,9 +1351,142 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <valarray> // valarray
 #include <vector> // vector
 
-// #include <nlohmann/detail/meta.hpp>
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
+
+// #include <nlohmann/detail/iterators/iteration_proxy.hpp>
+
+
+#include <cstddef> // size_t
+#include <string> // string, to_string
+#include <iterator> // input_iterator_tag
+
+// #include <nlohmann/detail/value_t.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+/// proxy class for the items() function
+template<typename IteratorType> class iteration_proxy
+{
+  private:
+    /// helper class for iteration
+    class iteration_proxy_internal
+    {
+      public:
+        using difference_type = std::ptrdiff_t;
+        using value_type = iteration_proxy_internal;
+        using pointer = iteration_proxy_internal*;
+        using reference = iteration_proxy_internal&;
+        using iterator_category = std::input_iterator_tag;
+
+      private:
+        /// the iterator
+        IteratorType anchor;
+        /// an index for arrays (used to create key names)
+        std::size_t array_index = 0;
+        /// last stringified array index
+        mutable std::size_t array_index_last = 0;
+        /// a string representation of the array index
+        mutable std::string array_index_str = "0";
+        /// an empty string (to return a reference for primitive values)
+        const std::string empty_str = "";
+
+      public:
+        explicit iteration_proxy_internal(IteratorType it) noexcept : anchor(it) {}
+
+        iteration_proxy_internal(const iteration_proxy_internal&) = default;
+        iteration_proxy_internal& operator=(const iteration_proxy_internal&) = default;
+
+        /// dereference operator (needed for range-based for)
+        iteration_proxy_internal& operator*()
+        {
+            return *this;
+        }
+
+        /// increment operator (needed for range-based for)
+        iteration_proxy_internal& operator++()
+        {
+            ++anchor;
+            ++array_index;
+
+            return *this;
+        }
+
+        /// equality operator (needed for InputIterator)
+        bool operator==(const iteration_proxy_internal& o) const noexcept
+        {
+            return anchor == o.anchor;
+        }
+
+        /// inequality operator (needed for range-based for)
+        bool operator!=(const iteration_proxy_internal& o) const noexcept
+        {
+            return anchor != o.anchor;
+        }
+
+        /// return key of the iterator
+        const std::string& key() const
+        {
+            assert(anchor.m_object != nullptr);
+
+            switch (anchor.m_object->type())
+            {
+                // use integer array index as key
+                case value_t::array:
+                {
+                    if (array_index != array_index_last)
+                    {
+                        array_index_str = std::to_string(array_index);
+                        array_index_last = array_index;
+                    }
+                    return array_index_str;
+                }
+
+                // use key from the object
+                case value_t::object:
+                    return anchor.key();
+
+                // use an empty key for all primitive types
+                default:
+                    return empty_str;
+            }
+        }
+
+        /// return value of the iterator
+        typename IteratorType::reference value() const
+        {
+            return anchor.value();
+        }
+    };
+
+    /// the container to iterate
+    typename IteratorType::reference container;
+
+  public:
+    /// construct iteration proxy from a container
+    explicit iteration_proxy(typename IteratorType::reference cont) noexcept
+        : container(cont) {}
+
+    /// return iterator begin (needed for range-based for)
+    iteration_proxy_internal begin() noexcept
+    {
+        return iteration_proxy_internal(container.begin());
+    }
+
+    /// return iterator end (needed for range-based for)
+    iteration_proxy_internal end() noexcept
+    {
+        return iteration_proxy_internal(container.end());
+    }
+};
+}
+}
 
 
 namespace nlohmann
@@ -1281,6 +1527,16 @@ struct external_constructor<value_t::string>
     {
         j.m_type = value_t::string;
         j.m_value = std::move(s);
+        j.assert_invariant();
+    }
+
+    template<typename BasicJsonType, typename CompatibleStringType,
+             enable_if_t<not std::is_same<CompatibleStringType, typename BasicJsonType::string_t>::value,
+                         int> = 0>
+    static void construct(BasicJsonType& j, const CompatibleStringType& str)
+    {
+        j.m_type = value_t::string;
+        j.m_value.string = j.template create<typename BasicJsonType::string_t>(str);
         j.assert_invariant();
     }
 };
@@ -1479,7 +1735,7 @@ void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
-void to_json(BasicJsonType& j, std::valarray<T> arr)
+void to_json(BasicJsonType& j, const std::valarray<T>& arr)
 {
     external_constructor<value_t::array>::construct(j, std::move(arr));
 }
@@ -1514,6 +1770,14 @@ template<typename BasicJsonType, typename... Args>
 void to_json(BasicJsonType& j, const std::pair<Args...>& p)
 {
     j = {p.first, p.second};
+}
+
+// for https://github.com/nlohmann/json/pull/1134
+template<typename BasicJsonType, typename T,
+         enable_if_t<std::is_same<T, typename iteration_proxy<typename BasicJsonType::iterator>::iteration_proxy_internal>::value, int> = 0>
+void to_json(BasicJsonType& j, T b) noexcept
+{
+    j = {{b.key(), b.value()}};
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
@@ -1572,12 +1836,9 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
 
-#include <algorithm> // min
-#include <array> // array
 #include <cassert> // assert
 #include <cstddef> // size_t
 #include <cstring> // strlen
-#include <ios> // streamsize, streamoff, streampos
 #include <istream> // istream
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <memory> // shared_ptr, make_shared, addressof
@@ -1593,6 +1854,9 @@ namespace nlohmann
 {
 namespace detail
 {
+/// the supported input formats
+enum class input_format_t { json, cbor, msgpack, ubjson };
+
 ////////////////////
 // input adapters //
 ////////////////////
@@ -1601,19 +1865,17 @@ namespace detail
 @brief abstract input adapter interface
 
 Produces a stream of std::char_traits<char>::int_type characters from a
-std::istream, a buffer, or some other input type.  Accepts the return of exactly
-one non-EOF character for future input.  The int_type characters returned
-consist of all valid char values as positive values (typically unsigned char),
-plus an EOF value outside that range, specified by the value of the function
-std::char_traits<char>::eof().  This value is typically -1, but could be any
-arbitrary value which is not a valid char value.
+std::istream, a buffer, or some other input type. Accepts the return of
+exactly one non-EOF character for future input. The int_type characters
+returned consist of all valid char values as positive values (typically
+unsigned char), plus an EOF value outside that range, specified by the value
+of the function std::char_traits<char>::eof(). This value is typically -1, but
+could be any arbitrary value which is not a valid char value.
 */
 struct input_adapter_protocol
 {
     /// get a character [0,255] or std::char_traits<char>::eof().
     virtual std::char_traits<char>::int_type get_character() = 0;
-    /// restore the last non-eof() character to input
-    virtual void unget_character() = 0;
     virtual ~input_adapter_protocol() = default;
 };
 
@@ -1641,34 +1903,7 @@ class input_stream_adapter : public input_adapter_protocol
 
     explicit input_stream_adapter(std::istream& i)
         : is(i), sb(*i.rdbuf())
-    {
-        // skip byte order mark
-        std::char_traits<char>::int_type c;
-        if ((c = get_character()) == 0xEF)
-        {
-            if ((c = get_character()) == 0xBB)
-            {
-                if ((c = get_character()) == 0xBF)
-                {
-                    return; // Ignore BOM
-                }
-                else if (c != std::char_traits<char>::eof())
-                {
-                    is.unget();
-                }
-                is.putback('\xBB');
-            }
-            else if (c != std::char_traits<char>::eof())
-            {
-                is.unget();
-            }
-            is.putback('\xEF');
-        }
-        else if (c != std::char_traits<char>::eof())
-        {
-            is.unget(); // no byte order mark; process as usual
-        }
-    }
+    {}
 
     // delete because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
@@ -1682,11 +1917,6 @@ class input_stream_adapter : public input_adapter_protocol
         return sb.sbumpc();
     }
 
-    void unget_character() override
-    {
-        sb.sungetc();  // is.unget() avoided for performance
-    }
-
   private:
     /// the associated input stream
     std::istream& is;
@@ -1698,14 +1928,8 @@ class input_buffer_adapter : public input_adapter_protocol
 {
   public:
     input_buffer_adapter(const char* b, const std::size_t l)
-        : cursor(b), limit(b + l), start(b)
-    {
-        // skip byte order mark
-        if (l >= 3 and b[0] == '\xEF' and b[1] == '\xBB' and b[2] == '\xBF')
-        {
-            cursor += 3;
-        }
-    }
+        : cursor(b), limit(b + l)
+    {}
 
     // delete because of pointer members
     input_buffer_adapter(const input_buffer_adapter&) = delete;
@@ -1721,21 +1945,164 @@ class input_buffer_adapter : public input_adapter_protocol
         return std::char_traits<char>::eof();
     }
 
-    void unget_character() noexcept override
-    {
-        if (JSON_LIKELY(cursor > start))
-        {
-            --cursor;
-        }
-    }
-
   private:
     /// pointer to the current character
     const char* cursor;
     /// pointer past the last character
-    const char* limit;
-    /// pointer to the first character
-    const char* start;
+    const char* const limit;
+};
+
+template<typename WideStringType>
+class wide_string_input_adapter : public input_adapter_protocol
+{
+  public:
+    explicit wide_string_input_adapter(const WideStringType& w) : str(w) {}
+
+    std::char_traits<char>::int_type get_character() noexcept override
+    {
+        // check if buffer needs to be filled
+        if (utf8_bytes_index == utf8_bytes_filled)
+        {
+            if (sizeof(typename WideStringType::value_type) == 2)
+            {
+                fill_buffer_utf16();
+            }
+            else
+            {
+                fill_buffer_utf32();
+            }
+
+            assert(utf8_bytes_filled > 0);
+            assert(utf8_bytes_index == 0);
+        }
+
+        // use buffer
+        assert(utf8_bytes_filled > 0);
+        assert(utf8_bytes_index < utf8_bytes_filled);
+        return utf8_bytes[utf8_bytes_index++];
+    }
+
+  private:
+    void fill_buffer_utf16()
+    {
+        utf8_bytes_index = 0;
+
+        if (current_wchar == str.size())
+        {
+            utf8_bytes[0] = std::char_traits<char>::eof();
+            utf8_bytes_filled = 1;
+        }
+        else
+        {
+            // get the current character
+            const int wc = static_cast<int>(str[current_wchar++]);
+
+            // UTF-16 to UTF-8 encoding
+            if (wc < 0x80)
+            {
+                utf8_bytes[0] = wc;
+                utf8_bytes_filled = 1;
+            }
+            else if (wc <= 0x7FF)
+            {
+                utf8_bytes[0] = 0xC0 | ((wc >> 6));
+                utf8_bytes[1] = 0x80 | (wc & 0x3F);
+                utf8_bytes_filled = 2;
+            }
+            else if (0xD800 > wc or wc >= 0xE000)
+            {
+                utf8_bytes[0] = 0xE0 | ((wc >> 12));
+                utf8_bytes[1] = 0x80 | ((wc >> 6) & 0x3F);
+                utf8_bytes[2] = 0x80 | (wc & 0x3F);
+                utf8_bytes_filled = 3;
+            }
+            else
+            {
+                if (current_wchar < str.size())
+                {
+                    const int wc2 = static_cast<int>(str[current_wchar++]);
+                    const int charcode = 0x10000 + (((wc & 0x3FF) << 10) | (wc2 & 0x3FF));
+                    utf8_bytes[0] = 0xf0 | (charcode >> 18);
+                    utf8_bytes[1] = 0x80 | ((charcode >> 12) & 0x3F);
+                    utf8_bytes[2] = 0x80 | ((charcode >> 6) & 0x3F);
+                    utf8_bytes[3] = 0x80 | (charcode & 0x3F);
+                    utf8_bytes_filled = 4;
+                }
+                else
+                {
+                    // unknown character
+                    ++current_wchar;
+                    utf8_bytes[0] = wc;
+                    utf8_bytes_filled = 1;
+                }
+            }
+        }
+    }
+
+    void fill_buffer_utf32()
+    {
+        utf8_bytes_index = 0;
+
+        if (current_wchar == str.size())
+        {
+            utf8_bytes[0] = std::char_traits<char>::eof();
+            utf8_bytes_filled = 1;
+        }
+        else
+        {
+            // get the current character
+            const int wc = static_cast<int>(str[current_wchar++]);
+
+            // UTF-32 to UTF-8 encoding
+            if (wc < 0x80)
+            {
+                utf8_bytes[0] = wc;
+                utf8_bytes_filled = 1;
+            }
+            else if (wc <= 0x7FF)
+            {
+                utf8_bytes[0] = 0xC0 | ((wc >> 6) & 0x1F);
+                utf8_bytes[1] = 0x80 | (wc & 0x3F);
+                utf8_bytes_filled = 2;
+            }
+            else if (wc <= 0xFFFF)
+            {
+                utf8_bytes[0] = 0xE0 | ((wc >> 12) & 0x0F);
+                utf8_bytes[1] = 0x80 | ((wc >> 6) & 0x3F);
+                utf8_bytes[2] = 0x80 | (wc & 0x3F);
+                utf8_bytes_filled = 3;
+            }
+            else if (wc <= 0x10FFFF)
+            {
+                utf8_bytes[0] = 0xF0 | ((wc >> 18 ) & 0x07);
+                utf8_bytes[1] = 0x80 | ((wc >> 12) & 0x3F);
+                utf8_bytes[2] = 0x80 | ((wc >> 6) & 0x3F);
+                utf8_bytes[3] = 0x80 | (wc & 0x3F);
+                utf8_bytes_filled = 4;
+            }
+            else
+            {
+                // unknown character
+                utf8_bytes[0] = wc;
+                utf8_bytes_filled = 1;
+            }
+        }
+    }
+
+  private:
+    /// the wstring to process
+    const WideStringType& str;
+
+    /// index of the current wchar in str
+    std::size_t current_wchar = 0;
+
+    /// a buffer for UTF-8 bytes
+    std::array<std::char_traits<char>::int_type, 4> utf8_bytes = {{0, 0, 0, 0}};
+
+    /// index to the utf8_codes array for the next valid byte
+    std::size_t utf8_bytes_index = 0;
+    /// number of valid bytes in the utf8_codes array
+    std::size_t utf8_bytes_filled = 0;
 };
 
 class input_adapter
@@ -1750,6 +2117,15 @@ class input_adapter
     /// input adapter for input stream
     input_adapter(std::istream&& i)
         : ia(std::make_shared<input_stream_adapter>(i)) {}
+
+    input_adapter(const std::wstring& ws)
+        : ia(std::make_shared<wide_string_input_adapter<std::wstring>>(ws)) {}
+
+    input_adapter(const std::u16string& ws)
+        : ia(std::make_shared<wide_string_input_adapter<std::u16string>>(ws)) {}
+
+    input_adapter(const std::u32string& ws)
+        : ia(std::make_shared<wide_string_input_adapter<std::u32string>>(ws)) {}
 
     /// input adapter for buffer
     template<typename CharT,
@@ -1840,10 +2216,8 @@ class input_adapter
 #include <clocale> // localeconv
 #include <cstddef> // size_t
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
+#include <cstdio> // snprintf
 #include <initializer_list> // initializer_list
-#include <ios> // hex, uppercase
-#include <iomanip> // setw, setfill
-#include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <vector> // vector
 
@@ -1933,12 +2307,14 @@ class lexer
                 return "end of input";
             case token_type::literal_or_value:
                 return "'[', '{', or a literal";
+            // LCOV_EXCL_START
             default: // catch non-enum values
-                return "unknown token"; // LCOV_EXCL_LINE
+                return "unknown token";
+                // LCOV_EXCL_STOP
         }
     }
 
-    explicit lexer(detail::input_adapter_t adapter)
+    explicit lexer(detail::input_adapter_t&& adapter)
         : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
 
     // delete because of pointer members
@@ -2586,11 +2962,13 @@ class lexer
                 goto scan_number_any1;
             }
 
+            // LCOV_EXCL_START
             default:
             {
                 // all other characters are rejected outside scan_number()
-                assert(false); // LCOV_EXCL_LINE
+                assert(false);
             }
+                // LCOV_EXCL_STOP
         }
 
 scan_number_minus:
@@ -2920,7 +3298,16 @@ scan_number_done:
     std::char_traits<char>::int_type get()
     {
         ++chars_read;
-        current = ia->get_character();
+        if (next_unget)
+        {
+            // just reset the next_unget variable and work with current
+            next_unget = false;
+        }
+        else
+        {
+            current = ia->get_character();
+        }
+
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
             token_string.push_back(std::char_traits<char>::to_char_type(current));
@@ -2928,13 +3315,20 @@ scan_number_done:
         return current;
     }
 
-    /// unget current character (return it again on next get)
+    /*!
+    @brief unget current character (read it again on next get)
+
+    We implement unget by setting variable next_unget to true. The input is not
+    changed - we just simulate ungetting by modifying chars_read and
+    token_string. The next call to get() will behave as if the unget character
+    is read again.
+    */
     void unget()
     {
+        next_unget = true;
         --chars_read;
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
-            ia->unget_character();
             assert(token_string.size() != 0);
             token_string.pop_back();
         }
@@ -2970,9 +3364,9 @@ scan_number_done:
     }
 
     /// return current string value (implicitly resets the token; useful only once)
-    string_t&& move_string()
+    string_t& get_string()
     {
-        return std::move(token_buffer);
+        return token_buffer;
     }
 
     /////////////////////
@@ -2997,10 +3391,9 @@ scan_number_done:
             if ('\x00' <= c and c <= '\x1F')
             {
                 // escape control characters
-                std::stringstream ss;
-                ss << "<U+" << std::setw(4) << std::uppercase << std::setfill('0')
-                   << std::hex << static_cast<int>(c) << ">";
-                result += ss.str();
+                char cs[9];
+                snprintf(cs, 9, "<U+%.4X>", static_cast<unsigned char>(c));
+                result += cs;
             }
             else
             {
@@ -3022,8 +3415,43 @@ scan_number_done:
     // actual scanner
     /////////////////////
 
+    /*!
+    @brief skip the UTF-8 byte order mark
+    @return true iff there is no BOM or the correct BOM has been skipped
+    */
+    bool skip_bom()
+    {
+        if (get() == 0xEF)
+        {
+            if (get() == 0xBB and get() == 0xBF)
+            {
+                // we completely parsed the BOM
+                return true;
+            }
+            else
+            {
+                // after reading 0xEF, an unexpected character followed
+                return false;
+            }
+        }
+        else
+        {
+            // the first character is not the beginning of the BOM; unget it to
+            // process is later
+            unget();
+            return true;
+        }
+    }
+
     token_type scan()
     {
+        // initially, skip the BOM
+        if (chars_read == 0 and not skip_bom())
+        {
+            error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
+            return token_type::parse_error;
+        }
+
         // read next character and ignore whitespace
         do
         {
@@ -3093,6 +3521,9 @@ scan_number_done:
     /// the current character
     std::char_traits<char>::int_type current = std::char_traits<char>::eof();
 
+    /// whether the next get() call should just return current
+    bool next_unget = false;
+
     /// the number of characters read
     std::size_t chars_read = 0;
 
@@ -3130,7 +3561,925 @@ scan_number_done:
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/meta/is_sax.hpp>
+
+
+#include <cstdint> // size_t
+#include <utility> // declval
+
+// #include <nlohmann/detail/meta/detected.hpp>
+
+
+#include <type_traits>
+
+// #include <nlohmann/detail/meta/void_t.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+template <typename...>
+using void_t = void;
+}
+}
+
+
+// http://en.cppreference.com/w/cpp/experimental/is_detected
+namespace nlohmann
+{
+namespace detail
+{
+struct nonesuch
+{
+    nonesuch() = delete;
+    ~nonesuch() = delete;
+    nonesuch(nonesuch const&) = delete;
+    void operator=(nonesuch const&) = delete;
+};
+
+template <class Default,
+          class AlwaysVoid,
+          template <class...> class Op,
+          class... Args>
+struct detector
+{
+    using value_t = std::false_type;
+    using type = Default;
+};
+
+template <class Default, template <class...> class Op, class... Args>
+struct detector<Default, void_t<Op<Args...>>, Op, Args...>
+{
+    using value_t = std::true_type;
+    using type = Op<Args...>;
+};
+
+template <template <class...> class Op, class... Args>
+using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
+
+template <template <class...> class Op, class... Args>
+using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
+
+template <class Default, template <class...> class Op, class... Args>
+using detected_or = detector<Default, void, Op, Args...>;
+
+template <class Default, template <class...> class Op, class... Args>
+using detected_or_t = typename detected_or<Default, Op, Args...>::type;
+
+template <class Expected, template <class...> class Op, class... Args>
+using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
+
+template <class To, template <class...> class Op, class... Args>
+using is_detected_convertible =
+    std::is_convertible<detected_t<Op, Args...>, To>;
+}
+}
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+template <typename T>
+using null_function_t = decltype(std::declval<T&>().null());
+
+template <typename T>
+using boolean_function_t =
+    decltype(std::declval<T&>().boolean(std::declval<bool>()));
+
+template <typename T, typename Integer>
+using number_integer_function_t =
+    decltype(std::declval<T&>().number_integer(std::declval<Integer>()));
+
+template <typename T, typename Unsigned>
+using number_unsigned_function_t =
+    decltype(std::declval<T&>().number_unsigned(std::declval<Unsigned>()));
+
+template <typename T, typename Float, typename String>
+using number_float_function_t = decltype(std::declval<T&>().number_float(
+                                    std::declval<Float>(), std::declval<const String&>()));
+
+template <typename T, typename String>
+using string_function_t =
+    decltype(std::declval<T&>().string(std::declval<String&>()));
+
+template <typename T>
+using start_object_function_t =
+    decltype(std::declval<T&>().start_object(std::declval<std::size_t>()));
+
+template <typename T, typename String>
+using key_function_t =
+    decltype(std::declval<T&>().key(std::declval<String&>()));
+
+template <typename T>
+using end_object_function_t = decltype(std::declval<T&>().end_object());
+
+template <typename T>
+using start_array_function_t =
+    decltype(std::declval<T&>().start_array(std::declval<std::size_t>()));
+
+template <typename T>
+using end_array_function_t = decltype(std::declval<T&>().end_array());
+
+template <typename T, typename Exception>
+using parse_error_function_t = decltype(std::declval<T&>().parse_error(
+        std::declval<std::size_t>(), std::declval<const std::string&>(),
+        std::declval<const Exception&>()));
+
+template <typename SAX, typename BasicJsonType>
+struct is_sax
+{
+  private:
+    static_assert(is_basic_json<BasicJsonType>::value,
+                  "BasicJsonType must be of type basic_json<...>");
+
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using exception_t = typename BasicJsonType::exception;
+
+  public:
+    static constexpr bool value =
+        is_detected_exact<bool, null_function_t, SAX>::value &&
+        is_detected_exact<bool, boolean_function_t, SAX>::value &&
+        is_detected_exact<bool, number_integer_function_t, SAX,
+        number_integer_t>::value &&
+        is_detected_exact<bool, number_unsigned_function_t, SAX,
+        number_unsigned_t>::value &&
+        is_detected_exact<bool, number_float_function_t, SAX, number_float_t,
+        string_t>::value &&
+        is_detected_exact<bool, string_function_t, SAX, string_t>::value &&
+        is_detected_exact<bool, start_object_function_t, SAX>::value &&
+        is_detected_exact<bool, key_function_t, SAX, string_t>::value &&
+        is_detected_exact<bool, end_object_function_t, SAX>::value &&
+        is_detected_exact<bool, start_array_function_t, SAX>::value &&
+        is_detected_exact<bool, end_array_function_t, SAX>::value &&
+        is_detected_exact<bool, parse_error_function_t, SAX, exception_t>::value;
+};
+
+template <typename SAX, typename BasicJsonType>
+struct is_sax_static_asserts
+{
+  private:
+    static_assert(is_basic_json<BasicJsonType>::value,
+                  "BasicJsonType must be of type basic_json<...>");
+
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using exception_t = typename BasicJsonType::exception;
+
+  public:
+    static_assert(is_detected_exact<bool, null_function_t, SAX>::value,
+                  "Missing/invalid function: bool null()");
+    static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
+                  "Missing/invalid function: bool boolean(bool)");
+    static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
+                  "Missing/invalid function: bool boolean(bool)");
+    static_assert(
+        is_detected_exact<bool, number_integer_function_t, SAX,
+        number_integer_t>::value,
+        "Missing/invalid function: bool number_integer(number_integer_t)");
+    static_assert(
+        is_detected_exact<bool, number_unsigned_function_t, SAX,
+        number_unsigned_t>::value,
+        "Missing/invalid function: bool number_unsigned(number_unsigned_t)");
+    static_assert(is_detected_exact<bool, number_float_function_t, SAX,
+                  number_float_t, string_t>::value,
+                  "Missing/invalid function: bool number_float(number_float_t, const string_t&)");
+    static_assert(
+        is_detected_exact<bool, string_function_t, SAX, string_t>::value,
+        "Missing/invalid function: bool string(string_t&)");
+    static_assert(is_detected_exact<bool, start_object_function_t, SAX>::value,
+                  "Missing/invalid function: bool start_object(std::size_t)");
+    static_assert(is_detected_exact<bool, key_function_t, SAX, string_t>::value,
+                  "Missing/invalid function: bool key(string_t&)");
+    static_assert(is_detected_exact<bool, end_object_function_t, SAX>::value,
+                  "Missing/invalid function: bool end_object()");
+    static_assert(is_detected_exact<bool, start_array_function_t, SAX>::value,
+                  "Missing/invalid function: bool start_array(std::size_t)");
+    static_assert(is_detected_exact<bool, end_array_function_t, SAX>::value,
+                  "Missing/invalid function: bool end_array()");
+    static_assert(
+        is_detected_exact<bool, parse_error_function_t, SAX, exception_t>::value,
+        "Missing/invalid function: bool parse_error(std::size_t, const "
+        "std::string&, const exception&)");
+};
+}
+}
+
 // #include <nlohmann/detail/input/input_adapters.hpp>
+
+// #include <nlohmann/detail/input/json_sax.hpp>
+
+
+#include <cstddef>
+#include <string>
+#include <vector>
+
+// #include <nlohmann/detail/input/parser.hpp>
+
+// #include <nlohmann/detail/exceptions.hpp>
+
+
+namespace nlohmann
+{
+
+/*!
+@brief SAX interface
+
+This class describes the SAX interface used by @ref nlohmann::json::sax_parse.
+Each function is called in different situations while the input is parsed. The
+boolean return value informs the parser whether to continue processing the
+input.
+*/
+template<typename BasicJsonType>
+struct json_sax
+{
+    /// type for (signed) integers
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    /// type for unsigned integers
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    /// type for floating-point numbers
+    using number_float_t = typename BasicJsonType::number_float_t;
+    /// type for strings
+    using string_t = typename BasicJsonType::string_t;
+
+    /*!
+    @brief a null value was read
+    @return whether parsing should proceed
+    */
+    virtual bool null() = 0;
+
+    /*!
+    @brief a boolean value was read
+    @param[in] val  boolean value
+    @return whether parsing should proceed
+    */
+    virtual bool boolean(bool val) = 0;
+
+    /*!
+    @brief an integer number was read
+    @param[in] val  integer value
+    @return whether parsing should proceed
+    */
+    virtual bool number_integer(number_integer_t val) = 0;
+
+    /*!
+    @brief an unsigned integer number was read
+    @param[in] val  unsigned integer value
+    @return whether parsing should proceed
+    */
+    virtual bool number_unsigned(number_unsigned_t val) = 0;
+
+    /*!
+    @brief an floating-point number was read
+    @param[in] val  floating-point value
+    @param[in] s    raw token value
+    @return whether parsing should proceed
+    */
+    virtual bool number_float(number_float_t val, const string_t& s) = 0;
+
+    /*!
+    @brief a string was read
+    @param[in] val  string value
+    @return whether parsing should proceed
+    @note It is safe to move the passed string.
+    */
+    virtual bool string(string_t& val) = 0;
+
+    /*!
+    @brief the beginning of an object was read
+    @param[in] elements  number of object elements or -1 if unknown
+    @return whether parsing should proceed
+    @note binary formats may report the number of elements
+    */
+    virtual bool start_object(std::size_t elements) = 0;
+
+    /*!
+    @brief an object key was read
+    @param[in] val  object key
+    @return whether parsing should proceed
+    @note It is safe to move the passed string.
+    */
+    virtual bool key(string_t& val) = 0;
+
+    /*!
+    @brief the end of an object was read
+    @return whether parsing should proceed
+    */
+    virtual bool end_object() = 0;
+
+    /*!
+    @brief the beginning of an array was read
+    @param[in] elements  number of array elements or -1 if unknown
+    @return whether parsing should proceed
+    @note binary formats may report the number of elements
+    */
+    virtual bool start_array(std::size_t elements) = 0;
+
+    /*!
+    @brief the end of an array was read
+    @return whether parsing should proceed
+    */
+    virtual bool end_array() = 0;
+
+    /*!
+    @brief a parse error occurred
+    @param[in] position    the position in the input where the error occurs
+    @param[in] last_token  the last read token
+    @param[in] error_msg   a detailed error message
+    @return whether parsing should proceed (must return false)
+    */
+    virtual bool parse_error(std::size_t position,
+                             const std::string& last_token,
+                             const detail::exception& ex) = 0;
+
+    virtual ~json_sax() = default;
+};
+
+
+namespace detail
+{
+/*!
+@brief SAX implementation to create a JSON value from SAX events
+
+This class implements the @ref json_sax interface and processes the SAX events
+to create a JSON value which makes it basically a DOM parser. The structure or
+hierarchy of the JSON value is managed by the stack `ref_stack` which contains
+a pointer to the respective array or object for each recursion depth.
+
+After successful parsing, the value that is passed by reference to the
+constructor contains the parsed value.
+
+@tparam BasicJsonType  the JSON type
+*/
+template<typename BasicJsonType>
+class json_sax_dom_parser
+{
+  public:
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+
+    /*!
+    @param[in, out] r  reference to a JSON value that is manipulated while
+                       parsing
+    @param[in] allow_exceptions_  whether parse errors yield exceptions
+    */
+    explicit json_sax_dom_parser(BasicJsonType& r, const bool allow_exceptions_ = true)
+        : root(r), allow_exceptions(allow_exceptions_)
+    {}
+
+    bool null()
+    {
+        handle_value(nullptr);
+        return true;
+    }
+
+    bool boolean(bool val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_integer(number_integer_t val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_unsigned(number_unsigned_t val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_float(number_float_t val, const string_t&)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool string(string_t& val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool start_object(std::size_t len)
+    {
+        ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
+
+        if (JSON_UNLIKELY(len != std::size_t(-1) and len > ref_stack.back()->max_size()))
+        {
+            JSON_THROW(out_of_range::create(408,
+                                            "excessive object size: " + std::to_string(len)));
+        }
+
+        return true;
+    }
+
+    bool key(string_t& val)
+    {
+        // add null at given key and store the reference for later
+        object_element = &(ref_stack.back()->m_value.object->operator[](val));
+        return true;
+    }
+
+    bool end_object()
+    {
+        ref_stack.pop_back();
+        return true;
+    }
+
+    bool start_array(std::size_t len)
+    {
+        ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
+
+        if (JSON_UNLIKELY(len != std::size_t(-1) and len > ref_stack.back()->max_size()))
+        {
+            JSON_THROW(out_of_range::create(408,
+                                            "excessive array size: " + std::to_string(len)));
+        }
+
+        return true;
+    }
+
+    bool end_array()
+    {
+        ref_stack.pop_back();
+        return true;
+    }
+
+    bool parse_error(std::size_t, const std::string&,
+                     const detail::exception& ex)
+    {
+        errored = true;
+        if (allow_exceptions)
+        {
+            // determine the proper exception type from the id
+            switch ((ex.id / 100) % 100)
+            {
+                case 1:
+                    JSON_THROW(*reinterpret_cast<const detail::parse_error*>(&ex));
+                case 4:
+                    JSON_THROW(*reinterpret_cast<const detail::out_of_range*>(&ex));
+                // LCOV_EXCL_START
+                case 2:
+                    JSON_THROW(*reinterpret_cast<const detail::invalid_iterator*>(&ex));
+                case 3:
+                    JSON_THROW(*reinterpret_cast<const detail::type_error*>(&ex));
+                case 5:
+                    JSON_THROW(*reinterpret_cast<const detail::other_error*>(&ex));
+                default:
+                    assert(false);
+                    // LCOV_EXCL_STOP
+            }
+        }
+        return false;
+    }
+
+    constexpr bool is_errored() const
+    {
+        return errored;
+    }
+
+  private:
+    /*!
+    @invariant If the ref stack is empty, then the passed value will be the new
+               root.
+    @invariant If the ref stack contains a value, then it is an array or an
+               object to which we can add elements
+    */
+    template<typename Value>
+    BasicJsonType* handle_value(Value&& v)
+    {
+        if (ref_stack.empty())
+        {
+            root = BasicJsonType(std::forward<Value>(v));
+            return &root;
+        }
+        else
+        {
+            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+            if (ref_stack.back()->is_array())
+            {
+                ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
+                return &(ref_stack.back()->m_value.array->back());
+            }
+            else
+            {
+                assert(object_element);
+                *object_element = BasicJsonType(std::forward<Value>(v));
+                return object_element;
+            }
+        }
+    }
+
+    /// the parsed JSON value
+    BasicJsonType& root;
+    /// stack to model hierarchy of values
+    std::vector<BasicJsonType*> ref_stack;
+    /// helper to hold the reference for the next object element
+    BasicJsonType* object_element = nullptr;
+    /// whether a syntax error occurred
+    bool errored = false;
+    /// whether to throw exceptions in case of errors
+    const bool allow_exceptions = true;
+};
+
+template<typename BasicJsonType>
+class json_sax_dom_callback_parser
+{
+  public:
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using parser_callback_t = typename BasicJsonType::parser_callback_t;
+    using parse_event_t = typename BasicJsonType::parse_event_t;
+
+    json_sax_dom_callback_parser(BasicJsonType& r,
+                                 const parser_callback_t cb,
+                                 const bool allow_exceptions_ = true)
+        : root(r), callback(cb), allow_exceptions(allow_exceptions_)
+    {
+        keep_stack.push_back(true);
+    }
+
+    bool null()
+    {
+        handle_value(nullptr);
+        return true;
+    }
+
+    bool boolean(bool val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_integer(number_integer_t val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_unsigned(number_unsigned_t val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool number_float(number_float_t val, const string_t&)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool string(string_t& val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool start_object(std::size_t len)
+    {
+        // check callback for object start
+        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::object_start, discarded);
+        keep_stack.push_back(keep);
+
+        auto val = handle_value(BasicJsonType::value_t::object, true);
+        ref_stack.push_back(val.second);
+
+        // check object limit
+        if (ref_stack.back())
+        {
+            if (JSON_UNLIKELY(len != std::size_t(-1) and len > ref_stack.back()->max_size()))
+            {
+                JSON_THROW(out_of_range::create(408,
+                                                "excessive object size: " + std::to_string(len)));
+            }
+        }
+
+        return true;
+    }
+
+    bool key(string_t& val)
+    {
+        BasicJsonType k = BasicJsonType(val);
+
+        // check callback for key
+        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::key, k);
+        key_keep_stack.push_back(keep);
+
+        // add discarded value at given key and store the reference for later
+        if (keep and ref_stack.back())
+        {
+            object_element = &(ref_stack.back()->m_value.object->operator[](val) = discarded);
+        }
+
+        return true;
+    }
+
+    bool end_object()
+    {
+        if (ref_stack.back())
+        {
+            if (not callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::object_end, *ref_stack.back()))
+            {
+                // discard object
+                *ref_stack.back() = discarded;
+            }
+        }
+
+        assert(not ref_stack.empty());
+        assert(not keep_stack.empty());
+        ref_stack.pop_back();
+        keep_stack.pop_back();
+
+        if (not ref_stack.empty() and ref_stack.back())
+        {
+            // remove discarded value
+            if (ref_stack.back()->is_object())
+            {
+                for (auto it = ref_stack.back()->begin(); it != ref_stack.back()->end(); ++it)
+                {
+                    if (it->is_discarded())
+                    {
+                        ref_stack.back()->erase(it);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    bool start_array(std::size_t len)
+    {
+        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::array_start, discarded);
+        keep_stack.push_back(keep);
+
+        auto val = handle_value(BasicJsonType::value_t::array, true);
+        ref_stack.push_back(val.second);
+
+        // check array limit
+        if (ref_stack.back())
+        {
+            if (JSON_UNLIKELY(len != std::size_t(-1) and len > ref_stack.back()->max_size()))
+            {
+                JSON_THROW(out_of_range::create(408,
+                                                "excessive array size: " + std::to_string(len)));
+            }
+        }
+
+        return true;
+    }
+
+    bool end_array()
+    {
+        bool keep = true;
+
+        if (ref_stack.back())
+        {
+            keep = callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::array_end, *ref_stack.back());
+            if (not keep)
+            {
+                // discard array
+                *ref_stack.back() = discarded;
+            }
+        }
+
+        assert(not ref_stack.empty());
+        assert(not keep_stack.empty());
+        ref_stack.pop_back();
+        keep_stack.pop_back();
+
+        // remove discarded value
+        if (not keep and not ref_stack.empty())
+        {
+            if (ref_stack.back()->is_array())
+            {
+                ref_stack.back()->m_value.array->pop_back();
+            }
+        }
+
+        return true;
+    }
+
+    bool parse_error(std::size_t, const std::string&,
+                     const detail::exception& ex)
+    {
+        errored = true;
+        if (allow_exceptions)
+        {
+            // determine the proper exception type from the id
+            switch ((ex.id / 100) % 100)
+            {
+                case 1:
+                    JSON_THROW(*reinterpret_cast<const detail::parse_error*>(&ex));
+                case 4:
+                    JSON_THROW(*reinterpret_cast<const detail::out_of_range*>(&ex));
+                // LCOV_EXCL_START
+                case 2:
+                    JSON_THROW(*reinterpret_cast<const detail::invalid_iterator*>(&ex));
+                case 3:
+                    JSON_THROW(*reinterpret_cast<const detail::type_error*>(&ex));
+                case 5:
+                    JSON_THROW(*reinterpret_cast<const detail::other_error*>(&ex));
+                default:
+                    assert(false);
+                    // LCOV_EXCL_STOP
+            }
+        }
+        return false;
+    }
+
+    constexpr bool is_errored() const
+    {
+        return errored;
+    }
+
+  private:
+    /*!
+    @param[in] v  value to add to the JSON value we build during parsing
+    @param[in] skip_callback  whether we should skip calling the callback
+               function; this is required after start_array() and
+               start_object() SAX events, because otherwise we would call the
+               callback function with an empty array or object, respectively.
+
+    @invariant If the ref stack is empty, then the passed value will be the new
+               root.
+    @invariant If the ref stack contains a value, then it is an array or an
+               object to which we can add elements
+
+    @return pair of boolean (whether value should be kept) and pointer (to the
+            passed value in the ref_stack hierarchy; nullptr if not kept)
+    */
+    template<typename Value>
+    std::pair<bool, BasicJsonType*> handle_value(Value&& v, const bool skip_callback = false)
+    {
+        assert(not keep_stack.empty());
+
+        // do not handle this value if we know it would be added to a discarded
+        // container
+        if (not keep_stack.back())
+        {
+            return {false, nullptr};
+        }
+
+        // create value
+        auto value = BasicJsonType(std::forward<Value>(v));
+
+        // check callback
+        const bool keep = skip_callback or callback(static_cast<int>(ref_stack.size()), parse_event_t::value, value);
+
+        // do not handle this value if we just learnt it shall be discarded
+        if (not keep)
+        {
+            return {false, nullptr};
+        }
+
+        if (ref_stack.empty())
+        {
+            root = std::move(value);
+            return {true, &root};
+        }
+        else
+        {
+            // skip this value if we already decided to skip the parent
+            // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
+            if (not ref_stack.back())
+            {
+                return {false, nullptr};
+            }
+
+            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+            if (ref_stack.back()->is_array())
+            {
+                ref_stack.back()->m_value.array->push_back(std::move(value));
+                return {true, &(ref_stack.back()->m_value.array->back())};
+            }
+            else
+            {
+                // check if we should store an element for the current key
+                assert(not key_keep_stack.empty());
+                const bool store_element = key_keep_stack.back();
+                key_keep_stack.pop_back();
+
+                if (not store_element)
+                {
+                    return {false, nullptr};
+                }
+
+                assert(object_element);
+                *object_element = std::move(value);
+                return {true, object_element};
+            }
+        }
+    }
+
+    /// the parsed JSON value
+    BasicJsonType& root;
+    /// stack to model hierarchy of values
+    std::vector<BasicJsonType*> ref_stack;
+    /// stack to manage which values to keep
+    std::vector<bool> keep_stack;
+    /// stack to manage which object keys to keep
+    std::vector<bool> key_keep_stack;
+    /// helper to hold the reference for the next object element
+    BasicJsonType* object_element = nullptr;
+    /// whether a syntax error occurred
+    bool errored = false;
+    /// callback function
+    const parser_callback_t callback = nullptr;
+    /// whether to throw exceptions in case of errors
+    const bool allow_exceptions = true;
+    /// a discarded value for the callback
+    BasicJsonType discarded = BasicJsonType::value_t::discarded;
+};
+
+template<typename BasicJsonType>
+class json_sax_acceptor
+{
+  public:
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+
+    bool null()
+    {
+        return true;
+    }
+
+    bool boolean(bool)
+    {
+        return true;
+    }
+
+    bool number_integer(number_integer_t)
+    {
+        return true;
+    }
+
+    bool number_unsigned(number_unsigned_t)
+    {
+        return true;
+    }
+
+    bool number_float(number_float_t, const string_t&)
+    {
+        return true;
+    }
+
+    bool string(string_t&)
+    {
+        return true;
+    }
+
+    bool start_object(std::size_t = std::size_t(-1))
+    {
+        return true;
+    }
+
+    bool key(string_t&)
+    {
+        return true;
+    }
+
+    bool end_object()
+    {
+        return true;
+    }
+
+    bool start_array(std::size_t = std::size_t(-1))
+    {
+        return true;
+    }
+
+    bool end_array()
+    {
+        return true;
+    }
+
+    bool parse_error(std::size_t, const std::string&, const detail::exception&)
+    {
+        return false;
+    }
+};
+}
+
+}
 
 // #include <nlohmann/detail/input/lexer.hpp>
 
@@ -3181,11 +4530,14 @@ class parser
         std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
 
     /// a parser reading from an input adapter
-    explicit parser(detail::input_adapter_t adapter,
+    explicit parser(detail::input_adapter_t&& adapter,
                     const parser_callback_t cb = nullptr,
                     const bool allow_exceptions_ = true)
-        : callback(cb), m_lexer(adapter), allow_exceptions(allow_exceptions_)
-    {}
+        : callback(cb), m_lexer(std::move(adapter)), allow_exceptions(allow_exceptions_)
+    {
+        // read first token
+        get_token();
+    }
 
     /*!
     @brief public parser interface
@@ -3199,31 +4551,54 @@ class parser
     */
     void parse(const bool strict, BasicJsonType& result)
     {
-        // read first token
-        get_token();
-
-        parse_internal(true, result);
-        result.assert_invariant();
-
-        // in strict mode, input must be completely read
-        if (strict)
+        if (callback)
         {
-            get_token();
-            expect(token_type::end_of_input);
+            json_sax_dom_callback_parser<BasicJsonType> sdp(result, callback, allow_exceptions);
+            sax_parse_internal(&sdp);
+            result.assert_invariant();
+
+            // in strict mode, input must be completely read
+            if (strict and (get_token() != token_type::end_of_input))
+            {
+                sdp.parse_error(m_lexer.get_position(),
+                                m_lexer.get_token_string(),
+                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input)));
+            }
+
+            // in case of an error, return discarded value
+            if (sdp.is_errored())
+            {
+                result = value_t::discarded;
+                return;
+            }
+
+            // set top-level value to null if it was discarded by the callback
+            // function
+            if (result.is_discarded())
+            {
+                result = nullptr;
+            }
         }
-
-        // in case of an error, return discarded value
-        if (errored)
+        else
         {
-            result = value_t::discarded;
-            return;
-        }
+            json_sax_dom_parser<BasicJsonType> sdp(result, allow_exceptions);
+            sax_parse_internal(&sdp);
+            result.assert_invariant();
 
-        // set top-level value to null if it was discarded by the callback
-        // function
-        if (result.is_discarded())
-        {
-            result = nullptr;
+            // in strict mode, input must be completely read
+            if (strict and (get_token() != token_type::end_of_input))
+            {
+                sdp.parse_error(m_lexer.get_position(),
+                                m_lexer.get_token_string(),
+                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input)));
+            }
+
+            // in case of an error, return discarded value
+            if (sdp.is_errored())
+            {
+                result = value_t::discarded;
+                return;
+            }
         }
     }
 
@@ -3235,414 +4610,311 @@ class parser
     */
     bool accept(const bool strict = true)
     {
-        // read first token
-        get_token();
+        json_sax_acceptor<BasicJsonType> sax_acceptor;
+        return sax_parse(&sax_acceptor, strict);
+    }
 
-        if (not accept_internal())
+    template <typename SAX>
+    bool sax_parse(SAX* sax, const bool strict = true)
+    {
+        (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
+        const bool result = sax_parse_internal(sax);
+
+        // strict mode: next byte must be EOF
+        if (result and strict and (get_token() != token_type::end_of_input))
         {
-            return false;
+            return sax->parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input)));
         }
 
-        // strict => last token must be EOF
-        return not strict or (get_token() == token_type::end_of_input);
+        return result;
     }
 
   private:
-    /*!
-    @brief the actual parser
-    @throw parse_error.101 in case of an unexpected token
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
-    */
-    void parse_internal(bool keep, BasicJsonType& result)
+    template <typename SAX>
+    bool sax_parse_internal(SAX* sax)
     {
-        // never parse after a parse error was detected
-        assert(not errored);
+        // stack to remember the hieararchy of structured values we are parsing
+        // true = array; false = object
+        std::vector<bool> states;
+        // value to avoid a goto (see comment where set to true)
+        bool skip_to_state_evaluation = false;
 
-        // start with a discarded value
-        if (not result.is_discarded())
+        while (true)
         {
-            result.m_value.destroy(result.m_type);
-            result.m_type = value_t::discarded;
-        }
-
-        switch (last_token)
-        {
-            case token_type::begin_object:
+            if (not skip_to_state_evaluation)
             {
-                if (keep)
+                // invariant: get_token() was called before each iteration
+                switch (last_token)
                 {
-                    if (callback)
+                    case token_type::begin_object:
                     {
-                        keep = callback(depth++, parse_event_t::object_start, result);
-                    }
-
-                    if (not callback or keep)
-                    {
-                        // explicitly set result to object to cope with {}
-                        result.m_type = value_t::object;
-                        result.m_value = value_t::object;
-                    }
-                }
-
-                // read next token
-                get_token();
-
-                // closing } -> we are done
-                if (last_token == token_type::end_object)
-                {
-                    if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
-                    {
-                        result.m_value.destroy(result.m_type);
-                        result.m_type = value_t::discarded;
-                    }
-                    break;
-                }
-
-                // parse values
-                string_t key;
-                BasicJsonType value;
-                while (true)
-                {
-                    // store key
-                    if (not expect(token_type::value_string))
-                    {
-                        return;
-                    }
-                    key = m_lexer.move_string();
-
-                    bool keep_tag = false;
-                    if (keep)
-                    {
-                        if (callback)
+                        if (JSON_UNLIKELY(not sax->start_object(std::size_t(-1))))
                         {
-                            BasicJsonType k(key);
-                            keep_tag = callback(depth, parse_event_t::key, k);
+                            return false;
+                        }
+
+                        // closing } -> we are done
+                        if (get_token() == token_type::end_object)
+                        {
+                            if (JSON_UNLIKELY(not sax->end_object()))
+                            {
+                                return false;
+                            }
+                            break;
+                        }
+
+                        // parse key
+                        if (JSON_UNLIKELY(last_token != token_type::value_string))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
                         }
                         else
                         {
-                            keep_tag = true;
+                            if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
+                            {
+                                return false;
+                            }
+                        }
+
+                        // parse separator (:)
+                        if (JSON_UNLIKELY(get_token() != token_type::name_separator))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
+                        }
+
+                        // remember we are now inside an object
+                        states.push_back(false);
+
+                        // parse values
+                        get_token();
+                        continue;
+                    }
+
+                    case token_type::begin_array:
+                    {
+                        if (JSON_UNLIKELY(not sax->start_array(std::size_t(-1))))
+                        {
+                            return false;
+                        }
+
+                        // closing ] -> we are done
+                        if (get_token() == token_type::end_array)
+                        {
+                            if (JSON_UNLIKELY(not sax->end_array()))
+                            {
+                                return false;
+                            }
+                            break;
+                        }
+
+                        // remember we are now inside an array
+                        states.push_back(true);
+
+                        // parse values (no need to call get_token)
+                        continue;
+                    }
+
+                    case token_type::value_float:
+                    {
+                        const auto res = m_lexer.get_number_float();
+
+                        if (JSON_UNLIKELY(not std::isfinite(res)))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
+                        }
+                        else
+                        {
+                            if (JSON_UNLIKELY(not sax->number_float(res, m_lexer.get_string())))
+                            {
+                                return false;
+                            }
+                            break;
                         }
                     }
 
-                    // parse separator (:)
-                    get_token();
-                    if (not expect(token_type::name_separator))
+                    case token_type::literal_false:
                     {
-                        return;
+                        if (JSON_UNLIKELY(not sax->boolean(false)))
+                        {
+                            return false;
+                        }
+                        break;
                     }
 
-                    // parse and add value
-                    get_token();
-                    value.m_value.destroy(value.m_type);
-                    value.m_type = value_t::discarded;
-                    parse_internal(keep, value);
-
-                    if (JSON_UNLIKELY(errored))
+                    case token_type::literal_null:
                     {
-                        return;
+                        if (JSON_UNLIKELY(not sax->null()))
+                        {
+                            return false;
+                        }
+                        break;
                     }
 
-                    if (keep and keep_tag and not value.is_discarded())
+                    case token_type::literal_true:
                     {
-                        result.m_value.object->emplace(std::move(key), std::move(value));
+                        if (JSON_UNLIKELY(not sax->boolean(true)))
+                        {
+                            return false;
+                        }
+                        break;
                     }
 
-                    // comma -> next value
-                    get_token();
-                    if (last_token == token_type::value_separator)
+                    case token_type::value_integer:
                     {
-                        get_token();
-                        continue;
+                        if (JSON_UNLIKELY(not sax->number_integer(m_lexer.get_number_integer())))
+                        {
+                            return false;
+                        }
+                        break;
                     }
 
-                    // closing }
-                    if (not expect(token_type::end_object))
+                    case token_type::value_string:
                     {
-                        return;
-                    }
-                    break;
-                }
-
-                if (keep and callback and not callback(--depth, parse_event_t::object_end, result))
-                {
-                    result.m_value.destroy(result.m_type);
-                    result.m_type = value_t::discarded;
-                }
-                break;
-            }
-
-            case token_type::begin_array:
-            {
-                if (keep)
-                {
-                    if (callback)
-                    {
-                        keep = callback(depth++, parse_event_t::array_start, result);
+                        if (JSON_UNLIKELY(not sax->string(m_lexer.get_string())))
+                        {
+                            return false;
+                        }
+                        break;
                     }
 
-                    if (not callback or keep)
+                    case token_type::value_unsigned:
                     {
-                        // explicitly set result to array to cope with []
-                        result.m_type = value_t::array;
-                        result.m_value = value_t::array;
-                    }
-                }
-
-                // read next token
-                get_token();
-
-                // closing ] -> we are done
-                if (last_token == token_type::end_array)
-                {
-                    if (callback and not callback(--depth, parse_event_t::array_end, result))
-                    {
-                        result.m_value.destroy(result.m_type);
-                        result.m_type = value_t::discarded;
-                    }
-                    break;
-                }
-
-                // parse values
-                BasicJsonType value;
-                while (true)
-                {
-                    // parse value
-                    value.m_value.destroy(value.m_type);
-                    value.m_type = value_t::discarded;
-                    parse_internal(keep, value);
-
-                    if (JSON_UNLIKELY(errored))
-                    {
-                        return;
+                        if (JSON_UNLIKELY(not sax->number_unsigned(m_lexer.get_number_unsigned())))
+                        {
+                            return false;
+                        }
+                        break;
                     }
 
-                    if (keep and not value.is_discarded())
+                    case token_type::parse_error:
                     {
-                        result.m_value.array->push_back(std::move(value));
+                        // using "uninitialized" to avoid "expected" message
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized)));
                     }
 
-                    // comma -> next value
-                    get_token();
-                    if (last_token == token_type::value_separator)
+                    default: // the last token was unexpected
                     {
-                        get_token();
-                        continue;
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value)));
                     }
-
-                    // closing ]
-                    if (not expect(token_type::end_array))
-                    {
-                        return;
-                    }
-                    break;
-                }
-
-                if (keep and callback and not callback(--depth, parse_event_t::array_end, result))
-                {
-                    result.m_value.destroy(result.m_type);
-                    result.m_type = value_t::discarded;
-                }
-                break;
-            }
-
-            case token_type::literal_null:
-            {
-                result.m_type = value_t::null;
-                break;
-            }
-
-            case token_type::value_string:
-            {
-                result.m_type = value_t::string;
-                result.m_value = m_lexer.move_string();
-                break;
-            }
-
-            case token_type::literal_true:
-            {
-                result.m_type = value_t::boolean;
-                result.m_value = true;
-                break;
-            }
-
-            case token_type::literal_false:
-            {
-                result.m_type = value_t::boolean;
-                result.m_value = false;
-                break;
-            }
-
-            case token_type::value_unsigned:
-            {
-                result.m_type = value_t::number_unsigned;
-                result.m_value = m_lexer.get_number_unsigned();
-                break;
-            }
-
-            case token_type::value_integer:
-            {
-                result.m_type = value_t::number_integer;
-                result.m_value = m_lexer.get_number_integer();
-                break;
-            }
-
-            case token_type::value_float:
-            {
-                result.m_type = value_t::number_float;
-                result.m_value = m_lexer.get_number_float();
-
-                // throw in case of infinity or NAN
-                if (JSON_UNLIKELY(not std::isfinite(result.m_value.number_float)))
-                {
-                    if (allow_exceptions)
-                    {
-                        JSON_THROW(out_of_range::create(406, "number overflow parsing '" +
-                                                        m_lexer.get_token_string() + "'"));
-                    }
-                    expect(token_type::uninitialized);
-                }
-                break;
-            }
-
-            case token_type::parse_error:
-            {
-                // using "uninitialized" to avoid "expected" message
-                if (not expect(token_type::uninitialized))
-                {
-                    return;
-                }
-                break; // LCOV_EXCL_LINE
-            }
-
-            default:
-            {
-                // the last token was unexpected; we expected a value
-                if (not expect(token_type::literal_or_value))
-                {
-                    return;
-                }
-                break; // LCOV_EXCL_LINE
-            }
-        }
-
-        if (keep and callback and not callback(depth, parse_event_t::value, result))
-        {
-            result.m_value.destroy(result.m_type);
-            result.m_type = value_t::discarded;
-        }
-    }
-
-    /*!
-    @brief the actual acceptor
-
-    @invariant 1. The last token is not yet processed. Therefore, the caller
-                  of this function must make sure a token has been read.
-               2. When this function returns, the last token is processed.
-                  That is, the last read character was already considered.
-
-    This invariant makes sure that no token needs to be "unput".
-    */
-    bool accept_internal()
-    {
-        switch (last_token)
-        {
-            case token_type::begin_object:
-            {
-                // read next token
-                get_token();
-
-                // closing } -> we are done
-                if (last_token == token_type::end_object)
-                {
-                    return true;
-                }
-
-                // parse values
-                while (true)
-                {
-                    // parse key
-                    if (last_token != token_type::value_string)
-                    {
-                        return false;
-                    }
-
-                    // parse separator (:)
-                    get_token();
-                    if (last_token != token_type::name_separator)
-                    {
-                        return false;
-                    }
-
-                    // parse value
-                    get_token();
-                    if (not accept_internal())
-                    {
-                        return false;
-                    }
-
-                    // comma -> next value
-                    get_token();
-                    if (last_token == token_type::value_separator)
-                    {
-                        get_token();
-                        continue;
-                    }
-
-                    // closing }
-                    return (last_token == token_type::end_object);
                 }
             }
-
-            case token_type::begin_array:
+            else
             {
-                // read next token
-                get_token();
-
-                // closing ] -> we are done
-                if (last_token == token_type::end_array)
-                {
-                    return true;
-                }
-
-                // parse values
-                while (true)
-                {
-                    // parse value
-                    if (not accept_internal())
-                    {
-                        return false;
-                    }
-
-                    // comma -> next value
-                    get_token();
-                    if (last_token == token_type::value_separator)
-                    {
-                        get_token();
-                        continue;
-                    }
-
-                    // closing ]
-                    return (last_token == token_type::end_array);
-                }
+                skip_to_state_evaluation = false;
             }
 
-            case token_type::value_float:
+            // we reached this line after we successfully parsed a value
+            if (states.empty())
             {
-                // reject infinity or NAN
-                return std::isfinite(m_lexer.get_number_float());
-            }
-
-            case token_type::literal_false:
-            case token_type::literal_null:
-            case token_type::literal_true:
-            case token_type::value_integer:
-            case token_type::value_string:
-            case token_type::value_unsigned:
+                // empty stack: we reached the end of the hieararchy: done
                 return true;
+            }
+            else
+            {
+                if (states.back())  // array
+                {
+                    // comma -> next value
+                    if (get_token() == token_type::value_separator)
+                    {
+                        // parse a new value
+                        get_token();
+                        continue;
+                    }
 
-            default: // the last token was unexpected
-                return false;
+                    // closing ]
+                    if (JSON_LIKELY(last_token == token_type::end_array))
+                    {
+                        if (JSON_UNLIKELY(not sax->end_array()))
+                        {
+                            return false;
+                        }
+
+                        // We are done with this array. Before we can parse a
+                        // new value, we need to evaluate the new state first.
+                        // By setting skip_to_state_evaluation to false, we
+                        // are effectively jumping to the beginning of this if.
+                        assert(not states.empty());
+                        states.pop_back();
+                        skip_to_state_evaluation = true;
+                        continue;
+                    }
+                    else
+                    {
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array)));
+                    }
+                }
+                else  // object
+                {
+                    // comma -> next value
+                    if (get_token() == token_type::value_separator)
+                    {
+                        // parse key
+                        if (JSON_UNLIKELY(get_token() != token_type::value_string))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
+                        }
+                        else
+                        {
+                            if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
+                            {
+                                return false;
+                            }
+                        }
+
+                        // parse separator (:)
+                        if (JSON_UNLIKELY(get_token() != token_type::name_separator))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
+                        }
+
+                        // parse values
+                        get_token();
+                        continue;
+                    }
+
+                    // closing }
+                    if (JSON_LIKELY(last_token == token_type::end_object))
+                    {
+                        if (JSON_UNLIKELY(not sax->end_object()))
+                        {
+                            return false;
+                        }
+
+                        // We are done with this object. Before we can parse a
+                        // new value, we need to evaluate the new state first.
+                        // By setting skip_to_state_evaluation to false, we
+                        // are effectively jumping to the beginning of this if.
+                        assert(not states.empty());
+                        states.pop_back();
+                        skip_to_state_evaluation = true;
+                        continue;
+                    }
+                    else
+                    {
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object)));
+                    }
+                }
+            }
         }
     }
 
@@ -3652,29 +4924,7 @@ class parser
         return (last_token = m_lexer.scan());
     }
 
-    /*!
-    @throw parse_error.101 if expected token did not occur
-    */
-    bool expect(token_type t)
-    {
-        if (JSON_UNLIKELY(t != last_token))
-        {
-            errored = true;
-            expected = t;
-            if (allow_exceptions)
-            {
-                throw_exception();
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    [[noreturn]] void throw_exception() const
+    std::string exception_message(const token_type expected)
     {
         std::string error_msg = "syntax error - ";
         if (last_token == token_type::parse_error)
@@ -3692,22 +4942,16 @@ class parser
             error_msg += "; expected " + std::string(lexer_t::token_type_name(expected));
         }
 
-        JSON_THROW(parse_error::create(101, m_lexer.get_position(), error_msg));
+        return error_msg;
     }
 
   private:
-    /// current level of recursion
-    int depth = 0;
     /// callback function
     const parser_callback_t callback = nullptr;
     /// the type of the last read token
     token_type last_token = token_type::uninitialized;
     /// the lexer
     lexer_t m_lexer;
-    /// whether a syntax error occurred
-    bool errored = false;
-    /// possible reason for the syntax error
-    token_type expected = token_type::uninitialized;
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
 };
@@ -3804,7 +5048,7 @@ class primitive_iterator_t
     primitive_iterator_t const operator++(int) noexcept
     {
         auto result = *this;
-        m_it++;
+        ++m_it;
         return result;
     }
 
@@ -3817,7 +5061,7 @@ class primitive_iterator_t
     primitive_iterator_t const operator--(int) noexcept
     {
         auto result = *this;
-        m_it--;
+        --m_it;
         return result;
     }
 
@@ -3879,7 +5123,7 @@ template<typename BasicJsonType> struct internal_iterator
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta.hpp>
+// #include <nlohmann/detail/meta/cpp_future.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
@@ -3904,7 +5148,7 @@ This class implements a both iterators (iterator and const_iterator) for the
 
 @requirement The class satisfies the following concept requirements:
 -
-[BidirectionalIterator](http://en.cppreference.com/w/cpp/concept/BidirectionalIterator):
+[BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator):
   The iterator that can be moved can be moved in both directions (i.e.
   incremented and decremented).
 
@@ -4456,7 +5700,7 @@ class iter_impl
     @brief  return the key of an object iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    typename object_t::key_type key() const
+    const typename object_t::key_type& key() const
     {
         assert(m_object != nullptr);
 
@@ -4488,105 +5732,6 @@ class iter_impl
 
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
-
-#include <cstddef> // size_t
-#include <string> // string, to_string
-
-// #include <nlohmann/detail/value_t.hpp>
-
-
-namespace nlohmann
-{
-namespace detail
-{
-/// proxy class for the items() function
-template<typename IteratorType> class iteration_proxy
-{
-  private:
-    /// helper class for iteration
-    class iteration_proxy_internal
-    {
-      private:
-        /// the iterator
-        IteratorType anchor;
-        /// an index for arrays (used to create key names)
-        std::size_t array_index = 0;
-
-      public:
-        explicit iteration_proxy_internal(IteratorType it) noexcept : anchor(it) {}
-
-        /// dereference operator (needed for range-based for)
-        iteration_proxy_internal& operator*()
-        {
-            return *this;
-        }
-
-        /// increment operator (needed for range-based for)
-        iteration_proxy_internal& operator++()
-        {
-            ++anchor;
-            ++array_index;
-
-            return *this;
-        }
-
-        /// inequality operator (needed for range-based for)
-        bool operator!=(const iteration_proxy_internal& o) const noexcept
-        {
-            return anchor != o.anchor;
-        }
-
-        /// return key of the iterator
-        std::string key() const
-        {
-            assert(anchor.m_object != nullptr);
-
-            switch (anchor.m_object->type())
-            {
-                // use integer array index as key
-                case value_t::array:
-                    return std::to_string(array_index);
-
-                // use key from the object
-                case value_t::object:
-                    return anchor.key();
-
-                // use an empty key for all primitive types
-                default:
-                    return "";
-            }
-        }
-
-        /// return value of the iterator
-        typename IteratorType::reference value() const
-        {
-            return anchor.value();
-        }
-    };
-
-    /// the container to iterate
-    typename IteratorType::reference container;
-
-  public:
-    /// construct iteration proxy from a container
-    explicit iteration_proxy(typename IteratorType::reference cont) noexcept
-        : container(cont) {}
-
-    /// return iterator begin (needed for range-based for)
-    iteration_proxy_internal begin() noexcept
-    {
-        return iteration_proxy_internal(container.begin());
-    }
-
-    /// return iterator end (needed for range-based for)
-    iteration_proxy_internal end() noexcept
-    {
-        return iteration_proxy_internal(container.end());
-    }
-};
-}
-}
-
 // #include <nlohmann/detail/iterators/json_reverse_iterator.hpp>
 
 
@@ -4611,10 +5756,10 @@ create @ref const_reverse_iterator).
 
 @requirement The class satisfies the following concept requirements:
 -
-[BidirectionalIterator](http://en.cppreference.com/w/cpp/concept/BidirectionalIterator):
+[BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator):
   The iterator that can be moved can be moved in both directions (i.e.
   incremented and decremented).
-- [OutputIterator](http://en.cppreference.com/w/cpp/concept/OutputIterator):
+- [OutputIterator](https://en.cppreference.com/w/cpp/named_req/OutputIterator):
   It is possible to write to the pointed-to element (only if @a Base is
   @ref iterator).
 
@@ -4631,11 +5776,11 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     using reference = typename Base::reference;
 
     /// create reverse iterator from iterator
-    json_reverse_iterator(const typename base_iterator::iterator_type& it) noexcept
+    explicit json_reverse_iterator(const typename base_iterator::iterator_type& it) noexcept
         : base_iterator(it) {}
 
     /// create reverse iterator from base class
-    json_reverse_iterator(const base_iterator& it) noexcept : base_iterator(it) {}
+    explicit json_reverse_iterator(const base_iterator& it) noexcept : base_iterator(it) {}
 
     /// post-increment (it++)
     json_reverse_iterator const operator++(int)
@@ -4832,20 +5977,22 @@ class output_adapter
 #include <cmath> // ldexp
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstdio> // snprintf
 #include <cstring> // memcpy
-#include <iomanip> // setw, setfill
-#include <ios> // hex
 #include <iterator> // back_inserter
 #include <limits> // numeric_limits
-#include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
+// #include <nlohmann/detail/input/json_sax.hpp>
+
 // #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/macro_scope.hpp>
+
+// #include <nlohmann/detail/meta/is_sax.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
@@ -4859,14 +6006,16 @@ namespace detail
 ///////////////////
 
 /*!
-@brief deserialization of CBOR and MessagePack values
+@brief deserialization of CBOR, MessagePack, and UBJSON values
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, typename SAX = json_sax_dom_parser<BasicJsonType>>
 class binary_reader
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using json_sax_t = SAX;
 
   public:
     /*!
@@ -4876,70 +6025,63 @@ class binary_reader
     */
     explicit binary_reader(input_adapter_t adapter) : ia(std::move(adapter))
     {
+        (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
         assert(ia);
     }
 
     /*!
-    @brief create a JSON value from CBOR input
-
+    @param[in] format  the binary format to parse
+    @param[in] sax_    a SAX event processor
     @param[in] strict  whether to expect the input to be consumed completed
-    @return JSON value created from CBOR input
 
-    @throw parse_error.110 if input ended unexpectedly or the end of file was
-                           not reached when @a strict was set to true
-    @throw parse_error.112 if unsupported byte was read
+    @return
     */
-    BasicJsonType parse_cbor(const bool strict)
+    bool sax_parse(const input_format_t format,
+                   json_sax_t* sax_,
+                   const bool strict = true)
     {
-        const auto res = parse_cbor_internal();
-        if (strict)
+        sax = sax_;
+        bool result = false;
+
+        switch (format)
         {
-            get();
-            expect_eof();
+            case input_format_t::cbor:
+                result = parse_cbor_internal();
+                break;
+
+            case input_format_t::msgpack:
+                result = parse_msgpack_internal();
+                break;
+
+            case input_format_t::ubjson:
+                result = parse_ubjson_internal();
+                break;
+
+            // LCOV_EXCL_START
+            default:
+                assert(false);
+                // LCOV_EXCL_STOP
         }
-        return res;
-    }
 
-    /*!
-    @brief create a JSON value from MessagePack input
-
-    @param[in] strict  whether to expect the input to be consumed completed
-    @return JSON value created from MessagePack input
-
-    @throw parse_error.110 if input ended unexpectedly or the end of file was
-                           not reached when @a strict was set to true
-    @throw parse_error.112 if unsupported byte was read
-    */
-    BasicJsonType parse_msgpack(const bool strict)
-    {
-        const auto res = parse_msgpack_internal();
-        if (strict)
+        // strict mode: next byte must be EOF
+        if (result and strict)
         {
-            get();
-            expect_eof();
+            if (format == input_format_t::ubjson)
+            {
+                get_ignore_noop();
+            }
+            else
+            {
+                get();
+            }
+
+            if (JSON_UNLIKELY(current != std::char_traits<char>::eof()))
+            {
+                return sax->parse_error(chars_read, get_token_string(), parse_error::create(110, chars_read, "expected end of input"));
+            }
         }
-        return res;
-    }
 
-    /*!
-    @brief create a JSON value from UBJSON input
-
-    @param[in] strict  whether to expect the input to be consumed completed
-    @return JSON value created from UBJSON input
-
-    @throw parse_error.110 if input ended unexpectedly or the end of file was
-                           not reached when @a strict was set to true
-    @throw parse_error.112 if unsupported byte was read
-    */
-    BasicJsonType parse_ubjson(const bool strict)
-    {
-        const auto res = parse_ubjson_internal();
-        if (strict)
-        {
-            get_ignore_noop();
-            expect_eof();
-        }
-        return res;
+        return result;
     }
 
     /*!
@@ -4959,14 +6101,16 @@ class binary_reader
     @param[in] get_char  whether a new character should be retrieved from the
                          input (true, default) or whether the last read
                          character should be considered instead
+
+    @return whether a valid CBOR value was passed to the SAX parser
     */
-    BasicJsonType parse_cbor_internal(const bool get_char = true)
+    bool parse_cbor_internal(const bool get_char = true)
     {
         switch (get_char ? get() : current)
         {
             // EOF
             case std::char_traits<char>::eof():
-                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
+                return unexpect_eof();
 
             // Integer 0x00..0x17 (0..23)
             case 0x00:
@@ -4993,19 +6137,31 @@ class binary_reader
             case 0x15:
             case 0x16:
             case 0x17:
-                return static_cast<number_unsigned_t>(current);
+                return sax->number_unsigned(static_cast<number_unsigned_t>(current));
 
             case 0x18: // Unsigned integer (one-byte uint8_t follows)
-                return get_number<uint8_t>();
+            {
+                uint8_t number;
+                return get_number(number) and sax->number_unsigned(number);
+            }
 
             case 0x19: // Unsigned integer (two-byte uint16_t follows)
-                return get_number<uint16_t>();
+            {
+                uint16_t number;
+                return get_number(number) and sax->number_unsigned(number);
+            }
 
             case 0x1A: // Unsigned integer (four-byte uint32_t follows)
-                return get_number<uint32_t>();
+            {
+                uint32_t number;
+                return get_number(number) and sax->number_unsigned(number);
+            }
 
             case 0x1B: // Unsigned integer (eight-byte uint64_t follows)
-                return get_number<uint64_t>();
+            {
+                uint64_t number;
+                return get_number(number) and sax->number_unsigned(number);
+            }
 
             // Negative integer -1-0x00..-1-0x17 (-1..-24)
             case 0x20:
@@ -5032,27 +6188,31 @@ class binary_reader
             case 0x35:
             case 0x36:
             case 0x37:
-                return static_cast<int8_t>(0x20 - 1 - current);
+                return sax->number_integer(static_cast<int8_t>(0x20 - 1 - current));
 
             case 0x38: // Negative integer (one-byte uint8_t follows)
             {
-                return static_cast<number_integer_t>(-1) - get_number<uint8_t>();
+                uint8_t number;
+                return get_number(number) and sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x39: // Negative integer -1-n (two-byte uint16_t follows)
             {
-                return static_cast<number_integer_t>(-1) - get_number<uint16_t>();
+                uint16_t number;
+                return get_number(number) and sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x3A: // Negative integer -1-n (four-byte uint32_t follows)
             {
-                return static_cast<number_integer_t>(-1) - get_number<uint32_t>();
+                uint32_t number;
+                return get_number(number) and sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x3B: // Negative integer -1-n (eight-byte uint64_t follows)
             {
-                return static_cast<number_integer_t>(-1) -
-                       static_cast<number_integer_t>(get_number<uint64_t>());
+                uint64_t number;
+                return get_number(number) and sax->number_integer(static_cast<number_integer_t>(-1)
+                        - static_cast<number_integer_t>(number));
             }
 
             // UTF-8 string (0x00..0x17 bytes follow)
@@ -5086,7 +6246,8 @@ class binary_reader
             case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
             case 0x7F: // UTF-8 string (indefinite length)
             {
-                return get_cbor_string();
+                string_t s;
+                return get_cbor_string(s) and sax->string(s);
             }
 
             // array (0x00..0x17 data items follow)
@@ -5114,39 +6275,34 @@ class binary_reader
             case 0x95:
             case 0x96:
             case 0x97:
-            {
-                return get_cbor_array(current & 0x1F);
-            }
+                return get_cbor_array(static_cast<std::size_t>(current & 0x1F));
 
             case 0x98: // array (one-byte uint8_t for n follows)
             {
-                return get_cbor_array(get_number<uint8_t>());
+                uint8_t len;
+                return get_number(len) and get_cbor_array(static_cast<std::size_t>(len));
             }
 
             case 0x99: // array (two-byte uint16_t for n follow)
             {
-                return get_cbor_array(get_number<uint16_t>());
+                uint16_t len;
+                return get_number(len) and get_cbor_array(static_cast<std::size_t>(len));
             }
 
             case 0x9A: // array (four-byte uint32_t for n follow)
             {
-                return get_cbor_array(get_number<uint32_t>());
+                uint32_t len;
+                return get_number(len) and get_cbor_array(static_cast<std::size_t>(len));
             }
 
             case 0x9B: // array (eight-byte uint64_t for n follow)
             {
-                return get_cbor_array(get_number<uint64_t>());
+                uint64_t len;
+                return get_number(len) and get_cbor_array(static_cast<std::size_t>(len));
             }
 
             case 0x9F: // array (indefinite length)
-            {
-                BasicJsonType result = value_t::array;
-                while (get() != 0xFF)
-                {
-                    result.push_back(parse_cbor_internal(false));
-                }
-                return result;
-            }
+                return get_cbor_array(std::size_t(-1));
 
             // map (0x00..0x17 pairs of data items follow)
             case 0xA0:
@@ -5173,62 +6329,56 @@ class binary_reader
             case 0xB5:
             case 0xB6:
             case 0xB7:
-            {
-                return get_cbor_object(current & 0x1F);
-            }
+                return get_cbor_object(static_cast<std::size_t>(current & 0x1F));
 
             case 0xB8: // map (one-byte uint8_t for n follows)
             {
-                return get_cbor_object(get_number<uint8_t>());
+                uint8_t len;
+                return get_number(len) and get_cbor_object(static_cast<std::size_t>(len));
             }
 
             case 0xB9: // map (two-byte uint16_t for n follow)
             {
-                return get_cbor_object(get_number<uint16_t>());
+                uint16_t len;
+                return get_number(len) and get_cbor_object(static_cast<std::size_t>(len));
             }
 
             case 0xBA: // map (four-byte uint32_t for n follow)
             {
-                return get_cbor_object(get_number<uint32_t>());
+                uint32_t len;
+                return get_number(len) and get_cbor_object(static_cast<std::size_t>(len));
             }
 
             case 0xBB: // map (eight-byte uint64_t for n follow)
             {
-                return get_cbor_object(get_number<uint64_t>());
+                uint64_t len;
+                return get_number(len) and get_cbor_object(static_cast<std::size_t>(len));
             }
 
             case 0xBF: // map (indefinite length)
-            {
-                BasicJsonType result = value_t::object;
-                while (get() != 0xFF)
-                {
-                    auto key = get_cbor_string();
-                    result[key] = parse_cbor_internal();
-                }
-                return result;
-            }
+                return get_cbor_object(std::size_t(-1));
 
             case 0xF4: // false
-            {
-                return false;
-            }
+                return sax->boolean(false);
 
             case 0xF5: // true
-            {
-                return true;
-            }
+                return sax->boolean(true);
 
             case 0xF6: // null
-            {
-                return value_t::null;
-            }
+                return sax->null();
 
             case 0xF9: // Half-Precision Float (two-byte IEEE 754)
             {
                 const int byte1 = get();
-                unexpect_eof();
+                if (JSON_UNLIKELY(not unexpect_eof()))
+                {
+                    return false;
+                }
                 const int byte2 = get();
-                unexpect_eof();
+                if (JSON_UNLIKELY(not unexpect_eof()))
+                {
+                    return false;
+                }
 
                 // code from RFC 7049, Appendix D, Figure 3:
                 // As half-precision floating-point numbers were only added
@@ -5239,51 +6389,59 @@ class binary_reader
                 // half-precision floating-point numbers in the C language
                 // is shown in Fig. 3.
                 const int half = (byte1 << 8) + byte2;
-                const int exp = (half >> 10) & 0x1F;
-                const int mant = half & 0x3FF;
-                double val;
-                if (exp == 0)
+                const double val = [&half]
                 {
-                    val = std::ldexp(mant, -24);
-                }
-                else if (exp != 31)
-                {
-                    val = std::ldexp(mant + 1024, exp - 25);
-                }
-                else
-                {
-                    val = (mant == 0) ? std::numeric_limits<double>::infinity()
-                          : std::numeric_limits<double>::quiet_NaN();
-                }
-                return (half & 0x8000) != 0 ? -val : val;
+                    const int exp = (half >> 10) & 0x1F;
+                    const int mant = half & 0x3FF;
+                    assert(0 <= exp and exp <= 32);
+                    assert(0 <= mant and mant <= 1024);
+                    switch (exp)
+                    {
+                        case 0:
+                            return std::ldexp(mant, -24);
+                        case 31:
+                            return (mant == 0)
+                            ? std::numeric_limits<double>::infinity()
+                            : std::numeric_limits<double>::quiet_NaN();
+                        default:
+                            return std::ldexp(mant + 1024, exp - 25);
+                    }
+                }();
+                return sax->number_float((half & 0x8000) != 0
+                                         ? static_cast<number_float_t>(-val)
+                                         : static_cast<number_float_t>(val), "");
             }
 
             case 0xFA: // Single-Precision Float (four-byte IEEE 754)
             {
-                return get_number<float>();
+                float number;
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
             {
-                return get_number<double>();
+                double number;
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             default: // anything else (0xFF is handled inside the other types)
             {
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(112, chars_read, "error reading CBOR; last byte: 0x" + ss.str()));
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, "error reading CBOR; last byte: 0x" + last_token));
             }
         }
     }
 
-    BasicJsonType parse_msgpack_internal()
+    /*!
+    @return whether a valid MessagePack value was passed to the SAX parser
+    */
+    bool parse_msgpack_internal()
     {
         switch (get())
         {
             // EOF
             case std::char_traits<char>::eof():
-                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
+                return unexpect_eof();
 
             // positive fixint
             case 0x00:
@@ -5414,7 +6572,7 @@ class binary_reader
             case 0x7D:
             case 0x7E:
             case 0x7F:
-                return static_cast<number_unsigned_t>(current);
+                return sax->number_unsigned(static_cast<number_unsigned_t>(current));
 
             // fixmap
             case 0x80:
@@ -5433,9 +6591,7 @@ class binary_reader
             case 0x8D:
             case 0x8E:
             case 0x8F:
-            {
-                return get_msgpack_object(current & 0x0F);
-            }
+                return get_msgpack_object(static_cast<std::size_t>(current & 0x0F));
 
             // fixarray
             case 0x90:
@@ -5454,9 +6610,7 @@ class binary_reader
             case 0x9D:
             case 0x9E:
             case 0x9F:
-            {
-                return get_msgpack_array(current & 0x0F);
-            }
+                return get_msgpack_array(static_cast<std::size_t>(current & 0x0F));
 
             // fixstr
             case 0xA0:
@@ -5491,73 +6645,113 @@ class binary_reader
             case 0xBD:
             case 0xBE:
             case 0xBF:
-                return get_msgpack_string();
+            {
+                string_t s;
+                return get_msgpack_string(s) and sax->string(s);
+            }
 
             case 0xC0: // nil
-                return value_t::null;
+                return sax->null();
 
             case 0xC2: // false
-                return false;
+                return sax->boolean(false);
 
             case 0xC3: // true
-                return true;
+                return sax->boolean(true);
 
             case 0xCA: // float 32
-                return get_number<float>();
+            {
+                float number;
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
+            }
 
             case 0xCB: // float 64
-                return get_number<double>();
+            {
+                double number;
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
+            }
 
             case 0xCC: // uint 8
-                return get_number<uint8_t>();
+            {
+                uint8_t number;
+                return get_number(number) and sax->number_unsigned(number);
+            }
 
             case 0xCD: // uint 16
-                return get_number<uint16_t>();
+            {
+                uint16_t number;
+                return get_number(number) and sax->number_unsigned(number);
+            }
 
             case 0xCE: // uint 32
-                return get_number<uint32_t>();
+            {
+                uint32_t number;
+                return get_number(number) and sax->number_unsigned(number);
+            }
 
             case 0xCF: // uint 64
-                return get_number<uint64_t>();
+            {
+                uint64_t number;
+                return get_number(number) and sax->number_unsigned(number);
+            }
 
             case 0xD0: // int 8
-                return get_number<int8_t>();
+            {
+                int8_t number;
+                return get_number(number) and sax->number_integer(number);
+            }
 
             case 0xD1: // int 16
-                return get_number<int16_t>();
+            {
+                int16_t number;
+                return get_number(number) and sax->number_integer(number);
+            }
 
             case 0xD2: // int 32
-                return get_number<int32_t>();
+            {
+                int32_t number;
+                return get_number(number) and sax->number_integer(number);
+            }
 
             case 0xD3: // int 64
-                return get_number<int64_t>();
+            {
+                int64_t number;
+                return get_number(number) and sax->number_integer(number);
+            }
 
             case 0xD9: // str 8
             case 0xDA: // str 16
             case 0xDB: // str 32
-                return get_msgpack_string();
+            {
+                string_t s;
+                return get_msgpack_string(s) and sax->string(s);
+            }
 
             case 0xDC: // array 16
             {
-                return get_msgpack_array(get_number<uint16_t>());
+                uint16_t len;
+                return get_number(len) and get_msgpack_array(static_cast<std::size_t>(len));
             }
 
             case 0xDD: // array 32
             {
-                return get_msgpack_array(get_number<uint32_t>());
+                uint32_t len;
+                return get_number(len) and get_msgpack_array(static_cast<std::size_t>(len));
             }
 
             case 0xDE: // map 16
             {
-                return get_msgpack_object(get_number<uint16_t>());
+                uint16_t len;
+                return get_number(len) and get_msgpack_object(static_cast<std::size_t>(len));
             }
 
             case 0xDF: // map 32
             {
-                return get_msgpack_object(get_number<uint32_t>());
+                uint32_t len;
+                return get_number(len) and get_msgpack_object(static_cast<std::size_t>(len));
             }
 
-            // positive fixint
+            // negative fixint
             case 0xE0:
             case 0xE1:
             case 0xE2:
@@ -5590,14 +6784,12 @@ class binary_reader
             case 0xFD:
             case 0xFE:
             case 0xFF:
-                return static_cast<int8_t>(current);
+                return sax->number_integer(static_cast<int8_t>(current));
 
             default: // anything else
             {
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(112, chars_read,
-                                               "error reading MessagePack; last byte: 0x" + ss.str()));
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, "error reading MessagePack; last byte: 0x" + last_token));
             }
         }
     }
@@ -5606,8 +6798,10 @@ class binary_reader
     @param[in] get_char  whether a new character should be retrieved from the
                          input (true, default) or whether the last read
                          character should be considered instead
+
+    @return whether a valid UBJSON value was passed to the SAX parser
     */
-    BasicJsonType parse_ubjson_internal(const bool get_char = true)
+    bool parse_ubjson_internal(const bool get_char = true)
     {
         return get_ubjson_value(get_char ? get_ignore_noop() : current);
     }
@@ -5645,23 +6839,26 @@ class binary_reader
     @brief read a number from the input
 
     @tparam NumberType the type of the number
+    @param[out] result  number of type @a NumberType
 
-    @return number of type @a NumberType
+    @return whether conversion completed
 
     @note This function needs to respect the system's endianess, because
-          bytes in CBOR and MessagePack are stored in network order (big
-          endian) and therefore need reordering on little endian systems.
-
-    @throw parse_error.110 if input has less than `sizeof(NumberType)` bytes
+          bytes in CBOR, MessagePack, and UBJSON are stored in network order
+          (big endian) and therefore need reordering on little endian systems.
     */
-    template<typename NumberType> NumberType get_number()
+    template<typename NumberType>
+    bool get_number(NumberType& result)
     {
         // step 1: read input into array with system's byte order
         std::array<uint8_t, sizeof(NumberType)> vec;
         for (std::size_t i = 0; i < sizeof(NumberType); ++i)
         {
             get();
-            unexpect_eof();
+            if (JSON_UNLIKELY(not unexpect_eof()))
+            {
+                return false;
+            }
 
             // reverse byte order prior to conversion if necessary
             if (is_little_endian)
@@ -5675,35 +6872,37 @@ class binary_reader
         }
 
         // step 2: convert array into number of type T and return
-        NumberType result;
         std::memcpy(&result, vec.data(), sizeof(NumberType));
-        return result;
+        return true;
     }
 
     /*!
     @brief create a string by reading characters from the input
 
-    @param[in] len number of bytes to read
+    @tparam NumberType the type of the number
+    @param[in] len number of characters to read
+    @param[out] string created by reading @a len bytes
+
+    @return whether string creation completed
 
     @note We can not reserve @a len bytes for the result, because @a len
           may be too large. Usually, @ref unexpect_eof() detects the end of
           the input before we run out of string memory.
-
-    @return string created by reading @a len bytes
-
-    @throw parse_error.110 if input has less than @a len bytes
     */
     template<typename NumberType>
-    string_t get_string(const NumberType len)
+    bool get_string(const NumberType len, string_t& result)
     {
-        string_t result;
-        std::generate_n(std::back_inserter(result), len, [this]()
+        bool success = true;
+        std::generate_n(std::back_inserter(result), len, [this, &success]()
         {
             get();
-            unexpect_eof();
+            if (JSON_UNLIKELY(not unexpect_eof()))
+            {
+                success = false;
+            }
             return static_cast<char>(current);
         });
-        return result;
+        return success;
     }
 
     /*!
@@ -5713,14 +6912,16 @@ class binary_reader
     string length and then copies this number of bytes into a string.
     Additionally, CBOR's strings with indefinite lengths are supported.
 
-    @return string
+    @param[out] result  created string
 
-    @throw parse_error.110 if input ended
-    @throw parse_error.113 if an unexpected byte is read
+    @return whether string creation completed
     */
-    string_t get_cbor_string()
+    bool get_cbor_string(string_t& result)
     {
-        unexpect_eof();
+        if (JSON_UNLIKELY(not unexpect_eof()))
+        {
+            return false;
+        }
 
         switch (current)
         {
@@ -5750,73 +6951,137 @@ class binary_reader
             case 0x76:
             case 0x77:
             {
-                return get_string(current & 0x1F);
+                return get_string(current & 0x1F, result);
             }
 
             case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
             {
-                return get_string(get_number<uint8_t>());
+                uint8_t len;
+                return get_number(len) and get_string(len, result);
             }
 
             case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
             {
-                return get_string(get_number<uint16_t>());
+                uint16_t len;
+                return get_number(len) and get_string(len, result);
             }
 
             case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
             {
-                return get_string(get_number<uint32_t>());
+                uint32_t len;
+                return get_number(len) and get_string(len, result);
             }
 
             case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
             {
-                return get_string(get_number<uint64_t>());
+                uint64_t len;
+                return get_number(len) and get_string(len, result);
             }
 
             case 0x7F: // UTF-8 string (indefinite length)
             {
-                string_t result;
                 while (get() != 0xFF)
                 {
-                    result.append(get_cbor_string());
+                    string_t chunk;
+                    if (not get_cbor_string(chunk))
+                    {
+                        return false;
+                    }
+                    result.append(chunk);
                 }
-                return result;
+                return true;
             }
 
             default:
             {
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(113, chars_read, "expected a CBOR string; last byte: 0x" + ss.str()));
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, "expected a CBOR string; last byte: 0x" + last_token));
             }
         }
     }
 
-    template<typename NumberType>
-    BasicJsonType get_cbor_array(const NumberType len)
+    /*!
+    @param[in] len  the length of the array or std::size_t(-1) for an
+                    array of indefinite size
+    @return whether array creation completed
+    */
+    bool get_cbor_array(const std::size_t len)
     {
-        BasicJsonType result = value_t::array;
-        std::generate_n(std::back_inserter(*result.m_value.array), len, [this]()
+        if (JSON_UNLIKELY(not sax->start_array(len)))
         {
-            return parse_cbor_internal();
-        });
-        return result;
+            return false;
+        }
+
+        if (len != std::size_t(-1))
+            for (std::size_t i = 0; i < len; ++i)
+            {
+                if (JSON_UNLIKELY(not parse_cbor_internal()))
+                {
+                    return false;
+                }
+            }
+        else
+        {
+            while (get() != 0xFF)
+            {
+                if (JSON_UNLIKELY(not parse_cbor_internal(false)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return sax->end_array();
     }
 
-    template<typename NumberType>
-    BasicJsonType get_cbor_object(const NumberType len)
+    /*!
+    @param[in] len  the length of the object or std::size_t(-1) for an
+                    object of indefinite size
+    @return whether object creation completed
+    */
+    bool get_cbor_object(const std::size_t len)
     {
-        BasicJsonType result = value_t::object;
-        std::generate_n(std::inserter(*result.m_value.object,
-                                      result.m_value.object->end()),
-                        len, [this]()
+        if (not JSON_UNLIKELY(sax->start_object(len)))
         {
-            get();
-            auto key = get_cbor_string();
-            auto val = parse_cbor_internal();
-            return std::make_pair(std::move(key), std::move(val));
-        });
-        return result;
+            return false;
+        }
+
+        string_t key;
+        if (len != std::size_t(-1))
+        {
+            for (std::size_t i = 0; i < len; ++i)
+            {
+                get();
+                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
+                {
+                    return false;
+                }
+
+                if (JSON_UNLIKELY(not parse_cbor_internal()))
+                {
+                    return false;
+                }
+                key.clear();
+            }
+        }
+        else
+        {
+            while (get() != 0xFF)
+            {
+                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
+                {
+                    return false;
+                }
+
+                if (JSON_UNLIKELY(not parse_cbor_internal()))
+                {
+                    return false;
+                }
+                key.clear();
+            }
+        }
+
+        return sax->end_object();
     }
 
     /*!
@@ -5825,14 +7090,16 @@ class binary_reader
     This function first reads starting bytes to determine the expected
     string length and then copies this number of bytes into a string.
 
-    @return string
+    @param[out] result  created string
 
-    @throw parse_error.110 if input ended
-    @throw parse_error.113 if an unexpected byte is read
+    @return whether string creation completed
     */
-    string_t get_msgpack_string()
+    bool get_msgpack_string(string_t& result)
     {
-        unexpect_eof();
+        if (JSON_UNLIKELY(not unexpect_eof()))
+        {
+            return false;
+        }
 
         switch (current)
         {
@@ -5870,59 +7137,85 @@ class binary_reader
             case 0xBE:
             case 0xBF:
             {
-                return get_string(current & 0x1F);
+                return get_string(current & 0x1F, result);
             }
 
             case 0xD9: // str 8
             {
-                return get_string(get_number<uint8_t>());
+                uint8_t len;
+                return get_number(len) and get_string(len, result);
             }
 
             case 0xDA: // str 16
             {
-                return get_string(get_number<uint16_t>());
+                uint16_t len;
+                return get_number(len) and get_string(len, result);
             }
 
             case 0xDB: // str 32
             {
-                return get_string(get_number<uint32_t>());
+                uint32_t len;
+                return get_number(len) and get_string(len, result);
             }
 
             default:
             {
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(113, chars_read,
-                                               "expected a MessagePack string; last byte: 0x" + ss.str()));
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, "expected a MessagePack string; last byte: 0x" + last_token));
             }
         }
     }
 
-    template<typename NumberType>
-    BasicJsonType get_msgpack_array(const NumberType len)
+    /*!
+    @param[in] len  the length of the array
+    @return whether array creation completed
+    */
+    bool get_msgpack_array(const std::size_t len)
     {
-        BasicJsonType result = value_t::array;
-        std::generate_n(std::back_inserter(*result.m_value.array), len, [this]()
+        if (JSON_UNLIKELY(not sax->start_array(len)))
         {
-            return parse_msgpack_internal();
-        });
-        return result;
+            return false;
+        }
+
+        for (std::size_t i = 0; i < len; ++i)
+        {
+            if (JSON_UNLIKELY(not parse_msgpack_internal()))
+            {
+                return false;
+            }
+        }
+
+        return sax->end_array();
     }
 
-    template<typename NumberType>
-    BasicJsonType get_msgpack_object(const NumberType len)
+    /*!
+    @param[in] len  the length of the object
+    @return whether object creation completed
+    */
+    bool get_msgpack_object(const std::size_t len)
     {
-        BasicJsonType result = value_t::object;
-        std::generate_n(std::inserter(*result.m_value.object,
-                                      result.m_value.object->end()),
-                        len, [this]()
+        if (JSON_UNLIKELY(not sax->start_object(len)))
+        {
+            return false;
+        }
+
+        string_t key;
+        for (std::size_t i = 0; i < len; ++i)
         {
             get();
-            auto key = get_msgpack_string();
-            auto val = parse_msgpack_internal();
-            return std::make_pair(std::move(key), std::move(val));
-        });
-        return result;
+            if (JSON_UNLIKELY(not get_msgpack_string(key) or not sax->key(key)))
+            {
+                return false;
+            }
+
+            if (JSON_UNLIKELY(not parse_msgpack_internal()))
+            {
+                return false;
+            }
+            key.clear();
+        }
+
+        return sax->end_object();
     }
 
     /*!
@@ -5932,41 +7225,131 @@ class binary_reader
     indicating a string, or in case of an object key where the 'S' byte can be
     left out.
 
+    @param[out] result   created string
     @param[in] get_char  whether a new character should be retrieved from the
                          input (true, default) or whether the last read
                          character should be considered instead
 
-    @return string
-
-    @throw parse_error.110 if input ended
-    @throw parse_error.113 if an unexpected byte is read
+    @return whether string creation completed
     */
-    string_t get_ubjson_string(const bool get_char = true)
+    bool get_ubjson_string(string_t& result, const bool get_char = true)
     {
         if (get_char)
         {
             get();  // TODO: may we ignore N here?
         }
 
-        unexpect_eof();
+        if (JSON_UNLIKELY(not unexpect_eof()))
+        {
+            return false;
+        }
 
         switch (current)
         {
             case 'U':
-                return get_string(get_number<uint8_t>());
+            {
+                uint8_t len;
+                return get_number(len) and get_string(len, result);
+            }
+
             case 'i':
-                return get_string(get_number<int8_t>());
+            {
+                int8_t len;
+                return get_number(len) and get_string(len, result);
+            }
+
             case 'I':
-                return get_string(get_number<int16_t>());
+            {
+                int16_t len;
+                return get_number(len) and get_string(len, result);
+            }
+
             case 'l':
-                return get_string(get_number<int32_t>());
+            {
+                int32_t len;
+                return get_number(len) and get_string(len, result);
+            }
+
             case 'L':
-                return get_string(get_number<int64_t>());
+            {
+                int64_t len;
+                return get_number(len) and get_string(len, result);
+            }
+
             default:
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(113, chars_read,
-                                               "expected a UBJSON string; last byte: 0x" + ss.str()));
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, "expected a UBJSON string; last byte: 0x" + last_token));
+        }
+    }
+
+    /*!
+    @param[out] result  determined size
+    @return whether size determination completed
+    */
+    bool get_ubjson_size_value(std::size_t& result)
+    {
+        switch (get_ignore_noop())
+        {
+            case 'U':
+            {
+                uint8_t number;
+                if (JSON_UNLIKELY(not get_number(number)))
+                {
+                    return false;
+                }
+                result = static_cast<std::size_t>(number);
+                return true;
+            }
+
+            case 'i':
+            {
+                int8_t number;
+                if (JSON_UNLIKELY(not get_number(number)))
+                {
+                    return false;
+                }
+                result = static_cast<std::size_t>(number);
+                return true;
+            }
+
+            case 'I':
+            {
+                int16_t number;
+                if (JSON_UNLIKELY(not get_number(number)))
+                {
+                    return false;
+                }
+                result = static_cast<std::size_t>(number);
+                return true;
+            }
+
+            case 'l':
+            {
+                int32_t number;
+                if (JSON_UNLIKELY(not get_number(number)))
+                {
+                    return false;
+                }
+                result = static_cast<std::size_t>(number);
+                return true;
+            }
+
+            case 'L':
+            {
+                int64_t number;
+                if (JSON_UNLIKELY(not get_number(number)))
+                {
+                    return false;
+                }
+                result = static_cast<std::size_t>(number);
+                return true;
+            }
+
+            default:
+            {
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, "byte after '#' must denote a number type; last byte: 0x" + last_token));
+            }
         }
     }
 
@@ -5976,84 +7359,127 @@ class binary_reader
     In the optimized UBJSON format, a type and a size can be provided to allow
     for a more compact representation.
 
-    @return pair of the size and the type
+    @param[out] result  pair of the size and the type
+
+    @return whether pair creation completed
     */
-    std::pair<std::size_t, int> get_ubjson_size_type()
+    bool get_ubjson_size_type(std::pair<std::size_t, int>& result)
     {
-        std::size_t sz = string_t::npos;
-        int tc = 0;
+        result.first = string_t::npos; // size
+        result.second = 0; // type
 
         get_ignore_noop();
 
         if (current == '$')
         {
-            tc = get();  // must not ignore 'N', because 'N' maybe the type
-            unexpect_eof();
+            result.second = get();  // must not ignore 'N', because 'N' maybe the type
+            if (JSON_UNLIKELY(not unexpect_eof()))
+            {
+                return false;
+            }
 
             get_ignore_noop();
-            if (current != '#')
+            if (JSON_UNLIKELY(current != '#'))
             {
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(112, chars_read,
-                                               "expected '#' after UBJSON type information; last byte: 0x" + ss.str()));
+                if (JSON_UNLIKELY(not unexpect_eof()))
+                {
+                    return false;
+                }
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, "expected '#' after UBJSON type information; last byte: 0x" + last_token));
             }
-            sz = parse_ubjson_internal();
+
+            return get_ubjson_size_value(result.first);
         }
         else if (current == '#')
         {
-            sz = parse_ubjson_internal();
+            return get_ubjson_size_value(result.first);
         }
-
-        return std::make_pair(sz, tc);
+        return true;
     }
 
-    BasicJsonType get_ubjson_value(const int prefix)
+    /*!
+    @param prefix  the previously read or set type prefix
+    @return whether value creation completed
+    */
+    bool get_ubjson_value(const int prefix)
     {
         switch (prefix)
         {
             case std::char_traits<char>::eof():  // EOF
-                JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
+                return unexpect_eof();
 
             case 'T':  // true
-                return true;
+                return sax->boolean(true);
             case 'F':  // false
-                return false;
+                return sax->boolean(false);
 
             case 'Z':  // null
-                return nullptr;
+                return sax->null();
 
             case 'U':
-                return get_number<uint8_t>();
+            {
+                uint8_t number;
+                return get_number(number) and sax->number_unsigned(number);
+            }
+
             case 'i':
-                return get_number<int8_t>();
+            {
+                int8_t number;
+                return get_number(number) and sax->number_integer(number);
+            }
+
             case 'I':
-                return get_number<int16_t>();
+            {
+                int16_t number;
+                return get_number(number) and sax->number_integer(number);
+            }
+
             case 'l':
-                return get_number<int32_t>();
+            {
+                int32_t number;
+                return get_number(number) and sax->number_integer(number);
+            }
+
             case 'L':
-                return get_number<int64_t>();
+            {
+                int64_t number;
+                return get_number(number) and sax->number_integer(number);
+            }
+
             case 'd':
-                return get_number<float>();
+            {
+                float number;
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
+            }
+
             case 'D':
-                return get_number<double>();
+            {
+                double number;
+                return get_number(number) and sax->number_float(static_cast<number_float_t>(number), "");
+            }
 
             case 'C':  // char
             {
                 get();
-                unexpect_eof();
+                if (JSON_UNLIKELY(not unexpect_eof()))
+                {
+                    return false;
+                }
                 if (JSON_UNLIKELY(current > 127))
                 {
-                    std::stringstream ss;
-                    ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                    JSON_THROW(parse_error::create(113, chars_read,
-                                                   "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + ss.str()));
+                    auto last_token = get_token_string();
+                    return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + last_token));
                 }
-                return string_t(1, static_cast<char>(current));
+                string_t s(1, static_cast<char>(current));
+                return sax->string(s);
             }
 
             case 'S':  // string
-                return get_ubjson_string();
+            {
+                string_t s;
+                return get_ubjson_string(s) and sax->string(s);
+            }
 
             case '[':  // array
                 return get_ubjson_array();
@@ -6062,129 +7488,170 @@ class binary_reader
                 return get_ubjson_object();
 
             default: // anything else
-                std::stringstream ss;
-                ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
-                JSON_THROW(parse_error::create(112, chars_read,
-                                               "error reading UBJSON; last byte: 0x" + ss.str()));
+            {
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, "error reading UBJSON; last byte: 0x" + last_token));
+            }
         }
     }
 
-    BasicJsonType get_ubjson_array()
+    /*!
+    @return whether array creation completed
+    */
+    bool get_ubjson_array()
     {
-        BasicJsonType result = value_t::array;
-        const auto size_and_type = get_ubjson_size_type();
+        std::pair<std::size_t, int> size_and_type;
+        if (JSON_UNLIKELY(not get_ubjson_size_type(size_and_type)))
+        {
+            return false;
+        }
 
         if (size_and_type.first != string_t::npos)
         {
-            if (JSON_UNLIKELY(size_and_type.first > result.max_size()))
+            if (JSON_UNLIKELY(not sax->start_array(size_and_type.first)))
             {
-                JSON_THROW(out_of_range::create(408,
-                                                "excessive array size: " + std::to_string(size_and_type.first)));
+                return false;
             }
 
             if (size_and_type.second != 0)
             {
                 if (size_and_type.second != 'N')
                 {
-                    std::generate_n(std::back_inserter(*result.m_value.array),
-                                    size_and_type.first, [this, size_and_type]()
+                    for (std::size_t i = 0; i < size_and_type.first; ++i)
                     {
-                        return get_ubjson_value(size_and_type.second);
-                    });
+                        if (JSON_UNLIKELY(not get_ubjson_value(size_and_type.second)))
+                        {
+                            return false;
+                        }
+                    }
                 }
             }
             else
             {
-                std::generate_n(std::back_inserter(*result.m_value.array),
-                                size_and_type.first, [this]()
+                for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    return parse_ubjson_internal();
-                });
+                    if (JSON_UNLIKELY(not parse_ubjson_internal()))
+                    {
+                        return false;
+                    }
+                }
             }
         }
         else
         {
+            if (JSON_UNLIKELY(not sax->start_array(std::size_t(-1))))
+            {
+                return false;
+            }
+
             while (current != ']')
             {
-                result.push_back(parse_ubjson_internal(false));
+                if (JSON_UNLIKELY(not parse_ubjson_internal(false)))
+                {
+                    return false;
+                }
                 get_ignore_noop();
             }
         }
 
-        return result;
+        return sax->end_array();
     }
 
-    BasicJsonType get_ubjson_object()
+    /*!
+    @return whether object creation completed
+    */
+    bool get_ubjson_object()
     {
-        BasicJsonType result = value_t::object;
-        const auto size_and_type = get_ubjson_size_type();
+        std::pair<std::size_t, int> size_and_type;
+        if (JSON_UNLIKELY(not get_ubjson_size_type(size_and_type)))
+        {
+            return false;
+        }
 
+        string_t key;
         if (size_and_type.first != string_t::npos)
         {
-            if (JSON_UNLIKELY(size_and_type.first > result.max_size()))
+            if (JSON_UNLIKELY(not sax->start_object(size_and_type.first)))
             {
-                JSON_THROW(out_of_range::create(408,
-                                                "excessive object size: " + std::to_string(size_and_type.first)));
+                return false;
             }
 
             if (size_and_type.second != 0)
             {
-                std::generate_n(std::inserter(*result.m_value.object,
-                                              result.m_value.object->end()),
-                                size_and_type.first, [this, size_and_type]()
+                for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    auto key = get_ubjson_string();
-                    auto val = get_ubjson_value(size_and_type.second);
-                    return std::make_pair(std::move(key), std::move(val));
-                });
+                    if (JSON_UNLIKELY(not get_ubjson_string(key) or not sax->key(key)))
+                    {
+                        return false;
+                    }
+                    if (JSON_UNLIKELY(not get_ubjson_value(size_and_type.second)))
+                    {
+                        return false;
+                    }
+                    key.clear();
+                }
             }
             else
             {
-                std::generate_n(std::inserter(*result.m_value.object,
-                                              result.m_value.object->end()),
-                                size_and_type.first, [this]()
+                for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    auto key = get_ubjson_string();
-                    auto val = parse_ubjson_internal();
-                    return std::make_pair(std::move(key), std::move(val));
-                });
+                    if (JSON_UNLIKELY(not get_ubjson_string(key) or not sax->key(key)))
+                    {
+                        return false;
+                    }
+                    if (JSON_UNLIKELY(not parse_ubjson_internal()))
+                    {
+                        return false;
+                    }
+                    key.clear();
+                }
             }
         }
         else
         {
+            if (JSON_UNLIKELY(not sax->start_object(std::size_t(-1))))
+            {
+                return false;
+            }
+
             while (current != '}')
             {
-                auto key = get_ubjson_string(false);
-                result[std::move(key)] = parse_ubjson_internal();
+                if (JSON_UNLIKELY(not get_ubjson_string(key, false) or not sax->key(key)))
+                {
+                    return false;
+                }
+                if (JSON_UNLIKELY(not parse_ubjson_internal()))
+                {
+                    return false;
+                }
                 get_ignore_noop();
+                key.clear();
             }
         }
 
-        return result;
+        return sax->end_object();
     }
 
     /*!
-    @brief throw if end of input is not reached
-    @throw parse_error.110 if input not ended
+    @return whether the last read character is not EOF
     */
-    void expect_eof() const
-    {
-        if (JSON_UNLIKELY(current != std::char_traits<char>::eof()))
-        {
-            JSON_THROW(parse_error::create(110, chars_read, "expected end of input"));
-        }
-    }
-
-    /*!
-    @briefthrow if end of input is reached
-    @throw parse_error.110 if input ended
-    */
-    void unexpect_eof() const
+    bool unexpect_eof() const
     {
         if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
         {
-            JSON_THROW(parse_error::create(110, chars_read, "unexpected end of input"));
+            return sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, "unexpected end of input"));
         }
+        return true;
+    }
+
+    /*!
+    @return a string representation of the last read byte
+    */
+    std::string get_token_string() const
+    {
+        char cr[3];
+        snprintf(cr, 3, "%.2hhX", static_cast<unsigned char>(current));
+        return std::string{cr};
     }
 
   private:
@@ -6199,6 +7666,9 @@ class binary_reader
 
     /// whether we can assume little endianess
     const bool is_little_endian = little_endianess();
+
+    /// the SAX parser
+    json_sax_t* sax = nullptr;
 };
 }
 }
@@ -6357,9 +7827,9 @@ class binary_writer
                 break;
             }
 
-            case value_t::number_float: // Double-Precision Float
+            case value_t::number_float:
             {
-                oa->write_character(static_cast<CharType>(0xFB));
+                oa->write_character(get_cbor_float_prefix(j.m_value.number_float));
                 write_number(j.m_value.number_float);
                 break;
             }
@@ -6617,9 +8087,9 @@ class binary_writer
                 break;
             }
 
-            case value_t::number_float: // float 64
+            case value_t::number_float:
             {
-                oa->write_character(static_cast<CharType>(0xCB));
+                oa->write_character(get_msgpack_float_prefix(j.m_value.number_float));
                 write_number(j.m_value.number_float);
                 break;
             }
@@ -6796,7 +8266,7 @@ class binary_writer
                 if (use_type and not j.m_value.array->empty())
                 {
                     assert(use_count);
-                    const char first_prefix = ubjson_prefix(j.front());
+                    const CharType first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
                     {
@@ -6807,7 +8277,7 @@ class binary_writer
                     {
                         prefix_required = false;
                         oa->write_character(static_cast<CharType>('$'));
-                        oa->write_character(static_cast<CharType>(first_prefix));
+                        oa->write_character(first_prefix);
                     }
                 }
 
@@ -6841,7 +8311,7 @@ class binary_writer
                 if (use_type and not j.m_value.object->empty())
                 {
                     assert(use_count);
-                    const char first_prefix = ubjson_prefix(j.front());
+                    const CharType first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin(), j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
                     {
@@ -6852,7 +8322,7 @@ class binary_writer
                     {
                         prefix_required = false;
                         oa->write_character(static_cast<CharType>('$'));
-                        oa->write_character(static_cast<CharType>(first_prefix));
+                        oa->write_character(first_prefix);
                     }
                 }
 
@@ -6920,7 +8390,7 @@ class binary_writer
     {
         if (add_prefix)
         {
-            oa->write_character(static_cast<CharType>('D'));  // float64
+            oa->write_character(get_ubjson_float_prefix(n));
         }
         write_number(n);
     }
@@ -7041,7 +8511,7 @@ class binary_writer
           write_number_with_ubjson_prefix. Therefore, we return 'L' for any
           value that does not fit the previous limits.
     */
-    char ubjson_prefix(const BasicJsonType& j) const noexcept
+    CharType ubjson_prefix(const BasicJsonType& j) const noexcept
     {
         switch (j.type())
         {
@@ -7100,7 +8570,7 @@ class binary_writer
             }
 
             case value_t::number_float:
-                return 'D';
+                return get_ubjson_float_prefix(j.m_value.number_float);
 
             case value_t::string:
                 return 'S';
@@ -7114,6 +8584,36 @@ class binary_writer
             default:  // discarded values
                 return 'N';
         }
+    }
+
+    static constexpr CharType get_cbor_float_prefix(float)
+    {
+        return static_cast<CharType>(0xFA);  // Single-Precision Float
+    }
+
+    static constexpr CharType get_cbor_float_prefix(double)
+    {
+        return static_cast<CharType>(0xFB);  // Double-Precision Float
+    }
+
+    static constexpr CharType get_msgpack_float_prefix(float)
+    {
+        return static_cast<CharType>(0xCA);  // float 32
+    }
+
+    static constexpr CharType get_msgpack_float_prefix(double)
+    {
+        return static_cast<CharType>(0xCB);  // float 64
+    }
+
+    static constexpr CharType get_ubjson_float_prefix(float)
+    {
+        return 'd';  // float 32
+    }
+
+    static constexpr CharType get_ubjson_float_prefix(double)
+    {
+        return 'D';  // float 64
     }
 
   private:
@@ -7138,11 +8638,8 @@ class binary_writer
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t
 #include <cstdio> // snprintf
-#include <iomanip> // setfill
-#include <iterator> // next
 #include <limits> // numeric_limits
 #include <string> // string
-#include <sstream> // stringstream
 #include <type_traits> // is_same
 
 // #include <nlohmann/detail/exceptions.hpp>
@@ -8037,7 +9534,7 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
     // numbers, all float's can be recovered using strtod (and strtof). However, the resulting
     // decimal representations are not exactly "short".
     //
-    // The documentation for 'std::to_chars' (http://en.cppreference.com/w/cpp/utility/to_chars)
+    // The documentation for 'std::to_chars' (https://en.cppreference.com/w/cpp/utility/to_chars)
     // says "value is converted to a string as if by std::sprintf in the default ("C") locale"
     // and since sprintf promotes float's to double's, I think this is exactly what 'std::to_chars'
     // does.
@@ -8246,7 +9743,7 @@ char* to_chars(char* first, char* last, FloatType value)
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta.hpp>
+// #include <nlohmann/detail/meta/cpp_future.hpp>
 
 // #include <nlohmann/detail/output/output_adapters.hpp>
 
@@ -8619,9 +10116,9 @@ class serializer
 
                 case UTF8_REJECT:  // decode found invalid UTF-8 byte
                 {
-                    std::stringstream ss;
-                    ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(byte);
-                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + ss.str()));
+                    std::string sn(3, '\0');
+                    snprintf(&sn[0], sn.size(), "%.2X", byte);
+                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn));
                 }
 
                 default:  // decode found yet incomplete multi-byte code point
@@ -8647,9 +10144,9 @@ class serializer
         else
         {
             // we finish reading, but do not accept: string was incomplete
-            std::stringstream ss;
-            ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(static_cast<uint8_t>(s.back()));
-            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + ss.str()));
+            std::string sn(3, '\0');
+            snprintf(&sn[0], sn.size(), "%.2X", static_cast<uint8_t>(s.back()));
+            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
         }
     }
 
@@ -9711,42 +11208,42 @@ and `from_json()` (@ref adl_serializer by default)
 
 @requirement The class satisfies the following concept requirements:
 - Basic
- - [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible):
+ - [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible):
    JSON values can be default constructed. The result will be a JSON null
    value.
- - [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible):
+ - [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible):
    A JSON value can be constructed from an rvalue argument.
- - [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible):
+ - [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible):
    A JSON value can be copy-constructed from an lvalue expression.
- - [MoveAssignable](http://en.cppreference.com/w/cpp/concept/MoveAssignable):
+ - [MoveAssignable](https://en.cppreference.com/w/cpp/named_req/MoveAssignable):
    A JSON value van be assigned from an rvalue argument.
- - [CopyAssignable](http://en.cppreference.com/w/cpp/concept/CopyAssignable):
+ - [CopyAssignable](https://en.cppreference.com/w/cpp/named_req/CopyAssignable):
    A JSON value can be copy-assigned from an lvalue expression.
- - [Destructible](http://en.cppreference.com/w/cpp/concept/Destructible):
+ - [Destructible](https://en.cppreference.com/w/cpp/named_req/Destructible):
    JSON values can be destructed.
 - Layout
- - [StandardLayoutType](http://en.cppreference.com/w/cpp/concept/StandardLayoutType):
+ - [StandardLayoutType](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType):
    JSON values have
-   [standard layout](http://en.cppreference.com/w/cpp/language/data_members#Standard_layout):
+   [standard layout](https://en.cppreference.com/w/cpp/language/data_members#Standard_layout):
    All non-static data members are private and standard layout types, the
    class has no virtual functions or (virtual) base classes.
 - Library-wide
- - [EqualityComparable](http://en.cppreference.com/w/cpp/concept/EqualityComparable):
+ - [EqualityComparable](https://en.cppreference.com/w/cpp/named_req/EqualityComparable):
    JSON values can be compared with `==`, see @ref
    operator==(const_reference,const_reference).
- - [LessThanComparable](http://en.cppreference.com/w/cpp/concept/LessThanComparable):
+ - [LessThanComparable](https://en.cppreference.com/w/cpp/named_req/LessThanComparable):
    JSON values can be compared with `<`, see @ref
    operator<(const_reference,const_reference).
- - [Swappable](http://en.cppreference.com/w/cpp/concept/Swappable):
+ - [Swappable](https://en.cppreference.com/w/cpp/named_req/Swappable):
    Any JSON lvalue or rvalue of can be swapped with any lvalue or rvalue of
    other compatible types, using unqualified function call @ref swap().
- - [NullablePointer](http://en.cppreference.com/w/cpp/concept/NullablePointer):
+ - [NullablePointer](https://en.cppreference.com/w/cpp/named_req/NullablePointer):
    JSON values can be compared against `std::nullptr_t` objects which are used
    to model the `null` value.
 - Container
- - [Container](http://en.cppreference.com/w/cpp/concept/Container):
+ - [Container](https://en.cppreference.com/w/cpp/named_req/Container):
    JSON values can be used like STL containers and provide iterator access.
- - [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer);
+ - [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer);
    JSON values can be used like STL containers and provide reverse iterator
    access.
 
@@ -9780,8 +11277,12 @@ class basic_json
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
     friend class ::nlohmann::detail::binary_writer;
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, typename SAX>
     friend class ::nlohmann::detail::binary_reader;
+    template<typename BasicJsonType>
+    friend class ::nlohmann::detail::json_sax_dom_parser;
+    template<typename BasicJsonType>
+    friend class ::nlohmann::detail::json_sax_dom_callback_parser;
 
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
@@ -9809,12 +11310,16 @@ class basic_json
 
   public:
     using value_t = detail::value_t;
-    /// @copydoc nlohmann::json_pointer
+    /// JSON Pointer, see @ref nlohmann::json_pointer
     using json_pointer = ::nlohmann::json_pointer<basic_json>;
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// helper type for initializer lists of basic_json values
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
+
+    using input_format_t = detail::input_format_t;
+    /// SAX interface type, see @ref nlohmann::json_sax
+    using json_sax_t = json_sax<basic_json>;
 
     ////////////////
     // exceptions //
@@ -10548,7 +12053,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.1.2")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.2.0")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -10716,7 +12221,6 @@ class basic_json
     */
     using parser_callback_t = typename parser::parser_callback_t;
 
-
     //////////////////
     // constructors //
     //////////////////
@@ -10878,7 +12382,7 @@ class basic_json
     was provided), strong guarantee holds: if an exception is thrown, there are
     no changes to any JSON value.
 
-    @since version 3.1.2
+    @since version 3.2.0
     */
     template <typename BasicJsonType,
               detail::enable_if_t<
@@ -11198,7 +12702,7 @@ class basic_json
     @warning A precondition is enforced with a runtime assertion that will
              result in calling `std::abort` if this precondition is not met.
              Assertions can be disabled by defining `NDEBUG` at compile time.
-             See http://en.cppreference.com/w/cpp/error/assert for more
+             See https://en.cppreference.com/w/cpp/error/assert for more
              information.
 
     @throw invalid_iterator.201 if iterators @a first and @a last are not
@@ -11338,7 +12842,7 @@ class basic_json
     changes to any JSON value.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is linear.
     - As postcondition, it holds: `other == basic_json(other)`.
@@ -11423,7 +12927,7 @@ class basic_json
     exceptions.
 
     @requirement This function helps `basic_json` satisfying the
-    [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible)
+    [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible)
     requirements.
 
     @liveexample{The code below shows the move constructor explicitly called
@@ -11457,7 +12961,7 @@ class basic_json
     @complexity Linear.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is linear.
 
@@ -11494,7 +12998,7 @@ class basic_json
     @complexity Linear.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is linear.
     - All stored elements are destroyed and all memory is freed.
@@ -12111,7 +13615,7 @@ class basic_json
     @complexity Depending on the implementation of the called `from_json()`
                 method.
 
-    @since version 3.1.2
+    @since version 3.2.0
     */
     template<typename BasicJsonType, detail::enable_if_t<
                  not std::is_same<BasicJsonType, basic_json>::value and
@@ -12125,8 +13629,8 @@ class basic_json
     @brief get a value (explicit)
 
     Explicit type conversion between the JSON value and a compatible value
-    which is [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible)
-    and [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible).
+    which is [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible)
+    and [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible).
     The value is converted by calling the @ref json_serializer<ValueType>
     `from_json()` method.
 
@@ -12186,8 +13690,8 @@ class basic_json
     @brief get a value (explicit); special case
 
     Explicit type conversion between the JSON value and a compatible value
-    which is **not** [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible)
-    and **not** [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible).
+    which is **not** [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible)
+    and **not** [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible).
     The value is converted by calling the @ref json_serializer<ValueType>
     `from_json()` method.
 
@@ -12432,9 +13936,9 @@ class basic_json
                    not detail::is_basic_json<ValueType>::value
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
-#endif
-#if defined(JSON_HAS_CPP_17)
+#if defined(JSON_HAS_CPP_17) && defined(_MSC_VER) and _MSC_VER <= 1914
                    and not std::is_same<ValueType, typename std::string_view>::value
+#endif
 #endif
                    , int >::type = 0 >
     operator ValueType() const
@@ -13016,7 +14520,7 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
-    @throw type_error.306 if the JSON value is not an objec; in that case,
+    @throw type_error.306 if the JSON value is not an object; in that case,
     using `value()` with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
@@ -13040,7 +14544,7 @@ class basic_json
             {
                 return ptr.get_checked(this);
             }
-            JSON_CATCH (out_of_range&)
+            JSON_INTERNAL_CATCH (out_of_range&)
             {
                 return default_value;
             }
@@ -13551,7 +15055,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
 
@@ -13590,7 +15094,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).begin()`.
@@ -13622,7 +15126,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
 
@@ -13661,7 +15165,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).end()`.
@@ -13691,7 +15195,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `reverse_iterator(end())`.
@@ -13728,7 +15232,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `reverse_iterator(begin())`.
@@ -13765,7 +15269,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).rbegin()`.
@@ -13794,7 +15298,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).rend()`.
@@ -13935,7 +15439,7 @@ class basic_json
 
     @complexity Constant.
 
-    @since version 3.x.x.
+    @since version 3.1.0.
     */
     iteration_proxy<iterator> items() noexcept
     {
@@ -13992,7 +15496,7 @@ class basic_json
     false in the case of a string.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `begin() == end()`.
@@ -14063,7 +15567,7 @@ class basic_json
     the case of a string.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `std::distance(begin(), end())`.
@@ -14133,7 +15637,7 @@ class basic_json
     @exceptionsafety No-throw guarantee: this function never throws exceptions.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of returning `b.size()` where `b` is the largest
@@ -15602,35 +17106,89 @@ class basic_json
 
     @since version 2.0.3 (contiguous containers)
     */
-    static basic_json parse(detail::input_adapter i,
+    static basic_json parse(detail::input_adapter&& i,
                             const parser_callback_t cb = nullptr,
                             const bool allow_exceptions = true)
     {
         basic_json result;
         parser(i, cb, allow_exceptions).parse(true, result);
         return result;
+    }
+
+    static bool accept(detail::input_adapter&& i)
+    {
+        return parser(i).accept(true);
     }
 
     /*!
-    @copydoc basic_json parse(detail::input_adapter, const parser_callback_t)
+    @brief generate SAX events
+
+    The SAX event lister must follow the interface of @ref json_sax.
+
+    This function reads from a compatible input. Examples are:
+    - an array of 1-byte values
+    - strings with character/literal type with size of 1 byte
+    - input streams
+    - container with contiguous storage of 1-byte values. Compatible container
+      types include `std::vector`, `std::string`, `std::array`,
+      `std::valarray`, and `std::initializer_list`. Furthermore, C-style
+      arrays can be used with `std::begin()`/`std::end()`. User-defined
+      containers can be used as long as they implement random-access iterators
+      and a contiguous storage.
+
+    @pre Each element of the container has a size of 1 byte. Violating this
+    precondition yields undefined behavior. **This precondition is enforced
+    with a static assertion.**
+
+    @pre The container storage is contiguous. Violating this precondition
+    yields undefined behavior. **This precondition is enforced with an
+    assertion.**
+    @pre Each element of the container has a size of 1 byte. Violating this
+    precondition yields undefined behavior. **This precondition is enforced
+    with a static assertion.**
+
+    @warning There is no way to enforce all preconditions at compile-time. If
+             the function is called with a noncompliant container and with
+             assertions switched off, the behavior is undefined and will most
+             likely yield segmentation violation.
+
+    @param[in] i  input to read from
+    @param[in,out] sax  SAX event listener
+    @param[in] format  the format to parse (JSON, CBOR, MessagePack, or UBJSON)
+    @param[in] strict  whether the input has to be consumed completely
+
+    @return return value of the last processed SAX event
+
+    @throw parse_error.101 if a parse error occurs; example: `""unexpected end
+    of input; expected string literal""`
+    @throw parse_error.102 if to_unicode fails or surrogate error
+    @throw parse_error.103 if to_unicode fails
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser. The complexity can be higher if the SAX consumer @a sax has
+    a super-linear complexity.
+
+    @note A UTF-8 byte order mark is silently ignored.
+
+    @liveexample{The example below demonstrates the `sax_parse()` function
+    reading from string and processing the events with a user-defined SAX
+    event consumer.,sax_parse}
+
+    @since version 3.2.0
     */
-    static basic_json parse(detail::input_adapter& i,
-                            const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
+    template <typename SAX>
+    static bool sax_parse(detail::input_adapter&& i, SAX* sax,
+                          input_format_t format = input_format_t::json,
+                          const bool strict = true)
     {
-        basic_json result;
-        parser(i, cb, allow_exceptions).parse(true, result);
-        return result;
-    }
-
-    static bool accept(detail::input_adapter i)
-    {
-        return parser(i).accept(true);
-    }
-
-    static bool accept(detail::input_adapter& i)
-    {
-        return parser(i).accept(true);
+        assert(sax);
+        switch (format)
+        {
+            case input_format_t::json:
+                return parser(std::move(i)).sax_parse(sax, strict);
+            default:
+                return detail::binary_reader<basic_json, SAX>(std::move(i)).sax_parse(format, sax, strict);
+        }
     }
 
     /*!
@@ -15700,6 +17258,15 @@ class basic_json
     static bool accept(IteratorType first, IteratorType last)
     {
         return parser(detail::input_adapter(first, last)).accept(true);
+    }
+
+    template<class IteratorType, class SAX, typename std::enable_if<
+                 std::is_base_of<
+                     std::random_access_iterator_tag,
+                     typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
+    static bool sax_parse(IteratorType first, IteratorType last, SAX* sax)
+    {
+        return parser(detail::input_adapter(first, last)).sax_parse(sax);
     }
 
     /*!
@@ -16198,6 +17765,9 @@ class basic_json
     @param[in] i  an input in CBOR format convertible to an input adapter
     @param[in] strict  whether to expect the input to be consumed until EOF
                        (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
     @return deserialized JSON value
 
     @throw parse_error.110 if the given input ends prematurely or the end of
@@ -16213,29 +17783,39 @@ class basic_json
 
     @sa http://cbor.io
     @sa @ref to_cbor(const basic_json&) for the analogous serialization
-    @sa @ref from_msgpack(detail::input_adapter, const bool) for the
+    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for the
         related MessagePack format
-    @sa @ref from_ubjson(detail::input_adapter, const bool) for the related
-        UBJSON format
+    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for the
+        related UBJSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0
+           @a strict parameter since 3.0.0; added @allow_exceptions parameter
+           since 3.2.0
     */
-    static basic_json from_cbor(detail::input_adapter i,
-                                const bool strict = true)
+    static basic_json from_cbor(detail::input_adapter&& i,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
     {
-        return binary_reader(i).parse_cbor(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::cbor, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
-    @copydoc from_cbor(detail::input_adapter, const bool)
+    @copydoc from_cbor(detail::input_adapter, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_cbor(A1 && a1, A2 && a2, const bool strict = true)
+    static basic_json from_cbor(A1 && a1, A2 && a2,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
     {
-        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_cbor(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::cbor, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
@@ -16288,6 +17868,10 @@ class basic_json
                   adapter
     @param[in] strict  whether to expect the input to be consumed until EOF
                        (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
+    @return deserialized JSON value
 
     @throw parse_error.110 if the given input ends prematurely or the end of
     file was not reached when @a strict was set to true
@@ -16302,29 +17886,39 @@ class basic_json
 
     @sa http://msgpack.org
     @sa @ref to_msgpack(const basic_json&) for the analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool) for the related CBOR
-        format
-    @sa @ref from_ubjson(detail::input_adapter, const bool) for the related
-        UBJSON format
+    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+        related CBOR format
+    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for
+        the related UBJSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0
+           @a strict parameter since 3.0.0; added @allow_exceptions parameter
+           since 3.2.0
     */
-    static basic_json from_msgpack(detail::input_adapter i,
-                                   const bool strict = true)
+    static basic_json from_msgpack(detail::input_adapter&& i,
+                                   const bool strict = true,
+                                   const bool allow_exceptions = true)
     {
-        return binary_reader(i).parse_msgpack(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::msgpack, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
-    @copydoc from_msgpack(detail::input_adapter, const bool)
+    @copydoc from_msgpack(detail::input_adapter, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_msgpack(A1 && a1, A2 && a2, const bool strict = true)
+    static basic_json from_msgpack(A1 && a1, A2 && a2,
+                                   const bool strict = true,
+                                   const bool allow_exceptions = true)
     {
-        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_msgpack(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::msgpack, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
@@ -16359,6 +17953,10 @@ class basic_json
     @param[in] i  an input in UBJSON format convertible to an input adapter
     @param[in] strict  whether to expect the input to be consumed until EOF
                        (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
+    @return deserialized JSON value
 
     @throw parse_error.110 if the given input ends prematurely or the end of
     file was not reached when @a strict was set to true
@@ -16373,24 +17971,36 @@ class basic_json
     @sa http://ubjson.org
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
              analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool) for the related CBOR
-        format
-    @sa @ref from_msgpack(detail::input_adapter, const bool) for the related
-        MessagePack format
+    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+        related CBOR format
+    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
+        the related MessagePack format
 
-    @since version 3.1.0
+    @since version 3.1.0; added @allow_exceptions parameter since 3.2.0
     */
-    static basic_json from_ubjson(detail::input_adapter i,
-                                  const bool strict = true)
+    static basic_json from_ubjson(detail::input_adapter&& i,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
     {
-        return binary_reader(i).parse_ubjson(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::ubjson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
+    /*!
+    @copydoc from_ubjson(detail::input_adapter, const bool, const bool)
+    */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_ubjson(A1 && a1, A2 && a2, const bool strict = true)
+    static basic_json from_ubjson(A1 && a1, A2 && a2,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
     {
-        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_ubjson(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::ubjson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /// @}
@@ -16767,11 +18377,13 @@ class basic_json
                         break;
                     }
 
+                    // LCOV_EXCL_START
                     default:
                     {
                         // if there exists a parent it cannot be primitive
-                        assert(false);  // LCOV_EXCL_LINE
+                        assert(false);
                     }
+                        // LCOV_EXCL_STOP
                 }
             }
         };
@@ -16913,7 +18525,7 @@ class basic_json
                         // the "path" location must exist - use at()
                         success = (result.at(ptr) == get_value("test", "value", false));
                     }
-                    JSON_CATCH (out_of_range&)
+                    JSON_INTERNAL_CATCH (out_of_range&)
                     {
                         // ignore out of range errors: success remains false
                     }
@@ -17191,11 +18803,10 @@ namespace std
 @since version 1.0.0
 */
 template<>
-inline void swap(nlohmann::json& j1,
-                 nlohmann::json& j2) noexcept(
-                     is_nothrow_move_constructible<nlohmann::json>::value and
-                     is_nothrow_move_assignable<nlohmann::json>::value
-                 )
+inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(
+    is_nothrow_move_constructible<nlohmann::json>::value and
+    is_nothrow_move_assignable<nlohmann::json>::value
+)
 {
     j1.swap(j2);
 }
@@ -17284,6 +18895,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #endif
 
 // clean up
+#undef JSON_INTERNAL_CATCH
 #undef JSON_CATCH
 #undef JSON_THROW
 #undef JSON_TRY

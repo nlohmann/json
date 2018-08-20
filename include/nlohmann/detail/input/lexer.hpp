@@ -3,10 +3,8 @@
 #include <clocale> // localeconv
 #include <cstddef> // size_t
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
+#include <cstdio> // snprintf
 #include <initializer_list> // initializer_list
-#include <ios> // hex, uppercase
-#include <iomanip> // setw, setfill
-#include <sstream> // stringstream
 #include <string> // char_traits, string
 #include <vector> // vector
 
@@ -94,12 +92,14 @@ class lexer
                 return "end of input";
             case token_type::literal_or_value:
                 return "'[', '{', or a literal";
+            // LCOV_EXCL_START
             default: // catch non-enum values
-                return "unknown token"; // LCOV_EXCL_LINE
+                return "unknown token";
+                // LCOV_EXCL_STOP
         }
     }
 
-    explicit lexer(detail::input_adapter_t adapter)
+    explicit lexer(detail::input_adapter_t&& adapter)
         : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
 
     // delete because of pointer members
@@ -747,11 +747,13 @@ class lexer
                 goto scan_number_any1;
             }
 
+            // LCOV_EXCL_START
             default:
             {
                 // all other characters are rejected outside scan_number()
-                assert(false); // LCOV_EXCL_LINE
+                assert(false);
             }
+                // LCOV_EXCL_STOP
         }
 
 scan_number_minus:
@@ -1081,7 +1083,16 @@ scan_number_done:
     std::char_traits<char>::int_type get()
     {
         ++chars_read;
-        current = ia->get_character();
+        if (next_unget)
+        {
+            // just reset the next_unget variable and work with current
+            next_unget = false;
+        }
+        else
+        {
+            current = ia->get_character();
+        }
+
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
             token_string.push_back(std::char_traits<char>::to_char_type(current));
@@ -1089,13 +1100,20 @@ scan_number_done:
         return current;
     }
 
-    /// unget current character (return it again on next get)
+    /*!
+    @brief unget current character (read it again on next get)
+
+    We implement unget by setting variable next_unget to true. The input is not
+    changed - we just simulate ungetting by modifying chars_read and
+    token_string. The next call to get() will behave as if the unget character
+    is read again.
+    */
     void unget()
     {
+        next_unget = true;
         --chars_read;
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
-            ia->unget_character();
             assert(token_string.size() != 0);
             token_string.pop_back();
         }
@@ -1131,9 +1149,9 @@ scan_number_done:
     }
 
     /// return current string value (implicitly resets the token; useful only once)
-    string_t&& move_string()
+    string_t& get_string()
     {
-        return std::move(token_buffer);
+        return token_buffer;
     }
 
     /////////////////////
@@ -1158,10 +1176,9 @@ scan_number_done:
             if ('\x00' <= c and c <= '\x1F')
             {
                 // escape control characters
-                std::stringstream ss;
-                ss << "<U+" << std::setw(4) << std::uppercase << std::setfill('0')
-                   << std::hex << static_cast<int>(c) << ">";
-                result += ss.str();
+                char cs[9];
+                snprintf(cs, 9, "<U+%.4X>", static_cast<unsigned char>(c));
+                result += cs;
             }
             else
             {
@@ -1183,8 +1200,43 @@ scan_number_done:
     // actual scanner
     /////////////////////
 
+    /*!
+    @brief skip the UTF-8 byte order mark
+    @return true iff there is no BOM or the correct BOM has been skipped
+    */
+    bool skip_bom()
+    {
+        if (get() == 0xEF)
+        {
+            if (get() == 0xBB and get() == 0xBF)
+            {
+                // we completely parsed the BOM
+                return true;
+            }
+            else
+            {
+                // after reading 0xEF, an unexpected character followed
+                return false;
+            }
+        }
+        else
+        {
+            // the first character is not the beginning of the BOM; unget it to
+            // process is later
+            unget();
+            return true;
+        }
+    }
+
     token_type scan()
     {
+        // initially, skip the BOM
+        if (chars_read == 0 and not skip_bom())
+        {
+            error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
+            return token_type::parse_error;
+        }
+
         // read next character and ignore whitespace
         do
         {
@@ -1253,6 +1305,9 @@ scan_number_done:
 
     /// the current character
     std::char_traits<char>::int_type current = std::char_traits<char>::eof();
+
+    /// whether the next get() call should just return current
+    bool next_unget = false;
 
     /// the number of characters read
     std::size_t chars_read = 0;

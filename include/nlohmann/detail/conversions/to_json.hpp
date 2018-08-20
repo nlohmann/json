@@ -8,8 +8,10 @@
 #include <valarray> // valarray
 #include <vector> // vector
 
-#include <nlohmann/detail/meta.hpp>
+#include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
+#include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
 namespace nlohmann
 {
@@ -49,6 +51,16 @@ struct external_constructor<value_t::string>
     {
         j.m_type = value_t::string;
         j.m_value = std::move(s);
+        j.assert_invariant();
+    }
+
+    template<typename BasicJsonType, typename CompatibleStringType,
+             enable_if_t<not std::is_same<CompatibleStringType, typename BasicJsonType::string_t>::value,
+                         int> = 0>
+    static void construct(BasicJsonType& j, const CompatibleStringType& str)
+    {
+        j.m_type = value_t::string;
+        j.m_value.string = j.template create<typename BasicJsonType::string_t>(str);
         j.assert_invariant();
     }
 };
@@ -247,7 +259,7 @@ void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
-void to_json(BasicJsonType& j, std::valarray<T> arr)
+void to_json(BasicJsonType& j, const std::valarray<T>& arr)
 {
     external_constructor<value_t::array>::construct(j, std::move(arr));
 }
@@ -282,6 +294,14 @@ template<typename BasicJsonType, typename... Args>
 void to_json(BasicJsonType& j, const std::pair<Args...>& p)
 {
     j = {p.first, p.second};
+}
+
+// for https://github.com/nlohmann/json/pull/1134
+template<typename BasicJsonType, typename T,
+         enable_if_t<std::is_same<T, typename iteration_proxy<typename BasicJsonType::iterator>::iteration_proxy_internal>::value, int> = 0>
+void to_json(BasicJsonType& j, T b) noexcept
+{
+    j = {{b.key(), b.value()}};
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>

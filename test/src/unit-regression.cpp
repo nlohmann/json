@@ -1,10 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.1.2
+|  |  |__   |  |  | | | |  version 3.2.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
 Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
@@ -114,6 +115,13 @@ struct nocopy
 };
 }
 
+/////////////////////////////////////////////////////////////////////
+// for #1021
+/////////////////////////////////////////////////////////////////////
+
+using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+
+
 TEST_CASE("regression tests")
 {
     SECTION("issue #60 - Double quotation mark is not parsed correctly")
@@ -129,19 +137,19 @@ TEST_CASE("regression tests")
 
     SECTION("issue #70 - Handle infinity and NaN cases")
     {
-        /*
+        // previously, NAN/INFINITY created a null value; now, the values are
+        // properly stored, but are dumped as "null"
         SECTION("NAN value")
         {
-            CHECK(json(NAN) == json());
-            CHECK(json(json::number_float_t(NAN)) == json());
+            CHECK(json(NAN).dump() == "null");
+            CHECK(json(json::number_float_t(NAN)).dump() == "null");
         }
 
         SECTION("infinity")
         {
-            CHECK(json(INFINITY) == json());
-            CHECK(json(json::number_float_t(INFINITY)) == json());
+            CHECK(json(INFINITY).dump() == "null");
+            CHECK(json(json::number_float_t(INFINITY)).dump() == "null");
         }
-        */
 
         // With 3.0.0, the semantics of this changed: NAN and infinity are
         // stored properly inside the JSON value (no exception or conversion
@@ -1206,41 +1214,6 @@ TEST_CASE("regression tests")
         CHECK(j["bool_vector"].dump() == "[false,true,false,false]");
     }
 
-    /* NOTE: m_line_buffer is not used any more
-    SECTION("issue #495 - fill_line_buffer incorrectly tests m_stream for eof but not fail or bad bits")
-    {
-        SECTION("setting failbit")
-        {
-            std::stringstream ss;
-            ss << "[1,2,3\n,4,5]";
-
-            json::lexer l(ss);
-
-            CHECK(l.m_line_buffer == "[1,2,3\n");
-
-            l.m_stream->setstate(std::ios_base::failbit);
-
-            CHECK_THROWS_AS(l.fill_line_buffer(), json::parse_error&);
-            CHECK_THROWS_WITH(l.fill_line_buffer(), "[json.exception.parse_error.111] parse error: bad input stream");
-        }
-
-        SECTION("setting badbit")
-        {
-            std::stringstream ss;
-            ss << "[1,2,3\n,4,5]";
-
-            json::lexer l(ss);
-
-            CHECK(l.m_line_buffer == "[1,2,3\n");
-
-            l.m_stream->setstate(std::ios_base::badbit);
-
-            CHECK_THROWS_AS(l.fill_line_buffer(), json::parse_error&);
-            CHECK_THROWS_WITH(l.fill_line_buffer(), "[json.exception.parse_error.111] parse error: bad input stream");
-        }
-    }
-     */
-
     SECTION("issue #504 - assertion error (OSS-Fuzz 856)")
     {
         std::vector<uint8_t> vec1 = {0xf9, 0xff, 0xff, 0x4a, 0x3a, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01, 0x37, 0x02, 0x38};
@@ -1499,6 +1472,46 @@ TEST_CASE("regression tests")
         //                  "[json.exception.out_of_range.408] excessive object size: 8658170730974374167");
     }
 
+    SECTION("issue #971 - Add a SAX parser - late bug")
+    {
+        // a JSON text
+        auto text = R"(
+    {
+        "Image": {
+            "Width":  800,
+            "Height": 600,
+            "Title":  "View from 15th Floor",
+            "Thumbnail": {
+                "Url":    "http://www.example.com/image/481989943",
+                "Height": 125,
+                "Width":  100
+            },
+            "Animated" : false,
+            "IDs": [116, 943, 234, 38793]
+        }
+    }
+    )";
+
+        // define parser callback
+        json::parser_callback_t cb = [](int /*depth*/, json::parse_event_t event, json & parsed)
+        {
+            // skip object elements with key "Thumbnail"
+            if (event == json::parse_event_t::key and parsed == json("Thumbnail"))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        };
+
+        // parse (with callback) and serialize JSON
+        json j_filtered = json::parse(text, cb);
+
+        CHECK(j_filtered == R"({"Image":{"Animated":false,"Height":600,"IDs":[116,943,234,38793], "Title":"View from 15th Floor","Width":800}})"_json);
+    }
+
     SECTION("issue #972 - Segmentation fault on G++ when trying to assign json string literal to custom json type")
     {
         my_json foo = R"([1, 2, 3])"_json;
@@ -1563,38 +1576,71 @@ TEST_CASE("regression tests")
             switch (event)
             {
                 case json::parse_event_t::key:
-                {
-                    return true;
-                }
+                    {
+                        return true;
+                    }
                 case json::parse_event_t::value:
-                {
-                    return false;
-                }
+                    {
+                        return false;
+                    }
                 case json::parse_event_t::object_start:
-                {
-                    return true;
-                }
+                    {
+                        return true;
+                    }
                 case json::parse_event_t::object_end:
-                {
-                    return false;
-                }
+                    {
+                        return false;
+                    }
                 case json::parse_event_t::array_start:
-                {
-                    return true;
-                }
+                    {
+                        return true;
+                    }
                 case json::parse_event_t::array_end:
-                {
-                    return false;
-                }
+                    {
+                        return false;
+                    }
 
                 default:
-                {
-                    return true;
-                }
+                    {
+                        return true;
+                    }
             }
         };
 
         auto j = json::parse(geojsonExample, cb, true);
         CHECK(j == json());
+    }
+
+    SECTION("issue #1021 - to/from_msgpack only works with standard typization")
+    {
+        float_json j = 1000.0;
+        CHECK(float_json::from_cbor(float_json::to_cbor(j)) == j);
+        CHECK(float_json::from_msgpack(float_json::to_msgpack(j)) == j);
+        CHECK(float_json::from_ubjson(float_json::to_ubjson(j)) == j);
+
+        float_json j2 = {1000.0, 2000.0, 3000.0};
+        CHECK(float_json::from_ubjson(float_json::to_ubjson(j2, true, true)) == j2);
+    }
+
+    SECTION("issue #1045 - Using STL algorithms with JSON containers with expected results?")
+    {
+        json diffs = nlohmann::json::array();
+        json m1{{"key1", 42}};
+        json m2{{"key2", 42}};
+        auto p1 = m1.items();
+        auto p2 = m2.items();
+
+        using it_type = decltype(p1.begin());
+
+        std::set_difference(
+            p1.begin(), p1.end(),
+            p2.begin(), p2.end(),
+            std::inserter(diffs, diffs.end()), [&](const it_type & e1, const it_type & e2) -> bool
+        {
+            using comper_pair = std::pair<std::string, decltype(e1.value())>; // Trying to avoid unneeded copy
+            return comper_pair(e1.key(), e1.value()) < comper_pair(e2.key(), e2.value()); // Using pair comper
+        });
+
+        CHECK(diffs.size() == 1); // Note the change here, was 2
     }
 }

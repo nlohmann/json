@@ -1,10 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.1.2
+|  |  |__   |  |  | | | |  version 3.2.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
 Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
@@ -30,8 +31,8 @@ SOFTWARE.
 #define NLOHMANN_JSON_HPP
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
-#define NLOHMANN_JSON_VERSION_MINOR 1
-#define NLOHMANN_JSON_VERSION_PATCH 2
+#define NLOHMANN_JSON_VERSION_MINOR 2
+#define NLOHMANN_JSON_VERSION_PATCH 0
 
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
@@ -47,7 +48,8 @@ SOFTWARE.
 
 #include <nlohmann/json_fwd.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
-#include <nlohmann/detail/meta.hpp>
+#include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/detail/conversions/from_json.hpp>
@@ -100,42 +102,42 @@ and `from_json()` (@ref adl_serializer by default)
 
 @requirement The class satisfies the following concept requirements:
 - Basic
- - [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible):
+ - [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible):
    JSON values can be default constructed. The result will be a JSON null
    value.
- - [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible):
+ - [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible):
    A JSON value can be constructed from an rvalue argument.
- - [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible):
+ - [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible):
    A JSON value can be copy-constructed from an lvalue expression.
- - [MoveAssignable](http://en.cppreference.com/w/cpp/concept/MoveAssignable):
+ - [MoveAssignable](https://en.cppreference.com/w/cpp/named_req/MoveAssignable):
    A JSON value van be assigned from an rvalue argument.
- - [CopyAssignable](http://en.cppreference.com/w/cpp/concept/CopyAssignable):
+ - [CopyAssignable](https://en.cppreference.com/w/cpp/named_req/CopyAssignable):
    A JSON value can be copy-assigned from an lvalue expression.
- - [Destructible](http://en.cppreference.com/w/cpp/concept/Destructible):
+ - [Destructible](https://en.cppreference.com/w/cpp/named_req/Destructible):
    JSON values can be destructed.
 - Layout
- - [StandardLayoutType](http://en.cppreference.com/w/cpp/concept/StandardLayoutType):
+ - [StandardLayoutType](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType):
    JSON values have
-   [standard layout](http://en.cppreference.com/w/cpp/language/data_members#Standard_layout):
+   [standard layout](https://en.cppreference.com/w/cpp/language/data_members#Standard_layout):
    All non-static data members are private and standard layout types, the
    class has no virtual functions or (virtual) base classes.
 - Library-wide
- - [EqualityComparable](http://en.cppreference.com/w/cpp/concept/EqualityComparable):
+ - [EqualityComparable](https://en.cppreference.com/w/cpp/named_req/EqualityComparable):
    JSON values can be compared with `==`, see @ref
    operator==(const_reference,const_reference).
- - [LessThanComparable](http://en.cppreference.com/w/cpp/concept/LessThanComparable):
+ - [LessThanComparable](https://en.cppreference.com/w/cpp/named_req/LessThanComparable):
    JSON values can be compared with `<`, see @ref
    operator<(const_reference,const_reference).
- - [Swappable](http://en.cppreference.com/w/cpp/concept/Swappable):
+ - [Swappable](https://en.cppreference.com/w/cpp/named_req/Swappable):
    Any JSON lvalue or rvalue of can be swapped with any lvalue or rvalue of
    other compatible types, using unqualified function call @ref swap().
- - [NullablePointer](http://en.cppreference.com/w/cpp/concept/NullablePointer):
+ - [NullablePointer](https://en.cppreference.com/w/cpp/named_req/NullablePointer):
    JSON values can be compared against `std::nullptr_t` objects which are used
    to model the `null` value.
 - Container
- - [Container](http://en.cppreference.com/w/cpp/concept/Container):
+ - [Container](https://en.cppreference.com/w/cpp/named_req/Container):
    JSON values can be used like STL containers and provide iterator access.
- - [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer);
+ - [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer);
    JSON values can be used like STL containers and provide reverse iterator
    access.
 
@@ -169,8 +171,12 @@ class basic_json
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
     friend class ::nlohmann::detail::binary_writer;
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, typename SAX>
     friend class ::nlohmann::detail::binary_reader;
+    template<typename BasicJsonType>
+    friend class ::nlohmann::detail::json_sax_dom_parser;
+    template<typename BasicJsonType>
+    friend class ::nlohmann::detail::json_sax_dom_callback_parser;
 
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
@@ -198,12 +204,16 @@ class basic_json
 
   public:
     using value_t = detail::value_t;
-    /// @copydoc nlohmann::json_pointer
+    /// JSON Pointer, see @ref nlohmann::json_pointer
     using json_pointer = ::nlohmann::json_pointer<basic_json>;
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// helper type for initializer lists of basic_json values
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
+
+    using input_format_t = detail::input_format_t;
+    /// SAX interface type, see @ref nlohmann::json_sax
+    using json_sax_t = json_sax<basic_json>;
 
     ////////////////
     // exceptions //
@@ -937,7 +947,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.1.2")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.2.0")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -1105,7 +1115,6 @@ class basic_json
     */
     using parser_callback_t = typename parser::parser_callback_t;
 
-
     //////////////////
     // constructors //
     //////////////////
@@ -1267,7 +1276,7 @@ class basic_json
     was provided), strong guarantee holds: if an exception is thrown, there are
     no changes to any JSON value.
 
-    @since version 3.1.2
+    @since version 3.2.0
     */
     template <typename BasicJsonType,
               detail::enable_if_t<
@@ -1587,7 +1596,7 @@ class basic_json
     @warning A precondition is enforced with a runtime assertion that will
              result in calling `std::abort` if this precondition is not met.
              Assertions can be disabled by defining `NDEBUG` at compile time.
-             See http://en.cppreference.com/w/cpp/error/assert for more
+             See https://en.cppreference.com/w/cpp/error/assert for more
              information.
 
     @throw invalid_iterator.201 if iterators @a first and @a last are not
@@ -1727,7 +1736,7 @@ class basic_json
     changes to any JSON value.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is linear.
     - As postcondition, it holds: `other == basic_json(other)`.
@@ -1812,7 +1821,7 @@ class basic_json
     exceptions.
 
     @requirement This function helps `basic_json` satisfying the
-    [MoveConstructible](http://en.cppreference.com/w/cpp/concept/MoveConstructible)
+    [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible)
     requirements.
 
     @liveexample{The code below shows the move constructor explicitly called
@@ -1846,7 +1855,7 @@ class basic_json
     @complexity Linear.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is linear.
 
@@ -1883,7 +1892,7 @@ class basic_json
     @complexity Linear.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is linear.
     - All stored elements are destroyed and all memory is freed.
@@ -2500,7 +2509,7 @@ class basic_json
     @complexity Depending on the implementation of the called `from_json()`
                 method.
 
-    @since version 3.1.2
+    @since version 3.2.0
     */
     template<typename BasicJsonType, detail::enable_if_t<
                  not std::is_same<BasicJsonType, basic_json>::value and
@@ -2514,8 +2523,8 @@ class basic_json
     @brief get a value (explicit)
 
     Explicit type conversion between the JSON value and a compatible value
-    which is [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible)
-    and [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible).
+    which is [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible)
+    and [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible).
     The value is converted by calling the @ref json_serializer<ValueType>
     `from_json()` method.
 
@@ -2575,8 +2584,8 @@ class basic_json
     @brief get a value (explicit); special case
 
     Explicit type conversion between the JSON value and a compatible value
-    which is **not** [CopyConstructible](http://en.cppreference.com/w/cpp/concept/CopyConstructible)
-    and **not** [DefaultConstructible](http://en.cppreference.com/w/cpp/concept/DefaultConstructible).
+    which is **not** [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible)
+    and **not** [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible).
     The value is converted by calling the @ref json_serializer<ValueType>
     `from_json()` method.
 
@@ -2821,9 +2830,9 @@ class basic_json
                    not detail::is_basic_json<ValueType>::value
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
-#endif
-#if defined(JSON_HAS_CPP_17)
+#if defined(JSON_HAS_CPP_17) && defined(_MSC_VER) and _MSC_VER <= 1914
                    and not std::is_same<ValueType, typename std::string_view>::value
+#endif
 #endif
                    , int >::type = 0 >
     operator ValueType() const
@@ -3405,7 +3414,7 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
-    @throw type_error.306 if the JSON value is not an objec; in that case,
+    @throw type_error.306 if the JSON value is not an object; in that case,
     using `value()` with a key makes no sense.
 
     @complexity Logarithmic in the size of the container.
@@ -3429,7 +3438,7 @@ class basic_json
             {
                 return ptr.get_checked(this);
             }
-            JSON_CATCH (out_of_range&)
+            JSON_INTERNAL_CATCH (out_of_range&)
             {
                 return default_value;
             }
@@ -3940,7 +3949,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
 
@@ -3979,7 +3988,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).begin()`.
@@ -4011,7 +4020,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
 
@@ -4050,7 +4059,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).end()`.
@@ -4080,7 +4089,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `reverse_iterator(end())`.
@@ -4117,7 +4126,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `reverse_iterator(begin())`.
@@ -4154,7 +4163,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).rbegin()`.
@@ -4183,7 +4192,7 @@ class basic_json
     @complexity Constant.
 
     @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](http://en.cppreference.com/w/cpp/concept/ReversibleContainer)
+    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
     requirements:
     - The complexity is constant.
     - Has the semantics of `const_cast<const basic_json&>(*this).rend()`.
@@ -4324,7 +4333,7 @@ class basic_json
 
     @complexity Constant.
 
-    @since version 3.x.x.
+    @since version 3.1.0.
     */
     iteration_proxy<iterator> items() noexcept
     {
@@ -4381,7 +4390,7 @@ class basic_json
     false in the case of a string.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `begin() == end()`.
@@ -4452,7 +4461,7 @@ class basic_json
     the case of a string.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of `std::distance(begin(), end())`.
@@ -4522,7 +4531,7 @@ class basic_json
     @exceptionsafety No-throw guarantee: this function never throws exceptions.
 
     @requirement This function helps `basic_json` satisfying the
-    [Container](http://en.cppreference.com/w/cpp/concept/Container)
+    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
     requirements:
     - The complexity is constant.
     - Has the semantics of returning `b.size()` where `b` is the largest
@@ -5991,35 +6000,89 @@ class basic_json
 
     @since version 2.0.3 (contiguous containers)
     */
-    static basic_json parse(detail::input_adapter i,
+    static basic_json parse(detail::input_adapter&& i,
                             const parser_callback_t cb = nullptr,
                             const bool allow_exceptions = true)
     {
         basic_json result;
         parser(i, cb, allow_exceptions).parse(true, result);
         return result;
+    }
+
+    static bool accept(detail::input_adapter&& i)
+    {
+        return parser(i).accept(true);
     }
 
     /*!
-    @copydoc basic_json parse(detail::input_adapter, const parser_callback_t)
+    @brief generate SAX events
+
+    The SAX event lister must follow the interface of @ref json_sax.
+
+    This function reads from a compatible input. Examples are:
+    - an array of 1-byte values
+    - strings with character/literal type with size of 1 byte
+    - input streams
+    - container with contiguous storage of 1-byte values. Compatible container
+      types include `std::vector`, `std::string`, `std::array`,
+      `std::valarray`, and `std::initializer_list`. Furthermore, C-style
+      arrays can be used with `std::begin()`/`std::end()`. User-defined
+      containers can be used as long as they implement random-access iterators
+      and a contiguous storage.
+
+    @pre Each element of the container has a size of 1 byte. Violating this
+    precondition yields undefined behavior. **This precondition is enforced
+    with a static assertion.**
+
+    @pre The container storage is contiguous. Violating this precondition
+    yields undefined behavior. **This precondition is enforced with an
+    assertion.**
+    @pre Each element of the container has a size of 1 byte. Violating this
+    precondition yields undefined behavior. **This precondition is enforced
+    with a static assertion.**
+
+    @warning There is no way to enforce all preconditions at compile-time. If
+             the function is called with a noncompliant container and with
+             assertions switched off, the behavior is undefined and will most
+             likely yield segmentation violation.
+
+    @param[in] i  input to read from
+    @param[in,out] sax  SAX event listener
+    @param[in] format  the format to parse (JSON, CBOR, MessagePack, or UBJSON)
+    @param[in] strict  whether the input has to be consumed completely
+
+    @return return value of the last processed SAX event
+
+    @throw parse_error.101 if a parse error occurs; example: `""unexpected end
+    of input; expected string literal""`
+    @throw parse_error.102 if to_unicode fails or surrogate error
+    @throw parse_error.103 if to_unicode fails
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser. The complexity can be higher if the SAX consumer @a sax has
+    a super-linear complexity.
+
+    @note A UTF-8 byte order mark is silently ignored.
+
+    @liveexample{The example below demonstrates the `sax_parse()` function
+    reading from string and processing the events with a user-defined SAX
+    event consumer.,sax_parse}
+
+    @since version 3.2.0
     */
-    static basic_json parse(detail::input_adapter& i,
-                            const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
+    template <typename SAX>
+    static bool sax_parse(detail::input_adapter&& i, SAX* sax,
+                          input_format_t format = input_format_t::json,
+                          const bool strict = true)
     {
-        basic_json result;
-        parser(i, cb, allow_exceptions).parse(true, result);
-        return result;
-    }
-
-    static bool accept(detail::input_adapter i)
-    {
-        return parser(i).accept(true);
-    }
-
-    static bool accept(detail::input_adapter& i)
-    {
-        return parser(i).accept(true);
+        assert(sax);
+        switch (format)
+        {
+            case input_format_t::json:
+                return parser(std::move(i)).sax_parse(sax, strict);
+            default:
+                return detail::binary_reader<basic_json, SAX>(std::move(i)).sax_parse(format, sax, strict);
+        }
     }
 
     /*!
@@ -6089,6 +6152,15 @@ class basic_json
     static bool accept(IteratorType first, IteratorType last)
     {
         return parser(detail::input_adapter(first, last)).accept(true);
+    }
+
+    template<class IteratorType, class SAX, typename std::enable_if<
+                 std::is_base_of<
+                     std::random_access_iterator_tag,
+                     typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
+    static bool sax_parse(IteratorType first, IteratorType last, SAX* sax)
+    {
+        return parser(detail::input_adapter(first, last)).sax_parse(sax);
     }
 
     /*!
@@ -6587,6 +6659,9 @@ class basic_json
     @param[in] i  an input in CBOR format convertible to an input adapter
     @param[in] strict  whether to expect the input to be consumed until EOF
                        (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
     @return deserialized JSON value
 
     @throw parse_error.110 if the given input ends prematurely or the end of
@@ -6602,29 +6677,39 @@ class basic_json
 
     @sa http://cbor.io
     @sa @ref to_cbor(const basic_json&) for the analogous serialization
-    @sa @ref from_msgpack(detail::input_adapter, const bool) for the
+    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for the
         related MessagePack format
-    @sa @ref from_ubjson(detail::input_adapter, const bool) for the related
-        UBJSON format
+    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for the
+        related UBJSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0
+           @a strict parameter since 3.0.0; added @allow_exceptions parameter
+           since 3.2.0
     */
-    static basic_json from_cbor(detail::input_adapter i,
-                                const bool strict = true)
+    static basic_json from_cbor(detail::input_adapter&& i,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
     {
-        return binary_reader(i).parse_cbor(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::cbor, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
-    @copydoc from_cbor(detail::input_adapter, const bool)
+    @copydoc from_cbor(detail::input_adapter, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_cbor(A1 && a1, A2 && a2, const bool strict = true)
+    static basic_json from_cbor(A1 && a1, A2 && a2,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
     {
-        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_cbor(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::cbor, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
@@ -6677,6 +6762,10 @@ class basic_json
                   adapter
     @param[in] strict  whether to expect the input to be consumed until EOF
                        (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
+    @return deserialized JSON value
 
     @throw parse_error.110 if the given input ends prematurely or the end of
     file was not reached when @a strict was set to true
@@ -6691,29 +6780,39 @@ class basic_json
 
     @sa http://msgpack.org
     @sa @ref to_msgpack(const basic_json&) for the analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool) for the related CBOR
-        format
-    @sa @ref from_ubjson(detail::input_adapter, const bool) for the related
-        UBJSON format
+    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+        related CBOR format
+    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for
+        the related UBJSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0
+           @a strict parameter since 3.0.0; added @allow_exceptions parameter
+           since 3.2.0
     */
-    static basic_json from_msgpack(detail::input_adapter i,
-                                   const bool strict = true)
+    static basic_json from_msgpack(detail::input_adapter&& i,
+                                   const bool strict = true,
+                                   const bool allow_exceptions = true)
     {
-        return binary_reader(i).parse_msgpack(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::msgpack, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
-    @copydoc from_msgpack(detail::input_adapter, const bool)
+    @copydoc from_msgpack(detail::input_adapter, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_msgpack(A1 && a1, A2 && a2, const bool strict = true)
+    static basic_json from_msgpack(A1 && a1, A2 && a2,
+                                   const bool strict = true,
+                                   const bool allow_exceptions = true)
     {
-        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_msgpack(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::msgpack, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
@@ -6748,6 +6847,10 @@ class basic_json
     @param[in] i  an input in UBJSON format convertible to an input adapter
     @param[in] strict  whether to expect the input to be consumed until EOF
                        (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
+    @return deserialized JSON value
 
     @throw parse_error.110 if the given input ends prematurely or the end of
     file was not reached when @a strict was set to true
@@ -6762,24 +6865,36 @@ class basic_json
     @sa http://ubjson.org
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
              analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool) for the related CBOR
-        format
-    @sa @ref from_msgpack(detail::input_adapter, const bool) for the related
-        MessagePack format
+    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+        related CBOR format
+    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
+        the related MessagePack format
 
-    @since version 3.1.0
+    @since version 3.1.0; added @allow_exceptions parameter since 3.2.0
     */
-    static basic_json from_ubjson(detail::input_adapter i,
-                                  const bool strict = true)
+    static basic_json from_ubjson(detail::input_adapter&& i,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
     {
-        return binary_reader(i).parse_ubjson(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::ubjson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
+    /*!
+    @copydoc from_ubjson(detail::input_adapter, const bool, const bool)
+    */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
-    static basic_json from_ubjson(A1 && a1, A2 && a2, const bool strict = true)
+    static basic_json from_ubjson(A1 && a1, A2 && a2,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
     {
-        return binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).parse_ubjson(strict);
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::ubjson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
     }
 
     /// @}
@@ -7156,11 +7271,13 @@ class basic_json
                         break;
                     }
 
+                    // LCOV_EXCL_START
                     default:
                     {
                         // if there exists a parent it cannot be primitive
-                        assert(false);  // LCOV_EXCL_LINE
+                        assert(false);
                     }
+                        // LCOV_EXCL_STOP
                 }
             }
         };
@@ -7302,7 +7419,7 @@ class basic_json
                         // the "path" location must exist - use at()
                         success = (result.at(ptr) == get_value("test", "value", false));
                     }
-                    JSON_CATCH (out_of_range&)
+                    JSON_INTERNAL_CATCH (out_of_range&)
                     {
                         // ignore out of range errors: success remains false
                     }
@@ -7580,11 +7697,10 @@ namespace std
 @since version 1.0.0
 */
 template<>
-inline void swap(nlohmann::json& j1,
-                 nlohmann::json& j2) noexcept(
-                     is_nothrow_move_constructible<nlohmann::json>::value and
-                     is_nothrow_move_assignable<nlohmann::json>::value
-                 )
+inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(
+    is_nothrow_move_constructible<nlohmann::json>::value and
+    is_nothrow_move_assignable<nlohmann::json>::value
+)
 {
     j1.swap(j2);
 }

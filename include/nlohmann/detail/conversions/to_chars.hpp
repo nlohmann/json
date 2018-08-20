@@ -887,7 +887,7 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
     // numbers, all float's can be recovered using strtod (and strtof). However, the resulting
     // decimal representations are not exactly "short".
     //
-    // The documentation for 'std::to_chars' (http://en.cppreference.com/w/cpp/utility/to_chars)
+    // The documentation for 'std::to_chars' (https://en.cppreference.com/w/cpp/utility/to_chars)
     // says "value is converted to a string as if by std::sprintf in the default ("C") locale"
     // and since sprintf promotes float's to double's, I think this is exactly what 'std::to_chars'
     // does.

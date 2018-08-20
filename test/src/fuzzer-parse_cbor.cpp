@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (fuzz test support)
-|  |  |__   |  |  | | | |  version 3.1.2
+|  |  |__   |  |  | | | |  version 3.2.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 This file implements a parser test suitable for fuzz testing. Given a byte
@@ -57,6 +57,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     catch (const json::type_error&)
     {
         // type errors can occur during parsing, too
+    }
+    catch (const json::out_of_range&)
+    {
+        // out of range errors can occur during parsing, too
     }
 
     // return 0 - non-zero return values are reserved for future use

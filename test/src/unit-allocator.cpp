@@ -1,10 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.1.2
+|  |  |__   |  |  | | | |  version 3.2.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
 Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
@@ -175,29 +176,6 @@ TEST_CASE("controlled bad_alloc")
             CHECK_THROWS_AS(my_json::json_value(v), std::bad_alloc&);
             next_construct_fails = false;
         }
-
-        /*
-                SECTION("json_value(const object_t&)")
-                {
-                    next_construct_fails = false;
-                    my_json::object_t v {{"foo", "bar"}};
-                    CHECK_NOTHROW(my_json::json_value j(v));
-                    next_construct_fails = true;
-                    CHECK_THROWS_AS(my_json::json_value j(v), std::bad_alloc&);
-                    next_construct_fails = false;
-                }
-        */
-        /*
-                SECTION("json_value(const array_t&)")
-                {
-                    next_construct_fails = false;
-                    my_json::array_t v = {"foo", "bar", "baz"};
-                    CHECK_NOTHROW(my_json::json_value j(v));
-                    next_construct_fails = true;
-                    CHECK_THROWS_AS(my_json::json_value j(v), std::bad_alloc&);
-                    next_construct_fails = false;
-                }
-        */
     }
 
     SECTION("class basic_json")

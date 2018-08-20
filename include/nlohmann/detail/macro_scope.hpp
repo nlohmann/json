@@ -4,13 +4,15 @@
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
 
 // exclude unsupported compilers
-#if defined(__clang__)
-    #if (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__) < 30400
-        #error "unsupported Clang version - see https://github.com/nlohmann/json#supported-compilers"
-    #endif
-#elif defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
-    #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
-        #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
+#if !defined(JSON_SKIP_UNSUPPORTED_COMPILER_CHECK)
+    #if defined(__clang__)
+        #if (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__) < 30400
+            #error "unsupported Clang version - see https://github.com/nlohmann/json#supported-compilers"
+        #endif
+    #elif defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
+        #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
+            #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
+        #endif
     #endif
 #endif
 
@@ -40,10 +42,12 @@
     #define JSON_THROW(exception) throw exception
     #define JSON_TRY try
     #define JSON_CATCH(exception) catch(exception)
+    #define JSON_INTERNAL_CATCH(exception) catch(exception)
 #else
     #define JSON_THROW(exception) std::abort()
     #define JSON_TRY if(true)
     #define JSON_CATCH(exception) if(false)
+    #define JSON_INTERNAL_CATCH(exception) if(false)
 #endif
 
 // override exception macros
@@ -58,6 +62,11 @@
 #if defined(JSON_CATCH_USER)
     #undef JSON_CATCH
     #define JSON_CATCH JSON_CATCH_USER
+    #define JSON_INTERNAL_CATCH JSON_CATCH_USER
+#endif
+#if defined(JSON_INTERNAL_CATCH_USER)
+    #undef JSON_INTERNAL_CATCH
+    #define JSON_INTERNAL_CATCH JSON_INTERNAL_CATCH_USER
 #endif
 
 // manual branch prediction

@@ -8,7 +8,7 @@
 #include <nlohmann/detail/iterators/internal_iterator.hpp>
 #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
-#include <nlohmann/detail/meta.hpp>
+#include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
@@ -31,7 +31,7 @@ This class implements a both iterators (iterator and const_iterator) for the
 
 @requirement The class satisfies the following concept requirements:
 -
-[BidirectionalIterator](http://en.cppreference.com/w/cpp/concept/BidirectionalIterator):
+[BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator):
   The iterator that can be moved can be moved in both directions (i.e.
   incremented and decremented).
 
@@ -583,7 +583,7 @@ class iter_impl
     @brief  return the key of an object iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    typename object_t::key_type key() const
+    const typename object_t::key_type& key() const
     {
         assert(m_object != nullptr);
 

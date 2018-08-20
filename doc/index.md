@@ -39,9 +39,11 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
     - @link nlohmann::basic_json::dump dump @endlink serialize to string
     - @link nlohmann::basic_json::operator<<(std::ostream&, const basic_json &) operator<< @endlink serialize to stream
   - deserialization / parsing
-    - @link nlohmann::basic_json::parse parse @endlink parse from string
+    - @link nlohmann::basic_json::parse parse @endlink parse from input (string, file, etc.) and return JSON value
+    - @link nlohmann::basic_json::sax_parse sax_parse @endlink parse from input (string, file, etc.) and generate SAX events
     - @link nlohmann::basic_json::operator>>(std::istream&, basic_json&) operator>> @endlink parse from stream
     - @link nlohmann::basic_json::accept accept @endlink check for syntax errors without parsing
+    - @link nlohmann::json_sax SAX interface @endlink define a user-defined SAX event consumer
   - [binary formats](binary_formats.md):
     - CBOR: @link nlohmann::basic_json::from_cbor from_cbor @endlink / @link nlohmann::basic_json::to_cbor to_cbor @endlink
     - MessagePack: @link nlohmann::basic_json::from_msgpack from_msgpack @endlink / @link nlohmann::basic_json::to_msgpack to_msgpack @endlink
@@ -304,4 +306,4 @@ Note that this table only lists those exceptions thrown due to the type. For ins
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 3.1.2
+@version 3.2.0

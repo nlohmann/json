@@ -1,10 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.1.2
+|  |  |__   |  |  | | | |  version 3.2.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
 Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
@@ -33,6 +34,76 @@ using nlohmann::json;
 
 #include <fstream>
 
+class SaxCountdown
+{
+  public:
+    explicit SaxCountdown(const int count) : events_left(count)
+    {}
+
+    bool null()
+    {
+        return events_left-- > 0;
+    }
+
+    bool boolean(bool)
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_integer(json::number_integer_t)
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_unsigned(json::number_unsigned_t)
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_float(json::number_float_t, const std::string&)
+    {
+        return events_left-- > 0;
+    }
+
+    bool string(std::string&)
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_object(std::size_t)
+    {
+        return events_left-- > 0;
+    }
+
+    bool key(std::string&)
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_object()
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_array(std::size_t)
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_array()
+    {
+        return events_left-- > 0;
+    }
+
+    bool parse_error(std::size_t, const std::string&, const json::exception&)
+    {
+        return false;
+    }
+
+  private:
+    int events_left = 0;
+};
+
 TEST_CASE("UBJSON")
 {
     SECTION("individual values")
@@ -54,6 +125,7 @@ TEST_CASE("UBJSON")
 
             // roundtrip
             CHECK(json::from_ubjson(result) == j);
+            CHECK(json::from_ubjson(result, true, false) == j);
         }
 
         SECTION("boolean")
@@ -67,6 +139,7 @@ TEST_CASE("UBJSON")
 
                 // roundtrip
                 CHECK(json::from_ubjson(result) == j);
+                CHECK(json::from_ubjson(result, true, false) == j);
             }
 
             SECTION("false")
@@ -78,6 +151,7 @@ TEST_CASE("UBJSON")
 
                 // roundtrip
                 CHECK(json::from_ubjson(result) == j);
+                CHECK(json::from_ubjson(result, true, false) == j);
             }
         }
 
@@ -140,6 +214,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -152,7 +227,7 @@ TEST_CASE("UBJSON")
                     numbers.push_back(-10000000);
                     numbers.push_back(-100000000);
                     numbers.push_back(-1000000000);
-                    numbers.push_back(-2147483648L);
+                    numbers.push_back(-2147483647 - 1); // https://stackoverflow.com/a/29356002/266378
                     for (auto i : numbers)
                     {
                         CAPTURE(i);
@@ -186,6 +261,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -219,6 +295,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -239,6 +316,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("-128..-1 (int8)")
@@ -269,6 +347,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -301,6 +380,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -333,6 +413,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -367,6 +448,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -409,6 +491,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -457,6 +540,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
             }
@@ -492,6 +576,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -524,6 +609,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -557,6 +643,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -598,6 +685,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
 
@@ -645,6 +733,7 @@ TEST_CASE("UBJSON")
 
                         // roundtrip
                         CHECK(json::from_ubjson(result) == j);
+                        CHECK(json::from_ubjson(result, true, false) == j);
                     }
                 }
             }
@@ -665,6 +754,7 @@ TEST_CASE("UBJSON")
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
                     CHECK(json::from_ubjson(result) == v);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
         }
@@ -703,6 +793,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
 
@@ -735,6 +826,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
 
@@ -768,6 +860,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
 
@@ -803,6 +896,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
         }
@@ -820,6 +914,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=false")
@@ -831,6 +926,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=true")
@@ -842,6 +938,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
 
@@ -856,6 +953,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=false")
@@ -867,6 +965,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=true")
@@ -878,6 +977,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
 
@@ -892,6 +992,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=false")
@@ -903,6 +1004,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=true")
@@ -914,6 +1016,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
 
@@ -928,6 +1031,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=false")
@@ -939,6 +1043,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=true")
@@ -950,6 +1055,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
 
@@ -966,6 +1072,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=false")
@@ -982,6 +1089,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=true")
@@ -993,6 +1101,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
 
@@ -1009,6 +1118,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=false")
@@ -1027,6 +1137,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=true")
@@ -1038,6 +1149,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
         }
@@ -1055,6 +1167,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=false")
@@ -1066,6 +1179,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=true")
@@ -1077,6 +1191,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
 
@@ -1091,6 +1206,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=false")
@@ -1102,6 +1218,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=true")
@@ -1113,6 +1230,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
 
@@ -1130,6 +1248,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=false")
@@ -1144,6 +1263,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
 
                 SECTION("size=true type=true")
@@ -1158,6 +1278,7 @@ TEST_CASE("UBJSON")
 
                     // roundtrip
                     CHECK(json::from_ubjson(result) == j);
+                    CHECK(json::from_ubjson(result, true, false) == j);
                 }
             }
         }
@@ -1188,6 +1309,80 @@ TEST_CASE("UBJSON")
             json j = 9223372036854775808llu;
             CHECK_THROWS_AS(json::to_ubjson(j), json::out_of_range&);
             CHECK_THROWS_WITH(json::to_ubjson(j), "[json.exception.out_of_range.407] number overflow serializing 9223372036854775808");
+        }
+
+        SECTION("excessive size")
+        {
+            SECTION("array")
+            {
+                std::vector<uint8_t> v_ubjson = {'[', '$', 'Z', '#', 'L', 0x78, 0x28, 0x00, 0x68, 0x28, 0x69, 0x69, 0x17};
+                CHECK_THROWS_AS(json::from_ubjson(v_ubjson), json::out_of_range&);
+
+                json j;
+                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int, json::parse_event_t, const json&)
+                {
+                    return true;
+                });
+                CHECK_THROWS_AS(json::sax_parse(v_ubjson, &scp, json::input_format_t::ubjson), json::out_of_range&);
+            }
+
+            SECTION("object")
+            {
+                std::vector<uint8_t> v_ubjson = {'{', '$', 'Z', '#', 'L', 0x78, 0x28, 0x00, 0x68, 0x28, 0x69, 0x69, 0x17};
+                CHECK_THROWS_AS(json::from_ubjson(v_ubjson), json::out_of_range&);
+
+                json j;
+                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int, json::parse_event_t, const json&)
+                {
+                    return true;
+                });
+                CHECK_THROWS_AS(json::sax_parse(v_ubjson, &scp, json::input_format_t::ubjson), json::out_of_range&);
+            }
+        }
+    }
+
+    SECTION("SAX aborts")
+    {
+        SECTION("start_array()")
+        {
+            std::vector<uint8_t> v = {'[', 'T', 'F', ']'};
+            SaxCountdown scp(0);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+        }
+
+        SECTION("start_object()")
+        {
+            std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
+            SaxCountdown scp(0);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+        }
+
+        SECTION("key() in object")
+        {
+            std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
+            SaxCountdown scp(1);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+        }
+
+        SECTION("start_array(len)")
+        {
+            std::vector<uint8_t> v = {'[', '#', 'i', '2', 'T', 'F'};
+            SaxCountdown scp(0);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+        }
+
+        SECTION("start_object(len)")
+        {
+            std::vector<uint8_t> v = {'{', '#', 'i', '1', 3, 'f', 'o', 'o', 'F'};
+            SaxCountdown scp(0);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+        }
+
+        SECTION("key() in object with length")
+        {
+            std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
+            SaxCountdown scp(1);
+            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
         }
     }
 
@@ -1239,6 +1434,7 @@ TEST_CASE("UBJSON")
             SECTION("optimized version (length only)")
             {
                 // create vector with two elements of the same type
+                std::vector<uint8_t> v_TU = {'[', '#', 'U', 2, 'T', 'T'};
                 std::vector<uint8_t> v_T = {'[', '#', 'i', 2, 'T', 'T'};
                 std::vector<uint8_t> v_F = {'[', '#', 'i', 2, 'F', 'F'};
                 std::vector<uint8_t> v_Z = {'[', '#', 'i', 2, 'Z', 'Z'};
@@ -1252,6 +1448,7 @@ TEST_CASE("UBJSON")
                 std::vector<uint8_t> v_C = {'[', '#', 'i', 2, 'C', 'a', 'C', 'a'};
 
                 // check if vector is parsed correctly
+                CHECK(json::from_ubjson(v_TU) == json({true, true}));
                 CHECK(json::from_ubjson(v_T) == json({true, true}));
                 CHECK(json::from_ubjson(v_F) == json({false, false}));
                 CHECK(json::from_ubjson(v_Z) == json({nullptr, nullptr}));
@@ -1378,6 +1575,136 @@ TEST_CASE("UBJSON")
                 CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.112] parse error at 4: expected '#' after UBJSON type information; last byte: 0x02");
             }
         }
+
+        SECTION("strings")
+        {
+            std::vector<uint8_t> vS = {'S'};
+            CHECK_THROWS_AS(json::from_ubjson(vS), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vS), "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
+            CHECK(json::from_ubjson(vS, true, false).is_discarded());
+
+            std::vector<uint8_t> v = {'S', 'i', '2', 'a'};
+            CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.110] parse error at 5: unexpected end of input");
+            CHECK(json::from_ubjson(v, true, false).is_discarded());
+
+            std::vector<uint8_t> vC = {'C'};
+            CHECK_THROWS_AS(json::from_ubjson(vC), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vC), "[json.exception.parse_error.110] parse error at 2: unexpected end of input");
+            CHECK(json::from_ubjson(vC, true, false).is_discarded());
+        }
+
+        SECTION("sizes")
+        {
+            std::vector<uint8_t> vU = {'[', '#', 'U'};
+            CHECK_THROWS_AS(json::from_ubjson(vU), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vU), "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
+            CHECK(json::from_ubjson(vU, true, false).is_discarded());
+
+            std::vector<uint8_t> vi = {'[', '#', 'i'};
+            CHECK_THROWS_AS(json::from_ubjson(vi), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vi), "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
+            CHECK(json::from_ubjson(vi, true, false).is_discarded());
+
+            std::vector<uint8_t> vI = {'[', '#', 'I'};
+            CHECK_THROWS_AS(json::from_ubjson(vI), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vI), "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
+            CHECK(json::from_ubjson(vI, true, false).is_discarded());
+
+            std::vector<uint8_t> vl = {'[', '#', 'l'};
+            CHECK_THROWS_AS(json::from_ubjson(vl), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vl), "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
+            CHECK(json::from_ubjson(vl, true, false).is_discarded());
+
+            std::vector<uint8_t> vL = {'[', '#', 'L'};
+            CHECK_THROWS_AS(json::from_ubjson(vL), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vL), "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
+            CHECK(json::from_ubjson(vL, true, false).is_discarded());
+
+            std::vector<uint8_t> v0 = {'[', '#', 'T', ']'};
+            CHECK_THROWS_AS(json::from_ubjson(v0), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(v0), "[json.exception.parse_error.113] parse error at 3: byte after '#' must denote a number type; last byte: 0x54");
+            CHECK(json::from_ubjson(v0, true, false).is_discarded());
+        }
+
+        SECTION("types")
+        {
+            std::vector<uint8_t> v0 = {'[', '$'};
+            CHECK_THROWS_AS(json::from_ubjson(v0), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(v0), "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
+            CHECK(json::from_ubjson(v0, true, false).is_discarded());
+
+            std::vector<uint8_t> vi = {'[', '$', '#'};
+            CHECK_THROWS_AS(json::from_ubjson(vi), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vi), "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
+            CHECK(json::from_ubjson(vi, true, false).is_discarded());
+
+            std::vector<uint8_t> vT = {'[', '$', 'T'};
+            CHECK_THROWS_AS(json::from_ubjson(vT), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vT), "[json.exception.parse_error.110] parse error at 4: unexpected end of input");
+            CHECK(json::from_ubjson(vT, true, false).is_discarded());
+        }
+
+        SECTION("arrays")
+        {
+            std::vector<uint8_t> vST = {'[', '$', 'i', '#', 'i', 2, 1};
+            CHECK_THROWS_AS(json::from_ubjson(vST), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vST), "[json.exception.parse_error.110] parse error at 8: unexpected end of input");
+            CHECK(json::from_ubjson(vST, true, false).is_discarded());
+
+            std::vector<uint8_t> vS = {'[', '#', 'i', 2, 'i', 1};
+            CHECK_THROWS_AS(json::from_ubjson(vS), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vS), "[json.exception.parse_error.110] parse error at 7: unexpected end of input");
+            CHECK(json::from_ubjson(vS, true, false).is_discarded());
+
+            std::vector<uint8_t> v = {'[', 'i', 2, 'i', 1};
+            CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.110] parse error at 6: unexpected end of input");
+            CHECK(json::from_ubjson(v, true, false).is_discarded());
+        }
+
+        SECTION("objects")
+        {
+            std::vector<uint8_t> vST = {'{', '$', 'i', '#', 'i', 2, 'i', 1, 'a', 1};
+            CHECK_THROWS_AS(json::from_ubjson(vST), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vST), "[json.exception.parse_error.110] parse error at 11: unexpected end of input");
+            CHECK(json::from_ubjson(vST, true, false).is_discarded());
+
+            std::vector<uint8_t> vT = {'{', '$', 'i', 'i', 1, 'a', 1};
+            CHECK_THROWS_AS(json::from_ubjson(vT), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vT), "[json.exception.parse_error.112] parse error at 4: expected '#' after UBJSON type information; last byte: 0x69");
+            CHECK(json::from_ubjson(vT, true, false).is_discarded());
+
+            std::vector<uint8_t> vS = {'{', '#', 'i', 2, 'i', 1, 'a', 'i', 1};
+            CHECK_THROWS_AS(json::from_ubjson(vS), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vS), "[json.exception.parse_error.110] parse error at 10: unexpected end of input");
+            CHECK(json::from_ubjson(vS, true, false).is_discarded());
+
+            std::vector<uint8_t> v = {'{', 'i', 1, 'a', 'i', 1};
+            CHECK_THROWS_AS(json::from_ubjson(v), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(v), "[json.exception.parse_error.110] parse error at 7: unexpected end of input");
+            CHECK(json::from_ubjson(v, true, false).is_discarded());
+
+            std::vector<uint8_t> v2 = {'{', 'i', 1, 'a', 'i', 1, 'i'};
+            CHECK_THROWS_AS(json::from_ubjson(v2), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(v2), "[json.exception.parse_error.110] parse error at 8: unexpected end of input");
+            CHECK(json::from_ubjson(v2, true, false).is_discarded());
+
+            std::vector<uint8_t> v3 = {'{', 'i', 1, 'a'};
+            CHECK_THROWS_AS(json::from_ubjson(v3), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(v3), "[json.exception.parse_error.110] parse error at 5: unexpected end of input");
+            CHECK(json::from_ubjson(v3, true, false).is_discarded());
+
+            std::vector<uint8_t> vST1 = {'{', '$', 'd', '#', 'i', 2, 'i', 1, 'a'};
+            CHECK_THROWS_AS(json::from_ubjson(vST1), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vST1), "[json.exception.parse_error.110] parse error at 10: unexpected end of input");
+            CHECK(json::from_ubjson(vST1, true, false).is_discarded());
+
+            std::vector<uint8_t> vST2 = {'{', '#', 'i', 2, 'i', 1, 'a'};
+            CHECK_THROWS_AS(json::from_ubjson(vST2), json::parse_error&);
+            CHECK_THROWS_WITH(json::from_ubjson(vST2), "[json.exception.parse_error.110] parse error at 8: unexpected end of input");
+            CHECK(json::from_ubjson(vST2, true, false).is_discarded());
+        }
     }
 
     SECTION("writing optimized values")
@@ -1476,257 +1803,6 @@ TEST_CASE("UBJSON")
         }
     }
 }
-
-/*
-// use this testcase outside [hide] to run it with Valgrind
-TEST_CASE("single UBJSON roundtrip")
-{
-    SECTION("sample.json")
-    {
-        std::string filename = "test/data/json_testsuite/sample.json";
-
-        // parse JSON file
-        std::ifstream f_json(filename);
-        json j1 = json::parse(f_json);
-
-        // parse MessagePack file
-        std::ifstream f_ubjson(filename + ".ubj", std::ios::binary);
-        std::vector<uint8_t> packed((std::istreambuf_iterator<char>(f_ubjson)),
-                                    std::istreambuf_iterator<char>());
-        json j2;
-        CHECK_NOTHROW(j2 = json::from_ubjson(packed));
-
-        // compare parsed JSON values
-        CHECK(j1 == j2);
-
-        SECTION("roundtrips")
-        {
-            SECTION("std::ostringstream")
-            {
-                std::ostringstream ss;
-                json::to_ubjson(j1, ss);
-                json j3 = json::from_ubjson(ss.str());
-                CHECK(j1 == j3);
-            }
-
-            SECTION("std::string")
-            {
-                std::string s;
-                json::to_ubjson(j1, s);
-                json j3 = json::from_ubjson(s);
-                CHECK(j1 == j3);
-            }
-        }
-
-        // check with different start index
-        // packed.insert(packed.begin(), 5, 0xff);
-        // CHECK(j1 == json::from_ubjson(packed.begin() + 5, packed.end()));
-    }
-}
-*/
-
-/*
-TEST_CASE("UBJSON roundtrips", "[hide]")
-{
-    SECTION("input from py-ubjson")
-    {
-        for (std::string filename :
-                {
-                    "test/data/json_nlohmann_tests/all_unicode.json",
-                    "test/data/json.org/1.json",
-                    "test/data/json.org/2.json",
-                    "test/data/json.org/3.json",
-                    "test/data/json.org/4.json",
-                    "test/data/json.org/5.json",
-                    "test/data/json_roundtrip/roundtrip01.json",
-                    "test/data/json_roundtrip/roundtrip02.json",
-                    "test/data/json_roundtrip/roundtrip03.json",
-                    "test/data/json_roundtrip/roundtrip04.json",
-                    "test/data/json_roundtrip/roundtrip05.json",
-                    "test/data/json_roundtrip/roundtrip06.json",
-                    "test/data/json_roundtrip/roundtrip07.json",
-                    "test/data/json_roundtrip/roundtrip08.json",
-                    "test/data/json_roundtrip/roundtrip09.json",
-                    "test/data/json_roundtrip/roundtrip10.json",
-                    "test/data/json_roundtrip/roundtrip11.json",
-                    "test/data/json_roundtrip/roundtrip12.json",
-                    "test/data/json_roundtrip/roundtrip13.json",
-                    "test/data/json_roundtrip/roundtrip14.json",
-                    "test/data/json_roundtrip/roundtrip15.json",
-                    "test/data/json_roundtrip/roundtrip16.json",
-                    "test/data/json_roundtrip/roundtrip17.json",
-                    "test/data/json_roundtrip/roundtrip18.json",
-                    "test/data/json_roundtrip/roundtrip19.json",
-                    "test/data/json_roundtrip/roundtrip20.json",
-                    "test/data/json_roundtrip/roundtrip21.json",
-                    "test/data/json_roundtrip/roundtrip22.json",
-                    "test/data/json_roundtrip/roundtrip23.json",
-                    "test/data/json_roundtrip/roundtrip24.json",
-                    "test/data/json_roundtrip/roundtrip25.json",
-                    "test/data/json_roundtrip/roundtrip26.json",
-                    "test/data/json_roundtrip/roundtrip27.json",
-                    "test/data/json_roundtrip/roundtrip28.json",
-                    "test/data/json_roundtrip/roundtrip29.json",
-                    "test/data/json_roundtrip/roundtrip30.json",
-                    "test/data/json_roundtrip/roundtrip31.json",
-                    "test/data/json_roundtrip/roundtrip32.json",
-                    "test/data/json_testsuite/sample.json", // kills AppVeyor
-                    "test/data/json_tests/pass1.json",
-                    "test/data/json_tests/pass2.json",
-                    "test/data/json_tests/pass3.json",
-                    "test/data/regression/floats.json",
-                    "test/data/regression/signed_ints.json",
-                    "test/data/regression/unsigned_ints.json",
-                    "test/data/regression/working_file.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_array_arraysWithSpaces.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_array_empty-string.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_array_empty.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_array_ending_with_newline.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_array_false.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_array_heterogeneous.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_array_null.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_array_with_1_and_newline.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_array_with_leading_space.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_array_with_several_null.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_array_with_trailing_space.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_0e+1.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_0e1.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_after_space.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_double_close_to_zero.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_double_huge_neg_exp.json",
-                    //"test/data/nst_json_testsuite/test_parsing/y_number_huge_exp.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_int_with_exp.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_minus_zero.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_negative_int.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_negative_one.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_negative_zero.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_real_capital_e.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_real_capital_e_neg_exp.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_real_capital_e_pos_exp.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_real_exponent.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_real_fraction_exponent.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_real_neg_exp.json",
-                    //"test/data/nst_json_testsuite/test_parsing/y_number_real_neg_overflow.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_real_pos_exponent.json",
-                    //"test/data/nst_json_testsuite/test_parsing/y_number_real_pos_overflow.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_real_underflow.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_simple_int.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_number_simple_real.json",
-                    //"test/data/nst_json_testsuite/test_parsing/y_number_too_big_neg_int.json",
-                    //"test/data/nst_json_testsuite/test_parsing/y_number_too_big_pos_int.json",
-                    //"test/data/nst_json_testsuite/test_parsing/y_number_very_big_negative_int.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_basic.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_duplicated_key_and_value.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_empty.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_empty_key.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_escaped_null_in_key.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_extreme_numbers.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_long_strings.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_simple.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_string_unicode.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_object_with_newlines.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_1_2_3_bytes_UTF-8_sequences.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_UTF-16_Surrogates_U+1D11E_MUSICAL_SYMBOL_G_CLEF.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pair.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pairs.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_allowed_escapes.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_backslash_and_u_escaped_zero.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_backslash_doublequotes.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_comments.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_double_escape_a.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_double_escape_n.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_escaped_control_character.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_escaped_noncharacter.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_in_array.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_in_array_with_leading_space.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_last_surrogates_1_and_2.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_newline_uescaped.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+10FFFF.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+1FFFF.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+FFFF.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_null_escape.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_one-byte-utf-8.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_pi.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_simple_ascii.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_space.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_three-byte-utf-8.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_two-byte-utf-8.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_u+2028_line_sep.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_u+2029_par_sep.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_uEscape.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_unescaped_char_delete.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_unicode.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_unicodeEscapedBackslash.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_unicode_2.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_unicode_U+200B_ZERO_WIDTH_SPACE.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_unicode_U+2064_invisible_plus.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_unicode_escaped_double_quote.json",
-                    // "test/data/nst_json_testsuite/test_parsing/y_string_utf16.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_utf8.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_string_with_del_character.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_structure_lonely_false.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_structure_lonely_int.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_structure_lonely_negative_real.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_structure_lonely_null.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_structure_lonely_string.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_structure_lonely_true.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_structure_string_empty.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_structure_trailing_newline.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_structure_true_in_array.json",
-                    "test/data/nst_json_testsuite/test_parsing/y_structure_whitespace_array.json"
-                })
-        {
-            CAPTURE(filename);
-
-            // parse JSON file
-            std::ifstream f_json(filename);
-            json j1 = json::parse(f_json);
-
-            SECTION("std::vector<uint8_t>")
-            {
-                // parse UBJSON file
-                std::ifstream f_ubjson(filename + ".ubj", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_ubjson)),
-                    std::istreambuf_iterator<char>());
-                json j2;
-                CHECK_NOTHROW(j2 = json::from_ubjson(packed));
-
-                // compare parsed JSON values
-                CHECK(j1 == j2);
-            }
-
-            SECTION("std::ifstream")
-            {
-                // parse UBJSON file
-                std::ifstream f_ubjson(filename + ".ubj", std::ios::binary);
-                json j2;
-                CHECK_NOTHROW(j2 = json::from_ubjson(f_ubjson));
-
-                // compare parsed JSON values
-                CHECK(j1 == j2);
-            }
-
-            SECTION("uint8_t* and size")
-            {
-                // parse UBJSON file
-                std::ifstream f_ubjson(filename + ".ubj", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_ubjson)),
-                    std::istreambuf_iterator<char>());
-                json j2;
-                CHECK_NOTHROW(j2 = json::from_ubjson({packed.data(), packed.size()}));
-
-                // compare parsed JSON values
-                CHECK(j1 == j2);
-            }
-        }
-    }
-}
-*/
 
 TEST_CASE("Universal Binary JSON Specification Examples 1")
 {
@@ -2037,40 +2113,6 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
     }
 }
 
-/*
-TEST_CASE("Universal Binary JSON Specification Examples 2")
-{
-    for (std::string prefix :
-            {
-                "test/data/universal-binary-json-java/CouchDB4k",
-                "test/data/universal-binary-json-java/MediaContent",
-                "test/data/universal-binary-json-java/TwitterTimeline"
-            })
-    {
-        CAPTURE(prefix);
-
-        // parse JSON file
-        std::ifstream f_json(prefix + ".formatted.json");
-        json j1 = json::parse(f_json);
-
-        SECTION("std::vector<uint8_t>")
-        {
-            // parse UBJSON file
-            std::ifstream f_ubjson(prefix + ".ubj", std::ios::binary);
-            std::vector<uint8_t> packed(
-                (std::istreambuf_iterator<char>(f_ubjson)),
-                std::istreambuf_iterator<char>());
-            json j2;
-            CHECK_NOTHROW(j2 = json::from_ubjson(packed));
-
-            // compare parsed JSON values
-            CHECK(j1 == j2);
-        }
-    }
-}
-*/
-
-
 TEST_CASE("all UBJSON first bytes", "[!throws]")
 {
     // these bytes will fail immediately with exception parse_error.112
@@ -2157,12 +2199,12 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
         {
             CAPTURE(filename);
 
-            // parse JSON file
-            std::ifstream f_json(filename);
-            json j1 = json::parse(f_json);
-
-            SECTION("std::vector<uint8_t>")
+            SECTION(filename + ": std::vector<uint8_t>")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse MessagePack file
                 std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
                 std::vector<uint8_t> packed(
@@ -2175,8 +2217,12 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("std::ifstream")
+            SECTION(filename + ": std::ifstream")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse MessagePack file
                 std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
                 json j2;
@@ -2186,8 +2232,12 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("uint8_t* and size")
+            SECTION(filename + ": uint8_t* and size")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse MessagePack file
                 std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
                 std::vector<uint8_t> packed(
@@ -2200,15 +2250,19 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION("output to output adapters")
+            SECTION(filename + ": output to output adapters")
             {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
                 // parse MessagePack file
                 std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
                 std::vector<uint8_t> packed(
                     (std::istreambuf_iterator<char>(f_ubjson)),
                     std::istreambuf_iterator<char>());
 
-                SECTION("std::vector<uint8_t>")
+                SECTION(filename + ": output adapters: std::vector<uint8_t>")
                 {
                     std::vector<uint8_t> vec;
                     json::to_ubjson(j1, vec);

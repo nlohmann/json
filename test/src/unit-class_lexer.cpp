@@ -1,10 +1,11 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.1.2
+|  |  |__   |  |  | | | |  version 3.2.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
 Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
@@ -173,15 +174,4 @@ TEST_CASE("lexer class")
         s += "\"";
         CHECK((scan_string(s.c_str()) == json::lexer::token_type::value_string));
     }
-
-    /* NOTE: to_unicode function has been removed
-    SECTION("to_unicode")
-    {
-        // lexer to call to_unicode on
-        json::lexer dummy_lexer("", 0);
-        CHECK(dummy_lexer.to_unicode(0x1F4A9) == "💩");
-        CHECK_THROWS_AS(dummy_lexer.to_unicode(0x200000), json::parse_error);
-        CHECK_THROWS_WITH(dummy_lexer.to_unicode(0x200000), "[json.exception.parse_error.103] parse error: code points above 0x10FFFF are invalid");
-    }
-    */
 }
