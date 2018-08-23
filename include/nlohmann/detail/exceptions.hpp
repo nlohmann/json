@@ -12,6 +12,19 @@ namespace detail
 // exceptions //
 ////////////////
 
+//! struct for positions
+struct input_position {
+    std::size_t chars_read ;
+    std::size_t lines_read ;
+    std::size_t chars_read_this_line ;
+    
+    input_position(size_t chars, size_t lines, size_t chars_this_line) :
+        chars_read(chars),
+        lines_read(lines),
+        chars_read_this_line(chars_this_line)
+    {}
+} ;
+
 /*!
 @brief general exception of the @ref basic_json class
 
@@ -119,12 +132,21 @@ class parse_error : public exception
     @param[in] what_arg  the explanatory string
     @return parse_error object
     */
-    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg)
+    static parse_error create(int id_, const input_position pos_, const std::string& what_arg)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
-                        (byte_ != 0 ? (" at " + std::to_string(byte_)) : "") +
+                        " at line: " + std::to_string(pos_.lines_read + 1) +
+                        " col: " + std::to_string(pos_.chars_read_this_line) +
+                        " : " + what_arg;
+        return parse_error(id_, pos_, w.c_str());
+    }
+    
+    static parse_error create(int id_, size_t bytes_, const std::string& what_arg)
+    {
+        std::string w = exception::name("parse_error", id_) + "parse error" +
+                        " at char " + std::to_string(bytes_) +
                         ": " + what_arg;
-        return parse_error(id_, byte_, w.c_str());
+        return parse_error(id_, bytes_, w.c_str());
     }
 
     /*!
@@ -136,11 +158,18 @@ class parse_error : public exception
           n+1 is the index of the terminating null byte or the end of file.
           This also holds true when reading a byte vector (CBOR or MessagePack).
     */
-    const std::size_t byte;
+    input_position position ;
 
   private:
-    parse_error(int id_, std::size_t byte_, const char* what_arg)
-        : exception(id_, what_arg), byte(byte_) {}
+    parse_error(int id_, const input_position& pos_, const char* what_arg)
+        : exception(id_, what_arg), 
+          position( pos_ )
+    {}
+    
+    parse_error(int id_, const size_t bytes_, const char* what_arg)
+        : exception(id_, what_arg), 
+          position( bytes_, 0, 0)
+    {}
 };
 
 /*!
