@@ -549,6 +549,19 @@ namespace detail
 // exceptions //
 ////////////////
 
+//! struct for positions
+struct input_position {
+    std::size_t chars_read ;
+    std::size_t lines_read ;
+    std::size_t chars_read_this_line ;
+    
+    input_position(size_t chars, size_t lines, size_t chars_this_line) :
+        chars_read(chars),
+        lines_read(lines),
+        chars_read_this_line(chars_this_line)
+    {}
+} ;
+
 /*!
 @brief general exception of the @ref basic_json class
 
@@ -656,12 +669,21 @@ class parse_error : public exception
     @param[in] what_arg  the explanatory string
     @return parse_error object
     */
-    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg)
+    static parse_error create(int id_, const input_position pos_, const std::string& what_arg)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
-                        (byte_ != 0 ? (" at " + std::to_string(byte_)) : "") +
+                        " at line: " + std::to_string(pos_.lines_read + 1) +
+                        " col: " + std::to_string(pos_.chars_read_this_line) +
+                        " : " + what_arg;
+        return parse_error(id_, pos_, w.c_str());
+    }
+    
+    static parse_error create(int id_, size_t bytes_, const std::string& what_arg)
+    {
+        std::string w = exception::name("parse_error", id_) + "parse error" +
+                        " at char " + std::to_string(bytes_) +
                         ": " + what_arg;
-        return parse_error(id_, byte_, w.c_str());
+        return parse_error(id_, bytes_, w.c_str());
     }
 
     /*!
@@ -673,11 +695,18 @@ class parse_error : public exception
           n+1 is the index of the terminating null byte or the end of file.
           This also holds true when reading a byte vector (CBOR or MessagePack).
     */
-    const std::size_t byte;
+    input_position position ;
 
   private:
-    parse_error(int id_, std::size_t byte_, const char* what_arg)
-        : exception(id_, what_arg), byte(byte_) {}
+    parse_error(int id_, const input_position& pos_, const char* what_arg)
+        : exception(id_, what_arg), 
+          position( pos_ )
+    {}
+    
+    parse_error(int id_, const size_t bytes_, const char* what_arg)
+        : exception(id_, what_arg), 
+          position( bytes_, 0, 0)
+    {}
 };
 
 /*!
@@ -2307,13 +2336,11 @@ class lexer
                 return "end of input";
             case token_type::literal_or_value:
                 return "'[', '{', or a literal";
-            // LCOV_EXCL_START
             default: // catch non-enum values
-                return "unknown token";
-                // LCOV_EXCL_STOP
+                return "unknown token"; // LCOV_EXCL_LINE
         }
     }
-
+    
     explicit lexer(detail::input_adapter_t&& adapter)
         : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
 
@@ -2962,13 +2989,11 @@ class lexer
                 goto scan_number_any1;
             }
 
-            // LCOV_EXCL_START
             default:
             {
                 // all other characters are rejected outside scan_number()
-                assert(false);
+                assert(false); // LCOV_EXCL_LINE
             }
-                // LCOV_EXCL_STOP
         }
 
 scan_number_minus:
@@ -3297,7 +3322,8 @@ scan_number_done:
     */
     std::char_traits<char>::int_type get()
     {
-        ++chars_read;
+        ++position.chars_read;
+        ++position.chars_read_this_line;
         if (next_unget)
         {
             // just reset the next_unget variable and work with current
@@ -3312,6 +3338,13 @@ scan_number_done:
         {
             token_string.push_back(std::char_traits<char>::to_char_type(current));
         }
+        
+        if ( current == '\n' )
+        {
+            ++position.lines_read ;
+            position.chars_read_this_line = 0 ;
+        }
+        
         return current;
     }
 
@@ -3326,11 +3359,17 @@ scan_number_done:
     void unget()
     {
         next_unget = true;
-        --chars_read;
+        --position.chars_read;
+        --position.chars_read_this_line;
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
             assert(token_string.size() != 0);
             token_string.pop_back();
+        }
+        if ( (position.lines_read != 0 ) && (position.chars_read_this_line == 0) )
+        {
+            // chars_read_this_line will be invalid, but reset the next get()
+            --position.lines_read ;
         }
     }
 
@@ -3374,9 +3413,9 @@ scan_number_done:
     /////////////////////
 
     /// return position of last read token
-    constexpr std::size_t get_position() const noexcept
+    constexpr input_position get_position() const noexcept
     {
-        return chars_read;
+        return position ;
     }
 
     /// return the last read token (for errors only).  Will never contain EOF
@@ -3392,7 +3431,7 @@ scan_number_done:
             {
                 // escape control characters
                 char cs[9];
-                snprintf(cs, 9, "<U+%.4X>", static_cast<unsigned char>(c));
+                snprintf(cs, 9, "<U+%.4hhX>", static_cast<unsigned char>(c));
                 result += cs;
             }
             else
@@ -3446,7 +3485,7 @@ scan_number_done:
     token_type scan()
     {
         // initially, skip the BOM
-        if (chars_read == 0 and not skip_bom())
+        if (position.chars_read == 0 and not skip_bom())
         {
             error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
             return token_type::parse_error;
@@ -3524,9 +3563,9 @@ scan_number_done:
     /// whether the next get() call should just return current
     bool next_unget = false;
 
-    /// the number of characters read
-    std::size_t chars_read = 0;
-
+    /// the current location in the input (defined in exceptions.hpp)
+    input_position position {0,0,0} ;
+    
     /// raw input token string (for error messages)
     std::vector<char> token_string {};
 
@@ -3656,119 +3695,119 @@ using number_integer_function_t =
 
 template <typename T, typename Unsigned>
 using number_unsigned_function_t =
-    decltype(std::declval<T&>().number_unsigned(std::declval<Unsigned>()));
+    decltype(std::declval<T &>().number_unsigned(std::declval<Unsigned>()));
 
 template <typename T, typename Float, typename String>
-using number_float_function_t = decltype(std::declval<T&>().number_float(
-                                    std::declval<Float>(), std::declval<const String&>()));
+using number_float_function_t = decltype(std::declval<T &>().number_float(
+    std::declval<Float>(), std::declval<const String &>()));
 
 template <typename T, typename String>
 using string_function_t =
-    decltype(std::declval<T&>().string(std::declval<String&>()));
+    decltype(std::declval<T &>().string(std::declval<String &>()));
 
 template <typename T>
 using start_object_function_t =
-    decltype(std::declval<T&>().start_object(std::declval<std::size_t>()));
+    decltype(std::declval<T &>().start_object(std::declval<std::size_t>()));
 
 template <typename T, typename String>
 using key_function_t =
-    decltype(std::declval<T&>().key(std::declval<String&>()));
+    decltype(std::declval<T &>().key(std::declval<String &>()));
 
 template <typename T>
-using end_object_function_t = decltype(std::declval<T&>().end_object());
+using end_object_function_t = decltype(std::declval<T &>().end_object());
 
 template <typename T>
 using start_array_function_t =
-    decltype(std::declval<T&>().start_array(std::declval<std::size_t>()));
+    decltype(std::declval<T &>().start_array(std::declval<std::size_t>()));
 
 template <typename T>
-using end_array_function_t = decltype(std::declval<T&>().end_array());
+using end_array_function_t = decltype(std::declval<T &>().end_array());
 
 template <typename T, typename Exception>
-using parse_error_function_t = decltype(std::declval<T&>().parse_error(
-        std::declval<std::size_t>(), std::declval<const std::string&>(),
-        std::declval<const Exception&>()));
+using parse_error_function_t = decltype(std::declval<T &>().parse_error(
+    std::declval<std::size_t>(), std::declval<const std::string &>(),
+    std::declval<const Exception &>()));
 
 template <typename SAX, typename BasicJsonType>
 struct is_sax
 {
-  private:
-    static_assert(is_basic_json<BasicJsonType>::value,
-                  "BasicJsonType must be of type basic_json<...>");
+private:
+  static_assert(is_basic_json<BasicJsonType>::value,
+                "BasicJsonType must be of type basic_json<...>");
 
-    using number_integer_t = typename BasicJsonType::number_integer_t;
-    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    using number_float_t = typename BasicJsonType::number_float_t;
-    using string_t = typename BasicJsonType::string_t;
-    using exception_t = typename BasicJsonType::exception;
+  using number_integer_t = typename BasicJsonType::number_integer_t;
+  using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+  using number_float_t = typename BasicJsonType::number_float_t;
+  using string_t = typename BasicJsonType::string_t;
+  using exception_t = typename BasicJsonType::exception;
 
-  public:
-    static constexpr bool value =
-        is_detected_exact<bool, null_function_t, SAX>::value &&
-        is_detected_exact<bool, boolean_function_t, SAX>::value &&
-        is_detected_exact<bool, number_integer_function_t, SAX,
-        number_integer_t>::value &&
-        is_detected_exact<bool, number_unsigned_function_t, SAX,
-        number_unsigned_t>::value &&
-        is_detected_exact<bool, number_float_function_t, SAX, number_float_t,
-        string_t>::value &&
-        is_detected_exact<bool, string_function_t, SAX, string_t>::value &&
-        is_detected_exact<bool, start_object_function_t, SAX>::value &&
-        is_detected_exact<bool, key_function_t, SAX, string_t>::value &&
-        is_detected_exact<bool, end_object_function_t, SAX>::value &&
-        is_detected_exact<bool, start_array_function_t, SAX>::value &&
-        is_detected_exact<bool, end_array_function_t, SAX>::value &&
-        is_detected_exact<bool, parse_error_function_t, SAX, exception_t>::value;
+public:
+  static constexpr bool value =
+      is_detected_exact<bool, null_function_t, SAX>::value &&
+      is_detected_exact<bool, boolean_function_t, SAX>::value &&
+      is_detected_exact<bool, number_integer_function_t, SAX,
+                        number_integer_t>::value &&
+      is_detected_exact<bool, number_unsigned_function_t, SAX,
+                        number_unsigned_t>::value &&
+      is_detected_exact<bool, number_float_function_t, SAX, number_float_t,
+                        string_t>::value &&
+      is_detected_exact<bool, string_function_t, SAX, string_t>::value &&
+      is_detected_exact<bool, start_object_function_t, SAX>::value &&
+      is_detected_exact<bool, key_function_t, SAX, string_t>::value &&
+      is_detected_exact<bool, end_object_function_t, SAX>::value &&
+      is_detected_exact<bool, start_array_function_t, SAX>::value &&
+      is_detected_exact<bool, end_array_function_t, SAX>::value &&
+      is_detected_exact<bool, parse_error_function_t, SAX, exception_t>::value;
 };
 
 template <typename SAX, typename BasicJsonType>
 struct is_sax_static_asserts
 {
-  private:
-    static_assert(is_basic_json<BasicJsonType>::value,
-                  "BasicJsonType must be of type basic_json<...>");
+private:
+  static_assert(is_basic_json<BasicJsonType>::value,
+                "BasicJsonType must be of type basic_json<...>");
 
-    using number_integer_t = typename BasicJsonType::number_integer_t;
-    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    using number_float_t = typename BasicJsonType::number_float_t;
-    using string_t = typename BasicJsonType::string_t;
-    using exception_t = typename BasicJsonType::exception;
+  using number_integer_t = typename BasicJsonType::number_integer_t;
+  using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+  using number_float_t = typename BasicJsonType::number_float_t;
+  using string_t = typename BasicJsonType::string_t;
+  using exception_t = typename BasicJsonType::exception;
 
-  public:
-    static_assert(is_detected_exact<bool, null_function_t, SAX>::value,
-                  "Missing/invalid function: bool null()");
-    static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
-                  "Missing/invalid function: bool boolean(bool)");
-    static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
-                  "Missing/invalid function: bool boolean(bool)");
-    static_assert(
-        is_detected_exact<bool, number_integer_function_t, SAX,
-        number_integer_t>::value,
-        "Missing/invalid function: bool number_integer(number_integer_t)");
-    static_assert(
-        is_detected_exact<bool, number_unsigned_function_t, SAX,
-        number_unsigned_t>::value,
-        "Missing/invalid function: bool number_unsigned(number_unsigned_t)");
-    static_assert(is_detected_exact<bool, number_float_function_t, SAX,
-                  number_float_t, string_t>::value,
-                  "Missing/invalid function: bool number_float(number_float_t, const string_t&)");
-    static_assert(
-        is_detected_exact<bool, string_function_t, SAX, string_t>::value,
-        "Missing/invalid function: bool string(string_t&)");
-    static_assert(is_detected_exact<bool, start_object_function_t, SAX>::value,
-                  "Missing/invalid function: bool start_object(std::size_t)");
-    static_assert(is_detected_exact<bool, key_function_t, SAX, string_t>::value,
-                  "Missing/invalid function: bool key(string_t&)");
-    static_assert(is_detected_exact<bool, end_object_function_t, SAX>::value,
-                  "Missing/invalid function: bool end_object()");
-    static_assert(is_detected_exact<bool, start_array_function_t, SAX>::value,
-                  "Missing/invalid function: bool start_array(std::size_t)");
-    static_assert(is_detected_exact<bool, end_array_function_t, SAX>::value,
-                  "Missing/invalid function: bool end_array()");
-    static_assert(
-        is_detected_exact<bool, parse_error_function_t, SAX, exception_t>::value,
-        "Missing/invalid function: bool parse_error(std::size_t, const "
-        "std::string&, const exception&)");
+public:
+  static_assert(is_detected_exact<bool, null_function_t, SAX>::value,
+                "Missing/invalid function: bool null()");
+  static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
+                "Missing/invalid function: bool boolean(bool)");
+  static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
+                "Missing/invalid function: bool boolean(bool)");
+  static_assert(
+      is_detected_exact<bool, number_integer_function_t, SAX,
+                        number_integer_t>::value,
+      "Missing/invalid function: bool number_integer(number_integer_t)");
+  static_assert(
+      is_detected_exact<bool, number_unsigned_function_t, SAX,
+                        number_unsigned_t>::value,
+      "Missing/invalid function: bool number_unsigned(number_unsigned_t)");
+  static_assert(is_detected_exact<bool, number_float_function_t, SAX,
+                                  number_float_t, string_t>::value,
+                "Missing/invalid function: bool number_float(number_float_t, const string_t&)");
+  static_assert(
+      is_detected_exact<bool, string_function_t, SAX, string_t>::value,
+      "Missing/invalid function: bool string(string_t&)");
+  static_assert(is_detected_exact<bool, start_object_function_t, SAX>::value,
+                "Missing/invalid function: bool start_object(std::size_t)");
+  static_assert(is_detected_exact<bool, key_function_t, SAX, string_t>::value,
+                "Missing/invalid function: bool key(string_t&)");
+  static_assert(is_detected_exact<bool, end_object_function_t, SAX>::value,
+                "Missing/invalid function: bool end_object()");
+  static_assert(is_detected_exact<bool, start_array_function_t, SAX>::value,
+                "Missing/invalid function: bool start_array(std::size_t)");
+  static_assert(is_detected_exact<bool, end_array_function_t, SAX>::value,
+                "Missing/invalid function: bool end_array()");
+  static_assert(
+      is_detected_exact<bool, parse_error_function_t, SAX, exception_t>::value,
+      "Missing/invalid function: bool parse_error(std::size_t, const "
+      "std::string&, const exception&)");
 };
 }
 }
