@@ -177,6 +177,7 @@ using json = basic_json<>;
 #if defined(JSON_CATCH_USER)
     #undef JSON_CATCH
     #define JSON_CATCH JSON_CATCH_USER
+    #undef JSON_INTERNAL_CATCH
     #define JSON_INTERNAL_CATCH JSON_CATCH_USER
 #endif
 #if defined(JSON_INTERNAL_CATCH_USER)
