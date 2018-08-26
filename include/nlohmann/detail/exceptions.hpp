@@ -23,6 +23,9 @@ struct input_position {
         lines_read(lines),
         chars_read_this_line(chars_this_line)
     {}
+    
+    //! Converts to chars_read
+    operator size_t() {return chars_read; }
 } ;
 
 /*!
@@ -135,16 +138,16 @@ class parse_error : public exception
     static parse_error create(int id_, const input_position pos_, const std::string& what_arg)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
-                        " at line: " + std::to_string(pos_.lines_read + 1) +
-                        " col: " + std::to_string(pos_.chars_read_this_line) +
-                        " : " + what_arg;
+                        " at line " + std::to_string(pos_.lines_read + 1) +
+                        " col " + std::to_string(pos_.chars_read_this_line) +
+                        ": " + what_arg;
         return parse_error(id_, pos_, w.c_str());
     }
     
     static parse_error create(int id_, size_t bytes_, const std::string& what_arg)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
-                        " at char " + std::to_string(bytes_) +
+                        " at " + std::to_string(bytes_) +
                         ": " + what_arg;
         return parse_error(id_, bytes_, w.c_str());
     }
