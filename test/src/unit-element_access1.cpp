@@ -195,7 +195,7 @@ TEST_CASE("element access 1")
                         const json j_nonarray_const(j_nonarray);
                         CHECK_NOTHROW(j_nonarray[0]);
                         CHECK_THROWS_AS(j_nonarray_const[0], json::type_error&);
-                        CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with null");
+                        CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with null");
                     }
 
                     SECTION("implicit transformation to properly filled array")
@@ -212,8 +212,8 @@ TEST_CASE("element access 1")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray[0], json::type_error&);
                     CHECK_THROWS_AS(j_nonarray_const[0], json::type_error&);
-                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with boolean");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with boolean");
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with boolean");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with boolean");
                 }
 
                 SECTION("string")
@@ -222,8 +222,8 @@ TEST_CASE("element access 1")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray[0], json::type_error&);
                     CHECK_THROWS_AS(j_nonarray_const[0], json::type_error&);
-                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with string");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with string");
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with string");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with string");
                 }
 
                 SECTION("object")
@@ -232,8 +232,8 @@ TEST_CASE("element access 1")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray[0], json::type_error&);
                     CHECK_THROWS_AS(j_nonarray_const[0], json::type_error&);
-                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with object");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with object");
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with object");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with object");
                 }
 
                 SECTION("number (integer)")
@@ -242,8 +242,8 @@ TEST_CASE("element access 1")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray[0], json::type_error&);
                     CHECK_THROWS_AS(j_nonarray_const[0], json::type_error&);
-                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with number");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number");
                 }
 
                 SECTION("number (unsigned)")
@@ -252,8 +252,8 @@ TEST_CASE("element access 1")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray[0], json::type_error&);
                     CHECK_THROWS_AS(j_nonarray_const[0], json::type_error&);
-                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with number");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number");
                 }
 
                 SECTION("number (floating-point)")
@@ -262,8 +262,8 @@ TEST_CASE("element access 1")
                     const json j_nonarray_const(j_nonarray);
                     CHECK_THROWS_AS(j_nonarray[0], json::type_error&);
                     CHECK_THROWS_AS(j_nonarray_const[0], json::type_error&);
-                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with number");
-                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with number");
+                    CHECK_THROWS_WITH(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number");
+                    CHECK_THROWS_WITH(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number");
                 }
             }
         }
