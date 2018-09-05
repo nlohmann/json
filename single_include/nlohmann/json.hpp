@@ -445,16 +445,30 @@ struct is_complete_type : std::false_type {};
 template <typename T>
 struct is_complete_type<T, decltype(void(sizeof(T)))> : std::true_type {};
 
-template<bool B, class RealType, class CompatibleObjectType>
+template <typename BasicJsonType, typename CompatibleObjectType,
+          typename = void>
 struct is_compatible_object_type_impl : std::false_type {};
 
-template<class RealType, class CompatibleObjectType>
-struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
+template <typename BasicJsonType, typename CompatibleObjectType>
+struct is_compatible_object_type_impl <
+    BasicJsonType, CompatibleObjectType,
+    enable_if_t<is_detected<mapped_type_t, CompatibleObjectType>::value and
+    is_detected<key_type_t, CompatibleObjectType>::value >>
 {
-    static constexpr auto value =
-        std::is_constructible<typename RealType::key_type, typename CompatibleObjectType::key_type>::value and
-        std::is_constructible<typename RealType::mapped_type, typename CompatibleObjectType::mapped_type>::value;
+
+    using object_t = typename BasicJsonType::object_t;
+
+    // macOS's is_constructible does not play well with nonesuch...
+    static constexpr bool value =
+        std::is_constructible<typename object_t::key_type,
+        typename CompatibleObjectType::key_type>::value and
+        std::is_constructible<typename object_t::mapped_type,
+        typename CompatibleObjectType::mapped_type>::value;
 };
+
+template <typename BasicJsonType, typename CompatibleObjectType>
+struct is_compatible_object_type
+    : is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType> {};
 
 template<bool B, class RealType, class CompatibleStringType>
 struct is_compatible_string_type_impl : std::false_type {};
@@ -465,16 +479,6 @@ struct is_compatible_string_type_impl<true, RealType, CompatibleStringType>
     static constexpr auto value =
         std::is_same<typename RealType::value_type, typename CompatibleStringType::value_type>::value and
         std::is_constructible<RealType, CompatibleStringType>::value;
-};
-
-template<class BasicJsonType, class CompatibleObjectType>
-struct is_compatible_object_type
-{
-    static auto constexpr value = is_compatible_object_type_impl <
-                                  conjunction<negation<std::is_same<void, CompatibleObjectType>>,
-                                  is_detected<mapped_type_t, CompatibleObjectType>,
-                                  is_detected<key_type_t, CompatibleObjectType>>::value,
-                                  typename BasicJsonType::object_t, CompatibleObjectType >::value;
 };
 
 template<class BasicJsonType, class CompatibleStringType>
