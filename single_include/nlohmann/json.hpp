@@ -497,19 +497,25 @@ struct is_basic_json_nested_type
                                   std::is_same<T, typename BasicJsonType::const_reverse_iterator>::value;
 };
 
-template<class BasicJsonType, class CompatibleArrayType>
-struct is_compatible_array_type
+template <typename BasicJsonType, typename CompatibleArrayType, typename = void>
+struct is_compatible_array_type_impl : std::false_type {};
+
+template <typename BasicJsonType, typename CompatibleArrayType>
+struct is_compatible_array_type_impl <
+    BasicJsonType, CompatibleArrayType,
+    enable_if_t<is_detected<value_type_t, CompatibleArrayType>::value and
+    is_detected<iterator_t, CompatibleArrayType>::value >>
 {
-    static auto constexpr value =
-        conjunction<negation<std::is_same<void, CompatibleArrayType>>,
-        negation<is_compatible_object_type<
-        BasicJsonType, CompatibleArrayType>>,
-        negation<std::is_constructible<typename BasicJsonType::string_t,
-        CompatibleArrayType>>,
-        negation<is_basic_json_nested_type<BasicJsonType, CompatibleArrayType>>,
-        is_detected<value_type_t, CompatibleArrayType>,
-        is_detected<iterator_t, CompatibleArrayType>>::value;
+    static constexpr auto value = not(
+                                      is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value or
+                                      std::is_constructible<typename BasicJsonType::string_t,
+                                      CompatibleArrayType>::value or
+                                      is_basic_json_nested_type<BasicJsonType, CompatibleArrayType>::value);
 };
+
+template <typename BasicJsonType, typename CompatibleArrayType>
+struct is_compatible_array_type
+    : is_compatible_array_type_impl<BasicJsonType, CompatibleArrayType> {};
 
 template<bool, typename, typename>
 struct is_compatible_integer_type_impl : std::false_type {};
