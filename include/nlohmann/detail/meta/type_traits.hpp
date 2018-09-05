@@ -90,25 +90,23 @@ template <typename BasicJsonType, typename CompatibleObjectType>
 struct is_compatible_object_type
     : is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType> {};
 
-template<bool B, class RealType, class CompatibleStringType>
+template <typename BasicJsonType, typename CompatibleStringType,
+          typename = void>
 struct is_compatible_string_type_impl : std::false_type {};
 
-template<class RealType, class CompatibleStringType>
-struct is_compatible_string_type_impl<true, RealType, CompatibleStringType>
+template <typename BasicJsonType, typename CompatibleStringType>
+struct is_compatible_string_type_impl <
+    BasicJsonType, CompatibleStringType,
+    enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type,
+    value_type_t, CompatibleStringType>::value >>
 {
     static constexpr auto value =
-        std::is_same<typename RealType::value_type, typename CompatibleStringType::value_type>::value and
-        std::is_constructible<RealType, CompatibleStringType>::value;
+        std::is_constructible<typename BasicJsonType::string_t, CompatibleStringType>::value;
 };
 
-template<class BasicJsonType, class CompatibleStringType>
+template <typename BasicJsonType, typename CompatibleStringType>
 struct is_compatible_string_type
-{
-    static auto constexpr value = is_compatible_string_type_impl <
-                                  conjunction<negation<std::is_same<void, CompatibleStringType>>,
-                                  is_detected<value_type_t, CompatibleStringType>>::value,
-                                  typename BasicJsonType::string_t, CompatibleStringType >::value;
-};
+    : is_compatible_string_type_impl<BasicJsonType, CompatibleStringType> {};
 
 template<typename BasicJsonType, typename T>
 struct is_basic_json_nested_type
