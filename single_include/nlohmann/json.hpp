@@ -267,26 +267,6 @@ template<> struct make_index_sequence<1> : index_sequence<0> {};
 template<typename... Ts>
 using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
 
-/*
-Implementation of two C++17 constructs: conjunction, negation. This is needed
-to avoid evaluating all the traits in a condition
-
-For example: not std::is_same<void, T>::value and has_value_type<T>::value
-will not compile when T = void (on MSVC at least). Whereas
-conjunction<negation<std::is_same<void, T>>, has_value_type<T>>::value will
-stop evaluating if negation<...>::value == false
-
-Please note that those constructs must be used with caution, since symbols can
-become very long quickly (which can slow down compilation and cause MSVC
-internal compiler errors). Only use it when you have to (see example ahead).
-*/
-template<class...> struct conjunction : std::true_type {};
-template<class B1> struct conjunction<B1> : B1 {};
-template<class B1, class... Bn>
-struct conjunction<B1, Bn...> : std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
-
-template<class B> struct negation : std::integral_constant<bool, not B::value> {};
-
 // dispatch utility (taken from ranges-v3)
 template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
 template<> struct priority_tag<0> {};
@@ -578,22 +558,24 @@ struct has_to_json
         T>::value;
 };
 
-template <typename BasicJsonType, typename CompatibleCompleteType>
-struct is_compatible_complete_type
+template <typename BasicJsonType, typename CompatibleType, typename = void>
+struct is_compatible_type_impl: std::false_type {};
+
+template <typename BasicJsonType, typename CompatibleType>
+struct is_compatible_type_impl <
+    BasicJsonType, CompatibleType,
+    enable_if_t<is_complete_type<CompatibleType>::value >>
 {
     static constexpr bool value =
-        not std::is_base_of<std::istream, CompatibleCompleteType>::value and
-        not is_basic_json<CompatibleCompleteType>::value and
-        not is_basic_json_nested_type<BasicJsonType, CompatibleCompleteType>::value and
-        has_to_json<BasicJsonType, CompatibleCompleteType>::value;
+        not std::is_base_of<std::istream, CompatibleType>::value and
+        not is_basic_json<CompatibleType>::value and
+        not is_basic_json_nested_type<BasicJsonType, CompatibleType>::value and
+        has_to_json<BasicJsonType, CompatibleType>::value;
 };
 
 template <typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
-    : conjunction<is_complete_type<CompatibleType>,
-      is_compatible_complete_type<BasicJsonType, CompatibleType>>
-{
-};
+    : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
 }
 }
 

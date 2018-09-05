@@ -198,21 +198,23 @@ struct has_to_json
         T>::value;
 };
 
-template <typename BasicJsonType, typename CompatibleCompleteType>
-struct is_compatible_complete_type
+template <typename BasicJsonType, typename CompatibleType, typename = void>
+struct is_compatible_type_impl: std::false_type {};
+
+template <typename BasicJsonType, typename CompatibleType>
+struct is_compatible_type_impl <
+    BasicJsonType, CompatibleType,
+    enable_if_t<is_complete_type<CompatibleType>::value >>
 {
     static constexpr bool value =
-        not std::is_base_of<std::istream, CompatibleCompleteType>::value and
-        not is_basic_json<CompatibleCompleteType>::value and
-        not is_basic_json_nested_type<BasicJsonType, CompatibleCompleteType>::value and
-        has_to_json<BasicJsonType, CompatibleCompleteType>::value;
+        not std::is_base_of<std::istream, CompatibleType>::value and
+        not is_basic_json<CompatibleType>::value and
+        not is_basic_json_nested_type<BasicJsonType, CompatibleType>::value and
+        has_to_json<BasicJsonType, CompatibleType>::value;
 };
 
 template <typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
-    : conjunction<is_complete_type<CompatibleType>,
-      is_compatible_complete_type<BasicJsonType, CompatibleType>>
-{
-};
+    : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
 }
 }
