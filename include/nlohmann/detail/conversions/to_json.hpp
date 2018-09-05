@@ -248,10 +248,12 @@ void to_json(BasicJsonType& j, const std::vector<bool>& e)
     external_constructor<value_t::array>::construct(j, e);
 }
 
-template<typename BasicJsonType, typename CompatibleArrayType,
-         enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value or
-                     std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value,
-                     int> = 0>
+template <typename BasicJsonType, typename CompatibleArrayType,
+          enable_if_t<is_compatible_array_type<BasicJsonType,
+                      CompatibleArrayType>::value and
+                      not is_compatible_object_type<
+                          BasicJsonType, CompatibleArrayType>::value,
+                      int> = 0>
 void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
     external_constructor<value_t::array>::construct(j, arr);
