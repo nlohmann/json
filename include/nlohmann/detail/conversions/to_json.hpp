@@ -252,7 +252,8 @@ template <typename BasicJsonType, typename CompatibleArrayType,
           enable_if_t<is_compatible_array_type<BasicJsonType,
                       CompatibleArrayType>::value and
                       not is_compatible_object_type<
-                          BasicJsonType, CompatibleArrayType>::value,
+                          BasicJsonType, CompatibleArrayType>::value and
+                      not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value,
                       int> = 0>
 void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {

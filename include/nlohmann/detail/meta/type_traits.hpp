@@ -127,9 +127,6 @@ struct is_compatible_array_type_impl <
     is_detected<iterator_t, CompatibleArrayType>::value >>
 {
     static constexpr auto value = not(
-                                      is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value or
-                                      std::is_constructible<typename BasicJsonType::string_t,
-                                      CompatibleArrayType>::value or
                                       is_basic_json_nested_type<BasicJsonType, CompatibleArrayType>::value);
 };
 

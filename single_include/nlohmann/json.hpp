@@ -487,9 +487,6 @@ struct is_compatible_array_type_impl <
     is_detected<iterator_t, CompatibleArrayType>::value >>
 {
     static constexpr auto value = not(
-                                      is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value or
-                                      std::is_constructible<typename BasicJsonType::string_t,
-                                      CompatibleArrayType>::value or
                                       is_basic_json_nested_type<BasicJsonType, CompatibleArrayType>::value);
 };
 
@@ -1124,16 +1121,6 @@ void from_json(const BasicJsonType& j, EnumType& e)
     e = static_cast<EnumType>(val);
 }
 
-template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::array_t& arr)
-{
-    if (JSON_UNLIKELY(not j.is_array()))
-    {
-        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
-    }
-    arr = *j.template get_ptr<const typename BasicJsonType::array_t*>();
-}
-
 // forward_list doesn't have an insert method
 template<typename BasicJsonType, typename T, typename Allocator,
          enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
@@ -1163,24 +1150,28 @@ void from_json(const BasicJsonType& j, std::valarray<T>& l)
     std::copy(j.m_value.array->begin(), j.m_value.array->end(), std::begin(l));
 }
 
-template<typename BasicJsonType, typename CompatibleArrayType>
-void from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, priority_tag<0> /*unused*/)
+template<typename BasicJsonType>
+void from_json_array_impl(const BasicJsonType& j, typename BasicJsonType::array_t& arr, priority_tag<3> /*unused*/)
 {
-    using std::end;
+    arr = *j.template get_ptr<const typename BasicJsonType::array_t*>();
+}
 
-    std::transform(j.begin(), j.end(),
-                   std::inserter(arr, end(arr)), [](const BasicJsonType & i)
+template <typename BasicJsonType, typename T, std::size_t N>
+auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
+                          priority_tag<2> /*unused*/)
+-> decltype(j.template get<T>(), void())
+{
+    for (std::size_t i = 0; i < N; ++i)
     {
-        // get<BasicJsonType>() returns *this, this won't call a from_json
-        // method when value_type is BasicJsonType
-        return i.template get<typename CompatibleArrayType::value_type>();
-    });
+        arr[i] = j.at(i).template get<T>();
+    }
 }
 
 template<typename BasicJsonType, typename CompatibleArrayType>
 auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, priority_tag<1> /*unused*/)
 -> decltype(
     arr.reserve(std::declval<typename CompatibleArrayType::size_type>()),
+    j.template get<typename CompatibleArrayType::value_type>(),
     void())
 {
     using std::end;
@@ -1195,25 +1186,34 @@ auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
     });
 }
 
-template<typename BasicJsonType, typename T, std::size_t N>
-void from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr, priority_tag<2> /*unused*/)
+template <typename BasicJsonType, typename CompatibleArrayType>
+void from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr,
+                          priority_tag<0> /*unused*/)
 {
-    for (std::size_t i = 0; i < N; ++i)
+    using std::end;
+
+    std::transform(
+        j.begin(), j.end(), std::inserter(arr, end(arr)),
+        [](const BasicJsonType & i)
     {
-        arr[i] = j.at(i).template get<T>();
-    }
+        // get<BasicJsonType>() returns *this, this won't call a from_json
+        // method when value_type is BasicJsonType
+        return i.template get<typename CompatibleArrayType::value_type>();
+    });
 }
 
-template <
-    typename BasicJsonType, typename CompatibleArrayType,
-    enable_if_t <
-        is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
-        not std::is_same<typename BasicJsonType::array_t,
-                         CompatibleArrayType>::value and
-        std::is_constructible <
-            BasicJsonType, typename CompatibleArrayType::value_type >::value,
-        int > = 0 >
-void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
+template <typename BasicJsonType, typename CompatibleArrayType,
+          enable_if_t <
+              is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
+              not is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value and
+              not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value and
+              not is_basic_json<CompatibleArrayType>::value,
+              int > = 0 >
+
+auto from_json(const BasicJsonType& j, CompatibleArrayType& arr)
+-> decltype(from_json_array_impl(j, arr, priority_tag<3> {}),
+j.template get<typename CompatibleArrayType::value_type>(),
+void())
 {
     if (JSON_UNLIKELY(not j.is_array()))
     {
@@ -1221,7 +1221,7 @@ void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
                                       std::string(j.type_name())));
     }
 
-    from_json_array_impl(j, arr, priority_tag<2> {});
+    from_json_array_impl(j, arr, priority_tag<3> {});
 }
 
 template<typename BasicJsonType, typename CompatibleObjectType,
@@ -1773,7 +1773,8 @@ template <typename BasicJsonType, typename CompatibleArrayType,
           enable_if_t<is_compatible_array_type<BasicJsonType,
                       CompatibleArrayType>::value and
                       not is_compatible_object_type<
-                          BasicJsonType, CompatibleArrayType>::value,
+                          BasicJsonType, CompatibleArrayType>::value and
+                      not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value,
                       int> = 0>
 void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
