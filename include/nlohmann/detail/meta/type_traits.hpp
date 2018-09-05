@@ -7,6 +7,7 @@
 
 #include <nlohmann/json_fwd.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann
@@ -30,9 +31,31 @@ template<typename> struct is_basic_json : std::false_type {};
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
 
-////////////////////////
-// has_/is_ functions //
-////////////////////////
+//////////////////////////
+// aliases for detected //
+//////////////////////////
+
+template <typename T>
+using mapped_type_t = typename T::mapped_type;
+
+template <typename T>
+using key_type_t = typename T::key_type;
+
+template <typename T>
+using value_type_t = typename T::value_type;
+
+template <typename T>
+using iterator_t = typename T::iterator;
+
+template <typename T, typename... Args>
+using to_json_function = decltype(T::to_json(std::declval<Args>()...));
+
+template <typename T, typename... Args>
+using from_json_function = decltype(T::from_json(std::declval<Args>()...));
+
+///////////////////
+// is_ functions //
+///////////////////
 
 // source: https://stackoverflow.com/a/37193089/4116453
 
@@ -41,11 +64,6 @@ struct is_complete_type : std::false_type {};
 
 template <typename T>
 struct is_complete_type<T, decltype(void(sizeof(T)))> : std::true_type {};
-
-NLOHMANN_JSON_HAS_HELPER(mapped_type);
-NLOHMANN_JSON_HAS_HELPER(key_type);
-NLOHMANN_JSON_HAS_HELPER(value_type);
-NLOHMANN_JSON_HAS_HELPER(iterator);
 
 template<bool B, class RealType, class CompatibleObjectType>
 struct is_compatible_object_type_impl : std::false_type {};
@@ -74,8 +92,8 @@ struct is_compatible_object_type
 {
     static auto constexpr value = is_compatible_object_type_impl <
                                   conjunction<negation<std::is_same<void, CompatibleObjectType>>,
-                                  has_mapped_type<CompatibleObjectType>,
-                                  has_key_type<CompatibleObjectType>>::value,
+                                  is_detected<mapped_type_t, CompatibleObjectType>,
+                                  is_detected<key_type_t, CompatibleObjectType>>::value,
                                   typename BasicJsonType::object_t, CompatibleObjectType >::value;
 };
 
@@ -84,7 +102,7 @@ struct is_compatible_string_type
 {
     static auto constexpr value = is_compatible_string_type_impl <
                                   conjunction<negation<std::is_same<void, CompatibleStringType>>,
-                                  has_value_type<CompatibleStringType>>::value,
+                                  is_detected<value_type_t, CompatibleStringType>>::value,
                                   typename BasicJsonType::string_t, CompatibleStringType >::value;
 };
 
@@ -107,8 +125,8 @@ struct is_compatible_array_type
         negation<std::is_constructible<typename BasicJsonType::string_t,
         CompatibleArrayType>>,
         negation<is_basic_json_nested_type<BasicJsonType, CompatibleArrayType>>,
-        has_value_type<CompatibleArrayType>,
-        has_iterator<CompatibleArrayType>>::value;
+        is_detected<value_type_t, CompatibleArrayType>,
+        is_detected<iterator_t, CompatibleArrayType>>::value;
 };
 
 template<bool, typename, typename>
@@ -141,14 +159,11 @@ struct is_compatible_integer_type
 template<typename BasicJsonType, typename T>
 struct has_from_json
 {
-    // also check the return type of from_json
-    template<typename U, typename = enable_if_t<std::is_same<void, decltype(uncvref_t<U>::from_json(
-                 std::declval<BasicJsonType>(), std::declval<T&>()))>::value>>
-    static int detect(U&&);
-    static void detect(...);
+    using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
-    static constexpr bool value = std::is_integral<decltype(
-                                      detect(std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
+    static constexpr bool value =
+        is_detected_exact<void, from_json_function, serializer,
+        const BasicJsonType&, T&>::value;
 };
 
 // This trait checks if JSONSerializer<T>::from_json(json const&) exists
@@ -156,28 +171,22 @@ struct has_from_json
 template<typename BasicJsonType, typename T>
 struct has_non_default_from_json
 {
-    template <
-        typename U,
-        typename = enable_if_t<std::is_same<
-                                   T, decltype(uncvref_t<U>::from_json(std::declval<BasicJsonType>()))>::value >>
-    static int detect(U&&);
-    static void detect(...);
+    using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
-    static constexpr bool value = std::is_integral<decltype(detect(
-                                      std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
+    static constexpr bool value =
+        is_detected_exact<T, from_json_function, serializer,
+        const BasicJsonType&>::value;
 };
 
 // This trait checks if BasicJsonType::json_serializer<T>::to_json exists
 template<typename BasicJsonType, typename T>
 struct has_to_json
 {
-    template<typename U, typename = decltype(uncvref_t<U>::to_json(
-                 std::declval<BasicJsonType&>(), std::declval<T>()))>
-    static int detect(U&&);
-    static void detect(...);
+    using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
-    static constexpr bool value = std::is_integral<decltype(detect(
-                                      std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
+    static constexpr bool value =
+        is_detected_exact<void, to_json_function, serializer, BasicJsonType&,
+        T>::value;
 };
 
 template <typename BasicJsonType, typename CompatibleCompleteType>
