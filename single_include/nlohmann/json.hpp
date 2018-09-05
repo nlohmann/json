@@ -517,31 +517,32 @@ template <typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type
     : is_compatible_array_type_impl<BasicJsonType, CompatibleArrayType> {};
 
-template<bool, typename, typename>
+template <typename RealIntegerType, typename CompatibleNumberIntegerType,
+          typename = void>
 struct is_compatible_integer_type_impl : std::false_type {};
 
-template<typename RealIntegerType, typename CompatibleNumberIntegerType>
-struct is_compatible_integer_type_impl<true, RealIntegerType, CompatibleNumberIntegerType>
+template <typename RealIntegerType, typename CompatibleNumberIntegerType>
+struct is_compatible_integer_type_impl <
+    RealIntegerType, CompatibleNumberIntegerType,
+    enable_if_t<std::is_integral<RealIntegerType>::value and
+    std::is_integral<CompatibleNumberIntegerType>::value and
+    not std::is_same<bool, CompatibleNumberIntegerType>::value >>
 {
     // is there an assert somewhere on overflows?
     using RealLimits = std::numeric_limits<RealIntegerType>;
     using CompatibleLimits = std::numeric_limits<CompatibleNumberIntegerType>;
 
     static constexpr auto value =
-        std::is_constructible<RealIntegerType, CompatibleNumberIntegerType>::value and
+        std::is_constructible<RealIntegerType,
+        CompatibleNumberIntegerType>::value and
         CompatibleLimits::is_integer and
         RealLimits::is_signed == CompatibleLimits::is_signed;
 };
 
-template<typename RealIntegerType, typename CompatibleNumberIntegerType>
+template <typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type
-{
-    static constexpr auto value =
-        is_compatible_integer_type_impl <
-        std::is_integral<CompatibleNumberIntegerType>::value and
-        not std::is_same<bool, CompatibleNumberIntegerType>::value,
-        RealIntegerType, CompatibleNumberIntegerType > ::value;
-};
+    : is_compatible_integer_type_impl<RealIntegerType,
+      CompatibleNumberIntegerType> {};
 
 // trait checking if JSONSerializer<T>::from_json(json const&, udt&) exists
 template<typename BasicJsonType, typename T>
