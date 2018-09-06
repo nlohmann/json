@@ -141,14 +141,12 @@ struct is_compatible_integer_type
 template<typename BasicJsonType, typename T>
 struct has_from_json
 {
-  private:
     // also check the return type of from_json
     template<typename U, typename = enable_if_t<std::is_same<void, decltype(uncvref_t<U>::from_json(
                  std::declval<BasicJsonType>(), std::declval<T&>()))>::value>>
     static int detect(U&&);
     static void detect(...);
 
-  public:
     static constexpr bool value = std::is_integral<decltype(
                                       detect(std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
 };
@@ -158,7 +156,6 @@ struct has_from_json
 template<typename BasicJsonType, typename T>
 struct has_non_default_from_json
 {
-  private:
     template <
         typename U,
         typename = enable_if_t<std::is_same<
@@ -166,7 +163,6 @@ struct has_non_default_from_json
     static int detect(U&&);
     static void detect(...);
 
-  public:
     static constexpr bool value = std::is_integral<decltype(detect(
                                       std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
 };
@@ -175,13 +171,11 @@ struct has_non_default_from_json
 template<typename BasicJsonType, typename T>
 struct has_to_json
 {
-  private:
     template<typename U, typename = decltype(uncvref_t<U>::to_json(
                  std::declval<BasicJsonType&>(), std::declval<T>()))>
     static int detect(U&&);
     static void detect(...);
 
-  public:
     static constexpr bool value = std::is_integral<decltype(detect(
                                       std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
 };

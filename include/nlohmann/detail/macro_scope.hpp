@@ -115,11 +115,9 @@ contains a `mapped_type`, whereas `std::vector` fails the test.
 */
 #define NLOHMANN_JSON_HAS_HELPER(type)                                        \
     template<typename T> struct has_##type {                                  \
-    private:                                                                  \
         template<typename U, typename = typename U::type>                     \
         static int detect(U &&);                                              \
         static void detect(...);                                              \
-    public:                                                                   \
         static constexpr bool value =                                         \
                 std::is_integral<decltype(detect(std::declval<T>()))>::value; \
     }
