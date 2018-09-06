@@ -20,8 +20,10 @@ struct adl_serializer
     @param[in,out] val  value to write to
     */
     template<typename BasicJsonType, typename ValueType>
-    static void from_json(BasicJsonType&& j, ValueType& val) noexcept(
-        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
+    static auto from_json(BasicJsonType&& j, ValueType& val) noexcept(
+        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val))) -> decltype(
+            ::nlohmann::from_json(std::forward<BasicJsonType>(j), val), void()
+        )
     {
         ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
     }
