@@ -253,7 +253,8 @@ template <typename BasicJsonType, typename CompatibleArrayType,
                       CompatibleArrayType>::value and
                       not is_compatible_object_type<
                           BasicJsonType, CompatibleArrayType>::value and
-                      not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value,
+                      not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value and
+                      not is_basic_json<CompatibleArrayType>::value,
                       int> = 0>
 void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
@@ -274,7 +275,7 @@ void to_json(BasicJsonType& j, typename BasicJsonType::array_t&& arr)
 }
 
 template<typename BasicJsonType, typename CompatibleObjectType,
-         enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value, int> = 0>
+         enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value and not is_basic_json<CompatibleObjectType>::value, int> = 0>
 void to_json(BasicJsonType& j, const CompatibleObjectType& obj)
 {
     external_constructor<value_t::object>::construct(j, obj);

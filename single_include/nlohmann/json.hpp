@@ -405,6 +405,18 @@ template <typename T>
 using value_type_t = typename T::value_type;
 
 template <typename T>
+using difference_type_t = typename T::difference_type;
+
+template <typename T>
+using pointer_t = typename T::pointer;
+
+template <typename T>
+using reference_t = typename T::reference;
+
+template <typename T>
+using iterator_category_t = typename T::iterator_category;
+
+template <typename T>
 using iterator_t = typename T::iterator;
 
 template <typename T, typename... Args>
@@ -416,6 +428,24 @@ using from_json_function = decltype(T::from_json(std::declval<Args>()...));
 ///////////////////
 // is_ functions //
 ///////////////////
+
+template <typename T, typename = void>
+struct is_iterator_traits : std::false_type {};
+
+template <typename T>
+struct is_iterator_traits<std::iterator_traits<T>>
+{
+  private:
+    using traits = std::iterator_traits<T>;
+
+  public:
+    static constexpr auto value =
+        is_detected<value_type_t, traits>::value &&
+        is_detected<difference_type_t, traits>::value &&
+        is_detected<pointer_t, traits>::value &&
+        is_detected<iterator_category_t, traits>::value &&
+        is_detected<reference_t, traits>::value;
+};
 
 // source: https://stackoverflow.com/a/37193089/4116453
 
@@ -468,15 +498,6 @@ template <typename BasicJsonType, typename CompatibleStringType>
 struct is_compatible_string_type
     : is_compatible_string_type_impl<BasicJsonType, CompatibleStringType> {};
 
-template<typename BasicJsonType, typename T>
-struct is_basic_json_nested_type
-{
-    static auto constexpr value = std::is_same<T, typename BasicJsonType::iterator>::value or
-                                  std::is_same<T, typename BasicJsonType::const_iterator>::value or
-                                  std::is_same<T, typename BasicJsonType::reverse_iterator>::value or
-                                  std::is_same<T, typename BasicJsonType::const_reverse_iterator>::value;
-};
-
 template <typename BasicJsonType, typename CompatibleArrayType, typename = void>
 struct is_compatible_array_type_impl : std::false_type {};
 
@@ -486,8 +507,10 @@ struct is_compatible_array_type_impl <
     enable_if_t<is_detected<value_type_t, CompatibleArrayType>::value and
     is_detected<iterator_t, CompatibleArrayType>::value >>
 {
-    static constexpr auto value = not(
-                                      is_basic_json_nested_type<BasicJsonType, CompatibleArrayType>::value);
+    // This is needed because json_reverse_iterator has a ::iterator type...
+    // Therefore it is detected as a CompatibleArrayType.
+    // The real fix would be to have an Iterable concept.
+    static constexpr bool value = not is_iterator_traits<std::iterator_traits<CompatibleArrayType>>::value;
 };
 
 template <typename BasicJsonType, typename CompatibleArrayType>
@@ -564,9 +587,6 @@ struct is_compatible_type_impl <
     enable_if_t<is_complete_type<CompatibleType>::value >>
 {
     static constexpr bool value =
-        not std::is_base_of<std::istream, CompatibleType>::value and
-        not is_basic_json<CompatibleType>::value and
-        not is_basic_json_nested_type<BasicJsonType, CompatibleType>::value and
         has_to_json<BasicJsonType, CompatibleType>::value;
 };
 
@@ -1752,7 +1772,8 @@ template <typename BasicJsonType, typename CompatibleArrayType,
                       CompatibleArrayType>::value and
                       not is_compatible_object_type<
                           BasicJsonType, CompatibleArrayType>::value and
-                      not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value,
+                      not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value and
+                      not is_basic_json<CompatibleArrayType>::value,
                       int> = 0>
 void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
@@ -1773,7 +1794,7 @@ void to_json(BasicJsonType& j, typename BasicJsonType::array_t&& arr)
 }
 
 template<typename BasicJsonType, typename CompatibleObjectType,
-         enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value, int> = 0>
+         enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value and not is_basic_json<CompatibleObjectType>::value, int> = 0>
 void to_json(BasicJsonType& j, const CompatibleObjectType& obj)
 {
     external_constructor<value_t::object>::construct(j, obj);
@@ -12292,7 +12313,7 @@ class basic_json
     template <typename CompatibleType,
               typename U = detail::uncvref_t<CompatibleType>,
               detail::enable_if_t<
-                  detail::is_compatible_type<basic_json_t, U>::value, int> = 0>
+                  not detail::is_basic_json<U>::value and detail::is_compatible_type<basic_json_t, U>::value, int> = 0>
     basic_json(CompatibleType && val) noexcept(noexcept(
                 JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
                                            std::forward<CompatibleType>(val))))
