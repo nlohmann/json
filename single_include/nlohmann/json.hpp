@@ -1232,8 +1232,8 @@ template <typename BasicJsonType, typename CompatibleArrayType,
 
 auto from_json(const BasicJsonType& j, CompatibleArrayType& arr)
 -> decltype(from_json_array_impl(j, arr, priority_tag<3> {}),
-            j.template get<typename CompatibleArrayType::value_type>(),
-            void())
+j.template get<typename CompatibleArrayType::value_type>(),
+void())
 {
     if (JSON_UNLIKELY(not j.is_array()))
     {
