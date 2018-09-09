@@ -218,25 +218,6 @@ using json = basic_json<>;
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
     AllocatorType, JSONSerializer>
 
-/*!
-@brief Helper to determine whether there's a key_type for T.
-
-This helper is used to tell associative containers apart from other containers
-such as sequence containers. For instance, `std::map` passes the test as it
-contains a `mapped_type`, whereas `std::vector` fails the test.
-
-@sa http://stackoverflow.com/a/7728728/266378
-@since version 1.0.0, overworked in version 2.0.6
-*/
-#define NLOHMANN_JSON_HAS_HELPER(type)                                        \
-    template<typename T> struct has_##type {                                  \
-        template<typename U, typename = typename U::type>                     \
-        static int detect(U &&);                                              \
-        static void detect(...);                                              \
-        static constexpr bool value =                                         \
-                std::is_integral<decltype(detect(std::declval<T>()))>::value; \
-    }
-
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
 
@@ -286,26 +267,6 @@ template<> struct make_index_sequence<1> : index_sequence<0> {};
 template<typename... Ts>
 using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
 
-/*
-Implementation of two C++17 constructs: conjunction, negation. This is needed
-to avoid evaluating all the traits in a condition
-
-For example: not std::is_same<void, T>::value and has_value_type<T>::value
-will not compile when T = void (on MSVC at least). Whereas
-conjunction<negation<std::is_same<void, T>>, has_value_type<T>>::value will
-stop evaluating if negation<...>::value == false
-
-Please note that those constructs must be used with caution, since symbols can
-become very long quickly (which can slow down compilation and cause MSVC
-internal compiler errors). Only use it when you have to (see example ahead).
-*/
-template<class...> struct conjunction : std::true_type {};
-template<class B1> struct conjunction<B1> : B1 {};
-template<class B1, class... Bn>
-struct conjunction<B1, Bn...> : std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
-
-template<class B> struct negation : std::integral_constant<bool, not B::value> {};
-
 // dispatch utility (taken from ranges-v3)
 template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
 template<> struct priority_tag<0> {};
@@ -334,6 +295,78 @@ constexpr T static_const<T>::value;
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
+// #include <nlohmann/detail/meta/detected.hpp>
+
+
+#include <type_traits>
+
+// #include <nlohmann/detail/meta/void_t.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+template <typename ...Ts> struct make_void
+{
+    using type = void;
+};
+template <typename ...Ts> using void_t = typename make_void<Ts...>::type;
+}
+}
+
+
+// http://en.cppreference.com/w/cpp/experimental/is_detected
+namespace nlohmann
+{
+namespace detail
+{
+struct nonesuch
+{
+    nonesuch() = delete;
+    ~nonesuch() = delete;
+    nonesuch(nonesuch const&) = delete;
+    void operator=(nonesuch const&) = delete;
+};
+
+template <class Default,
+          class AlwaysVoid,
+          template <class...> class Op,
+          class... Args>
+struct detector
+{
+    using value_t = std::false_type;
+    using type = Default;
+};
+
+template <class Default, template <class...> class Op, class... Args>
+struct detector<Default, void_t<Op<Args...>>, Op, Args...>
+{
+    using value_t = std::true_type;
+    using type = Op<Args...>;
+};
+
+template <template <class...> class Op, class... Args>
+using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
+
+template <template <class...> class Op, class... Args>
+using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
+
+template <class Default, template <class...> class Op, class... Args>
+using detected_or = detector<Default, void, Op, Args...>;
+
+template <class Default, template <class...> class Op, class... Args>
+using detected_or_t = typename detected_or<Default, Op, Args...>::type;
+
+template <class Expected, template <class...> class Op, class... Args>
+using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
+
+template <class To, template <class...> class Op, class... Args>
+using is_detected_convertible =
+    std::is_convertible<detected_t<Op, Args...>, To>;
+}
+}
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
@@ -358,9 +391,61 @@ template<typename> struct is_basic_json : std::false_type {};
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
 
-////////////////////////
-// has_/is_ functions //
-////////////////////////
+//////////////////////////
+// aliases for detected //
+//////////////////////////
+
+template <typename T>
+using mapped_type_t = typename T::mapped_type;
+
+template <typename T>
+using key_type_t = typename T::key_type;
+
+template <typename T>
+using value_type_t = typename T::value_type;
+
+template <typename T>
+using difference_type_t = typename T::difference_type;
+
+template <typename T>
+using pointer_t = typename T::pointer;
+
+template <typename T>
+using reference_t = typename T::reference;
+
+template <typename T>
+using iterator_category_t = typename T::iterator_category;
+
+template <typename T>
+using iterator_t = typename T::iterator;
+
+template <typename T, typename... Args>
+using to_json_function = decltype(T::to_json(std::declval<Args>()...));
+
+template <typename T, typename... Args>
+using from_json_function = decltype(T::from_json(std::declval<Args>()...));
+
+///////////////////
+// is_ functions //
+///////////////////
+
+template <typename T, typename = void>
+struct is_iterator_traits : std::false_type {};
+
+template <typename T>
+struct is_iterator_traits<std::iterator_traits<T>>
+{
+  private:
+    using traits = std::iterator_traits<T>;
+
+  public:
+    static constexpr auto value =
+        is_detected<value_type_t, traits>::value &&
+        is_detected<difference_type_t, traits>::value &&
+        is_detected<pointer_t, traits>::value &&
+        is_detected<iterator_category_t, traits>::value &&
+        is_detected<reference_t, traits>::value;
+};
 
 // source: https://stackoverflow.com/a/37193089/4116453
 
@@ -370,113 +455,104 @@ struct is_complete_type : std::false_type {};
 template <typename T>
 struct is_complete_type<T, decltype(void(sizeof(T)))> : std::true_type {};
 
-NLOHMANN_JSON_HAS_HELPER(mapped_type);
-NLOHMANN_JSON_HAS_HELPER(key_type);
-NLOHMANN_JSON_HAS_HELPER(value_type);
-NLOHMANN_JSON_HAS_HELPER(iterator);
-
-template<bool B, class RealType, class CompatibleObjectType>
+template <typename BasicJsonType, typename CompatibleObjectType,
+          typename = void>
 struct is_compatible_object_type_impl : std::false_type {};
 
-template<class RealType, class CompatibleObjectType>
-struct is_compatible_object_type_impl<true, RealType, CompatibleObjectType>
+template <typename BasicJsonType, typename CompatibleObjectType>
+struct is_compatible_object_type_impl <
+    BasicJsonType, CompatibleObjectType,
+    enable_if_t<is_detected<mapped_type_t, CompatibleObjectType>::value and
+    is_detected<key_type_t, CompatibleObjectType>::value >>
 {
-    static constexpr auto value =
-        std::is_constructible<typename RealType::key_type, typename CompatibleObjectType::key_type>::value and
-        std::is_constructible<typename RealType::mapped_type, typename CompatibleObjectType::mapped_type>::value;
+
+    using object_t = typename BasicJsonType::object_t;
+
+    // macOS's is_constructible does not play well with nonesuch...
+    static constexpr bool value =
+        std::is_constructible<typename object_t::key_type,
+        typename CompatibleObjectType::key_type>::value and
+        std::is_constructible<typename object_t::mapped_type,
+        typename CompatibleObjectType::mapped_type>::value;
 };
 
-template<bool B, class RealType, class CompatibleStringType>
+template <typename BasicJsonType, typename CompatibleObjectType>
+struct is_compatible_object_type
+    : is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType> {};
+
+template <typename BasicJsonType, typename CompatibleStringType,
+          typename = void>
 struct is_compatible_string_type_impl : std::false_type {};
 
-template<class RealType, class CompatibleStringType>
-struct is_compatible_string_type_impl<true, RealType, CompatibleStringType>
+template <typename BasicJsonType, typename CompatibleStringType>
+struct is_compatible_string_type_impl <
+    BasicJsonType, CompatibleStringType,
+    enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type,
+    value_type_t, CompatibleStringType>::value >>
 {
     static constexpr auto value =
-        std::is_same<typename RealType::value_type, typename CompatibleStringType::value_type>::value and
-        std::is_constructible<RealType, CompatibleStringType>::value;
+        std::is_constructible<typename BasicJsonType::string_t, CompatibleStringType>::value;
 };
 
-template<class BasicJsonType, class CompatibleObjectType>
-struct is_compatible_object_type
-{
-    static auto constexpr value = is_compatible_object_type_impl <
-                                  conjunction<negation<std::is_same<void, CompatibleObjectType>>,
-                                  has_mapped_type<CompatibleObjectType>,
-                                  has_key_type<CompatibleObjectType>>::value,
-                                  typename BasicJsonType::object_t, CompatibleObjectType >::value;
-};
-
-template<class BasicJsonType, class CompatibleStringType>
+template <typename BasicJsonType, typename CompatibleStringType>
 struct is_compatible_string_type
+    : is_compatible_string_type_impl<BasicJsonType, CompatibleStringType> {};
+
+template <typename BasicJsonType, typename CompatibleArrayType, typename = void>
+struct is_compatible_array_type_impl : std::false_type {};
+
+template <typename BasicJsonType, typename CompatibleArrayType>
+struct is_compatible_array_type_impl <
+    BasicJsonType, CompatibleArrayType,
+    enable_if_t<is_detected<value_type_t, CompatibleArrayType>::value and
+    is_detected<iterator_t, CompatibleArrayType>::value >>
 {
-    static auto constexpr value = is_compatible_string_type_impl <
-                                  conjunction<negation<std::is_same<void, CompatibleStringType>>,
-                                  has_value_type<CompatibleStringType>>::value,
-                                  typename BasicJsonType::string_t, CompatibleStringType >::value;
+    // This is needed because json_reverse_iterator has a ::iterator type...
+    // Therefore it is detected as a CompatibleArrayType.
+    // The real fix would be to have an Iterable concept.
+    static constexpr bool value = not is_iterator_traits<std::iterator_traits<CompatibleArrayType>>::value;
 };
 
-template<typename BasicJsonType, typename T>
-struct is_basic_json_nested_type
-{
-    static auto constexpr value = std::is_same<T, typename BasicJsonType::iterator>::value or
-                                  std::is_same<T, typename BasicJsonType::const_iterator>::value or
-                                  std::is_same<T, typename BasicJsonType::reverse_iterator>::value or
-                                  std::is_same<T, typename BasicJsonType::const_reverse_iterator>::value;
-};
-
-template<class BasicJsonType, class CompatibleArrayType>
+template <typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type
-{
-    static auto constexpr value =
-        conjunction<negation<std::is_same<void, CompatibleArrayType>>,
-        negation<is_compatible_object_type<
-        BasicJsonType, CompatibleArrayType>>,
-        negation<std::is_constructible<typename BasicJsonType::string_t,
-        CompatibleArrayType>>,
-        negation<is_basic_json_nested_type<BasicJsonType, CompatibleArrayType>>,
-        has_value_type<CompatibleArrayType>,
-        has_iterator<CompatibleArrayType>>::value;
-};
+    : is_compatible_array_type_impl<BasicJsonType, CompatibleArrayType> {};
 
-template<bool, typename, typename>
+template <typename RealIntegerType, typename CompatibleNumberIntegerType,
+          typename = void>
 struct is_compatible_integer_type_impl : std::false_type {};
 
-template<typename RealIntegerType, typename CompatibleNumberIntegerType>
-struct is_compatible_integer_type_impl<true, RealIntegerType, CompatibleNumberIntegerType>
+template <typename RealIntegerType, typename CompatibleNumberIntegerType>
+struct is_compatible_integer_type_impl <
+    RealIntegerType, CompatibleNumberIntegerType,
+    enable_if_t<std::is_integral<RealIntegerType>::value and
+    std::is_integral<CompatibleNumberIntegerType>::value and
+    not std::is_same<bool, CompatibleNumberIntegerType>::value >>
 {
     // is there an assert somewhere on overflows?
     using RealLimits = std::numeric_limits<RealIntegerType>;
     using CompatibleLimits = std::numeric_limits<CompatibleNumberIntegerType>;
 
     static constexpr auto value =
-        std::is_constructible<RealIntegerType, CompatibleNumberIntegerType>::value and
+        std::is_constructible<RealIntegerType,
+        CompatibleNumberIntegerType>::value and
         CompatibleLimits::is_integer and
         RealLimits::is_signed == CompatibleLimits::is_signed;
 };
 
-template<typename RealIntegerType, typename CompatibleNumberIntegerType>
+template <typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type
-{
-    static constexpr auto value =
-        is_compatible_integer_type_impl <
-        std::is_integral<CompatibleNumberIntegerType>::value and
-        not std::is_same<bool, CompatibleNumberIntegerType>::value,
-        RealIntegerType, CompatibleNumberIntegerType > ::value;
-};
+    : is_compatible_integer_type_impl<RealIntegerType,
+      CompatibleNumberIntegerType> {};
 
 // trait checking if JSONSerializer<T>::from_json(json const&, udt&) exists
 template<typename BasicJsonType, typename T>
 struct has_from_json
 {
-    // also check the return type of from_json
-    template<typename U, typename = enable_if_t<std::is_same<void, decltype(uncvref_t<U>::from_json(
-                 std::declval<BasicJsonType>(), std::declval<T&>()))>::value>>
-    static int detect(U&&);
-    static void detect(...);
+    using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
-    static constexpr bool value = std::is_integral<decltype(
-                                      detect(std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
+    static constexpr bool value =
+        is_detected_exact<void, from_json_function, serializer,
+        const BasicJsonType&, T&>::value;
 };
 
 // This trait checks if JSONSerializer<T>::from_json(json const&) exists
@@ -484,46 +560,39 @@ struct has_from_json
 template<typename BasicJsonType, typename T>
 struct has_non_default_from_json
 {
-    template <
-        typename U,
-        typename = enable_if_t<std::is_same<
-                                   T, decltype(uncvref_t<U>::from_json(std::declval<BasicJsonType>()))>::value >>
-    static int detect(U&&);
-    static void detect(...);
+    using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
-    static constexpr bool value = std::is_integral<decltype(detect(
-                                      std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
+    static constexpr bool value =
+        is_detected_exact<T, from_json_function, serializer,
+        const BasicJsonType&>::value;
 };
 
 // This trait checks if BasicJsonType::json_serializer<T>::to_json exists
 template<typename BasicJsonType, typename T>
 struct has_to_json
 {
-    template<typename U, typename = decltype(uncvref_t<U>::to_json(
-                 std::declval<BasicJsonType&>(), std::declval<T>()))>
-    static int detect(U&&);
-    static void detect(...);
+    using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
-    static constexpr bool value = std::is_integral<decltype(detect(
-                                      std::declval<typename BasicJsonType::template json_serializer<T, void>>()))>::value;
+    static constexpr bool value =
+        is_detected_exact<void, to_json_function, serializer, BasicJsonType&,
+        T>::value;
 };
 
-template <typename BasicJsonType, typename CompatibleCompleteType>
-struct is_compatible_complete_type
+template <typename BasicJsonType, typename CompatibleType, typename = void>
+struct is_compatible_type_impl: std::false_type {};
+
+template <typename BasicJsonType, typename CompatibleType>
+struct is_compatible_type_impl <
+    BasicJsonType, CompatibleType,
+    enable_if_t<is_complete_type<CompatibleType>::value >>
 {
     static constexpr bool value =
-        not std::is_base_of<std::istream, CompatibleCompleteType>::value and
-        not is_basic_json<CompatibleCompleteType>::value and
-        not is_basic_json_nested_type<BasicJsonType, CompatibleCompleteType>::value and
-        has_to_json<BasicJsonType, CompatibleCompleteType>::value;
+        has_to_json<BasicJsonType, CompatibleType>::value;
 };
 
 template <typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
-    : conjunction<is_complete_type<CompatibleType>,
-      is_compatible_complete_type<BasicJsonType, CompatibleType>>
-{
-};
+    : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
 }
 }
 
@@ -1072,16 +1141,6 @@ void from_json(const BasicJsonType& j, EnumType& e)
     e = static_cast<EnumType>(val);
 }
 
-template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::array_t& arr)
-{
-    if (JSON_UNLIKELY(not j.is_array()))
-    {
-        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
-    }
-    arr = *j.template get_ptr<const typename BasicJsonType::array_t*>();
-}
-
 // forward_list doesn't have an insert method
 template<typename BasicJsonType, typename T, typename Allocator,
          enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
@@ -1111,24 +1170,28 @@ void from_json(const BasicJsonType& j, std::valarray<T>& l)
     std::copy(j.m_value.array->begin(), j.m_value.array->end(), std::begin(l));
 }
 
-template<typename BasicJsonType, typename CompatibleArrayType>
-void from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, priority_tag<0> /*unused*/)
+template<typename BasicJsonType>
+void from_json_array_impl(const BasicJsonType& j, typename BasicJsonType::array_t& arr, priority_tag<3> /*unused*/)
 {
-    using std::end;
+    arr = *j.template get_ptr<const typename BasicJsonType::array_t*>();
+}
 
-    std::transform(j.begin(), j.end(),
-                   std::inserter(arr, end(arr)), [](const BasicJsonType & i)
+template <typename BasicJsonType, typename T, std::size_t N>
+auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
+                          priority_tag<2> /*unused*/)
+-> decltype(j.template get<T>(), void())
+{
+    for (std::size_t i = 0; i < N; ++i)
     {
-        // get<BasicJsonType>() returns *this, this won't call a from_json
-        // method when value_type is BasicJsonType
-        return i.template get<typename CompatibleArrayType::value_type>();
-    });
+        arr[i] = j.at(i).template get<T>();
+    }
 }
 
 template<typename BasicJsonType, typename CompatibleArrayType>
 auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, priority_tag<1> /*unused*/)
 -> decltype(
     arr.reserve(std::declval<typename CompatibleArrayType::size_type>()),
+    j.template get<typename CompatibleArrayType::value_type>(),
     void())
 {
     using std::end;
@@ -1143,25 +1206,34 @@ auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
     });
 }
 
-template<typename BasicJsonType, typename T, std::size_t N>
-void from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr, priority_tag<2> /*unused*/)
+template <typename BasicJsonType, typename CompatibleArrayType>
+void from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr,
+                          priority_tag<0> /*unused*/)
 {
-    for (std::size_t i = 0; i < N; ++i)
+    using std::end;
+
+    std::transform(
+        j.begin(), j.end(), std::inserter(arr, end(arr)),
+        [](const BasicJsonType & i)
     {
-        arr[i] = j.at(i).template get<T>();
-    }
+        // get<BasicJsonType>() returns *this, this won't call a from_json
+        // method when value_type is BasicJsonType
+        return i.template get<typename CompatibleArrayType::value_type>();
+    });
 }
 
-template <
-    typename BasicJsonType, typename CompatibleArrayType,
-    enable_if_t <
-        is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
-        not std::is_same<typename BasicJsonType::array_t,
-                         CompatibleArrayType>::value and
-        std::is_constructible <
-            BasicJsonType, typename CompatibleArrayType::value_type >::value,
-        int > = 0 >
-void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
+template <typename BasicJsonType, typename CompatibleArrayType,
+          enable_if_t <
+              is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
+              not is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value and
+              not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value and
+              not is_basic_json<CompatibleArrayType>::value,
+              int > = 0 >
+
+auto from_json(const BasicJsonType& j, CompatibleArrayType& arr)
+-> decltype(from_json_array_impl(j, arr, priority_tag<3> {}),
+            j.template get<typename CompatibleArrayType::value_type>(),
+            void())
 {
     if (JSON_UNLIKELY(not j.is_array()))
     {
@@ -1169,7 +1241,7 @@ void from_json(const BasicJsonType& j, CompatibleArrayType& arr)
                                       std::string(j.type_name())));
     }
 
-    from_json_array_impl(j, arr, priority_tag<2> {});
+    from_json_array_impl(j, arr, priority_tag<3> {});
 }
 
 template<typename BasicJsonType, typename CompatibleObjectType,
@@ -1292,34 +1364,12 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
 
 struct from_json_fn
 {
-  private:
     template<typename BasicJsonType, typename T>
-    auto call(const BasicJsonType& j, T& val, priority_tag<1> /*unused*/) const
+    auto operator()(const BasicJsonType& j, T& val) const
     noexcept(noexcept(from_json(j, val)))
     -> decltype(from_json(j, val), void())
     {
         return from_json(j, val);
-    }
-
-    template<typename BasicJsonType, typename T>
-    void call(const BasicJsonType& /*unused*/, T& /*unused*/, priority_tag<0> /*unused*/) const noexcept
-    {
-        static_assert(sizeof(BasicJsonType) == 0,
-                      "could not find from_json() method in T's namespace");
-#ifdef _MSC_VER
-        // MSVC does not show a stacktrace for the above assert
-        using decayed = uncvref_t<T>;
-        static_assert(sizeof(typename decayed::force_msvc_stacktrace) == 0,
-                      "forcing MSVC stacktrace to show which T we're talking about.");
-#endif
-    }
-
-  public:
-    template<typename BasicJsonType, typename T>
-    void operator()(const BasicJsonType& j, T& val) const
-    noexcept(noexcept(std::declval<from_json_fn>().call(j, val, priority_tag<1> {})))
-    {
-        return call(j, val, priority_tag<1> {});
     }
 };
 }
@@ -1717,10 +1767,14 @@ void to_json(BasicJsonType& j, const std::vector<bool>& e)
     external_constructor<value_t::array>::construct(j, e);
 }
 
-template<typename BasicJsonType, typename CompatibleArrayType,
-         enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value or
-                     std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value,
-                     int> = 0>
+template <typename BasicJsonType, typename CompatibleArrayType,
+          enable_if_t<is_compatible_array_type<BasicJsonType,
+                      CompatibleArrayType>::value and
+                      not is_compatible_object_type<
+                          BasicJsonType, CompatibleArrayType>::value and
+                      not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value and
+                      not is_basic_json<CompatibleArrayType>::value,
+                      int> = 0>
 void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
     external_constructor<value_t::array>::construct(j, arr);
@@ -1740,7 +1794,7 @@ void to_json(BasicJsonType& j, typename BasicJsonType::array_t&& arr)
 }
 
 template<typename BasicJsonType, typename CompatibleObjectType,
-         enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value, int> = 0>
+         enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value and not is_basic_json<CompatibleObjectType>::value, int> = 0>
 void to_json(BasicJsonType& j, const CompatibleObjectType& obj)
 {
     external_constructor<value_t::object>::construct(j, obj);
@@ -1752,9 +1806,12 @@ void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
     external_constructor<value_t::object>::construct(j, std::move(obj));
 }
 
-template<typename BasicJsonType, typename T, std::size_t N,
-         enable_if_t<not std::is_constructible<typename BasicJsonType::string_t, T (&)[N]>::value, int> = 0>
-void to_json(BasicJsonType& j, T (&arr)[N])
+template <
+    typename BasicJsonType, typename T, std::size_t N,
+    enable_if_t<not std::is_constructible<typename BasicJsonType::string_t,
+                const T (&)[N]>::value,
+                int> = 0 >
+void to_json(BasicJsonType& j, const T (&arr)[N])
 {
     external_constructor<value_t::array>::construct(j, arr);
 }
@@ -1787,34 +1844,11 @@ void to_json(BasicJsonType& j, const std::tuple<Args...>& t)
 
 struct to_json_fn
 {
-  private:
     template<typename BasicJsonType, typename T>
-    auto call(BasicJsonType& j, T&& val, priority_tag<1> /*unused*/) const noexcept(noexcept(to_json(j, std::forward<T>(val))))
+    auto operator()(BasicJsonType& j, T&& val) const noexcept(noexcept(to_json(j, std::forward<T>(val))))
     -> decltype(to_json(j, std::forward<T>(val)), void())
     {
         return to_json(j, std::forward<T>(val));
-    }
-
-    template<typename BasicJsonType, typename T>
-    void call(BasicJsonType& /*unused*/, T&& /*unused*/, priority_tag<0> /*unused*/) const noexcept
-    {
-        static_assert(sizeof(BasicJsonType) == 0,
-                      "could not find to_json() method in T's namespace");
-
-#ifdef _MSC_VER
-        // MSVC does not show a stacktrace for the above assert
-        using decayed = uncvref_t<T>;
-        static_assert(sizeof(typename decayed::force_msvc_stacktrace) == 0,
-                      "forcing MSVC stacktrace to show which T we're talking about.");
-#endif
-    }
-
-  public:
-    template<typename BasicJsonType, typename T>
-    void operator()(BasicJsonType& j, T&& val) const
-    noexcept(noexcept(std::declval<to_json_fn>().call(j, std::forward<T>(val), priority_tag<1> {})))
-    {
-        return call(j, std::forward<T>(val), priority_tag<1> {});
     }
 };
 }
@@ -3561,73 +3595,6 @@ scan_number_done:
 #include <utility> // declval
 
 // #include <nlohmann/detail/meta/detected.hpp>
-
-
-#include <type_traits>
-
-// #include <nlohmann/detail/meta/void_t.hpp>
-
-
-namespace nlohmann
-{
-namespace detail
-{
-template <typename...>
-using void_t = void;
-}
-}
-
-
-// http://en.cppreference.com/w/cpp/experimental/is_detected
-namespace nlohmann
-{
-namespace detail
-{
-struct nonesuch
-{
-    nonesuch() = delete;
-    ~nonesuch() = delete;
-    nonesuch(nonesuch const&) = delete;
-    void operator=(nonesuch const&) = delete;
-};
-
-template <class Default,
-          class AlwaysVoid,
-          template <class...> class Op,
-          class... Args>
-struct detector
-{
-    using value_t = std::false_type;
-    using type = Default;
-};
-
-template <class Default, template <class...> class Op, class... Args>
-struct detector<Default, void_t<Op<Args...>>, Op, Args...>
-{
-    using value_t = std::true_type;
-    using type = Op<Args...>;
-};
-
-template <template <class...> class Op, class... Args>
-using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
-
-template <template <class...> class Op, class... Args>
-using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
-
-template <class Default, template <class...> class Op, class... Args>
-using detected_or = detector<Default, void, Op, Args...>;
-
-template <class Default, template <class...> class Op, class... Args>
-using detected_or_t = typename detected_or<Default, Op, Args...>::type;
-
-template <class Expected, template <class...> class Op, class... Args>
-using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
-
-template <class To, template <class...> class Op, class... Args>
-using is_detected_convertible =
-    std::is_convertible<detected_t<Op, Args...>, To>;
-}
-}
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
@@ -11144,8 +11111,10 @@ struct adl_serializer
     @param[in,out] val  value to write to
     */
     template<typename BasicJsonType, typename ValueType>
-    static void from_json(BasicJsonType&& j, ValueType& val) noexcept(
-        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
+    static auto from_json(BasicJsonType&& j, ValueType& val) noexcept(
+        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val))) -> decltype(
+            ::nlohmann::from_json(std::forward<BasicJsonType>(j), val), void()
+        )
     {
         ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
     }
@@ -11159,9 +11128,11 @@ struct adl_serializer
     @param[in,out] j  JSON value to write to
     @param[in] val     value to read from
     */
-    template<typename BasicJsonType, typename ValueType>
-    static void to_json(BasicJsonType& j, ValueType&& val) noexcept(
+    template <typename BasicJsonType, typename ValueType>
+    static auto to_json(BasicJsonType& j, ValueType&& val) noexcept(
         noexcept(::nlohmann::to_json(j, std::forward<ValueType>(val))))
+    -> decltype(::nlohmann::to_json(j, std::forward<ValueType>(val)),
+                void())
     {
         ::nlohmann::to_json(j, std::forward<ValueType>(val));
     }
@@ -12342,7 +12313,7 @@ class basic_json
     template <typename CompatibleType,
               typename U = detail::uncvref_t<CompatibleType>,
               detail::enable_if_t<
-                  detail::is_compatible_type<basic_json_t, U>::value, int> = 0>
+                  not detail::is_basic_json<U>::value and detail::is_compatible_type<basic_json_t, U>::value, int> = 0>
     basic_json(CompatibleType && val) noexcept(noexcept(
                 JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
                                            std::forward<CompatibleType>(val))))
@@ -18899,7 +18870,6 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_HAS_CPP_17
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
 #undef NLOHMANN_BASIC_JSON_TPL
-#undef NLOHMANN_JSON_HAS_HELPER
 
 
 #endif
