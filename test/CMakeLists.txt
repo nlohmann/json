@@ -109,7 +109,7 @@ foreach(file ${files})
     target_link_libraries(${testcase} ${NLOHMANN_JSON_TARGET_NAME})
 
     if(NOT MSVC)
-        set_target_properties(${testcase} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-float-equal")
+        set_target_properties(${testcase} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-deprecated-declarations -Wno-float-equal")
     endif()
 
     add_test(NAME "${testcase}_default"
