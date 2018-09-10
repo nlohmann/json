@@ -227,12 +227,15 @@ json j_string = "this is a string";
 std::string cpp_string = j_string;
 // retrieve the string value (explicit JSON to std::string conversion)
 auto cpp_string2 = j_string.get<std::string>();
+// retrieve the string value (alternative explicit JSON to std::string conversion)
+std::string cpp_string3;
+j_string.get_to(cpp_string3);
 
 // retrieve the serialized value (explicit JSON serialization)
 std::string serialized_string = j_string.dump();
 
 // output of original string
-std::cout << cpp_string << " == " << cpp_string2 << " == " << j_string.get<std::string>() << '\n';
+std::cout << cpp_string << " == " << cpp_string2 << " == " << cpp_string3 << " == " << j_string.get<std::string>() << '\n';
 // output of serialized value
 std::cout << j_string << " == " << serialized_string << std::endl;
 ```
@@ -643,15 +646,15 @@ namespace ns {
     }
 
     void from_json(const json& j, person& p) {
-        p.name = j.at("name").get<std::string>();
-        p.address = j.at("address").get<std::string>();
-        p.age = j.at("age").get<int>();
+        j.at("name").get_to(p.name);
+        j.at("address").get_to(p.address);
+        j.at("age").get_to(p.age);
     }
 } // namespace ns
 ```
 
 That's all! When calling the `json` constructor with your type, your custom `to_json` method will be automatically called.
-Likewise, when calling `get<your_type>()`, the `from_json` method will be called.
+Likewise, when calling `get<your_type>()` or `get_to(your_type&)`, the `from_json` method will be called.
 
 Some important things:
 
@@ -659,9 +662,8 @@ Some important things:
 * Those methods **MUST** be available (e.g., properly headers must be included) everywhere you use the implicit conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
 * When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
 * In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
-* In case your type contains several `operator=` definitions, code like `your_variable = your_json;` [may not compile](https://github.com/nlohmann/json/issues/667). You need to write `your_variable = your_json.get<decltype your_variable>();` instead.
+* In case your type contains several `operator=` definitions, code like `your_variable = your_json;` [may not compile](https://github.com/nlohmann/json/issues/667). You need to write `your_variable = your_json.get<decltype(your_variable)>();` or `your_json.get_to(your_variable);` instead.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
-* Be careful with the definition order of the `from_json`/`to_json` functions: If a type `B` has a member of type `A`, you **MUST** define `to_json(A)` before `to_json(B)`. Look at [issue 561](https://github.com/nlohmann/json/issues/561) for more details.
 
 
 #### How do I convert third-party types?
