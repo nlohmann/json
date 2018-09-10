@@ -2184,15 +2184,18 @@ class input_adapter
                  int>::type = 0>
     input_adapter(IteratorType first, IteratorType last)
     {
+#ifndef NDEBUG
         // assertion to check that the iterator range is indeed contiguous,
         // see http://stackoverflow.com/a/35008842/266378 for more discussion
-        assert(std::accumulate(
-                   first, last, std::pair<bool, int>(true, 0),
-                   [&first](std::pair<bool, int> res, decltype(*first) val)
+        const auto is_contiguous = std::accumulate(
+                                       first, last, std::pair<bool, int>(true, 0),
+                                       [&first](std::pair<bool, int> res, decltype(*first) val)
         {
             res.first &= (val == *(std::next(std::addressof(*first), res.second++)));
             return res;
-        }).first);
+        }).first;
+        assert(is_contiguous);
+#endif
 
         // assertion to check that each element is 1 byte long
         static_assert(
