@@ -811,3 +811,9 @@ TEST_CASE("Issue #924")
     CHECK_NOTHROW(j.get<Evil>());
     CHECK_NOTHROW(j.get<std::vector<Evil>>());
 }
+
+TEST_CASE("Issue #1237")
+{
+    struct non_convertible_type {};
+    static_assert(not std::is_convertible<json, non_convertible_type>::value, "");
+}

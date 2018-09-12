@@ -65,6 +65,9 @@ using to_json_function = decltype(T::to_json(std::declval<Args>()...));
 template <typename T, typename... Args>
 using from_json_function = decltype(T::from_json(std::declval<Args>()...));
 
+template <typename T, typename U>
+using get_template_function = decltype(std::declval<T>().template get<U>());
+
 ///////////////////
 // is_ functions //
 ///////////////////
@@ -185,8 +188,12 @@ struct is_compatible_integer_type
       CompatibleNumberIntegerType> {};
 
 // trait checking if JSONSerializer<T>::from_json(json const&, udt&) exists
-template<typename BasicJsonType, typename T>
-struct has_from_json
+template <typename BasicJsonType, typename T, typename = void>
+struct has_from_json : std::false_type {};
+
+template <typename BasicJsonType, typename T>
+struct has_from_json<BasicJsonType, T,
+           enable_if_t<not is_basic_json<T>::value>>
 {
     using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
@@ -197,8 +204,11 @@ struct has_from_json
 
 // This trait checks if JSONSerializer<T>::from_json(json const&) exists
 // this overload is used for non-default-constructible user-defined-types
+template <typename BasicJsonType, typename T, typename = void>
+struct has_non_default_from_json : std::false_type {};
+
 template<typename BasicJsonType, typename T>
-struct has_non_default_from_json
+struct has_non_default_from_json<BasicJsonType, T, enable_if_t<not is_basic_json<T>::value>>
 {
     using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
@@ -208,8 +218,12 @@ struct has_non_default_from_json
 };
 
 // This trait checks if BasicJsonType::json_serializer<T>::to_json exists
-template<typename BasicJsonType, typename T>
-struct has_to_json
+// Do not evaluate the trait when T is a basic_json type, to avoid template instantiation infinite recursion.
+template <typename BasicJsonType, typename T, typename = void>
+struct has_to_json : std::false_type {};
+
+template <typename BasicJsonType, typename T>
+struct has_to_json<BasicJsonType, T, enable_if_t<not is_basic_json<T>::value>>
 {
     using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
