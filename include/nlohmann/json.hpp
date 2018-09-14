@@ -6590,6 +6590,26 @@ class basic_json
         binary_writer<char>(o).write_ubjson(j, use_size, use_type);
     }
 
+
+
+    static std::vector<uint8_t> to_bson(const basic_json& j)
+    {
+        std::vector<uint8_t> result;
+        to_bson(j, result);
+        return result;
+    }
+
+    static void to_bson(const basic_json& j, detail::output_adapter<uint8_t> o)
+    {
+        binary_writer<uint8_t>(o).write_bson(j);
+    }
+
+    static void to_bson(const basic_json& j, detail::output_adapter<char> o)
+    {
+        binary_writer<char>(o).write_bson(j);
+    }
+
+
     /*!
     @brief create a JSON value from an input in CBOR format
 
@@ -6896,6 +6916,34 @@ class basic_json
         const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
+
+
+
+
+
+    static basic_json from_bson(detail::input_adapter&& i,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::bson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+    template<typename A1, typename A2,
+             detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+    static basic_json from_bson(A1 && a1, A2 && a2,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::bson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+
 
     /// @}
 

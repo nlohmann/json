@@ -80,6 +80,10 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
+            case input_format_t::bson:
+                result = parse_bson_internal();
+                break;
+
             // LCOV_EXCL_START
             default:
                 assert(false);
@@ -120,6 +124,30 @@ class binary_reader
     }
 
   private:
+
+    bool parse_bson_internal()
+    {
+        int docLen = 0;
+        int byte;
+        for (int i = 0; i < 4; ++i)
+        {
+            byte = get();
+            if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
+            {
+                if (i == 1)
+                {
+                    return sax->boolean(docLen != 0x00);
+                }
+                return false;
+            }
+            docLen |= static_cast<std::int32_t>(byte) << 8 * i;
+        }
+
+        //sax->null();
+        get();
+        return true;
+    }
+
     /*!
     @param[in] get_char  whether a new character should be retrieved from the
                          input (true, default) or whether the last read

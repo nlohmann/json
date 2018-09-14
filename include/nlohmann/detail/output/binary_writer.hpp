@@ -676,6 +676,37 @@ class binary_writer
         }
     }
 
+
+    /*!
+    @param[in] j  JSON value to serialize
+    @pre       j.type() == value_t::object
+    */
+    void write_bson_object(const BasicJsonType& j)
+    {
+        assert(j.type() == value_t::object);
+
+    }
+
+    /*!
+    @param[in] j  JSON value to serialize
+    @pre       j.type() == value_t::object
+    */
+    void write_bson(const BasicJsonType& j)
+    {
+        switch (j.type())
+        {
+            default:
+                JSON_THROW(type_error::create(317, "JSON value cannot be serialized to requested format"));
+                break;
+            case value_t::discarded:
+                break;
+            case value_t::object:
+                write_bson_object(j);
+                break;
+        }
+    }
+
+
   private:
     /*
     @brief write a number to output input
@@ -703,6 +734,30 @@ class binary_writer
 
         oa->write_characters(vec.data(), sizeof(NumberType));
     }
+
+    /*
+    @brief write a number to output in little endian format
+
+    @param[in] n number of type @a NumberType
+    @tparam NumberType the type of the number
+    */
+    template<typename NumberType>
+    void write_number_little_endian(const NumberType n)
+    {
+        // step 1: write number to array of length NumberType
+        std::array<CharType, sizeof(NumberType)> vec;
+        std::memcpy(vec.data(), &n, sizeof(NumberType));
+
+        // step 2: write array to output (with possible reordering)
+        if (!is_little_endian)
+        {
+            // reverse byte order prior to conversion if necessary
+            std::reverse(vec.begin(), vec.end());
+        }
+
+        oa->write_characters(vec.data(), sizeof(NumberType));
+    }
+
 
     // UBJSON: write number (floating point)
     template<typename NumberType, typename std::enable_if<

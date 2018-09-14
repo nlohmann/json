@@ -819,6 +819,7 @@ json.exception.type_error.313 | invalid value to unflatten | The @ref unflatten 
 json.exception.type_error.314 | only objects can be unflattened | The @ref unflatten function only works for an object whose keys are JSON Pointers.
 json.exception.type_error.315 | values in object must be primitive | The @ref unflatten function only works for an object whose keys are JSON Pointers and whose values are primitive.
 json.exception.type_error.316 | invalid UTF-8 byte at index 10: 0x7E | The @ref dump function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded. |
+json.exception.type_error.317 | JSON value cannot be serialized to requested format | The dynamic type of the object cannot be represented in the requested serialization format (e.g. a raw `true` or `null` JSON object cannot be serialized to BSON) |
 
 @liveexample{The following code shows how a `type_error` exception can be
 caught.,type_error}
@@ -1882,7 +1883,7 @@ namespace nlohmann
 namespace detail
 {
 /// the supported input formats
-enum class input_format_t { json, cbor, msgpack, ubjson };
+enum class input_format_t { json, cbor, msgpack, ubjson, bson };
 
 ////////////////////
 // input adapters //
@@ -6020,6 +6021,10 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
+            case input_format_t::bson:
+                result = parse_bson_internal();
+                break;
+
             // LCOV_EXCL_START
             default:
                 assert(false);
@@ -6060,6 +6065,30 @@ class binary_reader
     }
 
   private:
+
+    bool parse_bson_internal()
+    {
+        int docLen = 0;
+        int byte;
+        for (int i = 0; i < 4; ++i)
+        {
+            byte = get();
+            if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
+            {
+                if (i == 1)
+                {
+                    return sax->boolean(docLen != 0x00);
+                }
+                return false;
+            }
+            docLen |= static_cast<std::int32_t>(byte) << 8 * i;
+        }
+
+        //sax->null();
+        get();
+        return true;
+    }
+
     /*!
     @param[in] get_char  whether a new character should be retrieved from the
                          input (true, default) or whether the last read
@@ -8317,6 +8346,37 @@ class binary_writer
         }
     }
 
+
+    /*!
+    @param[in] j  JSON value to serialize
+    @pre       j.type() == value_t::object
+    */
+    void write_bson_object(const BasicJsonType& j)
+    {
+        assert(j.type() == value_t::object);
+
+    }
+
+    /*!
+    @param[in] j  JSON value to serialize
+    @pre       j.type() == value_t::object
+    */
+    void write_bson(const BasicJsonType& j)
+    {
+        switch (j.type())
+        {
+            default:
+                JSON_THROW(type_error::create(317, "JSON value cannot be serialized to requested format"));
+                break;
+            case value_t::discarded:
+                break;
+            case value_t::object:
+                write_bson_object(j);
+                break;
+        }
+    }
+
+
   private:
     /*
     @brief write a number to output input
@@ -8344,6 +8404,30 @@ class binary_writer
 
         oa->write_characters(vec.data(), sizeof(NumberType));
     }
+
+    /*
+    @brief write a number to output in little endian format
+
+    @param[in] n number of type @a NumberType
+    @tparam NumberType the type of the number
+    */
+    template<typename NumberType>
+    void write_number_little_endian(const NumberType n)
+    {
+        // step 1: write number to array of length NumberType
+        std::array<CharType, sizeof(NumberType)> vec;
+        std::memcpy(vec.data(), &n, sizeof(NumberType));
+
+        // step 2: write array to output (with possible reordering)
+        if (!is_little_endian)
+        {
+            // reverse byte order prior to conversion if necessary
+            std::reverse(vec.begin(), vec.end());
+        }
+
+        oa->write_characters(vec.data(), sizeof(NumberType));
+    }
+
 
     // UBJSON: write number (floating point)
     template<typename NumberType, typename std::enable_if<
@@ -17663,6 +17747,26 @@ class basic_json
         binary_writer<char>(o).write_ubjson(j, use_size, use_type);
     }
 
+
+
+    static std::vector<uint8_t> to_bson(const basic_json& j)
+    {
+        std::vector<uint8_t> result;
+        to_bson(j, result);
+        return result;
+    }
+
+    static void to_bson(const basic_json& j, detail::output_adapter<uint8_t> o)
+    {
+        binary_writer<uint8_t>(o).write_bson(j);
+    }
+
+    static void to_bson(const basic_json& j, detail::output_adapter<char> o)
+    {
+        binary_writer<char>(o).write_bson(j);
+    }
+
+
     /*!
     @brief create a JSON value from an input in CBOR format
 
@@ -17969,6 +18073,34 @@ class basic_json
         const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
+
+
+
+
+
+    static basic_json from_bson(detail::input_adapter&& i,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::bson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+    template<typename A1, typename A2,
+             detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+    static basic_json from_bson(A1 && a1, A2 && a2,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::bson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+
 
     /// @}
 
