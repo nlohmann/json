@@ -36,7 +36,7 @@ using nlohmann::json;
 
 TEST_CASE("BSON")
 {
-    SECTION("individual values")
+    SECTION("individual values not supported")
     {
         SECTION("discarded")
         {
@@ -65,6 +65,51 @@ TEST_CASE("BSON")
                 json j = false;
                 REQUIRE_THROWS_AS(json::to_bson(j), json::type_error);
             }
+        }
+
+        SECTION("number")
+        {
+            json j = 42;
+            REQUIRE_THROWS_AS(json::to_bson(j), json::type_error);
+        }
+
+        SECTION("float")
+        {
+            json j = 4.2;
+            REQUIRE_THROWS_AS(json::to_bson(j), json::type_error);
+        }
+
+        SECTION("string")
+        {
+            json j = "not supported";
+            REQUIRE_THROWS_AS(json::to_bson(j), json::type_error);
+        }
+
+        SECTION("array")
+        {
+            json j = std::vector<int> {1, 2, 3, 4, 5, 6, 7};
+            REQUIRE_THROWS_AS(json::to_bson(j), json::type_error);
+        }
+    }
+
+    SECTION("objects")
+    {
+        SECTION("empty object")
+        {
+            json j = json::object();
+            std::vector<uint8_t> expected =
+            {
+                0x05, 0x00, 0x00, 0x00, // size (little endian)
+                // no entries
+                0x00 // end marker
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+
+            // roundtrip
+            CHECK(json::from_bson(result) == j);
+            CHECK(json::from_bson(result, true, false) == j);
         }
     }
 }

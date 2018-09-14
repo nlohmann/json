@@ -684,7 +684,8 @@ class binary_writer
     void write_bson_object(const BasicJsonType& j)
     {
         assert(j.type() == value_t::object);
-
+        write_number_little_endian(5);
+        oa->write_character(static_cast<CharType>(0x00));
     }
 
     /*!

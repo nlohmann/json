@@ -127,25 +127,18 @@ class binary_reader
 
     bool parse_bson_internal()
     {
-        int docLen = 0;
-        int byte;
-        for (int i = 0; i < 4; ++i)
+        std::int32_t documentSize;
+        get_number_little_endian(documentSize);
+
+        if (not JSON_UNLIKELY(sax->start_object(documentSize - 5)))
         {
-            byte = get();
-            if (JSON_UNLIKELY(current == std::char_traits<char>::eof()))
-            {
-                if (i == 1)
-                {
-                    return sax->boolean(docLen != 0x00);
-                }
-                return false;
-            }
-            docLen |= static_cast<std::int32_t>(byte) << 8 * i;
+            return false;
         }
 
-        //sax->null();
+        const auto result = sax->end_object();
+
         get();
-        return true;
+        return result;
     }
 
     /*!
@@ -913,6 +906,35 @@ class binary_reader
 
             // reverse byte order prior to conversion if necessary
             if (is_little_endian)
+            {
+                vec[sizeof(NumberType) - i - 1] = static_cast<uint8_t>(current);
+            }
+            else
+            {
+                vec[i] = static_cast<uint8_t>(current); // LCOV_EXCL_LINE
+            }
+        }
+
+        // step 2: convert array into number of type T and return
+        std::memcpy(&result, vec.data(), sizeof(NumberType));
+        return true;
+    }
+
+    template<typename NumberType>
+    bool get_number_little_endian(NumberType& result)
+    {
+        // step 1: read input into array with system's byte order
+        std::array<uint8_t, sizeof(NumberType)> vec;
+        for (std::size_t i = 0; i < sizeof(NumberType); ++i)
+        {
+            get();
+            if (JSON_UNLIKELY(not unexpect_eof()))
+            {
+                return false;
+            }
+
+            // reverse byte order prior to conversion if necessary
+            if (!is_little_endian)
             {
                 vec[sizeof(NumberType) - i - 1] = static_cast<uint8_t>(current);
             }
