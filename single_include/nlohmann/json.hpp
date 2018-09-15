@@ -6187,6 +6187,16 @@ class binary_reader
                     sax->boolean(static_cast<bool>(get()));
                 }
                 break;
+                case 0x10: // int32
+                {
+                    string_t key;
+                    get_bson_cstr(key);
+                    sax->key(key);
+                    std::int32_t value;
+                    get_number_little_endian(value);
+                    sax->number_integer(static_cast<std::int32_t>(value));
+                }
+                break;
                 case 0x0A: // null
                 {
                     string_t key;
@@ -8535,6 +8545,18 @@ class binary_writer
         return /*id*/ 1ul + name.size() + 1ul;
     }
 
+    std::size_t write_bson_integer(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    {
+        oa->write_character(static_cast<CharType>(0x10)); // int32
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(name.c_str()),
+            name.size() + 1u);
+
+        write_number_little_endian(static_cast<std::int32_t>(j.m_value.number_integer));
+
+        return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int32_t);
+    }
+
     std::size_t write_bson_object_entry(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
     {
         switch (j.type())
@@ -8546,6 +8568,8 @@ class binary_writer
                 return write_bson_boolean(name, j);
             case value_t::number_float:
                 return write_bson_double(name, j);
+            case value_t::number_integer:
+                return write_bson_integer(name, j);
             case value_t::string:
                 return write_bson_string(name, j);
             case value_t::null:
