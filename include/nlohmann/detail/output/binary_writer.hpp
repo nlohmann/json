@@ -688,12 +688,27 @@ class binary_writer
 
     std::size_t write_bson_double(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
     {
-        oa->write_character(static_cast<CharType>(0x01)); // boolean
+        oa->write_character(static_cast<CharType>(0x01)); // double
         oa->write_characters(
             reinterpret_cast<const CharType*>(name.c_str()),
             name.size() + 1u);
         write_number_little_endian(j.m_value.number_float);
         return /*id*/ 1ul + name.size() + 1u + /*double value*/ 8u;
+    }
+
+    std::size_t write_bson_string(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    {
+        oa->write_character(static_cast<CharType>(0x02)); // string (UTF-8)
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(name.c_str()),
+            name.size() + 1u);
+
+        write_number_little_endian(static_cast<std::int32_t>(j.m_value.string->size() + 1ul));
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(j.m_value.string->c_str()),
+            j.m_value.string->size() + 1);
+
+        return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int32_t) + j.m_value.string->size() + 1ul;
     }
 
     std::size_t write_bson_object_entry(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
@@ -707,6 +722,8 @@ class binary_writer
                 return write_bson_boolean(name, j);
             case value_t::number_float:
                 return write_bson_double(name, j);
+            case value_t::string:
+                return write_bson_string(name, j);
         };
 
         return 0ul;

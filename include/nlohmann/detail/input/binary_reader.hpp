@@ -139,7 +139,7 @@ class binary_reader
     /*!
     @return whether array creation completed
     */
-    bool get_bson_str(string_t& result)
+    bool get_bson_cstr(string_t& result)
     {
         bool success = true;
         generate_until(std::back_inserter(result), [](char c)
@@ -148,7 +148,7 @@ class binary_reader
         }, [this, &success]
         {
             get();
-            if (JSON_UNLIKELY(unexpect_eof()))
+            if (JSON_UNLIKELY(not unexpect_eof()))
             {
                 success = false;
             }
@@ -172,20 +172,33 @@ class binary_reader
         {
             switch (entry_type)
             {
-                case 0x01:
+                case 0x01: // double
                 {
                     string_t key;
-                    get_bson_str(key);
+                    get_bson_cstr(key);
                     sax->key(key);
                     double number;
                     get_number_little_endian(number);
                     sax->number_float(static_cast<number_float_t>(number), "");
                 }
                 break;
-                case 0x08:
+                case 0x02: // string
                 {
                     string_t key;
-                    get_bson_str(key);
+                    get_bson_cstr(key);
+                    sax->key(key);
+                    std::int32_t len;
+                    string_t value;
+                    get_number_little_endian(len);
+                    get_string(len - 1ul, value);
+                    get();
+                    sax->string(value);
+                }
+                break;
+                case 0x08: // boolean
+                {
+                    string_t key;
+                    get_bson_cstr(key);
                     sax->key(key);
                     sax->boolean(static_cast<bool>(get()));
                 }
