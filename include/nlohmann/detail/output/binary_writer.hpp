@@ -792,7 +792,7 @@ class binary_writer
         switch (j.type())
         {
             default:
-                JSON_THROW(type_error::create(317, "JSON value cannot be serialized to requested format"));
+                JSON_THROW(type_error::create(317, "JSON value of type be serialized to requested format: " + std::to_string((int)j.type())));
                 break;
             case value_t::object:
                 return write_bson_object_internal(name, j);

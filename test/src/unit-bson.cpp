@@ -380,5 +380,37 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result) == j);
             CHECK(json::from_bson(result, true, false) == j);
         }
+
+        SECTION("Some more complex document")
+        {
+            // directly encoding uint64 is not supported in bson (only for timestamp values)
+            json j =
+            {
+                {"double", 42.5},
+                {"entry", 4.2},
+                {"number", 12345},
+                {"object", {{ "string", "value" }}}
+            };
+
+            std::vector<uint8_t> expected =
+            {
+                /*size */ 0x4f, 0x00, 0x00, 0x00,
+                /*entry*/ 0x01, 'd',  'o',  'u',  'b',  'l',  'e',  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x45, 0x40,
+                /*entry*/ 0x01, 'e',  'n',  't',  'r',  'y',  0x00, 0xcd, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0x10, 0x40,
+                /*entry*/ 0x10, 'n',  'u',  'm',  'b',  'e',  'r',  0x00, 0x39, 0x30, 0x00, 0x00,
+                /*entry*/ 0x03, 'o',  'b',  'j',  'e',  'c',  't',  0x00,
+                /*entry: obj-size */ 0x17, 0x00, 0x00, 0x00,
+                /*entry: obj-entry*/0x02, 's',  't',  'r',  'i',  'n',  'g', 0x00, 0x06, 0x00, 0x00, 0x00, 'v', 'a', 'l', 'u', 'e', 0,
+                /*entry: obj-term.*/0x00,
+                /*obj-term*/ 0x00
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+
+            // roundtrip
+            CHECK(json::from_bson(result) == j);
+            CHECK(json::from_bson(result, true, false) == j);
+        }
     }
 }
