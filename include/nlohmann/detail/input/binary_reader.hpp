@@ -137,8 +137,6 @@ class binary_reader
     }
 
     /*!
-    @param[in] len  the length of the array or std::size_t(-1) for an
-                    array of indefinite size
     @return whether array creation completed
     */
     bool get_bson_str(string_t& result)
@@ -179,15 +177,19 @@ class binary_reader
                     string_t key;
                     get_bson_str(key);
                     sax->key(key);
-                    sax->boolean(static_cast<bool>(get()));
-                } break;
+                    double number;
+                    get_number_little_endian(number);
+                    sax->number_float(static_cast<number_float_t>(number), "");
+                }
+                break;
                 case 0x08:
                 {
                     string_t key;
                     get_bson_str(key);
                     sax->key(key);
                     sax->boolean(static_cast<bool>(get()));
-                } break;
+                }
+                break;
             }
         }
 

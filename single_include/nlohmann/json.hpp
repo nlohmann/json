@@ -6121,8 +6121,6 @@ class binary_reader
     }
 
     /*!
-    @param[in] len  the length of the array or std::size_t(-1) for an
-                    array of indefinite size
     @return whether array creation completed
     */
     bool get_bson_str(string_t& result)
@@ -6158,6 +6156,16 @@ class binary_reader
         {
             switch (entry_type)
             {
+                case 0x01:
+                {
+                    string_t key;
+                    get_bson_str(key);
+                    sax->key(key);
+                    double number;
+                    get_number_little_endian(number);
+                    sax->number_float(static_cast<number_float_t>(number), "");
+                }
+                break;
                 case 0x08:
                 {
                     string_t key;
@@ -8461,8 +8469,7 @@ class binary_writer
         }
     }
 
-
-    std::size_t write_bson_object_entry(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    std::size_t write_bson_boolean(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
     {
         oa->write_character(static_cast<CharType>(0x08)); // boolean
         oa->write_characters(
@@ -8470,6 +8477,32 @@ class binary_writer
             name.size() + 1u);
         oa->write_character(j.m_value.boolean ? static_cast<CharType>(0x01) : static_cast<CharType>(0x00));
         return /*id*/ 1ul + name.size() + 1u + /*boolean value*/ 1u;
+    }
+
+    std::size_t write_bson_double(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    {
+        oa->write_character(static_cast<CharType>(0x01)); // boolean
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(name.c_str()),
+            name.size() + 1u);
+        write_number_little_endian(j.m_value.number_float);
+        return /*id*/ 1ul + name.size() + 1u + /*double value*/ 8u;
+    }
+
+    std::size_t write_bson_object_entry(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    {
+        switch (j.type())
+        {
+            default:
+                JSON_THROW(type_error::create(317, "JSON value cannot be serialized to requested format"));
+                break;
+            case value_t::boolean:
+                return write_bson_boolean(name, j);
+            case value_t::number_float:
+                return write_bson_double(name, j);
+        };
+
+        return 0ul;
     }
 
     /*!
