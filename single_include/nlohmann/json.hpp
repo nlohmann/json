@@ -6215,10 +6215,17 @@ class binary_reader
                     sax->null();
                 }
                 break;
+                case 0x03: // object
+                {
+                    string_t key;
+                    get_bson_cstr(key);
+                    sax->key(key);
+                    parse_bson_internal();
+                }
+                break;
             }
         }
 
-        get();
         const auto result = sax->end_object();
 
         return result;
@@ -8609,6 +8616,18 @@ class binary_writer
         }
     }
 
+    std::size_t write_bson_object_internal(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    {
+        oa->write_character(static_cast<CharType>(0x03)); // object
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(name.c_str()),
+            name.size() + 1u);
+
+        auto const embedded_document_size = write_bson_object(j);
+
+        return /*id*/ 1ul + name.size() + 1ul + embedded_document_size;
+    }
+
     std::size_t write_bson_object_entry(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
     {
         switch (j.type())
@@ -8616,6 +8635,8 @@ class binary_writer
             default:
                 JSON_THROW(type_error::create(317, "JSON value cannot be serialized to requested format"));
                 break;
+            case value_t::object:
+                return write_bson_object_internal(name, j);
             case value_t::boolean:
                 return write_bson_boolean(name, j);
             case value_t::number_float:
@@ -8637,7 +8658,7 @@ class binary_writer
     @param[in] j  JSON value to serialize
     @pre       j.type() == value_t::object
     */
-    void write_bson_object(const BasicJsonType& j)
+    std::size_t write_bson_object(const BasicJsonType& j)
     {
         assert(j.type() == value_t::object);
         auto document_size_offset = oa->reserve_characters(4ul);
@@ -8650,6 +8671,7 @@ class binary_writer
 
         oa->write_character(static_cast<CharType>(0x00));
         write_number_little_endian_at(document_size_offset, document_size);
+        return document_size;
     }
 
     /*!

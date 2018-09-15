@@ -231,10 +231,17 @@ class binary_reader
                     sax->null();
                 }
                 break;
+                case 0x03: // object
+                {
+                    string_t key;
+                    get_bson_cstr(key);
+                    sax->key(key);
+                    parse_bson_internal();
+                }
+                break;
             }
         }
 
-        get();
         const auto result = sax->end_object();
 
         return result;

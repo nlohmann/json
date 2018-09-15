@@ -351,5 +351,34 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result) == j);
             CHECK(json::from_bson(result, true, false) == j);
         }
+
+        SECTION("non-empty object with object member")
+        {
+            // directly encoding uint64 is not supported in bson (only for timestamp values)
+            json j =
+            {
+                { "entry", json::object() }
+            };
+
+            std::vector<uint8_t> expected =
+            {
+                0x11, 0x00, 0x00, 0x00, // size (little endian)
+                0x03, /// entry: embedded document
+                'e', 'n', 't', 'r', 'y', '\x00',
+
+                0x05, 0x00, 0x00, 0x00, // size (little endian)
+                // no entries
+                0x00, // end marker (embedded document)
+
+                0x00 // end marker
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+
+            // roundtrip
+            CHECK(json::from_bson(result) == j);
+            CHECK(json::from_bson(result, true, false) == j);
+        }
     }
 }
