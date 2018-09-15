@@ -723,14 +723,42 @@ class binary_writer
 
     std::size_t write_bson_integer(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
     {
-        if (j.m_value.number_integer <= static_cast<uint64_t>((std::numeric_limits<int32_t>::max)()))
+        auto n = j.m_value.number_integer;
+        if ((std::numeric_limits<int32_t>::min)() <= n and n <= (std::numeric_limits<int32_t>::max)())
         {
             oa->write_character(static_cast<CharType>(0x10)); // int32
             oa->write_characters(
                 reinterpret_cast<const CharType*>(name.c_str()),
                 name.size() + 1u);
 
-            write_number_little_endian(static_cast<std::int32_t>(j.m_value.number_integer));
+            write_number_little_endian(static_cast<std::int32_t>(n));
+
+            return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int32_t);
+        }
+        else
+        {
+            oa->write_character(static_cast<CharType>(0x12)); // int64
+            oa->write_characters(
+                reinterpret_cast<const CharType*>(name.c_str()),
+                name.size() + 1u);
+
+            write_number_little_endian(static_cast<std::int64_t>(j.m_value.number_integer));
+
+            return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int64_t);
+        }
+    }
+
+    std::size_t write_bson_unsigned(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    {
+        auto n = j.m_value.number_integer;
+        if (n <= static_cast<uint64_t>((std::numeric_limits<uint32_t>::max)()))
+        {
+            oa->write_character(static_cast<CharType>(0x10)); // int32
+            oa->write_characters(
+                reinterpret_cast<const CharType*>(name.c_str()),
+                name.size() + 1u);
+
+            write_number_little_endian(static_cast<std::int32_t>(n));
 
             return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int32_t);
         }
@@ -760,6 +788,8 @@ class binary_writer
                 return write_bson_double(name, j);
             case value_t::number_integer:
                 return write_bson_integer(name, j);
+            case value_t::number_unsigned:
+                return write_bson_unsigned(name, j);
             case value_t::string:
                 return write_bson_string(name, j);
             case value_t::null:
