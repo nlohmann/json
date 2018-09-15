@@ -203,6 +203,14 @@ class binary_reader
                     sax->boolean(static_cast<bool>(get()));
                 }
                 break;
+                case 0x0A: // null
+                {
+                    string_t key;
+                    get_bson_cstr(key);
+                    sax->key(key);
+                    sax->null();
+                }
+                break;
             }
         }
 
