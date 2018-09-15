@@ -18,6 +18,8 @@ template<typename CharType> struct output_adapter_protocol
 {
     virtual void write_character(CharType c) = 0;
     virtual void write_characters(const CharType* s, std::size_t length) = 0;
+    virtual void write_characters_at(std::size_t position, const CharType* s, std::size_t length) = 0;
+    virtual std::size_t reserve_characters(std::size_t length) = 0;
     virtual ~output_adapter_protocol() = default;
 };
 
@@ -42,6 +44,18 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
         std::copy(s, s + length, std::back_inserter(v));
     }
 
+    void write_characters_at(std::size_t position, const CharType* s, std::size_t length) override
+    {
+        std::copy(s, s + length, std::begin(v) + position);
+    }
+
+    std::size_t reserve_characters(std::size_t length) override
+    {
+        const auto position = v.size();
+        std::fill_n(std::back_inserter(v), length, static_cast<CharType>(0x00));
+        return position;
+    }
+
   private:
     std::vector<CharType>& v;
 };
@@ -61,6 +75,22 @@ class output_stream_adapter : public output_adapter_protocol<CharType>
     void write_characters(const CharType* s, std::size_t length) override
     {
         stream.write(s, static_cast<std::streamsize>(length));
+    }
+
+    void write_characters_at(std::size_t position, const CharType* s, std::size_t length) override
+    {
+        const auto orig_offset = stream.tellp();
+        stream.seekp(static_cast<typename std::basic_ostream<CharType>::pos_type>(position));
+        stream.write(s, static_cast<std::streamsize>(length));
+        stream.seekp(orig_offset);
+    }
+
+    std::size_t reserve_characters(std::size_t length) override
+    {
+        const auto position = stream.tellp();
+        std::vector<CharType> empty(length, static_cast<CharType>(0));
+        stream.write(empty.data(), length);
+        return static_cast<std::size_t>(position);
     }
 
   private:
@@ -83,6 +113,19 @@ class output_string_adapter : public output_adapter_protocol<CharType>
     {
         str.append(s, length);
     }
+
+    void write_characters_at(std::size_t position, const CharType* s, std::size_t length) override
+    {
+        std::copy(s, s + length, std::begin(str) + position);
+    }
+
+    std::size_t reserve_characters(std::size_t length) override
+    {
+        const auto position = str.size();
+        std::fill_n(std::back_inserter(str), length, static_cast<CharType>(0x00));
+        return position;
+    }
+
 
   private:
     StringType& str;

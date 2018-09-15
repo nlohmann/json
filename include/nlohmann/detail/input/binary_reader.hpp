@@ -125,19 +125,75 @@ class binary_reader
 
   private:
 
+    template<class OutputIt, class UnaryPredicate, class Gen>
+    OutputIt generate_until(OutputIt&& d_first, UnaryPredicate&& pred, Gen&& gen)
+    {
+        for (auto x = gen(); !pred(x); x = gen())
+        {
+            *d_first++ = x;
+        }
+
+        return d_first;
+    }
+
+    /*!
+    @param[in] len  the length of the array or std::size_t(-1) for an
+                    array of indefinite size
+    @return whether array creation completed
+    */
+    bool get_bson_str(string_t& result)
+    {
+        bool success = true;
+        generate_until(std::back_inserter(result), [](char c)
+        {
+            return c == 0x00;
+        }, [this, &success]
+        {
+            get();
+            if (JSON_UNLIKELY(unexpect_eof()))
+            {
+                success = false;
+            }
+            return static_cast<char>(current);
+        });
+        return success;
+    }
+
+
     bool parse_bson_internal()
     {
         std::int32_t documentSize;
         get_number_little_endian(documentSize);
 
-        if (not JSON_UNLIKELY(sax->start_object(documentSize - 5)))
+        if (not JSON_UNLIKELY(sax->start_object(-1)))
         {
             return false;
         }
 
-        const auto result = sax->end_object();
+        while (auto entry_type = get())
+        {
+            switch (entry_type)
+            {
+                case 0x01:
+                {
+                    string_t key;
+                    get_bson_str(key);
+                    sax->key(key);
+                    sax->boolean(static_cast<bool>(get()));
+                } break;
+                case 0x08:
+                {
+                    string_t key;
+                    get_bson_str(key);
+                    sax->key(key);
+                    sax->boolean(static_cast<bool>(get()));
+                } break;
+            }
+        }
 
         get();
+        const auto result = sax->end_object();
+
         return result;
     }
 

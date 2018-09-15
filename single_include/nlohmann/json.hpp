@@ -5838,6 +5838,8 @@ template<typename CharType> struct output_adapter_protocol
 {
     virtual void write_character(CharType c) = 0;
     virtual void write_characters(const CharType* s, std::size_t length) = 0;
+    virtual void write_characters_at(std::size_t position, const CharType* s, std::size_t length) = 0;
+    virtual std::size_t reserve_characters(std::size_t length) = 0;
     virtual ~output_adapter_protocol() = default;
 };
 
@@ -5862,6 +5864,18 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
         std::copy(s, s + length, std::back_inserter(v));
     }
 
+    void write_characters_at(std::size_t position, const CharType* s, std::size_t length) override
+    {
+        std::copy(s, s + length, std::begin(v) + position);
+    }
+
+    std::size_t reserve_characters(std::size_t length) override
+    {
+        const auto position = v.size();
+        std::fill_n(std::back_inserter(v), length, static_cast<CharType>(0x00));
+        return position;
+    }
+
   private:
     std::vector<CharType>& v;
 };
@@ -5881,6 +5895,22 @@ class output_stream_adapter : public output_adapter_protocol<CharType>
     void write_characters(const CharType* s, std::size_t length) override
     {
         stream.write(s, static_cast<std::streamsize>(length));
+    }
+
+    void write_characters_at(std::size_t position, const CharType* s, std::size_t length) override
+    {
+        const auto orig_offset = stream.tellp();
+        stream.seekp(static_cast<typename std::basic_ostream<CharType>::pos_type>(position));
+        stream.write(s, static_cast<std::streamsize>(length));
+        stream.seekp(orig_offset);
+    }
+
+    std::size_t reserve_characters(std::size_t length) override
+    {
+        const auto position = stream.tellp();
+        std::vector<CharType> empty(length, static_cast<CharType>(0));
+        stream.write(empty.data(), length);
+        return static_cast<std::size_t>(position);
     }
 
   private:
@@ -5903,6 +5933,19 @@ class output_string_adapter : public output_adapter_protocol<CharType>
     {
         str.append(s, length);
     }
+
+    void write_characters_at(std::size_t position, const CharType* s, std::size_t length) override
+    {
+        std::copy(s, s + length, std::begin(str) + position);
+    }
+
+    std::size_t reserve_characters(std::size_t length) override
+    {
+        const auto position = str.size();
+        std::fill_n(std::back_inserter(str), length, static_cast<CharType>(0x00));
+        return position;
+    }
+
 
   private:
     StringType& str;
@@ -6066,19 +6109,69 @@ class binary_reader
 
   private:
 
+    template<class OutputIt, class UnaryPredicate, class Gen>
+    OutputIt generate_until(OutputIt&& d_first, UnaryPredicate&& pred, Gen&& gen)
+    {
+        for (auto x = gen(); !pred(x); x = gen())
+        {
+            *d_first++ = x;
+        }
+
+        return d_first;
+    }
+
+    /*!
+    @param[in] len  the length of the array or std::size_t(-1) for an
+                    array of indefinite size
+    @return whether array creation completed
+    */
+    bool get_bson_str(string_t& result)
+    {
+        bool success = true;
+        generate_until(std::back_inserter(result), [](char c)
+        {
+            return c == 0x00;
+        }, [this, &success]
+        {
+            get();
+            if (JSON_UNLIKELY(unexpect_eof()))
+            {
+                success = false;
+            }
+            return static_cast<char>(current);
+        });
+        return success;
+    }
+
+
     bool parse_bson_internal()
     {
         std::int32_t documentSize;
         get_number_little_endian(documentSize);
 
-        if (not JSON_UNLIKELY(sax->start_object(documentSize - 5)))
+        if (not JSON_UNLIKELY(sax->start_object(-1)))
         {
             return false;
         }
 
-        const auto result = sax->end_object();
+        while (auto entry_type = get())
+        {
+            switch (entry_type)
+            {
+                case 0x08:
+                {
+                    string_t key;
+                    get_bson_str(key);
+                    sax->key(key);
+                    sax->boolean(static_cast<bool>(get()));
+                }
+                break;
+            }
+        }
 
         get();
+        const auto result = sax->end_object();
+
         return result;
     }
 
@@ -8369,6 +8462,16 @@ class binary_writer
     }
 
 
+    std::size_t write_bson_object_entry(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    {
+        oa->write_character(static_cast<CharType>(0x08)); // boolean
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(name.c_str()),
+            name.size() + 1u);
+        oa->write_character(j.m_value.boolean ? static_cast<CharType>(0x01) : static_cast<CharType>(0x00));
+        return /*id*/ 1ul + name.size() + 1u + /*boolean value*/ 1u;
+    }
+
     /*!
     @param[in] j  JSON value to serialize
     @pre       j.type() == value_t::object
@@ -8376,8 +8479,16 @@ class binary_writer
     void write_bson_object(const BasicJsonType& j)
     {
         assert(j.type() == value_t::object);
-        write_number_little_endian(5);
+        auto document_size_offset = oa->reserve_characters(4ul);
+        std::int32_t document_size = 5ul;
+
+        for (const auto& el : *j.m_value.object)
+        {
+            document_size += write_bson_object_entry(el.first, el.second);
+        }
+
         oa->write_character(static_cast<CharType>(0x00));
+        write_number_little_endian_at(document_size_offset, document_size);
     }
 
     /*!
@@ -8449,6 +8560,30 @@ class binary_writer
         }
 
         oa->write_characters(vec.data(), sizeof(NumberType));
+    }
+
+    /*
+    @brief write a number to output in little endian format
+
+    @param[in] offset The offset where to start writing
+    @param[in] n number of type @a NumberType
+    @tparam NumberType the type of the number
+    */
+    template<typename NumberType>
+    void write_number_little_endian_at(std::size_t offset, const NumberType n)
+    {
+        // step 1: write number to array of length NumberType
+        std::array<CharType, sizeof(NumberType)> vec;
+        std::memcpy(vec.data(), &n, sizeof(NumberType));
+
+        // step 2: write array to output (with possible reordering)
+        if (!is_little_endian)
+        {
+            // reverse byte order prior to conversion if necessary
+            std::reverse(vec.begin(), vec.end());
+        }
+
+        oa->write_characters_at(offset, vec.data(), sizeof(NumberType));
     }
 
 

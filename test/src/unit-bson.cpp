@@ -111,5 +111,53 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result) == j);
             CHECK(json::from_bson(result, true, false) == j);
         }
+
+        SECTION("non-empty object with bool")
+        {
+            json j =
+            {
+                { "entry", true }
+            };
+
+            std::vector<uint8_t> expected =
+            {
+                0x0D, 0x00, 0x00, 0x00, // size (little endian)
+                0x08,               // entry: boolean
+                'e', 'n', 't', 'r', 'y', '\x00',
+                0x01,           // value = true
+                0x00                    // end marker
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+
+            // roundtrip
+            CHECK(json::from_bson(result) == j);
+            CHECK(json::from_bson(result, true, false) == j);
+        }
+
+        // SECTION("non-empty object with double")
+        // {
+        //     json j =
+        //     {
+        //         { "entry", true }
+        //     };
+
+        //     std::vector<uint8_t> expected =
+        //     {
+        //         0x14, 0x00, 0x00, 0x00, // size (little endian)
+        //         0x01, /// entry: double
+        //         'e', 'n', 't', 'r', 'y', '\x00',
+        //         0xcd, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0x10, 0x40,
+        //         0x00 // end marker
+        //     };
+
+        //     const auto result = json::to_bson(j);
+        //     CHECK(result == expected);
+
+        //     // roundtrip
+        //     //CHECK(json::from_bson(result) == j);
+        //     //CHECK(json::from_bson(result, true, false) == j);
+        // }
     }
 }

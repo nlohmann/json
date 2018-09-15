@@ -677,6 +677,16 @@ class binary_writer
     }
 
 
+    std::size_t write_bson_object_entry(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    {
+        oa->write_character(static_cast<CharType>(0x08)); // boolean
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(name.c_str()),
+            name.size() + 1u);
+        oa->write_character(j.m_value.boolean ? static_cast<CharType>(0x01) : static_cast<CharType>(0x00));
+        return /*id*/ 1ul + name.size() + 1u + /*boolean value*/ 1u;
+    }
+
     /*!
     @param[in] j  JSON value to serialize
     @pre       j.type() == value_t::object
@@ -684,8 +694,16 @@ class binary_writer
     void write_bson_object(const BasicJsonType& j)
     {
         assert(j.type() == value_t::object);
-        write_number_little_endian(5);
+        auto document_size_offset = oa->reserve_characters(4ul);
+        std::int32_t document_size = 5ul;
+
+        for (const auto& el : *j.m_value.object)
+        {
+            document_size += write_bson_object_entry(el.first, el.second);
+        }
+
         oa->write_character(static_cast<CharType>(0x00));
+        write_number_little_endian_at(document_size_offset, document_size);
     }
 
     /*!
@@ -757,6 +775,30 @@ class binary_writer
         }
 
         oa->write_characters(vec.data(), sizeof(NumberType));
+    }
+
+    /*
+    @brief write a number to output in little endian format
+
+    @param[in] offset The offset where to start writing
+    @param[in] n number of type @a NumberType
+    @tparam NumberType the type of the number
+    */
+    template<typename NumberType>
+    void write_number_little_endian_at(std::size_t offset, const NumberType n)
+    {
+        // step 1: write number to array of length NumberType
+        std::array<CharType, sizeof(NumberType)> vec;
+        std::memcpy(vec.data(), &n, sizeof(NumberType));
+
+        // step 2: write array to output (with possible reordering)
+        if (!is_little_endian)
+        {
+            // reverse byte order prior to conversion if necessary
+            std::reverse(vec.begin(), vec.end());
+        }
+
+        oa->write_characters_at(offset, vec.data(), sizeof(NumberType));
     }
 
 
