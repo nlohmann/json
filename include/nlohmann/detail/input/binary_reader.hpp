@@ -157,17 +157,8 @@ class binary_reader
         return success;
     }
 
-
-    bool parse_bson_internal()
+    void parse_bson_entries()
     {
-        std::int32_t documentSize;
-        get_number_little_endian(documentSize);
-
-        if (not JSON_UNLIKELY(sax->start_object(-1)))
-        {
-            return false;
-        }
-
         while (auto entry_type = get())
         {
             switch (entry_type)
@@ -239,8 +230,46 @@ class binary_reader
                     parse_bson_internal();
                 }
                 break;
+                case 0x04: // array
+                {
+                    string_t key;
+                    get_bson_cstr(key);
+                    sax->key(key);
+                    parse_bson_array();
+                }
+                break;
             }
         }
+    }
+
+    bool parse_bson_array()
+    {
+        std::int32_t documentSize;
+        get_number_little_endian(documentSize);
+
+        if (not JSON_UNLIKELY(sax->start_array(-1)))
+        {
+            return false;
+        }
+
+        parse_bson_entries();
+
+        const auto result = sax->end_array();
+
+        return result;
+    }
+
+    bool parse_bson_internal()
+    {
+        std::int32_t documentSize;
+        get_number_little_endian(documentSize);
+
+        if (not JSON_UNLIKELY(sax->start_object(-1)))
+        {
+            return false;
+        }
+
+        parse_bson_entries();
 
         const auto result = sax->end_object();
 

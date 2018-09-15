@@ -787,6 +787,28 @@ class binary_writer
         return /*id*/ 1ul + name.size() + 1ul + embedded_document_size;
     }
 
+    std::size_t write_bson_array(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    {
+        oa->write_character(static_cast<CharType>(0x04)); // object
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(name.c_str()),
+            name.size() + 1u);
+
+
+        auto document_size_offset = oa->reserve_characters(4ul);
+        std::int32_t embedded_document_size = 5ul;
+
+        for (const auto& el : *j.m_value.array)
+        {
+            embedded_document_size += write_bson_object_entry("", el);
+        }
+
+        oa->write_character(static_cast<CharType>(0x00));
+        write_number_little_endian_at(document_size_offset, embedded_document_size);
+
+        return /*id*/ 1ul + name.size() + 1ul + embedded_document_size;
+    }
+
     std::size_t write_bson_object_entry(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
     {
         switch (j.type())
@@ -796,6 +818,8 @@ class binary_writer
                 break;
             case value_t::object:
                 return write_bson_object_internal(name, j);
+            case value_t::array:
+                return write_bson_array(name, j);
             case value_t::boolean:
                 return write_bson_boolean(name, j);
             case value_t::number_float:
