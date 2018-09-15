@@ -255,6 +255,29 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
 
+        SECTION("non-empty object with integer (64-bit) member")
+        {
+            json j =
+            {
+                { "entry", std::int64_t{0x1234567804030201} }
+            };
+
+            std::vector<uint8_t> expected =
+            {
+                0x14, 0x00, 0x00, 0x00, // size (little endian)
+                0x12, /// entry: int64
+                'e', 'n', 't', 'r', 'y', '\x00',
+                0x01, 0x02, 0x03, 0x04, 0x78, 0x56, 0x34, 0x12,
+                0x00 // end marker
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+
+            // roundtrip
+            CHECK(json::from_bson(result) == j);
+            CHECK(json::from_bson(result, true, false) == j);
+        }
 
     }
 }

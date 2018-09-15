@@ -213,6 +213,16 @@ class binary_reader
                     sax->number_integer(static_cast<std::int32_t>(value));
                 }
                 break;
+                case 0x12: // int64
+                {
+                    string_t key;
+                    get_bson_cstr(key);
+                    sax->key(key);
+                    std::int64_t value;
+                    get_number_little_endian(value);
+                    sax->number_integer(static_cast<std::int64_t>(value));
+                }
+                break;
                 case 0x0A: // null
                 {
                     string_t key;

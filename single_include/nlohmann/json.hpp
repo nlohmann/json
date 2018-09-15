@@ -6197,6 +6197,16 @@ class binary_reader
                     sax->number_integer(static_cast<std::int32_t>(value));
                 }
                 break;
+                case 0x12: // int64
+                {
+                    string_t key;
+                    get_bson_cstr(key);
+                    sax->key(key);
+                    std::int64_t value;
+                    get_number_little_endian(value);
+                    sax->number_integer(static_cast<std::int64_t>(value));
+                }
+                break;
                 case 0x0A: // null
                 {
                     string_t key;
@@ -8547,14 +8557,28 @@ class binary_writer
 
     std::size_t write_bson_integer(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
     {
-        oa->write_character(static_cast<CharType>(0x10)); // int32
-        oa->write_characters(
-            reinterpret_cast<const CharType*>(name.c_str()),
-            name.size() + 1u);
+        if (j.m_value.number_integer <= static_cast<uint64_t>((std::numeric_limits<int32_t>::max)()))
+        {
+            oa->write_character(static_cast<CharType>(0x10)); // int32
+            oa->write_characters(
+                reinterpret_cast<const CharType*>(name.c_str()),
+                name.size() + 1u);
 
-        write_number_little_endian(static_cast<std::int32_t>(j.m_value.number_integer));
+            write_number_little_endian(static_cast<std::int32_t>(j.m_value.number_integer));
 
-        return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int32_t);
+            return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int32_t);
+        }
+        else
+        {
+            oa->write_character(static_cast<CharType>(0x12)); // int64
+            oa->write_characters(
+                reinterpret_cast<const CharType*>(name.c_str()),
+                name.size() + 1u);
+
+            write_number_little_endian(static_cast<std::int64_t>(j.m_value.number_integer));
+
+            return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int64_t);
+        }
     }
 
     std::size_t write_bson_object_entry(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
