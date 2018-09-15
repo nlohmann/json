@@ -408,6 +408,41 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
 
+        SECTION("non-empty object with non-empty array member")
+        {
+            json j =
+            {
+                { "entry", json::array({1, 2, 3, 4, 5, 6, 7, 8}) }
+            };
+
+            std::vector<uint8_t> expected =
+            {
+                0x41, 0x00, 0x00, 0x00, // size (little endian)
+                0x04, /// entry: embedded document
+                'e', 'n', 't', 'r', 'y', '\x00',
+
+                0x35, 0x00, 0x00, 0x00, // size (little endian)
+                0x10, 0x00, 0x01, 0x00, 0x00, 0x00,
+                0x10, 0x00, 0x02, 0x00, 0x00, 0x00,
+                0x10, 0x00, 0x03, 0x00, 0x00, 0x00,
+                0x10, 0x00, 0x04, 0x00, 0x00, 0x00,
+                0x10, 0x00, 0x05, 0x00, 0x00, 0x00,
+                0x10, 0x00, 0x06, 0x00, 0x00, 0x00,
+                0x10, 0x00, 0x07, 0x00, 0x00, 0x00,
+                0x10, 0x00, 0x08, 0x00, 0x00, 0x00,
+                0x00, // end marker (embedded document)
+
+                0x00 // end marker
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+
+            // roundtrip
+            CHECK(json::from_bson(result) == j);
+            CHECK(json::from_bson(result, true, false) == j);
+        }
+
         SECTION("Some more complex document")
         {
             // directly encoding uint64 is not supported in bson (only for timestamp values)

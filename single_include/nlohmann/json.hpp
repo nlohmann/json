@@ -6141,17 +6141,21 @@ class binary_reader
         return success;
     }
 
-    void parse_bson_entries()
+    void parse_bson_entries(bool is_array)
     {
         while (auto entry_type = get())
         {
+            string_t key;
+            get_bson_cstr(key);
+            if (!is_array)
+            {
+                sax->key(key);
+            }
+
             switch (entry_type)
             {
                 case 0x01: // double
                 {
-                    string_t key;
-                    get_bson_cstr(key);
-                    sax->key(key);
                     double number;
                     get_number_little_endian(number);
                     sax->number_float(static_cast<number_float_t>(number), "");
@@ -6159,9 +6163,6 @@ class binary_reader
                 break;
                 case 0x02: // string
                 {
-                    string_t key;
-                    get_bson_cstr(key);
-                    sax->key(key);
                     std::int32_t len;
                     string_t value;
                     get_number_little_endian(len);
@@ -6172,17 +6173,11 @@ class binary_reader
                 break;
                 case 0x08: // boolean
                 {
-                    string_t key;
-                    get_bson_cstr(key);
-                    sax->key(key);
                     sax->boolean(static_cast<bool>(get()));
                 }
                 break;
                 case 0x10: // int32
                 {
-                    string_t key;
-                    get_bson_cstr(key);
-                    sax->key(key);
                     std::int32_t value;
                     get_number_little_endian(value);
                     sax->number_integer(static_cast<std::int32_t>(value));
@@ -6190,9 +6185,6 @@ class binary_reader
                 break;
                 case 0x12: // int64
                 {
-                    string_t key;
-                    get_bson_cstr(key);
-                    sax->key(key);
                     std::int64_t value;
                     get_number_little_endian(value);
                     sax->number_integer(static_cast<std::int64_t>(value));
@@ -6200,25 +6192,16 @@ class binary_reader
                 break;
                 case 0x0A: // null
                 {
-                    string_t key;
-                    get_bson_cstr(key);
-                    sax->key(key);
                     sax->null();
                 }
                 break;
                 case 0x03: // object
                 {
-                    string_t key;
-                    get_bson_cstr(key);
-                    sax->key(key);
                     parse_bson_internal();
                 }
                 break;
                 case 0x04: // array
                 {
-                    string_t key;
-                    get_bson_cstr(key);
-                    sax->key(key);
                     parse_bson_array();
                 }
                 break;
@@ -6236,7 +6219,7 @@ class binary_reader
             return false;
         }
 
-        parse_bson_entries();
+        parse_bson_entries(/*is_array*/true);
 
         const auto result = sax->end_array();
 
@@ -6253,7 +6236,7 @@ class binary_reader
             return false;
         }
 
-        parse_bson_entries();
+        parse_bson_entries(/*is_array*/false);
 
         const auto result = sax->end_object();
 
