@@ -14,14 +14,19 @@ add_subdirectory(thirdparty/benchmark)
 include_directories(thirdparty)
 include_directories(${CMAKE_SOURCE_DIR}/../single_include)
 
-# copy test files to build folder
-file(COPY ${CMAKE_SOURCE_DIR}/data DESTINATION .)
-file(COPY ${CMAKE_SOURCE_DIR}/../test/data/regression/floats.json
-          ${CMAKE_SOURCE_DIR}/../test/data/regression/unsigned_ints.json
-          ${CMAKE_SOURCE_DIR}/../test/data/regression/signed_ints.json
-    DESTINATION data/numbers)
+include(ExternalData)
+
+set(ExternalData_URL_TEMPLATES
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/regression/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/nativejson-benchmark/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/jeopardy/%(hash)"
+)
+
+ExternalData_Expand_Arguments(json_benchmark_data _ DATA{data/,RECURSE:,REGEX:.*})
+ExternalData_Add_Target(json_benchmark_data)
 
 # benchmark binary
 add_executable(json_benchmarks src/benchmarks.cpp)
 target_compile_features(json_benchmarks PRIVATE cxx_std_11)
 target_link_libraries(json_benchmarks benchmark ${CMAKE_THREAD_LIBS_INIT})
+add_dependencies(json_benchmarks json_benchmark_data)
