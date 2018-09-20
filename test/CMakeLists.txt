@@ -93,23 +93,21 @@ endif()
 include(ExternalData)
 
 set(ExternalData_URL_TEMPLATES
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/big-list-of-naughty-strings/%(hash)"
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/cbor_regression/%(hash)"
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json-patch-tests/%(hash)"
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json.org/%(hash)"
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json_nlohmann_tests/%(hash)"
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json_roundtrip/%(hash)"
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json_tests/%(hash)"
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json_testsuite/%(hash)"
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/markus_kuhn/%(hash)"
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/nst_json_testsuite/test_parsing/%(hash)"
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/nst_json_testsuite2/test_parsing/%(hash)"
-  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/regression/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/%(hash)"
 )
+set(ExternalData_BINARY_ROOT ${CMAKE_BINARY_DIR}/data)
 
-# Force download of every test file
-ExternalData_Expand_Arguments(json_test_data _ DATA{data/,RECURSE:,REGEX:.*})
+ExternalData_Expand_Arguments(json_test_data _ DATA{data/json_data.zip})
 ExternalData_Add_Target(json_test_data)
+
+add_custom_target(unzip_json_test_data)
+add_dependencies(unzip_json_test_data json_test_data)
+add_custom_command(TARGET unzip_json_test_data PRE_BUILD
+   COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/data/
+   COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_BINARY_DIR}/data/test/data/json_data.zip ${CMAKE_CURRENT_BINARY_DIR}/data
+   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+COMMENT "Unpacking json test data..."
+VERBATIM)
 
 file(GLOB files "src/unit-*.cpp")
 foreach(file ${files})
@@ -155,5 +153,5 @@ foreach(file ${files})
         set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
     endif()
 
-    add_dependencies(${testcase} json_test_data)
+    add_dependencies(${testcase} unzip_json_test_data)
 endforeach()
