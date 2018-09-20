@@ -758,7 +758,7 @@ TEST_CASE("nst's JSONTestSuite")
                         "test/data/nst_json_testsuite/test_parsing/n_structure_open_open.json",
                         "test/data/nst_json_testsuite/test_parsing/n_structure_single_point.json",
                         "test/data/nst_json_testsuite/test_parsing/n_structure_single_star.json",
-                        "test/data/nst_json_testsuite/test_parsing/n_structure_trailing_#.json",
+                        "test/data/nst_json_testsuite/test_parsing/n_structure_trailing_hash.json",
                         "test/data/nst_json_testsuite/test_parsing/n_structure_uescaped_LF_before_string.json",
                         "test/data/nst_json_testsuite/test_parsing/n_structure_unclosed_array.json",
                         "test/data/nst_json_testsuite/test_parsing/n_structure_unclosed_array_partial_null.json",
@@ -799,7 +799,7 @@ TEST_CASE("nst's JSONTestSuite")
                         "test/data/nst_json_testsuite/test_parsing/n_structure_number_with_trailing_garbage.json",
                         "test/data/nst_json_testsuite/test_parsing/n_structure_object_followed_by_closing_object.json",
                         "test/data/nst_json_testsuite/test_parsing/n_structure_object_with_trailing_garbage.json",
-                        "test/data/nst_json_testsuite/test_parsing/n_structure_trailing_#.json"
+                        "test/data/nst_json_testsuite/test_parsing/n_structure_trailing_hash.json"
                     }
                 )
             {
@@ -1176,7 +1176,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_open_open.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_single_eacute.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_single_star.json",
-                        "test/data/nst_json_testsuite2/test_parsing/n_structure_trailing_#.json",
+                        "test/data/nst_json_testsuite2/test_parsing/n_structure_trailing_hash.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_uescaped_LF_before_string.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_unclosed_array.json",
                         "test/data/nst_json_testsuite2/test_parsing/n_structure_unclosed_array_partial_null.json",

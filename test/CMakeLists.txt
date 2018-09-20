@@ -90,6 +90,27 @@ endif()
 # one executable for each unit test file
 #############################################################################
 
+include(ExternalData)
+
+set(ExternalData_URL_TEMPLATES
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/big-list-of-naughty-strings/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/cbor_regression/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json-patch-tests/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json.org/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json_nlohmann_tests/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json_roundtrip/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json_tests/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/json_testsuite/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/markus_kuhn/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/nst_json_testsuite/test_parsing/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/nst_json_testsuite2/test_parsing/%(hash)"
+  "https://github.com/theodelrieu/cmake_external_data/raw/master/json/%(algo)/regression/%(hash)"
+)
+
+# Force download of every test file
+ExternalData_Expand_Arguments(json_test_data _ DATA{data/,RECURSE:,REGEX:.*})
+ExternalData_Add_Target(json_test_data)
+
 file(GLOB files "src/unit-*.cpp")
 foreach(file ${files})
     get_filename_component(file_basename ${file} NAME_WE)
@@ -112,24 +133,27 @@ foreach(file ${files})
         set_target_properties(${testcase} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-float-equal")
     endif()
 
-    add_test(NAME "${testcase}_default"
+    ExternalData_Add_Test(json_test_data NAME "${testcase}_default"
       COMMAND ${testcase} ${CATCH_TEST_FILTER}
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      # Launch tests in build, instead of build/test
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
     set_tests_properties("${testcase}_default" PROPERTIES LABELS "default")
 
-    add_test(NAME "${testcase}_all"
+
+    ExternalData_Add_Test(json_test_data NAME "${testcase}_all"
       COMMAND ${testcase} ${CATCH_TEST_FILTER} "*"
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
     set_tests_properties("${testcase}_all" PROPERTIES LABELS "all")
 
     if(JSON_Valgrind)
-        add_test(NAME "${testcase}_valgrind"
+        ExternalData_Add_Test(json_test_data NAME "${testcase}_valgrind"
           COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${CATCH_TEST_FILTER}
-          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         )
         set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
     endif()
 
+    add_dependencies(${testcase} json_test_data)
 endforeach()
