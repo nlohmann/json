@@ -7691,19 +7691,6 @@ class basic_json
 // specialization of std::swap, and std::hash
 namespace std
 {
-/*!
-@brief exchanges the values of two JSON objects
-
-@since version 1.0.0
-*/
-template<>
-inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(
-    is_nothrow_move_constructible<nlohmann::json>::value and
-    is_nothrow_move_assignable<nlohmann::json>::value
-)
-{
-    j1.swap(j2);
-}
 
 /// hash value for JSON objects
 template<>
@@ -7738,6 +7725,20 @@ struct less< ::nlohmann::detail::value_t>
         return nlohmann::detail::operator<(lhs, rhs);
     }
 };
+
+/*!
+@brief exchanges the values of two JSON objects
+
+@since version 1.0.0
+*/
+template<>
+inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(
+    is_nothrow_move_constructible<nlohmann::json>::value and
+    is_nothrow_move_assignable<nlohmann::json>::value
+)
+{
+    j1.swap(j2);
+}
 
 } // namespace std
 
