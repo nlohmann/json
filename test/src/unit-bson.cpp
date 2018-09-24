@@ -476,3 +476,61 @@ TEST_CASE("BSON")
         }
     }
 }
+
+TEST_CASE("BSON input/output_adapters")
+{
+    json json_representation =
+    {
+        {"double", 42.5},
+        {"entry", 4.2},
+        {"number", 12345},
+        {"object", {{ "string", "value" }}}
+    };
+
+    std::vector<uint8_t> bson_representation =
+    {
+        /*size */ 0x4f, 0x00, 0x00, 0x00,
+        /*entry*/ 0x01, 'd',  'o',  'u',  'b',  'l',  'e',  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x45, 0x40,
+        /*entry*/ 0x01, 'e',  'n',  't',  'r',  'y',  0x00, 0xcd, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0x10, 0x40,
+        /*entry*/ 0x10, 'n',  'u',  'm',  'b',  'e',  'r',  0x00, 0x39, 0x30, 0x00, 0x00,
+        /*entry*/ 0x03, 'o',  'b',  'j',  'e',  'c',  't',  0x00,
+        /*entry: obj-size */ 0x17, 0x00, 0x00, 0x00,
+        /*entry: obj-entry*/0x02, 's',  't',  'r',  'i',  'n',  'g', 0x00, 0x06, 0x00, 0x00, 0x00, 'v', 'a', 'l', 'u', 'e', 0,
+        /*entry: obj-term.*/0x00,
+        /*obj-term*/ 0x00
+    };
+
+    json j2;
+    CHECK_NOTHROW(j2 = json::from_bson(bson_representation));
+
+    // compare parsed JSON values
+    CHECK(json_representation == j2);
+
+    SECTION("roundtrips")
+    {
+        SECTION("std::ostringstream")
+        {
+            std::ostringstream ss;
+            json::to_bson(json_representation, ss);
+            std::istringstream iss(ss.str());
+            json j3 = json::from_bson(iss);
+            CHECK(json_representation == j3);
+        }
+
+        SECTION("std::string")
+        {
+            std::string s;
+            json::to_bson(json_representation, s);
+            json j3 = json::from_bson(s);
+            CHECK(json_representation == j3);
+        }
+
+        SECTION("std::vector")
+        {
+            std::vector<std::uint8_t> v;
+            json::to_bson(json_representation, v);
+            json j3 = json::from_bson(v);
+            CHECK(json_representation == j3);
+        }
+    }
+}

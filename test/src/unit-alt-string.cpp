@@ -102,9 +102,15 @@ class alt_string
         str_impl.resize(n, c);
     }
 
-	auto begin() -> std::string::iterator { return str_impl.begin(); }
+    auto begin() -> std::string::iterator
+    {
+        return str_impl.begin();
+    }
 
-	auto end() -> std::string::iterator { return str_impl.end(); }
+    auto end() -> std::string::iterator
+    {
+        return str_impl.end();
+    }
 
     template <typename op_type>
     bool operator<(const op_type& op) const
