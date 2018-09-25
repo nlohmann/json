@@ -1427,20 +1427,26 @@ TEST_CASE("regression tests")
             }
         })"_json;
 
-        CHECK_THROWS_AS(model.patch(R"([{"op": "move",
-                         "from": "/one/two/three",
-                         "path": "/a/b/c"}])"_json), json::out_of_range&);
-        CHECK_THROWS_WITH(model.patch(R"([{"op": "move",
-                         "from": "/one/two/three",
-                         "path": "/a/b/c"}])"_json),
+        auto p1 = R"([{"op": "move",
+                       "from": "/one/two/three",
+                       "path": "/a/b/c"}])"_json;
+        CHECK_THROWS_AS(model.patch(p1), json::out_of_range&);
+
+        auto p2 = R"([{"op": "move",
+                       "from": "/one/two/three",
+                       "path": "/a/b/c"}])"_json;
+        CHECK_THROWS_WITH(model.patch(p2),
                           "[json.exception.out_of_range.403] key 'a' not found");
 
-        CHECK_THROWS_AS(model.patch(R"([{"op": "copy",
+        auto p3 = R"([{"op": "copy",
+                       "from": "/one/two/three",
+                       "path": "/a/b/c"}])"_json;
+        CHECK_THROWS_AS(model.patch(p3), json::out_of_range&);
+
+        auto p4 = R"([{"op": "copy",
                                  "from": "/one/two/three",
-                                 "path": "/a/b/c"}])"_json), json::out_of_range&);
-        CHECK_THROWS_WITH(model.patch(R"([{"op": "copy",
-                                 "from": "/one/two/three",
-                                 "path": "/a/b/c"}])"_json),
+                                 "path": "/a/b/c"}])"_json;
+        CHECK_THROWS_WITH(model.patch(p4),
                           "[json.exception.out_of_range.403] key 'a' not found");
     }
 

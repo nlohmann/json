@@ -4943,7 +4943,9 @@ class basic_json
         return {it, res.second};
     }
 
-    /// helper for insertion of an iterator (supports GCC 4.8+)
+    /// Helper for insertion of an iterator
+    /// @note: This uses std::distance to support GCC 4.8,
+    ///        see https://github.com/nlohmann/json/pull/1257
     template<typename... Args>
     iterator insert_iterator(const_iterator pos, Args&& ... args)
     {
@@ -4954,8 +4956,9 @@ class basic_json
         m_value.array->insert(pos.m_it.array_iterator, std::forward<Args>(args)...);
         result.m_it.array_iterator = m_value.array->begin() + insert_pos;
 
-        // For GCC 4.9+ only, this could become:
+        // This could have been written as:
         // result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, cnt, val);
+        // but the return value of insert is missing in GCC 4.8, so it is written this way instead.
 
         return result;
     }
