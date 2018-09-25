@@ -6126,9 +6126,9 @@ class binary_reader
     bool get_bson_cstr(string_t& result)
     {
         bool success = true;
-        generate_until(std::back_inserter(result), [](char c)
+        generate_until(std::back_inserter(result), [&success](char c)
         {
-            return c == 0x00;
+            return c == 0x00 || !success;
         }, [this, &success]
         {
             get();
@@ -6141,12 +6141,16 @@ class binary_reader
         return success;
     }
 
-    void parse_bson_entries(bool is_array)
+    bool parse_bson_entries(bool is_array)
     {
         while (auto entry_type = get())
         {
             string_t key;
-            get_bson_cstr(key);
+            if (!get_bson_cstr(key))
+            {
+                return false;
+            }
+
             if (!is_array)
             {
                 sax->key(key);
@@ -6207,6 +6211,7 @@ class binary_reader
                 break;
             }
         }
+        return true;
     }
 
     bool parse_bson_array()
@@ -6214,16 +6219,17 @@ class binary_reader
         std::int32_t documentSize;
         get_number_little_endian(documentSize);
 
-        if (not JSON_UNLIKELY(sax->start_array(-1)))
+        if (JSON_UNLIKELY(not sax->start_array(-1)))
         {
             return false;
         }
 
-        parse_bson_entries(/*is_array*/true);
+        if (!parse_bson_entries(/*is_array*/true))
+        {
+            return false;
+        }
 
-        const auto result = sax->end_array();
-
-        return result;
+        return sax->end_array();
     }
 
     bool parse_bson_internal()
@@ -6231,16 +6237,17 @@ class binary_reader
         std::int32_t documentSize;
         get_number_little_endian(documentSize);
 
-        if (not JSON_UNLIKELY(sax->start_object(-1)))
+        if (JSON_UNLIKELY(not sax->start_object(-1)))
         {
             return false;
         }
 
-        parse_bson_entries(/*is_array*/false);
+        if (!parse_bson_entries(/*is_array*/false))
+        {
+            return false;
+        }
 
-        const auto result = sax->end_object();
-
-        return result;
+        return sax->end_object();
     }
 
     /*!
@@ -8545,7 +8552,7 @@ class binary_writer
         oa->write_characters(
             reinterpret_cast<const CharType*>(name.c_str()),
             name.size() + 1u);
-        write_number_little_endian(j.m_value.number_float);
+        write_number<decltype(j.m_value.number_float), true>(j.m_value.number_float);
         return /*id*/ 1ul + name.size() + 1u + /*double value*/ 8u;
     }
 
@@ -8556,7 +8563,7 @@ class binary_writer
             reinterpret_cast<const CharType*>(name.c_str()),
             name.size() + 1u);
 
-        write_number_little_endian(static_cast<std::int32_t>(j.m_value.string->size() + 1ul));
+        write_number<std::int32_t, true>(static_cast<std::int32_t>(j.m_value.string->size() + 1ul));
         oa->write_characters(
             reinterpret_cast<const CharType*>(j.m_value.string->c_str()),
             j.m_value.string->size() + 1);
@@ -8584,7 +8591,7 @@ class binary_writer
                 reinterpret_cast<const CharType*>(name.c_str()),
                 name.size() + 1u);
 
-            write_number_little_endian(static_cast<std::int32_t>(n));
+            write_number<std::int32_t, true>(static_cast<std::int32_t>(n));
 
             return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int32_t);
         }
@@ -8595,7 +8602,7 @@ class binary_writer
                 reinterpret_cast<const CharType*>(name.c_str()),
                 name.size() + 1u);
 
-            write_number_little_endian(static_cast<std::int64_t>(j.m_value.number_integer));
+            write_number<std::int64_t, true>(static_cast<std::int64_t>(j.m_value.number_integer));
 
             return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int64_t);
         }
@@ -8611,7 +8618,7 @@ class binary_writer
                 reinterpret_cast<const CharType*>(name.c_str()),
                 name.size() + 1u);
 
-            write_number_little_endian(static_cast<std::int32_t>(n));
+            write_number<std::int32_t, true>(static_cast<std::int32_t>(n));
 
             return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int32_t);
         }
@@ -8622,7 +8629,7 @@ class binary_writer
                 reinterpret_cast<const CharType*>(name.c_str()),
                 name.size() + 1u);
 
-            write_number_little_endian(static_cast<std::int64_t>(j.m_value.number_integer));
+            write_number<std::int64_t, true>(static_cast<std::int64_t>(j.m_value.number_integer));
 
             return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int64_t);
         }
@@ -8657,7 +8664,7 @@ class binary_writer
         }
 
         oa->write_character(static_cast<CharType>(0x00));
-        write_number_little_endian_at(document_size_offset, embedded_document_size);
+        write_number_at<std::int32_t, true>(document_size_offset, embedded_document_size);
 
         return /*id*/ 1ul + name.size() + 1ul + embedded_document_size;
     }
@@ -8666,9 +8673,11 @@ class binary_writer
     {
         switch (j.type())
         {
+            // LCOV_EXCL_START
             default:
-                JSON_THROW(type_error::create(317, "JSON value of type be serialized to requested format: " + std::to_string((int)j.type())));
+                assert(false);
                 break;
+            // LCOV_EXCL_STOP
             case value_t::object:
                 return write_bson_object_internal(name, j);
             case value_t::array:
@@ -8706,7 +8715,7 @@ class binary_writer
         }
 
         oa->write_character(static_cast<CharType>(0x00));
-        write_number_little_endian_at(document_size_offset, document_size);
+        write_number_at<std::int32_t, true>(document_size_offset, document_size);
         return document_size;
     }
 
@@ -8736,12 +8745,14 @@ class binary_writer
 
     @param[in] n number of type @a NumberType
     @tparam NumberType the type of the number
+    @tparam OutputIsLittleEndian Set to true if output data is
+                                 required to be little endian
 
     @note This function needs to respect the system's endianess, because bytes
           in CBOR, MessagePack, and UBJSON are stored in network order (big
           endian) and therefore need reordering on little endian systems.
     */
-    template<typename NumberType>
+    template<typename NumberType, bool OutputIsLittleEndian = false>
     void write_number(const NumberType n)
     {
         // step 1: write number to array of length NumberType
@@ -8749,30 +8760,7 @@ class binary_writer
         std::memcpy(vec.data(), &n, sizeof(NumberType));
 
         // step 2: write array to output (with possible reordering)
-        if (is_little_endian)
-        {
-            // reverse byte order prior to conversion if necessary
-            std::reverse(vec.begin(), vec.end());
-        }
-
-        oa->write_characters(vec.data(), sizeof(NumberType));
-    }
-
-    /*
-    @brief write a number to output in little endian format
-
-    @param[in] n number of type @a NumberType
-    @tparam NumberType the type of the number
-    */
-    template<typename NumberType>
-    void write_number_little_endian(const NumberType n)
-    {
-        // step 1: write number to array of length NumberType
-        std::array<CharType, sizeof(NumberType)> vec;
-        std::memcpy(vec.data(), &n, sizeof(NumberType));
-
-        // step 2: write array to output (with possible reordering)
-        if (!is_little_endian)
+        if (is_little_endian && !OutputIsLittleEndian)
         {
             // reverse byte order prior to conversion if necessary
             std::reverse(vec.begin(), vec.end());
@@ -8787,20 +8775,24 @@ class binary_writer
     @param[in] offset The offset where to start writing
     @param[in] n number of type @a NumberType
     @tparam NumberType the type of the number
+    @tparam OutputIsLittleEndian Set to true if output data is
+                                 required to be little endian
     */
-    template<typename NumberType>
-    void write_number_little_endian_at(std::size_t offset, const NumberType n)
+    template<typename NumberType, bool OutputIsLittleEndian = false>
+    void write_number_at(std::size_t offset, const NumberType n)
     {
         // step 1: write number to array of length NumberType
         std::array<CharType, sizeof(NumberType)> vec;
         std::memcpy(vec.data(), &n, sizeof(NumberType));
 
         // step 2: write array to output (with possible reordering)
-        if (!is_little_endian)
+        // LCOV_EXCL_START
+        if (is_little_endian && !OutputIsLittleEndian)
         {
             // reverse byte order prior to conversion if necessary
             std::reverse(vec.begin(), vec.end());
         }
+        // LCOV_EXCL_STOP
 
         oa->write_characters_at(offset, vec.data(), sizeof(NumberType));
     }

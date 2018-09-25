@@ -352,6 +352,31 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
 
+        SECTION("non-empty object with small unsigned integer member")
+        {
+            json j =
+            {
+                { "entry", std::uint64_t{0x42} }
+            };
+
+            std::vector<uint8_t> expected =
+            {
+                0x10, 0x00, 0x00, 0x00, // size (little endian)
+                0x10, /// entry: int32
+                'e', 'n', 't', 'r', 'y', '\x00',
+                0x42, 0x00, 0x00, 0x00,
+                0x00 // end marker
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+
+            // roundtrip
+            CHECK(json::from_bson(result) == j);
+            CHECK(json::from_bson(result, true, false) == j);
+        }
+
+
         SECTION("non-empty object with object member")
         {
             json j =
@@ -534,3 +559,152 @@ TEST_CASE("BSON input/output_adapters")
         }
     }
 }
+
+
+
+
+
+class SaxCountdown
+{
+  public:
+    explicit SaxCountdown(const int count) : events_left(count)
+    {}
+
+    bool null()
+    {
+        return events_left-- > 0;
+    }
+
+    bool boolean(bool)
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_integer(json::number_integer_t)
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_unsigned(json::number_unsigned_t)
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_float(json::number_float_t, const std::string&)
+    {
+        return events_left-- > 0;
+    }
+
+    bool string(std::string&)
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_object(std::size_t)
+    {
+        return events_left-- > 0;
+    }
+
+    bool key(std::string&)
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_object()
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_array(std::size_t)
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_array()
+    {
+        return events_left-- > 0;
+    }
+
+    bool parse_error(std::size_t, const std::string&, const json::exception&)
+    {
+        return false;
+    }
+
+  private:
+    int events_left = 0;
+};
+
+
+TEST_CASE("Incomplete BSON INPUT")
+{
+    std::vector<uint8_t> incomplete_bson =
+    {
+        0x0D, 0x00, 0x00, 0x00, // size (little endian)
+        0x08,                   // entry: boolean
+        'e', 'n', 't'           // unexpected EOF
+    };
+
+    CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+                      "[json.exception.parse_error.110] parse error at 9: unexpected end of input");
+    CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+
+    SaxCountdown scp(0);
+    CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+}
+
+TEST_CASE("Incomplete BSON INPUT 2")
+{
+    std::vector<uint8_t> incomplete_bson =
+    {
+        0x0D, 0x00, 0x00, 0x00, // size (little endian)
+        0x08,                   // entry: boolean, unexpected EOF
+    };
+
+    CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+                      "[json.exception.parse_error.110] parse error at 6: unexpected end of input");
+    CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+
+    SaxCountdown scp(0);
+    CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+}
+
+
+TEST_CASE("Incomplete BSON INPUT 3")
+{
+    std::vector<uint8_t> incomplete_bson =
+    {
+        0x41, 0x00, 0x00, 0x00, // size (little endian)
+        0x04, /// entry: embedded document
+        'e', 'n', 't', 'r', 'y', '\x00',
+
+        0x35, 0x00, 0x00, 0x00, // size (little endian)
+        0x10, 0x00, 0x01, 0x00, 0x00, 0x00,
+        0x10, 0x00, 0x02, 0x00, 0x00, 0x00
+        // missing input data...
+    };
+    CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+                      "[json.exception.parse_error.110] parse error at 29: unexpected end of input");
+    CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+
+    SaxCountdown scp(1);
+    CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+}
+
+
+
+TEST_CASE("Incomplete BSON INPUT 4")
+{
+    std::vector<uint8_t> incomplete_bson =
+    {
+        0x0D, 0x00, // size (incomplete), unexpected EOF
+    };
+
+    CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+                      "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
+    CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+
+    SaxCountdown scp(0);
+    CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+}
+
+

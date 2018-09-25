@@ -142,9 +142,9 @@ class binary_reader
     bool get_bson_cstr(string_t& result)
     {
         bool success = true;
-        generate_until(std::back_inserter(result), [](char c)
+        generate_until(std::back_inserter(result), [&success](char c)
         {
-            return c == 0x00;
+            return c == 0x00 || !success;
         }, [this, &success]
         {
             get();
@@ -157,12 +157,16 @@ class binary_reader
         return success;
     }
 
-    void parse_bson_entries(bool is_array)
+    bool parse_bson_entries(bool is_array)
     {
         while (auto entry_type = get())
         {
             string_t key;
-            get_bson_cstr(key);
+            if (!get_bson_cstr(key))
+            {
+                return false;
+            }
+
             if (!is_array)
             {
                 sax->key(key);
@@ -223,6 +227,7 @@ class binary_reader
                 break;
             }
         }
+        return true;
     }
 
     bool parse_bson_array()
@@ -230,16 +235,17 @@ class binary_reader
         std::int32_t documentSize;
         get_number_little_endian(documentSize);
 
-        if (not JSON_UNLIKELY(sax->start_array(-1)))
+        if (JSON_UNLIKELY(not sax->start_array(-1)))
         {
             return false;
         }
 
-        parse_bson_entries(/*is_array*/true);
+        if (!parse_bson_entries(/*is_array*/true))
+        {
+            return false;
+        }
 
-        const auto result = sax->end_array();
-
-        return result;
+        return sax->end_array();
     }
 
     bool parse_bson_internal()
@@ -247,16 +253,17 @@ class binary_reader
         std::int32_t documentSize;
         get_number_little_endian(documentSize);
 
-        if (not JSON_UNLIKELY(sax->start_object(-1)))
+        if (JSON_UNLIKELY(not sax->start_object(-1)))
         {
             return false;
         }
 
-        parse_bson_entries(/*is_array*/false);
+        if (!parse_bson_entries(/*is_array*/false))
+        {
+            return false;
+        }
 
-        const auto result = sax->end_object();
-
-        return result;
+        return sax->end_object();
     }
 
     /*!
