@@ -133,3 +133,10 @@ foreach(file ${files})
     endif()
 
 endforeach()
+
+#############################################################################
+# Test the generated build configs
+#############################################################################
+add_subdirectory(cmake_import)
+add_subdirectory(cmake_import_minver)
+add_subdirectory(cmake_add_subdirectory)
