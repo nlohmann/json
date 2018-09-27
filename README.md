@@ -69,6 +69,18 @@ to the files you want to process JSON and set the necessary switches to enable C
 
 You can further use file [`include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_fwd.hpp) for forward-declarations. The installation of json_fwd.hpp (as part of cmake's install step), can be achieved by setting `-DJSON_MultipleHeaders=ON`.
 
+If this library was built with CMake then you can consume it from another CMake project by using the namespaced imported target from the generated package configuration:
+```cmake
+# CMakeLists.txt
+find_package(nlohmann_json REQUIRED)
+...
+add_library(foo ...)
+...
+target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+```
+The package configuration file, `nlohmann_jsonConfig.cmake`, can be used either from an install tree or directly out of the build tree.
+
+
 ### Package Managers
 
 :beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann_json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann_json --HEAD`.
