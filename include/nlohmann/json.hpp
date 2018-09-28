@@ -4943,6 +4943,26 @@ class basic_json
         return {it, res.second};
     }
 
+    /// Helper for insertion of an iterator
+    /// @note: This uses std::distance to support GCC 4.8,
+    ///        see https://github.com/nlohmann/json/pull/1257
+    template<typename... Args>
+    iterator insert_iterator(const_iterator pos, Args&& ... args)
+    {
+        iterator result(this);
+        assert(m_value.array != nullptr);
+
+        auto insert_pos = std::distance(m_value.array->begin(), pos.m_it.array_iterator);
+        m_value.array->insert(pos.m_it.array_iterator, std::forward<Args>(args)...);
+        result.m_it.array_iterator = m_value.array->begin() + insert_pos;
+
+        // This could have been written as:
+        // result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, cnt, val);
+        // but the return value of insert is missing in GCC 4.8, so it is written this way instead.
+
+        return result;
+    }
+
     /*!
     @brief inserts element
 
@@ -4977,9 +4997,7 @@ class basic_json
             }
 
             // insert to array and return iterator
-            iterator result(this);
-            result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, val);
-            return result;
+            return insert_iterator(pos, val);
         }
 
         JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name())));
@@ -5030,9 +5048,7 @@ class basic_json
             }
 
             // insert to array and return iterator
-            iterator result(this);
-            result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, cnt, val);
-            return result;
+            return insert_iterator(pos, cnt, val);
         }
 
         JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name())));
@@ -5094,12 +5110,7 @@ class basic_json
         }
 
         // insert to array and return iterator
-        iterator result(this);
-        result.m_it.array_iterator = m_value.array->insert(
-                                         pos.m_it.array_iterator,
-                                         first.m_it.array_iterator,
-                                         last.m_it.array_iterator);
-        return result;
+        return insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator);
     }
 
     /*!
@@ -5141,9 +5152,7 @@ class basic_json
         }
 
         // insert to array and return iterator
-        iterator result(this);
-        result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, ilist.begin(), ilist.end());
-        return result;
+        return insert_iterator(pos, ilist.begin(), ilist.end());
     }
 
     /*!

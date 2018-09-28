@@ -405,7 +405,7 @@ TEST_CASE("RFC 7159 examples")
     SECTION("13 Examples")
     {
         {
-            CHECK_NOTHROW(json(R"(
+            auto json_contents = R"(
             {
                  "Image": {
                      "Width":  800,
@@ -420,11 +420,13 @@ TEST_CASE("RFC 7159 examples")
                      "IDs": [116, 943, 234, 38793]
                    }
                }
-            )"));
+            )";
+
+            CHECK_NOTHROW(json(json_contents));
         }
 
         {
-            CHECK_NOTHROW(json(R"(
+            auto json_contents = R"(
                 [
                     {
                        "precision": "zip",
@@ -446,7 +448,8 @@ TEST_CASE("RFC 7159 examples")
                        "Zip":       "94085",
                        "Country":   "US"
                     }
-            ])"));
+            ])";
+            CHECK_NOTHROW(json(json_contents));
         }
 
         CHECK(json::parse("\"Hello world!\"") == json("Hello world!"));
