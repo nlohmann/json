@@ -405,7 +405,7 @@ TEST_CASE("RFC 7159 examples")
     SECTION("13 Examples")
     {
         {
-            CHECK_NOTHROW(json(R"(
+            auto json_contents = R"(
             {
                  "Image": {
                      "Width":  800,
@@ -420,11 +420,13 @@ TEST_CASE("RFC 7159 examples")
                      "IDs": [116, 943, 234, 38793]
                    }
                }
-            )"));
+            )";
+
+            CHECK_NOTHROW(json(json_contents));
         }
 
         {
-            CHECK_NOTHROW(json(R"(
+            auto json_contents = R"(
                 [
                     {
                        "precision": "zip",
@@ -446,7 +448,8 @@ TEST_CASE("RFC 7159 examples")
                        "Zip":       "94085",
                        "Country":   "US"
                     }
-            ])"));
+            ])";
+            CHECK_NOTHROW(json(json_contents));
         }
 
         CHECK(json::parse("\"Hello world!\"") == json("Hello world!"));
@@ -1343,13 +1346,11 @@ TEST_CASE("Big List of Naughty Strings")
     SECTION("roundtripping")
     {
         std::ifstream f("test/data/big-list-of-naughty-strings/blns.json");
+        std::string line;
 
-        while (not f.eof())
+        // read lines one by one, bail out on error or eof
+        while (getline(f, line))
         {
-            // read line
-            std::string line;
-            getline(f, line);
-
             // trim whitespace
             line = trim(line);
 

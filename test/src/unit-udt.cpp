@@ -298,6 +298,19 @@ TEST_CASE("basic usage", "[udt]")
             CHECK(book == parsed_book);
         }
 
+        SECTION("via explicit calls to get_to")
+        {
+            udt::person person;
+            udt::name name;
+
+            json person_json = big_json["contacts"][0]["person"];
+            CHECK(person_json.get_to(person) == sfinae_addict);
+
+            // correct reference gets returned
+            person_json["name"].get_to(name).m_val = "new name";
+            CHECK(name.m_val == "new name");
+        }
+
         SECTION("implicit conversions")
         {
             const udt::contact_book parsed_book = big_json;
