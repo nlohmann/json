@@ -13697,6 +13697,52 @@ class basic_json
     }
 
     /*!
+    @brief get a value (explicit)
+
+    Explicit type conversion between the JSON value and a compatible value.
+    The value is filled into the input parameter by calling the @ref json_serializer<ValueType>
+    `from_json()` method.
+
+    The function is equivalent to executing
+    @code {.cpp}
+    ValueType v;
+    JSONSerializer<ValueType>::from_json(*this, v);
+    @endcode
+
+    This overloads is chosen if:
+    - @a ValueType is not @ref basic_json,
+    - @ref json_serializer<ValueType> has a `from_json()` method of the form
+      `void from_json(const basic_json&, ValueType&)`, and
+
+    @tparam ValueType the input parameter type.
+
+    @return the input parameter, allowing chaining calls.
+
+    @throw what @ref json_serializer<ValueType> `from_json()` method throws
+
+    @liveexample{The example below shows several conversions from JSON values
+    to other types. There a few things to note: (1) Floating-point numbers can
+    be converted to integers\, (2) A JSON array can be converted to a standard
+    `std::vector<short>`\, (3) A JSON object can be converted to C++
+    associative containers such as `std::unordered_map<std::string\,
+    json>`.,get_to}
+
+    @since version 3.3.0
+    */
+    template<typename ValueType,
+             detail::enable_if_t <
+                 not detail::is_basic_json<ValueType>::value and
+                 detail::has_from_json<basic_json_t, ValueType>::value,
+                 int> = 0>
+    ValueType & get_to(ValueType& v) const noexcept(noexcept(
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))
+    {
+        JSONSerializer<ValueType>::from_json(*this, v);
+        return v;
+    }
+
+
+    /*!
     @brief get a pointer value (explicit)
 
     Explicit pointer access to the internally stored JSON value. No copies are
