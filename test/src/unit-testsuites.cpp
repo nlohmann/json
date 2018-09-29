@@ -1346,13 +1346,11 @@ TEST_CASE("Big List of Naughty Strings")
     SECTION("roundtripping")
     {
         std::ifstream f("test/data/big-list-of-naughty-strings/blns.json");
+        std::string line;
 
-        while (not f.eof())
+        // read lines one by one, bail out on error or eof
+        while (getline(f, line))
         {
-            // read line
-            std::string line;
-            getline(f, line);
-
             // trim whitespace
             line = trim(line);
 
