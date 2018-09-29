@@ -6109,36 +6109,27 @@ class binary_reader
 
   private:
 
-    template<class OutputIt, class UnaryPredicate, class Gen>
-    OutputIt generate_until(OutputIt&& d_first, UnaryPredicate&& pred, Gen&& gen)
-    {
-        for (auto x = gen(); !pred(x); x = gen())
-        {
-            *d_first++ = x;
-        }
-
-        return d_first;
-    }
-
     /*!
     @return whether array creation completed
     */
     bool get_bson_cstr(string_t& result)
     {
-        bool success = true;
-        generate_until(std::back_inserter(result), [&success](char c)
-        {
-            return c == 0x00 || !success;
-        }, [this, &success]
+        auto out = std::back_inserter(result);
+        while (true)
         {
             get();
             if (JSON_UNLIKELY(not unexpect_eof()))
             {
-                success = false;
+                return false;
             }
-            return static_cast<char>(current);
-        });
-        return success;
+            if (current == 0x00)
+            {
+                return true;
+            }
+            *out++ = static_cast<char>(current);
+        }
+
+        return true;
     }
 
     bool parse_bson_entries(bool is_array)
