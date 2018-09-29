@@ -6161,7 +6161,7 @@ class binary_reader
                 case 0x01: // double
                 {
                     double number;
-                    get_number_little_endian(number);
+                    get_number<double, true>(number);
                     sax->number_float(static_cast<number_float_t>(number), "");
                 }
                 break;
@@ -6169,7 +6169,7 @@ class binary_reader
                 {
                     std::int32_t len;
                     string_t value;
-                    get_number_little_endian(len);
+                    get_number<std::int32_t, true>(len);
                     get_string(len - 1ul, value);
                     get();
                     sax->string(value);
@@ -6183,14 +6183,14 @@ class binary_reader
                 case 0x10: // int32
                 {
                     std::int32_t value;
-                    get_number_little_endian(value);
+                    get_number<std::int32_t, true>(value);
                     sax->number_integer(static_cast<std::int32_t>(value));
                 }
                 break;
                 case 0x12: // int64
                 {
                     std::int64_t value;
-                    get_number_little_endian(value);
+                    get_number<std::int64_t, true>(value);
                     sax->number_integer(static_cast<std::int64_t>(value));
                 }
                 break;
@@ -6217,7 +6217,7 @@ class binary_reader
     bool parse_bson_array()
     {
         std::int32_t documentSize;
-        get_number_little_endian(documentSize);
+        get_number<std::int32_t, true>(documentSize);
 
         if (JSON_UNLIKELY(not sax->start_array(-1)))
         {
@@ -6235,7 +6235,7 @@ class binary_reader
     bool parse_bson_internal()
     {
         std::int32_t documentSize;
-        get_number_little_endian(documentSize);
+        get_number<std::int32_t, true>(documentSize);
 
         if (JSON_UNLIKELY(not sax->start_object(-1)))
         {
@@ -7000,7 +7000,7 @@ class binary_reader
           bytes in CBOR, MessagePack, and UBJSON are stored in network order
           (big endian) and therefore need reordering on little endian systems.
     */
-    template<typename NumberType>
+    template<typename NumberType, bool InputIsLittleEndian = false>
     bool get_number(NumberType& result)
     {
         // step 1: read input into array with system's byte order
@@ -7014,7 +7014,7 @@ class binary_reader
             }
 
             // reverse byte order prior to conversion if necessary
-            if (is_little_endian)
+            if (is_little_endian && !InputIsLittleEndian)
             {
                 vec[sizeof(NumberType) - i - 1] = static_cast<uint8_t>(current);
             }
@@ -7029,34 +7029,6 @@ class binary_reader
         return true;
     }
 
-    template<typename NumberType>
-    bool get_number_little_endian(NumberType& result)
-    {
-        // step 1: read input into array with system's byte order
-        std::array<uint8_t, sizeof(NumberType)> vec;
-        for (std::size_t i = 0; i < sizeof(NumberType); ++i)
-        {
-            get();
-            if (JSON_UNLIKELY(not unexpect_eof()))
-            {
-                return false;
-            }
-
-            // reverse byte order prior to conversion if necessary
-            if (!is_little_endian)
-            {
-                vec[sizeof(NumberType) - i - 1] = static_cast<uint8_t>(current);
-            }
-            else
-            {
-                vec[i] = static_cast<uint8_t>(current); // LCOV_EXCL_LINE
-            }
-        }
-
-        // step 2: convert array into number of type T and return
-        std::memcpy(&result, vec.data(), sizeof(NumberType));
-        return true;
-    }
 
     /*!
     @brief create a string by reading characters from the input
