@@ -41,7 +41,7 @@ TEST_CASE("iterator_wrapper")
             json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : j.items())
             {
                 switch (counter++)
                 {
@@ -74,7 +74,7 @@ TEST_CASE("iterator_wrapper")
             json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : j.items())
             {
                 switch (counter++)
                 {
@@ -118,7 +118,7 @@ TEST_CASE("iterator_wrapper")
             json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : j.items())
             {
                 switch (counter++)
                 {
@@ -151,7 +151,7 @@ TEST_CASE("iterator_wrapper")
             json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (const auto& i : json::iterator_wrapper(j))
+            for (const auto& i : j.items())
             {
                 switch (counter++)
                 {
@@ -187,7 +187,7 @@ TEST_CASE("iterator_wrapper")
             const json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : j.items())
             {
                 switch (counter++)
                 {
@@ -220,7 +220,7 @@ TEST_CASE("iterator_wrapper")
             const json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : j.items())
             {
                 switch (counter++)
                 {
@@ -253,7 +253,7 @@ TEST_CASE("iterator_wrapper")
             const json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : j.items())
             {
                 switch (counter++)
                 {
@@ -286,7 +286,7 @@ TEST_CASE("iterator_wrapper")
             const json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (const auto& i : json::iterator_wrapper(j))
+            for (const auto& i : j.items())
             {
                 switch (counter++)
                 {
@@ -322,7 +322,7 @@ TEST_CASE("iterator_wrapper")
             json j = {"A", "B"};
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : j.items())
             {
                 switch (counter++)
                 {
@@ -355,7 +355,7 @@ TEST_CASE("iterator_wrapper")
             json j = {"A", "B"};
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : j.items())
             {
                 switch (counter++)
                 {
@@ -399,7 +399,7 @@ TEST_CASE("iterator_wrapper")
             json j = {"A", "B"};
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : j.items())
             {
                 switch (counter++)
                 {
@@ -432,7 +432,7 @@ TEST_CASE("iterator_wrapper")
             json j = {"A", "B"};
             int counter = 1;
 
-            for (const auto& i : json::iterator_wrapper(j))
+            for (const auto& i : j.items())
             {
                 switch (counter++)
                 {
@@ -468,7 +468,7 @@ TEST_CASE("iterator_wrapper")
             const json j = {"A", "B"};
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : j.items())
             {
                 switch (counter++)
                 {
@@ -501,7 +501,7 @@ TEST_CASE("iterator_wrapper")
             const json j = {"A", "B"};
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : j.items())
             {
                 switch (counter++)
                 {
@@ -534,7 +534,7 @@ TEST_CASE("iterator_wrapper")
             const json j = {"A", "B"};
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : j.items())
             {
                 switch (counter++)
                 {
@@ -567,7 +567,7 @@ TEST_CASE("iterator_wrapper")
             const json j = {"A", "B"};
             int counter = 1;
 
-            for (const auto& i : json::iterator_wrapper(j))
+            for (const auto& i : j.items())
             {
                 switch (counter++)
                 {
@@ -603,7 +603,7 @@ TEST_CASE("iterator_wrapper")
             json j = 1;
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : j.items())
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -618,7 +618,7 @@ TEST_CASE("iterator_wrapper")
             json j = 1;
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : j.items())
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -639,7 +639,7 @@ TEST_CASE("iterator_wrapper")
             json j = 1;
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : j.items())
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -654,7 +654,7 @@ TEST_CASE("iterator_wrapper")
             json j = 1;
             int counter = 1;
 
-            for (const auto& i : json::iterator_wrapper(j))
+            for (const auto& i : j.items())
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -672,7 +672,7 @@ TEST_CASE("iterator_wrapper")
             const json j = 1;
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : j.items())
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -687,7 +687,7 @@ TEST_CASE("iterator_wrapper")
             const json j = 1;
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : j.items())
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -702,7 +702,7 @@ TEST_CASE("iterator_wrapper")
             const json j = 1;
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : j.items())
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -717,7 +717,7 @@ TEST_CASE("iterator_wrapper")
             const json j = 1;
             int counter = 1;
 
-            for (const auto& i : json::iterator_wrapper(j))
+            for (const auto& i : j.items())
             {
                 ++counter;
                 CHECK(i.key() == "");
