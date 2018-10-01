@@ -69,7 +69,7 @@ TEST_CASE("serialization")
         {
             std::stringstream ss;
             json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
-            j >> ss;
+            ss << j;
             CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
         }
 
@@ -78,7 +78,7 @@ TEST_CASE("serialization")
             std::stringstream ss;
             json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
             ss.width(4);
-            j >> ss;
+            ss << j;
             CHECK(ss.str() ==
                   "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
         }
@@ -89,7 +89,7 @@ TEST_CASE("serialization")
             json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
             ss.width(1);
             ss.fill('\t');
-            j >> ss;
+            ss << j;
             CHECK(ss.str() ==
                   "[\n\t\"foo\",\n\t1,\n\t2,\n\t3,\n\tfalse,\n\t{\n\t\t\"one\": 1\n\t}\n]");
         }

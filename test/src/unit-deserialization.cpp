@@ -236,7 +236,7 @@ TEST_CASE("deserialization")
             std::stringstream ss;
             ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
             json j;
-            j << ss;
+            ss >> j;
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
         }
 
@@ -316,8 +316,8 @@ TEST_CASE("deserialization")
             ss1 << "[\"foo\",1,2,3,false,{\"one\":1}";
             ss2 << "[\"foo\",1,2,3,false,{\"one\":1}";
             json j;
-            CHECK_THROWS_AS(j << ss1, json::parse_error&);
-            CHECK_THROWS_WITH(j << ss2,
+            CHECK_THROWS_AS(ss1 >> j, json::parse_error&);
+            CHECK_THROWS_WITH(ss2 >> j,
                               "[json.exception.parse_error.101] parse error at 29: syntax error - unexpected end of input; expected ']'");
         }
 
@@ -959,9 +959,9 @@ TEST_CASE("deserialization")
         {
             std::istringstream s(bom + "123 456");
             json j;
-            j << s;
+            s >> j;
             CHECK(j == 123);
-            j << s;
+            s >> j;
             CHECK(j == 456);
         }
     }
