@@ -96,21 +96,20 @@ foreach(file ${files})
     string(REGEX REPLACE "unit-([^$]+)" "test-\\1" testcase ${file_basename})
 
     add_executable(${testcase} $<TARGET_OBJECTS:catch_main> ${file})
-    set_target_properties(${testcase} PROPERTIES
-        COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
-        COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
+    target_compile_definitions(${testcase} PRIVATE
+      CATCH_CONFIG_FAST_COMPILE
+      $<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>
     )
-
-    target_compile_definitions(${testcase} PRIVATE CATCH_CONFIG_FAST_COMPILE)
-    target_compile_features(${testcase} PRIVATE cxx_std_11)
-    target_include_directories(${testcase} PRIVATE "thirdparty/catch")
-    target_include_directories(${testcase} PRIVATE "thirdparty/fifo_map")
-    target_include_directories(${testcase} PRIVATE ${NLOHMANN_JSON_INCLUDE_BUILD_DIR})
+    target_compile_options(${testcase} PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
+        $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+    )
+    target_include_directories(${testcase} PRIVATE
+        thirdparty/catch
+        thirdparty/fifo_map
+    )
     target_link_libraries(${testcase} ${NLOHMANN_JSON_TARGET_NAME})
-
-    if(NOT MSVC)
-        set_target_properties(${testcase} PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-float-equal")
-    endif()
 
     add_test(NAME "${testcase}_default"
       COMMAND ${testcase} ${CATCH_TEST_FILTER}
@@ -131,7 +130,6 @@ foreach(file ${files})
         )
         set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
     endif()
-
 endforeach()
 
 #############################################################################
