@@ -115,51 +115,6 @@ class input_buffer_adapter : public input_adapter_protocol
     const char* const limit;
 };
 
-template<typename WideStringType>
-class wide_string_input_adapter : public input_adapter_protocol
-{
-  public:
-    explicit wide_string_input_adapter(const WideStringType& w) : str(w) {}
-
-    std::char_traits<char>::int_type get_character() noexcept override
-    {
-        // check if buffer needs to be filled
-        if (utf8_bytes_index == utf8_bytes_filled)
-        {
-            fill_buffer<sizeof(typename WideStringType::value_type)>();
-
-            assert(utf8_bytes_filled > 0);
-            assert(utf8_bytes_index == 0);
-        }
-
-        // use buffer
-        assert(utf8_bytes_filled > 0);
-        assert(utf8_bytes_index < utf8_bytes_filled);
-        return utf8_bytes[utf8_bytes_index++];
-    }
-
-  private:
-    template<size_t T>
-    void fill_buffer()
-    {
-        wide_string_input_helper<WideStringType, T>::fill_buffer(str, current_wchar, utf8_bytes, utf8_bytes_index, utf8_bytes_filled);
-    }
-    
-    /// the wstring to process
-    const WideStringType& str;
-
-    /// index of the current wchar in str
-    std::size_t current_wchar = 0;
-
-    /// a buffer for UTF-8 bytes
-    std::array<std::char_traits<char>::int_type, 4> utf8_bytes = {{0, 0, 0, 0}};
-
-    /// index to the utf8_codes array for the next valid byte
-    std::size_t utf8_bytes_index = 0;
-    /// number of valid bytes in the utf8_codes array
-    std::size_t utf8_bytes_filled = 0;
-};
-
 namespace
 {
     template<typename WideStringType, size_t T>
@@ -278,6 +233,51 @@ namespace
         }
     };
 }
+
+template<typename WideStringType>
+class wide_string_input_adapter : public input_adapter_protocol
+{
+  public:
+    explicit wide_string_input_adapter(const WideStringType& w) : str(w) {}
+
+    std::char_traits<char>::int_type get_character() noexcept override
+    {
+        // check if buffer needs to be filled
+        if (utf8_bytes_index == utf8_bytes_filled)
+        {
+            fill_buffer<sizeof(typename WideStringType::value_type)>();
+
+            assert(utf8_bytes_filled > 0);
+            assert(utf8_bytes_index == 0);
+        }
+
+        // use buffer
+        assert(utf8_bytes_filled > 0);
+        assert(utf8_bytes_index < utf8_bytes_filled);
+        return utf8_bytes[utf8_bytes_index++];
+    }
+
+  private:
+    template<size_t T>
+    void fill_buffer()
+    {
+        wide_string_input_helper<WideStringType, T>::fill_buffer(str, current_wchar, utf8_bytes, utf8_bytes_index, utf8_bytes_filled);
+    }
+    
+    /// the wstring to process
+    const WideStringType& str;
+
+    /// index of the current wchar in str
+    std::size_t current_wchar = 0;
+
+    /// a buffer for UTF-8 bytes
+    std::array<std::char_traits<char>::int_type, 4> utf8_bytes = {{0, 0, 0, 0}};
+
+    /// index to the utf8_codes array for the next valid byte
+    std::size_t utf8_bytes_index = 0;
+    /// number of valid bytes in the utf8_codes array
+    std::size_t utf8_bytes_filled = 0;
+};
 
 class input_adapter
 {
