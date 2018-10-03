@@ -2004,14 +2004,7 @@ class wide_string_input_adapter : public input_adapter_protocol
         // check if buffer needs to be filled
         if (utf8_bytes_index == utf8_bytes_filled)
         {
-            if (sizeof(typename WideStringType::value_type) == 2)
-            {
-                fill_buffer_utf16();
-            }
-            else
-            {
-                fill_buffer_utf32();
-            }
+            fill_buffer(sizeof(typename WideStringType::value_type));
 
             assert(utf8_bytes_filled > 0);
             assert(utf8_bytes_index == 0);
@@ -2024,6 +2017,18 @@ class wide_string_input_adapter : public input_adapter_protocol
     }
 
   private:
+    void fill_buffer(size_t size)
+    {
+        if (2 == size)
+        {
+            fill_buffer_utf16();
+        }
+        else
+        {
+            fill_buffer_utf32();
+        }
+    }
+
     void fill_buffer_utf16()
     {
         utf8_bytes_index = 0;
