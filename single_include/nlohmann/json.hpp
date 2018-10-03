@@ -1993,124 +1993,121 @@ class input_buffer_adapter : public input_adapter_protocol
     const char* const limit;
 };
 
-namespace
+template<typename WideStringType, size_t T>
+struct wide_string_input_helper
 {
-    template<typename WideStringType, size_t T>
-    struct wide_string_input_helper
+    // UTF-32
+    static void fill_buffer(const WideStringType& str, size_t& current_wchar, std::array<std::char_traits<char>::int_type, 4>& utf8_bytes, size_t& utf8_bytes_index, size_t& utf8_bytes_filled)
     {
-        // UTF-32
-        static void fill_buffer(const WideStringType& str, size_t& current_wchar, std::array<std::char_traits<char>::int_type, 4>& utf8_bytes, size_t& utf8_bytes_index, size_t& utf8_bytes_filled)
-        {
-            utf8_bytes_index = 0;
+        utf8_bytes_index = 0;
 
-            if (current_wchar == str.size())
+        if (current_wchar == str.size())
+        {
+            utf8_bytes[0] = std::char_traits<char>::eof();
+            utf8_bytes_filled = 1;
+        }
+        else
+        {
+            // get the current character
+            const int wc = static_cast<int>(str[current_wchar++]);
+
+            // UTF-32 to UTF-8 encoding
+            if (wc < 0x80)
             {
-                utf8_bytes[0] = std::char_traits<char>::eof();
+                utf8_bytes[0] = wc;
                 utf8_bytes_filled = 1;
+            }
+            else if (wc <= 0x7FF)
+            {
+                utf8_bytes[0] = 0xC0 | ((wc >> 6) & 0x1F);
+                utf8_bytes[1] = 0x80 | (wc & 0x3F);
+                utf8_bytes_filled = 2;
+            }
+            else if (wc <= 0xFFFF)
+            {
+                utf8_bytes[0] = 0xE0 | ((wc >> 12) & 0x0F);
+                utf8_bytes[1] = 0x80 | ((wc >> 6) & 0x3F);
+                utf8_bytes[2] = 0x80 | (wc & 0x3F);
+                utf8_bytes_filled = 3;
+            }
+            else if (wc <= 0x10FFFF)
+            {
+                utf8_bytes[0] = 0xF0 | ((wc >> 18) & 0x07);
+                utf8_bytes[1] = 0x80 | ((wc >> 12) & 0x3F);
+                utf8_bytes[2] = 0x80 | ((wc >> 6) & 0x3F);
+                utf8_bytes[3] = 0x80 | (wc & 0x3F);
+                utf8_bytes_filled = 4;
             }
             else
             {
-                // get the current character
-                const int wc = static_cast<int>(str[current_wchar++]);
+                // unknown character
+                utf8_bytes[0] = wc;
+                utf8_bytes_filled = 1;
+            }
+        }
+    }
+};
 
-                // UTF-32 to UTF-8 encoding
-                if (wc < 0x80)
+template<typename WideStringType>
+struct wide_string_input_helper<WideStringType, 2>
+{
+    // UTF-16
+    static void fill_buffer(const WideStringType& str, size_t& current_wchar, std::array<std::char_traits<char>::int_type, 4>& utf8_bytes, size_t& utf8_bytes_index, size_t& utf8_bytes_filled)
+    {
+        utf8_bytes_index = 0;
+
+        if (current_wchar == str.size())
+        {
+            utf8_bytes[0] = std::char_traits<char>::eof();
+            utf8_bytes_filled = 1;
+        }
+        else
+        {
+            // get the current character
+            const int wc = static_cast<int>(str[current_wchar++]);
+
+            // UTF-16 to UTF-8 encoding
+            if (wc < 0x80)
+            {
+                utf8_bytes[0] = wc;
+                utf8_bytes_filled = 1;
+            }
+            else if (wc <= 0x7FF)
+            {
+                utf8_bytes[0] = 0xC0 | ((wc >> 6));
+                utf8_bytes[1] = 0x80 | (wc & 0x3F);
+                utf8_bytes_filled = 2;
+            }
+            else if (0xD800 > wc or wc >= 0xE000)
+            {
+                utf8_bytes[0] = 0xE0 | ((wc >> 12));
+                utf8_bytes[1] = 0x80 | ((wc >> 6) & 0x3F);
+                utf8_bytes[2] = 0x80 | (wc & 0x3F);
+                utf8_bytes_filled = 3;
+            }
+            else
+            {
+                if (current_wchar < str.size())
                 {
-                    utf8_bytes[0] = wc;
-                    utf8_bytes_filled = 1;
-                }
-                else if (wc <= 0x7FF)
-                {
-                    utf8_bytes[0] = 0xC0 | ((wc >> 6) & 0x1F);
-                    utf8_bytes[1] = 0x80 | (wc & 0x3F);
-                    utf8_bytes_filled = 2;
-                }
-                else if (wc <= 0xFFFF)
-                {
-                    utf8_bytes[0] = 0xE0 | ((wc >> 12) & 0x0F);
-                    utf8_bytes[1] = 0x80 | ((wc >> 6) & 0x3F);
-                    utf8_bytes[2] = 0x80 | (wc & 0x3F);
-                    utf8_bytes_filled = 3;
-                }
-                else if (wc <= 0x10FFFF)
-                {
-                    utf8_bytes[0] = 0xF0 | ((wc >> 18) & 0x07);
-                    utf8_bytes[1] = 0x80 | ((wc >> 12) & 0x3F);
-                    utf8_bytes[2] = 0x80 | ((wc >> 6) & 0x3F);
-                    utf8_bytes[3] = 0x80 | (wc & 0x3F);
+                    const int wc2 = static_cast<int>(str[current_wchar++]);
+                    const int charcode = 0x10000 + (((wc & 0x3FF) << 10) | (wc2 & 0x3FF));
+                    utf8_bytes[0] = 0xf0 | (charcode >> 18);
+                    utf8_bytes[1] = 0x80 | ((charcode >> 12) & 0x3F);
+                    utf8_bytes[2] = 0x80 | ((charcode >> 6) & 0x3F);
+                    utf8_bytes[3] = 0x80 | (charcode & 0x3F);
                     utf8_bytes_filled = 4;
                 }
                 else
                 {
                     // unknown character
+                    ++current_wchar;
                     utf8_bytes[0] = wc;
                     utf8_bytes_filled = 1;
                 }
             }
         }
-    };
-
-    template<typename WideStringType>
-    struct wide_string_input_helper<WideStringType, 2>
-    {
-        // UTF-16
-        static void fill_buffer(const WideStringType& str, size_t& current_wchar, std::array<std::char_traits<char>::int_type, 4>& utf8_bytes, size_t& utf8_bytes_index, size_t& utf8_bytes_filled)
-        {
-            utf8_bytes_index = 0;
-
-            if (current_wchar == str.size())
-            {
-                utf8_bytes[0] = std::char_traits<char>::eof();
-                utf8_bytes_filled = 1;
-            }
-            else
-            {
-                // get the current character
-                const int wc = static_cast<int>(str[current_wchar++]);
-
-                // UTF-16 to UTF-8 encoding
-                if (wc < 0x80)
-                {
-                    utf8_bytes[0] = wc;
-                    utf8_bytes_filled = 1;
-                }
-                else if (wc <= 0x7FF)
-                {
-                    utf8_bytes[0] = 0xC0 | ((wc >> 6));
-                    utf8_bytes[1] = 0x80 | (wc & 0x3F);
-                    utf8_bytes_filled = 2;
-                }
-                else if (0xD800 > wc or wc >= 0xE000)
-                {
-                    utf8_bytes[0] = 0xE0 | ((wc >> 12));
-                    utf8_bytes[1] = 0x80 | ((wc >> 6) & 0x3F);
-                    utf8_bytes[2] = 0x80 | (wc & 0x3F);
-                    utf8_bytes_filled = 3;
-                }
-                else
-                {
-                    if (current_wchar < str.size())
-                    {
-                        const int wc2 = static_cast<int>(str[current_wchar++]);
-                        const int charcode = 0x10000 + (((wc & 0x3FF) << 10) | (wc2 & 0x3FF));
-                        utf8_bytes[0] = 0xf0 | (charcode >> 18);
-                        utf8_bytes[1] = 0x80 | ((charcode >> 12) & 0x3F);
-                        utf8_bytes[2] = 0x80 | ((charcode >> 6) & 0x3F);
-                        utf8_bytes[3] = 0x80 | (charcode & 0x3F);
-                        utf8_bytes_filled = 4;
-                    }
-                    else
-                    {
-                        // unknown character
-                        ++current_wchar;
-                        utf8_bytes[0] = wc;
-                        utf8_bytes_filled = 1;
-                    }
-                }
-            }
-        }
-    };
-}
+    }
+};
 
 template<typename WideStringType>
 class wide_string_input_adapter : public input_adapter_protocol
