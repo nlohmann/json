@@ -2138,7 +2138,7 @@ class wide_string_input_adapter : public input_adapter_protocol
     {
         wide_string_input_helper<WideStringType, T>::fill_buffer(str, current_wchar, utf8_bytes, utf8_bytes_index, utf8_bytes_filled);
     }
-    
+
     /// the wstring to process
     const WideStringType& str;
 
@@ -2153,8 +2153,6 @@ class wide_string_input_adapter : public input_adapter_protocol
     /// number of valid bytes in the utf8_codes array
     std::size_t utf8_bytes_filled = 0;
 };
-
-
 
 class input_adapter
 {
