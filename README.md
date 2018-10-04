@@ -966,6 +966,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 9.1 | OSX 10.12.6 | Apple LLVM version 9.0.0 (clang-900.0.38) |
 | Clang Xcode 9.2 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.1) |
 | Clang Xcode 9.3 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.2) |
+| Clang Xcode 10.0 | OSX 10.13.3 | Apple LLVM version 10.0.0 (clang-1000.11.45.2) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 |
 | Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.7.180.61344, MSVC 19.14.26433.0 |
 
@@ -1116,7 +1117,7 @@ I deeply appreciate the help of the following people.
 - [Axel Huebl](https://github.com/ax3l) simplified a CMake check and added support for the [Spack package manager](https://spack.io).
 - [Carlos O'Ryan](https://github.com/coryan) fixed a typo.
 - [James Upjohn](https://github.com/jammehcow) fixed a version number in the compilers section.
-- [Chuck Atkins](https://github.com/chuckatkins) adjusted the CMake files to the CMake packaging guidelines
+- [Chuck Atkins](https://github.com/chuckatkins) adjusted the CMake files to the CMake packaging guidelines and provided documentation for the CMake integration.
 - [Jan Schöppach](https://github.com/dns13) fixed a typo.
 - [martin-mfg](https://github.com/martin-mfg) fixed a typo.
 - [Matthias Möller](https://github.com/TinyTinni) removed the dependency from `std::stringstream`.
@@ -1127,6 +1128,16 @@ I deeply appreciate the help of the following people.
 - [grembo](https://github.com/grembo) fixed the test suite and re-enabled several test cases.
 - [Hyeon Kim](https://github.com/simnalamburt) introduced the macro `JSON_INTERNAL_CATCH` to control the exception handling inside the library.
 - [thyu](https://github.com/thyu) fixed a compiler warning.
+- [David Guthrie](https://github.com/LEgregius) fixed a subtle compilation error with Clang 3.4.2.
+- [Dennis Fischer](https://github.com/dennisfischer) allowed to call `find_package` without installing the library.
+- [Hyeon Kim](https://github.com/simnalamburt) fixed an issue with a double macro definition.
+- [Ben Berman](https://github.com/rivertam) made some error messages more understandable.
+- [zakalibit](https://github.com/zakalibit) fixed a compilation problem with the Intel C++ compiler.
+- [mandreyel](https://github.com/mandreyel) fixed a compilation problem.
+- [Kostiantyn Ponomarenko](https://github.com/koponomarenko) added version and license information to the Meson build file.
+- [Henry Schreiner](https://github.com/henryiii) added support for GCC 4.8.
+- [knilch](https://github.com/knilch0r) made sure the test suite does not stall when run in the wrong directory.
+- [Antonio Borondo](https://github.com/antonioborondo) fixed an MSVC 2017 warning.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
