@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.2.0
+|  |  |__   |  |  | | | |  version 3.3.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -63,7 +63,7 @@ TEST_CASE("JSON patch")
             // is not an error, because "a" exists, and "b" will be added to
             // its value.
             CHECK_NOTHROW(doc1.patch(patch));
-            CHECK(doc1.patch(patch) == R"(
+            auto doc1_ans = R"(
                 {
                     "a": {
                         "foo": 1,
@@ -72,7 +72,8 @@ TEST_CASE("JSON patch")
                         }
                     }
                 }
-            )"_json);
+            )"_json;
+            CHECK(doc1.patch(patch) == doc1_ans);
 
             // It is an error in this document:
             json doc2 = R"({ "q": { "bar": 2 } })"_json;

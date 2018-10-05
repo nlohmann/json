@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.2.0
+|  |  |__   |  |  | | | |  version 3.3.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -296,6 +296,19 @@ TEST_CASE("basic usage", "[udt]")
             CHECK(contacts == book.m_contacts);
             CHECK(book_name == udt::name{"C++"});
             CHECK(book == parsed_book);
+        }
+
+        SECTION("via explicit calls to get_to")
+        {
+            udt::person person;
+            udt::name name;
+
+            json person_json = big_json["contacts"][0]["person"];
+            CHECK(person_json.get_to(person) == sfinae_addict);
+
+            // correct reference gets returned
+            person_json["name"].get_to(name).m_val = "new name";
+            CHECK(name.m_val == "new name");
         }
 
         SECTION("implicit conversions")
@@ -810,4 +823,10 @@ TEST_CASE("Issue #924")
 
     CHECK_NOTHROW(j.get<Evil>());
     CHECK_NOTHROW(j.get<std::vector<Evil>>());
+}
+
+TEST_CASE("Issue #1237")
+{
+    struct non_convertible_type {};
+    static_assert(not std::is_convertible<json, non_convertible_type>::value, "");
 }

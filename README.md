@@ -5,6 +5,7 @@
 [![Coverage Status](https://img.shields.io/coveralls/nlohmann/json.svg)](https://coveralls.io/r/nlohmann/json)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f3732b3327e34358a0e9d1fe9f661f08)](https://www.codacy.com/app/nlohmann/json?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
+[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/nlohmann/json.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/nlohmann/json/context:cpp)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/TarF5pPn9NtHQjhf)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
@@ -15,6 +16,8 @@
 
 - [Design goals](#design-goals)
 - [Integration](#integration)
+  - [CMake](#cmake)
+  - [Package Managers](#package-managers)
 - [Examples](#examples)
   - [JSON as first-class data type](#json-as-first-class-data-type)
   - [Serialization / Deserialization](#serialization--deserialization)
@@ -67,6 +70,71 @@ using json = nlohmann::json;
 to the files you want to process JSON and set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 
 You can further use file [`include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_fwd.hpp) for forward-declarations. The installation of json_fwd.hpp (as part of cmake's install step), can be achieved by setting `-DJSON_MultipleHeaders=ON`.
+
+### CMake
+
+You can also use the `nlohmann_json::nlohmann_json` interface target in CMake.  This target populates the appropriate usage requirements for `INTERFACE_INCLUDE_DIRECTORIES` to point to the appropriate include directories and `INTERFACE_COMPILE_FEATURES` for the necessary C++11 flags.
+
+#### External
+
+To use this library from a CMake project, you can locate it directly with `find_package()` and use the namespaced imported target from the generated package configuration:
+```cmake
+# CMakeLists.txt
+find_package(nlohmann_json 3.2.0 REQUIRED)
+...
+add_library(foo ...)
+...
+target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+```
+The package configuration file, `nlohmann_jsonConfig.cmake`, can be used either from an install tree or directly out of the build tree.
+
+#### Embedded
+
+To embed the library directly into an existing CMake project, place the entire source tree in a subdirectory and call `add_subdirectory()` in your `CMakeLists.txt` file:
+```cmake
+# Typically you don't care so much for a third party library's tests to be
+# run from your own project's code.
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+
+# Don't use include(nlohmann_json/CMakeLists.txt) since that carries with it
+# inintended consequences that will break the build.  It's generally
+# discouraged (although not necessarily well documented as such) to use
+# include(...) for pulling in other CMake projects anyways.
+add_subdirectory(nlohmann_json)
+...
+add_library(foo ...)
+...
+target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+```
+
+#### Supporting Both
+To allow your project to support either an externally supplied or an embedded JSON library, you can use a pattern akin to the following:
+``` cmake
+# Top level CMakeLists.txt
+project(FOO)
+...
+option(FOO_USE_EXTERNAL_JSON "Use an external JSON library" OFF)
+...
+add_subdirectory(thirdparty)
+...
+add_library(foo ...)
+...
+# Note that the namespaced target will always be available regardless of the
+# import method
+target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+```
+```cmake
+# thirdparty/CMakeLists.txt
+...
+if(FOO_USE_EXTERNAL_JSON)
+  find_package(nlohmann_json 3.2.0 REQUIRED)
+else()
+  set(JSON_BuildTests OFF CACHE INTERNAL "")
+  add_subdirectory(nlohmann_json)
+endif()
+...
+```
+`thirdparty/nlohmann_json` is then a complete copy of this source tree.
 
 ### Package Managers
 
@@ -226,12 +294,15 @@ json j_string = "this is a string";
 std::string cpp_string = j_string;
 // retrieve the string value (explicit JSON to std::string conversion)
 auto cpp_string2 = j_string.get<std::string>();
+// retrieve the string value (alternative explicit JSON to std::string conversion)
+std::string cpp_string3;
+j_string.get_to(cpp_string3);
 
 // retrieve the serialized value (explicit JSON serialization)
 std::string serialized_string = j_string.dump();
 
 // output of original string
-std::cout << cpp_string << " == " << cpp_string2 << " == " << j_string.get<std::string>() << '\n';
+std::cout << cpp_string << " == " << cpp_string2 << " == " << cpp_string3 << " == " << j_string.get<std::string>() << '\n';
 // output of serialized value
 std::cout << j_string << " == " << serialized_string << std::endl;
 ```
@@ -642,15 +713,15 @@ namespace ns {
     }
 
     void from_json(const json& j, person& p) {
-        p.name = j.at("name").get<std::string>();
-        p.address = j.at("address").get<std::string>();
-        p.age = j.at("age").get<int>();
+        j.at("name").get_to(p.name);
+        j.at("address").get_to(p.address);
+        j.at("age").get_to(p.age);
     }
 } // namespace ns
 ```
 
 That's all! When calling the `json` constructor with your type, your custom `to_json` method will be automatically called.
-Likewise, when calling `get<your_type>()`, the `from_json` method will be called.
+Likewise, when calling `get<your_type>()` or `get_to(your_type&)`, the `from_json` method will be called.
 
 Some important things:
 
@@ -658,9 +729,8 @@ Some important things:
 * Those methods **MUST** be available (e.g., properly headers must be included) everywhere you use the implicit conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
 * When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
 * In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
-* In case your type contains several `operator=` definitions, code like `your_variable = your_json;` [may not compile](https://github.com/nlohmann/json/issues/667). You need to write `your_variable = your_json.get<decltype your_variable>();` instead.
+* In case your type contains several `operator=` definitions, code like `your_variable = your_json;` [may not compile](https://github.com/nlohmann/json/issues/667). You need to write `your_variable = your_json.get<decltype(your_variable)>();` or `your_json.get_to(your_variable);` instead.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
-* Be careful with the definition order of the `from_json`/`to_json` functions: If a type `B` has a member of type `A`, you **MUST** define `to_json(A)` before `to_json(B)`. Look at [issue 561](https://github.com/nlohmann/json/issues/561) for more details.
 
 
 #### How do I convert third-party types?
@@ -842,7 +912,7 @@ json j_from_ubjson = json::from_ubjson(v_ubjson);
 
 Though it's 2018 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.9 - 8.2 (and possibly later)
+- GCC 4.8 - 8.2 (and possibly later)
 - Clang 3.4 - 6.1 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
@@ -852,7 +922,7 @@ I would be happy to learn about other compilers/versions.
 
 Please note:
 
-- GCC 4.8 does not work because of two bugs ([55817](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55817) and [57824](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57824)) in the C++11 support. Note there is a [pull request](https://github.com/nlohmann/json/pull/212) to fix some of the issues.
+- GCC 4.8 has a bug [57824](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57824)): multiline raw strings cannot be the arguments to macros. Don't use multiline raw strings directly in macros with this compiler.
 - Android defaults to using very old compilers and C++ libraries. To fix this, add the following to your `Application.mk`. This will switch to the LLVM C++ library, the Clang compiler, and enable C++11 and other features disabled by default.
 
     ```
@@ -871,6 +941,7 @@ The following compilers are currently used in continuous integration at [Travis]
 
 | Compiler        | Operating System             | Version String |
 |-----------------|------------------------------|----------------|
+| GCC 4.8.5       | Ubuntu 14.04.5 LTS           | g++-4.8 (Ubuntu 4.8.5-2ubuntu1~14.04.2) 4.8.5 |
 | GCC 4.9.4       | Ubuntu 14.04.1 LTS           | g++-4.9 (Ubuntu 4.9.4-2ubuntu1~14.04.1) 4.9.4 |
 | GCC 5.5.0       | Ubuntu 14.04.1 LTS           | g++-5 (Ubuntu 5.5.0-12ubuntu1~14.04) 5.5.0 20171010 |
 | GCC 6.4.0       | Ubuntu 14.04.1 LTS           | g++-6 (Ubuntu 6.4.0-17ubuntu1~14.04) 6.4.0 20180424 |
@@ -895,6 +966,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 9.1 | OSX 10.12.6 | Apple LLVM version 9.0.0 (clang-900.0.38) |
 | Clang Xcode 9.2 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.1) |
 | Clang Xcode 9.3 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.2) |
+| Clang Xcode 10.0 | OSX 10.13.3 | Apple LLVM version 10.0.0 (clang-1000.11.45.2) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 |
 | Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.7.180.61344, MSVC 19.14.26433.0 |
 
@@ -1045,7 +1117,7 @@ I deeply appreciate the help of the following people.
 - [Axel Huebl](https://github.com/ax3l) simplified a CMake check and added support for the [Spack package manager](https://spack.io).
 - [Carlos O'Ryan](https://github.com/coryan) fixed a typo.
 - [James Upjohn](https://github.com/jammehcow) fixed a version number in the compilers section.
-- [Chuck Atkins](https://github.com/chuckatkins) adjusted the CMake files to the CMake packaging guidelines
+- [Chuck Atkins](https://github.com/chuckatkins) adjusted the CMake files to the CMake packaging guidelines and provided documentation for the CMake integration.
 - [Jan Schöppach](https://github.com/dns13) fixed a typo.
 - [martin-mfg](https://github.com/martin-mfg) fixed a typo.
 - [Matthias Möller](https://github.com/TinyTinni) removed the dependency from `std::stringstream`.
@@ -1056,6 +1128,16 @@ I deeply appreciate the help of the following people.
 - [grembo](https://github.com/grembo) fixed the test suite and re-enabled several test cases.
 - [Hyeon Kim](https://github.com/simnalamburt) introduced the macro `JSON_INTERNAL_CATCH` to control the exception handling inside the library.
 - [thyu](https://github.com/thyu) fixed a compiler warning.
+- [David Guthrie](https://github.com/LEgregius) fixed a subtle compilation error with Clang 3.4.2.
+- [Dennis Fischer](https://github.com/dennisfischer) allowed to call `find_package` without installing the library.
+- [Hyeon Kim](https://github.com/simnalamburt) fixed an issue with a double macro definition.
+- [Ben Berman](https://github.com/rivertam) made some error messages more understandable.
+- [zakalibit](https://github.com/zakalibit) fixed a compilation problem with the Intel C++ compiler.
+- [mandreyel](https://github.com/mandreyel) fixed a compilation problem.
+- [Kostiantyn Ponomarenko](https://github.com/koponomarenko) added version and license information to the Meson build file.
+- [Henry Schreiner](https://github.com/henryiii) added support for GCC 4.8.
+- [knilch](https://github.com/knilch0r) made sure the test suite does not stall when run in the wrong directory.
+- [Antonio Borondo](https://github.com/antonioborondo) fixed an MSVC 2017 warning.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

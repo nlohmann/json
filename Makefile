@@ -191,7 +191,10 @@ pedantic_gcc:
 		-Wunused-macros \
 		-Wunused-parameter \
 		-Wuseless-cast \
-		-Wvariadic-macros"
+		-Wvariadic-macros \
+		-Wctor-dtor-privacy \
+		-Winit-self \
+		-Wstrict-null-sentinel"
 
 ##########################################################################
 # benchmarks
