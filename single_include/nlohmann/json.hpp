@@ -6354,16 +6354,19 @@ class binary_reader
 
             case 0xF9: // Half-Precision Float (two-byte IEEE 754)
             {
-                const int byte1 = get();
+                const int byte1_raw = get();
                 if (JSON_UNLIKELY(not unexpect_eof()))
                 {
                     return false;
                 }
-                const int byte2 = get();
+                const int byte2_raw = get();
                 if (JSON_UNLIKELY(not unexpect_eof()))
                 {
                     return false;
                 }
+
+                const unsigned char byte1 = static_cast<unsigned char>(byte1_raw);
+                const unsigned char byte2 = static_cast<unsigned char>(byte2_raw);
 
                 // code from RFC 7049, Appendix D, Figure 3:
                 // As half-precision floating-point numbers were only added
