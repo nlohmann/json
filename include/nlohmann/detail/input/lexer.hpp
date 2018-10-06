@@ -92,13 +92,11 @@ class lexer
                 return "end of input";
             case token_type::literal_or_value:
                 return "'[', '{', or a literal";
-            // LCOV_EXCL_START
             default: // catch non-enum values
-                return "unknown token";
-                // LCOV_EXCL_STOP
+                return "unknown token"; // LCOV_EXCL_LINE
         }
     }
-
+    
     explicit lexer(detail::input_adapter_t&& adapter)
         : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
 
@@ -747,13 +745,11 @@ class lexer
                 goto scan_number_any1;
             }
 
-            // LCOV_EXCL_START
             default:
             {
                 // all other characters are rejected outside scan_number()
-                assert(false);
+                assert(false); // LCOV_EXCL_LINE
             }
-                // LCOV_EXCL_STOP
         }
 
 scan_number_minus:
@@ -1082,7 +1078,8 @@ scan_number_done:
     */
     std::char_traits<char>::int_type get()
     {
-        ++chars_read;
+        ++position.chars_read;
+        ++position.chars_read_this_line;
         if (next_unget)
         {
             // just reset the next_unget variable and work with current
@@ -1097,6 +1094,13 @@ scan_number_done:
         {
             token_string.push_back(std::char_traits<char>::to_char_type(current));
         }
+        
+        if ( current == '\n' )
+        {
+            ++position.lines_read ;
+            position.chars_read_this_line = 0 ;
+        }
+        
         return current;
     }
 
@@ -1111,11 +1115,17 @@ scan_number_done:
     void unget()
     {
         next_unget = true;
-        --chars_read;
+        --position.chars_read;
+        --position.chars_read_this_line;
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
             assert(token_string.size() != 0);
             token_string.pop_back();
+        }
+        if ( (position.lines_read != 0 ) && (position.chars_read_this_line == 0) )
+        {
+            // chars_read_this_line will be invalid, but reset the next get()
+            --position.lines_read ;
         }
     }
 
@@ -1159,9 +1169,9 @@ scan_number_done:
     /////////////////////
 
     /// return position of last read token
-    constexpr std::size_t get_position() const noexcept
+    constexpr input_position get_position() const noexcept
     {
-        return chars_read;
+        return position ;
     }
 
     /// return the last read token (for errors only).  Will never contain EOF
@@ -1177,7 +1187,7 @@ scan_number_done:
             {
                 // escape control characters
                 char cs[9];
-                snprintf(cs, 9, "<U+%.4X>", static_cast<unsigned char>(c));
+                snprintf(cs, 9, "<U+%.4hhX>", static_cast<unsigned char>(c));
                 result += cs;
             }
             else
@@ -1231,7 +1241,7 @@ scan_number_done:
     token_type scan()
     {
         // initially, skip the BOM
-        if (chars_read == 0 and not skip_bom())
+        if (position.chars_read == 0 and not skip_bom())
         {
             error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
             return token_type::parse_error;
@@ -1309,9 +1319,9 @@ scan_number_done:
     /// whether the next get() call should just return current
     bool next_unget = false;
 
-    /// the number of characters read
-    std::size_t chars_read = 0;
-
+    /// the current location in the input (defined in exceptions.hpp)
+    input_position position {0,0,0} ;
+    
     /// raw input token string (for error messages)
     std::vector<char> token_string {};
 
