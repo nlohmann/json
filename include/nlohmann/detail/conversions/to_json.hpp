@@ -306,7 +306,7 @@ void to_json(BasicJsonType& j, const std::pair<Args...>& p)
 // for https://github.com/nlohmann/json/pull/1134
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_same<T, typename iteration_proxy<typename BasicJsonType::iterator>::iteration_proxy_internal>::value, int> = 0>
-void to_json(BasicJsonType& j, T b) noexcept
+void to_json(BasicJsonType& j, const T& b)
 {
     j = {{b.key(), b.value()}};
 }

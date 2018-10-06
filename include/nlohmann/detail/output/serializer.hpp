@@ -442,7 +442,7 @@ class serializer
             return;
         }
 
-        const bool is_negative = not (x >= 0);  // see issue #755
+        const bool is_negative = std::is_same<NumberType, number_integer_t>::value and not (x >= 0);  // see issue #755
         std::size_t i = 0;
 
         while (x != 0)
