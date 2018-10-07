@@ -9,6 +9,7 @@
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>
 
+
 namespace nlohmann
 {
 namespace detail
@@ -676,187 +677,278 @@ class binary_writer
         }
     }
 
-    std::size_t write_bson_boolean(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    /*!
+    @return The size of a BSON document entry header, including the id marker and the entry name size (and its null-terminator).
+    */
+    static std::size_t calc_bson_entry_header_size(const typename BasicJsonType::string_t& name)
     {
-        oa->write_character(static_cast<CharType>(0x08)); // boolean
+        return /*id*/ 1ul + name.size() + /*zero-terminator*/1u;
+    }
+
+    /*!
+    @brief Writes the given @a element_type and @a name to the output adapter
+    */
+    void write_bson_entry_header(const typename BasicJsonType::string_t& name, std::uint8_t element_type)
+    {
+        oa->write_character(static_cast<CharType>(element_type)); // boolean
         oa->write_characters(
             reinterpret_cast<const CharType*>(name.c_str()),
             name.size() + 1u);
-        oa->write_character(j.m_value.boolean ? static_cast<CharType>(0x01) : static_cast<CharType>(0x00));
-        return /*id*/ 1ul + name.size() + 1u + /*boolean value*/ 1u;
     }
 
-    std::size_t write_bson_double(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    /*!
+    @brief Writes a BSON element with key @a name and boolean value @a value
+    */
+    void write_bson_boolean(const typename BasicJsonType::string_t& name, const bool value)
     {
-        oa->write_character(static_cast<CharType>(0x01)); // double
-        oa->write_characters(
-            reinterpret_cast<const CharType*>(name.c_str()),
-            name.size() + 1u);
-        write_number<decltype(j.m_value.number_float), true>(j.m_value.number_float);
-        return /*id*/ 1ul + name.size() + 1u + /*double value*/ 8u;
+        write_bson_entry_header(name, 0x08);
+        oa->write_character(value ? static_cast<CharType>(0x01) : static_cast<CharType>(0x00));
     }
 
-    std::size_t write_bson_string(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    /*!
+    @brief Writes a BSON element with key @a name and double value @a value
+    */
+    void write_bson_double(const typename BasicJsonType::string_t& name, const double value)
     {
-        oa->write_character(static_cast<CharType>(0x02)); // string (UTF-8)
-        oa->write_characters(
-            reinterpret_cast<const CharType*>(name.c_str()),
-            name.size() + 1u);
-
-        write_number<std::int32_t, true>(static_cast<std::int32_t>(j.m_value.string->size() + 1ul));
-        oa->write_characters(
-            reinterpret_cast<const CharType*>(j.m_value.string->c_str()),
-            j.m_value.string->size() + 1);
-
-        return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int32_t) + j.m_value.string->size() + 1ul;
+        write_bson_entry_header(name, 0x01);
+        write_number<double, true>(value);
     }
 
-    std::size_t write_bson_null(const typename BasicJsonType::string_t& name, const BasicJsonType&)
+    /*!
+    @return The size of the BSON-encoded string in @a value
+    */
+    static std::size_t calc_bson_string_size(const typename BasicJsonType::string_t& value)
     {
-        oa->write_character(static_cast<CharType>(0x0A)); // null
-        oa->write_characters(
-            reinterpret_cast<const CharType*>(name.c_str()),
-            name.size() + 1u);
-
-        return /*id*/ 1ul + name.size() + 1ul;
+        return sizeof(std::int32_t) + value.size() + 1ul;
     }
 
-    std::size_t write_bson_integer(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    /*!
+    @brief Writes a BSON element with key @a name and string value @a value
+    */
+    void write_bson_string(const typename BasicJsonType::string_t& name, const typename BasicJsonType::string_t& value)
     {
-        auto n = j.m_value.number_integer;
-        if ((std::numeric_limits<int32_t>::min)() <= n and n <= (std::numeric_limits<int32_t>::max)())
+        write_bson_entry_header(name, 0x02);
+
+        write_number<std::int32_t, true>(static_cast<std::int32_t>(value.size() + 1ul));
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(value.c_str()),
+            value.size() + 1);
+    }
+
+    /*!
+    @brief Writes a BSON element with key @a name and null value
+    */
+    void write_bson_null(const typename BasicJsonType::string_t& name)
+    {
+        write_bson_entry_header(name, 0x0A);
+    }
+
+    /*!
+    @return The size of the BSON-encoded integer @a value
+    */
+    static std::size_t calc_bson_integer_size(const std::int64_t value)
+    {
+        if ((std::numeric_limits<std::int32_t>::min)() <= value and value <= (std::numeric_limits<std::int32_t>::max)())
         {
-            oa->write_character(static_cast<CharType>(0x10)); // int32
-            oa->write_characters(
-                reinterpret_cast<const CharType*>(name.c_str()),
-                name.size() + 1u);
-
-            write_number<std::int32_t, true>(static_cast<std::int32_t>(n));
-
-            return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int32_t);
+            return sizeof(std::int32_t);
         }
         else
         {
-            oa->write_character(static_cast<CharType>(0x12)); // int64
-            oa->write_characters(
-                reinterpret_cast<const CharType*>(name.c_str()),
-                name.size() + 1u);
-
-            write_number<std::int64_t, true>(static_cast<std::int64_t>(j.m_value.number_integer));
-
-            return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int64_t);
+            return sizeof(std::int64_t);
         }
     }
 
-    std::size_t write_bson_unsigned(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    /*!
+    @brief Writes a BSON element with key @a name and integer @a value
+    */
+    void write_bson_integer(const typename BasicJsonType::string_t& name, const std::int64_t value)
     {
-        auto n = j.m_value.number_integer;
-        if (n <= static_cast<uint64_t>((std::numeric_limits<uint32_t>::max)()))
+        if ((std::numeric_limits<std::int32_t>::min)() <= value and value <= (std::numeric_limits<std::int32_t>::max)())
         {
-            oa->write_character(static_cast<CharType>(0x10)); // int32
-            oa->write_characters(
-                reinterpret_cast<const CharType*>(name.c_str()),
-                name.size() + 1u);
-
-            write_number<std::int32_t, true>(static_cast<std::int32_t>(n));
-
-            return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int32_t);
+            write_bson_entry_header(name, 0x10); // int32
+            write_number<std::int32_t, true>(static_cast<std::int32_t>(value));
         }
         else
         {
-            oa->write_character(static_cast<CharType>(0x12)); // int64
-            oa->write_characters(
-                reinterpret_cast<const CharType*>(name.c_str()),
-                name.size() + 1u);
-
-            write_number<std::int64_t, true>(static_cast<std::int64_t>(j.m_value.number_integer));
-
-            return /*id*/ 1ul + name.size() + 1ul + sizeof(std::int64_t);
+            write_bson_entry_header(name, 0x12); // int64
+            write_number<std::int64_t, true>(static_cast<std::int64_t>(value));
         }
     }
 
-    std::size_t write_bson_object_internal(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+
+    /*!
+    @return The size of the BSON-encoded unsigned integer in @a j
+    */
+    static std::size_t calc_bson_unsigned_size(const std::uint64_t value)
     {
-        oa->write_character(static_cast<CharType>(0x03)); // object
-        oa->write_characters(
-            reinterpret_cast<const CharType*>(name.c_str()),
-            name.size() + 1u);
-
-        auto const embedded_document_size = write_bson_object(j);
-
-        return /*id*/ 1ul + name.size() + 1ul + embedded_document_size;
+        if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
+        {
+            return sizeof(std::int32_t);
+        }
+        else
+        {
+            return sizeof(std::int64_t);
+        }
     }
 
-    std::size_t write_bson_array(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    /*!
+    @brief Writes a BSON element with key @a name and unsigned @a value
+    */
+    void write_bson_unsigned(const typename BasicJsonType::string_t& name, const std::uint64_t value)
     {
-        oa->write_character(static_cast<CharType>(0x04)); // object
-        oa->write_characters(
-            reinterpret_cast<const CharType*>(name.c_str()),
-            name.size() + 1u);
-
-
-        auto document_size_offset = oa->reserve_characters(4ul);
-        std::int32_t embedded_document_size = 5ul;
-
-        for (const auto& el : *j.m_value.array)
+        if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
         {
-            embedded_document_size += write_bson_object_entry("", el);
+            write_bson_entry_header(name, 0x10); // int32
+            write_number<std::int32_t, true>(static_cast<std::int32_t>(value));
+        }
+        else
+        {
+            write_bson_entry_header(name, 0x12); // int64
+            write_number<std::int64_t, true>(static_cast<std::int64_t>(value));
+        }
+    }
+
+    /*!
+    @brief Writes a BSON element with key @a name and object @a value
+    */
+    void write_bson_object_entry(const typename BasicJsonType::string_t& name, const typename BasicJsonType::object_t& value)
+    {
+        write_bson_entry_header(name, 0x03); // object
+        write_bson_object(value);
+    }
+
+
+    /*!
+    @return The size of the BSON-encoded array @a value
+    */
+    static std::size_t calc_bson_array_size(const typename BasicJsonType::array_t& value)
+    {
+        std::size_t embedded_document_size = 0ul;
+
+        for (const auto& el : value)
+        {
+            embedded_document_size += calc_bson_element_size("", el);
+        }
+
+        return sizeof(std::int32_t) + embedded_document_size + 1ul;
+    }
+
+    /*!
+    @brief Writes a BSON element with key @a name and array @a value
+    */
+    void write_bson_array(const typename BasicJsonType::string_t& name, const typename BasicJsonType::array_t& value)
+    {
+        write_bson_entry_header(name, 0x04); // array
+        write_number<std::int32_t, true>(calc_bson_array_size(value));
+
+        for (const auto& el : value)
+        {
+            write_bson_element("", el);
         }
 
         oa->write_character(static_cast<CharType>(0x00));
-        write_number_at<std::int32_t, true>(document_size_offset, embedded_document_size);
-
-        return /*id*/ 1ul + name.size() + 1ul + embedded_document_size;
     }
 
-    std::size_t write_bson_object_entry(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+
+    /*!
+    @brief Calculates the size necessary to serialize the JSON value @a j with its @a name
+    @return The calculated size for the BSON document entry for @a j with the given @a name.
+    */
+    static std::size_t calc_bson_element_size(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
+    {
+        const auto header_size = calc_bson_entry_header_size(name);
+        switch (j.type())
+        {
+            // LCOV_EXCL_START
+            default:
+                assert(false);
+                return 0ul;
+            // LCOV_EXCL_STOP
+            case value_t::object:
+                return header_size + calc_bson_object_size(*j.m_value.object);
+            case value_t::array:
+                return header_size + calc_bson_array_size(*j.m_value.array);
+            case value_t::boolean:
+                return header_size + 1ul;
+            case value_t::number_float:
+                return header_size + 8ul;
+            case value_t::number_integer:
+                return header_size + calc_bson_integer_size(j.m_value.number_integer);
+            case value_t::number_unsigned:
+                return header_size + calc_bson_unsigned_size(j.m_value.number_unsigned);
+            case value_t::string:
+                return header_size + calc_bson_string_size(*j.m_value.string);
+            case value_t::null:
+                return header_size + 0ul;
+        };
+    }
+
+
+    /*!
+    @brief Serializes the JSON value @a j to BSON and associates it with the key @a name.
+    @param name The name to associate with the JSON entity @a j within the current BSON document
+    @return The size of the bson entry
+    */
+    void write_bson_element(const typename BasicJsonType::string_t& name, const BasicJsonType& j)
     {
         switch (j.type())
         {
             // LCOV_EXCL_START
             default:
                 assert(false);
-                break;
+                return;
             // LCOV_EXCL_STOP
             case value_t::object:
-                return write_bson_object_internal(name, j);
+                return write_bson_object_entry(name, *j.m_value.object);
             case value_t::array:
-                return write_bson_array(name, j);
+                return write_bson_array(name, *j.m_value.array);
             case value_t::boolean:
-                return write_bson_boolean(name, j);
+                return write_bson_boolean(name, j.m_value.boolean);
             case value_t::number_float:
-                return write_bson_double(name, j);
+                return write_bson_double(name, j.m_value.number_float);
             case value_t::number_integer:
-                return write_bson_integer(name, j);
+                return write_bson_integer(name, j.m_value.number_integer);
             case value_t::number_unsigned:
-                return write_bson_unsigned(name, j);
+                return write_bson_unsigned(name, j.m_value.number_unsigned);
             case value_t::string:
-                return write_bson_string(name, j);
+                return write_bson_string(name, *j.m_value.string);
             case value_t::null:
-                return write_bson_null(name, j);
+                return write_bson_null(name);
         };
+    }
 
-        return 0ul;
+    /*!
+    @brief Calculates the size of the BSON serialization of the given
+           JSON-object @a j.
+    @param[in] j  JSON value to serialize
+    @pre       j.type() == value_t::object
+    */
+    static std::size_t calc_bson_object_size(const typename BasicJsonType::object_t& value)
+    {
+        std::size_t document_size = 0;
+
+        for (const auto& el : value)
+        {
+            document_size += calc_bson_element_size(el.first, el.second);
+        }
+
+        return sizeof(std::int32_t) + document_size + 1ul;
     }
 
     /*!
     @param[in] j  JSON value to serialize
     @pre       j.type() == value_t::object
     */
-    std::size_t write_bson_object(const BasicJsonType& j)
+    void write_bson_object(const typename BasicJsonType::object_t& value)
     {
-        assert(j.type() == value_t::object);
-        auto document_size_offset = oa->reserve_characters(4ul);
-        std::int32_t document_size = 5ul;
+        write_number<std::int32_t, true>(calc_bson_object_size(value));
 
-        for (const auto& el : *j.m_value.object)
+        for (const auto& el : value)
         {
-            document_size += write_bson_object_entry(el.first, el.second);
+            write_bson_element(el.first, el.second);
         }
 
         oa->write_character(static_cast<CharType>(0x00));
-        write_number_at<std::int32_t, true>(document_size_offset, document_size);
-        return document_size;
     }
 
     /*!
@@ -873,7 +965,7 @@ class binary_writer
             case value_t::discarded:
                 break;
             case value_t::object:
-                write_bson_object(j);
+                write_bson_object(*j.m_value.object);
                 break;
         }
     }
@@ -908,35 +1000,6 @@ class binary_writer
 
         oa->write_characters(vec.data(), sizeof(NumberType));
     }
-
-    /*
-    @brief write a number to output in little endian format
-
-    @param[in] offset The offset where to start writing
-    @param[in] n number of type @a NumberType
-    @tparam NumberType the type of the number
-    @tparam OutputIsLittleEndian Set to true if output data is
-                                 required to be little endian
-    */
-    template<typename NumberType, bool OutputIsLittleEndian = false>
-    void write_number_at(std::size_t offset, const NumberType n)
-    {
-        // step 1: write number to array of length NumberType
-        std::array<CharType, sizeof(NumberType)> vec;
-        std::memcpy(vec.data(), &n, sizeof(NumberType));
-
-        // step 2: write array to output (with possible reordering)
-        // LCOV_EXCL_START
-        if (is_little_endian && !OutputIsLittleEndian)
-        {
-            // reverse byte order prior to conversion if necessary
-            std::reverse(vec.begin(), vec.end());
-        }
-        // LCOV_EXCL_STOP
-
-        oa->write_characters_at(offset, vec.data(), sizeof(NumberType));
-    }
-
 
     // UBJSON: write number (floating point)
     template<typename NumberType, typename std::enable_if<

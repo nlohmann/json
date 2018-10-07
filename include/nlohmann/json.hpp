@@ -6594,9 +6594,45 @@ class basic_json
     /*!
     @brief Serializes the given JSON object `j` to BSON and returns a vector
            containing the corresponding BSON-representation.
-    @param j The JSON object to convert to BSON.
-    @return The BSON representation of the JSON input `j`.
-    @pre The input `j` shall be an object: `j.is_object() == true`
+
+    BSON (Binary JSON) is a binary format in which zero or more ordered key/value pairs are
+    stored as a single entity (a so-called document).
+
+    The library uses the following mapping from JSON values types to BSON types:
+
+    JSON value type | value/range                       | BSON type   | marker
+    --------------- | --------------------------------- | ----------- | ------
+    null            | `null`                            | null        | 0x0A
+    boolean         | `true`, `false`                   | boolean     | 0x08
+    number_integer  | -9223372036854775808..-2147483649 | int64       | 0x12
+    number_integer  | -2147483648..2147483647           | int32       | 0x10
+    number_integer  | 2147483648..9223372036854775807   | int64       | 0x12
+    number_unsigned | 0..2147483647                     | int32       | 0x10
+    number_unsigned | 2147483648..9223372036854775807   | int64       | 0x12
+    number_float    | *any value*                       | double      | 0x01
+    string          | *any value*                       | string      | 0x02
+    array           | *any value*                       | document    | 0x04
+    object          | *any value*                       | document    | 0x03
+
+    @warning The mapping is **incomplete**, since only JSON-objects (and things
+    contained therein) can be serialized to BSON.
+
+    @pre The input `j` is required to be an object: `j.is_object() == true`
+
+    @note Any BSON output created via @ref to_bson can be successfully parsed
+          by @ref from_bson.
+
+    @param[in] j  JSON value to serialize
+    @return BSON serialization as byte vector
+
+    @complexity Linear in the size of the JSON value @a j.
+
+    @sa http://bsonspec.org/spec.html
+    @sa @ref from_bson(detail::input_adapter, const bool strict) for the
+        analogous deserialization
+    @sa @ref to_ubjson(const basic_json&) for the related UBJSON format
+    @sa @ref to_cbor(const basic_json&) for the related CBOR format
+    @sa @ref to_msgpack(const basic_json&) for the related MessagePack format
     */
     static std::vector<uint8_t> to_bson(const basic_json& j)
     {
@@ -6611,6 +6647,7 @@ class basic_json
     @param j The JSON object to convert to BSON.
     @param o The output adapter that receives the binary BSON representation.
     @pre The input `j` shall be an object: `j.is_object() == true`
+    @sa @ref to_bson(const basic_json&)
     */
     static void to_bson(const basic_json& j, detail::output_adapter<uint8_t> o)
     {
