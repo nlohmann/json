@@ -181,7 +181,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t&)
+    bool number_float(number_float_t val, const string_t& /*unused*/)
     {
         handle_value(val);
         return true;
@@ -238,7 +238,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&,
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
                      const detail::exception& ex)
     {
         errored = true;
@@ -358,7 +358,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t&)
+    bool number_float(number_float_t val, const string_t& /*unused*/)
     {
         handle_value(val);
         return true;
@@ -496,7 +496,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&,
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
                      const detail::exception& ex)
     {
         errored = true;
@@ -642,37 +642,37 @@ class json_sax_acceptor
         return true;
     }
 
-    bool boolean(bool)
+    bool boolean(bool /*unused*/)
     {
         return true;
     }
 
-    bool number_integer(number_integer_t)
+    bool number_integer(number_integer_t /*unused*/)
     {
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t)
+    bool number_unsigned(number_unsigned_t /*unused*/)
     {
         return true;
     }
 
-    bool number_float(number_float_t, const string_t&)
+    bool number_float(number_float_t /*unused*/, const string_t& /*unused*/)
     {
         return true;
     }
 
-    bool string(string_t&)
+    bool string(string_t& /*unused*/)
     {
         return true;
     }
 
-    bool start_object(std::size_t = std::size_t(-1))
+    bool start_object(std::size_t  /*unused*/ = std::size_t(-1))
     {
         return true;
     }
 
-    bool key(string_t&)
+    bool key(string_t& /*unused*/)
     {
         return true;
     }
@@ -682,7 +682,7 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_array(std::size_t = std::size_t(-1))
+    bool start_array(std::size_t  /*unused*/ = std::size_t(-1))
     {
         return true;
     }
@@ -692,11 +692,11 @@ class json_sax_acceptor
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&, const detail::exception&)
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const detail::exception& /*unused*/)
     {
         return false;
     }
 };
-}
+}  // namespace detail
 
-}
+}  // namespace nlohmann

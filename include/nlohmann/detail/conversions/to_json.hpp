@@ -312,7 +312,7 @@ void to_json(BasicJsonType& j, const T& b)
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...>)
+void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...> /*unused*/)
 {
     j = {std::get<Idx>(t)...};
 }
@@ -332,11 +332,11 @@ struct to_json_fn
         return to_json(j, std::forward<T>(val));
     }
 };
-}
+}  // namespace detail
 
 /// namespace to hold default `to_json` function
 namespace
 {
 constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
-}
-}
+} // namespace
+}  // namespace nlohmann

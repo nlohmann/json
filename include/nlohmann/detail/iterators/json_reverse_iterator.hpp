@@ -115,5 +115,5 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
         return it.operator * ();
     }
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

@@ -693,4 +693,4 @@ class json_pointer
     /// the reference tokens
     std::vector<std::string> reference_tokens;
 };
-}
+}  // namespace nlohmann

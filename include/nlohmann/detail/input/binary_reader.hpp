@@ -403,8 +403,8 @@ class binary_reader
                     return false;
                 }
 
-                const unsigned char byte1 = static_cast<unsigned char>(byte1_raw);
-                const unsigned char byte2 = static_cast<unsigned char>(byte2_raw);
+                const auto byte1 = static_cast<unsigned char>(byte1_raw);
+                const auto byte2 = static_cast<unsigned char>(byte2_raw);
 
                 // code from RFC 7049, Appendix D, Figure 3:
                 // As half-precision floating-point numbers were only added
@@ -1039,6 +1039,7 @@ class binary_reader
         }
 
         if (len != std::size_t(-1))
+        {
             for (std::size_t i = 0; i < len; ++i)
             {
                 if (JSON_UNLIKELY(not parse_cbor_internal()))
@@ -1046,6 +1047,7 @@ class binary_reader
                     return false;
                 }
             }
+        }
         else
         {
             while (get() != 0xFF)
@@ -1696,5 +1698,5 @@ class binary_reader
     /// the SAX parser
     json_sax_t* sax = nullptr;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

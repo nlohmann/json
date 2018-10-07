@@ -53,6 +53,9 @@ class serializer
     // delete because of pointer members
     serializer(const serializer&) = delete;
     serializer& operator=(const serializer&) = delete;
+    serializer(serializer&&) noexcept = default;
+    serializer& operator=(serializer&&) noexcept = default;
+    ~serializer() = default;
 
     /*!
     @brief internal implementation of the serialization function
@@ -627,5 +630,5 @@ class serializer
     /// the indentation string
     string_t indent_string;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

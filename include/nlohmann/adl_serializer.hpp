@@ -46,4 +46,4 @@ struct adl_serializer
         ::nlohmann::to_json(j, std::forward<ValueType>(val));
     }
 };
-}
+}  // namespace nlohmann

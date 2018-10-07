@@ -104,7 +104,10 @@ class lexer
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
+    lexer(lexer&&) noexcept = default;
     lexer& operator=(lexer&) = delete;
+    lexer& operator=(lexer&&) noexcept = default;
+    ~lexer() = default;
 
   private:
     /////////////////////
@@ -1208,16 +1211,8 @@ scan_number_done:
     {
         if (get() == 0xEF)
         {
-            if (get() == 0xBB and get() == 0xBF)
-            {
-                // we completely parsed the BOM
-                return true;
-            }
-            else
-            {
-                // after reading 0xEF, an unexpected character followed
-                return false;
-            }
+            // check if we completely parse the BOM
+            return get() == 0xBB and get() == 0xBF;
         }
         else
         {
@@ -1329,5 +1324,5 @@ scan_number_done:
     /// the decimal point
     const char decimal_point_char = '.';
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

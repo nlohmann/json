@@ -108,7 +108,7 @@ uses the standard template types.
 @since version 1.0.0
 */
 using json = basic_json<>;
-}
+}  // namespace nlohmann
 
 #endif
 
@@ -280,8 +280,8 @@ struct static_const
 
 template<typename T>
 constexpr T static_const<T>::value;
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
@@ -312,8 +312,8 @@ template <typename ...Ts> struct make_void
     using type = void;
 };
 template <typename ...Ts> using void_t = typename make_void<Ts...>::type;
-}
-}
+} // namespace detail
+}  // namespace nlohmann
 
 
 // http://en.cppreference.com/w/cpp/experimental/is_detected
@@ -364,8 +364,8 @@ using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
 template <class To, template <class...> class Op, class... Args>
 using is_detected_convertible =
     std::is_convertible<detected_t<Op, Args...>, To>;
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -607,8 +607,8 @@ struct is_compatible_type_impl <
 template <typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -939,8 +939,8 @@ class other_error : public exception
   private:
     other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/value_t.hpp>
 
@@ -1017,8 +1017,8 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
     const auto r_index = static_cast<std::size_t>(rhs);
     return l_index < order.size() and r_index < order.size() and order[l_index] < order[r_index];
 }
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/conversions/from_json.hpp>
 
@@ -1327,7 +1327,7 @@ void from_json(const BasicJsonType& j, std::pair<A1, A2>& p)
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-void from_json_tuple_impl(const BasicJsonType& j, Tuple& t, index_sequence<Idx...>)
+void from_json_tuple_impl(const BasicJsonType& j, Tuple& t, index_sequence<Idx...> /*unused*/)
 {
     t = std::make_tuple(j.at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
 }
@@ -1386,7 +1386,7 @@ struct from_json_fn
         return from_json(j, val);
     }
 };
-}
+}  // namespace detail
 
 /// namespace to hold default `from_json` function
 /// to see why this is required:
@@ -1394,8 +1394,8 @@ struct from_json_fn
 namespace
 {
 constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::value;
-}
-}
+} // namespace
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/conversions/to_json.hpp>
 
@@ -1456,9 +1456,6 @@ template<typename IteratorType> class iteration_proxy
 
       public:
         explicit iteration_proxy_internal(IteratorType it) noexcept : anchor(it) {}
-
-        iteration_proxy_internal(const iteration_proxy_internal&) = default;
-        iteration_proxy_internal& operator=(const iteration_proxy_internal&) = default;
 
         /// dereference operator (needed for range-based for)
         iteration_proxy_internal& operator*()
@@ -1542,8 +1539,8 @@ template<typename IteratorType> class iteration_proxy
         return iteration_proxy_internal(container.end());
     }
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 
 namespace nlohmann
@@ -1845,7 +1842,7 @@ void to_json(BasicJsonType& j, const T& b)
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...>)
+void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...> /*unused*/)
 {
     j = {std::get<Idx>(t)...};
 }
@@ -1865,14 +1862,14 @@ struct to_json_fn
         return to_json(j, std::forward<T>(val));
     }
 };
-}
+}  // namespace detail
 
 /// namespace to hold default `to_json` function
 namespace
 {
 constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
-}
-}
+} // namespace
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
@@ -1949,6 +1946,8 @@ class input_stream_adapter : public input_adapter_protocol
     // delete because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
+    input_stream_adapter(input_stream_adapter&&) = delete;
+    input_stream_adapter& operator=(input_stream_adapter&&) = delete;
 
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xFF do not
@@ -1975,6 +1974,9 @@ class input_buffer_adapter : public input_adapter_protocol
     // delete because of pointer members
     input_buffer_adapter(const input_buffer_adapter&) = delete;
     input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
+    input_buffer_adapter(input_buffer_adapter&&) = delete;
+    input_buffer_adapter& operator=(input_buffer_adapter&&) = delete;
+    ~input_buffer_adapter() override = default;
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
@@ -2009,7 +2011,7 @@ struct wide_string_input_helper
         else
         {
             // get the current character
-            const int wc = static_cast<int>(str[current_wchar++]);
+            const auto wc = static_cast<int>(str[current_wchar++]);
 
             // UTF-32 to UTF-8 encoding
             if (wc < 0x80)
@@ -2064,7 +2066,7 @@ struct wide_string_input_helper<WideStringType, 2>
         else
         {
             // get the current character
-            const int wc = static_cast<int>(str[current_wchar++]);
+            const auto wc = static_cast<int>(str[current_wchar++]);
 
             // UTF-16 to UTF-8 encoding
             if (wc < 0x80)
@@ -2089,7 +2091,7 @@ struct wide_string_input_helper<WideStringType, 2>
             {
                 if (current_wchar < str.size())
                 {
-                    const int wc2 = static_cast<int>(str[current_wchar++]);
+                    const auto wc2 = static_cast<int>(str[current_wchar++]);
                     const int charcode = 0x10000 + (((wc & 0x3FF) << 10) | (wc2 & 0x3FF));
                     utf8_bytes[0] = 0xf0 | (charcode >> 18);
                     utf8_bytes[1] = 0x80 | ((charcode >> 12) & 0x3F);
@@ -2259,8 +2261,8 @@ class input_adapter
     /// the actual adapter
     input_adapter_t ia = nullptr;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/input/lexer.hpp>
 
@@ -2371,7 +2373,10 @@ class lexer
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
+    lexer(lexer&&) noexcept = default;
     lexer& operator=(lexer&) = delete;
+    lexer& operator=(lexer&&) noexcept = default;
+    ~lexer() = default;
 
   private:
     /////////////////////
@@ -3475,16 +3480,8 @@ scan_number_done:
     {
         if (get() == 0xEF)
         {
-            if (get() == 0xBB and get() == 0xBF)
-            {
-                // we completely parsed the BOM
-                return true;
-            }
-            else
-            {
-                // after reading 0xEF, an unexpected character followed
-                return false;
-            }
+            // check if we completely parse the BOM
+            return get() == 0xBB and get() == 0xBF;
         }
         else
         {
@@ -3596,8 +3593,8 @@ scan_number_done:
     /// the decimal point
     const char decimal_point_char = '.';
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/input/parser.hpp>
 
@@ -3755,8 +3752,8 @@ struct is_sax_static_asserts
         "Missing/invalid function: bool parse_error(std::size_t, const "
         "std::string&, const exception&)");
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
@@ -3946,7 +3943,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t&)
+    bool number_float(number_float_t val, const string_t& /*unused*/)
     {
         handle_value(val);
         return true;
@@ -4003,7 +4000,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&,
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
                      const detail::exception& ex)
     {
         errored = true;
@@ -4123,7 +4120,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t&)
+    bool number_float(number_float_t val, const string_t& /*unused*/)
     {
         handle_value(val);
         return true;
@@ -4261,7 +4258,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&,
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
                      const detail::exception& ex)
     {
         errored = true;
@@ -4407,37 +4404,37 @@ class json_sax_acceptor
         return true;
     }
 
-    bool boolean(bool)
+    bool boolean(bool /*unused*/)
     {
         return true;
     }
 
-    bool number_integer(number_integer_t)
+    bool number_integer(number_integer_t /*unused*/)
     {
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t)
+    bool number_unsigned(number_unsigned_t /*unused*/)
     {
         return true;
     }
 
-    bool number_float(number_float_t, const string_t&)
+    bool number_float(number_float_t /*unused*/, const string_t& /*unused*/)
     {
         return true;
     }
 
-    bool string(string_t&)
+    bool string(string_t& /*unused*/)
     {
         return true;
     }
 
-    bool start_object(std::size_t = std::size_t(-1))
+    bool start_object(std::size_t  /*unused*/ = std::size_t(-1))
     {
         return true;
     }
 
-    bool key(string_t&)
+    bool key(string_t& /*unused*/)
     {
         return true;
     }
@@ -4447,7 +4444,7 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_array(std::size_t = std::size_t(-1))
+    bool start_array(std::size_t  /*unused*/ = std::size_t(-1))
     {
         return true;
     }
@@ -4457,14 +4454,14 @@ class json_sax_acceptor
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&, const detail::exception&)
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const detail::exception& /*unused*/)
     {
         return false;
     }
 };
-}
+}  // namespace detail
 
-}
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/input/lexer.hpp>
 
@@ -4940,8 +4937,8 @@ class parser
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 
@@ -5062,8 +5059,8 @@ class primitive_iterator_t
         return *this;
     }
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/iterators/internal_iterator.hpp>
 
@@ -5090,8 +5087,8 @@ template<typename BasicJsonType> struct internal_iterator
     /// generic iterator for all other types
     primitive_iterator_t primitive_iterator {};
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/iterators/iter_impl.hpp>
 
@@ -5712,8 +5709,8 @@ class iter_impl
     /// the actual iterator of the associated instance
     internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
@@ -5835,8 +5832,8 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
         return it.operator * ();
     }
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/output/output_adapters.hpp>
 
@@ -5950,8 +5947,8 @@ class output_adapter
   private:
     output_adapter_t<CharType> oa = nullptr;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/input/binary_reader.hpp>
 
@@ -6365,8 +6362,8 @@ class binary_reader
                     return false;
                 }
 
-                const unsigned char byte1 = static_cast<unsigned char>(byte1_raw);
-                const unsigned char byte2 = static_cast<unsigned char>(byte2_raw);
+                const auto byte1 = static_cast<unsigned char>(byte1_raw);
+                const auto byte2 = static_cast<unsigned char>(byte2_raw);
 
                 // code from RFC 7049, Appendix D, Figure 3:
                 // As half-precision floating-point numbers were only added
@@ -7001,6 +6998,7 @@ class binary_reader
         }
 
         if (len != std::size_t(-1))
+        {
             for (std::size_t i = 0; i < len; ++i)
             {
                 if (JSON_UNLIKELY(not parse_cbor_internal()))
@@ -7008,6 +7006,7 @@ class binary_reader
                     return false;
                 }
             }
+        }
         else
         {
             while (get() != 0xFF)
@@ -7658,8 +7657,8 @@ class binary_reader
     /// the SAX parser
     json_sax_t* sax = nullptr;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/output/binary_writer.hpp>
 
@@ -8206,9 +8205,11 @@ class binary_writer
             case value_t::boolean:
             {
                 if (add_prefix)
+                {
                     oa->write_character(j.m_value.boolean
                                         ? static_cast<CharType>('T')
                                         : static_cast<CharType>('F'));
+                }
                 break;
             }
 
@@ -8574,32 +8575,32 @@ class binary_writer
         }
     }
 
-    static constexpr CharType get_cbor_float_prefix(float)
+    static constexpr CharType get_cbor_float_prefix(float /*unused*/)
     {
         return static_cast<CharType>(0xFA);  // Single-Precision Float
     }
 
-    static constexpr CharType get_cbor_float_prefix(double)
+    static constexpr CharType get_cbor_float_prefix(double /*unused*/)
     {
         return static_cast<CharType>(0xFB);  // Double-Precision Float
     }
 
-    static constexpr CharType get_msgpack_float_prefix(float)
+    static constexpr CharType get_msgpack_float_prefix(float /*unused*/)
     {
         return static_cast<CharType>(0xCA);  // float 32
     }
 
-    static constexpr CharType get_msgpack_float_prefix(double)
+    static constexpr CharType get_msgpack_float_prefix(double /*unused*/)
     {
         return static_cast<CharType>(0xCB);  // float 64
     }
 
-    static constexpr CharType get_ubjson_float_prefix(float)
+    static constexpr CharType get_ubjson_float_prefix(float /*unused*/)
     {
         return 'd';  // float 32
     }
 
-    static constexpr CharType get_ubjson_float_prefix(double)
+    static constexpr CharType get_ubjson_float_prefix(double /*unused*/)
     {
         return 'D';  // float 64
     }
@@ -8611,8 +8612,8 @@ class binary_writer
     /// the output
     output_adapter_t<CharType> oa = nullptr;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/output/serializer.hpp>
 
@@ -8682,10 +8683,9 @@ struct diyfp // f * 2^e
 {
     static constexpr int kPrecision = 64; // = q
 
-    uint64_t f;
-    int e;
+    uint64_t f = 0;
+    int e = 0;
 
-    constexpr diyfp() noexcept : f(0), e(0) {}
     constexpr diyfp(uint64_t f_, int e_) noexcept : f(f_), e(e_) {}
 
     /*!
@@ -8697,7 +8697,7 @@ struct diyfp // f * 2^e
         assert(x.e == y.e);
         assert(x.f >= y.f);
 
-        return diyfp(x.f - y.f, x.e);
+        return {x.f - y.f, x.e};
     }
 
     /*!
@@ -8762,7 +8762,7 @@ struct diyfp // f * 2^e
 
         const uint64_t h = p3 + p2_hi + p1_hi + (Q >> 32);
 
-        return diyfp(h, x.e + y.e + 64);
+        return {h, x.e + y.e + 64};
     }
 
     /*!
@@ -8793,7 +8793,7 @@ struct diyfp // f * 2^e
         assert(delta >= 0);
         assert(((x.f << delta) >> delta) == x.f);
 
-        return diyfp(x.f << delta, target_exponent);
+        return {x.f << delta, target_exponent};
     }
 };
 
@@ -9096,7 +9096,7 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     assert(e >= -1500);
     assert(e <=  1500);
     const int f = kAlpha - e - 1;
-    const int k = (f * 78913) / (1 << 18) + (f > 0);
+    const int k = (f * 78913) / (1 << 18) + static_cast<int>(f > 0);
 
     const int index = (-kCachedPowersMinDecExp + k + (kCachedPowersDecStep - 1)) / kCachedPowersDecStep;
     assert(index >= 0);
@@ -9244,7 +9244,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
 
     const diyfp one(uint64_t{1} << -M_plus.e, M_plus.e);
 
-    uint32_t p1 = static_cast<uint32_t>(M_plus.f >> -one.e); // p1 = f div 2^-e (Since -e >= 32, p1 fits into a 32-bit int.)
+    auto p1 = static_cast<uint32_t>(M_plus.f >> -one.e); // p1 = f div 2^-e (Since -e >= 32, p1 fits into a 32-bit int.)
     uint64_t p2 = M_plus.f & (one.f - 1);                    // p2 = f mod 2^-e
 
     // 1)
@@ -9563,7 +9563,7 @@ inline char* append_exponent(char* buf, int e)
         *buf++ = '+';
     }
 
-    uint32_t k = static_cast<uint32_t>(e);
+    auto k = static_cast<uint32_t>(e);
     if (k < 10)
     {
         // Always print at least two digits in the exponent.
@@ -9681,7 +9681,7 @@ format. Returns an iterator pointing past-the-end of the decimal representation.
 @note The result is NOT null-terminated.
 */
 template <typename FloatType>
-char* to_chars(char* first, char* last, FloatType value)
+char* to_chars(char* first, const char* last, FloatType value)
 {
     static_cast<void>(last); // maybe unused - fix warning
     assert(std::isfinite(value));
@@ -9771,6 +9771,9 @@ class serializer
     // delete because of pointer members
     serializer(const serializer&) = delete;
     serializer& operator=(const serializer&) = delete;
+    serializer(serializer&&) noexcept = default;
+    serializer& operator=(serializer&&) noexcept = default;
+    ~serializer() = default;
 
     /*!
     @brief internal implementation of the serialization function
@@ -10345,8 +10348,8 @@ class serializer
     /// the indentation string
     string_t indent_string;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/json_ref.hpp>
 
@@ -10382,9 +10385,11 @@ class json_ref
     {}
 
     // class should be movable only
-    json_ref(json_ref&&) = default;
+    json_ref(json_ref&&) noexcept = default;
     json_ref(const json_ref&) = delete;
     json_ref& operator=(const json_ref&) = delete;
+    json_ref& operator=(json_ref&&) noexcept = default;
+    ~json_ref() = default;
 
     value_type moved_or_copied() const
     {
@@ -10410,8 +10415,8 @@ class json_ref
     value_type* value_ref = nullptr;
     const bool is_rvalue;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/json_pointer.hpp>
 
@@ -11112,7 +11117,7 @@ class json_pointer
     /// the reference tokens
     std::vector<std::string> reference_tokens;
 };
-}
+}  // namespace nlohmann
 
 // #include <nlohmann/adl_serializer.hpp>
 
@@ -11165,7 +11170,7 @@ struct adl_serializer
         ::nlohmann::to_json(j, std::forward<ValueType>(val));
     }
 };
-}
+}  // namespace nlohmann
 
 
 /*!
@@ -12964,7 +12969,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    reference& operator=(basic_json other) noexcept (
+    basic_json& operator=(basic_json other) noexcept (
         std::is_nothrow_move_constructible<value_t>::value and
         std::is_nothrow_move_assignable<value_t>::value and
         std::is_nothrow_move_constructible<json_value>::value and

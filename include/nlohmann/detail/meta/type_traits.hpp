@@ -247,5 +247,5 @@ struct is_compatible_type_impl <
 template <typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

@@ -540,9 +540,11 @@ class binary_writer
             case value_t::boolean:
             {
                 if (add_prefix)
+                {
                     oa->write_character(j.m_value.boolean
                                         ? static_cast<CharType>('T')
                                         : static_cast<CharType>('F'));
+                }
                 break;
             }
 
@@ -908,32 +910,32 @@ class binary_writer
         }
     }
 
-    static constexpr CharType get_cbor_float_prefix(float)
+    static constexpr CharType get_cbor_float_prefix(float /*unused*/)
     {
         return static_cast<CharType>(0xFA);  // Single-Precision Float
     }
 
-    static constexpr CharType get_cbor_float_prefix(double)
+    static constexpr CharType get_cbor_float_prefix(double /*unused*/)
     {
         return static_cast<CharType>(0xFB);  // Double-Precision Float
     }
 
-    static constexpr CharType get_msgpack_float_prefix(float)
+    static constexpr CharType get_msgpack_float_prefix(float /*unused*/)
     {
         return static_cast<CharType>(0xCA);  // float 32
     }
 
-    static constexpr CharType get_msgpack_float_prefix(double)
+    static constexpr CharType get_msgpack_float_prefix(double /*unused*/)
     {
         return static_cast<CharType>(0xCB);  // float 64
     }
 
-    static constexpr CharType get_ubjson_float_prefix(float)
+    static constexpr CharType get_ubjson_float_prefix(float /*unused*/)
     {
         return 'd';  // float 32
     }
 
-    static constexpr CharType get_ubjson_float_prefix(double)
+    static constexpr CharType get_ubjson_float_prefix(double /*unused*/)
     {
         return 'D';  // float 64
     }
@@ -945,5 +947,5 @@ class binary_writer
     /// the output
     output_adapter_t<CharType> oa = nullptr;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
