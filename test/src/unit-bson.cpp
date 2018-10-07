@@ -376,6 +376,31 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
 
+        SECTION("discarded values are not serialized")
+        {
+            json j = json::value_t::discarded;
+            const auto result = json::to_bson(j);
+            CHECK(result.empty());
+        }
+
+        SECTION("discarded members are not serialized")
+        {
+            json j =
+            {
+                { "entry", json::value_t::discarded }
+            };
+
+            std::vector<uint8_t> expected =
+            {
+                0x05, 0x00, 0x00, 0x00, // size (little endian)
+                // no entries
+                0x00 // end marker
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+        }
+
 
         SECTION("non-empty object with object member")
         {

@@ -9,7 +9,6 @@
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>
 
-
 namespace nlohmann
 {
 namespace detail
@@ -864,6 +863,8 @@ class binary_writer
                 assert(false);
                 return 0ul;
             // LCOV_EXCL_STOP
+            case value_t::discarded:
+                return 0ul;
             case value_t::object:
                 return header_size + calc_bson_object_size(*j.m_value.object);
             case value_t::array:
@@ -898,6 +899,8 @@ class binary_writer
                 assert(false);
                 return;
             // LCOV_EXCL_STOP
+            case value_t::discarded:
+                return;
             case value_t::object:
                 return write_bson_object_entry(name, *j.m_value.object);
             case value_t::array:
