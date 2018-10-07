@@ -53,8 +53,8 @@ class serializer
     // delete because of pointer members
     serializer(const serializer&) = delete;
     serializer& operator=(const serializer&) = delete;
-    serializer(serializer&&) noexcept = default;
-    serializer& operator=(serializer&&) noexcept = default;
+    serializer(serializer&&) = delete;
+    serializer& operator=(serializer&&) = delete;
     ~serializer() = default;
 
     /*!

@@ -104,9 +104,9 @@ class lexer
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
-    lexer(lexer&&) noexcept = default;
+    lexer(lexer&&) = delete;
     lexer& operator=(lexer&) = delete;
-    lexer& operator=(lexer&&) noexcept = default;
+    lexer& operator=(lexer&&) = delete;
     ~lexer() = default;
 
   private:

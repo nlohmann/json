@@ -2373,9 +2373,9 @@ class lexer
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
-    lexer(lexer&&) noexcept = default;
+    lexer(lexer&&) = delete;
     lexer& operator=(lexer&) = delete;
-    lexer& operator=(lexer&&) noexcept = default;
+    lexer& operator=(lexer&&) = delete;
     ~lexer() = default;
 
   private:
@@ -8510,22 +8510,20 @@ class binary_writer
                 {
                     return 'i';
                 }
-                else if ((std::numeric_limits<uint8_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
+                if ((std::numeric_limits<uint8_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
                 {
                     return 'U';
                 }
-                else if ((std::numeric_limits<int16_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
+                if ((std::numeric_limits<int16_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
                 {
                     return 'I';
                 }
-                else if ((std::numeric_limits<int32_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
+                if ((std::numeric_limits<int32_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
                 {
                     return 'l';
                 }
-                else  // no check and assume int64_t (see note above)
-                {
-                    return 'L';
-                }
+                // no check and assume int64_t (see note above)
+                return 'L';
             }
 
             case value_t::number_unsigned:
@@ -8534,22 +8532,20 @@ class binary_writer
                 {
                     return 'i';
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
+                if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                 {
                     return 'U';
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<int16_t>::max)())
+                if (j.m_value.number_unsigned <= (std::numeric_limits<int16_t>::max)())
                 {
                     return 'I';
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<int32_t>::max)())
+                if (j.m_value.number_unsigned <= (std::numeric_limits<int32_t>::max)())
                 {
                     return 'l';
                 }
-                else  // no check and assume int64_t (see note above)
-                {
-                    return 'L';
-                }
+                // no check and assume int64_t (see note above)
+                return 'L';
             }
 
             case value_t::number_float:
@@ -9765,8 +9761,8 @@ class serializer
     // delete because of pointer members
     serializer(const serializer&) = delete;
     serializer& operator=(const serializer&) = delete;
-    serializer(serializer&&) noexcept = default;
-    serializer& operator=(serializer&&) noexcept = default;
+    serializer(serializer&&) = delete;
+    serializer& operator=(serializer&&) = delete;
     ~serializer() = default;
 
     /*!
