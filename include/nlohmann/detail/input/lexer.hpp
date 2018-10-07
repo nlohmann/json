@@ -1278,12 +1278,18 @@ scan_number_done:
         next_unget = true;
 
         --position.chars_read_total;
-        --position.chars_read_current_line;
 
         // in case we "unget" a newline, we have to also decrement the lines_read
-        if (position.lines_read != 0 and position.chars_read_current_line == 0)
+        if (position.chars_read_current_line == 0)
         {
-            --position.lines_read;
+            if (position.lines_read > 0)
+            {
+                --position.lines_read;
+            }
+        }
+        else
+        {
+            --position.chars_read_current_line;
         }
 
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))

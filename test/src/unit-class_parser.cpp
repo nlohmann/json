@@ -1292,6 +1292,9 @@ TEST_CASE("parser class")
         CHECK(accept_helper("\"\\u01") == false);
         CHECK(accept_helper("\"\\u012") == false);
 
+        // unget of newline
+        CHECK(parser_helper("\n123\n") == 123);
+
         // invalid escapes
         for (int c = 1; c < 128; ++c)
         {
