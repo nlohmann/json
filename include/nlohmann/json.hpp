@@ -7289,11 +7289,9 @@ class basic_json
                                 // avoid undefined behavior
                                 JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range"));
                             }
-                            else
-                            {
-                                // default case: insert add offset
-                                parent.insert(parent.begin() + static_cast<difference_type>(idx), val);
-                            }
+
+                            // default case: insert add offset
+                            parent.insert(parent.begin() + static_cast<difference_type>(idx), val);
                         }
                         break;
                     }

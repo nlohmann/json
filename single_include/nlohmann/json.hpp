@@ -3483,13 +3483,11 @@ scan_number_done:
             // check if we completely parse the BOM
             return get() == 0xBB and get() == 0xBF;
         }
-        else
-        {
-            // the first character is not the beginning of the BOM; unget it to
-            // process is later
-            unget();
-            return true;
-        }
+
+        // the first character is not the beginning of the BOM; unget it to
+        // process is later
+        unget();
+        return true;
     }
 
     token_type scan()
@@ -4048,20 +4046,19 @@ class json_sax_dom_parser
             root = BasicJsonType(std::forward<Value>(v));
             return &root;
         }
+
+        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+
+        if (ref_stack.back()->is_array())
+        {
+            ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
+            return &(ref_stack.back()->m_value.array->back());
+        }
         else
         {
-            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
-            if (ref_stack.back()->is_array())
-            {
-                ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
-                return &(ref_stack.back()->m_value.array->back());
-            }
-            else
-            {
-                assert(object_element);
-                *object_element = BasicJsonType(std::forward<Value>(v));
-                return object_element;
-            }
+            assert(object_element);
+            *object_element = BasicJsonType(std::forward<Value>(v));
+            return object_element;
         }
     }
 
@@ -4336,37 +4333,37 @@ class json_sax_dom_callback_parser
             root = std::move(value);
             return {true, &root};
         }
+
+        // skip this value if we already decided to skip the parent
+        // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
+        if (not ref_stack.back())
+        {
+            return {false, nullptr};
+        }
+
+        // we now only expect arrays and objects
+        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+
+        if (ref_stack.back()->is_array())
+        {
+            ref_stack.back()->m_value.array->push_back(std::move(value));
+            return {true, &(ref_stack.back()->m_value.array->back())};
+        }
         else
         {
-            // skip this value if we already decided to skip the parent
-            // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
-            if (not ref_stack.back())
+            // check if we should store an element for the current key
+            assert(not key_keep_stack.empty());
+            const bool store_element = key_keep_stack.back();
+            key_keep_stack.pop_back();
+
+            if (not store_element)
             {
                 return {false, nullptr};
             }
 
-            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
-            if (ref_stack.back()->is_array())
-            {
-                ref_stack.back()->m_value.array->push_back(std::move(value));
-                return {true, &(ref_stack.back()->m_value.array->back())};
-            }
-            else
-            {
-                // check if we should store an element for the current key
-                assert(not key_keep_stack.empty());
-                const bool store_element = key_keep_stack.back();
-                key_keep_stack.pop_back();
-
-                if (not store_element)
-                {
-                    return {false, nullptr};
-                }
-
-                assert(object_element);
-                *object_element = std::move(value);
-                return {true, object_element};
-            }
+            assert(object_element);
+            *object_element = std::move(value);
+            return {true, object_element};
         }
     }
 
@@ -4654,12 +4651,9 @@ class parser
                                                     m_lexer.get_token_string(),
                                                     parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
                         }
-                        else
+                        if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
                         {
-                            if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
-                            {
-                                return false;
-                            }
+                            return false;
                         }
 
                         // parse separator (:)
@@ -18392,11 +18386,9 @@ class basic_json
                                 // avoid undefined behavior
                                 JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range"));
                             }
-                            else
-                            {
-                                // default case: insert add offset
-                                parent.insert(parent.begin() + static_cast<difference_type>(idx), val);
-                            }
+
+                            // default case: insert add offset
+                            parent.insert(parent.begin() + static_cast<difference_type>(idx), val);
                         }
                         break;
                     }

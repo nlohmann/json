@@ -1214,13 +1214,11 @@ scan_number_done:
             // check if we completely parse the BOM
             return get() == 0xBB and get() == 0xBF;
         }
-        else
-        {
-            // the first character is not the beginning of the BOM; unget it to
-            // process is later
-            unget();
-            return true;
-        }
+
+        // the first character is not the beginning of the BOM; unget it to
+        // process is later
+        unget();
+        return true;
     }
 
     token_type scan()

@@ -286,20 +286,19 @@ class json_sax_dom_parser
             root = BasicJsonType(std::forward<Value>(v));
             return &root;
         }
+
+        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+
+        if (ref_stack.back()->is_array())
+        {
+            ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
+            return &(ref_stack.back()->m_value.array->back());
+        }
         else
         {
-            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
-            if (ref_stack.back()->is_array())
-            {
-                ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
-                return &(ref_stack.back()->m_value.array->back());
-            }
-            else
-            {
-                assert(object_element);
-                *object_element = BasicJsonType(std::forward<Value>(v));
-                return object_element;
-            }
+            assert(object_element);
+            *object_element = BasicJsonType(std::forward<Value>(v));
+            return object_element;
         }
     }
 
@@ -574,37 +573,37 @@ class json_sax_dom_callback_parser
             root = std::move(value);
             return {true, &root};
         }
+
+        // skip this value if we already decided to skip the parent
+        // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
+        if (not ref_stack.back())
+        {
+            return {false, nullptr};
+        }
+
+        // we now only expect arrays and objects
+        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+
+        if (ref_stack.back()->is_array())
+        {
+            ref_stack.back()->m_value.array->push_back(std::move(value));
+            return {true, &(ref_stack.back()->m_value.array->back())};
+        }
         else
         {
-            // skip this value if we already decided to skip the parent
-            // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
-            if (not ref_stack.back())
+            // check if we should store an element for the current key
+            assert(not key_keep_stack.empty());
+            const bool store_element = key_keep_stack.back();
+            key_keep_stack.pop_back();
+
+            if (not store_element)
             {
                 return {false, nullptr};
             }
 
-            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
-            if (ref_stack.back()->is_array())
-            {
-                ref_stack.back()->m_value.array->push_back(std::move(value));
-                return {true, &(ref_stack.back()->m_value.array->back())};
-            }
-            else
-            {
-                // check if we should store an element for the current key
-                assert(not key_keep_stack.empty());
-                const bool store_element = key_keep_stack.back();
-                key_keep_stack.pop_back();
-
-                if (not store_element)
-                {
-                    return {false, nullptr};
-                }
-
-                assert(object_element);
-                *object_element = std::move(value);
-                return {true, object_element};
-            }
+            assert(object_element);
+            *object_element = std::move(value);
+            return {true, object_element};
         }
     }
 
