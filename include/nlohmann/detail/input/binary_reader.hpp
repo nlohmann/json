@@ -126,7 +126,12 @@ class binary_reader
   private:
 
     /*!
-    @return whether array creation completed
+    @brief Parses a C-style string from the BSON input.
+    @param [out] result A reference to the string variable where the read string
+                        is to be stored.
+    @return `true` if the \x00-byte indicating the end of the
+            string was encountered before the EOF.
+            `false` indicates an unexpected EOF.
     */
     bool get_bson_cstr(string_t& result)
     {
@@ -148,12 +153,112 @@ class binary_reader
         return true;
     }
 
-    bool parse_bson_entries(bool is_array)
+    /*!
+    @brief Parses a zero-terminated string of length @a len from the BSON input.
+    @param [in]  len    The length (including the zero-byte at the end) of the string to be read.
+    @param [out] result A reference to the string variable where the read string
+                        is to be stored.
+    @tparam NumberType The type of the length @a len
+    @pre len > 0
+    @return `true` if the string was successfully parsed
+    */
+    template <typename NumberType>
+    bool get_bson_string(const NumberType len, string_t& result)
     {
-        while (auto entry_type = get())
+        return get_string(len - static_cast<NumberType>(1), result)
+               && get() != std::char_traits<char>::eof();
+    }
+
+    /*!
+    @return A hexadecimal string representation of the given @a byte
+    @param byte The byte to convert to a string
+    */
+    static std::string byte_hexstring(unsigned char byte)
+    {
+        char cr[3];
+        snprintf(cr, sizeof(cr), "%02hhX", byte);
+        return std::string{cr};
+    }
+
+    /*!
+    @brief Read a BSON document element of the given @a element_type.
+    @param element_type The BSON element type, c.f. http://bsonspec.org/spec.html
+    @param element_type_parse_position The position in the input stream, where the `element_type` was read.
+    @warning Not all BSON element types are supported yet. An unsupported @a element_type will
+             give rise to a parse_error.114: Unsupported BSON record type 0x...
+    @return whether a valid BSON-object/array was passed to the SAX parser
+    */
+    bool parse_bson_element_internal(int element_type, std::size_t element_type_parse_position)
+    {
+        switch (element_type)
         {
+            case 0x01: // double
+            {
+                double number;
+                return get_number<double, true>(number)
+                       && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+            case 0x02: // string
+            {
+                std::int32_t len;
+                string_t value;
+                return get_number<std::int32_t, true>(len)
+                       && get_bson_string(len, value)
+                       && sax->string(value);
+            }
+            case 0x08: // boolean
+            {
+                return sax->boolean(static_cast<bool>(get()));
+            }
+            case 0x10: // int32
+            {
+                std::int32_t value;
+                return get_number<std::int32_t, true>(value)
+                       && sax->number_integer(static_cast<std::int32_t>(value));
+            }
+            case 0x12: // int64
+            {
+                std::int64_t value;
+                return get_number<std::int64_t, true>(value)
+                       && sax->number_integer(static_cast<std::int64_t>(value));
+            }
+            case 0x0A: // null
+            {
+                return sax->null();
+            }
+            case 0x03: // object
+            {
+                return parse_bson_internal();
+            }
+            case 0x04: // array
+            {
+                return parse_bson_array();
+            }
+            default: // anything else not supported (yet)
+            {
+                auto element_type_str = byte_hexstring(element_type);
+                return sax->parse_error(element_type_parse_position, element_type_str, parse_error::create(114, element_type_parse_position, "Unsupported BSON record type 0x" + element_type_str));
+            }
+        }
+    }
+
+    /*!
+    @brief Read a BSON element list (as specified in the BSON-spec) from the input
+           and passes it to the SAX-parser.
+           The same binary layout is used for objects and arrays, hence it must
+           be indicated with the argument @a is_array which one is expected
+           (true --> array, false --> object).
+    @param is_array Determines if the element list being read is to be treated as
+           an object (@a is_array == false), or as an array (@a is_array == true).
+    @return whether a valid BSON-object/array was passed to the SAX parser
+    */
+    bool parse_bson_element_list(bool is_array)
+    {
+        while (auto element_type = get())
+        {
+            const std::size_t element_type_parse_position = chars_read;
             string_t key;
-            if (!get_bson_cstr(key))
+            if (JSON_UNLIKELY(not get_bson_cstr(key)))
             {
                 return false;
             }
@@ -163,64 +268,18 @@ class binary_reader
                 sax->key(key);
             }
 
-            switch (entry_type)
+            if (JSON_UNLIKELY(not parse_bson_element_internal(element_type, element_type_parse_position)))
             {
-                case 0x01: // double
-                {
-                    double number;
-                    get_number<double, true>(number);
-                    sax->number_float(static_cast<number_float_t>(number), "");
-                }
-                break;
-                case 0x02: // string
-                {
-                    std::int32_t len;
-                    string_t value;
-                    get_number<std::int32_t, true>(len);
-                    get_string(len - 1ul, value);
-                    get();
-                    sax->string(value);
-                }
-                break;
-                case 0x08: // boolean
-                {
-                    sax->boolean(static_cast<bool>(get()));
-                }
-                break;
-                case 0x10: // int32
-                {
-                    std::int32_t value;
-                    get_number<std::int32_t, true>(value);
-                    sax->number_integer(static_cast<std::int32_t>(value));
-                }
-                break;
-                case 0x12: // int64
-                {
-                    std::int64_t value;
-                    get_number<std::int64_t, true>(value);
-                    sax->number_integer(static_cast<std::int64_t>(value));
-                }
-                break;
-                case 0x0A: // null
-                {
-                    sax->null();
-                }
-                break;
-                case 0x03: // object
-                {
-                    parse_bson_internal();
-                }
-                break;
-                case 0x04: // array
-                {
-                    parse_bson_array();
-                }
-                break;
+                return false;
             }
         }
         return true;
     }
 
+    /*!
+    @brief Reads an array from the BSON input and passes it to the SAX-parser.
+    @return whether a valid BSON-array was passed to the SAX parser
+    */
     bool parse_bson_array()
     {
         std::int32_t documentSize;
@@ -231,7 +290,7 @@ class binary_reader
             return false;
         }
 
-        if (!parse_bson_entries(/*is_array*/true))
+        if (JSON_UNLIKELY(not parse_bson_element_list(/*is_array*/true)))
         {
             return false;
         }
@@ -239,6 +298,10 @@ class binary_reader
         return sax->end_array();
     }
 
+    /*!
+    @brief Reads in a BSON-object and pass it to the SAX-parser.
+    @return whether a valid BSON-value was passed to the SAX parser
+    */
     bool parse_bson_internal()
     {
         std::int32_t documentSize;
@@ -249,7 +312,7 @@ class binary_reader
             return false;
         }
 
-        if (!parse_bson_entries(/*is_array*/false))
+        if (JSON_UNLIKELY(not parse_bson_element_list(/*is_array*/false)))
         {
             return false;
         }

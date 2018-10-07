@@ -690,6 +690,7 @@ json.exception.parse_error.109 | parse error: array index 'one' is not a number 
 json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
 json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xF8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
 json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last byte: 0x98 | While parsing a map key, a value that is not a string has been read.
+json.exception.parse_error.114 | parse error: Unsupported BSON record type 0x0F | The parsing of the corresponding BSON record type is not implemented (yet).
 
 @note For an input with n bytes, 1 is the index of the first character and n+1
       is the index of the terminating null byte or the end of file. This also
@@ -6110,7 +6111,12 @@ class binary_reader
   private:
 
     /*!
-    @return whether array creation completed
+    @brief Parses a C-style string from the BSON input.
+    @param [out] result A reference to the string variable where the read string
+                        is to be stored.
+    @return `true` if the \x00-byte indicating the end of the
+            string was encountered before the EOF.
+            `false` indicates an unexpected EOF.
     */
     bool get_bson_cstr(string_t& result)
     {
@@ -6132,12 +6138,112 @@ class binary_reader
         return true;
     }
 
-    bool parse_bson_entries(bool is_array)
+    /*!
+    @brief Parses a zero-terminated string of length @a len from the BSON input.
+    @param [in]  len    The length (including the zero-byte at the end) of the string to be read.
+    @param [out] result A reference to the string variable where the read string
+                        is to be stored.
+    @tparam NumberType The type of the length @a len
+    @pre len > 0
+    @return `true` if the string was successfully parsed
+    */
+    template <typename NumberType>
+    bool get_bson_string(const NumberType len, string_t& result)
     {
-        while (auto entry_type = get())
+        return get_string(len - static_cast<NumberType>(1), result)
+               && get() != std::char_traits<char>::eof();
+    }
+
+    /*!
+    @return A hexadecimal string representation of the given @a byte
+    @param byte The byte to convert to a string
+    */
+    static std::string byte_hexstring(unsigned char byte)
+    {
+        char cr[3];
+        snprintf(cr, sizeof(cr), "%02hhX", byte);
+        return std::string{cr};
+    }
+
+    /*!
+    @brief Read a BSON document element of the given @a element_type.
+    @param element_type The BSON element type, c.f. http://bsonspec.org/spec.html
+    @param element_type_parse_position The position in the input stream, where the `element_type` was read.
+    @warning Not all BSON element types are supported yet. An unsupported @a element_type will
+             give rise to a parse_error.114: Unsupported BSON record type 0x...
+    @return whether a valid BSON-object/array was passed to the SAX parser
+    */
+    bool parse_bson_element_internal(int element_type, std::size_t element_type_parse_position)
+    {
+        switch (element_type)
         {
+            case 0x01: // double
+            {
+                double number;
+                return get_number<double, true>(number)
+                       && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+            case 0x02: // string
+            {
+                std::int32_t len;
+                string_t value;
+                return get_number<std::int32_t, true>(len)
+                       && get_bson_string(len, value)
+                       && sax->string(value);
+            }
+            case 0x08: // boolean
+            {
+                return sax->boolean(static_cast<bool>(get()));
+            }
+            case 0x10: // int32
+            {
+                std::int32_t value;
+                return get_number<std::int32_t, true>(value)
+                       && sax->number_integer(static_cast<std::int32_t>(value));
+            }
+            case 0x12: // int64
+            {
+                std::int64_t value;
+                return get_number<std::int64_t, true>(value)
+                       && sax->number_integer(static_cast<std::int64_t>(value));
+            }
+            case 0x0A: // null
+            {
+                return sax->null();
+            }
+            case 0x03: // object
+            {
+                return parse_bson_internal();
+            }
+            case 0x04: // array
+            {
+                return parse_bson_array();
+            }
+            default: // anything else not supported (yet)
+            {
+                auto element_type_str = byte_hexstring(element_type);
+                return sax->parse_error(element_type_parse_position, element_type_str, parse_error::create(114, element_type_parse_position, "Unsupported BSON record type 0x" + element_type_str));
+            }
+        }
+    }
+
+    /*!
+    @brief Read a BSON element list (as specified in the BSON-spec) from the input
+           and passes it to the SAX-parser.
+           The same binary layout is used for objects and arrays, hence it must
+           be indicated with the argument @a is_array which one is expected
+           (true --> array, false --> object).
+    @param is_array Determines if the element list being read is to be treated as
+           an object (@a is_array == false), or as an array (@a is_array == true).
+    @return whether a valid BSON-object/array was passed to the SAX parser
+    */
+    bool parse_bson_element_list(bool is_array)
+    {
+        while (auto element_type = get())
+        {
+            const std::size_t element_type_parse_position = chars_read;
             string_t key;
-            if (!get_bson_cstr(key))
+            if (JSON_UNLIKELY(not get_bson_cstr(key)))
             {
                 return false;
             }
@@ -6147,64 +6253,18 @@ class binary_reader
                 sax->key(key);
             }
 
-            switch (entry_type)
+            if (JSON_UNLIKELY(not parse_bson_element_internal(element_type, element_type_parse_position)))
             {
-                case 0x01: // double
-                {
-                    double number;
-                    get_number<double, true>(number);
-                    sax->number_float(static_cast<number_float_t>(number), "");
-                }
-                break;
-                case 0x02: // string
-                {
-                    std::int32_t len;
-                    string_t value;
-                    get_number<std::int32_t, true>(len);
-                    get_string(len - 1ul, value);
-                    get();
-                    sax->string(value);
-                }
-                break;
-                case 0x08: // boolean
-                {
-                    sax->boolean(static_cast<bool>(get()));
-                }
-                break;
-                case 0x10: // int32
-                {
-                    std::int32_t value;
-                    get_number<std::int32_t, true>(value);
-                    sax->number_integer(static_cast<std::int32_t>(value));
-                }
-                break;
-                case 0x12: // int64
-                {
-                    std::int64_t value;
-                    get_number<std::int64_t, true>(value);
-                    sax->number_integer(static_cast<std::int64_t>(value));
-                }
-                break;
-                case 0x0A: // null
-                {
-                    sax->null();
-                }
-                break;
-                case 0x03: // object
-                {
-                    parse_bson_internal();
-                }
-                break;
-                case 0x04: // array
-                {
-                    parse_bson_array();
-                }
-                break;
+                return false;
             }
         }
         return true;
     }
 
+    /*!
+    @brief Reads an array from the BSON input and passes it to the SAX-parser.
+    @return whether a valid BSON-array was passed to the SAX parser
+    */
     bool parse_bson_array()
     {
         std::int32_t documentSize;
@@ -6215,7 +6275,7 @@ class binary_reader
             return false;
         }
 
-        if (!parse_bson_entries(/*is_array*/true))
+        if (JSON_UNLIKELY(not parse_bson_element_list(/*is_array*/true)))
         {
             return false;
         }
@@ -6223,6 +6283,10 @@ class binary_reader
         return sax->end_array();
     }
 
+    /*!
+    @brief Reads in a BSON-object and pass it to the SAX-parser.
+    @return whether a valid BSON-value was passed to the SAX parser
+    */
     bool parse_bson_internal()
     {
         std::int32_t documentSize;
@@ -6233,7 +6297,7 @@ class binary_reader
             return false;
         }
 
-        if (!parse_bson_entries(/*is_array*/false))
+        if (JSON_UNLIKELY(not parse_bson_element_list(/*is_array*/false)))
         {
             return false;
         }
@@ -8691,7 +8755,7 @@ class binary_writer
         switch (j.type())
         {
             default:
-                JSON_THROW(type_error::create(317, "JSON value cannot be serialized to requested format"));
+                JSON_THROW(type_error::create(317, "JSON value of type " + std::to_string(static_cast<std::uint8_t>(j.type())) + " cannot be serialized to requested format"));
                 break;
             case value_t::discarded:
                 break;
@@ -18080,7 +18144,13 @@ class basic_json
     }
 
 
-
+    /*!
+    @brief Serializes the given JSON object `j` to BSON and returns a vector
+           containing the corresponding BSON-representation.
+    @param j The JSON object to convert to BSON.
+    @return The BSON representation of the JSON input `j`.
+    @pre The input `j` shall be an object: `j.is_object() == true`
+    */
     static std::vector<uint8_t> to_bson(const basic_json& j)
     {
         std::vector<uint8_t> result;
@@ -18088,11 +18158,21 @@ class basic_json
         return result;
     }
 
+    /*!
+    @brief Serializes the given JSON object `j` to BSON and forwards the
+           corresponding BSON-representation to the given output_adapter `o`.
+    @param j The JSON object to convert to BSON.
+    @param o The output adapter that receives the binary BSON representation.
+    @pre The input `j` shall be an object: `j.is_object() == true`
+    */
     static void to_bson(const basic_json& j, detail::output_adapter<uint8_t> o)
     {
         binary_writer<uint8_t>(o).write_bson(j);
     }
 
+    /*!
+    @copydoc to_bson(const basic_json&, detail::output_adapter<uint8_t>)
+    */
     static void to_bson(const basic_json& j, detail::output_adapter<char> o)
     {
         binary_writer<char>(o).write_bson(j);
@@ -18293,6 +18373,8 @@ class basic_json
         related CBOR format
     @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for
         the related UBJSON format
+    @sa @ref from_bson(detail::input_adapter, const bool, const bool) for
+        the related BSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
@@ -18378,6 +18460,8 @@ class basic_json
         related CBOR format
     @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
         the related MessagePack format
+    @sa @ref from_bson(detail::input_adapter, const bool, const bool) for
+        the related BSON format
 
     @since version 3.1.0; added @allow_exceptions parameter since 3.2.0
     */
@@ -18409,7 +18493,61 @@ class basic_json
 
 
 
+    /*!
+    @brief Create a JSON value from an input in BSON format
 
+    Deserializes a given input @a i to a JSON value using the BSON (Binary JSON)
+    serialization format.
+
+    The library maps BSON record types to JSON value types as follows:
+
+    BSON type       | BSON marker byte | JSON value type
+    --------------- | ---------------- | ---------------------------
+    double          | 0x01             | number_float
+    string          | 0x02             | string
+    document        | 0x03             | object
+    array           | 0x04             | array
+    binary          | 0x05             | still unsupported
+    undefined       | 0x06             | still unsupported
+    ObjectId        | 0x07             | still unsupported
+    boolean         | 0x08             | boolean
+    UTC Date-Time   | 0x09             | still unsupported
+    null            | 0x0A             | null
+    Regular Expr.   | 0x0B             | still unsupported
+    DB Pointer      | 0x0C             | still unsupported
+    JavaScript Code | 0x0D             | still unsupported
+    Symbol          | 0x0E             | still unsupported
+    JavaScript Code | 0x0F             | still unsupported
+    int32           | 0x10             | number_integer
+    Timestamp       | 0x11             | still unsupported
+    128-bit decimal float | 0x13       | still unsupported
+    Max Key         | 0x7F             | still unsupported
+    Min Key         | 0xFF             | still unsupported
+
+
+    @warning The mapping is **incomplete**. The unsupported mappings
+             are indicated in the table above.
+
+    @param[in] i  an input in BSON format convertible to an input adapter
+    @param[in] strict  whether to expect the input to be consumed until EOF
+                       (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
+    @return deserialized JSON value
+
+    @throw parse_error.114 if an unsupported BSON record type is encountered
+
+    @sa http://bsonspec.org/spec.html
+    @sa @ref to_bson(const basic_json&, const bool, const bool) for the
+             analogous serialization
+    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+        related CBOR format
+    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
+        the related MessagePack format
+    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for the
+        related UBJSON format
+    */
     static basic_json from_bson(detail::input_adapter&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
@@ -18420,6 +18558,9 @@ class basic_json
         return res ? result : basic_json(value_t::discarded);
     }
 
+    /*!
+    @copydoc from_bson(detail::input_adapter&&, const bool, const bool)
+    */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
     static basic_json from_bson(A1 && a1, A2 && a2,

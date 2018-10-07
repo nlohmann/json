@@ -6591,7 +6591,13 @@ class basic_json
     }
 
 
-
+    /*!
+    @brief Serializes the given JSON object `j` to BSON and returns a vector
+           containing the corresponding BSON-representation.
+    @param j The JSON object to convert to BSON.
+    @return The BSON representation of the JSON input `j`.
+    @pre The input `j` shall be an object: `j.is_object() == true`
+    */
     static std::vector<uint8_t> to_bson(const basic_json& j)
     {
         std::vector<uint8_t> result;
@@ -6599,11 +6605,21 @@ class basic_json
         return result;
     }
 
+    /*!
+    @brief Serializes the given JSON object `j` to BSON and forwards the
+           corresponding BSON-representation to the given output_adapter `o`.
+    @param j The JSON object to convert to BSON.
+    @param o The output adapter that receives the binary BSON representation.
+    @pre The input `j` shall be an object: `j.is_object() == true`
+    */
     static void to_bson(const basic_json& j, detail::output_adapter<uint8_t> o)
     {
         binary_writer<uint8_t>(o).write_bson(j);
     }
 
+    /*!
+    @copydoc to_bson(const basic_json&, detail::output_adapter<uint8_t>)
+    */
     static void to_bson(const basic_json& j, detail::output_adapter<char> o)
     {
         binary_writer<char>(o).write_bson(j);
@@ -6804,6 +6820,8 @@ class basic_json
         related CBOR format
     @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for
         the related UBJSON format
+    @sa @ref from_bson(detail::input_adapter, const bool, const bool) for
+        the related BSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
@@ -6889,6 +6907,8 @@ class basic_json
         related CBOR format
     @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
         the related MessagePack format
+    @sa @ref from_bson(detail::input_adapter, const bool, const bool) for
+        the related BSON format
 
     @since version 3.1.0; added @allow_exceptions parameter since 3.2.0
     */
@@ -6920,7 +6940,61 @@ class basic_json
 
 
 
+    /*!
+    @brief Create a JSON value from an input in BSON format
 
+    Deserializes a given input @a i to a JSON value using the BSON (Binary JSON)
+    serialization format.
+
+    The library maps BSON record types to JSON value types as follows:
+
+    BSON type       | BSON marker byte | JSON value type
+    --------------- | ---------------- | ---------------------------
+    double          | 0x01             | number_float
+    string          | 0x02             | string
+    document        | 0x03             | object
+    array           | 0x04             | array
+    binary          | 0x05             | still unsupported
+    undefined       | 0x06             | still unsupported
+    ObjectId        | 0x07             | still unsupported
+    boolean         | 0x08             | boolean
+    UTC Date-Time   | 0x09             | still unsupported
+    null            | 0x0A             | null
+    Regular Expr.   | 0x0B             | still unsupported
+    DB Pointer      | 0x0C             | still unsupported
+    JavaScript Code | 0x0D             | still unsupported
+    Symbol          | 0x0E             | still unsupported
+    JavaScript Code | 0x0F             | still unsupported
+    int32           | 0x10             | number_integer
+    Timestamp       | 0x11             | still unsupported
+    128-bit decimal float | 0x13       | still unsupported
+    Max Key         | 0x7F             | still unsupported
+    Min Key         | 0xFF             | still unsupported
+
+
+    @warning The mapping is **incomplete**. The unsupported mappings
+             are indicated in the table above.
+
+    @param[in] i  an input in BSON format convertible to an input adapter
+    @param[in] strict  whether to expect the input to be consumed until EOF
+                       (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
+    @return deserialized JSON value
+
+    @throw parse_error.114 if an unsupported BSON record type is encountered
+
+    @sa http://bsonspec.org/spec.html
+    @sa @ref to_bson(const basic_json&, const bool, const bool) for the
+             analogous serialization
+    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+        related CBOR format
+    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
+        the related MessagePack format
+    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for the
+        related UBJSON format
+    */
     static basic_json from_bson(detail::input_adapter&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
@@ -6931,6 +7005,9 @@ class basic_json
         return res ? result : basic_json(value_t::discarded);
     }
 
+    /*!
+    @copydoc from_bson(detail::input_adapter&&, const bool, const bool)
+    */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
     static basic_json from_bson(A1 && a1, A2 && a2,

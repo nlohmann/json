@@ -708,3 +708,22 @@ TEST_CASE("Incomplete BSON INPUT 4")
 }
 
 
+TEST_CASE("Unsupported BSON input")
+{
+    std::vector<uint8_t> bson =
+    {
+        0x0C, 0x00, 0x00, 0x00, // size (little endian)
+        0xFF,                   // entry type: Min key (not supported yet)
+        'e', 'n', 't', 'r', 'y', '\x00',
+        0x00 // end marker
+    };
+
+    CHECK_THROWS_WITH(json::from_bson(bson),
+                      "[json.exception.parse_error.114] parse error at 5: Unsupported BSON record type 0xFF");
+    CHECK(json::from_bson(bson, true, false).is_discarded());
+
+    SaxCountdown scp(0);
+    CHECK(not json::sax_parse(bson, &scp, json::input_format_t::bson));
+}
+
+
