@@ -39,9 +39,6 @@ template<typename IteratorType> class iteration_proxy
       public:
         explicit iteration_proxy_internal(IteratorType it) noexcept : anchor(it) {}
 
-        iteration_proxy_internal(const iteration_proxy_internal&) = default;
-        iteration_proxy_internal& operator=(const iteration_proxy_internal&) = default;
-
         /// dereference operator (needed for range-based for)
         iteration_proxy_internal& operator*()
         {
@@ -124,5 +121,5 @@ template<typename IteratorType> class iteration_proxy
         return iteration_proxy_internal(container.end());
     }
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

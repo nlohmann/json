@@ -109,5 +109,5 @@ class output_adapter
   private:
     output_adapter_t<CharType> oa = nullptr;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

@@ -540,9 +540,11 @@ class binary_writer
             case value_t::boolean:
             {
                 if (add_prefix)
+                {
                     oa->write_character(j.m_value.boolean
                                         ? static_cast<CharType>('T')
                                         : static_cast<CharType>('F'));
+                }
                 break;
             }
 
@@ -849,22 +851,20 @@ class binary_writer
                 {
                     return 'i';
                 }
-                else if ((std::numeric_limits<uint8_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
+                if ((std::numeric_limits<uint8_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
                 {
                     return 'U';
                 }
-                else if ((std::numeric_limits<int16_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
+                if ((std::numeric_limits<int16_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
                 {
                     return 'I';
                 }
-                else if ((std::numeric_limits<int32_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
+                if ((std::numeric_limits<int32_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
                 {
                     return 'l';
                 }
-                else  // no check and assume int64_t (see note above)
-                {
-                    return 'L';
-                }
+                // no check and assume int64_t (see note above)
+                return 'L';
             }
 
             case value_t::number_unsigned:
@@ -873,22 +873,20 @@ class binary_writer
                 {
                     return 'i';
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
+                if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
                 {
                     return 'U';
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<int16_t>::max)())
+                if (j.m_value.number_unsigned <= (std::numeric_limits<int16_t>::max)())
                 {
                     return 'I';
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<int32_t>::max)())
+                if (j.m_value.number_unsigned <= (std::numeric_limits<int32_t>::max)())
                 {
                     return 'l';
                 }
-                else  // no check and assume int64_t (see note above)
-                {
-                    return 'L';
-                }
+                // no check and assume int64_t (see note above)
+                return 'L';
             }
 
             case value_t::number_float:
@@ -908,32 +906,32 @@ class binary_writer
         }
     }
 
-    static constexpr CharType get_cbor_float_prefix(float)
+    static constexpr CharType get_cbor_float_prefix(float /*unused*/)
     {
         return static_cast<CharType>(0xFA);  // Single-Precision Float
     }
 
-    static constexpr CharType get_cbor_float_prefix(double)
+    static constexpr CharType get_cbor_float_prefix(double /*unused*/)
     {
         return static_cast<CharType>(0xFB);  // Double-Precision Float
     }
 
-    static constexpr CharType get_msgpack_float_prefix(float)
+    static constexpr CharType get_msgpack_float_prefix(float /*unused*/)
     {
         return static_cast<CharType>(0xCA);  // float 32
     }
 
-    static constexpr CharType get_msgpack_float_prefix(double)
+    static constexpr CharType get_msgpack_float_prefix(double /*unused*/)
     {
         return static_cast<CharType>(0xCB);  // float 64
     }
 
-    static constexpr CharType get_ubjson_float_prefix(float)
+    static constexpr CharType get_ubjson_float_prefix(float /*unused*/)
     {
         return 'd';  // float 32
     }
 
-    static constexpr CharType get_ubjson_float_prefix(double)
+    static constexpr CharType get_ubjson_float_prefix(double /*unused*/)
     {
         return 'D';  // float 64
     }
@@ -945,5 +943,5 @@ class binary_writer
     /// the output
     output_adapter_t<CharType> oa = nullptr;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

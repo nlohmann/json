@@ -137,5 +137,5 @@ public:
       "Missing/invalid function: bool parse_error(std::size_t, const "
       "std::string&, const exception&)");
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

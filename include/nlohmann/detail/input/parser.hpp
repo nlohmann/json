@@ -201,12 +201,9 @@ class parser
                                                     m_lexer.get_token_string(),
                                                     parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
                         }
-                        else
+                        if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
                         {
-                            if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
-                            {
-                                return false;
-                            }
+                            return false;
                         }
 
                         // parse separator (:)
@@ -484,5 +481,5 @@ class parser
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

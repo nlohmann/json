@@ -1866,7 +1866,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    reference& operator=(basic_json other) noexcept (
+    basic_json& operator=(basic_json other) noexcept (
         std::is_nothrow_move_constructible<value_t>::value and
         std::is_nothrow_move_assignable<value_t>::value and
         std::is_nothrow_move_constructible<json_value>::value and
@@ -7289,11 +7289,9 @@ class basic_json
                                 // avoid undefined behavior
                                 JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range"));
                             }
-                            else
-                            {
-                                // default case: insert add offset
-                                parent.insert(parent.begin() + static_cast<difference_type>(idx), val);
-                            }
+
+                            // default case: insert add offset
+                            parent.insert(parent.begin() + static_cast<difference_type>(idx), val);
                         }
                         break;
                     }

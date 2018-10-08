@@ -53,6 +53,9 @@ class serializer
     // delete because of pointer members
     serializer(const serializer&) = delete;
     serializer& operator=(const serializer&) = delete;
+    serializer(serializer&&) = delete;
+    serializer& operator=(serializer&&) = delete;
+    ~serializer() = default;
 
     /*!
     @brief internal implementation of the serialization function
@@ -442,7 +445,7 @@ class serializer
             return;
         }
 
-        const bool is_negative = not (x >= 0);  // see issue #755
+        const bool is_negative = std::is_same<NumberType, number_integer_t>::value and not (x >= 0);  // see issue #755
         std::size_t i = 0;
 
         while (x != 0)
@@ -627,5 +630,5 @@ class serializer
     /// the indentation string
     string_t indent_string;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

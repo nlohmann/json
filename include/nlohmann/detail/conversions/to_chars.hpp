@@ -47,10 +47,9 @@ struct diyfp // f * 2^e
 {
     static constexpr int kPrecision = 64; // = q
 
-    uint64_t f;
-    int e;
+    uint64_t f = 0;
+    int e = 0;
 
-    constexpr diyfp() noexcept : f(0), e(0) {}
     constexpr diyfp(uint64_t f_, int e_) noexcept : f(f_), e(e_) {}
 
     /*!
@@ -62,7 +61,7 @@ struct diyfp // f * 2^e
         assert(x.e == y.e);
         assert(x.f >= y.f);
 
-        return diyfp(x.f - y.f, x.e);
+        return {x.f - y.f, x.e};
     }
 
     /*!
@@ -127,7 +126,7 @@ struct diyfp // f * 2^e
 
         const uint64_t h = p3 + p2_hi + p1_hi + (Q >> 32);
 
-        return diyfp(h, x.e + y.e + 64);
+        return {h, x.e + y.e + 64};
     }
 
     /*!
@@ -158,7 +157,7 @@ struct diyfp // f * 2^e
         assert(delta >= 0);
         assert(((x.f << delta) >> delta) == x.f);
 
-        return diyfp(x.f << delta, target_exponent);
+        return {x.f << delta, target_exponent};
     }
 };
 
@@ -461,7 +460,7 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     assert(e >= -1500);
     assert(e <=  1500);
     const int f = kAlpha - e - 1;
-    const int k = (f * 78913) / (1 << 18) + (f > 0);
+    const int k = (f * 78913) / (1 << 18) + static_cast<int>(f > 0);
 
     const int index = (-kCachedPowersMinDecExp + k + (kCachedPowersDecStep - 1)) / kCachedPowersDecStep;
     assert(index >= 0);
@@ -609,7 +608,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
 
     const diyfp one(uint64_t{1} << -M_plus.e, M_plus.e);
 
-    uint32_t p1 = static_cast<uint32_t>(M_plus.f >> -one.e); // p1 = f div 2^-e (Since -e >= 32, p1 fits into a 32-bit int.)
+    auto p1 = static_cast<uint32_t>(M_plus.f >> -one.e); // p1 = f div 2^-e (Since -e >= 32, p1 fits into a 32-bit int.)
     uint64_t p2 = M_plus.f & (one.f - 1);                    // p2 = f mod 2^-e
 
     // 1)
@@ -928,7 +927,7 @@ inline char* append_exponent(char* buf, int e)
         *buf++ = '+';
     }
 
-    uint32_t k = static_cast<uint32_t>(e);
+    auto k = static_cast<uint32_t>(e);
     if (k < 10)
     {
         // Always print at least two digits in the exponent.
@@ -1046,7 +1045,7 @@ format. Returns an iterator pointing past-the-end of the decimal representation.
 @note The result is NOT null-terminated.
 */
 template <typename FloatType>
-char* to_chars(char* first, char* last, FloatType value)
+char* to_chars(char* first, const char* last, FloatType value)
 {
     static_cast<void>(last); // maybe unused - fix warning
     assert(std::isfinite(value));

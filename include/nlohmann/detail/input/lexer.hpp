@@ -104,7 +104,10 @@ class lexer
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
+    lexer(lexer&&) = delete;
     lexer& operator=(lexer&) = delete;
+    lexer& operator=(lexer&&) = delete;
+    ~lexer() = default;
 
   private:
     /////////////////////
@@ -709,7 +712,7 @@ class lexer
           locale's decimal point is used instead of `.` to work with the
           locale-dependent converters.
     */
-    token_type scan_number()
+    token_type scan_number()  // lgtm [cpp/use-of-goto]
     {
         // reset token_buffer to store the number's bytes
         reset();
@@ -1208,24 +1211,14 @@ scan_number_done:
     {
         if (get() == 0xEF)
         {
-            if (get() == 0xBB and get() == 0xBF)
-            {
-                // we completely parsed the BOM
-                return true;
-            }
-            else
-            {
-                // after reading 0xEF, an unexpected character followed
-                return false;
-            }
+            // check if we completely parse the BOM
+            return get() == 0xBB and get() == 0xBF;
         }
-        else
-        {
-            // the first character is not the beginning of the BOM; unget it to
-            // process is later
-            unget();
-            return true;
-        }
+
+        // the first character is not the beginning of the BOM; unget it to
+        // process is later
+        unget();
+        return true;
     }
 
     token_type scan()
@@ -1329,5 +1322,5 @@ scan_number_done:
     /// the decimal point
     const char decimal_point_char = '.';
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

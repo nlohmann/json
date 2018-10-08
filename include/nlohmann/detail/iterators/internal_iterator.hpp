@@ -21,5 +21,5 @@ template<typename BasicJsonType> struct internal_iterator
     /// generic iterator for all other types
     primitive_iterator_t primitive_iterator {};
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

@@ -34,6 +34,8 @@ class json_ref
     json_ref(json_ref&&) = default;
     json_ref(const json_ref&) = delete;
     json_ref& operator=(const json_ref&) = delete;
+    json_ref& operator=(json_ref&&) = delete;
+    ~json_ref() = default;
 
     value_type moved_or_copied() const
     {
@@ -59,5 +61,5 @@ class json_ref
     value_type* value_ref = nullptr;
     const bool is_rvalue;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

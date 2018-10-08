@@ -71,6 +71,8 @@ class input_stream_adapter : public input_adapter_protocol
     // delete because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
+    input_stream_adapter(input_stream_adapter&&) = delete;
+    input_stream_adapter& operator=(input_stream_adapter&&) = delete;
 
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xFF do not
@@ -97,6 +99,9 @@ class input_buffer_adapter : public input_adapter_protocol
     // delete because of pointer members
     input_buffer_adapter(const input_buffer_adapter&) = delete;
     input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
+    input_buffer_adapter(input_buffer_adapter&&) = delete;
+    input_buffer_adapter& operator=(input_buffer_adapter&&) = delete;
+    ~input_buffer_adapter() override = default;
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
@@ -131,7 +136,7 @@ struct wide_string_input_helper
         else
         {
             // get the current character
-            const int wc = static_cast<int>(str[current_wchar++]);
+            const auto wc = static_cast<int>(str[current_wchar++]);
 
             // UTF-32 to UTF-8 encoding
             if (wc < 0x80)
@@ -186,7 +191,7 @@ struct wide_string_input_helper<WideStringType, 2>
         else
         {
             // get the current character
-            const int wc = static_cast<int>(str[current_wchar++]);
+            const auto wc = static_cast<int>(str[current_wchar++]);
 
             // UTF-16 to UTF-8 encoding
             if (wc < 0x80)
@@ -211,7 +216,7 @@ struct wide_string_input_helper<WideStringType, 2>
             {
                 if (current_wchar < str.size())
                 {
-                    const int wc2 = static_cast<int>(str[current_wchar++]);
+                    const auto wc2 = static_cast<int>(str[current_wchar++]);
                     const int charcode = 0x10000 + (((wc & 0x3FF) << 10) | (wc2 & 0x3FF));
                     utf8_bytes[0] = 0xf0 | (charcode >> 18);
                     utf8_bytes[1] = 0x80 | ((charcode >> 12) & 0x3F);
@@ -381,5 +386,5 @@ class input_adapter
     /// the actual adapter
     input_adapter_t ia = nullptr;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

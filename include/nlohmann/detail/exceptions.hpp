@@ -326,5 +326,5 @@ class other_error : public exception
   private:
     other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
