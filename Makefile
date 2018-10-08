@@ -12,6 +12,7 @@ SRCS = include/nlohmann/json.hpp \
        include/nlohmann/detail/input/json_sax.hpp \
        include/nlohmann/detail/input/lexer.hpp \
        include/nlohmann/detail/input/parser.hpp \
+       include/nlohmann/detail/input/position_t.hpp \
        include/nlohmann/detail/iterators/internal_iterator.hpp \
        include/nlohmann/detail/iterators/iter_impl.hpp \
        include/nlohmann/detail/iterators/iteration_proxy.hpp \

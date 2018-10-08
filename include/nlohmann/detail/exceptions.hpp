@@ -4,6 +4,8 @@
 #include <stdexcept> // runtime_error
 #include <string> // to_string
 
+#include <nlohmann/detail/input/position_t.hpp>
+
 namespace nlohmann
 {
 namespace detail
@@ -114,15 +116,23 @@ class parse_error : public exception
     /*!
     @brief create a parse error exception
     @param[in] id_       the id of the exception
-    @param[in] byte_     the byte index where the error occurred (or 0 if the
-                         position cannot be determined)
+    @param[in] position  the position where the error occurred (or with
+                         chars_read_total=0 if the position cannot be
+                         determined)
     @param[in] what_arg  the explanatory string
     @return parse_error object
     */
+    static parse_error create(int id_, const position_t& pos, const std::string& what_arg)
+    {
+        std::string w = exception::name("parse_error", id_) + "parse error" +
+                        position_string(pos) + ": " + what_arg;
+        return parse_error(id_, pos.chars_read_total, w.c_str());
+    }
+
     static parse_error create(int id_, std::size_t byte_, const std::string& what_arg)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
-                        (byte_ != 0 ? (" at " + std::to_string(byte_)) : "") +
+                        (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
                         ": " + what_arg;
         return parse_error(id_, byte_, w.c_str());
     }
@@ -141,6 +151,12 @@ class parse_error : public exception
   private:
     parse_error(int id_, std::size_t byte_, const char* what_arg)
         : exception(id_, what_arg), byte(byte_) {}
+
+    static std::string position_string(const position_t& pos)
+    {
+        return " at line " + std::to_string(pos.lines_read + 1) +
+               ", column " + std::to_string(pos.chars_read_current_line);
+    }
 };
 
 /*!

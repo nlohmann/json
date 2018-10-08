@@ -617,6 +617,36 @@ struct is_compatible_type
 #include <stdexcept> // runtime_error
 #include <string> // to_string
 
+// #include <nlohmann/detail/input/position_t.hpp>
+
+
+#include <cstddef> // size_t
+
+namespace nlohmann
+{
+namespace detail
+{
+/// struct to capture the start position of the current token
+struct position_t
+{
+    /// the total number of characters read
+    std::size_t chars_read_total = 0;
+    /// the number of characters read in the current line
+    std::size_t chars_read_current_line = 0;
+    /// the number of lines read
+    std::size_t lines_read = 0;
+
+    /// conversion to size_t to preserve SAX interface
+    constexpr operator size_t() const
+    {
+        return chars_read_total;
+    }
+};
+
+}
+}
+
+
 namespace nlohmann
 {
 namespace detail
@@ -727,15 +757,23 @@ class parse_error : public exception
     /*!
     @brief create a parse error exception
     @param[in] id_       the id of the exception
-    @param[in] byte_     the byte index where the error occurred (or 0 if the
-                         position cannot be determined)
+    @param[in] position  the position where the error occurred (or with
+                         chars_read_total=0 if the position cannot be
+                         determined)
     @param[in] what_arg  the explanatory string
     @return parse_error object
     */
+    static parse_error create(int id_, const position_t& pos, const std::string& what_arg)
+    {
+        std::string w = exception::name("parse_error", id_) + "parse error" +
+                        position_string(pos) + ": " + what_arg;
+        return parse_error(id_, pos.chars_read_total, w.c_str());
+    }
+
     static parse_error create(int id_, std::size_t byte_, const std::string& what_arg)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
-                        (byte_ != 0 ? (" at " + std::to_string(byte_)) : "") +
+                        (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
                         ": " + what_arg;
         return parse_error(id_, byte_, w.c_str());
     }
@@ -754,6 +792,12 @@ class parse_error : public exception
   private:
     parse_error(int id_, std::size_t byte_, const char* what_arg)
         : exception(id_, what_arg), byte(byte_) {}
+
+    static std::string position_string(const position_t& pos)
+    {
+        return " at line " + std::to_string(pos.lines_read + 1) +
+               ", column " + std::to_string(pos.chars_read_current_line);
+    }
 };
 
 /*!
@@ -2279,6 +2323,8 @@ class input_adapter
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
+// #include <nlohmann/detail/input/position_t.hpp>
+
 
 namespace nlohmann
 {
@@ -2665,39 +2711,194 @@ class lexer
 
                 // invalid control characters
                 case 0x00:
+                {
+                    error_message = "invalid string: control character U+0000 (NUL) must be escaped to \\u0000";
+                    return token_type::parse_error;
+                }
+
                 case 0x01:
+                {
+                    error_message = "invalid string: control character U+0001 (SOH) must be escaped to \\u0001";
+                    return token_type::parse_error;
+                }
+
                 case 0x02:
+                {
+                    error_message = "invalid string: control character U+0002 (STX) must be escaped to \\u0002";
+                    return token_type::parse_error;
+                }
+
                 case 0x03:
+                {
+                    error_message = "invalid string: control character U+0003 (ETX) must be escaped to \\u0003";
+                    return token_type::parse_error;
+                }
+
                 case 0x04:
+                {
+                    error_message = "invalid string: control character U+0004 (EOT) must be escaped to \\u0004";
+                    return token_type::parse_error;
+                }
+
                 case 0x05:
+                {
+                    error_message = "invalid string: control character U+0005 (ENQ) must be escaped to \\u0005";
+                    return token_type::parse_error;
+                }
+
                 case 0x06:
+                {
+                    error_message = "invalid string: control character U+0006 (ACK) must be escaped to \\u0006";
+                    return token_type::parse_error;
+                }
+
                 case 0x07:
+                {
+                    error_message = "invalid string: control character U+0007 (BEL) must be escaped to \\u0007";
+                    return token_type::parse_error;
+                }
+
                 case 0x08:
+                {
+                    error_message = "invalid string: control character U+0008 (BS) must be escaped to \\u0008 or \\b";
+                    return token_type::parse_error;
+                }
+
                 case 0x09:
+                {
+                    error_message = "invalid string: control character U+0009 (HT) must be escaped to \\u0009 or \\t";
+                    return token_type::parse_error;
+                }
+
                 case 0x0A:
+                {
+                    error_message = "invalid string: control character U+000A (LF) must be escaped to \\u000A or \\n";
+                    return token_type::parse_error;
+                }
+
                 case 0x0B:
+                {
+                    error_message = "invalid string: control character U+000B (VT) must be escaped to \\u000B";
+                    return token_type::parse_error;
+                }
+
                 case 0x0C:
+                {
+                    error_message = "invalid string: control character U+000C (FF) must be escaped to \\u000C or \\f";
+                    return token_type::parse_error;
+                }
+
                 case 0x0D:
+                {
+                    error_message = "invalid string: control character U+000D (CR) must be escaped to \\u000D or \\r";
+                    return token_type::parse_error;
+                }
+
                 case 0x0E:
+                {
+                    error_message = "invalid string: control character U+000E (SO) must be escaped to \\u000E";
+                    return token_type::parse_error;
+                }
+
                 case 0x0F:
+                {
+                    error_message = "invalid string: control character U+000F (SI) must be escaped to \\u000F";
+                    return token_type::parse_error;
+                }
+
                 case 0x10:
+                {
+                    error_message = "invalid string: control character U+0010 (DLE) must be escaped to \\u0010";
+                    return token_type::parse_error;
+                }
+
                 case 0x11:
+                {
+                    error_message = "invalid string: control character U+0011 (DC1) must be escaped to \\u0011";
+                    return token_type::parse_error;
+                }
+
                 case 0x12:
+                {
+                    error_message = "invalid string: control character U+0012 (DC2) must be escaped to \\u0012";
+                    return token_type::parse_error;
+                }
+
                 case 0x13:
+                {
+                    error_message = "invalid string: control character U+0013 (DC3) must be escaped to \\u0013";
+                    return token_type::parse_error;
+                }
+
                 case 0x14:
+                {
+                    error_message = "invalid string: control character U+0014 (DC4) must be escaped to \\u0014";
+                    return token_type::parse_error;
+                }
+
                 case 0x15:
+                {
+                    error_message = "invalid string: control character U+0015 (NAK) must be escaped to \\u0015";
+                    return token_type::parse_error;
+                }
+
                 case 0x16:
+                {
+                    error_message = "invalid string: control character U+0016 (SYN) must be escaped to \\u0016";
+                    return token_type::parse_error;
+                }
+
                 case 0x17:
+                {
+                    error_message = "invalid string: control character U+0017 (ETB) must be escaped to \\u0017";
+                    return token_type::parse_error;
+                }
+
                 case 0x18:
+                {
+                    error_message = "invalid string: control character U+0018 (CAN) must be escaped to \\u0018";
+                    return token_type::parse_error;
+                }
+
                 case 0x19:
+                {
+                    error_message = "invalid string: control character U+0019 (EM) must be escaped to \\u0019";
+                    return token_type::parse_error;
+                }
+
                 case 0x1A:
+                {
+                    error_message = "invalid string: control character U+001A (SUB) must be escaped to \\u001A";
+                    return token_type::parse_error;
+                }
+
                 case 0x1B:
+                {
+                    error_message = "invalid string: control character U+001B (ESC) must be escaped to \\u001B";
+                    return token_type::parse_error;
+                }
+
                 case 0x1C:
+                {
+                    error_message = "invalid string: control character U+001C (FS) must be escaped to \\u001C";
+                    return token_type::parse_error;
+                }
+
                 case 0x1D:
+                {
+                    error_message = "invalid string: control character U+001D (GS) must be escaped to \\u001D";
+                    return token_type::parse_error;
+                }
+
                 case 0x1E:
+                {
+                    error_message = "invalid string: control character U+001E (RS) must be escaped to \\u001E";
+                    return token_type::parse_error;
+                }
+
                 case 0x1F:
                 {
-                    error_message = "invalid string: control character must be escaped";
+                    error_message = "invalid string: control character U+001F (US) must be escaped to \\u001F";
                     return token_type::parse_error;
                 }
 
@@ -3354,7 +3555,9 @@ scan_number_done:
     */
     std::char_traits<char>::int_type get()
     {
-        ++chars_read;
+        ++position.chars_read_total;
+        ++position.chars_read_current_line;
+
         if (next_unget)
         {
             // just reset the next_unget variable and work with current
@@ -3369,6 +3572,13 @@ scan_number_done:
         {
             token_string.push_back(std::char_traits<char>::to_char_type(current));
         }
+
+        if (current == '\n')
+        {
+            ++position.lines_read;
+            ++position.chars_read_current_line = 0;
+        }
+
         return current;
     }
 
@@ -3376,14 +3586,29 @@ scan_number_done:
     @brief unget current character (read it again on next get)
 
     We implement unget by setting variable next_unget to true. The input is not
-    changed - we just simulate ungetting by modifying chars_read and
-    token_string. The next call to get() will behave as if the unget character
-    is read again.
+    changed - we just simulate ungetting by modifying chars_read_total,
+    chars_read_current_line, and token_string. The next call to get() will
+    behave as if the unget character is read again.
     */
     void unget()
     {
         next_unget = true;
-        --chars_read;
+
+        --position.chars_read_total;
+
+        // in case we "unget" a newline, we have to also decrement the lines_read
+        if (position.chars_read_current_line == 0)
+        {
+            if (position.lines_read > 0)
+            {
+                --position.lines_read;
+            }
+        }
+        else
+        {
+            --position.chars_read_current_line;
+        }
+
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
             assert(token_string.size() != 0);
@@ -3431,9 +3656,9 @@ scan_number_done:
     /////////////////////
 
     /// return position of last read token
-    constexpr std::size_t get_position() const noexcept
+    constexpr position_t get_position() const noexcept
     {
-        return chars_read;
+        return position;
     }
 
     /// return the last read token (for errors only).  Will never contain EOF
@@ -3493,7 +3718,7 @@ scan_number_done:
     token_type scan()
     {
         // initially, skip the BOM
-        if (chars_read == 0 and not skip_bom())
+        if (position.chars_read_total == 0 and not skip_bom())
         {
             error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
             return token_type::parse_error;
@@ -3571,8 +3796,8 @@ scan_number_done:
     /// whether the next get() call should just return current
     bool next_unget = false;
 
-    /// the number of characters read
-    std::size_t chars_read = 0;
+    /// the start position of the current token
+    position_t position;
 
     /// raw input token string (for error messages)
     std::vector<char> token_string {};
@@ -3873,7 +4098,7 @@ struct json_sax
     @brief a parse error occurred
     @param[in] position    the position in the input where the error occurs
     @param[in] last_token  the last read token
-    @param[in] error_msg   a detailed error message
+    @param[in] ex          an exception object describing the error
     @return whether parsing should proceed (must return false)
     */
     virtual bool parse_error(std::size_t position,
@@ -4541,7 +4766,8 @@ class parser
             {
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input)));
+                                parse_error::create(101, m_lexer.get_position(),
+                                                    exception_message(token_type::end_of_input, "value")));
             }
 
             // in case of an error, return discarded value
@@ -4569,7 +4795,8 @@ class parser
             {
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input)));
+                                parse_error::create(101, m_lexer.get_position(),
+                                                    exception_message(token_type::end_of_input, "value")));
             }
 
             // in case of an error, return discarded value
@@ -4604,7 +4831,8 @@ class parser
         {
             return sax->parse_error(m_lexer.get_position(),
                                     m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input)));
+                                    parse_error::create(101, m_lexer.get_position(),
+                                            exception_message(token_type::end_of_input, "value")));
         }
 
         return result;
@@ -4649,7 +4877,8 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
+                                                    parse_error::create(101, m_lexer.get_position(),
+                                                            exception_message(token_type::value_string, "object key")));
                         }
                         if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
                         {
@@ -4661,7 +4890,8 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
+                                                    parse_error::create(101, m_lexer.get_position(),
+                                                            exception_message(token_type::name_separator, "object separator")));
                         }
 
                         // remember we are now inside an object
@@ -4775,14 +5005,16 @@ class parser
                         // using "uninitialized" to avoid "expected" message
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized)));
+                                                parse_error::create(101, m_lexer.get_position(),
+                                                        exception_message(token_type::uninitialized, "value")));
                     }
 
                     default: // the last token was unexpected
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value)));
+                                                parse_error::create(101, m_lexer.get_position(),
+                                                        exception_message(token_type::literal_or_value, "value")));
                     }
                 }
             }
@@ -4830,7 +5062,8 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array)));
+                                                parse_error::create(101, m_lexer.get_position(),
+                                                        exception_message(token_type::end_array, "array")));
                     }
                 }
                 else  // object
@@ -4843,7 +5076,8 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string)));
+                                                    parse_error::create(101, m_lexer.get_position(),
+                                                            exception_message(token_type::value_string, "object key")));
                         }
                         else
                         {
@@ -4858,7 +5092,8 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator)));
+                                                    parse_error::create(101, m_lexer.get_position(),
+                                                            exception_message(token_type::name_separator, "object separator")));
                         }
 
                         // parse values
@@ -4887,7 +5122,8 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object)));
+                                                parse_error::create(101, m_lexer.get_position(),
+                                                        exception_message(token_type::end_object, "object")));
                     }
                 }
             }
@@ -4900,9 +5136,17 @@ class parser
         return (last_token = m_lexer.scan());
     }
 
-    std::string exception_message(const token_type expected)
+    std::string exception_message(const token_type expected, const std::string& context)
     {
-        std::string error_msg = "syntax error - ";
+        std::string error_msg = "syntax error ";
+
+        if (not context.empty())
+        {
+            error_msg += "while parsing " + context + " ";
+        }
+
+        error_msg += "- ";
+
         if (last_token == token_type::parse_error)
         {
             error_msg += std::string(m_lexer.get_error_message()) + "; last read: '" +
@@ -17092,6 +17336,8 @@ class basic_json
     @param[in] cb  a parser callback function of type @ref parser_callback_t
     which is used to control the deserialization by filtering unwanted values
     (optional)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
 
     @return result of the deserialization
 
@@ -17487,7 +17733,7 @@ class basic_json
     vector in CBOR format.,to_cbor}
 
     @sa http://cbor.io
-    @sa @ref from_cbor(detail::input_adapter, const bool strict) for the
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
         analogous deserialization
     @sa @ref to_msgpack(const basic_json&) for the related MessagePack format
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
@@ -17584,8 +17830,7 @@ class basic_json
     vector in MessagePack format.,to_msgpack}
 
     @sa http://msgpack.org
-    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
-        analogous deserialization
+    @sa @ref from_msgpack for the analogous deserialization
     @sa @ref to_cbor(const basic_json& for the related CBOR format
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
              related UBJSON format
@@ -17682,7 +17927,7 @@ class basic_json
     vector in UBJSON format.,to_ubjson}
 
     @sa http://ubjson.org
-    @sa @ref from_ubjson(detail::input_adapter, const bool strict) for the
+    @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for the
         analogous deserialization
     @sa @ref to_cbor(const basic_json& for the related CBOR format
     @sa @ref to_msgpack(const basic_json&) for the related MessagePack format
@@ -17797,14 +18042,14 @@ class basic_json
 
     @sa http://cbor.io
     @sa @ref to_cbor(const basic_json&) for the analogous serialization
-    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for the
+    @sa @ref from_msgpack(detail::input_adapter&&, const bool, const bool) for the
         related MessagePack format
-    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for the
+    @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for the
         related UBJSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0; added @allow_exceptions parameter
+           @a strict parameter since 3.0.0; added @a allow_exceptions parameter
            since 3.2.0
     */
     static basic_json from_cbor(detail::input_adapter&& i,
@@ -17818,7 +18063,7 @@ class basic_json
     }
 
     /*!
-    @copydoc from_cbor(detail::input_adapter, const bool, const bool)
+    @copydoc from_cbor(detail::input_adapter&&, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
@@ -17900,14 +18145,14 @@ class basic_json
 
     @sa http://msgpack.org
     @sa @ref to_msgpack(const basic_json&) for the analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
         related CBOR format
-    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for
+    @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for
         the related UBJSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0; added @allow_exceptions parameter
+           @a strict parameter since 3.0.0; added @a allow_exceptions parameter
            since 3.2.0
     */
     static basic_json from_msgpack(detail::input_adapter&& i,
@@ -17921,7 +18166,7 @@ class basic_json
     }
 
     /*!
-    @copydoc from_msgpack(detail::input_adapter, const bool, const bool)
+    @copydoc from_msgpack(detail::input_adapter&&, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
@@ -17985,12 +18230,12 @@ class basic_json
     @sa http://ubjson.org
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
              analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
         related CBOR format
-    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
+    @sa @ref from_msgpack(detail::input_adapter&&, const bool, const bool) for
         the related MessagePack format
 
-    @since version 3.1.0; added @allow_exceptions parameter since 3.2.0
+    @since version 3.1.0; added @a allow_exceptions parameter since 3.2.0
     */
     static basic_json from_ubjson(detail::input_adapter&& i,
                                   const bool strict = true,
@@ -18003,7 +18248,7 @@ class basic_json
     }
 
     /*!
-    @copydoc from_ubjson(detail::input_adapter, const bool, const bool)
+    @copydoc from_ubjson(detail::input_adapter&&, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>

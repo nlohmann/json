@@ -10,6 +10,7 @@
 
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
+#include <nlohmann/detail/input/position_t.hpp>
 
 namespace nlohmann
 {
@@ -396,39 +397,194 @@ class lexer
 
                 // invalid control characters
                 case 0x00:
+                {
+                    error_message = "invalid string: control character U+0000 (NUL) must be escaped to \\u0000";
+                    return token_type::parse_error;
+                }
+
                 case 0x01:
+                {
+                    error_message = "invalid string: control character U+0001 (SOH) must be escaped to \\u0001";
+                    return token_type::parse_error;
+                }
+
                 case 0x02:
+                {
+                    error_message = "invalid string: control character U+0002 (STX) must be escaped to \\u0002";
+                    return token_type::parse_error;
+                }
+
                 case 0x03:
+                {
+                    error_message = "invalid string: control character U+0003 (ETX) must be escaped to \\u0003";
+                    return token_type::parse_error;
+                }
+
                 case 0x04:
+                {
+                    error_message = "invalid string: control character U+0004 (EOT) must be escaped to \\u0004";
+                    return token_type::parse_error;
+                }
+
                 case 0x05:
+                {
+                    error_message = "invalid string: control character U+0005 (ENQ) must be escaped to \\u0005";
+                    return token_type::parse_error;
+                }
+
                 case 0x06:
+                {
+                    error_message = "invalid string: control character U+0006 (ACK) must be escaped to \\u0006";
+                    return token_type::parse_error;
+                }
+
                 case 0x07:
+                {
+                    error_message = "invalid string: control character U+0007 (BEL) must be escaped to \\u0007";
+                    return token_type::parse_error;
+                }
+
                 case 0x08:
+                {
+                    error_message = "invalid string: control character U+0008 (BS) must be escaped to \\u0008 or \\b";
+                    return token_type::parse_error;
+                }
+
                 case 0x09:
+                {
+                    error_message = "invalid string: control character U+0009 (HT) must be escaped to \\u0009 or \\t";
+                    return token_type::parse_error;
+                }
+
                 case 0x0A:
+                {
+                    error_message = "invalid string: control character U+000A (LF) must be escaped to \\u000A or \\n";
+                    return token_type::parse_error;
+                }
+
                 case 0x0B:
+                {
+                    error_message = "invalid string: control character U+000B (VT) must be escaped to \\u000B";
+                    return token_type::parse_error;
+                }
+
                 case 0x0C:
+                {
+                    error_message = "invalid string: control character U+000C (FF) must be escaped to \\u000C or \\f";
+                    return token_type::parse_error;
+                }
+
                 case 0x0D:
+                {
+                    error_message = "invalid string: control character U+000D (CR) must be escaped to \\u000D or \\r";
+                    return token_type::parse_error;
+                }
+
                 case 0x0E:
+                {
+                    error_message = "invalid string: control character U+000E (SO) must be escaped to \\u000E";
+                    return token_type::parse_error;
+                }
+
                 case 0x0F:
+                {
+                    error_message = "invalid string: control character U+000F (SI) must be escaped to \\u000F";
+                    return token_type::parse_error;
+                }
+
                 case 0x10:
+                {
+                    error_message = "invalid string: control character U+0010 (DLE) must be escaped to \\u0010";
+                    return token_type::parse_error;
+                }
+
                 case 0x11:
+                {
+                    error_message = "invalid string: control character U+0011 (DC1) must be escaped to \\u0011";
+                    return token_type::parse_error;
+                }
+
                 case 0x12:
+                {
+                    error_message = "invalid string: control character U+0012 (DC2) must be escaped to \\u0012";
+                    return token_type::parse_error;
+                }
+
                 case 0x13:
+                {
+                    error_message = "invalid string: control character U+0013 (DC3) must be escaped to \\u0013";
+                    return token_type::parse_error;
+                }
+
                 case 0x14:
+                {
+                    error_message = "invalid string: control character U+0014 (DC4) must be escaped to \\u0014";
+                    return token_type::parse_error;
+                }
+
                 case 0x15:
+                {
+                    error_message = "invalid string: control character U+0015 (NAK) must be escaped to \\u0015";
+                    return token_type::parse_error;
+                }
+
                 case 0x16:
+                {
+                    error_message = "invalid string: control character U+0016 (SYN) must be escaped to \\u0016";
+                    return token_type::parse_error;
+                }
+
                 case 0x17:
+                {
+                    error_message = "invalid string: control character U+0017 (ETB) must be escaped to \\u0017";
+                    return token_type::parse_error;
+                }
+
                 case 0x18:
+                {
+                    error_message = "invalid string: control character U+0018 (CAN) must be escaped to \\u0018";
+                    return token_type::parse_error;
+                }
+
                 case 0x19:
+                {
+                    error_message = "invalid string: control character U+0019 (EM) must be escaped to \\u0019";
+                    return token_type::parse_error;
+                }
+
                 case 0x1A:
+                {
+                    error_message = "invalid string: control character U+001A (SUB) must be escaped to \\u001A";
+                    return token_type::parse_error;
+                }
+
                 case 0x1B:
+                {
+                    error_message = "invalid string: control character U+001B (ESC) must be escaped to \\u001B";
+                    return token_type::parse_error;
+                }
+
                 case 0x1C:
+                {
+                    error_message = "invalid string: control character U+001C (FS) must be escaped to \\u001C";
+                    return token_type::parse_error;
+                }
+
                 case 0x1D:
+                {
+                    error_message = "invalid string: control character U+001D (GS) must be escaped to \\u001D";
+                    return token_type::parse_error;
+                }
+
                 case 0x1E:
+                {
+                    error_message = "invalid string: control character U+001E (RS) must be escaped to \\u001E";
+                    return token_type::parse_error;
+                }
+
                 case 0x1F:
                 {
-                    error_message = "invalid string: control character must be escaped";
+                    error_message = "invalid string: control character U+001F (US) must be escaped to \\u001F";
                     return token_type::parse_error;
                 }
 
@@ -1085,7 +1241,9 @@ scan_number_done:
     */
     std::char_traits<char>::int_type get()
     {
-        ++chars_read;
+        ++position.chars_read_total;
+        ++position.chars_read_current_line;
+
         if (next_unget)
         {
             // just reset the next_unget variable and work with current
@@ -1100,6 +1258,13 @@ scan_number_done:
         {
             token_string.push_back(std::char_traits<char>::to_char_type(current));
         }
+
+        if (current == '\n')
+        {
+            ++position.lines_read;
+            ++position.chars_read_current_line = 0;
+        }
+
         return current;
     }
 
@@ -1107,14 +1272,29 @@ scan_number_done:
     @brief unget current character (read it again on next get)
 
     We implement unget by setting variable next_unget to true. The input is not
-    changed - we just simulate ungetting by modifying chars_read and
-    token_string. The next call to get() will behave as if the unget character
-    is read again.
+    changed - we just simulate ungetting by modifying chars_read_total,
+    chars_read_current_line, and token_string. The next call to get() will
+    behave as if the unget character is read again.
     */
     void unget()
     {
         next_unget = true;
-        --chars_read;
+
+        --position.chars_read_total;
+
+        // in case we "unget" a newline, we have to also decrement the lines_read
+        if (position.chars_read_current_line == 0)
+        {
+            if (position.lines_read > 0)
+            {
+                --position.lines_read;
+            }
+        }
+        else
+        {
+            --position.chars_read_current_line;
+        }
+
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
             assert(token_string.size() != 0);
@@ -1162,9 +1342,9 @@ scan_number_done:
     /////////////////////
 
     /// return position of last read token
-    constexpr std::size_t get_position() const noexcept
+    constexpr position_t get_position() const noexcept
     {
-        return chars_read;
+        return position;
     }
 
     /// return the last read token (for errors only).  Will never contain EOF
@@ -1224,7 +1404,7 @@ scan_number_done:
     token_type scan()
     {
         // initially, skip the BOM
-        if (chars_read == 0 and not skip_bom())
+        if (position.chars_read_total == 0 and not skip_bom())
         {
             error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
             return token_type::parse_error;
@@ -1302,8 +1482,8 @@ scan_number_done:
     /// whether the next get() call should just return current
     bool next_unget = false;
 
-    /// the number of characters read
-    std::size_t chars_read = 0;
+    /// the start position of the current token
+    position_t position;
 
     /// raw input token string (for error messages)
     std::vector<char> token_string {};

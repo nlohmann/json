@@ -5999,6 +5999,8 @@ class basic_json
     @param[in] cb  a parser callback function of type @ref parser_callback_t
     which is used to control the deserialization by filtering unwanted values
     (optional)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
 
     @return result of the deserialization
 
@@ -6394,7 +6396,7 @@ class basic_json
     vector in CBOR format.,to_cbor}
 
     @sa http://cbor.io
-    @sa @ref from_cbor(detail::input_adapter, const bool strict) for the
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
         analogous deserialization
     @sa @ref to_msgpack(const basic_json&) for the related MessagePack format
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
@@ -6491,8 +6493,7 @@ class basic_json
     vector in MessagePack format.,to_msgpack}
 
     @sa http://msgpack.org
-    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
-        analogous deserialization
+    @sa @ref from_msgpack for the analogous deserialization
     @sa @ref to_cbor(const basic_json& for the related CBOR format
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
              related UBJSON format
@@ -6589,7 +6590,7 @@ class basic_json
     vector in UBJSON format.,to_ubjson}
 
     @sa http://ubjson.org
-    @sa @ref from_ubjson(detail::input_adapter, const bool strict) for the
+    @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for the
         analogous deserialization
     @sa @ref to_cbor(const basic_json& for the related CBOR format
     @sa @ref to_msgpack(const basic_json&) for the related MessagePack format
@@ -6704,14 +6705,14 @@ class basic_json
 
     @sa http://cbor.io
     @sa @ref to_cbor(const basic_json&) for the analogous serialization
-    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for the
+    @sa @ref from_msgpack(detail::input_adapter&&, const bool, const bool) for the
         related MessagePack format
-    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for the
+    @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for the
         related UBJSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0; added @allow_exceptions parameter
+           @a strict parameter since 3.0.0; added @a allow_exceptions parameter
            since 3.2.0
     */
     static basic_json from_cbor(detail::input_adapter&& i,
@@ -6725,7 +6726,7 @@ class basic_json
     }
 
     /*!
-    @copydoc from_cbor(detail::input_adapter, const bool, const bool)
+    @copydoc from_cbor(detail::input_adapter&&, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
@@ -6807,14 +6808,14 @@ class basic_json
 
     @sa http://msgpack.org
     @sa @ref to_msgpack(const basic_json&) for the analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
         related CBOR format
-    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for
+    @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for
         the related UBJSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0; added @allow_exceptions parameter
+           @a strict parameter since 3.0.0; added @a allow_exceptions parameter
            since 3.2.0
     */
     static basic_json from_msgpack(detail::input_adapter&& i,
@@ -6828,7 +6829,7 @@ class basic_json
     }
 
     /*!
-    @copydoc from_msgpack(detail::input_adapter, const bool, const bool)
+    @copydoc from_msgpack(detail::input_adapter&&, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
@@ -6892,12 +6893,12 @@ class basic_json
     @sa http://ubjson.org
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
              analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
         related CBOR format
-    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
+    @sa @ref from_msgpack(detail::input_adapter&&, const bool, const bool) for
         the related MessagePack format
 
-    @since version 3.1.0; added @allow_exceptions parameter since 3.2.0
+    @since version 3.1.0; added @a allow_exceptions parameter since 3.2.0
     */
     static basic_json from_ubjson(detail::input_adapter&& i,
                                   const bool strict = true,
@@ -6910,7 +6911,7 @@ class basic_json
     }
 
     /*!
-    @copydoc from_ubjson(detail::input_adapter, const bool, const bool)
+    @copydoc from_ubjson(detail::input_adapter&&, const bool, const bool)
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
