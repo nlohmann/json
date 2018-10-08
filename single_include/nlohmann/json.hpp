@@ -10375,10 +10375,10 @@ class json_ref
     {}
 
     // class should be movable only
-    json_ref(json_ref&&) noexcept = default;
+    json_ref(json_ref&&) = default;
     json_ref(const json_ref&) = delete;
     json_ref& operator=(const json_ref&) = delete;
-    json_ref& operator=(json_ref&&) noexcept = default;
+    json_ref& operator=(json_ref&&) = delete;
     ~json_ref() = default;
 
     value_type moved_or_copied() const
