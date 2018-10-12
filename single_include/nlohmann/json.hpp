@@ -10591,6 +10591,9 @@ class serializer
 #include <initializer_list>
 #include <utility>
 
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
+
 namespace nlohmann
 {
 namespace detail
@@ -10613,10 +10616,12 @@ class json_ref
         : owned_value(init), value_ref(&owned_value), is_rvalue(true)
     {}
 
-    template<class... Args>
-    json_ref(Args&& ... args)
-        : owned_value(std::forward<Args>(args)...), value_ref(&owned_value), is_rvalue(true)
-    {}
+    template <
+        class... Args,
+        enable_if_t<std::is_constructible<value_type, Args...>::value, int> = 0 >
+    json_ref(Args && ... args)
+        : owned_value(std::forward<Args>(args)...), value_ref(&owned_value),
+          is_rvalue(true) {}
 
     // class should be movable only
     json_ref(json_ref&&) = default;
