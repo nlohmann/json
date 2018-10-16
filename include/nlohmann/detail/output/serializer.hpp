@@ -39,6 +39,14 @@ class serializer
     static constexpr uint8_t UTF8_REJECT = 1;
 
   public:
+    /// how to treat decoding errors
+    enum class error_handler_t
+    {
+        strict,  ///< throw a type_error exception in case of invalid UTF-8
+        replace, ///< replace invalid UTF-8 sequences with U+FFFD
+        ignore   ///< ignore invalid UTF-8 sequences
+    };
+
     /*!
     @param[in] s  output stream to serialize to
     @param[in] ichar  indentation character to use
@@ -278,10 +286,12 @@ class serializer
     @param[in] s  the string to escape
     @param[in] ensure_ascii  whether to escape non-ASCII characters with
                              \uXXXX sequences
+    @param[in] error_handler how to react on decoding errors
 
     @complexity Linear in the length of string @a s.
     */
-    void dump_escaped(const string_t& s, const bool ensure_ascii)
+    void dump_escaped(const string_t& s, const bool ensure_ascii,
+                      const error_handler_t error_handler = error_handler_t::strict)
     {
         uint32_t codepoint;
         uint8_t state = UTF8_ACCEPT;
@@ -389,9 +399,33 @@ class serializer
 
                 case UTF8_REJECT:  // decode found invalid UTF-8 byte
                 {
-                    std::string sn(3, '\0');
-                    snprintf(&sn[0], sn.size(), "%.2X", byte);
-                    JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn));
+                    switch (error_handler)
+                    {
+                        case error_handler_t::strict:
+                        {
+                            std::string sn(3, '\0');
+                            snprintf(&sn[0], sn.size(), "%.2X", byte);
+                            JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn));
+                        }
+
+                        case error_handler_t::ignore:
+                        {
+                            state = UTF8_ACCEPT;
+                            continue;
+                        }
+
+                        case error_handler_t::replace:
+                        {
+                            string_buffer[bytes++] = '\\';
+                            string_buffer[bytes++] = 'u';
+                            string_buffer[bytes++] = 'f';
+                            string_buffer[bytes++] = 'f';
+                            string_buffer[bytes++] = 'f';
+                            string_buffer[bytes++] = 'd';
+                            state = UTF8_ACCEPT;
+                            continue;
+                        }
+                    }
                 }
 
                 default:  // decode found yet incomplete multi-byte code point
@@ -417,9 +451,28 @@ class serializer
         else
         {
             // we finish reading, but do not accept: string was incomplete
-            std::string sn(3, '\0');
-            snprintf(&sn[0], sn.size(), "%.2X", static_cast<uint8_t>(s.back()));
-            JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
+            switch (error_handler)
+            {
+                case error_handler_t::strict:
+                {
+                    std::string sn(3, '\0');
+                    snprintf(&sn[0], sn.size(), "%.2X", static_cast<uint8_t>(s.back()));
+                    JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
+                }
+
+                case error_handler_t::ignore:
+                {
+                    break;
+                }
+
+                case error_handler_t::replace:
+                {
+                    // write buffer, but replace last byte
+                    o->write_characters(string_buffer.data(), bytes - 1);
+                    o->write_characters("\\ufffd", 6);
+                    break;
+                }
+            }
         }
     }
 
