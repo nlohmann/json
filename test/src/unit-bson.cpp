@@ -91,6 +91,16 @@ TEST_CASE("BSON")
         }
     }
 
+    SECTION("keys containing code-point U+0000 cannot be serialized to BSON")
+    {
+        json j =
+        {
+            { std::string("en\0try", 6), true }
+        };
+        REQUIRE_THROWS_AS(json::to_bson(j), json::out_of_range);
+        CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.out_of_range.409] BSON key cannot contain code point U+0000");
+    }
+
     SECTION("objects")
     {
         SECTION("empty object")

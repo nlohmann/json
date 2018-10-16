@@ -6617,9 +6617,12 @@ class basic_json
 
     @warning The mapping is **incomplete**, since only JSON-objects (and things
     contained therein) can be serialized to BSON.
-    Also, integers larger than 9223372036854775807 cannot be serialized to BSON.
+    Also, integers larger than 9223372036854775807 cannot be serialized to BSON,
+    and the keys may not contain U+0000, since they are serialized a
+    zero-terminated c-strings.
 
     @throw out_of_range.407  if `j.is_number_unsigned() && j.get<std::uint64_t>() > 9223372036854775807`
+    @throw out_of_range.409  if a key in `j` contains a NULL (U+0000)
     @throw type_error.317    if `!j.is_object()`
 
     @pre The input `j` is required to be an object: `j.is_object() == true`.

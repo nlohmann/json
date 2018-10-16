@@ -865,6 +865,7 @@ json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch op
 json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed number could not be stored as without changing it to NaN or INF.
 json.exception.out_of_range.407 | number overflow serializing '9223372036854775808' | UBJSON and BSON only support integer numbers up to 9223372036854775807. |
 json.exception.out_of_range.408 | excessive array size: 8658170730974374167 | The size (following `#`) of an UBJSON array or object exceeds the maximal capacity. |
+json.exception.out_of_range.409 | BSON key cannot contain code point U+0000 | Key identifiers to be serialized to BSON cannot contain code point U+0000, since the key is stored as zero-terminated c-string |
 
 @liveexample{The following code shows how an `out_of_range` exception can be
 caught.,out_of_range}
@@ -8530,6 +8531,11 @@ class binary_writer
     */
     static std::size_t calc_bson_entry_header_size(const typename BasicJsonType::string_t& name)
     {
+        if (name.find(static_cast<CharType>(0)) != BasicJsonType::string_t::npos)
+        {
+            JSON_THROW(out_of_range::create(409, "BSON key cannot contain code point U+0000"));
+        }
+
         return /*id*/ 1ul + name.size() + /*zero-terminator*/1u;
     }
 
@@ -18203,9 +18209,12 @@ class basic_json
 
     @warning The mapping is **incomplete**, since only JSON-objects (and things
     contained therein) can be serialized to BSON.
-    Also, integers larger than 9223372036854775807 cannot be serialized to BSON.
+    Also, integers larger than 9223372036854775807 cannot be serialized to BSON,
+    and the keys may not contain U+0000, since they are serialized a
+    zero-terminated c-strings.
 
     @throw out_of_range.407  if `j.is_number_unsigned() && j.get<std::uint64_t>() > 9223372036854775807`
+    @throw out_of_range.409  if a key in `j` contains a NULL (U+0000)
     @throw type_error.317    if `!j.is_object()`
 
     @pre The input `j` is required to be an object: `j.is_object() == true`.
