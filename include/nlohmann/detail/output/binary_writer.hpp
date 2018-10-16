@@ -800,11 +800,16 @@ class binary_writer
             write_bson_entry_header(name, 0x10); // int32
             write_number<std::int32_t, true>(static_cast<std::int32_t>(value));
         }
-        else
+        else if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
         {
             write_bson_entry_header(name, 0x12); // int64
             write_number<std::int64_t, true>(static_cast<std::int64_t>(value));
         }
+        else
+        {
+            JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(value)));
+        }
+
     }
 
     /*!

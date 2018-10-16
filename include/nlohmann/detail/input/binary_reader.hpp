@@ -256,6 +256,11 @@ class binary_reader
     {
         while (auto element_type = get())
         {
+            if (JSON_UNLIKELY(not unexpect_eof()))
+            {
+                return false;
+            }
+
             const std::size_t element_type_parse_position = chars_read;
             string_t key;
             if (JSON_UNLIKELY(not get_bson_cstr(key)))

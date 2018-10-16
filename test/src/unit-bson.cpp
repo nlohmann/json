@@ -31,7 +31,6 @@ SOFTWARE.
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
-
 #include <fstream>
 
 TEST_CASE("BSON")
@@ -708,7 +707,7 @@ TEST_CASE("Incomplete BSON INPUT 3")
         // missing input data...
     };
     CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
-                      "[json.exception.parse_error.110] parse error at 29: unexpected end of input");
+                      "[json.exception.parse_error.110] parse error at 28: unexpected end of input");
     CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
     SaxCountdown scp(1);
@@ -752,3 +751,354 @@ TEST_CASE("Unsupported BSON input")
 }
 
 
+
+TEST_CASE("BSON numerical data")
+{
+    SECTION("number")
+    {
+        SECTION("signed")
+        {
+            SECTION("std::int64_t: INT64_MIN .. INT32_MIN-1")
+            {
+                std::vector<int64_t> numbers
+                {
+                    INT64_MIN,
+                    -1000000000000000000LL,
+                    -100000000000000000LL,
+                    -10000000000000000LL,
+                    -1000000000000000LL,
+                    -100000000000000LL,
+                    -10000000000000LL,
+                    -1000000000000LL,
+                    -100000000000LL,
+                    -10000000000LL,
+                    static_cast<std::int64_t>(INT32_MIN) - 1,
+                };
+
+                for (auto i : numbers)
+                {
+
+                    CAPTURE(i);
+
+                    json j =
+                    {
+                        { "entry", i }
+                    };
+                    CHECK(j.at("entry").is_number_integer());
+
+                    std::uint64_t iu = *reinterpret_cast<std::uint64_t*>(&i);
+                    std::vector<uint8_t> expected_bson =
+                    {
+                        0x14u, 0x00u, 0x00u, 0x00u, // size (little endian)
+                        0x12u, /// entry: int64
+                        'e', 'n', 't', 'r', 'y', '\x00',
+                        static_cast<uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 4u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 5u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 6u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 7u)) & 0xffu),
+                        0x00u // end marker
+                    };
+
+                    const auto bson = json::to_bson(j);
+                    CHECK(bson == expected_bson);
+
+                    auto j_roundtrip = json::from_bson(bson);
+
+                    CHECK(j_roundtrip.at("entry").is_number_integer());
+                    CHECK(j_roundtrip == j);
+                    CHECK(json::from_bson(bson, true, false) == j);
+
+                }
+            }
+
+
+            SECTION("signed std::int32_t: INT32_MIN .. INT32_MAX")
+            {
+                std::vector<int32_t> numbers
+                {
+                    INT32_MIN,
+                    -2147483647L,
+                    -1000000000L,
+                    -100000000L,
+                    -10000000L,
+                    -1000000L,
+                    -100000L,
+                    -10000L,
+                    -1000L,
+                    -100L,
+                    -10L,
+                    -1L,
+                    0L,
+                    1L,
+                    10L,
+                    100L,
+                    1000L,
+                    10000L,
+                    100000L,
+                    1000000L,
+                    10000000L,
+                    100000000L,
+                    1000000000L,
+                    2147483646L,
+                    INT32_MAX
+                };
+
+                for (auto i : numbers)
+                {
+
+                    CAPTURE(i);
+
+                    json j =
+                    {
+                        { "entry", i }
+                    };
+                    CHECK(j.at("entry").is_number_integer());
+
+                    std::uint64_t iu = *reinterpret_cast<std::uint64_t*>(&i);
+                    std::vector<uint8_t> expected_bson =
+                    {
+                        0x10u, 0x00u, 0x00u, 0x00u, // size (little endian)
+                        0x10u, /// entry: int32
+                        'e', 'n', 't', 'r', 'y', '\x00',
+                        static_cast<uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                        0x00u // end marker
+                    };
+
+                    const auto bson = json::to_bson(j);
+                    CHECK(bson == expected_bson);
+
+                    auto j_roundtrip = json::from_bson(bson);
+
+                    CHECK(j_roundtrip.at("entry").is_number_integer());
+                    CHECK(j_roundtrip == j);
+                    CHECK(json::from_bson(bson, true, false) == j);
+
+                }
+            }
+
+            SECTION("signed std::int64_t: INT32_MAX+1 .. INT64_MAX")
+            {
+                std::vector<int64_t> numbers
+                {
+                    INT64_MAX,
+                    1000000000000000000LL,
+                    100000000000000000LL,
+                    10000000000000000LL,
+                    1000000000000000LL,
+                    100000000000000LL,
+                    10000000000000LL,
+                    1000000000000LL,
+                    100000000000LL,
+                    10000000000LL,
+                    static_cast<std::int64_t>(INT32_MAX) + 1,
+                };
+
+                for (auto i : numbers)
+                {
+
+                    CAPTURE(i);
+
+                    json j =
+                    {
+                        { "entry", i }
+                    };
+                    CHECK(j.at("entry").is_number_integer());
+
+                    std::uint64_t iu = *reinterpret_cast<std::uint64_t*>(&i);
+                    std::vector<uint8_t> expected_bson =
+                    {
+                        0x14u, 0x00u, 0x00u, 0x00u, // size (little endian)
+                        0x12u, /// entry: int64
+                        'e', 'n', 't', 'r', 'y', '\x00',
+                        static_cast<uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 4u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 5u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 6u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 7u)) & 0xffu),
+                        0x00u // end marker
+                    };
+
+                    const auto bson = json::to_bson(j);
+                    CHECK(bson == expected_bson);
+
+                    auto j_roundtrip = json::from_bson(bson);
+
+                    CHECK(j_roundtrip.at("entry").is_number_integer());
+                    CHECK(j_roundtrip == j);
+                    CHECK(json::from_bson(bson, true, false) == j);
+
+                }
+            }
+        }
+
+        SECTION("unsigned")
+        {
+            SECTION("unsigned std::uint64_t: 0 .. INT32_MAX")
+            {
+                std::vector<std::uint64_t> numbers
+                {
+                    0ULL,
+                    1ULL,
+                    10ULL,
+                    100ULL,
+                    1000ULL,
+                    10000ULL,
+                    100000ULL,
+                    1000000ULL,
+                    10000000ULL,
+                    100000000ULL,
+                    1000000000ULL,
+                    2147483646ULL,
+                    static_cast<std::uint64_t>(INT32_MAX)
+                };
+
+                for (auto i : numbers)
+                {
+
+                    CAPTURE(i);
+
+                    json j =
+                    {
+                        { "entry", i }
+                    };
+
+                    std::uint64_t iu = *reinterpret_cast<std::uint64_t*>(&i);
+                    std::vector<uint8_t> expected_bson =
+                    {
+                        0x10u, 0x00u, 0x00u, 0x00u, // size (little endian)
+                        0x10u, /// entry: int32
+                        'e', 'n', 't', 'r', 'y', '\x00',
+                        static_cast<uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                        0x00u // end marker
+                    };
+
+                    const auto bson = json::to_bson(j);
+                    CHECK(bson == expected_bson);
+
+                    auto j_roundtrip = json::from_bson(bson);
+
+                    CHECK(j.at("entry").is_number_unsigned());
+                    CHECK(j_roundtrip.at("entry").is_number_integer());
+                    CHECK(j_roundtrip == j);
+                    CHECK(json::from_bson(bson, true, false) == j);
+
+                }
+            }
+
+            SECTION("unsigned std::uint64_t: INT32_MAX+1 .. INT64_MAX")
+            {
+                std::vector<std::uint64_t> numbers
+                {
+                    static_cast<std::uint64_t>(INT32_MAX) + 1,
+                    4000000000ULL,
+                    static_cast<std::uint64_t>(UINT32_MAX),
+                    10000000000ULL,
+                    100000000000ULL,
+                    1000000000000ULL,
+                    10000000000000ULL,
+                    100000000000000ULL,
+                    1000000000000000ULL,
+                    10000000000000000ULL,
+                    100000000000000000ULL,
+                    1000000000000000000ULL,
+                    static_cast<std::uint64_t>(INT64_MAX),
+                };
+
+                for (auto i : numbers)
+                {
+
+                    CAPTURE(i);
+
+                    json j =
+                    {
+                        { "entry", i }
+                    };
+
+                    std::uint64_t iu = *reinterpret_cast<std::uint64_t*>(&i);
+                    std::vector<uint8_t> expected_bson =
+                    {
+                        0x14u, 0x00u, 0x00u, 0x00u, // size (little endian)
+                        0x12u, /// entry: int64
+                        'e', 'n', 't', 'r', 'y', '\x00',
+                        static_cast<uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 4u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 5u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 6u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 7u)) & 0xffu),
+                        0x00u // end marker
+                    };
+
+                    const auto bson = json::to_bson(j);
+                    CHECK(bson == expected_bson);
+
+                    auto j_roundtrip = json::from_bson(bson);
+
+                    CHECK(j.at("entry").is_number_unsigned());
+                    CHECK(j_roundtrip.at("entry").is_number_integer());
+                    CHECK(j_roundtrip == j);
+                    CHECK(json::from_bson(bson, true, false) == j);
+                }
+            }
+
+            SECTION("unsigned std::uint64_t: INT64_MAX+1 .. UINT64_MAX")
+            {
+                std::vector<std::uint64_t> numbers
+                {
+                    static_cast<std::uint64_t>(INT64_MAX) + 1ULL,
+                    10000000000000000000ULL,
+                    18000000000000000000ULL,
+                    UINT64_MAX - 1ULL,
+                    UINT64_MAX,
+                };
+
+                for (auto i : numbers)
+                {
+
+                    CAPTURE(i);
+
+                    json j =
+                    {
+                        { "entry", i }
+                    };
+
+                    std::uint64_t iu = *reinterpret_cast<std::uint64_t*>(&i);
+                    std::vector<uint8_t> expected_bson =
+                    {
+                        0x14u, 0x00u, 0x00u, 0x00u, // size (little endian)
+                        0x12u, /// entry: int64
+                        'e', 'n', 't', 'r', 'y', '\x00',
+                        static_cast<uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 4u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 5u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 6u)) & 0xffu),
+                        static_cast<uint8_t>((iu >> (8u * 7u)) & 0xffu),
+                        0x00u // end marker
+                    };
+
+                    CHECK_THROWS_AS(json::to_bson(j), json::out_of_range&);
+                    CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.out_of_range.407] number overflow serializing " + std::to_string(i));
+                }
+            }
+
+        }
+    }
+}

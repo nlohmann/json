@@ -863,7 +863,7 @@ json.exception.out_of_range.403 | key 'foo' not found | The provided key was not
 json.exception.out_of_range.404 | unresolved reference token 'foo' | A reference token in a JSON Pointer could not be resolved.
 json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
 json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed number could not be stored as without changing it to NaN or INF.
-json.exception.out_of_range.407 | number overflow serializing '9223372036854775808' | UBJSON only supports integers numbers up to 9223372036854775807. |
+json.exception.out_of_range.407 | number overflow serializing '9223372036854775808' | UBJSON and BSON only support integer numbers up to 9223372036854775807. |
 json.exception.out_of_range.408 | excessive array size: 8658170730974374167 | The size (following `#`) of an UBJSON array or object exceeds the maximal capacity. |
 
 @liveexample{The following code shows how an `out_of_range` exception can be
@@ -6198,6 +6198,11 @@ class binary_reader
     {
         while (auto element_type = get())
         {
+            if (JSON_UNLIKELY(not unexpect_eof()))
+            {
+                return false;
+            }
+
             const std::size_t element_type_parse_position = chars_read;
             string_t key;
             if (JSON_UNLIKELY(not get_bson_cstr(key)))
@@ -8644,11 +8649,16 @@ class binary_writer
             write_bson_entry_header(name, 0x10); // int32
             write_number<std::int32_t, true>(static_cast<std::int32_t>(value));
         }
-        else
+        else if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
         {
             write_bson_entry_header(name, 0x12); // int64
             write_number<std::int64_t, true>(static_cast<std::int64_t>(value));
         }
+        else
+        {
+            JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(value)));
+        }
+
     }
 
     /*!
