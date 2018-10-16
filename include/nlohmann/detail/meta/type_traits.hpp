@@ -68,6 +68,52 @@ using from_json_function = decltype(T::from_json(std::declval<Args>()...));
 template <typename T, typename U>
 using get_template_function = decltype(std::declval<T>().template get<U>());
 
+// trait checking if JSONSerializer<T>::from_json(json const&, udt&) exists
+template <typename BasicJsonType, typename T, typename = void>
+struct has_from_json : std::false_type {};
+
+template <typename BasicJsonType, typename T>
+struct has_from_json<BasicJsonType, T,
+           enable_if_t<not is_basic_json<T>::value>>
+{
+    using serializer = typename BasicJsonType::template json_serializer<T, void>;
+
+    static constexpr bool value =
+        is_detected_exact<void, from_json_function, serializer,
+        const BasicJsonType&, T&>::value;
+};
+
+// This trait checks if JSONSerializer<T>::from_json(json const&) exists
+// this overload is used for non-default-constructible user-defined-types
+template <typename BasicJsonType, typename T, typename = void>
+struct has_non_default_from_json : std::false_type {};
+
+template<typename BasicJsonType, typename T>
+struct has_non_default_from_json<BasicJsonType, T, enable_if_t<not is_basic_json<T>::value>>
+{
+    using serializer = typename BasicJsonType::template json_serializer<T, void>;
+
+    static constexpr bool value =
+        is_detected_exact<T, from_json_function, serializer,
+        const BasicJsonType&>::value;
+};
+
+// This trait checks if BasicJsonType::json_serializer<T>::to_json exists
+// Do not evaluate the trait when T is a basic_json type, to avoid template instantiation infinite recursion.
+template <typename BasicJsonType, typename T, typename = void>
+struct has_to_json : std::false_type {};
+
+template <typename BasicJsonType, typename T>
+struct has_to_json<BasicJsonType, T, enable_if_t<not is_basic_json<T>::value>>
+{
+    using serializer = typename BasicJsonType::template json_serializer<T, void>;
+
+    static constexpr bool value =
+        is_detected_exact<void, to_json_function, serializer, BasicJsonType&,
+        T>::value;
+};
+
+
 ///////////////////
 // is_ functions //
 ///////////////////
@@ -123,6 +169,35 @@ template <typename BasicJsonType, typename CompatibleObjectType>
 struct is_compatible_object_type
     : is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType> {};
 
+template <typename BasicJsonType, typename ConstructibleObjectType,
+          typename = void>
+struct is_constructible_object_type_impl : std::false_type {};
+
+template <typename BasicJsonType, typename ConstructibleObjectType>
+struct is_constructible_object_type_impl <
+    BasicJsonType, ConstructibleObjectType,
+    enable_if_t<is_detected<mapped_type_t, ConstructibleObjectType>::value and
+    is_detected<key_type_t, ConstructibleObjectType>::value >>
+{
+    using object_t = typename BasicJsonType::object_t;
+
+    static constexpr bool value =
+        std::is_constructible<typename ConstructibleObjectType::key_type,
+        typename object_t::key_type>::value and
+        std::is_same<typename object_t::mapped_type,
+        typename ConstructibleObjectType::mapped_type>::value or
+        (has_from_json<BasicJsonType,
+         typename ConstructibleObjectType::mapped_type>::value or
+         has_non_default_from_json <
+         BasicJsonType,
+         typename ConstructibleObjectType::mapped_type >::value);
+};
+
+template <typename BasicJsonType, typename ConstructibleObjectType>
+struct is_constructible_object_type
+    : is_constructible_object_type_impl<BasicJsonType,
+      ConstructibleObjectType> {};
+
 template <typename BasicJsonType, typename CompatibleStringType,
           typename = void>
 struct is_compatible_string_type_impl : std::false_type {};
@@ -137,9 +212,28 @@ struct is_compatible_string_type_impl <
         std::is_constructible<typename BasicJsonType::string_t, CompatibleStringType>::value;
 };
 
-template <typename BasicJsonType, typename CompatibleStringType>
+template <typename BasicJsonType, typename ConstrutibleStringType>
 struct is_compatible_string_type
-    : is_compatible_string_type_impl<BasicJsonType, CompatibleStringType> {};
+    : is_compatible_string_type_impl<BasicJsonType, ConstrutibleStringType> {};
+
+template <typename BasicJsonType, typename ConstrutibleStringType,
+          typename = void>
+struct is_constructible_string_type_impl : std::false_type {};
+
+template <typename BasicJsonType, typename ConstrutibleStringType>
+struct is_constructible_string_type_impl <
+    BasicJsonType, ConstrutibleStringType,
+    enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type,
+    value_type_t, ConstrutibleStringType>::value >>
+{
+    static constexpr auto value =
+        std::is_constructible<ConstrutibleStringType,
+        typename BasicJsonType::string_t>::value;
+};
+
+template <typename BasicJsonType, typename ConstrutibleStringType>
+struct is_constructible_string_type
+    : is_constructible_string_type_impl<BasicJsonType, ConstrutibleStringType> {};
 
 template <typename BasicJsonType, typename CompatibleArrayType, typename = void>
 struct is_compatible_array_type_impl : std::false_type {};
@@ -148,17 +242,60 @@ template <typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
     enable_if_t<is_detected<value_type_t, CompatibleArrayType>::value and
-    is_detected<iterator_t, CompatibleArrayType>::value >>
+    is_detected<iterator_t, CompatibleArrayType>::value and
+// This is needed because json_reverse_iterator has a ::iterator type...
+// Therefore it is detected as a CompatibleArrayType.
+// The real fix would be to have an Iterable concept.
+    not is_iterator_traits<
+    std::iterator_traits<CompatibleArrayType>>::value >>
 {
-    // This is needed because json_reverse_iterator has a ::iterator type...
-    // Therefore it is detected as a CompatibleArrayType.
-    // The real fix would be to have an Iterable concept.
-    static constexpr bool value = not is_iterator_traits<std::iterator_traits<CompatibleArrayType>>::value;
+    static constexpr bool value =
+        std::is_constructible<BasicJsonType,
+        typename CompatibleArrayType::value_type>::value;
 };
 
 template <typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type
     : is_compatible_array_type_impl<BasicJsonType, CompatibleArrayType> {};
+
+template <typename BasicJsonType, typename ConstructibleArrayType, typename = void>
+struct is_constructible_array_type_impl : std::false_type {};
+
+template <typename BasicJsonType, typename ConstructibleArrayType>
+struct is_constructible_array_type_impl <
+    BasicJsonType, ConstructibleArrayType,
+    enable_if_t<std::is_same<ConstructibleArrayType,
+    typename BasicJsonType::value_type>::value >>
+            : std::true_type {};
+
+template <typename BasicJsonType, typename ConstructibleArrayType>
+struct is_constructible_array_type_impl <
+    BasicJsonType, ConstructibleArrayType,
+    enable_if_t<not std::is_same<ConstructibleArrayType,
+    typename BasicJsonType::value_type>::value and
+    is_detected<value_type_t, ConstructibleArrayType>::value and
+    is_detected<iterator_t, ConstructibleArrayType>::value and
+    is_complete_type<
+    detected_t<value_type_t, ConstructibleArrayType>>::value >>
+{
+    static constexpr bool value =
+        // This is needed because json_reverse_iterator has a ::iterator type,
+        // furthermore, std::back_insert_iterator (and other iterators) have a base class `iterator`...
+        // Therefore it is detected as a ConstructibleArrayType.
+        // The real fix would be to have an Iterable concept.
+        not is_iterator_traits <
+        std::iterator_traits<ConstructibleArrayType >>::value and
+
+        (std::is_same<typename ConstructibleArrayType::value_type, typename BasicJsonType::array_t::value_type>::value or
+         has_from_json<BasicJsonType,
+         typename ConstructibleArrayType::value_type>::value or
+         has_non_default_from_json <
+         BasicJsonType, typename ConstructibleArrayType::value_type >::value);
+};
+
+template <typename BasicJsonType, typename ConstructibleArrayType>
+struct is_constructible_array_type
+    : is_constructible_array_type_impl<BasicJsonType, ConstructibleArrayType> {};
 
 template <typename RealIntegerType, typename CompatibleNumberIntegerType,
           typename = void>
@@ -186,51 +323,6 @@ template <typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type
     : is_compatible_integer_type_impl<RealIntegerType,
       CompatibleNumberIntegerType> {};
-
-// trait checking if JSONSerializer<T>::from_json(json const&, udt&) exists
-template <typename BasicJsonType, typename T, typename = void>
-struct has_from_json : std::false_type {};
-
-template <typename BasicJsonType, typename T>
-struct has_from_json<BasicJsonType, T,
-           enable_if_t<not is_basic_json<T>::value>>
-{
-    using serializer = typename BasicJsonType::template json_serializer<T, void>;
-
-    static constexpr bool value =
-        is_detected_exact<void, from_json_function, serializer,
-        const BasicJsonType&, T&>::value;
-};
-
-// This trait checks if JSONSerializer<T>::from_json(json const&) exists
-// this overload is used for non-default-constructible user-defined-types
-template <typename BasicJsonType, typename T, typename = void>
-struct has_non_default_from_json : std::false_type {};
-
-template<typename BasicJsonType, typename T>
-struct has_non_default_from_json<BasicJsonType, T, enable_if_t<not is_basic_json<T>::value>>
-{
-    using serializer = typename BasicJsonType::template json_serializer<T, void>;
-
-    static constexpr bool value =
-        is_detected_exact<T, from_json_function, serializer,
-        const BasicJsonType&>::value;
-};
-
-// This trait checks if BasicJsonType::json_serializer<T>::to_json exists
-// Do not evaluate the trait when T is a basic_json type, to avoid template instantiation infinite recursion.
-template <typename BasicJsonType, typename T, typename = void>
-struct has_to_json : std::false_type {};
-
-template <typename BasicJsonType, typename T>
-struct has_to_json<BasicJsonType, T, enable_if_t<not is_basic_json<T>::value>>
-{
-    using serializer = typename BasicJsonType::template json_serializer<T, void>;
-
-    static constexpr bool value =
-        is_detected_exact<void, to_json_function, serializer, BasicJsonType&,
-        T>::value;
-};
 
 template <typename BasicJsonType, typename CompatibleType, typename = void>
 struct is_compatible_type_impl: std::false_type {};
