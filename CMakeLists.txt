@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.8)
 ## PROJECT
 ## name and version
 ##
-project(nlohmann_json VERSION 3.2.0 LANGUAGES CXX)
+project(nlohmann_json VERSION 3.3.0 LANGUAGES CXX)
 
 ##
 ## INCLUDE
@@ -86,10 +86,10 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     ${NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE} COMPATIBILITY SameMajorVersion
 )
-configure_package_config_file(
+configure_file(
     ${NLOHMANN_JSON_CMAKE_CONFIG_TEMPLATE}
     ${NLOHMANN_JSON_CMAKE_PROJECT_CONFIG_FILE}
-    INSTALL_DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
+    @ONLY
 )
 
 install(
@@ -121,4 +121,3 @@ install(
     NAMESPACE ${PROJECT_NAME}::
     DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
 )
-export(PACKAGE ${PROJECT_NAME})

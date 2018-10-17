@@ -299,7 +299,7 @@ void from_json(const BasicJsonType& j, std::pair<A1, A2>& p)
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-void from_json_tuple_impl(const BasicJsonType& j, Tuple& t, index_sequence<Idx...>)
+void from_json_tuple_impl(const BasicJsonType& j, Tuple& t, index_sequence<Idx...> /*unused*/)
 {
     t = std::make_tuple(j.at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
 }
@@ -358,7 +358,7 @@ struct from_json_fn
         return from_json(j, val);
     }
 };
-}
+}  // namespace detail
 
 /// namespace to hold default `from_json` function
 /// to see why this is required:
@@ -366,5 +366,5 @@ struct from_json_fn
 namespace
 {
 constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::value;
-}
-}
+} // namespace
+}  // namespace nlohmann

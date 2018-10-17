@@ -679,7 +679,8 @@ TEST_CASE("Incomplete BSON INPUT")
     };
 
     CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
-                      "[json.exception.parse_error.110] parse error at 9: unexpected end of input");
+                      "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing BSON cstring: unexpected end of input");
+
     CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
     SaxCountdown scp(0);
@@ -695,7 +696,7 @@ TEST_CASE("Incomplete BSON INPUT 2")
     };
 
     CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
-                      "[json.exception.parse_error.110] parse error at 6: unexpected end of input");
+                      "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BSON cstring: unexpected end of input");
     CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
     SaxCountdown scp(0);
@@ -717,7 +718,7 @@ TEST_CASE("Incomplete BSON INPUT 3")
         // missing input data...
     };
     CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
-                      "[json.exception.parse_error.110] parse error at 28: unexpected end of input");
+                      "[json.exception.parse_error.110] parse error at byte 28: syntax error while parsing BSON element list: unexpected end of input");
     CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
     SaxCountdown scp(1);
@@ -734,7 +735,7 @@ TEST_CASE("Incomplete BSON INPUT 4")
     };
 
     CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
-                      "[json.exception.parse_error.110] parse error at 3: unexpected end of input");
+                      "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BSON number: unexpected end of input");
     CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
     SaxCountdown scp(0);
@@ -753,7 +754,7 @@ TEST_CASE("Unsupported BSON input")
     };
 
     CHECK_THROWS_WITH(json::from_bson(bson),
-                      "[json.exception.parse_error.114] parse error at 5: Unsupported BSON record type 0xFF");
+                      "[json.exception.parse_error.114] parse error at byte 5: Unsupported BSON record type 0xFF");
     CHECK(json::from_bson(bson, true, false).is_discarded());
 
     SaxCountdown scp(0);

@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.2.0
+|  |  |__   |  |  | | | |  version 3.3.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -39,7 +39,7 @@ TEST_CASE("JSON pointers")
     {
         CHECK_THROWS_AS(json::json_pointer("foo"), json::parse_error&);
         CHECK_THROWS_WITH(json::json_pointer("foo"),
-                          "[json.exception.parse_error.107] parse error at 1: JSON pointer must be empty or begin with '/' - was: 'foo'");
+                          "[json.exception.parse_error.107] parse error at byte 1: JSON pointer must be empty or begin with '/' - was: 'foo'");
 
         CHECK_THROWS_AS(json::json_pointer("/~~"), json::parse_error&);
         CHECK_THROWS_WITH(json::json_pointer("/~~"),

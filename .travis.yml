@@ -161,11 +161,22 @@ matrix:
   - os: osx
     osx_image: xcode9.4
 
+  - os: osx
+    osx_image: xcode10
+
   # Linux / GCC
 
   - os: linux
     compiler: gcc
-    env: COMPILER=g++-4.9
+    env: compiler=g++-4.8
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-4.8', 'ninja-build']
+
+  - os: linux
+    compiler: gcc
+    env: compiler=g++-4.9
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
