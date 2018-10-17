@@ -930,7 +930,7 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec {0x65, 0xf5, 0x0a, 0x48, 0x21};
         CHECK_THROWS_AS(json::from_cbor(vec), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec),
-                          "[json.exception.parse_error.110] parse error at byte 6: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing CBOR string: unexpected end of input");
     }
 
     SECTION("issue #407 - Heap-buffer-overflow (OSS-Fuzz issue 343)")
@@ -939,31 +939,31 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec1 {0xcb, 0x8f, 0x0a};
         CHECK_THROWS_AS(json::from_msgpack(vec1), json::parse_error&);
         CHECK_THROWS_WITH(json::from_msgpack(vec1),
-                          "[json.exception.parse_error.110] parse error at byte 4: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack number: unexpected end of input");
 
         // related test case: incomplete float32
         std::vector<uint8_t> vec2 {0xca, 0x8f, 0x0a};
         CHECK_THROWS_AS(json::from_msgpack(vec2), json::parse_error&);
         CHECK_THROWS_WITH(json::from_msgpack(vec2),
-                          "[json.exception.parse_error.110] parse error at byte 4: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack number: unexpected end of input");
 
         // related test case: incomplete Half-Precision Float (CBOR)
         std::vector<uint8_t> vec3 {0xf9, 0x8f};
         CHECK_THROWS_AS(json::from_cbor(vec3), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec3),
-                          "[json.exception.parse_error.110] parse error at byte 3: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input");
 
         // related test case: incomplete Single-Precision Float (CBOR)
         std::vector<uint8_t> vec4 {0xfa, 0x8f, 0x0a};
         CHECK_THROWS_AS(json::from_cbor(vec4), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec4),
-                          "[json.exception.parse_error.110] parse error at byte 4: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR number: unexpected end of input");
 
         // related test case: incomplete Double-Precision Float (CBOR)
         std::vector<uint8_t> vec5 {0xfb, 0x8f, 0x0a};
         CHECK_THROWS_AS(json::from_cbor(vec5), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec5),
-                          "[json.exception.parse_error.110] parse error at byte 4: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR number: unexpected end of input");
     }
 
     SECTION("issue #408 - Heap-buffer-overflow (OSS-Fuzz issue 344)")
@@ -972,7 +972,7 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec1 {0x87};
         CHECK_THROWS_AS(json::from_msgpack(vec1), json::parse_error&);
         CHECK_THROWS_WITH(json::from_msgpack(vec1),
-                          "[json.exception.parse_error.110] parse error at byte 2: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack string: unexpected end of input");
 
         // more test cases for MessagePack
         for (auto b :
@@ -1006,10 +1006,10 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec2;
         CHECK_THROWS_AS(json::from_cbor(vec2), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec2),
-                          "[json.exception.parse_error.110] parse error at byte 1: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing CBOR value: unexpected end of input");
         CHECK_THROWS_AS(json::from_msgpack(vec2), json::parse_error&);
         CHECK_THROWS_WITH(json::from_msgpack(vec2),
-                          "[json.exception.parse_error.110] parse error at byte 1: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing MessagePack value: unexpected end of input");
     }
 
     SECTION("issue #411 - Heap-buffer-overflow (OSS-Fuzz issue 366)")
@@ -1018,19 +1018,19 @@ TEST_CASE("regression tests")
         std::vector<uint8_t> vec1 {0x7f};
         CHECK_THROWS_AS(json::from_cbor(vec1), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec1),
-                          "[json.exception.parse_error.110] parse error at byte 2: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR string: unexpected end of input");
 
         // related test case: empty array (indefinite length)
         std::vector<uint8_t> vec2 {0x9f};
         CHECK_THROWS_AS(json::from_cbor(vec2), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec2),
-                          "[json.exception.parse_error.110] parse error at byte 2: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR value: unexpected end of input");
 
         // related test case: empty map (indefinite length)
         std::vector<uint8_t> vec3 {0xbf};
         CHECK_THROWS_AS(json::from_cbor(vec3), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec3),
-                          "[json.exception.parse_error.110] parse error at byte 2: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR string: unexpected end of input");
     }
 
     SECTION("issue #412 - Heap-buffer-overflow (OSS-Fuzz issue 367)")
@@ -1058,25 +1058,25 @@ TEST_CASE("regression tests")
         };
         CHECK_THROWS_AS(json::from_cbor(vec), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec),
-                          "[json.exception.parse_error.113] parse error at byte 2: expected a CBOR string; last byte: 0x98");
+                          "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x98");
 
         // related test case: nonempty UTF-8 string (indefinite length)
         std::vector<uint8_t> vec1 {0x7f, 0x61, 0x61};
         CHECK_THROWS_AS(json::from_cbor(vec1), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec1),
-                          "[json.exception.parse_error.110] parse error at byte 4: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR string: unexpected end of input");
 
         // related test case: nonempty array (indefinite length)
         std::vector<uint8_t> vec2 {0x9f, 0x01};
         CHECK_THROWS_AS(json::from_cbor(vec2), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec2),
-                          "[json.exception.parse_error.110] parse error at byte 3: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR value: unexpected end of input");
 
         // related test case: nonempty map (indefinite length)
         std::vector<uint8_t> vec3 {0xbf, 0x61, 0x61, 0x01};
         CHECK_THROWS_AS(json::from_cbor(vec3), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec3),
-                          "[json.exception.parse_error.110] parse error at byte 5: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR string: unexpected end of input");
     }
 
     SECTION("issue #414 - compare with literal 0)")
@@ -1111,7 +1111,7 @@ TEST_CASE("regression tests")
         };
         CHECK_THROWS_AS(json::from_cbor(vec1), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec1),
-                          "[json.exception.parse_error.113] parse error at byte 13: expected a CBOR string; last byte: 0xB4");
+                          "[json.exception.parse_error.113] parse error at byte 13: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xB4");
 
         // related test case: double-precision
         std::vector<uint8_t> vec2
@@ -1125,7 +1125,7 @@ TEST_CASE("regression tests")
         };
         CHECK_THROWS_AS(json::from_cbor(vec2), json::parse_error&);
         CHECK_THROWS_WITH(json::from_cbor(vec2),
-                          "[json.exception.parse_error.113] parse error at byte 13: expected a CBOR string; last byte: 0xB4");
+                          "[json.exception.parse_error.113] parse error at byte 13: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xB4");
     }
 
     SECTION("issue #452 - Heap-buffer-overflow (OSS-Fuzz issue 585)")

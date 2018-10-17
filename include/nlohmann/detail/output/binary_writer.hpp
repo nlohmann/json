@@ -767,7 +767,7 @@ class binary_writer
         }
         else
         {
-            JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
+            JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(n) + " cannot be represented by UBJSON as it does not fit int64"));
         }
     }
 
@@ -821,7 +821,7 @@ class binary_writer
         // LCOV_EXCL_START
         else
         {
-            JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(n)));
+            JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(n) + " cannot be represented by UBJSON as it does not fit int64"));
         }
         // LCOV_EXCL_STOP
     }
